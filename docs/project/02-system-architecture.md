@@ -13,7 +13,7 @@ The architecture must support a 6-week MVP/demo while keeping the project clean 
 
 Primary goals:
 
-- Build a working browser-based logistics MVP.
+- Build a working mobile-first logistics MVP for Customer/Driver plus an Admin web dashboard.
 - Keep Customer, Driver, and Admin flows in one coherent system.
 - Keep external services behind provider interfaces.
 - Allow local development without real third-party credentials.
@@ -24,7 +24,6 @@ Non-goals:
 
 - Production SLA.
 - High concurrency guarantee.
-- Native mobile app architecture.
 - Advanced dispatch optimization.
 - Full payment reconciliation.
 
@@ -34,8 +33,9 @@ Non-goals:
 
 | Layer | Technology | Purpose |
 | --- | --- | --- |
-| Frontend | Next.js, React, TypeScript | Web App/PWA for Customer, Driver, Admin. |
-| Styling | Tailwind CSS | Fast responsive UI implementation. |
+| Mobile | Expo React Native, TypeScript | Customer and Driver mobile app. |
+| Admin Web | Next.js, React, TypeScript | Admin dashboard. |
+| Styling | Tailwind CSS | Admin web styling and shared design conventions. |
 | Backend | NestJS, TypeScript | Modular API and business logic. |
 | ORM | Prisma | Database schema, migrations, query layer. |
 | Database | PostgreSQL + PostGIS | Users, orders, route coordinates, tracking, payments. |
@@ -56,17 +56,11 @@ Non-goals:
                                   +----------^-----------+
                                              |
 +----------------------+          +----------+-----------+
-| Customer Browser     |          |                      |
-| Driver Browser       +--------->+ Next.js Web App/PWA  |
-| Admin Browser        | HTTPS    |                      |
++----------------------+          +----------------------+
+| Customer Mobile App  |          |                      |
+| Driver Mobile App    +--------->+ NestJS Backend API   |
+| Admin Web Dashboard  | HTTPS    | REST + Socket.IO     |
 +----------------------+          +----------+-----------+
-                                             |
-                                             | HTTPS JSON + Socket.IO
-                                             v
-                                  +----------+-----------+
-                                  | NestJS Backend API   |
-                                  | REST + Socket.IO     |
-                                  +----------+-----------+
                                              |
                          +-------------------+-------------------+
                          |                   |                   |
@@ -85,14 +79,22 @@ Recommended monorepo layout:
 ```text
 leopard/
   apps/
+    mobile/
+      src/
+        app/
+        features/
+          auth/
+          customer/
+          driver/
+          tracking/
+        lib/
+        components/
     web/
       src/
         app/
-          login/
-          customer/
-          driver/
           admin/
         components/
+          admin/
         lib/
         styles/
     api/
@@ -126,10 +128,12 @@ leopard/
 
 Rules:
 
-- `apps/web` must not query the database directly.
-- `apps/web` communicates only with `apps/api`.
+- `apps/mobile` contains Customer and Driver flows.
+- `apps/web` contains Admin Dashboard flows.
+- Client apps must not query the database directly.
+- `apps/mobile` and `apps/web` communicate only with `apps/api`.
 - `apps/api` owns business rules.
-- `packages/shared` contains DTOs, enums, and shared validation helpers when useful.
+- `packages/shared` contains DTOs, enums, and shared validation helpers for mobile, web, and API when useful.
 - Integration-specific code must stay under `apps/api/src/integrations`.
 
 ---
@@ -273,20 +277,23 @@ apps/api/src/admin/admin.service.ts
 
 ---
 
-## 6. Frontend App Design
+## 6. Client App Design
 
-### 6.1 Route Structure
+### 6.1 Screen and Route Structure
 
 ```text
+Mobile app:
+LoginScreen
+
+CustomerOrdersScreen
+CustomerCreateOrderScreen
+CustomerOrderDetailScreen
+
+DriverOrdersScreen
+DriverOrderDetailScreen
+
+Admin web:
 /login
-
-/customer/orders
-/customer/orders/new
-/customer/orders/[id]
-
-/driver/orders
-/driver/orders/[id]
-
 /admin
 /admin/orders
 /admin/orders/[id]
@@ -294,19 +301,19 @@ apps/api/src/admin/admin.service.ts
 /admin/drivers
 ```
 
-### 6.2 Frontend Responsibilities
+### 6.2 Client Responsibilities
 
-Frontend owns:
+Mobile and web clients own:
 
 - Form state.
-- Browser validation messages.
+- Client-side validation messages.
 - Role-based routing.
 - API calls through a single client wrapper.
 - Socket.IO client connection.
 - Map display.
 - User-friendly loading/empty/error states.
 
-Frontend does not own:
+Clients do not own:
 
 - Authorization decisions.
 - Price calculation source of truth.
@@ -314,17 +321,31 @@ Frontend does not own:
 - Payment state source of truth.
 - Database access.
 
-### 6.3 Recommended Frontend File Layout
+### 6.3 Recommended Client File Layout
 
 ```text
+apps/mobile/src/
+  features/
+    auth/
+    customer/
+      orders/
+      tracking/
+      payments/
+    driver/
+      orders/
+      tracking/
+  components/
+    orders/
+    maps/
+    tracking/
+    upload/
+  lib/
+    api.ts
+    socket.ts
+
 apps/web/src/
   app/
     login/page.tsx
-    customer/orders/page.tsx
-    customer/orders/new/page.tsx
-    customer/orders/[id]/page.tsx
-    driver/orders/page.tsx
-    driver/orders/[id]/page.tsx
     admin/page.tsx
     admin/orders/page.tsx
     admin/orders/[id]/page.tsx
@@ -506,7 +527,7 @@ API error shape:
 }
 ```
 
-Frontend rules:
+Client rules:
 
 - Show short readable message.
 - Keep form data when validation fails.
@@ -575,6 +596,8 @@ Staging must support:
 
 Decision: Use monorepo with `apps/web`, `apps/api`, and `packages/shared`.
 
+Scope correction: use `apps/mobile` for Customer and Driver flows. Use `apps/web` for Admin Dashboard only.
+
 Reason:
 
 - Easier shared contracts.
@@ -608,4 +631,3 @@ Reason:
 
 - Faster implementation than custom WebSocket protocol.
 - Room-based order tracking is straightforward.
-

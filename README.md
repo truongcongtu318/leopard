@@ -2,15 +2,15 @@
 
 LEOPARD is a 6-week MVP/Demo project for a cargo transportation connection system. The product connects Customers who create shipment orders with Drivers who accept and complete those orders, while Admin users monitor orders, users, drivers, tracking, uploads, and payment state.
 
-This repository is currently in the planning and specification phase. It contains the SRS, architecture, database design, API specification, UI flow specification, sprint plan, and Codex working instructions that coding agents and developers should follow when implementation begins.
+This repository contains the Phase 1 foundation for the LEOPARD MVP: planning documents, Codex working instructions, a pnpm monorepo scaffold, a Next.js Admin web placeholder, a NestJS API placeholder, shared TypeScript contracts, and Docker Compose for PostgreSQL/PostGIS.
 
 ## Product Scope
 
 The MVP includes:
 
-- Customer Web App/PWA for shipment order creation and order tracking.
-- Driver Web App/PWA for viewing, accepting, and updating shipment orders.
-- Admin Dashboard for users, drivers, orders, status, tracking, media, and payment overview.
+- Customer Mobile App for shipment order creation and order tracking.
+- Driver Mobile App for viewing, accepting, updating shipment orders, and sending tracking.
+- Admin Web Dashboard for users, drivers, orders, status, tracking, media, and payment overview.
 - Backend API for authentication, orders, drivers, admin, tracking, upload, payment, and integrations.
 - PostgreSQL/PostGIS database for users, orders, stops, coordinates, tracking points, media, and payment intents.
 - Vietmap integration for address search, geocoding, routing, distance, and ETA at MVP level.
@@ -18,13 +18,14 @@ The MVP includes:
 - Media upload for cargo and delivery confirmation images.
 - VietQR/payOS QR payment creation at MVP/demo level.
 
-The MVP does not include production SLA, native mobile apps, automatic bank reconciliation, advanced AI ETA, production-grade route optimization, Fleet Owner dashboard, or high-concurrency guarantees.
+The MVP does not include production SLA, automatic bank reconciliation, advanced AI ETA, production-grade route optimization, Fleet Owner dashboard, or high-concurrency guarantees.
 
 ## Approved Tech Stack
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | Next.js, React, TypeScript, Tailwind CSS |
+| Admin Web | Next.js, React, TypeScript, Tailwind CSS |
+| Mobile | Expo React Native, TypeScript |
 | Backend | NestJS, TypeScript |
 | ORM | Prisma |
 | Database | PostgreSQL + PostGIS |
@@ -34,6 +35,7 @@ The MVP does not include production SLA, native mobile apps, automatic bank reco
 | Media Storage | Local storage for dev, DigitalOcean Spaces/S3-compatible for staging |
 | Payment | VietQR/payOS with demo fallback |
 | Local Runtime | Docker Compose |
+| Package Manager | pnpm |
 
 ## Repository Structure
 
@@ -41,6 +43,15 @@ The MVP does not include production SLA, native mobile apps, automatic bank reco
 .
 |-- AGENTS.md
 |-- README.md
+|-- apps
+|   |-- api
+|   |-- mobile  # planned for Phase 2: Customer + Driver app
+|   `-- web
+|-- packages
+|   `-- shared
+|-- docker-compose.yml
+|-- package.json
+|-- pnpm-workspace.yaml
 `-- docs
     |-- srs-leopard-mvp.md
     |-- project
@@ -54,16 +65,6 @@ The MVP does not include production SLA, native mobile apps, automatic bank reco
         |-- 02-agent-goal-cards.md
         |-- 04-review-and-verification-gates.md
         `-- codex-best-practices-for-leopard.md
-```
-
-Planned implementation structure:
-
-```text
-apps/
-  web/      # Next.js Customer, Driver, Admin UI
-  api/      # NestJS API and Socket.IO gateway
-packages/
-  shared/   # Shared DTOs, enums, and validation helpers
 ```
 
 ## Active Documentation
@@ -86,26 +87,38 @@ Current status:
 
 - Git repository initialized.
 - Requirements and workflow documents exist.
-- Application code has not been scaffolded yet.
+- Phase 1 monorepo scaffold exists.
+- `apps/web` contains a Next.js Admin Dashboard placeholder.
+- `apps/mobile` is the Phase 2 target for Customer and Driver mobile flows.
+- `apps/api` contains a NestJS health endpoint and initial Prisma setup.
+- `packages/shared` contains shared MVP enums and DTO contracts.
+- Docker Compose starts PostgreSQL/PostGIS for local development.
 
 Recommended next implementation step:
 
-1. Scaffold the monorepo with `apps/web`, `apps/api`, and `packages/shared`.
-2. Add Docker Compose for PostgreSQL/PostGIS.
-3. Add `.env.example`.
-4. Implement Week 1 from the sprint plan.
+1. Implement Phase 2 authentication, user roles, and driver profile basics.
+2. Add the first real database models and migrations from the database design document.
+3. Keep each implementation task scoped to one vertical slice and verify before commit.
 
 ## Local Setup
 
-Application setup will be finalized after the monorepo is scaffolded. The expected future commands are:
+Use Node.js 22.12+ or 24.x for Prisma compatibility. The repository includes `.nvmrc` and `.node-version` for local runtime alignment.
+
+Install dependencies and start the local database:
 
 ```bash
 pnpm install
 pnpm db:up
+pnpm db:seed
+```
+
+Run the apps:
+
+```bash
 pnpm dev
 ```
 
-Expected future verification commands:
+Run verification:
 
 ```bash
 pnpm lint
@@ -114,7 +127,7 @@ pnpm test
 pnpm build
 ```
 
-If these scripts do not exist yet, follow the current sprint task and add them as part of foundation work.
+`pnpm db:seed` syncs the local Prisma schema and creates demo Customer, Driver, Admin, and DriverProfile records with hashed demo passwords. `pnpm db:down` stops the local database.
 
 ## Environment Variables
 
@@ -176,7 +189,15 @@ pnpm --filter api typecheck
 pnpm --filter api lint
 ```
 
-Frontend changes should eventually run:
+Mobile changes should eventually run:
+
+```bash
+pnpm --filter mobile test
+pnpm --filter mobile typecheck
+pnpm --filter mobile lint
+```
+
+Admin web changes should eventually run:
 
 ```bash
 pnpm --filter web test

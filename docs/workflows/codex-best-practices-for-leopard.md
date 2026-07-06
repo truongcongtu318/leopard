@@ -60,7 +60,7 @@ Use this:
 
 ```text
 Goal:
-Implement Customer order creation UI.
+Implement Customer order creation mobile UI.
 
 Context:
 - docs/srs-leopard-mvp.md
@@ -69,7 +69,7 @@ Context:
 - docs/project/05-ui-flow-screen-spec.md, Customer Create Order
 
 Constraints:
-- Next.js + TypeScript + Tailwind.
+- Expo React Native + TypeScript.
 - No new scope beyond Customer order creation.
 - Max 3 stops.
 - Use existing API client.
@@ -79,7 +79,7 @@ Done when:
 - Customer can create order with pickup, dropoff, 0-3 stops, vehicle type, and notes.
 - 4th stop is blocked.
 - Created order appears after refresh.
-- `pnpm --filter web typecheck` and `pnpm --filter web lint` pass.
+- `pnpm --filter mobile typecheck` and `pnpm --filter mobile lint` pass.
 ```
 
 ---
@@ -388,4 +388,3 @@ Do this:
 5. Continue with one smaller slice.
 
 Do not keep adding more instructions to a confused thread. Start a fresh thread or use a worktree when context is polluted.
-

@@ -11,6 +11,7 @@ LEOPARD is a 6-week MVP/Demo logistics connection system with three roles:
 The approved stack is:
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS.
+- Mobile: Expo React Native, TypeScript.
 - Backend: NestJS, Prisma, TypeScript.
 - Database: PostgreSQL + PostGIS.
 - Realtime: Socket.IO/WebSocket.
@@ -63,7 +64,8 @@ LEOPARD is operational logistics product UI, not a landing page.
 
 - Avoid AI-purple gradients, glassmorphism, decorative hero sections, and fake marketing cards.
 - Prioritize clear forms, status badges, tables/lists, route summary, and map/tracking panels.
-- Customer and Driver flows must work on mobile.
+- Customer and Driver flows belong in the mobile app (`apps/mobile`).
+- Admin flows belong in the web dashboard (`apps/web`).
 - Admin can be denser but must remain readable.
 - Every main screen needs loading, empty, error, and success states.
 
@@ -79,7 +81,15 @@ pnpm --filter api typecheck
 pnpm --filter api lint
 ```
 
-Frontend changes:
+Mobile changes:
+
+```bash
+pnpm --filter mobile test
+pnpm --filter mobile typecheck
+pnpm --filter mobile lint
+```
+
+Admin web changes:
 
 ```bash
 pnpm --filter web test
@@ -120,4 +130,3 @@ Use subagents mainly for:
 - Security or maintainability review.
 
 Be careful with parallel write-heavy implementation. Do not let multiple agents edit the same files at the same time unless they are isolated in separate worktrees.
-

@@ -55,6 +55,7 @@ Create the project foundation and remove ambiguity before feature implementation
 
 - [ ] Create monorepo structure.
 - [ ] Create `apps/web`, `apps/api`, and `packages/shared`.
+- [ ] Record scope correction: Customer/Driver flows are implemented in `apps/mobile`; `apps/web` is Admin-only.
 - [ ] Add root scripts for dev, build, lint, test, typecheck.
 - [ ] Add Docker Compose PostgreSQL/PostGIS.
 - [ ] Add `.env.example`.
@@ -128,6 +129,7 @@ Build the backend core needed for Customer, Driver, and Admin flows.
 - [ ] Implement seed data for Customer, Driver, Admin.
 - [ ] Implement Auth module.
 - [ ] Implement role guard.
+- [ ] Scaffold `apps/mobile` with Expo React Native and shared contracts.
 - [ ] Implement MapProvider interface.
 - [ ] Implement DemoMapProvider.
 - [ ] Implement VietmapProvider boundary.
@@ -504,4 +506,3 @@ Can cut or simplify:
 - Admin summary widgets.
 - Delivery image upload.
 - Real payOS integration.
-

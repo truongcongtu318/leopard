@@ -6,7 +6,7 @@
 **Version:** 1.0  
 **Date:** 2026-07-06  
 **Status:** Draft for review  
-**Project Type:** Web App/PWA + Admin Dashboard + Backend API  
+**Project Type:** Customer/Driver Mobile App + Admin Web Dashboard + Backend API
 **Target Release:** MVP/Demo  
 
 ---
@@ -27,15 +27,15 @@ The document is intended to be used during the SDLC process by:
 
 ### 1.2 Product Scope
 
-LEOPARD MVP/Demo is a browser-based logistics connection system with three user roles:
+LEOPARD MVP/Demo is a logistics connection system with three user roles:
 
 - Customer: creates and tracks shipment orders.
 - Driver: receives, accepts, and updates shipment orders.
 - Admin: manages users, drivers, orders, statuses, and order details.
 
-The system includes a Web App/PWA, Admin Dashboard, Backend API, database, map integration, realtime tracking demo, media upload, and QR payment creation.
+The system includes a Customer/Driver mobile app, Admin Web Dashboard, Backend API, database, map integration, realtime tracking demo, media upload, and QR payment creation.
 
-This MVP is intended for demonstration, business validation, academic presentation, and future product development. It is not a production-grade commercial logistics platform and does not commit to 24/7 SLA, high concurrency, full payment reconciliation, advanced dispatch optimization, or native mobile app release.
+This MVP is intended for demonstration, business validation, academic presentation, and future product development. It is not a production-grade commercial logistics platform and does not commit to 24/7 SLA, high concurrency, full payment reconciliation, or advanced dispatch optimization.
 
 ### 1.3 SDLC Alignment
 
@@ -53,7 +53,8 @@ This SRS supports the following SDLC phases:
 | Term | Definition |
 | --- | --- |
 | MVP | Minimum Viable Product used for demonstration and validation. |
-| PWA | Progressive Web App that works through a browser with responsive behavior. |
+| Mobile App | Expo React Native application used by Customer and Driver. |
+| Admin Web Dashboard | Browser-based Next.js dashboard used by Admin. |
 | Customer | User who creates shipment orders. |
 | Driver | User who accepts and completes shipment orders. |
 | Admin | User who monitors and manages operational data. |
@@ -77,7 +78,8 @@ This SRS supports the following SDLC phases:
 
 LEOPARD is a new web-based MVP system. It consists of:
 
-- A frontend Web App/PWA for Customer, Driver, and Admin.
+- A mobile app for Customer and Driver flows.
+- A web dashboard for Admin flows.
 - A backend API for authentication, orders, users, drivers, tracking, uploads, payments, and integrations.
 - A PostgreSQL/PostGIS database for users, orders, coordinates, tracking points, payments, and media metadata.
 - Third-party integrations for map/routing, authentication/OTP when configured, media storage, and QR payment creation.
@@ -106,11 +108,11 @@ The system shall provide:
 
 ### 2.4 Operating Environment
 
-Frontend:
+Client applications:
 
-- Runs in common modern browsers: Chrome, Edge, Firefox, and Safari.
-- Supports desktop and mobile responsive layouts.
-- Delivered as Web App/PWA using Next.js and React.
+- Customer and Driver run in an Expo React Native mobile app.
+- Admin runs in a Next.js web dashboard.
+- Admin web supports common modern browsers: Chrome, Edge, Firefox, and Safari.
 
 Backend:
 
@@ -127,7 +129,8 @@ Deployment:
 ### 2.5 Design and Implementation Constraints
 
 - The tech stack shall remain:
-  - Next.js / React / TypeScript for frontend.
+  - Expo React Native / TypeScript for Customer and Driver mobile app.
+  - Next.js / React / TypeScript / Tailwind CSS for Admin web dashboard.
   - NestJS / Prisma for backend.
   - PostgreSQL + PostGIS for database.
   - Socket.IO/WebSocket for realtime tracking.
@@ -167,10 +170,18 @@ Dependencies:
 The system shall use a client-server architecture:
 
 ```text
-Customer / Driver / Admin Browser
+Customer / Driver Mobile App
         |
         v
-Next.js Web App / PWA
+Expo React Native App
+        |
+        v
+NestJS Backend API + Socket.IO Gateway
+
+Admin Browser
+        |
+        v
+Next.js Admin Web Dashboard
         |
         v
 NestJS Backend API + Socket.IO Gateway
@@ -235,7 +246,7 @@ Requirement priorities:
 | --- | --- | --- | --- |
 | AUTH-001 | The system shall allow users to log in. | P0 | Valid credentials return an authenticated session/token. |
 | AUTH-002 | The system shall support Customer, Driver, and Admin roles. | P0 | Each user has exactly one MVP role. |
-| AUTH-003 | The system shall redirect users to role-specific pages after login. | P0 | Customer, Driver, and Admin land on correct dashboards. |
+| AUTH-003 | The system shall redirect users to role-specific surfaces after login. | P0 | Customer and Driver land in mobile flows; Admin lands in Admin Dashboard. |
 | AUTH-004 | The system shall prevent users from accessing pages outside their role. | P0 | Unauthorized role access is blocked. |
 | AUTH-005 | The system shall provide logout. | P1 | Session/token is cleared and user returns to login. |
 | AUTH-006 | The system shall support Firebase Phone Auth OTP if configured. | P2 | OTP can be enabled through environment configuration. |
@@ -374,7 +385,8 @@ Recommended payment statuses:
 
 General UI:
 
-- The UI shall be responsive for desktop and mobile.
+- Customer and Driver UI shall be optimized for mobile app usage.
+- Admin UI shall be optimized for desktop web dashboard usage while remaining reviewable on smaller screens.
 - The UI shall provide separate navigation for Customer, Driver, and Admin.
 - The UI shall display loading, empty, success, and error states for main flows.
 - The UI shall not expose admin-only actions to non-admin users.
@@ -647,7 +659,7 @@ The system shall integrate with:
 | --- | --- | --- |
 | NFR-USE-001 | UI shall be responsive for desktop and mobile. | Main flows usable on desktop and mobile viewport. |
 | NFR-USE-002 | UI shall show clear validation errors. | Missing required fields show readable messages. |
-| NFR-USE-003 | UI shall provide clear role-based navigation. | Customer, Driver, and Admin have distinct navigation. |
+| NFR-USE-003 | UI shall provide clear role-based navigation. | Customer and Driver have distinct mobile flows; Admin has distinct web navigation. |
 | NFR-USE-004 | Demo flow shall be easy to repeat. | Seed/demo data supports repeated presentation. |
 
 ### 8.5 Maintainability

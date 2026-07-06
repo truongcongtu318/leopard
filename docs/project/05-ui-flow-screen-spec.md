@@ -15,6 +15,8 @@ Rules:
 
 - Build the actual app first, not a landing page.
 - Keep Customer, Driver, and Admin flows separate after login.
+- Customer and Driver screens are implemented in the mobile app.
+- Admin screens are implemented in the web dashboard.
 - Prioritize clear forms, tables, status badges, and map/tracking visibility.
 - Every main screen must have loading, empty, error, and success states.
 - Mobile must be usable for Customer and Driver flows.
@@ -25,18 +27,21 @@ Rules:
 ## 2. Navigation Map
 
 ```text
+Mobile app:
+Login
+  -> CustomerOrders
+  -> DriverOrders
+
+CustomerOrders
+  -> CustomerCreateOrder
+  -> CustomerOrderDetail
+
+DriverOrders
+  -> DriverOrderDetail
+
+Admin web:
 /login
-  -> Customer: /customer/orders
-  -> Driver: /driver/orders
   -> Admin: /admin
-
-/customer/orders
-  -> /customer/orders/new
-  -> /customer/orders/[id]
-
-/driver/orders
-  -> /driver/orders/[id]
-
 /admin
   -> /admin/orders
   -> /admin/orders/[id]
@@ -50,7 +55,7 @@ Rules:
 
 ### 3.1 App Shell
 
-Used by authenticated pages.
+Used by authenticated mobile and web pages/screens.
 
 Elements:
 
@@ -541,7 +546,7 @@ Desktop width target:
 
 Rules:
 
-- Customer and Driver flows must work on mobile.
+- Customer and Driver flows must work in the mobile app.
 - Forms stack vertically on mobile.
 - Primary action remains visible without horizontal scrolling.
 - Admin tables may become cards on mobile.
@@ -609,4 +614,3 @@ The UI must support this sequence without code changes:
 - Admin can inspect orders, users, and drivers.
 - Mobile Customer and Driver flows are usable.
 - Desktop Admin dashboard is readable.
-
