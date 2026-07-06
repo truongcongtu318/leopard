@@ -40,7 +40,7 @@ Stop conditions:
 
 ### GOAL-W1-01: Monorepo Foundation
 
-**Goal:** Create the monorepo foundation for LEOPARD with web, API, shared package, local DB runtime, and root scripts.
+**Goal:** Create the monorepo foundation for LEOPARD with Admin web, API, shared package, local DB runtime, and root scripts.
 
 **Source docs:**
 
@@ -60,7 +60,8 @@ Stop conditions:
 **Acceptance criteria:**
 
 - Root workspace exists.
-- Web/API/shared package folders exist.
+- Admin web/API/shared package folders exist.
+- Customer/Driver mobile app scope is recorded for Phase 2.
 - Docker Compose includes PostgreSQL/PostGIS.
 - Root scripts exist for dev, build, lint, test, typecheck.
 - `.env.example` has no real secrets.
@@ -232,15 +233,18 @@ pnpm --filter api typecheck
 
 **Allowed files/areas:**
 
+- `apps/mobile/src/features/auth`
+- `apps/mobile/src/features/customer`
+- `apps/mobile/src/features/driver`
+- `apps/mobile/src/lib/api.ts`
+- `apps/mobile/src/components/layout`
 - `apps/web/src/app/login`
-- `apps/web/src/lib/auth.ts`
-- `apps/web/src/lib/api.ts`
-- `apps/web/src/components/layout`
+- `apps/web/src/app/admin`
 
 **Acceptance criteria:**
 
-- Customer login redirects to `/customer/orders`.
-- Driver login redirects to `/driver/orders`.
+- Customer login opens the Customer mobile order flow.
+- Driver login opens the Driver mobile order flow.
 - Admin login redirects to `/admin`.
 - Invalid credentials show readable error.
 - Logout clears session.
@@ -248,6 +252,8 @@ pnpm --filter api typecheck
 **Verification:**
 
 ```bash
+pnpm --filter mobile typecheck
+pnpm --filter mobile lint
 pnpm --filter web typecheck
 pnpm --filter web lint
 ```
@@ -268,10 +274,10 @@ pnpm --filter web lint
 
 **Allowed files/areas:**
 
-- `apps/web/src/app/customer`
-- `apps/web/src/components/orders`
-- `apps/web/src/components/maps`
-- `apps/web/src/lib/api.ts`
+- `apps/mobile/src/features/customer`
+- `apps/mobile/src/components/orders`
+- `apps/mobile/src/components/maps`
+- `apps/mobile/src/lib/api.ts`
 
 **Acceptance criteria:**
 
@@ -285,8 +291,8 @@ pnpm --filter web lint
 **Verification:**
 
 ```bash
-pnpm --filter web typecheck
-pnpm --filter web lint
+pnpm --filter mobile typecheck
+pnpm --filter mobile lint
 ```
 
 Manual:
@@ -351,9 +357,9 @@ pnpm --filter api typecheck
 
 **Allowed files/areas:**
 
-- `apps/web/src/app/driver`
-- `apps/web/src/components/orders`
-- `apps/web/src/lib/api.ts`
+- `apps/mobile/src/features/driver`
+- `apps/mobile/src/components/orders`
+- `apps/mobile/src/lib/api.ts`
 
 **Acceptance criteria:**
 
@@ -366,8 +372,8 @@ pnpm --filter api typecheck
 **Verification:**
 
 ```bash
-pnpm --filter web typecheck
-pnpm --filter web lint
+pnpm --filter mobile typecheck
+pnpm --filter mobile lint
 ```
 
 Manual:
@@ -395,8 +401,8 @@ Update status to PICKING_UP, IN_TRANSIT, DELIVERED.
 **Allowed files/areas:**
 
 - `apps/api/src/tracking`
-- `apps/web/src/lib/socket.ts`
-- `apps/web/src/components/tracking`
+- `apps/mobile/src/lib/socket.ts`
+- `apps/mobile/src/components/tracking`
 - Customer and Driver order detail pages.
 
 **Acceptance criteria:**
@@ -412,7 +418,7 @@ Update status to PICKING_UP, IN_TRANSIT, DELIVERED.
 ```bash
 pnpm --filter api test tracking
 pnpm --filter api typecheck
-pnpm --filter web typecheck
+pnpm --filter mobile typecheck
 ```
 
 Manual:
@@ -481,7 +487,8 @@ pnpm --filter web lint
 
 - `apps/api/src/media`
 - `apps/api/src/integrations/storage`
-- `apps/web/src/components/upload`
+- `apps/mobile/src/components/upload`
+- `apps/web/src/components/admin`
 - Customer and Driver order detail pages.
 
 **Acceptance criteria:**
@@ -497,6 +504,7 @@ pnpm --filter web lint
 ```bash
 pnpm --filter api test media
 pnpm --filter api typecheck
+pnpm --filter mobile typecheck
 pnpm --filter web typecheck
 ```
 
@@ -517,7 +525,8 @@ pnpm --filter web typecheck
 
 - `apps/api/src/payments`
 - `apps/api/src/integrations/payment`
-- `apps/web/src/components/payments`
+- `apps/mobile/src/components/payments`
+- `apps/web/src/components/admin`
 - Customer and Admin order detail pages.
 
 **Acceptance criteria:**
@@ -532,6 +541,7 @@ pnpm --filter web typecheck
 ```bash
 pnpm --filter api test payments
 pnpm --filter api typecheck
+pnpm --filter mobile typecheck
 pnpm --filter web typecheck
 ```
 
@@ -624,4 +634,3 @@ Full staging demo passes.
 **Stop conditions:**
 
 - P0 issue requires scope or architecture decision.
-

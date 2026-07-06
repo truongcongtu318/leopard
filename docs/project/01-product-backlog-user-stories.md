@@ -44,14 +44,14 @@ A story is done when:
 
 | Epic ID | Epic | Priority | Owner Area |
 | --- | --- | --- | --- |
-| EPIC-01 | Authentication and Role Access | P0 | Frontend + Backend |
-| EPIC-02 | Customer Shipment Booking | P0 | Frontend + Backend |
-| EPIC-03 | Map, Geocoding, Routing, ETA | P0 | Backend Integration + Frontend |
-| EPIC-04 | Driver Order Flow | P0 | Frontend + Backend |
-| EPIC-05 | Realtime Tracking | P0 | Backend Gateway + Frontend |
-| EPIC-06 | Media Upload | P1 | Backend Integration + Frontend |
-| EPIC-07 | Payment QR Creation | P0 | Backend Integration + Frontend |
-| EPIC-08 | Admin Dashboard | P0 | Frontend + Backend |
+| EPIC-01 | Authentication and Role Access | P0 | Mobile + Admin Web + Backend |
+| EPIC-02 | Customer Shipment Booking | P0 | Mobile + Backend |
+| EPIC-03 | Map, Geocoding, Routing, ETA | P0 | Backend Integration + Mobile |
+| EPIC-04 | Driver Order Flow | P0 | Mobile + Backend |
+| EPIC-05 | Realtime Tracking | P0 | Backend Gateway + Mobile |
+| EPIC-06 | Media Upload | P1 | Backend Integration + Mobile + Admin Web |
+| EPIC-07 | Payment QR Creation | P0 | Backend Integration + Mobile + Admin Web |
+| EPIC-08 | Admin Dashboard | P0 | Admin Web + Backend |
 | EPIC-09 | Deployment and Handover | P0 | DevOps + Docs |
 
 ---
@@ -503,4 +503,3 @@ The backlog is complete enough for demo when:
 - P1 stories required by the demo script are done or have documented fallback.
 - No P0 bug remains open.
 - Staging can run the full demo flow.
-
