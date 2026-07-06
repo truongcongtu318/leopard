@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  DRIVER
+  ADMIN
+}
+
+enum VehicleType {
+  VAN
+  SMALL_TRUCK
+  MEDIUM_TRUCK
+}
+
+enum DriverAvailability {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum OrderStatus {
+  REQUESTED
+  ACCEPTED
+  PICKING_UP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  QR_CREATED
+  PAID_DEMO
+  FAILED
+}
+
+enum ImageType {
+  CARGO
+  DELIVERY_CONFIRMATION
+  DOCUMENT
+}
+
+enum PaymentProvider {
+  DEMO
+  VIETQR
+  PAYOS
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  phone        String?         @unique
+  passwordHash String
+  name         String
+  role         Role
+  driver       DriverProfile?
+  orders       Order[]         @relation("CustomerOrders")
+  uploads      OrderImage[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([role])
+}
+
+model DriverProfile {
+  id           String             @id @default(cuid())
+  userId       String             @unique
+  user         User               @relation(fields: [userId], references: [id])
+  vehicleType  VehicleType
+  availability DriverAvailability @default(AVAILABLE)
+  licensePlate String?
+  orders       Order[]
+  tracking     TrackingPoint[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([availability])
+  @@index([vehicleType])
+}
+
+model Order {
+  id                String          @id @default(cuid())
+  customerId        String
+  customer          User            @relation("CustomerOrders", fields: [customerId], references: [id])
+  driverId          String?
+  driver            DriverProfile?  @relation(fields: [driverId], references: [id])
+  pickupAddress     String
+  pickupLat         Float
+  pickupLng         Float
+  dropoffAddress    String
+  dropoffLat        Float
+  dropoffLng        Float
+  vehicleType       VehicleType
+  cargoNotes        String?
+  status            OrderStatus     @default(REQUESTED)
+  distanceKm        Float
+  etaMinutes        Int
+  estimatedPriceVnd Int
+  paymentStatus     PaymentStatus   @default(UNPAID)
+  stops             OrderStop[]
+  images            OrderImage[]
+  trackingPoints    TrackingPoint[]
+  paymentIntents    PaymentIntent[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([customerId])
+  @@index([driverId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+model OrderStop {
+  id       String @id @default(cuid())
+  orderId  String
+  order    Order  @relation(fields: [orderId], references: [id])
+  sequence Int
+  address  String
+  lat      Float
+  lng      Float
+
+  @@unique([orderId, sequence])
+}
+
+model OrderImage {
+  id           String    @id @default(cuid())
+  orderId      String
+  order        Order     @relation(fields: [orderId], references: [id])
+  uploadedById String
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id])
+  type         ImageType
+  url          String
+  mimeType     String
+  sizeBytes    Int
+  createdAt    DateTime  @default(now())
+
+  @@index([orderId])
+  @@index([uploadedById])
+  @@index([type])
+}
+
+model TrackingPoint {
+  id         String        @id @default(cuid())
+  orderId    String
+  order      Order         @relation(fields: [orderId], references: [id])
+  driverId   String
+  driver     DriverProfile @relation(fields: [driverId], references: [id])
+  lat        Float
+  lng        Float
+  recordedAt DateTime      @default(now())
+
+  @@index([orderId])
+  @@index([orderId, recordedAt])
+  @@index([driverId])
+}
+
+model PaymentIntent {
+  id                String          @id @default(cuid())
+  orderId           String
+  order             Order           @relation(fields: [orderId], references: [id])
+  amountVnd         Int
+  status            PaymentStatus
+  provider          PaymentProvider
+  qrContent         String
+  providerReference String?
+  createdAt         DateTime        @default(now())
+
+  @@index([orderId])
+  @@index([status])
+  @@index([provider])
+}

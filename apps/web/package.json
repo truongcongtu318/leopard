@@ -1,0 +1,28 @@
+{
+  "name": "@leopard/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "pnpm --filter @leopard/shared build && next build",
+    "lint": "pnpm --filter @leopard/shared build && pnpm --dir ../.. exec eslint apps/web/src apps/web/next.config.mjs apps/web/postcss.config.mjs",
+    "test": "pnpm --filter @leopard/shared build && pnpm --dir ../.. exec vitest run apps/web/src",
+    "typecheck": "pnpm --filter @leopard/shared build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@leopard/shared": "workspace:*",
+    "next": "^16.2.9",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
+  }
+}

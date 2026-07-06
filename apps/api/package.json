@@ -1,0 +1,36 @@
+{
+  "name": "@leopard/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "pnpm --filter @leopard/shared build && nest build",
+    "lint": "pnpm --filter @leopard/shared build && pnpm --dir ../.. exec eslint apps/api/src apps/api/prisma apps/api/prisma.config.ts",
+    "test": "pnpm --filter @leopard/shared build && pnpm --dir ../.. exec vitest run apps/api/src",
+    "typecheck": "pnpm --filter @leopard/shared build && tsc -p tsconfig.json --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push",
+    "db:seed": "prisma db push && tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@leopard/shared": "workspace:*",
+    "@nestjs/common": "^11.1.9",
+    "@nestjs/core": "^11.1.9",
+    "@nestjs/platform-express": "^11.1.9",
+    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.14",
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.16.0",
+    "prisma": "^7.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

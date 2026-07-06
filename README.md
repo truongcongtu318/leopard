@@ -2,7 +2,7 @@
 
 LEOPARD is a 6-week MVP/Demo project for a cargo transportation connection system. The product connects Customers who create shipment orders with Drivers who accept and complete those orders, while Admin users monitor orders, users, drivers, tracking, uploads, and payment state.
 
-This repository is currently in the planning and specification phase. It contains the SRS, architecture, database design, API specification, UI flow specification, sprint plan, and Codex working instructions that coding agents and developers should follow when implementation begins.
+This repository contains the Phase 1 foundation for the LEOPARD MVP: planning documents, Codex working instructions, a pnpm monorepo scaffold, a Next.js web app placeholder, a NestJS API placeholder, shared TypeScript contracts, and Docker Compose for PostgreSQL/PostGIS.
 
 ## Product Scope
 
@@ -34,6 +34,7 @@ The MVP does not include production SLA, native mobile apps, automatic bank reco
 | Media Storage | Local storage for dev, DigitalOcean Spaces/S3-compatible for staging |
 | Payment | VietQR/payOS with demo fallback |
 | Local Runtime | Docker Compose |
+| Package Manager | pnpm |
 
 ## Repository Structure
 
@@ -41,6 +42,14 @@ The MVP does not include production SLA, native mobile apps, automatic bank reco
 .
 |-- AGENTS.md
 |-- README.md
+|-- apps
+|   |-- api
+|   `-- web
+|-- packages
+|   `-- shared
+|-- docker-compose.yml
+|-- package.json
+|-- pnpm-workspace.yaml
 `-- docs
     |-- srs-leopard-mvp.md
     |-- project
@@ -54,16 +63,6 @@ The MVP does not include production SLA, native mobile apps, automatic bank reco
         |-- 02-agent-goal-cards.md
         |-- 04-review-and-verification-gates.md
         `-- codex-best-practices-for-leopard.md
-```
-
-Planned implementation structure:
-
-```text
-apps/
-  web/      # Next.js Customer, Driver, Admin UI
-  api/      # NestJS API and Socket.IO gateway
-packages/
-  shared/   # Shared DTOs, enums, and validation helpers
 ```
 
 ## Active Documentation
@@ -86,26 +85,37 @@ Current status:
 
 - Git repository initialized.
 - Requirements and workflow documents exist.
-- Application code has not been scaffolded yet.
+- Phase 1 monorepo scaffold exists.
+- `apps/web` contains a Next.js placeholder app.
+- `apps/api` contains a NestJS health endpoint and initial Prisma setup.
+- `packages/shared` contains shared MVP enums and DTO contracts.
+- Docker Compose starts PostgreSQL/PostGIS for local development.
 
 Recommended next implementation step:
 
-1. Scaffold the monorepo with `apps/web`, `apps/api`, and `packages/shared`.
-2. Add Docker Compose for PostgreSQL/PostGIS.
-3. Add `.env.example`.
-4. Implement Week 1 from the sprint plan.
+1. Implement Phase 2 authentication, user roles, and driver profile basics.
+2. Add the first real database models and migrations from the database design document.
+3. Keep each implementation task scoped to one vertical slice and verify before commit.
 
 ## Local Setup
 
-Application setup will be finalized after the monorepo is scaffolded. The expected future commands are:
+Use Node.js 22.12+ or 24.x for Prisma compatibility. The repository includes `.nvmrc` and `.node-version` for local runtime alignment.
+
+Install dependencies and start the local database:
 
 ```bash
 pnpm install
 pnpm db:up
+pnpm db:seed
+```
+
+Run the apps:
+
+```bash
 pnpm dev
 ```
 
-Expected future verification commands:
+Run verification:
 
 ```bash
 pnpm lint
@@ -114,7 +124,7 @@ pnpm test
 pnpm build
 ```
 
-If these scripts do not exist yet, follow the current sprint task and add them as part of foundation work.
+`pnpm db:seed` syncs the local Prisma schema and creates demo Customer, Driver, Admin, and DriverProfile records with hashed demo passwords. `pnpm db:down` stops the local database.
 
 ## Environment Variables
 
