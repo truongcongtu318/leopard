@@ -45,7 +45,7 @@ The MVP does not include production SLA, automatic bank reconciliation, advanced
 |-- README.md
 |-- apps
 |   |-- api
-|   |-- mobile  # planned for Phase 2: Customer + Driver app
+|   |-- mobile
 |   `-- web
 |-- packages
 |   `-- shared
@@ -89,7 +89,7 @@ Current status:
 - Requirements and workflow documents exist.
 - Phase 1 monorepo scaffold exists.
 - `apps/web` contains a Next.js Admin Dashboard placeholder.
-- `apps/mobile` is the Phase 2 target for Customer and Driver mobile flows.
+- `apps/mobile` contains the Expo React Native foundation for Customer and Driver mobile flows.
 - `apps/api` contains a NestJS health endpoint and initial Prisma setup.
 - `packages/shared` contains shared MVP enums and DTO contracts.
 - Docker Compose starts PostgreSQL/PostGIS for local development.
