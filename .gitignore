@@ -12,6 +12,7 @@ out/
 .nuxt/
 .svelte-kit/
 .turbo/
+.expo/
 coverage/
 .nyc_output/
 
@@ -96,4 +97,3 @@ cypress/videos/
 *.zip
 *.tar
 *.tar.gz
-
