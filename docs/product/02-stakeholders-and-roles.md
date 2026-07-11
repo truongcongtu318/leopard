@@ -9,6 +9,7 @@
 | Operations/Admin | Vận hành pilot | Theo dõi đơn, xử lý ngoại lệ, xác nhận thanh toán |
 | Customer | Gửi hàng | Tạo và theo dõi đơn thuộc sở hữu |
 | Driver | Vận chuyển | Nhận đơn, cập nhật trạng thái và vị trí |
+| Fleet Owner | Quản lý đội tài xế nhỏ | Theo dõi drivers, orders và tracking thuộc fleet của mình |
 
 ## Role hệ thống
 
@@ -26,6 +27,14 @@
 - Cập nhật lifecycle và gửi tracking point cho đơn được phân công.
 - Tải ảnh xác nhận giao hàng.
 
+### `FLEET_OWNER`
+
+- Quản lý fleet profile ở mức pilot.
+- Mời hoặc gán Driver vào fleet theo quy trình được Admin cho phép.
+- Xem drivers, availability và order đang/đã thực hiện của drivers thuộc fleet.
+- Xem tracking và payment summary của orders thuộc fleet.
+- Không được sửa order của Customer, xác nhận payment thay Admin hoặc xem dữ liệu fleet khác.
+
 ### `ADMIN`
 
 - Xem và lọc users, drivers, orders, tracking, media và payments.
@@ -37,4 +46,5 @@
 
 - Backend là nguồn quyết định authorization.
 - Quyền role và ownership phải cùng được kiểm tra.
+- Fleet Owner chỉ truy cập dữ liệu thông qua quan hệ `FleetMember` hợp lệ.
 - Mọi thao tác Admin làm thay đổi dữ liệu nhạy cảm phải được audit.

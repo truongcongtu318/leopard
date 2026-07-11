@@ -2,9 +2,9 @@
 
 Các hạng mục sau không thuộc mini-production pilot:
 
-- Native iOS/Android application.
+- App store release, push notification và device permission nâng cao cho native mobile.
 - Multi-tenant và white-label.
-- Fleet Owner dashboard hoặc quản lý đội xe nhiều cấp.
+- Fleet management nâng cao: nhiều cấp quản lý, doanh thu tài xế, hoa hồng, hợp đồng, chi nhánh hoặc phân quyền tùy biến.
 - Ghép nhiều đơn, tối ưu tuyến đa phương tiện hoặc dispatch tự động.
 - AI ETA, dự báo giao thông độc quyền hoặc cam kết ETA chính xác.
 - Đối soát ngân hàng và tự động xác nhận tiền về.

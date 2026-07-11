@@ -4,6 +4,7 @@
 | --- | --- | --- |
 | `AuthModule` | Login, token, refresh session, logout | Users, OTP |
 | `UsersModule` | Profile, role, account status | Audit |
+| `FleetsModule` | Fleet profile, membership và fleet-scoped queries | Users, Drivers, Orders |
 | `OrdersModule` | Create, query, lifecycle, pricing snapshot | Maps, Media, Audit |
 | `DriversModule` | Availability, assignment, active order | Orders |
 | `TrackingModule` | Validate, persist, query và broadcast points | Orders, Socket |
@@ -27,3 +28,4 @@
 - Accept order: kiểm tra Driver và update assignment trong một transaction có điều kiện.
 - Status transition: update order và insert status history trong một transaction.
 - Manual payment: update payment/order payment state và insert audit trong một transaction.
+- Fleet membership change: update membership và insert audit trong một transaction khi thao tác do Admin thực hiện.

@@ -4,8 +4,12 @@ Repo hiện ở giai đoạn specification; cấu trúc implementation dự ki�
 
 ```text
 apps/web
+apps/admin
+apps/mobile
 apps/api
 packages/shared
+packages/ui
+packages/config
 ```
 
 ## Yêu cầu

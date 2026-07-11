@@ -14,16 +14,18 @@ Access token tối thiểu có `sub`, `role`, `sessionId`, `iat`, `exp`. Backend
 
 ## Permission matrix
 
-| Action | Customer | Driver | Admin |
-| --- | --- | --- | --- |
-| Create order | Có | Không | Không |
-| View order | Own | Assigned/public summary | Tất cả |
-| Cancel order | Own `REQUESTED` | Không | Có reason |
-| Accept order | Không | Available | Không |
-| Update delivery status | Không | Assigned | Không |
-| Send tracking | Không | Assigned | Không |
-| Create payment | Own | Không | Có |
-| Confirm payment | Không | Không | Có + audit |
-| Disable user | Không | Không | Có + audit |
+| Action | Customer | Driver | Fleet Owner | Admin |
+| --- | --- | --- | --- | --- |
+| Create order | Có | Không | Không | Không |
+| View order | Own | Assigned/public summary | Fleet assigned | Tất cả |
+| Cancel order | Own `REQUESTED` | Không | Không | Có reason |
+| Accept order | Không | Available | Không | Không |
+| Update delivery status | Không | Assigned | Không | Không |
+| Send tracking | Không | Assigned | Không | Không |
+| View fleet drivers | Không | Không | Own fleet | Tất cả |
+| View tracking | Own | Assigned | Fleet assigned | Tất cả |
+| Create payment | Own | Không | Không | Có |
+| Confirm payment | Không | Không | Không | Có + audit |
+| Disable user | Không | Không | Không | Có + audit |
 
 Endpoint không được chỉ dựa vào việc ẩn nút ở UI. Resource không tồn tại và resource không có quyền có thể cùng trả 404 để hạn chế dò ID, trừ khi nghiệp vụ cần báo 403 rõ ràng.

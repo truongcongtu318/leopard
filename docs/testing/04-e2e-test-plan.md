@@ -20,6 +20,10 @@ Driver gửi point; Customer đang xem detail nhận marker mới. Ngắt kết 
 
 Customer tạo QR; Admin xác nhận manual có note; Customer thấy `PAID_MANUAL` sau reload và audit tồn tại.
 
+## E2E-FLEET
+
+Fleet Owner đăng nhập, xem drivers thuộc fleet, lọc orders theo Driver/status, mở detail và xem tracking/payment summary. Fleet Owner không mở được order của fleet khác và không thấy action xác nhận payment hoặc cập nhật delivery status.
+
 ## E2E-ADMIN
 
 Admin lọc orders theo status/date/Driver, mở detail và xem timeline, media, tracking, payment. Pagination giữ filter khi chuyển trang.

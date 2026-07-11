@@ -4,6 +4,7 @@
 
 - `Order.customerId` xác định Customer owner bất biến.
 - `Order.driverId` chỉ được đặt qua accept-order command và không sửa trực tiếp.
+- `FleetMember` xác định Fleet Owner hoặc Driver thuộc fleet; Fleet Owner chỉ xem dữ liệu thông qua membership `ACTIVE`.
 - Tracking point phải trùng `order.driverId` tại thời điểm ghi.
 - Media access kế thừa quyền từ order.
 
@@ -11,6 +12,7 @@
 
 - Customer query luôn có `customerId = actor.id`.
 - Driver query public chỉ lấy summary của `REQUESTED`; dữ liệu nhạy cảm đầy đủ chỉ mở sau assignment.
+- Fleet Owner query chỉ trả drivers thuộc fleet và orders có `driverId` thuộc fleet tại thời điểm truy cập.
 - Admin endpoint bắt buộc pagination; không trả toàn bảng.
 - Signed media URL được tạo sau authorization, không lưu vĩnh viễn trong database.
 
