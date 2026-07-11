@@ -6,7 +6,7 @@
 
 **Architecture:** Mỗi role là một independent lane/worktree. Mobile lanes dùng Expo Router/TanStack Query; web lanes dùng App Router/TanStack Query/Table. Integration tests dùng deterministic seed và shared test IDs ở client boundary, không dùng implementation detail selector.
 
-**Tech Stack:** Expo 57, Next.js 16, Socket.IO client 4.8.3, Playwright 1.61.1, Maestro hoặc Expo-compatible E2E harness được Foundation pin chính xác.
+**Tech Stack:** Expo 57, Next.js 16, Socket.IO client 4.8.3, Playwright 1.61.1, Maestro CLI 2.3.0.
 
 ## Global Constraints
 
@@ -22,7 +22,7 @@
 **Files:**
 - Create: `apps/mobile/app/(customer)/orders/new.tsx`, `[id].tsx`
 - Create: `apps/mobile/src/features/customer/OrderListScreen.tsx`, `CreateOrderScreen.tsx`, `AddressField.tsx`, `RouteEstimatePanel.tsx`
-- Test: matching component tests and `apps/mobile/e2e/customer-create-order.yaml`
+- Test: `apps/mobile/src/features/customer/OrderListScreen.test.tsx`, `CreateOrderScreen.test.tsx`, `AddressField.test.tsx`, `RouteEstimatePanel.test.tsx`, `apps/mobile/e2e/customer-create-order.yaml`
 
 **Interfaces:** Consumes map search/route estimate, POST/GET orders; estimate token required on submit.
 
@@ -35,7 +35,7 @@
 
 **Files:**
 - Create: `apps/mobile/src/features/customer/OrderDetailScreen.tsx`, `TrackingMap.tsx`, `PaymentPanel.tsx`
-- Test: matching tests and `apps/mobile/e2e/customer-track-pay.yaml`
+- Test: `apps/mobile/src/features/customer/OrderDetailScreen.test.tsx`, `TrackingMap.test.tsx`, `PaymentPanel.test.tsx`, `apps/mobile/e2e/customer-track-pay.yaml`
 
 **Interfaces:** Consumes order room events, tracking history, QR/payment endpoints and cancellation.
 
@@ -49,7 +49,7 @@
 **Files:**
 - Create: `apps/mobile/app/(driver)/orders/[id].tsx`
 - Create: `apps/mobile/src/features/driver/DriverOrderListScreen.tsx`, `DriverOrderScreen.tsx`
-- Test: matching tests and `apps/mobile/e2e/driver-accept-order.yaml`
+- Test: `apps/mobile/src/features/driver/DriverOrderListScreen.test.tsx`, `DriverOrderScreen.test.tsx`, `apps/mobile/e2e/driver-accept-order.yaml`
 
 **Interfaces:** Consumes availability/list/accept endpoints.
 
@@ -62,7 +62,7 @@
 
 **Files:**
 - Create: `apps/mobile/src/features/driver/DeliveryWorkflow.tsx`, `TrackingSender.ts`, `DeliveryProofField.tsx`
-- Test: matching tests and `apps/mobile/e2e/driver-delivery.yaml`
+- Test: `apps/mobile/src/features/driver/DeliveryWorkflow.test.tsx`, `TrackingSender.test.ts`, `DeliveryProofField.test.tsx`, `apps/mobile/e2e/driver-delivery.yaml`
 
 **Interfaces:** Consumes status, media and tracking socket contracts.
 

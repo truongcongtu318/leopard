@@ -22,9 +22,23 @@
 **Files:**
 - Create: `apps/api/src/maps/providers/map-provider.ts`, `demo-map.provider.ts`
 - Create: `apps/api/src/maps/domain/haversine.ts`, `demo-route-estimator.ts`
-- Test: corresponding `*.spec.ts`
+- Test: `apps/api/src/maps/domain/haversine.spec.ts`, `apps/api/src/maps/domain/demo-route-estimator.spec.ts`
 
-**Interfaces:** `MapProvider.search`, `geocode`, `route`; `RouteEstimator.estimate(input): Promise<RouteEstimate>`.
+**Interfaces:** `MapProvider.search(query: string): Promise<PlaceCandidate[]>`, `geocode(placeId: string): Promise<GeoPoint>`, `route(input: RouteInput): Promise<RouteEstimate>`; `RouteEstimator.estimate(input: RouteInput): Promise<RouteEstimate>`.
+
+```ts
+interface RouteInput {
+  pickup: GeoPoint;
+  stops: GeoPoint[];
+  dropoff: GeoPoint;
+  vehicleType: string;
+}
+
+interface VerifiedOrderEstimate extends RouteEstimate {
+  normalizedInput: RouteInput;
+  expiresAt: string;
+}
+```
 
 - [ ] Test known coordinate distance, multi-leg sum, 1.25 factor, 30 km/h duration, stop delay, deterministic repeated output and DEMO labels.
 - [ ] Implement pure math with rounded minute duration and injectable clock for deterministic tests.
@@ -48,7 +62,7 @@
 
 **Files:**
 - Create: `apps/api/src/maps/domain/pricing.service.ts`, `estimate-token.service.ts`
-- Test: matching specs
+- Test: `apps/api/src/maps/domain/pricing.service.spec.ts`, `apps/api/src/maps/domain/estimate-token.service.spec.ts`
 
 **Interfaces:** `PricingService.quote({vehicleType,distanceMeters,stopCount}): {amountVnd:number;currency:'VND'}`; signed estimate token binds normalized route, quote and 10-minute expiry.
 
@@ -62,12 +76,12 @@
 **Files:**
 - Create: `apps/api/src/maps/maps.module.ts`, `maps.controller.ts`, `maps.service.ts`
 - Test: `apps/api/src/maps/maps.e2e-spec.ts`
-- Modify: app module/OpenAPI
+- Modify: `apps/api/src/app.module.ts`
 
-**Interfaces:** `GET /maps/search?q=`, `GET /maps/geocode/:placeId`, `POST /maps/route` returning route, price and estimate token.
+**Interfaces:** `GET /maps/search?q=`, `GET /maps/geocode/:placeId`, and `POST /orders/estimate`; estimate returns `estimateToken`, `polyline`, `distanceM`, `durationS`, `estimatedArrivalAt`, `estimatedPriceVnd`, `source`, `isEstimate`, `calculatedAt`.
 
 - [ ] Test auth, input bounds, provider source fields, demo label, provider unavailable error and rate limiting.
-- [ ] Implement endpoints and connect PH-06 order creation to verify estimate token rather than recalculate client input.
+- [ ] Implement the endpoint and publish `EstimateTokenService.verify(token: string): VerifiedOrderEstimate` for PH-06; do not edit PH-06 files.
 - [ ] Run map/order E2E, contract tests, API full gate.
 - [ ] Commit `feat(map): expose route price and ETA endpoints`.
 

@@ -4,7 +4,7 @@
 
 **Goal:** Tạo platform foundation sớm và đưa integrated application qua security, performance, recovery, deployment và pilot release gates.
 
-**Architecture:** Platform task ở Wave 1 tạo local/staging contracts nhưng không phụ thuộc feature. Wave 5 chạy trên integrated baseline, dùng deterministic seed, black-box E2E and operational drills; remediation được tách thành task theo root cause.
+**Architecture:** Compose và CI tasks ở Wave 1 không phụ thuộc feature; seed/migration task chạy Wave 2A sau PH-02. Wave 5 chạy trên integrated baseline, dùng deterministic seed, black-box E2E and operational drills; remediation được tách thành task theo root cause.
 
 **Tech Stack:** Docker Compose, PostgreSQL/PostGIS, GitHub Actions, Playwright, k6-compatible load harness, structured logs.
 
@@ -31,14 +31,14 @@
 - [ ] Run `docker compose config` and infrastructure test; expected exit 0.
 - [ ] Commit `build(infra): add local pilot runtime`.
 
-### Task PH-13-T02: Seed and Migration Operations (Wave 1)
+### Task PH-13-T02: Seed and Migration Operations (Wave 2A, depends on PH-02)
 
 **Files:**
 - Create: `apps/api/prisma/seed.ts`, `infra/seed/demo-manifest.json`
 - Create: `infra/scripts/reset-demo.sh`, `infra/scripts/test-migrations.sh`
 - Test: `apps/api/test/seed-determinism.spec.ts`
 
-**Interfaces:** Seed exact Customer, Driver, Fleet Owner, Admin, two fleets, active/inactive memberships and orders in every lifecycle state with fixed IDs.
+**Interfaces:** Seed exact Customer, Driver, Fleet Owner, Admin, two fleets, `INVITED`/`ACTIVE`/`REMOVED` memberships and orders in every lifecycle state with fixed IDs.
 
 - [ ] Test two seed runs produce same logical records and no duplicate active sessions/intents.
 - [ ] Implement idempotent upserts without real personal data; demo phone numbers use reserved examples.
@@ -65,7 +65,7 @@
 - Create: `apps/api/test/security/authorization.e2e-spec.ts`, `input-hardening.e2e-spec.ts`, `session-security.e2e-spec.ts`
 - Create: `docs/testing/evidence/pilot-security.md`
 
-**Interfaces:** Evidence maps tests to AC-01..AC-07 and NFR-04/05/06/07/11.
+**Interfaces:** Evidence maps tests to AC-01..AC-07 and NFR-04/05/06/07/11; master NFR matrix assigns availability, maintainability and recovery evidence to PH-13-T05/T06.
 
 - [ ] Test IDOR for every resource, role escalation, inactive FleetMember, JWT/refresh replay, upload abuse, pagination abuse, provider error redaction and rate limits.
 - [ ] Run secret scan and dependency audit; triage severity with exact package/path.

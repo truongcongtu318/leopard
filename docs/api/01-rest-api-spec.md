@@ -37,6 +37,15 @@ Create order input gồm `pickup`, `stops` tối đa 3, `dropoff`, `vehicleType`
 
 Estimate response gồm `estimateToken`, `polyline`, `distanceM`, `durationS`, `estimatedArrivalAt`, `estimatedPriceVnd`, `source`, `isEstimate`, `calculatedAt`, hết hạn sau 10 phút.
 
+## Map lookup
+
+| Method | Path | Role | Mô tả |
+| --- | --- | --- | --- |
+| GET | `/maps/search?q=` | Authenticated | Tìm địa điểm qua MapProvider |
+| GET | `/maps/geocode/:placeId` | Authenticated | Đổi place ID thành label và tọa độ |
+
+Hai endpoint trả `source`; provider error dùng error envelope chuẩn. Client không gọi Vietmap trực tiếp và không nhận provider credential.
+
 ## Driver
 
 | Method | Path | Role | Mô tả |

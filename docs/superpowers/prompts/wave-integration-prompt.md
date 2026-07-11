@@ -12,7 +12,7 @@ REQUIRED SKILLS
 INPUTS
 - Previous verified baseline: {{BASELINE_SHA}}
 - Integration branch: codex/integration-wave-{{WAVE_NUMBER}}
-- Approved phase branches in dependency order: {{BRANCH_LIST}}
+- Approved `codex/phase-ph-XX` branches in dependency order: {{BRANCH_LIST}}
 - Expected task commits: {{TASK_COMMIT_LIST}}
 
 MISSION

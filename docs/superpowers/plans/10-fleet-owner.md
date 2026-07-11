@@ -35,7 +35,6 @@
 **Files:**
 - Create: `apps/api/src/fleets/fleets.module.ts`, `fleet-owner.controller.ts`, `fleet-owner.service.ts`
 - Test: `apps/api/src/fleets/fleet-owner.e2e-spec.ts`
-- Modify: OpenAPI
 
 **Interfaces:** `GET /fleet/profile`, `/fleet/drivers`, `/fleet/orders`, `/fleet/orders/:id`, `/fleet/orders/:id/tracking`.
 
@@ -49,7 +48,7 @@
 **Files:**
 - Create: `apps/admin/src/app/(fleet)/fleet/page.tsx`, `drivers/page.tsx`, `orders/page.tsx`, `orders/[id]/page.tsx`
 - Create: `apps/admin/src/features/fleet/FleetOverview.tsx`, `DriverTable.tsx`, `FleetOrderTable.tsx`, `FleetOrderDetail.tsx`
-- Test: matching component tests
+- Test: `apps/admin/src/features/fleet/FleetOverview.test.tsx`, `DriverTable.test.tsx`, `FleetOrderTable.test.tsx`, `FleetOrderDetail.test.tsx`
 
 **Interfaces:** Consumes PH-10 APIs; URL owns `page`, `status`, `driverId`, `from`, `to` filters.
 

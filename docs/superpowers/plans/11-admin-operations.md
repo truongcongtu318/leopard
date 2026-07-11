@@ -22,9 +22,8 @@
 **Files:**
 - Create: `apps/api/src/admin/admin.module.ts`, `admin.controller.ts`, `admin-query.service.ts`
 - Test: `apps/api/src/admin/admin-query.e2e-spec.ts`
-- Modify: OpenAPI
 
-**Interfaces:** `GET /admin/dashboard`, `/admin/users`, `/admin/fleets`, `/admin/drivers`, `/admin/orders`, `/admin/orders/:id`.
+**Interfaces:** `GET /admin/dashboard`, `/admin/users`, `/admin/fleets`, `/admin/drivers`, `/admin/orders`; Admin order detail uses authorized `GET /orders/:id`.
 
 - [ ] Test Admin-only access, page bounds, allowlisted sort, status/customer/driver/date filters, aggregate consistency and no N+1 query regression fixture.
 - [ ] Implement bounded selects through module query services and stable page envelope.
@@ -36,9 +35,9 @@
 **Files:**
 - Create: `apps/api/src/admin/admin-command.service.ts`
 - Test: `apps/api/src/admin/admin-command.integration-spec.ts`
-- Modify: controllers/OpenAPI
+- Modify: `apps/api/src/admin/admin.controller.ts`, `apps/api/src/admin/admin-command.service.ts`
 
-**Interfaces:** disable/enable user, cancel eligible order with reason, manage FleetMember status; payment confirmation remains PH-09 service.
+**Interfaces:** `PATCH /admin/users/:id/status {status,reason,clientRequestId}`; Admin cancellation uses `POST /orders/:id/cancel {reason}`; FleetMember mutation remains internal Admin service until a public endpoint is added through contract change; payment confirmation remains PH-09 service.
 
 - [ ] Test mandatory reason, self-disable prevention, transaction rollback and immutable audit record.
 - [ ] Implement commands by calling Users/Orders/Fleets application services inside declared transaction boundaries.
@@ -49,8 +48,8 @@
 
 **Files:**
 - Create: `apps/admin/src/app/(admin)/admin/page.tsx`, `orders/page.tsx`, `orders/[id]/page.tsx`, `users/page.tsx`, `fleets/page.tsx`, `drivers/page.tsx`
-- Create: `apps/admin/src/features/admin/*`
-- Test: `apps/admin/src/features/admin/admin-pages.test.tsx`
+- Create: `apps/admin/src/features/admin/AdminOverview.tsx`, `AdminOrderTable.tsx`, `AdminOrderDetail.tsx`, `UserTable.tsx`, `FleetTable.tsx`, `DriverTable.tsx`, `AdminCommandDialog.tsx`
+- Test: `apps/admin/src/features/admin/admin-pages.test.tsx`, `AdminCommandDialog.test.tsx`
 
 **Interfaces:** Consumes PH-11 APIs and PH-09 confirmation command; filter state lives in URL.
 

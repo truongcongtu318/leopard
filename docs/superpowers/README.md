@@ -26,10 +26,13 @@ Khởi động lại Codex sau khi đổi cấu hình. Mỗi session phải nh�
 | Wave | Implementation sessions tối đa | Reviewer sessions | Ghi chú |
 | --- | ---: | ---: | --- |
 | 0 | 1 | 1 | Foundation tuần tự |
-| 1 | 4 | 2 | Backend, Expo, Web, Platform |
-| 2 | 5 | 2 | Auth, Order, Map và hai design-system lanes |
-| 3 | 4 | 2 | Tracking, Media/Payment, Fleet, Admin |
-| 4 | 4 | 2 | Một role journey mỗi worktree |
+| 1 | 5 | 2 | Backend, Expo, Web, Compose và CI |
+| 2A | 3 | 2 | Auth, Map/ETA và seed sau PH-02 |
+| 2B | 1 | 1 | Order/Driver sau Map contract |
+| 3A | 2 | 2 | Tracking và Media/Payment |
+| 3B | 2 | 2 | Fleet và Admin sau provider phases |
+| 4A | 4 | 2 | Customer base, Driver base, Fleet và Admin journeys |
+| 4B | 2 | 2 | Customer tracking/payment và Driver delivery |
 | 5 | 1–2 | 2 | Integration tuần tự; security review độc lập |
 
 Giới hạn thực tế dựa trên file ownership. Nếu hai task cần cùng controlled surface, giảm concurrency và tạo contract task đi trước.

@@ -21,9 +21,10 @@
 
 **Files:**
 - Create: `apps/api/src/orders/domain/order-state-machine.ts`
+- Create: `apps/api/src/orders/domain/delivery-proof-reader.ts`
 - Test: `apps/api/src/orders/domain/order-state-machine.spec.ts`
 
-**Interfaces:** Produces `assertOrderTransition(input:{from;to;actorRole;hasDeliveryProof;cancelReason?}): void`.
+**Interfaces:** Produces `DeliveryProofReader.hasDeliveryProof(orderId: string): Promise<boolean>` and `assertOrderTransition(input:{from:OrderStatus;to:OrderStatus;actorRole:Role;hasDeliveryProof:boolean;cancelReason?:string}): void`.
 
 - [ ] Table-test every allowed transition and reject skips/reversals with `ORDER_INVALID_TRANSITION`; test Customer cancellation only from REQUESTED and Admin reason requirement.
 - [ ] Observe failure, implement pure exhaustive state machine, run unit test and mutation-sensitive branch coverage.
@@ -36,9 +37,9 @@
 - Create: `apps/api/src/orders/orders.module.ts`, `orders.controller.ts`, `orders.service.ts`, `orders.repository.ts`
 - Create: `apps/api/src/orders/dto/create-order.dto.ts`, `order-response.mapper.ts`
 - Test: `apps/api/src/orders/customer-orders.e2e-spec.ts`
-- Modify: OpenAPI and app module
+- Modify: `apps/api/src/app.module.ts`
 
-**Interfaces:** `POST /orders`, `GET /orders`, `GET /orders/:id`; consumes `RouteEstimator.estimate(RouteInput)` from PH-07.
+**Interfaces:** `POST /orders`, `GET /orders`, `GET /orders/:id`; consumes `EstimateTokenService.verify(token: string): VerifiedOrderEstimate` from integrated PH-07.
 
 - [ ] Test 0–3 ordered stops, invalid coordinates/vehicle, route snapshot fields, pagination, own-order isolation and 404 non-disclosure for other Customer.
 - [ ] Implement transaction creating order/stops/status history and snapshot fields; default payment `UNPAID`.
@@ -50,9 +51,8 @@
 **Files:**
 - Create: `apps/api/src/drivers/drivers.module.ts`, `drivers.controller.ts`, `drivers.service.ts`, `drivers.repository.ts`
 - Test: `apps/api/src/drivers/availability.e2e-spec.ts`
-- Modify: OpenAPI
 
-**Interfaces:** `PATCH /drivers/me/availability {availability}`, `GET /driver/orders/available`.
+**Interfaces:** `PATCH /driver/availability {availability}`, `GET /driver/orders/available`, `GET /driver/orders/active`.
 
 - [ ] Test Driver-only access, AVAILABLE/OFFLINE updates, BUSY derived from active assignment and available list limited to REQUESTED.
 - [ ] Implement availability policy and paginated query; client cannot set BUSY directly.
@@ -64,7 +64,7 @@
 **Files:**
 - Create: `apps/api/src/orders/accept-order.service.ts`
 - Test: `apps/api/src/orders/accept-order.integration-spec.ts`
-- Modify: order/driver controllers and OpenAPI
+- Modify: `apps/api/src/orders/orders.controller.ts`, `apps/api/src/drivers/drivers.controller.ts`
 
 **Interfaces:** `POST /driver/orders/:id/accept` -> accepted order.
 
@@ -79,9 +79,9 @@
 **Files:**
 - Create: `apps/api/src/orders/update-order-status.service.ts`, `cancel-order.service.ts`
 - Test: `apps/api/src/orders/order-lifecycle.e2e-spec.ts`
-- Modify: controllers/OpenAPI
+- Modify: `apps/api/src/orders/orders.controller.ts`, `apps/api/src/orders/orders.service.ts`
 
-**Interfaces:** `POST /driver/orders/:id/status {status}`, `POST /orders/:id/cancel {reason?}`.
+**Interfaces:** `POST /driver/orders/:id/status {status,clientRequestId}`, `POST /orders/:id/cancel {reason?}`.
 
 - [ ] Test assigned Driver only, transaction history, invalid transition unchanged, delivery proof condition and role-specific cancellation.
 - [ ] Implement transition service using PH-06-T01 and audit Admin cancellation.

@@ -6,11 +6,11 @@
 
 **Architecture:** Modular monolith; controller parse/validate, application service sở hữu use case, repository sở hữu Prisma access. Global middleware tạo request ID; exception filter trả stable error envelope.
 
-**Tech Stack:** NestJS 11.1.28, Prisma 7.8.0 ESM, PostgreSQL 17, PostGIS 3.5, Jest 30.4.2, Supertest.
+**Tech Stack:** NestJS 11.1.28, Prisma 7.8.0 ESM, PostgreSQL 17, PostGIS 3.5, Jest 30.4.2, Supertest 7.2.2.
 
 ## Global Constraints
 
-- Branch `codex/ph-02-backend-core` từ Wave 0 baseline.
+- Phase integration branch `codex/phase-ph-02`; mỗi task dùng `codex/ph-02-tYY-<short-name>` từ Wave 0 baseline hoặc task predecessor.
 - PH-02 sở hữu `apps/api/prisma/**` và `apps/api/openapi/**` trong Wave 1.
 - ID UUID, UTC timestamps, integer VND, PostGIS geography Point 4326.
 - Không implement feature endpoint ngoài health và contract smoke.
@@ -20,7 +20,7 @@
 ### Task PH-02-T01: NestJS Application Shell
 
 **Files:**
-- Create: `apps/api/package.json`
+- Create: `apps/api/package.json` with package name `api`
 - Create: `apps/api/tsconfig.json`
 - Create: `apps/api/nest-cli.json`
 - Create: `apps/api/src/main.ts`
@@ -48,7 +48,7 @@
 - Test: `apps/api/test/database-schema.spec.ts`
 
 **Interfaces:**
-- Produces models: `User`, `RefreshSession`, `Fleet`, `FleetMember`, `DriverProfile`, `Order`, `OrderStop`, `OrderStatusHistory`, `TrackingPoint`, `MediaObject`, `Payment`, `AuditLog` exactly as `docs/data/01-database-design.md`.
+- Produces models: `User`, `RefreshSession`, `Fleet`, `FleetMember`, `DriverProfile`, `Order`, `OrderStop`, `OrderStatusHistory`, `TrackingPoint`, `MediaObject`, `PaymentIntent`, `AuditLog` exactly as `docs/data/01-database-design.md`.
 
 - [ ] Write schema tests that query PostgreSQL metadata for required tables, unique active Driver assignment constraint, indexes on order status/date and GiST tracking location; run against empty DB and observe failure.
 - [ ] Add `CREATE EXTENSION IF NOT EXISTS postgis`; use Prisma-supported scalar columns plus SQL migration for geography Point/index where Prisma representation is unsupported.
@@ -82,10 +82,10 @@
 - Modify: `apps/api/src/app.module.ts`
 
 **Interfaces:**
-- Produces OpenAPI 3.1 components for bearer auth, `ApiError`, `PageMeta`, roles/status enums, `GeoPoint`, `RouteEstimate`; path placeholders matching `docs/api/01-rest-api-spec.md`.
+- Produces complete OpenAPI 3.1 paths from `docs/api/01-rest-api-spec.md`, including demo/Firebase auth separation, map lookup, `/orders/estimate`, Driver, Fleet, media/payment, Admin and health; schemas include bearer auth, `ApiError`, `Page`, canonical enums, `GeoPoint`, `RouteEstimate`.
 
 - [ ] Write tests validating OpenAPI 3.1 syntax, unique operation IDs, bearer security on private paths and exact enum values; observe failure without document.
-- [ ] Define schemas and endpoint signatures without implementation; expose Swagger only when `ENABLE_API_DOCS=true` and never in production by default.
+- [ ] Define all endpoint signatures before feature phases; expose Swagger only when `ENABLE_API_DOCS=true` and never in production by default. PH-05..PH-11 must not edit this file.
 - [ ] Run `pnpm --filter api test:contract`; expected OpenAPI tests pass.
 - [ ] Commit with `git commit -m "docs(api): establish OpenAPI contract baseline"`.
 

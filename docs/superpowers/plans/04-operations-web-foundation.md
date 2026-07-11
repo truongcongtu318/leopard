@@ -6,11 +6,11 @@
 
 **Architecture:** App Router route groups tách auth/fleet/admin; server components dùng cho shell/read bootstrap, client components dùng cho filters/actions. Backend quyết định authorization; middleware chỉ tối ưu navigation.
 
-**Tech Stack:** Next.js 16.2.10, React 19.2.7, Tailwind CSS 4.3.2, TanStack Query/Table, React Hook Form, Vitest 4.1.10, Playwright 1.61.1.
+**Tech Stack:** Next.js 16.2.10, React 19.2.7, Tailwind CSS 4.3.2, TanStack Query 5.101.2, TanStack Table 8.21.3, React Hook Form 7.81.0, Vitest 4.1.10, Playwright 1.61.1.
 
 ## Global Constraints
 
-- Branch `codex/ph-04-operations-web` từ Wave 0 baseline.
+- Phase integration branch `codex/phase-ph-04`; mỗi task dùng `codex/ph-04-tYY-<short-name>` từ Wave 0 baseline hoặc task predecessor.
 - PH-04 sở hữu route layouts, navigation shell, `packages/ui` và web design tokens.
 - Desktop target 1024x768/1440x900; tablet fallback 768x1024.
 - Không landing page, gradient tím, glassmorphism, hero hoặc card lồng card.
@@ -20,7 +20,7 @@
 ### Task PH-04-T01: Next.js Runtime Shell
 
 **Files:**
-- Create: `apps/admin/package.json`, `apps/admin/next.config.ts`, `apps/admin/tsconfig.json`
+- Create: `apps/admin/package.json` with package name `web`, `apps/admin/next.config.ts`, `apps/admin/tsconfig.json`
 - Create: `apps/admin/src/app/layout.tsx`, `apps/admin/src/app/page.tsx`, `apps/admin/src/app/globals.css`
 - Test: `apps/admin/src/app/page.test.tsx`
 

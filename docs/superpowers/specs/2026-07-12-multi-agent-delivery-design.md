@@ -88,26 +88,26 @@ flowchart TD
   W0 --> W1C["Operations Web Foundation"]
   W0 --> W1D["Local Infrastructure"]
   W1A --> W2A["Auth and Access"]
-  W1A --> W2B["Order and Driver"]
   W1A --> W2C["Map, Pricing and ETA"]
-  W1B --> W2D["Mobile Design System"]
-  W1C --> W2E["Web Design System"]
+  W2C --> W2B["Order and Driver"]
   W2A --> W3A["Realtime Tracking"]
   W2B --> W3A
   W2B --> W3B["Media and Payment"]
   W2A --> W3C["Fleet Owner"]
   W2B --> W3C
+  W3A --> W3C
   W2A --> W3D["Admin Operations"]
   W2B --> W3D
+  W3B --> W3D
   W2C --> W4A["Customer Flow"]
-  W2D --> W4A
+  W1B --> W4A
   W3A --> W4A
-  W2D --> W4B["Driver Flow"]
+  W1B --> W4B["Driver Flow"]
   W3A --> W4B
   W3B --> W4B
-  W2E --> W4C["Fleet Web Flow"]
+  W1C --> W4C["Fleet Web Flow"]
   W3C --> W4C
-  W2E --> W4D["Admin Web Flow"]
+  W1C --> W4D["Admin Web Flow"]
   W3D --> W4D
   W4A --> W5["Pilot Integration and Release Gate"]
   W4B --> W5
@@ -118,23 +118,23 @@ flowchart TD
 
 ### Wave 0: Foundation Gate
 
-Chạy tuần tự. Tạo workspace có thể install, lint, typecheck, test và build; khóa contract nền; tạo database migration baseline; bật CI. Không khởi chạy feature session trước khi gate pass.
+Chạy tuần tự. Tạo workspace có thể install, lint, typecheck, test và build; khóa shared contract nền và CI tối thiểu. Database migration baseline thuộc Backend Core ở Wave 1. Không khởi chạy runtime session trước khi gate pass.
 
 ### Wave 1: Runtime Foundations
 
-Bốn session có thể chạy song song: Backend Core, Expo Foundation, Operations Web Foundation và Local Infrastructure. Mỗi session chỉ dùng extension points từ Wave 0.
+Backend Core, Expo Foundation, Operations Web Foundation, Local Infrastructure và CI Matrix có thể chạy song song. Mobile/Web design-system tasks nằm trong chính foundation phase tương ứng. Seed/migration task chờ Backend Core được tích hợp.
 
 ### Wave 2: Core Domain
 
-Auth and Access, Order and Driver, Map/Pricing/ETA, Mobile Design System và Web Design System chạy theo dependency graph. Auth, Order và Map dùng module ownership riêng; mọi schema cần thiết đã nằm trong baseline hoặc được tích hợp tuần tự bởi Data Contract Owner trước khi wave bắt đầu.
+Wave 2A chạy Auth and Access, Map/Pricing/ETA và deterministic seed song song sau Backend Core. Wave 2B chạy Order and Driver sau khi Map phát hành `EstimateTokenService`; Order phase sở hữu integration wiring và `DeliveryProofReader` interface.
 
 ### Wave 3: Supporting Features
 
-Realtime Tracking, Media/Payment, Fleet Owner và Admin Operations chạy song song sau khi các core contracts liên quan đã ổn định. Tracking không sửa order lifecycle; Fleet Owner/Admin dùng query/service public của module sở hữu entity.
+Wave 3A chạy Realtime Tracking và Media/Payment song song. Wave 3B chỉ bắt đầu sau integration gate: Fleet Owner tiêu thụ Tracking service, còn Admin tiêu thụ Payment service; hai consumer phase có thể chạy song song.
 
 ### Wave 4: Client Vertical Flows
 
-Customer Flow, Driver Flow, Fleet Web Flow và Admin Web Flow chạy trên bốn worktree riêng. Các phase này tích hợp API contract đã phát hành, không thay đổi backend business rule.
+Wave 4A chạy Customer base, Driver base, Fleet Web và Admin Web trên bốn worktree riêng. Wave 4B tiếp tục Customer tracking/payment sau Customer base và Driver delivery sau Driver base. Các task tích hợp API contract đã phát hành, không thay đổi backend business rule.
 
 ### Wave 5: Pilot Integration and Release Gate
 
@@ -157,16 +157,16 @@ Mỗi implementation phase cần một implementer và hai review gates: spec co
 
 ## 8. Branch, worktree và integration model
 
-Mỗi phase dùng branch `codex/ph-XX-<short-name>` tách từ commit baseline được ghi trong progress tracker. Worktree đặt tại `.worktrees/ph-XX-<short-name>` sau khi xác nhận `.worktrees/` được ignore. Một branch chỉ chứa một phase và không merge trực tiếp vào `develop`.
+Mỗi task dùng branch `codex/ph-XX-tYY-<short-name>` tách từ commit baseline được ghi trong progress tracker. Worktree đặt tại `.worktrees/ph-XX-tYY-<short-name>` sau khi xác nhận `.worktrees/` được ignore. Các task branch được merge theo thứ tự vào `codex/phase-ph-XX`; phase branch đã qua gate mới được merge vào `codex/integration-wave-N`. Không branch nào merge trực tiếp vào `develop`.
 
 Luồng tích hợp:
 
 1. Orchestrator ghi baseline commit cho wave.
-2. Agent tạo worktree/branch từ đúng baseline.
+2. Agent tạo task worktree/branch từ đúng phase baseline.
 3. Agent chạy test theo TDD, commit atomic và ghi verification evidence.
 4. Spec reviewer kiểm tra scope, contract và pass criteria.
 5. Quality reviewer kiểm tra correctness, security, maintainability và test quality.
-6. Integration owner merge/cherry-pick phase đã duyệt vào `codex/integration-wave-N` theo dependency.
+6. Phase owner merge task đã duyệt vào `codex/phase-ph-XX`; Integration owner merge phase đã duyệt vào `codex/integration-wave-N` theo dependency.
 7. Integration gate chạy toàn bộ script của wave.
 8. Baseline mới chỉ được công bố khi gate pass.
 

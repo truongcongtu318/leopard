@@ -12,7 +12,7 @@
 
 - Source of truth và thứ tự ưu tiên tuân thủ `AGENTS.md`.
 - Mọi branch implementation tách từ baseline commit do Orchestrator công bố, không tách trực tiếp từ branch của agent khác.
-- Không sửa `main` hoặc `develop`; phase branch dùng `codex/ph-XX-<short-name>`.
+- Không sửa `main` hoặc `develop`; task branch dùng `codex/ph-XX-tYY-<short-name>`, phase integration dùng `codex/phase-ph-XX`.
 - API sở hữu business rule, authorization, pricing, ETA, lifecycle và provider orchestration.
 - `packages/shared`, Prisma schema/migrations, root config, OpenAPI và stable error codes là controlled surfaces.
 - Mobile dùng Expo SDK 57 cho Customer/Driver; Admin/Fleet Owner dùng Next.js operations web.
@@ -43,15 +43,17 @@ flowchart TD
   PH01 --> PH04["PH-04 Operations Web Foundation"]
   PH01 --> PH13A["PH-13 Platform Foundation"]
   PH02 --> PH05["PH-05 Auth and Access"]
-  PH02 --> PH06["PH-06 Order and Driver"]
   PH02 --> PH07["PH-07 Map, Pricing and ETA"]
+  PH07 --> PH06["PH-06 Order and Driver"]
   PH05 --> PH08["PH-08 Realtime Tracking"]
   PH06 --> PH08
   PH06 --> PH09["PH-09 Media and Payment"]
   PH05 --> PH10["PH-10 Fleet Owner"]
   PH06 --> PH10
+  PH08 --> PH10
   PH05 --> PH11["PH-11 Admin Operations"]
   PH06 --> PH11
+  PH09 --> PH11
   PH03 --> PH12A["PH-12 Customer and Driver Clients"]
   PH07 --> PH12A
   PH08 --> PH12A
@@ -69,10 +71,13 @@ flowchart TD
 | Wave | Sessions có thể chạy song song | Gate owner |
 | --- | --- | --- |
 | 0 | PH-01 only | Foundation Owner |
-| 1 | PH-02, PH-03, PH-04, PH-13 Platform Foundation | Integration Owner |
-| 2 | PH-05, PH-06, PH-07, Mobile DS task, Web DS task | Integration Owner |
-| 3 | PH-08, PH-09, PH-10, PH-11 | Integration Owner |
-| 4 | PH-12 Customer, Driver, Fleet, Admin lanes | Client Integration Owner |
+| 1 | PH-02, PH-03, PH-04, PH-13-T01, PH-13-T03 | Integration Owner |
+| 2A | PH-05, PH-07, PH-13-T02 | Integration Owner |
+| 2B | PH-06 | Order Phase Owner |
+| 3A | PH-08, PH-09 | Integration Owner |
+| 3B | PH-10, PH-11 | Integration Owner |
+| 4A | PH-12-T01, PH-12-T03, PH-12-T05, PH-12-T06 | Client Integration Owner |
+| 4B | PH-12-T02, PH-12-T04 | Client Integration Owner |
 | 5 | PH-13 security, E2E, performance, deployment | Release Owner |
 
 ## Controlled Surface Lock
@@ -82,7 +87,7 @@ flowchart TD
 | Root `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `turbo.json` | PH-01 | Feature phases không sửa |
 | `packages/shared/src/contracts/**` | PH-01 Contract tasks | Contract change request bắt buộc |
 | `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/**` | PH-02 Data tasks | Một migration owner mỗi wave |
-| `apps/api/openapi/openapi.yaml` | PH-02/contract owner | Endpoint phase chỉ implement contract |
+| `apps/api/openapi/openapi.yaml` | PH-02-T04 | PH-05..PH-11 chỉ implement và chạy contract test; không sửa YAML |
 | `apps/mobile/src/navigation/**` | PH-03 | Feature đăng ký qua route types đã khóa |
 | `apps/admin/src/app/**/layout.tsx`, design tokens | PH-04 | Feature không sửa shell/tokens |
 | `.github/workflows/**`, `infra/docker/**` | PH-13 Platform task | Feature chỉ dùng scripts đã có |
@@ -109,8 +114,8 @@ export type PaymentStatus =
   | 'FAILED';
 
 export type DriverAvailability = 'OFFLINE' | 'AVAILABLE' | 'BUSY';
-export type FleetMemberStatus = 'ACTIVE' | 'INACTIVE';
-export type ProviderSource = 'VIETMAP' | 'PAYOS' | 'VIETQR' | 'FIREBASE' | 'S3' | 'LOCAL' | 'DEMO';
+export type FleetMemberStatus = 'INVITED' | 'ACTIVE' | 'REMOVED';
+export type ProviderSource = 'VIETMAP' | 'DEMO' | 'PAYOS' | 'VIETQR' | 'LOCAL' | 'S3';
 
 export interface ApiErrorEnvelope {
   error: {
@@ -121,16 +126,12 @@ export interface ApiErrorEnvelope {
   };
 }
 
-export interface PageMeta {
+export interface Page<T> {
+  items: T[];
   page: number;
   pageSize: number;
-  totalItems: number;
+  total: number;
   totalPages: number;
-}
-
-export interface Page<T> {
-  data: T[];
-  meta: PageMeta;
 }
 ```
 
@@ -143,14 +144,18 @@ export interface Page<T> {
 | PH-03-T01..T04 | `03-expo-mobile-foundation.md` | 1 | PH-01 | Expo | `NOT_STARTED` |
 | PH-04-T01..T04 | `04-operations-web-foundation.md` | 1 | PH-01 | Web | `NOT_STARTED` |
 | PH-05-T01..T05 | `05-auth-and-access.md` | 2 | PH-02 | Security/Backend | `NOT_STARTED` |
-| PH-06-T01..T06 | `06-order-and-driver.md` | 2 | PH-02 | Backend Domain | `NOT_STARTED` |
+| PH-06-T01..T06 | `06-order-and-driver.md` | 2B | PH-02, PH-07 | Backend Domain | `NOT_STARTED` |
 | PH-07-T01..T04 | `07-map-pricing-eta.md` | 2 | PH-02 | Integration/Backend | `NOT_STARTED` |
 | PH-08-T01..T04 | `08-realtime-tracking.md` | 3 | PH-05, PH-06 | Realtime | `NOT_STARTED` |
 | PH-09-T01..T05 | `09-media-and-payment.md` | 3 | PH-06 | Backend/Integration | `NOT_STARTED` |
-| PH-10-T01..T04 | `10-fleet-owner.md` | 3 | PH-05, PH-06 | Fullstack Fleet | `NOT_STARTED` |
-| PH-11-T01..T04 | `11-admin-operations.md` | 3 | PH-05, PH-06 | Fullstack Admin | `NOT_STARTED` |
-| PH-12-T01..T06 | `12-cross-client-integration.md` | 4 | PH-03..PH-11 | Expo/Web | `NOT_STARTED` |
-| PH-13-T01..T06 | `13-quality-security-pilot-release.md` | 1/5 | PH-01, PH-12 | Platform/QA/Security | `NOT_STARTED` |
+| PH-10-T01..T04 | `10-fleet-owner.md` | 3B | PH-05, PH-06, PH-08 | Fullstack Fleet | `NOT_STARTED` |
+| PH-11-T01..T04 | `11-admin-operations.md` | 3B | PH-05, PH-06, PH-09 | Fullstack Admin | `NOT_STARTED` |
+| PH-12-T01, T03, T05, T06 | `12-cross-client-integration.md` | 4A | Relevant PH-03..PH-11 | Expo/Web | `NOT_STARTED` |
+| PH-12-T02 | `12-cross-client-integration.md` | 4B | PH-12-T01 | Expo Customer | `NOT_STARTED` |
+| PH-12-T04 | `12-cross-client-integration.md` | 4B | PH-12-T03 | Expo Driver | `NOT_STARTED` |
+| PH-13-T01, T03 | `13-quality-security-pilot-release.md` | 1 | PH-01 | Platform | `NOT_STARTED` |
+| PH-13-T02 | `13-quality-security-pilot-release.md` | 2A | PH-02 | Data Operations | `NOT_STARTED` |
+| PH-13-T04..T06 | `13-quality-security-pilot-release.md` | 5 | PH-12 | QA/Security/Release | `NOT_STARTED` |
 
 ## Feature Traceability
 
@@ -165,9 +170,26 @@ export interface Page<T> {
 | F-07 Media | FR-07 / AC-06 | PH-09-T01, T02 | PH-12-T04, PH-13-T04 |
 | F-08 Payment | FR-08 / AC-06 | PH-09-T03..T05 | PH-12-T02, T06 |
 | F-09 Fleet Owner Lite | FR-04 / AC-05 | PH-10-T01..T04 | PH-12-T05, PH-13-T04 |
-| F-10 Admin | FR-09 / AC-07 | PH-11-T01..T04 | PH-12-T06, PH-13-T04 |
+| F-10 Admin | FR-09 / AC-01, AC-07 | PH-11-T01..T04 | PH-12-T06, PH-13-T04 |
 | F-11 Operations | FR-09 / AC-07 | PH-02-T03, T05; PH-13-T01..T06 | PH-13-T05, T06 |
 | F-12 UX | NFR-09, NFR-10 / AC-07 | PH-03-T03, PH-04-T02, T03; PH-12-T01..T06 | PH-12-T06, PH-13-T06 |
+
+## NFR Traceability
+
+| NFR | Owning tasks | Evidence task |
+| --- | --- | --- |
+| NFR-01 Performance | PH-02-T03, PH-11-T01 | PH-13-T05 |
+| NFR-02 Realtime | PH-08-T03, T04 | PH-13-T05 |
+| NFR-03 Availability | PH-02-T05, PH-13-T01 | PH-13-T06 |
+| NFR-04 Security | PH-05-T01..T04, PH-09-T01 | PH-13-T04 |
+| NFR-05 Privacy | PH-06-T06, PH-10-T04 | PH-13-T04 |
+| NFR-06 Reliability | PH-05-T03, PH-06-T04, T05, PH-09-T04 | PH-13-T04 |
+| NFR-07 Auditability | PH-06-T05, PH-09-T04, PH-11-T02, T04 | PH-13-T04 |
+| NFR-08 Maintainability | PH-01-T02..T04, PH-02-T01 | Every phase gate |
+| NFR-09 Accessibility | PH-03-T03, PH-04-T03 | PH-12-T06 |
+| NFR-10 Responsive | PH-03-T03, PH-04-T02, T03 | PH-12-T06 |
+| NFR-11 Observability | PH-02-T03 | PH-13-T05 |
+| NFR-12 Recovery | PH-13-T02 | PH-13-T05 |
 
 ## Session Startup
 
@@ -179,14 +201,14 @@ Read this master plan and the assigned phase plan. Verify every dependency statu
 
 ```bash
 git fetch origin
-git worktree add .worktrees/ph-XX-short-name -b codex/ph-XX-short-name <BASELINE_SHA>
+git worktree add .worktrees/ph-XX-tYY-short-name -b codex/ph-XX-tYY-short-name <PHASE_BASELINE_SHA>
 ```
 
 Expected: worktree is created from the exact published baseline and `git status --short --branch` is clean.
 
 - [ ] **Step 3: Start the session**
 
-Fill `docs/superpowers/prompts/session-prompt-template.md` with one task only. Do not assign a full phase when tasks touch different controlled surfaces.
+Fill `docs/superpowers/prompts/session-prompt-template.md` with one task only. Tasks within a phase follow their declared dependency order and merge into `codex/phase-ph-XX` before the phase gate.
 
 - [ ] **Step 4: Register ownership**
 
@@ -205,8 +227,10 @@ Fresh reviewer checks correctness, security, test design, error handling and mai
 - [ ] **Step 3: Integrate dependency order**
 
 ```bash
+git switch codex/phase-ph-XX
+git merge --no-ff codex/ph-XX-tYY-short-name
 git switch codex/integration-wave-N
-git merge --no-ff codex/ph-XX-short-name
+git merge --no-ff codex/phase-ph-XX
 ```
 
 Expected: merge succeeds without choosing between competing controlled-surface changes. A conflict means ownership/dependency design was violated and must be diagnosed before resolution.

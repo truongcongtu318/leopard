@@ -6,7 +6,7 @@
 
 **Architecture:** `AuthModule` issues short-lived JWT access tokens and opaque hashed refresh sessions. Provider adapter verifies identity; policy guard composes role with resource-specific ownership checks.
 
-**Tech Stack:** NestJS 11, Prisma 7, `jose`, Argon2, Firebase Admin behind `OtpProvider`, Jest/Supertest.
+**Tech Stack:** NestJS 11.1.28, Prisma 7.8.0, jose 6.2.3, Argon2 0.44.0, Firebase Admin 14.1.0, Jest 30.4.2, Supertest 7.2.2.
 
 ## Global Constraints
 
@@ -35,9 +35,9 @@
 **Files:**
 - Create: `apps/api/src/auth/auth.module.ts`, `auth.controller.ts`, `auth.service.ts`, `token.service.ts`, `dto/login.dto.ts`
 - Test: `apps/api/src/auth/login.e2e-spec.ts`
-- Modify: `apps/api/openapi/openapi.yaml`, `apps/api/src/app.module.ts`
+- Modify: `apps/api/src/app.module.ts`
 
-**Interfaces:** `POST /api/v1/auth/login {idToken}` -> `{user, session: AuthSession}`; JWT claims `{sub,role,sessionId}`.
+**Interfaces:** `POST /api/v1/auth/login/demo {accountId}` (local/test only), `POST /api/v1/auth/firebase {idToken}` -> `{user, session: AuthSession}`, and authenticated `GET /api/v1/me`; JWT claims `{sub,role,sessionId}`.
 
 - [ ] Test valid login, disabled user 403 `ACCOUNT_DISABLED`, invalid provider token 401 and 15-minute expiry.
 - [ ] Implement user lookup/upsert policy defined by environment, access token signing with key ID and refresh session creation.
@@ -49,7 +49,7 @@
 **Files:**
 - Create: `apps/api/src/auth/refresh-session.repository.ts`, `dto/refresh.dto.ts`
 - Test: `apps/api/src/auth/refresh.e2e-spec.ts`
-- Modify: `apps/api/src/auth/auth.controller.ts`, `auth.service.ts`, `apps/api/openapi/openapi.yaml`
+- Modify: `apps/api/src/auth/auth.controller.ts`, `apps/api/src/auth/auth.service.ts`
 
 **Interfaces:** `POST /auth/refresh {refreshToken}` -> new `AuthSession`; `POST /auth/logout` -> 204.
 
@@ -77,8 +77,8 @@
 
 **Files:**
 - Create: `apps/mobile/src/auth/LoginScreen.tsx`, `apps/admin/src/features/auth/LoginForm.tsx`
-- Test: matching `*.test.tsx`
-- Modify: login route pages only
+- Test: `apps/mobile/src/auth/LoginScreen.test.tsx`, `apps/admin/src/features/auth/LoginForm.test.tsx`
+- Modify: `apps/mobile/app/(public)/login.tsx`, `apps/admin/src/app/(auth)/login/page.tsx`
 
 **Interfaces:** Consumes login/refresh/logout endpoints; produces role-directed session hydration.
 

@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Branch `codex/ph-01-foundation` tách từ verified documentation baseline.
+- Phase integration branch `codex/phase-ph-01`; mỗi task dùng `codex/ph-01-tYY-<short-name>` từ task baseline được công bố.
 - PH-01 là owner duy nhất của root config, lockfile và `packages/shared` trong Wave 0.
 - Dùng ESM, TypeScript strict, UTC/ISO 8601, UUID, integer VND, meter và second.
 - Không scaffold business module, screen hoặc provider trong phase này.
@@ -29,7 +29,7 @@
 
 **Interfaces:**
 - Consumes: Node.js 24 LTS and Corepack.
-- Produces: root scripts `build`, `dev`, `lint`, `typecheck`, `test`, `test:contract`, `format:check`.
+- Produces: root scripts `build`, `dev`, `lint`, `typecheck`, `test`, `test:e2e`, `test:contract`, `db:migrate:test`, `format:check`.
 
 - [ ] **Step 1: Write the failing workspace smoke test**
 
@@ -43,7 +43,7 @@ Expected: FAIL because `pnpm-workspace.yaml` does not exist.
 
 - [ ] **Step 2: Create root manifests**
 
-Use `packageManager: "pnpm@11.11.0"`, `engines.node: ">=24 <25"`, `type: "module"`; map root scripts to `turbo run`. Configure Turbo outputs for `dist/**`, `.next/**`, `coverage/**` and mark `dev` persistent/non-cacheable.
+Use `packageManager: "pnpm@11.11.0"`, `engines.node: ">=24 <25"`, `type: "module"`; map root scripts to `turbo run`, including `test:e2e`, and map `db:migrate:test` to `pnpm --filter api prisma:migrate:test`. Configure Turbo outputs for `dist/**`, `.next/**`, `coverage/**` and mark `dev` persistent/non-cacheable.
 
 - [ ] **Step 3: Install and verify**
 
@@ -124,11 +124,11 @@ git commit -m "build(config): add strict shared tooling"
 
 **Interfaces:**
 - Consumes: types listed in `00-master-orchestration.md`.
-- Produces: `Role`, `OrderStatus`, `PaymentStatus`, `DriverAvailability`, `FleetMemberStatus`, `ProviderSource`, `ApiErrorEnvelope`, `Page<T>`, `GeoPoint`, `RouteEstimate`, `AuthSession`.
+- Produces: canonical enums from `docs/data/01-database-design.md`, `ApiErrorEnvelope`, `Page<T>`, `GeoPoint`, `RouteEstimate`, `AuthSession`.
 
 - [ ] **Step 1: Write failing contract tests**
 
-Assert enum arrays contain exact values and `parsePageQuery({page:'2',pageSize:'20'})` returns numeric values while rejecting page size over 100.
+Assert `FleetMemberStatus` is exactly `INVITED | ACTIVE | REMOVED`, `ProviderSource` excludes Firebase identity providers, pagination serializes `{items,page,pageSize,total,totalPages}`, and `parsePageQuery({page:'2',pageSize:'20'})` rejects page size over 100.
 
 ```bash
 pnpm --filter @leopard/shared test
@@ -138,7 +138,7 @@ Expected: FAIL because exports do not exist.
 
 - [ ] **Step 2: Implement exact contracts**
 
-Define `GeoPoint { latitude: number; longitude: number }`, `RouteEstimate { distanceMeters; durationSeconds; encodedPolyline; source; calculatedAt; isEstimate }`, and `AuthSession { accessToken; accessTokenExpiresAt; refreshToken; refreshTokenExpiresAt }`. Keep functions pure and framework-free.
+Define `GeoPoint { latitude: number; longitude: number }`, `RouteEstimate { polyline; distanceM; durationS; estimatedArrivalAt; estimatedPriceVnd; source; calculatedAt; isEstimate }`, and `AuthSession { accessToken; accessTokenExpiresAt; refreshToken; refreshTokenExpiresAt }`. Keep functions pure and framework-free.
 
 - [ ] **Step 3: Verify package**
 

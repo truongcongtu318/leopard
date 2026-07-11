@@ -14,7 +14,8 @@ MISSION
 
 BASELINE
 - Commit: {{VERIFIED_BASELINE_SHA}}
-- Branch: codex/{{TASK_ID_LOWER}}-{{SHORT_NAME}}
+- Task branch: codex/{{TASK_ID_LOWER}}-{{SHORT_NAME}}
+- Phase integration branch: codex/phase-{{PHASE_ID_LOWER}}
 - Dependencies verified: {{DEPENDENCY_TASK_IDS}}
 
 SOURCE OF TRUTH

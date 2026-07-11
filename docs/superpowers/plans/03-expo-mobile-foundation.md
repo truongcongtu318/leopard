@@ -6,11 +6,11 @@
 
 **Architecture:** Expo Router groups tách public/customer/driver; TanStack Query quản lý server state; secure storage giữ refresh credential; presentation không chứa business rule.
 
-**Tech Stack:** Expo 57.0.4, React Native 0.86.0, React 19.2.7, Expo Router, TanStack Query, React Hook Form, Vitest/Jest Native Testing Library.
+**Tech Stack:** Expo/Expo Router 57.0.4, React Native 0.86.0, React 19.2.7, TanStack Query 5.101.2, React Hook Form 7.81.0, React Native Testing Library 14.0.1.
 
 ## Global Constraints
 
-- Branch `codex/ph-03-expo-foundation` từ Wave 0 baseline.
+- Phase integration branch `codex/phase-ph-03`; mỗi task dùng `codex/ph-03-tYY-<short-name>` từ Wave 0 baseline hoặc task predecessor.
 - PH-03 sở hữu `apps/mobile/app/**` route shell và `apps/mobile/src/theme/**`.
 - Hỗ trợ 360x800 và 390x844; touch target tối thiểu 44x44.
 - Không yêu cầu background location hoặc app-store build trong pilot.
@@ -20,7 +20,7 @@
 ### Task PH-03-T01: Expo Runtime Shell
 
 **Files:**
-- Create: `apps/mobile/package.json`, `apps/mobile/app.json`, `apps/mobile/tsconfig.json`, `apps/mobile/babel.config.js`
+- Create: `apps/mobile/package.json` with package name `mobile`, `apps/mobile/app.json`, `apps/mobile/tsconfig.json`, `apps/mobile/babel.config.js`
 - Create: `apps/mobile/app/_layout.tsx`, `apps/mobile/app/index.tsx`
 - Test: `apps/mobile/src/smoke.test.tsx`
 

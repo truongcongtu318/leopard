@@ -6,7 +6,7 @@
 
 **Architecture:** Media metadata is persisted only after storage success; storage/payment SDKs remain behind providers. Manual payment transaction updates payment state and audit atomically.
 
-**Tech Stack:** NestJS multipart streaming, S3-compatible client, local storage adapter, payOS/VietQR adapters, Prisma transactions.
+**Tech Stack:** NestJS 11.1.28 multipart streaming, AWS S3 client 3.1085.0, local storage adapter, payOS/VietQR adapters, Prisma 7.8.0 transactions.
 
 ## Global Constraints
 
@@ -22,7 +22,7 @@
 **Files:**
 - Create: `apps/api/src/media/providers/storage-provider.ts`, `local-storage.provider.ts`, `s3-storage.provider.ts`
 - Create: `apps/api/src/media/upload-policy.ts`
-- Test: corresponding specs
+- Test: `apps/api/src/media/providers/local-storage.provider.spec.ts`, `apps/api/src/media/providers/s3-storage.provider.spec.ts`, `apps/api/src/media/upload-policy.spec.ts`
 
 **Interfaces:** `put`, `createReadUrl`, `delete`; input includes stream, size, contentType, checksum and key.
 
@@ -36,9 +36,9 @@
 **Files:**
 - Create: `apps/api/src/media/media.module.ts`, `media.controller.ts`, `media.service.ts`, `media.repository.ts`
 - Test: `apps/api/src/media/media.e2e-spec.ts`
-- Modify: OpenAPI and order proof lookup
+- Modify: `apps/api/src/app.module.ts`
 
-**Interfaces:** `POST /orders/:id/media?purpose=CARGO|DELIVERY_PROOF`, `GET /media/:id/url`.
+**Interfaces:** `POST /orders/:id/media/cargo`, `POST /orders/:id/media/delivery-proof`, `GET /media/:id/url`; Media repository implements PH-06 `DeliveryProofReader`.
 
 - [ ] Test role/ownership, invalid file, orphan cleanup on DB failure, private signed URL and proof enabling DELIVERED.
 - [ ] Implement storage-first then metadata transaction with compensating delete.
@@ -49,7 +49,7 @@
 
 **Files:**
 - Create: `apps/api/src/payments/providers/payment-provider.ts`, `demo-payment.provider.ts`, `payos.provider.ts`, `vietqr.provider.ts`
-- Test: matching specs
+- Test: `apps/api/src/payments/providers/demo-payment.provider.spec.ts`, `apps/api/src/payments/providers/payos.provider.spec.ts`, `apps/api/src/payments/providers/vietqr.provider.spec.ts`
 
 **Interfaces:** `createQr({orderId,amountVnd,reference,idempotencyKey}): Promise<{qrPayload,expiresAt,providerReference,source}>`.
 
@@ -63,9 +63,8 @@
 **Files:**
 - Create: `apps/api/src/payments/payments.module.ts`, `payments.controller.ts`, `payments.service.ts`, `payments.repository.ts`
 - Test: `apps/api/src/payments/payments.e2e-spec.ts`
-- Modify: OpenAPI
 
-**Interfaces:** `POST /orders/:id/payments/qr`, `GET /orders/:id/payment`, `POST /admin/payments/:id/confirm {note}`.
+**Interfaces:** `POST /orders/:id/payments`, `GET /orders/:id/payments`, `POST /admin/payments/:id/confirm {note,clientRequestId}`.
 
 - [ ] Test owner/Admin create QR, one active intent, exact amount, Customer read, Admin-only confirmation, mandatory note and duplicate confirmation idempotency.
 - [ ] Implement unique active intent and manual confirmation transaction with `AuditLog`.

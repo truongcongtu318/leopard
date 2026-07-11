@@ -6,7 +6,7 @@
 
 **Architecture:** Socket gateway authenticates handshake and delegates policy/persistence to `TrackingService`. Point is committed before broadcast; REST history and realtime event share one response mapper.
 
-**Tech Stack:** Socket.IO 4.8.3, NestJS gateway, Prisma/PostGIS, fake timers and socket integration tests.
+**Tech Stack:** Socket.IO server/client 4.8.3, `@nestjs/platform-socket.io` 11.1.28, Prisma 7.8.0/PostGIS 3.5, Jest 30.4.2.
 
 ## Global Constraints
 
@@ -21,9 +21,9 @@
 
 **Files:**
 - Create: `apps/api/src/tracking/tracking.policy.ts`, `tracking-point.schema.ts`, `tracking-rate-limiter.ts`
-- Test: matching specs
+- Test: `apps/api/src/tracking/tracking.policy.spec.ts`, `apps/api/src/tracking/tracking-point.schema.spec.ts`, `apps/api/src/tracking/tracking-rate-limiter.spec.ts`
 
-**Interfaces:** `assertCanSend(actor,order)`, `assertCanView(actor,order)`, point `{latitude,longitude,capturedAt,accuracy?}`.
+**Interfaces:** `assertCanSend(actor:AuthenticatedActor,order:OrderAccessView): void`, `assertCanView(actor:AuthenticatedActor,order:OrderAccessView): void`, point `{orderId,clientPointId,latitude,longitude,accuracyM?,capturedAt}`.
 
 - [ ] Table-test all role/ownership/membership combinations, coordinate/time bounds and configurable per-Driver rate limit.
 - [ ] Implement pure policy plus limiter; return stable `TRACKING_FORBIDDEN`, `TRACKING_INVALID_POINT`, `TRACKING_RATE_LIMITED`.
@@ -35,7 +35,6 @@
 **Files:**
 - Create: `apps/api/src/tracking/tracking.module.ts`, `tracking.service.ts`, `tracking.repository.ts`, `tracking.controller.ts`
 - Test: `apps/api/src/tracking/tracking.integration-spec.ts`
-- Modify: OpenAPI
 
 **Interfaces:** `recordPoint(actor,orderId,input): TrackingPointDto`; `GET /orders/:id/tracking?from&to&page&pageSize`.
 
@@ -50,7 +49,7 @@
 - Create: `apps/api/src/tracking/tracking.gateway.ts`, `socket-auth.adapter.ts`, `tracking.events.ts`
 - Test: `apps/api/src/tracking/tracking.gateway-spec.ts`
 
-**Interfaces:** client `order:join`, `order:leave`, `tracking:point`; server `tracking:updated`, `order:status`, `event:error` per docs.
+**Interfaces:** namespace `/tracking`; client `tracking:join-order`, `tracking:leave-order`, `tracking:send-point`; server `tracking:point-updated`, `order:status-updated`, `session:error` exactly as `docs/api/02-socket-events.md`.
 
 - [ ] Test invalid handshake rejection, authorized joins, cross-order denial, leave behavior, persist-before-broadcast and invalid event without disconnect.
 - [ ] Implement rooms `order:<uuid>` and delegate all policy to services.
