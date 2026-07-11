@@ -28,7 +28,7 @@
 
 - [ ] Test ordered 0–3 stops, coordinate validation, estimate loading/error/expiry, DEMO label, price/ETA and double-submit prevention.
 - [ ] Implement address search debounce/cancellation, route panel and persisted order navigation.
-- [ ] Run mobile tests and Customer E2E create/list/detail at 360x800.
+- [ ] Run mobile tests and `pnpm --filter mobile test:e2e -- e2e/customer-create-order.yaml` at 360x800.
 - [ ] Commit `feat(customer): create and review shipment orders`.
 
 ### Task PH-12-T02: Customer Tracking and Payment
@@ -41,7 +41,7 @@
 
 - [ ] Test reconnect/history reconciliation, stale/no-location state, QR expiry, payment status refresh and valid cancellation visibility.
 - [ ] Implement socket lifecycle tied to visible order; REST history fills event gaps after reconnect.
-- [ ] Run tests/E2E including demo ETA/payment labels and refresh persistence.
+- [ ] Run tests and `pnpm --filter mobile test:e2e -- e2e/customer-track-pay.yaml`, including demo ETA/payment labels and refresh persistence.
 - [ ] Commit `feat(customer): track orders and manage payment`.
 
 ### Task PH-12-T03: Driver Availability and Acceptance
@@ -55,7 +55,7 @@
 
 - [ ] Test availability control, active-order banner, accept race conflict refresh and only one active order.
 - [ ] Implement optimistic state only where server result is reversible; 409 acceptance triggers queue refresh and clear message.
-- [ ] Run mobile tests and two-Driver acceptance E2E.
+- [ ] Run mobile tests and `pnpm --filter mobile test:e2e -- e2e/driver-accept-order.yaml` with two seeded Drivers.
 - [ ] Commit `feat(driver): manage availability and accept orders`.
 
 ### Task PH-12-T04: Driver Delivery and Tracking
@@ -68,7 +68,7 @@
 
 - [ ] Test next-state-only actions, foreground location permission denial, throttled points, offline retry without duplicate and delivery proof before DELIVERED.
 - [ ] Implement foreground tracking lifecycle; stop sender on logout/order terminal/app background per pilot policy.
-- [ ] Run E2E REQUESTED through DELIVERED and verify Customer receives events.
+- [ ] Run `pnpm --filter mobile test:e2e -- e2e/driver-delivery.yaml` from REQUESTED through DELIVERED and verify Customer receives events.
 - [ ] Commit `feat(driver): complete tracked delivery workflow`.
 
 ### Task PH-12-T05: Fleet Owner Web Journey
@@ -93,7 +93,7 @@
 **Interfaces:** Consumes Admin/Payment/Health APIs.
 
 - [ ] Test operational filters, order detail, manual payment note/audit, user status, health warning and role-route isolation.
-- [ ] Run mobile and admin lint/typecheck/test/build/export plus all client E2E.
+- [ ] Run mobile/admin lint/typecheck/test/build/export, `pnpm --filter mobile test:e2e` for all Maestro flows and `pnpm --filter web test:e2e` for all Playwright flows.
 - [ ] Verify screenshots at 360x800, 390x844, 768x1024, 1024x768, 1440x900 show no overlap/overflow.
 - [ ] Commit `test(clients): verify role-based pilot journeys`.
 

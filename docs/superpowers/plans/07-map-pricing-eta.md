@@ -82,7 +82,7 @@ interface VerifiedOrderEstimate extends RouteEstimate {
 
 - [ ] Test auth, input bounds, provider source fields, demo label, provider unavailable error and rate limiting.
 - [ ] Implement the endpoint and publish `EstimateTokenService.verify(token: string): VerifiedOrderEstimate` for PH-06; do not edit PH-06 files.
-- [ ] Run map/order E2E, contract tests, API full gate.
+- [ ] Run `pnpm --filter api test:e2e -- maps.e2e-spec.ts`, `pnpm --filter api test:contract`, API lint/typecheck/test/build; PH-06 owns later order-consumer E2E.
 - [ ] Commit `feat(map): expose route price and ETA endpoints`.
 
 ## Phase Boundary Rules

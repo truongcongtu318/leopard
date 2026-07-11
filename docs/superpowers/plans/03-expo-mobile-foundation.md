@@ -6,7 +6,7 @@
 
 **Architecture:** Expo Router groups tách public/customer/driver; TanStack Query quản lý server state; secure storage giữ refresh credential; presentation không chứa business rule.
 
-**Tech Stack:** Expo/Expo Router 57.0.4, React Native 0.86.0, React 19.2.7, TanStack Query 5.101.2, React Hook Form 7.81.0, React Native Testing Library 14.0.1.
+**Tech Stack:** Expo/Expo Router 57.0.4, React Native 0.86.0, React 19.2.7, TanStack Query 5.101.2, React Hook Form 7.81.0, React Native Testing Library 14.0.1, Maestro CLI 2.3.0.
 
 ## Global Constraints
 
@@ -24,7 +24,7 @@
 - Create: `apps/mobile/app/_layout.tsx`, `apps/mobile/app/index.tsx`
 - Test: `apps/mobile/src/smoke.test.tsx`
 
-**Interfaces:** Produces scripts `start`, `android`, `ios`, `test`, `lint`, `typecheck`, `export` and root provider slot.
+**Interfaces:** Produces scripts `start`, `android`, `ios`, `test`, `test:e2e` (`maestro test`), `lint`, `typecheck`, `export` and root provider slot.
 
 - [ ] Write a render test expecting root route to mount without console error; observe missing app failure.
 - [ ] Create Expo SDK 57 app with package identity `com.leopard.pilot`, New Architecture default, safe-area and error boundary.
