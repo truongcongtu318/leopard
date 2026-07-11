@@ -1,0 +1,29 @@
+# Authentication và permissions
+
+## Session flow
+
+1. Client đăng nhập qua demo hoặc Firebase endpoint.
+2. API tạo access token và refresh session; refresh token chỉ truyền qua HttpOnly cookie.
+3. Client gửi `Authorization: Bearer <token>` cho REST và token trong Socket handshake.
+4. Khi access token hết hạn, client gọi `/auth/refresh` một lần; request song song chờ cùng kết quả refresh.
+5. Refresh thất bại đưa người dùng về login và xóa state nhạy cảm.
+
+## Claims
+
+Access token tối thiểu có `sub`, `role`, `sessionId`, `iat`, `exp`. Backend luôn tải account status cần thiết; không tin role do client gửi.
+
+## Permission matrix
+
+| Action | Customer | Driver | Admin |
+| --- | --- | --- | --- |
+| Create order | Có | Không | Không |
+| View order | Own | Assigned/public summary | Tất cả |
+| Cancel order | Own `REQUESTED` | Không | Có reason |
+| Accept order | Không | Available | Không |
+| Update delivery status | Không | Assigned | Không |
+| Send tracking | Không | Assigned | Không |
+| Create payment | Own | Không | Có |
+| Confirm payment | Không | Không | Có + audit |
+| Disable user | Không | Không | Có + audit |
+
+Endpoint không được chỉ dựa vào việc ẩn nút ở UI. Resource không tồn tại và resource không có quyền có thể cùng trả 404 để hạn chế dò ID, trừ khi nghiệp vụ cần báo 403 rõ ràng.

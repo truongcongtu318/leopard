@@ -1,200 +1,89 @@
 # LEOPARD
 
-LEOPARD is a 6-week MVP/Demo project for a cargo transportation connection system. The product connects Customers who create shipment orders with Drivers who accept and complete those orders, while Admin users monitor orders, users, drivers, tracking, uploads, and payment state.
+LEOPARD là nền tảng kết nối vận chuyển hàng hóa ở mức mini-production pilot. Customer tạo và theo dõi đơn, Driver nhận và thực hiện chuyến, còn Admin giám sát users, drivers, orders, tracking, media và payment state.
 
-This repository is currently in the planning and specification phase. It contains the SRS, architecture, database design, API specification, UI flow specification, sprint plan, and Codex working instructions that coding agents and developers should follow when implementation begins.
+Repository hiện ở giai đoạn đặc tả và thiết kế SDLC; chưa scaffold mã nguồn ứng dụng.
 
-## Product Scope
+## Phạm vi pilot
 
-The MVP includes:
+- Customer Web App/PWA theo mobile-first.
+- Driver Web App/PWA cho availability, nhận đơn, lifecycle và tracking.
+- Admin Dashboard cô đọng cho vận hành.
+- REST API và Socket.IO gateway có authorization theo role/ownership.
+- PostgreSQL/PostGIS cho orders, stops, tracking, media, payments và audit.
+- Vietmap, Firebase Phone Auth, S3-compatible storage và VietQR/payOS qua provider interface.
+- Demo providers có dữ liệu xác định khi local hoặc thiếu credential được cho phép.
+- ETA luôn là “ETA dự kiến”; demo ETA phải hiển thị rõ là dữ liệu mô phỏng.
 
-- Customer Web App/PWA for shipment order creation and order tracking.
-- Driver Web App/PWA for viewing, accepting, and updating shipment orders.
-- Admin Dashboard for users, drivers, orders, status, tracking, media, and payment overview.
-- Backend API for authentication, orders, drivers, admin, tracking, upload, payment, and integrations.
-- PostgreSQL/PostGIS database for users, orders, stops, coordinates, tracking points, media, and payment intents.
-- Vietmap integration for address search, geocoding, routing, distance, and ETA at MVP level.
-- Socket.IO/WebSocket realtime tracking demo.
-- Media upload for cargo and delivery confirmation images.
-- VietQR/payOS QR payment creation at MVP/demo level.
+Không thuộc phạm vi: native mobile, multi-tenant, Fleet Owner, route optimization nhiều đơn, AI ETA, đối soát ngân hàng tự động và SLA quy mô lớn.
 
-The MVP does not include production SLA, native mobile apps, automatic bank reconciliation, advanced AI ETA, production-grade route optimization, Fleet Owner dashboard, or high-concurrency guarantees.
-
-## Approved Tech Stack
+## Tech stack
 
 | Layer | Technology |
 | --- | --- |
 | Frontend | Next.js, React, TypeScript, Tailwind CSS |
-| Backend | NestJS, TypeScript |
-| ORM | Prisma |
+| Backend | NestJS, Prisma, TypeScript |
 | Database | PostgreSQL + PostGIS |
 | Realtime | Socket.IO / WebSocket |
-| Maps | Vietmap API with demo fallback |
-| OTP | Firebase Phone Auth when configured |
-| Media Storage | Local storage for dev, DigitalOcean Spaces/S3-compatible for staging |
-| Payment | VietQR/payOS with demo fallback |
-| Local Runtime | Docker Compose |
+| Maps | Vietmap với demo fallback có kiểm soát |
+| OTP | Firebase Phone Auth hoặc demo provider |
+| Storage | Local development, S3-compatible staging |
+| Payment | VietQR/payOS hoặc demo provider |
+| Local runtime | Docker Compose |
 
-## Repository Structure
+## Tài liệu nguồn
 
-```text
-.
-|-- AGENTS.md
-|-- README.md
-`-- docs
-    |-- srs-leopard-mvp.md
-    |-- project
-    |   |-- 01-product-backlog-user-stories.md
-    |   |-- 02-system-architecture.md
-    |   |-- 03-database-design-erd.md
-    |   |-- 04-api-specification.md
-    |   `-- 05-ui-flow-screen-spec.md
-    `-- workflows
-        |-- 01-six-week-sprint-plan.md
-        |-- 02-agent-goal-cards.md
-        |-- 04-review-and-verification-gates.md
-        `-- codex-best-practices-for-leopard.md
-```
+Đọc theo thứ tự:
 
-Planned implementation structure:
+1. [Vision và Scope](./docs/product/01-vision-and-scope.md)
+2. [SRS](./docs/requirements/01-srs.md)
+3. [User Stories](./docs/requirements/02-user-stories.md)
+4. [System Architecture](./docs/architecture/01-system-architecture.md)
+5. [Database Design](./docs/data/01-database-design.md)
+6. [REST API Specification](./docs/api/01-rest-api-spec.md)
+7. [UI Principles](./docs/ui/01-ui-principles.md)
+8. [Development Process](./docs/development/04-definition-of-ready.md)
+9. [Test Strategy](./docs/testing/01-test-strategy.md)
+10. [Contributing](./CONTRIBUTING.md)
+
+Toàn bộ tài liệu được tổ chức thành tám thư mục vật lý, tương ứng bảy nhóm SDLC đã duyệt: Product, Requirements, Architecture cùng Data/API, UI, Development và Testing. Data/API được tách thư mục để giữ file tập trung nhưng cùng thuộc nhóm System Design.
+
+## Cấu trúc dự kiến
 
 ```text
 apps/
   web/      # Next.js Customer, Driver, Admin UI
-  api/      # NestJS API and Socket.IO gateway
+  api/      # NestJS API và Socket.IO gateway
 packages/
-  shared/   # Shared DTOs, enums, and validation helpers
+  shared/   # Shared DTOs, enums và validation schemas
 ```
 
-## Active Documentation
+## Trạng thái
 
-Start here:
+- Bộ tài liệu mini-production pilot đã được thiết kế.
+- Application code, package scripts, Docker Compose và environment template chưa được scaffold.
+- Bước triển khai tiếp theo là dựng monorepo foundation theo `docs/development/01-local-setup.md`.
 
-1. [AGENTS.md](./AGENTS.md) - Codex and agent working rules for this repository.
-2. [SRS](./docs/srs-leopard-mvp.md) - product requirements and acceptance criteria.
-3. [Product Backlog](./docs/project/01-product-backlog-user-stories.md) - user stories and implementation order.
-4. [System Architecture](./docs/project/02-system-architecture.md) - module and integration architecture.
-5. [Database Design and ERD](./docs/project/03-database-design-erd.md) - entities, enums, constraints, and Prisma draft.
-6. [API Specification](./docs/project/04-api-specification.md) - endpoint contracts, payloads, errors, and Socket.IO events.
-7. [UI Flow and Screen Specification](./docs/project/05-ui-flow-screen-spec.md) - screen map, UI states, and demo flow.
-8. [6-Week Sprint Plan](./docs/workflows/01-six-week-sprint-plan.md) - phased implementation plan.
-9. [Codex Best Practices for LEOPARD](./docs/workflows/codex-best-practices-for-leopard.md) - how to prompt and review Codex work.
-
-## Development Status
-
-Current status:
-
-- Git repository initialized.
-- Requirements and workflow documents exist.
-- Application code has not been scaffolded yet.
-
-Recommended next implementation step:
-
-1. Scaffold the monorepo with `apps/web`, `apps/api`, and `packages/shared`.
-2. Add Docker Compose for PostgreSQL/PostGIS.
-3. Add `.env.example`.
-4. Implement Week 1 from the sprint plan.
-
-## Local Setup
-
-Application setup will be finalized after the monorepo is scaffolded. The expected future commands are:
+Các lệnh dự kiến sau khi scaffold:
 
 ```bash
 pnpm install
 pnpm db:up
 pnpm dev
-```
-
-Expected future verification commands:
-
-```bash
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
 ```
 
-If these scripts do not exist yet, follow the current sprint task and add them as part of foundation work.
+Nếu script chưa tồn tại, implementation task phải tạo hoặc ghi rõ verification gần nhất đã chạy. Không commit secret thật.
 
-## Environment Variables
+## Làm việc với agent
 
-The implementation should provide `.env.example` with at least:
+Mỗi task nên có Goal, Context, Constraints và Done when. Giữ task theo một story hoặc vertical slice; cập nhật tài liệu khi behavior thay đổi. Quy tắc chi tiết nằm trong [AGENTS.md](./AGENTS.md).
 
-```dotenv
-DATABASE_URL="postgresql://leopard:leopard@localhost:5432/leopard?schema=public"
-JWT_SECRET="replace-with-local-dev-secret"
-WEB_ORIGIN="http://localhost:3000"
-API_PORT="4000"
-VIETMAP_API_KEY=""
-STORAGE_DRIVER="local"
-LOCAL_UPLOAD_DIR="./uploads"
-S3_ENDPOINT=""
-S3_ACCESS_KEY_ID=""
-S3_SECRET_ACCESS_KEY=""
-S3_BUCKET=""
-PAYMENT_MODE="demo"
-PAYOS_CLIENT_ID=""
-PAYOS_API_KEY=""
-PAYOS_CHECKSUM_KEY=""
-```
-
-Never commit real secrets.
-
-## Agent Workflow
-
-Use this task prompt structure:
-
-```text
-Goal:
-[one small story or goal]
-
-Context:
-- [specific docs sections]
-- [specific files]
-
-Constraints:
-- [stack]
-- [scope limits]
-- [security/authorization rules]
-- [UI rules if relevant]
-
-Done when:
-- [behavior]
-- [tests/checks]
-- [manual verification]
-```
-
-Keep implementation tasks small: one endpoint, one screen, one provider, one business rule, or one bug at a time.
-
-## Verification Rules
-
-Backend changes should eventually run:
-
-```bash
-pnpm --filter api test
-pnpm --filter api typecheck
-pnpm --filter api lint
-```
-
-Frontend changes should eventually run:
-
-```bash
-pnpm --filter web test
-pnpm --filter web typecheck
-pnpm --filter web lint
-```
-
-Release or sprint completion should eventually run:
-
-```bash
-pnpm test
-pnpm typecheck
-pnpm lint
-pnpm build
-```
-
-If a script is unavailable, report it and run the closest available check.
+Git workflow dùng `feature/fix/docs branch → develop → main`. Không commit trực tiếp lên `develop` hoặc `main`; xem [CONTRIBUTING.md](./CONTRIBUTING.md) trước khi bắt đầu.
 
 ## License
 
-No license has been selected yet. Do not reuse or distribute this project as open source until a license is explicitly added.
+Chưa chọn license. Không phân phối dự án như open source trước khi license được thêm chính thức.
