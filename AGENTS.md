@@ -2,76 +2,85 @@
 
 ## Project Context
 
-LEOPARD is a 6-week MVP/Demo logistics connection system with three roles:
+LEOPARD là hệ thống kết nối logistics ở mức mini-production pilot với ba role:
 
-- Customer creates shipment orders.
-- Driver accepts orders, updates delivery status, and sends tracking points.
-- Admin monitors users, drivers, orders, tracking, uploads, and payment state.
+- Customer tạo và theo dõi shipment order.
+- Driver nhận order, cập nhật delivery status và gửi tracking point.
+- Admin giám sát users, drivers, orders, tracking, media và payment state.
 
-The approved stack is:
+Approved stack:
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS.
 - Backend: NestJS, Prisma, TypeScript.
 - Database: PostgreSQL + PostGIS.
 - Realtime: Socket.IO/WebSocket.
-- Integrations: Vietmap, Firebase Phone Auth when configured, DigitalOcean Spaces/S3-compatible storage, VietQR/payOS.
+- Integrations: Vietmap, Firebase Phone Auth, S3-compatible storage, VietQR/payOS.
 
 ## Source Of Truth
 
-Read these before implementation:
+Đọc trước implementation:
 
-1. `docs/srs-leopard-mvp.md`
-2. `docs/project/01-product-backlog-user-stories.md`
-3. `docs/project/02-system-architecture.md`
-4. `docs/project/03-database-design-erd.md`
-5. `docs/project/04-api-specification.md`
-6. `docs/project/05-ui-flow-screen-spec.md`
-7. `docs/workflows/codex-best-practices-for-leopard.md`
+1. `docs/product/01-vision-and-scope.md`
+2. `docs/requirements/01-srs.md`
+3. `docs/requirements/02-user-stories.md`
+4. `docs/requirements/03-acceptance-criteria.md`
+5. `docs/architecture/01-system-architecture.md`
+6. `docs/data/01-database-design.md`
+7. `docs/api/01-rest-api-spec.md`
+8. `docs/ui/03-screen-specs.md`
+9. `docs/development/05-definition-of-done.md`
+10. `docs/testing/01-test-strategy.md`
+11. `CONTRIBUTING.md`
 
-If documents conflict, follow this priority:
-
-1. `docs/srs-leopard-mvp.md`
-2. `docs/project/*`
-3. `docs/workflows/*`
-4. Existing code behavior
+Nếu tài liệu xung đột, ưu tiên: SRS, Product/Requirements, Architecture/Data/API, UI, Development/Testing, rồi existing code behavior. Khi code cố ý thay đổi behavior, cập nhật tài liệu trong cùng task.
 
 ## Prompt Contract
 
-Every implementation task should include:
+Mỗi implementation task cần có:
 
-- Goal: what to build or fix.
-- Context: relevant files/docs/errors.
-- Constraints: stack, scope, security, architecture rules.
-- Done when: tests/checks/manual behavior required before completion.
+- Goal: behavior cần xây dựng hoặc sửa.
+- Context: story, acceptance criteria, file hoặc lỗi liên quan.
+- Constraints: stack, scope, security, architecture và UI rules.
+- Done when: test, build và manual verification cần đạt.
 
-If any of those are missing and the task is ambiguous, ask for clarification or create a short plan first.
+Nếu thiếu thông tin làm thay đổi đáng kể solution, đọc tài liệu liên quan trước rồi lập kế hoạch ngắn.
 
 ## Implementation Rules
 
-- Keep tasks small: one story or one vertical slice at a time.
-- Do not add features outside MVP scope.
-- Do not let frontend own business rules that belong in the backend.
-- Enforce role authorization in the API, not only in UI.
-- Use provider interfaces for Vietmap, storage, OTP, and payment.
-- Use demo providers when real credentials are absent.
-- Keep PostGIS usage minimal for MVP.
-- Prefer readable, boring code over clever abstractions.
+- Giữ task nhỏ: một story hoặc một vertical slice.
+- Không thêm feature nằm trong `docs/product/05-out-of-scope.md` nếu chưa có change request.
+- Backend sở hữu business rules, pricing, ETA, lifecycle và authorization.
+- Kiểm tra cả role lẫn ownership/assignment ở API.
+- Dùng provider interfaces cho map/ETA, storage, OTP và payment.
+- Demo provider chỉ bật theo config; dữ liệu ETA demo phải deterministic và được ghi nhãn.
+- Dùng transaction cho accept order, status history và manual payment confirmation.
+- Giữ PostGIS vừa đủ cho point/index/query của pilot.
+- Ưu tiên code dễ đọc và module boundary rõ.
+
+## Git Workflow
+
+- Không làm việc trực tiếp trên `main` hoặc `develop`.
+- Tạo `feature/*`, `fix/*`, `docs/*`, `refactor/*` hoặc `codex/*` từ `develop`.
+- PR thông thường nhắm vào `develop`; chỉ release/hotfix PR mới nhắm vào `main`.
+- `release/*` tách từ `develop`; `hotfix/*` tách từ `main` và phải đồng bộ trở lại `develop`.
+- Tuân thủ commit convention, review gate và verification trong `CONTRIBUTING.md`.
 
 ## UI Rules
 
-LEOPARD is operational logistics product UI, not a landing page.
+LEOPARD là operational logistics UI, không phải landing page.
 
-- Avoid AI-purple gradients, glassmorphism, decorative hero sections, and fake marketing cards.
-- Prioritize clear forms, status badges, tables/lists, route summary, and map/tracking panels.
-- Customer and Driver flows must work on mobile.
-- Admin can be denser but must remain readable.
-- Every main screen needs loading, empty, error, and success states.
+- Customer và Driver mobile-first; Admin cô đọng và dễ quét.
+- Tuân thủ `docs/ui/04-design-system.md` và responsive rules.
+- Mọi màn hình chính có loading, empty, error, success và permission-denied state.
+- ETA dùng nhãn “ETA dự kiến”; source demo phải hiện “Dữ liệu mô phỏng”.
+- Không dùng gradient tím, glassmorphism, decorative hero hoặc fake marketing card.
+- Kiểm tra text overflow, overlap, keyboard focus và contrast trước khi hoàn tất.
 
 ## Verification
 
-Run the narrowest relevant checks after each task.
+Chạy bộ kiểm tra hẹp nhất phù hợp sau mỗi task.
 
-Backend changes:
+Backend:
 
 ```bash
 pnpm --filter api test
@@ -79,7 +88,7 @@ pnpm --filter api typecheck
 pnpm --filter api lint
 ```
 
-Frontend changes:
+Frontend:
 
 ```bash
 pnpm --filter web test
@@ -87,7 +96,7 @@ pnpm --filter web typecheck
 pnpm --filter web lint
 ```
 
-Before sprint or release completion:
+Trước release:
 
 ```bash
 pnpm test
@@ -96,28 +105,20 @@ pnpm lint
 pnpm build
 ```
 
-If a script does not exist yet, say so and run the closest available verification.
+Nếu script chưa tồn tại, nói rõ và chạy verification gần nhất có sẵn. UI thay đổi phải kiểm tra viewport trong `docs/ui/05-responsive-rules.md`.
 
 ## Review Expectations
 
-Before claiming done, confirm:
+Trước khi báo hoàn tất, xác nhận:
 
-- Acceptance criteria pass.
-- No P0 bug remains.
-- No unauthorized role can access private data.
-- Data persists after refresh where relevant.
-- Diff does not include unrelated refactors.
-- Docs are updated when behavior changes.
+- Acceptance criteria và test scenario liên quan đạt.
+- Không còn P0/P1 issue thuộc phạm vi.
+- Không role nào truy cập dữ liệu riêng tư ngoài quyền.
+- Dữ liệu persist sau refresh khi liên quan.
+- Diff không chứa refactor hoặc generated file không liên quan.
+- API/data/UI docs được cập nhật khi behavior thay đổi.
+- Không có secret hoặc dữ liệu cá nhân trong code, fixture hay log.
 
 ## Subagent Rules
 
-Use subagents mainly for:
-
-- Read-heavy exploration.
-- Independent review passes.
-- Test/log analysis.
-- UI review.
-- Security or maintainability review.
-
-Be careful with parallel write-heavy implementation. Do not let multiple agents edit the same files at the same time unless they are isolated in separate worktrees.
-
+Dùng subagent chủ yếu cho exploration, independent review, test/log analysis, UI review và security review. Không để nhiều agent ghi cùng file nếu không có worktree tách biệt.
