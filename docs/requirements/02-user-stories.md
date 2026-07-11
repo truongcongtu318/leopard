@@ -13,8 +13,10 @@
 | US-09 | F-07 | Là Driver, tôi muốn tải ảnh xác nhận để hoàn tất giao hàng. |
 | US-10 | F-08 | Là Customer, tôi muốn tạo QR và xem trạng thái thanh toán của đơn. |
 | US-11 | F-08 | Là Admin, tôi muốn xác nhận thanh toán thủ công với audit trail. |
-| US-12 | F-09 | Là Admin, tôi muốn lọc và kiểm tra toàn bộ dữ liệu vận hành. |
-| US-13 | F-10 | Là người vận hành, tôi muốn xem health và log để phát hiện sự cố. |
-| US-14 | F-11 | Là người dùng mobile, tôi muốn giao diện rõ ràng ở mọi trạng thái. |
+| US-12 | F-09 | Là Fleet Owner, tôi muốn xem drivers thuộc fleet và trạng thái sẵn sàng của họ. |
+| US-13 | F-09 | Là Fleet Owner, tôi muốn xem orders, tracking và payment summary của drivers thuộc fleet. |
+| US-14 | F-10 | Là Admin, tôi muốn lọc và kiểm tra toàn bộ dữ liệu vận hành. |
+| US-15 | F-11 | Là người vận hành, tôi muốn xem health và log để phát hiện sự cố. |
+| US-16 | F-12 | Là người dùng mobile, tôi muốn giao diện rõ ràng ở mọi trạng thái. |
 
 User story chỉ được đưa vào phát triển khi đạt Definition of Ready trong `docs/development/04-definition-of-ready.md`.

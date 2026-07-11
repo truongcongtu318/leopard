@@ -6,7 +6,7 @@ Namespace: `/tracking`. Handshake: `auth: { token: <accessToken> }`.
 
 ### `tracking:join-order`
 
-Payload: `{"orderId":"uuid"}`. Ack thành công: `{"ok":true,"latestPoint":null}` hoặc latest point. Actor phải là owner, assigned Driver hoặc Admin.
+Payload: `{"orderId":"uuid"}`. Ack thành công: `{"ok":true,"latestPoint":null}` hoặc latest point. Actor phải là owner, assigned Driver, Fleet Owner của assigned Driver hoặc Admin.
 
 ### `tracking:leave-order`
 

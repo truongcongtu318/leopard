@@ -3,6 +3,8 @@
 ## Entity chính
 
 - `User`: identity, phone, role, status và timestamps.
+- `Fleet`: hồ sơ đội xe ở mức pilot.
+- `FleetMember`: quan hệ Fleet Owner/Driver với fleet và trạng thái membership.
 - `DriverProfile`: availability, vehicle type và last known location tùy chọn.
 - `Order`: owner, assigned Driver, route snapshot, price, ETA và lifecycle.
 - `OrderStop`: pickup/stop/dropoff theo thứ tự.
@@ -16,8 +18,10 @@
 ## Enum chuẩn
 
 ```text
-Role: CUSTOMER | DRIVER | ADMIN
+Role: CUSTOMER | DRIVER | FLEET_OWNER | ADMIN
 UserStatus: ACTIVE | DISABLED
+FleetMemberRole: OWNER | DRIVER
+FleetMemberStatus: INVITED | ACTIVE | REMOVED
 DriverAvailability: OFFLINE | AVAILABLE | BUSY
 OrderStatus: REQUESTED | ACCEPTED | PICKING_UP | IN_TRANSIT | DELIVERED | CANCELLED
 StopType: PICKUP | STOP | DROPOFF
@@ -38,6 +42,7 @@ ProviderSource: VIETMAP | DEMO | PAYOS | VIETQR | LOCAL | S3
 
 - `Order(customerId, createdAt desc)`, `Order(status, createdAt desc)`.
 - Partial index cho order active theo `driverId`.
+- `FleetMember(fleetId, role, status)` và unique active membership cho mỗi Driver trong một fleet pilot.
 - `TrackingPoint(orderId, capturedAt desc)`.
 - Unique `TrackingPoint(orderId, clientPointId)`.
 - `PaymentIntent(orderId, createdAt desc)` và partial unique cho intent active.

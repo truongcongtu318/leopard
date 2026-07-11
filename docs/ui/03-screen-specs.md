@@ -15,12 +15,19 @@ Phone/Firebase flow hoặc demo account selector khi được bật. Có trạng
 - `/driver/orders`: availability control, active-order banner và danh sách `REQUESTED`.
 - `/driver/orders/:id`: route/cargo summary, accept action hoặc active workflow; status action hiển thị đúng next state duy nhất; delivery proof trước `DELIVERED`.
 
+## Fleet Owner
+
+- `/fleet`: KPI fleet pilot, drivers theo availability, active orders và cảnh báo cần chú ý.
+- `/fleet/drivers`: table/list drivers thuộc fleet, availability, active order và last known location nếu có quyền.
+- `/fleet/orders`: server pagination, filters theo status/driver/khoảng ngày và payment summary.
+- `/fleet/orders/:id`: route, status history, tracking, media và payment summary chỉ đọc.
+
 ## Admin
 
 - `/admin`: KPI vận hành, số đơn theo status, lỗi cần chú ý và recent orders.
 - `/admin/orders`: table có server pagination, filters, sort và clear filters.
 - `/admin/orders/:id`: route, status history, tracking, media, payment và audited commands.
-- `/admin/users`, `/admin/drivers`: search/filter, status và chi tiết cần thiết.
+- `/admin/users`, `/admin/fleets`, `/admin/drivers`: search/filter, status và chi tiết cần thiết.
 
 ## Map/ETA copy
 

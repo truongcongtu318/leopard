@@ -3,6 +3,8 @@
 ```mermaid
 erDiagram
   USER ||--o| DRIVER_PROFILE : has
+  USER ||--o{ FLEET_MEMBER : joins
+  FLEET ||--o{ FLEET_MEMBER : contains
   USER ||--o{ ORDER : creates
   DRIVER_PROFILE ||--o{ ORDER : accepts
   ORDER ||--|{ ORDER_STOP : contains
@@ -13,6 +15,19 @@ erDiagram
   USER ||--o{ REFRESH_SESSION : holds
   USER ||--o{ AUDIT_LOG : acts
 
+  FLEET {
+    uuid id PK
+    string name
+    string businessPhone
+    UserStatus status
+  }
+  FLEET_MEMBER {
+    uuid id PK
+    uuid fleetId FK
+    uuid userId FK
+    FleetMemberRole role
+    FleetMemberStatus status
+  }
   ORDER {
     uuid id PK
     uuid customerId FK

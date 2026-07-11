@@ -4,8 +4,10 @@
 
 ```mermaid
 flowchart LR
-  Web[Next.js Web/PWA] -->|REST| API[NestJS API]
-  Web <-->|Socket.IO| RT[Tracking Gateway]
+  Mobile[Expo/React Native hoặc Mobile PWA] -->|REST| API[NestJS API]
+  OpsWeb[Next.js Admin/Fleet Web] -->|REST| API
+  Mobile <-->|Socket.IO| RT[Tracking Gateway]
+  OpsWeb <-->|Socket.IO| RT
   API --> DB[(PostgreSQL + PostGIS)]
   RT --> DB
   API --> MAP[Map/ETA Provider]
@@ -14,7 +16,7 @@ flowchart LR
   API --> PAY[Payment Provider]
 ```
 
-Frontend là một Next.js application với route theo role. Backend là modular monolith NestJS; Socket.IO gateway chạy cùng deployment API trong pilot. PostgreSQL là nguồn dữ liệu chuẩn; provider ngoài được bọc qua interface và có demo implementation khi được cấu hình.
+Frontend gồm mobile app/PWA cho Customer và Driver, cùng operations web cho Fleet Owner và Admin. Backend là modular monolith NestJS; Socket.IO gateway chạy cùng deployment API trong pilot. PostgreSQL là nguồn dữ liệu chuẩn; provider ngoài được bọc qua interface và có demo implementation khi được cấu hình.
 
 ## Boundary
 

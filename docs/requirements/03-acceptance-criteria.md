@@ -24,16 +24,23 @@
 ## AC-04 Tracking
 
 - Chỉ assigned Driver gửi được point cho active order.
-- Customer sở hữu order và Admin nhận được event sau khi join room.
+- Customer sở hữu order, Fleet Owner của assigned Driver và Admin nhận được event sau khi join room.
 - Point không hợp lệ hoặc quá giới hạn tần suất bị từ chối mà gateway không ngắt toàn bộ phiên.
 
-## AC-05 Media và payment
+## AC-05 Fleet Owner Lite
+
+- Fleet Owner chỉ xem được drivers thuộc fleet có `FleetMember.status=ACTIVE`.
+- Fleet Owner xem được orders, tracking và payment summary của orders assigned cho Driver thuộc fleet.
+- Fleet Owner bị từ chối khi xem dữ liệu fleet khác hoặc order chưa assigned cho Driver thuộc fleet.
+- Fleet Owner không thể xác nhận payment, cập nhật delivery status hoặc disable user.
+
+## AC-06 Media và payment
 
 - File sai loại hoặc lớn hơn 10 MB bị từ chối.
 - QR response có amount, reference, expiry và provider source.
 - Chỉ Admin xác nhận `PAID_MANUAL`; thao tác tạo audit record.
 
-## AC-06 UI và operations
+## AC-07 UI và operations
 
 - Mỗi màn hình chính có loading, empty, error, success và permission-denied state phù hợp.
 - Customer/Driver dùng được ở viewport 360 px mà không tràn ngang.

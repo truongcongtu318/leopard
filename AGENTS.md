@@ -2,15 +2,17 @@
 
 ## Project Context
 
-LEOPARD là hệ thống kết nối logistics ở mức mini-production pilot với ba role:
+LEOPARD là hệ thống kết nối logistics ở mức mini-production pilot với bốn role:
 
 - Customer tạo và theo dõi shipment order.
 - Driver nhận order, cập nhật delivery status và gửi tracking point.
-- Admin giám sát users, drivers, orders, tracking, media và payment state.
+- Fleet Owner quản lý fleet pilot, drivers thuộc fleet và orders của fleet ở chế độ chủ yếu read-only.
+- Admin giám sát users, fleets, drivers, orders, tracking, media và payment state.
 
 Approved stack:
 
-- Frontend: Next.js, React, TypeScript, Tailwind CSS.
+- Mobile: Expo/React Native hoặc Mobile PWA, TypeScript.
+- Operations Web: Next.js, React, TypeScript, Tailwind CSS.
 - Backend: NestJS, Prisma, TypeScript.
 - Database: PostgreSQL + PostGIS.
 - Realtime: Socket.IO/WebSocket.
@@ -51,6 +53,7 @@ Nếu thiếu thông tin làm thay đổi đáng kể solution, đọc tài li�
 - Không thêm feature nằm trong `docs/product/05-out-of-scope.md` nếu chưa có change request.
 - Backend sở hữu business rules, pricing, ETA, lifecycle và authorization.
 - Kiểm tra cả role lẫn ownership/assignment ở API.
+- Fleet Owner chỉ truy cập dữ liệu qua `FleetMember` hợp lệ; không được kế thừa quyền Admin.
 - Dùng provider interfaces cho map/ETA, storage, OTP và payment.
 - Demo provider chỉ bật theo config; dữ liệu ETA demo phải deterministic và được ghi nhãn.
 - Dùng transaction cho accept order, status history và manual payment confirmation.
@@ -69,7 +72,7 @@ Nếu thiếu thông tin làm thay đổi đáng kể solution, đọc tài li�
 
 LEOPARD là operational logistics UI, không phải landing page.
 
-- Customer và Driver mobile-first; Admin cô đọng và dễ quét.
+- Customer và Driver mobile-first; Fleet Owner/Admin cô đọng và dễ quét.
 - Tuân thủ `docs/ui/04-design-system.md` và responsive rules.
 - Mọi màn hình chính có loading, empty, error, success và permission-denied state.
 - ETA dùng nhãn “ETA dự kiến”; source demo phải hiện “Dữ liệu mô phỏng”.

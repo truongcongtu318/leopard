@@ -29,9 +29,9 @@ Query pagination mặc định `page=1`, `pageSize=20`, tối đa 100. Sort ch�
 | POST | `/orders/estimate` | Customer | Tính route, price và ETA |
 | POST | `/orders` | Customer | Tạo order |
 | GET | `/orders` | Customer | Danh sách order sở hữu |
-| GET | `/orders/:id` | Owner/assigned/Admin | Chi tiết order |
+| GET | `/orders/:id` | Owner/assigned/Fleet Owner/Admin | Chi tiết order |
 | POST | `/orders/:id/cancel` | Owner/Admin | Hủy theo rule |
-| GET | `/orders/:id/tracking` | Owner/assigned/Admin | Tracking history |
+| GET | `/orders/:id/tracking` | Owner/assigned/Fleet Owner/Admin | Tracking history |
 
 Create order input gồm `pickup`, `stops` tối đa 3, `dropoff`, `vehicleType`, `cargoNote`, `cargoWeightKg` tùy chọn và `estimateToken`. Backend không tin giá/ETA do client gửi.
 
@@ -49,6 +49,18 @@ Estimate response gồm `estimateToken`, `polyline`, `distanceM`, `durationS`, `
 
 Status input: `{"status":"IN_TRANSIT","clientRequestId":"uuid"}`. Request lặp với cùng ID trả kết quả cũ.
 
+## Fleet Owner
+
+| Method | Path | Role | Mô tả |
+| --- | --- | --- | --- |
+| GET | `/fleet/profile` | Fleet Owner | Fleet profile hiện tại |
+| GET | `/fleet/drivers` | Fleet Owner | Drivers thuộc fleet có filter |
+| GET | `/fleet/orders` | Fleet Owner | Orders assigned cho Driver thuộc fleet |
+| GET | `/fleet/orders/:id` | Fleet Owner | Order detail nếu thuộc fleet |
+| GET | `/fleet/orders/:id/tracking` | Fleet Owner | Tracking history nếu thuộc fleet |
+
+Fleet filters: `driverId`, `status`, `from`, `to`, `q`, pagination và sort allow-list. Fleet Owner không có endpoint xác nhận payment, cập nhật lifecycle hoặc disable user.
+
 ## Media và payment
 
 | Method | Path | Role | Mô tả |
@@ -57,7 +69,7 @@ Status input: `{"status":"IN_TRANSIT","clientRequestId":"uuid"}`. Request lặp 
 | POST | `/orders/:id/media/delivery-proof` | Assigned Driver | Upload proof |
 | GET | `/media/:id/url` | Authorized | Signed read URL |
 | POST | `/orders/:id/payments` | Owner/Admin | Tạo QR intent |
-| GET | `/orders/:id/payments` | Owner/Admin | Payment history |
+| GET | `/orders/:id/payments` | Owner/Fleet Owner/Admin | Payment history |
 | POST | `/admin/payments/:id/confirm` | Admin | Manual confirmation |
 
 Manual confirmation input gồm `note` từ 5-500 ký tự và `clientRequestId`.
@@ -69,6 +81,7 @@ Manual confirmation input gồm `note` từ 5-500 ký tự và `clientRequestId`
 | GET | `/admin/dashboard` | Admin | Chỉ số vận hành |
 | GET | `/admin/users` | Admin | Users có filter |
 | PATCH | `/admin/users/:id/status` | Admin | Enable/disable |
+| GET | `/admin/fleets` | Admin | Fleets và membership có filter |
 | GET | `/admin/drivers` | Admin | Drivers có filter |
 | GET | `/admin/orders` | Admin | Orders có filter |
 | GET | `/health/live` | Public | Liveness |

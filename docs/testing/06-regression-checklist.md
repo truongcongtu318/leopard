@@ -1,7 +1,8 @@
 # Regression checklist
 
-- Login, refresh và logout cho cả ba role.
+- Login, refresh và logout cho cả bốn role.
 - Role/ownership không bị bypass qua URL hoặc API trực tiếp.
+- Fleet Owner không xem được dữ liệu ngoài fleet và không có action của Admin/Driver.
 - Create order, estimate token, 0-3 stops và persistence.
 - Concurrent accept và Driver active-order constraint.
 - Toàn bộ lifecycle, cancel rules và status history.

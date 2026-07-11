@@ -6,7 +6,8 @@
 | --- | --- | --- |
 | Customer | `0900000001` | Tạo và theo dõi đơn |
 | Driver | `0900000002` | Nhận và giao đơn |
-| Admin | `0900000003` | Vận hành |
+| Fleet Owner | `0900000003` | Theo dõi fleet pilot |
+| Admin | `0900000004` | Vận hành |
 
 Demo login chỉ bật khi `AUTH_PROVIDER=demo` và không được bật ở production-like environment ngoài staging pilot được phê duyệt.
 
@@ -15,6 +16,7 @@ Demo login chỉ bật khi `AUTH_PROVIDER=demo` và không được bật ở pr
 Seed tạo tối thiểu:
 
 - Một Driver `AVAILABLE` và một Driver `OFFLINE`.
+- Một fleet demo có Fleet Owner và hai Driver membership.
 - Một order cho mỗi status.
 - Route cố định tại TP.HCM với 0, 1 và 3 stops.
 - Tracking history cho một order `IN_TRANSIT`.

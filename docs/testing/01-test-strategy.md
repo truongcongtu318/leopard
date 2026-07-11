@@ -2,13 +2,13 @@
 
 ## Mục tiêu
 
-Tập trung rủi ro vào authorization, order lifecycle, concurrent acceptance, tracking, provider fallback, upload và payment confirmation.
+Tập trung rủi ro vào authorization, fleet-scoped ownership, order lifecycle, concurrent acceptance, tracking, provider fallback, upload và payment confirmation.
 
 ## Test pyramid
 
 - Unit: state machine, pricing/ETA demo, permission policy và validation thuần.
 - Integration: NestJS module với test database, Prisma transaction, provider adapter fake và Socket gateway.
-- E2E: luồng theo role qua UI/API ở staging-like environment.
+- E2E: luồng theo role qua UI/API ở staging-like environment, bao gồm Fleet Owner chỉ đọc dữ liệu thuộc fleet.
 - UAT: Product Owner/Admin thực hiện kịch bản nghiệp vụ.
 
 ## Môi trường và dữ liệu
