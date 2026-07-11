@@ -98,6 +98,7 @@ docs/
 - Fleet Owner Lite đã nằm trong scope với quyền giới hạn theo `FleetMember`.
 - Application code, package scripts, Docker Compose và environment template chưa được scaffold.
 - Bước triển khai tiếp theo là dựng monorepo foundation theo [Local Setup](./docs/development/01-local-setup.md).
+- Kế hoạch triển khai song song và prompt cho từng Codex session nằm tại [Multi-Agent Execution Guide](./docs/superpowers/README.md).
 
 Các lệnh dự kiến sau khi scaffold:
 
