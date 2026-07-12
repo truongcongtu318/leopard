@@ -13,20 +13,21 @@ Phase: `PH-01 Foundation`
 
 ## Tasks
 
-- PH-01-T01 Root Workspace: IN_PROGRESS
+- PH-01-T01 Root Workspace: VERIFIED
   - branch: `codex/ph-01-t01-root-workspace`
   - worktree: `.worktrees/ph-01-t01-root-workspace`
   - baseline: `359ad6af0e015dea123290ac4f0270d97089ef7b`
   - owner: Foundation implementer
   - files: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `.npmrc`, `.nvmrc`, `.gitignore`, `scripts/check-workspace.mjs`, `pnpm-lock.yaml`
-- PH-01-T02 Shared TypeScript Configuration: BLOCKED until PH-01-T01 VERIFIED
+- PH-01-T02 Shared TypeScript Configuration: READY
 - PH-01-T03 Shared Domain Contracts: BLOCKED until PH-01-T02 VERIFIED
 - PH-01-T04 Shared Validators: BLOCKED until PH-01-T03 VERIFIED
 - PH-01-T05 Foundation CI Gate: BLOCKED until PH-01-T04 VERIFIED
 
 ## Integrated Task Commits
 
-None yet.
+- PH-01-T01: `359ad6a..709a45c`, review approved, integrated via merge commit on `codex/phase-ph-01`
+  - controller verification: Node 24.18.0 portable + Corepack pnpm `install --frozen-lockfile`, `node scripts/check-workspace.mjs`, `pnpm exec turbo --version` => `2.10.4`, `git diff --check`
 
 ## Minor Review Findings To Revisit
 
