@@ -25,13 +25,13 @@ Phase: `PH-01 Foundation`
   - baseline: `91ed4f09930ccd8462df21d2bb113064fb53557d`
   - owner: Foundation config implementer
   - files: `packages/config/**`, `prettier.config.mjs`, `package.json`, `pnpm-lock.yaml`
-- PH-01-T03 Shared Domain Contracts: IN_PROGRESS
+- PH-01-T03 Shared Domain Contracts: VERIFIED
   - branch: `codex/ph-01-t03-shared-contracts`
   - worktree: `.worktrees/ph-01-t03-shared-contracts`
   - baseline: `e66d3c3cf5688f21d482ddcaa3cb6f55ea96369a`
   - owner: Shared contract implementer
   - files: `packages/shared/**`
-- PH-01-T04 Shared Validators: BLOCKED until PH-01-T03 VERIFIED
+- PH-01-T04 Shared Validators: READY
 - PH-01-T05 Foundation CI Gate: BLOCKED until PH-01-T04 VERIFIED
 
 ## Integrated Task Commits
@@ -40,6 +40,8 @@ Phase: `PH-01 Foundation`
   - controller verification: Node 24.18.0 portable + Corepack pnpm `install --frozen-lockfile`, `node scripts/check-workspace.mjs`, `pnpm exec turbo --version` => `2.10.4`, `git diff --check`
 - PH-01-T02: `91ed4f0..4381383`, review approved, integrated via merge commit on `codex/phase-ph-01`
   - controller verification: Node 24.18.0 portable `node --test packages/config/test/config.test.mjs` => 4/4 pass, Corepack pnpm `format:check`, `git diff --check`
+- PH-01-T03: `e66d3c3..a42aa50`, review approved after Important test-coverage fix, integrated via merge commit on `codex/phase-ph-01`
+  - controller verification: Node 24 portable Corepack pnpm `--filter @leopard/shared test`, `typecheck`, `build`, `git diff --check`
 
 ## Minor Review Findings To Revisit
 
