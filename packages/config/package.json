@@ -1,0 +1,17 @@
+{
+  "name": "@leopard/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint/base": "./eslint/base.mjs",
+    "./package.json": "./package.json",
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./tsconfig/node.json": "./tsconfig/node.json",
+    "./tsconfig/react-native.json": "./tsconfig/react-native.json"
+  },
+  "scripts": {
+    "format:check": "prettier --check ."
+  }
+}
