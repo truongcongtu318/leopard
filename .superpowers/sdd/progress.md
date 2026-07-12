@@ -31,7 +31,12 @@ Phase: `PH-01 Foundation`
   - baseline: `e66d3c3cf5688f21d482ddcaa3cb6f55ea96369a`
   - owner: Shared contract implementer
   - files: `packages/shared/**`
-- PH-01-T04 Shared Validators: READY
+- PH-01-T04 Shared Validators: IN_PROGRESS
+  - branch: `codex/ph-01-t04-shared-validators`
+  - worktree: `.worktrees/ph-01-t04-shared-validators`
+  - baseline: `1d2d5799e1bd4e8d82205d74d357be49936dbf87`
+  - owner: Shared validator implementer
+  - files: `packages/validators/**`, `pnpm-lock.yaml`
 - PH-01-T05 Foundation CI Gate: BLOCKED until PH-01-T04 VERIFIED
 
 ## Integrated Task Commits
