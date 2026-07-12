@@ -25,7 +25,12 @@ Phase: `PH-01 Foundation`
   - baseline: `91ed4f09930ccd8462df21d2bb113064fb53557d`
   - owner: Foundation config implementer
   - files: `packages/config/**`, `prettier.config.mjs`, `package.json`, `pnpm-lock.yaml`
-- PH-01-T03 Shared Domain Contracts: READY
+- PH-01-T03 Shared Domain Contracts: IN_PROGRESS
+  - branch: `codex/ph-01-t03-shared-contracts`
+  - worktree: `.worktrees/ph-01-t03-shared-contracts`
+  - baseline: `e66d3c3cf5688f21d482ddcaa3cb6f55ea96369a`
+  - owner: Shared contract implementer
+  - files: `packages/shared/**`
 - PH-01-T04 Shared Validators: BLOCKED until PH-01-T03 VERIFIED
 - PH-01-T05 Foundation CI Gate: BLOCKED until PH-01-T04 VERIFIED
 
