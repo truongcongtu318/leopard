@@ -78,6 +78,7 @@ Desktop.ini
 .codex-log/
 .codex/tmp/
 .codex/cache/
+.worktrees/
 
 # Test artifacts
 playwright-report/
@@ -96,4 +97,3 @@ cypress/videos/
 *.zip
 *.tar
 *.tar.gz
-
