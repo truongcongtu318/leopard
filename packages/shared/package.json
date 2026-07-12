@@ -14,7 +14,7 @@
     "build": "tsc --project tsconfig.json",
     "format:check": "prettier --check package.json tsconfig.json src",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit --project tsconfig.json"
+    "typecheck": "tsc --noEmit --project tsconfig.test.json"
   },
   "devDependencies": {
     "vitest": "4.1.10"

@@ -1,19 +1,50 @@
 import { describe, expect, it } from 'vitest';
 
-import { FleetMemberStatus, parsePageQuery, ProviderSource } from './index.js';
+import {
+  DriverAvailability,
+  FleetMemberRole,
+  FleetMemberStatus,
+  MediaType,
+  OrderStatus,
+  parsePageQuery,
+  PaymentStatus,
+  ProviderSource,
+  Role,
+  StopType,
+  UserStatus,
+} from './index.js';
+import type { Page } from './index.js';
 
 describe('shared domain contracts', () => {
-  it('defines the canonical fleet member statuses', () => {
-    expect(FleetMemberStatus).toEqual(['INVITED', 'ACTIVE', 'REMOVED']);
-  });
-
-  it('keeps identity providers out of provider sources', () => {
-    expect(ProviderSource).toEqual(['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3']);
+  it('defines the canonical baseline enum values', () => {
+    expect({
+      Role,
+      UserStatus,
+      FleetMemberRole,
+      FleetMemberStatus,
+      DriverAvailability,
+      OrderStatus,
+      StopType,
+      MediaType,
+      PaymentStatus,
+      ProviderSource,
+    }).toEqual({
+      Role: ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'],
+      UserStatus: ['ACTIVE', 'DISABLED'],
+      FleetMemberRole: ['OWNER', 'DRIVER'],
+      FleetMemberStatus: ['INVITED', 'ACTIVE', 'REMOVED'],
+      DriverAvailability: ['OFFLINE', 'AVAILABLE', 'BUSY'],
+      OrderStatus: ['REQUESTED', 'ACCEPTED', 'PICKING_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'],
+      StopType: ['PICKUP', 'STOP', 'DROPOFF'],
+      MediaType: ['CARGO', 'DELIVERY_PROOF'],
+      PaymentStatus: ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'],
+      ProviderSource: ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'],
+    });
     expect(ProviderSource).not.toContain('FIREBASE');
   });
 
   it('uses the documented pagination response shape', () => {
-    const page = {
+    const page: Page<{ id: string }> = {
       items: [{ id: 'order-1' }],
       page: 1,
       pageSize: 20,
@@ -21,7 +52,7 @@ describe('shared domain contracts', () => {
       totalPages: 1,
     };
 
-    expect(JSON.parse(JSON.stringify(page))).toEqual({
+    expect(page).toEqual({
       items: [{ id: 'order-1' }],
       page: 1,
       pageSize: 20,
