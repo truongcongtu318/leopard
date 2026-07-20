@@ -13,10 +13,12 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "format:check": "prettier --check package.json tsconfig.json src",
+    "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit --project tsconfig.test.json"
   },
   "devDependencies": {
+    "@leopard/config": "workspace:*",
     "vitest": "4.1.10"
   }
 }

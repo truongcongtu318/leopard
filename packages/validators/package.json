@@ -13,6 +13,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "format:check": "prettier --check package.json tsconfig.json src",
+    "lint": "eslint .",
     "prebuild": "pnpm --filter @leopard/shared build",
     "pretest": "pnpm --filter @leopard/shared build",
     "pretypecheck": "pnpm --filter @leopard/shared build",
@@ -24,6 +25,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@leopard/config": "workspace:*",
     "vitest": "4.1.10"
   }
 }

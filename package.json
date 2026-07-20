@@ -19,6 +19,7 @@
     "format:check": "turbo run format:check"
   },
   "devDependencies": {
+    "eslint": "9.39.5",
     "prettier": "3.6.2",
     "turbo": "2.10.4",
     "typescript": "7.0.2"
