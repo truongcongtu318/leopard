@@ -4,7 +4,7 @@ Orchestrator branch: `codex/phase-ph-01`
 Develop baseline: `8997107fc48840eb02f9a7367ad4fa96ce77ac2c`
 Wave: `0`
 Phase: `PH-01 Foundation`
-Verified PH-01 baseline: `846711346c49879a8b3c200189efb69b59990bc6`
+Verified PH-01 baseline: `7963e2c9b1460eb5778ea2ce376469269592583c`
 Wave 0 integration branch: `codex/integration-wave-0`
 Wave 0 integration merge baseline: `37a38cf44c138c875c167bfe1743614de02a256e`
 
@@ -100,7 +100,6 @@ Wave 0 integration merge baseline: `37a38cf44c138c875c167bfe1743614de02a256e`
 
 - PH-01-T04 optional: add explicit regression tests for unknown keys and `mediaIds` length to guard `.strict()` and max-5 constraints.
 - Final whole-branch review optional: pnpm `.npmrc` settings may be ineffective in pnpm 11; consider moving settings to `pnpm-workspace.yaml` in a future tooling pass.
-- Final whole-branch review optional: rename `Blockers` to `Resolved Blockers` for clarity after Wave 0 completes.
 
 ## Final Review Fixes
 
