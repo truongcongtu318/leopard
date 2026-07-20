@@ -45,6 +45,19 @@ describe('shared request schemas', () => {
     expect(result.success).toBe(true);
   });
 
+  it('rejects a vehicle type outside the shared contract', () => {
+    const result = createOrderSchema.safeParse({
+      pickup,
+      stops: [],
+      dropoff,
+      vehicleType: 'BICYCLE',
+      cargoNote: 'Unsupported vehicle',
+      estimateToken: 'signed-estimate-token',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('rejects latitude outside the geographic range', () => {
     expect(geoPointSchema.safeParse({ latitude: 90.001, longitude: 106.7 }).success).toBe(false);
   });

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-import { geoPointSchema, uuidSchema } from './common.js';
+import { VehicleType } from '@leopard/shared';
 
-const supportedVehicleTypes = ['MOTORBIKE', 'VAN', 'TRUCK'] as const;
+import { geoPointSchema, uuidSchema } from './common.js';
 
 const orderLocationSchema = geoPointSchema
   .extend({
@@ -15,7 +15,7 @@ export const createOrderSchema = z
     pickup: orderLocationSchema,
     stops: z.array(orderLocationSchema).max(3),
     dropoff: orderLocationSchema,
-    vehicleType: z.enum(supportedVehicleTypes),
+    vehicleType: z.enum(VehicleType),
     cargoNote: z.string().trim().min(1).max(1000),
     cargoWeightKg: z.number().finite().positive().optional(),
     mediaIds: z.array(uuidSchema).max(5).optional(),

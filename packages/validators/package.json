@@ -13,6 +13,8 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "format:check": "prettier --check package.json tsconfig.json src",
+    "prebuild": "pnpm --filter @leopard/shared build",
+    "pretest": "pnpm --filter @leopard/shared build",
     "pretypecheck": "pnpm --filter @leopard/shared build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit --project tsconfig.test.json"
