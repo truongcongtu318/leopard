@@ -38,7 +38,7 @@ Phase: `PH-01 Foundation`
   - owner: Shared validator implementer
   - files: `packages/validators/**`, `pnpm-lock.yaml`
   - blocker: reviewer found `createOrderSchema` invents vehicle type allowlist `MOTORBIKE | VAN | TRUCK`; source docs mention `vehicleType` but do not define canonical values, and fixing requires changing controlled shared/source contract outside T04 ownership.
-- PH-01 VehicleType Contract Remediation: IN_PROGRESS
+- PH-01 VehicleType Contract Remediation: VERIFIED
   - branch: `codex/ph-01-contract-vehicle-type`
   - worktree: `.worktrees/ph-01-contract-vehicle-type`
   - baseline: `0217275a9415699f4ae40ff054fc3e81d6eb4675`
@@ -55,6 +55,8 @@ Phase: `PH-01 Foundation`
   - controller verification: Node 24.18.0 portable `node --test packages/config/test/config.test.mjs` => 4/4 pass, Corepack pnpm `format:check`, `git diff --check`
 - PH-01-T03: `e66d3c3..a42aa50`, review approved after Important test-coverage fix, integrated via merge commit on `codex/phase-ph-01`
   - controller verification: Node 24 portable Corepack pnpm `--filter @leopard/shared test`, `typecheck`, `build`, `git diff --check`
+- PH-01 VehicleType Contract Remediation: `0217275..fe1600d`, review approved, integrated via merge commit on `codex/phase-ph-01`
+  - controller verification: Node 24 portable Corepack pnpm `--filter @leopard/shared test` => 1 file / 3 tests pass, `typecheck`, `build`, `git diff --check`
 
 ## Minor Review Findings To Revisit
 
