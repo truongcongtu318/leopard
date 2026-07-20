@@ -13,6 +13,9 @@ export type FleetMemberStatus = (typeof FleetMemberStatus)[number];
 export const DriverAvailability = ['OFFLINE', 'AVAILABLE', 'BUSY'] as const;
 export type DriverAvailability = (typeof DriverAvailability)[number];
 
+export const VehicleType = ['MOTORBIKE', 'VAN', 'TRUCK'] as const;
+export type VehicleType = (typeof VehicleType)[number];
+
 export const OrderStatus = [
   'REQUESTED',
   'ACCEPTED',

@@ -114,6 +114,7 @@ export type PaymentStatus =
   | 'FAILED';
 
 export type DriverAvailability = 'OFFLINE' | 'AVAILABLE' | 'BUSY';
+export type VehicleType = 'MOTORBIKE' | 'VAN' | 'TRUCK';
 export type FleetMemberStatus = 'INVITED' | 'ACTIVE' | 'REMOVED';
 export type ProviderSource = 'VIETMAP' | 'DEMO' | 'PAYOS' | 'VIETQR' | 'LOCAL' | 'S3';
 
