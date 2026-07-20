@@ -70,6 +70,17 @@ Phase: `PH-01 Foundation`
 ## Minor Review Findings To Revisit
 
 - PH-01-T04 optional: add explicit regression tests for unknown keys and `mediaIds` length to guard `.strict()` and max-5 constraints.
+- Final whole-branch review optional: pnpm `.npmrc` settings may be ineffective in pnpm 11; consider moving settings to `pnpm-workspace.yaml` in a future tooling pass.
+- Final whole-branch review optional: rename `Blockers` to `Resolved Blockers` for clarity after Wave 0 completes.
+
+## Final Review Fixes
+
+- PH-01 Final Lint Gate Fix: IN_PROGRESS
+  - branch: `codex/ph-01-final-lint-gate-fix`
+  - worktree: `.worktrees/ph-01-final-lint-gate-fix`
+  - baseline: `37ab94620ff57e37be66ff96c486fcbd0cdc68bf`
+  - owner: Foundation tooling fix implementer
+  - blocker: final reviewer found root `pnpm lint` ran zero Turbo tasks, so CI lint quality gate was a no-op.
 
 ## Blockers
 
