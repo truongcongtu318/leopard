@@ -1,6 +1,26 @@
 # Local setup
 
-Repo hiện ở giai đoạn specification; cấu trúc implementation dự kiến:
+Foundation workspace đã sẵn sàng cho shared packages. Runtime apps và local infrastructure sẽ được scaffold ở phase sau.
+
+## Yêu cầu
+
+- Node.js 24 LTS.
+- Corepack, dùng pnpm được pin trong `package.json`.
+
+## Cài đặt và kiểm tra foundation
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+CI chạy đúng các lệnh quality này cho pull request vào `develop` và `main`.
+
+## Cấu trúc runtime dự kiến
 
 ```text
 apps/web
@@ -12,21 +32,4 @@ packages/ui
 packages/config
 ```
 
-## Yêu cầu
-
-- Node.js LTS và pnpm.
-- Docker + Docker Compose.
-- PostgreSQL có PostGIS qua container.
-
-## Luồng setup dự kiến
-
-```bash
-pnpm install
-cp .env.example .env
-pnpm db:up
-pnpm prisma:migrate
-pnpm db:seed
-pnpm dev
-```
-
-Local mặc định `AUTH_PROVIDER=demo`, `MAP_PROVIDER=demo`, `STORAGE_PROVIDER=local`, `PAYMENT_PROVIDER=demo`. Credential thật không được commit. Khi scaffold được tạo, README và tài liệu này phải cập nhật theo script thực tế.
+Docker, PostgreSQL/PostGIS, environment template và provider configuration chưa thuộc foundation. Credential thật không được commit.

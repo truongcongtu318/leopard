@@ -96,23 +96,23 @@ docs/
 
 - Bộ tài liệu mini-production pilot đã được thiết kế.
 - Fleet Owner Lite đã nằm trong scope với quyền giới hạn theo `FleetMember`.
-- Application code, package scripts, Docker Compose và environment template chưa được scaffold.
-- Bước triển khai tiếp theo là dựng monorepo foundation theo [Local Setup](./docs/development/01-local-setup.md).
+- Foundation pnpm workspace, shared contracts, validators và quality scripts đã sẵn sàng.
+- Application runtime, Docker Compose và environment template chưa được scaffold.
+- Hướng dẫn chạy foundation nằm tại [Local Setup](./docs/development/01-local-setup.md).
 - Kế hoạch triển khai song song và prompt cho từng Codex session nằm tại [Multi-Agent Execution Guide](./docs/superpowers/README.md).
 
-Các lệnh dự kiến sau khi scaffold:
+Kiểm tra foundation cục bộ:
 
 ```bash
+corepack enable
 pnpm install
-pnpm db:up
-pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
 ```
 
-Nếu script chưa tồn tại, implementation task phải tạo hoặc ghi rõ verification gần nhất đã chạy. Không commit secret thật.
+CI chạy cùng các quality scripts này cho pull request vào `develop` và `main`. Không commit secret thật.
 
 ## Làm việc với agent
 
