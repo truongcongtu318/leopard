@@ -31,7 +31,7 @@ Phase: `PH-01 Foundation`
   - baseline: `e66d3c3cf5688f21d482ddcaa3cb6f55ea96369a`
   - owner: Shared contract implementer
   - files: `packages/shared/**`
-- PH-01-T04 Shared Validators: IN_PROGRESS
+- PH-01-T04 Shared Validators: VERIFIED
   - branch: `codex/ph-01-t04-shared-validators`
   - worktree: `.worktrees/ph-01-t04-shared-validators`
   - baseline: `1d2d5799e1bd4e8d82205d74d357be49936dbf87`
@@ -57,6 +57,8 @@ Phase: `PH-01 Foundation`
   - controller verification: Node 24 portable Corepack pnpm `--filter @leopard/shared test`, `typecheck`, `build`, `git diff --check`
 - PH-01 VehicleType Contract Remediation: `0217275..fe1600d`, review approved, integrated via merge commit on `codex/phase-ph-01`
   - controller verification: Node 24 portable Corepack pnpm `--filter @leopard/shared test` => 1 file / 3 tests pass, `typecheck`, `build`, `git diff --check`
+- PH-01-T04: `0ab6632..c6b45bd`, review approved after Critical vehicle contract remediation/fix, integrated via merge commit on `codex/phase-ph-01`
+  - controller verification: Node 24 portable Corepack pnpm `--filter @leopard/validators test` => 1 file / 8 tests pass, `typecheck`, `build`, `git diff --check`
 
 ## Minor Review Findings To Revisit
 
