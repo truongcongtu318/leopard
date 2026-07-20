@@ -31,12 +31,13 @@ Phase: `PH-01 Foundation`
   - baseline: `e66d3c3cf5688f21d482ddcaa3cb6f55ea96369a`
   - owner: Shared contract implementer
   - files: `packages/shared/**`
-- PH-01-T04 Shared Validators: IN_PROGRESS
+- PH-01-T04 Shared Validators: BLOCKED
   - branch: `codex/ph-01-t04-shared-validators`
   - worktree: `.worktrees/ph-01-t04-shared-validators`
   - baseline: `1d2d5799e1bd4e8d82205d74d357be49936dbf87`
   - owner: Shared validator implementer
   - files: `packages/validators/**`, `pnpm-lock.yaml`
+  - blocker: reviewer found `createOrderSchema` invents vehicle type allowlist `MOTORBIKE | VAN | TRUCK`; source docs mention `vehicleType` but do not define canonical values, and fixing requires changing controlled shared/source contract outside T04 ownership.
 - PH-01-T05 Foundation CI Gate: BLOCKED until PH-01-T04 VERIFIED
 
 ## Integrated Task Commits
@@ -51,3 +52,14 @@ Phase: `PH-01 Foundation`
 ## Minor Review Findings To Revisit
 
 None yet.
+
+## Blockers
+
+Task: PH-01-T04
+Baseline: `1d2d5799e1bd4e8d82205d74d357be49936dbf87`
+Blocked contract: canonical `VehicleType` values for `createOrderSchema.vehicleType`
+Requirement: `docs/requirements/03-acceptance-criteria.md` says unsupported vehicle type receives HTTP 422; `docs/superpowers/plans/01-foundation.md` requires `createOrderSchema` to accept supported vehicle type; T04 consumes shared enums from `@leopard/shared`.
+Minimal change: define canonical vehicle type values in source contract and `@leopard/shared`, then update `@leopard/validators` to consume that enum instead of local `MOTORBIKE | VAN | TRUCK`.
+Consumers affected: `PH-01-T04`, later `PH-06`, `PH-07`, `PH-12` order/pricing/client flows.
+Migration compatibility: none.
+Tests required: shared contract enum regression; validators unsupported-vehicle regression; validators test/typecheck/build.
