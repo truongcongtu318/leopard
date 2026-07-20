@@ -12,6 +12,7 @@ import {
   Role,
   StopType,
   UserStatus,
+  VehicleType,
 } from './index.js';
 import type { Page } from './index.js';
 
@@ -28,6 +29,7 @@ describe('shared domain contracts', () => {
       MediaType,
       PaymentStatus,
       ProviderSource,
+      VehicleType,
     }).toEqual({
       Role: ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'],
       UserStatus: ['ACTIVE', 'DISABLED'],
@@ -39,6 +41,7 @@ describe('shared domain contracts', () => {
       MediaType: ['CARGO', 'DELIVERY_PROOF'],
       PaymentStatus: ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'],
       ProviderSource: ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'],
+      VehicleType: ['MOTORBIKE', 'VAN', 'TRUCK'],
     });
     expect(ProviderSource).not.toContain('FIREBASE');
   });
