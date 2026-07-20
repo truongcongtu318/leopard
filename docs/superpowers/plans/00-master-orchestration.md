@@ -27,7 +27,7 @@ Orchestrator cập nhật bảng này ngay sau khi integration gate pass. Không
 
 | Wave | Integration branch | Baseline commit | Gate status |
 | --- | --- | --- | --- |
-| 0 | `codex/integration-wave-0` | Chưa tạo trước execution | `NOT_STARTED` |
+| 0 | `codex/integration-wave-0` | `37a38cf44c138c875c167bfe1743614de02a256e` | `PASSED` |
 | 1 | `codex/integration-wave-1` | Chưa tạo trước execution | `NOT_STARTED` |
 | 2 | `codex/integration-wave-2` | Chưa tạo trước execution | `NOT_STARTED` |
 | 3 | `codex/integration-wave-3` | Chưa tạo trước execution | `NOT_STARTED` |

@@ -5,6 +5,8 @@ Develop baseline: `8997107fc48840eb02f9a7367ad4fa96ce77ac2c`
 Wave: `0`
 Phase: `PH-01 Foundation`
 Verified PH-01 baseline: `846711346c49879a8b3c200189efb69b59990bc6`
+Wave 0 integration branch: `codex/integration-wave-0`
+Wave 0 integration merge baseline: `37a38cf44c138c875c167bfe1743614de02a256e`
 
 ## Preflight
 
@@ -18,6 +20,19 @@ Verified PH-01 baseline: `846711346c49879a8b3c200189efb69b59990bc6`
   - baseline before gate record: `846711346c49879a8b3c200189efb69b59990bc6`
   - Node: `v24.14.0`; Corepack pnpm: `11.11.0`
   - clean install from empty `node_modules`: `pnpm install --frozen-lockfile` exit 0
+  - `node scripts/verify-foundation.mjs` exit 0
+  - forced `turbo run lint --force`: 3 successful / 3 total, cache bypass
+  - forced `turbo run typecheck --force`: 2 successful / 2 total, cache bypass
+  - forced `turbo run test --force`: 2 successful / 2 total, 11 tests pass, cache bypass
+  - forced `turbo run build --force`: 2 successful / 2 total, cache bypass
+  - `git diff --check` exit 0
+
+## Wave Gate
+
+- Wave 0 integration gate: PASSED on `codex/integration-wave-0`
+  - integration merge baseline: `37a38cf44c138c875c167bfe1743614de02a256e`
+  - Node: `v24.14.0`; Corepack pnpm: `11.11.0`
+  - `pnpm install --frozen-lockfile` exit 0
   - `node scripts/verify-foundation.mjs` exit 0
   - forced `turbo run lint --force`: 3 successful / 3 total, cache bypass
   - forced `turbo run typecheck --force`: 2 successful / 2 total, cache bypass
