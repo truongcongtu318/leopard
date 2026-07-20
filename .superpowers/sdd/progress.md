@@ -45,7 +45,12 @@ Phase: `PH-01 Foundation`
   - owner: Contract remediation implementer
   - files: `packages/shared/src/enums.ts`, `packages/shared/src/contracts.test.ts`, `docs/data/01-database-design.md`, `docs/api/01-rest-api-spec.md`, `docs/superpowers/plans/00-master-orchestration.md`
   - purpose: define canonical pilot `VehicleType` values before PH-01-T04 consumes them.
-- PH-01-T05 Foundation CI Gate: BLOCKED until PH-01-T04 VERIFIED
+- PH-01-T05 Foundation CI Gate: IN_PROGRESS
+  - branch: `codex/ph-01-t05-foundation-ci`
+  - worktree: `.worktrees/ph-01-t05-foundation-ci`
+  - baseline: `a41c956be039225bc76e08a0c9887c8c28edacc4`
+  - owner: Foundation CI implementer
+  - files: `.github/workflows/ci.yml`, `scripts/verify-foundation.mjs`, `README.md`, `docs/development/01-local-setup.md`
 
 ## Integrated Task Commits
 
