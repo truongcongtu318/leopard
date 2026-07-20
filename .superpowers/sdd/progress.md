@@ -45,7 +45,7 @@ Phase: `PH-01 Foundation`
   - owner: Contract remediation implementer
   - files: `packages/shared/src/enums.ts`, `packages/shared/src/contracts.test.ts`, `docs/data/01-database-design.md`, `docs/api/01-rest-api-spec.md`, `docs/superpowers/plans/00-master-orchestration.md`
   - purpose: define canonical pilot `VehicleType` values before PH-01-T04 consumes them.
-- PH-01-T05 Foundation CI Gate: IN_PROGRESS
+- PH-01-T05 Foundation CI Gate: VERIFIED
   - branch: `codex/ph-01-t05-foundation-ci`
   - worktree: `.worktrees/ph-01-t05-foundation-ci`
   - baseline: `a41c956be039225bc76e08a0c9887c8c28edacc4`
@@ -64,6 +64,8 @@ Phase: `PH-01 Foundation`
   - controller verification: Node 24 portable Corepack pnpm `--filter @leopard/shared test` => 1 file / 3 tests pass, `typecheck`, `build`, `git diff --check`
 - PH-01-T04: `0ab6632..c6b45bd`, review approved after Critical vehicle contract remediation/fix, integrated via merge commit on `codex/phase-ph-01`
   - controller verification: Node 24 portable Corepack pnpm `--filter @leopard/validators test` => 1 file / 8 tests pass, `typecheck`, `build`, `git diff --check`
+- PH-01-T05: `a41c956..59e2394`, review approved, integrated via merge commit on `codex/phase-ph-01`
+  - controller verification: Node 24 portable `node scripts/verify-foundation.mjs`, Corepack pnpm `lint`, `typecheck`, `test` => 2 files / 11 tests pass, `build`, `git diff --check`
 
 ## Minor Review Findings To Revisit
 
