@@ -75,14 +75,15 @@ Phase: `PH-01 Foundation`
 
 ## Final Review Fixes
 
-- PH-01 Final Lint Gate Fix: IN_PROGRESS
+- PH-01 Final Lint Gate Fix: VERIFIED
   - branch: `codex/ph-01-final-lint-gate-fix`
   - worktree: `.worktrees/ph-01-final-lint-gate-fix`
   - baseline: `37ab94620ff57e37be66ff96c486fcbd0cdc68bf`
   - owner: Foundation tooling fix implementer
   - blocker: final reviewer found root `pnpm lint` ran zero Turbo tasks, so CI lint quality gate was a no-op.
+  - controller verification: Node 24 portable Corepack pnpm `exec turbo run lint --force` => 3 successful / 3 total, `lint`, `typecheck`, `test`, `build`, `git diff --check`
 
-## Blockers
+## Resolved Blockers
 
 Task: PH-01-T04
 Baseline: `1d2d5799e1bd4e8d82205d74d357be49936dbf87`
