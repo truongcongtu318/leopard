@@ -38,6 +38,13 @@ Phase: `PH-01 Foundation`
   - owner: Shared validator implementer
   - files: `packages/validators/**`, `pnpm-lock.yaml`
   - blocker: reviewer found `createOrderSchema` invents vehicle type allowlist `MOTORBIKE | VAN | TRUCK`; source docs mention `vehicleType` but do not define canonical values, and fixing requires changing controlled shared/source contract outside T04 ownership.
+- PH-01 VehicleType Contract Remediation: IN_PROGRESS
+  - branch: `codex/ph-01-contract-vehicle-type`
+  - worktree: `.worktrees/ph-01-contract-vehicle-type`
+  - baseline: `0217275a9415699f4ae40ff054fc3e81d6eb4675`
+  - owner: Contract remediation implementer
+  - files: `packages/shared/src/enums.ts`, `packages/shared/src/contracts.test.ts`, `docs/data/01-database-design.md`, `docs/api/01-rest-api-spec.md`, `docs/superpowers/plans/00-master-orchestration.md`
+  - purpose: define canonical pilot `VehicleType` values before PH-01-T04 consumes them.
 - PH-01-T05 Foundation CI Gate: BLOCKED until PH-01-T04 VERIFIED
 
 ## Integrated Task Commits
