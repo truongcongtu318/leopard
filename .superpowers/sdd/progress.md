@@ -31,13 +31,13 @@ Phase: `PH-01 Foundation`
   - baseline: `e66d3c3cf5688f21d482ddcaa3cb6f55ea96369a`
   - owner: Shared contract implementer
   - files: `packages/shared/**`
-- PH-01-T04 Shared Validators: BLOCKED
+- PH-01-T04 Shared Validators: IN_PROGRESS
   - branch: `codex/ph-01-t04-shared-validators`
   - worktree: `.worktrees/ph-01-t04-shared-validators`
   - baseline: `1d2d5799e1bd4e8d82205d74d357be49936dbf87`
   - owner: Shared validator implementer
   - files: `packages/validators/**`, `pnpm-lock.yaml`
-  - blocker: reviewer found `createOrderSchema` invents vehicle type allowlist `MOTORBIKE | VAN | TRUCK`; source docs mention `vehicleType` but do not define canonical values, and fixing requires changing controlled shared/source contract outside T04 ownership.
+  - blocker resolved by PH-01 VehicleType Contract Remediation; branch refreshed onto phase baseline with canonical shared `VehicleType`.
 - PH-01 VehicleType Contract Remediation: VERIFIED
   - branch: `codex/ph-01-contract-vehicle-type`
   - worktree: `.worktrees/ph-01-contract-vehicle-type`
@@ -60,7 +60,7 @@ Phase: `PH-01 Foundation`
 
 ## Minor Review Findings To Revisit
 
-None yet.
+- PH-01-T04 optional: add explicit regression tests for unknown keys and `mediaIds` length to guard `.strict()` and max-5 constraints.
 
 ## Blockers
 
