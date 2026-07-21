@@ -27,7 +27,7 @@ Orchestrator cập nhật bảng này ngay sau khi integration gate pass. Không
 
 | Wave | Integration branch | Baseline commit | Gate status |
 | --- | --- | --- | --- |
-| 0 | `codex/integration-wave-0` | Chưa tạo trước execution | `NOT_STARTED` |
+| 0 | `codex/integration-wave-0` | `37a38cf44c138c875c167bfe1743614de02a256e` | `PASSED` |
 | 1 | `codex/integration-wave-1` | Chưa tạo trước execution | `NOT_STARTED` |
 | 2 | `codex/integration-wave-2` | Chưa tạo trước execution | `NOT_STARTED` |
 | 3 | `codex/integration-wave-3` | Chưa tạo trước execution | `NOT_STARTED` |
@@ -114,6 +114,7 @@ export type PaymentStatus =
   | 'FAILED';
 
 export type DriverAvailability = 'OFFLINE' | 'AVAILABLE' | 'BUSY';
+export type VehicleType = 'MOTORBIKE' | 'VAN' | 'TRUCK';
 export type FleetMemberStatus = 'INVITED' | 'ACTIVE' | 'REMOVED';
 export type ProviderSource = 'VIETMAP' | 'DEMO' | 'PAYOS' | 'VIETQR' | 'LOCAL' | 'S3';
 
@@ -139,7 +140,7 @@ export interface Page<T> {
 
 | Task | Plan | Wave | Dependencies | Agent | Status |
 | --- | --- | --- | --- | --- | --- |
-| PH-01-T01..T05 | `01-foundation.md` | 0 | None | Foundation/Contract | `NOT_STARTED` |
+| PH-01-T01..T05 | `01-foundation.md` | 0 | None | Foundation/Contract | `VERIFIED` |
 | PH-02-T01..T05 | `02-backend-core.md` | 1 | PH-01 | Backend/Data | `NOT_STARTED` |
 | PH-03-T01..T04 | `03-expo-mobile-foundation.md` | 1 | PH-01 | Expo | `NOT_STARTED` |
 | PH-04-T01..T04 | `04-operations-web-foundation.md` | 1 | PH-01 | Web | `NOT_STARTED` |
