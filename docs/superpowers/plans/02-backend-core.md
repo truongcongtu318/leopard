@@ -6,7 +6,7 @@
 
 **Architecture:** Modular monolith; controller parse/validate, application service sở hữu use case, repository sở hữu Prisma access. Global middleware tạo request ID; exception filter trả stable error envelope.
 
-**Tech Stack:** NestJS 11.1.28, Prisma 7.8.0 ESM, PostgreSQL 17, PostGIS 3.5, Jest 30.4.2, Supertest 7.2.2.
+**Tech Stack:** NestJS 11.1.28, Prisma 7.8.0 ESM, PostgreSQL 17, PostGIS 3.5, Jest 30.0.5, Supertest 7.2.2.
 
 ## Global Constraints
 

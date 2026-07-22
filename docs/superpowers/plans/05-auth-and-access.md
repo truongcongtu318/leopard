@@ -6,7 +6,7 @@
 
 **Architecture:** `AuthModule` issues short-lived JWT access tokens and opaque hashed refresh sessions. Provider adapter verifies identity; policy guard composes role with resource-specific ownership checks.
 
-**Tech Stack:** NestJS 11.1.28, Prisma 7.8.0, jose 6.2.3, Argon2 0.44.0, Firebase Admin 14.1.0, Jest 30.4.2, Supertest 7.2.2.
+**Tech Stack:** NestJS 11.1.28, Prisma 7.8.0, jose 6.2.3, Argon2 0.44.0, Firebase Admin 14.1.0, Jest 30.0.5, Supertest 7.2.2.
 
 ## Global Constraints
 

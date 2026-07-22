@@ -121,3 +121,60 @@ Minimal change: define canonical vehicle type values in source contract and `@le
 Consumers affected: `PH-01-T04`, later `PH-06`, `PH-07`, `PH-12` order/pricing/client flows.
 Migration compatibility: none.
 Tests required: shared contract enum regression; validators unsupported-vehicle regression; validators test/typecheck/build.
+
+---
+
+# LEOPARD Wave 1 Single-Branch Progress
+
+Branch: `codex/wave-1-runtime-foundations`
+Approved execution baseline: `ae64d68`
+Coordinator owns: Git mutations, `pnpm-lock.yaml`, task ledger and dependency barriers.
+Implementation agents: Agent A Backend/Platform; Agent B Client Foundations.
+
+## Wave 1 Tasks
+
+- PH-02-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
+- PH-02-T02: READY after PH-13-T01A database slice
+- PH-02-T03: READY after PH-02-T01
+- PH-02-T04: READY after PH-02-T01
+- PH-02-T05: READY after PH-02-T01..T04
+- PH-03-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
+- PH-03-T02: READY after PH-03-T01
+- PH-03-T03: READY after PH-03-T01
+- PH-03-T04: READY after PH-03-T01/T02
+- PH-04-T01..T04: NOT_STARTED — wait for PH-03 VERIFIED and D3
+- PH-13-T01: READY — database slice PH-13-T01A follows verified PH-02-T01
+- PH-13-T03: NOT_STARTED — waits for runtime scripts and PH-13-T01
+
+## Coordinator Checkpoints
+
+- C-00: complete — approved spec/plan/master override committed as `ae64d68`
+- D1: VERIFIED — checkpoint commit pending
+  - Node `24.14.0`, pnpm `11.11.0`
+  - frozen install: PASS
+  - peer dependency check: PASS
+  - API RED: PASS as evidence — exit 1 on missing `./app.module.js`
+  - Mobile RED: PASS as evidence — exit 1 on missing `../app/_layout`
+  - API GREEN: PASS — E2E 1/1, typecheck, build and lint; dev startup/steady-state lifecycle clean
+  - Mobile GREEN: PASS — tests 2/2, typecheck, lint and Expo web export (774 modules)
+  - cross-review: APPROVED after PH-02 I-01/I-02 and PH-03 I-01 remediation
+- D2: pending
+- D3: pending
+- Final Wave 1 gate: pending
+
+## Wave 1 Remediation Decisions
+
+- Mobile test tooling: `jest-expo@57.0.4` does not exist; use SDK-57 dist-tag `57.0.2` and direct `babel-preset-expo@57.0.3`.
+- Mobile peers: pin Jest `29.7.0` for `jest-watch-typeahead`, and `react-native-worklets@0.10.0` for Expo 57 peer compatibility.
+- API transform: replace `ts-jest` because its TypeScript peer excludes repo TypeScript 7; use `@swc/jest@0.2.39` + `@swc/core@1.15.46`.
+- API Jest: registry package `30.4.2` and `30.4.1` fail internally before test module loading; pin tested `30.0.5`. Phase plans PH-02/05/08 updated consistently.
+- Native build allowlist: Coordinator approved only `@prisma/engines`, `@swc/core`, `prisma`, `unrs-resolver` in `pnpm-workspace.yaml`; install and peer audit pass.
+- Mobile direct runtime/test dependencies: add `@jest/globals@29.7.0`, `react-native-safe-area-context@5.8.0`, `react-native-web@0.21.2` and `react-dom@19.2.7` after typecheck/export and deprecation evidence.
+- API validation runtime: add `class-validator@0.15.1` and `class-transformer@0.5.1`, both inside Nest 11.1.28 peer ranges.
+- Nest CLI 11.0.14 cannot parse TypeScript 7 configuration even with the SWC builder. API build uses direct `tsc`; development uses the reviewed Node runner with initial compile, TypeScript/Node watchers and process-tree cleanup.
+
+## Wave 1 Minor Review Findings To Revisit
+
+- PH-02-T01 M-01: shell E2E boots `AppModule` directly and does not exercise `createApplication` bootstrap configuration.
+- PH-02-T01 M-02: CORS allowlist schema accepts general URLs rather than canonical HTTP(S) origins only.
+- PH-02-T01 M-03: POSIX watcher cleanup has no bounded SIGKILL escalation if a process group ignores shutdown.

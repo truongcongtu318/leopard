@@ -6,7 +6,7 @@
 
 **Architecture:** Socket gateway authenticates handshake and delegates policy/persistence to `TrackingService`. Point is committed before broadcast; REST history and realtime event share one response mapper.
 
-**Tech Stack:** Socket.IO server/client 4.8.3, `@nestjs/platform-socket.io` 11.1.28, Prisma 7.8.0/PostGIS 3.5, Jest 30.4.2.
+**Tech Stack:** Socket.IO server/client 4.8.3, `@nestjs/platform-socket.io` 11.1.28, Prisma 7.8.0/PostGIS 3.5, Jest 30.0.5.
 
 ## Global Constraints
 

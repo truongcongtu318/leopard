@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "LEOPARD Pilot",
+    "slug": "leopard-pilot",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "scheme": "leopard",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.leopard.pilot",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.leopard.pilot"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
