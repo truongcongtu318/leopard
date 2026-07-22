@@ -134,22 +134,22 @@ Implementation agents: Agent A Backend/Platform; Agent B Client Foundations.
 ## Wave 1 Tasks
 
 - PH-02-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
-- PH-02-T02: READY after PH-13-T01A database slice
+- PH-02-T02: READY — PH-13-T01A database slice GREEN and cross-review APPROVED
 - PH-02-T03: READY after PH-02-T01
 - PH-02-T04: READY after PH-02-T01
 - PH-02-T05: READY after PH-02-T01..T04
 - PH-03-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
-- PH-03-T02: READY after PH-03-T01
+- PH-03-T02: VERIFIED — 15 role/hydration tests and cross-review APPROVED
 - PH-03-T03: READY after PH-03-T01
 - PH-03-T04: READY after PH-03-T01/T02
 - PH-04-T01..T04: NOT_STARTED — wait for PH-03 VERIFIED and D3
-- PH-13-T01: READY — database slice PH-13-T01A follows verified PH-02-T01
+- PH-13-T01: IN_PROGRESS — T01A database slice GREEN/APPROVED; retain files until T01B
 - PH-13-T03: NOT_STARTED — waits for runtime scripts and PH-13-T01
 
 ## Coordinator Checkpoints
 
 - C-00: complete — approved spec/plan/master override committed as `ae64d68`
-- D1: VERIFIED — checkpoint commit pending
+- D1: VERIFIED — checkpoint `289e6a9`
   - Node `24.14.0`, pnpm `11.11.0`
   - frozen install: PASS
   - peer dependency check: PASS
@@ -172,6 +172,7 @@ Implementation agents: Agent A Backend/Platform; Agent B Client Foundations.
 - Mobile direct runtime/test dependencies: add `@jest/globals@29.7.0`, `react-native-safe-area-context@5.8.0`, `react-native-web@0.21.2` and `react-dom@19.2.7` after typecheck/export and deprecation evidence.
 - API validation runtime: add `class-validator@0.15.1` and `class-transformer@0.5.1`, both inside Nest 11.1.28 peer ranges.
 - Nest CLI 11.0.14 cannot parse TypeScript 7 configuration even with the SWC builder. API build uses direct `tsc`; development uses the reviewed Node runner with initial compile, TypeScript/Node watchers and process-tree cleanup.
+- PH-13 local database binds loopback only. On this host the default 5432 bind was unavailable, so runtime verification used supported `POSTGRES_PORT=55432` with matching `DATABASE_URL`; health, PostGIS 3.5 and deterministic cleanup passed.
 
 ## Wave 1 Minor Review Findings To Revisit
 
