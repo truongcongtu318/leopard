@@ -134,13 +134,13 @@ Implementation agents: Agent A Backend/Platform; Agent B Client Foundations.
 ## Wave 1 Tasks
 
 - PH-02-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
-- PH-02-T02: READY — PH-13-T01A database slice GREEN and cross-review APPROVED
+- PH-02-T02: VERIFIED — clean-database GREEN (2×), cross-review APPROVED, I-01 fixed
 - PH-02-T03: READY after PH-02-T01
 - PH-02-T04: READY after PH-02-T01
 - PH-02-T05: READY after PH-02-T01..T04
 - PH-03-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
 - PH-03-T02: VERIFIED — 15 role/hydration tests and cross-review APPROVED
-- PH-03-T03: READY after PH-03-T01
+- PH-03-T03: VERIFIED — cross-review APPROVED, 0 findings
 - PH-03-T04: READY after PH-03-T01/T02
 - PH-04-T01..T04: NOT_STARTED — wait for PH-03 VERIFIED and D3
 - PH-13-T01: IN_PROGRESS — T01A database slice GREEN/APPROVED; retain files until T01B
