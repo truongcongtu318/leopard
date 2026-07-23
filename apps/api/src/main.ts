@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import { pathToFileURL } from 'node:url';
 
 import { AppModule } from './app.module.js';
+import { DocsModule } from './docs/docs.module.js';
 import { parseEnv } from './config/env.schema.js';
 import type { AppEnv } from './config/env.schema.js';
 
@@ -34,6 +35,8 @@ export async function createApplication(env: AppEnv): Promise<INestApplication> 
       callback(new Error('Origin is not allowed by CORS'), false);
     },
   });
+
+  DocsModule.setupSwagger(app);
 
   return app;
 }

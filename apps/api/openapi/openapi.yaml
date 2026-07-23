@@ -1,0 +1,1626 @@
+openapi: "3.1.0"
+info:
+  title: LEOPARD API
+  description: |
+    LEOPARD delivery platform — REST API for customers, drivers, fleet owners, and administrators.
+  version: "0.0.0"
+  contact:
+    name: LEOPARD Team
+servers:
+  - url: /api/v1
+    description: Base path (routed through API gateway / reverse proxy)
+security:
+  - bearerAuth: []
+paths:
+  # ── Auth ──────────────────────────────────────────────────────────────
+  /auth/login/demo:
+    post:
+      operationId: auth.loginDemo
+      summary: Demo login (local/dev only)
+      description: Create a demo session for development and testing.
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DemoLoginRequest"
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "400":
+          $ref: "#/components/responses/ApiError"
+  /auth/firebase:
+    post:
+      operationId: auth.firebase
+      summary: Exchange Firebase ID token for session
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FirebaseLoginRequest"
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /auth/refresh:
+    post:
+      operationId: auth.refresh
+      summary: Rotate refresh token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /auth/logout:
+    post:
+      operationId: auth.logout
+      summary: Revoke session
+      tags: [Auth]
+      responses:
+        "204":
+          description: Session revoked (no content)
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /me:
+    get:
+      operationId: auth.me
+      summary: Current user profile
+      tags: [Auth]
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  # ── Orders ────────────────────────────────────────────────────────────
+  /orders/estimate:
+    post:
+      operationId: orders.estimate
+      summary: Calculate route, price, and ETA
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EstimateRequest"
+      responses:
+        "200":
+          description: Estimate result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EstimateResponse"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /orders:
+    post:
+      operationId: orders.create
+      summary: Create a new order
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSchema"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+    get:
+      operationId: orders.list
+      summary: List own orders
+      tags: [Orders]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/OrderStatusFilter"
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: Paginated orders
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/OrderSchema"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /orders/{id}:
+    get:
+      operationId: orders.getById
+      summary: Order detail
+      description: Accessible by owner, assigned driver, fleet owner, or admin.
+      tags: [Orders]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      responses:
+        "200":
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSchema"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /orders/{id}/cancel:
+    post:
+      operationId: orders.cancel
+      summary: Cancel an order
+      description: Only owner or admin may cancel, subject to cancellation rules.
+      tags: [Orders]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelOrderRequest"
+      responses:
+        "200":
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSchema"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+        "409":
+          $ref: "#/components/responses/ApiError"
+  /orders/{id}/tracking:
+    get:
+      operationId: orders.getTracking
+      summary: Order tracking history
+      description: Accessible by owner, assigned driver, fleet owner, or admin.
+      tags: [Orders]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      responses:
+        "200":
+          description: Tracking history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingHistory"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  # ── Maps ──────────────────────────────────────────────────────────────
+  /maps/search:
+    get:
+      operationId: maps.search
+      summary: Search places via map provider
+      tags: [Maps]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Search query text
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapSearchResponse"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /maps/geocode/{placeId}:
+    get:
+      operationId: maps.geocode
+      summary: Resolve place ID to label and coordinates
+      tags: [Maps]
+      parameters:
+        - name: placeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Map provider place identifier
+      responses:
+        "200":
+          description: Geocode result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeocodeResult"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  # ── Driver ────────────────────────────────────────────────────────────
+  /driver/availability:
+    patch:
+      operationId: driver.setAvailability
+      summary: Change driver availability status
+      tags: [Driver]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetAvailabilityRequest"
+      responses:
+        "200":
+          description: Availability updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverAvailabilityStatus"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /driver/orders/available:
+    get:
+      operationId: driver.listAvailableOrders
+      summary: List REQUESTED orders available to accept
+      tags: [Driver]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Available orders
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/OrderSchema"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /driver/orders/active:
+    get:
+      operationId: driver.getActiveOrder
+      summary: Current active order for the driver
+      tags: [Driver]
+      responses:
+        "200":
+          description: Active order (or null)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/OrderSchema"
+                  - type: "null"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /driver/orders/{id}/accept:
+    post:
+      operationId: driver.acceptOrder
+      summary: Accept an order
+      tags: [Driver]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      responses:
+        "200":
+          description: Order accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSchema"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+        "409":
+          $ref: "#/components/responses/ApiError"
+  /driver/orders/{id}/status:
+    post:
+      operationId: driver.updateOrderStatus
+      summary: Transition order status (assigned driver only)
+      tags: [Driver]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionStatusRequest"
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSchema"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+        "409":
+          $ref: "#/components/responses/ApiError"
+  # ── Fleet Owner ───────────────────────────────────────────────────────
+  /fleet/profile:
+    get:
+      operationId: fleet.getProfile
+      summary: Fleet owner profile
+      tags: [Fleet]
+      responses:
+        "200":
+          description: Fleet profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetProfile"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /fleet/drivers:
+    get:
+      operationId: fleet.listDrivers
+      summary: List drivers in the fleet
+      tags: [Fleet]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/FleetMemberStatus"
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: Fleet drivers
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/FleetDriver"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /fleet/orders:
+    get:
+      operationId: fleet.listOrders
+      summary: List orders assigned to fleet drivers
+      tags: [Fleet]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: driverId
+          in: query
+          schema:
+            type: string
+          description: Filter by driver
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start of date range
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of date range
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: Fleet orders
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/OrderSchema"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /fleet/orders/{id}:
+    get:
+      operationId: fleet.getOrderById
+      summary: Fleet order detail
+      tags: [Fleet]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      responses:
+        "200":
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSchema"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /fleet/orders/{id}/tracking:
+    get:
+      operationId: fleet.getOrderTracking
+      summary: Fleet order tracking history
+      tags: [Fleet]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      responses:
+        "200":
+          description: Tracking history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingHistory"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  # ── Media & Payment ───────────────────────────────────────────────────
+  /orders/{id}/media/cargo:
+    post:
+      operationId: media.uploadCargo
+      summary: Upload cargo image
+      tags: [Media]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/MediaUploadRequest"
+      responses:
+        "201":
+          description: Media uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRecord"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /orders/{id}/media/delivery-proof:
+    post:
+      operationId: media.uploadDeliveryProof
+      summary: Upload delivery proof image
+      tags: [Media]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/MediaUploadRequest"
+      responses:
+        "201":
+          description: Proof uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRecord"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /media/{id}/url:
+    get:
+      operationId: media.getSignedUrl
+      summary: Signed read URL for media
+      tags: [Media]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Media record ID
+      responses:
+        "200":
+          description: Signed URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignedUrlResponse"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /orders/{id}/payments:
+    post:
+      operationId: payments.createIntent
+      summary: Create QR payment intent
+      tags: [Payments]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      responses:
+        "201":
+          description: Payment intent created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentRecord"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+    get:
+      operationId: payments.getHistory
+      summary: Payment history for an order
+      tags: [Payments]
+      parameters:
+        - $ref: "#/components/parameters/OrderIdParam"
+      responses:
+        "200":
+          description: Payment records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentRecord"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /admin/payments/{id}/confirm:
+    post:
+      operationId: payments.adminConfirm
+      summary: Manually confirm a payment (admin only)
+      tags: [Admin, Payments]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Payment record ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminConfirmPaymentRequest"
+      responses:
+        "200":
+          description: Payment confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentRecord"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+        "409":
+          $ref: "#/components/responses/ApiError"
+  # ── Admin ─────────────────────────────────────────────────────────────
+  /admin/dashboard:
+    get:
+      operationId: admin.dashboard
+      summary: Operational dashboard metrics
+      tags: [Admin]
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /admin/users:
+    get:
+      operationId: admin.listUsers
+      summary: List users with filters
+      tags: [Admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: role
+          in: query
+          schema:
+            $ref: "#/components/schemas/Role"
+          description: Filter by role
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/UserStatus"
+          description: Filter by user status
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: Paginated users
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/AdminUserRecord"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /admin/users/{id}/status:
+    patch:
+      operationId: admin.updateUserStatus
+      summary: Enable or disable a user
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserStatusRequest"
+      responses:
+        "200":
+          description: User status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserRecord"
+        "400":
+          $ref: "#/components/responses/ApiError"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /admin/fleets:
+    get:
+      operationId: admin.listFleets
+      summary: List fleets and memberships
+      tags: [Admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: Paginated fleets
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/AdminFleetRecord"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /admin/drivers:
+    get:
+      operationId: admin.listDrivers
+      summary: List drivers with filters
+      tags: [Admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: availability
+          in: query
+          schema:
+            $ref: "#/components/schemas/DriverAvailability"
+          description: Filter by availability
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: Paginated drivers
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/AdminDriverRecord"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  /admin/orders:
+    get:
+      operationId: admin.listOrders
+      summary: List orders with filters
+      tags: [Admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+          description: Filter by order status
+        - name: customerId
+          in: query
+          schema:
+            type: string
+          description: Filter by customer
+        - name: driverId
+          in: query
+          schema:
+            type: string
+          description: Filter by driver
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start of date range
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of date range
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: Paginated orders
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/OrderSchema"
+        "401":
+          $ref: "#/components/responses/ApiError"
+  # ── Health ────────────────────────────────────────────────────────────
+  /health/live:
+    get:
+      operationId: health.liveness
+      summary: Liveness probe
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /health/ready:
+    get:
+      operationId: health.readiness
+      summary: Readiness probe
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+        "503":
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase-issued or session JWT
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number (1-based)
+    PageSizeParam:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Items per page
+    OrderStatusFilter:
+      name: status
+      in: query
+      schema:
+        $ref: "#/components/schemas/OrderStatus"
+      description: Filter by order status
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+      description: Sort expression (field allow-list enforced server-side)
+    OrderIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Order ID
+  responses:
+    ApiError:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorEnvelope"
+  schemas:
+    # ══ Enums (canonical — MUST match packages/shared/src/enums.ts) ══
+    Role:
+      type: string
+      enum: [CUSTOMER, DRIVER, FLEET_OWNER, ADMIN]
+    UserStatus:
+      type: string
+      enum: [ACTIVE, DISABLED]
+    FleetMemberRole:
+      type: string
+      enum: [OWNER, DRIVER]
+    FleetMemberStatus:
+      type: string
+      enum: [INVITED, ACTIVE, REMOVED]
+    DriverAvailability:
+      type: string
+      enum: [OFFLINE, AVAILABLE, BUSY]
+    VehicleType:
+      type: string
+      enum: [MOTORBIKE, VAN, TRUCK]
+    OrderStatus:
+      type: string
+      enum: [REQUESTED, ACCEPTED, PICKING_UP, IN_TRANSIT, DELIVERED, CANCELLED]
+    StopType:
+      type: string
+      enum: [PICKUP, STOP, DROPOFF]
+    MediaType:
+      type: string
+      enum: [CARGO, DELIVERY_PROOF]
+    PaymentStatus:
+      type: string
+      enum: [UNPAID, QR_CREATED, PAID_MANUAL, FAILED]
+    ProviderSource:
+      type: string
+      enum: [VIETMAP, DEMO, PAYOS, VIETQR, LOCAL, S3]
+
+    # ══ Envelopes ══
+    PaginationEnvelope:
+      type: object
+      required: [items, page, pageSize, total, totalPages]
+      properties:
+        items:
+          type: array
+          items: {}
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+
+    ApiErrorEnvelope:
+      type: object
+      required: [statusCode, code, message, requestId, timestamp]
+      properties:
+        statusCode:
+          type: integer
+        code:
+          type: string
+          description: Machine-readable error code (e.g. ORDER_NOT_FOUND)
+        message:
+          type: string
+          description: Human-readable error message
+        requestId:
+          type: string
+          description: Correlation ID for tracing
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          description: Optional structured error details (validation errors, etc.)
+
+    # ══ Health ══
+    HealthStatus:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [ok, degraded, down]
+              message:
+                type: string
+
+    # ══ Auth ══
+    DemoLoginRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/Role"
+        phone:
+          type: string
+          pattern: '^0\d{9}$'
+          description: Optional phone number for demo user
+
+    FirebaseLoginRequest:
+      type: object
+      required: [idToken]
+      properties:
+        idToken:
+          type: string
+          description: Firebase ID token
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token from current session
+
+    SessionResponse:
+      type: object
+      required: [accessToken, refreshToken, expiresAt]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/UserProfile"
+
+    UserProfile:
+      type: object
+      required: [id, role, status, createdAt]
+      properties:
+        id:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        avatarUrl:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ══ Orders ══
+    EstopSchema:
+      type: object
+      required: [type, address, lat, lng]
+      properties:
+        type:
+          $ref: "#/components/schemas/StopType"
+        address:
+          type: string
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+        contactName:
+          type: string
+        contactPhone:
+          type: string
+        note:
+          type: string
+
+    EstimateRequest:
+      type: object
+      required: [pickup, dropoff, vehicleType]
+      properties:
+        pickup:
+          $ref: "#/components/schemas/EstopSchema"
+        stops:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/EstopSchema"
+        dropoff:
+          $ref: "#/components/schemas/EstopSchema"
+        vehicleType:
+          $ref: "#/components/schemas/VehicleType"
+
+    EstimateResponse:
+      type: object
+      required:
+        [estimateToken, polyline, distanceM, durationS, estimatedArrivalAt,
+         estimatedPriceVnd, source, isEstimate, calculatedAt]
+      properties:
+        estimateToken:
+          type: string
+          description: Opaque token valid for 10 minutes
+        polyline:
+          type: string
+          description: Encoded route polyline
+        distanceM:
+          type: integer
+          description: Distance in meters
+        durationS:
+          type: integer
+          description: Duration in seconds
+        estimatedArrivalAt:
+          type: string
+          format: date-time
+        estimatedPriceVnd:
+          type: integer
+          description: Estimated price in VND
+        source:
+          $ref: "#/components/schemas/ProviderSource"
+        isEstimate:
+          type: boolean
+        calculatedAt:
+          type: string
+          format: date-time
+
+    CreateOrderRequest:
+      type: object
+      required: [pickup, dropoff, vehicleType, estimateToken]
+      properties:
+        pickup:
+          $ref: "#/components/schemas/EstopSchema"
+        stops:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/EstopSchema"
+        dropoff:
+          $ref: "#/components/schemas/EstopSchema"
+        vehicleType:
+          $ref: "#/components/schemas/VehicleType"
+        estimateToken:
+          type: string
+        cargoNote:
+          type: string
+        cargoWeightKg:
+          type: number
+
+    CancelOrderRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          description: Cancellation reason
+
+    OrderSchema:
+      type: object
+      required: [id, status, vehicleType, pickup, dropoff, totalPriceVnd, createdAt]
+      properties:
+        id:
+          type: string
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        vehicleType:
+          $ref: "#/components/schemas/VehicleType"
+        pickup:
+          $ref: "#/components/schemas/EstopSchema"
+        stops:
+          type: array
+          items:
+            $ref: "#/components/schemas/EstopSchema"
+        dropoff:
+          $ref: "#/components/schemas/EstopSchema"
+        totalPriceVnd:
+          type: integer
+        distanceM:
+          type: integer
+        durationS:
+          type: integer
+        polyline:
+          type: string
+        cargoNote:
+          type: string
+        cargoWeightKg:
+          type: number
+        customerId:
+          type: string
+        driverId:
+          type: string
+        fleetId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        cancelledAt:
+          type: string
+          format: date-time
+        cancelReason:
+          type: string
+
+    # ══ Tracking ══
+    TrackingHistory:
+      type: object
+      required: [orderId, events]
+      properties:
+        orderId:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrackingEvent"
+
+    TrackingEvent:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        timestamp:
+          type: string
+          format: date-time
+        location:
+          $ref: "#/components/schemas/LatLng"
+        note:
+          type: string
+
+    LatLng:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+
+    # ══ Maps ══
+    MapSearchResponse:
+      type: object
+      required: [source, results]
+      properties:
+        source:
+          $ref: "#/components/schemas/ProviderSource"
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MapPlace"
+
+    MapPlace:
+      type: object
+      required: [placeId, label, lat, lng]
+      properties:
+        placeId:
+          type: string
+        label:
+          type: string
+        address:
+          type: string
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+
+    GeocodeResult:
+      type: object
+      required: [source, placeId, label, lat, lng]
+      properties:
+        source:
+          $ref: "#/components/schemas/ProviderSource"
+        placeId:
+          type: string
+        label:
+          type: string
+        address:
+          type: string
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+
+    # ══ Driver ══
+    SetAvailabilityRequest:
+      type: object
+      required: [availability]
+      properties:
+        availability:
+          $ref: "#/components/schemas/DriverAvailability"
+
+    DriverAvailabilityStatus:
+      type: object
+      required: [availability]
+      properties:
+        availability:
+          $ref: "#/components/schemas/DriverAvailability"
+
+    TransitionStatusRequest:
+      type: object
+      required: [status, clientRequestId]
+      properties:
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        clientRequestId:
+          type: string
+          format: uuid
+
+    # ══ Fleet ══
+    FleetProfile:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        logoUrl:
+          type: string
+          format: uri
+        driverCount:
+          type: integer
+        activeOrderCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    FleetDriver:
+      type: object
+      required: [id, name, status, availability, joinedAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        status:
+          $ref: "#/components/schemas/FleetMemberStatus"
+        role:
+          $ref: "#/components/schemas/FleetMemberRole"
+        availability:
+          $ref: "#/components/schemas/DriverAvailability"
+        activeOrderCount:
+          type: integer
+        joinedAt:
+          type: string
+          format: date-time
+
+    # ══ Media ══
+    MediaUploadRequest:
+      type: object
+      required: [file]
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Image file (JPEG, PNG, WEBP)
+
+    MediaRecord:
+      type: object
+      required: [id, type, orderId, uploadedBy, createdAt]
+      properties:
+        id:
+          type: string
+        type:
+          $ref: "#/components/schemas/MediaType"
+        orderId:
+          type: string
+        uploadedBy:
+          type: string
+        url:
+          type: string
+          format: uri
+          description: Pre-signed read URL (may expire)
+        createdAt:
+          type: string
+          format: date-time
+
+    SignedUrlResponse:
+      type: object
+      required: [url, expiresAt]
+      properties:
+        url:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+
+    # ══ Payments ══
+    PaymentRecord:
+      type: object
+      required: [id, orderId, amountVnd, status, createdAt]
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        amountVnd:
+          type: integer
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        qrCodeUrl:
+          type: string
+          format: uri
+        confirmedBy:
+          type: string
+        confirmedAt:
+          type: string
+          format: date-time
+        note:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdminConfirmPaymentRequest:
+      type: object
+      required: [note, clientRequestId]
+      properties:
+        note:
+          type: string
+          minLength: 5
+          maxLength: 500
+        clientRequestId:
+          type: string
+          format: uuid
+
+    # ══ Admin ══
+    AdminDashboard:
+      type: object
+      required: [totalOrders, activeOrders, totalDrivers, availableDrivers, revenueVnd, period]
+      properties:
+        totalOrders:
+          type: integer
+        activeOrders:
+          type: integer
+        totalDrivers:
+          type: integer
+        availableDrivers:
+          type: integer
+        revenueVnd:
+          type: integer
+        period:
+          type: string
+          description: Period label (e.g. "today", "this-week")
+
+    AdminUserRecord:
+      type: object
+      required: [id, role, status, createdAt]
+      properties:
+        id:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        fleetId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateUserStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/UserStatus"
+
+    AdminFleetRecord:
+      type: object
+      required: [id, name, driverCount, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ownerName:
+          type: string
+        ownerPhone:
+          type: string
+        driverCount:
+          type: integer
+        activeOrderCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminDriverRecord:
+      type: object
+      required: [id, name, availability, fleetName, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        availability:
+          $ref: "#/components/schemas/DriverAvailability"
+        fleetId:
+          type: string
+        fleetName:
+          type: string
+        activeOrderCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
