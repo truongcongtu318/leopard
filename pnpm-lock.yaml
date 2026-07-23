@@ -54,6 +54,9 @@ importers:
       '@testing-library/react':
         specifier: 16.3.1
         version: 16.3.1(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/jest':
+        specifier: 30.0.0
+        version: 30.0.0
       '@types/react':
         specifier: 19.2.7
         version: 19.2.7
@@ -69,6 +72,9 @@ importers:
       tailwindcss:
         specifier: 4.1.18
         version: 4.1.18
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
 
   apps/api:
     dependencies:
@@ -273,6 +279,12 @@ importers:
       '@leopard/config':
         specifier: workspace:*
         version: link:../config
+      '@swc/core':
+        specifier: ^1.15.46
+        version: 1.15.46
+      '@swc/jest':
+        specifier: ^0.2.39
+        version: 0.2.39(@swc/core@1.15.46)
       '@testing-library/jest-dom':
         specifier: 6.9.1
         version: 6.9.1
