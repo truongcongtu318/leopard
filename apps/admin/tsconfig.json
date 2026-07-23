@@ -1,8 +1,9 @@
 {
   "extends": "@leopard/config/tsconfig/nextjs.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "types": ["jest"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/types/**/*.d.ts"],
   "exclude": ["node_modules"]
 }
