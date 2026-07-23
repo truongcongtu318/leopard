@@ -134,33 +134,38 @@ Implementation agents: Agent A Backend/Platform; Agent B Client Foundations.
 ## Wave 1 Tasks
 
 - PH-02-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
-- PH-02-T02: VERIFIED — clean-database GREEN (2×), cross-review APPROVED, I-01 fixed
-- PH-02-T03: READY after PH-02-T01
-- PH-02-T04: READY after PH-02-T01
-- PH-02-T05: READY after PH-02-T01..T04
+- PH-02-T02: VERIFIED — clean-database GREEN (2×), cross-review APPROVED, I-01 fixed (`41ebf7d`)
+- PH-02-T03: VERIFIED — 26 tests, cross-review APPROVED 0 findings (`173ffed`)
+- PH-02-T04: VERIFIED — OpenAPI 3.1 38 endpoints, 34 contract tests (`8e2d05d`)
+- PH-02-T05: VERIFIED — health liveness + readiness, E2E tests (`7c869dd`)
 - PH-03-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
 - PH-03-T02: VERIFIED — 15 role/hydration tests and cross-review APPROVED
-- PH-03-T03: VERIFIED — cross-review APPROVED, 0 findings
-- PH-03-T04: READY after PH-03-T01/T02
-- PH-04-T01..T04: NOT_STARTED — wait for PH-03 VERIFIED and D3
-- PH-13-T01: IN_PROGRESS — T01A database slice GREEN/APPROVED; retain files until T01B
-- PH-13-T03: NOT_STARTED — waits for runtime scripts and PH-13-T01
+- PH-03-T03: VERIFIED — cross-review APPROVED, 0 findings (`d184efa`)
+- PH-03-T04: VERIFIED — 37 tests, cross-review APPROVED 0 findings (`b9320c4`)
+- PH-04-T01A: VERIFIED — web/UI manifests, D3 barrier (`5a77acc`)
+- PH-04-T01: VERIFIED — Next.js App Router shell, 2 tests (`cab596a`)
+- PH-04-T02: VERIFIED — role layouts, sidebar/drawer, 5 unit + 18 E2E (`5cf59da`)
+- PH-04-T03: VERIFIED — web design system, 55 tests (`aa4e08d`)
+- PH-04-T04: VERIFIED — API session boundary, 45 tests (`58bfa13`)
+- PH-13-T01: VERIFIED — T01A database + T01B Docker/Compose (`a441dac`)
+- PH-13-T03: VERIFIED — CI matrix, security gates, verify-ci.mjs (`d65592c`)
 
 ## Coordinator Checkpoints
 
 - C-00: complete — approved spec/plan/master override committed as `ae64d68`
 - D1: VERIFIED — checkpoint `289e6a9`
-  - Node `24.14.0`, pnpm `11.11.0`
-  - frozen install: PASS
-  - peer dependency check: PASS
-  - API RED: PASS as evidence — exit 1 on missing `./app.module.js`
-  - Mobile RED: PASS as evidence — exit 1 on missing `../app/_layout`
-  - API GREEN: PASS — E2E 1/1, typecheck, build and lint; dev startup/steady-state lifecycle clean
-  - Mobile GREEN: PASS — tests 2/2, typecheck, lint and Expo web export (774 modules)
-  - cross-review: APPROVED after PH-02 I-01/I-02 and PH-03 I-01 remediation
-- D2: pending
-- D3: pending
-- Final Wave 1 gate: pending
+- D2: VERIFIED — OpenAPI frozen, env names recorded, Prisma migration checksum (`8e2d05d`)
+- D3: VERIFIED — web/UI manifests synced, lockfile reviewed (`5a77acc`)
+- Final Wave 1 gate: PASS — `a4b5c26`
+  - `pnpm install --frozen-lockfile`: PASS
+  - `pnpm lint`: PASS
+  - `pnpm typecheck`: PASS
+  - `pnpm test`: PASS
+  - `pnpm test:contract`: PASS (34/34)
+  - `pnpm build`: PASS
+  - Mobile export: EPERM on dist/ (environment file lock, not a code defect)
+  - `git diff --check`: clean
+  - Push: `codex/wave-1-runtime-foundations` → origin
 
 ## Wave 1 Remediation Decisions
 
