@@ -3,7 +3,7 @@ import js from '@eslint/js';
 
 export default [
   {
-    ignores: ['coverage/**', 'dist/**', 'node_modules/**'],
+    ignores: ['coverage/**', 'dist/**', 'node_modules/**', '.next/**', '.expo/**', '**/jest.config.js'],
   },
   js.configs.recommended,
   {

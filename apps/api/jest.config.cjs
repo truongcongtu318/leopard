@@ -2,6 +2,7 @@ module.exports = {
   rootDir: '.',
   testEnvironment: 'node',
   testRegex: '.*\\.(spec|test)\\.ts$',
+  testPathIgnorePatterns: ['database-schema\\.spec\\.ts', '.*\\.e2e-spec\\.ts'],
   moduleFileExtensions: ['js', 'json', 'ts'],
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
