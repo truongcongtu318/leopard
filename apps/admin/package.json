@@ -1,0 +1,35 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3002",
+    "build": "next build",
+    "start": "next start",
+    "test": "jest --runInBand",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@leopard/ui": "workspace:*",
+    "next": "16.0.8",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@jest/globals": "29.7.0",
+    "@leopard/config": "workspace:*",
+    "@playwright/test": "1.57.0",
+    "@tailwindcss/postcss": "4.1.18",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.1",
+    "@types/react": "19.2.7",
+    "@types/jest": "30.0.0",
+    "@types/react-dom": "19.2.3",
+    "jest": "29.7.0",
+    "jest-environment-jsdom": "29.7.0",
+    "tailwindcss": "4.1.18",
+    "typescript": "7.0.2"
+  }
+}

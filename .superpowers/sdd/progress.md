@@ -121,3 +121,66 @@ Minimal change: define canonical vehicle type values in source contract and `@le
 Consumers affected: `PH-01-T04`, later `PH-06`, `PH-07`, `PH-12` order/pricing/client flows.
 Migration compatibility: none.
 Tests required: shared contract enum regression; validators unsupported-vehicle regression; validators test/typecheck/build.
+
+---
+
+# LEOPARD Wave 1 Single-Branch Progress
+
+Branch: `codex/wave-1-runtime-foundations`
+Approved execution baseline: `ae64d68`
+Coordinator owns: Git mutations, `pnpm-lock.yaml`, task ledger and dependency barriers.
+Implementation agents: Agent A Backend/Platform; Agent B Client Foundations.
+
+## Wave 1 Tasks
+
+- PH-02-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
+- PH-02-T02: VERIFIED — clean-database GREEN (2×), cross-review APPROVED, I-01 fixed (`41ebf7d`)
+- PH-02-T03: VERIFIED — 26 tests, cross-review APPROVED 0 findings (`173ffed`)
+- PH-02-T04: VERIFIED — OpenAPI 3.1 38 endpoints, 34 contract tests (`8e2d05d`)
+- PH-02-T05: VERIFIED — health liveness + readiness, E2E tests (`7c869dd`)
+- PH-03-T01: VERIFIED — RED/GREEN complete, cross-review APPROVED
+- PH-03-T02: VERIFIED — 15 role/hydration tests and cross-review APPROVED
+- PH-03-T03: VERIFIED — cross-review APPROVED, 0 findings (`d184efa`)
+- PH-03-T04: VERIFIED — 37 tests, cross-review APPROVED 0 findings (`b9320c4`)
+- PH-04-T01A: VERIFIED — web/UI manifests, D3 barrier (`5a77acc`)
+- PH-04-T01: VERIFIED — Next.js App Router shell, 2 tests (`cab596a`)
+- PH-04-T02: VERIFIED — role layouts, sidebar/drawer, 5 unit + 18 E2E (`5cf59da`)
+- PH-04-T03: VERIFIED — web design system, 55 tests (`aa4e08d`)
+- PH-04-T04: VERIFIED — API session boundary, 45 tests (`58bfa13`)
+- PH-13-T01: VERIFIED — T01A database + T01B Docker/Compose (`a441dac`)
+- PH-13-T03: VERIFIED — CI matrix, security gates, verify-ci.mjs (`d65592c`)
+
+## Coordinator Checkpoints
+
+- C-00: complete — approved spec/plan/master override committed as `ae64d68`
+- D1: VERIFIED — checkpoint `289e6a9`
+- D2: VERIFIED — OpenAPI frozen, env names recorded, Prisma migration checksum (`8e2d05d`)
+- D3: VERIFIED — web/UI manifests synced, lockfile reviewed (`5a77acc`)
+- Final Wave 1 gate: PASS — `a4b5c26`
+  - `pnpm install --frozen-lockfile`: PASS
+  - `pnpm lint`: PASS
+  - `pnpm typecheck`: PASS
+  - `pnpm test`: PASS
+  - `pnpm test:contract`: PASS (34/34)
+  - `pnpm build`: PASS
+  - Mobile export: EPERM on dist/ (environment file lock, not a code defect)
+  - `git diff --check`: clean
+  - Push: `codex/wave-1-runtime-foundations` → origin
+
+## Wave 1 Remediation Decisions
+
+- Mobile test tooling: `jest-expo@57.0.4` does not exist; use SDK-57 dist-tag `57.0.2` and direct `babel-preset-expo@57.0.3`.
+- Mobile peers: pin Jest `29.7.0` for `jest-watch-typeahead`, and `react-native-worklets@0.10.0` for Expo 57 peer compatibility.
+- API transform: replace `ts-jest` because its TypeScript peer excludes repo TypeScript 7; use `@swc/jest@0.2.39` + `@swc/core@1.15.46`.
+- API Jest: registry package `30.4.2` and `30.4.1` fail internally before test module loading; pin tested `30.0.5`. Phase plans PH-02/05/08 updated consistently.
+- Native build allowlist: Coordinator approved only `@prisma/engines`, `@swc/core`, `prisma`, `unrs-resolver` in `pnpm-workspace.yaml`; install and peer audit pass.
+- Mobile direct runtime/test dependencies: add `@jest/globals@29.7.0`, `react-native-safe-area-context@5.8.0`, `react-native-web@0.21.2` and `react-dom@19.2.7` after typecheck/export and deprecation evidence.
+- API validation runtime: add `class-validator@0.15.1` and `class-transformer@0.5.1`, both inside Nest 11.1.28 peer ranges.
+- Nest CLI 11.0.14 cannot parse TypeScript 7 configuration even with the SWC builder. API build uses direct `tsc`; development uses the reviewed Node runner with initial compile, TypeScript/Node watchers and process-tree cleanup.
+- PH-13 local database binds loopback only. On this host the default 5432 bind was unavailable, so runtime verification used supported `POSTGRES_PORT=55432` with matching `DATABASE_URL`; health, PostGIS 3.5 and deterministic cleanup passed.
+
+## Wave 1 Minor Review Findings To Revisit
+
+- PH-02-T01 M-01: shell E2E boots `AppModule` directly and does not exercise `createApplication` bootstrap configuration.
+- PH-02-T01 M-02: CORS allowlist schema accepts general URLs rather than canonical HTTP(S) origins only.
+- PH-02-T01 M-03: POSIX watcher cleanup has no bounded SIGKILL escalation if a process group ignores shutdown.
