@@ -82,3 +82,49 @@ The install was needed because dependencies were absent in the worktree. `prisma
 - No blocker.
 - Existing `jest-e2e.config.cjs` inherits `testPathIgnorePatterns` from the base config, so direct `test:e2e --runTestsByPath ...` does not discover E2E files unless the ignore pattern is overridden.
 - This task intentionally does not implement refresh rotation or logout; PH-05-T03 owns that behavior.
+
+## Fix Round 1
+
+Reviewer finding: `AuthModule` wired `OTP_PROVIDER` to a bare `FirebaseOtpProvider`, so the real app-wired Firebase route always used the unavailable default verifier while the E2E success path bypassed the module wiring.
+
+Fix:
+
+- Added an app-wired local/test Firebase verifier factory in `apps/api/src/auth/auth.module.ts`.
+- The factory reads `AUTH_FIREBASE_TEST_TOKENS` only in `development`, `local` or `test`, then passes the configured verifier into `FirebaseOtpProvider`.
+- Invalid configured tokens still return provider rejection without echoing the raw token.
+- Production does not receive a fake verifier; real Firebase Admin wiring would require a dependency/config decision outside this fix if staging/provider-real verification is required.
+- Added an E2E case that starts `AuthModule` without overriding `OTP_PROVIDER` and verifies `POST /api/v1/auth/firebase` succeeds through the real module provider wiring.
+
+RED command:
+
+```bash
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api exec jest --config jest-e2e.config.cjs --runTestsByPath src/auth/login.e2e-spec.ts --testPathIgnorePatterns 'database-schema\\.spec\\.ts' --runInBand
+```
+
+RED result: failed as expected, 1 failed / 4 passed. The app-wired Firebase login expected `201` but received `503 Service Unavailable`.
+
+GREEN / verification commands:
+
+```bash
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api exec jest --config jest-e2e.config.cjs --runTestsByPath src/auth/login.e2e-spec.ts --testPathIgnorePatterns 'database-schema\\.spec\\.ts' --runInBand
+```
+
+Result: PASS, 5 tests passed.
+
+```bash
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api test:contract
+```
+
+Result: PASS, 34 tests passed.
+
+```bash
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api typecheck
+```
+
+Result: PASS.
+
+```bash
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api lint
+```
+
+Result: PASS.

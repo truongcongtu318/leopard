@@ -121,6 +121,7 @@ describe('PH-05-T02 login and access tokens', () => {
     process.env.AUTH_DEMO_LOGIN_ENABLED = 'true';
     process.env.AUTH_ACCESS_TOKEN_SECRET = 'test-access-token-secret';
     process.env.AUTH_REFRESH_TOKEN_SECRET = 'test-refresh-token-secret';
+    delete process.env.AUTH_FIREBASE_TEST_TOKENS;
 
     verifyOtp = jest.fn();
     prismaState = createPrismaDouble();
@@ -151,6 +152,7 @@ describe('PH-05-T02 login and access tokens', () => {
     delete process.env.AUTH_DEMO_LOGIN_ENABLED;
     delete process.env.AUTH_ACCESS_TOKEN_SECRET;
     delete process.env.AUTH_REFRESH_TOKEN_SECRET;
+    delete process.env.AUTH_FIREBASE_TEST_TOKENS;
   });
 
   it('issues a 15-minute access token and hashed refresh session for a demo account', async () => {
@@ -276,5 +278,76 @@ describe('PH-05-T02 login and access tokens', () => {
         });
         expect(JSON.stringify(body)).not.toContain('secret-id-token');
       });
+  });
+});
+
+describe('PH-05-T02 app-wired Firebase login', () => {
+  let app: INestApplication;
+  let prismaState: ReturnType<typeof createPrismaDouble>;
+
+  beforeEach(async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.AUTH_ACCESS_TOKEN_SECRET = 'test-access-token-secret';
+    process.env.AUTH_REFRESH_TOKEN_SECRET = 'test-refresh-token-secret';
+    process.env.AUTH_FIREBASE_TEST_TOKENS = JSON.stringify({
+      'valid-id-token': {
+        uid: 'firebase-user-1',
+        phone_number: '+84901234567',
+      },
+    });
+
+    prismaState = createPrismaDouble();
+
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AuthModule],
+    })
+      .overrideProvider(PrismaService)
+      .useValue(prismaState.prisma)
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
+    await app.init();
+  });
+
+  afterEach(async () => {
+    await app.close();
+    delete process.env.AUTH_ACCESS_TOKEN_SECRET;
+    delete process.env.AUTH_REFRESH_TOKEN_SECRET;
+    delete process.env.AUTH_FIREBASE_TEST_TOKENS;
+  });
+
+  it('exchanges a configured local Firebase token through AuthModule provider wiring', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/auth/firebase')
+      .send({ idToken: 'valid-id-token' })
+      .expect(201);
+
+    expect(response.body.user).toMatchObject({
+      id: 'user-1',
+      phone: '+84901234567',
+      role: 'CUSTOMER',
+      status: 'ACTIVE',
+    });
+    expect(response.body.session).toMatchObject({
+      accessToken: expect.any(String) as string,
+      accessTokenExpiresAt: expect.any(String) as string,
+      refreshToken: expect.any(String) as string,
+      refreshTokenExpiresAt: expect.any(String) as string,
+    });
+
+    const payload = decodeJwtPayload(response.body.session.accessToken as string);
+    expect(payload).toMatchObject({
+      sub: 'user-1',
+      role: 'CUSTOMER',
+      sessionId: 'session-1',
+    });
   });
 });

@@ -5,9 +5,77 @@ import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
-import { FirebaseOtpProvider } from './providers/firebase-otp.provider.js';
-import { OTP_PROVIDER } from './providers/otp-provider.js';
+import {
+  type FirebaseDecodedIdToken,
+  FirebaseOtpProvider,
+  type FirebaseIdTokenVerifier,
+} from './providers/firebase-otp.provider.js';
+import { OTP_PROVIDER, OtpProviderError } from './providers/otp-provider.js';
 import { TokenService } from './token.service.js';
+
+const LOCAL_FIREBASE_ENVS = new Set(['development', 'local', 'test']);
+
+function createFirebaseOtpProvider(): FirebaseOtpProvider {
+  const verifier = createConfiguredLocalFirebaseVerifier();
+
+  return new FirebaseOtpProvider(verifier);
+}
+
+function createConfiguredLocalFirebaseVerifier():
+  | FirebaseIdTokenVerifier
+  | undefined {
+  const tokenFixture = process.env.AUTH_FIREBASE_TEST_TOKENS;
+  const nodeEnv = process.env.NODE_ENV ?? 'development';
+
+  if (!tokenFixture || !LOCAL_FIREBASE_ENVS.has(nodeEnv)) {
+    return undefined;
+  }
+
+  return async (idToken: string): Promise<FirebaseDecodedIdToken> => {
+    const tokens = parseFirebaseTokenFixture(tokenFixture);
+    const decoded = tokens[idToken];
+
+    if (!decoded) {
+      throw new OtpProviderError(
+        'OTP_PROVIDER_REJECTED',
+        'Firebase OTP verification failed',
+      );
+    }
+
+    return decoded;
+  };
+}
+
+function parseFirebaseTokenFixture(
+  tokenFixture: string,
+): Record<string, FirebaseDecodedIdToken> {
+  try {
+    const parsed = JSON.parse(tokenFixture) as unknown;
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error('Fixture must be an object');
+    }
+
+    const tokens: Record<string, FirebaseDecodedIdToken> = {};
+    for (const [token, decoded] of Object.entries(parsed)) {
+      if (
+        typeof decoded !== 'object' ||
+        decoded === null ||
+        Array.isArray(decoded)
+      ) {
+        throw new Error('Decoded token must be an object');
+      }
+
+      tokens[token] = decoded as FirebaseDecodedIdToken;
+    }
+
+    return tokens;
+  } catch {
+    throw new OtpProviderError(
+      'OTP_PROVIDER_UNAVAILABLE',
+      'Firebase OTP verifier is not configured',
+    );
+  }
+}
 
 @Module({
   imports: [DatabaseModule],
@@ -15,7 +83,7 @@ import { TokenService } from './token.service.js';
   providers: [
     AuthService,
     TokenService,
-    { provide: OTP_PROVIDER, useClass: FirebaseOtpProvider },
+    { provide: OTP_PROVIDER, useFactory: createFirebaseOtpProvider },
     { provide: APP_FILTER, useClass: ApiExceptionFilter },
   ],
   exports: [AuthService, TokenService],
