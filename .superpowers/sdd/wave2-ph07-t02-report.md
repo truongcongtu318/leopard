@@ -13,6 +13,8 @@ Implemented in assigned worktree:
 - Original implementation commit message: `feat(map): integrate Vietmap provider boundary`
 - Fix round 1 commit SHA: `ac8dbd1c8f0e2f60b44cef24f508222bed2b03bc`
 - Fix round 1 commit message: `fix(map): redact Vietmap application errors`
+- Fix-round report update commit SHA: `da3eb30759aa71c75488f3e7f67456c968418d0c`
+- Fix-round report update commit message: `docs(map): record PH-07-T02 fix round`
 
 ## Changed Files
 
