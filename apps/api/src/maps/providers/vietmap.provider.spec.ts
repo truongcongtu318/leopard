@@ -178,6 +178,21 @@ describe('VietmapProvider', () => {
     expect(error.message).not.toContain(API_KEY);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it('redacts API keys from Route v4 application-level failures', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        code: 'INVALID_REQUEST',
+        messages: `invalid route for ${API_KEY}`,
+        paths: [],
+      }),
+    );
+    const provider = vietmapProvider(fetchMock);
+
+    const error = await catchError(provider.route(routeInput()));
+    expect(error.message).toBe('Vietmap route failed: invalid route for [REDACTED]');
+    expect(error.message).not.toContain(API_KEY);
+  });
 });
 
 describe('ResilientMapProvider', () => {

@@ -94,7 +94,7 @@ export class VietmapProvider implements MapProvider {
   async route(input: RouteInput): Promise<RouteEstimate> {
     const url = this.buildRouteUrl(input);
     const payload = await this.getJson<VietmapRouteResponse>(url, 'route');
-    const path = firstRoutePath(payload);
+    const path = firstRoutePath(payload, this.options.apiKey);
     const distance = numberOrNull(path.distance);
     const durationMs = numberOrNull(path.time);
 
@@ -230,7 +230,7 @@ function mapPlaceCandidate(item: unknown): PlaceCandidate | null {
   };
 }
 
-function firstRoutePath(payload: VietmapRouteResponse): VietmapRoutePath {
+function firstRoutePath(payload: VietmapRouteResponse, apiKey: string): VietmapRoutePath {
   if (
     payload.code !== 'OK' ||
     !Array.isArray(payload.paths) ||
@@ -238,7 +238,10 @@ function firstRoutePath(payload: VietmapRouteResponse): VietmapRoutePath {
     !isRecord(payload.paths[0])
   ) {
     throw new VietmapProviderError(
-      `Vietmap route failed: ${stringOrNull(payload.messages) ?? 'no route found'}`,
+      redactSecrets(
+        `Vietmap route failed: ${stringOrNull(payload.messages) ?? 'no route found'}`,
+        apiKey,
+      ),
     );
   }
 
