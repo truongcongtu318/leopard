@@ -6,6 +6,7 @@ import { DomainError } from '../common/domain-error.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { DemoOtpProvider } from './providers/demo-otp.provider.js';
 import { OTP_PROVIDER, OtpProviderError } from './providers/otp-provider.js';
+import { RefreshSessionRepository } from './refresh-session.repository.js';
 import { type AuthSession, TokenService } from './token.service.js';
 
 export interface AuthUser {
@@ -34,6 +35,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
+    private readonly refreshSessions: RefreshSessionRepository,
     @Inject(OTP_PROVIDER) private readonly firebaseOtpProvider: OtpProvider,
   ) {}
 
@@ -88,6 +90,29 @@ export class AuthService {
     }
 
     return this.requireActiveUser(user);
+  }
+
+  public async refresh(refreshToken: string): Promise<AuthSession> {
+    const refreshSession = await this.refreshSessions.rotate(refreshToken);
+    const user = await this.prisma.user.findUnique({
+      where: { id: refreshSession.record.userId },
+    });
+
+    if (!user) {
+      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+    }
+
+    return this.tokenService.createAuthSession(
+      this.requireActiveUser(user),
+      refreshSession,
+    );
+  }
+
+  public async logout(authorization: string | undefined): Promise<void> {
+    const token = this.extractBearerToken(authorization);
+    const claims = this.tokenService.verifyAccessToken(token);
+
+    await this.refreshSessions.revoke(claims.sessionId);
   }
 
   private async loginIdentity(phone: string, role: Role): Promise<AuthResponse> {
