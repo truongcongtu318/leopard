@@ -9,8 +9,10 @@ Implemented in assigned worktree:
 
 ## Commit
 
-- Commit SHA: see final task response for the commit containing this report.
-- Commit message: `feat(map): integrate Vietmap provider boundary`
+- Original implementation commit SHA: `47c08e6e95aa404d40b64df2c458547ede834705`
+- Original implementation commit message: `feat(map): integrate Vietmap provider boundary`
+- Fix round 1 commit SHA: `ac8dbd1c8f0e2f60b44cef24f508222bed2b03bc`
+- Fix round 1 commit message: `fix(map): redact Vietmap application errors`
 
 ## Changed Files
 
@@ -80,3 +82,44 @@ Then `corepack pnpm --filter api typecheck` passed.
 - No blockers.
 - No real network calls are made in tests; provider HTTP is injected and mocked.
 - No wiring was added to `app.module.ts`, OpenAPI, orders, auth, Prisma, mobile/admin or workspace configuration.
+
+## Fix Round 1
+
+Reviewer: Parfit
+
+Verdict addressed: `CHANGES_REQUESTED`
+
+Important findings fixed:
+
+- Redacted API keys from Route v4 application-level failures where Vietmap returns HTTP 200 with `code !== 'OK'`.
+- Updated this report to include the original implementation commit SHA and fix round commit SHA.
+
+TDD RED:
+
+```text
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api test -- --runTestsByPath apps/api/src/maps/providers/vietmap.provider.spec.ts --runInBand
+FAIL src/maps/providers/vietmap.provider.spec.ts
+Tests: 1 failed, 9 passed, 10 total
+Expected: "Vietmap route failed: invalid route for [REDACTED]"
+Received: "Vietmap route failed: invalid route for secret-vietmap-key"
+```
+
+GREEN and verification:
+
+```text
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api test -- --runTestsByPath apps/api/src/maps/providers/vietmap.provider.spec.ts --runInBand
+PASS src/maps/providers/vietmap.provider.spec.ts
+Tests: 10 passed, 10 total
+```
+
+```text
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api typecheck
+tsc --noEmit --project tsconfig.json
+exit 0
+```
+
+```text
+PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH corepack pnpm --filter api lint
+eslint .
+exit 0
+```
