@@ -52,7 +52,7 @@ interface StoredRefreshSession {
   readonly id: string;
   readonly userId: string;
   readonly tokenHash: string;
-  readonly expiresAt: Date;
+  expiresAt: Date;
   revokedAt: Date | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -327,6 +327,51 @@ describe('PH-05-T04 guards and resource policy', () => {
       .expect(({ body }) => {
         expect(body.code).toBe('UNAUTHORIZED');
       });
+  });
+
+  it('rejects a session that expires between authenticated requests with 401', async () => {
+    const user: StoredUser = {
+      id: 'user-session-expiry-between-requests',
+      phone: '+840000000002-expiry-between-requests',
+      role: 'CUSTOMER',
+      status: 'ACTIVE',
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    const session: StoredRefreshSession = {
+      id: 'session-expiry-between-requests',
+      userId: user.id,
+      tokenHash: 'hash',
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    prismaState.users.set(user.id, user);
+    prismaState.refreshSessions.set(session.id, session);
+
+    const token = createAccessToken(tokenService, {
+      userId: user.id,
+      role: user.role,
+      sessionId: session.id,
+    }, session.expiresAt);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    session.expiresAt = new Date(Date.now() - 1);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(401)
+      .expect(({ body }) => {
+        expect(body.code).toBe('UNAUTHORIZED');
+      });
+
+    expect(prismaState.prisma.refreshSession.findUnique).toHaveBeenCalledTimes(2);
   });
 
   it('rejects disabled users with 401 on private routes', async () => {
