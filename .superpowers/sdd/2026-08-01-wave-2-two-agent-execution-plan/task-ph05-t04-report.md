@@ -5,6 +5,7 @@
 - Initial implementation commit SHA: `5f79f221df7e874c82a77522013b6f11a94fed1a`
 - Fix-round implementation commit SHA: `a8416c85c47fdb5c71937e2cbedf3e342c4dc0f7`
 - Second fix-round implementation commit SHA: `b9652c2a7f420debd678c2928e487163f2a54f56`
+- Final regression-test commit SHA: `7c0c16f5e7a19dcdad1517c4546d53531c5cd64e`
 
 ## Changed Files
 
@@ -24,6 +25,7 @@
 - Added `CurrentUser` and `CurrentUserRole` decorators with stable public names for later consumers.
 - Added generic `ResourcePolicy.assert(actor, action, resource)` with owner, role, and predicate-based authorization paths.
 - Added explicit bounded `AccountStatusCache` for current account status only. The current database role is loaded on every request, so role demotions cannot remain authorized for the cache TTL. Session validity remains live-checked against `refreshSession` on every request and is not cached.
+- Added a two-request regression proving a valid access token is rejected with `401` when its backing `RefreshSession.expiresAt` becomes past between requests.
 - Exported the new guards/policy from `AuthModule` for later maps/orders consumers.
 
 ## Cache Semantics
@@ -68,29 +70,35 @@
    - Key error: expected `403` after `ADMIN -> CUSTOMER` demotion, received `200`; the companion lookup assertion also observed one user lookup instead of two
    - The same red run confirmed the mutated revoked session returned `401` and `refreshSession.findUnique(...)` was called twice; the existing live-session path was preserved while the test was strengthened
 
+7. Final regression test was added before any production change:
+   - The existing live session lookup behavior made the new expiry-between-requests test pass on its first run; no production implementation change was needed
+   - Command: `./apps/api/node_modules/.bin/jest --config apps/api/jest.config.cjs --runInBand apps/api/src/auth/guards/guards.spec.ts`
+   - Result: PASS (`15/15`)
+
 ## GREEN Evidence
 
-1. Focused guard/decorator/policy suite after second fix round:
+1. Focused guard/decorator/policy suite after final regression test:
    - Command: `./apps/api/node_modules/.bin/jest --config apps/api/jest.config.cjs --runInBand apps/api/src/auth/guards/guards.spec.ts`
-   - Result: PASS (`14/14`)
+   - Result: PASS (`15/15`)
    - New coverage across the fix rounds:
      - cache TTL expiry
      - cache max-size eviction
      - status-only cache with live role lookup after a warm hit
      - two authenticated requests with an intervening session revocation, returning `401` on the second request
+     - two authenticated requests with an intervening session expiry, returning `401` on the second request
      - forged signed `ADMIN` token against a `CUSTOMER` DB user returning `403`
      - warm-cache `ADMIN -> CUSTOMER` database demotion returning `403`
 
-2. API typecheck after second fix round:
+2. API typecheck after final regression test:
    - Command: `./node_modules/.bin/tsc --noEmit --project apps/api/tsconfig.json`
    - Result: PASS
 
-3. API lint after second fix round:
+3. API lint after final regression test:
    - Command: `../../node_modules/.bin/eslint .`
    - Working directory: `apps/api`
    - Result: PASS
 
-4. Whitespace check after second fix round:
+4. Whitespace check after final regression test:
    - Command: `git diff --check`
    - Result: PASS
 
@@ -98,6 +106,7 @@
 
 - Reviewer-requested scope is implemented and covered by focused tests.
 - Account status remains bounded by the explicit TTL/size policy, while the current role is loaded live on every request and refresh-session revocation/expiry checks remain live on every request.
+- A valid access token is rejected when its backing refresh session expires between requests; the regression confirms the second request performs a live session lookup and returns `401`.
 - A signed token claiming `ADMIN` no longer has any chance to elevate a `CUSTOMER` database user through `@RequireRoles('ADMIN')`; the focused regression now proves the guard returns `403`.
 
 ## Concerns / Blockers
