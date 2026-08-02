@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { PrismaPg } from '@prisma/adapter-pg';
-import prismaClientPackage from '@prisma/client';
+import prismaClientPackage, { type Prisma } from '@prisma/client';
 
 type Coordinate = {
   lat: number;
@@ -143,6 +143,7 @@ const DEMO_PHONE_PREFIX = '09000000';
 const DEMO_FLEET_NAME_PREFIX = 'Demo Fleet ';
 
 const { PrismaClient } = prismaClientPackage;
+type SeedClient = Prisma.TransactionClient;
 
 function requireDatabaseUrl(): string {
   const connectionString = process.env.DATABASE_URL;
@@ -214,8 +215,8 @@ function toTokenHash(seedKey: string): string {
   return createHash('sha256').update(`leopard-demo-seed:${seedKey}`).digest('hex');
 }
 
-async function loadExistingDemoBoundary(): Promise<DemoBoundary> {
-  const users = await prisma.user.findMany({
+async function loadExistingDemoBoundary(client: SeedClient): Promise<DemoBoundary> {
+  const users = await client.user.findMany({
     where: {
       phone: {
         startsWith: DEMO_PHONE_PREFIX,
@@ -226,7 +227,7 @@ async function loadExistingDemoBoundary(): Promise<DemoBoundary> {
     },
   });
 
-  const fleets = await prisma.fleet.findMany({
+  const fleets = await client.fleet.findMany({
     where: {
       name: {
         startsWith: DEMO_FLEET_NAME_PREFIX,
@@ -243,7 +244,7 @@ async function loadExistingDemoBoundary(): Promise<DemoBoundary> {
   const orders =
     userIds.length === 0
       ? []
-      : await prisma.order.findMany({
+      : await client.order.findMany({
           where: {
             OR: [
               {
@@ -270,44 +271,76 @@ async function loadExistingDemoBoundary(): Promise<DemoBoundary> {
   };
 }
 
-async function deleteExistingDemoBoundary(boundary: DemoBoundary): Promise<void> {
+async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoundary): Promise<void> {
+  if (boundary.userIds.length > 0) {
+    // Actor-owned rows can point at orders outside the demo order boundary.
+    await client.auditLog.deleteMany({
+      where: {
+        actorId: {
+          in: boundary.userIds,
+        },
+      },
+    });
+    await client.orderStatusHistory.deleteMany({
+      where: {
+        actorId: {
+          in: boundary.userIds,
+        },
+      },
+    });
+    await client.trackingPoint.deleteMany({
+      where: {
+        driverId: {
+          in: boundary.userIds,
+        },
+      },
+    });
+    await client.mediaObject.deleteMany({
+      where: {
+        uploaderId: {
+          in: boundary.userIds,
+        },
+      },
+    });
+  }
+
   if (boundary.orderIds.length > 0) {
-    await prisma.mediaObject.deleteMany({
+    await client.mediaObject.deleteMany({
       where: {
         orderId: {
           in: boundary.orderIds,
         },
       },
     });
-    await prisma.paymentIntent.deleteMany({
+    await client.paymentIntent.deleteMany({
       where: {
         orderId: {
           in: boundary.orderIds,
         },
       },
     });
-    await prisma.trackingPoint.deleteMany({
+    await client.trackingPoint.deleteMany({
       where: {
         orderId: {
           in: boundary.orderIds,
         },
       },
     });
-    await prisma.orderStatusHistory.deleteMany({
+    await client.orderStatusHistory.deleteMany({
       where: {
         orderId: {
           in: boundary.orderIds,
         },
       },
     });
-    await prisma.orderStop.deleteMany({
+    await client.orderStop.deleteMany({
       where: {
         orderId: {
           in: boundary.orderIds,
         },
       },
     });
-    await prisma.order.deleteMany({
+    await client.order.deleteMany({
       where: {
         id: {
           in: boundary.orderIds,
@@ -317,14 +350,14 @@ async function deleteExistingDemoBoundary(boundary: DemoBoundary): Promise<void>
   }
 
   if (boundary.userIds.length > 0 || boundary.fleetIds.length > 0) {
-    await prisma.refreshSession.deleteMany({
+    await client.refreshSession.deleteMany({
       where: {
         userId: {
           in: boundary.userIds,
         },
       },
     });
-    await prisma.fleetMember.deleteMany({
+    await client.fleetMember.deleteMany({
       where: {
         OR: [
           {
@@ -340,21 +373,21 @@ async function deleteExistingDemoBoundary(boundary: DemoBoundary): Promise<void>
         ],
       },
     });
-    await prisma.driverProfile.deleteMany({
+    await client.driverProfile.deleteMany({
       where: {
         userId: {
           in: boundary.userIds,
         },
       },
     });
-    await prisma.fleet.deleteMany({
+    await client.fleet.deleteMany({
       where: {
         id: {
           in: boundary.fleetIds,
         },
       },
     });
-    await prisma.user.deleteMany({
+    await client.user.deleteMany({
       where: {
         id: {
           in: boundary.userIds,
@@ -364,8 +397,8 @@ async function deleteExistingDemoBoundary(boundary: DemoBoundary): Promise<void>
   }
 }
 
-async function insertUsers(manifest: DemoManifest): Promise<void> {
-  await prisma.user.createMany({
+async function insertUsers(client: SeedClient, manifest: DemoManifest): Promise<void> {
+  await client.user.createMany({
     data: manifest.users.map((user) => {
       const createdAt = requiredCreatedAt(user.createdAt, `users[${user.id}]`);
 
@@ -381,8 +414,8 @@ async function insertUsers(manifest: DemoManifest): Promise<void> {
   });
 }
 
-async function insertDriverProfiles(manifest: DemoManifest): Promise<void> {
-  await prisma.driverProfile.createMany({
+async function insertDriverProfiles(client: SeedClient, manifest: DemoManifest): Promise<void> {
+  await client.driverProfile.createMany({
     data: manifest.driverProfiles.map((profile) => {
       const createdAt = requiredCreatedAt(profile.createdAt, `driverProfiles[${profile.id}]`);
 
@@ -403,7 +436,7 @@ async function insertDriverProfiles(manifest: DemoManifest): Promise<void> {
       continue;
     }
 
-    await prisma.$executeRaw`
+    await client.$executeRaw`
       UPDATE "DriverProfile"
       SET "lastKnownLocation" = ST_SetSRID(
             ST_MakePoint(${profile.location.lng}, ${profile.location.lat}),
@@ -414,8 +447,8 @@ async function insertDriverProfiles(manifest: DemoManifest): Promise<void> {
   }
 }
 
-async function insertFleets(manifest: DemoManifest): Promise<void> {
-  await prisma.fleet.createMany({
+async function insertFleets(client: SeedClient, manifest: DemoManifest): Promise<void> {
+  await client.fleet.createMany({
     data: manifest.fleets.map((fleet) => {
       const createdAt = requiredCreatedAt(fleet.createdAt, `fleets[${fleet.id}]`);
 
@@ -429,8 +462,8 @@ async function insertFleets(manifest: DemoManifest): Promise<void> {
   });
 }
 
-async function insertFleetMembers(manifest: DemoManifest): Promise<void> {
-  await prisma.fleetMember.createMany({
+async function insertFleetMembers(client: SeedClient, manifest: DemoManifest): Promise<void> {
+  await client.fleetMember.createMany({
     data: manifest.fleetMembers.map((member) => {
       const createdAt = createdAtForFleetMember(member);
 
@@ -450,8 +483,8 @@ async function insertFleetMembers(manifest: DemoManifest): Promise<void> {
   });
 }
 
-async function insertRefreshSessions(manifest: DemoManifest): Promise<void> {
-  await prisma.refreshSession.createMany({
+async function insertRefreshSessions(client: SeedClient, manifest: DemoManifest): Promise<void> {
+  await client.refreshSession.createMany({
     data: manifest.refreshSessions.map((session) => {
       const createdAt = requiredCreatedAt(session.createdAt, `refreshSessions[${session.id}]`);
 
@@ -468,8 +501,8 @@ async function insertRefreshSessions(manifest: DemoManifest): Promise<void> {
   });
 }
 
-async function insertOrders(manifest: DemoManifest): Promise<void> {
-  await prisma.order.createMany({
+async function insertOrders(client: SeedClient, manifest: DemoManifest): Promise<void> {
+  await client.order.createMany({
     data: manifest.orders.map((order) => {
       const createdAt = createdAtForOrder(order);
 
@@ -496,12 +529,12 @@ async function insertOrders(manifest: DemoManifest): Promise<void> {
   });
 }
 
-async function insertOrderChildren(manifest: DemoManifest): Promise<void> {
+async function insertOrderChildren(client: SeedClient, manifest: DemoManifest): Promise<void> {
   for (const order of manifest.orders) {
     for (const stop of order.stops) {
       const createdAt = requiredCreatedAt(stop.createdAt, `orderStops[${stop.id}]`);
 
-      await prisma.$executeRaw`
+      await client.$executeRaw`
         INSERT INTO "OrderStop" (
           id,
           "orderId",
@@ -526,7 +559,7 @@ async function insertOrderChildren(manifest: DemoManifest): Promise<void> {
     }
 
     if (order.statusHistory.length > 0) {
-      await prisma.orderStatusHistory.createMany({
+      await client.orderStatusHistory.createMany({
         data: order.statusHistory.map((entry) => ({
           id: entry.id,
           orderId: order.id,
@@ -542,7 +575,7 @@ async function insertOrderChildren(manifest: DemoManifest): Promise<void> {
     for (const point of order.trackingPoints) {
       const createdAt = createdAtForTrackingPoint(point);
 
-      await prisma.$executeRaw`
+      await client.$executeRaw`
         INSERT INTO "TrackingPoint" (
           id,
           "orderId",
@@ -565,7 +598,7 @@ async function insertOrderChildren(manifest: DemoManifest): Promise<void> {
     }
 
     if (order.mediaObjects.length > 0) {
-      await prisma.mediaObject.createMany({
+      await client.mediaObject.createMany({
         data: order.mediaObjects.map((mediaObject) => ({
           id: mediaObject.id,
           orderId: order.id,
@@ -584,7 +617,7 @@ async function insertOrderChildren(manifest: DemoManifest): Promise<void> {
     }
 
     if (order.paymentIntents.length > 0) {
-      await prisma.paymentIntent.createMany({
+      await client.paymentIntent.createMany({
         data: order.paymentIntents.map((paymentIntent) => {
           const createdAt = requiredCreatedAt(
             paymentIntent.createdAt,
@@ -598,7 +631,7 @@ async function insertOrderChildren(manifest: DemoManifest): Promise<void> {
             status: paymentIntent.status,
             amountVnd: paymentIntent.amountVnd,
             qrPayload: paymentIntent.qrPayload,
-            providerSnapshot: paymentIntent.providerSnapshot,
+            providerSnapshot: paymentIntent.providerSnapshot ?? undefined,
             expiresAt: toDate(paymentIntent.expiresAt),
             createdAt,
             updatedAt: createdAt,
@@ -611,16 +644,25 @@ async function insertOrderChildren(manifest: DemoManifest): Promise<void> {
 
 export async function seedPilotData(): Promise<void> {
   const manifest = await loadManifest();
-  const boundary = await loadExistingDemoBoundary();
 
-  await deleteExistingDemoBoundary(boundary);
-  await insertUsers(manifest);
-  await insertDriverProfiles(manifest);
-  await insertFleets(manifest);
-  await insertFleetMembers(manifest);
-  await insertOrders(manifest);
-  await insertOrderChildren(manifest);
-  await insertRefreshSessions(manifest);
+  await prisma.$transaction(
+    async (client) => {
+      const boundary = await loadExistingDemoBoundary(client);
+
+      await deleteExistingDemoBoundary(client, boundary);
+      await insertUsers(client, manifest);
+      await insertDriverProfiles(client, manifest);
+      await insertFleets(client, manifest);
+      await insertFleetMembers(client, manifest);
+      await insertOrders(client, manifest);
+      await insertOrderChildren(client, manifest);
+      await insertRefreshSessions(client, manifest);
+    },
+    {
+      maxWait: 10_000,
+      timeout: 30_000,
+    },
+  );
 
   process.stdout.write(
     `Seeded ${manifest.users.length} users, ${manifest.fleets.length} fleets and ${manifest.orders.length} orders.\n`,

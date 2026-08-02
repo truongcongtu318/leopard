@@ -288,6 +288,8 @@ const PAYMENT_STATUSES = ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'] as co
 const USER_ROLES = ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const;
 
 const STALE_DEMO = {
+  actorLinkedHistoryId: 'cccccccc-cccc-4ccc-8ccc-cccccccccc13',
+  auditLogId: 'cccccccc-cccc-4ccc-8ccc-cccccccccc12',
   driverProfileId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
   fleetId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc3',
   fleetMemberId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc4',
@@ -300,6 +302,14 @@ const STALE_DEMO = {
   trackingPointId: 'cccccccc-cccc-4ccc-8ccc-cccccccccc11',
   userId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc0',
   userPhone: '0900000099',
+} as const;
+
+const NON_DEMO = {
+  auditLogId: 'dddddddd-dddd-4ddd-8ddd-dddddddddd03',
+  orderId: 'dddddddd-dddd-4ddd-8ddd-dddddddddd01',
+  orderStatusHistoryId: 'dddddddd-dddd-4ddd-8ddd-dddddddddd02',
+  userId: 'dddddddd-dddd-4ddd-8ddd-dddddddddd00',
+  userPhone: '0911111199',
 } as const;
 
 function requireDatabaseUrl(): string {
@@ -851,17 +861,23 @@ function runSeed(databaseUrl: string): void {
 }
 
 async function deleteStaleFixtureIfPresent(client: Client): Promise<void> {
+  await client.query('DELETE FROM "AuditLog" WHERE id = $1::uuid', [STALE_DEMO.auditLogId]);
+  await client.query('DELETE FROM "AuditLog" WHERE id = $1::uuid', [NON_DEMO.auditLogId]);
+  await client.query('DELETE FROM "OrderStatusHistory" WHERE id = $1::uuid', [STALE_DEMO.actorLinkedHistoryId]);
   await client.query('DELETE FROM "MediaObject" WHERE id = $1::uuid', [STALE_DEMO.mediaObjectId]);
   await client.query('DELETE FROM "PaymentIntent" WHERE id = $1::uuid', [STALE_DEMO.paymentIntentId]);
   await client.query('DELETE FROM "TrackingPoint" WHERE id = $1::uuid', [STALE_DEMO.trackingPointId]);
   await client.query('DELETE FROM "OrderStatusHistory" WHERE id = $1::uuid', [STALE_DEMO.orderStatusHistoryId]);
+  await client.query('DELETE FROM "OrderStatusHistory" WHERE id = $1::uuid', [NON_DEMO.orderStatusHistoryId]);
   await client.query('DELETE FROM "OrderStop" WHERE id = $1::uuid', [STALE_DEMO.orderStopId]);
   await client.query('DELETE FROM "Order" WHERE id = $1::uuid', [STALE_DEMO.orderId]);
+  await client.query('DELETE FROM "Order" WHERE id = $1::uuid', [NON_DEMO.orderId]);
   await client.query('DELETE FROM "RefreshSession" WHERE id = $1::uuid', [STALE_DEMO.refreshSessionId]);
   await client.query('DELETE FROM "FleetMember" WHERE id = $1::uuid', [STALE_DEMO.fleetMemberId]);
   await client.query('DELETE FROM "DriverProfile" WHERE id = $1::uuid', [STALE_DEMO.driverProfileId]);
   await client.query('DELETE FROM "Fleet" WHERE id = $1::uuid', [STALE_DEMO.fleetId]);
   await client.query('DELETE FROM "User" WHERE id = $1::uuid', [STALE_DEMO.userId]);
+  await client.query('DELETE FROM "User" WHERE id = $1::uuid', [NON_DEMO.userId]);
 }
 
 async function insertStaleFixture(client: Client): Promise<void> {
@@ -871,6 +887,12 @@ async function insertStaleFixture(client: Client): Promise<void> {
     `INSERT INTO "User" (id, phone, role, status)
      VALUES ($1::uuid, $2, 'DRIVER', 'ACTIVE')`,
     [STALE_DEMO.userId, STALE_DEMO.userPhone],
+  );
+
+  await client.query(
+    `INSERT INTO "User" (id, phone, role, status)
+     VALUES ($1::uuid, $2, 'CUSTOMER', 'ACTIVE')`,
+    [NON_DEMO.userId, NON_DEMO.userPhone],
   );
 
   await client.query(
@@ -951,6 +973,26 @@ async function insertStaleFixture(client: Client): Promise<void> {
   );
 
   await client.query(
+    `INSERT INTO "Order" (
+       id,
+       "customerId",
+       status,
+       "providerSource",
+       "createdAt",
+       "updatedAt"
+     )
+     VALUES (
+       $1::uuid,
+       $2::uuid,
+       'REQUESTED',
+       'DEMO',
+       '2026-08-01T14:10:00.000Z'::timestamptz,
+       '2026-08-01T14:10:00.000Z'::timestamptz
+     )`,
+    [NON_DEMO.orderId, NON_DEMO.userId],
+  );
+
+  await client.query(
     `INSERT INTO "OrderStop" (
        id,
        "orderId",
@@ -990,6 +1032,94 @@ async function insertStaleFixture(client: Client): Promise<void> {
        '2026-08-01T14:12:00.000Z'::timestamptz
      )`,
     [STALE_DEMO.orderStatusHistoryId, STALE_DEMO.orderId, STALE_DEMO.userId],
+  );
+
+  await client.query(
+    `INSERT INTO "OrderStatusHistory" (
+       id,
+       "orderId",
+       "fromStatus",
+       "toStatus",
+       "actorId",
+       "reason",
+       "createdAt"
+     )
+     VALUES (
+       $1::uuid,
+       $2::uuid,
+       NULL,
+       'REQUESTED',
+       $3::uuid,
+       'demo actor on non-demo order',
+       '2026-08-01T14:11:00.000Z'::timestamptz
+     )`,
+    [STALE_DEMO.actorLinkedHistoryId, NON_DEMO.orderId, STALE_DEMO.userId],
+  );
+
+  await client.query(
+    `INSERT INTO "OrderStatusHistory" (
+       id,
+       "orderId",
+       "fromStatus",
+       "toStatus",
+       "actorId",
+       "reason",
+       "createdAt"
+     )
+     VALUES (
+       $1::uuid,
+       $2::uuid,
+       NULL,
+       'REQUESTED',
+       $3::uuid,
+       'non-demo history must survive',
+       '2026-08-01T14:12:00.000Z'::timestamptz
+     )`,
+    [NON_DEMO.orderStatusHistoryId, NON_DEMO.orderId, NON_DEMO.userId],
+  );
+
+  await client.query(
+    `INSERT INTO "AuditLog" (
+       id,
+       "actorId",
+       action,
+       "resourceType",
+       "resourceId",
+       metadata,
+       "createdAt"
+     )
+     VALUES (
+       $1::uuid,
+       $2::uuid,
+       'DEMO_FIXTURE_ACTION',
+       'Order',
+       $3::uuid,
+       '{"ownedBy":"demo"}'::jsonb,
+       '2026-08-01T14:13:00.000Z'::timestamptz
+     )`,
+    [STALE_DEMO.auditLogId, STALE_DEMO.userId, STALE_DEMO.orderId],
+  );
+
+  await client.query(
+    `INSERT INTO "AuditLog" (
+       id,
+       "actorId",
+       action,
+       "resourceType",
+       "resourceId",
+       metadata,
+       "createdAt"
+     )
+     VALUES (
+       $1::uuid,
+       $2::uuid,
+       'NON_DEMO_ACTION',
+       'Order',
+       $3::uuid,
+       '{"ownedBy":"non-demo"}'::jsonb,
+       '2026-08-01T14:14:00.000Z'::timestamptz
+     )`,
+    [NON_DEMO.auditLogId, NON_DEMO.userId, NON_DEMO.orderId],
   );
 
   await client.query(
@@ -1060,6 +1190,14 @@ async function insertStaleFixture(client: Client): Promise<void> {
 }
 
 async function countStaleFixtureRows(client: Client): Promise<Record<string, number>> {
+  const auditLog = await client.query<{ count: string }>(
+    'SELECT COUNT(*)::text AS count FROM "AuditLog" WHERE id = $1::uuid',
+    [STALE_DEMO.auditLogId],
+  );
+  const actorLinkedHistory = await client.query<{ count: string }>(
+    'SELECT COUNT(*)::text AS count FROM "OrderStatusHistory" WHERE id = $1::uuid',
+    [STALE_DEMO.actorLinkedHistoryId],
+  );
   const user = await client.query<{ count: string }>(
     'SELECT COUNT(*)::text AS count FROM "User" WHERE id = $1::uuid',
     [STALE_DEMO.userId],
@@ -1106,6 +1244,8 @@ async function countStaleFixtureRows(client: Client): Promise<Record<string, num
   );
 
   return {
+    actorLinkedHistory: Number(actorLinkedHistory.rows[0]?.count ?? '0'),
+    auditLog: Number(auditLog.rows[0]?.count ?? '0'),
     driverProfile: Number(driverProfile.rows[0]?.count ?? '0'),
     fleet: Number(fleet.rows[0]?.count ?? '0'),
     fleetMember: Number(fleetMember.rows[0]?.count ?? '0'),
@@ -1118,6 +1258,57 @@ async function countStaleFixtureRows(client: Client): Promise<Record<string, num
     trackingPoint: Number(trackingPoint.rows[0]?.count ?? '0'),
     user: Number(user.rows[0]?.count ?? '0'),
   };
+}
+
+async function countNonDemoFixtureRows(client: Client): Promise<Record<string, number>> {
+  const auditLog = await client.query<{ count: string }>(
+    'SELECT COUNT(*)::text AS count FROM "AuditLog" WHERE id = $1::uuid',
+    [NON_DEMO.auditLogId],
+  );
+  const order = await client.query<{ count: string }>(
+    'SELECT COUNT(*)::text AS count FROM "Order" WHERE id = $1::uuid',
+    [NON_DEMO.orderId],
+  );
+  const orderStatusHistory = await client.query<{ count: string }>(
+    'SELECT COUNT(*)::text AS count FROM "OrderStatusHistory" WHERE id = $1::uuid',
+    [NON_DEMO.orderStatusHistoryId],
+  );
+  const user = await client.query<{ count: string }>(
+    'SELECT COUNT(*)::text AS count FROM "User" WHERE id = $1::uuid',
+    [NON_DEMO.userId],
+  );
+
+  return {
+    auditLog: Number(auditLog.rows[0]?.count ?? '0'),
+    order: Number(order.rows[0]?.count ?? '0'),
+    orderStatusHistory: Number(orderStatusHistory.rows[0]?.count ?? '0'),
+    user: Number(user.rows[0]?.count ?? '0'),
+  };
+}
+
+async function installSeedFailureTrigger(client: Client): Promise<void> {
+  await client.query(`
+    CREATE OR REPLACE FUNCTION seed_test_fail_on_fleet()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      RAISE EXCEPTION 'seed test failure after cleanup';
+    END;
+    $$;
+  `);
+  await client.query('DROP TRIGGER IF EXISTS seed_test_fail_on_fleet ON "Fleet"');
+  await client.query(`
+    CREATE TRIGGER seed_test_fail_on_fleet
+    BEFORE INSERT ON "Fleet"
+    FOR EACH ROW
+    EXECUTE FUNCTION seed_test_fail_on_fleet();
+  `);
+}
+
+async function removeSeedFailureTrigger(client: Client): Promise<void> {
+  await client.query('DROP TRIGGER IF EXISTS seed_test_fail_on_fleet ON "Fleet"');
+  await client.query('DROP FUNCTION IF EXISTS seed_test_fail_on_fleet()');
 }
 
 describe('pilot seed determinism', () => {
@@ -1174,6 +1365,7 @@ describe('pilot seed determinism', () => {
     runSeed(databaseUrl);
 
     const staleCounts = await countStaleFixtureRows(client);
+    const nonDemoCounts = await countNonDemoFixtureRows(client);
     const clearedProfile = await client.query<{ location: string | null }>(
       `SELECT ST_AsText("lastKnownLocation"::geometry) AS location
        FROM "DriverProfile"
@@ -1182,6 +1374,8 @@ describe('pilot seed determinism', () => {
     );
 
     expect(staleCounts).toEqual({
+      actorLinkedHistory: 0,
+      auditLog: 0,
       driverProfile: 0,
       fleet: 0,
       fleetMember: 0,
@@ -1194,6 +1388,30 @@ describe('pilot seed determinism', () => {
       trackingPoint: 0,
       user: 0,
     });
+    expect(nonDemoCounts).toEqual({
+      auditLog: 1,
+      order: 1,
+      orderStatusHistory: 1,
+      user: 1,
+    });
     expect(clearedProfile.rows[0]?.location ?? null).toBeNull();
+  });
+
+  it('rolls back cleanup and recreation when a database write fails mid-seed', async () => {
+    const databaseUrl = requireDatabaseUrl();
+    const manifest = await loadManifest();
+
+    runSeed(databaseUrl);
+    const beforeFailure = await snapshotSeedState(client, manifest);
+    await installSeedFailureTrigger(client);
+
+    try {
+      expect(() => runSeed(databaseUrl)).toThrow();
+    } finally {
+      await removeSeedFailureTrigger(client);
+    }
+
+    const afterFailure = await snapshotSeedState(client, manifest);
+    expect(afterFailure).toEqual(beforeFailure);
   });
 });
