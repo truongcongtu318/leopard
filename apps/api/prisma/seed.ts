@@ -134,13 +134,18 @@ type DemoManifest = {
 };
 
 type DemoBoundary = {
+  driverProfileIds: string[];
   fleetIds: string[];
+  fleetMemberIds: string[];
+  mediaObjectIds: string[];
   orderIds: string[];
+  orderStatusHistoryIds: string[];
+  orderStopIds: string[];
+  paymentIntentIds: string[];
+  refreshSessionIds: string[];
+  trackingPointIds: string[];
   userIds: string[];
 };
-
-const DEMO_PHONE_PREFIX = '09000000';
-const DEMO_FLEET_NAME_PREFIX = 'Demo Fleet ';
 
 const { PrismaClient } = prismaClientPackage;
 type SeedClient = Prisma.TransactionClient;
@@ -215,59 +220,39 @@ function toTokenHash(seedKey: string): string {
   return createHash('sha256').update(`leopard-demo-seed:${seedKey}`).digest('hex');
 }
 
-async function loadExistingDemoBoundary(client: SeedClient): Promise<DemoBoundary> {
-  const users = await client.user.findMany({
+async function loadExistingDemoBoundary(client: SeedClient, manifest: DemoManifest): Promise<DemoBoundary> {
+  const orderIds = manifest.orders.map((order) => order.id);
+  const existingOrders = await client.order.findMany({
     where: {
-      phone: {
-        startsWith: DEMO_PHONE_PREFIX,
+      id: {
+        in: orderIds,
       },
     },
     select: {
       id: true,
     },
   });
-
-  const fleets = await client.fleet.findMany({
-    where: {
-      name: {
-        startsWith: DEMO_FLEET_NAME_PREFIX,
-      },
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  const userIds = users.map((user) => user.id);
-  const fleetIds = fleets.map((fleet) => fleet.id);
-
-  const orders =
-    userIds.length === 0
-      ? []
-      : await client.order.findMany({
-          where: {
-            OR: [
-              {
-                customerId: {
-                  in: userIds,
-                },
-              },
-              {
-                driverId: {
-                  in: userIds,
-                },
-              },
-            ],
-          },
-          select: {
-            id: true,
-          },
-        });
 
   return {
-    fleetIds,
-    orderIds: orders.map((order) => order.id),
-    userIds,
+    driverProfileIds: manifest.driverProfiles.map((profile) => profile.id),
+    fleetIds: manifest.fleets.map((fleet) => fleet.id),
+    fleetMemberIds: manifest.fleetMembers.map((member) => member.id),
+    mediaObjectIds: manifest.orders.flatMap((order) =>
+      order.mediaObjects.map((mediaObject) => mediaObject.id),
+    ),
+    orderIds: existingOrders.map((order) => order.id),
+    orderStatusHistoryIds: manifest.orders.flatMap((order) =>
+      order.statusHistory.map((statusHistory) => statusHistory.id),
+    ),
+    orderStopIds: manifest.orders.flatMap((order) => order.stops.map((stop) => stop.id)),
+    paymentIntentIds: manifest.orders.flatMap((order) =>
+      order.paymentIntents.map((paymentIntent) => paymentIntent.id),
+    ),
+    refreshSessionIds: manifest.refreshSessions.map((session) => session.id),
+    trackingPointIds: manifest.orders.flatMap((order) =>
+      order.trackingPoints.map((trackingPoint) => trackingPoint.id),
+    ),
+    userIds: manifest.users.map((user) => user.id),
   };
 }
 
@@ -283,23 +268,50 @@ async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoun
     });
     await client.orderStatusHistory.deleteMany({
       where: {
-        actorId: {
-          in: boundary.userIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.orderStatusHistoryIds,
+            },
+          },
+          {
+            actorId: {
+              in: boundary.userIds,
+            },
+          },
+        ],
       },
     });
     await client.trackingPoint.deleteMany({
       where: {
-        driverId: {
-          in: boundary.userIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.trackingPointIds,
+            },
+          },
+          {
+            driverId: {
+              in: boundary.userIds,
+            },
+          },
+        ],
       },
     });
     await client.mediaObject.deleteMany({
       where: {
-        uploaderId: {
-          in: boundary.userIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.mediaObjectIds,
+            },
+          },
+          {
+            uploaderId: {
+              in: boundary.userIds,
+            },
+          },
+        ],
       },
     });
   }
@@ -307,37 +319,82 @@ async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoun
   if (boundary.orderIds.length > 0) {
     await client.mediaObject.deleteMany({
       where: {
-        orderId: {
-          in: boundary.orderIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.mediaObjectIds,
+            },
+          },
+          {
+            orderId: {
+              in: boundary.orderIds,
+            },
+          },
+        ],
       },
     });
     await client.paymentIntent.deleteMany({
       where: {
-        orderId: {
-          in: boundary.orderIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.paymentIntentIds,
+            },
+          },
+          {
+            orderId: {
+              in: boundary.orderIds,
+            },
+          },
+        ],
       },
     });
     await client.trackingPoint.deleteMany({
       where: {
-        orderId: {
-          in: boundary.orderIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.trackingPointIds,
+            },
+          },
+          {
+            orderId: {
+              in: boundary.orderIds,
+            },
+          },
+        ],
       },
     });
     await client.orderStatusHistory.deleteMany({
       where: {
-        orderId: {
-          in: boundary.orderIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.orderStatusHistoryIds,
+            },
+          },
+          {
+            orderId: {
+              in: boundary.orderIds,
+            },
+          },
+        ],
       },
     });
     await client.orderStop.deleteMany({
       where: {
-        orderId: {
-          in: boundary.orderIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.orderStopIds,
+            },
+          },
+          {
+            orderId: {
+              in: boundary.orderIds,
+            },
+          },
+        ],
       },
     });
     await client.order.deleteMany({
@@ -352,14 +409,28 @@ async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoun
   if (boundary.userIds.length > 0 || boundary.fleetIds.length > 0) {
     await client.refreshSession.deleteMany({
       where: {
-        userId: {
-          in: boundary.userIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.refreshSessionIds,
+            },
+          },
+          {
+            userId: {
+              in: boundary.userIds,
+            },
+          },
+        ],
       },
     });
     await client.fleetMember.deleteMany({
       where: {
         OR: [
+          {
+            id: {
+              in: boundary.fleetMemberIds,
+            },
+          },
           {
             fleetId: {
               in: boundary.fleetIds,
@@ -375,9 +446,18 @@ async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoun
     });
     await client.driverProfile.deleteMany({
       where: {
-        userId: {
-          in: boundary.userIds,
-        },
+        OR: [
+          {
+            id: {
+              in: boundary.driverProfileIds,
+            },
+          },
+          {
+            userId: {
+              in: boundary.userIds,
+            },
+          },
+        ],
       },
     });
     await client.fleet.deleteMany({
@@ -647,7 +727,7 @@ export async function seedPilotData(): Promise<void> {
 
   await prisma.$transaction(
     async (client) => {
-      const boundary = await loadExistingDemoBoundary(client);
+      const boundary = await loadExistingDemoBoundary(client, manifest);
 
       await deleteExistingDemoBoundary(client, boundary);
       await insertUsers(client, manifest);

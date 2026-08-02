@@ -287,6 +287,7 @@ const MEMBERSHIP_STATUSES = ['INVITED', 'ACTIVE', 'REMOVED'] as const;
 const PAYMENT_STATUSES = ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'] as const;
 const USER_ROLES = ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const;
 
+// Non-demo fixture deliberately matching the retired phone and fleet-name prefixes.
 const STALE_DEMO = {
   actorLinkedHistoryId: 'cccccccc-cccc-4ccc-8ccc-cccccccccc13',
   auditLogId: 'cccccccc-cccc-4ccc-8ccc-cccccccccc12',
@@ -1342,7 +1343,7 @@ describe('pilot seed determinism', () => {
     expect(secondSnapshot).toEqual(expectedSnapshot);
   });
 
-  it('removes stale demo-owned rows and clears manifest-null driver locations on reseed', async () => {
+  it('preserves non-demo prefix collisions and clears manifest-null driver locations on reseed', async () => {
     const databaseUrl = requireDatabaseUrl();
     const manifest = await loadManifest();
     const nullLocationProfile = manifest.driverProfiles.find((profile) => profile.location === null);
@@ -1374,19 +1375,19 @@ describe('pilot seed determinism', () => {
     );
 
     expect(staleCounts).toEqual({
-      actorLinkedHistory: 0,
-      auditLog: 0,
-      driverProfile: 0,
-      fleet: 0,
-      fleetMember: 0,
-      mediaObject: 0,
-      order: 0,
-      orderStatusHistory: 0,
-      orderStop: 0,
-      paymentIntent: 0,
-      refreshSession: 0,
-      trackingPoint: 0,
-      user: 0,
+      actorLinkedHistory: 1,
+      auditLog: 1,
+      driverProfile: 1,
+      fleet: 1,
+      fleetMember: 1,
+      mediaObject: 1,
+      order: 1,
+      orderStatusHistory: 1,
+      orderStop: 1,
+      paymentIntent: 1,
+      refreshSession: 1,
+      trackingPoint: 1,
+      user: 1,
     });
     expect(nonDemoCounts).toEqual({
       auditLog: 1,

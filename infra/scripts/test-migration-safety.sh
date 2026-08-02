@@ -24,8 +24,8 @@ fi
 if (unset ALLOW_DESTRUCTIVE_RESET; assert_local_database_url "$LOOPBACK_LOOKALIKE_DATABASE_URL"); then
   fail "non-IP hostname with a loopback-looking prefix was accepted"
 fi
-if ! (ALLOW_DESTRUCTIVE_RESET=1 assert_local_database_url "$REMOTE_DATABASE_URL"); then
-  fail "explicit destructive opt-in was rejected"
+if (ALLOW_DESTRUCTIVE_RESET=1 assert_local_database_url "$REMOTE_DATABASE_URL"); then
+  fail "remote database URL was accepted despite the removed destructive opt-in"
 fi
 
 for script in reset-demo.sh test-migrations.sh; do

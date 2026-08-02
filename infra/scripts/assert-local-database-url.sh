@@ -36,11 +36,6 @@ assert_local_database_url() {
       ;;
   esac
 
-  if [[ "${ALLOW_DESTRUCTIVE_RESET:-0}" == '1' ]]; then
-    printf 'WARNING: destructive database operation explicitly enabled for non-local host %s.\n' "$host" >&2
-    return 0
-  fi
-
-  printf 'Refusing destructive database operation for non-local host %s. Use a loopback DATABASE_URL or set ALLOW_DESTRUCTIVE_RESET=1 only after explicit review.\n' "$host" >&2
+  printf 'Refusing destructive database operation for non-local host %s. Use a loopback DATABASE_URL.\n' "$host" >&2
   return 1
 }
