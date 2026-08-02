@@ -1,21 +1,28 @@
 # PH-13-T02 Report - Seed and Migration Operations
 
-- Status: GREEN
+- Status: GREEN (second fix round)
 - Branch: `codex/ph-13-t02-seed-migration-ops`
-- Base: `37f67bfacef76d73b44a9ae34d3fd9da5e36061d`
-- Commit SHA: recorded in final task handoff because embedding the final self-referential SHA in this file would change the commit hash again
+- Prior implementation: `7b6f56803e74fe309a8fe95c2a1af9f62000e87`
+- Implementation commit: `332566d8f7d832c1b255b024bbafb840461f1cfd`
+- Report commit SHA: recorded in the final task handoff because embedding the self-referential SHA would change this commit hash
 
 ## Changed Files
 
 - `apps/api/prisma/seed.ts`
 - `apps/api/test/seed-determinism.spec.ts`
-- `infra/seed/demo-manifest.json`
+- `infra/scripts/assert-local-database-url.sh`
+- `infra/scripts/reset-demo.sh`
+- `infra/scripts/test-migration-safety.sh`
+- `infra/scripts/test-migrations.sh`
 
-## RED Evidence
+No schema, feature endpoint, workspace configuration, or other worktree was changed.
 
-Command:
+## Second-Round RED Evidence
+
+Commands:
 
 ```bash
+bash infra/scripts/test-migration-safety.sh
 DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' \
   ./apps/api/node_modules/.bin/jest \
   --config apps/api/jest.config.cjs \
@@ -23,57 +30,64 @@ DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=p
   --runTestsByPath apps/api/test/seed-determinism.spec.ts
 ```
 
-Result:
+Results before this fix:
 
-- Exit code `1`
-- First failure: `Expected: > 0 / Received: 0` because the manifest had no canonical `driverProfiles[].location = null` case, so stale location clearing was unprovable.
-- After adding the null-location regression and manifest timestamps, the same spec still failed because demo rows kept runtime `createdAt`/`updatedAt` values and stale demo-owned `User`/`DriverProfile`/`Fleet`/`FleetMember`/`Order` rows survived reseed.
-- This proved the task still needed both manifest-backed deterministic timestamps and source-of-truth cleanup inside the demo ownership boundary.
+- `test-migration-safety.sh`: exit `1`, because the database URL guard was missing.
+- Seed determinism: exit `1`; the stale fixture failed on `OrderStatusHistory_actorId_fkey` while deleting demo users.
+- The transaction regression failed because the root Prisma client committed cleanup before the injected Fleet write failure.
 
 ## GREEN Evidence
 
-Primary verification command:
+Primary migration and seed gate:
 
 ```bash
 DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' \
   ./infra/scripts/test-migrations.sh
 ```
 
-Result:
+Result: exit `0`.
 
-- Exit code `0`
-- `prisma generate` succeeded with `apps/api/prisma.config.ts`
-- `prisma migrate reset --force` reapplied `0001_baseline`
-- Seed ran twice with identical logical output: `Seeded 8 users, 2 fleets and 6 orders.`
-- `prisma migrate deploy` returned `No pending migrations to apply.`
-- `apps/api/test/seed-determinism.spec.ts` passed
-- `apps/api/test/database-schema.spec.ts` passed
-- `apps/api/src/health/health.e2e-spec.ts` passed
-- `apps/api/src/app.e2e-spec.ts` passed
-- Direct API typecheck passed via `./node_modules/.bin/tsc --noEmit --project apps/api/tsconfig.json`
-- Direct API lint passed via `../../node_modules/.bin/eslint .` from `apps/api`
+- Clean reset reapplied `0001_baseline`.
+- Seed ran twice: `Seeded 8 users, 2 fleets and 6 orders.`
+- Two consecutive `prisma migrate deploy` runs reported no pending migrations.
+- The upgrade invariant passed: exactly one applied baseline migration, no rollback, and the recorded checksum matched `apps/api/prisma/migrations/0001_baseline/migration.sql`.
+- `seed-determinism.spec.ts` and `database-schema.spec.ts`: 2 suites, 10 tests passed.
+- Health and app e2e suites: 2 suites, 5 tests passed.
 
-## Exact Commands Run
+Additional verification:
 
 ```bash
-docker compose up -d postgres
-DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./infra/scripts/reset-demo.sh
-DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' node --experimental-strip-types apps/api/prisma/seed.ts
-DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./infra/scripts/test-migrations.sh
-DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./apps/api/node_modules/.bin/jest --config apps/api/jest.config.cjs --runInBand --runTestsByPath apps/api/test/seed-determinism.spec.ts
+bash -n infra/scripts/assert-local-database-url.sh infra/scripts/reset-demo.sh \
+  infra/scripts/test-migrations.sh infra/scripts/test-migration-safety.sh
+./infra/scripts/test-migration-safety.sh
 ./node_modules/.bin/tsc --noEmit --project apps/api/tsconfig.json
-../../node_modules/.bin/eslint .
+./node_modules/.bin/tsc --noEmit --target ES2022 --module NodeNext \
+  --moduleResolution NodeNext --skipLibCheck apps/api/prisma/seed.ts
+(cd apps/api && ../../node_modules/.bin/eslint .)
 ```
+
+All commands exited `0`. The shell safety test verified that non-local hosts, including `127.evil`, fail before Docker or migration reset, while `ALLOW_DESTRUCTIVE_RESET=1` is an explicit opt-in for a reviewed remote operation.
+
+The pnpm preflight commands below were also attempted and each exited `1` before source analysis because the repository's install policy rejected ignored builds for `@scarf/scarf@1.4.0` and `sharp@0.34.5` (`ERR_PNPM_IGNORED_BUILDS`):
+
+```bash
+pnpm --filter api typecheck
+pnpm --filter api lint
+pnpm --filter api test -- --runInBand --testPathPatterns='seed-determinism\.spec\.ts$'
+```
+
+The installed direct tsc, eslint, and database-backed commands above were used as the verified fallback. The e2e Jest command still emits the pre-existing open-handle warning after its passing assertions.
 
 ## Implementation Notes
 
-- Seed data is driven by `infra/seed/demo-manifest.json` with fixed UUIDs and reserved example phones only.
-- The seed now treats the demo dataset as replaceable source-of-truth inside a narrow ownership boundary: users with reserved demo phones, fleets named `Demo Fleet *`, and orders attached to those demo users.
-- Repeated runs delete only demo-owned rows, then recreate canonical users, driver profiles, fleets, memberships, orders, refresh sessions, and order children with deterministic `createdAt`/`updatedAt` values derived from the manifest.
-- The manifest now includes one canonical driver profile with `location: null`; reseed clears any leftover `lastKnownLocation` for that row.
-- The determinism spec now snapshots logical counts plus row-level timestamps for users, profiles, fleets, memberships, sessions, orders, stops, tracking points, media objects, payment intents, and status history.
+- `reset-demo.sh` and `test-migrations.sh` parse `DATABASE_URL` before any generation, Docker, or reset command. Loopback hosts are allowed by default; remote hosts require `ALLOW_DESTRUCTIVE_RESET=1`.
+- Demo cleanup uses one bounded transaction-scoped Prisma client. Actor-owned `AuditLog`, `OrderStatusHistory`, `TrackingPoint`, and `MediaObject` rows are removed only for reserved demo-user IDs; order children are removed only for orders attached to demo users. The regression fixture proves the demo actor reference is removed while a non-demo user, order, status history, and audit row survive.
+- All Prisma writes and raw PostGIS statements use the interactive transaction client. The `@prisma/adapter-pg` path supports transaction-scoped raw statements, so no adapter fallback was needed. The injected mid-seed trigger proves cleanup, Prisma writes, and raw PostGIS changes roll back together.
+- The repository has one baseline migration only. The migration script tests the truthful upgrade invariant available here: repeated deploy is idempotent, the baseline is fully applied, no rollback is recorded, and its checksum matches the checked-in SQL. No unrelated migration was invented.
 
-## Concerns
+## Scope and Risks
 
-- The e2e Jest run finishes green but still emits the pre-existing warning: `Jest did not exit one second after the test run has completed.` No failing assertions accompanied it, and this task stayed within the owned seed/migration surface instead of changing shared test/runtime behavior.
-- `pnpm --filter api typecheck` and `pnpm --filter api lint` did not reach source analysis in this worktree because the wrapper tripped the repo's ignored-build/install gate (`@scarf/scarf`, `sharp`). The direct installed binaries completed successfully, so the code itself was still verified.
+- PH-05-T05 was not run, as explicitly excluded.
+- The pnpm wrapper gate remains blocked by the existing ignored-build approval policy; direct installed verification passed.
+- The pre-existing Jest open-handle warning remains after the passing e2e assertions and is outside this seed/migration scope.
+- Ownership violations: none. Other worktrees were not touched.
