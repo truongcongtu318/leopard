@@ -11,14 +11,18 @@ type Coordinate = {
   lng: number;
 };
 
-type ManifestUser = {
+type TimestampedManifest = {
+  createdAt?: string;
+};
+
+type ManifestUser = TimestampedManifest & {
   id: string;
   phone: string;
   role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
   status: 'ACTIVE' | 'DISABLED';
 };
 
-type DriverProfileManifest = {
+type DriverProfileManifest = TimestampedManifest & {
   id: string;
   userId: string;
   availability: 'OFFLINE' | 'AVAILABLE' | 'BUSY';
@@ -27,12 +31,12 @@ type DriverProfileManifest = {
   location: Coordinate | null;
 };
 
-type FleetManifest = {
+type FleetManifest = TimestampedManifest & {
   id: string;
   name: string;
 };
 
-type FleetMemberManifest = {
+type FleetMemberManifest = TimestampedManifest & {
   id: string;
   fleetId: string;
   userId: string;
@@ -43,14 +47,14 @@ type FleetMemberManifest = {
   removedAt: string | null;
 };
 
-type RefreshSessionManifest = {
+type RefreshSessionManifest = TimestampedManifest & {
   id: string;
   userId: string;
   seedKey: string;
   expiresAt: string;
 };
 
-type OrderStopManifest = {
+type OrderStopManifest = TimestampedManifest & {
   id: string;
   type: 'PICKUP' | 'STOP' | 'DROPOFF';
   sequence: number;
@@ -67,7 +71,7 @@ type OrderStatusHistoryManifest = {
   createdAt: string;
 };
 
-type TrackingPointManifest = {
+type TrackingPointManifest = TimestampedManifest & {
   id: string;
   driverId: string;
   clientPointId: string;
@@ -75,7 +79,7 @@ type TrackingPointManifest = {
   location: Coordinate;
 };
 
-type MediaObjectManifest = {
+type MediaObjectManifest = TimestampedManifest & {
   id: string;
   uploaderId: string;
   type: 'CARGO' | 'DELIVERY_PROOF';
@@ -85,7 +89,7 @@ type MediaObjectManifest = {
   sizeBytes: number;
 };
 
-type PaymentIntentManifest = {
+type PaymentIntentManifest = TimestampedManifest & {
   id: string;
   provider: 'VIETMAP' | 'DEMO' | 'PAYOS' | 'VIETQR' | 'LOCAL' | 'S3';
   status: 'UNPAID' | 'QR_CREATED' | 'PAID_MANUAL' | 'FAILED';
@@ -95,7 +99,7 @@ type PaymentIntentManifest = {
   expiresAt: string | null;
 };
 
-type OrderManifest = {
+type OrderManifest = TimestampedManifest & {
   id: string;
   customerId: string;
   driverId: string | null;
@@ -128,6 +132,15 @@ type DemoManifest = {
   refreshSessions: RefreshSessionManifest[];
   orders: OrderManifest[];
 };
+
+type DemoBoundary = {
+  fleetIds: string[];
+  orderIds: string[];
+  userIds: string[];
+};
+
+const DEMO_PHONE_PREFIX = '09000000';
+const DEMO_FLEET_NAME_PREFIX = 'Demo Fleet ';
 
 const { PrismaClient } = prismaClientPackage;
 
@@ -168,78 +181,260 @@ function toDate(value: string | null): Date | null {
   return value ? new Date(value) : null;
 }
 
+function requiredCreatedAt(value: string | undefined, label: string): Date {
+  if (!value) {
+    throw new Error(`${label} must declare createdAt in infra/seed/demo-manifest.json`);
+  }
+
+  return new Date(value);
+}
+
+function createdAtForFleetMember(member: FleetMemberManifest): Date {
+  return member.createdAt ? new Date(member.createdAt) : new Date(member.invitedAt);
+}
+
+function createdAtForOrder(order: OrderManifest): Date {
+  if (order.createdAt) {
+    return new Date(order.createdAt);
+  }
+
+  const initialStatus = order.statusHistory[0]?.createdAt;
+  if (!initialStatus) {
+    throw new Error(`orders[${order.id}] must declare createdAt or at least one status history entry`);
+  }
+
+  return new Date(initialStatus);
+}
+
+function createdAtForTrackingPoint(point: TrackingPointManifest): Date {
+  return point.createdAt ? new Date(point.createdAt) : new Date(point.capturedAt);
+}
+
 function toTokenHash(seedKey: string): string {
   return createHash('sha256').update(`leopard-demo-seed:${seedKey}`).digest('hex');
 }
 
-async function upsertUsers(manifest: DemoManifest): Promise<void> {
-  for (const user of manifest.users) {
-    await prisma.user.upsert({
-      where: { phone: user.phone },
-      create: user,
-      update: {
-        id: user.id,
-        role: user.role,
-        status: user.status,
+async function loadExistingDemoBoundary(): Promise<DemoBoundary> {
+  const users = await prisma.user.findMany({
+    where: {
+      phone: {
+        startsWith: DEMO_PHONE_PREFIX,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const fleets = await prisma.fleet.findMany({
+    where: {
+      name: {
+        startsWith: DEMO_FLEET_NAME_PREFIX,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const userIds = users.map((user) => user.id);
+  const fleetIds = fleets.map((fleet) => fleet.id);
+
+  const orders =
+    userIds.length === 0
+      ? []
+      : await prisma.order.findMany({
+          where: {
+            OR: [
+              {
+                customerId: {
+                  in: userIds,
+                },
+              },
+              {
+                driverId: {
+                  in: userIds,
+                },
+              },
+            ],
+          },
+          select: {
+            id: true,
+          },
+        });
+
+  return {
+    fleetIds,
+    orderIds: orders.map((order) => order.id),
+    userIds,
+  };
+}
+
+async function deleteExistingDemoBoundary(boundary: DemoBoundary): Promise<void> {
+  if (boundary.orderIds.length > 0) {
+    await prisma.mediaObject.deleteMany({
+      where: {
+        orderId: {
+          in: boundary.orderIds,
+        },
+      },
+    });
+    await prisma.paymentIntent.deleteMany({
+      where: {
+        orderId: {
+          in: boundary.orderIds,
+        },
+      },
+    });
+    await prisma.trackingPoint.deleteMany({
+      where: {
+        orderId: {
+          in: boundary.orderIds,
+        },
+      },
+    });
+    await prisma.orderStatusHistory.deleteMany({
+      where: {
+        orderId: {
+          in: boundary.orderIds,
+        },
+      },
+    });
+    await prisma.orderStop.deleteMany({
+      where: {
+        orderId: {
+          in: boundary.orderIds,
+        },
+      },
+    });
+    await prisma.order.deleteMany({
+      where: {
+        id: {
+          in: boundary.orderIds,
+        },
+      },
+    });
+  }
+
+  if (boundary.userIds.length > 0 || boundary.fleetIds.length > 0) {
+    await prisma.refreshSession.deleteMany({
+      where: {
+        userId: {
+          in: boundary.userIds,
+        },
+      },
+    });
+    await prisma.fleetMember.deleteMany({
+      where: {
+        OR: [
+          {
+            fleetId: {
+              in: boundary.fleetIds,
+            },
+          },
+          {
+            userId: {
+              in: boundary.userIds,
+            },
+          },
+        ],
+      },
+    });
+    await prisma.driverProfile.deleteMany({
+      where: {
+        userId: {
+          in: boundary.userIds,
+        },
+      },
+    });
+    await prisma.fleet.deleteMany({
+      where: {
+        id: {
+          in: boundary.fleetIds,
+        },
+      },
+    });
+    await prisma.user.deleteMany({
+      where: {
+        id: {
+          in: boundary.userIds,
+        },
       },
     });
   }
 }
 
-async function upsertDriverProfiles(manifest: DemoManifest): Promise<void> {
-  for (const profile of manifest.driverProfiles) {
-    await prisma.driverProfile.upsert({
-      where: { userId: profile.userId },
-      create: {
+async function insertUsers(manifest: DemoManifest): Promise<void> {
+  await prisma.user.createMany({
+    data: manifest.users.map((user) => {
+      const createdAt = requiredCreatedAt(user.createdAt, `users[${user.id}]`);
+
+      return {
+        id: user.id,
+        phone: user.phone,
+        role: user.role,
+        status: user.status,
+        createdAt,
+        updatedAt: createdAt,
+      };
+    }),
+  });
+}
+
+async function insertDriverProfiles(manifest: DemoManifest): Promise<void> {
+  await prisma.driverProfile.createMany({
+    data: manifest.driverProfiles.map((profile) => {
+      const createdAt = requiredCreatedAt(profile.createdAt, `driverProfiles[${profile.id}]`);
+
+      return {
         id: profile.id,
         userId: profile.userId,
         availability: profile.availability,
         vehicleType: profile.vehicleType,
         lastKnownAt: toDate(profile.lastKnownAt),
-      },
-      update: {
-        id: profile.id,
-        availability: profile.availability,
-        vehicleType: profile.vehicleType,
-        lastKnownAt: toDate(profile.lastKnownAt),
-      },
-    });
+        createdAt,
+        updatedAt: createdAt,
+      };
+    }),
+  });
 
-    if (profile.location) {
-      await prisma.$executeRaw`
-        UPDATE "DriverProfile"
-        SET "lastKnownLocation" = ST_SetSRID(
-              ST_MakePoint(${profile.location.lng}, ${profile.location.lat}),
-              4326
-            )::geography
-        WHERE id = ${profile.id}::uuid
-      `;
+  for (const profile of manifest.driverProfiles) {
+    if (!profile.location) {
+      continue;
     }
+
+    await prisma.$executeRaw`
+      UPDATE "DriverProfile"
+      SET "lastKnownLocation" = ST_SetSRID(
+            ST_MakePoint(${profile.location.lng}, ${profile.location.lat}),
+            4326
+          )::geography
+      WHERE id = ${profile.id}::uuid
+    `;
   }
 }
 
-async function upsertFleets(manifest: DemoManifest): Promise<void> {
-  for (const fleet of manifest.fleets) {
-    await prisma.fleet.upsert({
-      where: { id: fleet.id },
-      create: fleet,
-      update: {
+async function insertFleets(manifest: DemoManifest): Promise<void> {
+  await prisma.fleet.createMany({
+    data: manifest.fleets.map((fleet) => {
+      const createdAt = requiredCreatedAt(fleet.createdAt, `fleets[${fleet.id}]`);
+
+      return {
+        id: fleet.id,
         name: fleet.name,
-      },
-    });
-  }
+        createdAt,
+        updatedAt: createdAt,
+      };
+    }),
+  });
 }
 
-async function upsertFleetMembers(manifest: DemoManifest): Promise<void> {
-  for (const member of manifest.fleetMembers) {
-    await prisma.fleetMember.upsert({
-      where: {
-        fleetId_userId: {
-          fleetId: member.fleetId,
-          userId: member.userId,
-        },
-      },
-      create: {
+async function insertFleetMembers(manifest: DemoManifest): Promise<void> {
+  await prisma.fleetMember.createMany({
+    data: manifest.fleetMembers.map((member) => {
+      const createdAt = createdAtForFleetMember(member);
+
+      return {
         id: member.id,
         fleetId: member.fleetId,
         userId: member.userId,
@@ -248,46 +443,37 @@ async function upsertFleetMembers(manifest: DemoManifest): Promise<void> {
         invitedAt: new Date(member.invitedAt),
         joinedAt: toDate(member.joinedAt),
         removedAt: toDate(member.removedAt),
-      },
-      update: {
-        id: member.id,
-        role: member.role,
-        status: member.status,
-        invitedAt: new Date(member.invitedAt),
-        joinedAt: toDate(member.joinedAt),
-        removedAt: toDate(member.removedAt),
-      },
-    });
-  }
+        createdAt,
+        updatedAt: createdAt,
+      };
+    }),
+  });
 }
 
-async function replaceRefreshSessions(manifest: DemoManifest): Promise<void> {
-  const userIds = manifest.refreshSessions.map((session) => session.userId);
-
-  await prisma.refreshSession.deleteMany({
-    where: {
-      userId: {
-        in: userIds,
-      },
-    },
-  });
-
+async function insertRefreshSessions(manifest: DemoManifest): Promise<void> {
   await prisma.refreshSession.createMany({
-    data: manifest.refreshSessions.map((session) => ({
-      id: session.id,
-      userId: session.userId,
-      tokenHash: toTokenHash(session.seedKey),
-      expiresAt: new Date(session.expiresAt),
-      revokedAt: null,
-    })),
+    data: manifest.refreshSessions.map((session) => {
+      const createdAt = requiredCreatedAt(session.createdAt, `refreshSessions[${session.id}]`);
+
+      return {
+        id: session.id,
+        userId: session.userId,
+        tokenHash: toTokenHash(session.seedKey),
+        expiresAt: new Date(session.expiresAt),
+        revokedAt: null,
+        createdAt,
+        updatedAt: createdAt,
+      };
+    }),
   });
 }
 
-async function upsertOrders(manifest: DemoManifest): Promise<void> {
-  for (const order of manifest.orders) {
-    await prisma.order.upsert({
-      where: { id: order.id },
-      create: {
+async function insertOrders(manifest: DemoManifest): Promise<void> {
+  await prisma.order.createMany({
+    data: manifest.orders.map((order) => {
+      const createdAt = createdAtForOrder(order);
+
+      return {
         id: order.id,
         customerId: order.customerId,
         driverId: order.driverId,
@@ -303,88 +489,40 @@ async function upsertOrders(manifest: DemoManifest): Promise<void> {
         inTransitAt: toDate(order.timestamps.inTransitAt),
         deliveredAt: toDate(order.timestamps.deliveredAt),
         cancelledAt: toDate(order.timestamps.cancelledAt),
-      },
-      update: {
-        customerId: order.customerId,
-        driverId: order.driverId,
-        status: order.status,
-        routeSnapshot: order.routeSnapshot,
-        providerSource: order.providerSource,
-        distanceMeters: order.distanceMeters,
-        durationSeconds: order.durationSeconds,
-        priceVnd: order.priceVnd,
-        etaSeconds: order.etaSeconds,
-        acceptedAt: toDate(order.timestamps.acceptedAt),
-        pickingUpAt: toDate(order.timestamps.pickingUpAt),
-        inTransitAt: toDate(order.timestamps.inTransitAt),
-        deliveredAt: toDate(order.timestamps.deliveredAt),
-        cancelledAt: toDate(order.timestamps.cancelledAt),
-      },
-    });
-  }
+        createdAt,
+        updatedAt: createdAt,
+      };
+    }),
+  });
 }
 
-async function replaceOrderChildren(manifest: DemoManifest): Promise<void> {
-  const orderIds = manifest.orders.map((order) => order.id);
-
-  await prisma.mediaObject.deleteMany({
-    where: {
-      orderId: {
-        in: orderIds,
-      },
-    },
-  });
-  await prisma.paymentIntent.deleteMany({
-    where: {
-      orderId: {
-        in: orderIds,
-      },
-    },
-  });
-  await prisma.trackingPoint.deleteMany({
-    where: {
-      orderId: {
-        in: orderIds,
-      },
-    },
-  });
-  await prisma.orderStatusHistory.deleteMany({
-    where: {
-      orderId: {
-        in: orderIds,
-      },
-    },
-  });
-  await prisma.orderStop.deleteMany({
-    where: {
-      orderId: {
-        in: orderIds,
-      },
-    },
-  });
-
+async function insertOrderChildren(manifest: DemoManifest): Promise<void> {
   for (const order of manifest.orders) {
-    if (order.stops.length > 0) {
-      for (const stop of order.stops) {
-        await prisma.$executeRaw`
-          INSERT INTO "OrderStop" (
-            id,
-            "orderId",
-            type,
-            sequence,
-            address,
-            location
-          )
-          VALUES (
-            ${stop.id}::uuid,
-            ${order.id}::uuid,
-            ${stop.type}::"StopType",
-            ${stop.sequence},
-            ${stop.address},
-            ST_SetSRID(ST_MakePoint(${stop.location.lng}, ${stop.location.lat}), 4326)::geography
-          )
-        `;
-      }
+    for (const stop of order.stops) {
+      const createdAt = requiredCreatedAt(stop.createdAt, `orderStops[${stop.id}]`);
+
+      await prisma.$executeRaw`
+        INSERT INTO "OrderStop" (
+          id,
+          "orderId",
+          type,
+          sequence,
+          address,
+          location,
+          "createdAt",
+          "updatedAt"
+        )
+        VALUES (
+          ${stop.id}::uuid,
+          ${order.id}::uuid,
+          ${stop.type}::"StopType",
+          ${stop.sequence},
+          ${stop.address},
+          ST_SetSRID(ST_MakePoint(${stop.location.lng}, ${stop.location.lat}), 4326)::geography,
+          ${createdAt}::timestamptz,
+          ${createdAt}::timestamptz
+        )
+      `;
     }
 
     if (order.statusHistory.length > 0) {
@@ -401,56 +539,71 @@ async function replaceOrderChildren(manifest: DemoManifest): Promise<void> {
       });
     }
 
-    if (order.trackingPoints.length > 0) {
-      for (const point of order.trackingPoints) {
-        await prisma.$executeRaw`
-          INSERT INTO "TrackingPoint" (
-            id,
-            "orderId",
-            "driverId",
-            "clientPointId",
-            location,
-            "capturedAt"
-          )
-          VALUES (
-            ${point.id}::uuid,
-            ${order.id}::uuid,
-            ${point.driverId}::uuid,
-            ${point.clientPointId},
-            ST_SetSRID(ST_MakePoint(${point.location.lng}, ${point.location.lat}), 4326)::geography,
-            ${new Date(point.capturedAt)}::timestamptz
-          )
-        `;
-      }
+    for (const point of order.trackingPoints) {
+      const createdAt = createdAtForTrackingPoint(point);
+
+      await prisma.$executeRaw`
+        INSERT INTO "TrackingPoint" (
+          id,
+          "orderId",
+          "driverId",
+          "clientPointId",
+          location,
+          "capturedAt",
+          "createdAt"
+        )
+        VALUES (
+          ${point.id}::uuid,
+          ${order.id}::uuid,
+          ${point.driverId}::uuid,
+          ${point.clientPointId},
+          ST_SetSRID(ST_MakePoint(${point.location.lng}, ${point.location.lat}), 4326)::geography,
+          ${new Date(point.capturedAt)}::timestamptz,
+          ${createdAt}::timestamptz
+        )
+      `;
     }
 
     if (order.mediaObjects.length > 0) {
       await prisma.mediaObject.createMany({
-        data: order.mediaObjects.map((media) => ({
-          id: media.id,
+        data: order.mediaObjects.map((mediaObject) => ({
+          id: mediaObject.id,
           orderId: order.id,
-          uploaderId: media.uploaderId,
-          type: media.type,
-          provider: media.provider,
-          storageKey: media.storageKey,
-          contentType: media.contentType,
-          sizeBytes: media.sizeBytes,
+          uploaderId: mediaObject.uploaderId,
+          type: mediaObject.type,
+          provider: mediaObject.provider,
+          storageKey: mediaObject.storageKey,
+          contentType: mediaObject.contentType,
+          sizeBytes: mediaObject.sizeBytes,
+          createdAt: requiredCreatedAt(
+            mediaObject.createdAt,
+            `mediaObjects[${mediaObject.id}]`,
+          ),
         })),
       });
     }
 
     if (order.paymentIntents.length > 0) {
       await prisma.paymentIntent.createMany({
-        data: order.paymentIntents.map((paymentIntent) => ({
-          id: paymentIntent.id,
-          orderId: order.id,
-          provider: paymentIntent.provider,
-          status: paymentIntent.status,
-          amountVnd: paymentIntent.amountVnd,
-          qrPayload: paymentIntent.qrPayload,
-          providerSnapshot: paymentIntent.providerSnapshot,
-          expiresAt: toDate(paymentIntent.expiresAt),
-        })),
+        data: order.paymentIntents.map((paymentIntent) => {
+          const createdAt = requiredCreatedAt(
+            paymentIntent.createdAt,
+            `paymentIntents[${paymentIntent.id}]`,
+          );
+
+          return {
+            id: paymentIntent.id,
+            orderId: order.id,
+            provider: paymentIntent.provider,
+            status: paymentIntent.status,
+            amountVnd: paymentIntent.amountVnd,
+            qrPayload: paymentIntent.qrPayload,
+            providerSnapshot: paymentIntent.providerSnapshot,
+            expiresAt: toDate(paymentIntent.expiresAt),
+            createdAt,
+            updatedAt: createdAt,
+          };
+        }),
       });
     }
   }
@@ -458,14 +611,16 @@ async function replaceOrderChildren(manifest: DemoManifest): Promise<void> {
 
 export async function seedPilotData(): Promise<void> {
   const manifest = await loadManifest();
+  const boundary = await loadExistingDemoBoundary();
 
-  await upsertUsers(manifest);
-  await upsertDriverProfiles(manifest);
-  await upsertFleets(manifest);
-  await upsertFleetMembers(manifest);
-  await upsertOrders(manifest);
-  await replaceOrderChildren(manifest);
-  await replaceRefreshSessions(manifest);
+  await deleteExistingDemoBoundary(boundary);
+  await insertUsers(manifest);
+  await insertDriverProfiles(manifest);
+  await insertFleets(manifest);
+  await insertFleetMembers(manifest);
+  await insertOrders(manifest);
+  await insertOrderChildren(manifest);
+  await insertRefreshSessions(manifest);
 
   process.stdout.write(
     `Seeded ${manifest.users.length} users, ${manifest.fleets.length} fleets and ${manifest.orders.length} orders.\n`,

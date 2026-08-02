@@ -10,8 +10,6 @@
 - `apps/api/prisma/seed.ts`
 - `apps/api/test/seed-determinism.spec.ts`
 - `infra/seed/demo-manifest.json`
-- `infra/scripts/reset-demo.sh`
-- `infra/scripts/test-migrations.sh`
 
 ## RED Evidence
 
@@ -28,8 +26,9 @@ DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=p
 Result:
 
 - Exit code `1`
-- Failure reason: `Cannot find module '/home/tutruong/project/leopard/.worktrees/ph-13-t02-seed-migration-ops/apps/api/prisma/seed.ts'`
-- This proved the deterministic seed entrypoint and dataset were missing before implementation.
+- First failure: `Expected: > 0 / Received: 0` because the manifest had no canonical `driverProfiles[].location = null` case, so stale location clearing was unprovable.
+- After adding the null-location regression and manifest timestamps, the same spec still failed because demo rows kept runtime `createdAt`/`updatedAt` values and stale demo-owned `User`/`DriverProfile`/`Fleet`/`FleetMember`/`Order` rows survived reseed.
+- This proved the task still needed both manifest-backed deterministic timestamps and source-of-truth cleanup inside the demo ownership boundary.
 
 ## GREEN Evidence
 
@@ -51,24 +50,30 @@ Result:
 - `apps/api/test/database-schema.spec.ts` passed
 - `apps/api/src/health/health.e2e-spec.ts` passed
 - `apps/api/src/app.e2e-spec.ts` passed
+- Direct API typecheck passed via `./node_modules/.bin/tsc --noEmit --project apps/api/tsconfig.json`
+- Direct API lint passed via `../../node_modules/.bin/eslint .` from `apps/api`
 
 ## Exact Commands Run
 
 ```bash
 docker compose up -d postgres
-DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./apps/api/node_modules/.bin/prisma generate --config apps/api/prisma.config.ts --schema apps/api/prisma/schema.prisma
+DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./infra/scripts/reset-demo.sh
+DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' node --experimental-strip-types apps/api/prisma/seed.ts
 DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./infra/scripts/test-migrations.sh
-DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./apps/api/node_modules/.bin/jest --config apps/api/jest.config.cjs --runInBand --testRegex='(database-schema|seed-determinism)\.spec\.ts$' --testPathIgnorePatterns='.*\.e2e-spec\.ts$'
-DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./apps/api/node_modules/.bin/jest --config apps/api/jest-e2e.config.cjs --runInBand --testRegex='(health|app)\.e2e-spec\.ts$' --testPathIgnorePatterns='database-schema\.spec\.ts$'
+DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' ./apps/api/node_modules/.bin/jest --config apps/api/jest.config.cjs --runInBand --runTestsByPath apps/api/test/seed-determinism.spec.ts
+./node_modules/.bin/tsc --noEmit --project apps/api/tsconfig.json
+../../node_modules/.bin/eslint .
 ```
 
 ## Implementation Notes
 
 - Seed data is driven by `infra/seed/demo-manifest.json` with fixed UUIDs and reserved example phones only.
-- The manifest includes support Driver accounts so the dataset can satisfy the existing partial unique index on active `Order.driverId` while still covering `ACCEPTED`, `PICKING_UP`, and `IN_TRANSIT` at the same time.
-- `seed.ts` uses the repo's Prisma 7 adapter pattern (`PrismaPg`) instead of a zero-argument client constructor.
-- `test-migrations.sh` uses CLI regex overrides because the repo Jest configs intentionally ignore `database-schema.spec.ts` and `.e2e-spec.ts` by default.
+- The seed now treats the demo dataset as replaceable source-of-truth inside a narrow ownership boundary: users with reserved demo phones, fleets named `Demo Fleet *`, and orders attached to those demo users.
+- Repeated runs delete only demo-owned rows, then recreate canonical users, driver profiles, fleets, memberships, orders, refresh sessions, and order children with deterministic `createdAt`/`updatedAt` values derived from the manifest.
+- The manifest now includes one canonical driver profile with `location: null`; reseed clears any leftover `lastKnownLocation` for that row.
+- The determinism spec now snapshots logical counts plus row-level timestamps for users, profiles, fleets, memberships, sessions, orders, stops, tracking points, media objects, payment intents, and status history.
 
 ## Concerns
 
 - The e2e Jest run finishes green but still emits the pre-existing warning: `Jest did not exit one second after the test run has completed.` No failing assertions accompanied it, and this task stayed within the owned seed/migration surface instead of changing shared test/runtime behavior.
+- `pnpm --filter api typecheck` and `pnpm --filter api lint` did not reach source analysis in this worktree because the wrapper tripped the repo's ignored-build/install gate (`@scarf/scarf`, `sharp`). The direct installed binaries completed successfully, so the code itself was still verified.
