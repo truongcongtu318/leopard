@@ -1,5 +1,5 @@
 import type {
-  GeoPoint,
+  GeocodeResult,
   MapProvider,
   PlaceCandidate,
   RouteEstimate,
@@ -76,7 +76,7 @@ export class VietmapProvider implements MapProvider {
       .filter((candidate): candidate is PlaceCandidate => candidate !== null);
   }
 
-  async geocode(placeId: string): Promise<GeoPoint> {
+  async geocode(placeId: string): Promise<GeocodeResult> {
     const url = this.buildUrl('/api/place/v4', {
       refid: placeId,
     });
@@ -88,7 +88,10 @@ export class VietmapProvider implements MapProvider {
       throw new VietmapProviderError('Vietmap geocode failed: missing coordinates');
     }
 
-    return { latitude, longitude };
+    return {
+      point: { latitude, longitude },
+      source: 'VIETMAP',
+    };
   }
 
   async route(input: RouteInput): Promise<RouteEstimate> {

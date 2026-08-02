@@ -12,6 +12,11 @@ export interface PlaceCandidate {
   source: MapProviderSource;
 }
 
+export interface GeocodeResult {
+  point: GeoPoint;
+  source: MapProviderSource;
+}
+
 export interface RouteInput {
   pickup: GeoPoint;
   stops: GeoPoint[];
@@ -41,6 +46,6 @@ export interface RouteEstimator {
 
 export interface MapProvider {
   search(query: string): Promise<PlaceCandidate[]>;
-  geocode(placeId: string): Promise<GeoPoint>;
+  geocode(placeId: string): Promise<GeocodeResult>;
   route(input: RouteInput): Promise<RouteEstimate>;
 }

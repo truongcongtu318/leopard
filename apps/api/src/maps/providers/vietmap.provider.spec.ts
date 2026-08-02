@@ -68,8 +68,11 @@ describe('VietmapProvider', () => {
     const provider = vietmapProvider(fetchMock);
 
     await expect(provider.geocode('auto:opaque/ref id')).resolves.toEqual({
-      latitude: 10.759222947000069,
-      longitude: 106.67590269100003,
+      point: {
+        latitude: 10.759222947000069,
+        longitude: 106.67590269100003,
+      },
+      source: 'VIETMAP',
     });
 
     const requestedUrl = getRequestedUrl(fetchMock);

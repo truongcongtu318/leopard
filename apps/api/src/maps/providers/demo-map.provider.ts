@@ -1,6 +1,6 @@
 import { DemoRouteEstimator } from '../domain/demo-route-estimator.js';
 import type {
-  GeoPoint,
+  GeocodeResult,
   MapProvider,
   PlaceCandidate,
   RouteEstimate,
@@ -26,7 +26,7 @@ export class DemoMapProvider implements MapProvider {
     ];
   }
 
-  async geocode(placeId: string): Promise<GeoPoint> {
+  async geocode(placeId: string): Promise<GeocodeResult> {
     const normalizedPlaceId = placeId.trim().toLowerCase();
     const hash = [...normalizedPlaceId].reduce(
       (total, character) => total + character.charCodeAt(0),
@@ -34,8 +34,11 @@ export class DemoMapProvider implements MapProvider {
     );
 
     return {
-      latitude: 10.7 + (hash % 1_000) / 10_000,
-      longitude: 106.6 + (hash % 1_000) / 10_000,
+      point: {
+        latitude: 10.7 + (hash % 1_000) / 10_000,
+        longitude: 106.6 + (hash % 1_000) / 10_000,
+      },
+      source: 'DEMO',
     };
   }
 

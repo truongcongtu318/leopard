@@ -1,5 +1,5 @@
 import type {
-  GeoPoint,
+  GeocodeResult,
   MapProvider,
   PlaceCandidate,
   RouteEstimate,
@@ -26,7 +26,7 @@ export class ResilientMapProvider implements MapProvider {
     return this.withDemoFallback((provider) => provider.search(query));
   }
 
-  async geocode(placeId: string): Promise<GeoPoint> {
+  async geocode(placeId: string): Promise<GeocodeResult> {
     return this.withDemoFallback((provider) => provider.geocode(placeId));
   }
 
