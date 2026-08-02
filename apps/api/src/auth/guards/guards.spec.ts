@@ -42,7 +42,7 @@ import {
 interface StoredUser {
   readonly id: string;
   readonly phone: string;
-  readonly role: Role;
+  role: Role;
   status: UserStatus;
   readonly createdAt: Date;
   updatedAt: Date;
@@ -205,17 +205,14 @@ describe('PH-05-T04 guards and resource policy', () => {
     });
     const first: CachedAccountStatus = {
       userId: 'user-1',
-      role: 'CUSTOMER',
       status: 'ACTIVE',
     };
     const second: CachedAccountStatus = {
       userId: 'user-2',
-      role: 'DRIVER',
       status: 'ACTIVE',
     };
     const third: CachedAccountStatus = {
       userId: 'user-3',
-      role: 'ADMIN',
       status: 'DISABLED',
     };
 
@@ -443,13 +440,17 @@ describe('PH-05-T04 guards and resource policy', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
+    session.revokedAt = new Date('2026-08-01T01:00:00.000Z');
+
     await request(app.getHttpServer())
       .get('/api/v1/authz-test/profile')
       .set('Authorization', `Bearer ${token}`)
-      .expect(200);
+      .expect(401)
+      .expect(({ body }) => {
+        expect(body.code).toBe('UNAUTHORIZED');
+      });
 
     expect(prismaState.prisma.refreshSession.findUnique).toHaveBeenCalledTimes(2);
-    expect(prismaState.prisma.user.findUnique).toHaveBeenCalledTimes(1);
   });
 
   it('returns 403 for role mismatches and ignores client-supplied role hints', async () => {
@@ -522,6 +523,51 @@ describe('PH-05-T04 guards and resource policy', () => {
       .expect(({ body }) => {
         expect(body.code).toBe('FORBIDDEN');
       });
+  });
+
+  it('re-reads the current database role after a warm account-status cache hit', async () => {
+    const user: StoredUser = {
+      id: 'user-role-demotion',
+      phone: '+840000000005-demotion',
+      role: 'ADMIN',
+      status: 'ACTIVE',
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    const session: StoredRefreshSession = {
+      id: 'session-role-demotion',
+      userId: user.id,
+      tokenHash: 'hash',
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    prismaState.users.set(user.id, user);
+    prismaState.refreshSessions.set(session.id, session);
+
+    const signedAdminToken = createAccessToken(tokenService, {
+      userId: user.id,
+      role: 'ADMIN',
+      sessionId: session.id,
+    }, session.expiresAt);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/admin')
+      .set('Authorization', `Bearer ${signedAdminToken}`)
+      .expect(200);
+
+    user.role = 'CUSTOMER';
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/admin')
+      .set('Authorization', `Bearer ${signedAdminToken}`)
+      .expect(403)
+      .expect(({ body }) => {
+        expect(body.code).toBe('FORBIDDEN');
+      });
+
+    expect(prismaState.prisma.user.findUnique).toHaveBeenCalledTimes(2);
   });
 
   it('allows the generic resource policy to authorize resource owners only', async () => {

@@ -3,6 +3,7 @@ import {
   type CanActivate,
   type ExecutionContext,
 } from '@nestjs/common';
+import type { UserStatus } from '@prisma/client';
 
 import { DomainError } from '../../common/domain-error.js';
 import { PrismaService } from '../../database/prisma.service.js';
@@ -38,28 +39,47 @@ export class AccessTokenGuard implements CanActivate {
       throw this.unauthorized();
     }
 
-    const user = await this.accountStatusCache.getOrLoad(claims.sub, async () => {
+    const cachedStatus = this.accountStatusCache.get(claims.sub);
+    let userId: string;
+    let role: AuthenticatedActor['role'];
+    let status: UserStatus;
+
+    if (cachedStatus) {
+      const currentUser = await this.prisma.user.findUnique({
+        where: { id: claims.sub },
+        select: { id: true, role: true },
+      });
+      if (!currentUser) {
+        throw this.unauthorized();
+      }
+
+      userId = currentUser.id;
+      role = currentUser.role;
+      status = cachedStatus.status;
+    } else {
       const currentUser = await this.prisma.user.findUnique({
         where: { id: claims.sub },
       });
       if (!currentUser) {
-        return null;
+        throw this.unauthorized();
       }
 
-      return {
+      this.accountStatusCache.set({
         userId: currentUser.id,
-        role: currentUser.role,
         status: currentUser.status,
-      };
-    });
+      });
+      userId = currentUser.id;
+      role = currentUser.role;
+      status = currentUser.status;
+    }
 
-    if (!user || user.status !== 'ACTIVE') {
+    if (status !== 'ACTIVE') {
       throw this.unauthorized();
     }
 
     const actor: AuthenticatedActor = {
-      userId: user.userId,
-      role: user.role,
+      userId,
+      role,
       sessionId: session.id,
     };
 

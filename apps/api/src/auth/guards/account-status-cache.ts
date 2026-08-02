@@ -1,5 +1,5 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
-import type { Role, UserStatus } from '@prisma/client';
+import type { UserStatus } from '@prisma/client';
 
 const DEFAULT_ACCOUNT_STATUS_CACHE_TTL_MS = 5_000;
 const DEFAULT_ACCOUNT_STATUS_CACHE_MAX_ENTRIES = 100;
@@ -10,7 +10,6 @@ export const ACCOUNT_STATUS_CACHE_OPTIONS = Symbol(
 
 export interface CachedAccountStatus {
   readonly userId: string;
-  readonly role: Role;
   readonly status: UserStatus;
 }
 
