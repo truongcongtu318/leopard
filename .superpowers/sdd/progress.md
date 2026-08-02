@@ -184,3 +184,34 @@ Implementation agents: Agent A Backend/Platform; Agent B Client Foundations.
 - PH-02-T01 M-01: shell E2E boots `AppModule` directly and does not exercise `createApplication` bootstrap configuration.
 - PH-02-T01 M-02: CORS allowlist schema accepts general URLs rather than canonical HTTP(S) origins only.
 - PH-02-T01 M-03: POSIX watcher cleanup has no bounded SIGKILL escalation if a process group ignores shutdown.
+
+# LEOPARD Wave 2A Current-Scope Delivery
+
+Integration branch: `codex/integration-wave-2`
+Integration baseline: `a6a7a38`
+Develop baseline: `37f67bfacef76d73b44a9ae34d3fd9da5e36061d`
+
+## Verified Current Scope
+
+- PH-05-T04 Authentication and Policy Guards: VERIFIED — `b9652c2`, `69eec8a`; fresh review approved; guard suite 15/15.
+- PH-07-T04 Map REST API and Gate: VERIFIED — `1de2867`, `91bd2b3`, `de74380`, `6f7d942`; fresh review approved; maps E2E 14/14, contract 34/34, unit 106/106.
+- PH-13-T02 Seed and Migration Operations: VERIFIED — `332566d`, `33f905e`, `563b50a`, `3184e6f`; fresh review approved; migration/seed 10/10 and health/app E2E 5/5.
+
+## Wave Gate Evidence
+
+- Integration unit tests with local `DATABASE_URL`: 10 suites, 109 tests passed.
+- Login E2E: 5/5 passed; refresh E2E: 10/10 passed on a clean local `RefreshSession` table.
+- Health/app/maps E2E: 19/19 passed.
+- API typecheck/build/lint and `git diff --check`: passed through direct binaries after `pnpm install --frozen-lockfile --ignore-scripts`.
+- `test-migrations.sh`: reset, two seeds, idempotent migration deploy, checksum invariant, 10 database/seed tests and 5 API E2E tests passed.
+- `test-migration-safety.sh`: remote and lookalike hosts rejected before Docker/reset.
+- Root `pnpm` task preflight remains blocked by `ERR_PNPM_IGNORED_BUILDS`; data E2E prints a pre-existing open-handle warning but exits 0.
+
+## Deferred
+
+- PH-05-T05 Client Login Integration: DEFERRED by orchestrator instruction for this run; no implementation branch was started.
+- PH-06 order/driver work: not started in this handoff.
+
+## Next Owner
+
+Start a new isolated `codex/ph-05-t05-client-login` worktree from the merged integration/develop baseline. Read the PH-05-T05 plan and task brief, then follow TDD and the two-agent implementer/reviewer workflow. Do not treat this handoff as Wave 2A product-complete.
