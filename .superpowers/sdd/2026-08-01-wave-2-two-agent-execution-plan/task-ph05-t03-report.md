@@ -26,21 +26,23 @@ Report artifact:
 RED:
 - Before a database URL was provided, the new Prisma-backed suite failed at real Prisma initialization with `DATABASE_URL is required to initialize PrismaService`. This confirmed the attempted remediation was exercising the actual database path rather than silently falling back to the in-memory double.
 - After extending the Postgres suite to cover the remaining expired/revoked case and winner-token reuse, the first rerun failed with `ReferenceError: latestRefreshSession is not defined`, proving the new DB-backed assertions were live and catching a real test-scope bug.
+- After reviewer follow-up, the new deterministic-session test failed because both lookups resolved to the newest `RefreshSession` row when the helper used `createdAt desc` alone. This proved the helper was not stably tied to the bearer session under test.
 
 GREEN:
-- After moving `latestRefreshSession()` into the Prisma-backed describe scope, the full focused refresh suite passed against local PostgreSQL with Prisma baseline applied: 1 suite, 9 tests passed.
+- After moving `latestRefreshSession()` into the Prisma-backed describe scope, the focused refresh suite passed against local PostgreSQL with Prisma baseline applied: 1 suite, 9 tests passed.
+- After the hygiene follow-up switched `latestRefreshSession()` to resolve the stable `sessionId` from the access token, the focused Postgres suite passed again with 1 suite and 10 tests green.
 
 ## Commands And Results
 
 Environment:
-- `DATABASE_URL=postgresql://leopard:leopard_local@localhost:5432/leopard?schema=public`
+- `DATABASE_URL=[REDACTED local Postgres URL]`
 - Node runtime via `PATH=/home/tutruong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH`
 
 Commands:
 - `pnpm --filter api exec prisma migrate deploy --schema prisma/schema.prisma`
   - Result: `No pending migrations to apply.`
 - `pnpm --filter api exec jest --config jest-e2e.config.cjs --runInBand --testPathIgnorePatterns='[]' --testRegex 'src/auth/refresh\\.e2e-spec\\.ts$'`
-  - Result: pass, `1` suite and `9` tests green.
+  - Result: pass, `1` suite and `10` tests green after the hygiene follow-up.
 - `pnpm --filter api typecheck`
   - Result: pass.
 - `pnpm --filter api lint`
@@ -50,6 +52,7 @@ Commands:
 
 ## Verified DB-Backed Coverage
 
+- Session lookup in the Postgres-backed helper is now deterministic per bearer access token rather than relying on latest-row ordering.
 - Rotation stores only hashed refresh tokens and revokes the prior session.
 - Reuse revokes the affected token family through the real `RefreshSession` table.
 - Expired and already revoked refresh tokens are rejected on the Prisma/PostgreSQL path.

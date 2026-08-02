@@ -423,12 +423,26 @@ describe('PH-05-T03 refresh rotation and logout with Prisma transactions', () =>
     return response.body.session as AuthSessionBody;
   }
 
-  async function latestRefreshSession(): Promise<{
+  async function latestRefreshSession(
+    accessToken: string,
+  ): Promise<{
     readonly id: string;
     readonly userId: string;
   }> {
-    const session = await prisma.refreshSession.findFirst({
-      orderBy: { createdAt: 'desc' },
+    const encodedPayload = accessToken.split('.')[1];
+    if (!encodedPayload) {
+      throw new Error('Expected an encoded access-token payload');
+    }
+
+    const payload = JSON.parse(
+      Buffer.from(encodedPayload, 'base64url').toString('utf8'),
+    ) as { readonly sessionId?: string };
+    if (!payload.sessionId) {
+      throw new Error('Expected access token to include sessionId');
+    }
+
+    const session = await prisma.refreshSession.findUnique({
+      where: { id: payload.sessionId },
       select: { id: true, userId: true },
     });
 
@@ -438,6 +452,16 @@ describe('PH-05-T03 refresh rotation and logout with Prisma transactions', () =>
 
     return session;
   }
+
+  it('selects the persisted refresh session for each access token deterministically', async () => {
+    const first = await loginDemo();
+    const second = await loginDemo();
+
+    const firstRecord = await latestRefreshSession(first.accessToken);
+    const secondRecord = await latestRefreshSession(second.accessToken);
+
+    expect(firstRecord.id).not.toBe(secondRecord.id);
+  });
 
   it('rotates and rejects reuse through the real RefreshSession table', async () => {
     const original = await loginDemo();
@@ -508,7 +532,7 @@ describe('PH-05-T03 refresh rotation and logout with Prisma transactions', () =>
 
   it('rejects expired and revoked refresh tokens in the real database path', async () => {
     const expired = await loginDemo();
-    const expiredRecord = await latestRefreshSession();
+    const expiredRecord = await latestRefreshSession(expired.accessToken);
 
     await prisma.refreshSession.update({
       where: { id: expiredRecord.id },
@@ -522,7 +546,7 @@ describe('PH-05-T03 refresh rotation and logout with Prisma transactions', () =>
     await expect(prisma.refreshSession.count()).resolves.toBe(1);
 
     const revoked = await loginDemo();
-    const revokedRecord = await latestRefreshSession();
+    const revokedRecord = await latestRefreshSession(revoked.accessToken);
 
     await prisma.refreshSession.update({
       where: { id: revokedRecord.id },
