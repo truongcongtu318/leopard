@@ -46,4 +46,3 @@ The normal `pnpm --filter api test/typecheck/lint` preflight is currently blocke
 3. Read `docs/superpowers/plans/05-auth-and-access.md` and the PH-05-T05 task brief before writing tests.
 4. Keep mobile and admin login ownership separate from the backend auth guards and OpenAPI files.
 5. Do not start PH-06 order/driver work until its dependency gate and the next orchestration decision are recorded.
-
