@@ -357,3 +357,200 @@ describe('PH-05-T03 refresh rotation and logout', () => {
       .expect(401);
   });
 });
+
+describe('PH-05-T03 refresh rotation and logout with Prisma transactions', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+
+  beforeAll(async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.AUTH_DEMO_LOGIN_ENABLED = 'true';
+    process.env.AUTH_ACCESS_TOKEN_SECRET = 'test-access-token-secret';
+    process.env.AUTH_REFRESH_TOKEN_SECRET = 'test-refresh-token-secret';
+
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AuthModule],
+    })
+      .overrideProvider(OTP_PROVIDER)
+      .useValue({ verify: jest.fn() })
+      .compile();
+
+    prisma = moduleFixture.get(PrismaService);
+    app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
+    await app.init();
+  });
+
+  beforeEach(async () => {
+    await deleteDemoAuthRows();
+  });
+
+  afterAll(async () => {
+    await deleteDemoAuthRows();
+    await app.close();
+    delete process.env.AUTH_DEMO_LOGIN_ENABLED;
+    delete process.env.AUTH_ACCESS_TOKEN_SECRET;
+    delete process.env.AUTH_REFRESH_TOKEN_SECRET;
+  });
+
+  async function deleteDemoAuthRows(): Promise<void> {
+    const demoPhones = ['+840000000001'];
+    const users = await prisma.user.findMany({
+      where: { phone: { in: demoPhones } },
+      select: { id: true },
+    });
+    const userIds = users.map(({ id }) => id);
+
+    await prisma.refreshSession.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+  }
+
+  async function loginDemo(): Promise<AuthSessionBody> {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/auth/login/demo')
+      .send({ accountId: 'customer' })
+      .expect(201);
+
+    return response.body.session as AuthSessionBody;
+  }
+
+  async function latestRefreshSession(): Promise<{
+    readonly id: string;
+    readonly userId: string;
+  }> {
+    const session = await prisma.refreshSession.findFirst({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, userId: true },
+    });
+
+    if (!session) {
+      throw new Error('Expected a persisted refresh session');
+    }
+
+    return session;
+  }
+
+  it('rotates and rejects reuse through the real RefreshSession table', async () => {
+    const original = await loginDemo();
+    const rotated = (
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: original.refreshToken })
+        .expect(201)
+    ).body as AuthSessionBody;
+
+    const sessionsAfterRotation = await prisma.refreshSession.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(sessionsAfterRotation).toHaveLength(2);
+    expect(sessionsAfterRotation[0]?.revokedAt).toBeInstanceOf(Date);
+    expect(sessionsAfterRotation[1]?.revokedAt).toBeNull();
+    expect(sessionsAfterRotation[1]?.tokenHash).toContain('$argon2');
+    expect(sessionsAfterRotation[1]?.tokenHash).not.toBe(rotated.refreshToken);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: original.refreshToken })
+      .expect(401);
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: rotated.refreshToken })
+      .expect(401);
+
+    const activeSessions = await prisma.refreshSession.count({
+      where: { revokedAt: null },
+    });
+    expect(activeSessions).toBe(0);
+  });
+
+  it('allows only one concurrent refresh to commit against Postgres', async () => {
+    const original = await loginDemo();
+
+    const attempts = await Promise.allSettled([
+      request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: original.refreshToken }),
+      request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: original.refreshToken }),
+    ]);
+    const statuses = attempts.map((attempt) =>
+      attempt.status === 'fulfilled' ? attempt.value.status : 0,
+    );
+
+    expect(statuses.sort()).toEqual([201, 401]);
+    await expect(prisma.refreshSession.count()).resolves.toBe(2);
+    await expect(
+      prisma.refreshSession.count({ where: { revokedAt: null } }),
+    ).resolves.toBe(1);
+
+    const winner = attempts.find(
+      (attempt) => attempt.status === 'fulfilled' && attempt.value.status === 201,
+    );
+    if (winner?.status !== 'fulfilled') {
+      throw new Error('Expected one successful refresh response');
+    }
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: (winner.value.body as AuthSessionBody).refreshToken })
+      .expect(201);
+  });
+
+  it('rejects expired and revoked refresh tokens in the real database path', async () => {
+    const expired = await loginDemo();
+    const expiredRecord = await latestRefreshSession();
+
+    await prisma.refreshSession.update({
+      where: { id: expiredRecord.id },
+      data: { expiresAt: new Date('2026-07-31T00:00:00.000Z') },
+    });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: expired.refreshToken })
+      .expect(401);
+    await expect(prisma.refreshSession.count()).resolves.toBe(1);
+
+    const revoked = await loginDemo();
+    const revokedRecord = await latestRefreshSession();
+
+    await prisma.refreshSession.update({
+      where: { id: revokedRecord.id },
+      data: { revokedAt: new Date('2026-08-02T00:00:00.000Z') },
+    });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: revoked.refreshToken })
+      .expect(401);
+    await expect(prisma.refreshSession.count()).resolves.toBe(2);
+  });
+
+  it('logs out the bearer session in the real database transaction path', async () => {
+    const session = await loginDemo();
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/logout')
+      .set('Authorization', `Bearer ${session.accessToken}`)
+      .expect(204)
+      .expect('');
+
+    await expect(
+      prisma.refreshSession.count({ where: { revokedAt: null } }),
+    ).resolves.toBe(0);
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: session.refreshToken })
+      .expect(401);
+  });
+});
