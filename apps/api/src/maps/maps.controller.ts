@@ -5,6 +5,7 @@ import {
   Controller,
   Get,
   Injectable,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -21,9 +22,10 @@ import {
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
-import { MapsService } from './maps.service.js';
+import { MapPlaceNotFoundError, MapsService } from './maps.service.js';
 import type { OrderEstimateResponse } from './maps.service.js';
 import type {
+  GeocodeResult,
   GeoPoint,
   MapProviderSource,
   PlaceCandidate,
@@ -169,7 +171,17 @@ export class MapsController {
   @Get('maps/geocode/:placeId')
   async geocode(@Param('placeId') rawPlaceId: unknown): Promise<GeocodeResponse> {
     const placeId = validatePlaceId(rawPlaceId);
-    const result = await this.mapsService.geocode(placeId);
+
+    let result: GeocodeResult;
+    try {
+      result = await this.mapsService.geocode(placeId);
+    } catch (error) {
+      if (error instanceof MapPlaceNotFoundError) {
+        throw new NotFoundException(error.message);
+      }
+
+      throw error;
+    }
 
     return {
       source: result.source,

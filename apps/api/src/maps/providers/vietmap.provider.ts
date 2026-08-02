@@ -5,6 +5,7 @@ import type {
   RouteEstimate,
   RouteInput,
 } from './map-provider.js';
+import { MapProviderNotFoundError } from './map-provider.js';
 
 const DEFAULT_BASE_URL = 'https://maps.vietmap.vn';
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -169,12 +170,15 @@ export class VietmapProvider implements MapProvider {
         }
 
         const message = await responseMessage(response);
-        const error = new VietmapProviderError(
-          redactSecrets(
-            `Vietmap ${operation} failed with HTTP ${response.status} ${response.statusText}: ${message}`,
-            this.options.apiKey,
-          ),
-        );
+        const error =
+          operation === 'geocode' && response.status === 404
+            ? new MapProviderNotFoundError('Vietmap geocode place not found')
+            : new VietmapProviderError(
+                redactSecrets(
+                  `Vietmap ${operation} failed with HTTP ${response.status} ${response.statusText}: ${message}`,
+                  this.options.apiKey,
+                ),
+              );
 
         if (!isTransientStatus(response.status) || attempt === MAX_ATTEMPTS) {
           throw error;
@@ -182,7 +186,10 @@ export class VietmapProvider implements MapProvider {
 
         latestError = error;
       } catch (error) {
-        if (error instanceof VietmapProviderError) {
+        if (
+          error instanceof MapProviderNotFoundError ||
+          error instanceof VietmapProviderError
+        ) {
           throw error;
         }
 

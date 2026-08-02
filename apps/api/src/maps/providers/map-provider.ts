@@ -3,6 +3,14 @@ export interface GeoPoint {
   longitude: number;
 }
 
+export class MapProviderNotFoundError extends Error {
+  constructor(message = 'Map place not found') {
+    super(message);
+    this.name = 'MapProviderNotFoundError';
+    Object.setPrototypeOf(this, MapProviderNotFoundError.prototype);
+  }
+}
+
 export type MapProviderSource = 'VIETMAP' | 'DEMO';
 
 export interface PlaceCandidate {

@@ -6,6 +6,7 @@ import type {
   RouteEstimate,
   RouteInput,
 } from './map-provider.js';
+import { MapProviderNotFoundError } from './map-provider.js';
 
 export class DemoMapProvider implements MapProvider {
   constructor(private readonly estimator = new DemoRouteEstimator()) {}
@@ -29,6 +30,10 @@ export class DemoMapProvider implements MapProvider {
 
   async geocode(placeId: string): Promise<GeocodeResult> {
     const normalizedPlaceId = placeId.trim().toLowerCase();
+
+    if (!normalizedPlaceId.startsWith('demo:') || normalizedPlaceId === 'demo:') {
+      throw new MapProviderNotFoundError();
+    }
 
     return {
       label: demoLabel(normalizedPlaceId),

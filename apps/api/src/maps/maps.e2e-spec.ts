@@ -112,6 +112,26 @@ describe('Maps REST API', () => {
     }
   });
 
+  it('returns 404 when the map provider cannot resolve a place ID', async () => {
+    const app = await createApp();
+    const session = await loginDemo(app);
+
+    try {
+      const response = await request(app.getHttpServer())
+        .get(`/maps/geocode/${encodeURIComponent('unknown-place-id')}`)
+        .set('Authorization', bearer(session))
+        .expect(404);
+
+      expect(response.body).toMatchObject({
+        statusCode: 404,
+        code: 'NOT_FOUND',
+        message: 'Map place not found',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
   it('issues a bounded route estimate token with route, price, ETA and source fields', async () => {
     const app = await createApp();
     const session = await loginDemo(app);

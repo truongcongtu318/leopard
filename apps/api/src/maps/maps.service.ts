@@ -12,11 +12,20 @@ import type {
   RouteEstimate,
   RouteInput,
 } from './providers/map-provider.js';
+import { MapProviderNotFoundError } from './providers/map-provider.js';
 
 export const MAP_PROVIDER = Symbol('MAP_PROVIDER');
 
 export interface OrderEstimateResponse extends RouteEstimate {
   estimateToken: string;
+}
+
+export class MapPlaceNotFoundError extends Error {
+  constructor() {
+    super('Map place not found');
+    this.name = 'MapPlaceNotFoundError';
+    Object.setPrototypeOf(this, MapPlaceNotFoundError.prototype);
+  }
 }
 
 @Injectable()
@@ -32,7 +41,15 @@ export class MapsService {
   }
 
   async geocode(placeId: string): Promise<GeocodeResult> {
-    return this.withProvider(() => this.mapProvider.geocode(placeId));
+    try {
+      return await this.mapProvider.geocode(placeId);
+    } catch (error) {
+      if (error instanceof MapProviderNotFoundError) {
+        throw new MapPlaceNotFoundError();
+      }
+
+      throw this.providerUnavailableError();
+    }
   }
 
   async estimate(input: RouteInput): Promise<OrderEstimateResponse> {
@@ -66,11 +83,15 @@ export class MapsService {
     try {
       return await operation();
     } catch {
-      throw new DomainError(
-        'MAP_PROVIDER_UNAVAILABLE',
-        503,
-        'Map provider unavailable',
-      );
+      throw this.providerUnavailableError();
     }
+  }
+
+  private providerUnavailableError(): DomainError {
+    return new DomainError(
+      'MAP_PROVIDER_UNAVAILABLE',
+      503,
+      'Map provider unavailable',
+    );
   }
 }
