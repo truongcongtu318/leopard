@@ -9,7 +9,8 @@ Worktree: /home/tutruong/project/leopard/.worktrees/ph-05-t03-refresh-logout
 
 - Original implementation: `4d7ae62db287bb8338ca79800e4cff612a6ec0b1`
 - Original report: `c1d837ca42e538859c6969322f33b1dbef7ec5c3`
-- Fix-round implementation: `2b885e17ef918937873432d2910dcb179bb331f1`
+- Prior fix-round implementation: `2b885e17ef918937873432d2910dcb179bb331f1`
+- Hygiene follow-up commit: `4a9f0693bf12b7b1163ae572367477c54aeeecb6`
 
 ## Scope
 
@@ -41,8 +42,8 @@ Environment:
 Commands:
 - `pnpm --filter api exec prisma migrate deploy --schema prisma/schema.prisma`
   - Result: `No pending migrations to apply.`
-- `pnpm --filter api exec jest --config jest-e2e.config.cjs --runInBand --testPathIgnorePatterns='[]' --testRegex 'src/auth/refresh\\.e2e-spec\\.ts$'`
-  - Result: pass, `1` suite and `10` tests green after the hygiene follow-up.
+- `pnpm --filter api exec jest --config jest-e2e.config.cjs --runInBand --testPathIgnorePatterns='[]' --runTestsByPath src/auth/refresh.e2e-spec.ts`
+  - Result: pass, `1` suite and `10` tests green against local PostgreSQL after the hygiene follow-up.
 - `pnpm --filter api typecheck`
   - Result: pass.
 - `pnpm --filter api lint`
