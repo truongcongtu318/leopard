@@ -1,9 +1,10 @@
 # PH-05-T04 Report
 
 - Date: Sunday, August 2, 2026
-- Status: COMPLETE (scoped reviewer fix round)
+- Status: COMPLETE (scoped second reviewer fix round)
 - Initial implementation commit SHA: `5f79f221df7e874c82a77522013b6f11a94fed1a`
 - Fix-round implementation commit SHA: `a8416c85c47fdb5c71937e2cbedf3e342c4dc0f7`
+- Second fix-round implementation commit SHA: `b9652c2a7f420debd678c2928e487163f2a54f56`
 
 ## Changed Files
 
@@ -22,17 +23,17 @@
 - Added reusable `RoleGuard` and `RequireRoles(...)` metadata decorator with `401` for missing actor and `403` for role denial.
 - Added `CurrentUser` and `CurrentUserRole` decorators with stable public names for later consumers.
 - Added generic `ResourcePolicy.assert(actor, action, resource)` with owner, role, and predicate-based authorization paths.
-- Added explicit bounded `AccountStatusCache` for current account role/status only. Session validity remains live-checked against `refreshSession` on every request and is not cached.
+- Added explicit bounded `AccountStatusCache` for current account status only. The current database role is loaded on every request, so role demotions cannot remain authorized for the cache TTL. Session validity remains live-checked against `refreshSession` on every request and is not cached.
 - Exported the new guards/policy from `AuthModule` for later maps/orders consumers.
 
 ## Cache Semantics
 
-- Cache scope: `userId -> { userId, role, status }`
+- Cache scope: `userId -> { userId, status }`; role is deliberately excluded
 - Default TTL: `5_000 ms`
 - Default max size: `100` entries
 - Eviction policy: oldest cached entry is removed when inserting beyond max size after expired entries are cleared
+- Role safety: `prisma.user.findUnique(...)` loads the current role on every request, including warm status-cache hits; `actor.role` never comes from the signed JWT role claim
 - Session safety: `refreshSession.findUnique(...)` still runs on every request, so revocation and expiry are always live
-- Authorization safety: `actor.role` always comes from the current database user record, not the signed JWT role claim
 
 ## RED Evidence
 
@@ -61,32 +62,44 @@
    - Result: FAIL
    - Key error: `Nest can't resolve dependencies of the AccountStatusCache (?)`
 
+6. Second fix round red, warm role cache could authorize a demoted user:
+   - Command: `./apps/api/node_modules/.bin/jest --config apps/api/jest.config.cjs --runInBand apps/api/src/auth/guards/guards.spec.ts`
+   - Result: FAIL (`12 passed, 2 failed`)
+   - Key error: expected `403` after `ADMIN -> CUSTOMER` demotion, received `200`; the companion lookup assertion also observed one user lookup instead of two
+   - The same red run confirmed the mutated revoked session returned `401` and `refreshSession.findUnique(...)` was called twice; the existing live-session path was preserved while the test was strengthened
+
 ## GREEN Evidence
 
-1. Focused guard/decorator/policy suite after fix round:
+1. Focused guard/decorator/policy suite after second fix round:
    - Command: `./apps/api/node_modules/.bin/jest --config apps/api/jest.config.cjs --runInBand apps/api/src/auth/guards/guards.spec.ts`
-   - Result: PASS (`13/13`)
-   - New coverage in this round:
+   - Result: PASS (`14/14`)
+   - New coverage across the fix rounds:
      - cache TTL expiry
      - cache max-size eviction
-     - cached account lookup while session validity remains live
+     - status-only cache with live role lookup after a warm hit
+     - two authenticated requests with an intervening session revocation, returning `401` on the second request
      - forged signed `ADMIN` token against a `CUSTOMER` DB user returning `403`
+     - warm-cache `ADMIN -> CUSTOMER` database demotion returning `403`
 
-2. API typecheck after fix round:
+2. API typecheck after second fix round:
    - Command: `./node_modules/.bin/tsc --noEmit --project apps/api/tsconfig.json`
    - Result: PASS
 
-3. API lint after fix round:
+3. API lint after second fix round:
    - Command: `../../node_modules/.bin/eslint .`
    - Working directory: `apps/api`
+   - Result: PASS
+
+4. Whitespace check after second fix round:
+   - Command: `git diff --check`
    - Result: PASS
 
 ## Verification Summary
 
 - Reviewer-requested scope is implemented and covered by focused tests.
-- Account role/status is now cached with a bounded TTL/size policy, while refresh-session revocation and expiry checks remain live on every request.
+- Account status remains bounded by the explicit TTL/size policy, while the current role is loaded live on every request and refresh-session revocation/expiry checks remain live on every request.
 - A signed token claiming `ADMIN` no longer has any chance to elevate a `CUSTOMER` database user through `@RequireRoles('ADMIN')`; the focused regression now proves the guard returns `403`.
 
 ## Concerns / Blockers
 
-1. The account-status cache intentionally introduces a short role/status staleness window of up to `5 seconds` for repeated private requests by the same `userId`. That boundary is now explicit, tested, and limited to account role/status only; session revocation and expiry are still checked live and are unaffected by the cache.
+1. The account-status cache intentionally introduces a short status staleness window of up to `5 seconds` for repeated private requests by the same `userId`. That boundary is explicit and tested; role changes are not cached, and session revocation/expiry are checked live and unaffected by the cache.
