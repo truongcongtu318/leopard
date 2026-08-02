@@ -1,91 +1,73 @@
+import { createHash } from 'node:crypto';
+
 import {
   HttpCode,
   HttpStatus,
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
+  Injectable,
   Param,
+  Post,
   Query,
+  UnauthorizedException,
   UseFilters,
   UseGuards,
   type ExecutionContext,
-  Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import type { CanActivate } from '@nestjs/common';
-import { Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsIn,
-  IsNumber,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-  MinLength,
-  ValidateNested,
-} from 'class-validator';
 
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
 import { MapsService } from './maps.service.js';
 import type { OrderEstimateResponse } from './maps.service.js';
-import type { PlaceCandidate } from './providers/map-provider.js';
+import type {
+  GeoPoint,
+  MapProviderSource,
+  PlaceCandidate,
+  RouteInput,
+} from './providers/map-provider.js';
 
 type VehicleType = 'MOTORBIKE' | 'VAN' | 'TRUCK';
+type StopType = 'PICKUP' | 'STOP' | 'DROPOFF';
 
-class SearchQueryDto {
-  @IsString()
-  @MinLength(2)
-  @MaxLength(120)
-  q!: string;
+interface EstimateStop {
+  type: StopType;
+  address: string;
+  lat: number;
+  lng: number;
 }
 
-class GeocodeParamsDto {
-  @IsString()
-  @MinLength(1)
-  @MaxLength(200)
-  placeId!: string;
+interface EstimateRequestDto {
+  pickup: EstimateStop;
+  stops: EstimateStop[];
+  dropoff: EstimateStop;
+  vehicleType: VehicleType;
 }
 
-class GeoPointDto {
-  @IsNumber()
-  @Min(-90)
-  @Max(90)
-  latitude!: number;
-
-  @IsNumber()
-  @Min(-180)
-  @Max(180)
-  longitude!: number;
-}
-
-class EstimateRequestDto {
-  @ValidateNested()
-  @Type(() => GeoPointDto)
-  pickup!: GeoPointDto;
-
-  @IsArray()
-  @ArrayMaxSize(3)
-  @ValidateNested({ each: true })
-  @Type(() => GeoPointDto)
-  stops!: GeoPointDto[];
-
-  @ValidateNested()
-  @Type(() => GeoPointDto)
-  dropoff!: GeoPointDto;
-
-  @IsString()
-  @IsIn(['MOTORBIKE', 'VAN', 'TRUCK'])
-  vehicleType!: VehicleType;
+interface SearchResponse {
+  source: MapProviderSource;
+  results: Array<{
+    placeId: string;
+    label: string;
+    address?: string;
+    lat: number;
+    lng: number;
+  }>;
 }
 
 interface GeocodeResponse {
+  source: MapProviderSource;
   placeId: string;
-  point: GeoPointDto;
-  source: 'VIETMAP' | 'DEMO';
+  label: string;
+  address?: string;
+  lat: number;
+  lng: number;
+}
+
+interface ValidationIssue {
+  field: string;
+  messages: string[];
 }
 
 @Injectable()
@@ -96,11 +78,7 @@ export class BearerAuthGuard implements CanActivate {
     }>();
     const authorization = request.headers.authorization;
 
-    if (
-      typeof authorization !== 'string' ||
-      !authorization.startsWith('Bearer ') ||
-      authorization.slice('Bearer '.length).trim().length === 0
-    ) {
+    if (normalizedBearerToken(authorization) === null) {
       throw new UnauthorizedException('Authentication required');
     }
 
@@ -128,6 +106,8 @@ export class MapsRateLimitGuard implements CanActivate {
       method?: string;
       path?: string;
       ip?: string;
+      user?: unknown;
+      auth?: unknown;
       headers: Record<string, string | string[] | undefined>;
     }>();
     const rateLimit = this.resolveLimit(request.method, request.path);
@@ -172,18 +152,21 @@ export class MapsRateLimitGuard implements CanActivate {
 
   private callerKey(request: {
     ip?: string;
+    user?: unknown;
+    auth?: unknown;
     headers: Record<string, string | string[] | undefined>;
   }): string {
-    const authorization = request.headers.authorization;
-    const token =
-      typeof authorization === 'string'
-        ? authorization.trim()
-        : Array.isArray(authorization)
-          ? authorization.join(',').trim()
-          : 'unknown';
+    const actorIdentity = authenticatedActorIdentity(request.user, request.auth);
     const ip = request.ip?.trim() || 'unknown';
 
-    return `${token}:${ip}`;
+    if (actorIdentity !== null) {
+      return `actor:${actorIdentity}:${ip}`;
+    }
+
+    const token = normalizedBearerToken(request.headers.authorization) ?? 'anonymous';
+    const tokenFingerprint = createHash('sha256').update(token).digest('hex');
+
+    return `bearer:${tokenFingerprint}:${ip}`;
   }
 }
 
@@ -194,28 +177,287 @@ export class MapsController {
   constructor(private readonly mapsService: MapsService) {}
 
   @Get('maps/search')
-  search(@Query() query: SearchQueryDto): Promise<PlaceCandidate[]> {
-    return this.mapsService.search(query.q);
+  async search(@Query('q') rawQuery: unknown): Promise<SearchResponse> {
+    const query = validateSearchQuery(rawQuery);
+    const results = await this.mapsService.search(query);
+
+    return {
+      source: results[0]?.source ?? this.mapsService.defaultSource(),
+      results: results.map(mapPlaceCandidate),
+    };
   }
 
   @Get('maps/geocode/:placeId')
-  async geocode(@Param() params: GeocodeParamsDto): Promise<GeocodeResponse> {
-    const result = await this.mapsService.geocode(params.placeId);
+  async geocode(@Param('placeId') rawPlaceId: unknown): Promise<GeocodeResponse> {
+    const placeId = validatePlaceId(rawPlaceId);
+    const result = await this.mapsService.geocode(placeId);
 
     return {
-      placeId: params.placeId,
-      ...result,
+      source: result.source,
+      placeId,
+      label: result.label,
+      ...(result.address ? { address: result.address } : {}),
+      lat: result.point.latitude,
+      lng: result.point.longitude,
     };
   }
 
   @Post('orders/estimate')
   @HttpCode(HttpStatus.OK)
-  estimate(@Body() body: EstimateRequestDto): Promise<OrderEstimateResponse> {
-    return this.mapsService.estimate({
-      pickup: body.pickup,
-      stops: body.stops,
-      dropoff: body.dropoff,
-      vehicleType: body.vehicleType,
-    });
+  estimate(@Body() body: unknown): Promise<OrderEstimateResponse> {
+    const request = validateEstimateRequest(body);
+
+    return this.mapsService.estimate(toRouteInput(request));
   }
+}
+
+function mapPlaceCandidate(candidate: PlaceCandidate): SearchResponse['results'][number] {
+  return {
+    placeId: candidate.placeId,
+    label: candidate.label,
+    ...(candidate.address ? { address: candidate.address } : {}),
+    lat: candidate.point.latitude,
+    lng: candidate.point.longitude,
+  };
+}
+
+function toRouteInput(request: EstimateRequestDto): RouteInput {
+  return {
+    pickup: toGeoPoint(request.pickup),
+    stops: request.stops.map(toGeoPoint),
+    dropoff: toGeoPoint(request.dropoff),
+    vehicleType: request.vehicleType,
+  };
+}
+
+function toGeoPoint(stop: EstimateStop): GeoPoint {
+  return {
+    latitude: stop.lat,
+    longitude: stop.lng,
+  };
+}
+
+function validateSearchQuery(rawQuery: unknown): string {
+  if (typeof rawQuery !== 'string') {
+    validationError([{ field: 'q', messages: ['query parameter is required'] }]);
+  }
+
+  const query = rawQuery.trim();
+
+  if (query.length === 0) {
+    validationError([{ field: 'q', messages: ['must not be empty'] }]);
+  }
+
+  return query;
+}
+
+function validatePlaceId(rawPlaceId: unknown): string {
+  if (typeof rawPlaceId !== 'string') {
+    validationError([{ field: 'placeId', messages: ['path parameter is required'] }]);
+  }
+
+  const placeId = rawPlaceId.trim();
+
+  if (placeId.length === 0) {
+    validationError([{ field: 'placeId', messages: ['must not be empty'] }]);
+  }
+
+  return placeId;
+}
+
+function validateEstimateRequest(rawBody: unknown): EstimateRequestDto {
+  const issues: ValidationIssue[] = [];
+  const body = recordOrNull(rawBody);
+
+  if (body === null) {
+    validationError([{ field: 'body', messages: ['must be an object'] }]);
+  }
+
+  const pickup = validateEstimateStop(body.pickup, 'pickup', issues);
+  const stops = validateStops(body.stops, issues);
+  const dropoff = validateEstimateStop(body.dropoff, 'dropoff', issues);
+  const vehicleType = validateVehicleType(body.vehicleType, issues);
+
+  if (issues.length > 0 || pickup === null || dropoff === null || vehicleType === null) {
+    validationError(issues);
+  }
+
+  return {
+    pickup,
+    stops,
+    dropoff,
+    vehicleType,
+  };
+}
+
+function validateStops(rawStops: unknown, issues: ValidationIssue[]): EstimateStop[] {
+  if (rawStops === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(rawStops)) {
+    issues.push({ field: 'stops', messages: ['must be an array when provided'] });
+    return [];
+  }
+
+  if (rawStops.length > 3) {
+    issues.push({ field: 'stops', messages: ['must contain at most 3 items'] });
+  }
+
+  return rawStops.flatMap((stop, index) => {
+    const parsed = validateEstimateStop(stop, `stops[${index}]`, issues);
+    return parsed === null ? [] : [parsed];
+  });
+}
+
+function validateEstimateStop(
+  rawStop: unknown,
+  field: string,
+  issues: ValidationIssue[],
+): EstimateStop | null {
+  const stop = recordOrNull(rawStop);
+
+  if (stop === null) {
+    issues.push({ field, messages: ['must be an object'] });
+    return null;
+  }
+
+  const type = validateStopType(stop.type, `${field}.type`, issues);
+  const address = validateRequiredString(stop.address, `${field}.address`, issues);
+  const lat = validateCoordinate(stop.lat, `${field}.lat`, -90, 90, issues);
+  const lng = validateCoordinate(stop.lng, `${field}.lng`, -180, 180, issues);
+
+  if (type === null || address === null || lat === null || lng === null) {
+    return null;
+  }
+
+  return { type, address, lat, lng };
+}
+
+function validateVehicleType(
+  rawVehicleType: unknown,
+  issues: ValidationIssue[],
+): VehicleType | null {
+  if (
+    rawVehicleType === 'MOTORBIKE' ||
+    rawVehicleType === 'VAN' ||
+    rawVehicleType === 'TRUCK'
+  ) {
+    return rawVehicleType;
+  }
+
+  issues.push({
+    field: 'vehicleType',
+    messages: ['must be one of MOTORBIKE, VAN, TRUCK'],
+  });
+  return null;
+}
+
+function validateStopType(
+  rawStopType: unknown,
+  field: string,
+  issues: ValidationIssue[],
+): StopType | null {
+  if (
+    rawStopType === 'PICKUP' ||
+    rawStopType === 'STOP' ||
+    rawStopType === 'DROPOFF'
+  ) {
+    return rawStopType;
+  }
+
+  issues.push({
+    field,
+    messages: ['must be one of PICKUP, STOP, DROPOFF'],
+  });
+  return null;
+}
+
+function validateRequiredString(
+  rawValue: unknown,
+  field: string,
+  issues: ValidationIssue[],
+): string | null {
+  if (typeof rawValue !== 'string') {
+    issues.push({ field, messages: ['must be a string'] });
+    return null;
+  }
+
+  const value = rawValue.trim();
+
+  if (value.length === 0) {
+    issues.push({ field, messages: ['must not be empty'] });
+    return null;
+  }
+
+  return value;
+}
+
+function validateCoordinate(
+  rawValue: unknown,
+  field: string,
+  min: number,
+  max: number,
+  issues: ValidationIssue[],
+): number | null {
+  if (typeof rawValue !== 'number' || !Number.isFinite(rawValue)) {
+    issues.push({ field, messages: ['must be a finite number'] });
+    return null;
+  }
+
+  if (rawValue < min || rawValue > max) {
+    issues.push({ field, messages: [`must be between ${min} and ${max}`] });
+    return null;
+  }
+
+  return rawValue;
+}
+
+function validationError(issues: ValidationIssue[]): never {
+  throw new DomainError('BAD_REQUEST', 400, 'Validation failed', issues);
+}
+
+function recordOrNull(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function normalizedBearerToken(
+  authorization: string | string[] | undefined,
+): string | null {
+  if (typeof authorization !== 'string' || !authorization.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authorization.slice('Bearer '.length).trim();
+
+  return token.length > 0 ? token : null;
+}
+
+function authenticatedActorIdentity(user: unknown, auth: unknown): string | null {
+  const userRecord = recordOrNull(user);
+  const authRecord = recordOrNull(auth);
+
+  const candidates = [
+    stringValue(userRecord?.id),
+    stringValue(userRecord?.userId),
+    stringValue(userRecord?.sessionId),
+    stringValue(authRecord?.sessionId),
+    stringValue(authRecord?.subject),
+    stringValue(authRecord?.sub),
+  ];
+
+  return candidates.find((candidate) => candidate !== null) ?? null;
+}
+
+function stringValue(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
 }

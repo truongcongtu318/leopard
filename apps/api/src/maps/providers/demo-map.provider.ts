@@ -21,6 +21,7 @@ export class DemoMapProvider implements MapProvider {
       {
         placeId: `demo:${normalizedQuery.toLowerCase()}`,
         label: `${normalizedQuery} (Demo data)`,
+        point: demoPoint(`demo:${normalizedQuery.toLowerCase()}`),
         source: 'DEMO',
       },
     ];
@@ -28,16 +29,10 @@ export class DemoMapProvider implements MapProvider {
 
   async geocode(placeId: string): Promise<GeocodeResult> {
     const normalizedPlaceId = placeId.trim().toLowerCase();
-    const hash = [...normalizedPlaceId].reduce(
-      (total, character) => total + character.charCodeAt(0),
-      0,
-    );
 
     return {
-      point: {
-        latitude: 10.7 + (hash % 1_000) / 10_000,
-        longitude: 106.6 + (hash % 1_000) / 10_000,
-      },
+      label: demoLabel(normalizedPlaceId),
+      point: demoPoint(normalizedPlaceId),
       source: 'DEMO',
     };
   }
@@ -45,4 +40,27 @@ export class DemoMapProvider implements MapProvider {
   async route(input: RouteInput): Promise<RouteEstimate> {
     return this.estimator.estimate(input);
   }
+}
+
+function demoPoint(seed: string) {
+  const hash = [...seed].reduce(
+    (total, character) => total + character.charCodeAt(0),
+    0,
+  );
+
+  return {
+    latitude: 10.7 + (hash % 1_000) / 10_000,
+    longitude: 106.6 + (hash % 1_000) / 10_000,
+  };
+}
+
+function demoLabel(placeId: string): string {
+  const rawLabel = placeId.startsWith('demo:') ? placeId.slice('demo:'.length) : placeId;
+  const normalizedLabel = rawLabel
+    .split(/\s+/)
+    .filter((part) => part.length > 0)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+  return `${normalizedLabel || placeId} (Demo data)`;
 }

@@ -3,8 +3,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DomainError } from '../common/domain-error.js';
 import { EstimateTokenService } from './domain/estimate-token.service.js';
 import { PricingService } from './domain/pricing.service.js';
+import { DemoMapProvider } from './providers/demo-map.provider.js';
 import type {
   GeocodeResult,
+  MapProviderSource,
   MapProvider,
   PlaceCandidate,
   RouteEstimate,
@@ -54,6 +56,10 @@ export class MapsService {
       estimateToken,
       ...pricedEstimate,
     };
+  }
+
+  defaultSource(): MapProviderSource {
+    return this.mapProvider instanceof DemoMapProvider ? 'DEMO' : 'VIETMAP';
   }
 
   private async withProvider<T>(operation: () => Promise<T>): Promise<T> {

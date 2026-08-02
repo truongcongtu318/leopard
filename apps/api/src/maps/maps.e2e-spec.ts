@@ -42,12 +42,12 @@ describe('Maps REST API', () => {
       const response = await request(app.getHttpServer())
         .get('/maps/search')
         .set('Authorization', AUTHORIZATION)
-        .query({ q: 'a' })
-        .expect(422);
+        .query({ q: ' ' })
+        .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 422,
-        code: 'VALIDATION_ERROR',
+        statusCode: 400,
+        code: 'BAD_REQUEST',
       });
     } finally {
       await app.close();
@@ -64,13 +64,17 @@ describe('Maps REST API', () => {
         .query({ q: 'Ben Thanh' })
         .expect(200);
 
-      expect(response.body).toEqual([
-        {
-          placeId: 'demo:ben thanh',
-          label: 'Ben Thanh (Demo data)',
-          source: 'DEMO',
-        },
-      ]);
+      expect(response.body).toEqual({
+        source: 'DEMO',
+        results: [
+          {
+            placeId: 'demo:ben thanh',
+            label: 'Ben Thanh (Demo data)',
+            lat: expect.any(Number) as number,
+            lng: expect.any(Number) as number,
+          },
+        ],
+      });
     } finally {
       await app.close();
     }
@@ -87,10 +91,9 @@ describe('Maps REST API', () => {
 
       expect(response.body).toEqual({
         placeId: 'demo:ben thanh',
-        point: {
-          latitude: expect.any(Number) as number,
-          longitude: expect.any(Number) as number,
-        },
+        label: 'Ben Thanh (Demo data)',
+        lat: expect.any(Number) as number,
+        lng: expect.any(Number) as number,
         source: 'DEMO',
       });
     } finally {
@@ -107,9 +110,18 @@ describe('Maps REST API', () => {
         .post('/orders/estimate')
         .set('Authorization', AUTHORIZATION)
         .send({
-          pickup: samePoint,
-          stops: [],
-          dropoff: samePoint,
+          pickup: {
+            type: 'PICKUP',
+            address: 'Ben Thanh Market',
+            lat: samePoint.latitude,
+            lng: samePoint.longitude,
+          },
+          dropoff: {
+            type: 'DROPOFF',
+            address: 'Ben Thanh Market',
+            lat: samePoint.latitude,
+            lng: samePoint.longitude,
+          },
           vehicleType: 'MOTORBIKE',
         })
         .expect(200);
@@ -140,23 +152,38 @@ describe('Maps REST API', () => {
         .post('/orders/estimate')
         .set('Authorization', AUTHORIZATION)
         .send({
-          pickup: point,
-          stops: [point, point, point, point],
-          dropoff: point,
+          pickup: {
+            type: 'PICKUP',
+            address: 'A',
+            lat: point.latitude,
+            lng: point.longitude,
+          },
+          stops: [
+            { type: 'STOP', address: 'B', lat: point.latitude, lng: point.longitude },
+            { type: 'STOP', address: 'C', lat: point.latitude, lng: point.longitude },
+            { type: 'STOP', address: 'D', lat: point.latitude, lng: point.longitude },
+            { type: 'STOP', address: 'E', lat: point.latitude, lng: point.longitude },
+          ],
+          dropoff: {
+            type: 'DROPOFF',
+            address: 'Z',
+            lat: point.latitude,
+            lng: point.longitude,
+          },
           vehicleType: 'MOTORBIKE',
         })
-        .expect(422);
+        .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 422,
-        code: 'VALIDATION_ERROR',
+        statusCode: 400,
+        code: 'BAD_REQUEST',
       });
     } finally {
       await app.close();
     }
   });
 
-  it('rejects route estimates when required route fields are missing', async () => {
+  it('rejects route estimates when pickup is missing', async () => {
     const app = await createApp();
     const point = { latitude: 10.762622, longitude: 106.660172 };
 
@@ -165,15 +192,52 @@ describe('Maps REST API', () => {
         .post('/orders/estimate')
         .set('Authorization', AUTHORIZATION)
         .send({
-          pickup: point,
-          dropoff: point,
+          dropoff: {
+            type: 'DROPOFF',
+            address: 'Ben Thanh Market',
+            lat: point.latitude,
+            lng: point.longitude,
+          },
           vehicleType: 'MOTORBIKE',
         })
-        .expect(422);
+        .expect(400);
 
       expect(response.body).toMatchObject({
-        statusCode: 422,
-        code: 'VALIDATION_ERROR',
+        statusCode: 400,
+        code: 'BAD_REQUEST',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('rejects route estimates when a required nested stop coordinate is missing', async () => {
+    const app = await createApp();
+    const point = { latitude: 10.762622, longitude: 106.660172 };
+
+    try {
+      const response = await request(app.getHttpServer())
+        .post('/orders/estimate')
+        .set('Authorization', AUTHORIZATION)
+        .send({
+          pickup: {
+            type: 'PICKUP',
+            address: 'Ben Thanh Market',
+            lat: point.latitude,
+            lng: point.longitude,
+          },
+          dropoff: {
+            type: 'DROPOFF',
+            address: 'District 1',
+            lat: point.latitude,
+          },
+          vehicleType: 'MOTORBIKE',
+        })
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        code: 'BAD_REQUEST',
       });
     } finally {
       await app.close();
@@ -190,9 +254,18 @@ describe('Maps REST API', () => {
           .post('/orders/estimate')
           .set('Authorization', AUTHORIZATION)
           .send({
-            pickup: point,
-            stops: [],
-            dropoff: point,
+            pickup: {
+              type: 'PICKUP',
+              address: 'A',
+              lat: point.latitude,
+              lng: point.longitude,
+            },
+            dropoff: {
+              type: 'DROPOFF',
+              address: 'B',
+              lat: point.latitude,
+              lng: point.longitude,
+            },
             vehicleType: 'MOTORBIKE',
           })
           .expect(200);
@@ -202,9 +275,18 @@ describe('Maps REST API', () => {
         .post('/orders/estimate')
         .set('Authorization', AUTHORIZATION)
         .send({
-          pickup: point,
-          stops: [],
-          dropoff: point,
+          pickup: {
+            type: 'PICKUP',
+            address: 'A',
+            lat: point.latitude,
+            lng: point.longitude,
+          },
+          dropoff: {
+            type: 'DROPOFF',
+            address: 'B',
+            lat: point.latitude,
+            lng: point.longitude,
+          },
           vehicleType: 'MOTORBIKE',
         })
         .expect(429);

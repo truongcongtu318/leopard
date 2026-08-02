@@ -8,11 +8,14 @@ export type MapProviderSource = 'VIETMAP' | 'DEMO';
 export interface PlaceCandidate {
   placeId: string;
   label: string;
-  point?: GeoPoint;
+  address?: string;
+  point: GeoPoint;
   source: MapProviderSource;
 }
 
 export interface GeocodeResult {
+  label: string;
+  address?: string;
   point: GeoPoint;
   source: MapProviderSource;
 }

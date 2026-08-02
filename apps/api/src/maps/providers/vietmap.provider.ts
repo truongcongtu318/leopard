@@ -31,6 +31,9 @@ interface VietmapPlaceSearchResult {
 }
 
 interface VietmapPlaceDetail {
+  display?: unknown;
+  name?: unknown;
+  address?: unknown;
   lat?: unknown;
   lng?: unknown;
 }
@@ -83,12 +86,20 @@ export class VietmapProvider implements MapProvider {
     const payload = await this.getJson<VietmapPlaceDetail>(url, 'geocode');
     const latitude = numberOrNull(payload.lat);
     const longitude = numberOrNull(payload.lng);
+    const address = stringOrNull(payload.address);
+    const label =
+      stringOrNull(payload.display) ??
+      stringOrNull(payload.name) ??
+      address ??
+      placeId;
 
     if (latitude === null || longitude === null) {
       throw new VietmapProviderError('Vietmap geocode failed: missing coordinates');
     }
 
     return {
+      label,
+      ...(address ? { address } : {}),
       point: { latitude, longitude },
       source: 'VIETMAP',
     };
@@ -222,13 +233,17 @@ function mapPlaceCandidate(item: unknown): PlaceCandidate | null {
 
   const latitude = numberOrNull(result.lat);
   const longitude = numberOrNull(result.lng);
+  const address = stringOrNull(result.address);
+
+  if (latitude === null || longitude === null) {
+    return null;
+  }
 
   return {
     placeId,
     label,
-    ...(latitude !== null && longitude !== null
-      ? { point: { latitude, longitude } }
-      : {}),
+    ...(address ? { address } : {}),
+    point: { latitude, longitude },
     source: 'VIETMAP',
   };
 }

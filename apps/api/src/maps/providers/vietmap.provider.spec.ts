@@ -68,6 +68,7 @@ describe('VietmapProvider', () => {
     const provider = vietmapProvider(fetchMock);
 
     await expect(provider.geocode('auto:opaque/ref id')).resolves.toEqual({
+      label: '197 Đường Trần Phú,Phường Chợ Quán,Thành Phố Hồ Chí Minh',
       point: {
         latitude: 10.759222947000069,
         longitude: 106.67590269100003,
@@ -140,6 +141,8 @@ describe('VietmapProvider', () => {
           {
             ref_id: 'auto:retry-ok',
             display: 'Retry OK',
+            lat: 10.75,
+            lng: 106.67,
           },
         ]),
       );
@@ -149,6 +152,10 @@ describe('VietmapProvider', () => {
       {
         placeId: 'auto:retry-ok',
         label: 'Retry OK',
+        point: {
+          latitude: 10.75,
+          longitude: 106.67,
+        },
         source: 'VIETMAP',
       },
     ]);
