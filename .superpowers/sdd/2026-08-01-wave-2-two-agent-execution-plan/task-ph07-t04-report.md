@@ -1,4 +1,4 @@
-# PH-07-T04 Report: Map REST API Auth Integration Fix
+# PH-07-T04 Report: Map REST API Auth and Final 404 Fixes
 
 Status: VERIFIED
 
@@ -7,6 +7,8 @@ Branch: `codex/ph-07-t04-map-rest-api`
 Worktree: `/home/tutruong/project/leopard/.worktrees/ph-07-t04-map-rest-api`
 Dependency base: `e2637c8` (verified PH-05 auth phase merge)
 Implementation commit: `1de286721475524a648b7bbb951d2447fe6f891e`
+
+Final 404 implementation commit: `de7438032a8508a2d8cf81843be14d9502b230cc`
 
 ## Scope
 
@@ -108,9 +110,54 @@ apps/api/src/maps/maps.module.ts
 
 `pnpm-workspace.yaml` is clean.
 
-## Remaining Note
+## Final 404 Fix Round
 
-The existing report note that the frozen OpenAPI advertises a `404` geocode
-not-found semantic remains outside this auth fix's ownership boundary. Demo
-geocode IDs remain deterministic and provider failures remain
-`503 MAP_PROVIDER_UNAVAILABLE`; no new heuristic was introduced.
+The remaining Important finding is resolved: `GET /maps/geocode/:placeId` now
+maps a provider not-found result to the frozen contract's HTTP 404 response.
+
+Changed in final implementation commit `de7438032a8508a2d8cf81843be14d9502b230cc`:
+
+- `apps/api/src/maps/providers/map-provider.ts` defines the typed
+  `MapProviderNotFoundError` boundary.
+- `VietmapProvider` maps geocode HTTP 404 responses to that error, and
+  `ResilientMapProvider` does not replace not-found with demo data.
+- `DemoMapProvider` rejects non-demo place IDs with the same explicit error so
+  local E2E behavior is deterministic.
+- `MapsService` maps provider not-found to `MapPlaceNotFoundError` while
+  retaining generic `503 MAP_PROVIDER_UNAVAILABLE` conversion.
+- `MapsController` maps only `MapPlaceNotFoundError` to Nest 404, producing the
+  existing `NOT_FOUND` API envelope through the unchanged shared filter.
+- `apps/api/src/maps/maps.e2e-spec.ts` covers an authenticated unknown place ID
+  returning `404 NOT_FOUND`.
+- `apps/api/src/maps/providers/vietmap.provider.spec.ts` covers upstream 404
+  mapping and no fallback masking.
+
+### TDD RED
+
+Before the implementation change:
+
+- Focused maps E2E: `1` failed, `13` passed; unknown place ID expected `404`,
+  received `200`.
+- Provider unit suite: `2` failed, `10` passed; no typed provider not-found
+  error existed and resilient fallback returned demo data.
+
+### TDD GREEN
+
+After the implementation change:
+
+- Focused maps E2E: `14/14` passed.
+- Provider unit suite: `12/12` passed.
+
+### Final verification
+
+- API OpenAPI contract: `34/34` passed.
+- API unit suite: `9` suites, `106` tests passed.
+- API typecheck: PASS (`tsc --noEmit --project apps/api/tsconfig.json`).
+- API lint: PASS (`eslint .`).
+- API build: PASS (`tsc --project apps/api/tsconfig.json`).
+- Whitespace: PASS (`git diff --check`).
+- Existing provider-unavailable E2E remains `503 MAP_PROVIDER_UNAVAILABLE`.
+
+Only map implementation/test files and this task report were changed in this
+fix round. Auth source, OpenAPI, shared filters, `pnpm-workspace.yaml`, and
+unrelated providers remain untouched. PH-05-T05 was not run.
