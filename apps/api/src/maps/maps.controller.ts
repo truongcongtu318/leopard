@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto';
-
 import {
   HttpCode,
   HttpStatus,
@@ -10,13 +8,17 @@ import {
   Param,
   Post,
   Query,
-  UnauthorizedException,
   UseFilters,
   UseGuards,
   type ExecutionContext,
 } from '@nestjs/common';
 import type { CanActivate } from '@nestjs/common';
 
+import {
+  getAuthenticatedActor,
+  type AuthenticatedActor,
+} from '../auth/decorators/current-user.js';
+import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
 import { MapsService } from './maps.service.js';
@@ -70,22 +72,6 @@ interface ValidationIssue {
   messages: string[];
 }
 
-@Injectable()
-export class BearerAuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<{
-      headers: Record<string, string | string[] | undefined>;
-    }>();
-    const authorization = request.headers.authorization;
-
-    if (normalizedBearerToken(authorization) === null) {
-      throw new UnauthorizedException('Authentication required');
-    }
-
-    return true;
-  }
-}
-
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const ROUTE_RATE_LIMITS: ReadonlyArray<{
   method: 'GET' | 'POST';
@@ -106,9 +92,7 @@ export class MapsRateLimitGuard implements CanActivate {
       method?: string;
       path?: string;
       ip?: string;
-      user?: unknown;
-      auth?: unknown;
-      headers: Record<string, string | string[] | undefined>;
+      authenticatedActor?: AuthenticatedActor;
     }>();
     const rateLimit = this.resolveLimit(request.method, request.path);
 
@@ -152,27 +136,22 @@ export class MapsRateLimitGuard implements CanActivate {
 
   private callerKey(request: {
     ip?: string;
-    user?: unknown;
-    auth?: unknown;
-    headers: Record<string, string | string[] | undefined>;
+    authenticatedActor?: AuthenticatedActor;
   }): string {
-    const actorIdentity = authenticatedActorIdentity(request.user, request.auth);
+    const actor = getAuthenticatedActor(request);
     const ip = request.ip?.trim() || 'unknown';
 
-    if (actorIdentity !== null) {
-      return `actor:${actorIdentity}:${ip}`;
+    if (!actor) {
+      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
     }
 
-    const token = normalizedBearerToken(request.headers.authorization) ?? 'anonymous';
-    const tokenFingerprint = createHash('sha256').update(token).digest('hex');
-
-    return `bearer:${tokenFingerprint}:${ip}`;
+    return `actor:${actor.userId}:${ip}`;
   }
 }
 
 @Controller()
 @UseFilters(ApiExceptionFilter)
-@UseGuards(BearerAuthGuard, MapsRateLimitGuard)
+@UseGuards(AccessTokenGuard, MapsRateLimitGuard)
 export class MapsController {
   constructor(private readonly mapsService: MapsService) {}
 
@@ -423,41 +402,4 @@ function recordOrNull(value: unknown): Record<string, unknown> | null {
   }
 
   return value as Record<string, unknown>;
-}
-
-function normalizedBearerToken(
-  authorization: string | string[] | undefined,
-): string | null {
-  if (typeof authorization !== 'string' || !authorization.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authorization.slice('Bearer '.length).trim();
-
-  return token.length > 0 ? token : null;
-}
-
-function authenticatedActorIdentity(user: unknown, auth: unknown): string | null {
-  const userRecord = recordOrNull(user);
-  const authRecord = recordOrNull(auth);
-
-  const candidates = [
-    stringValue(userRecord?.id),
-    stringValue(userRecord?.userId),
-    stringValue(userRecord?.sessionId),
-    stringValue(authRecord?.sessionId),
-    stringValue(authRecord?.subject),
-    stringValue(authRecord?.sub),
-  ];
-
-  return candidates.find((candidate) => candidate !== null) ?? null;
-}
-
-function stringValue(value: unknown): string | null {
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
 }

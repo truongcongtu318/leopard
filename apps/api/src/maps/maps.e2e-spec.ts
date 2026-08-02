@@ -1,5 +1,7 @@
 /// <reference types="jest" />
 
+import { createHmac } from 'node:crypto';
+
 import { ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
@@ -7,8 +9,14 @@ import request from 'supertest';
 
 import { AppModule } from '../app.module.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
+import { PrismaService } from '../database/prisma.service.js';
 
-const AUTHORIZATION = 'Bearer test-customer-token';
+interface AuthSessionBody {
+  readonly accessToken: string;
+  readonly accessTokenExpiresAt: string;
+  readonly refreshToken: string;
+  readonly refreshTokenExpiresAt: string;
+}
 
 describe('Maps REST API', () => {
   const originalEnv = { ...process.env };
@@ -37,11 +45,12 @@ describe('Maps REST API', () => {
 
   it('rejects search queries outside supported bounds', async () => {
     const app = await createApp();
+    const session = await loginDemo(app);
 
     try {
       const response = await request(app.getHttpServer())
         .get('/maps/search')
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(session))
         .query({ q: ' ' })
         .expect(400);
 
@@ -56,11 +65,12 @@ describe('Maps REST API', () => {
 
   it('returns demo map search candidates with provider source and demo label', async () => {
     const app = await createApp();
+    const session = await loginDemo(app);
 
     try {
       const response = await request(app.getHttpServer())
         .get('/maps/search')
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(session))
         .query({ q: 'Ben Thanh' })
         .expect(200);
 
@@ -82,11 +92,12 @@ describe('Maps REST API', () => {
 
   it('returns geocoded coordinates with provider source', async () => {
     const app = await createApp();
+    const session = await loginDemo(app);
 
     try {
       const response = await request(app.getHttpServer())
         .get(`/maps/geocode/${encodeURIComponent('demo:ben thanh')}`)
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(session))
         .expect(200);
 
       expect(response.body).toEqual({
@@ -103,12 +114,13 @@ describe('Maps REST API', () => {
 
   it('issues a bounded route estimate token with route, price, ETA and source fields', async () => {
     const app = await createApp();
+    const session = await loginDemo(app);
     const samePoint = { latitude: 10.762622, longitude: 106.660172 };
 
     try {
       const response = await request(app.getHttpServer())
         .post('/orders/estimate')
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(session))
         .send({
           pickup: {
             type: 'PICKUP',
@@ -145,12 +157,13 @@ describe('Maps REST API', () => {
 
   it('rejects route estimates with more than three intermediate stops', async () => {
     const app = await createApp();
+    const session = await loginDemo(app);
     const point = { latitude: 10.762622, longitude: 106.660172 };
 
     try {
       const response = await request(app.getHttpServer())
         .post('/orders/estimate')
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(session))
         .send({
           pickup: {
             type: 'PICKUP',
@@ -185,12 +198,13 @@ describe('Maps REST API', () => {
 
   it('rejects route estimates when pickup is missing', async () => {
     const app = await createApp();
+    const session = await loginDemo(app);
     const point = { latitude: 10.762622, longitude: 106.660172 };
 
     try {
       const response = await request(app.getHttpServer())
         .post('/orders/estimate')
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(session))
         .send({
           dropoff: {
             type: 'DROPOFF',
@@ -213,12 +227,13 @@ describe('Maps REST API', () => {
 
   it('rejects route estimates when a required nested stop coordinate is missing', async () => {
     const app = await createApp();
+    const session = await loginDemo(app);
     const point = { latitude: 10.762622, longitude: 106.660172 };
 
     try {
       const response = await request(app.getHttpServer())
         .post('/orders/estimate')
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(session))
         .send({
           pickup: {
             type: 'PICKUP',
@@ -244,15 +259,106 @@ describe('Maps REST API', () => {
     }
   });
 
-  it('rate limits repeated order estimate requests for the same caller', async () => {
+  it('rejects an invalid signed access token', async () => {
     const app = await createApp();
+    const session = await loginDemo(app);
+
+    try {
+      const response = await request(app.getHttpServer())
+        .get('/maps/search')
+        .set('Authorization', `Bearer ${tamperSignature(session.accessToken)}`)
+        .query({ q: 'Ben Thanh' })
+        .expect(401);
+
+      expect(response.body).toMatchObject({
+        statusCode: 401,
+        code: 'UNAUTHORIZED',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('rejects an expired signed access token', async () => {
+    const app = await createApp();
+    const session = await loginDemo(app);
+
+    try {
+      const response = await request(app.getHttpServer())
+        .get('/maps/search')
+        .set('Authorization', `Bearer ${createExpiredAccessToken(session.accessToken)}`)
+        .query({ q: 'Ben Thanh' })
+        .expect(401);
+
+      expect(response.body).toMatchObject({
+        statusCode: 401,
+        code: 'UNAUTHORIZED',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('rejects a valid access token after its refresh session is revoked', async () => {
+    const app = await createApp();
+    const session = await loginDemo(app);
+    const prisma = app.get(PrismaService);
+    const claims = decodeAccessToken(session.accessToken);
+
+    try {
+      await prisma.refreshSession.update({
+        where: { id: claims.sessionId },
+        data: { revokedAt: new Date() },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get('/maps/search')
+        .set('Authorization', bearer(session))
+        .query({ q: 'Ben Thanh' })
+        .expect(401);
+
+      expect(response.body).toMatchObject({
+        statusCode: 401,
+        code: 'UNAUTHORIZED',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('rate limits repeated order estimate requests for the same actor across sessions', async () => {
+    const app = await createApp();
+    const firstSession = await loginDemo(app);
+    const secondSession = await loginDemo(app);
     const point = { latitude: 10.762622, longitude: 106.660172 };
 
     try {
-      for (let attempt = 0; attempt < 10; attempt += 1) {
+      for (let attempt = 0; attempt < 5; attempt += 1) {
         await request(app.getHttpServer())
           .post('/orders/estimate')
-          .set('Authorization', AUTHORIZATION)
+          .set('Authorization', bearer(firstSession))
+          .send({
+            pickup: {
+              type: 'PICKUP',
+              address: 'A',
+              lat: point.latitude,
+              lng: point.longitude,
+            },
+            dropoff: {
+              type: 'DROPOFF',
+              address: 'B',
+              lat: point.latitude,
+              lng: point.longitude,
+            },
+            vehicleType: 'MOTORBIKE',
+          })
+          .expect(200);
+      }
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await request(app.getHttpServer())
+          .post('/orders/estimate')
+          .set('Authorization', bearer(secondSession))
           .send({
             pickup: {
               type: 'PICKUP',
@@ -273,7 +379,7 @@ describe('Maps REST API', () => {
 
       const response = await request(app.getHttpServer())
         .post('/orders/estimate')
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(firstSession))
         .send({
           pickup: {
             type: 'PICKUP',
@@ -309,11 +415,12 @@ describe('Maps REST API', () => {
       VIETMAP_BASE_URL: 'http://127.0.0.1:9',
       VIETMAP_TIMEOUT_MS: '100',
     });
+    const session = await loginDemo(app);
 
     try {
       const response = await request(app.getHttpServer())
         .get('/maps/search')
-        .set('Authorization', AUTHORIZATION)
+        .set('Authorization', bearer(session))
         .query({ q: 'Ben Thanh' })
         .expect(503);
 
@@ -329,6 +436,72 @@ describe('Maps REST API', () => {
   });
 });
 
+async function loginDemo(app: INestApplication): Promise<AuthSessionBody> {
+  const response = await request(app.getHttpServer())
+    .post('/auth/login/demo')
+    .send({ accountId: 'customer' })
+    .expect(201);
+
+  return response.body.session as AuthSessionBody;
+}
+
+function bearer(session: AuthSessionBody): string {
+  return `Bearer ${session.accessToken}`;
+}
+
+function decodeAccessToken(accessToken: string): { readonly sessionId: string } {
+  const [, encodedPayload] = accessToken.split('.');
+  if (!encodedPayload) {
+    throw new Error('Expected an access-token payload');
+  }
+
+  const payload = JSON.parse(
+    Buffer.from(encodedPayload, 'base64url').toString('utf8'),
+  ) as { readonly sessionId?: unknown };
+  if (typeof payload.sessionId !== 'string') {
+    throw new Error('Expected access token to include sessionId');
+  }
+
+  return { sessionId: payload.sessionId };
+}
+
+function tamperSignature(accessToken: string): string {
+  const lastCharacter = accessToken.at(-1);
+  if (!lastCharacter) {
+    throw new Error('Expected a signed access token');
+  }
+
+  return `${accessToken.slice(0, -1)}${lastCharacter === 'a' ? 'b' : 'a'}`;
+}
+
+function createExpiredAccessToken(accessToken: string): string {
+  const [encodedHeader, encodedPayload] = accessToken.split('.');
+  if (!encodedHeader || !encodedPayload) {
+    throw new Error('Expected a JWT access token');
+  }
+
+  const payload = JSON.parse(
+    Buffer.from(encodedPayload, 'base64url').toString('utf8'),
+  ) as Record<string, unknown>;
+  const expiredPayload = Buffer.from(
+    JSON.stringify({
+      ...payload,
+      exp: Math.floor(Date.now() / 1_000) - 60,
+    }),
+  ).toString('base64url');
+  const signingInput = `${encodedHeader}.${expiredPayload}`;
+  const secret = process.env.AUTH_ACCESS_TOKEN_SECRET;
+  if (!secret) {
+    throw new Error('Expected the test access-token secret');
+  }
+
+  const signature = createHmac('sha256', secret)
+    .update(signingInput)
+    .digest('base64url');
+
+  return `${signingInput}.${signature}`;
+}
+
 async function createApp(
   overrides: Record<string, string | undefined> = {},
 ): Promise<INestApplication> {
@@ -336,6 +509,9 @@ async function createApp(
     ...process.env,
     NODE_ENV: 'test',
     DATABASE_URL: 'postgresql://leopard:leopard_local@localhost:5432/leopard?schema=public',
+    AUTH_DEMO_LOGIN_ENABLED: 'true',
+    AUTH_ACCESS_TOKEN_SECRET: 'test-access-token-secret',
+    AUTH_REFRESH_TOKEN_SECRET: 'test-refresh-token-secret',
     MAP_PROVIDER: 'demo',
     ALLOW_DEMO_PROVIDER: 'true',
     PRICING_MINIMUM_FARE_VND: '10000',

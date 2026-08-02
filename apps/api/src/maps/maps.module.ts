@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 
+import { AuthModule } from '../auth/auth.module.js';
+import { AccountStatusCache } from '../auth/guards/account-status-cache.js';
+import { DatabaseModule } from '../database/database.module.js';
 import { EstimateTokenService } from './domain/estimate-token.service.js';
 import { PricingService } from './domain/pricing.service.js';
-import {
-  BearerAuthGuard,
-  MapsController,
-  MapsRateLimitGuard,
-} from './maps.controller.js';
+import { MapsController, MapsRateLimitGuard } from './maps.controller.js';
 import { MAP_PROVIDER, MapsService } from './maps.service.js';
 import { DemoMapProvider } from './providers/demo-map.provider.js';
 import type { MapProvider } from './providers/map-provider.js';
@@ -14,9 +13,10 @@ import { ResilientMapProvider } from './providers/resilient-map.provider.js';
 import { VietmapProvider } from './providers/vietmap.provider.js';
 
 @Module({
+  imports: [AuthModule, DatabaseModule],
   controllers: [MapsController],
   providers: [
-    BearerAuthGuard,
+    AccountStatusCache,
     MapsRateLimitGuard,
     MapsService,
     {
