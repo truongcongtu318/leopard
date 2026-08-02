@@ -1,9 +1,10 @@
 # PH-13-T02 Report - Seed and Migration Operations
 
-- Status: GREEN (second fix round)
+- Status: GREEN (manifest-boundary and migration-guard follow-up)
 - Branch: `codex/ph-13-t02-seed-migration-ops`
 - Prior implementation: `7b6f56803e74fe309a8fe95c2a1af9f62000e87`
-- Implementation commit: `332566d8f7d832c1b255b024bbafb840461f1cfd`
+- Prior hardening commit: `332566d8f7d832c1b255b024bbafb840461f1cfd`
+- Implementation commit: `563b50a`
 - Report commit SHA: recorded in the final task handoff because embedding the self-referential SHA would change this commit hash
 
 ## Changed Files
@@ -17,12 +18,19 @@
 
 No schema, feature endpoint, workspace configuration, or other worktree was changed.
 
-## Second-Round RED Evidence
+## Review-Finding Evidence
 
-Commands:
+The follow-up addressed two review findings without changing schema, endpoints, workspace configuration, or other worktrees:
+
+- `seed.ts` now derives users, driver profiles, fleets, fleet members, refresh sessions, orders, and every manifest order child ID from `infra/seed/demo-manifest.json`. Cleanup uses those explicit IDs; actor-linked audit/history/tracking/media cleanup remains scoped to manifest user IDs. Prefix-based user/fleet discovery and both `DEMO_*_PREFIX` constants are gone.
+- The determinism fixture is a non-demo user and fleet outside the manifest with the retired phone/name prefixes. It, its related rows, and the existing non-demo rows survive reseed, while manifest-null driver location is reset.
+- The database URL guard accepts only `localhost`, `127.0.0.1`, and `::1` for PostgreSQL URLs. `ALLOW_DESTRUCTIVE_RESET=1` cannot bypass remote-host rejection, and the safety script asserts that behavior.
+
+## Verification Evidence
+
+Focused seed determinism:
 
 ```bash
-bash infra/scripts/test-migration-safety.sh
 DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public' \
   ./apps/api/node_modules/.bin/jest \
   --config apps/api/jest.config.cjs \
@@ -30,13 +38,7 @@ DATABASE_URL='postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=p
   --runTestsByPath apps/api/test/seed-determinism.spec.ts
 ```
 
-Results before this fix:
-
-- `test-migration-safety.sh`: exit `1`, because the database URL guard was missing.
-- Seed determinism: exit `1`; the stale fixture failed on `OrderStatusHistory_actorId_fkey` while deleting demo users.
-- The transaction regression failed because the root Prisma client committed cleanup before the injected Fleet write failure.
-
-## GREEN Evidence
+Result: exit `0`; 1 suite and 3 tests passed, including prefix-collision preservation and transaction rollback.
 
 Primary migration and seed gate:
 
@@ -66,7 +68,7 @@ bash -n infra/scripts/assert-local-database-url.sh infra/scripts/reset-demo.sh \
 (cd apps/api && ../../node_modules/.bin/eslint .)
 ```
 
-All commands exited `0`. The shell safety test verified that non-local hosts, including `127.evil`, fail before Docker or migration reset, while `ALLOW_DESTRUCTIVE_RESET=1` is an explicit opt-in for a reviewed remote operation.
+All direct verification commands exited `0`. The shell safety test verified that non-local hosts, including `127.evil`, fail before Docker or migration reset, both with and without `ALLOW_DESTRUCTIVE_RESET=1`.
 
 The pnpm preflight commands below were also attempted and each exited `1` before source analysis because the repository's install policy rejected ignored builds for `@scarf/scarf@1.4.0` and `sharp@0.34.5` (`ERR_PNPM_IGNORED_BUILDS`):
 
@@ -80,8 +82,8 @@ The installed direct tsc, eslint, and database-backed commands above were used a
 
 ## Implementation Notes
 
-- `reset-demo.sh` and `test-migrations.sh` parse `DATABASE_URL` before any generation, Docker, or reset command. Loopback hosts are allowed by default; remote hosts require `ALLOW_DESTRUCTIVE_RESET=1`.
-- Demo cleanup uses one bounded transaction-scoped Prisma client. Actor-owned `AuditLog`, `OrderStatusHistory`, `TrackingPoint`, and `MediaObject` rows are removed only for reserved demo-user IDs; order children are removed only for orders attached to demo users. The regression fixture proves the demo actor reference is removed while a non-demo user, order, status history, and audit row survive.
+- `reset-demo.sh` and `test-migrations.sh` parse `DATABASE_URL` before any generation, Docker, or reset command. Only loopback PostgreSQL hosts are accepted; remote hosts cannot be enabled by an environment variable.
+- Demo cleanup uses one bounded transaction-scoped Prisma client. Top-level and order-child rows are deleted by IDs from the current manifest. Actor-owned `AuditLog`, `OrderStatusHistory`, `TrackingPoint`, and `MediaObject` rows are removed only for manifest user IDs; the regression fixture proves an outside-manifest prefix collision survives.
 - All Prisma writes and raw PostGIS statements use the interactive transaction client. The `@prisma/adapter-pg` path supports transaction-scoped raw statements, so no adapter fallback was needed. The injected mid-seed trigger proves cleanup, Prisma writes, and raw PostGIS changes roll back together.
 - The repository has one baseline migration only. The migration script tests the truthful upgrade invariant available here: repeated deploy is idempotent, the baseline is fully applied, no rollback is recorded, and its checksum matches the checked-in SQL. No unrelated migration was invented.
 
