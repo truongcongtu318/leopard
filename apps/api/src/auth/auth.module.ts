@@ -5,6 +5,9 @@ import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { AccessTokenGuard } from './guards/access-token.guard.js';
+import { RoleGuard } from './guards/role.guard.js';
+import { ResourcePolicy } from './policies/resource-policy.js';
 import {
   type FirebaseDecodedIdToken,
   FirebaseOtpProvider,
@@ -83,11 +86,21 @@ function parseFirebaseTokenFixture(
   controllers: [AuthController],
   providers: [
     AuthService,
+    AccessTokenGuard,
+    RoleGuard,
+    ResourcePolicy,
     RefreshSessionRepository,
     TokenService,
     { provide: OTP_PROVIDER, useFactory: createFirebaseOtpProvider },
     { provide: APP_FILTER, useClass: ApiExceptionFilter },
   ],
-  exports: [AuthService, TokenService, RefreshSessionRepository],
+  exports: [
+    AuthService,
+    TokenService,
+    RefreshSessionRepository,
+    AccessTokenGuard,
+    RoleGuard,
+    ResourcePolicy,
+  ],
 })
 export class AuthModule {}
