@@ -5,6 +5,10 @@ import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import {
+  ACCOUNT_STATUS_CACHE_OPTIONS,
+  AccountStatusCache,
+} from './guards/account-status-cache.js';
 import { AccessTokenGuard } from './guards/access-token.guard.js';
 import { RoleGuard } from './guards/role.guard.js';
 import { ResourcePolicy } from './policies/resource-policy.js';
@@ -86,6 +90,8 @@ function parseFirebaseTokenFixture(
   controllers: [AuthController],
   providers: [
     AuthService,
+    { provide: ACCOUNT_STATUS_CACHE_OPTIONS, useValue: undefined },
+    AccountStatusCache,
     AccessTokenGuard,
     RoleGuard,
     ResourcePolicy,

@@ -33,6 +33,11 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { ResourcePolicy } from '../policies/resource-policy.js';
 import { ApiExceptionFilter } from '../../common/api-exception.filter.js';
 import { DomainError } from '../../common/domain-error.js';
+import {
+  ACCOUNT_STATUS_CACHE_OPTIONS,
+  AccountStatusCache,
+  type CachedAccountStatus,
+} from './account-status-cache.js';
 
 interface StoredUser {
   readonly id: string;
@@ -161,6 +166,8 @@ describe('PH-05-T04 guards and resource policy', () => {
       controllers: [GuardTestController],
       providers: [
         AccessTokenGuard,
+        { provide: ACCOUNT_STATUS_CACHE_OPTIONS, useValue: undefined },
+        AccountStatusCache,
         RoleGuard,
         ResourcePolicy,
         TokenService,
@@ -187,6 +194,47 @@ describe('PH-05-T04 guards and resource policy', () => {
     await app?.close();
     delete process.env.AUTH_ACCESS_TOKEN_SECRET;
     delete process.env.AUTH_REFRESH_TOKEN_SECRET;
+  });
+
+  it('expires cached account status after the configured TTL and evicts the oldest entry at max size', () => {
+    let now = 10_000;
+    const cache = new AccountStatusCache({
+      ttlMs: 50,
+      maxEntries: 2,
+      now: () => now,
+    });
+    const first: CachedAccountStatus = {
+      userId: 'user-1',
+      role: 'CUSTOMER',
+      status: 'ACTIVE',
+    };
+    const second: CachedAccountStatus = {
+      userId: 'user-2',
+      role: 'DRIVER',
+      status: 'ACTIVE',
+    };
+    const third: CachedAccountStatus = {
+      userId: 'user-3',
+      role: 'ADMIN',
+      status: 'DISABLED',
+    };
+
+    cache.set(first);
+    cache.set(second);
+
+    expect(cache.get('user-1')).toEqual(first);
+    expect(cache.get('user-2')).toEqual(second);
+
+    cache.set(third);
+
+    expect(cache.get('user-1')).toBeUndefined();
+    expect(cache.get('user-2')).toEqual(second);
+    expect(cache.get('user-3')).toEqual(third);
+
+    now += 51;
+
+    expect(cache.get('user-2')).toBeUndefined();
+    expect(cache.get('user-3')).toBeUndefined();
   });
 
   it('rejects missing bearer tokens with 401', async () => {
@@ -363,6 +411,47 @@ describe('PH-05-T04 guards and resource policy', () => {
       });
   });
 
+  it('caches account status lookups but re-checks refresh-session validity on every request', async () => {
+    const user: StoredUser = {
+      id: 'user-cached',
+      phone: '+840000000004-cache',
+      role: 'CUSTOMER',
+      status: 'ACTIVE',
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    const session: StoredRefreshSession = {
+      id: 'session-cached',
+      userId: user.id,
+      tokenHash: 'hash',
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    prismaState.users.set(user.id, user);
+    prismaState.refreshSessions.set(session.id, session);
+
+    const token = createAccessToken(tokenService, {
+      userId: user.id,
+      role: user.role,
+      sessionId: session.id,
+    }, session.expiresAt);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(prismaState.prisma.refreshSession.findUnique).toHaveBeenCalledTimes(2);
+    expect(prismaState.prisma.user.findUnique).toHaveBeenCalledTimes(1);
+  });
+
   it('returns 403 for role mismatches and ignores client-supplied role hints', async () => {
     const user: StoredUser = {
       id: 'user-customer',
@@ -393,6 +482,42 @@ describe('PH-05-T04 guards and resource policy', () => {
     await request(app.getHttpServer())
       .get('/api/v1/authz-test/admin?role=ADMIN')
       .set('Authorization', `Bearer ${token}`)
+      .expect(403)
+      .expect(({ body }) => {
+        expect(body.code).toBe('FORBIDDEN');
+      });
+  });
+
+  it('returns 403 when a signed ADMIN token belongs to a CUSTOMER in the database', async () => {
+    const user: StoredUser = {
+      id: 'user-forged-admin',
+      phone: '+840000000005-forged',
+      role: 'CUSTOMER',
+      status: 'ACTIVE',
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    const session: StoredRefreshSession = {
+      id: 'session-forged-admin',
+      userId: user.id,
+      tokenHash: 'hash',
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    prismaState.users.set(user.id, user);
+    prismaState.refreshSessions.set(session.id, session);
+
+    const forgedAdminToken = createAccessToken(tokenService, {
+      userId: user.id,
+      role: 'ADMIN',
+      sessionId: session.id,
+    }, session.expiresAt);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/admin')
+      .set('Authorization', `Bearer ${forgedAdminToken}`)
       .expect(403)
       .expect(({ body }) => {
         expect(body.code).toBe('FORBIDDEN');
