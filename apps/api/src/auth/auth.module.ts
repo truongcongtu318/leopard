@@ -11,6 +11,7 @@ import {
   type FirebaseIdTokenVerifier,
 } from './providers/firebase-otp.provider.js';
 import { OTP_PROVIDER, OtpProviderError } from './providers/otp-provider.js';
+import { RefreshSessionRepository } from './refresh-session.repository.js';
 import { TokenService } from './token.service.js';
 
 const LOCAL_FIREBASE_ENVS = new Set(['development', 'local', 'test']);
@@ -82,10 +83,11 @@ function parseFirebaseTokenFixture(
   controllers: [AuthController],
   providers: [
     AuthService,
+    RefreshSessionRepository,
     TokenService,
     { provide: OTP_PROVIDER, useFactory: createFirebaseOtpProvider },
     { provide: APP_FILTER, useClass: ApiExceptionFilter },
   ],
-  exports: [AuthService, TokenService],
+  exports: [AuthService, TokenService, RefreshSessionRepository],
 })
 export class AuthModule {}

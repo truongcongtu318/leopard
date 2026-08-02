@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import type { Role } from '@prisma/client';
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import { DomainError } from '../common/domain-error.js';
-import { PrismaService } from '../database/prisma.service.js';
+import {
+  RefreshSessionRepository,
+  type CreatedRefreshSession,
+} from './refresh-session.repository.js';
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
-const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 const JWT_ALGORITHM = 'HS256';
 const JWT_TYPE = 'JWT';
 const TOKEN_ROLES = new Set<Role>(['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN']);
@@ -36,36 +38,34 @@ interface SessionUser {
 
 @Injectable()
 export class TokenService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly refreshSessions: RefreshSessionRepository) {}
 
   public async createSession(user: SessionUser): Promise<AuthSession> {
-    const refreshToken = this.randomToken();
-    const refreshTokenExpiresAt = this.secondsFromNow(REFRESH_TOKEN_TTL_SECONDS);
-    const refreshSession = await this.prisma.refreshSession.create({
-      data: {
-        userId: user.id,
-        tokenHash: this.hashRefreshToken(refreshToken),
-        expiresAt: refreshTokenExpiresAt,
-      },
-    });
+    const refreshSession = await this.refreshSessions.create(user.id);
 
+    return this.createAuthSession(user, refreshSession);
+  }
+
+  public createAuthSession(
+    user: SessionUser,
+    refreshSession: CreatedRefreshSession,
+  ): AuthSession {
     const issuedAt = this.nowSeconds();
     const accessTokenExpiresAt = new Date(
       (issuedAt + ACCESS_TOKEN_TTL_SECONDS) * 1_000,
     );
-    const accessToken = this.signAccessToken({
-      sub: user.id,
-      role: user.role,
-      sessionId: refreshSession.id,
-      iat: issuedAt,
-      exp: issuedAt + ACCESS_TOKEN_TTL_SECONDS,
-    });
 
     return {
-      accessToken,
+      accessToken: this.signAccessToken({
+        sub: user.id,
+        role: user.role,
+        sessionId: refreshSession.record.id,
+        iat: issuedAt,
+        exp: issuedAt + ACCESS_TOKEN_TTL_SECONDS,
+      }),
       accessTokenExpiresAt: accessTokenExpiresAt.toISOString(),
-      refreshToken,
-      refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
+      refreshToken: refreshSession.refreshToken,
+      refreshTokenExpiresAt: refreshSession.record.expiresAt.toISOString(),
     };
   }
 
@@ -128,12 +128,6 @@ export class TokenService {
     return `${signingInput}.${this.sign(signingInput)}`;
   }
 
-  private hashRefreshToken(refreshToken: string): string {
-    return createHmac('sha256', this.refreshSecret())
-      .update(refreshToken)
-      .digest('base64url');
-  }
-
   private sign(input: string): string {
     return createHmac('sha256', this.accessSecret())
       .update(input)
@@ -165,24 +159,12 @@ export class TokenService {
     }
   }
 
-  private randomToken(): string {
-    return randomBytes(32).toString('base64url');
-  }
-
-  private secondsFromNow(seconds: number): Date {
-    return new Date((this.nowSeconds() + seconds) * 1_000);
-  }
-
   private nowSeconds(): number {
     return Math.floor(Date.now() / 1_000);
   }
 
   private accessSecret(): string {
     return this.secret('AUTH_ACCESS_TOKEN_SECRET', 'local-access-token-secret');
-  }
-
-  private refreshSecret(): string {
-    return this.secret('AUTH_REFRESH_TOKEN_SECRET', 'local-refresh-token-secret');
   }
 
   private secret(name: string, localFallback: string): string {
