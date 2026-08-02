@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { DemoMapProvider } from './demo-map.provider.js';
-import type { MapProvider, RouteInput } from './map-provider.js';
+import {
+  MapProviderNotFoundError,
+  type MapProvider,
+  type RouteInput,
+} from './map-provider.js';
 import { ResilientMapProvider } from './resilient-map.provider.js';
 import { VietmapProvider } from './vietmap.provider.js';
 
@@ -68,13 +72,30 @@ describe('VietmapProvider', () => {
     const provider = vietmapProvider(fetchMock);
 
     await expect(provider.geocode('auto:opaque/ref id')).resolves.toEqual({
-      latitude: 10.759222947000069,
-      longitude: 106.67590269100003,
+      label: '197 Đường Trần Phú,Phường Chợ Quán,Thành Phố Hồ Chí Minh',
+      point: {
+        latitude: 10.759222947000069,
+        longitude: 106.67590269100003,
+      },
+      source: 'VIETMAP',
     });
 
     const requestedUrl = getRequestedUrl(fetchMock);
     expect(requestedUrl.pathname).toBe('/api/place/v4');
     expect(requestedUrl.searchParams.get('refid')).toBe('auto:opaque/ref id');
+  });
+
+  it('maps a missing geocode response to the shared provider not-found error', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(404, { message: 'place not found' }, 'Not Found'),
+    );
+    const provider = vietmapProvider(fetchMock);
+
+    const error = await catchError(provider.geocode('missing-place'));
+
+    expect(error).toBeInstanceOf(MapProviderNotFoundError);
+    expect(error.message).toBe('Vietmap geocode place not found');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('maps Route v4 payloads to shared route estimates without leaking SDK types', async () => {
@@ -137,6 +158,8 @@ describe('VietmapProvider', () => {
           {
             ref_id: 'auto:retry-ok',
             display: 'Retry OK',
+            lat: 10.75,
+            lng: 106.67,
           },
         ]),
       );
@@ -146,6 +169,10 @@ describe('VietmapProvider', () => {
       {
         placeId: 'auto:retry-ok',
         label: 'Retry OK',
+        point: {
+          latitude: 10.75,
+          longitude: 106.67,
+        },
         source: 'VIETMAP',
       },
     ]);
@@ -224,6 +251,18 @@ describe('ResilientMapProvider', () => {
 
     await expect(provider.route(routeInput())).rejects.toThrow('provider unavailable');
   });
+
+  it('does not replace a provider not-found with demo data', async () => {
+    process.env.ALLOW_DEMO_PROVIDER = 'true';
+    const provider = new ResilientMapProvider(
+      notFoundProvider(),
+      new DemoMapProvider(),
+    );
+
+    await expect(provider.geocode('missing-place')).rejects.toBeInstanceOf(
+      MapProviderNotFoundError,
+    );
+  });
 });
 
 function vietmapProvider(fetchFn: FetchMock): VietmapProvider {
@@ -290,6 +329,18 @@ function failingProvider(): MapProvider {
     },
     route: async () => {
       throw new Error('provider unavailable');
+    },
+  };
+}
+
+function notFoundProvider(): MapProvider {
+  return {
+    search: async () => [],
+    geocode: async () => {
+      throw new MapProviderNotFoundError();
+    },
+    route: async () => {
+      throw new MapProviderNotFoundError();
     },
   };
 }

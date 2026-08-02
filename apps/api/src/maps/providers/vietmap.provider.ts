@@ -1,10 +1,11 @@
 import type {
-  GeoPoint,
+  GeocodeResult,
   MapProvider,
   PlaceCandidate,
   RouteEstimate,
   RouteInput,
 } from './map-provider.js';
+import { MapProviderNotFoundError } from './map-provider.js';
 
 const DEFAULT_BASE_URL = 'https://maps.vietmap.vn';
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -31,6 +32,9 @@ interface VietmapPlaceSearchResult {
 }
 
 interface VietmapPlaceDetail {
+  display?: unknown;
+  name?: unknown;
+  address?: unknown;
   lat?: unknown;
   lng?: unknown;
 }
@@ -76,19 +80,30 @@ export class VietmapProvider implements MapProvider {
       .filter((candidate): candidate is PlaceCandidate => candidate !== null);
   }
 
-  async geocode(placeId: string): Promise<GeoPoint> {
+  async geocode(placeId: string): Promise<GeocodeResult> {
     const url = this.buildUrl('/api/place/v4', {
       refid: placeId,
     });
     const payload = await this.getJson<VietmapPlaceDetail>(url, 'geocode');
     const latitude = numberOrNull(payload.lat);
     const longitude = numberOrNull(payload.lng);
+    const address = stringOrNull(payload.address);
+    const label =
+      stringOrNull(payload.display) ??
+      stringOrNull(payload.name) ??
+      address ??
+      placeId;
 
     if (latitude === null || longitude === null) {
       throw new VietmapProviderError('Vietmap geocode failed: missing coordinates');
     }
 
-    return { latitude, longitude };
+    return {
+      label,
+      ...(address ? { address } : {}),
+      point: { latitude, longitude },
+      source: 'VIETMAP',
+    };
   }
 
   async route(input: RouteInput): Promise<RouteEstimate> {
@@ -155,12 +170,15 @@ export class VietmapProvider implements MapProvider {
         }
 
         const message = await responseMessage(response);
-        const error = new VietmapProviderError(
-          redactSecrets(
-            `Vietmap ${operation} failed with HTTP ${response.status} ${response.statusText}: ${message}`,
-            this.options.apiKey,
-          ),
-        );
+        const error =
+          operation === 'geocode' && response.status === 404
+            ? new MapProviderNotFoundError('Vietmap geocode place not found')
+            : new VietmapProviderError(
+                redactSecrets(
+                  `Vietmap ${operation} failed with HTTP ${response.status} ${response.statusText}: ${message}`,
+                  this.options.apiKey,
+                ),
+              );
 
         if (!isTransientStatus(response.status) || attempt === MAX_ATTEMPTS) {
           throw error;
@@ -168,7 +186,10 @@ export class VietmapProvider implements MapProvider {
 
         latestError = error;
       } catch (error) {
-        if (error instanceof VietmapProviderError) {
+        if (
+          error instanceof MapProviderNotFoundError ||
+          error instanceof VietmapProviderError
+        ) {
           throw error;
         }
 
@@ -219,13 +240,17 @@ function mapPlaceCandidate(item: unknown): PlaceCandidate | null {
 
   const latitude = numberOrNull(result.lat);
   const longitude = numberOrNull(result.lng);
+  const address = stringOrNull(result.address);
+
+  if (latitude === null || longitude === null) {
+    return null;
+  }
 
   return {
     placeId,
     label,
-    ...(latitude !== null && longitude !== null
-      ? { point: { latitude, longitude } }
-      : {}),
+    ...(address ? { address } : {}),
+    point: { latitude, longitude },
     source: 'VIETMAP',
   };
 }

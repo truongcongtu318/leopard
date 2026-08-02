@@ -3,12 +3,28 @@ export interface GeoPoint {
   longitude: number;
 }
 
+export class MapProviderNotFoundError extends Error {
+  constructor(message = 'Map place not found') {
+    super(message);
+    this.name = 'MapProviderNotFoundError';
+    Object.setPrototypeOf(this, MapProviderNotFoundError.prototype);
+  }
+}
+
 export type MapProviderSource = 'VIETMAP' | 'DEMO';
 
 export interface PlaceCandidate {
   placeId: string;
   label: string;
-  point?: GeoPoint;
+  address?: string;
+  point: GeoPoint;
+  source: MapProviderSource;
+}
+
+export interface GeocodeResult {
+  label: string;
+  address?: string;
+  point: GeoPoint;
   source: MapProviderSource;
 }
 
@@ -41,6 +57,6 @@ export interface RouteEstimator {
 
 export interface MapProvider {
   search(query: string): Promise<PlaceCandidate[]>;
-  geocode(placeId: string): Promise<GeoPoint>;
+  geocode(placeId: string): Promise<GeocodeResult>;
   route(input: RouteInput): Promise<RouteEstimate>;
 }

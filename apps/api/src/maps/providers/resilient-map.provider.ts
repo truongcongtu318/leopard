@@ -1,10 +1,11 @@
 import type {
-  GeoPoint,
+  GeocodeResult,
   MapProvider,
   PlaceCandidate,
   RouteEstimate,
   RouteInput,
 } from './map-provider.js';
+import { MapProviderNotFoundError } from './map-provider.js';
 
 export interface ResilientMapProviderOptions {
   allowDemoProvider?: boolean;
@@ -26,7 +27,7 @@ export class ResilientMapProvider implements MapProvider {
     return this.withDemoFallback((provider) => provider.search(query));
   }
 
-  async geocode(placeId: string): Promise<GeoPoint> {
+  async geocode(placeId: string): Promise<GeocodeResult> {
     return this.withDemoFallback((provider) => provider.geocode(placeId));
   }
 
@@ -40,6 +41,10 @@ export class ResilientMapProvider implements MapProvider {
     try {
       return await operation(this.primaryProvider);
     } catch (error) {
+      if (error instanceof MapProviderNotFoundError) {
+        throw error;
+      }
+
       if (!this.allowDemoProvider) {
         throw error;
       }
