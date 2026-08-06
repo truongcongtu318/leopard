@@ -1,3 +1,4 @@
+export const ADMIN_ACCESS_COOKIE = "leopard.admin.access";
 export const ADMIN_REFRESH_COOKIE = "leopard.admin.refresh";
 
 export interface BackendAuthSession {
@@ -17,28 +18,46 @@ export interface BackendAuthResponse {
   session: BackendAuthSession;
 }
 
+export function isBackendAuthSession(value: unknown): value is BackendAuthSession {
+  if (!value || typeof value !== "object") return false;
+  const session = value as Partial<BackendAuthSession>;
+  return (
+    typeof session.accessToken === "string" &&
+    typeof session.accessTokenExpiresAt === "string" &&
+    typeof session.refreshToken === "string" &&
+    typeof session.refreshTokenExpiresAt === "string"
+  );
+}
+
 export function getApiBaseUrl(): string {
   return process.env.API_URL ?? "http://localhost:3000/api/v1";
 }
 
 export async function postBackendJson<T>(
   path: string,
-  body: unknown,
+  body?: unknown,
+  extraHeaders: Record<string, string> = {},
 ): Promise<Response> {
-  return fetch(`${getApiBaseUrl()}${path}`, {
+  const init: RequestInit = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...extraHeaders,
     },
-    body: JSON.stringify(body),
-  });
+  };
+  if (body !== undefined) {
+    init.body = JSON.stringify(body);
+  }
+
+  return fetch(`${getApiBaseUrl()}${path}`, init);
 }
 
 export async function readResponseBody(response: Response): Promise<unknown> {
+  const text = await response.text();
   try {
-    return await response.json();
+    return JSON.parse(text);
   } catch {
-    return await response.text();
+    return text;
   }
 }
 
@@ -46,12 +65,11 @@ export function clientAuthResponse(
   backend: BackendAuthResponse,
 ): {
   user: BackendAuthResponse["user"];
-  session: Pick<BackendAuthSession, "accessToken" | "accessTokenExpiresAt">;
+  session: Pick<BackendAuthSession, "accessTokenExpiresAt">;
 } {
   return {
     user: backend.user,
     session: {
-      accessToken: backend.session.accessToken,
       accessTokenExpiresAt: backend.session.accessTokenExpiresAt,
     },
   };
@@ -60,20 +78,26 @@ export function clientAuthResponse(
 export function clientRefreshResponse(
   session: BackendAuthSession,
 ): {
-  session: Pick<BackendAuthSession, "accessToken" | "accessTokenExpiresAt">;
+  session: Pick<BackendAuthSession, "accessTokenExpiresAt">;
 } {
   return {
     session: {
-      accessToken: session.accessToken,
       accessTokenExpiresAt: session.accessTokenExpiresAt,
     },
   };
 }
 
-export function setRefreshCookie(
+export function setSessionCookies(
   response: Response,
   session: BackendAuthSession,
 ): void {
+  response.headers.append(
+    "Set-Cookie",
+    serializeCookie(ADMIN_ACCESS_COOKIE, session.accessToken, {
+      expires: new Date(session.accessTokenExpiresAt),
+      maxAge: undefined,
+    }),
+  );
   response.headers.append(
     "Set-Cookie",
     serializeCookie(ADMIN_REFRESH_COOKIE, session.refreshToken, {
@@ -83,7 +107,14 @@ export function setRefreshCookie(
   );
 }
 
-export function clearRefreshCookie(response: Response): void {
+export function clearSessionCookies(response: Response): void {
+  response.headers.append(
+    "Set-Cookie",
+    serializeCookie(ADMIN_ACCESS_COOKIE, "", {
+      expires: undefined,
+      maxAge: 0,
+    }),
+  );
   response.headers.append(
     "Set-Cookie",
     serializeCookie(ADMIN_REFRESH_COOKIE, "", {
@@ -117,6 +148,15 @@ export function jsonResponse(body: unknown, status = 200): Response {
 }
 
 export function jsonError(status: number, body: unknown): Response {
+  if (typeof body === "string") {
+    return new Response(body, {
+      status,
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+  }
+
   return jsonResponse(body, status);
 }
 

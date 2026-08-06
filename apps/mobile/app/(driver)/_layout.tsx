@@ -1,18 +1,29 @@
-import { Slot } from 'expo-router';
+import { Slot, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useProtectedLayout } from '../../src/navigation/role-router';
 
 export default function DriverLayout() {
   const decision = useProtectedLayout('driver');
+  const router = useRouter();
+  const redirectTo = decision.kind === 'denied' ? decision.redirectTo : null;
 
-  if (!decision.canRenderProtectedContent) {
+  useEffect(() => {
+    if (redirectTo) {
+      router.replace(redirectTo);
+    }
+  }, [redirectTo, router]);
+
+  if (decision.kind === 'loading') {
     return (
       <View style={styles.container}>
         <Text accessibilityLiveRegion="polite">Đang kiểm tra phiên và quyền truy cập.</Text>
       </View>
     );
   }
+
+  if (decision.kind === 'denied') return null;
 
   return <Slot />;
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import type { Role } from '@leopard/shared';
 
 import { httpClient } from '../api/http-client';
 import { colors, radius, spacing, typography } from '../theme/tokens';
@@ -9,7 +10,7 @@ import { sessionStore } from './session-store';
 import { ApiError } from '../api/api-error';
 
 export interface LoginScreenProps {
-  onLoginSuccess?: (role: string) => void;
+  onLoginSuccess?: (role: Role) => void;
   allowDemo?: boolean;
   sessionExpired?: boolean;
 }
@@ -18,7 +19,7 @@ interface AuthResponse {
   user: {
     id: string;
     phone: string;
-    role: string;
+    role: Role;
     status: string;
   };
   session: {
@@ -68,7 +69,7 @@ export function LoginScreen({
     }
   };
 
-  const handleDemoLogin = async (accountId: string, defaultRole: string) => {
+  const handleDemoLogin = async (accountId: string, defaultRole: Role) => {
     if (isSubmitting) return;
 
     setIsSubmitting(true);

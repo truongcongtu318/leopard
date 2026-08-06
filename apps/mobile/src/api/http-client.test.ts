@@ -310,6 +310,17 @@ describe('http-client', () => {
     });
   });
 
+  it('parses a one-shot plain-text error response without reading its body twice', async () => {
+    fetchMock().mockResolvedValue(createOneShotTextResponse(500, 'upstream unavailable'));
+
+    await expect(httpClient.get('/server-error')).rejects.toMatchObject({
+      name: 'ApiError',
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'upstream unavailable',
+    });
+  });
+
   // ---- network errors ----
 
   it('throws error with statusCode 0 on network error', async () => {
@@ -361,5 +372,25 @@ function createMockResponse(status: number, body: unknown): Response {
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
     blob: () => Promise.resolve(new Blob()),
     formData: () => Promise.resolve(new FormData()),
+  } as Response;
+}
+
+function createOneShotTextResponse(status: number, body: string): Response {
+  let consumed = false;
+  const readText = () => {
+    if (consumed) {
+      return Promise.reject(new TypeError('Body is unusable'));
+    }
+    consumed = true;
+    return Promise.resolve(body);
+  };
+
+  return {
+    ok: false,
+    status,
+    statusText: 'Error',
+    json: async () => JSON.parse(await readText()),
+    text: readText,
+    headers: new Headers({ 'Content-Type': 'text/plain' }),
   } as Response;
 }

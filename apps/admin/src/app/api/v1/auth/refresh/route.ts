@@ -2,13 +2,13 @@ import {
   ADMIN_REFRESH_COOKIE,
   type BackendAuthSession,
   clientRefreshResponse,
-  clearRefreshCookie,
+  clearSessionCookies,
   jsonError,
   jsonResponse,
   postBackendJson,
   readCookie,
   readResponseBody,
-  setRefreshCookie,
+  setSessionCookies,
 } from "../../../../../lib/auth/bff-session";
 
 export async function POST(request: Request): Promise<Response> {
@@ -18,7 +18,7 @@ export async function POST(request: Request): Promise<Response> {
       code: "UNAUTHORIZED",
       message: "Missing refresh session",
     });
-    clearRefreshCookie(response);
+    clearSessionCookies(response);
     return response;
   }
 
@@ -30,12 +30,12 @@ export async function POST(request: Request): Promise<Response> {
 
   if (!backendResponse.ok) {
     const response = jsonError(backendResponse.status, body);
-    clearRefreshCookie(response);
+    clearSessionCookies(response);
     return response;
   }
 
   const session = body as BackendAuthSession;
   const response = jsonResponse(clientRefreshResponse(session));
-  setRefreshCookie(response, session);
+  setSessionCookies(response, session);
   return response;
 }

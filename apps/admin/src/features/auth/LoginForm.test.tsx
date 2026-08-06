@@ -34,10 +34,10 @@ describe('LoginForm (Admin)', () => {
     expect(screen.getByText('Demo Fleet Owner')).toBeTruthy();
   });
 
-  it('uses BFF firebase login response without exposing a refresh token', async () => {
+  it('uses BFF firebase login response without exposing bearer tokens', async () => {
     postSpy.mockResolvedValueOnce({
       user: { id: 'usr-fleet-1', phone: '0900000001', role: 'FLEET_OWNER', status: 'ACTIVE' },
-      session: { accessToken: 'admin-token', accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
+      session: { accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
     });
 
     const onSuccess = jest.fn();
@@ -54,16 +54,15 @@ describe('LoginForm (Admin)', () => {
         userId: 'usr-fleet-1',
         role: 'FLEET_OWNER',
         expiresAt: '2026-12-31T23:59:59Z',
-        accessToken: 'admin-token',
       });
       expect(onSuccess).toHaveBeenCalledWith('FLEET_OWNER');
     });
   });
 
-  it('uses BFF demo login response without exposing a refresh token', async () => {
+  it('uses BFF demo login response without exposing bearer tokens', async () => {
     postSpy.mockResolvedValueOnce({
       user: { id: 'usr-admin-1', phone: '0900000002', role: 'ADMIN', status: 'ACTIVE' },
-      session: { accessToken: 'demo-acc-token', accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
+      session: { accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
     });
 
     const onSuccess = jest.fn();
@@ -78,7 +77,6 @@ describe('LoginForm (Admin)', () => {
         userId: 'usr-admin-1',
         role: 'ADMIN',
         expiresAt: '2026-12-31T23:59:59Z',
-        accessToken: 'demo-acc-token',
       });
       expect(onSuccess).toHaveBeenCalledWith('ADMIN');
     });
@@ -87,7 +85,7 @@ describe('LoginForm (Admin)', () => {
   it('sends correct demo IDs matching backend DEMO_ROLES keys', async () => {
     const makeResponse = (id: string, role: string) => ({
       user: { id, phone: '0900000000', role, status: 'ACTIVE' },
-      session: { accessToken: `tok-${role}`, accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
+      session: { accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
     });
 
     // fleet-owner
@@ -121,10 +119,10 @@ describe('LoginForm (Admin)', () => {
     unmount2();
   });
 
-  it('stores only the access bearer and role after successful login', async () => {
+  it('stores session metadata after successful login', async () => {
     postSpy.mockResolvedValueOnce({
       user: { id: 'usr-admin-1', phone: '0900000002', role: 'ADMIN', status: 'ACTIVE' },
-      session: { accessToken: 'the-bearer-token', accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
+      session: { accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
     });
 
     const onSuccess = jest.fn();
@@ -141,7 +139,6 @@ describe('LoginForm (Admin)', () => {
         userId: 'usr-admin-1',
         role: 'ADMIN',
         expiresAt: '2026-12-31T23:59:59Z',
-        accessToken: 'the-bearer-token',
       });
     });
   });
@@ -167,7 +164,7 @@ describe('LoginForm (Admin)', () => {
 
     resolvePost({
       user: { id: 'usr-admin-1', phone: '0900000002', role: 'ADMIN', status: 'ACTIVE' },
-      session: { accessToken: 'acc', accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
+      session: { accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
     });
 
     await waitFor(() => {

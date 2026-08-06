@@ -43,10 +43,7 @@ describe('LoginPage (Admin)', () => {
     postSpy.mockResolvedValueOnce({
       user: { id: 'admin-1', role: 'ADMIN' },
       session: {
-        accessToken: 'token',
-        refreshToken: 'refresh',
         accessTokenExpiresAt: '2026-12-31T23:59:59Z',
-        refreshTokenExpiresAt: '2027-12-31T23:59:59Z',
       },
     } as any);
 
@@ -64,10 +61,7 @@ describe('LoginPage (Admin)', () => {
     postSpy.mockResolvedValueOnce({
       user: { id: 'fleet-1', role: 'FLEET_OWNER' },
       session: {
-        accessToken: 'token',
-        refreshToken: 'refresh',
         accessTokenExpiresAt: '2026-12-31T23:59:59Z',
-        refreshTokenExpiresAt: '2027-12-31T23:59:59Z',
       },
     } as any);
 
@@ -85,10 +79,7 @@ describe('LoginPage (Admin)', () => {
     postSpy.mockResolvedValueOnce({
       user: { id: 'cust-1', role: 'CUSTOMER' },
       session: {
-        accessToken: 'token',
-        refreshToken: 'refresh',
         accessTokenExpiresAt: '2026-12-31T23:59:59Z',
-        refreshTokenExpiresAt: '2027-12-31T23:59:59Z',
       },
     } as any);
 
@@ -106,10 +97,7 @@ describe('LoginPage (Admin)', () => {
     postSpy.mockResolvedValueOnce({
       user: { id: 'driver-1', role: 'DRIVER' },
       session: {
-        accessToken: 'token',
-        refreshToken: 'refresh',
         accessTokenExpiresAt: '2026-12-31T23:59:59Z',
-        refreshTokenExpiresAt: '2027-12-31T23:59:59Z',
       },
     } as any);
 

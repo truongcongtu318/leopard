@@ -3,8 +3,8 @@
 ## Session flow
 
 1. Client đăng nhập qua demo hoặc Firebase endpoint.
-2. API tạo access token và refresh session; refresh token chỉ truyền qua HttpOnly cookie.
-3. Client gửi `Authorization: Bearer <token>` cho REST và token trong Socket handshake.
+2. API tạo access token và refresh session. Mobile giữ access token trong memory và refresh token trong SecureStore; admin web giữ cả hai trong cookie `HttpOnly` do BFF quản lý.
+3. Mobile client gửi `Authorization: Bearer <token>` cho REST và token trong Socket handshake. Admin web chỉ gọi same-origin BFF; BFF forward access token tới backend.
 4. Khi access token hết hạn, client gọi `/auth/refresh` một lần; request song song chờ cùng kết quả refresh.
 5. Refresh thất bại đưa người dùng về login và xóa state nhạy cảm.
 

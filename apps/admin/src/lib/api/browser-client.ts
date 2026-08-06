@@ -1,15 +1,11 @@
 import { ApiError } from "./api-error";
-import {
-  clearSession,
-  getAccessToken,
-  setAccessToken,
-} from "../auth/session";
+import { clearSession, updateSessionExpiry } from "../auth/session";
 
 /**
  * Browser fetch-based API client.
  *
  * Uses same-origin BFF pattern — all requests go to relative /api/v1.
- * On 401: clears session, redirects to /login.
+ * On 401: refreshes the httpOnly BFF session once, then redirects to /login.
  * On 403: throws ApiError with FORBIDDEN.
  * Network errors → ApiError with statusCode 0.
  */
@@ -37,19 +33,15 @@ function buildHeaders(): Record<string, string> {
     "x-request-id": generateRequestId(),
   };
 
-  const accessToken = getAccessToken();
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`;
-  }
-
   return headers;
 }
 
 async function safeParseJson(response: Response): Promise<unknown> {
+  const text = await response.text();
   try {
-    return await response.json();
+    return JSON.parse(text);
   } catch {
-    return await response.text();
+    return text;
   }
 }
 
@@ -147,16 +139,12 @@ async function refreshAccessToken(): Promise<boolean> {
 
     const body = (await response.json()) as {
       session?: {
-        accessToken?: string;
         accessTokenExpiresAt?: string;
       };
     };
 
-    if (body.session?.accessToken && body.session.accessTokenExpiresAt) {
-      await setAccessToken(
-        body.session.accessToken,
-        body.session.accessTokenExpiresAt,
-      );
+    if (body.session?.accessTokenExpiresAt) {
+      await updateSessionExpiry(body.session.accessTokenExpiresAt);
       return true;
     }
 

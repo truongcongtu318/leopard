@@ -41,6 +41,26 @@ function createMockResponse(status: number, body: unknown): Response {
   } as Response;
 }
 
+function createOneShotTextResponse(status: number, body: string): Response {
+  let consumed = false;
+  const readText = () => {
+    if (consumed) {
+      return Promise.reject(new TypeError("Body is unusable"));
+    }
+    consumed = true;
+    return Promise.resolve(body);
+  };
+
+  return {
+    ok: false,
+    status,
+    statusText: "Error",
+    json: async () => JSON.parse(await readText()),
+    text: readText,
+    headers: new Headers({ "Content-Type": "text/plain" }),
+  } as Response;
+}
+
 // ---------------------------------------------------------------------------
 // ApiError
 // ---------------------------------------------------------------------------
@@ -231,6 +251,16 @@ describe("serverClient", () => {
     });
   });
 
+  it("handles one-shot plain-text server errors", async () => {
+    fetchMock().mockResolvedValue(createOneShotTextResponse(503, "upstream unavailable"));
+
+    await expect(serverClient.get("/error")).rejects.toMatchObject({
+      name: "ApiError",
+      statusCode: 503,
+      message: "upstream unavailable",
+    });
+  });
+
   it("does not set Authorization header", async () => {
     fetchMock().mockResolvedValue(createMockResponse(200, { data: "ok" }));
 
@@ -384,7 +414,6 @@ describe("browserClient", () => {
       .mockResolvedValueOnce(
         createMockResponse(200, {
           session: {
-            accessToken: "rotated-access",
             accessTokenExpiresAt: "2026-08-06T02:15:00.000Z",
           },
         }),
@@ -399,22 +428,20 @@ describe("browserClient", () => {
 
     const retry = fetchMock().mock.calls[2]?.[1] as RequestInit | undefined;
     const retryHeaders = retry?.headers as Record<string, string> | undefined;
-    expect(retryHeaders?.Authorization).toBe("Bearer rotated-access");
+    expect(retryHeaders?.Authorization).toBeUndefined();
 
     await expect(getSession()).resolves.toEqual({
       userId: "u1",
       role: "ADMIN",
       expiresAt: "2026-08-06T02:15:00.000Z",
-      accessToken: "rotated-access",
     });
   });
 
-  it("cleans up session, bearer, and refresh cookie when 401 refresh fails", async () => {
+  it("cleans up session and cookies when 401 refresh fails", async () => {
     await setSession({
       userId: "u1",
       role: "ADMIN",
       expiresAt: "2026-08-06T02:00:00.000Z",
-      accessToken: "expired-access",
     });
 
     fetchMock()
@@ -481,6 +508,16 @@ describe("browserClient", () => {
       name: "ApiError",
       statusCode: 422,
       code: "VALIDATION_ERROR",
+    });
+  });
+
+  it("handles one-shot plain-text browser errors", async () => {
+    fetchMock().mockResolvedValue(createOneShotTextResponse(503, "upstream unavailable"));
+
+    await expect(browserClient.get("/error")).rejects.toMatchObject({
+      name: "ApiError",
+      statusCode: 503,
+      message: "upstream unavailable",
     });
   });
 

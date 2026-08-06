@@ -4,7 +4,8 @@
 
 - Access token JWT hết hạn sau 15 phút.
 - Refresh token ngẫu nhiên, lưu hash trong `RefreshSession`, hết hạn tối đa 7 ngày và rotate mỗi lần dùng.
-- Cookie refresh dùng `HttpOnly`, `Secure` ở staging và `SameSite=Lax`.
+- Admin web BFF lưu access và refresh cookie với `HttpOnly`, `Secure` ở production và `SameSite=Lax`; browser không nhận raw bearer token trong JSON.
+- Mobile giữ access token trong memory và refresh token trong SecureStore.
 - Firebase ID token chỉ được xác minh ở backend.
 
 ## Authorization

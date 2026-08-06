@@ -19,7 +19,6 @@ interface AuthResponse {
     status: string;
   };
   session: {
-    accessToken: string;
     accessTokenExpiresAt: string;
   };
 }
@@ -52,7 +51,6 @@ export function LoginForm({
         userId: res.user.id,
         role: res.user.role,
         expiresAt,
-        accessToken: res.session.accessToken,
       });
 
       onSuccess?.(res.user.role);
@@ -93,7 +91,6 @@ export function LoginForm({
         userId: res.user.id,
         role: res.user.role,
         expiresAt,
-        accessToken: res.session.accessToken,
       });
 
       onSuccess?.(res.user.role);

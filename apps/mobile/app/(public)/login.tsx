@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { Role } from '@leopard/shared';
 import { LoginScreen } from '../../src/auth/LoginScreen';
 
 export default function LoginRoute() {
@@ -6,7 +7,7 @@ export default function LoginRoute() {
   const searchParams = useLocalSearchParams<{ expired?: string }>();
   const isExpired = searchParams.expired === 'true';
 
-  const handleLoginSuccess = (role: string) => {
+  const handleLoginSuccess = (role: Role) => {
     switch (role) {
       case 'CUSTOMER':
         router.replace('/customer/orders');
@@ -15,13 +16,11 @@ export default function LoginRoute() {
         router.replace('/driver/orders');
         break;
       case 'FLEET_OWNER':
-        router.replace('/fleet');
-        break;
       case 'ADMIN':
-        router.replace('/admin');
+        router.replace('/(public)/login');
         break;
       default:
-        router.replace('/customer/orders');
+        router.replace('/(public)/login');
         break;
     }
   };

@@ -13,7 +13,7 @@
 - Keep `develop` untouched; work only on `codex/wave2-followup` or isolated agent workspaces.
 - Backend owns lifecycle, authorization, idempotency and transaction rules.
 - Mobile access tokens stay in memory; refresh tokens stay in SecureStore.
-- Admin must follow the existing httpOnly refresh-cookie/BFF boundary; do not put refresh tokens in localStorage or client-visible markup.
+- Admin must follow the httpOnly BFF cookie boundary; do not put access or refresh tokens in localStorage, sessionStorage, or client-visible JSON/markup.
 - Write regression tests before production changes and verify the expected RED failure.
 - Do not change unrelated Wave 2 behavior or generated artifacts.
 
@@ -27,7 +27,9 @@
 
 - Mobile refresh posts `{ refreshToken }`, parses the top-level `AuthSession`, stores the rotated refresh token, and retries once.
 - Mobile startup restores the refresh credential and role, obtains a fresh access token before protected layouts render, and rejects route groups whose role does not match the persisted authenticated role.
-- Admin login retains a usable session across reload and access-token expiry using the repository's httpOnly refresh-cookie/BFF boundary; logout and 401 clear both session state and the in-memory bearer header.
+- Admin login retains a usable session across reload and access-token expiry using the repository's httpOnly BFF cookie boundary; logout and 401 clear both session state and both auth cookies.
+- Admin BFF logout revokes the backend session before clearing cookies, and all client error parsers consume a response body only once.
+- Mobile protected layouts redirect denied decisions, and unsupported Fleet Owner/Admin login results return to the mobile login route.
 - Tests cover the real field names, refresh-on-hydrate, role mismatch, reload/session expiry, and header clearing.
 
 ### Task 2: Backend Order Consistency and Database Test Safety

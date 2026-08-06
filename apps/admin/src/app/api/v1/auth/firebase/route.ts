@@ -5,7 +5,7 @@ import {
   jsonResponse,
   postBackendJson,
   readResponseBody,
-  setRefreshCookie,
+  setSessionCookies,
 } from "../../../../../lib/auth/bff-session";
 
 export async function POST(request: Request): Promise<Response> {
@@ -22,6 +22,6 @@ export async function POST(request: Request): Promise<Response> {
 
   const authBody = body as BackendAuthResponse;
   const response = jsonResponse(clientAuthResponse(authBody));
-  setRefreshCookie(response, authBody.session);
+  setSessionCookies(response, authBody.session);
   return response;
 }

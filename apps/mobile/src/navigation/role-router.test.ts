@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { renderHook, waitFor } from '@testing-library/react-native';
 
-const mockSetItemAsync = jest.fn<() => Promise<void>>();
-const mockGetItemAsync = jest.fn<() => Promise<string | null>>();
-const mockDeleteItemAsync = jest.fn<() => Promise<void>>();
+const mockSetItemAsync = jest.fn<(key: string, value: string) => Promise<void>>();
+const mockGetItemAsync = jest.fn<(key: string) => Promise<string | null>>();
+const mockDeleteItemAsync = jest.fn<(key: string) => Promise<void>>();
 const mockIsAvailableAsync = jest.fn<() => Promise<boolean>>();
 
 jest.mock('../auth/secure-session-storage', () => ({
