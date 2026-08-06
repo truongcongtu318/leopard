@@ -209,7 +209,18 @@ Develop baseline: `37f67bfacef76d73b44a9ae34d3fd9da5e36061d`
 
 - PH-05-T05 Client Login Integration: VERIFIED — `fea1752`, `eafa06d`, `6152609`, `98e9848`, `8266ca3`; TDD suite 84/84 mobile & 65/65 web passed. Wave 2A is now Product-Complete.
 
-## Wave 2B Status
+## Wave 2B Current-Scope Delivery
 
-- PH-06 order/driver work: Ready to open after orchestrator decision.
+Integration commit: `f9482cc`
+
+- PH-06-T01 Order State Machine: VERIFIED — `e800cb8`; 14 unit test cases, 100% branch coverage.
+- PH-06-T02 Create and Query Customer Orders: VERIFIED — `ef32ec1`; PostGIS GeoJSON integration, 404 non-disclosure for unauthorized Customer lookups.
+- PH-06-T03 Driver Availability & Queue: VERIFIED — `ae4bfdd`; `AVAILABLE`/`OFFLINE` toggles, direct `BUSY` blocked, queue queries.
+- PH-06-T04 Race-Safe Order Acceptance: VERIFIED — `74eeece`; Prisma `$transaction` with atomic `updateMany` conditional update (`status: 'REQUESTED'`).
+- PH-06-T05 Status Update & Audited Cancellation: VERIFIED — `3bf3157`; delivery proof required before `DELIVERED`, `OrderStatusHistory` recorded.
+- PH-06-T06 Order Domain Gate: VERIFIED — `4fbaae6`; role authorization matrix suite passed.
+- PH-06 Code Review Remediation: VERIFIED — `5b13d16`; fixed Fleet Owner access control, driver concurrent double-order acceptance, class-validator DTOs, Admin cancel in `IN_TRANSIT`, 20-iteration integration race-condition test suite. Re-review gate APPROVED.
+
+Wave 2 (Wave 2A & Wave 2B) is now 100% COMPLETE & VERIFIED.
+
 
