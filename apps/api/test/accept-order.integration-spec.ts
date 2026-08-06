@@ -5,12 +5,12 @@ import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
-import { AppModule } from '../app.module.js';
-import { ApiExceptionFilter } from '../common/api-exception.filter.js';
-import { PrismaService } from '../database/prisma.service.js';
-import { TokenService } from '../auth/token.service.js';
-import { RefreshSessionRepository } from '../auth/refresh-session.repository.js';
-import { InMemoryPrismaService } from '../../test/prisma-mock.js';
+import { AppModule } from '../src/app.module.js';
+import { ApiExceptionFilter } from '../src/common/api-exception.filter.js';
+import { PrismaService } from '../src/database/prisma.service.js';
+import { TokenService } from '../src/auth/token.service.js';
+import { RefreshSessionRepository } from '../src/auth/refresh-session.repository.js';
+import { InMemoryPrismaService } from './prisma-mock.js';
 
 interface AuthSessionBody {
   readonly accessToken: string;

@@ -45,12 +45,11 @@ export class InMemoryPrismaService {
         type,
         sequence,
         address,
-        location: null as any,
         lat,
         lng,
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
+      } as any;
 
       this.orderStops.set(id, stop);
       return [stop];

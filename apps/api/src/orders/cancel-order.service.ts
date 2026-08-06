@@ -34,7 +34,7 @@ export class CancelOrderService {
       to: 'CANCELLED',
       actorRole: actor.role,
       hasDeliveryProof: false,
-      cancelReason: dto.reason,
+      ...(dto.reason ? { cancelReason: dto.reason } : {}),
     });
 
     const now = new Date();
