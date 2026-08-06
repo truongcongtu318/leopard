@@ -1,26 +1,30 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { LoginScreen } from '../../src/auth/LoginScreen';
 
 export default function LoginRoute() {
-  return (
-    <View style={styles.container}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Đăng nhập
-      </Text>
-      <Text>Xác thực chưa được triển khai trong giai đoạn này.</Text>
-    </View>
-  );
-}
+  const router = useRouter();
+  const searchParams = useLocalSearchParams<{ expired?: string }>();
+  const isExpired = searchParams.expired === 'true';
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-});
+  const handleLoginSuccess = (role: string) => {
+    switch (role) {
+      case 'CUSTOMER':
+        router.replace('/customer/orders');
+        break;
+      case 'DRIVER':
+        router.replace('/driver/orders');
+        break;
+      case 'FLEET_OWNER':
+        router.replace('/fleet');
+        break;
+      case 'ADMIN':
+        router.replace('/admin');
+        break;
+      default:
+        router.replace('/customer/orders');
+        break;
+    }
+  };
+
+  return <LoginScreen onLoginSuccess={handleLoginSuccess} sessionExpired={isExpired} />;
+}

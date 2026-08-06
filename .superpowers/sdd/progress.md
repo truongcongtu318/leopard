@@ -207,11 +207,9 @@ Develop baseline: `37f67bfacef76d73b44a9ae34d3fd9da5e36061d`
 - `test-migration-safety.sh`: remote and lookalike hosts rejected before Docker/reset.
 - Root `pnpm` task preflight remains blocked by `ERR_PNPM_IGNORED_BUILDS`; data E2E prints a pre-existing open-handle warning but exits 0.
 
-## Deferred
+- PH-05-T05 Client Login Integration: VERIFIED — `fea1752`, `eafa06d`, `6152609`, `98e9848`, `8266ca3`; TDD suite 84/84 mobile & 65/65 web passed. Wave 2A is now Product-Complete.
 
-- PH-05-T05 Client Login Integration: DEFERRED by orchestrator instruction for this run; no implementation branch was started.
-- PH-06 order/driver work: not started in this handoff.
+## Wave 2B Status
 
-## Next Owner
+- PH-06 order/driver work: Ready to open after orchestrator decision.
 
-Start a new isolated `codex/ph-05-t05-client-login` worktree from the merged integration/develop baseline. Read the PH-05-T05 plan and task brief, then follow TDD and the two-agent implementer/reviewer workflow. Do not treat this handoff as Wave 2A product-complete.
