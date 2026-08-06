@@ -138,6 +138,38 @@ export function readCookie(request: Request, name: string): string | null {
   return null;
 }
 
+export function isSameOriginRequest(request: Request): boolean {
+  let requestOrigin: string;
+  try {
+    requestOrigin = new URL(request.url).origin;
+  } catch {
+    return false;
+  }
+
+  const origin = request.headers.get("origin");
+  if (origin) return origin === requestOrigin;
+
+  const referer = request.headers.get("referer");
+  if (referer) {
+    try {
+      return new URL(referer).origin === requestOrigin;
+    } catch {
+      return false;
+    }
+  }
+
+  return process.env.NODE_ENV !== "production";
+}
+
+export function csrfErrorResponse(request: Request): Response | null {
+  if (isSameOriginRequest(request)) return null;
+
+  return jsonError(403, {
+    code: "CSRF_FORBIDDEN",
+    message: "Cross-site request blocked",
+  });
+}
+
 export function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,

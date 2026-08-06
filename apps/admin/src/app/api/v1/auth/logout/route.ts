@@ -3,6 +3,7 @@ import {
   ADMIN_REFRESH_COOKIE,
   type BackendAuthSession,
   clearSessionCookies,
+  csrfErrorResponse,
   isBackendAuthSession,
   postBackendJson,
   readCookie,
@@ -10,6 +11,9 @@ import {
 } from "../../../../../lib/auth/bff-session";
 
 export async function POST(request: Request): Promise<Response> {
+  const csrfError = csrfErrorResponse(request);
+  if (csrfError) return csrfError;
+
   const accessToken = readCookie(request, ADMIN_ACCESS_COOKIE);
   const refreshToken = readCookie(request, ADMIN_REFRESH_COOKIE);
 

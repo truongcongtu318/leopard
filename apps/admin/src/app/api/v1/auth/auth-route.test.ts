@@ -28,9 +28,15 @@ function createMockResponse(status: number, body: unknown): Response {
   } as Response;
 }
 
-function jsonRequest(path: string, body: unknown, cookie?: string): Request {
+function jsonRequest(
+  path: string,
+  body: unknown,
+  cookie?: string,
+  origin?: string,
+): Request {
   const headers = new Headers({ "Content-Type": "application/json" });
   if (cookie) headers.set("Cookie", cookie);
+  if (origin) headers.set("Origin", origin);
   return {
     url: `http://localhost:3002${path}`,
     method: "POST",
@@ -178,6 +184,26 @@ describe("admin auth BFF routes", () => {
 
     expect(response.status).toBe(503);
     await expect(response.text()).resolves.toBe("provider unavailable");
+  });
+
+  it("rejects cross-site login requests before creating a backend session", async () => {
+    const { POST } = await import("./login/demo/route");
+
+    const response = await POST(
+      jsonRequest(
+        "/api/v1/auth/login/demo",
+        { accountId: "admin" },
+        undefined,
+        "https://evil.example",
+      ),
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({
+      code: "CSRF_FORBIDDEN",
+      message: "Cross-site request blocked",
+    });
+    expect(fetchMock()).not.toHaveBeenCalled();
   });
 });
 

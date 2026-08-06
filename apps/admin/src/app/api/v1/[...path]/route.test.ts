@@ -27,11 +27,12 @@ function createMockResponse(
 
 function request(
   path: string,
-  options: { cookie?: string; method?: string; body?: unknown } = {},
+  options: { cookie?: string; method?: string; body?: unknown; origin?: string } = {},
 ): Request {
   const headers = new Headers();
   if (options.cookie) headers.set("Cookie", options.cookie);
   if (options.body !== undefined) headers.set("Content-Type", "application/json");
+  if (options.origin) headers.set("Origin", options.origin);
 
   const body = options.body === undefined ? undefined : JSON.stringify(options.body);
   return {
@@ -131,5 +132,57 @@ describe("admin API BFF proxy", () => {
     expect(response.headers.get("set-cookie")).toEqual(
       expect.stringMatching(/leopard\.admin\.refresh=refresh-2/),
     );
+  });
+
+  it("rejects cross-site cookie-backed mutations before reaching the backend", async () => {
+    const { POST } = await import("./route");
+
+    const response = await POST(
+      request("/api/v1/orders", {
+        method: "POST",
+        body: { pickup: "A", dropoff: "B" },
+        cookie: "leopard.admin.access=access-1; leopard.admin.refresh=refresh-1",
+        origin: "https://evil.example",
+      }),
+      context,
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({
+      code: "CSRF_FORBIDDEN",
+      message: "Cross-site request blocked",
+    });
+    expect(fetchMock()).not.toHaveBeenCalled();
+  });
+
+  it("requires origin metadata for production mutations", async () => {
+    const { POST } = await import("./route");
+    const previousNodeEnv = process.env.NODE_ENV;
+    const mutableEnv = process.env as unknown as Record<string, string | undefined>;
+    mutableEnv.NODE_ENV = "production";
+
+    try {
+      const response = await POST(
+        request("/api/v1/orders", {
+          method: "POST",
+          body: { pickup: "A", dropoff: "B" },
+          cookie: "leopard.admin.access=access-1",
+        }),
+        context,
+      );
+
+      expect(response.status).toBe(403);
+      expect(await response.json()).toEqual({
+        code: "CSRF_FORBIDDEN",
+        message: "Cross-site request blocked",
+      });
+      expect(fetchMock()).not.toHaveBeenCalled();
+    } finally {
+      if (previousNodeEnv === undefined) {
+        delete mutableEnv.NODE_ENV;
+      } else {
+        mutableEnv.NODE_ENV = previousNodeEnv;
+      }
+    }
   });
 });

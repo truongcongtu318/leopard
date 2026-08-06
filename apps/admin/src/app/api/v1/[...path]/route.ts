@@ -3,6 +3,7 @@ import {
   ADMIN_REFRESH_COOKIE,
   type BackendAuthSession,
   clearSessionCookies,
+  csrfErrorResponse,
   getApiBaseUrl,
   isBackendAuthSession,
   postBackendJson,
@@ -47,6 +48,11 @@ async function proxyRequest(
   request: Request,
   context: RouteContext,
 ): Promise<Response> {
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) {
+    const csrfError = csrfErrorResponse(request);
+    if (csrfError) return csrfError;
+  }
+
   const { path } = await context.params;
   const body = await readRequestBody(request);
   const accessToken = readCookie(request, ADMIN_ACCESS_COOKIE);

@@ -1,6 +1,7 @@
 import {
   type BackendAuthResponse,
   clientAuthResponse,
+  csrfErrorResponse,
   jsonError,
   jsonResponse,
   postBackendJson,
@@ -9,6 +10,9 @@ import {
 } from "../../../../../../lib/auth/bff-session";
 
 export async function POST(request: Request): Promise<Response> {
+  const csrfError = csrfErrorResponse(request);
+  if (csrfError) return csrfError;
+
   const payload = await request.json();
   const backendResponse = await postBackendJson<BackendAuthResponse>(
     "/auth/login/demo",
