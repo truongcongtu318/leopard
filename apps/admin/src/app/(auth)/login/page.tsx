@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LoginClientWrapper } from "./LoginClientWrapper";
 
 export const metadata: Metadata = {
   title: "Login — LEOPARD Operations",
@@ -46,22 +47,7 @@ export default function LoginPage() {
         >
           Sign in to manage your fleet operations
         </p>
-        <button
-          type="button"
-          style={{
-            width: "100%",
-            padding: "0.75rem 1rem",
-            backgroundColor: "#1d4ed8",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "0.375rem",
-            fontSize: "1rem",
-            fontWeight: 500,
-            cursor: "pointer",
-          }}
-        >
-          Login
-        </button>
+        <LoginClientWrapper />
       </div>
     </div>
   );
