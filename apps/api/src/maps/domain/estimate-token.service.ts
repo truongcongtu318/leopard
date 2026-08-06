@@ -71,12 +71,26 @@ export class EstimateTokenService {
     return `${encodedPayload}.${this.sign(encodedPayload)}`;
   }
 
-  verify(token: string): VerifiedOrderEstimate {
+  verify(token: string, requestedInput?: RouteInput): VerifiedOrderEstimate {
     const payload = this.verifyPayload(token);
     const expiresAtMs = Date.parse(payload.expiresAt);
 
     if (!Number.isFinite(expiresAtMs) || expiresAtMs <= this.now().getTime()) {
       throw new EstimateTokenError('Estimate token has expired');
+    }
+
+    if (requestedInput) {
+      const normalizedRequested = normalizeRouteInput(requestedInput);
+      const isMatch =
+        normalizedRequested.vehicleType === payload.routeInput.vehicleType &&
+        isEqualPoint(normalizedRequested.pickup, payload.routeInput.pickup) &&
+        isEqualPoint(normalizedRequested.dropoff, payload.routeInput.dropoff) &&
+        normalizedRequested.stops.length === payload.routeInput.stops.length &&
+        normalizedRequested.stops.every((stop, i) => isEqualPoint(stop, payload.routeInput.stops[i]!));
+
+      if (!isMatch) {
+        throw new EstimateMismatchError('Estimate parameters mismatch');
+      }
     }
 
     return {
@@ -127,6 +141,13 @@ export class EstimateTokenError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'EstimateTokenError';
+  }
+}
+
+export class EstimateMismatchError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EstimateMismatchError';
   }
 }
 
@@ -200,6 +221,10 @@ function normalizePoint(point: GeoPoint): GeoPoint {
     latitude: roundCoordinate(point.latitude),
     longitude: roundCoordinate(point.longitude),
   };
+}
+
+function isEqualPoint(a: GeoPoint, b: GeoPoint): boolean {
+  return a.latitude === b.latitude && a.longitude === b.longitude;
 }
 
 function roundCoordinate(value: number): number {

@@ -171,4 +171,46 @@ describe('Customer Orders REST API (E2E)', () => {
       })
       .expect(400);
   });
+
+  it('rejects order creation if requested locations do not match estimate token payload', async () => {
+    const pickup = { latitude: 10.762622, longitude: 106.660172 };
+    const dropoff = { latitude: 10.772622, longitude: 106.670172 };
+    const maliciousDropoff = { latitude: 21.028511, longitude: 105.804817 }; // Hanoi
+
+    const token = estimateTokenService.issue({
+      routeInput: {
+        pickup,
+        stops: [],
+        dropoff,
+        vehicleType: 'MOTORBIKE',
+      },
+      estimate: {
+        polyline: 'short_route_polyline',
+        distanceM: 2500,
+        durationS: 600,
+        estimatedArrivalAt: new Date(Date.now() + 600_000).toISOString(),
+        estimatedPriceVnd: 15_000,
+        source: 'DEMO',
+        calculatedAt: new Date().toISOString(),
+        isEstimate: true,
+      },
+      quote: {
+        amountVnd: 15_000,
+        currency: 'VND',
+      },
+    });
+
+    const createRes = await request(app.getHttpServer())
+      .post('/orders')
+      .set('Authorization', `Bearer ${customerSession.accessToken}`)
+      .send({
+        pickup: { address: 'Ben Thanh Market', lat: pickup.latitude, lng: pickup.longitude },
+        dropoff: { address: 'Hanoi', lat: maliciousDropoff.latitude, lng: maliciousDropoff.longitude },
+        vehicleType: 'MOTORBIKE',
+        estimateToken: token,
+      })
+      .expect(400);
+
+    expect(createRes.body.message).toMatch(/không khớp với ước tính/i);
+  });
 });

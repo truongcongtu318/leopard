@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
-import { EstimateTokenError, EstimateTokenService } from '../maps/domain/estimate-token.service.js';
+import { EstimateTokenError, EstimateMismatchError, EstimateTokenService } from '../maps/domain/estimate-token.service.js';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
 import { mapOrderResponse, type MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersRepository } from './orders.repository.js';
@@ -27,8 +27,27 @@ export class OrdersService {
 
     let verifiedEstimate;
     try {
-      verifiedEstimate = this.estimateTokenService.verify(dto.estimateToken);
+      const requestedInput = {
+        pickup: {
+          latitude: dto.pickup.latitude ?? dto.pickup.lat!,
+          longitude: dto.pickup.longitude ?? dto.pickup.lng!,
+        },
+        dropoff: {
+          latitude: dto.dropoff.latitude ?? dto.dropoff.lat!,
+          longitude: dto.dropoff.longitude ?? dto.dropoff.lng!,
+        },
+        stops: dto.stops?.map((stop) => ({
+          latitude: stop.latitude ?? stop.lat!,
+          longitude: stop.longitude ?? stop.lng!,
+        })) ?? [],
+        vehicleType: dto.vehicleType,
+      };
+
+      verifiedEstimate = this.estimateTokenService.verify(dto.estimateToken, requestedInput);
     } catch (error) {
+      if (error instanceof EstimateMismatchError) {
+        throw new DomainError('ESTIMATE_MISMATCH', 400, 'Thông tin đặt xe không khớp với ước tính');
+      }
       if (error instanceof EstimateTokenError) {
         throw new DomainError('BAD_REQUEST', 400, 'Mã ước tính không hợp lệ hoặc đã hết hạn');
       }
