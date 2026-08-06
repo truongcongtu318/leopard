@@ -14,6 +14,7 @@ export interface Session {
   userId: string;
   role: Role;
   expiresAt: string;
+  accessToken?: string;
 }
 
 /**
@@ -22,6 +23,7 @@ export interface Session {
  * or an API route. For now, simple in-memory state.
  */
 let _session: Session | null = null;
+let _accessToken: string | null = null;
 
 /**
  * Get the current session. Returns null if not authenticated.
@@ -30,11 +32,30 @@ export async function getSession(): Promise<Session | null> {
   return _session;
 }
 
+export function getAccessToken(): string | null {
+  return _accessToken;
+}
+
 /**
  * Set (or replace) the current session.
  */
-export async function setSession(session: Session): Promise<void> {
+export async function setSession(session: Session | null): Promise<void> {
+  if (session === null) {
+    await clearSession();
+    return;
+  }
   _session = session;
+  _accessToken = session.accessToken ?? null;
+}
+
+export async function setAccessToken(
+  accessToken: string,
+  expiresAt: string,
+): Promise<void> {
+  _accessToken = accessToken;
+  if (_session !== null) {
+    _session = { ..._session, accessToken, expiresAt };
+  }
 }
 
 /**
@@ -42,6 +63,7 @@ export async function setSession(session: Session): Promise<void> {
  */
 export async function clearSession(): Promise<void> {
   _session = null;
+  _accessToken = null;
 }
 
 /**

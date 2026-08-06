@@ -20,9 +20,7 @@ interface AuthResponse {
   };
   session: {
     accessToken: string;
-    refreshToken: string;
     accessTokenExpiresAt: string;
-    refreshTokenExpiresAt: string;
   };
 }
 
@@ -50,12 +48,11 @@ export function LoginForm({
       const expiresAt =
         res.session.accessTokenExpiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-      browserClient.setHeader('Authorization', `Bearer ${res.session.accessToken}`);
-
       await setSession({
         userId: res.user.id,
         role: res.user.role,
         expiresAt,
+        accessToken: res.session.accessToken,
       });
 
       onSuccess?.(res.user.role);
@@ -92,12 +89,11 @@ export function LoginForm({
       const expiresAt =
         res.session.accessTokenExpiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-      browserClient.setHeader('Authorization', `Bearer ${res.session.accessToken}`);
-
       await setSession({
         userId: res.user.id,
         role: res.user.role,
         expiresAt,
+        accessToken: res.session.accessToken,
       });
 
       onSuccess?.(res.user.role);

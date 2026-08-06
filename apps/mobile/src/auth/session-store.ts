@@ -1,7 +1,9 @@
 import { secureSessionStorage } from './secure-session-storage';
+import type { Role } from '@leopard/shared';
 
 export interface SessionState {
   authenticated: boolean;
+  role: Role | null;
 }
 
 type Listener = (state: SessionState) => void;
@@ -9,21 +11,37 @@ type Listener = (state: SessionState) => void;
 /**
  * SessionStore manages the authentication session:
  * - accessToken is kept in memory only (never persisted)
- * - refreshCredential is persisted via expo-secure-store
+ * - refreshToken is persisted via expo-secure-store
+ * - role is persisted so protected layouts can enforce the authenticated role
  *
  * Subscribers are notified of state changes (authenticated / not).
  */
 export class SessionStore {
   private accessToken: string | null = null;
-  private refreshCredential: string | null = null;
+  private refreshToken: string | null = null;
+  private role: Role | null = null;
   private listeners = new Set<Listener>();
 
   // ---- public API ----
 
-  async setSession(accessToken: string, refreshCredential: string): Promise<void> {
+  async setSession(
+    accessToken: string,
+    refreshToken: string,
+    role?: Role | null,
+  ): Promise<void> {
     this.accessToken = accessToken;
-    this.refreshCredential = refreshCredential;
-    await secureSessionStorage.setRefreshCredential(refreshCredential);
+    this.refreshToken = refreshToken;
+    await secureSessionStorage.setRefreshToken(refreshToken);
+
+    if (role !== undefined) {
+      this.role = role;
+      if (role === null) {
+        await secureSessionStorage.removeRole();
+      } else {
+        await secureSessionStorage.setRole(role);
+      }
+    }
+
     this.notify();
   }
 
@@ -31,18 +49,24 @@ export class SessionStore {
     return this.accessToken;
   }
 
-  async getRefreshCredential(): Promise<string | null> {
+  async getRefreshToken(): Promise<string | null> {
     // Re-use in-memory value if available (set via setSession or hydrate)
-    if (this.refreshCredential !== null) {
-      return this.refreshCredential;
+    if (this.refreshToken !== null) {
+      return this.refreshToken;
     }
-    return secureSessionStorage.getRefreshCredential();
+    return secureSessionStorage.getRefreshToken();
+  }
+
+  getRole(): Role | null {
+    return this.role;
   }
 
   async clearSession(): Promise<void> {
     this.accessToken = null;
-    this.refreshCredential = null;
-    await secureSessionStorage.removeRefreshCredential();
+    this.refreshToken = null;
+    this.role = null;
+    await secureSessionStorage.removeRefreshToken();
+    await secureSessionStorage.removeRole();
     this.notify();
   }
 
@@ -51,16 +75,20 @@ export class SessionStore {
   }
 
   /**
-   * Restore the refresh credential from SecureStore on app start.
+   * Restore the refresh token and role from SecureStore on app start.
    * Returns false if SecureStore is unavailable, true otherwise.
-   * The access token is never persisted - only the refresh credential.
+   * The access token is never persisted.
    */
   async hydrate(): Promise<boolean> {
     try {
-      const stored = await secureSessionStorage.getRefreshCredential();
+      const stored = await secureSessionStorage.getRefreshToken();
+      const storedRole = await secureSessionStorage.getRole();
       // null means either unavailable or empty - both are fine, just nothing to restore
       if (stored !== null) {
-        this.refreshCredential = stored;
+        this.refreshToken = stored;
+      }
+      if (isRole(storedRole)) {
+        this.role = storedRole;
       }
       return true;
     } catch {
@@ -80,11 +108,23 @@ export class SessionStore {
   // ---- internal ----
 
   private notify(): void {
-    const state: SessionState = { authenticated: this.isAuthenticated() };
+    const state: SessionState = {
+      authenticated: this.isAuthenticated(),
+      role: this.role,
+    };
     for (const listener of this.listeners) {
       listener(state);
     }
   }
+}
+
+function isRole(value: string | null): value is Role {
+  return (
+    value === 'CUSTOMER' ||
+    value === 'DRIVER' ||
+    value === 'FLEET_OWNER' ||
+    value === 'ADMIN'
+  );
 }
 
 /**

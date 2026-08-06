@@ -20,8 +20,8 @@ interface RequestOptions {
 let refreshPromise: Promise<boolean> | null = null;
 
 async function performRefresh(): Promise<boolean> {
-  const refreshCredential = await sessionStore.getRefreshCredential();
-  if (!refreshCredential) return false;
+  const refreshToken = await sessionStore.getRefreshToken();
+  if (!refreshToken) return false;
 
   try {
     const response = await fetch(`${BASE_URL}${REFRESH_PATH}`, {
@@ -30,18 +30,20 @@ async function performRefresh(): Promise<boolean> {
         'Content-Type': 'application/json',
         'x-request-id': generateRequestId(),
       },
-      body: JSON.stringify({ refreshCredential }),
+      body: JSON.stringify({ refreshToken }),
     });
 
     if (!response.ok) return false;
 
     const body = (await response.json()) as {
       accessToken?: string;
-      refreshCredential?: string;
+      accessTokenExpiresAt?: string;
+      refreshToken?: string;
+      refreshTokenExpiresAt?: string;
     };
 
-    if (body.accessToken && body.refreshCredential) {
-      await sessionStore.setSession(body.accessToken, body.refreshCredential);
+    if (body.accessToken && body.refreshToken) {
+      await sessionStore.setSession(body.accessToken, body.refreshToken);
       return true;
     }
 
@@ -58,6 +60,10 @@ function startRefresh(): Promise<boolean> {
     });
   }
   return refreshPromise;
+}
+
+export function refreshSession(): Promise<boolean> {
+  return startRefresh();
 }
 
 // ---- request execution ----

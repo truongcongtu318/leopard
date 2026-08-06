@@ -10,19 +10,19 @@ jest.mock('expo-secure-store', () => ({
 
 jest.mock('../auth/session-store', () => {
   const getAccessToken = jest.fn();
-  const getRefreshCredential = jest.fn();
+  const getRefreshToken = jest.fn();
   const setSession = jest.fn();
   const clearSession = jest.fn();
 
   (globalThis as Record<string, unknown>).__sessionMocks = {
     getAccessToken,
-    getRefreshCredential,
+    getRefreshToken,
     setSession,
     clearSession,
   };
 
   return {
-    sessionStore: { getAccessToken, getRefreshCredential, setSession, clearSession },
+    sessionStore: { getAccessToken, getRefreshToken, setSession, clearSession },
   };
 });
 
@@ -30,8 +30,8 @@ import { httpClient } from './http-client';
 
 interface SessionMockFns {
   getAccessToken: jest.Mock<() => string | null>;
-  getRefreshCredential: jest.Mock<() => Promise<string | null>>;
-  setSession: jest.Mock<(accessToken: string, refreshCredential: string) => Promise<void>>;
+  getRefreshToken: jest.Mock<() => Promise<string | null>>;
+  setSession: jest.Mock<(accessToken: string, refreshToken: string) => Promise<void>>;
   clearSession: jest.Mock<() => Promise<void>>;
 }
 
@@ -57,7 +57,7 @@ describe('http-client', () => {
     globalThis.fetch = jest.fn() as unknown as typeof globalThis.fetch;
     jest.clearAllMocks();
     mocks().getAccessToken.mockReturnValue(null);
-    mocks().getRefreshCredential.mockResolvedValue(null);
+    mocks().getRefreshToken.mockResolvedValue(null);
     mocks().setSession.mockResolvedValue(undefined);
     mocks().clearSession.mockResolvedValue(undefined);
   });
@@ -178,23 +178,31 @@ describe('http-client', () => {
 
   it('attempts token refresh on 401 and retries original request', async () => {
     mocks().getAccessToken.mockReturnValue('expired-token');
-    mocks().getRefreshCredential.mockResolvedValue('refresh-cred-1');
+    mocks().getRefreshToken.mockResolvedValue('refresh-token-1');
 
     fetchMock()
       .mockResolvedValueOnce(createMockResponse(401, { code: 'UNAUTHORIZED', message: 'Token expired' }))
-      .mockResolvedValueOnce(createMockResponse(200, { accessToken: 'new-access-token', refreshCredential: 'new-refresh-cred' }))
+      .mockResolvedValueOnce(createMockResponse(200, {
+        accessToken: 'new-access-token',
+        accessTokenExpiresAt: '2026-08-06T02:15:00.000Z',
+        refreshToken: 'new-refresh-token',
+        refreshTokenExpiresAt: '2026-08-13T02:15:00.000Z',
+      }))
       .mockResolvedValueOnce(createMockResponse(200, { data: 'success' }));
 
     const result = await httpClient.get('/protected');
 
     expect(result).toEqual({ data: 'success' });
     expect(fetchMock()).toHaveBeenCalledTimes(3);
-    expect(mocks().setSession).toHaveBeenCalledWith('new-access-token', 'new-refresh-cred');
+    const refreshCall = fetchMock().mock.calls[1] as [string, RequestInit | undefined];
+    expect(refreshCall[0]).toContain('/auth/refresh');
+    expect(refreshCall[1]?.body).toBe(JSON.stringify({ refreshToken: 'refresh-token-1' }));
+    expect(mocks().setSession).toHaveBeenCalledWith('new-access-token', 'new-refresh-token');
   });
 
   it('throws error with ApiError shape when refresh fails', async () => {
     mocks().getAccessToken.mockReturnValue('expired-token');
-    mocks().getRefreshCredential.mockResolvedValue('bad-refresh');
+    mocks().getRefreshToken.mockResolvedValue('bad-refresh');
 
     fetchMock()
       .mockResolvedValueOnce(createMockResponse(401, { code: 'UNAUTHORIZED', message: 'Token expired' }))
@@ -208,7 +216,7 @@ describe('http-client', () => {
 
   it('throws error with ApiError shape when no refresh credential available on 401', async () => {
     mocks().getAccessToken.mockReturnValue('expired-token');
-    mocks().getRefreshCredential.mockResolvedValue(null);
+    mocks().getRefreshToken.mockResolvedValue(null);
 
     fetchMock().mockResolvedValueOnce(createMockResponse(401, { code: 'UNAUTHORIZED', message: 'Token expired' }));
 
@@ -222,10 +230,15 @@ describe('http-client', () => {
 
   it('deduplicates concurrent refresh calls (only one refresh when multiple 401s)', async () => {
     mocks().getAccessToken.mockReturnValue('expired-token');
-    mocks().getRefreshCredential.mockResolvedValue('refresh-cred-1');
+    mocks().getRefreshToken.mockResolvedValue('refresh-token-1');
 
     const r401 = createMockResponse(401, { code: 'UNAUTHORIZED', message: 'Token expired' });
-    const rTokens = createMockResponse(200, { accessToken: 'new-token', refreshCredential: 'new-refresh' });
+    const rTokens = createMockResponse(200, {
+      accessToken: 'new-token',
+      accessTokenExpiresAt: '2026-08-06T02:15:00.000Z',
+      refreshToken: 'new-refresh',
+      refreshTokenExpiresAt: '2026-08-13T02:15:00.000Z',
+    });
     const rOk = createMockResponse(200, { data: 'ok' });
 
     fetchMock()
@@ -247,6 +260,9 @@ describe('http-client', () => {
     expect(r2).toEqual({ data: 'ok' });
     expect(r3).toEqual({ data: 'ok' });
     expect(fetchMock()).toHaveBeenCalledTimes(7);
+    expect(fetchMock().mock.calls.filter(([url]) => String(url).includes('/auth/refresh'))).toHaveLength(1);
+    expect(mocks().setSession).toHaveBeenCalledTimes(1);
+    expect(mocks().setSession).toHaveBeenCalledWith('new-token', 'new-refresh');
   });
 
   // ---- error parsing ----

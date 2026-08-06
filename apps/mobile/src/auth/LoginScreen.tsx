@@ -48,7 +48,7 @@ export function LoginScreen({
       const res = await httpClient.post<AuthResponse>('/auth/firebase', { idToken });
       const accessToken = res.session?.accessToken ?? '';
       const refreshToken = res.session?.refreshToken ?? '';
-      await sessionStore.setSession(accessToken, refreshToken);
+      await sessionStore.setSession(accessToken, refreshToken, res.user.role);
       const role = res.user?.role ?? 'CUSTOMER';
       onLoginSuccess?.(role);
     } catch (err) {
@@ -78,7 +78,7 @@ export function LoginScreen({
       const res = await httpClient.post<AuthResponse>('/auth/login/demo', { accountId });
       const accessToken = res.session?.accessToken ?? '';
       const refreshToken = res.session?.refreshToken ?? '';
-      await sessionStore.setSession(accessToken, refreshToken);
+      await sessionStore.setSession(accessToken, refreshToken, res.user.role);
       const role = res.user?.role ?? defaultRole;
       onLoginSuccess?.(role);
     } catch (err) {
