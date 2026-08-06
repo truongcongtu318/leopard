@@ -1,14 +1,10 @@
 import { Slot } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { getMobileRouteDecision } from '../../src/navigation/role-router';
+import { useProtectedLayout } from '../../src/navigation/role-router';
 
 export default function DriverLayout() {
-  const decision = getMobileRouteDecision({
-    isHydrated: false,
-    role: null,
-    routeGroup: 'driver',
-  });
+  const decision = useProtectedLayout('driver');
 
   if (!decision.canRenderProtectedContent) {
     return (
