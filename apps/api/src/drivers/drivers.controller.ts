@@ -17,6 +17,8 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { AcceptOrderService } from '../orders/accept-order.service.js';
+import { UpdateOrderStatusService } from '../orders/update-order-status.service.js';
+import type { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto.js';
 import { DriversService } from './drivers.service.js';
 import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 
@@ -27,6 +29,7 @@ export class DriversController {
   constructor(
     private readonly driversService: DriversService,
     private readonly acceptOrderService: AcceptOrderService,
+    private readonly updateOrderStatusService: UpdateOrderStatusService,
   ) {}
 
   @Patch('availability')
@@ -66,5 +69,16 @@ export class DriversController {
     @Param('id') id: string,
   ) {
     return this.acceptOrderService.acceptOrder(actor, id);
+  }
+
+  @Post('orders/:id/status')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  updateStatus(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+    @Body() dto: UpdateOrderStatusDto,
+  ) {
+    return this.updateOrderStatusService.updateStatus(actor, id, dto);
   }
 }

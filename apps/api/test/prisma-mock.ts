@@ -13,6 +13,9 @@ import type {
 
 export class InMemoryPrismaService {
   public users = new Map<string, User>();
+  public mediaObject = {
+    findFirst: jest.fn(async () => null),
+  };
   public refreshSessions = new Map<string, RefreshSession>();
   public driverProfiles = new Map<string, DriverProfile>();
   public orders = new Map<string, Order>();

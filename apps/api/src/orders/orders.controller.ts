@@ -15,6 +15,8 @@ import { RequireRoles } from '../auth/decorators/require-roles.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
+import { CancelOrderService } from './cancel-order.service.js';
+import type { CancelOrderDto } from './dto/cancel-order.dto.js';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
 import type { MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersService } from './orders.service.js';
@@ -23,7 +25,10 @@ import { OrdersService } from './orders.service.js';
 @UseFilters(ApiExceptionFilter)
 @UseGuards(AccessTokenGuard, RoleGuard)
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly cancelOrderService: CancelOrderService,
+  ) {}
 
   @Post()
   @RequireRoles('CUSTOMER')
@@ -54,5 +59,16 @@ export class OrdersController {
     @Param('id') id: string,
   ): Promise<MappedOrderResponse> {
     return this.ordersService.getOrderById(actor, id);
+  }
+
+  @Post(':id/cancel')
+  @RequireRoles('CUSTOMER', 'ADMIN')
+  @HttpCode(HttpStatus.OK)
+  cancelOrder(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+    @Body() dto: CancelOrderDto,
+  ): Promise<MappedOrderResponse> {
+    return this.cancelOrderService.cancelOrder(actor, id, dto);
   }
 }
