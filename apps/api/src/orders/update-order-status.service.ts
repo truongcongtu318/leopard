@@ -21,52 +21,76 @@ export class UpdateOrderStatusService {
     orderId: string,
     dto: UpdateOrderStatusDto,
   ): Promise<MappedOrderResponse> {
-    const order = await this.ordersRepository.findById(orderId);
-
-    if (!order) {
-      throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
-    }
-
-    if (order.driverId !== actor.userId) {
-      throw new DomainError(
-        'FORBIDDEN',
-        403,
-        'Chỉ tài xế được phân công mới có thể cập nhật trạng thái đơn hàng',
-      );
-    }
-
-    if (order.status === dto.status) {
-      return mapOrderResponse(order);
-    }
-
-    const hasDeliveryProof = await this.proofReader.hasDeliveryProof(orderId);
-
-    assertOrderTransition({
-      from: order.status,
-      to: dto.status,
-      actorRole: actor.role,
-      hasDeliveryProof,
-    });
-
-    const now = new Date();
-    const statusTimestamps: Record<string, Date> = {};
-
-    if (dto.status === 'PICKING_UP') {
-      statusTimestamps.pickingUpAt = now;
-    } else if (dto.status === 'IN_TRANSIT') {
-      statusTimestamps.inTransitAt = now;
-    } else if (dto.status === 'DELIVERED') {
-      statusTimestamps.deliveredAt = now;
-    }
-
     const result = await this.prisma.$transaction(async (tx) => {
-      await tx.order.update({
+      const order = await tx.order.findUnique({
         where: { id: orderId },
+      });
+
+      if (!order) {
+        throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
+      }
+
+      if (order.driverId !== actor.userId) {
+        throw new DomainError(
+          'FORBIDDEN',
+          403,
+          'Chỉ tài xế được phân công mới có thể cập nhật trạng thái đơn hàng',
+        );
+      }
+
+      if (dto.clientRequestId) {
+        const existingHistory = await tx.orderStatusHistory.findFirst({
+          where: {
+            orderId,
+            actorId: actor.userId,
+            clientRequestId: dto.clientRequestId,
+          },
+        });
+
+        if (existingHistory) {
+          return this.ordersRepository.findById(orderId, tx);
+        }
+      }
+
+      if (order.status === dto.status) {
+        throw new DomainError('ORDER_INVALID_TRANSITION', 409, 'Trạng thái đơn hàng đã thay đổi.');
+      }
+
+      const hasDeliveryProof = await this.proofReader.hasDeliveryProof(orderId);
+
+      assertOrderTransition({
+        from: order.status,
+        to: dto.status,
+        actorRole: actor.role,
+        hasDeliveryProof,
+      });
+
+      const now = new Date();
+      const statusTimestamps: Record<string, Date> = {};
+
+      if (dto.status === 'PICKING_UP') {
+        statusTimestamps.pickingUpAt = now;
+      } else if (dto.status === 'IN_TRANSIT') {
+        statusTimestamps.inTransitAt = now;
+      } else if (dto.status === 'DELIVERED') {
+        statusTimestamps.deliveredAt = now;
+      }
+
+      const updateRes = await tx.order.updateMany({
+        where: {
+          id: orderId,
+          driverId: actor.userId,
+          status: order.status,
+        },
         data: {
           status: dto.status,
           ...statusTimestamps,
         },
       });
+
+      if (updateRes.count === 0) {
+        throw new DomainError('ORDER_INVALID_TRANSITION', 409, 'Trạng thái đơn hàng đã thay đổi.');
+      }
 
       if (dto.status === 'DELIVERED') {
         await tx.driverProfile.update({
@@ -81,10 +105,11 @@ export class UpdateOrderStatusService {
           fromStatus: order.status,
           toStatus: dto.status,
           actorId: actor.userId,
+          clientRequestId: dto.clientRequestId ?? null,
         },
       });
 
-      return this.ordersRepository.findById(orderId);
+      return this.ordersRepository.findById(orderId, tx);
     });
 
     if (!result) {

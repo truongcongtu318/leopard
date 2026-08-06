@@ -1,6 +1,7 @@
 import type { Role } from '@leopard/shared';
 import { useEffect, useState } from 'react';
 
+import { refreshSession } from '../api/http-client';
 import { sessionStore } from '../auth/session-store';
 
 export type MobileHome =
@@ -107,6 +108,15 @@ export function useProtectedLayout(
     async function initSession() {
       try {
         await sessionStore.hydrate();
+        const hasRefreshToken = (await sessionStore.getRefreshToken()) !== null;
+        if (hasRefreshToken && !sessionStore.getAccessToken()) {
+          const refreshed = await refreshSession();
+          if (!refreshed) {
+            await sessionStore.clearSession();
+          }
+        }
+      } catch {
+        await sessionStore.clearSession();
       } finally {
         if (!cancelled) {
           setIsHydrated(true);
@@ -121,18 +131,7 @@ export function useProtectedLayout(
     };
   }, []);
 
-  const role = sessionStore.isAuthenticated()
-    ? inferRoleFromRouteGroup(routeGroup)
-    : null;
+  const role = sessionStore.isAuthenticated() ? sessionStore.getRole() : null;
 
   return getMobileRouteDecision({ isHydrated, role, routeGroup });
-}
-
-/**
- * When the session store has a token but no explicit role stored,
- * infer the role from the route group the user navigated to.
- * This is safe because role-mismatch is caught by getMobileRouteDecision.
- */
-function inferRoleFromRouteGroup(routeGroup: MobileProtectedRouteGroup): Role {
-  return routeGroup === 'customer' ? 'CUSTOMER' : 'DRIVER';
 }

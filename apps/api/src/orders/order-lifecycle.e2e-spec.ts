@@ -25,6 +25,33 @@ class TestDeliveryProofReader implements DeliveryProofReader {
   }
 }
 
+class TransactionVisibilityPrismaService extends InMemoryPrismaService {
+  async $transaction<T>(fn: (tx: InMemoryPrismaService) => Promise<T>): Promise<T> {
+    const tx = new InMemoryPrismaService();
+    tx.users = new Map(this.users);
+    tx.refreshSessions = new Map(this.refreshSessions);
+    tx.driverProfiles = new Map(this.driverProfiles);
+    tx.fleetMembers = new Map(this.fleetMembers);
+    tx.orders = new Map(this.orders);
+    tx.orderStops = new Map(this.orderStops);
+    tx.orderStatusHistories = new Map(this.orderStatusHistories);
+    tx.paymentIntents = new Map(this.paymentIntents);
+
+    const result = await fn(tx);
+
+    this.users = tx.users;
+    this.refreshSessions = tx.refreshSessions;
+    this.driverProfiles = tx.driverProfiles;
+    this.fleetMembers = tx.fleetMembers;
+    this.orders = tx.orders;
+    this.orderStops = tx.orderStops;
+    this.orderStatusHistories = tx.orderStatusHistories;
+    this.paymentIntents = tx.paymentIntents;
+
+    return result;
+  }
+}
+
 describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
   let app: INestApplication;
   let customerSession: AuthSessionBody;
@@ -156,6 +183,75 @@ describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
     expect(profile?.availability).toBe('AVAILABLE');
   });
 
+  it('returns the first status result when replaying a clientRequestId with a different status', async () => {
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: customerUserId,
+        driverId: driverUserId,
+        status: 'ACCEPTED',
+        distanceMeters: 1000,
+        durationSeconds: 300,
+        priceVnd: 20000,
+      },
+    });
+
+    const firstRes = await request(app.getHttpServer())
+      .post(`/driver/orders/${order.id}/status`)
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .send({ status: 'PICKING_UP', clientRequestId: 'status-replay-1' })
+      .expect(200);
+
+    const replayRes = await request(app.getHttpServer())
+      .post(`/driver/orders/${order.id}/status`)
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .send({ status: 'IN_TRANSIT', clientRequestId: 'status-replay-1' })
+      .expect(200);
+
+    expect(replayRes.body.status).toBe(firstRes.body.status);
+    expect(replayRes.body.status).toBe('PICKING_UP');
+
+    const histories = Array.from(prismaMock.orderStatusHistories.values()).filter(
+      (history) => history.orderId === order.id && history.toStatus === 'PICKING_UP',
+    );
+    expect(histories).toHaveLength(1);
+  });
+
+  it('allows only one concurrent status transition from the same observed state', async () => {
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: customerUserId,
+        driverId: driverUserId,
+        status: 'ACCEPTED',
+        distanceMeters: 1000,
+        durationSeconds: 300,
+        priceVnd: 20000,
+      },
+    });
+
+    const [firstRes, secondRes] = await Promise.all([
+      request(app.getHttpServer())
+        .post(`/driver/orders/${order.id}/status`)
+        .set('Authorization', `Bearer ${driverSession.accessToken}`)
+        .send({ status: 'PICKING_UP', clientRequestId: 'status-race-1' }),
+      request(app.getHttpServer())
+        .post(`/driver/orders/${order.id}/status`)
+        .set('Authorization', `Bearer ${driverSession.accessToken}`)
+        .send({ status: 'PICKING_UP', clientRequestId: 'status-race-2' }),
+    ]);
+
+    expect([firstRes.status, secondRes.status].sort()).toEqual([200, 409]);
+
+    const histories = Array.from(prismaMock.orderStatusHistories.values()).filter(
+      (history) => history.orderId === order.id && history.toStatus === 'PICKING_UP',
+    );
+    expect(histories).toHaveLength(1);
+    expect(histories[0]).toMatchObject({
+      fromStatus: 'ACCEPTED',
+      toStatus: 'PICKING_UP',
+      actorId: driverUserId,
+    });
+  });
+
   it('allows Customer to cancel order in REQUESTED state', async () => {
     const order = await prismaMock.order.create({
       data: { customerId: customerUserId, status: 'REQUESTED', distanceMeters: 1000, durationSeconds: 300, priceVnd: 20000 },
@@ -192,5 +288,171 @@ describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
 
     const profile = await prismaMock.driverProfile.findUnique({ where: { userId: driverUserId } });
     expect(profile?.availability).toBe('AVAILABLE');
+  });
+});
+
+describe('Order transaction response consistency', () => {
+  let app: INestApplication;
+  let customerSession: AuthSessionBody;
+  let driverSession: AuthSessionBody;
+  let adminSession: AuthSessionBody;
+  let customerUserId: string;
+  let driverUserId: string;
+  let prismaMock: TransactionVisibilityPrismaService;
+
+  beforeEach(async () => {
+    process.env = {
+      ...process.env,
+      NODE_ENV: 'test',
+      AUTH_DEMO_LOGIN_ENABLED: 'true',
+      AUTH_ACCESS_TOKEN_SECRET: 'test-access-token-secret',
+      AUTH_REFRESH_TOKEN_SECRET: 'test-refresh-token-secret',
+    };
+
+    prismaMock = new TransactionVisibilityPrismaService();
+
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(PrismaService)
+      .useValue(prismaMock)
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalFilters(new ApiExceptionFilter());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
+    await app.init();
+    await app.listen(0);
+
+    const tokenService = app.get(TokenService);
+    const refreshSessions = app.get(RefreshSessionRepository);
+
+    const customer = await prismaMock.user.create({
+      data: { phone: '+84910000101', role: 'CUSTOMER', status: 'ACTIVE' },
+    });
+    customerUserId = customer.id;
+    const customerRefreshSession = await refreshSessions.create(customer.id);
+    customerSession = tokenService.createAuthSession(customer, customerRefreshSession);
+
+    const driver = await prismaMock.user.create({
+      data: { phone: '+84910000102', role: 'DRIVER', status: 'ACTIVE' },
+    });
+    driverUserId = driver.id;
+    await prismaMock.driverProfile.create({
+      data: { userId: driver.id, availability: 'AVAILABLE', vehicleType: 'MOTORBIKE' },
+    });
+    const driverRefreshSession = await refreshSessions.create(driver.id);
+    driverSession = tokenService.createAuthSession(driver, driverRefreshSession);
+
+    const admin = await prismaMock.user.create({
+      data: { phone: '+84910000103', role: 'ADMIN', status: 'ACTIVE' },
+    });
+    const adminRefreshSession = await refreshSessions.create(admin.id);
+    adminSession = tokenService.createAuthSession(admin, adminRefreshSession);
+  });
+
+  afterEach(async () => {
+    if (app) {
+      await app.close();
+    }
+  });
+
+  it('returns accepted order state and history written in the same transaction', async () => {
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: customerUserId,
+        status: 'REQUESTED',
+        distanceMeters: 1000,
+        durationSeconds: 300,
+        priceVnd: 20000,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post(`/driver/orders/${order.id}/accept`)
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      id: order.id,
+      status: 'ACCEPTED',
+      driverId: driverUserId,
+    });
+    expect(response.body.statusHistory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromStatus: 'REQUESTED',
+          toStatus: 'ACCEPTED',
+          actorId: driverUserId,
+        }),
+      ]),
+    );
+  });
+
+  it('returns cancelled order state and history written in the same transaction', async () => {
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: customerUserId,
+        driverId: driverUserId,
+        status: 'ACCEPTED',
+        distanceMeters: 1000,
+        durationSeconds: 300,
+        priceVnd: 20000,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post(`/orders/${order.id}/cancel`)
+      .set('Authorization', `Bearer ${adminSession.accessToken}`)
+      .send({ reason: 'Customer requested cancellation via phone' })
+      .expect(200);
+
+    expect(response.body.status).toBe('CANCELLED');
+    expect(response.body.statusHistory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromStatus: 'ACCEPTED',
+          toStatus: 'CANCELLED',
+          actorId: expect.any(String),
+          reason: 'Customer requested cancellation via phone',
+        }),
+      ]),
+    );
+  });
+
+  it('returns status transition state and history written in the same transaction', async () => {
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: customerUserId,
+        driverId: driverUserId,
+        status: 'ACCEPTED',
+        distanceMeters: 1000,
+        durationSeconds: 300,
+        priceVnd: 20000,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post(`/driver/orders/${order.id}/status`)
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .send({ status: 'PICKING_UP', clientRequestId: 'status-transaction-read' })
+      .expect(200);
+
+    expect(response.body.status).toBe('PICKING_UP');
+    expect(response.body.statusHistory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromStatus: 'ACCEPTED',
+          toStatus: 'PICKING_UP',
+          actorId: driverUserId,
+        }),
+      ]),
+    );
   });
 });

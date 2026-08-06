@@ -13,119 +13,249 @@ interface AuthSessionBody {
   readonly accessToken: string;
 }
 
-describe('Real DB Race-Safe Order Acceptance (Integration)', () => {
-  let app: INestApplication;
-  let prisma: PrismaService;
-  let driverSessions: AuthSessionBody[] = [];
-  let customerId: string;
+const optInEnvName = 'LEOPARD_REAL_DB_RACE_TEST';
+const requiredDatabaseName = 'leopard_real_db_race_test';
 
-  beforeAll(async () => {
-    process.env = {
-      ...process.env,
-      NODE_ENV: 'test',
-      AUTH_DEMO_LOGIN_ENABLED: 'true',
-      AUTH_ACCESS_TOKEN_SECRET: 'test-access-token-secret',
-      AUTH_REFRESH_TOKEN_SECRET: 'test-refresh-token-secret',
-    };
+function getSkipReason(): string | null {
+  if (process.env[optInEnvName] !== 'true') {
+    return `set ${optInEnvName}=true and DATABASE_URL to a disposable ${requiredDatabaseName} database`;
+  }
 
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+  if (!process.env.DATABASE_URL) {
+    return 'DATABASE_URL is required for the opted-in real database race suite';
+  }
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalFilters(new ApiExceptionFilter());
-    app.useGlobalPipes(
-      new ValidationPipe({
-        forbidNonWhitelisted: true,
-        transform: true,
-        whitelist: true,
-      }),
-    );
-    await app.init();
-    await app.listen(0);
+  const databaseName = new URL(process.env.DATABASE_URL).pathname.replace(/^\//, '');
 
-    prisma = app.get(PrismaService);
-    const tokenService = app.get(TokenService);
-    const refreshSessions = app.get(RefreshSessionRepository);
+  if (databaseName !== requiredDatabaseName) {
+    return `DATABASE_URL must point to disposable database ${requiredDatabaseName}; got ${databaseName}`;
+  }
 
-    // Clean DB before test
-    await prisma.orderStatusHistory.deleteMany();
-    await prisma.orderStop.deleteMany();
-    await prisma.order.deleteMany();
-    await prisma.driverProfile.deleteMany();
-    await prisma.refreshSession.deleteMany();
-    await prisma.user.deleteMany();
+  return null;
+}
 
-    // Create a customer
-    const c = await prisma.user.create({
-      data: { phone: '+84999999999', role: 'CUSTOMER', status: 'ACTIVE' },
-    });
-    customerId = c.id;
+const skipReason = getSkipReason();
+const describeRealDb = skipReason ? describe.skip : describe;
 
-    // Create 20 Drivers
-    for (let i = 0; i < 20; i++) {
-      const phone = `+849000000${i.toString().padStart(2, '0')}`;
-      const d = await prisma.user.create({
-        data: { phone, role: 'DRIVER', status: 'ACTIVE' },
+describeRealDb(
+  skipReason
+    ? `Real DB Race-Safe Order Consistency (skipped: ${skipReason})`
+    : 'Real DB Race-Safe Order Consistency',
+  () => {
+    let app: INestApplication;
+    let prisma: PrismaService;
+    let driverSessions: AuthSessionBody[] = [];
+    let driverUserIds: string[] = [];
+    let customerId: string;
+    let fixtureUserIds: string[] = [];
+    let fixtureOrderIds: string[] = [];
+
+    async function cleanupOrders(): Promise<void> {
+      if (fixtureOrderIds.length === 0) {
+        return;
+      }
+
+      await prisma.orderStatusHistory.deleteMany({
+        where: { orderId: { in: fixtureOrderIds } },
       });
-      await prisma.driverProfile.create({
-        data: { userId: d.id, availability: 'AVAILABLE', vehicleType: 'MOTORBIKE' },
+      await prisma.orderStop.deleteMany({
+        where: { orderId: { in: fixtureOrderIds } },
       });
-      const s = await refreshSessions.create(d.id);
-      const session = tokenService.createAuthSession(d, s);
-      driverSessions.push(session);
+      await prisma.order.deleteMany({
+        where: { id: { in: fixtureOrderIds } },
+      });
+      await prisma.driverProfile.updateMany({
+        where: { userId: { in: driverUserIds } },
+        data: { availability: 'AVAILABLE' },
+      });
+      fixtureOrderIds = [];
     }
-  });
 
-  afterAll(async () => {
-    if (prisma) {
-      // Clean DB after test
-      await prisma.orderStatusHistory.deleteMany();
-      await prisma.orderStop.deleteMany();
-      await prisma.order.deleteMany();
-      await prisma.driverProfile.deleteMany();
-      await prisma.refreshSession.deleteMany();
-      await prisma.user.deleteMany();
-    }
-    if (app) {
-      await app.close();
-    }
-  });
+    async function cleanupFixtures(): Promise<void> {
+      await cleanupOrders();
 
-  it('ensures atomic acceptance: exactly one driver succeeds (200) and 19 get 409', async () => {
-    // Create a new REQUESTED order
-    const order = await prisma.order.create({
-      data: {
-        customerId,
-        status: 'REQUESTED',
-        distanceMeters: 1500,
-        durationSeconds: 400,
-        priceVnd: 25000,
-      },
+      if (fixtureUserIds.length === 0) {
+        return;
+      }
+
+      await prisma.driverProfile.deleteMany({
+        where: { userId: { in: fixtureUserIds } },
+      });
+      await prisma.refreshSession.deleteMany({
+        where: { userId: { in: fixtureUserIds } },
+      });
+      await prisma.user.deleteMany({
+        where: { id: { in: fixtureUserIds } },
+      });
+      fixtureUserIds = [];
+      driverUserIds = [];
+      driverSessions = [];
+    }
+
+    beforeAll(async () => {
+      process.env = {
+        ...process.env,
+        NODE_ENV: 'test',
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        AUTH_ACCESS_TOKEN_SECRET: 'test-access-token-secret',
+        AUTH_REFRESH_TOKEN_SECRET: 'test-refresh-token-secret',
+      };
+
+      const moduleFixture = await Test.createTestingModule({
+        imports: [AppModule],
+      }).compile();
+
+      app = moduleFixture.createNestApplication();
+      app.useGlobalFilters(new ApiExceptionFilter());
+      app.useGlobalPipes(
+        new ValidationPipe({
+          forbidNonWhitelisted: true,
+          transform: true,
+          whitelist: true,
+        }),
+      );
+      await app.init();
+      await app.listen(0);
+
+      prisma = app.get(PrismaService);
+      const tokenService = app.get(TokenService);
+      const refreshSessions = app.get(RefreshSessionRepository);
+      await cleanupFixtures();
+
+      const runId = Date.now().toString();
+      const customer = await prisma.user.create({
+        data: {
+          phone: `+8497${runId.slice(-8)}`,
+          role: 'CUSTOMER',
+          status: 'ACTIVE',
+        },
+      });
+      customerId = customer.id;
+      fixtureUserIds.push(customer.id);
+
+      for (let i = 0; i < 20; i++) {
+        const driver = await prisma.user.create({
+          data: {
+            phone: `+8498${runId.slice(-6)}${i.toString().padStart(2, '0')}`,
+            role: 'DRIVER',
+            status: 'ACTIVE',
+          },
+        });
+        fixtureUserIds.push(driver.id);
+        driverUserIds.push(driver.id);
+
+        await prisma.driverProfile.create({
+          data: {
+            userId: driver.id,
+            availability: 'AVAILABLE',
+            vehicleType: 'MOTORBIKE',
+          },
+        });
+        const refreshSession = await refreshSessions.create(driver.id);
+        driverSessions.push(tokenService.createAuthSession(driver, refreshSession));
+      }
     });
 
-    // 20 Concurrent accept requests
-    const requests = driverSessions.map((session) =>
-      request(app.getHttpServer())
-        .post(`/driver/orders/${order.id}/accept`)
-        .set('Authorization', `Bearer ${session.accessToken}`),
-    );
-
-    const responses = await Promise.all(requests);
-    const statuses = responses.map((res) => res.status);
-
-    const successes = statuses.filter((s) => s === 200).length;
-    const conflicts = statuses.filter((s) => s === 409).length;
-
-    expect(successes).toBe(1);
-    expect(conflicts).toBe(19);
-
-    const winnerResponse = responses.find((res) => res.status === 200);
-    expect(winnerResponse).toBeDefined();
-    expect(winnerResponse?.body).toMatchObject({
-      id: order.id,
-      status: 'ACCEPTED',
-      driverId: expect.any(String),
+    afterEach(async () => {
+      await cleanupOrders();
     });
-  });
-});
+
+    afterAll(async () => {
+      if (prisma) {
+        await cleanupFixtures();
+      }
+      if (app) {
+        await app.close();
+      }
+    });
+
+    it('accepts a concurrently requested order exactly once', async () => {
+      const order = await prisma.order.create({
+        data: {
+          customerId,
+          status: 'REQUESTED',
+          distanceMeters: 1500,
+          durationSeconds: 400,
+          priceVnd: 25000,
+        },
+      });
+      fixtureOrderIds.push(order.id);
+
+      const responses = await Promise.all(
+        driverSessions.map((session) =>
+          request(app.getHttpServer())
+            .post(`/driver/orders/${order.id}/accept`)
+            .set('Authorization', `Bearer ${session.accessToken}`),
+        ),
+      );
+
+      const statuses = responses.map((res) => res.status);
+      expect(statuses.filter((status) => status === 200)).toHaveLength(1);
+      expect(statuses.filter((status) => status === 409)).toHaveLength(19);
+
+      const finalOrder = await prisma.order.findUnique({
+        where: { id: order.id },
+      });
+      const histories = await prisma.orderStatusHistory.findMany({
+        where: { orderId: order.id, toStatus: 'ACCEPTED' },
+      });
+      const winnerResponse = responses.find((res) => res.status === 200);
+
+      expect(winnerResponse?.body).toMatchObject({
+        id: order.id,
+        status: 'ACCEPTED',
+        driverId: expect.any(String),
+      });
+      expect(finalOrder?.status).toBe('ACCEPTED');
+      expect(finalOrder?.driverId).toBe(winnerResponse?.body.driverId);
+      expect(histories).toHaveLength(1);
+      expect(histories[0]).toMatchObject({
+        fromStatus: 'REQUESTED',
+        toStatus: 'ACCEPTED',
+        actorId: winnerResponse?.body.driverId,
+      });
+    });
+
+    it('keeps concurrent status updates and history in one outcome', async () => {
+      const order = await prisma.order.create({
+        data: {
+          customerId,
+          driverId: driverUserIds[0],
+          status: 'ACCEPTED',
+          distanceMeters: 1500,
+          durationSeconds: 400,
+          priceVnd: 25000,
+        },
+      });
+      fixtureOrderIds.push(order.id);
+
+      const [firstResponse, secondResponse] = await Promise.all([
+        request(app.getHttpServer())
+          .post(`/driver/orders/${order.id}/status`)
+          .set('Authorization', `Bearer ${driverSessions[0].accessToken}`)
+          .send({ status: 'PICKING_UP', clientRequestId: 'real-db-status-1' }),
+        request(app.getHttpServer())
+          .post(`/driver/orders/${order.id}/status`)
+          .set('Authorization', `Bearer ${driverSessions[0].accessToken}`)
+          .send({ status: 'PICKING_UP', clientRequestId: 'real-db-status-2' }),
+      ]);
+
+      expect([firstResponse.status, secondResponse.status].sort()).toEqual([200, 409]);
+
+      const finalOrder = await prisma.order.findUnique({
+        where: { id: order.id },
+      });
+      const histories = await prisma.orderStatusHistory.findMany({
+        where: { orderId: order.id, toStatus: 'PICKING_UP' },
+      });
+
+      expect(finalOrder?.status).toBe('PICKING_UP');
+      expect(histories).toHaveLength(1);
+      expect(histories[0]).toMatchObject({
+        fromStatus: 'ACCEPTED',
+        toStatus: 'PICKING_UP',
+        actorId: driverUserIds[0],
+      });
+    });
+  },
+);

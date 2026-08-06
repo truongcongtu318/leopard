@@ -35,10 +35,11 @@ function buildHeaders(): Record<string, string> {
 }
 
 async function safeParseJson(response: Response): Promise<unknown> {
+  const text = await response.text();
   try {
-    return await response.json();
+    return JSON.parse(text);
   } catch {
-    return await response.text();
+    return text;
   }
 }
 

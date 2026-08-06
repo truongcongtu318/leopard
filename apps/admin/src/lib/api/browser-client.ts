@@ -1,11 +1,11 @@
 import { ApiError } from "./api-error";
-import { clearSession } from "../auth/session";
+import { clearSession, updateSessionExpiry } from "../auth/session";
 
 /**
  * Browser fetch-based API client.
  *
  * Uses same-origin BFF pattern — all requests go to relative /api/v1.
- * On 401: clears session, redirects to /login.
+ * On 401: refreshes the httpOnly BFF session once, then redirects to /login.
  * On 403: throws ApiError with FORBIDDEN.
  * Network errors → ApiError with statusCode 0.
  */
@@ -25,21 +25,23 @@ function generateRequestId(): string {
   }
 }
 
-const _headers: Record<string, string> = {};
+let refreshPromise: Promise<boolean> | null = null;
 
 function buildHeaders(): Record<string, string> {
-  return {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "x-request-id": generateRequestId(),
-    ..._headers,
   };
+
+  return headers;
 }
 
 async function safeParseJson(response: Response): Promise<unknown> {
+  const text = await response.text();
   try {
-    return await response.json();
+    return JSON.parse(text);
   } catch {
-    return await response.text();
+    return text;
   }
 }
 
@@ -54,6 +56,7 @@ async function request<T>(
   const init: RequestInit = {
     method,
     headers,
+    credentials: "same-origin",
   };
 
   if (body !== undefined) {
@@ -67,15 +70,39 @@ async function request<T>(
     throw new ApiError(0, "NETWORK_ERROR", "Network request failed");
   }
 
-  // 401 → clear session, redirect to login
   if (response.status === 401) {
-    await clearSession();
-    // Redirect to /login in the browser
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
+    const refreshed = shouldAttemptRefresh(path)
+      ? await startRefresh()
+      : false;
+
+    if (refreshed) {
+      const retryInit: RequestInit = {
+        method,
+        headers: buildHeaders(),
+        credentials: "same-origin",
+      };
+      if (body !== undefined) {
+        retryInit.body = JSON.stringify(body);
+      }
+
+      let retryResponse: Response;
+      try {
+        retryResponse = await fetch(url, retryInit);
+      } catch {
+        throw new ApiError(0, "NETWORK_ERROR", "Network request failed after token refresh");
+      }
+
+      if (!retryResponse.ok) {
+        const retryBody = await safeParseJson(retryResponse);
+        throw await ApiError.fromResponse(retryResponse.status, retryBody);
+      }
+
+      return (await retryResponse.json()) as T;
     }
-    const body = await safeParseJson(response);
-    throw await ApiError.fromResponse(response.status, body);
+
+    await cleanupBrowserSession();
+    const errorBody = await safeParseJson(response);
+    throw await ApiError.fromResponse(response.status, errorBody);
   }
 
   // Non-OK → throw
@@ -87,9 +114,63 @@ async function request<T>(
   return (await response.json()) as T;
 }
 
-export const browserClient = {
-  _headers,
+function shouldAttemptRefresh(path: string): boolean {
+  return path !== "/auth/refresh" && path !== "/auth/logout";
+}
 
+function startRefresh(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  try {
+    const response = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: buildHeaders(),
+      credentials: "same-origin",
+    });
+
+    if (!response.ok) return false;
+
+    const body = (await response.json()) as {
+      session?: {
+        accessTokenExpiresAt?: string;
+      };
+    };
+
+    if (body.session?.accessTokenExpiresAt) {
+      await updateSessionExpiry(body.session.accessTokenExpiresAt);
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+async function cleanupBrowserSession(): Promise<void> {
+  await clearSession();
+  try {
+    await fetch(`${BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: buildHeaders(),
+      credentials: "same-origin",
+    });
+  } catch {
+    // Local cleanup must complete even if cookie cleanup cannot be reached.
+  }
+  if (typeof window !== "undefined") {
+    window.location.href = "/login";
+  }
+}
+
+export const browserClient = {
   get<T = unknown>(path: string): Promise<T> {
     return request<T>("GET", path);
   },
@@ -106,7 +187,5 @@ export const browserClient = {
     return request<T>("DELETE", path);
   },
 
-  setHeader(key: string, value: string): void {
-    _headers[key] = value;
-  },
+  setHeader(_key: string, _value: string): void {},
 };

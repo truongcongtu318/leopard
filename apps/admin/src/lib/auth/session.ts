@@ -33,8 +33,18 @@ export async function getSession(): Promise<Session | null> {
 /**
  * Set (or replace) the current session.
  */
-export async function setSession(session: Session): Promise<void> {
+export async function setSession(session: Session | null): Promise<void> {
+  if (session === null) {
+    await clearSession();
+    return;
+  }
   _session = session;
+}
+
+export async function updateSessionExpiry(expiresAt: string): Promise<void> {
+  if (_session !== null) {
+    _session = { ..._session, expiresAt };
+  }
 }
 
 /**

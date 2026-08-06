@@ -77,7 +77,7 @@ describe('LoginRoute (Mobile)', () => {
     await screen.unmount();
   });
 
-  it('redirects FLEET_OWNER to /fleet upon successful login', async () => {
+  it('returns unsupported FLEET_OWNER sessions to the mobile login route', async () => {
     (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
       accessToken: 'token',
       refreshToken: 'refresh',
@@ -90,13 +90,13 @@ describe('LoginRoute (Mobile)', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/fleet');
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
     });
 
     await screen.unmount();
   });
 
-  it('redirects ADMIN to /admin upon successful login', async () => {
+  it('returns unsupported ADMIN sessions to the mobile login route', async () => {
     (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
       accessToken: 'token',
       refreshToken: 'refresh',
@@ -109,7 +109,7 @@ describe('LoginRoute (Mobile)', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/admin');
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
     });
 
     await screen.unmount();

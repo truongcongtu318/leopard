@@ -409,6 +409,7 @@ export class InMemoryPrismaService {
           fromStatus: shData.fromStatus ?? null,
           toStatus: shData.toStatus,
           actorId: shData.actorId ?? null,
+          clientRequestId: shData.clientRequestId ?? null,
           reason: shData.reason ?? null,
           createdAt: new Date(),
         };
@@ -424,9 +425,9 @@ export class InMemoryPrismaService {
       this.orders.set(where.id, updated);
       return updated;
     }),
-    updateMany: jest.fn(async ({ where, data }: { where: { id: string; status: OrderStatus }; data: any }) => {
+    updateMany: jest.fn(async ({ where, data }: { where: { id: string; driverId?: string; status: OrderStatus }; data: any }) => {
       const existing = this.orders.get(where.id);
-      if (!existing || existing.status !== where.status) {
+      if (!existing || existing.status !== where.status || (where.driverId && existing.driverId !== where.driverId)) {
         return { count: 0 };
       }
       const updated: Order = { ...existing, ...data, updatedAt: new Date() };
@@ -436,6 +437,19 @@ export class InMemoryPrismaService {
   };
 
   orderStatusHistory = {
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let histories = Array.from(this.orderStatusHistories.values());
+      if (where?.orderId) {
+        histories = histories.filter((history) => history.orderId === where.orderId);
+      }
+      if (where?.actorId) {
+        histories = histories.filter((history) => history.actorId === where.actorId);
+      }
+      if (where?.clientRequestId) {
+        histories = histories.filter((history: any) => history.clientRequestId === where.clientRequestId);
+      }
+      return histories[0] ?? null;
+    }),
     create: jest.fn(async ({ data }: { data: any }) => {
       const id = data.id ?? `sh-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const history: OrderStatusHistory = {
@@ -444,6 +458,7 @@ export class InMemoryPrismaService {
         fromStatus: data.fromStatus ?? null,
         toStatus: data.toStatus,
         actorId: data.actorId ?? null,
+        clientRequestId: data.clientRequestId ?? null,
         reason: data.reason ?? null,
         createdAt: new Date(),
       };

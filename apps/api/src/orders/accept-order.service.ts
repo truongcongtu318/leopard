@@ -86,7 +86,7 @@ export class AcceptOrderService {
         },
       });
 
-      return this.ordersRepository.findById(orderId);
+      return this.ordersRepository.findById(orderId, tx);
     });
 
     if (!result) {

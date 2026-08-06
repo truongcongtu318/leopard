@@ -31,6 +31,7 @@ function secureMocks(): SecureStoreMocks {
 }
 
 const REFRESH_KEY = 'leopard.refresh';
+const ROLE_KEY = 'leopard.role';
 
 function makeSessionStore(): SessionStore {
   return new SessionStore();
@@ -51,14 +52,15 @@ describe('SessionStore', () => {
 
   // ---- memory-only access token ----
 
-  it('stores access token in memory only (no SecureStore call)', async () => {
+  it('stores access token in memory only while persisting refresh token and role', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-123', 'ref-456');
+    await store.setSession('acc-123', 'ref-456', 'CUSTOMER');
 
     const accessToken = store.getAccessToken();
     expect(accessToken).toBe('acc-123');
-    expect(secureMocks().setItemAsync).toHaveBeenCalledTimes(1); // only refresh
+    expect(secureMocks().setItemAsync).toHaveBeenCalledTimes(2); // refresh + role only
     expect(secureMocks().setItemAsync).toHaveBeenCalledWith(REFRESH_KEY, 'ref-456');
+    expect(secureMocks().setItemAsync).toHaveBeenCalledWith(ROLE_KEY, 'CUSTOMER');
   });
 
   it('getAccessToken returns null when no session is set', () => {
@@ -76,40 +78,44 @@ describe('SessionStore', () => {
 
   // ---- SecureStore refresh persistence ----
 
-  it('persists refresh credential via SecureStore', async () => {
+  it('persists refresh token via SecureStore', async () => {
     const store = makeSessionStore();
     await store.setSession('acc-1', 'ref-1');
 
     expect(secureMocks().setItemAsync).toHaveBeenCalledWith(REFRESH_KEY, 'ref-1');
   });
 
-  it('getRefreshCredential reads from SecureStore', async () => {
+  it('getRefreshToken reads from SecureStore', async () => {
     secureMocks().getItemAsync.mockResolvedValue('stored-refresh');
     const store = makeSessionStore();
 
-    const refresh = await store.getRefreshCredential();
+    const refresh = await store.getRefreshToken();
     expect(refresh).toBe('stored-refresh');
     expect(secureMocks().getItemAsync).toHaveBeenCalledWith(REFRESH_KEY);
   });
 
-  it('clearSession removes refresh credential from SecureStore', async () => {
+  it('clearSession removes refresh token and role from SecureStore', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-1', 'ref-1');
+    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
     await store.clearSession();
 
     expect(secureMocks().deleteItemAsync).toHaveBeenCalledWith(REFRESH_KEY);
+    expect(secureMocks().deleteItemAsync).toHaveBeenCalledWith(ROLE_KEY);
   });
 
   // ---- hydrate ----
 
-  it('hydrate restores refresh credential from SecureStore on app start', async () => {
-    secureMocks().getItemAsync.mockResolvedValue('hydrated-refresh');
+  it('hydrate restores refresh token and role from SecureStore on app start', async () => {
+    secureMocks().getItemAsync
+      .mockResolvedValueOnce('hydrated-refresh')
+      .mockResolvedValueOnce('DRIVER');
     const store = makeSessionStore();
 
     await store.hydrate();
 
-    const refresh = await store.getRefreshCredential();
+    const refresh = await store.getRefreshToken();
     expect(refresh).toBe('hydrated-refresh');
+    expect(store.getRole()).toBe('DRIVER');
     // accessToken should NOT be restored from SecureStore
     expect(store.getAccessToken()).toBeNull();
   });
@@ -154,6 +160,19 @@ describe('SessionStore', () => {
     expect(store.isAuthenticated()).toBe(true);
   });
 
+  it('isAuthenticated returns false when a refresh token exists but access token has not been restored', async () => {
+    secureMocks().getItemAsync
+      .mockResolvedValueOnce('stored-refresh')
+      .mockResolvedValueOnce('CUSTOMER');
+    const store = makeSessionStore();
+
+    await store.hydrate();
+
+    expect(await store.getRefreshToken()).toBe('stored-refresh');
+    expect(store.getAccessToken()).toBeNull();
+    expect(store.isAuthenticated()).toBe(false);
+  });
+
   it('isAuthenticated returns false after clearSession', async () => {
     const store = makeSessionStore();
     await store.setSession('acc-1', 'ref-1');
@@ -172,7 +191,7 @@ describe('SessionStore', () => {
     await store.setSession('acc-1', 'ref-1');
 
     expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener).toHaveBeenCalledWith({ authenticated: true });
+    expect(listener).toHaveBeenCalledWith({ authenticated: true, role: null });
 
     unsubscribe();
   });
@@ -187,7 +206,7 @@ describe('SessionStore', () => {
     await store.clearSession();
 
     expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener).toHaveBeenCalledWith({ authenticated: false });
+    expect(listener).toHaveBeenCalledWith({ authenticated: false, role: null });
 
     unsubscribe();
   });
@@ -228,23 +247,35 @@ describe('SessionStore', () => {
     expect(store.isAuthenticated()).toBe(false);
   });
 
-  it('getRefreshCredential returns null when SecureStore unavailable', async () => {
+  it('getRefreshToken returns null when SecureStore unavailable', async () => {
     secureMocks().isAvailableAsync.mockResolvedValue(false);
     secureMocks().getItemAsync.mockResolvedValue(null);
     const store = makeSessionStore();
 
-    const result = await store.getRefreshCredential();
+    const result = await store.getRefreshToken();
     expect(result).toBeNull();
   });
 
-  it('re-uses in-memory refresh credential after setSession', async () => {
+  it('re-uses in-memory refresh token after setSession', async () => {
     const store = makeSessionStore();
     await store.setSession('acc-1', 'ref-set');
 
     secureMocks().getItemAsync.mockClear();
-    const refresh = await store.getRefreshCredential();
+    const refresh = await store.getRefreshToken();
 
     expect(refresh).toBe('ref-set');
     expect(secureMocks().getItemAsync).not.toHaveBeenCalled();
+  });
+
+  it('preserves the existing role when a refresh rotation updates only tokens', async () => {
+    const store = makeSessionStore();
+    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
+    secureMocks().setItemAsync.mockClear();
+
+    await store.setSession('acc-2', 'ref-2');
+
+    expect(store.getRole()).toBe('CUSTOMER');
+    expect(secureMocks().setItemAsync).toHaveBeenCalledWith(REFRESH_KEY, 'ref-2');
+    expect(secureMocks().setItemAsync).not.toHaveBeenCalledWith(ROLE_KEY, expect.any(String));
   });
 });

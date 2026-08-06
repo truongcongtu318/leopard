@@ -199,11 +199,13 @@ model OrderStatusHistory {
   fromStatus OrderStatus?
   toStatus   OrderStatus
   actorId    String?      @db.Uuid
+  clientRequestId String?
   reason     String?
   createdAt  DateTime     @default(now()) @db.Timestamptz(3)
   order      Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
   actor      User?        @relation("OrderStatusActor", fields: [actorId], references: [id], onDelete: Restrict)
 
+  @@unique([orderId, actorId, clientRequestId])
   @@index([orderId, createdAt(sort: Desc)])
 }
 
@@ -265,4 +267,3 @@ model AuditLog {
   @@index([actorId, createdAt(sort: Desc)])
   @@index([resourceType, resourceId, createdAt(sort: Desc)])
 }
-

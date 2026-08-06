@@ -41,9 +41,9 @@ export class CancelOrderService {
 
     const result = await this.prisma.$transaction(async (tx) => {
       const updateRes = await tx.order.updateMany({
-        where: { 
+        where: {
           id: orderId,
-          status: order.status 
+          status: order.status,
         },
         data: {
           status: 'CANCELLED',
@@ -72,7 +72,7 @@ export class CancelOrderService {
         },
       });
 
-      return this.ordersRepository.findById(orderId);
+      return this.ordersRepository.findById(orderId, tx);
     });
 
     if (!result) {

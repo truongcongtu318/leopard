@@ -64,7 +64,7 @@ describe('LoginScreen (Mobile)', () => {
 
     await waitFor(() => {
       expect(httpClient.post).toHaveBeenCalledWith('/auth/firebase', { idToken: 'firebase-id-token-123' });
-      expect(sessionStore.setSession).toHaveBeenCalledWith('acc_123', 'ref_123');
+      expect(sessionStore.setSession).toHaveBeenCalledWith('acc_123', 'ref_123', 'CUSTOMER');
       expect(onLoginSuccess).toHaveBeenCalledWith('CUSTOMER');
     });
 
@@ -85,7 +85,7 @@ describe('LoginScreen (Mobile)', () => {
 
     await waitFor(() => {
       expect(httpClient.post).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'customer' });
-      expect(sessionStore.setSession).toHaveBeenCalledWith('demo-acc-token', 'demo-ref-token');
+      expect(sessionStore.setSession).toHaveBeenCalledWith('demo-acc-token', 'demo-ref-token', 'CUSTOMER');
       expect(onLoginSuccess).toHaveBeenCalledWith('CUSTOMER');
     });
 

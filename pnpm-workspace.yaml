@@ -10,3 +10,6 @@ allowBuilds:
   prisma: true
   sharp: true
   unrs-resolver: true
+
+overrides:
+  "@nestjs/swagger>js-yaml": 5.2.2
