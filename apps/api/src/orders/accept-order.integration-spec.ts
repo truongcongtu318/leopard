@@ -191,3 +191,157 @@ describe('AcceptOrder Integration Tests', () => {
     expect(driver1Profile?.availability).toBe('BUSY');
   });
 });
+
+describe('Concurrency tests for Order Acceptance and Cancellation', () => {
+  let app: import('@nestjs/common').INestApplication;
+  let prismaMock: import('../../test/prisma-mock.js').InMemoryPrismaService;
+  let tokenService: import('../auth/token.service.js').TokenService;
+  let refreshSessions: import('../auth/refresh-session.repository.js').RefreshSessionRepository;
+
+  beforeAll(async () => {
+    // we use beforeAll because we just want to set this up once
+    const { Test } = require('@nestjs/testing');
+    const { ValidationPipe } = require('@nestjs/common');
+    const { AppModule } = require('../app.module.js');
+    const { ApiExceptionFilter } = require('../common/api-exception.filter.js');
+    const { PrismaService } = require('../database/prisma.service.js');
+    const { TokenService } = require('../auth/token.service.js');
+    const { RefreshSessionRepository } = require('../auth/refresh-session.repository.js');
+    const { InMemoryPrismaService } = require('../../test/prisma-mock.js');
+    const request = require('supertest');
+
+    process.env.NODE_ENV = 'test';
+    process.env.AUTH_DEMO_LOGIN_ENABLED = 'true';
+
+    prismaMock = new InMemoryPrismaService();
+
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(PrismaService)
+      .useValue(prismaMock)
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalFilters(new ApiExceptionFilter());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+        transform: true,
+        whitelist: true,
+      }),
+    );
+    await app.init();
+    await app.listen(0);
+
+    tokenService = app.get(TokenService);
+    refreshSessions = app.get(RefreshSessionRepository);
+  });
+
+  afterAll(async () => {
+    if (app) {
+      await app.close();
+    }
+  });
+
+  it('tests 20 concurrent requests from 20 drivers for the same order, exactly 1 wins', async () => {
+    const request = require('supertest');
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: 'customer-1',
+        status: 'REQUESTED',
+        distanceMeters: 1500,
+        durationSeconds: 400,
+        priceVnd: 25000,
+      },
+    });
+
+    const driverSessions = [];
+    for (let i = 0; i < 20; i++) {
+      const d = await prismaMock.user.create({
+        data: { phone: `+848000000${i.toString().padStart(2, '0')}`, role: 'DRIVER', status: 'ACTIVE' },
+      });
+      await prismaMock.driverProfile.create({
+        data: { userId: d.id, availability: 'AVAILABLE', vehicleType: 'MOTORBIKE' },
+      });
+      const s = await refreshSessions.create(d.id);
+      const session = tokenService.createAuthSession(d, s);
+      driverSessions.push(session.accessToken);
+    }
+
+    const requests = driverSessions.map(token => 
+      request(app.getHttpServer())
+        .post(`/driver/orders/${order.id}/accept`)
+        .set('Authorization', `Bearer ${token}`)
+    );
+
+    const responses = await Promise.all(requests);
+    
+    const statuses = responses.map(r => r.status);
+    const successCount = statuses.filter(s => s === 200).length;
+    const conflictCount = statuses.filter(s => s === 409).length;
+
+    expect(successCount).toBe(1);
+    expect(conflictCount).toBe(19);
+  });
+
+  it('tests race condition between driver accepting and customer cancelling', async () => {
+    const request = require('supertest');
+    
+    const c = await prismaMock.user.create({
+      data: { phone: '+84999999999', role: 'CUSTOMER', status: 'ACTIVE' },
+    });
+    const customerId = c.id;
+    const sCustomer = await refreshSessions.create(c.id);
+    const customerSession = tokenService.createAuthSession(c, sCustomer);
+
+    // To properly catch race conditions, run it a few times
+    for (let i = 0; i < 20; i++) {
+      prismaMock.orders.clear();
+      prismaMock.orderStops.clear();
+      prismaMock.orderStatusHistories.clear();
+      
+      const order = await prismaMock.order.create({
+        data: {
+          customerId: customerId,
+          status: 'REQUESTED',
+          distanceMeters: 1500,
+          durationSeconds: 400,
+          priceVnd: 25000,
+        },
+      });
+  
+      const d = await prismaMock.user.create({
+        data: { phone: `+84988888${i.toString().padStart(2, '0')}`, role: 'DRIVER', status: 'ACTIVE' },
+      });
+      await prismaMock.driverProfile.create({
+        data: { userId: d.id, availability: 'AVAILABLE', vehicleType: 'MOTORBIKE' },
+      });
+      const s = await refreshSessions.create(d.id);
+      const driverSession = tokenService.createAuthSession(d, s);
+  
+      const [acceptRes, cancelRes] = await Promise.all([
+        request(app.getHttpServer())
+          .post(`/driver/orders/${order.id}/accept`)
+          .set('Authorization', `Bearer ${driverSession.accessToken}`),
+        request(app.getHttpServer())
+          .post(`/orders/${order.id}/cancel`)
+          .set('Authorization', `Bearer ${customerSession.accessToken}`)
+          .send({ reason: 'Changed my mind' })
+      ]);
+  
+      const finalOrder = await prismaMock.order.findUnique({ where: { id: order.id } });
+      const histories = Array.from(prismaMock.orderStatusHistories.values()).filter(h => h.orderId === order.id);
+      
+      const hasAccepted = histories.some(h => h.toStatus === 'ACCEPTED');
+      const hasCancelled = histories.some(h => h.toStatus === 'CANCELLED');
+      
+       if (acceptRes.status === 200 && cancelRes.status === 200) {
+          const cancelHistory = histories.find(h => h.toStatus === 'CANCELLED');
+          if (cancelHistory && cancelHistory.fromStatus === 'REQUESTED' && hasAccepted) {
+              throw new Error(`Race condition caught: Order was accepted but cancel recorded from REQUESTED`);
+          }
+      }
+    }
+  });
+});

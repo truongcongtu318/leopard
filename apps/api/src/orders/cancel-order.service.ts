@@ -40,13 +40,20 @@ export class CancelOrderService {
     const now = new Date();
 
     const result = await this.prisma.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: orderId },
+      const updateRes = await tx.order.updateMany({
+        where: { 
+          id: orderId,
+          status: order.status 
+        },
         data: {
           status: 'CANCELLED',
           cancelledAt: now,
         },
       });
+
+      if (updateRes.count === 0) {
+        throw new DomainError('ORDER_INVALID_TRANSITION', 409, 'Trạng thái đơn hàng đã thay đổi.');
+      }
 
       if (order.driverId) {
         await tx.driverProfile.update({
