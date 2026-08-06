@@ -357,7 +357,13 @@ export class InMemoryPrismaService {
       if (where) {
         if (where.customerId) filtered = filtered.filter((o) => o.customerId === where.customerId);
         if (where.driverId) filtered = filtered.filter((o) => o.driverId === where.driverId);
-        if (where.status) filtered = filtered.filter((o) => o.status === where.status);
+        if (where.status) {
+          if (typeof where.status === 'string') {
+            filtered = filtered.filter((o) => o.status === where.status);
+          } else if (where.status.in) {
+            filtered = filtered.filter((o) => where.status.in.includes(o.status));
+          }
+        }
       }
       return filtered.length;
     }),

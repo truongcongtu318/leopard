@@ -21,6 +21,7 @@ describe('Driver Availability and Order Queue API (E2E)', () => {
   let driverSession: AuthSessionBody;
   let customerSession: AuthSessionBody;
   let prismaMock: InMemoryPrismaService;
+  let driverUserId: string;
 
   beforeAll(async () => {
     process.env = {
@@ -54,10 +55,10 @@ describe('Driver Availability and Order Queue API (E2E)', () => {
     const tokenService = app.get(TokenService);
     const refreshSessions = app.get(RefreshSessionRepository);
 
-    // Create driver user and profile
     const driverUser = await prismaMock.user.create({
       data: { phone: '+84988888888', role: 'DRIVER', status: 'ACTIVE' },
     });
+    driverUserId = driverUser.id;
     await prismaMock.driverProfile.create({
       data: { userId: driverUser.id, availability: 'OFFLINE', vehicleType: 'MOTORBIKE' },
     });
@@ -145,5 +146,28 @@ describe('Driver Availability and Order Queue API (E2E)', () => {
       .expect(200);
 
     expect(activeRes.body).toEqual({ order: null });
+  });
+
+  it('blocks setting availability to AVAILABLE if driver has active order (ACCEPTED/PICKING_UP/IN_TRANSIT)', async () => {
+    // Setup driver with active order in ACCEPTED state
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: 'customer-1',
+        driverId: driverUserId,
+        status: 'ACCEPTED',
+        distanceMeters: 1000,
+        durationSeconds: 300,
+        priceVnd: 20000,
+      },
+    });
+
+    // Try to change availability to AVAILABLE
+    const res = await request(app.getHttpServer())
+      .patch('/driver/availability')
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .send({ availability: 'AVAILABLE' })
+      .expect(409);
+
+    expect(res.body.code).toBe('DRIVER_HAS_ACTIVE_ORDER');
   });
 });
