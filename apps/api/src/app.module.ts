@@ -5,9 +5,10 @@ import { RequestContextMiddleware } from './common/request-context.middleware.js
 import { DocsModule } from './docs/docs.module.js';
 import { HealthModule } from './health/health.module.js';
 import { MapsModule } from './maps/maps.module.js';
+import { OrdersModule } from './orders/orders.module.js';
 
 @Module({
-  imports: [AuthModule, DocsModule, HealthModule, MapsModule],
+  imports: [AuthModule, DocsModule, HealthModule, MapsModule, OrdersModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
