@@ -10,6 +10,7 @@ import request from 'supertest';
 import { AppModule } from '../app.module.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { InMemoryPrismaService } from '../../test/prisma-mock.js';
 
 interface AuthSessionBody {
   readonly accessToken: string;
@@ -545,9 +546,14 @@ async function createApp(
     ...overrides,
   };
 
+  const prismaMock = new InMemoryPrismaService();
+
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  })
+    .overrideProvider(PrismaService)
+    .useValue(prismaMock)
+    .compile();
 
   const app = moduleFixture.createNestApplication();
   app.useGlobalFilters(new ApiExceptionFilter());

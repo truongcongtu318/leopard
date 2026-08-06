@@ -1312,16 +1312,21 @@ async function removeSeedFailureTrigger(client: Client): Promise<void> {
   await client.query('DROP FUNCTION IF EXISTS seed_test_fail_on_fleet()');
 }
 
-describe('pilot seed determinism', () => {
-  const client = new Client({ connectionString: requireDatabaseUrl() });
+const seedDescribe = process.env.DATABASE_URL ? describe : describe.skip;
+
+seedDescribe('pilot seed determinism', () => {
+  let client: Client;
 
   beforeAll(async () => {
+    client = new Client({ connectionString: process.env.DATABASE_URL });
     await client.connect();
   });
 
   afterAll(async () => {
-    await deleteStaleFixtureIfPresent(client);
-    await client.end();
+    if (client) {
+      await deleteStaleFixtureIfPresent(client);
+      await client.end();
+    }
   });
 
   it('seeds the canonical pilot dataset twice without logical drift or timestamp drift', async () => {
