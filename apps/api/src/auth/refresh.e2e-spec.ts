@@ -9,6 +9,7 @@ import request from 'supertest';
 import { PrismaService } from '../database/prisma.service.js';
 import { AuthModule } from './auth.module.js';
 import { OTP_PROVIDER } from './providers/otp-provider.js';
+import { InMemoryPrismaService } from '../../test/prisma-mock.js';
 
 interface StoredUser {
   readonly id: string;
@@ -368,9 +369,13 @@ describe('PH-05-T03 refresh rotation and logout with Prisma transactions', () =>
     process.env.AUTH_ACCESS_TOKEN_SECRET = 'test-access-token-secret';
     process.env.AUTH_REFRESH_TOKEN_SECRET = 'test-refresh-token-secret';
 
+    const prismaMock = new InMemoryPrismaService();
+
     const moduleFixture = await Test.createTestingModule({
       imports: [AuthModule],
     })
+      .overrideProvider(PrismaService)
+      .useValue(prismaMock)
       .overrideProvider(OTP_PROVIDER)
       .useValue({ verify: jest.fn() })
       .compile();

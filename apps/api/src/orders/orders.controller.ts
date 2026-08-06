@@ -16,8 +16,8 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { CancelOrderService } from './cancel-order.service.js';
-import type { CancelOrderDto } from './dto/cancel-order.dto.js';
-import type { CreateOrderDto } from './dto/create-order.dto.js';
+import { CancelOrderDto } from './dto/cancel-order.dto.js';
+import { CreateOrderDto } from './dto/create-order.dto.js';
 import type { MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersService } from './orders.service.js';
 

@@ -142,6 +142,22 @@ export class OrdersService {
       throw new DomainError('FORBIDDEN', 403, 'Không có quyền truy cập đơn hàng');
     }
 
+    // Fleet Owner authorization: can view if order.driverId is in active fleet managed by Fleet Owner
+    if (actor.role === 'FLEET_OWNER') {
+      if (!order.driverId) {
+        throw new DomainError('FORBIDDEN', 403, 'Không có quyền truy cập đơn hàng');
+      }
+
+      const isDriverInFleet = await this.ordersRepository.isDriverInFleetOwnerFleets(
+        actor.userId,
+        order.driverId,
+      );
+
+      if (!isDriverInFleet) {
+        throw new DomainError('FORBIDDEN', 403, 'Không có quyền truy cập đơn hàng');
+      }
+    }
+
     return mapOrderResponse(order);
   }
 }

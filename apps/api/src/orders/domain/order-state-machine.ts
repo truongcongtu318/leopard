@@ -26,7 +26,10 @@ export function assertOrderTransition(input: AssertOrderTransitionInput): void {
 
     if (
       actorRole === Role.ADMIN &&
-      (from === OrderStatus.REQUESTED || from === OrderStatus.ACCEPTED || from === OrderStatus.PICKING_UP) &&
+      (from === OrderStatus.REQUESTED ||
+        from === OrderStatus.ACCEPTED ||
+        from === OrderStatus.PICKING_UP ||
+        from === OrderStatus.IN_TRANSIT) &&
       cancelReason &&
       cancelReason.trim().length > 0
     ) {

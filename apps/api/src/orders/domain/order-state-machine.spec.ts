@@ -59,8 +59,13 @@ describe('Order State Machine', () => {
       ).not.toThrow();
     });
 
-    it('allows ADMIN to cancel order in REQUESTED, ACCEPTED, and PICKING_UP states with reason', () => {
-      for (const from of [OrderStatus.REQUESTED, OrderStatus.ACCEPTED, OrderStatus.PICKING_UP]) {
+    it('allows ADMIN to cancel order in REQUESTED, ACCEPTED, PICKING_UP, and IN_TRANSIT states with reason', () => {
+      for (const from of [
+        OrderStatus.REQUESTED,
+        OrderStatus.ACCEPTED,
+        OrderStatus.PICKING_UP,
+        OrderStatus.IN_TRANSIT,
+      ]) {
         expect(() =>
           assertOrderTransition({
             from,

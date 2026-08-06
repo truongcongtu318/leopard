@@ -18,9 +18,9 @@ import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { AcceptOrderService } from '../orders/accept-order.service.js';
 import { UpdateOrderStatusService } from '../orders/update-order-status.service.js';
-import type { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto.js';
+import { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto.js';
 import { DriversService } from './drivers.service.js';
-import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
+import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 
 @Controller('driver')
 @UseFilters(ApiExceptionFilter)

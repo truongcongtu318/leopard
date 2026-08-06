@@ -1,5 +1,8 @@
-import type { DriverAvailability } from '@prisma/client';
+import { DriverAvailability } from '@prisma/client';
+import { IsEnum } from 'class-validator';
 
-export interface UpdateAvailabilityDto {
-  availability: DriverAvailability;
+export class UpdateAvailabilityDto {
+  @IsEnum(DriverAvailability)
+  availability!: DriverAvailability;
 }
+

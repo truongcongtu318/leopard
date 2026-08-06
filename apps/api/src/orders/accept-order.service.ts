@@ -20,34 +20,6 @@ export class AcceptOrderService {
       throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế mới có thể nhận đơn hàng');
     }
 
-    const driverProfile = await this.prisma.driverProfile.findUnique({
-      where: { userId: actor.userId },
-    });
-
-    if (!driverProfile || driverProfile.availability !== 'AVAILABLE') {
-      throw new DomainError(
-        'DRIVER_HAS_ACTIVE_ORDER',
-        409,
-        'Lái xe không ở trạng thái sẵn sàng để nhận đơn',
-      );
-    }
-
-    const activeOrders = await this.prisma.order.findMany({
-      where: {
-        driverId: actor.userId,
-        status: { in: ['ACCEPTED', 'PICKING_UP', 'IN_TRANSIT'] },
-      },
-      take: 1,
-    });
-
-    if (activeOrders.length > 0) {
-      throw new DomainError(
-        'DRIVER_HAS_ACTIVE_ORDER',
-        409,
-        'Lái xe đã có đơn hàng đang xử lý',
-      );
-    }
-
     const existingOrder = await this.prisma.order.findUnique({
       where: { id: orderId },
     });
@@ -67,6 +39,24 @@ export class AcceptOrderService {
     const now = new Date();
 
     const result = await this.prisma.$transaction(async (tx) => {
+      const driverUpdate = await tx.driverProfile.updateMany({
+        where: {
+          userId: actor.userId,
+          availability: 'AVAILABLE',
+        },
+        data: {
+          availability: 'BUSY',
+        },
+      });
+
+      if (driverUpdate.count === 0) {
+        throw new DomainError(
+          'DRIVER_BUSY',
+          409,
+          'Lái xe không ở trạng thái sẵn sàng để nhận đơn',
+        );
+      }
+
       const updateRes = await tx.order.updateMany({
         where: {
           id: orderId,
@@ -86,11 +76,6 @@ export class AcceptOrderService {
           'Đơn hàng đã có tài xế khác tiếp nhận',
         );
       }
-
-      await tx.driverProfile.update({
-        where: { userId: actor.userId },
-        data: { availability: 'BUSY' },
-      });
 
       await tx.orderStatusHistory.create({
         data: {

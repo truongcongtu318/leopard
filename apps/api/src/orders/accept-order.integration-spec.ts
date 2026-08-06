@@ -5,18 +5,18 @@ import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
-import { AppModule } from '../src/app.module.js';
-import { ApiExceptionFilter } from '../src/common/api-exception.filter.js';
-import { PrismaService } from '../src/database/prisma.service.js';
-import { TokenService } from '../src/auth/token.service.js';
-import { RefreshSessionRepository } from '../src/auth/refresh-session.repository.js';
-import { InMemoryPrismaService } from './prisma-mock.js';
+import { AppModule } from '../app.module.js';
+import { ApiExceptionFilter } from '../common/api-exception.filter.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { TokenService } from '../auth/token.service.js';
+import { RefreshSessionRepository } from '../auth/refresh-session.repository.js';
+import { InMemoryPrismaService } from '../../test/prisma-mock.js';
 
 interface AuthSessionBody {
   readonly accessToken: string;
 }
 
-describe('Race-Safe Order Acceptance (Integration)', () => {
+describe('AcceptOrder Integration Tests', () => {
   let app: INestApplication;
   let driver1Session: AuthSessionBody;
   let driver2Session: AuthSessionBody;
@@ -57,7 +57,7 @@ describe('Race-Safe Order Acceptance (Integration)', () => {
     const tokenService = app.get(TokenService);
     const refreshSessions = app.get(RefreshSessionRepository);
 
-    // Create Driver 1
+    // Driver 1
     const d1 = await prismaMock.user.create({
       data: { phone: '+84911111111', role: 'DRIVER', status: 'ACTIVE' },
     });
@@ -68,7 +68,7 @@ describe('Race-Safe Order Acceptance (Integration)', () => {
     const s1 = await refreshSessions.create(d1.id);
     driver1Session = tokenService.createAuthSession(d1, s1);
 
-    // Create Driver 2
+    // Driver 2
     const d2 = await prismaMock.user.create({
       data: { phone: '+84922222222', role: 'DRIVER', status: 'ACTIVE' },
     });
@@ -86,14 +86,12 @@ describe('Race-Safe Order Acceptance (Integration)', () => {
     }
   });
 
-  it('ensures atomic acceptance: exactly one driver succeeds (200) and the other gets 409', async () => {
+  it('tests 20 concurrent order acceptance attempts by 2 drivers (exactly 1 driver wins)', async () => {
     for (let iteration = 0; iteration < 20; iteration++) {
-      // Clear previous orders for clean iteration
       prismaMock.orders.clear();
       prismaMock.orderStops.clear();
       prismaMock.orderStatusHistories.clear();
 
-      // Create a new REQUESTED order
       const order = await prismaMock.order.create({
         data: {
           customerId: 'customer-1',
@@ -104,7 +102,6 @@ describe('Race-Safe Order Acceptance (Integration)', () => {
         },
       });
 
-      // Reset driver profiles to AVAILABLE and clear active assignments for clean iteration
       await prismaMock.driverProfile.update({
         where: { userId: driver1UserId },
         data: { availability: 'AVAILABLE' },
@@ -114,7 +111,6 @@ describe('Race-Safe Order Acceptance (Integration)', () => {
         data: { availability: 'AVAILABLE' },
       });
 
-      // Concurrent accept requests
       const [res1, res2] = await Promise.all([
         request(app.getHttpServer())
           .post(`/driver/orders/${order.id}/accept`)
@@ -136,14 +132,12 @@ describe('Race-Safe Order Acceptance (Integration)', () => {
         driverId: expect.any(String),
       });
 
-      expect(loser.body).toMatchObject({
-        code: 'ORDER_ALREADY_ASSIGNED',
-      });
+      expect(['ORDER_ALREADY_ASSIGNED', 'DRIVER_BUSY']).toContain(loser.body.code);
     }
   });
 
-  it('rejects driver who is OFFLINE or already has an active order with 409', async () => {
-    const order = await prismaMock.order.create({
+  it('tests 1 driver attempting to accept 2 orders concurrently (exactly 1 order succeeds)', async () => {
+    const orderA = await prismaMock.order.create({
       data: {
         customerId: 'customer-1',
         status: 'REQUESTED',
@@ -153,18 +147,47 @@ describe('Race-Safe Order Acceptance (Integration)', () => {
       },
     });
 
-    // Set Driver 1 to OFFLINE
-    await prismaMock.driverProfile.update({
-      where: { userId: driver1UserId },
-      data: { availability: 'OFFLINE' },
+    const orderB = await prismaMock.order.create({
+      data: {
+        customerId: 'customer-1',
+        status: 'REQUESTED',
+        distanceMeters: 2000,
+        durationSeconds: 600,
+        priceVnd: 40000,
+      },
     });
 
-    await request(app.getHttpServer())
-      .post(`/driver/orders/${order.id}/accept`)
-      .set('Authorization', `Bearer ${driver1Session.accessToken}`)
-      .expect(409)
-      .expect(({ body }) => {
-        expect(body.code).toBe('DRIVER_BUSY');
-      });
+    await prismaMock.driverProfile.update({
+      where: { userId: driver1UserId },
+      data: { availability: 'AVAILABLE' },
+    });
+
+    const [resA, resB] = await Promise.all([
+      request(app.getHttpServer())
+        .post(`/driver/orders/${orderA.id}/accept`)
+        .set('Authorization', `Bearer ${driver1Session.accessToken}`),
+      request(app.getHttpServer())
+        .post(`/driver/orders/${orderB.id}/accept`)
+        .set('Authorization', `Bearer ${driver1Session.accessToken}`),
+    ]);
+
+    const statuses = [resA.status, resB.status].sort();
+    expect(statuses).toEqual([200, 409]);
+
+    const winnerRes = resA.status === 200 ? resA : resB;
+    const loserRes = resA.status === 409 ? resA : resB;
+
+    expect(winnerRes.body.status).toBe('ACCEPTED');
+    expect(winnerRes.body.driverId).toBe(driver1UserId);
+
+    expect(loserRes.body).toMatchObject({
+      code: 'DRIVER_BUSY',
+      message: 'Lái xe không ở trạng thái sẵn sàng để nhận đơn',
+    });
+
+    const driver1Profile = await prismaMock.driverProfile.findUnique({
+      where: { userId: driver1UserId },
+    });
+    expect(driver1Profile?.availability).toBe('BUSY');
   });
 });

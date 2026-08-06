@@ -9,6 +9,7 @@ import type {
   DriverAvailability,
   OrderStatus,
   Role,
+  FleetMember,
 } from '@prisma/client';
 
 export class InMemoryPrismaService {
@@ -18,6 +19,7 @@ export class InMemoryPrismaService {
   };
   public refreshSessions = new Map<string, RefreshSession>();
   public driverProfiles = new Map<string, DriverProfile>();
+  public fleetMembers = new Map<string, FleetMember>();
   public orders = new Map<string, Order>();
   public orderStops = new Map<string, OrderStop & { lat: number; lng: number }>();
   public orderStatusHistories = new Map<string, OrderStatusHistory>();
@@ -78,7 +80,13 @@ export class InMemoryPrismaService {
       }
       return null;
     }),
-    findMany: jest.fn(async () => Array.from(this.users.values())),
+    findMany: jest.fn(async ({ where }: { where?: { phone?: { in?: string[] } } } = {}) => {
+      let list = Array.from(this.users.values());
+      if (where?.phone?.in) {
+        list = list.filter((u) => where.phone!.in!.includes(u.phone));
+      }
+      return list;
+    }),
     create: jest.fn(async ({ data }: { data: Partial<User> }) => {
       const id = data.id ?? `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const user: User = {
@@ -99,6 +107,15 @@ export class InMemoryPrismaService {
       this.users.set(where.id, updated);
       return updated;
     }),
+    deleteMany: jest.fn(async ({ where }: { where?: { id?: { in?: string[] } } }) => {
+      let count = 0;
+      if (where?.id?.in) {
+        for (const id of where.id.in) {
+          if (this.users.delete(id)) count++;
+        }
+      }
+      return { count };
+    }),
   };
 
   refreshSession = {
@@ -108,6 +125,13 @@ export class InMemoryPrismaService {
         return Array.from(this.refreshSessions.values()).find((s) => s.tokenHash === where.tokenHash) ?? null;
       }
       return null;
+    }),
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let list = Array.from(this.refreshSessions.values());
+      if (where?.tokenHash?.startsWith) {
+        list = list.filter((s) => s.tokenHash.startsWith(where.tokenHash.startsWith));
+      }
+      return list[0] ?? null;
     }),
     create: jest.fn(async ({ data }: { data: Partial<RefreshSession> }) => {
       const id = data.id ?? `session-${Date.now()}`;
@@ -129,6 +153,49 @@ export class InMemoryPrismaService {
       const updated = { ...existing, ...data, updatedAt: new Date() };
       this.refreshSessions.set(where.id, updated);
       return updated;
+    }),
+    updateMany: jest.fn(async ({ where, data }: { where?: any; data: Partial<RefreshSession> }) => {
+      let count = 0;
+      for (const session of this.refreshSessions.values()) {
+        let match = true;
+        if (where?.id && session.id !== where.id) match = false;
+        if (where?.userId && session.userId !== where.userId) match = false;
+        if (where?.revokedAt === null && session.revokedAt !== null) match = false;
+        if (where?.expiresAt?.gt && session.expiresAt.getTime() <= where.expiresAt.gt.getTime()) match = false;
+        if (where?.tokenHash?.contains && !session.tokenHash.includes(where.tokenHash.contains)) match = false;
+
+        if (match) {
+          Object.assign(session, data, { updatedAt: new Date() });
+          count++;
+        }
+      }
+      return { count };
+    }),
+    deleteMany: jest.fn(async ({ where }: { where?: { userId?: { in?: string[] } } }) => {
+      let count = 0;
+      if (where?.userId?.in) {
+        for (const [id, session] of this.refreshSessions.entries()) {
+          if (where.userId.in.includes(session.userId)) {
+            this.refreshSessions.delete(id);
+            count++;
+          }
+        }
+      }
+      return { count };
+    }),
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.refreshSessions.values());
+      if (where?.revokedAt === null) {
+        list = list.filter((s) => s.revokedAt === null);
+      }
+      return list.length;
+    }),
+    findMany: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.refreshSessions.values());
+      if (where?.userId) {
+        list = list.filter((s) => s.userId === where.userId);
+      }
+      return list;
     }),
   };
 
@@ -162,6 +229,73 @@ export class InMemoryPrismaService {
       const updated = { ...existing, ...data, updatedAt: new Date() };
       this.driverProfiles.set(existing.id, updated);
       return updated;
+    }),
+    updateMany: jest.fn(async ({ where, data }: { where?: { userId?: string; availability?: DriverAvailability }; data: Partial<DriverProfile> }) => {
+      let count = 0;
+      for (const profile of this.driverProfiles.values()) {
+        const matchUserId = !where?.userId || profile.userId === where.userId;
+        const matchAvailability = !where?.availability || profile.availability === where.availability;
+        if (matchUserId && matchAvailability) {
+          Object.assign(profile, data, { updatedAt: new Date() });
+          count++;
+        }
+      }
+      return { count };
+    }),
+  };
+
+  fleetMember = {
+    findMany: jest.fn(async ({ where, select }: { where?: any; select?: any }) => {
+      let filtered = Array.from(this.fleetMembers.values());
+      if (where) {
+        if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
+        if (where.status) filtered = filtered.filter((m) => m.status === where.status);
+        if (where.fleetId) {
+          if (typeof where.fleetId === 'string') filtered = filtered.filter((m) => m.fleetId === where.fleetId);
+          else if (where.fleetId.in) filtered = filtered.filter((m) => where.fleetId.in.includes(m.fleetId));
+        }
+      }
+      if (select?.fleetId) {
+        return filtered.map((m) => ({ fleetId: m.fleetId }));
+      }
+      return filtered;
+    }),
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let filtered = Array.from(this.fleetMembers.values());
+      if (where) {
+        if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
+        if (where.status) filtered = filtered.filter((m) => m.status === where.status);
+        if (where.fleetId) {
+          if (typeof where.fleetId === 'string') filtered = filtered.filter((m) => m.fleetId === where.fleetId);
+          else if (where.fleetId.in) filtered = filtered.filter((m) => where.fleetId.in.includes(m.fleetId));
+        }
+      }
+      return filtered[0] ?? null;
+    }),
+    count: jest.fn(async ({ where }: { where?: any }) => {
+      let filtered = Array.from(this.fleetMembers.values());
+      if (where) {
+        if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
+        if (where.status) filtered = filtered.filter((m) => m.status === where.status);
+      }
+      return filtered.length;
+    }),
+    create: jest.fn(async ({ data }: { data: any }) => {
+      const id = data.id ?? `member-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const member: FleetMember = {
+        id,
+        fleetId: data.fleetId,
+        userId: data.userId,
+        role: data.role ?? 'DRIVER',
+        status: data.status ?? 'INVITED',
+        invitedAt: new Date(),
+        joinedAt: data.joinedAt ?? null,
+        removedAt: data.removedAt ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.fleetMembers.set(id, member);
+      return member;
     }),
   };
 

@@ -5,14 +5,20 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 import { AppModule } from './app.module.js';
+import { PrismaService } from './database/prisma.service.js';
+import { InMemoryPrismaService } from '../test/prisma-mock.js';
 
 describe('API runtime shell', () => {
   let app: INestApplication | undefined;
 
   beforeAll(async () => {
+    const prismaMock = new InMemoryPrismaService();
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(PrismaService)
+      .useValue(prismaMock)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
