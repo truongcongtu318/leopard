@@ -62,6 +62,10 @@ export class CreateOrderDto {
 
   @IsString()
   estimateToken!: string;
+
+  @IsOptional()
+  @IsString()
+  clientRequestId?: string;
 }
 
 export class OrderQueryDto {

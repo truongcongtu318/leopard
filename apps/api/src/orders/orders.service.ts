@@ -106,12 +106,21 @@ export class OrdersService {
       longitude: dropoffLng,
     });
 
-    const order = await this.ordersRepository.createOrder({
-      customerId: actor.userId,
-      providerSource: verifiedEstimate.source,
-      distanceMeters: verifiedEstimate.distanceM,
-      durationSeconds: verifiedEstimate.durationS,
-      priceVnd: verifiedEstimate.estimatedPriceVnd,
+    if (dto.clientRequestId) {
+      const existingOrder = await this.ordersRepository.findByClientRequestId(actor.userId, dto.clientRequestId);
+      if (existingOrder) {
+        return mapOrderResponse(existingOrder);
+      }
+    }
+
+    try {
+      const order = await this.ordersRepository.createOrder({
+        customerId: actor.userId,
+        ...(dto.clientRequestId ? { clientRequestId: dto.clientRequestId } : {}),
+        providerSource: verifiedEstimate.source,
+        distanceMeters: verifiedEstimate.distanceM,
+        durationSeconds: verifiedEstimate.durationS,
+        priceVnd: verifiedEstimate.estimatedPriceVnd,
       routeSnapshot: {
         polyline: verifiedEstimate.polyline,
         source: verifiedEstimate.source,
@@ -123,6 +132,15 @@ export class OrdersService {
     });
 
     return mapOrderResponse(order);
+  } catch (error: any) {
+      if (error?.code === 'P2002' && dto.clientRequestId) {
+        const existingOrder = await this.ordersRepository.findByClientRequestId(actor.userId, dto.clientRequestId);
+        if (existingOrder) {
+          return mapOrderResponse(existingOrder);
+        }
+      }
+      throw error;
+    }
   }
 
   async getCustomerOrders(

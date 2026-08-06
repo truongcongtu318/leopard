@@ -16,6 +16,7 @@ export interface CreateOrderParams {
     latitude: number;
     longitude: number;
   }>;
+  clientRequestId?: string;
 }
 
 export interface OrderWithRelations extends Order {
@@ -32,6 +33,7 @@ export class OrdersRepository {
       const order = await tx.order.create({
         data: {
           customerId: params.customerId,
+          clientRequestId: params.clientRequestId ?? null,
           status: 'REQUESTED',
           providerSource: params.providerSource,
           distanceMeters: params.distanceMeters,
@@ -108,6 +110,41 @@ export class OrdersRepository {
         statusHistory,
       };
     });
+  }
+
+  async findByClientRequestId(customerId: string, clientRequestId: string): Promise<OrderWithRelations | null> {
+    const order = await this.prisma.order.findFirst({
+      where: { customerId, clientRequestId },
+      include: {
+        statusHistory: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+
+    if (!order) {
+      return null;
+    }
+
+    const stops = await this.prisma.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
+      SELECT
+        id,
+        "orderId",
+        type,
+        sequence,
+        address,
+        ST_Y(location::geometry) as lat,
+        ST_X(location::geometry) as lng,
+        "createdAt",
+        "updatedAt"
+      FROM "OrderStop"
+      WHERE "orderId" = ${order.id}::uuid
+      ORDER BY sequence ASC
+    `;
+
+    return {
+      ...order,
+      stops,
+      statusHistory: order.statusHistory,
+    };
   }
 
   async findById(id: string): Promise<OrderWithRelations | null> {

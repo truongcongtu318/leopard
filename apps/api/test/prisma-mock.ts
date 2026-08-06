@@ -368,11 +368,20 @@ export class InMemoryPrismaService {
       }
       return filtered.length;
     }),
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let filtered = Array.from(this.orders.values());
+      if (where) {
+        if (where.customerId) filtered = filtered.filter((o) => o.customerId === where.customerId);
+        if (where.clientRequestId) filtered = filtered.filter((o: any) => o.clientRequestId === where.clientRequestId);
+      }
+      return filtered[0] ?? null;
+    }),
     create: jest.fn(async ({ data }: { data: any }) => {
       const id = data.id ?? `order-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const order: Order = {
+      const order: any = {
         id,
         customerId: data.customerId,
+        clientRequestId: data.clientRequestId ?? null,
         driverId: data.driverId ?? null,
         status: data.status ?? 'REQUESTED',
         routeSnapshot: data.routeSnapshot ?? null,
