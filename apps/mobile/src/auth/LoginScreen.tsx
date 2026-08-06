@@ -15,12 +15,17 @@ export interface LoginScreenProps {
 }
 
 interface AuthResponse {
-  accessToken: string;
-  refreshToken?: string;
-  refreshCredential?: string;
-  user?: {
+  user: {
     id: string;
+    phone: string;
     role: string;
+    status: string;
+  };
+  session: {
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpiresAt: string;
+    refreshTokenExpiresAt: string;
   };
 }
 
@@ -41,8 +46,9 @@ export function LoginScreen({
 
     try {
       const res = await httpClient.post<AuthResponse>('/auth/firebase', { idToken });
-      const refreshVal = res.refreshToken ?? res.refreshCredential ?? '';
-      await sessionStore.setSession(res.accessToken, refreshVal);
+      const accessToken = res.session?.accessToken ?? '';
+      const refreshToken = res.session?.refreshToken ?? '';
+      await sessionStore.setSession(accessToken, refreshToken);
       const role = res.user?.role ?? 'CUSTOMER';
       onLoginSuccess?.(role);
     } catch (err) {
@@ -70,8 +76,9 @@ export function LoginScreen({
 
     try {
       const res = await httpClient.post<AuthResponse>('/auth/login/demo', { accountId });
-      const refreshVal = res.refreshToken ?? res.refreshCredential ?? '';
-      await sessionStore.setSession(res.accessToken, refreshVal);
+      const accessToken = res.session?.accessToken ?? '';
+      const refreshToken = res.session?.refreshToken ?? '';
+      await sessionStore.setSession(accessToken, refreshToken);
       const role = res.user?.role ?? defaultRole;
       onLoginSuccess?.(role);
     } catch (err) {
@@ -137,25 +144,25 @@ export function LoginScreen({
             <Button
               disabled={isSubmitting}
               label="Demo Customer"
-              onPress={() => handleDemoLogin('demo-customer', 'CUSTOMER')}
+              onPress={() => handleDemoLogin('customer', 'CUSTOMER')}
               variant="secondary"
             />
             <Button
               disabled={isSubmitting}
               label="Demo Driver"
-              onPress={() => handleDemoLogin('demo-driver', 'DRIVER')}
+              onPress={() => handleDemoLogin('driver', 'DRIVER')}
               variant="secondary"
             />
             <Button
               disabled={isSubmitting}
               label="Demo Fleet Owner"
-              onPress={() => handleDemoLogin('demo-fleet-owner', 'FLEET_OWNER')}
+              onPress={() => handleDemoLogin('fleet-owner', 'FLEET_OWNER')}
               variant="secondary"
             />
             <Button
               disabled={isSubmitting}
               label="Demo Admin"
-              onPress={() => handleDemoLogin('demo-admin', 'ADMIN')}
+              onPress={() => handleDemoLogin('admin', 'ADMIN')}
               variant="secondary"
             />
           </View>

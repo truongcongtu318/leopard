@@ -25,10 +25,13 @@ function generateRequestId(): string {
   }
 }
 
+const _headers: Record<string, string> = {};
+
 function buildHeaders(): Record<string, string> {
   return {
     "Content-Type": "application/json",
     "x-request-id": generateRequestId(),
+    ..._headers,
   };
 }
 
@@ -85,6 +88,8 @@ async function request<T>(
 }
 
 export const browserClient = {
+  _headers,
+
   get<T = unknown>(path: string): Promise<T> {
     return request<T>("GET", path);
   },
@@ -99,5 +104,9 @@ export const browserClient = {
 
   delete<T = unknown>(path: string): Promise<T> {
     return request<T>("DELETE", path);
+  },
+
+  setHeader(key: string, value: string): void {
+    _headers[key] = value;
   },
 };

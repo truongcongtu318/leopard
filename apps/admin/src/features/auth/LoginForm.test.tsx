@@ -34,37 +34,10 @@ describe('LoginForm (Admin)', () => {
     expect(screen.getByText('Demo Fleet Owner')).toBeTruthy();
   });
 
-  it('authenticates via demo account and invokes setSession and onSuccess', async () => {
+  it('extracts tokens from nested res.session and sets Authorization header on firebase login', async () => {
     postSpy.mockResolvedValueOnce({
-      accessToken: 'demo-acc-token',
-      refreshToken: 'demo-ref-token',
-      user: { id: 'usr-admin-1', role: 'ADMIN' },
-      expiresAt: '2026-12-31T23:59:59Z',
-    });
-
-    const onSuccess = jest.fn();
-    render(<LoginForm allowDemo={true} onSuccess={onSuccess} />);
-
-    fireEvent.click(screen.getByText('Demo Admin'));
-
-    await waitFor(async () => {
-      expect(postSpy).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'demo-admin' });
-      const session = await getSession();
-      expect(session).toEqual({
-        userId: 'usr-admin-1',
-        role: 'ADMIN',
-        expiresAt: '2026-12-31T23:59:59Z',
-      });
-      expect(onSuccess).toHaveBeenCalledWith('ADMIN');
-    });
-  });
-
-  it('authenticates via phone/firebase token and invokes setSession and onSuccess', async () => {
-    postSpy.mockResolvedValueOnce({
-      accessToken: 'admin-token',
-      refreshToken: 'admin-refresh',
-      user: { id: 'usr-fleet-1', role: 'FLEET_OWNER' },
-      expiresAt: '2026-12-31T23:59:59Z',
+      user: { id: 'usr-fleet-1', phone: '0900000001', role: 'FLEET_OWNER', status: 'ACTIVE' },
+      session: { accessToken: 'admin-token', refreshToken: 'admin-refresh', accessTokenExpiresAt: '2026-12-31T23:59:59Z', refreshTokenExpiresAt: '2027-01-07T23:59:59Z' },
     });
 
     const onSuccess = jest.fn();
@@ -84,6 +57,87 @@ describe('LoginForm (Admin)', () => {
       });
       expect(onSuccess).toHaveBeenCalledWith('FLEET_OWNER');
     });
+  });
+
+  it('extracts tokens from nested res.session and sets Authorization header on demo login', async () => {
+    postSpy.mockResolvedValueOnce({
+      user: { id: 'usr-admin-1', phone: '0900000002', role: 'ADMIN', status: 'ACTIVE' },
+      session: { accessToken: 'demo-acc-token', refreshToken: 'demo-ref-token', accessTokenExpiresAt: '2026-12-31T23:59:59Z', refreshTokenExpiresAt: '2027-01-07T23:59:59Z' },
+    });
+
+    const onSuccess = jest.fn();
+    render(<LoginForm allowDemo={true} onSuccess={onSuccess} />);
+
+    fireEvent.click(screen.getByText('Demo Admin'));
+
+    await waitFor(async () => {
+      expect(postSpy).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'admin' });
+      const session = await getSession();
+      expect(session).toEqual({
+        userId: 'usr-admin-1',
+        role: 'ADMIN',
+        expiresAt: '2026-12-31T23:59:59Z',
+      });
+      expect(onSuccess).toHaveBeenCalledWith('ADMIN');
+    });
+  });
+
+  it('sends correct demo IDs matching backend DEMO_ROLES keys', async () => {
+    const makeResponse = (id: string, role: string) => ({
+      user: { id, phone: '0900000000', role, status: 'ACTIVE' },
+      session: { accessToken: `tok-${role}`, refreshToken: `ref-${role}`, accessTokenExpiresAt: '2026-12-31T23:59:59Z', refreshTokenExpiresAt: '2027-01-07T23:59:59Z' },
+    });
+
+    // fleet-owner
+    postSpy.mockResolvedValueOnce(makeResponse('usr-fleet', 'FLEET_OWNER'));
+    render(<LoginForm allowDemo={true} />);
+    fireEvent.click(screen.getByText('Demo Fleet Owner'));
+    await waitFor(() => {
+      expect(postSpy).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'fleet-owner' });
+    });
+
+    // driver
+    jest.clearAllMocks();
+    postSpy = jest.spyOn(browserClient, 'post') as jest.SpiedFunction<typeof browserClient.post>;
+    postSpy.mockResolvedValueOnce(makeResponse('usr-driver', 'DRIVER'));
+    const { unmount } = render(<LoginForm allowDemo={true} />);
+    fireEvent.click(screen.getAllByText('Demo Driver')[0]);
+    await waitFor(() => {
+      expect(postSpy).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'driver' });
+    });
+    unmount();
+
+    // customer
+    jest.clearAllMocks();
+    postSpy = jest.spyOn(browserClient, 'post') as jest.SpiedFunction<typeof browserClient.post>;
+    postSpy.mockResolvedValueOnce(makeResponse('usr-customer', 'CUSTOMER'));
+    const { unmount: unmount2 } = render(<LoginForm allowDemo={true} />);
+    fireEvent.click(screen.getAllByText('Demo Customer')[0]);
+    await waitFor(() => {
+      expect(postSpy).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'customer' });
+    });
+    unmount2();
+  });
+
+  it('sets Authorization header on browserClient after successful login', async () => {
+    // We need to check that browserClient gets the auth header set
+    postSpy.mockResolvedValueOnce({
+      user: { id: 'usr-admin-1', phone: '0900000002', role: 'ADMIN', status: 'ACTIVE' },
+      session: { accessToken: 'the-bearer-token', refreshToken: 'ref', accessTokenExpiresAt: '2026-12-31T23:59:59Z', refreshTokenExpiresAt: '2027-01-07T23:59:59Z' },
+    });
+
+    const onSuccess = jest.fn();
+    render(<LoginForm allowDemo={true} onSuccess={onSuccess} />);
+
+    fireEvent.click(screen.getByText('Demo Admin'));
+
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalled();
+    });
+
+    // Verify the Authorization header was set by checking browserClient internal state
+    // browserClient.setHeader should have been called - we verify via the module
+    expect((browserClient as any)._headers?.['Authorization']).toBe('Bearer the-bearer-token');
   });
 
   it('disables inputs and displays submitting state during request', async () => {
@@ -106,10 +160,8 @@ describe('LoginForm (Admin)', () => {
     });
 
     resolvePost({
-      accessToken: 'acc',
-      refreshToken: 'ref',
-      user: { id: 'usr-admin-1', role: 'ADMIN' },
-      expiresAt: '2026-12-31T23:59:59Z',
+      user: { id: 'usr-admin-1', phone: '0900000002', role: 'ADMIN', status: 'ACTIVE' },
+      session: { accessToken: 'acc', refreshToken: 'ref', accessTokenExpiresAt: '2026-12-31T23:59:59Z', refreshTokenExpiresAt: '2027-01-07T23:59:59Z' },
     });
 
     await waitFor(() => {

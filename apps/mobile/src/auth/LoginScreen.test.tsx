@@ -48,33 +48,12 @@ describe('LoginScreen (Mobile)', () => {
     await screen.unmount();
   });
 
-  it('handles demo login flow and triggers sessionStore and onLoginSuccess', async () => {
-    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
-      accessToken: 'test-access-token',
-      refreshToken: 'test-refresh-token',
-      user: { id: 'usr-customer', role: 'CUSTOMER' },
-    });
-
-    const onLoginSuccess = jest.fn();
-    const screen = await render(<LoginScreen allowDemo={true} onLoginSuccess={onLoginSuccess} />);
-
-    await fireEvent.press(screen.getByText('Demo Customer'));
-
-    await waitFor(() => {
-      expect(httpClient.post).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'demo-customer' });
-      expect(sessionStore.setSession).toHaveBeenCalledWith('test-access-token', 'test-refresh-token');
-      expect(onLoginSuccess).toHaveBeenCalledWith('CUSTOMER');
-    });
-
-    await screen.unmount();
-  });
-
-  it('handles phone token login flow successfully', async () => {
-    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
-      accessToken: 'firebase-access-token',
-      refreshToken: 'firebase-refresh-token',
-      user: { id: 'usr-driver', role: 'DRIVER' },
-    });
+  it('extracts session tokens from res.session on firebase login', async () => {
+    const mockResponse = {
+      user: { id: 'u1', phone: '0901234567', role: 'CUSTOMER', status: 'ACTIVE' },
+      session: { accessToken: 'acc_123', refreshToken: 'ref_123', accessTokenExpiresAt: '2026-08-07', refreshTokenExpiresAt: '2026-08-14' },
+    };
+    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce(mockResponse);
 
     const onLoginSuccess = jest.fn();
     const screen = await render(<LoginScreen onLoginSuccess={onLoginSuccess} />);
@@ -85,11 +64,70 @@ describe('LoginScreen (Mobile)', () => {
 
     await waitFor(() => {
       expect(httpClient.post).toHaveBeenCalledWith('/auth/firebase', { idToken: 'firebase-id-token-123' });
-      expect(sessionStore.setSession).toHaveBeenCalledWith('firebase-access-token', 'firebase-refresh-token');
-      expect(onLoginSuccess).toHaveBeenCalledWith('DRIVER');
+      expect(sessionStore.setSession).toHaveBeenCalledWith('acc_123', 'ref_123');
+      expect(onLoginSuccess).toHaveBeenCalledWith('CUSTOMER');
     });
 
     await screen.unmount();
+  });
+
+  it('extracts session tokens from res.session on demo login', async () => {
+    const mockResponse = {
+      user: { id: 'usr-customer', phone: '0900000001', role: 'CUSTOMER', status: 'ACTIVE' },
+      session: { accessToken: 'demo-acc-token', refreshToken: 'demo-ref-token', accessTokenExpiresAt: '2026-08-07', refreshTokenExpiresAt: '2026-08-14' },
+    };
+    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce(mockResponse);
+
+    const onLoginSuccess = jest.fn();
+    const screen = await render(<LoginScreen allowDemo={true} onLoginSuccess={onLoginSuccess} />);
+
+    await fireEvent.press(screen.getByText('Demo Customer'));
+
+    await waitFor(() => {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'customer' });
+      expect(sessionStore.setSession).toHaveBeenCalledWith('demo-acc-token', 'demo-ref-token');
+      expect(onLoginSuccess).toHaveBeenCalledWith('CUSTOMER');
+    });
+
+    await screen.unmount();
+  });
+
+  it('sends correct demo IDs matching backend DEMO_ROLES keys', async () => {
+    const makeResponse = (role: string) => ({
+      user: { id: `usr-${role}`, phone: '0900000000', role, status: 'ACTIVE' },
+      session: { accessToken: `tok-${role}`, refreshToken: `ref-${role}`, accessTokenExpiresAt: '2026-08-07', refreshTokenExpiresAt: '2026-08-14' },
+    });
+
+    const onLoginSuccess = jest.fn();
+
+    // Test driver demo button
+    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce(makeResponse('DRIVER'));
+    const screen = await render(<LoginScreen allowDemo={true} onLoginSuccess={onLoginSuccess} />);
+    await fireEvent.press(screen.getByText('Demo Driver'));
+    await waitFor(() => {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'driver' });
+    });
+    await screen.unmount();
+
+    // Test fleet-owner demo button
+    jest.clearAllMocks();
+    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce(makeResponse('FLEET_OWNER'));
+    const screen2 = await render(<LoginScreen allowDemo={true} onLoginSuccess={onLoginSuccess} />);
+    await fireEvent.press(screen2.getByText('Demo Fleet Owner'));
+    await waitFor(() => {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'fleet-owner' });
+    });
+    await screen2.unmount();
+
+    // Test admin demo button
+    jest.clearAllMocks();
+    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce(makeResponse('ADMIN'));
+    const screen3 = await render(<LoginScreen allowDemo={true} onLoginSuccess={onLoginSuccess} />);
+    await fireEvent.press(screen3.getByText('Demo Admin'));
+    await waitFor(() => {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'admin' });
+    });
+    await screen3.unmount();
   });
 
   it('disables inputs and shows submitting state during authentication request', async () => {
@@ -113,9 +151,8 @@ describe('LoginScreen (Mobile)', () => {
     });
 
     resolvePost({
-      accessToken: 'token',
-      refreshToken: 'refresh',
-      user: { id: 'usr-driver', role: 'DRIVER' },
+      user: { id: 'usr-driver', phone: '0900000000', role: 'DRIVER', status: 'ACTIVE' },
+      session: { accessToken: 'token', refreshToken: 'refresh', accessTokenExpiresAt: '2026-08-07', refreshTokenExpiresAt: '2026-08-14' },
     });
 
     await waitFor(() => {
