@@ -101,7 +101,7 @@ describe('LoginForm (Admin)', () => {
     postSpy = jest.spyOn(browserClient, 'post') as jest.SpiedFunction<typeof browserClient.post>;
     postSpy.mockResolvedValueOnce(makeResponse('usr-driver', 'DRIVER'));
     const { unmount } = render(<LoginForm allowDemo={true} />);
-    fireEvent.click(screen.getAllByText('Demo Driver')[0]);
+    fireEvent.click(screen.getAllByText('Demo Driver')[0]!);
     await waitFor(() => {
       expect(postSpy).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'driver' });
     });
@@ -112,7 +112,7 @@ describe('LoginForm (Admin)', () => {
     postSpy = jest.spyOn(browserClient, 'post') as jest.SpiedFunction<typeof browserClient.post>;
     postSpy.mockResolvedValueOnce(makeResponse('usr-customer', 'CUSTOMER'));
     const { unmount: unmount2 } = render(<LoginForm allowDemo={true} />);
-    fireEvent.click(screen.getAllByText('Demo Customer')[0]);
+    fireEvent.click(screen.getAllByText('Demo Customer')[0]!);
     await waitFor(() => {
       expect(postSpy).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'customer' });
     });
