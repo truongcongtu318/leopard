@@ -250,6 +250,7 @@ export class InMemoryPrismaService {
       if (where) {
         if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
         if (where.status) filtered = filtered.filter((m) => m.status === where.status);
+        if (where.role) filtered = filtered.filter((m) => m.role === where.role);
         if (where.fleetId) {
           if (typeof where.fleetId === 'string') filtered = filtered.filter((m) => m.fleetId === where.fleetId);
           else if (where.fleetId.in) filtered = filtered.filter((m) => where.fleetId.in.includes(m.fleetId));

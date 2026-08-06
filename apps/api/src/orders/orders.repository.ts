@@ -205,6 +205,7 @@ export class OrdersRepository {
       where: {
         userId: fleetOwnerUserId,
         status: 'ACTIVE',
+        role: 'OWNER',
       },
       select: { fleetId: true },
     });
