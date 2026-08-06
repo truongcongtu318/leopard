@@ -1,6 +1,5 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import React from 'react';
 
 import { LoginForm } from './LoginForm';
@@ -19,20 +18,20 @@ describe('LoginForm (Admin)', () => {
 
   it('renders input field and submit button', () => {
     render(<LoginForm />);
-    expect(screen.getByLabelText('Số điện thoại hoặc Token')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Số điện thoại hoặc Token')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeTruthy();
   });
 
   it('renders session expired alert banner when sessionExpired prop is true', () => {
     render(<LoginForm sessionExpired={true} />);
-    expect(screen.getByRole('alert')).toHaveTextContent('Phiên làm việc đã hết hạn');
+    expect(screen.getByRole('alert').textContent).toContain('Phiên làm việc đã hết hạn');
   });
 
   it('renders demo account options when allowDemo prop is true', () => {
     render(<LoginForm allowDemo={true} />);
-    expect(screen.getByText('Tài khoản demo')).toBeInTheDocument();
-    expect(screen.getByText('Demo Admin')).toBeInTheDocument();
-    expect(screen.getByText('Demo Fleet Owner')).toBeInTheDocument();
+    expect(screen.getByText('Tài khoản demo')).toBeTruthy();
+    expect(screen.getByText('Demo Admin')).toBeTruthy();
+    expect(screen.getByText('Demo Fleet Owner')).toBeTruthy();
   });
 
   it('authenticates via demo account and invokes setSession and onSuccess', async () => {
@@ -100,8 +99,10 @@ describe('LoginForm (Admin)', () => {
     fireEvent.click(screen.getByText('Demo Admin'));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Đang xử lý...' })).toBeDisabled();
-      expect(screen.getByLabelText('Số điện thoại hoặc Token')).toBeDisabled();
+      const button = screen.getByRole('button', { name: 'Đang xử lý...' }) as HTMLButtonElement;
+      const input = screen.getByLabelText('Số điện thoại hoặc Token') as HTMLInputElement;
+      expect(button.disabled).toBe(true);
+      expect(input.disabled).toBe(true);
     });
 
     resolvePost({
@@ -112,7 +113,7 @@ describe('LoginForm (Admin)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Đang xử lý...' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Đang xử lý...' })).toBeNull();
     });
   });
 
@@ -127,7 +128,7 @@ describe('LoginForm (Admin)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Mã xác thực không hợp lệ');
+      expect(screen.getByRole('alert').textContent).toContain('Mã xác thực không hợp lệ');
     });
   });
 
@@ -142,7 +143,7 @@ describe('LoginForm (Admin)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Hệ thống xác thực tạm thời không khả dụng');
+      expect(screen.getByRole('alert').textContent).toContain('Hệ thống xác thực tạm thời không khả dụng');
     });
   });
 });

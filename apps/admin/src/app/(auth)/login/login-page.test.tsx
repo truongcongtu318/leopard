@@ -1,6 +1,5 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import React from 'react';
 import { AppRouterContext } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
@@ -36,8 +35,8 @@ describe('LoginPage (Admin)', () => {
 
   it('renders LoginForm inside LoginPage', () => {
     renderWithRouter(<LoginPage />);
-    expect(screen.getByLabelText('Số điện thoại hoặc Token')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Số điện thoại hoặc Token')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeTruthy();
   });
 
   it('redirects ADMIN to /admin upon successful login', async () => {
