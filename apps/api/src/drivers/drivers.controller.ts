@@ -4,7 +4,9 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
+  Post,
   Query,
   UseFilters,
   UseGuards,
@@ -14,6 +16,7 @@ import { RequireRoles } from '../auth/decorators/require-roles.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
+import { AcceptOrderService } from '../orders/accept-order.service.js';
 import { DriversService } from './drivers.service.js';
 import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 
@@ -21,7 +24,10 @@ import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 @UseFilters(ApiExceptionFilter)
 @UseGuards(AccessTokenGuard, RoleGuard)
 export class DriversController {
-  constructor(private readonly driversService: DriversService) {}
+  constructor(
+    private readonly driversService: DriversService,
+    private readonly acceptOrderService: AcceptOrderService,
+  ) {}
 
   @Patch('availability')
   @RequireRoles('DRIVER')
@@ -50,5 +56,15 @@ export class DriversController {
   @RequireRoles('DRIVER')
   getActiveOrder(@CurrentUser() actor: AuthenticatedActor) {
     return this.driversService.getActiveOrder(actor);
+  }
+
+  @Post('orders/:id/accept')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  acceptOrder(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+  ) {
+    return this.acceptOrderService.acceptOrder(actor, id);
   }
 }
