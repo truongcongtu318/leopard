@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 
+type OrdersPrismaClient = PrismaService | Prisma.TransactionClient;
+
 export interface CreateOrderParams {
   customerId: string;
   providerSource: ProviderSource;
@@ -112,8 +114,13 @@ export class OrdersRepository {
     });
   }
 
-  async findByClientRequestId(customerId: string, clientRequestId: string): Promise<OrderWithRelations | null> {
-    const order = await this.prisma.order.findFirst({
+  async findByClientRequestId(
+    customerId: string,
+    clientRequestId: string,
+    tx?: OrdersPrismaClient,
+  ): Promise<OrderWithRelations | null> {
+    const db = tx ?? this.prisma;
+    const order = await db.order.findFirst({
       where: { customerId, clientRequestId },
       include: {
         statusHistory: { orderBy: { createdAt: 'desc' } },
@@ -124,7 +131,7 @@ export class OrdersRepository {
       return null;
     }
 
-    const stops = await this.prisma.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
+    const stops = await db.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
       SELECT
         id,
         "orderId",
@@ -147,8 +154,9 @@ export class OrdersRepository {
     };
   }
 
-  async findById(id: string): Promise<OrderWithRelations | null> {
-    const order = await this.prisma.order.findUnique({
+  async findById(id: string, tx?: OrdersPrismaClient): Promise<OrderWithRelations | null> {
+    const db = tx ?? this.prisma;
+    const order = await db.order.findUnique({
       where: { id },
       include: {
         statusHistory: { orderBy: { createdAt: 'desc' } },
@@ -159,7 +167,7 @@ export class OrdersRepository {
       return null;
     }
 
-    const stops = await this.prisma.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
+    const stops = await db.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
       SELECT
         id,
         "orderId",

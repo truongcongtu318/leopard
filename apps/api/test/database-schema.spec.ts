@@ -257,6 +257,9 @@ describe('canonical pilot database schema', () => {
         expect.stringMatching(/ON public\."Order".*\("customerId", "createdAt" DESC\)/),
         expect.stringMatching(/ON public\."Order".*\(status, "createdAt" DESC\)/),
         expect.stringMatching(
+          /UNIQUE INDEX.*ON public\."Order".*\("customerId", "clientRequestId"\)/,
+        ),
+        expect.stringMatching(
           /UNIQUE INDEX.*ON public\."Order".*\("driverId"\).*WHERE.*status.*ACCEPTED.*PICKING_UP.*IN_TRANSIT/,
         ),
         expect.stringMatching(
@@ -282,6 +285,9 @@ describe('canonical pilot database schema', () => {
         ),
         expect.stringMatching(
           /ON public\."OrderStatusHistory".*\("orderId", "createdAt" DESC\)/,
+        ),
+        expect.stringMatching(
+          /UNIQUE INDEX.*ON public\."OrderStatusHistory".*\("orderId", "actorId", "clientRequestId"\)/,
         ),
       ]),
     );
@@ -316,7 +322,16 @@ describe('canonical pilot database schema', () => {
     );
 
     expect(historyColumns.rows.map(({ column_name }) => column_name)).toEqual(
-      expect.arrayContaining(['id', 'orderId', 'fromStatus', 'toStatus', 'actorId', 'reason', 'createdAt']),
+      expect.arrayContaining([
+        'id',
+        'orderId',
+        'fromStatus',
+        'toStatus',
+        'actorId',
+        'clientRequestId',
+        'reason',
+        'createdAt',
+      ]),
     );
     expect(historyColumns.rows.map(({ column_name }) => column_name)).not.toContain('updatedAt');
     expect(orderDeleteActions.rows.length).toBeGreaterThanOrEqual(5);
