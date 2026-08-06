@@ -250,6 +250,7 @@ export class InMemoryPrismaService {
       if (where) {
         if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
         if (where.status) filtered = filtered.filter((m) => m.status === where.status);
+        if (where.role) filtered = filtered.filter((m) => m.role === where.role);
         if (where.fleetId) {
           if (typeof where.fleetId === 'string') filtered = filtered.filter((m) => m.fleetId === where.fleetId);
           else if (where.fleetId.in) filtered = filtered.filter((m) => where.fleetId.in.includes(m.fleetId));
@@ -357,15 +358,30 @@ export class InMemoryPrismaService {
       if (where) {
         if (where.customerId) filtered = filtered.filter((o) => o.customerId === where.customerId);
         if (where.driverId) filtered = filtered.filter((o) => o.driverId === where.driverId);
-        if (where.status) filtered = filtered.filter((o) => o.status === where.status);
+        if (where.status) {
+          if (typeof where.status === 'string') {
+            filtered = filtered.filter((o) => o.status === where.status);
+          } else if (where.status.in) {
+            filtered = filtered.filter((o) => where.status.in.includes(o.status));
+          }
+        }
       }
       return filtered.length;
     }),
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let filtered = Array.from(this.orders.values());
+      if (where) {
+        if (where.customerId) filtered = filtered.filter((o) => o.customerId === where.customerId);
+        if (where.clientRequestId) filtered = filtered.filter((o: any) => o.clientRequestId === where.clientRequestId);
+      }
+      return filtered[0] ?? null;
+    }),
     create: jest.fn(async ({ data }: { data: any }) => {
       const id = data.id ?? `order-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const order: Order = {
+      const order: any = {
         id,
         customerId: data.customerId,
+        clientRequestId: data.clientRequestId ?? null,
         driverId: data.driverId ?? null,
         status: data.status ?? 'REQUESTED',
         routeSnapshot: data.routeSnapshot ?? null,

@@ -2,13 +2,17 @@ import { Injectable } from '@nestjs/common';
 import type { DriverAvailability, DriverProfile, OrderStatus } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 import type { OrderWithRelations } from '../orders/orders.repository.js';
+import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class DriversRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findDriverProfileByUserId(userId: string): Promise<DriverProfile | null> {
-    return this.prisma.driverProfile.findUnique({
+  async findDriverProfileByUserId(
+    userId: string,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<DriverProfile | null> {
+    return tx.driverProfile.findUnique({
       where: { userId },
     });
   }
@@ -16,11 +20,12 @@ export class DriversRepository {
   async updateAvailability(
     userId: string,
     availability: DriverAvailability,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
   ): Promise<DriverProfile> {
-    const existing = await this.findDriverProfileByUserId(userId);
+    const existing = await this.findDriverProfileByUserId(userId, tx);
 
     if (!existing) {
-      return this.prisma.driverProfile.create({
+      return tx.driverProfile.create({
         data: {
           userId,
           availability,
@@ -29,7 +34,7 @@ export class DriversRepository {
       });
     }
 
-    return this.prisma.driverProfile.update({
+    return tx.driverProfile.update({
       where: { userId },
       data: { availability },
     });

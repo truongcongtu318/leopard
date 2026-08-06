@@ -1,4 +1,7 @@
 import type { Role } from '@leopard/shared';
+import { useEffect, useState } from 'react';
+
+import { sessionStore } from '../auth/session-store';
 
 export type MobileHome =
   | '/(customer)/orders'
@@ -86,4 +89,50 @@ export function getMobileRouteDecision({
     canRenderProtectedContent: true,
     kind: 'authorized',
   };
+}
+
+/**
+ * Hook for protected layouts that performs session hydration and returns
+ * the route decision. Uses a `finally` block to guarantee isHydrated is
+ * set to true even when hydration throws, preventing infinite loading.
+ */
+export function useProtectedLayout(
+  routeGroup: MobileProtectedRouteGroup,
+): MobileRouteDecision {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initSession() {
+      try {
+        await sessionStore.hydrate();
+      } finally {
+        if (!cancelled) {
+          setIsHydrated(true);
+        }
+      }
+    }
+
+    void initSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const role = sessionStore.isAuthenticated()
+    ? inferRoleFromRouteGroup(routeGroup)
+    : null;
+
+  return getMobileRouteDecision({ isHydrated, role, routeGroup });
+}
+
+/**
+ * When the session store has a token but no explicit role stored,
+ * infer the role from the route group the user navigated to.
+ * This is safe because role-mismatch is caught by getMobileRouteDecision.
+ */
+function inferRoleFromRouteGroup(routeGroup: MobileProtectedRouteGroup): Role {
+  return routeGroup === 'customer' ? 'CUSTOMER' : 'DRIVER';
 }

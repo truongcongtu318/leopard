@@ -12,12 +12,17 @@ export interface LoginFormProps {
 }
 
 interface AuthResponse {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt?: string;
   user: {
     id: string;
+    phone: string;
     role: "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN";
+    status: string;
+  };
+  session: {
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpiresAt: string;
+    refreshTokenExpiresAt: string;
   };
 }
 
@@ -43,7 +48,9 @@ export function LoginForm({
       });
 
       const expiresAt =
-        res.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        res.session.accessTokenExpiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+      browserClient.setHeader('Authorization', `Bearer ${res.session.accessToken}`);
 
       await setSession({
         userId: res.user.id,
@@ -83,7 +90,9 @@ export function LoginForm({
       });
 
       const expiresAt =
-        res.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        res.session.accessTokenExpiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+      browserClient.setHeader('Authorization', `Bearer ${res.session.accessToken}`);
 
       await setSession({
         userId: res.user.id,
@@ -225,7 +234,7 @@ export function LoginForm({
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleDemoLogin("demo-admin", "ADMIN")}
+              onClick={() => handleDemoLogin("admin", "ADMIN")}
               style={{
                 padding: "0.5rem",
                 backgroundColor: "#f3f4f6",
@@ -242,7 +251,7 @@ export function LoginForm({
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleDemoLogin("demo-fleet-owner", "FLEET_OWNER")}
+              onClick={() => handleDemoLogin("fleet-owner", "FLEET_OWNER")}
               style={{
                 padding: "0.5rem",
                 backgroundColor: "#f3f4f6",
@@ -259,7 +268,7 @@ export function LoginForm({
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleDemoLogin("demo-driver", "DRIVER")}
+              onClick={() => handleDemoLogin("driver", "DRIVER")}
               style={{
                 padding: "0.5rem",
                 backgroundColor: "#f3f4f6",
@@ -276,7 +285,7 @@ export function LoginForm({
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleDemoLogin("demo-customer", "CUSTOMER")}
+              onClick={() => handleDemoLogin("customer", "CUSTOMER")}
               style={{
                 padding: "0.5rem",
                 backgroundColor: "#f3f4f6",

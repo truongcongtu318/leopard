@@ -25,6 +25,7 @@ describe('Order & Driver Domain Authorization Matrix', () => {
   let adminSession: AuthSessionBody;
   let customerUserId: string;
   let driverUserId: string;
+  let fleetOwnerUserId: string;
   let prismaMock: InMemoryPrismaService;
 
   beforeEach(async () => {
@@ -90,6 +91,7 @@ describe('Order & Driver Domain Authorization Matrix', () => {
     const fo = await prismaMock.user.create({
       data: { phone: '+84910000004', role: 'FLEET_OWNER', status: 'ACTIVE' },
     });
+    fleetOwnerUserId = fo.id;
     const fos = await refreshSessions.create(fo.id);
     fleetOwnerSession = tokenService.createAuthSession(fo, fos);
 
@@ -147,6 +149,69 @@ describe('Order & Driver Domain Authorization Matrix', () => {
         .set('Authorization', `Bearer ${customer2Session.accessToken}`)
         .expect(404);
     });
+
+    it('returns 403 for fleet owner querying order assigned to driver not in their fleet', async () => {
+      const order = await prismaMock.order.create({
+        data: { customerId: customerUserId, driverId: driverUserId, status: 'ACCEPTED', distanceMeters: 1000, durationSeconds: 300, priceVnd: 20000 },
+      });
+
+      // Fleet Owner with no fleet relationship to driver -> 403
+      await request(app.getHttpServer())
+        .get(`/orders/${order.id}`)
+        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
+        .expect(403);
+    });
+
+    it('returns 403 for fleet owner who is only a member (not OWNER) of the fleet', async () => {
+      const fleetId = 'fleet-1';
+      // Fleet Owner is only a DRIVER/MEMBER in the fleet
+      await prismaMock.fleetMember.create({
+        data: { fleetId, userId: fleetOwnerUserId, role: 'DRIVER', status: 'ACTIVE' },
+      });
+      
+      // Let's create an order and driver
+      const driver = await prismaMock.user.create({
+        data: { phone: '+84910000010', role: 'DRIVER', status: 'ACTIVE' },
+      });
+      await prismaMock.fleetMember.create({
+        data: { fleetId, userId: driver.id, role: 'DRIVER', status: 'ACTIVE' },
+      });
+
+      const order = await prismaMock.order.create({
+        data: { customerId: customerUserId, driverId: driver.id, status: 'ACCEPTED', distanceMeters: 1000, durationSeconds: 300, priceVnd: 20000 },
+      });
+
+      // Fleet Owner is not OWNER in the fleet -> 403
+      await request(app.getHttpServer())
+        .get(`/orders/${order.id}`)
+        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
+        .expect(403);
+    });
+
+    it('returns 200 for fleet owner who is OWNER of the fleet', async () => {
+      const fleetId = 'fleet-2';
+      await prismaMock.fleetMember.create({
+        data: { fleetId, userId: fleetOwnerUserId, role: 'OWNER', status: 'ACTIVE' },
+      });
+      
+      const driver = await prismaMock.user.create({
+        data: { phone: '+84910000011', role: 'DRIVER', status: 'ACTIVE' },
+      });
+      await prismaMock.fleetMember.create({
+        data: { fleetId, userId: driver.id, role: 'DRIVER', status: 'ACTIVE' },
+      });
+
+      const order = await prismaMock.order.create({
+        data: { customerId: customerUserId, driverId: driver.id, status: 'ACCEPTED', distanceMeters: 1000, durationSeconds: 300, priceVnd: 20000 },
+      });
+
+      // Fleet Owner is OWNER in the fleet -> 200
+      await request(app.getHttpServer())
+        .get(`/orders/${order.id}`)
+        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
+        .expect(200);
+    });
+
   });
 
   describe('PATCH /driver/availability', () => {

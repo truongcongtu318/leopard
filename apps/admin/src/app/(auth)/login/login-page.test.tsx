@@ -41,11 +41,14 @@ describe('LoginPage (Admin)', () => {
 
   it('redirects ADMIN to /admin upon successful login', async () => {
     postSpy.mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
       user: { id: 'admin-1', role: 'ADMIN' },
-      expiresAt: '2026-12-31T23:59:59Z',
-    });
+      session: {
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        accessTokenExpiresAt: '2026-12-31T23:59:59Z',
+        refreshTokenExpiresAt: '2027-12-31T23:59:59Z',
+      },
+    } as any);
 
     renderWithRouter(<LoginPage />);
     const input = screen.getByLabelText('Số điện thoại hoặc Token');
@@ -59,11 +62,14 @@ describe('LoginPage (Admin)', () => {
 
   it('redirects FLEET_OWNER to /fleet upon successful login', async () => {
     postSpy.mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
       user: { id: 'fleet-1', role: 'FLEET_OWNER' },
-      expiresAt: '2026-12-31T23:59:59Z',
-    });
+      session: {
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        accessTokenExpiresAt: '2026-12-31T23:59:59Z',
+        refreshTokenExpiresAt: '2027-12-31T23:59:59Z',
+      },
+    } as any);
 
     renderWithRouter(<LoginPage />);
     const input = screen.getByLabelText('Số điện thoại hoặc Token');
@@ -77,11 +83,14 @@ describe('LoginPage (Admin)', () => {
 
   it('redirects CUSTOMER to /customer/orders upon successful login', async () => {
     postSpy.mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
       user: { id: 'cust-1', role: 'CUSTOMER' },
-      expiresAt: '2026-12-31T23:59:59Z',
-    });
+      session: {
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        accessTokenExpiresAt: '2026-12-31T23:59:59Z',
+        refreshTokenExpiresAt: '2027-12-31T23:59:59Z',
+      },
+    } as any);
 
     renderWithRouter(<LoginPage />);
     const input = screen.getByLabelText('Số điện thoại hoặc Token');
@@ -95,11 +104,14 @@ describe('LoginPage (Admin)', () => {
 
   it('redirects DRIVER to /driver/orders upon successful login', async () => {
     postSpy.mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
       user: { id: 'driver-1', role: 'DRIVER' },
-      expiresAt: '2026-12-31T23:59:59Z',
-    });
+      session: {
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        accessTokenExpiresAt: '2026-12-31T23:59:59Z',
+        refreshTokenExpiresAt: '2027-12-31T23:59:59Z',
+      },
+    } as any);
 
     renderWithRouter(<LoginPage />);
     const input = screen.getByLabelText('Số điện thoại hoặc Token');
