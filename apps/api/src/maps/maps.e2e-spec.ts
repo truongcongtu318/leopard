@@ -176,6 +176,30 @@ describe('Maps REST API', () => {
     }
   });
 
+  it.each(['driver', 'fleet-owner', 'admin'] as const)(
+    'rejects %s route estimates with 403',
+    async (accountId) => {
+      const app = await createApp();
+      const session = await loginDemo(app, accountId);
+
+      try {
+        const response = await request(app.getHttpServer())
+          .post('/orders/estimate')
+          .set('Authorization', bearer(session))
+          .send({
+            pickup: { type: 'PICKUP', address: 'A', lat: 10.76, lng: 106.66 },
+            dropoff: { type: 'DROPOFF', address: 'B', lat: 10.77, lng: 106.67 },
+            vehicleType: 'MOTORBIKE',
+          })
+          .expect(403);
+
+        expect(response.body).toMatchObject({ code: 'FORBIDDEN' });
+      } finally {
+        await app.close();
+      }
+    },
+  );
+
   it('rejects route estimates with more than three intermediate stops', async () => {
     const app = await createApp();
     const session = await loginDemo(app);
@@ -457,10 +481,13 @@ describe('Maps REST API', () => {
   });
 });
 
-async function loginDemo(app: INestApplication): Promise<AuthSessionBody> {
+async function loginDemo(
+  app: INestApplication,
+  accountId: 'customer' | 'driver' | 'fleet-owner' | 'admin' = 'customer',
+): Promise<AuthSessionBody> {
   const response = await request(app.getHttpServer())
     .post('/auth/login/demo')
-    .send({ accountId: 'customer' })
+    .send({ accountId })
     .expect(201);
 
   return response.body.session as AuthSessionBody;

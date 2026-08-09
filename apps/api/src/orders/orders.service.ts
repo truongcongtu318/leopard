@@ -17,6 +17,16 @@ export class OrdersService {
     actor: AuthenticatedActor,
     dto: CreateOrderDto,
   ): Promise<MappedOrderResponse> {
+    if (dto.clientRequestId) {
+      const existingOrder = await this.ordersRepository.findByClientRequestId(
+        actor.userId,
+        dto.clientRequestId,
+      );
+      if (existingOrder) {
+        return mapOrderResponse(existingOrder);
+      }
+    }
+
     if (!dto.pickup || !dto.dropoff || !dto.vehicleType || !dto.estimateToken) {
       throw new DomainError('BAD_REQUEST', 400, 'Thiếu thông tin bắt buộc để tạo đơn hàng');
     }
@@ -105,13 +115,6 @@ export class OrdersService {
       latitude: dropoffLat,
       longitude: dropoffLng,
     });
-
-    if (dto.clientRequestId) {
-      const existingOrder = await this.ordersRepository.findByClientRequestId(actor.userId, dto.clientRequestId);
-      if (existingOrder) {
-        return mapOrderResponse(existingOrder);
-      }
-    }
 
     try {
       const order = await this.ordersRepository.createOrder({

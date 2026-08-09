@@ -17,6 +17,7 @@ import {
   FirebaseOtpProvider,
   type FirebaseIdTokenVerifier,
 } from './providers/firebase-otp.provider.js';
+import { createProductionFirebaseVerifier } from './providers/firebase-admin.verifier.js';
 import { OTP_PROVIDER, OtpProviderError } from './providers/otp-provider.js';
 import { RefreshSessionRepository } from './refresh-session.repository.js';
 import { TokenService } from './token.service.js';
@@ -24,7 +25,12 @@ import { TokenService } from './token.service.js';
 const LOCAL_FIREBASE_ENVS = new Set(['development', 'local', 'test']);
 
 function createFirebaseOtpProvider(): FirebaseOtpProvider {
-  const verifier = createConfiguredLocalFirebaseVerifier();
+  const localVerifier = createConfiguredLocalFirebaseVerifier();
+  const verifier =
+    localVerifier ??
+    (process.env.NODE_ENV === 'production'
+      ? createProductionFirebaseVerifier(process.env)
+      : undefined);
 
   return new FirebaseOtpProvider(verifier);
 }
