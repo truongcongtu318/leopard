@@ -226,7 +226,7 @@ Verification đã chạy trên working tree hiện tại:
 - Production startup/health trên database disposable: pass.
 - Production dependency audit: `0 critical`, `14 high`, `8 moderate`, `1 low`; các advisory nằm ở dependency transitive/optional của Firebase Admin, Prisma tooling và Expo, cần risk review/upgrade riêng trước release gate.
 
-**Technical gate: `PASSED`.** Việc còn lại thuộc orchestration là tạo/publish baseline commit SHA và cập nhật master registry trước khi tách branch Wave 3 từ baseline đó.
+**Wave 2 gate: `PASSED`.** Baseline đã được công bố tại `4b8cca56e2b07c62163745d506def5c541fa7d2f` trên branch `codex/integration-wave-2`; Wave 3 phải tách từ đúng commit này.
 
 ## 4. Dependency and Workspace Repair
 
@@ -274,7 +274,7 @@ Wave 2 chỉ được đánh dấu `PASSED` khi:
 - [x] Unit, integration, E2E, contract, lint, typecheck và build đều exit 0.
 - [x] Migration/seed chạy được trên database sạch và upgrade path.
 - [x] `git diff --check` sạch; không có secret hoặc dữ liệu cá nhân trong diff/fixture/log.
-- [ ] `docs/superpowers/plans/00-master-orchestration.md` được cập nhật task status, Wave 2 baseline SHA và gate status.
+- [x] `docs/superpowers/plans/00-master-orchestration.md` được cập nhật task status, Wave 2 baseline SHA và gate status.
 
 ## 7. Wave 3A Start Plan
 

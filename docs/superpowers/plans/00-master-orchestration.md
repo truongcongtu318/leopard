@@ -35,7 +35,7 @@ Orchestrator cập nhật bảng này ngay sau khi integration gate pass. Không
 | ---- | ---------------------------------- | ------------------------------------------ | ------------- |
 | 0    | `codex/integration-wave-0`         | `37a38cf44c138c875c167bfe1743614de02a256e` | `PASSED`      |
 | 1    | `codex/wave-1-runtime-foundations` | `4339526f45db33b4f9e460a367004f2f2628d254` | `READY`       |
-| 2    | `codex/integration-wave-2`         | Chưa tạo trước execution                   | `NOT_STARTED` |
+| 2    | `codex/integration-wave-2`         | `4b8cca56e2b07c62163745d506def5c541fa7d2f` | `PASSED`      |
 | 3    | `codex/integration-wave-3`         | Chưa tạo trước execution                   | `NOT_STARTED` |
 | 4    | `codex/integration-wave-4`         | Chưa tạo trước execution                   | `NOT_STARTED` |
 | 5    | `codex/integration-wave-5`         | Chưa tạo trước execution                   | `NOT_STARTED` |
@@ -148,7 +148,7 @@ export interface Page<T> {
 | PH-04-T01..T04           | `04-operations-web-foundation.md`      | 1    | PH-01                 | Web                 | `NOT_STARTED` |
 | PH-05-T01..T04           | `05-auth-and-access.md`                | 2    | PH-02                 | Security/Backend    | `VERIFIED`    |
 | PH-05-T05                | `05-auth-and-access.md`                | 2    | PH-05-T04            | Client Integration  | `DEFERRED`   |
-| PH-06-T01..T06           | `06-order-and-driver.md`               | 2B   | PH-02, PH-07          | Backend Domain      | `NOT_STARTED` |
+| PH-06-T01..T06           | `06-order-and-driver.md`               | 2B   | PH-02, PH-07          | Backend Domain      | `VERIFIED`    |
 | PH-07-T01..T04           | `07-map-pricing-eta.md`                | 2    | PH-02                 | Integration/Backend | `VERIFIED`    |
 | PH-08-T01..T04           | `08-realtime-tracking.md`              | 3    | PH-05, PH-06          | Realtime            | `NOT_STARTED` |
 | PH-09-T01..T05           | `09-media-and-payment.md`              | 3    | PH-06                 | Backend/Integration | `NOT_STARTED` |
