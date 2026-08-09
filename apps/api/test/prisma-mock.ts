@@ -10,6 +10,7 @@ import type {
   OrderStatus,
   Role,
   FleetMember,
+  AuditLog,
 } from '@prisma/client';
 
 export class InMemoryPrismaService {
@@ -24,6 +25,7 @@ export class InMemoryPrismaService {
   public orderStops = new Map<string, OrderStop & { lat: number; lng: number }>();
   public orderStatusHistories = new Map<string, OrderStatusHistory>();
   public paymentIntents = new Map<string, PaymentIntent>();
+  public auditLogs = new Map<string, AuditLog>();
 
   async $transaction<T>(fn: (tx: InMemoryPrismaService) => Promise<T>): Promise<T> {
     return fn(this);
@@ -469,6 +471,23 @@ export class InMemoryPrismaService {
       return Array.from(this.orderStatusHistories.values())
         .filter((h) => h.orderId === where.orderId)
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    }),
+  };
+
+  auditLog = {
+    create: jest.fn(async ({ data }: { data: Partial<AuditLog> }) => {
+      const id = data.id ?? `audit-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const audit: AuditLog = {
+        id,
+        actorId: data.actorId ?? null,
+        action: data.action ?? '',
+        resourceType: data.resourceType ?? '',
+        resourceId: data.resourceId ?? null,
+        metadata: data.metadata ?? null,
+        createdAt: new Date(),
+      };
+      this.auditLogs.set(id, audit);
+      return audit;
     }),
   };
 }

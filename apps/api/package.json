@@ -11,7 +11,7 @@
     "test": "jest --config jest.config.cjs --passWithNoTests",
     "test:e2e": "jest --config jest-e2e.config.cjs --runInBand",
     "test:contract": "jest --config jest.config.cjs --passWithNoTests --testPathPatterns=openapi-contract",
-    "prisma:migrate:test": "prisma migrate deploy --schema prisma/schema.prisma && jest --config jest.config.cjs --runInBand --testPathPatterns=database-schema"
+    "prisma:migrate:test": "prisma generate --schema prisma/schema.prisma && prisma migrate deploy --schema prisma/schema.prisma && jest --config jest-database.config.cjs --runInBand"
   },
   "dependencies": {
     "@leopard/shared": "workspace:*",
@@ -25,6 +25,7 @@
     "argon2": "0.44.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
+    "firebase-admin": "14.2.0",
     "js-yaml": "4.3.0",
     "pg": "8.22.0",
     "reflect-metadata": "0.2.2",

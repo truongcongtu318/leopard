@@ -212,6 +212,125 @@ describe('Customer Orders REST API (E2E)', () => {
     expect(createRes1.body.id).toEqual(createRes2.body.id);
   });
 
+  it('returns the persisted order before revalidating an expired estimate token', async () => {
+    const pickup = { latitude: 10.762622, longitude: 106.660172 };
+    const dropoff = { latitude: 10.772622, longitude: 106.670172 };
+    const token = estimateTokenService.issue({
+      routeInput: { pickup, stops: [], dropoff, vehicleType: 'MOTORBIKE' },
+      estimate: {
+        polyline: 'encoded_polyline',
+        distanceM: 2500,
+        durationS: 600,
+        estimatedArrivalAt: new Date(Date.now() + 600_000).toISOString(),
+        estimatedPriceVnd: 15_000,
+        source: 'DEMO',
+        calculatedAt: new Date().toISOString(),
+        isEstimate: true,
+      },
+      quote: { amountVnd: 15_000, currency: 'VND' },
+    });
+    const clientRequestId = `req-delayed-${Date.now()}`;
+    const body = {
+      pickup: { address: 'P1', lat: pickup.latitude, lng: pickup.longitude },
+      dropoff: { address: 'D1', lat: dropoff.latitude, lng: dropoff.longitude },
+      vehicleType: 'MOTORBIKE',
+      estimateToken: token,
+      clientRequestId,
+    };
+
+    const first = await request(app.getHttpServer())
+      .post('/orders')
+      .set('Authorization', `Bearer ${customerSession.accessToken}`)
+      .send(body)
+      .expect(201);
+    const replay = await request(app.getHttpServer())
+      .post('/orders')
+      .set('Authorization', `Bearer ${customerSession.accessToken}`)
+      .send({ ...body, estimateToken: 'expired.token' })
+      .expect(201);
+
+    expect(replay.body.id).toBe(first.body.id);
+  });
+
+  it.each([
+    ['missing pickup', (body: Record<string, unknown>) => ({ ...body, pickup: undefined })],
+    ['more than 3 stops', (body: Record<string, unknown>) => ({
+      ...body,
+      stops: Array.from({ length: 4 }, (_, index) => ({
+        address: `Stop ${index}`,
+        lat: 10.76,
+        lng: 106.66,
+      })),
+    })],
+    ['latitude out of range', (body: Record<string, unknown>) => ({
+      ...body,
+      pickup: { address: 'P', lat: 91, lng: 106.66 },
+    })],
+    ['longitude out of range', (body: Record<string, unknown>) => ({
+      ...body,
+      dropoff: { address: 'D', lat: 10.77, lng: 181 },
+    })],
+    ['invalid vehicle', (body: Record<string, unknown>) => ({ ...body, vehicleType: 'BICYCLE' })],
+    ['empty address', (body: Record<string, unknown>) => ({
+      ...body,
+      pickup: { address: '   ', lat: 10.76, lng: 106.66 },
+    })],
+    ['empty estimate token', (body: Record<string, unknown>) => ({ ...body, estimateToken: '   ' })],
+    ['empty client request id', (body: Record<string, unknown>) => ({ ...body, clientRequestId: '   ' })],
+    ['negative cargo weight', (body: Record<string, unknown>) => ({ ...body, cargoWeightKg: -1 })],
+    ['cargo weight above pilot limit', (body: Record<string, unknown>) => ({
+      ...body,
+      cargoWeightKg: 10_001,
+    })],
+  ] as const)('returns 422 for %s without persisting partial state', async (_name, mutate) => {
+    const token = estimateTokenService.issue({
+      routeInput: {
+        pickup: { latitude: 10.76, longitude: 106.66 },
+        stops: [],
+        dropoff: { latitude: 10.77, longitude: 106.67 },
+        vehicleType: 'MOTORBIKE',
+      },
+      estimate: {
+        polyline: 'validation',
+        distanceM: 1000,
+        durationS: 300,
+        estimatedArrivalAt: new Date(Date.now() + 300_000).toISOString(),
+        estimatedPriceVnd: 12_000,
+        source: 'DEMO',
+        calculatedAt: new Date().toISOString(),
+        isEstimate: true,
+      },
+      quote: { amountVnd: 12_000, currency: 'VND' },
+    });
+    const baseline = {
+      orders: prismaMock.orders.size,
+      stops: prismaMock.orderStops.size,
+      histories: prismaMock.orderStatusHistories.size,
+      payments: prismaMock.paymentIntents.size,
+    };
+    const body = mutate({
+      pickup: { address: 'P', lat: 10.76, lng: 106.66 },
+      dropoff: { address: 'D', lat: 10.77, lng: 106.67 },
+      vehicleType: 'MOTORBIKE',
+      estimateToken: token,
+      clientRequestId: `validation-${Date.now()}-${Math.random()}`,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/orders')
+      .set('Authorization', `Bearer ${customerSession.accessToken}`)
+      .send(body)
+      .expect(422);
+
+    expect(response.body).toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect({
+      orders: prismaMock.orders.size,
+      stops: prismaMock.orderStops.size,
+      histories: prismaMock.orderStatusHistories.size,
+      payments: prismaMock.paymentIntents.size,
+    }).toEqual(baseline);
+  });
+
   it('rejects order creation if requested locations do not match estimate token payload', async () => {
     const pickup = { latitude: 10.762622, longitude: 106.660172 };
     const dropoff = { latitude: 10.772622, longitude: 106.670172 };

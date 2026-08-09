@@ -19,7 +19,9 @@ import {
   getAuthenticatedActor,
   type AuthenticatedActor,
 } from '../auth/decorators/current-user.js';
+import { RequireRoles } from '../auth/decorators/require-roles.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
+import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
 import { MapPlaceNotFoundError, MapsService } from './maps.service.js';
@@ -153,7 +155,7 @@ export class MapsRateLimitGuard implements CanActivate {
 
 @Controller()
 @UseFilters(ApiExceptionFilter)
-@UseGuards(AccessTokenGuard, MapsRateLimitGuard)
+@UseGuards(AccessTokenGuard, RoleGuard, MapsRateLimitGuard)
 export class MapsController {
   constructor(private readonly mapsService: MapsService) {}
 
@@ -194,6 +196,7 @@ export class MapsController {
   }
 
   @Post('orders/estimate')
+  @RequireRoles('CUSTOMER')
   @HttpCode(HttpStatus.OK)
   estimate(@Body() body: unknown): Promise<OrderEstimateResponse> {
     const request = validateEstimateRequest(body);

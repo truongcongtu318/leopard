@@ -33,7 +33,7 @@ Query pagination mặc định `page=1`, `pageSize=20`, tối đa 100. Sort ch�
 | POST | `/orders/:id/cancel` | Owner/Admin | Hủy theo rule |
 | GET | `/orders/:id/tracking` | Owner/assigned/Fleet Owner/Admin | Tracking history |
 
-Create order input gồm `pickup`, `stops` tối đa 3, `dropoff`, `vehicleType` (`MOTORBIKE`, `VAN` hoặc `TRUCK`), `cargoNote`, `cargoWeightKg` tùy chọn và `estimateToken`. Backend không tin giá/ETA do client gửi.
+Create order input gồm `pickup`, `stops` tối đa 3, `dropoff`, `vehicleType` (`MOTORBIKE`, `VAN` hoặc `TRUCK`), `cargoNote`, `cargoWeightKg` tùy chọn trong khoảng `0-10000` kg và `estimateToken`. Address, estimate token và `clientRequestId` nếu có không được là chuỗi rỗng; latitude nằm trong `[-90, 90]`, longitude trong `[-180, 180]`. Backend không tin giá/ETA do client gửi. Input validation trả `422 VALIDATION_ERROR` kèm field details.
 
 Estimate response gồm `estimateToken`, `polyline`, `distanceM`, `durationS`, `estimatedArrivalAt`, `estimatedPriceVnd`, `source`, `isEstimate`, `calculatedAt`, hết hạn sau 10 phút.
 
