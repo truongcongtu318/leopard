@@ -43,6 +43,9 @@ successful cached tasks for the full workspace gate.
   and required checks must be confirmed in GitHub after this change is merged.
 - CI explicitly generates Prisma Client after dependency installation before
   lint, typecheck, test, integration, and build jobs.
+- Migration verification uses a dedicated Jest schema config so
+  `database-schema.spec.ts` is selected instead of being excluded by the
+  default unit-test ignore patterns.
 
 ## Next baseline
 

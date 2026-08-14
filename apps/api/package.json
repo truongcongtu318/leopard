@@ -12,7 +12,7 @@
     "test:e2e": "jest --config jest-e2e.config.cjs --runInBand",
     "test:contract": "jest --config jest.config.cjs --passWithNoTests --testPathPatterns=openapi-contract",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
-    "prisma:migrate:test": "prisma migrate deploy --schema prisma/schema.prisma && jest --config jest.config.cjs --runInBand --testPathPatterns=database-schema"
+    "prisma:migrate:test": "prisma migrate deploy --schema prisma/schema.prisma && jest --config jest.schema.config.cjs --runInBand"
   },
   "dependencies": {
     "@leopard/shared": "workspace:*",
