@@ -42,9 +42,7 @@ for (const file of requiredFiles) {
 // ================================================================
 // 2. Workflow files use pinned action versions (no @main/@latest/@master)
 // ================================================================
-const workflowFiles = requiredFiles.filter(
-  (f) => f.endsWith('.yml') || f.endsWith('.yaml'),
-);
+const workflowFiles = requiredFiles.filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'));
 
 const unpinned = new Set(['main', 'master', 'latest', 'HEAD']);
 
@@ -84,7 +82,10 @@ for (const file of workflowFiles) {
 // ================================================================
 const secretChecks = [
   { name: 'GitHub PAT', regex: /\bghp_[A-Za-z0-9]{36}\b/ },
-  { name: 'hardcoded token/secret', regex: /\b(token|secret|password|api_key|API_KEY)\s*[:=]\s*["'][A-Za-z0-9_\-+=\/]{8,}["']/gi },
+  {
+    name: 'hardcoded token/secret',
+    regex: /\b(token|secret|password|api_key|API_KEY)\s*[:=]\s*["'][A-Za-z0-9_\-+=\/]{8,}["']/gi,
+  },
 ];
 
 let foundSecrets = false;
@@ -180,7 +181,7 @@ for (const pkg of packages) {
 
   // API needs e2e, contract, and migration test scripts
   if (pkg.name === 'api') {
-    for (const s of ['test:e2e', 'test:contract', 'prisma:migrate:test']) {
+    for (const s of ['test:e2e', 'test:contract', 'prisma:generate', 'prisma:migrate:test']) {
       if (scripts[s]) {
         ok(`api: "${s}" script exists`);
       } else {

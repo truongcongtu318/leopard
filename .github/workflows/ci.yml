@@ -24,6 +24,9 @@ jobs:
           node-version: 24
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter api prisma:generate
+        env:
+          DATABASE_URL: postgresql://leopard:leopard_local@localhost:5432/leopard
       - run: pnpm lint
 
   typecheck:
@@ -39,6 +42,9 @@ jobs:
           node-version: 24
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter api prisma:generate
+        env:
+          DATABASE_URL: postgresql://leopard:leopard_local@localhost:5432/leopard
       - run: pnpm typecheck
 
   unit-test:
@@ -54,6 +60,9 @@ jobs:
           node-version: 24
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter api prisma:generate
+        env:
+          DATABASE_URL: postgresql://leopard:leopard_local@localhost:5432/leopard
       - run: pnpm test
 
   integration-test:
@@ -83,6 +92,9 @@ jobs:
           node-version: 24
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter api prisma:generate
+        env:
+          DATABASE_URL: postgresql://leopard:leopard_local@localhost:5432/leopard
       - run: pnpm --filter api test:e2e
         env:
           DATABASE_URL: postgresql://leopard:leopard_local@localhost:5432/leopard
@@ -105,5 +117,8 @@ jobs:
           node-version: 24
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter api prisma:generate
+        env:
+          DATABASE_URL: postgresql://leopard:leopard_local@localhost:5432/leopard
       - run: pnpm build
       - run: pnpm --filter mobile export

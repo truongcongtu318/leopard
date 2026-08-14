@@ -20,6 +20,7 @@ The following checks passed on the current workspace:
 - `node scripts/check-workspace.mjs`
 - `node scripts/verify-foundation.mjs`
 - `node scripts/verify-ci.mjs`
+- `DATABASE_URL=postgresql://leopard:leopard_local@localhost:5432/leopard prisma generate --schema prisma/schema.prisma`
 - `./node_modules/.bin/turbo run lint typecheck test build --concurrency=1`
 - `git diff --check`
 
@@ -40,6 +41,8 @@ successful cached tasks for the full workspace gate.
   install should provide the dependency.
 - The CI workflow now triggers on both `develop` and `main`; branch protection
   and required checks must be confirmed in GitHub after this change is merged.
+- CI explicitly generates Prisma Client after dependency installation before
+  lint, typecheck, test, integration, and build jobs.
 
 ## Next baseline
 
