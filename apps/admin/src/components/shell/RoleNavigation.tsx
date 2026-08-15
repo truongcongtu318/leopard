@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 
 export interface NavItem {
   label: string;
@@ -8,30 +8,48 @@ export interface NavItem {
 }
 
 export interface RoleNavigationProps {
-  items: NavItem[];
+  items: readonly NavItem[];
   currentPath: string;
+  ariaLabel?: string;
 }
 
-export function RoleNavigation({ items, currentPath }: RoleNavigationProps) {
+function findCurrentHref(items: readonly NavItem[], currentPath: string) {
+  return items.reduce<string | undefined>((longestMatch, item) => {
+    const isRoleRoot = item.href.split('/').filter(Boolean).length <= 1;
+    const isMatch =
+      currentPath === item.href || (!isRoleRoot && currentPath.startsWith(`${item.href}/`));
+
+    if (!isMatch || (longestMatch && longestMatch.length >= item.href.length)) {
+      return longestMatch;
+    }
+
+    return item.href;
+  }, undefined);
+}
+
+export function RoleNavigation({
+  items,
+  currentPath,
+  ariaLabel = 'Điều hướng theo vai trò',
+}: RoleNavigationProps) {
+  const currentHref = findCurrentHref(items, currentPath);
+
   return (
-    <nav role="navigation" aria-label="Role navigation">
-      <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+    <nav aria-label={ariaLabel}>
+      <ul className="m-0 list-none space-y-xs p-0">
         {items.map((item) => {
-          const isActive = currentPath === item.href;
+          const isActive = currentHref === item.href;
+
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
-                aria-current={isActive ? "page" : undefined}
-                style={{
-                  display: "block",
-                  padding: "0.75rem 1rem",
-                  textDecoration: "none",
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive ? "#1d4ed8" : "#374151",
-                  backgroundColor: isActive ? "#eff6ff" : "transparent",
-                  borderRadius: "0.375rem",
-                }}
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex min-h-11 items-center rounded-control px-md py-xs text-body-compact transition-colors motion-reduce:transition-none ${
+                  isActive
+                    ? 'bg-active font-semibold text-active-text'
+                    : 'text-neutral-muted hover:bg-neutral-surface hover:text-neutral-text'
+                }`}
               >
                 {item.label}
               </Link>

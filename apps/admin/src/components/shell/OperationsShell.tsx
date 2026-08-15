@@ -1,260 +1,216 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
-import { RoleNavigation, type NavItem } from "./RoleNavigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+
+import { RoleNavigation, type NavItem } from './RoleNavigation';
 
 export interface OperationsShellProps {
   children: React.ReactNode;
   role: string;
-  navItems: NavItem[];
+  navItems: readonly NavItem[];
 }
 
-export function OperationsShell({
-  children,
-  role,
-  navItems,
-}: OperationsShellProps) {
-  const pathname = usePathname();
+interface RoleContext {
+  contextLabel: string;
+  navigationLabel: string;
+  drawerLabel: string;
+}
+
+const ROLE_CONTEXT: Readonly<Record<string, RoleContext>> = {
+  admin: {
+    contextLabel: 'Quản trị vận hành',
+    navigationLabel: 'Điều hướng quản trị',
+    drawerLabel: 'Điều hướng quản trị vận hành',
+  },
+  fleet_owner: {
+    contextLabel: 'Quản lý đội xe',
+    navigationLabel: 'Điều hướng đội xe',
+    drawerLabel: 'Điều hướng quản lý đội xe',
+  },
+};
+
+const FALLBACK_CONTEXT: RoleContext = {
+  contextLabel: 'Khu vực vận hành',
+  navigationLabel: 'Điều hướng vận hành',
+  drawerLabel: 'Điều hướng khu vực vận hành',
+};
+
+const NAVIGATION_LABELS: Readonly<Record<string, string>> = {
+  '/admin': 'Tổng quan',
+  '/admin/users': 'Người dùng',
+  '/admin/fleets': 'Đội xe',
+  '/admin/drivers': 'Tài xế',
+  '/admin/orders': 'Đơn hàng',
+  '/fleet': 'Tổng quan',
+  '/fleet/drivers': 'Tài xế',
+  '/fleet/orders': 'Đơn hàng',
+};
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+export function OperationsShell({ children, role, navItems }: OperationsShellProps) {
+  const pathname = usePathname() ?? '';
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
-  const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const roleContext = ROLE_CONTEXT[role] ?? FALLBACK_CONTEXT;
+  const localizedItems = useMemo(
+    () =>
+      navItems.map((item) => ({
+        ...item,
+        label: NAVIGATION_LABELS[item.href] ?? item.label,
+      })),
+    [navItems],
+  );
 
-  // Close drawer
   const closeDrawer = useCallback(() => {
     setDrawerOpen(false);
-    hamburgerRef.current?.focus();
+    triggerRef.current?.focus();
   }, []);
 
-  // Focus trap inside drawer
   useEffect(() => {
     if (!drawerOpen) return;
 
     const drawer = drawerRef.current;
     if (!drawer) return;
 
-    const focusableSelectors = [
-      "a[href]",
-      "button:not([disabled])",
-      "input:not([disabled])",
-      "select:not([disabled])",
-      "textarea:not([disabled])",
-      '[tabindex]:not([tabindex="-1"])',
-    ];
-    const focusableSelector = focusableSelectors.join(",");
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
         closeDrawer();
         return;
       }
 
-      if (e.key !== "Tab") return;
+      if (event.key !== 'Tab') return;
 
-      const focusableElements = drawer.querySelectorAll(focusableSelector);
-      const firstFocusable = focusableElements[0] as HTMLElement;
-      const lastFocusable = focusableElements[
-        focusableElements.length - 1
-      ] as HTMLElement;
+      const focusable = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      const first = focusable.at(0);
+      const last = focusable.at(-1);
 
-      if (!firstFocusable || !lastFocusable) return;
+      if (!first || !last) return;
 
-      if (e.shiftKey) {
-        if (document.activeElement === firstFocusable) {
-          e.preventDefault();
-          lastFocusable.focus();
-        }
-      } else {
-        if (document.activeElement === lastFocusable) {
-          e.preventDefault();
-          firstFocusable.focus();
-        }
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
 
-    drawer.addEventListener("keydown", handleKeyDown);
-
-    // Focus the close button when drawer opens
+    drawer.addEventListener('keydown', handleKeyDown);
     closeButtonRef.current?.focus();
 
-    return () => {
-      drawer.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [drawerOpen, closeDrawer]);
+    return () => drawer.removeEventListener('keydown', handleKeyDown);
+  }, [closeDrawer, drawerOpen]);
 
-  // Close drawer on route change
   useEffect(() => {
     setDrawerOpen(false);
   }, [pathname]);
 
-  const toggleDrawer = () => setDrawerOpen((prev) => !prev);
-
-  const brand = "LEOPARD";
-
-  const sidebarContent = (
-    <div style={{ padding: "1rem" }}>
-      <div
-        style={{
-          fontWeight: 700,
-          fontSize: "1.25rem",
-          marginBottom: "1.5rem",
-          padding: "0 1rem",
-        }}
-      >
-        {brand}
-      </div>
-      <p
-        style={{
-          fontSize: "0.75rem",
-          textTransform: "uppercase",
-          color: "#6b7280",
-          padding: "0 1rem",
-          marginBottom: "0.5rem",
-        }}
-      >
-        {role === "admin" ? "Administration" : "Fleet Owner"}
+  const navigation = (
+    <div className="p-md">
+      <div className="px-md pb-lg text-section-title font-bold">LEOPARD</div>
+      <p className="mb-xs px-md text-body-compact font-semibold uppercase text-neutral-muted">
+        {roleContext.contextLabel}
       </p>
-      <RoleNavigation items={navItems} currentPath={pathname} />
+      <RoleNavigation
+        items={localizedItems}
+        currentPath={pathname}
+        ariaLabel={roleContext.navigationLabel}
+      />
     </div>
   );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Desktop sidebar */}
-      <aside
-        aria-label="Main navigation"
-        style={{
-          display: "none",
-          width: "260px",
-          flexShrink: 0,
-          borderRight: "1px solid #e5e7eb",
-          backgroundColor: "#f9fafb",
-          height: "100vh",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          bottom: 0,
-          overflowY: "auto",
-        }}
-        className="desktop-sidebar"
+    <div className="min-h-screen bg-neutral text-neutral-text">
+      <a
+        href="#noi-dung-chinh"
+        className="fixed left-md top-md z-50 -translate-y-24 rounded-control bg-brand px-md py-sm font-semibold text-brand-text transition-transform focus:translate-y-0 motion-reduce:transition-none"
       >
-        {sidebarContent}
+        Bỏ qua đến nội dung chính
+      </a>
+
+      <aside className="fixed inset-y-0 left-0 hidden w-64 overflow-y-auto border-r border-neutral-border bg-neutral-surface lg:block">
+        {navigation}
       </aside>
 
-      {/* Mobile/tablet hamburger */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "0.75rem 1rem",
-          borderBottom: "1px solid #e5e7eb",
-          backgroundColor: "#f9fafb",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-        className="mobile-header"
-      >
-        <button
-          ref={hamburgerRef}
-          onClick={toggleDrawer}
-          aria-label="Open navigation menu"
-          aria-expanded={drawerOpen}
-          style={{
-            background: "none",
-            border: "1px solid #d1d5db",
-            borderRadius: "0.375rem",
-            padding: "0.5rem",
-            cursor: "pointer",
-            marginRight: "0.75rem",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
+      <div className="flex min-h-screen flex-col lg:ml-64">
+        <header className="sticky top-0 z-20 flex min-h-14 items-center gap-sm border-b border-neutral-border bg-neutral px-md lg:hidden">
+          <button
+            ref={triggerRef}
+            type="button"
+            onClick={() => setDrawerOpen((open) => !open)}
+            aria-label="Mở điều hướng"
+            aria-expanded={drawerOpen}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-neutral-border bg-neutral text-neutral-text transition-colors hover:bg-neutral-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none"
           >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-        <span style={{ fontWeight: 600, fontSize: "1.1rem" }}>{brand}</span>
-      </header>
-
-      {/* Mobile/tablet drawer overlay */}
-      {drawerOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 30,
-            display: "flex",
-          }}
-        >
-          {/* Backdrop */}
-          <div
-            onClick={closeDrawer}
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.3)",
-            }}
-            aria-hidden="true"
-          />
-          {/* Drawer panel */}
-          <nav
-            ref={drawerRef}
-            role="navigation"
-            aria-label="Main navigation"
-            style={{
-              position: "relative",
-              width: "280px",
-              maxWidth: "85vw",
-              backgroundColor: "#ffffff",
-              height: "100%",
-              overflowY: "auto",
-              boxShadow: "2px 0 12px rgba(0, 0, 0, 0.15)",
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "0.75rem 1rem",
-                borderBottom: "1px solid #e5e7eb",
-              }}
+            <svg
+              aria-hidden="true"
+              focusable="false"
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
             >
-              <span style={{ fontWeight: 600 }}>{brand}</span>
+              <path d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
+          </button>
+          <span className="font-semibold">LEOPARD</span>
+          <span className="text-body-compact text-neutral-muted">{roleContext.contextLabel}</span>
+        </header>
+
+        <main
+          id="noi-dung-chinh"
+          tabIndex={-1}
+          className="mx-auto w-full max-w-operations flex-1 bg-neutral p-lg text-neutral-text"
+        >
+          {children}
+        </main>
+      </div>
+
+      {drawerOpen ? (
+        <div className="fixed inset-0 z-40">
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            onClick={closeDrawer}
+            className="absolute inset-0 bg-neutral-text/40"
+          />
+          <div
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="operations-drawer-title"
+            className="relative z-10 h-full w-72 max-w-full overflow-y-auto border-r border-neutral-border bg-neutral"
+          >
+            <div className="flex min-h-14 items-center justify-between border-b border-neutral-border px-md">
+              <h2 id="operations-drawer-title" className="font-semibold">
+                {roleContext.drawerLabel}
+              </h2>
               <button
                 ref={closeButtonRef}
+                type="button"
                 onClick={closeDrawer}
-                aria-label="Close navigation menu"
-                style={{
-                  background: "none",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "0.375rem",
-                  padding: "0.5rem",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                aria-label="Đóng điều hướng"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-neutral-border bg-neutral text-neutral-text transition-colors hover:bg-neutral-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none"
               >
                 <svg
-                  width="20"
-                  height="20"
+                  aria-hidden="true"
+                  focusable="false"
+                  className="h-5 w-5"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -266,53 +222,10 @@ export function OperationsShell({
                 </svg>
               </button>
             </div>
-            {sidebarContent}
-          </nav>
+            {navigation}
+          </div>
         </div>
-      )}
-
-      {/* Main content area */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-        className="content-wrapper"
-      >
-        <main
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "1.5rem",
-          }}
-        >
-          {children}
-        </main>
-      </div>
-
-      {/* Responsive styles */}
-      <style jsx>{`
-        /* Desktop: show sidebar, hide mobile header */
-        @media (min-width: 1024px) {
-          .desktop-sidebar {
-            display: block;
-          }
-          .mobile-header {
-            display: none;
-          }
-          .content-wrapper {
-            margin-left: 260px;
-          }
-        }
-        /* Tablet and below: show mobile header, hide desktop sidebar */
-        @media (max-width: 1023px) {
-          .desktop-sidebar {
-            display: none;
-          }
-        }
-      `}</style>
+      ) : null}
     </div>
   );
 }
