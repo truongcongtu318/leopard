@@ -1,12 +1,16 @@
 # Wave 4 Static UI/UX Parallel Execution Plan
 
-> **Status:** `PROPOSED`. Plan này cho phép làm sớm phần presentation của Wave 4 trong lúc Wave 3 hoàn thiện backend. Nó không thay đổi requirement và không được dùng để đánh dấu PH-12 `VERIFIED` trước khi tích hợp API/Socket thật và E2E đạt.
+> **Status:** `IN_PROGRESS`. Plan này cho phép làm sớm phần presentation của Wave 4 trong lúc Wave 3 hoàn thiện backend. Nó không thay đổi requirement và không được dùng để đánh dấu PH-12 `VERIFIED` trước khi tích hợp API/Socket thật và E2E đạt.
 
 **Goal:** Hoàn thiện UI/UX tĩnh cho bốn journey Customer, Driver, Fleet Owner và Admin trên các role design systems đã duyệt và fixture xác định, sau đó nối backend Wave 3 qua adapter mà không viết lại màn hình.
 
 **Architecture:** Một LEOPARD design language chung được triển khai thành Mobile Design System cho Customer/Driver và Operations Design System cho Fleet/Admin; mỗi role có system-design specification và pattern catalogue riêng. Screen/component chỉ phụ thuộc feature-local view model và port. Fixture adapter chỉ được inject trong test hoặc local preview có nhãn rõ; API/Socket/upload/location adapters được bổ sung sau contract handoff của Wave 3. Backend tiếp tục sở hữu authorization, lifecycle, pricing, ETA, payment và mọi business rule.
 
 **Baseline đề xuất:** `bfe5a41` — Wave 2 đã đóng và CI xanh. Mỗi lane phải xác nhận lại SHA trước khi tạo worktree.
+
+**Execution checkpoint 2026-08-15:** plan đã publish tại `198bd42` trên `develop`;
+W4-S00, W4-DS00 và W4-DS01..DS04 đã qua independent review; W4-S01 và W4-S04
+đang chạy song song. Static journey và runtime evidence vẫn pending.
 
 **Plan liên quan:** `10-fleet-owner.md`, `11-admin-operations.md`, `12-cross-client-integration.md`.
 
@@ -80,12 +84,12 @@ Không tạo bốn palette/token set độc lập. Chất lượng và tính nh�
 
 ### Design direction theo role
 
-| Role | Purpose và audience | Tone/density | Ưu tiên thị giác | Chi tiết nhận diện |
-| --- | --- | --- | --- | --- |
-| Customer | Hướng dẫn người gửi tạo và theo dõi đơn ít sai sót | Bình tĩnh, rõ ràng, density vừa | Current order, route, giá và ETA | `Route Spine` nối pickup–stops–dropoff và timeline |
-| Driver | Hỗ trợ thao tác nhanh ngoài hiện trường | Action-first, tương phản cao, touch lớn | Trạng thái hiện tại, đúng một next action, tracking/offline | Active-trip rail luôn cho biết chuyến và trạng thái gửi vị trí |
-| Fleet Owner | Quét nhanh tình trạng fleet ở chế độ chỉ đọc | Cô đọng, yên tĩnh, exception-first | Scope fleet, unavailable Drivers, active orders | Fleet-scope marker luôn hiện tại list/detail |
-| Admin | Điều tra và xử lý ngoại lệ có audit | Dense, kỹ thuật, filter-first | Health, exception, ownership và audit context | Audit rail liên kết action–reason–request ID |
+| Role        | Purpose và audience                                | Tone/density                            | Ưu tiên thị giác                                            | Chi tiết nhận diện                                             |
+| ----------- | -------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------- |
+| Customer    | Hướng dẫn người gửi tạo và theo dõi đơn ít sai sót | Bình tĩnh, rõ ràng, density vừa         | Current order, route, giá và ETA                            | `Route Spine` nối pickup–stops–dropoff và timeline             |
+| Driver      | Hỗ trợ thao tác nhanh ngoài hiện trường            | Action-first, tương phản cao, touch lớn | Trạng thái hiện tại, đúng một next action, tracking/offline | Active-trip rail luôn cho biết chuyến và trạng thái gửi vị trí |
+| Fleet Owner | Quét nhanh tình trạng fleet ở chế độ chỉ đọc       | Cô đọng, yên tĩnh, exception-first      | Scope fleet, unavailable Drivers, active orders             | Fleet-scope marker luôn hiện tại list/detail                   |
+| Admin       | Điều tra và xử lý ngoại lệ có audit                | Dense, kỹ thuật, filter-first           | Health, exception, ownership và audit context               | Audit rail liên kết action–reason–request ID                   |
 
 `Route Spine` là motif chức năng dùng chung, không phải trang trí: bản đầy đủ ở mobile detail và bản cô đọng ở Fleet/Admin detail. Không dùng gradient tím, glassmorphism, nested decorative cards, oversized hero hoặc animation không truyền đạt state.
 
@@ -103,13 +107,13 @@ Mỗi role system-design document phải có đủ: purpose/audience, design dir
 
 ### Skill contract cho mọi UI task
 
-| Skill | Khi bắt buộc dùng | Evidence phải bàn giao |
-| --- | --- | --- |
-| `design-system` | Trước foundation và tại static gate | Baseline audit, token/component inventory, parity check, 10-dimension score và AI-slop review |
-| `frontend-design-direction` | Trước khi code từng role | Purpose, audience, tone, density, memorable detail và constraints được ghi trong role spec |
-| `frontend-patterns` | Mọi Fleet/Admin React/Next task | Component composition, thin routes, URL/form/server-state ownership, stable loading/error rendering và performance review |
-| `react-native-patterns` | Mọi Customer/Driver Expo task | Thin routes, validated params, state separation, virtualized lists, `StyleSheet`, safe area/Dynamic Type và native API boundary review |
-| `frontend-a11y` | Mọi web form/dialog/filter/table và static gate | Semantic HTML, connected labels/errors, keyboard operation, focus restore/trap, live regions và reduced-motion evidence |
+| Skill                       | Khi bắt buộc dùng                               | Evidence phải bàn giao                                                                                                                 |
+| --------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `design-system`             | Trước foundation và tại static gate             | Baseline audit, token/component inventory, parity check, 10-dimension score và AI-slop review                                          |
+| `frontend-design-direction` | Trước khi code từng role                        | Purpose, audience, tone, density, memorable detail và constraints được ghi trong role spec                                             |
+| `frontend-patterns`         | Mọi Fleet/Admin React/Next task                 | Component composition, thin routes, URL/form/server-state ownership, stable loading/error rendering và performance review              |
+| `react-native-patterns`     | Mọi Customer/Driver Expo task                   | Thin routes, validated params, state separation, virtualized lists, `StyleSheet`, safe area/Dynamic Type và native API boundary review |
+| `frontend-a11y`             | Mọi web form/dialog/filter/table và static gate | Semantic HTML, connected labels/errors, keyboard operation, focus restore/trap, live regions và reduced-motion evidence                |
 
 Skill phải xuất hiện trong task prompt và handoff của agent; chỉ ghi tên skill trong plan nhưng không có evidence không được tính là đã áp dụng. Mobile accessibility dùng React Native roles/labels, touch target, Dynamic Type và screen-reader checks theo `react-native-patterns`; web dùng thêm gate chi tiết của `frontend-a11y`.
 
@@ -143,32 +147,32 @@ Quy tắc:
 
 ## Ownership lock
 
-| Surface | Owner khi chạy song song | Ghi chú |
-| --- | --- | --- |
-| `apps/api/src/tracking/**`, `media/**`, `payments/**`, `fleets/**`, `admin/**`, `audit/**` | Wave 3 | Bao gồm policy, persistence, REST và Socket |
-| `apps/api/test/**`, Prisma, migration, backend seed | Wave 3 | Wave 4 chỉ consume handoff |
-| `apps/mobile/app/(customer)/**`, `src/features/customer/**` | Customer UI lane | Không sửa navigation/auth foundation |
-| `apps/mobile/app/(driver)/**`, `src/features/driver/**` | Driver UI lane | Không sửa navigation/auth foundation |
-| `apps/admin/src/app/(fleet)/**`, `src/features/fleet/**`, Fleet Playwright | Fleet UI lane | Nhận phần frontend của PH-10-T03/T04 |
-| `apps/admin/src/app/(admin)/**`, `src/features/admin/**`, Admin Playwright | Admin UI lane | Nhận phần frontend của PH-11-T03/T04 |
-| `apps/mobile/src/ui/**`, `packages/ui/**` | UI Foundation Owner duy nhất | Merge trước khi mở bốn role lanes |
-| `docs/ui/04-design-system.md`, token parity, quality scorecard | Design System Owner duy nhất | Role lanes không tự thêm core token |
-| `docs/ui/07-*.md`..`10-*.md`, role preview catalogue | Role UI owner | Duyệt trước screen implementation |
-| layouts, shells, tokens, common API clients | Integration Owner | Chỉ sửa khi có blocker được ghi nhận |
-| `packages/shared/**`, OpenAPI, root config/lockfile | Controlled-surface owner | Bắt buộc change request; static UI không sửa |
+| Surface                                                                                    | Owner khi chạy song song     | Ghi chú                                      |
+| ------------------------------------------------------------------------------------------ | ---------------------------- | -------------------------------------------- |
+| `apps/api/src/tracking/**`, `media/**`, `payments/**`, `fleets/**`, `admin/**`, `audit/**` | Wave 3                       | Bao gồm policy, persistence, REST và Socket  |
+| `apps/api/test/**`, Prisma, migration, backend seed                                        | Wave 3                       | Wave 4 chỉ consume handoff                   |
+| `apps/mobile/app/(customer)/**`, `src/features/customer/**`                                | Customer UI lane             | Không sửa navigation/auth foundation         |
+| `apps/mobile/app/(driver)/**`, `src/features/driver/**`                                    | Driver UI lane               | Không sửa navigation/auth foundation         |
+| `apps/admin/src/app/(fleet)/**`, `src/features/fleet/**`, Fleet Playwright                 | Fleet UI lane                | Nhận phần frontend của PH-10-T03/T04         |
+| `apps/admin/src/app/(admin)/**`, `src/features/admin/**`, Admin Playwright                 | Admin UI lane                | Nhận phần frontend của PH-11-T03/T04         |
+| `apps/mobile/src/ui/**`, `packages/ui/**`                                                  | UI Foundation Owner duy nhất | Merge trước khi mở bốn role lanes            |
+| `docs/ui/04-design-system.md`, token parity, quality scorecard                             | Design System Owner duy nhất | Role lanes không tự thêm core token          |
+| `docs/ui/07-*.md`..`10-*.md`, role preview catalogue                                       | Role UI owner                | Duyệt trước screen implementation            |
+| layouts, shells, tokens, common API clients                                                | Integration Owner            | Chỉ sửa khi có blocker được ghi nhận         |
+| `packages/shared/**`, OpenAPI, root config/lockfile                                        | Controlled-surface owner     | Bắt buộc change request; static UI không sửa |
 
 ## Scenario matrix tối thiểu
 
-| Journey | Success data | States bổ sung bắt buộc |
-| --- | --- | --- |
-| Customer order list | Nhiều status, pagination | loading, empty, error, permission-denied |
-| Customer create | pickup, 0–3 stops, dropoff, estimate | invalid field, estimate loading/error/expired, submit pending |
-| Customer detail | timeline, route, Driver, media, payment | no Driver, stale/no location, QR expired, cancel unavailable |
-| Driver orders | availability, active banner, requested list | empty, offline, accept pending, 409 race conflict |
-| Driver workflow | next valid state, tracking state, proof | permission denied, upload error, proof required, reconnect |
-| Fleet dashboard | KPI, alerts, recent orders | loading, empty, error, permission-denied |
-| Fleet drivers/orders/detail | filters, pagination, route/payment/tracking | no result, stale location, map fallback, foreign URL denial |
-| Admin dashboard/lists/detail | KPI, filters, audit/action affordances | readiness warning, no result, command error, permission-denied |
+| Journey                      | Success data                                | States bổ sung bắt buộc                                        |
+| ---------------------------- | ------------------------------------------- | -------------------------------------------------------------- |
+| Customer order list          | Nhiều status, pagination                    | loading, empty, error, permission-denied                       |
+| Customer create              | pickup, 0–3 stops, dropoff, estimate        | invalid field, estimate loading/error/expired, submit pending  |
+| Customer detail              | timeline, route, Driver, media, payment     | no Driver, stale/no location, QR expired, cancel unavailable   |
+| Driver orders                | availability, active banner, requested list | empty, offline, accept pending, 409 race conflict              |
+| Driver workflow              | next valid state, tracking state, proof     | permission denied, upload error, proof required, reconnect     |
+| Fleet dashboard              | KPI, alerts, recent orders                  | loading, empty, error, permission-denied                       |
+| Fleet drivers/orders/detail  | filters, pagination, route/payment/tracking | no result, stale location, map fallback, foreign URL denial    |
+| Admin dashboard/lists/detail | KPI, filters, audit/action affordances      | readiness warning, no result, command error, permission-denied |
 
 ## Static implementation tasks
 
