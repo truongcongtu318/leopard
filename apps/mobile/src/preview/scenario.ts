@@ -1,4 +1,4 @@
-import { resolveMobilePreviewMode, type MobilePreviewModeInput } from './preview-mode';
+import { resolveMobilePreviewMode } from './preview-mode';
 
 export const UI_SCENARIO_NAMES = Object.freeze([
   'loading',
@@ -26,10 +26,12 @@ export type MobilePreviewFixture = Readonly<{
   scenario: UiScenario;
 }>;
 
-export type MobilePreviewSelectionInput = MobilePreviewModeInput &
-  Readonly<{
-    scenarioName: UiScenarioName;
-  }>;
+export type MobilePreviewScenarioProvider = () => Promise<UiScenarioName>;
+
+export type CreateMobilePreviewSelectionInput = Readonly<{
+  localPreviewEnabled: boolean;
+  scenarioProvider: MobilePreviewScenarioProvider;
+}>;
 
 export type MobilePreviewSelection =
   | Readonly<{
@@ -87,12 +89,15 @@ function createMobilePreviewFixture(scenarioName: UiScenarioName): MobilePreview
   });
 }
 
-export function createMobilePreviewSelection({
-  environment,
+export async function createMobilePreviewSelection({
   localPreviewEnabled,
-  scenarioName,
-}: MobilePreviewSelectionInput): MobilePreviewSelection {
-  const mode = resolveMobilePreviewMode({ environment, localPreviewEnabled });
+  scenarioProvider,
+}: CreateMobilePreviewSelectionInput): Promise<MobilePreviewSelection> {
+  const mode = resolveMobilePreviewMode({
+    environment: process.env.NODE_ENV,
+    buildPreviewFlag: process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW,
+    localPreviewEnabled,
+  });
 
   if (mode === 'runtime') {
     return Object.freeze({
@@ -101,6 +106,8 @@ export function createMobilePreviewSelection({
       bannerRequired: false,
     });
   }
+
+  const scenarioName = await scenarioProvider();
 
   return Object.freeze({
     mode,

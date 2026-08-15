@@ -1,11 +1,11 @@
 export { MOBILE_PREVIEW_BANNER_TEXT, PreviewBanner } from './PreviewBanner';
-export { resolveMobilePreviewMode } from './preview-mode';
-export type { MobilePreviewMode, MobilePreviewModeInput } from './preview-mode';
+export { MOBILE_PREVIEW_ENABLED_FLAG } from './preview-mode';
 export { UI_SCENARIO_NAMES, createMobilePreviewSelection } from './scenario';
 export type {
+  CreateMobilePreviewSelectionInput,
   MobilePreviewFixture,
+  MobilePreviewScenarioProvider,
   MobilePreviewSelection,
-  MobilePreviewSelectionInput,
   UiScenario,
   UiScenarioCopy,
   UiScenarioName,
