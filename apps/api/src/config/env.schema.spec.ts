@@ -19,6 +19,17 @@ const validProductionEnv: NodeJS.ProcessEnv = {
   ALLOW_DEMO_PROVIDER: 'false',
   VIETMAP_API_KEY: 'vietmap-production-key',
   FIREBASE_PROJECT_ID: 'leopard-production',
+  SOCKET_PROVIDER: 'in-memory',
+  ALLOW_IN_MEMORY_SOCKET_PROVIDER: 'true',
+  STORAGE_PROVIDER: 's3',
+  S3_ACCESS_KEY_ID: '1234567890',
+  S3_SECRET_ACCESS_KEY: '1234567890',
+  S3_BUCKET: 'bucket',
+  S3_REGION: 'us-east-1',
+  PAYMENT_PROVIDER: 'payos',
+  PAYOS_CLIENT_ID: '1234567890',
+  PAYOS_API_KEY: '1234567890',
+  PAYOS_CHECKSUM_KEY: '1234567890',
 };
 
 describe('production environment schema', () => {
@@ -39,6 +50,9 @@ describe('production environment schema', () => {
     'PRICING_VEHICLE_RATES_JSON',
     'VIETMAP_API_KEY',
     'FIREBASE_PROJECT_ID',
+    'SOCKET_PROVIDER',
+    'STORAGE_PROVIDER',
+    'PAYMENT_PROVIDER',
   ])('fails fast when %s is missing', (name) => {
     expect(() => parseEnv({ ...validProductionEnv, [name]: undefined })).toThrow();
   });

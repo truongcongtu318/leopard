@@ -110,6 +110,7 @@ function parseFirebaseTokenFixture(
     AuthService,
     TokenService,
     RefreshSessionRepository,
+    AccountStatusCache,
     AccessTokenGuard,
     RoleGuard,
     ResourcePolicy,

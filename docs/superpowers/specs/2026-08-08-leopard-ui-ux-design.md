@@ -26,6 +26,17 @@
 
 Cảm hứng từ ruộng lúa, trời xanh, sông nước Việt Nam.
 
+**Brand Palette — 4 màu chính (đồng bộ canvas Stitch):**
+
+| Màu | Hex | Vai trò |
+|-----|-----|---------|
+| **Primary** | `#0F766E` | Màu brand chính — primary actions, header, accent |
+| **Secondary** | `#CCFBF1` | Màu phụ — selected bg, badge, nền nhẹ |
+| **Tertiary** | `#9C573A` | Màu nhấn ấm — họa tiết Đông Sơn, icon, highlight |
+| **Neutral** | `#747877` | Màu trung tính — text phụ, border, icon mặc định |
+
+> Mỗi màu có thang tint/shade **T0 → T100** (T0 = `#000000`, T100 = `#FFFFFF`).
+
 **Light Mode (mặc định)**
 
 | Token | Hex | Usage |
@@ -179,14 +190,17 @@ Kết hợp họa tiết Đông Sơn (hình học, đối xứng) với phong c�
 | 📋 Đơn hàng | `/fleet/orders` | Server pagination, filter status/driver/date |
 | 📈 Báo cáo | `/fleet/reports` | Revenue chart, driver performance |
 
-**Admin — 5 Sidebar Items:**
+**Admin — 6 Sidebar Items (đồng bộ canvas Stitch):**
 | Mục | Route | Nội dung |
 |-----|-------|----------|
 | 📊 Tổng quan | `/admin` | Operation KPIs, status breakdown, alerts |
+| 🚚 Vận tải | `/admin/transport` | Quản lý vận tải |
+| 🏬 Kho bãi | `/admin/warehouse` | Quản lý kho bãi |
 | 📋 Đơn hàng | `/admin/orders` | Table, sort, filter, bulk actions |
-| 👥 Người dùng | `/admin/users` | Search, filter, status management |
-| 🚛 Đội xe | `/admin/fleets` | Fleet list, fleet detail |
+| 🏍️ Tài xế | `/admin/drivers` | Search, filter, status management |
 | ⚙️ Cài đặt | `/admin/settings` | System config, rate cards |
+
+> Footer sidebar: **Hỗ trợ** + **Đăng xuất**. Nút **"Tạo vận đơn mới"** ở đầu sidebar.
 
 **Sidebar behavior:** Cố định từ 1024px. Tablet/mobile dùng drawer (hamburger menu). Sidebar có logo LEOPARD + PatternWave divider + PatternRice accent ở góc dưới.
 
@@ -266,12 +280,10 @@ Kết hợp họa tiết Đông Sơn (hình học, đối xứng) với phong c�
 - Empty: illustration shipper Đông Sơn + "Bạn chưa có đơn hàng nào"
 - Loading: 3 skeleton cards với shimmer sóng nước
 
-#### Tạo đơn hàng mới
-- Address search với autocomplete (Vietmap)
-- Thêm điểm dừng (tùy chọn, tối đa 5)
-- Chọn loại xe: segmented control (🛵 Xe máy / 📦 Xe tải / 🚛 Xe lớn)
-- Ghi chú hàng hóa (tùy chọn)
-- ETA & Giá panel: hiện sau khi nhập đủ điểm đi/đến
+#### Tạo đơn hàng mới (wizard 3 bước — đồng bộ canvas Stitch)
+- **Bước 1:** Address search với autocomplete (Vietmap), điểm đi/đến
+- **Bước 2:** Thêm điểm dừng (tùy chọn, tối đa 5), chọn loại xe: segmented control (🛵 Xe máy / 📦 Xe tải / 🚛 Xe lớn)
+- **Bước 3:** Ghi chú hàng hóa, xác nhận ETA & Giá, submit đơn
 - Demo label: "⚠️ Dữ liệu mô phỏng" khi source là DEMO
 - Submit button disabled đến khi có estimate token hợp lệ
 
@@ -323,12 +335,24 @@ Kết hợp họa tiết Đông Sơn (hình học, đối xứng) với phong c�
 - DataTable đơn hàng gần đây
 - Alert list: đơn quá hạn, bất thường
 
-#### Quản lý đơn hàng
-- DataTable: ID, khách, tài xế, status, thời gian, giá
-- FilterBar: status, ngày, tài xế, đội xe
-- Sort: tất cả cột
-- BulkActionBar: chọn nhiều → action hàng loạt
-- Click row → detail modal/slide panel
+#### Quản lý tài xế (Admin)
+- DataTable: tên tài xế, SĐT, đội xe, trạng thái, số đơn hôm nay, đánh giá
+- FilterBar: tìm kiếm (tên/SĐT), trạng thái (Online/Offline/Disabled), đội xe
+- Action: xem chi tiết, khóa/mở khóa tài xế
+- Pagination server-side
+
+#### Quản lý người dùng
+- DataTable người dùng + filter + status management
+
+#### Cài đặt hệ thống
+- 3 sections: **Cấu hình chung** (đăng ký Demo, số đơn/ngày, phí nền tảng %), **Bảo mật** (2FA, hết hạn OTP, đăng nhập sai tối đa), **Thông báo hệ thống** (SMS, Email, Push)
+- Nút "Lưu cài đặt" ở dưới
+
+### 7.5b Error States (dùng chung)
+
+- **403 — Từ chối truy cập:** banner LEOPARD + nút "Quay về trang chủ"
+- **404 — Không tìm thấy trang:** icon "?" + nút "Quay về trang chủ"
+- **500 — Lỗi máy chủ:** nút "Thử lại" + "Liên hệ hỗ trợ"
 
 ### 7.6 State Requirements (All Screens)
 
@@ -344,37 +368,69 @@ Kết hợp họa tiết Đông Sơn (hình học, đối xứng) với phong c�
 
 ---
 
-## 8. Target Screens Inventory
+## 8. Screens Inventory — Đã thiết kế trên Stitch
 
-### Mobile (12 screens)
+> Đồng bộ với canvas Stitch (project `9197524441544415939`). Tổng cộng **30 màn hình**.
+
+### Onboarding & Login (7 màn hình)
+| # | Screen | Platform | Role | Priority |
+|---|--------|----------|------|----------|
+| 1 | Onboarding Slide 1 | Mobile | All | P0 |
+| 2 | Onboarding Slide 2 | Mobile | All | P0 |
+| 3 | Onboarding Slide 3 | Mobile | All | P0 |
+| 4 | Đăng nhập | Mobile | All | P0 |
+| 5 | Xác thực OTP | Mobile | All | P0 |
+| 6 | Chọn tài khoản Demo | Mobile | All | P0 |
+| 7 | Đăng nhập Desktop | Web | All | P0 |
+
+### Customer (Mobile — 7 màn hình)
 | # | Screen | Role | Priority |
 |---|--------|------|----------|
-| 1 | Login + Onboarding | All | P0 |
-| 2 | Danh sách đơn hàng | Customer | P0 |
-| 3 | Tạo đơn hàng mới | Customer | P0 |
-| 4 | Chi tiết đơn hàng + Tracking | Customer | P0 |
-| 5 | Thông báo | Customer | P1 |
-| 6 | Tài khoản (Profile) | Customer | P1 |
-| 7 | Tổng quan | Driver | P0 |
-| 8 | Chi tiết đơn (đang chạy) | Driver | P0 |
-| 9 | Lịch sử đơn | Driver | P1 |
-| 10 | Tài khoản (Profile) | Driver | P1 |
-| 11 | Đánh giá sau giao hàng | Customer | P1 |
-| 12 | Delivery proof (chụp ảnh) | Driver | P1 |
+| 8 | Danh sách đơn hàng | Customer | P0 |
+| 9 | Tạo đơn hàng — Bước 1 | Customer | P0 |
+| 10 | Tạo đơn hàng — Bước 2 | Customer | P0 |
+| 11 | Tạo đơn hàng — Bước 3 | Customer | P0 |
+| 12 | Chi tiết đơn hàng — REQUESTED | Customer | P0 |
+| 13 | Thông báo | Customer | P1 |
+| 14 | Tài khoản (Profile) | Customer | P1 |
 
-### Web (8 screens)
+### Driver (Mobile — 4 màn hình)
 | # | Screen | Role | Priority |
 |---|--------|------|----------|
-| 13 | Login | All | P0 |
-| 14 | Tổng quan | Fleet Owner | P0 |
-| 15 | Quản lý tài xế | Fleet Owner | P1 |
-| 16 | Quản lý đơn hàng | Fleet Owner | P1 |
-| 17 | Báo cáo | Fleet Owner | P1 |
-| 18 | Tổng quan | Admin | P0 |
-| 19 | Quản lý đơn hàng | Admin | P1 |
-| 20 | Quản lý người dùng | Admin | P1 |
-| 21 | Quản lý đội xe | Admin | P1 |
-| 22 | Cài đặt hệ thống | Admin | P2 |
+| 15 | Tổng quan Tài xế | Driver | P0 |
+| 16 | Chi tiết đơn đang giao | Driver | P0 |
+| 17 | Lịch sử giao hàng | Driver | P1 |
+| 18 | Tài khoản (Profile) | Driver | P1 |
+
+### Fleet Owner (Web — 4 màn hình)
+| # | Screen | Role | Priority |
+|---|--------|------|----------|
+| 19 | Tổng quan | Fleet Owner | P0 |
+| 20 | Quản lý tài xế | Fleet Owner | P1 |
+| 21 | Quản lý đơn hàng | Fleet Owner | P1 |
+| 22 | Báo cáo | Fleet Owner | P1 |
+
+### Admin (Web — 5 màn hình)
+| # | Screen | Role | Priority |
+|---|--------|------|----------|
+| 23 | Admin Dashboard (Tổng quan) | Admin | P0 |
+| 24 | Quản lý đơn hàng | Admin | P1 |
+| 25 | Quản lý người dùng | Admin | P1 |
+| 26 | Quản lý tài xế | Admin | P1 |
+| 27 | Cài đặt hệ thống | Admin | P2 |
+
+### Error States (3 màn hình — dùng chung)
+| # | Screen | Role | Priority |
+|---|--------|------|----------|
+| 28 | 403 — Từ chối truy cập | All | P1 |
+| 29 | 404 — Không tìm thấy trang | All | P1 |
+| 30 | 500 — Lỗi máy chủ | All | P1 |
+
+### Design System Assets (trên canvas)
+- Color palette **Nhiệt Đới Xanh** (Primary `#0F766E`, Secondary `#CCFBF1`, Tertiary `#9C573A`, Neutral `#747877` + thang T0→T100)
+- Typography showcase (Crimson Pro, Be Vietnam Pro, JetBrains Mono)
+- Component previews (Button, Input, Select, Toggle, Icon)
+- Spec article `2026-08-08-leopard-ui-ux-design.md`
 
 ---
 
