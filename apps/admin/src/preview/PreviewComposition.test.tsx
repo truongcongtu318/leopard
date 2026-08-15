@@ -13,6 +13,7 @@ import {
   WEB_PREVIEW_ENABLED_FLAG,
   WebPreviewComposition,
   createWebPreviewSelection,
+  type WebUiScenario,
 } from ".";
 
 const originalNodeEnv = process.env.NODE_ENV;
@@ -47,9 +48,15 @@ describe("WebPreviewComposition", () => {
       }),
     });
     const renderRuntime = jest.fn(() => <p>Dữ liệu runtime</p>);
-    const renderFixture = jest.fn((scenario) => (
-      <p>{scenario.kind === "success" ? scenario.data.orderId : scenario.copy.title}</p>
-    ));
+    const renderFixture = jest.fn(
+      (scenario: WebUiScenario<Readonly<{ orderId: string }>>) => (
+        <p>
+          {scenario.kind === "success"
+            ? scenario.data.orderId
+            : scenario.copy.title}
+        </p>
+      ),
+    );
 
     render(
       <WebPreviewComposition
@@ -59,8 +66,8 @@ describe("WebPreviewComposition", () => {
       />,
     );
 
-    expect(screen.getByText(PREVIEW_BANNER_TEXT)).toBeInTheDocument();
-    expect(screen.getByText("preview-order-001")).toBeInTheDocument();
+    expect(screen.getByText(PREVIEW_BANNER_TEXT)).toBeTruthy();
+    expect(screen.getByText("preview-order-001")).toBeTruthy();
     expect(renderFixture).toHaveBeenCalledTimes(1);
     expect(renderRuntime).not.toHaveBeenCalled();
   });
@@ -86,8 +93,8 @@ describe("WebPreviewComposition", () => {
       />,
     );
 
-    expect(screen.getByText("Dữ liệu runtime")).toBeInTheDocument();
-    expect(screen.queryByText(PREVIEW_BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.getByText("Dữ liệu runtime")).toBeTruthy();
+    expect(screen.queryByText(PREVIEW_BANNER_TEXT)).toBeNull();
     expect(scenarioProvider).not.toHaveBeenCalled();
     expect(renderFixture).not.toHaveBeenCalled();
     expect(renderRuntime).toHaveBeenCalledTimes(1);

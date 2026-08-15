@@ -14,6 +14,7 @@ import {
   MOBILE_PREVIEW_ENABLED_FLAG,
   MobilePreviewComposition,
   createMobilePreviewSelection,
+  type MobilePreviewFixture,
 } from '.';
 
 const originalNodeEnv = process.env.NODE_ENV;
@@ -45,7 +46,7 @@ describe('MobilePreviewComposition', () => {
       scenarioProvider: async () => 'success',
     });
     const renderRuntime = jest.fn(() => <Text>Dữ liệu runtime</Text>);
-    const renderFixture = jest.fn((fixture) => (
+    const renderFixture = jest.fn((fixture: MobilePreviewFixture) => (
       <Text>{fixture.scenario.copy.title}</Text>
     ));
     const screen = await render(
