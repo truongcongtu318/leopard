@@ -122,7 +122,9 @@ describe("Button", () => {
 describe("StatusBadge", () => {
   const cases: Array<{ status: string; expectedClass: string }> = [
     { status: "DELIVERED", expectedClass: "bg-success" },
-    { status: "ACTIVE", expectedClass: "bg-success" },
+    { status: "ACTIVE", expectedClass: "bg-active" },
+    { status: "AVAILABLE", expectedClass: "bg-success" },
+    { status: "BUSY", expectedClass: "bg-active" },
     { status: "REQUESTED", expectedClass: "bg-info" },
     { status: "PICKING_UP", expectedClass: "bg-warning" },
     { status: "IN_TRANSIT", expectedClass: "bg-active" },
@@ -148,6 +150,21 @@ describe("StatusBadge", () => {
       expect(badge.className).toContain(expectedClass);
     },
   );
+
+  it("uses neutral styling for an unknown status", () => {
+    render(<StatusBadge status="AWAITING_REVIEW" />);
+
+    const badge = screen.getByText("AWAITING REVIEW");
+    expect(badge.className).toContain("bg-neutral-surface");
+    expect(badge.className).toContain("text-neutral-text");
+    expect(badge.className).toContain("border-neutral-border");
+  });
+
+  it("uses the dedicated pill radius token", () => {
+    render(<StatusBadge status="ACTIVE" />);
+
+    expect(screen.getByText("ACTIVE").className).toContain("rounded-pill");
+  });
 
   it("applies custom className", () => {
     render(<StatusBadge status="ACTIVE" className="my-badge" />);
