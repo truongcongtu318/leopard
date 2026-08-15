@@ -1,16 +1,48 @@
-import { describe, expect, it } from '@jest/globals';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
 import { colors, radius, spacing, typography } from '../theme/tokens';
+import * as previewBoundary from '.';
 import {
   MOBILE_PREVIEW_BANNER_TEXT,
+  MOBILE_PREVIEW_ENABLED_FLAG,
   PreviewBanner,
   UI_SCENARIO_NAMES,
   createMobilePreviewSelection,
-  resolveMobilePreviewMode,
   type UiScenarioName,
 } from '.';
+import { resolveMobilePreviewMode } from './preview-mode';
+
+const BUILD_FLAG_ENV = 'EXPO_PUBLIC_LEOPARD_UI_PREVIEW';
+const originalNodeEnv = process.env.NODE_ENV;
+const originalBuildFlag = process.env[BUILD_FLAG_ENV];
+
+function setEnvironment(name: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+}
+
+beforeEach(() => {
+  setEnvironment('NODE_ENV', 'test');
+  setEnvironment(BUILD_FLAG_ENV, MOBILE_PREVIEW_ENABLED_FLAG);
+});
+
+afterEach(() => {
+  setEnvironment('NODE_ENV', originalNodeEnv);
+  setEnvironment(BUILD_FLAG_ENV, originalBuildFlag);
+});
 
 describe('mobile preview scenario boundary', () => {
   it('defines the complete typed static-preview vocabulary', () => {
@@ -28,15 +60,20 @@ describe('mobile preview scenario boundary', () => {
 
   it.each(['loading', 'empty', 'error', 'success', 'permission-denied', 'offline'] as const)(
     'creates deterministic fresh objects for %s',
-    (scenarioName) => {
-      const input = {
-        environment: 'test',
+    async (scenarioName) => {
+      const firstProvider = jest.fn(async () => scenarioName);
+      const secondProvider = jest.fn(async () => scenarioName);
+      const first = await createMobilePreviewSelection({
         localPreviewEnabled: true,
-        scenarioName,
-      } as const;
-      const first = createMobilePreviewSelection(input);
-      const second = createMobilePreviewSelection(input);
+        scenarioProvider: firstProvider,
+      });
+      const second = await createMobilePreviewSelection({
+        localPreviewEnabled: true,
+        scenarioProvider: secondProvider,
+      });
 
+      expect(firstProvider).toHaveBeenCalledTimes(1);
+      expect(secondProvider).toHaveBeenCalledTimes(1);
       expect(first).toEqual(second);
       expect(first).not.toBe(second);
       expect(first.mode).toBe('fixtures');
@@ -52,17 +89,16 @@ describe('mobile preview scenario boundary', () => {
     },
   );
 
-  it('freezes the fixture and every nested object exposed to preview consumers', () => {
-    const selection = createMobilePreviewSelection({
-      environment: 'development',
+  it('freezes the fixture and every nested object exposed to preview consumers', async () => {
+    const selection = await createMobilePreviewSelection({
       localPreviewEnabled: true,
-      scenarioName: 'success',
+      scenarioProvider: async () => 'success',
     });
 
     expect(selection.mode).toBe('fixtures');
 
     if (selection.mode !== 'fixtures') {
-      throw new Error('Expected a guarded fixture selection in development mode.');
+      throw new Error('Expected a guarded fixture selection in test mode.');
     }
 
     const { fixture } = selection;
@@ -75,12 +111,14 @@ describe('mobile preview scenario boundary', () => {
   });
 
   it.each(['production', 'staging', undefined])(
-    'never exposes fixtures when environment is %s',
-    (environment) => {
-      const selection = createMobilePreviewSelection({
-        environment,
+    'never invokes the lazy fixture provider when trusted environment is %s',
+    async (environment) => {
+      setEnvironment('NODE_ENV', environment);
+      const scenarioProvider = jest.fn(async () => 'success' as const);
+
+      const selection = await createMobilePreviewSelection({
         localPreviewEnabled: true,
-        scenarioName: 'success',
+        scenarioProvider,
       });
 
       expect(selection).toEqual({
@@ -88,18 +126,43 @@ describe('mobile preview scenario boundary', () => {
         fixture: null,
         bannerRequired: false,
       });
+      expect(scenarioProvider).not.toHaveBeenCalled();
       expect(Object.isFrozen(selection)).toBe(true);
     },
   );
+
+  it('never invokes the lazy fixture provider without trusted build opt in', async () => {
+    setEnvironment(BUILD_FLAG_ENV, undefined);
+    const scenarioProvider = jest.fn(async () => 'success' as const);
+
+    const selection = await createMobilePreviewSelection({
+      localPreviewEnabled: true,
+      scenarioProvider,
+    });
+
+    expect(selection).toEqual({
+      mode: 'runtime',
+      fixture: null,
+      bannerRequired: false,
+    });
+    expect(scenarioProvider).not.toHaveBeenCalled();
+  });
+
+  it('does not expose raw factories or the pure resolver from the public boundary', () => {
+    expect(previewBoundary).not.toHaveProperty('createMobilePreviewFixture');
+    expect(previewBoundary).not.toHaveProperty('createUiScenario');
+    expect(previewBoundary).not.toHaveProperty('resolveMobilePreviewMode');
+  });
 });
 
 describe('mobile preview mode resolution', () => {
   it.each(['development', 'test'])(
-    'allows fixtures in %s with an explicit local flag',
+    'allows fixtures in %s with build and local opt in',
     (environment) => {
       expect(
         resolveMobilePreviewMode({
           environment,
+          buildPreviewFlag: MOBILE_PREVIEW_ENABLED_FLAG,
           localPreviewEnabled: true,
         }),
       ).toBe('fixtures');
@@ -107,13 +170,28 @@ describe('mobile preview mode resolution', () => {
   );
 
   it.each([
-    { environment: 'development', localPreviewEnabled: false },
-    { environment: 'test', localPreviewEnabled: false },
-    { environment: 'production', localPreviewEnabled: true },
-    { environment: 'production', localPreviewEnabled: false },
-    { environment: 'staging', localPreviewEnabled: true },
-    { environment: undefined, localPreviewEnabled: true },
-  ])('fails closed for $environment with local flag $localPreviewEnabled', (input) => {
+    {
+      environment: 'development',
+      buildPreviewFlag: MOBILE_PREVIEW_ENABLED_FLAG,
+      localPreviewEnabled: false,
+    },
+    { environment: 'test', buildPreviewFlag: undefined, localPreviewEnabled: true },
+    {
+      environment: 'production',
+      buildPreviewFlag: MOBILE_PREVIEW_ENABLED_FLAG,
+      localPreviewEnabled: true,
+    },
+    {
+      environment: 'staging',
+      buildPreviewFlag: MOBILE_PREVIEW_ENABLED_FLAG,
+      localPreviewEnabled: true,
+    },
+    {
+      environment: undefined,
+      buildPreviewFlag: MOBILE_PREVIEW_ENABLED_FLAG,
+      localPreviewEnabled: true,
+    },
+  ])('fails closed for $environment with explicit opt ins', (input) => {
     expect(resolveMobilePreviewMode(input)).toBe('runtime');
   });
 });
