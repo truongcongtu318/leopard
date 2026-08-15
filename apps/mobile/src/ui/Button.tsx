@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import { colors, control, radius, spacing, typography } from '../theme/tokens';
 
 type ButtonVariant = 'primary' | 'secondary' | 'destructive';
+type ButtonSize = 'default' | 'driver-primary';
 
 type ButtonProps = {
   label: string;
@@ -13,6 +14,7 @@ type ButtonProps = {
   isLoading?: boolean;
   disabledLabel?: string;
   loadingLabel?: string;
+  size?: ButtonSize;
 };
 
 const variantStyles = StyleSheet.create({
@@ -42,6 +44,15 @@ const variantTextStyles = StyleSheet.create({
   },
 });
 
+const sizeStyles = StyleSheet.create({
+  default: {
+    minHeight: control.minimumTouchHeight,
+  },
+  'driver-primary': {
+    minHeight: control.stickyPrimaryMinimumHeight,
+  },
+});
+
 export function Button({
   label,
   onPress,
@@ -50,6 +61,7 @@ export function Button({
   isLoading = false,
   disabledLabel,
   loadingLabel = 'Đang xử lý',
+  size = 'default',
 }: ButtonProps) {
   const isDisabled = disabled || isLoading;
   const visibleLabel = isLoading
@@ -66,6 +78,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.control,
+        sizeStyles[size],
         variantStyles[variant],
         pressed && !isDisabled ? styles.pressed : null,
         isDisabled ? styles.disabled : null,
@@ -83,7 +96,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.control,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: control.minimumTouchHeight,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },

@@ -15,6 +15,25 @@ export const radius = {
 
 export const control = {
   minimumTouchHeight: 44,
+  stickyPrimaryMinimumHeight: 48,
+} as const;
+
+export const motion = {
+  none: 0,
+  fast: 120,
+  standard: 180,
+  slow: 240,
+} as const;
+
+export const layout = {
+  contentMaxWidth: 768,
+  mapMinimumHeight: 280,
+} as const;
+
+const sectionTitle = {
+  fontSize: 20,
+  fontWeight: '600' as const,
+  lineHeight: 28,
 } as const;
 
 export const typography = {
@@ -31,11 +50,14 @@ export const typography = {
     fontSize: 16,
     lineHeight: 24,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600' as const,
-    lineHeight: 28,
+  sectionTitle,
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    lineHeight: 32,
   },
+  // Compatibility alias for existing primitives; new code should name the hierarchy.
+  title: sectionTitle,
 } as const;
 
 export const colors = {
