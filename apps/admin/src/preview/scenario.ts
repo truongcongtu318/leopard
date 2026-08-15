@@ -1,3 +1,8 @@
+import {
+  resolveWebPreviewMode,
+  type DisabledWebPreviewReason,
+} from "./preview-mode";
+
 export const WEB_UI_SCENARIO_NAMES = Object.freeze([
   "loading",
   "empty",
@@ -53,6 +58,45 @@ export type WebUiScenario<
   TData extends PreviewFixtureValue = PreviewFixtureValue,
 > = NonSuccessWebUiScenario | SuccessWebUiScenario<TData>;
 
+export type WebPreviewScenarioRequest<
+  TData extends PreviewFixtureValue = PreviewFixtureValue,
+> =
+  | Readonly<{
+      kind: Exclude<WebUiScenarioName, "success">;
+    }>
+  | Readonly<{
+      kind: "success";
+      data: TData;
+    }>;
+
+export type WebPreviewScenarioProvider<
+  TData extends PreviewFixtureValue = PreviewFixtureValue,
+> = () => Promise<WebPreviewScenarioRequest<TData>>;
+
+export type CreateWebPreviewSelectionInput<
+  TData extends PreviewFixtureValue = PreviewFixtureValue,
+> = Readonly<{
+  localFlag?: string | null;
+  scenarioProvider: WebPreviewScenarioProvider<TData>;
+}>;
+
+export type WebPreviewSelection<
+  TData extends PreviewFixtureValue = PreviewFixtureValue,
+> =
+  | Readonly<{
+      enabled: false;
+      source: "runtime";
+      reason: DisabledWebPreviewReason;
+      scenario: null;
+      bannerRequired: false;
+    }>
+  | Readonly<{
+      enabled: true;
+      source: "fixtures";
+      scenario: WebUiScenario<TData>;
+      bannerRequired: true;
+    }>;
+
 const SCENARIO_COPY = {
   loading: {
     title: "Đang tải dữ liệu",
@@ -95,20 +139,20 @@ function cloneFixtureValue<TValue extends PreviewFixtureValue>(
   return value;
 }
 
-export function createImmutableFixture<TFixture extends PreviewFixtureValue>(
+function createImmutableFixture<TFixture extends PreviewFixtureValue>(
   source: TFixture,
 ): TFixture {
   return cloneFixtureValue(source);
 }
 
-export function createWebUiScenario<TData extends PreviewFixtureValue>(
+function createWebUiScenario<TData extends PreviewFixtureValue>(
   kind: "success",
   data: TData,
 ): SuccessWebUiScenario<TData>;
-export function createWebUiScenario(
+function createWebUiScenario(
   kind: Exclude<WebUiScenarioName, "success">,
 ): NonSuccessWebUiScenario;
-export function createWebUiScenario<TData extends PreviewFixtureValue>(
+function createWebUiScenario<TData extends PreviewFixtureValue>(
   kind: WebUiScenarioName,
   data?: TData,
 ): WebUiScenario<TData> {
@@ -143,4 +187,35 @@ export function createWebUiScenario<TData extends PreviewFixtureValue>(
         copy: SCENARIO_COPY[kind],
       });
   }
+}
+
+export async function createWebPreviewSelection<
+  TData extends PreviewFixtureValue = PreviewFixtureValue,
+>(
+  input: CreateWebPreviewSelectionInput<TData>,
+): Promise<WebPreviewSelection<TData>> {
+  const resolution = resolveWebPreviewMode({
+    nodeEnv: process.env.NODE_ENV,
+    serverFlag: process.env.LEOPARD_UI_PREVIEW ?? null,
+    localFlag: input.localFlag ?? null,
+  });
+
+  if (!resolution.enabled) {
+    return Object.freeze({
+      ...resolution,
+      scenario: null,
+      bannerRequired: false,
+    });
+  }
+
+  const request = await input.scenarioProvider();
+  const scenario =
+    request.kind === "success"
+      ? createWebUiScenario("success", request.data)
+      : createWebUiScenario(request.kind);
+
+  return Object.freeze({
+    ...resolution,
+    scenario,
+  });
 }
