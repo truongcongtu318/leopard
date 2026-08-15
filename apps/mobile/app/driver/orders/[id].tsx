@@ -8,7 +8,7 @@ import { DriverPreviewRoute } from '../../../src/features/driver/orders/preview/
 import { ScreenScaffold } from '../../../src/ui/ScreenScaffold';
 import { ScreenState } from '../../../src/ui/ScreenState';
 
-export default function DriverOrderDetailRoute() {
+export default function DriverOrderDetailPage() {
   const params = useLocalSearchParams<{
     id?: string | string[];
     preview?: string | string[];

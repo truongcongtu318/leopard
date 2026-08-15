@@ -49,8 +49,8 @@ function createMockResponse(status: number, body: unknown): Response {
 
 describe('getMobileHome', () => {
   const cases = [
-    ['CUSTOMER', '/(customer)/orders'],
-    ['DRIVER', '/(driver)/orders'],
+    ['CUSTOMER', '/customer/orders'],
+    ['DRIVER', '/driver/orders'],
     ['FLEET_OWNER', '/(public)/login'],
     ['ADMIN', '/(public)/login'],
   ] as const;
@@ -133,8 +133,8 @@ describe('getMobileRouteDecision', () => {
   }
 
   const mismatchedCases = [
-    ['CUSTOMER', 'driver', '/(customer)/orders'],
-    ['DRIVER', 'customer', '/(driver)/orders'],
+    ['CUSTOMER', 'driver', '/customer/orders'],
+    ['DRIVER', 'customer', '/driver/orders'],
   ] as const;
 
   for (const [role, routeGroup, home] of mismatchedCases) {
@@ -253,7 +253,7 @@ describe('useProtectedLayout', () => {
         canRenderProtectedContent: false,
         kind: 'denied',
         reason: 'role-mismatch',
-        redirectTo: '/(customer)/orders',
+        redirectTo: '/customer/orders',
       });
     });
   });

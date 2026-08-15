@@ -8,7 +8,7 @@ import { CustomerPreviewRoute } from '../../../src/features/customer/orders/prev
 import { ScreenScaffold } from '../../../src/ui/ScreenScaffold';
 import { ScreenState } from '../../../src/ui/ScreenState';
 
-export default function CustomerOrderDetailRoute() {
+export default function CustomerOrderDetailPage() {
   const params = useLocalSearchParams<{
     id?: string | string[];
     preview?: string | string[];

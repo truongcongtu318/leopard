@@ -5,8 +5,8 @@ import { refreshSession } from '../api/http-client';
 import { sessionStore } from '../auth/session-store';
 
 export type MobileHome =
-  | '/(customer)/orders'
-  | '/(driver)/orders'
+  | '/customer/orders'
+  | '/driver/orders'
   | '/(public)/login';
 
 export type MobileProtectedRouteGroup = 'customer' | 'driver';
@@ -36,9 +36,9 @@ type MobileRouteContext = {
 export function getMobileHome(role: Role): MobileHome {
   switch (role) {
     case 'CUSTOMER':
-      return '/(customer)/orders';
+      return '/customer/orders';
     case 'DRIVER':
-      return '/(driver)/orders';
+      return '/driver/orders';
     case 'FLEET_OWNER':
     case 'ADMIN':
       return '/(public)/login';

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Button } from './Button';
+import { Button, type ButtonVariant } from './Button';
 import { cn } from './cn';
 import { ReadOnlyDetailList, type ReadOnlyDetailItem } from './ReadOnlyDetailList';
 
@@ -27,6 +27,7 @@ export type CommandDialogProps = Readonly<{
   state: CommandDialogState;
   title: string;
   commandLabel: string;
+  commandVariant?: Extract<ButtonVariant, 'primary' | 'destructive'>;
   targetItems: readonly ReadOnlyDetailItem[];
   consequence: string;
   reasonLabel: string;
@@ -85,6 +86,7 @@ export function CommandDialog({
   state,
   title,
   commandLabel,
+  commandVariant = 'destructive',
   targetItems,
   consequence,
   reasonLabel,
@@ -223,7 +225,7 @@ export function CommandDialog({
           aria-labelledby={titleId}
           onKeyDown={handleKeyDown}
           className={cn(
-            'max-h-full w-full max-w-xl overflow-y-auto rounded-card border border-danger-border bg-neutral p-lg text-neutral-text shadow-xl',
+            'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card border border-danger-border bg-neutral p-lg text-neutral-text shadow-xl',
             className,
           )}
         >
@@ -273,7 +275,7 @@ export function CommandDialog({
         aria-describedby={describedBy}
         onKeyDown={handleKeyDown}
         className={cn(
-          'max-h-full w-full max-w-xl overflow-y-auto rounded-card border border-neutral-border bg-neutral p-lg text-neutral-text shadow-xl',
+          'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card border border-neutral-border bg-neutral p-lg text-neutral-text shadow-xl',
           className,
         )}
       >
@@ -389,7 +391,7 @@ export function CommandDialog({
                   <Button variant="secondary" onPress={onClose} isDisabled={state === 'pending'}>
                     Hủy thao tác
                   </Button>
-                  <Button type="submit" variant="destructive" isLoading={state === 'pending'}>
+                  <Button type="submit" variant={commandVariant} isLoading={state === 'pending'}>
                     {state === 'pending' ? 'Đang xử lý…' : commandLabel}
                   </Button>
                 </div>

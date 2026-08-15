@@ -7,12 +7,14 @@ export type DataTableColumn = {
   key: string;
   header: string;
   sortable?: boolean;
+  className?: string;
   render?: (row: Record<string, unknown>) => React.ReactNode;
 };
 
 export type DataTableProps = {
   columns: DataTableColumn[];
   rows: Record<string, unknown>[];
+  caption?: string;
   isLoading?: boolean;
   emptyMessage?: string;
   onSort?: (sortKey: string) => void;
@@ -21,11 +23,11 @@ export type DataTableProps = {
   className?: string;
 };
 
-function SkeletonRow({ cols }: { cols: number }) {
+function SkeletonRow({ columns }: { columns: DataTableColumn[] }) {
   return (
     <tr aria-busy="true" role="row">
-      {Array.from({ length: cols }).map((_, i) => (
-        <td key={i} className="px-md py-sm">
+      {columns.map((column) => (
+        <td key={column.key} className={cn('px-md py-sm', column.className)}>
           <div className="h-4 w-full animate-pulse rounded bg-neutral-surface motion-reduce:animate-none" />
         </td>
       ))}
@@ -36,6 +38,7 @@ function SkeletonRow({ cols }: { cols: number }) {
 export function DataTable({
   columns,
   rows,
+  caption,
   isLoading = false,
   emptyMessage = "No data",
   onSort,
@@ -48,6 +51,7 @@ export function DataTable({
       className={cn("w-full overflow-x-auto rounded-card border border-neutral-border", className)}
     >
       <table role="table" className="w-full border-collapse text-left text-sm">
+        {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
           <tr role="row" className="border-b border-neutral-border bg-neutral-surface">
             {columns.map((col) => (
@@ -63,6 +67,7 @@ export function DataTable({
                 className={cn(
                   "font-semibold text-neutral-text",
                   col.sortable ? "p-0" : "px-md py-sm",
+                  col.className,
                 )}
               >
                 {col.sortable ? (
@@ -100,7 +105,7 @@ export function DataTable({
         <tbody>
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <SkeletonRow key={i} cols={columns.length} />
+              <SkeletonRow key={i} columns={columns} />
             ))
           ) : rows.length === 0 ? (
             <tr role="row">
@@ -119,7 +124,7 @@ export function DataTable({
                 className="border-b border-neutral-border last:border-b-0 hover:bg-neutral-surface/50"
               >
                 {columns.map((col) => (
-                  <td key={col.key} className="px-md py-sm text-neutral-text">
+                  <td key={col.key} className={cn('px-md py-sm text-neutral-text', col.className)}>
                     {col.render
                       ? col.render(row)
                       : String(row[col.key] ?? "")}

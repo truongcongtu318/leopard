@@ -59,6 +59,14 @@ describe('CommandDialog', () => {
     expect(screen.getByText('Đơn hàng sẽ không thể tiếp tục vận chuyển.')).toBeInTheDocument();
   });
 
+  it('uses an explicit dialog max width that cannot collide with the xl spacing token', () => {
+    renderDialog();
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveClass('max-w-[36rem]');
+    expect(dialog).not.toHaveClass('max-w-xl');
+  });
+
   it('connects the visible reason label, hint, count and invalid feedback', () => {
     renderDialog({
       state: 'invalid',
@@ -101,6 +109,18 @@ describe('CommandDialog', () => {
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledWith('Địa chỉ nhận không còn hợp lệ');
+  });
+
+  it('uses a non-destructive primary action when the command requests it', () => {
+    renderDialog({
+      commandLabel: 'Kích hoạt lại người dùng',
+      commandVariant: 'primary',
+      reasonValue: 'Đã xác minh yêu cầu kích hoạt lại',
+    });
+
+    const command = screen.getByRole('button', { name: 'Kích hoạt lại người dùng' });
+    expect(command).toHaveClass('bg-brand');
+    expect(command).not.toHaveClass('bg-danger');
   });
 
   it('blocks duplicate submission and Escape while pending', () => {

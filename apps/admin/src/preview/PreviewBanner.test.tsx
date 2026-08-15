@@ -38,9 +38,9 @@ describe("PreviewBanner", () => {
       "utf8",
     );
 
-    expect(globalStyles).toContain('@import "tailwindcss";');
-    expect(globalStyles).toContain(
-      '@import "../../../../packages/ui/src/tokens.css";',
+    expect(globalStyles).toMatch(/@import\s+['"]tailwindcss['"];/);
+    expect(globalStyles).toMatch(
+      /@import\s+['"]\.\.\/\.\.\/\.\.\/\.\.\/packages\/ui\/src\/tokens\.css['"];/,
     );
     expect(sharedTheme).not.toContain('@import "tailwindcss";');
     expect(sharedTheme).toContain("--color-warning:");

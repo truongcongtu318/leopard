@@ -353,6 +353,36 @@ describe('DataTable', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
+  it('supports an accessible table caption for operational scope', () => {
+    render(<DataTable caption="Đơn hàng trong phạm vi Admin hiện tại" columns={columns} rows={rows} />);
+
+    expect(
+      screen.getByRole('table', { name: 'Đơn hàng trong phạm vi Admin hiện tại' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Đơn hàng trong phạm vi Admin hiện tại')).toHaveClass('sr-only');
+  });
+
+  it('applies responsive priority classes to matching headers and cells', () => {
+    render(
+      <DataTable
+        columns={[
+          { key: 'id', header: 'ID' },
+          { key: 'status', header: 'Metadata phụ', className: 'hidden xl:table-cell' },
+        ]}
+        rows={[{ id: 1, status: 'Ẩn ở tablet' }]}
+      />,
+    );
+
+    expect(screen.getByRole('columnheader', { name: 'Metadata phụ' })).toHaveClass(
+      'hidden',
+      'xl:table-cell',
+    );
+    expect(screen.getByRole('cell', { name: 'Ẩn ở tablet' })).toHaveClass(
+      'hidden',
+      'xl:table-cell',
+    );
+  });
+
   it('renders custom render function for columns', () => {
     const cols = [
       { key: 'id', header: 'ID' },

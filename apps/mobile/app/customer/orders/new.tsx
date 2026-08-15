@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { normalizeRouteParam } from '../../../src/features/customer/orders/adapter';
 import { CustomerPreviewRoute } from '../../../src/features/customer/orders/preview/CustomerPreviewRoute';
 
-export default function CustomerCreateOrderRoute() {
+export default function CustomerCreateOrderPage() {
   const params = useLocalSearchParams<{
     preview?: string | string[];
     scenario?: string | string[];

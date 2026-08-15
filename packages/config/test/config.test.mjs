@@ -4,6 +4,8 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import eslintConfig from '../eslint/base.mjs';
+
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const tsconfigDirectory = path.resolve(testDirectory, '../tsconfig');
 
@@ -34,3 +36,11 @@ for (const configName of ['base', 'node', 'react-native', 'nextjs']) {
     assert.equal(config.compilerOptions.strict, true);
   });
 }
+
+test('eslint ignores generated browser-test artifacts', () => {
+  const globalIgnores = eslintConfig[0]?.ignores ?? [];
+
+  assert.ok(globalIgnores.includes('playwright-report/**'));
+  assert.ok(globalIgnores.includes('test-results/**'));
+  assert.ok(globalIgnores.includes('blob-report/**'));
+});

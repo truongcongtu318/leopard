@@ -4,11 +4,11 @@ import { getVerifiedOperationsUser } from '../../../lib/auth/server-session';
 import { redirect } from 'next/navigation';
 
 const adminNavItems = [
-  { label: 'Dashboard', href: '/admin' },
-  { label: 'Users', href: '/admin/users' },
-  { label: 'Fleets', href: '/admin/fleets' },
-  { label: 'Drivers', href: '/admin/drivers' },
-  { label: 'Orders', href: '/admin/orders' },
+  { label: 'Tổng quan', href: '/admin' },
+  { label: 'Đơn hàng', href: '/admin/orders' },
+  { label: 'Người dùng', href: '/admin/users' },
+  { label: 'Đội xe', href: '/admin/fleets' },
+  { label: 'Tài xế', href: '/admin/drivers' },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
