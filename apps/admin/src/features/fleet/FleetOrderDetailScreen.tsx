@@ -1,0 +1,149 @@
+import {
+  MapPanel,
+  OperationsPageHeader,
+  OperationalAlert,
+  ReadOnlyDetailList,
+  RouteSpine,
+  StatusBadge,
+  StatusTimeline,
+} from '@leopard/ui';
+
+import {
+  FleetBoundaryState,
+  FleetBreadcrumbs,
+  FleetNotice,
+  FleetReadOnlyNote,
+  FleetScopeRail,
+  FleetSurface,
+} from './FleetShared';
+import type { FleetOrderDetailRouteView } from './model';
+
+export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDetailRouteView }>) {
+  if (view.kind !== 'order-detail') {
+    return (
+      <div className="flex flex-col gap-md">
+        <OperationsPageHeader title="Chi tiết đơn" />
+        <FleetBoundaryState view={view} />
+      </div>
+    );
+  }
+
+  const { order } = view;
+  return (
+    <div className="flex flex-col gap-lg">
+      <FleetBreadcrumbs current="order-detail" orderReference={order.reference} />
+      <OperationsPageHeader
+        context="Chi tiết vận hành thuộc phạm vi đội xe"
+        isStale={order.tracking.state === 'stale'}
+        updatedAt={order.updatedAtLabel}
+        title={`Đơn ${order.reference}`}
+      />
+      <FleetScopeRail scope={view.scope} />
+      <FleetReadOnlyNote />
+      {view.notice ? <FleetNotice notice={view.notice} /> : null}
+
+      <div className="flex flex-wrap items-center gap-sm">
+        <StatusBadge domain="orderStatus" status={order.status} />
+        <StatusBadge domain="paymentStatus" status={order.payment.status} />
+        <span className="text-body-compact text-neutral-muted">{order.tracking.statusLabel}</span>
+      </div>
+
+      <div className="grid gap-lg xl:grid-cols-[minmax(0,3fr)_minmax(18rem,2fr)]">
+        <FleetSurface
+          description={`${order.eta.label} · ${order.eta.sourceLabel ?? 'Nguồn ETA chưa xác định'}`}
+          title="Lộ trình"
+        >
+          <RouteSpine
+            ariaLabel="Lộ trình đơn thuộc đội xe"
+            destination={order.route.destination}
+            isStale={order.tracking.state === 'stale'}
+            origin={order.route.origin}
+            stops={order.route.stops}
+          />
+        </FleetSurface>
+
+        <FleetSurface title="Thông tin phân công">
+          <ReadOnlyDetailList
+            ariaLabel="Thông tin phân công và hàng hóa"
+            items={[
+              { id: 'driver', label: 'Driver', value: order.driverLabel },
+              { id: 'customer', label: 'Customer', value: order.customerLabel },
+              { id: 'cargo', label: 'Hàng hóa', value: order.cargoSummary },
+              { id: 'updated', label: 'Cập nhật', value: order.updatedAtLabel },
+            ]}
+          />
+        </FleetSurface>
+      </div>
+
+      <MapPanel
+        height="large"
+        lastUpdated={order.tracking.lastUpdatedLabel}
+        state={order.tracking.state}
+        textAlternative={order.tracking.mapAlternative}
+        title="Tracking và vị trí gần nhất"
+      >
+        <div className="flex h-full min-h-map-min items-center justify-center p-md text-center text-body-compact text-neutral-muted">
+          Tuyến và marker mô phỏng; không được mô tả là vị trí trực tiếp.
+        </div>
+      </MapPanel>
+
+      <div className="grid gap-lg xl:grid-cols-2">
+        <FleetSurface title="Lịch sử trạng thái">
+          <StatusTimeline
+            ariaLabel="Lịch sử trạng thái đơn"
+            items={order.history.map((item) => ({
+              id: item.id,
+              label: item.label,
+              description: item.description,
+              timestamp: item.timestampLabel,
+              dateTime: item.dateTime,
+              isCurrent: item.isCurrent,
+            }))}
+          />
+        </FleetSurface>
+
+        <FleetSurface title="Thanh toán">
+          <ReadOnlyDetailList
+            ariaLabel="Tóm tắt thanh toán"
+            items={[
+              {
+                id: 'status',
+                label: 'Trạng thái',
+                value: <StatusBadge domain="paymentStatus" status={order.payment.status} />,
+              },
+              { id: 'amount', label: 'Số tiền', value: order.payment.amountLabel },
+              { id: 'method', label: 'Phương thức', value: order.payment.methodLabel },
+            ]}
+          />
+        </FleetSurface>
+      </div>
+
+      <FleetSurface
+        description="Chỉ hiển thị metadata đã được backend cho phép; không lộ signed URL."
+        title="Media"
+      >
+        {order.media.state === 'error' ? (
+          <OperationalAlert title="Không thể tải media" tone="warning">
+            <p>{order.media.message}</p>
+          </OperationalAlert>
+        ) : order.media.items.length === 0 ? (
+          <p className="text-body-compact text-neutral-muted">Chưa có media được phép hiển thị.</p>
+        ) : (
+          <ul className="m-0 grid list-none gap-sm p-0 sm:grid-cols-2">
+            {order.media.items.map((item) => (
+              <li
+                key={item.id}
+                className="rounded-control border border-neutral-border bg-neutral-surface p-sm"
+              >
+                <p className="font-semibold break-words">{item.label}</p>
+                <p className="mt-xxs text-body-compact text-neutral-muted">
+                  {item.mediaType} · {item.capturedAtLabel}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </FleetSurface>
+    </div>
+  );
+}

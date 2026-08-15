@@ -1,18 +1,23 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
+
+import { FleetPreviewRoute } from '../../../features/fleet/FleetPreviewRoute';
+import type { FleetSearchParams } from '../../../features/fleet/adapter';
+import { readFleetPreviewInput } from '../../../features/fleet/route-input';
 
 export const metadata: Metadata = {
-  title: "Fleet Dashboard — LEOPARD Operations",
+  title: 'Tổng quan đội xe — LEOPARD Operations',
 };
 
-export default function FleetDashboardPage() {
+export default async function FleetDashboardPage({
+  searchParams,
+}: Readonly<{ searchParams: Promise<FleetSearchParams> }>) {
+  const search = await searchParams;
+  const preview = readFleetPreviewInput(search);
   return (
-    <div>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem" }}>
-        Fleet Dashboard
-      </h1>
-      <p style={{ color: "#6b7280" }}>
-        Welcome to the fleet management dashboard.
-      </p>
-    </div>
+    <FleetPreviewRoute
+      localFlag={preview.localFlag}
+      scenario={preview.scenario}
+      screen="dashboard"
+    />
   );
 }
