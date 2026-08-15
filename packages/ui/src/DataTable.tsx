@@ -16,6 +16,8 @@ export type DataTableProps = {
   isLoading?: boolean;
   emptyMessage?: string;
   onSort?: (sortKey: string) => void;
+  sortKey?: string;
+  sortDirection?: "ascending" | "descending";
   className?: string;
 };
 
@@ -24,7 +26,7 @@ function SkeletonRow({ cols }: { cols: number }) {
     <tr aria-busy="true" role="row">
       {Array.from({ length: cols }).map((_, i) => (
         <td key={i} className="px-md py-sm">
-          <div className="h-4 w-full animate-pulse rounded bg-neutral-surface" />
+          <div className="h-4 w-full animate-pulse rounded bg-neutral-surface motion-reduce:animate-none" />
         </td>
       ))}
     </tr>
@@ -37,6 +39,8 @@ export function DataTable({
   isLoading = false,
   emptyMessage = "No data",
   onSort,
+  sortKey,
+  sortDirection,
   className,
 }: DataTableProps) {
   return (
@@ -50,20 +54,27 @@ export function DataTable({
               <th
                 key={col.key}
                 role="columnheader"
-                aria-sort={col.sortable ? "none" : undefined}
+                scope="col"
+                aria-sort={
+                  col.sortable && col.key === sortKey
+                    ? sortDirection
+                    : undefined
+                }
                 className={cn(
-                  "px-md py-sm font-semibold text-neutral-text",
-                  col.sortable && "cursor-pointer hover:bg-neutral-border/20 select-none",
+                  "font-semibold text-neutral-text",
+                  col.sortable ? "p-0" : "px-md py-sm",
                 )}
-                onClick={() => {
-                  if (col.sortable && onSort) {
-                    onSort(col.key);
-                  }
-                }}
               >
-                <span className="inline-flex items-center gap-1">
-                  {col.header}
-                  {col.sortable && (
+                {col.sortable ? (
+                  <button
+                    type="button"
+                    onClick={() => onSort?.(col.key)}
+                    className={cn(
+                      "flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1 bg-transparent px-md py-sm text-left text-sm font-semibold text-neutral-text",
+                      "hover:bg-neutral-border/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+                    )}
+                  >
+                    <span>{col.header}</span>
                     <svg
                       className="h-3 w-3 text-neutral-muted"
                       fill="none"
@@ -78,8 +89,10 @@ export function DataTable({
                         d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
                       />
                     </svg>
-                  )}
-                </span>
+                  </button>
+                ) : (
+                  col.header
+                )}
               </th>
             ))}
           </tr>

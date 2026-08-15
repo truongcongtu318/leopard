@@ -11,7 +11,11 @@ export { Pagination } from "./Pagination";
 export type { PaginationProps } from "./Pagination";
 
 export { FilterBar } from "./FilterBar";
-export type { FilterBarProps, FilterBarFilters } from "./FilterBar";
+export type {
+  FilterBarProps,
+  FilterBarFilters,
+  FilterBarStatusOption,
+} from "./FilterBar";
 
 export { ScreenState } from "./ScreenState";
 export type { ScreenStateProps } from "./ScreenState";

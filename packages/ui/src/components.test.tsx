@@ -253,9 +253,8 @@ describe("DataTable", () => {
       />,
     );
 
-    expect(screen.getByRole("columnheader", { name: "ID" })).toHaveAttribute(
+    expect(screen.getByRole("columnheader", { name: "ID" })).not.toHaveAttribute(
       "aria-sort",
-      "none",
     );
     expect(screen.getByRole("columnheader", { name: "Name" })).toHaveAttribute(
       "aria-sort",
@@ -278,6 +277,11 @@ describe("DataTable", () => {
       "aria-sort",
       "descending",
     );
+
+    rerender(<DataTable columns={columns} rows={rows} />);
+    expect(screen.getByRole("columnheader", { name: "Name" })).not.toHaveAttribute(
+      "aria-sort",
+    );
   });
 
   it("gives sortable headers a 44px target and visible focus treatment", () => {
@@ -285,6 +289,7 @@ describe("DataTable", () => {
 
     const sortButton = screen.getByRole("button", { name: "ID" });
     expect(sortButton).toHaveClass("min-h-11");
+    expect(sortButton).toHaveClass("min-w-11");
     expect(sortButton).toHaveClass("focus-visible:ring-2");
     expect(sortButton).toHaveClass("focus-visible:ring-brand");
   });
@@ -379,9 +384,26 @@ describe("Pagination", () => {
 // ---- FilterBar ----
 
 describe("FilterBar", () => {
+  const fleetMemberStatusOptions = [
+    { value: "", label: "Tất cả trạng thái thành viên" },
+    { value: "INVITED", label: "Đã mời" },
+    { value: "ACTIVE", label: "Đang tham gia" },
+    { value: "REMOVED", label: "Đã gỡ khỏi đội xe" },
+  ] as const;
+
+  const userStatusOptions = [
+    { value: "", label: "Tất cả trạng thái người dùng" },
+    { value: "ACTIVE", label: "Đang hoạt động" },
+    { value: "DISABLED", label: "Đã vô hiệu hóa" },
+  ] as const;
+
   it("renders visible labels connected to the search and status controls", () => {
     render(
-      <FilterBar filters={{ search: "", status: "" }} onFilterChange={() => {}} />,
+      <FilterBar
+        filters={{ search: "", status: "" }}
+        statusOptions={fleetMemberStatusOptions}
+        onFilterChange={() => {}}
+      />,
     );
 
     const searchInput = screen.getByLabelText("Tìm kiếm");
@@ -395,9 +417,13 @@ describe("FilterBar", () => {
     expect(statusLabel).toHaveAttribute("for", statusSelect.id);
   });
 
-  it("uses clear Vietnamese copy for every shared status option", () => {
-    render(
-      <FilterBar filters={{ search: "", status: "" }} onFilterChange={() => {}} />,
+  it("renders immutable domain-scoped status copy supplied by the caller", () => {
+    const { rerender } = render(
+      <FilterBar
+        filters={{ search: "", status: "ACTIVE" }}
+        statusOptions={fleetMemberStatusOptions}
+        onFilterChange={() => {}}
+      />,
     );
 
     expect(
@@ -406,22 +432,29 @@ describe("FilterBar", () => {
         label: option.textContent,
       })),
     ).toEqual([
-      { value: "", label: "Tất cả trạng thái" },
-      { value: "ACTIVE", label: "Đang hoạt động" },
-      { value: "DELIVERED", label: "Đã giao" },
-      { value: "REQUESTED", label: "Chờ tài xế" },
-      { value: "PICKING_UP", label: "Đang đến điểm lấy" },
-      { value: "IN_TRANSIT", label: "Đang vận chuyển" },
-      { value: "CANCELLED", label: "Đã hủy" },
-      { value: "DISABLED", label: "Đã vô hiệu hóa" },
-      { value: "FAILED", label: "Thất bại" },
-      { value: "ACCEPTED", label: "Đã nhận đơn" },
+      { value: "", label: "Tất cả trạng thái thành viên" },
       { value: "INVITED", label: "Đã mời" },
+      { value: "ACTIVE", label: "Đang tham gia" },
       { value: "REMOVED", label: "Đã gỡ khỏi đội xe" },
-      { value: "QR_CREATED", label: "Đã tạo mã QR" },
-      { value: "OFFLINE", label: "Ngoại tuyến" },
-      { value: "UNPAID", label: "Chưa thanh toán" },
-      { value: "PAID_MANUAL", label: "Đã xác nhận thanh toán" },
+    ]);
+
+    rerender(
+      <FilterBar
+        filters={{ search: "", status: "ACTIVE" }}
+        statusOptions={userStatusOptions}
+        onFilterChange={() => {}}
+      />,
+    );
+
+    expect(
+      screen.getAllByRole("option").map((option) => ({
+        value: (option as HTMLOptionElement).value,
+        label: option.textContent,
+      })),
+    ).toEqual([
+      { value: "", label: "Tất cả trạng thái người dùng" },
+      { value: "ACTIVE", label: "Đang hoạt động" },
+      { value: "DISABLED", label: "Đã vô hiệu hóa" },
     ]);
   });
 
@@ -429,6 +462,7 @@ describe("FilterBar", () => {
     render(
       <FilterBar
         filters={{ search: "test", status: "ACTIVE" }}
+        statusOptions={fleetMemberStatusOptions}
         onFilterChange={() => {}}
       />,
     );
@@ -439,6 +473,7 @@ describe("FilterBar", () => {
     render(
       <FilterBar
         filters={{ search: "test", status: "ACTIVE" }}
+        statusOptions={fleetMemberStatusOptions}
         onFilterChange={() => {}}
       />,
     );
@@ -461,7 +496,11 @@ describe("FilterBar", () => {
     try {
       const handleChange = jest.fn();
       render(
-        <FilterBar filters={{ search: "", status: "" }} onFilterChange={handleChange} />,
+        <FilterBar
+          filters={{ search: "", status: "" }}
+          statusOptions={fleetMemberStatusOptions}
+          onFilterChange={handleChange}
+        />,
       );
       const input = screen.getByLabelText("Tìm kiếm");
       fireEvent.change(input, { target: { value: "test" } });
@@ -481,7 +520,11 @@ describe("FilterBar", () => {
   it("calls onFilterChange immediately when status changes", () => {
     const handleChange = jest.fn();
     render(
-      <FilterBar filters={{ search: "", status: "" }} onFilterChange={handleChange} />,
+      <FilterBar
+        filters={{ search: "", status: "" }}
+        statusOptions={fleetMemberStatusOptions}
+        onFilterChange={handleChange}
+      />,
     );
     const select = screen.getByLabelText("Trạng thái");
     fireEvent.change(select, { target: { value: "ACTIVE" } });
@@ -493,7 +536,13 @@ describe("FilterBar", () => {
   it("returns a new filter object without mutating the input filters", () => {
     const filters = Object.freeze({ search: "existing", status: "INVITED" });
     const handleChange = jest.fn();
-    render(<FilterBar filters={filters} onFilterChange={handleChange} />);
+    render(
+      <FilterBar
+        filters={filters}
+        statusOptions={fleetMemberStatusOptions}
+        onFilterChange={handleChange}
+      />,
+    );
 
     fireEvent.change(screen.getByLabelText("Trạng thái"), {
       target: { value: "REMOVED" },
@@ -514,6 +563,7 @@ describe("FilterBar", () => {
       render(
         <FilterBar
           filters={{ search: "test", status: "ACTIVE" }}
+          statusOptions={fleetMemberStatusOptions}
           onFilterChange={handleChange}
         />,
       );
@@ -538,7 +588,11 @@ describe("FilterBar", () => {
     try {
       const handleChange = jest.fn();
       const { unmount } = render(
-        <FilterBar filters={{ search: "", status: "" }} onFilterChange={handleChange} />,
+        <FilterBar
+          filters={{ search: "", status: "" }}
+          statusOptions={fleetMemberStatusOptions}
+          onFilterChange={handleChange}
+        />,
       );
 
       fireEvent.change(screen.getByLabelText("Tìm kiếm"), {

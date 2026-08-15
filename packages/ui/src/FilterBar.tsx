@@ -8,33 +8,28 @@ export type FilterBarFilters = {
   status: string;
 };
 
+export type FilterBarStatusOption = {
+  readonly value: string;
+  readonly label: string;
+};
+
 export type FilterBarProps = {
   filters: FilterBarFilters;
+  statusOptions: readonly FilterBarStatusOption[];
   onFilterChange: (filters: FilterBarFilters) => void;
   className?: string;
 };
 
-const STATUS_OPTIONS = [
-  { value: "", label: "All statuses" },
-  { value: "ACTIVE", label: "Active" },
-  { value: "DELIVERED", label: "Delivered" },
-  { value: "REQUESTED", label: "Requested" },
-  { value: "PICKING_UP", label: "Picking Up" },
-  { value: "IN_TRANSIT", label: "In Transit" },
-  { value: "CANCELLED", label: "Cancelled" },
-  { value: "DISABLED", label: "Disabled" },
-  { value: "FAILED", label: "Failed" },
-  { value: "ACCEPTED", label: "Accepted" },
-  { value: "INVITED", label: "Invited" },
-  { value: "QR_CREATED", label: "QR Created" },
-  { value: "OFFLINE", label: "Offline" },
-  { value: "UNPAID", label: "Unpaid" },
-  { value: "PAID_MANUAL", label: "Paid Manual" },
-];
-
-export function FilterBar({ filters, onFilterChange, className }: FilterBarProps) {
+export function FilterBar({
+  filters,
+  statusOptions,
+  onFilterChange,
+  className,
+}: FilterBarProps) {
   const searchTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [localSearch, setLocalSearch] = React.useState(filters.search);
+  const searchInputId = React.useId();
+  const statusSelectId = React.useId();
 
   // Sync external search value when it changes from outside (e.g. clear)
   React.useEffect(() => {
@@ -81,52 +76,65 @@ export function FilterBar({ filters, onFilterChange, className }: FilterBarProps
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-sm",
+        "flex flex-wrap items-end gap-sm",
         className,
       )}
     >
-      <input
-        type="text"
-        placeholder="Search..."
-        value={localSearch}
-        onChange={handleSearchChange}
-        aria-label="Search"
-        className={cn(
-          "rounded-control border border-neutral-border bg-neutral px-sm py-2 text-sm text-neutral-text",
-          "placeholder:text-neutral-muted",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-          "flex-1 min-w-[200px]",
-        )}
-      />
+      <div className="flex min-w-[200px] flex-1 flex-col gap-xxs">
+        <label
+          htmlFor={searchInputId}
+          className="text-sm font-semibold text-neutral-text"
+        >
+          Tìm kiếm
+        </label>
+        <input
+          id={searchInputId}
+          type="text"
+          placeholder="Nhập từ khóa"
+          value={localSearch}
+          onChange={handleSearchChange}
+          className={cn(
+            "min-h-11 w-full rounded-control border border-neutral-border bg-neutral px-sm py-2 text-sm text-neutral-text",
+            "placeholder:text-neutral-muted",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+          )}
+        />
+      </div>
 
-      <select
-        role="combobox"
-        value={filters.status}
-        onChange={handleStatusChange}
-        aria-label="Filter by status"
-        className={cn(
-          "rounded-control border border-neutral-border bg-neutral px-sm py-2 text-sm text-neutral-text",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-        )}
-      >
-        {STATUS_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-col gap-xxs">
+        <label
+          htmlFor={statusSelectId}
+          className="text-sm font-semibold text-neutral-text"
+        >
+          Trạng thái
+        </label>
+        <select
+          id={statusSelectId}
+          value={filters.status}
+          onChange={handleStatusChange}
+          className={cn(
+            "min-h-11 rounded-control border border-neutral-border bg-neutral px-sm py-2 text-sm text-neutral-text",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+          )}
+        >
+          {statusOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {hasFilters && (
         <button
           type="button"
           onClick={handleClear}
-          aria-label="Clear filters"
           className={cn(
-            "inline-flex items-center rounded-control border border-neutral-border bg-neutral px-sm py-2 text-sm font-medium text-neutral-text",
-            "hover:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+            "inline-flex min-h-11 items-center rounded-control border border-neutral-border bg-neutral px-sm py-2 text-sm font-medium text-neutral-text",
+            "hover:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
           )}
         >
-          Clear
+          Xóa bộ lọc
         </button>
       )}
     </div>
