@@ -117,27 +117,32 @@ consume semantic role; không chọn màu theo cảm tính hoặc theo tên hue.
 
 ### 4.2 Canonical status mapping
 
-| Domain state       | Semantic role | Nhãn hiển thị tiếng Việt |
-| ------------------ | ------------- | ------------------------ |
-| `REQUESTED`        | `info`        | Chờ tài xế               |
-| `ACCEPTED`         | `active`      | Đã nhận đơn              |
-| `PICKING_UP`       | `warning`     | Đang đến điểm lấy        |
-| `IN_TRANSIT`       | `active`      | Đang vận chuyển          |
-| `DELIVERED`        | `success`     | Đã giao                  |
-| `CANCELLED`        | `danger`      | Đã hủy                   |
-| `UNPAID`           | `warning`     | Chưa thanh toán          |
-| `QR_CREATED`       | `info`        | Đã tạo mã QR             |
-| `PAID_MANUAL`      | `success`     | Đã xác nhận thanh toán   |
-| `FAILED`           | `danger`      | Thất bại                 |
-| Driver `OFFLINE`   | `neutral`     | Ngoại tuyến              |
-| Driver `AVAILABLE` | `success`     | Sẵn sàng                 |
-| Driver `BUSY`      | `active`      | Đang bận                 |
-| User `ACTIVE`      | `active`      | Đang hoạt động           |
-| User `DISABLED`    | `danger`      | Đã vô hiệu hóa           |
+| Domain state          | Semantic role | Nhãn hiển thị tiếng Việt |
+| --------------------- | ------------- | ------------------------ |
+| `REQUESTED`           | `info`        | Chờ tài xế               |
+| `ACCEPTED`            | `active`      | Đã nhận đơn              |
+| `PICKING_UP`          | `warning`     | Đang đến điểm lấy        |
+| `IN_TRANSIT`          | `active`      | Đang vận chuyển          |
+| `DELIVERED`           | `success`     | Đã giao                  |
+| `CANCELLED`           | `danger`      | Đã hủy                   |
+| `UNPAID`              | `warning`     | Chưa thanh toán          |
+| `QR_CREATED`          | `info`        | Đã tạo mã QR             |
+| `PAID_MANUAL`         | `success`     | Đã xác nhận thanh toán   |
+| `FAILED`              | `danger`      | Thất bại                 |
+| Driver `OFFLINE`      | `neutral`     | Ngoại tuyến              |
+| Driver `AVAILABLE`    | `success`     | Sẵn sàng                 |
+| Driver `BUSY`         | `active`      | Đang bận                 |
+| FleetMember `INVITED` | `info`        | Đã mời                   |
+| FleetMember `ACTIVE`  | `active`      | Đang tham gia            |
+| FleetMember `REMOVED` | `neutral`     | Đã gỡ khỏi đội xe        |
+| User `ACTIVE`         | `active`      | Đang hoạt động           |
+| User `DISABLED`       | `danger`      | Đã vô hiệu hóa           |
 
 API enum vẫn là machine value; role adapter/view model chịu trách nhiệm cung cấp
-nhãn hiển thị. Không dùng một global string map mơ hồ cho các enum cùng tên nhưng
-khác domain.
+nhãn hiển thị. Mapping luôn nhận domain discriminator, ví dụ `userStatus` và
+`fleetMemberStatus`, trước khi chọn semantic role/copy. User `ACTIVE` là “Đang hoạt
+động”, còn FleetMember `ACTIVE` là “Đang tham gia”; không dùng một global string map
+theo raw enum value cho các domain khác nhau.
 
 ### 4.3 Typography
 
@@ -329,17 +334,17 @@ thay đổi requirement LEOPARD.
 - [Onfleet — Map & Sidebar](https://support.onfleet.com/hc/en-us/articles/360023669612-Map-Sidebar)
   mô tả dashboard gồm map và sidebar; selection task/driver/team ở sidebar tác động
   đến phạm vi map và có keyboard shortcut cho zoom-to-fit.
-- [Samsara — Fleet Overview Map](https://kb.samsara.com/hc/en-us/articles/41266933936269-Monitor-Your-Fleet-on-the-Fleet-Overview-Map)
-  mô tả live map với search/filter, asset list và detail/action theo entity; filter
-  cập nhật cả list và map.
+- [Samsara — GPS Fleet Tracking](https://www.samsara.com/products/telematics/gps-fleet-tracking)
+  mô tả dữ liệu GPS thời gian thực cho khả năng hiển thị vị trí vehicle/asset trên
+  bản đồ và hỗ trợ người quản lý giám sát hoạt động.
 - [Motive — Fleet View 2.0](https://helpcenter.gomotive.com/hc/en-us/articles/36088175670685-Fleet-View-2-0)
   công bố smart clustering, map/list selection đồng bộ, saved view và configurable
   asset cards cho fleet-scale monitoring.
 
 ### Suy luận có thể chuyển giao cho LEOPARD
 
-- Fleet/Admin nên giữ selection/filter đồng bộ giữa list và map để người vận hành
-  không mất ngữ cảnh.
+- **Suy luận từ Onfleet và Motive:** Fleet/Admin nên giữ selection/filter đồng bộ giữa
+  list và map để người vận hành không mất ngữ cảnh.
 - Dense-map state cần clustering hoặc summary strategy, last-updated label và detail
   tại chỗ trước khi điều hướng sâu.
 - User preference như column visibility/map viewport chỉ nên lưu khi không làm ẩn

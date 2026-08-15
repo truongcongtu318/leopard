@@ -78,7 +78,8 @@ có partial dark style. Gate này nằm ngoài bảng và không tham gia tổng
 - Một semantic palette dùng chung; platform khác implementation nhưng không khác ý
   nghĩa.
 - Canonical status semantics/nhãn tiếng Việt nằm ở core contract; adapter/view model
-  map enum theo domain.
+  map enum theo domain discriminator. User `ACTIVE` và FleetMember `ACTIVE` giữ copy
+  riêng, không dùng global raw-value map.
 - Typography mở rộng với `bodyCompact`, `sectionTitle`, `pageTitle`; runtime parity là
   foundation task, role lane không tự khai báo lại.
 - `Route Spine` có `route-full`, `route-compact`, `status-spine`; Admin có `audit-rail`
@@ -95,14 +96,16 @@ có partial dark style. Gate này nằm ngoài bảng và không tham gia tổng
 
 - [Onfleet Map & Sidebar](https://support.onfleet.com/hc/en-us/articles/360023669612-Map-Sidebar):
   map + sidebar là hai vùng chính; selection ở sidebar ảnh hưởng map focus.
-- [Samsara Fleet Overview Map](https://kb.samsara.com/hc/en-us/articles/41266933936269-Monitor-Your-Fleet-on-the-Fleet-Overview-Map):
-  search/filter cập nhật asset list và live map, detail/action mở theo entity.
+- [Samsara GPS Fleet Tracking](https://www.samsara.com/products/telematics/gps-fleet-tracking):
+  dữ liệu GPS thời gian thực cung cấp khả năng hiển thị vị trí vehicle/asset trên bản
+  đồ và hỗ trợ giám sát hoạt động.
 - [Motive Fleet View 2.0](https://helpcenter.gomotive.com/hc/en-us/articles/36088175670685-Fleet-View-2-0):
   smart clustering, synced list/map, saved viewport và configurable asset cards.
 
 ### Suy luận, không phải requirement nguồn ngoài
 
-- Fleet/Admin giữ list/filter/map selection đồng bộ và không mất context khi inspect.
+- **Suy luận từ Onfleet và Motive:** Fleet/Admin giữ list/filter/map selection đồng bộ
+  và không mất context khi inspect.
 - Dense map cần clustering/summary strategy, last-updated timestamp và in-context
   detail.
 - Chỉ lưu view preference nếu không che scope/status/exception bắt buộc.
