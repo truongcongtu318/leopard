@@ -615,23 +615,26 @@ describe("FilterBar", () => {
 describe("ScreenState", () => {
   it("renders loading spinner and message", () => {
     render(<ScreenState state="loading" />);
-    // Has a status role for spinner
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText("Đang tải dữ liệu")).toBeInTheDocument();
   });
 
   it("renders empty state with message", () => {
-    render(<ScreenState state="empty" message="No items found" />);
-    expect(screen.getByText("No items found")).toBeInTheDocument();
-    expect(screen.getByText(/empty/i)).toBeInTheDocument();
+    render(<ScreenState state="empty" message="Chưa có đơn hàng" />);
+    expect(screen.getByText("Chưa có đơn hàng")).toBeInTheDocument();
+    expect(screen.getByText("Chưa có dữ liệu")).toBeInTheDocument();
   });
 
   it("renders error state with message and retry button", () => {
     const handleRetry = jest.fn();
     render(
-      <ScreenState state="error" message="Something went wrong" onRetry={handleRetry} />,
+      <ScreenState
+        state="error"
+        message="Không thể tải đơn hàng"
+        onRetry={handleRetry}
+      />,
     );
-    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
-    const retryBtn = screen.getByRole("button", { name: /retry/i });
+    expect(screen.getByText("Không thể tải đơn hàng")).toBeInTheDocument();
+    const retryBtn = screen.getByRole("button", { name: "Thử lại" });
     expect(retryBtn).toBeInTheDocument();
     fireEvent.click(retryBtn);
     expect(handleRetry).toHaveBeenCalledTimes(1);

@@ -138,7 +138,7 @@ describe("ScreenState state contract", () => {
     const onRetry = jest.fn();
     render(<ScreenState state="error" onRetry={onRetry} />);
 
-    const retryButton = screen.getByRole("button", { name: /retry/i });
+    const retryButton = screen.getByRole("button", { name: "Thử lại" });
     expect(retryButton.tagName).toBe("BUTTON");
     expect(retryButton).toHaveAttribute("type", "button");
     retryButton.focus();

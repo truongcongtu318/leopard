@@ -18,7 +18,7 @@ export type {
 } from "./FilterBar";
 
 export { ScreenState } from "./ScreenState";
-export type { ScreenStateProps } from "./ScreenState";
+export type { ScreenStateName, ScreenStateProps } from "./ScreenState";
 
 export { MapPanel } from "./MapPanel";
 export type { MapPanelProps } from "./MapPanel";
