@@ -206,6 +206,14 @@ describe("DataTable", () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
+  it("stops skeleton motion when reduced motion is requested", () => {
+    render(<DataTable columns={columns} rows={rows} isLoading />);
+
+    const skeleton = document.querySelector(".animate-pulse");
+    expect(skeleton).toBeInTheDocument();
+    expect(skeleton).toHaveClass("motion-reduce:animate-none");
+  });
+
   it("shows empty message when rows is empty", () => {
     render(
       <DataTable
@@ -217,13 +225,68 @@ describe("DataTable", () => {
     expect(screen.getByText("No data available")).toBeInTheDocument();
   });
 
-  it("calls onSort when a sortable column header is clicked", () => {
+  it("uses a focusable native button for sortable column headers", () => {
     const handleSort = jest.fn();
     render(
       <DataTable columns={columns} rows={rows} onSort={handleSort} />,
     );
-    fireEvent.click(screen.getByRole("columnheader", { name: "ID" }));
+
+    const sortButton = screen.getByRole("button", { name: "ID" });
+    const columnHeader = screen.getByRole("columnheader", { name: "ID" });
+
+    expect(sortButton.tagName).toBe("BUTTON");
+    expect(sortButton.closest("th")).toBe(columnHeader);
+    sortButton.focus();
+    expect(sortButton).toHaveFocus();
+
+    fireEvent.click(sortButton);
     expect(handleSort).toHaveBeenCalledWith("id");
+  });
+
+  it("exposes the current optional sort direction on the column header", () => {
+    const { rerender } = render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        sortKey="name"
+        sortDirection="ascending"
+      />,
+    );
+
+    expect(screen.getByRole("columnheader", { name: "ID" })).toHaveAttribute(
+      "aria-sort",
+      "none",
+    );
+    expect(screen.getByRole("columnheader", { name: "Name" })).toHaveAttribute(
+      "aria-sort",
+      "ascending",
+    );
+    expect(screen.getByRole("columnheader", { name: "Status" })).not.toHaveAttribute(
+      "aria-sort",
+    );
+
+    rerender(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        sortKey="name"
+        sortDirection="descending"
+      />,
+    );
+
+    expect(screen.getByRole("columnheader", { name: "Name" })).toHaveAttribute(
+      "aria-sort",
+      "descending",
+    );
+  });
+
+  it("gives sortable headers a 44px target and visible focus treatment", () => {
+    render(<DataTable columns={columns} rows={rows} onSort={() => {}} />);
+
+    const sortButton = screen.getByRole("button", { name: "ID" });
+    expect(sortButton).toHaveClass("min-h-11");
+    expect(sortButton).toHaveClass("focus-visible:ring-2");
+    expect(sortButton).toHaveClass("focus-visible:ring-brand");
   });
 
   it("does not call onSort for non-sortable columns", () => {
@@ -316,11 +379,50 @@ describe("Pagination", () => {
 // ---- FilterBar ----
 
 describe("FilterBar", () => {
-  it("renders text input and status dropdown", () => {
+  it("renders visible labels connected to the search and status controls", () => {
     render(
       <FilterBar filters={{ search: "", status: "" }} onFilterChange={() => {}} />,
     );
-    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
+
+    const searchInput = screen.getByLabelText("Tìm kiếm");
+    const statusSelect = screen.getByLabelText("Trạng thái");
+    const searchLabel = screen.getByText("Tìm kiếm", { selector: "label" });
+    const statusLabel = screen.getByText("Trạng thái", { selector: "label" });
+
+    expect(searchInput).toBeInTheDocument();
+    expect(statusSelect).toBeInTheDocument();
+    expect(searchLabel).toHaveAttribute("for", searchInput.id);
+    expect(statusLabel).toHaveAttribute("for", statusSelect.id);
+  });
+
+  it("uses clear Vietnamese copy for every shared status option", () => {
+    render(
+      <FilterBar filters={{ search: "", status: "" }} onFilterChange={() => {}} />,
+    );
+
+    expect(
+      screen.getAllByRole("option").map((option) => ({
+        value: (option as HTMLOptionElement).value,
+        label: option.textContent,
+      })),
+    ).toEqual([
+      { value: "", label: "Tất cả trạng thái" },
+      { value: "ACTIVE", label: "Đang hoạt động" },
+      { value: "DELIVERED", label: "Đã giao" },
+      { value: "REQUESTED", label: "Chờ tài xế" },
+      { value: "PICKING_UP", label: "Đang đến điểm lấy" },
+      { value: "IN_TRANSIT", label: "Đang vận chuyển" },
+      { value: "CANCELLED", label: "Đã hủy" },
+      { value: "DISABLED", label: "Đã vô hiệu hóa" },
+      { value: "FAILED", label: "Thất bại" },
+      { value: "ACCEPTED", label: "Đã nhận đơn" },
+      { value: "INVITED", label: "Đã mời" },
+      { value: "REMOVED", label: "Đã gỡ khỏi đội xe" },
+      { value: "QR_CREATED", label: "Đã tạo mã QR" },
+      { value: "OFFLINE", label: "Ngoại tuyến" },
+      { value: "UNPAID", label: "Chưa thanh toán" },
+      { value: "PAID_MANUAL", label: "Đã xác nhận thanh toán" },
+    ]);
   });
 
   it("renders clear filters button", () => {
@@ -330,27 +432,50 @@ describe("FilterBar", () => {
         onFilterChange={() => {}}
       />,
     );
-    expect(screen.getByRole("button", { name: /clear/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Xóa bộ lọc" })).toBeInTheDocument();
+  });
+
+  it("gives controls and the clear action 44px targets with visible focus", () => {
+    render(
+      <FilterBar
+        filters={{ search: "test", status: "ACTIVE" }}
+        onFilterChange={() => {}}
+      />,
+    );
+
+    const controls = [
+      screen.getByLabelText("Tìm kiếm"),
+      screen.getByLabelText("Trạng thái"),
+      screen.getByRole("button", { name: "Xóa bộ lọc" }),
+    ];
+
+    controls.forEach((control) => {
+      expect(control).toHaveClass("min-h-11");
+      expect(control).toHaveClass("focus-visible:ring-2");
+      expect(control).toHaveClass("focus-visible:ring-brand");
+    });
   });
 
   it("calls onFilterChange with debounced search", async () => {
     jest.useFakeTimers();
-    const handleChange = jest.fn();
-    render(
-      <FilterBar filters={{ search: "", status: "" }} onFilterChange={handleChange} />,
-    );
-    const input = screen.getByPlaceholderText(/search/i);
-    fireEvent.change(input, { target: { value: "test" } });
+    try {
+      const handleChange = jest.fn();
+      render(
+        <FilterBar filters={{ search: "", status: "" }} onFilterChange={handleChange} />,
+      );
+      const input = screen.getByLabelText("Tìm kiếm");
+      fireEvent.change(input, { target: { value: "test" } });
 
-    act(() => {
-      jest.advanceTimersByTime(200);
-    });
+      act(() => {
+        jest.advanceTimersByTime(200);
+      });
 
-    expect(handleChange).toHaveBeenCalledWith(
-      expect.objectContaining({ search: "test" }),
-    );
-
-    jest.useRealTimers();
+      expect(handleChange).toHaveBeenCalledWith(
+        expect.objectContaining({ search: "test" }),
+      );
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("calls onFilterChange immediately when status changes", () => {
@@ -358,23 +483,76 @@ describe("FilterBar", () => {
     render(
       <FilterBar filters={{ search: "", status: "" }} onFilterChange={handleChange} />,
     );
-    const select = screen.getByRole("combobox");
+    const select = screen.getByLabelText("Trạng thái");
     fireEvent.change(select, { target: { value: "ACTIVE" } });
     expect(handleChange).toHaveBeenCalledWith(
       expect.objectContaining({ status: "ACTIVE" }),
     );
   });
 
-  it("clears filters when clear button is clicked", () => {
+  it("returns a new filter object without mutating the input filters", () => {
+    const filters = Object.freeze({ search: "existing", status: "INVITED" });
     const handleChange = jest.fn();
-    render(
-      <FilterBar
-        filters={{ search: "test", status: "ACTIVE" }}
-        onFilterChange={handleChange}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: /clear/i }));
-    expect(handleChange).toHaveBeenCalledWith({ search: "", status: "" });
+    render(<FilterBar filters={filters} onFilterChange={handleChange} />);
+
+    fireEvent.change(screen.getByLabelText("Trạng thái"), {
+      target: { value: "REMOVED" },
+    });
+
+    expect(handleChange).toHaveBeenCalledWith({
+      search: "existing",
+      status: "REMOVED",
+    });
+    expect(handleChange.mock.calls[0]?.[0]).not.toBe(filters);
+    expect(filters).toEqual({ search: "existing", status: "INVITED" });
+  });
+
+  it("clears filters and cancels a pending debounced search", () => {
+    jest.useFakeTimers();
+    try {
+      const handleChange = jest.fn();
+      render(
+        <FilterBar
+          filters={{ search: "test", status: "ACTIVE" }}
+          onFilterChange={handleChange}
+        />,
+      );
+
+      fireEvent.change(screen.getByLabelText("Tìm kiếm"), {
+        target: { value: "pending" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Xóa bộ lọc" }));
+      act(() => {
+        jest.advanceTimersByTime(200);
+      });
+
+      expect(handleChange).toHaveBeenCalledTimes(1);
+      expect(handleChange).toHaveBeenCalledWith({ search: "", status: "" });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("cleans up a pending search debounce on unmount", () => {
+    jest.useFakeTimers();
+    try {
+      const handleChange = jest.fn();
+      const { unmount } = render(
+        <FilterBar filters={{ search: "", status: "" }} onFilterChange={handleChange} />,
+      );
+
+      fireEvent.change(screen.getByLabelText("Tìm kiếm"), {
+        target: { value: "pending" },
+      });
+      unmount();
+      act(() => {
+        jest.advanceTimersByTime(200);
+      });
+
+      expect(handleChange).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 
