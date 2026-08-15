@@ -123,18 +123,18 @@ describe("StatusBadge", () => {
   const cases: Array<{ status: string; expectedClass: string }> = [
     { status: "DELIVERED", expectedClass: "bg-success" },
     { status: "ACTIVE", expectedClass: "bg-success" },
-    { status: "REQUESTED", expectedClass: "bg-warning" },
+    { status: "REQUESTED", expectedClass: "bg-info" },
     { status: "PICKING_UP", expectedClass: "bg-warning" },
-    { status: "IN_TRANSIT", expectedClass: "bg-warning" },
+    { status: "IN_TRANSIT", expectedClass: "bg-active" },
     { status: "CANCELLED", expectedClass: "bg-danger" },
     { status: "DISABLED", expectedClass: "bg-danger" },
     { status: "FAILED", expectedClass: "bg-danger" },
-    { status: "ACCEPTED", expectedClass: "bg-info" },
+    { status: "ACCEPTED", expectedClass: "bg-active" },
     { status: "INVITED", expectedClass: "bg-info" },
     { status: "QR_CREATED", expectedClass: "bg-info" },
     { status: "OFFLINE", expectedClass: "bg-neutral" },
-    { status: "UNPAID", expectedClass: "bg-neutral" },
-    { status: "PAID_MANUAL", expectedClass: "bg-neutral" },
+    { status: "UNPAID", expectedClass: "bg-warning" },
+    { status: "PAID_MANUAL", expectedClass: "bg-success" },
   ];
 
   it.each(cases)(
