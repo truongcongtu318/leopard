@@ -1,25 +1,20 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+
+import { normalizeDriverRouteParam } from '../../../src/features/driver/orders/adapter';
+import { DriverPreviewRoute } from '../../../src/features/driver/orders/preview/DriverPreviewRoute';
 
 export default function DriverOrdersRoute() {
+  const params = useLocalSearchParams<{
+    preview?: string | string[];
+    scenario?: string | string[];
+  }>();
+  const router = useRouter();
   return (
-    <View style={styles.container}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Đơn hàng dành cho tài xế
-      </Text>
-      <Text>Nội dung đơn hàng chưa được triển khai.</Text>
-    </View>
+    <DriverPreviewRoute
+      localPreviewEnabled={normalizeDriverRouteParam(params.preview) === 'enabled'}
+      onOpenOrder={(orderId) => router.push(`/driver/orders/${orderId}?preview=enabled`)}
+      scenario={normalizeDriverRouteParam(params.scenario)}
+      screen="list"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-});
