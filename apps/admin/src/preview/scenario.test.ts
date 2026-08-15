@@ -1,4 +1,11 @@
-import { describe, expect, it } from "@jest/globals";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from "@jest/globals";
 
 import * as previewBoundary from ".";
 import {
@@ -10,20 +17,39 @@ import {
   type WebUiScenarioName,
 } from ".";
 
-const ENABLED_PREVIEW = {
-  nodeEnv: "test",
-  serverFlag: WEB_PREVIEW_ENABLED_FLAG,
-  localFlag: WEB_PREVIEW_ENABLED_FLAG,
-} as const;
+const SERVER_FLAG_ENV = "LEOPARD_UI_PREVIEW";
+const originalNodeEnv = process.env.NODE_ENV;
+const originalServerFlag = process.env[SERVER_FLAG_ENV];
 
-function selectFixtureScenario<TData extends PreviewFixtureValue>(
+function setEnvironment(name: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+}
+
+beforeEach(() => {
+  setEnvironment("NODE_ENV", "test");
+  setEnvironment(SERVER_FLAG_ENV, WEB_PREVIEW_ENABLED_FLAG);
+});
+
+afterEach(() => {
+  setEnvironment("NODE_ENV", originalNodeEnv);
+  setEnvironment(SERVER_FLAG_ENV, originalServerFlag);
+});
+
+async function selectFixtureScenario<TData extends PreviewFixtureValue>(
   scenario: WebPreviewScenarioRequest<TData>,
 ) {
-  const selection = createWebPreviewSelection({
-    ...ENABLED_PREVIEW,
-    scenario,
+  const scenarioProvider = jest.fn(async () => scenario);
+  const selection = await createWebPreviewSelection({
+    localFlag: WEB_PREVIEW_ENABLED_FLAG,
+    scenarioProvider,
   });
 
+  expect(scenarioProvider).toHaveBeenCalledTimes(1);
   expect(selection.enabled).toBe(true);
   expect(selection.bannerRequired).toBe(true);
 
@@ -52,9 +78,9 @@ describe("web UI scenario vocabulary", () => {
     "empty",
     "error",
     "permission-denied",
-  ] as const)("returns a fresh deterministic %s scenario", (scenarioName) => {
-    const first = selectFixtureScenario({ kind: scenarioName });
-    const second = selectFixtureScenario({ kind: scenarioName });
+  ] as const)("returns a fresh deterministic %s scenario", async (scenarioName) => {
+    const first = await selectFixtureScenario({ kind: scenarioName });
+    const second = await selectFixtureScenario({ kind: scenarioName });
 
     expect(first).toEqual(second);
     expect(first).not.toBe(second);
@@ -63,21 +89,26 @@ describe("web UI scenario vocabulary", () => {
     expect(Object.isFrozen(first.copy)).toBe(true);
   });
 
-  it("uses stable public error codes without exposing error details", () => {
-    expect(selectFixtureScenario({ kind: "error" })).toMatchObject({
+  it("uses stable public error codes without exposing error details", async () => {
+    await expect(selectFixtureScenario({ kind: "error" })).resolves.toMatchObject({
       kind: "error",
       errorCode: "SERVICE_NOT_READY",
     });
-    expect(selectFixtureScenario({ kind: "permission-denied" })).toMatchObject({
+    await expect(
+      selectFixtureScenario({ kind: "permission-denied" }),
+    ).resolves.toMatchObject({
       kind: "permission-denied",
       errorCode: "FORBIDDEN",
     });
-    expect(selectFixtureScenario({ kind: "error" })).not.toHaveProperty("details");
+    await expect(selectFixtureScenario({ kind: "error" })).resolves.not.toHaveProperty(
+      "details",
+    );
   });
 
   it("does not expose raw fixture factories from the preview boundary", () => {
     expect(previewBoundary).not.toHaveProperty("createImmutableFixture");
     expect(previewBoundary).not.toHaveProperty("createWebUiScenario");
+    expect(previewBoundary).not.toHaveProperty("resolveWebPreviewMode");
   });
 });
 
@@ -90,8 +121,8 @@ describe("guarded immutable preview fixtures", () => {
     checkpoints: ["Quận 1", "Thành phố Thủ Đức"],
   } as const;
 
-  it("deep-clones and freezes fixture values", () => {
-    const scenario = selectFixtureScenario({
+  it("deep-clones and freezes fixture values", async () => {
+    const scenario = await selectFixtureScenario({
       kind: "success",
       data: sourceFixture,
     });
@@ -110,10 +141,10 @@ describe("guarded immutable preview fixtures", () => {
     expect(Object.isFrozen(scenario.data.checkpoints)).toBe(true);
   });
 
-  it("returns fresh nested values for every guarded selection", () => {
+  it("returns fresh nested values for every guarded selection", async () => {
     const request = { kind: "success", data: sourceFixture } as const;
-    const first = selectFixtureScenario(request);
-    const second = selectFixtureScenario(request);
+    const first = await selectFixtureScenario(request);
+    const second = await selectFixtureScenario(request);
 
     if (first.kind !== "success" || second.kind !== "success") {
       throw new Error("Expected success fixture scenarios.");
@@ -126,23 +157,27 @@ describe("guarded immutable preview fixtures", () => {
     expect(first.data.checkpoints).not.toBe(second.data.checkpoints);
   });
 
-  it("does not mutate the source fixture", () => {
+  it("does not mutate the source fixture", async () => {
     const before = JSON.stringify(sourceFixture);
 
-    selectFixtureScenario({ kind: "success", data: sourceFixture });
+    await selectFixtureScenario({ kind: "success", data: sourceFixture });
 
     expect(JSON.stringify(sourceFixture)).toBe(before);
     expect(Object.isFrozen(sourceFixture)).toBe(false);
   });
 
   it.each(["production", "staging", undefined])(
-    "never exposes a fixture scenario when environment is %s",
-    (nodeEnv) => {
-      const selection = createWebPreviewSelection({
-        nodeEnv,
-        serverFlag: WEB_PREVIEW_ENABLED_FLAG,
+    "never invokes the lazy fixture provider when trusted environment is %s",
+    async (nodeEnv) => {
+      setEnvironment("NODE_ENV", nodeEnv);
+      const scenarioProvider = jest.fn(async () => ({
+        kind: "success" as const,
+        data: sourceFixture,
+      }));
+
+      const selection = await createWebPreviewSelection({
         localFlag: WEB_PREVIEW_ENABLED_FLAG,
-        scenario: { kind: "success", data: sourceFixture },
+        scenarioProvider,
       });
 
       expect(selection).toMatchObject({
@@ -151,7 +186,29 @@ describe("guarded immutable preview fixtures", () => {
         scenario: null,
         bannerRequired: false,
       });
+      expect(scenarioProvider).not.toHaveBeenCalled();
       expect(Object.isFrozen(selection)).toBe(true);
     },
   );
+
+  it("never invokes the lazy fixture provider without trusted server opt in", async () => {
+    setEnvironment(SERVER_FLAG_ENV, undefined);
+    const scenarioProvider = jest.fn(async () => ({
+      kind: "success" as const,
+      data: sourceFixture,
+    }));
+
+    const selection = await createWebPreviewSelection({
+      localFlag: WEB_PREVIEW_ENABLED_FLAG,
+      scenarioProvider,
+    });
+
+    expect(selection).toMatchObject({
+      enabled: false,
+      reason: "server-flag-disabled",
+      scenario: null,
+      bannerRequired: false,
+    });
+    expect(scenarioProvider).not.toHaveBeenCalled();
+  });
 });
