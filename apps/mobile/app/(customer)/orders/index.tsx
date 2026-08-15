@@ -1,25 +1,23 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+
+import { normalizeRouteParam } from '../../../src/features/customer/orders/adapter';
+import { CustomerPreviewRoute } from '../../../src/features/customer/orders/preview/CustomerPreviewRoute';
 
 export default function CustomerOrdersRoute() {
+  const params = useLocalSearchParams<{
+    preview?: string | string[];
+    scenario?: string | string[];
+  }>();
+  const router = useRouter();
+  const preview = normalizeRouteParam(params.preview);
+
   return (
-    <View style={styles.container}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Đơn hàng của khách hàng
-      </Text>
-      <Text>Nội dung đơn hàng chưa được triển khai.</Text>
-    </View>
+    <CustomerPreviewRoute
+      localPreviewEnabled={preview === 'enabled'}
+      onCreate={() => router.push('/customer/orders/new?preview=enabled')}
+      onOpenOrder={(orderId) => router.push(`/customer/orders/${orderId}?preview=enabled`)}
+      scenario={normalizeRouteParam(params.scenario)}
+      screen="list"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-});
