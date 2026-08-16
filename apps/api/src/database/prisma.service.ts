@@ -15,7 +15,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     const pool = new pg.Pool({ connectionString });
 
     super({
-      adapter: new PrismaPg(pool),
+      adapter: new PrismaPg(pool, { disposeExternalPool: true }),
     });
   }
 

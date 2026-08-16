@@ -519,6 +519,7 @@
           "storageKey": "seed/orders/picking-up/cargo-1.jpg",
           "contentType": "image/jpeg",
           "sizeBytes": 245760,
+          "checksumSha256": "f5c92b26a95f6de8125afc5411f9cb8e04e17928fa5af1edfec6a16c9d31af2e",
           "createdAt": "2026-08-01T10:20:00.000Z"
         }
       ],
@@ -756,6 +757,7 @@
           "storageKey": "seed/orders/delivered/proof-1.jpg",
           "contentType": "image/jpeg",
           "sizeBytes": 198512,
+          "checksumSha256": "e48c65cf94f3a6766d8fc0c9233c70c9848cc1aabe54d4939d6bf7645cea5cb4",
           "createdAt": "2026-08-01T12:58:00.000Z"
         }
       ],

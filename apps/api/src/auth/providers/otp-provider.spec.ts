@@ -88,6 +88,37 @@ describe('OTP provider boundary', () => {
     await assertion;
   });
 
+  it('uses Firebase Admin revocation checks without making a real network call', async () => {
+    const { createFirebaseAdminVerifier } = await import('./firebase-admin.verifier.js');
+    const adminAuth = {
+      verifyIdToken: jest.fn(async () => ({
+        uid: 'firebase-user-1',
+        phone_number: '+84901234567',
+      })),
+    };
+    const verifier = createFirebaseAdminVerifier(adminAuth);
+
+    await expect(verifier('mock-id-token')).resolves.toMatchObject({
+      uid: 'firebase-user-1',
+    });
+    expect(adminAuth.verifyIdToken).toHaveBeenCalledWith('mock-id-token', true);
+  });
+
+  it.each([
+    ['auth/id-token-expired', 'OTP_PROVIDER_REJECTED'],
+    ['auth/id-token-revoked', 'OTP_PROVIDER_REJECTED'],
+    ['app/network-error', 'OTP_PROVIDER_UNAVAILABLE'],
+  ])('maps Firebase Admin %s to %s', async (code, expectedCode) => {
+    const { createFirebaseAdminVerifier } = await import('./firebase-admin.verifier.js');
+    const verifier = createFirebaseAdminVerifier({
+      verifyIdToken: jest.fn(async () => Promise.reject({ code })),
+    });
+
+    await expect(verifier('mock-id-token')).rejects.toMatchObject({
+      code: expectedCode,
+    });
+  });
+
   it('registers the selected provider behind the OTP_PROVIDER token', async () => {
     const { OTP_PROVIDER } = await import('./otp-provider.js');
     const { OtpProviderModule } = await import('./otp-provider.module.js');

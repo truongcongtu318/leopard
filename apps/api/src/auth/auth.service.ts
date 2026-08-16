@@ -28,8 +28,6 @@ const DEMO_ROLES = new Map<string, Role>([
   ['admin', 'ADMIN'],
 ]);
 
-const VALID_ROLES = new Set<Role>(['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN']);
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -66,7 +64,7 @@ export class AuthService {
       this.firebaseOtpProvider.verify(idToken),
     );
 
-    return this.loginIdentity(identity.phoneNumber, this.defaultFirebaseRole());
+    return this.loginIdentity(identity.phoneNumber, 'CUSTOMER');
   }
 
   public async getCurrentUser(authorization: string | undefined): Promise<AuthUser> {
@@ -191,13 +189,5 @@ export class AuthService {
     }
 
     return token;
-  }
-
-  private defaultFirebaseRole(): Role {
-    const configuredRole = process.env.AUTH_FIREBASE_DEFAULT_ROLE;
-
-    return VALID_ROLES.has(configuredRole as Role)
-      ? (configuredRole as Role)
-      : 'CUSTOMER';
   }
 }

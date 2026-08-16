@@ -7,9 +7,15 @@ import { DriversModule } from './drivers/drivers.module.js';
 import { HealthModule } from './health/health.module.js';
 import { MapsModule } from './maps/maps.module.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { TrackingModule } from './tracking/tracking.module.js';
+import { FleetsModule } from './fleets/fleets.module.js';
+import { AdminModule } from './admin/admin.module.js';
+import { MediaModule } from './media/media.module.js';
+import { PaymentsModule } from './payments/payments.module.js';
+import { AuditModule } from './audit/audit.module.js';
 
 @Module({
-  imports: [AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule],
+  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, MediaModule, PaymentsModule, FleetsModule, AdminModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

@@ -97,6 +97,21 @@ describe('shared request schemas', () => {
     expect(result.success).toBe(false);
   });
 
+  it('enforces the documented pilot cargo-weight range', () => {
+    const baseOrder = {
+      pickup,
+      stops: [],
+      dropoff,
+      vehicleType: 'MOTORBIKE',
+      cargoNote: 'Weight boundary',
+      estimateToken: 'signed-estimate-token',
+    } as const;
+
+    expect(createOrderSchema.safeParse({ ...baseOrder, cargoWeightKg: 0 }).success).toBe(true);
+    expect(createOrderSchema.safeParse({ ...baseOrder, cargoWeightKg: -1 }).success).toBe(false);
+    expect(createOrderSchema.safeParse({ ...baseOrder, cargoWeightKg: 10_001 }).success).toBe(false);
+  });
+
   it('rejects page sizes above 100', () => {
     expect(pageQuerySchema.safeParse({ page: '2', pageSize: '101' }).success).toBe(false);
   });

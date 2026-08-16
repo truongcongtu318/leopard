@@ -279,6 +279,27 @@ describe('PH-05-T02 login and access tokens', () => {
         expect(JSON.stringify(body)).not.toContain('secret-id-token');
       });
   });
+
+  it.each(['OTP_PROVIDER_TIMEOUT', 'OTP_PROVIDER_UNAVAILABLE'] as const)(
+    'maps %s to a stable redacted 503 response',
+    async (providerCode) => {
+      verifyOtp.mockRejectedValue(
+        new OtpProviderError(providerCode, 'provider leaked secret-id-token'),
+      );
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/firebase')
+        .send({ idToken: 'secret-id-token' })
+        .expect(503)
+        .expect(({ body }) => {
+          expect(body).toMatchObject({
+            code: 'OTP_PROVIDER_UNAVAILABLE',
+            message: 'OTP provider is unavailable',
+          });
+          expect(JSON.stringify(body)).not.toContain('secret-id-token');
+        });
+    },
+  );
 });
 
 describe('PH-05-T02 app-wired Firebase login', () => {

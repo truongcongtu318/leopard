@@ -17,7 +17,7 @@ export const createOrderSchema = z
     dropoff: orderLocationSchema,
     vehicleType: z.enum(VehicleType),
     cargoNote: z.string().trim().min(1).max(1000),
-    cargoWeightKg: z.number().finite().positive().optional(),
+    cargoWeightKg: z.number().finite().min(0).max(10_000).optional(),
     mediaIds: z.array(uuidSchema).max(5).optional(),
     estimateToken: z.string().trim().min(1),
   })
