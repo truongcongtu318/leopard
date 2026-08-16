@@ -35,7 +35,7 @@ Orchestrator cập nhật bảng này ngay sau khi integration gate pass. Không
 | ---- | ---------------------------------- | ------------------------------------------ | ------------- |
 | 0    | `codex/integration-wave-0`         | `37a38cf44c138c875c167bfe1743614de02a256e` | `PASSED`      |
 | 1    | `codex/wave-1-runtime-foundations` | `4339526f45db33b4f9e460a367004f2f2628d254` | `READY`       |
-| 2    | `codex/integration-wave-2`         | `4b8cca56e2b07c62163745d506def5c541fa7d2f` | `PASSED`      |
+| 2    | `develop`                          | `ae8e5a5ee27c482b9f5914af5e9b2f8cbd7fe4a7` | `VERIFIED`    |
 | 3    | `codex/integration-wave-3`         | Chưa tạo trước execution                   | `NOT_STARTED` |
 | 4    | `codex/integration-wave-4`         | Chưa tạo trước execution                   | `NOT_STARTED` |
 | 5    | `codex/integration-wave-5`         | Chưa tạo trước execution                   | `NOT_STARTED` |
