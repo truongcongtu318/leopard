@@ -37,6 +37,46 @@ Operational clarity có nghĩa là:
   Driver ưu tiên current state và đúng một next action.
 - UI chỉ phản ánh permission, lifecycle, giá, ETA và payment state do backend trả về.
 
+### 1.1 Visual language — Dispatch Control / Road Ledger
+
+`Operational clarity` phải nhìn thấy được trong composition, không chỉ tồn tại trong
+component API. Visual language của LEOPARD được gọi là **Dispatch Control / Road
+Ledger**: giao diện giống một sổ điều phối hiện đại, nơi tuyến đường, trạng thái hiện
+tại và ngoại lệ tạo thành cấu trúc chính.
+
+| Layer            | Cách thể hiện                                                                                | Không được làm                                      |
+| ---------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Work canvas      | Nền neutral dịu; surface trắng chỉ dùng cho vùng cần tách khỏi canvas                        | Phủ toàn màn hình bằng các card viền giống nhau     |
+| Dispatch slab    | Một vùng ink/brand tương phản cao cho active trip, current task hoặc context quan trọng nhất | Dùng slab như hero marketing hoặc lặp ở mọi section |
+| Signal rail      | Rail `3–4 px` ở cạnh trái cho scope, exception hoặc freshness state                          | Dùng màu không kèm label/copy                       |
+| Route instrument | Route Spine/schematic là motif chức năng xuyên list, form và detail                          | Để map fallback thành hình chữ nhật trống           |
+| Data strip       | Giá, ETA, timestamp, count dùng tabular numerals và baseline thẳng hàng                      | Rải metadata thành nhiều pill/card nhỏ              |
+
+Tỷ lệ thị giác mặc định là **neutral canvas chiếm đa số, ink tạo khung, brand dẫn
+đường và amber chỉ báo ngoại lệ**. Màu semantic hiện có vẫn là source of truth; role
+không tạo palette riêng. Typography dùng ba nhịp rõ: eyebrow/micro-label, heading có
+trọng lượng và value/tabular numerals. Divider và whitespace phân nhóm trước khi dùng
+border; shadow chỉ dành cho layer nổi thật.
+
+Silhouette theo role:
+
+- **Customer — Journey Sheet:** route và bước hiện tại dẫn flow; estimate/price tạo
+  một data strip dễ so sánh; form dài chia thành stage có số, không thành một dải input.
+- **Driver — Field Cockpit:** active trip/current task nằm trên dispatch slab tương
+  phản cao; next action ở vùng ngón cái; tracking/proof là signal module nhìn một lần
+  biết có đang chặn hoàn tất hay không.
+- **Fleet — Scope Ledger:** fleet scope rail luôn xuất hiện trước dữ liệu riêng tư;
+  exception và availability quan trọng hơn KPI trang trí; route/list/map có selection
+  và hierarchy chung.
+- **Admin — Investigation Console:** filter/result là workbench, detail dùng split
+  investigation + Audit Rail; command nằm trong vùng capability rõ, không trộn với
+  metadata đọc-only.
+
+Responsive không chỉ là “không overflow”. Tại `768–1023 px`, table không được giữ
+`5–6` cột semantic rồi ép badge/text; chỉ giữ `3–4` cột quyết định hoặc chuyển sang
+row-detail. Ở mobile, first viewport phải cho thấy object/task thật và một signal có
+ích, không chỉ title + đoạn mô tả.
+
 ## 2. Kiến trúc design system
 
 Design system có ba tầng; không tạo bốn palette độc lập theo role.

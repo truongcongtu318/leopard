@@ -4,10 +4,12 @@ import '@testing-library/jest-dom';
 import React from 'react';
 
 import { CompactMetricSummary } from './CompactMetricSummary';
+import { FieldMapSchematic } from './FieldMapSchematic';
 import { OperationalAlert } from './OperationalAlert';
 import { OperationsPageHeader } from './OperationsPageHeader';
 import { ReadOnlyDetailList } from './ReadOnlyDetailList';
 import { ResponsiveResultList } from './ResponsiveResultList';
+import { RouteMapSchematic } from './RouteMapSchematic';
 import { RouteSpine } from './RouteSpine';
 import { StatusTimeline } from './StatusTimeline';
 
@@ -150,6 +152,37 @@ describe('RouteSpine', () => {
     render(<RouteSpine origin={origin} stops={[]} destination={destination} isStale />);
 
     expect(screen.getByText('Dữ liệu tuyến có thể đã cũ')).toBeInTheDocument();
+  });
+});
+
+describe('RouteMapSchematic', () => {
+  it('renders a visible route signature and textual context without raw coordinates', () => {
+    render(
+      <RouteMapSchematic
+        destinationLabel="Thành phố Thủ Đức"
+        markerLabel="Tài xế gần điểm giao"
+        originLabel="Quận 7"
+      />,
+    );
+
+    expect(screen.getByTestId('route-map-schematic')).toBeInTheDocument();
+    expect(screen.getByText('Quận 7')).toBeInTheDocument();
+    expect(screen.getByText('Thành phố Thủ Đức')).toBeInTheDocument();
+    expect(screen.getByText('Tài xế gần điểm giao')).toBeInTheDocument();
+    expect(screen.queryByText(/10\.\d+,\s*106\.\d+/)).not.toBeInTheDocument();
+  });
+});
+
+describe('FieldMapSchematic', () => {
+  it('renders a distribution field with named markers and no invented route', () => {
+    const { container } = render(
+      <FieldMapSchematic fieldLabel="Đội xe Sao Mai" markerLabels={['Tài xế An', 'Tài xế Bình']} />,
+    );
+
+    expect(screen.getByText('Đội xe Sao Mai')).toBeInTheDocument();
+    expect(screen.getByText('Tài xế An')).toBeInTheDocument();
+    expect(screen.getByText('Tài xế Bình')).toBeInTheDocument();
+    expect(container.querySelector('[data-route-path]')).not.toBeInTheDocument();
   });
 });
 

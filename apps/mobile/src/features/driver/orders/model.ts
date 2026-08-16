@@ -12,6 +12,7 @@ export type DriverRouteView = Readonly<{
 
 export type DriverCommandView = Readonly<{
   id: string;
+  orderId?: string;
   label: string;
   targetStatus?: OrderStatus;
   isPending?: boolean;

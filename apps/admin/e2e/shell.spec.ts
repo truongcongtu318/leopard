@@ -211,4 +211,121 @@ test.describe('Operations static UI gate', () => {
     await expect(drawer).toBeHidden();
     await expect(trigger).toBeFocused();
   });
+
+  test('keeps privacy-safe preview context through Admin investigation links', async ({
+    context,
+    page,
+  }) => {
+    await useRole(context, 'qa-admin');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(
+      '/admin/orders?preview=enabled&scenario=ADM-ORD-DENSE&q=0909123456',
+    );
+
+    await page.getByRole('link', { name: 'Xem đơn LP-A-260815-104' }).first().click();
+    await expect(page.getByText(PREVIEW_BANNER)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Đơn LP-A-260815-104' })).toBeVisible();
+
+    let destination = new URL(page.url());
+    expect(destination.pathname).toBe(
+      '/admin/orders/33333333-3333-4333-8333-333333333104',
+    );
+    expect(destination.searchParams.get('preview')).toBe('enabled');
+    expect(destination.searchParams.get('scenario')).toBe('ADM-ORD-DETAIL');
+    expect(destination.searchParams.has('q')).toBe(false);
+    expect(destination.href).not.toContain('0909123456');
+
+    await page
+      .getByLabel('Đường dẫn')
+      .getByRole('link', { name: 'Đơn hàng' })
+      .click();
+    destination = new URL(page.url());
+    expect(destination.pathname).toBe('/admin/orders');
+    expect(destination.searchParams.get('preview')).toBe('enabled');
+    expect(destination.searchParams.get('scenario')).toBe('ADM-ORD-DENSE');
+    await expect(page.getByText(PREVIEW_BANNER)).toBeVisible();
+
+    await page
+      .getByLabel('Đường dẫn')
+      .getByRole('link', { name: 'Tổng quan' })
+      .click();
+    destination = new URL(page.url());
+    expect(destination.pathname).toBe('/admin');
+    expect(destination.searchParams.get('preview')).toBe('enabled');
+    expect(destination.searchParams.get('scenario')).toBe('ADM-OV-READY');
+    await expect(page.getByText(PREVIEW_BANNER)).toBeVisible();
+  });
+
+  test('binds Fleet preview navigation to the selected in-scope order', async ({
+    context,
+    page,
+  }) => {
+    await useRole(context, 'qa-fleet');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/fleet/orders?preview=enabled&scenario=fleet-orders-mixed');
+
+    await page.getByRole('link', { name: 'Xem đơn LP-F-260815-002' }).first().click();
+    await expect(page.getByRole('heading', { name: 'Đơn LP-F-260815-002' })).toBeVisible();
+    await expect(page.getByText(PREVIEW_BANNER)).toBeVisible();
+    expect(new URL(page.url()).searchParams.get('scenario')).toBe(
+      'fleet-order-detail-success',
+    );
+
+    await page.goto('/fleet/drivers?preview=enabled&scenario=fleet-drivers-mixed');
+    await page.getByRole('link', { name: 'Xem đơn LP-F-260815-001' }).first().click();
+    await expect(page.getByRole('heading', { name: 'Đơn LP-F-260815-001' })).toBeVisible();
+    await expect(page.getByText(PREVIEW_BANNER)).toBeVisible();
+
+    await page.goto('/fleet?preview=enabled&scenario=fleet-overview-success');
+    await page.getByRole('link', { name: 'LP-F-260815-002' }).click();
+    await expect(page.getByRole('heading', { name: 'Đơn LP-F-260815-002' })).toBeVisible();
+    await expect(page.getByText(PREVIEW_BANNER)).toBeVisible();
+  });
+
+  test('keeps the Admin investigation usable at 200% text zoom', async ({ context, page }) => {
+    await useRole(context, 'qa-admin');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(
+      '/admin/orders/33333333-3333-4333-8333-333333333101?preview=enabled&scenario=ADM-ORD-DETAIL',
+    );
+    await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+
+    await expect(page.getByText(PREVIEW_BANNER)).toBeVisible();
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.getByLabel('Audit Rail — thao tác đặc quyền')).toBeVisible();
+    await expectNoDocumentOverflow(page);
+
+    const trigger = page.getByRole('button', { name: 'Hủy đơn hàng' });
+    await trigger.scrollIntoViewIfNeeded();
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+
+    const dialog = page.getByRole('dialog', {
+      name: 'Hủy đơn hàng: Đơn LP-A-260815-101',
+    });
+    const dialogHeading = dialog.getByRole('heading', {
+      name: 'Hủy đơn hàng: Đơn LP-A-260815-101',
+    });
+    const reason = dialog.getByRole('textbox', { name: /Lý do hủy/ });
+    const cancel = dialog.getByRole('button', { name: 'Hủy thao tác' });
+    const submit = dialog.getByRole('button', { name: 'Hủy đơn hàng' });
+
+    await expect(dialog).toBeVisible();
+    await expect(dialogHeading).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(reason).toBeFocused();
+    await page.keyboard.type('Xác minh điều phối bằng bàn phím');
+    await page.keyboard.press('Tab');
+    await expect(cancel).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(submit).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(cancel).toBeFocused();
+    await expectNoDocumentOverflow(page);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+    await expectNoDocumentOverflow(page);
+  });
 });

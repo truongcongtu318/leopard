@@ -63,10 +63,18 @@ export const typography = {
 export const colors = {
   neutral: {
     background: '#FFFFFF',
+    canvas: '#F6F7F4',
     surface: '#F3F4F6',
     text: '#17202A',
     mutedText: '#4B5563',
     border: '#6B7280',
+    subtleBorder: '#D1D5DB',
+  },
+  operational: {
+    ink: '#102A36',
+    inkMuted: '#C8D6DA',
+    road: '#D9DEDC',
+    mapLand: '#EDF0EA',
   },
   brand: {
     background: '#075985',

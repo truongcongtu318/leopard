@@ -38,6 +38,12 @@ export type { CompactMetricSummaryItem, CompactMetricSummaryProps } from './Comp
 export { RouteSpine } from './RouteSpine';
 export type { RouteSpinePoint, RouteSpineProps } from './RouteSpine';
 
+export { RouteMapSchematic } from './RouteMapSchematic';
+export type { RouteMapSchematicProps } from './RouteMapSchematic';
+
+export { FieldMapSchematic } from './FieldMapSchematic';
+export type { FieldMapSchematicProps } from './FieldMapSchematic';
+
 export { StatusTimeline } from './StatusTimeline';
 export type { StatusTimelineItem, StatusTimelineProps } from './StatusTimeline';
 

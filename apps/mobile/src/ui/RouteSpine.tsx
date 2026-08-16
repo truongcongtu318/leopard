@@ -13,6 +13,8 @@ type RouteProps = Readonly<{
   stops: readonly RoutePoint[];
 }>;
 
+type RouteSummaryProps = RouteProps & Readonly<{ tone?: 'default' | 'inverse' }>;
+
 type RouteNodeProps = Readonly<{
   accessibilityLabel: string;
   hasConnector: boolean;
@@ -74,19 +76,30 @@ export function RouteSpine({ destination, origin, stops }: RouteProps) {
   );
 }
 
-export function RouteSummary({ destination, origin, stops }: RouteProps) {
+export function RouteSummary({ destination, origin, stops, tone = 'default' }: RouteSummaryProps) {
   const stopCountLabel = `${stops.length} điểm dừng`;
+  const inverse = tone === 'inverse';
 
   return (
     <View style={styles.summary}>
       <View style={styles.summaryLocation}>
-        <Text style={styles.summaryLabel}>Điểm lấy hàng</Text>
-        <Text style={styles.summaryAddress}>{origin.label}</Text>
+        <Text style={[styles.summaryLabel, inverse ? styles.summaryLabelInverse : null]}>
+          Điểm lấy hàng
+        </Text>
+        <Text style={[styles.summaryAddress, inverse ? styles.summaryAddressInverse : null]}>
+          {origin.label}
+        </Text>
       </View>
-      <Text style={styles.stopCount}>{stopCountLabel}</Text>
+      <Text style={[styles.stopCount, inverse ? styles.stopCountInverse : null]}>
+        {stopCountLabel}
+      </Text>
       <View style={styles.summaryLocation}>
-        <Text style={styles.summaryLabel}>Điểm giao hàng</Text>
-        <Text style={styles.summaryAddress}>{destination.label}</Text>
+        <Text style={[styles.summaryLabel, inverse ? styles.summaryLabelInverse : null]}>
+          Điểm giao hàng
+        </Text>
+        <Text style={[styles.summaryAddress, inverse ? styles.summaryAddressInverse : null]}>
+          {destination.label}
+        </Text>
       </View>
     </View>
   );
@@ -164,10 +177,13 @@ const styles = StyleSheet.create({
     color: colors.neutral.text,
     flexShrink: 1,
   },
+  summaryAddressInverse: { color: colors.brand.text },
+  summaryLabelInverse: { color: colors.operational.inkMuted },
   stopCount: {
     ...typography.caption,
     color: colors.info.text,
     flexShrink: 1,
     fontWeight: '600',
   },
+  stopCountInverse: { color: colors.brand.softBackground },
 });

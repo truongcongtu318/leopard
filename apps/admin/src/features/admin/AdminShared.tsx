@@ -12,6 +12,7 @@ import type {
   AdminNoticeView,
   AdminPreviewContext,
 } from './model';
+import { createAdminPreviewHref } from './adapter';
 
 export function AdminBoundaryState({ view }: Readonly<{ view: AdminBoundaryView }>) {
   return <ScreenState message={view.message} state={view.kind} title={view.title} />;
@@ -43,14 +44,19 @@ const listLabel: Readonly<Record<AdminListScreen, string>> = {
 export function AdminBreadcrumbs({
   screen,
   orderReference,
-}: Readonly<{ screen: AdminListScreen | 'order-detail'; orderReference?: string }>) {
+  previewContext,
+}: Readonly<{
+  screen: AdminListScreen | 'order-detail';
+  orderReference?: string;
+  previewContext?: AdminPreviewContext | undefined;
+}>) {
   return (
     <nav aria-label="Đường dẫn" className="text-body-compact text-neutral-muted">
       <ol className="m-0 flex flex-wrap items-center gap-xs p-0">
         <li className="list-none">
           <a
             className="rounded-control underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            href="/admin"
+            href={createAdminPreviewHref('/admin', 'overview', previewContext)}
           >
             Tổng quan
           </a>
@@ -61,7 +67,7 @@ export function AdminBreadcrumbs({
             <li className="list-none">
               <a
                 className="rounded-control underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                href="/admin/orders"
+                href={createAdminPreviewHref('/admin/orders', 'orders', previewContext)}
               >
                 Đơn hàng
               </a>
@@ -86,23 +92,54 @@ export function AdminSurface({
   description,
   children,
   className = '',
+  ariaLabel,
+  variant = 'section',
 }: Readonly<{
   title: string;
   description?: string;
   children: ReactNode;
   className?: string;
+  ariaLabel?: string;
+  variant?: 'section' | 'panel' | 'signal';
 }>) {
+  const variantClass =
+    variant === 'panel'
+      ? 'rounded-card border border-neutral-border bg-neutral p-md'
+      : variant === 'signal'
+        ? 'border-l-4 border-brand bg-neutral-surface py-md pl-md pr-sm'
+        : 'border-t border-neutral-border pt-md';
   return (
     <section
-      className={`min-w-0 rounded-card border border-neutral-border bg-neutral p-md text-neutral-text ${className}`}
+      aria-label={ariaLabel}
+      className={`min-w-0 text-neutral-text ${variantClass} ${className}`}
     >
-      <header className="mb-md">
+      <header className="mb-sm">
         <h2 className="text-section-title font-semibold break-words">{title}</h2>
         {description ? (
           <p className="mt-xxs text-body-compact text-neutral-muted break-words">{description}</p>
         ) : null}
       </header>
       {children}
+    </section>
+  );
+}
+
+export function AdminDispatchSlab({
+  ariaLabel,
+  eyebrow,
+  children,
+}: Readonly<{
+  ariaLabel: string;
+  eyebrow: string;
+  children: ReactNode;
+}>) {
+  return (
+    <section
+      aria-label={ariaLabel}
+      className="min-w-0 border-l-4 border-brand bg-neutral-text p-md text-brand-text"
+    >
+      <p className="text-xs font-semibold tracking-wide text-brand-soft">{eyebrow}</p>
+      <div className="mt-sm min-w-0">{children}</div>
     </section>
   );
 }
@@ -159,7 +196,7 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
   return (
     <aside
       aria-label="Audit Rail — thao tác đặc quyền"
-      className="min-w-0 rounded-card border border-neutral-border bg-neutral p-md text-neutral-text"
+      className="min-w-0 border-l-4 border-brand bg-neutral-surface p-md text-neutral-text"
     >
       <header className="mb-md border-b border-neutral-border pb-sm">
         <h2 className="text-section-title font-semibold">Audit Rail</h2>

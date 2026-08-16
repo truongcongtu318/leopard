@@ -7,8 +7,19 @@ import {
   StatusBadge,
 } from '@leopard/ui';
 
-import { AdminBoundaryState, AdminNotice, AdminSurface } from './AdminShared';
-import type { AdminOverviewRouteView, AdminOrderSummaryView } from './model';
+import {
+  AdminBoundaryState,
+  AdminDispatchSlab,
+  AdminNotice,
+  AdminSurface,
+} from './AdminShared';
+import { createAdminPreviewHref } from './adapter';
+import type {
+  AdminOverviewRouteView,
+  AdminOrderSummaryView,
+  AdminPreviewContext,
+  AdminPreviewScreen,
+} from './model';
 
 const RECENT_ORDER_COLUMNS = [
   {
@@ -53,7 +64,22 @@ const RECENT_ORDER_COLUMNS = [
   },
 ];
 
-export function AdminOverviewScreen({ view }: Readonly<{ view: AdminOverviewRouteView }>) {
+function screenForHref(href: string): AdminPreviewScreen {
+  if (/^\/admin\/orders\/[^/]+/.test(href)) return 'order-detail';
+  if (href === '/admin/orders') return 'orders';
+  if (href === '/admin/users') return 'users';
+  if (href === '/admin/fleets') return 'fleets';
+  if (href === '/admin/drivers') return 'drivers';
+  return 'overview';
+}
+
+export function AdminOverviewScreen({
+  view,
+  previewContext,
+}: Readonly<{
+  view: AdminOverviewRouteView;
+  previewContext?: AdminPreviewContext;
+}>) {
   if (view.kind !== 'overview') {
     return (
       <div className="flex flex-col gap-md">
@@ -63,8 +89,12 @@ export function AdminOverviewScreen({ view }: Readonly<{ view: AdminOverviewRout
     );
   }
 
-  const recentRows = view.recentOrders.map((order) => ({ id: order.id, order }));
-  const recentMobile = view.recentOrders.map((order) => ({
+  const recentOrders = view.recentOrders.map((order) => ({
+    ...order,
+    href: createAdminPreviewHref(order.href, 'order-detail', previewContext),
+  }));
+  const recentRows = recentOrders.map((order) => ({ id: order.id, order }));
+  const recentMobile = recentOrders.map((order) => ({
     id: order.id,
     heading: (
       <a className="text-brand underline" href={order.href}>{order.reference}</a>
@@ -77,49 +107,92 @@ export function AdminOverviewScreen({ view }: Readonly<{ view: AdminOverviewRout
   }));
 
   return (
-    <div className="flex min-w-0 flex-col gap-lg">
+    <div className="flex min-w-0 flex-col gap-xl">
       <OperationsPageHeader
-        context="Theo dõi sức khỏe hệ thống và ngoại lệ trong phạm vi pilot"
+        context="Ưu tiên ngoại lệ, phạm vi điều tra và dữ liệu mới nhất trong ca trực pilot"
         isStale={view.state === 'offline'}
         title="Tổng quan vận hành"
         updatedAt={view.checkedAtLabel}
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
 
-      <AdminSurface title="Sức khỏe hệ thống" description="Liveness và readiness là hai tín hiệu độc lập.">
-        <dl className="grid gap-sm sm:grid-cols-2">
-          <div className="border-l-2 border-success-border pl-sm">
-            <dt className="text-xs font-semibold text-neutral-muted">Liveness</dt>
-            <dd className="mt-xxs font-semibold">{view.health.liveness}</dd>
-          </div>
-          <div className={`border-l-2 pl-sm ${view.health.readiness === 'READY' ? 'border-success-border' : 'border-danger-border'}`}>
-            <dt className="text-xs font-semibold text-neutral-muted">Readiness</dt>
-            <dd className="mt-xxs font-semibold">{view.health.readiness}</dd>
-            <dd className="mt-xxs text-body-compact text-neutral-muted">{view.health.dependencyLabel}</dd>
-          </div>
-        </dl>
-      </AdminSurface>
-
-      <section aria-label="Chỉ số vận hành" className="grid gap-sm sm:grid-cols-2 xl:grid-cols-4">
-        {view.metrics.map((metric) => {
-          const content = (
-            <dl className="h-full border-l-4 border-brand bg-neutral-surface px-md py-sm text-neutral-text">
-              <dt className="text-body-compact font-medium text-neutral-muted">{metric.label}</dt>
-              <dd className="mt-xxs text-section-title font-bold tabular-nums">{metric.value}</dd>
-              <dd className="mt-xxs text-xs text-neutral-muted">{metric.detail}</dd>
+      <AdminDispatchSlab ariaLabel="Bàn điều phối hiện tại" eyebrow="CA TRỰC PILOT · TÍN HIỆU HIỆN TẠI">
+        <div className="grid min-w-0 gap-md lg:grid-cols-[minmax(14rem,1fr)_minmax(0,2fr)] lg:items-end">
+          <div className="min-w-0">
+            <h2 className="text-section-title font-semibold">Sức khỏe hệ thống</h2>
+            <p className="mt-xxs text-body-compact text-brand-soft">
+              Liveness và readiness được giữ tách biệt để tránh bỏ sót dependency lỗi.
+            </p>
+            <dl className="mt-md grid grid-cols-2 gap-sm">
+              <div className="border-l-4 border-success-border pl-sm">
+                <dt className="text-xs font-semibold text-brand-soft">Liveness</dt>
+                <dd className="mt-xxs font-semibold tabular-nums">{view.health.liveness}</dd>
+              </div>
+              <div
+                className={`border-l-4 pl-sm ${
+                  view.health.readiness === 'READY'
+                    ? 'border-success-border'
+                    : 'border-danger-border'
+                }`}
+              >
+                <dt className="text-xs font-semibold text-brand-soft">Readiness</dt>
+                <dd className="mt-xxs font-semibold tabular-nums">{view.health.readiness}</dd>
+                <dd className="mt-xxs text-xs text-brand-soft break-words">
+                  {view.health.dependencyLabel}
+                </dd>
+              </div>
             </dl>
-          );
-          return metric.href ? (
-            <a key={metric.id} className="rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" href={metric.href}>{content}</a>
-          ) : <div key={metric.id}>{content}</div>;
-        })}
-      </section>
+          </div>
 
-      <div className="grid min-w-0 gap-lg xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
-        <AdminSurface title="Ngoại lệ cần điều tra" description="Condition và mức độ đã được adapter cung cấp; UI không tự suy diễn severity.">
+          <dl
+            aria-label="Chỉ số vận hành"
+            className="grid min-w-0 grid-cols-2 border-t border-brand-soft lg:grid-cols-4 lg:border-l lg:border-t-0"
+          >
+            {view.metrics.map((metric) => {
+              const metricValue = (
+                <div className="min-w-0 border-b border-brand-soft px-sm py-sm last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
+                  <dt className="text-xs font-medium text-brand-soft break-words">{metric.label}</dt>
+                  <dd className="mt-xxs text-section-title font-bold tabular-nums">{metric.value}</dd>
+                  <dd className="mt-xxs text-xs text-brand-soft break-words">{metric.detail}</dd>
+                </div>
+              );
+              return metric.href ? (
+                <a
+                  key={metric.id}
+                  className="min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft focus-visible:ring-inset"
+                  href={createAdminPreviewHref(
+                    metric.href,
+                    screenForHref(metric.href),
+                    previewContext,
+                  )}
+                >
+                  {metricValue}
+                </a>
+              ) : (
+                <div key={metric.id} className="min-w-0">{metricValue}</div>
+              );
+            })}
+          </dl>
+        </div>
+      </AdminDispatchSlab>
+
+      <div className="grid min-w-0 gap-xl xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
+        <AdminSurface
+          title="Ngoại lệ cần điều tra"
+          description="Hàng được xếp theo tín hiệu adapter; màu và signal rail không thay thế nhãn điều kiện."
+        >
           <ul className="m-0 grid list-none gap-sm p-0">
             {view.exceptions.map((exception) => (
-              <li key={exception.id} className="border-b border-neutral-border pb-sm last:border-0 last:pb-0">
+              <li
+                key={exception.id}
+                className={`border-l-4 bg-neutral-surface py-sm pl-md pr-sm ${
+                  exception.tone === 'danger'
+                    ? 'border-danger-border'
+                    : exception.tone === 'warning'
+                      ? 'border-warning-border'
+                      : 'border-brand'
+                }`}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-xs">
                   <div className="min-w-0">
                     <p className={`font-semibold break-words ${exception.tone === 'danger' ? 'text-danger-text' : exception.tone === 'warning' ? 'text-warning-text' : ''}`}>{exception.label}</p>
@@ -128,17 +201,27 @@ export function AdminOverviewScreen({ view }: Readonly<{ view: AdminOverviewRout
                   <span className="text-xs text-neutral-muted tabular-nums">{exception.updatedAtLabel}</span>
                 </div>
                 {exception.targetHref ? (
-                  <a className="mt-xs inline-flex min-h-11 items-center font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" href={exception.targetHref}>Điều tra chi tiết</a>
+                  <a
+                    className="mt-xs inline-flex min-h-11 items-center font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    href={createAdminPreviewHref(
+                      exception.targetHref,
+                      screenForHref(exception.targetHref),
+                      previewContext,
+                      exception.targetScenario,
+                    )}
+                  >
+                    Điều tra chi tiết
+                  </a>
                 ) : null}
               </li>
             ))}
           </ul>
         </AdminSurface>
 
-        <AdminSurface title="Phân bố trạng thái đơn">
-          <dl className="grid gap-xs">
+        <AdminSurface title="Sổ trạng thái đơn" description="Số lượng theo snapshot hiện tại.">
+          <dl className="grid grid-cols-2 gap-x-md">
             {view.orderDistribution.map((item) => (
-              <div key={item.status} className="flex items-center justify-between gap-sm border-b border-neutral-border py-xs last:border-0">
+              <div key={item.status} className="flex min-w-0 items-center justify-between gap-sm border-b border-neutral-border py-sm">
                 <dt><StatusBadge domain="orderStatus" status={item.status} /></dt>
                 <dd className="font-semibold tabular-nums">{item.count}</dd>
               </div>
@@ -147,7 +230,7 @@ export function AdminOverviewScreen({ view }: Readonly<{ view: AdminOverviewRout
         </AdminSurface>
       </div>
 
-      <AdminSurface title="Đơn cập nhật gần đây">
+      <AdminSurface title="Sổ đơn cập nhật gần đây" description="Mới nhất trước · phạm vi Admin hiện tại">
         <div className="hidden min-w-0 overflow-x-auto md:block">
           <DataTable
             caption="Đơn cập nhật gần đây trong phạm vi Admin hiện tại"

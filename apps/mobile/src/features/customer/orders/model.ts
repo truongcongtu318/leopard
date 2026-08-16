@@ -14,6 +14,7 @@ export type CustomerRouteView = Readonly<{
 
 export type CustomerActionView = Readonly<{
   id: string;
+  orderId?: string;
   label: string;
   emphasis: 'primary' | 'secondary' | 'destructive';
   disabled?: boolean;

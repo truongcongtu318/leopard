@@ -83,6 +83,22 @@ const DEFAULT_SCENARIO: Readonly<Record<AdminPreviewScreen, AdminPreviewScenario
   drivers: 'ADM-DRV-MIXED',
 };
 
+const DEFAULT_ORDER_ID = '33333333-3333-4333-8333-333333333101';
+const ORDER_STATUS_LABEL: Readonly<Record<OrderStatus, string>> = {
+  REQUESTED: 'Chờ tài xế',
+  ACCEPTED: 'Đã nhận đơn',
+  PICKING_UP: 'Đang đến điểm lấy',
+  IN_TRANSIT: 'Đang vận chuyển',
+  DELIVERED: 'Đã giao',
+  CANCELLED: 'Đã hủy',
+};
+const PAYMENT_STATUS_LABEL: Readonly<Record<PaymentStatus, string>> = {
+  UNPAID: 'Chưa thanh toán',
+  QR_CREATED: 'Đã tạo mã QR',
+  PAID_MANUAL: 'Đã xác nhận thanh toán',
+  FAILED: 'Thất bại',
+};
+
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
     for (const child of Object.values(value)) deepFreeze(child);
@@ -110,8 +126,10 @@ function boundary(
       };
 }
 
-function command(kind: AdminCommandKind): AdminCommandView {
-  const orderId = '33333333-3333-4333-8333-333333333101';
+function command(
+  kind: AdminCommandKind,
+  orderContext: AdminOrderDetailDataView | null = null,
+): AdminCommandView {
   const disabling = kind === 'DISABLE_USER';
   const userId =
     kind === 'ENABLE_USER'
@@ -121,11 +139,12 @@ function command(kind: AdminCommandKind): AdminCommandView {
   const maskedPhone = disabling ? '••• 1234' : '••• 5678';
   const userRole = disabling ? 'DRIVER' : 'CUSTOMER';
   if (kind === 'CANCEL_ORDER') {
+    if (!orderContext) throw new TypeError('Order command requires an exact target context');
     return {
       kind,
-      targetId: orderId,
-      targetLabel: 'Đơn LP-A-260815-101',
-      currentStateLabel: 'Đã nhận đơn',
+      targetId: orderContext.id,
+      targetLabel: `Đơn ${orderContext.reference}`,
+      currentStateLabel: ORDER_STATUS_LABEL[orderContext.status],
       proposedStateLabel: 'Đã hủy',
       reasonPolicy: {
         label: 'Lý do hủy',
@@ -136,23 +155,29 @@ function command(kind: AdminCommandKind): AdminCommandView {
       },
       consequence: 'Đơn hàng sẽ không thể tiếp tục vận chuyển sau khi backend xác nhận hủy.',
       isIrreversible: true,
-      contextVersion: 'order-v17',
+      contextVersion: `order-${orderContext.id}-v17`,
       commandLabel: 'Hủy đơn hàng',
       buttonVariant: 'destructive',
       targetItems: [
-        { id: 'order', label: 'Đơn hàng', value: 'LP-A-260815-101' },
-        { id: 'status', label: 'Trạng thái hiện tại', value: 'Đã nhận đơn' },
-        { id: 'assignment', label: 'Phân công', value: 'Tài xế An Mô Phỏng' },
-        { id: 'updated', label: 'Cập nhật', value: '14:32 · 15/08/2026' },
+        { id: 'order', label: 'Đơn hàng', value: orderContext.reference },
+        { id: 'order-id', label: 'Order UUID', value: orderContext.id },
+        {
+          id: 'status',
+          label: 'Trạng thái hiện tại',
+          value: ORDER_STATUS_LABEL[orderContext.status],
+        },
+        { id: 'assignment', label: 'Phân công', value: orderContext.driverLabel },
+        { id: 'updated', label: 'Cập nhật', value: orderContext.updatedAtLabel },
       ],
     };
   }
   if (kind === 'CONFIRM_MANUAL_PAYMENT') {
+    if (!orderContext) throw new TypeError('Payment command requires an exact order context');
     return {
       kind,
-      targetId: '66666666-6666-4666-8666-666666666001',
-      targetLabel: 'Thanh toán PAY-A-001 của LP-A-260815-101',
-      currentStateLabel: 'Chưa thanh toán',
+      targetId: orderContext.payment.id,
+      targetLabel: `Thanh toán ${orderContext.payment.referenceLabel} của ${orderContext.reference}`,
+      currentStateLabel: PAYMENT_STATUS_LABEL[orderContext.payment.status],
       proposedStateLabel: 'Đã xác nhận thanh toán',
       reasonPolicy: {
         label: 'Ghi chú xác nhận',
@@ -163,14 +188,19 @@ function command(kind: AdminCommandKind): AdminCommandView {
       },
       consequence: 'Backend sẽ ghi nhận xác nhận thanh toán thủ công kèm audit nếu command hợp lệ.',
       isIrreversible: true,
-      contextVersion: 'payment-v8',
+      contextVersion: `payment-${orderContext.payment.id}-v8`,
       commandLabel: 'Xác nhận đã thanh toán',
       buttonVariant: 'primary',
       targetItems: [
-        { id: 'order', label: 'Đơn hàng', value: 'LP-A-260815-101' },
-        { id: 'payment', label: 'Payment ID', value: 'PAY-A-001' },
-        { id: 'amount', label: 'Số tiền', value: '420.000 ₫' },
-        { id: 'status', label: 'Trạng thái hiện tại', value: 'Chưa thanh toán' },
+        { id: 'order', label: 'Đơn hàng', value: orderContext.reference },
+        { id: 'order-id', label: 'Order UUID', value: orderContext.id },
+        { id: 'payment', label: 'Payment ID', value: orderContext.payment.id },
+        { id: 'amount', label: 'Số tiền', value: orderContext.payment.amountLabel },
+        {
+          id: 'status',
+          label: 'Trạng thái hiện tại',
+          value: PAYMENT_STATUS_LABEL[orderContext.payment.status],
+        },
       ],
     };
   }
@@ -294,6 +324,7 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
         tone: 'warning',
         updatedAtLabel: '14:27 · 15/08/2026',
         targetHref: '/admin/orders/33333333-3333-4333-8333-333333333101',
+        targetScenario: 'ADM-TRK-STALE',
       },
       {
         id: 'exception-payment',
@@ -303,6 +334,7 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
         tone: 'danger',
         updatedAtLabel: '14:25 · 15/08/2026',
         targetHref: '/admin/orders/33333333-3333-4333-8333-333333333102',
+        targetScenario: 'ADM-PAY-FAILED',
       },
     ],
     recentOrders: orderItems().slice(0, 3).map((item) => ({
@@ -351,9 +383,9 @@ const defaultFilters: Readonly<Record<AdminListScreen, AdminListFilters>> = {
 
 function orderItems(): readonly AdminOrderListItemView[] {
   const rows: readonly [string, OrderStatus, PaymentStatus, string][] = [
-    ['101', 'REQUESTED', 'UNPAID', 'Chưa có vị trí'],
-    ['102', 'ACCEPTED', 'QR_CREATED', 'Cập nhật lúc 14:30'],
-    ['103', 'PICKING_UP', 'FAILED', 'Vị trí cũ · 14:22'],
+    ['101', 'ACCEPTED', 'UNPAID', 'Cập nhật lúc 14:30'],
+    ['102', 'REQUESTED', 'FAILED', 'Chưa có vị trí'],
+    ['103', 'PICKING_UP', 'QR_CREATED', 'Vị trí cũ · 14:22'],
     ['104', 'IN_TRANSIT', 'UNPAID', 'Cập nhật lúc 14:31'],
     ['105', 'DELIVERED', 'PAID_MANUAL', 'Tracking đã kết thúc'],
     ['106', 'CANCELLED', 'UNPAID', 'Không còn tracking'],
@@ -478,54 +510,109 @@ function listView(
   };
 }
 
-function baseOrderDetail(scenarioId: AdminPreviewScenarioId): AdminOrderDetailDataView {
+function previewOrder(orderId: string | null): AdminOrderListItemView {
+  const selected = orderItems().find((item) => item.id === (orderId ?? DEFAULT_ORDER_ID));
+  if (!selected) throw new TypeError('Preview order is not available for this route');
+  return selected;
+}
+
+function paymentIdFor(order: AdminOrderListItemView): string {
+  return `66666666-6666-4666-8666-666666666${order.id.slice(-3)}`;
+}
+
+function paymentReferenceFor(order: AdminOrderListItemView): string {
+  return `PAY-A-${order.id.slice(-3)}`;
+}
+
+function historyFor(order: AdminOrderListItemView): AdminOrderDetailDataView['history'] {
+  const requested = {
+    id: `${order.id}-requested`,
+    label: 'Chờ tài xế',
+    description: 'Đơn được tạo từ dữ liệu mô phỏng.',
+    timestampLabel: '13:30 · 15/08/2026',
+    dateTime: '2026-08-15T13:30:00+07:00',
+    isCurrent: order.status === 'REQUESTED',
+  };
+  if (order.status === 'REQUESTED') return [requested];
+  return [
+    requested,
+    {
+      id: `${order.id}-${order.status.toLocaleLowerCase('en')}`,
+      label: ORDER_STATUS_LABEL[order.status],
+      description: `Snapshot hiện tại của ${order.reference}.`,
+      timestampLabel: order.createdAtLabel,
+      dateTime: '2026-08-15T14:32:00+07:00',
+      isCurrent: true,
+    },
+  ];
+}
+
+function baseOrderDetail(
+  scenarioId: AdminPreviewScenarioId,
+  selectedOrder: AdminOrderListItemView,
+): AdminOrderDetailDataView {
   const trackingStale = scenarioId === 'ADM-TRK-STALE';
   const mediaError = scenarioId === 'ADM-MEDIA-ERROR';
   const paymentFailed = scenarioId === 'ADM-PAY-FAILED';
+  const [originLabel = selectedOrder.routeLabel, destinationLabel = selectedOrder.routeLabel] =
+    selectedOrder.routeLabel.split(' → ');
+  const trackingState = trackingStale
+    ? 'stale'
+    : selectedOrder.trackingLabel === 'Chưa có vị trí'
+      ? 'no-location'
+      : 'route';
   return {
-    id: '33333333-3333-4333-8333-333333333101',
-    reference: 'LP-A-260815-101',
-    status: 'ACCEPTED',
-    customerLabel: 'Khách Hàng Lan Mô Phỏng · ••• 4101',
-    driverLabel: 'Tài xế An Mô Phỏng · ••• 1201',
-    updatedAtLabel: '14:32 · 15/08/2026',
+    id: selectedOrder.id,
+    reference: selectedOrder.reference,
+    status: selectedOrder.status,
+    customerLabel: selectedOrder.customerLabel,
+    driverLabel: selectedOrder.driverLabel,
+    updatedAtLabel: selectedOrder.createdAtLabel,
     cargoSummary: 'Hàng đóng thùng · khoảng 120 kg · ghi chú vận hành mô phỏng dài để kiểm tra wrap',
     route: {
-      origin: { id: 'admin-origin', label: 'Kho mô phỏng tại Quận 7', metadata: 'Lấy hàng lúc 13:45' },
-      stops: [{ id: 'admin-stop', label: 'Điểm dừng mô phỏng tại Quận 4', metadata: 'Dự kiến đi qua' }],
-      destination: { id: 'admin-destination', label: 'Điểm giao mô phỏng tại Thành phố Thủ Đức', metadata: 'Điểm đến dự kiến' },
+      origin: { id: `${selectedOrder.id}-origin`, label: originLabel, metadata: 'Lấy hàng lúc 13:45' },
+      stops: [{ id: `${selectedOrder.id}-stop`, label: 'Điểm dừng mô phỏng tại Quận 4', metadata: 'Dự kiến đi qua' }],
+      destination: { id: `${selectedOrder.id}-destination`, label: destinationLabel, metadata: 'Điểm đến dự kiến' },
     },
     eta: { label: 'ETA dự kiến · 18 phút', sourceLabel: 'Dữ liệu mô phỏng' },
     tracking: {
-      state: trackingStale ? 'stale' : 'route',
-      statusLabel: trackingStale ? 'Vị trí cũ — cập nhật lần cuối 14:22' : 'Cập nhật lúc 14:32',
-      lastUpdatedLabel: trackingStale ? '14:22 · 15/08/2026' : '14:32 · 15/08/2026',
+      state: trackingState,
+      statusLabel: trackingStale ? 'Vị trí cũ — cập nhật lần cuối 14:22' : selectedOrder.trackingLabel,
+      lastUpdatedLabel:
+        trackingState === 'no-location'
+          ? null
+          : trackingStale
+            ? '14:22 · 15/08/2026'
+            : selectedOrder.createdAtLabel,
       mapAlternative: 'Điểm gần nhất ở cấp khu vực Quận 7; không lộ tọa độ thô.',
     },
-    history: [
-      { id: 'requested', label: 'Chờ tài xế', description: 'Đơn được tạo.', timestampLabel: '13:30 · 15/08/2026', dateTime: '2026-08-15T13:30:00+07:00', isCurrent: false },
-      { id: 'accepted', label: 'Đã nhận đơn', description: 'Tài xế An Mô Phỏng được phân công.', timestampLabel: '13:35 · 15/08/2026', dateTime: '2026-08-15T13:35:00+07:00', isCurrent: true },
-    ],
+    history: historyFor(selectedOrder),
     media: {
       state: mediaError ? 'error' : 'success',
       message: mediaError ? 'Không thể tải ảnh. Hãy yêu cầu lại URL xem được phép; mã media-demo-003.' : null,
       items: mediaError ? [] : [{ id: 'media-a-001', label: 'Ảnh xác nhận mô phỏng', mediaType: 'JPEG', capturedAtLabel: '14:10 · 15/08/2026' }],
     },
     payment: {
-      id: '66666666-6666-4666-8666-666666666001',
-      status: paymentFailed ? 'FAILED' : 'UNPAID',
-      amountLabel: '420.000 ₫',
+      id: paymentIdFor(selectedOrder),
+      status: paymentFailed ? 'FAILED' : selectedOrder.paymentStatus,
+      amountLabel: selectedOrder.amountLabel,
       sourceLabel: paymentFailed ? 'Provider mô phỏng báo thất bại' : 'Chưa có xác nhận',
-      referenceLabel: paymentFailed ? 'PAY-DEMO-FAILED-001' : 'PAY-A-001',
+      referenceLabel: paymentFailed
+        ? `PAY-DEMO-FAILED-${selectedOrder.id.slice(-3)}`
+        : paymentReferenceFor(selectedOrder),
       expiresAtLabel: paymentFailed ? null : '15:00 · 15/08/2026',
     },
   };
 }
 
-function baseAuditEntries(): readonly AdminAuditEntryView[] {
+function auditTarget(order: AdminOrderDetailDataView): string {
+  return `${order.reference} · ${order.id}`;
+}
+
+function baseAuditEntries(order: AdminOrderDetailDataView): readonly AdminAuditEntryView[] {
   return [{
     id: 'audit-admin-001', outcomeLabel: 'Thành công', actionLabel: 'Gán tài xế cho đơn',
-    actorLabel: 'Admin Demo · ADMIN', targetLabel: 'LP-A-260815-101',
+    actorLabel: 'Admin Demo · ADMIN', targetLabel: auditTarget(order),
     reason: 'Điều phối pilot bằng dữ liệu mô phỏng đã được sanitize.', timestampLabel: '13:35 · 15/08/2026',
     dateTime: '2026-08-15T13:35:00+07:00', requestId: 'req-admin-demo-001', auditId: 'audit-demo-001',
   }];
@@ -534,15 +621,20 @@ function baseAuditEntries(): readonly AdminAuditEntryView[] {
 function detailView(
   scenarioId: AdminPreviewScenarioId,
   commandKind: AdminCommandKind | null,
+  orderId: string | null,
 ): AdminOrderDetailView {
+  const selectedOrder = previewOrder(orderId);
   const isCommandScenario = COMMAND_SCENARIOS.includes(scenarioId as (typeof COMMAND_SCENARIOS)[number]);
   const selectedCommand = isCommandScenario ? commandKind ?? 'CANCEL_ORDER' : null;
   if (selectedCommand && !['CANCEL_ORDER', 'CONFIRM_MANUAL_PAYMENT'].includes(selectedCommand)) {
     throw new TypeError(`Unsupported Admin command for order-detail: ${selectedCommand}`);
   }
-  const commands = [command('CANCEL_ORDER'), command('CONFIRM_MANUAL_PAYMENT')];
-  let order = baseOrderDetail(scenarioId);
-  let auditEntries = baseAuditEntries();
+  let order = baseOrderDetail(scenarioId, selectedOrder);
+  const commands = [
+    command('CANCEL_ORDER', order),
+    command('CONFIRM_MANUAL_PAYMENT', order),
+  ];
+  let auditEntries = baseAuditEntries(order);
   if (scenarioId === 'ADM-CMD-SUCCESS' && selectedCommand) {
     order = {
       ...order,
@@ -558,11 +650,11 @@ function detailView(
       {
         id: 'audit-admin-009', outcomeLabel: 'Thành công',
         actionLabel: selectedCommand === 'CONFIRM_MANUAL_PAYMENT' ? 'Xác nhận thanh toán thủ công' : 'Hủy đơn hàng',
-        actorLabel: 'Admin Demo · ADMIN', targetLabel: 'LP-A-260815-101',
+        actorLabel: 'Admin Demo · ADMIN', targetLabel: auditTarget(order),
         reason: 'Scenario persisted response với lý do mô phỏng đã sanitize.', timestampLabel: '14:35 · 15/08/2026',
         dateTime: '2026-08-15T14:35:00+07:00', requestId: 'req-admin-demo-009', auditId: 'audit-demo-009',
       },
-      ...baseAuditEntries(),
+      ...baseAuditEntries(order),
     ];
   }
   return {
@@ -594,27 +686,32 @@ function resolveScenario(
 
 export function createAdminPreviewView(
   screen: 'overview', requestedScenario: string | null, commandKind?: AdminCommandKind | null,
+  orderId?: string | null,
 ): AdminOverviewRouteView;
 export function createAdminPreviewView(
   screen: AdminListScreen, requestedScenario: string | null, commandKind?: AdminCommandKind | null,
+  orderId?: string | null,
 ): AdminListRouteView;
 export function createAdminPreviewView(
   screen: 'order-detail', requestedScenario: string | null, commandKind?: AdminCommandKind | null,
+  orderId?: string | null,
 ): AdminOrderDetailRouteView;
 export function createAdminPreviewView(
   screen: AdminPreviewScreen, requestedScenario: string | null, commandKind?: AdminCommandKind | null,
+  orderId?: string | null,
 ): AdminRouteView;
 export function createAdminPreviewView(
   screen: AdminPreviewScreen,
   requestedScenario: string | null,
   commandKind: AdminCommandKind | null = null,
+  orderId: string | null = null,
 ): AdminRouteView {
   const scenarioId = resolveScenario(screen, requestedScenario);
   let view: AdminRouteView;
   if (scenarioId === 'ADM-DENIED') view = boundary(scenarioId, 'permission-denied');
   else if (scenarioId === 'ADM-EXPIRED') view = boundary(scenarioId, 'session-expired');
   else if (screen === 'overview') view = overview(scenarioId);
-  else if (screen === 'order-detail') view = detailView(scenarioId, commandKind);
+  else if (screen === 'order-detail') view = detailView(scenarioId, commandKind, orderId);
   else view = listView(screen, scenarioId, commandKind);
   return deepFreeze(view);
 }

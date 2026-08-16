@@ -3,6 +3,7 @@ import type {
   AdminListFilters,
   AdminListScreen,
   AdminPreviewContext,
+  AdminPreviewScreen,
 } from './model';
 
 export type AdminSearchParams = Readonly<
@@ -38,6 +39,57 @@ const SORTS_BY_SCREEN = {
   fleets: ['name-asc', 'name-desc', 'updated-desc'],
   drivers: ['name-asc', 'name-desc', 'updated-desc'],
 } as const;
+const PREVIEW_SCENARIOS_BY_SCREEN: Readonly<Record<AdminPreviewScreen, readonly string[]>> = {
+  overview: [
+    'ADM-OV-READY',
+    'ADM-OV-READINESS',
+    'ADM-OV-OFFLINE',
+    'ADM-DENIED',
+    'ADM-EXPIRED',
+  ],
+  orders: ['ADM-ORD-DENSE', 'ADM-ORD-NORESULT', 'ADM-DENIED', 'ADM-EXPIRED'],
+  'order-detail': [
+    'ADM-ORD-DETAIL',
+    'ADM-TRK-STALE',
+    'ADM-MEDIA-ERROR',
+    'ADM-PAY-FAILED',
+    'ADM-CMD-INVALID',
+    'ADM-CMD-PENDING',
+    'ADM-CMD-ERROR',
+    'ADM-CMD-CONFLICT',
+    'ADM-CMD-SUCCESS',
+    'ADM-DENIED',
+    'ADM-EXPIRED',
+  ],
+  users: [
+    'ADM-USR-DENSE',
+    'ADM-CMD-INVALID',
+    'ADM-CMD-PENDING',
+    'ADM-CMD-ERROR',
+    'ADM-CMD-CONFLICT',
+    'ADM-CMD-SUCCESS',
+    'ADM-DENIED',
+    'ADM-EXPIRED',
+  ],
+  fleets: ['ADM-FLT-EMPTY', 'ADM-DENIED', 'ADM-EXPIRED'],
+  drivers: ['ADM-DRV-MIXED', 'ADM-DENIED', 'ADM-EXPIRED'],
+};
+const DEFAULT_PREVIEW_SCENARIO: Readonly<Record<AdminPreviewScreen, string>> = {
+  overview: 'ADM-OV-READY',
+  orders: 'ADM-ORD-DENSE',
+  'order-detail': 'ADM-ORD-DETAIL',
+  users: 'ADM-USR-DENSE',
+  fleets: 'ADM-FLT-EMPTY',
+  drivers: 'ADM-DRV-MIXED',
+};
+const COMMAND_PREVIEW_SCENARIOS = new Set([
+  'ADM-CMD-INVALID',
+  'ADM-CMD-PENDING',
+  'ADM-CMD-ERROR',
+  'ADM-CMD-CONFLICT',
+  'ADM-CMD-SUCCESS',
+]);
+const ADMIN_PREVIEW_ORIGIN = 'https://leopard-preview.invalid';
 
 function first(value: string | readonly string[] | undefined): string {
   if (typeof value === 'string') return value;
@@ -108,14 +160,43 @@ function append(params: URLSearchParams, key: string, value: string, fallback = 
   if (value !== fallback) params.set(key, value);
 }
 
-function appendPreview(params: URLSearchParams, context?: AdminPreviewContext): void {
+function allowedPreviewScenario(
+  screen: AdminPreviewScreen,
+  requestedScenario: string | null | undefined,
+): string {
+  return requestedScenario && PREVIEW_SCENARIOS_BY_SCREEN[screen].includes(requestedScenario)
+    ? requestedScenario
+    : DEFAULT_PREVIEW_SCENARIO[screen];
+}
+
+function commandAllowedForScreen(
+  screen: AdminPreviewScreen,
+  command: AdminCommandKind,
+): boolean {
+  return screen === 'order-detail'
+    ? command === 'CANCEL_ORDER' || command === 'CONFIRM_MANUAL_PAYMENT'
+    : screen === 'users'
+      ? command === 'DISABLE_USER' || command === 'ENABLE_USER'
+      : false;
+}
+
+function appendPreview(
+  params: URLSearchParams,
+  screen: AdminPreviewScreen,
+  context?: AdminPreviewContext,
+): void {
   if (context?.preview !== 'enabled') return;
   params.set('preview', 'enabled');
-  if (context.scenario && SCENARIO_PATTERN.test(context.scenario)) {
-    params.set('scenario', context.scenario);
-  }
+  const scenario = allowedPreviewScenario(screen, context.scenario);
+  params.set('scenario', scenario);
   const command = parseAdminCommandKind(context.command);
-  if (command) params.set('command', command);
+  if (
+    command &&
+    COMMAND_PREVIEW_SCENARIOS.has(scenario) &&
+    commandAllowedForScreen(screen, command)
+  ) {
+    params.set('command', command);
+  }
 }
 
 export function serializeAdminListFilters(
@@ -142,8 +223,52 @@ export function serializeAdminListFilters(
   params.set('sort', filters.sort);
   params.set('page', String(filters.page));
   params.set('pageSize', String(filters.pageSize));
-  appendPreview(params, context);
+  appendPreview(params, screen, context);
   return params.toString();
+}
+
+function fallbackPath(screen: AdminPreviewScreen): string {
+  if (screen === 'overview') return '/admin';
+  if (screen === 'order-detail') return '/admin/orders';
+  return `/admin/${screen}`;
+}
+
+function isPathForScreen(pathname: string, screen: AdminPreviewScreen): boolean {
+  if (screen === 'overview') return pathname === '/admin';
+  if (screen === 'order-detail') {
+    const orderId = pathname.startsWith('/admin/orders/')
+      ? pathname.slice('/admin/orders/'.length)
+      : '';
+    return UUID_PATTERN.test(orderId);
+  }
+  return pathname === `/admin/${screen}`;
+}
+
+export function createAdminPreviewHref(
+  href: string,
+  screen: AdminPreviewScreen,
+  context?: AdminPreviewContext,
+  preferredScenario?: string,
+): string {
+  let pathname = fallbackPath(screen);
+  try {
+    const parsed = new URL(href, ADMIN_PREVIEW_ORIGIN);
+    if (parsed.origin === ADMIN_PREVIEW_ORIGIN && isPathForScreen(parsed.pathname, screen)) {
+      pathname = parsed.pathname;
+    }
+  } catch {
+    // Keep the fail-closed route fallback and never forward an unparsed query.
+  }
+
+  if (context?.preview !== 'enabled') return pathname;
+
+  const params = new URLSearchParams();
+  appendPreview(params, screen, {
+    ...context,
+    scenario: preferredScenario ?? context.scenario ?? null,
+  });
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }
 
 export function parseAdminEntityId(

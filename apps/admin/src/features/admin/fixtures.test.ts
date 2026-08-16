@@ -94,6 +94,53 @@ describe('Admin immutable scenario catalogue', () => {
     expect(view.order.payment.status).toBe('PAID_MANUAL');
   });
 
+  it('binds order detail, command targets and audit targets to the requested catalogue order', () => {
+    const orderId = '33333333-3333-4333-8333-333333333104';
+    const view = createAdminPreviewView('order-detail', 'ADM-ORD-DETAIL', null, orderId);
+    if (view.kind !== 'order-detail') throw new Error('Expected detail view');
+
+    expect(view.order).toMatchObject({
+      id: orderId,
+      reference: 'LP-A-260815-104',
+      status: 'IN_TRANSIT',
+    });
+
+    const cancel = view.availableCommands.find((item) => item.kind === 'CANCEL_ORDER');
+    const payment = view.availableCommands.find(
+      (item) => item.kind === 'CONFIRM_MANUAL_PAYMENT',
+    );
+    expect(cancel).toMatchObject({
+      targetId: orderId,
+      targetLabel: 'Đơn LP-A-260815-104',
+      targetItems: expect.arrayContaining([
+        expect.objectContaining({ id: 'order-id', value: orderId }),
+      ]),
+    });
+    expect(payment).toMatchObject({
+      targetId: view.order.payment.id,
+      targetLabel: expect.stringContaining('LP-A-260815-104'),
+      targetItems: expect.arrayContaining([
+        expect.objectContaining({ id: 'order-id', value: orderId }),
+      ]),
+    });
+    expect(view.audit.entries).not.toHaveLength(0);
+    for (const entry of view.audit.entries) {
+      expect(entry.targetLabel).toContain('LP-A-260815-104');
+      expect(entry.targetLabel).toContain(orderId);
+    }
+  });
+
+  it('fails closed when a valid UUID is not present in the preview order catalogue', () => {
+    expect(() =>
+      createAdminPreviewView(
+        'order-detail',
+        'ADM-ORD-DETAIL',
+        null,
+        '99999999-9999-4999-8999-999999999999',
+      ),
+    ).toThrow('Preview order is not available');
+  });
+
   it('binds user commands and persisted results to the exact capability target', () => {
     const invalidEnable = createAdminPreviewView('users', 'ADM-CMD-INVALID', 'ENABLE_USER');
     if (invalidEnable.kind !== 'list') throw new Error('Expected Users list');

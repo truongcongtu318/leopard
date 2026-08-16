@@ -35,6 +35,7 @@ function OrderSummaryContent({
 }: Omit<OrderSummaryProps, 'accessibilityHint' | 'accessibilityLabel' | 'onPress'>) {
   return (
     <>
+      <Text style={styles.eyebrow}>JOURNEY LEDGER</Text>
       <View style={styles.header}>
         <Text style={styles.reference}>Đơn {orderReference}</Text>
         <StatusBadge domain="order" status={status} />
@@ -50,6 +51,7 @@ function OrderSummaryContent({
           ))}
         </View>
       ) : null}
+      <Text style={styles.affordance}>Xem hành trình →</Text>
     </>
   );
 }
@@ -68,6 +70,7 @@ export function OrderSummary(props: OrderSummaryProps) {
       accessibilityRole="button"
       onPress={props.onPress}
       style={({ pressed }) => [styles.container, pressed ? styles.pressed : null]}
+      testID={`order-summary-${props.orderReference}`}
     >
       {content}
     </Pressable>
@@ -77,14 +80,24 @@ export function OrderSummary(props: OrderSummaryProps) {
 const styles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',
-    borderBottomColor: colors.neutral.border,
-    borderBottomWidth: 1,
+    backgroundColor: colors.neutral.background,
+    borderColor: colors.neutral.subtleBorder,
+    borderLeftColor: colors.brand.background,
+    borderLeftWidth: 4,
+    borderWidth: 1,
     gap: spacing.sm,
     minHeight: control.minimumTouchHeight,
-    paddingVertical: spacing.sm,
+    padding: spacing.md,
   },
   pressed: {
     backgroundColor: colors.brand.softBackground,
+  },
+  eyebrow: {
+    ...typography.caption,
+    color: colors.brand.background,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
   },
   header: {
     alignItems: 'flex-start',
@@ -94,16 +107,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   reference: {
-    ...typography.label,
+    ...typography.sectionTitle,
     color: colors.neutral.text,
     flexShrink: 1,
   },
   metadata: {
+    borderTopColor: colors.neutral.subtleBorder,
+    borderTopWidth: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
   },
   metadataItem: {
+    flexBasis: 92,
+    flexGrow: 1,
     gap: spacing.xxs,
   },
   metadataLabel: {
@@ -115,5 +133,11 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: colors.neutral.text,
     flexShrink: 1,
+  },
+  affordance: {
+    ...typography.caption,
+    alignSelf: 'flex-end',
+    color: colors.brand.background,
+    fontWeight: '700',
   },
 });

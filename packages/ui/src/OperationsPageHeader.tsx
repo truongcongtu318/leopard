@@ -3,6 +3,7 @@ import { cn } from './cn';
 
 export type OperationsPageHeaderProps = Readonly<{
   title: string;
+  eyebrow?: React.ReactNode;
   context?: React.ReactNode;
   updatedAt?: React.ReactNode;
   isStale?: boolean;
@@ -12,6 +13,7 @@ export type OperationsPageHeaderProps = Readonly<{
 
 export function OperationsPageHeader({
   title,
+  eyebrow = 'OPERATIONS LEDGER',
   context,
   updatedAt,
   isStale = false,
@@ -25,8 +27,13 @@ export function OperationsPageHeader({
         className,
       )}
     >
-      <div className="min-w-0">
-        <h1 className="text-page-title font-bold break-words">{title}</h1>
+      <div className="min-w-0 border-l-4 border-brand pl-md">
+        {eyebrow ? (
+          <div className="mb-xxs text-[0.625rem] font-bold tracking-widest text-brand break-words">
+            {eyebrow}
+          </div>
+        ) : null}
+        <h1 className="text-page-title font-bold tracking-tight break-words">{title}</h1>
         {context ? (
           <div className="mt-xxs text-body-compact text-neutral-muted break-words">{context}</div>
         ) : null}

@@ -1,9 +1,11 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
+import { LedgerSection } from '../../../ui/LedgerSection';
 import { MapPanel } from '../../../ui/MapPanel';
+import { RouteMapSchematic } from '../../../ui/RouteMapSchematic';
 import { RouteSpine } from '../../../ui/RouteSpine';
 import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
@@ -76,11 +78,11 @@ function ProofPanel({ proof }: Readonly<{ proof: DriverProofView }>) {
   const isError =
     proof.kind === 'invalid-type' || proof.kind === 'too-large' || proof.kind === 'upload-retry';
   return (
-    <View style={styles.section}>
-      <SectionHeading
-        description="JPEG, PNG hoặc WebP; tối đa 10 MB. File picker được cung cấp qua port."
-        title="Ảnh xác nhận giao hàng"
-      />
+    <LedgerSection
+      description="JPEG, PNG hoặc WebP; tối đa 10 MB. File picker được cung cấp qua port."
+      index="03"
+      title="Ảnh xác nhận giao hàng"
+    >
       <View style={[styles.proofPanel, isError ? styles.proofError : null]}>
         <Text accessibilityRole={isError ? 'alert' : undefined} style={styles.proofTitle}>
           {proof.label}
@@ -90,7 +92,7 @@ function ProofPanel({ proof }: Readonly<{ proof: DriverProofView }>) {
           <Text style={styles.helper}>Tệp mô phỏng: {proof.fileLabel}</Text>
         ) : null}
       </View>
-    </View>
+    </LedgerSection>
   );
 }
 
@@ -98,10 +100,14 @@ function TrackingPanel({
   tracking,
   onRetry,
   onOpenLocationSettings,
+  originLabel,
+  destinationLabel,
 }: Readonly<{
   tracking: DriverTrackingView;
   onRetry?: () => void;
   onOpenLocationSettings?: () => void;
+  originLabel: string;
+  destinationLabel: string;
 }>) {
   const isStale =
     tracking.kind === 'stale' ||
@@ -138,15 +144,19 @@ function TrackingPanel({
           state="stale"
           summary={summary}
         >
-          <View style={styles.mapPlaceholder}>
-            <Text style={styles.body}>Marker gần nhất · không gọi là vị trí trực tiếp.</Text>
-          </View>
+          <RouteMapSchematic
+            destinationLabel={destinationLabel}
+            markerLabel="Marker gần nhất · dữ liệu mô phỏng"
+            originLabel={originLabel}
+          />
         </MapPanel>
       ) : (
         <MapPanel state="ready" summary={summary}>
-          <View style={styles.mapPlaceholder}>
-            <Text style={styles.body}>Marker và route mô phỏng cho bản xem trước.</Text>
-          </View>
+          <RouteMapSchematic
+            destinationLabel={destinationLabel}
+            markerLabel="Tài xế trên chặng hiện tại · dữ liệu mô phỏng"
+            originLabel={originLabel}
+          />
         </MapPanel>
       )}
     </View>
@@ -165,6 +175,8 @@ function PublicDetail({
 >) {
   return (
     <ScreenScaffold
+      eyebrow="DRIVER · OPEN ORDER"
+      headerTone="ink"
       stickyFooter={
         view.primaryTask ? (
           <TaskButton
@@ -181,6 +193,7 @@ function PublicDetail({
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <StatusBadge domain="order" status={view.order.status} />
         <View style={styles.currentTask}>
+          <Text style={styles.taskEyebrow}>ACCEPTANCE BRIEF</Text>
           <SectionHeading title="Thông tin để quyết định nhận đơn" />
           <Text style={styles.routeLabel}>{view.order.publicRouteLabel}</Text>
           <Text style={styles.body}>
@@ -212,6 +225,8 @@ function AssignedDetail({
 >) {
   return (
     <ScreenScaffold
+      eyebrow="DRIVER · ACTIVE MISSION"
+      headerTone="ink"
       stickyFooter={
         view.primaryTask ? (
           <TaskButton
@@ -226,9 +241,15 @@ function AssignedDetail({
       title={`Đơn ${view.order.reference}`}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.rowBetween}>
-          <StatusBadge domain="order" status={view.order.status} />
-          <Text style={styles.trackingCompact}>{view.tracking.label}</Text>
+        <View style={styles.missionStatusSlab}>
+          <Text style={styles.missionEyebrow}>CURRENT LEG</Text>
+          <View style={styles.rowBetween}>
+            <StatusBadge domain="order" status={view.order.status} />
+            <Text style={styles.missionTracking}>{view.tracking.label}</Text>
+          </View>
+          <Text style={styles.missionHelper}>
+            Một nhiệm vụ chính tại mỗi thời điểm · proof gate được hiển thị độc lập
+          </Text>
         </View>
         {view.notice ? (
           <View style={styles.notice}>
@@ -237,34 +258,37 @@ function AssignedDetail({
             </Text>
           </View>
         ) : null}
-        <View style={styles.section}>
-          <SectionHeading title="Lộ trình được phân công" />
+        <LedgerSection
+          description={`Khoảng cách ${view.order.route.distanceLabel}`}
+          index="01"
+          title="Lộ trình được phân công"
+          tone="signal"
+        >
           <RouteSpine
             destination={view.order.route.destination}
             origin={view.order.route.origin}
             stops={view.order.route.stops}
           />
-          <Text style={styles.helper}>Khoảng cách {view.order.route.distanceLabel}</Text>
           <EtaIndicator
             durationSeconds={view.order.route.etaDurationSeconds}
             source={view.order.route.etaSource}
           />
-        </View>
-        <View style={styles.section}>
-          <SectionHeading title="Hàng hóa và liên hệ" />
+        </LedgerSection>
+        <LedgerSection index="02" title="Hàng hóa và liên hệ">
           <Text style={styles.body}>{view.order.vehicleLabel}</Text>
           <Text style={styles.body}>{view.order.cargoSummary}</Text>
           <Text style={styles.body}>{view.order.customerContact}</Text>
-        </View>
+        </LedgerSection>
         <ProofPanel proof={view.proof} />
-        <View style={styles.section}>
-          <SectionHeading title="Tracking" />
+        <LedgerSection index="04" title="Tracking và bản đồ tuyến">
           <TrackingPanel
+            destinationLabel={view.order.route.destination.label}
             onOpenLocationSettings={onOpenLocationSettings}
             onRetry={onRetry}
+            originLabel={view.order.route.origin.label}
             tracking={view.tracking}
           />
-        </View>
+        </LedgerSection>
         <StatusTimeline entries={view.order.history} />
       </ScrollView>
     </ScreenScaffold>
@@ -275,7 +299,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   const { view } = props;
   if (view.kind === 'conflict') {
     return (
-      <ScreenScaffold title="Chi tiết đơn">
+      <ScreenScaffold eyebrow="DRIVER · FIELD COCKPIT" headerTone="ink" title="Chi tiết đơn">
         <ScreenState
           actionLabel={view.recoveryLabel}
           message={`${view.message}${view.activeOrderReference ? ` Chuyến hiện tại: ${view.activeOrderReference}.` : ''}`}
@@ -288,7 +312,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   }
   if (view.kind !== 'content') {
     return (
-      <ScreenScaffold title="Chi tiết đơn">
+      <ScreenScaffold eyebrow="DRIVER · FIELD COCKPIT" headerTone="ink" title="Chi tiết đơn">
         <ScreenState
           actionLabel={view.kind === 'error' ? 'Thử tải lại chi tiết' : undefined}
           message={view.message}
@@ -314,10 +338,42 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   currentTask: {
+    backgroundColor: colors.neutral.background,
     borderLeftColor: colors.active.border,
     borderLeftWidth: 4,
     gap: spacing.sm,
     padding: spacing.md,
+  },
+  taskEyebrow: {
+    ...typography.caption,
+    color: colors.brand.background,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  missionStatusSlab: {
+    backgroundColor: colors.operational.ink,
+    borderLeftColor: colors.brand.background,
+    borderLeftWidth: 4,
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  missionEyebrow: {
+    ...typography.caption,
+    color: colors.brand.softBackground,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  missionTracking: {
+    ...typography.label,
+    color: colors.brand.text,
+    flexShrink: 1,
+  },
+  missionHelper: {
+    ...typography.caption,
+    color: colors.operational.inkMuted,
+    flexShrink: 1,
   },
   routeLabel: { ...typography.sectionTitle, color: colors.neutral.text, flexShrink: 1 },
   body: { ...typography.body, color: colors.neutral.text, flexShrink: 1 },
@@ -330,10 +386,10 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   proofPanel: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.border,
-    borderRadius: radius.card,
-    borderWidth: 1,
+    backgroundColor: colors.neutral.background,
+    borderColor: colors.neutral.subtleBorder,
+    borderStyle: 'dashed',
+    borderWidth: 2,
     gap: spacing.xs,
     padding: spacing.md,
   },
@@ -354,13 +410,6 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   trackingTitle: { ...typography.label, color: colors.neutral.text, flexShrink: 1 },
-  trackingCompact: { ...typography.label, color: colors.active.text, flexShrink: 1 },
-  mapPlaceholder: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    padding: spacing.md,
-  },
   notice: {
     backgroundColor: colors.warning.background,
     borderLeftColor: colors.warning.border,

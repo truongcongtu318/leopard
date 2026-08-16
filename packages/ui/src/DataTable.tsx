@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "./cn";
+import React from 'react';
+import { cn } from './cn';
 
 export type DataTableColumn = {
   key: string;
@@ -19,7 +19,7 @@ export type DataTableProps = {
   emptyMessage?: string;
   onSort?: (sortKey: string) => void;
   sortKey?: string;
-  sortDirection?: "ascending" | "descending";
+  sortDirection?: 'ascending' | 'descending';
   className?: string;
 };
 
@@ -40,33 +40,27 @@ export function DataTable({
   rows,
   caption,
   isLoading = false,
-  emptyMessage = "No data",
+  emptyMessage = 'No data',
   onSort,
   sortKey,
   sortDirection,
   className,
 }: DataTableProps) {
   return (
-    <div
-      className={cn("w-full overflow-x-auto rounded-card border border-neutral-border", className)}
-    >
+    <div className={cn('w-full overflow-x-auto border-y border-neutral-border', className)}>
       <table role="table" className="w-full border-collapse text-left text-sm">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
-          <tr role="row" className="border-b border-neutral-border bg-neutral-surface">
+          <tr role="row" className="border-b border-neutral-border bg-neutral-text text-brand-text">
             {columns.map((col) => (
               <th
                 key={col.key}
                 role="columnheader"
                 scope="col"
-                aria-sort={
-                  col.sortable && col.key === sortKey
-                    ? sortDirection
-                    : undefined
-                }
+                aria-sort={col.sortable && col.key === sortKey ? sortDirection : undefined}
                 className={cn(
-                  "font-semibold text-neutral-text",
-                  col.sortable ? "p-0" : "px-md py-sm",
+                  'font-semibold text-brand-text',
+                  col.sortable ? 'p-0' : 'px-md py-sm',
                   col.className,
                 )}
               >
@@ -75,13 +69,13 @@ export function DataTable({
                     type="button"
                     onClick={() => onSort?.(col.key)}
                     className={cn(
-                      "flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1 bg-transparent px-md py-sm text-left text-sm font-semibold text-neutral-text",
-                      "hover:bg-neutral-border/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+                      'flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1 bg-transparent px-md py-sm text-left text-sm font-semibold text-brand-text',
+                      'hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-brand-soft focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset',
                     )}
                   >
                     <span>{col.header}</span>
                     <svg
-                      className="h-3 w-3 text-neutral-muted"
+                      className="h-3 w-3 text-brand-soft"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -104,15 +98,10 @@ export function DataTable({
         </thead>
         <tbody>
           {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <SkeletonRow key={i} columns={columns} />
-            ))
+            Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} columns={columns} />)
           ) : rows.length === 0 ? (
             <tr role="row">
-              <td
-                colSpan={columns.length}
-                className="px-md py-lg text-center text-neutral-muted"
-              >
+              <td colSpan={columns.length} className="px-md py-lg text-center text-neutral-muted">
                 {emptyMessage}
               </td>
             </tr>
@@ -121,13 +110,11 @@ export function DataTable({
               <tr
                 key={rowIdx}
                 role="row"
-                className="border-b border-neutral-border last:border-b-0 hover:bg-neutral-surface/50"
+                className="border-b border-neutral-border last:border-b-0 hover:bg-neutral-surface"
               >
                 {columns.map((col) => (
                   <td key={col.key} className={cn('px-md py-sm text-neutral-text', col.className)}>
-                    {col.render
-                      ? col.render(row)
-                      : String(row[col.key] ?? "")}
+                    {col.render ? col.render(row) : String(row[col.key] ?? '')}
                   </td>
                 ))}
               </tr>

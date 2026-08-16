@@ -66,13 +66,14 @@ export function MapPanel({
       aria-labelledby={titleId}
       aria-busy={state === 'loading' ? 'true' : undefined}
       className={cn(
-        'flex min-h-map-min w-full flex-col overflow-auto rounded-card border border-neutral-border bg-neutral-surface text-body-compact text-neutral-text',
+        'flex min-h-map-min w-full flex-col overflow-auto border-y border-neutral-border bg-neutral-surface text-body-compact text-neutral-text',
         heightClasses[height],
         className,
       )}
     >
-      <div className="border-b border-neutral-border bg-neutral px-md py-sm">
-        <h2 id={titleId} className="text-section-title font-semibold break-words">
+      <div className="border-b border-neutral-border border-l-4 border-l-brand bg-neutral-text px-md py-sm text-brand-text">
+        <p className="text-[0.625rem] font-bold tracking-widest text-brand-soft">ROUTE FIELD</p>
+        <h2 id={titleId} className="mt-xxs text-section-title font-semibold break-words">
           {title}
         </h2>
       </div>

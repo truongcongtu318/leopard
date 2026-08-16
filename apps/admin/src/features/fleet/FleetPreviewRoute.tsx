@@ -28,6 +28,7 @@ type FleetPreviewCatalogue = Readonly<{
   createFleetPreviewView: (
     screen: FleetPreviewScreen,
     requestedScenario: string | null,
+    requestedOrderId?: string | null,
   ) => FleetRouteView;
 }>;
 
@@ -151,7 +152,12 @@ function FleetScreen({
   previewContext: FleetPreviewContext;
 }>) {
   if (screen === 'dashboard') {
-    return <FleetDashboardScreen view={view as FleetDashboardRouteView} />;
+    return (
+      <FleetDashboardScreen
+        previewContext={previewContext}
+        view={view as FleetDashboardRouteView}
+      />
+    );
   }
   if (screen === 'drivers') {
     return (
@@ -183,7 +189,7 @@ export async function FleetPreviewRoute({
       try {
         const catalogue = await loadCatalogue();
         const view = withUrlState(
-          catalogue.createFleetPreviewView(screen, scenario),
+          catalogue.createFleetPreviewView(screen, scenario, orderId),
           driverFilters,
           orderFilters,
         );

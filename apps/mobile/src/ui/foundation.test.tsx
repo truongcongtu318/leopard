@@ -2,11 +2,13 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
 
-import { layout, spacing, typography } from '../theme/tokens';
+import { colors, layout, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
+import { LedgerSection } from './LedgerSection';
 import { MapPanel } from './MapPanel';
 import { OrderSummary } from './OrderSummary';
 import { PaymentSummary } from './PaymentSummary';
+import { RouteMapSchematic } from './RouteMapSchematic';
 import { RouteSpine, RouteSummary } from './RouteSpine';
 import { SCREEN_SCAFFOLD_SAFE_AREA_OWNER, ScreenScaffold, SectionHeading } from './ScreenScaffold';
 import { StatusTimeline, statusTimelineKeyExtractor } from './StatusTimeline';
@@ -84,9 +86,62 @@ describe('ScreenScaffold and SectionHeading', () => {
 
     await screen.unmount();
   });
+
+  it('supports a role-specific ink masthead without changing heading semantics', async () => {
+    const screen = await render(
+      <ScreenScaffold
+        eyebrow="DRIVER · FIELD COCKPIT"
+        headerTone="ink"
+        subtitle="Ưu tiên chuyến đang thực hiện"
+        title="Bàn công việc"
+      >
+        <Text>Nội dung chuyến</Text>
+      </ScreenScaffold>,
+    );
+
+    expect(screen.getByText('DRIVER · FIELD COCKPIT')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Bàn công việc' })).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByTestId('screen-scaffold-masthead').props.style),
+    ).toMatchObject({
+      backgroundColor: colors.operational.ink,
+      borderLeftWidth: 4,
+    });
+    await screen.unmount();
+  });
+
+  it('renders numbered ledger sections as one shared composition primitive', async () => {
+    const screen = await render(
+      <LedgerSection description="Điểm lấy, điểm dừng và điểm giao" index="01" title="Lộ trình">
+        <Text>Route fields</Text>
+      </LedgerSection>,
+    );
+
+    expect(screen.getByText('01')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Lộ trình' })).toBeTruthy();
+    expect(screen.getByText('Route fields')).toBeTruthy();
+    await screen.unmount();
+  });
 });
 
 describe('RouteSpine and RouteSummary', () => {
+  it('renders a non-empty schematic map signature without exposing raw coordinates', async () => {
+    const screen = await render(
+      <RouteMapSchematic
+        destinationLabel="Thành phố Thủ Đức"
+        markerLabel="Tài xế cách điểm giao 2,4 km"
+        originLabel="Quận 7"
+      />,
+    );
+
+    expect(screen.getByTestId('route-map-schematic')).toBeTruthy();
+    expect(screen.getByText('Quận 7')).toBeTruthy();
+    expect(screen.getByText('Thành phố Thủ Đức')).toBeTruthy();
+    expect(screen.getByText('Tài xế cách điểm giao 2,4 km')).toBeTruthy();
+    expect(screen.queryByText(/10\.\d+,\s*106\.\d+/)).toBeNull();
+    await screen.unmount();
+  });
+
   it('renders a direct pickup-to-dropoff route without a fake stop', async () => {
     const screen = await render(
       <RouteSpine destination={destination} origin={origin} stops={[]} />,

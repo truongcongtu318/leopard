@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { render, waitFor } from '@testing-library/react-native';
 
 import { CustomerPreviewRoute } from './CustomerPreviewRoute';
+import type { CustomerPreviewRouteProps } from './CustomerPreviewRoute';
+import { createCustomerDetailFixture } from '../fixtures';
 import { createCustomerPreviewView } from './catalogue';
 
 const previousFlag = process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
@@ -70,6 +72,30 @@ describe('CustomerPreviewRoute', () => {
     });
     expect(screen.getByText(/Bản xem trước giao diện/)).toBeTruthy();
     expect(screen.queryByText('Kho mô phỏng Quận 7, Thành phố Hồ Chí Minh')).toBeNull();
+    await screen.unmount();
+  });
+
+  it('fails closed when a detail catalogue returns a fixture for another order ID', async () => {
+    process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = 'enabled';
+    const routeOrderId = '11111111-1111-4111-8111-111111111099';
+    const loadCatalogue = jest.fn(async () => ({
+      createCustomerPreviewView: () => createCustomerDetailFixture('C-DETAIL-SUCCESS'),
+    }));
+    const props = {
+      loadCatalogue,
+      localPreviewEnabled: true,
+      orderId: routeOrderId,
+      scenario: 'C-DETAIL-SUCCESS',
+      screen: 'detail',
+    } as CustomerPreviewRouteProps;
+
+    const screen = await render(<CustomerPreviewRoute {...props} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Không thể mở scenario')).toBeTruthy();
+    });
+    expect(screen.queryByText('Kho mô phỏng Quận 7, Thành phố Hồ Chí Minh')).toBeNull();
+    expect(loadCatalogue).toHaveBeenCalledTimes(1);
     await screen.unmount();
   });
 });

@@ -12,8 +12,9 @@ import { colors, control, radius, spacing, typography } from '../../../theme/tok
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
 import { FormField } from '../../../ui/FormField';
+import { LedgerSection } from '../../../ui/LedgerSection';
 import { RouteSpine } from '../../../ui/RouteSpine';
-import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
+import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
 import type { CustomerActionView, CustomerCreateFormScreenView, CustomerCreateView } from './model';
 
@@ -58,30 +59,37 @@ function EstimatePanel({
   const estimate = view.estimate;
   if (estimate.kind === 'ready') {
     return (
-      <View style={styles.section}>
-        <SectionHeading
-          description={`Khoảng cách ${estimate.distanceLabel} · tính lúc ${estimate.calculatedAtLabel}`}
-          title="Giá và thời gian"
-        />
+      <LedgerSection
+        description={`Khoảng cách ${estimate.distanceLabel} · tính lúc ${estimate.calculatedAtLabel}`}
+        index="03"
+        title="Kiểm tra estimate"
+        tone="signal"
+      >
         <View style={styles.priceRow}>
-          <Text style={styles.fieldLabel}>Giá dự kiến</Text>
+          <Text style={styles.priceLabel}>Giá dự kiến</Text>
           <Text style={styles.price}>{estimate.priceLabel}</Text>
         </View>
         <EtaIndicator durationSeconds={estimate.durationSeconds} source={estimate.source} />
-      </View>
+      </LedgerSection>
     );
   }
   if (estimate.kind === 'loading') {
-    return <EtaIndicator durationSeconds={null} isLoading source={estimate.source} />;
+    return (
+      <LedgerSection index="03" title="Kiểm tra estimate" tone="signal">
+        <EtaIndicator durationSeconds={null} isLoading source={estimate.source} />
+      </LedgerSection>
+    );
   }
   if (estimate.kind === 'error') {
     return (
-      <EtaIndicator
-        durationSeconds={null}
-        error={estimate.message}
-        onRetry={onRetry}
-        source={estimate.source}
-      />
+      <LedgerSection index="03" title="Kiểm tra estimate" tone="signal">
+        <EtaIndicator
+          durationSeconds={null}
+          error={estimate.message}
+          onRetry={onRetry}
+          source={estimate.source}
+        />
+      </LedgerSection>
     );
   }
   const message =
@@ -91,9 +99,11 @@ function EstimatePanel({
         ? 'Lộ trình đã thay đổi; estimate cũ không còn dùng được.'
         : 'Hoàn tất lộ trình để tính giá và ETA dự kiến.';
   return (
-    <View style={styles.estimatePlaceholder}>
-      <Text style={styles.body}>{message}</Text>
-    </View>
+    <LedgerSection index="03" title="Kiểm tra estimate" tone="signal">
+      <View style={styles.estimatePlaceholder}>
+        <Text style={styles.body}>{message}</Text>
+      </View>
+    </LedgerSection>
   );
 }
 
@@ -122,7 +132,7 @@ export function CustomerCreateOrderScreen({
 }: CustomerCreateOrderScreenProps) {
   if (view.kind === 'permission-denied') {
     return (
-      <ScreenScaffold title="Tạo đơn">
+      <ScreenScaffold eyebrow="CUSTOMER · NEW JOURNEY" title="Tạo đơn">
         <ScreenState message={view.message} state="permission-denied" title={view.title} />
       </ScreenScaffold>
     );
@@ -154,6 +164,7 @@ export function CustomerCreateOrderScreen({
         ) : null
       }
       subtitle="Nhập lộ trình trước, sau đó xác nhận giá và ETA dự kiến."
+      eyebrow="CUSTOMER · NEW JOURNEY"
       title="Tạo đơn"
     >
       <KeyboardAvoidingView
@@ -165,11 +176,12 @@ export function CustomerCreateOrderScreen({
           keyboardShouldPersistTaps="handled"
         >
           <Notice isAlert={isAlert} message={view.notice} />
-          <View style={styles.section}>
-            <SectionHeading
-              description="Theo thứ tự điểm lấy, tối đa ba điểm dừng và điểm giao."
-              title="Lộ trình"
-            />
+          <LedgerSection
+            description="Theo thứ tự điểm lấy, tối đa ba điểm dừng và điểm giao."
+            index="01"
+            title="Lộ trình"
+            tone="signal"
+          >
             <RouteSpine
               destination={{ id: 'draft-dropoff', label: view.form.dropoff || 'Chưa chọn' }}
               origin={{ id: 'draft-pickup', label: view.form.pickup || 'Chưa chọn' }}
@@ -210,10 +222,14 @@ export function CustomerCreateOrderScreen({
               placeholder="Nhập địa chỉ giao hàng"
               value={view.form.dropoff}
             />
-          </View>
+          </LedgerSection>
 
-          <View style={styles.section}>
-            <SectionHeading title="Phương tiện và hàng hóa" />
+          <LedgerSection
+            description="Chọn năng lực vận chuyển phù hợp với kiện hàng."
+            index="02"
+            title="Phương tiện và hàng hóa"
+            tone="signal"
+          >
             <View accessibilityRole="radiogroup" style={styles.vehicleOptions}>
               {vehicleOptions.map((option) => {
                 const selected = view.form.vehicleType === option.value;
@@ -248,7 +264,7 @@ export function CustomerCreateOrderScreen({
               value={view.form.cargoNote}
             />
             <Text style={styles.helper}>Ảnh hàng hóa: JPEG, PNG hoặc WebP; tối đa 10 MB.</Text>
-          </View>
+          </LedgerSection>
 
           <EstimatePanel onRetry={onRetry} view={view} />
         </ScrollView>
@@ -263,9 +279,6 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     paddingBottom: spacing.xl,
   },
-  section: {
-    gap: spacing.md,
-  },
   stopField: {
     gap: spacing.xs,
   },
@@ -276,7 +289,8 @@ const styles = StyleSheet.create({
   },
   vehicleOption: {
     alignItems: 'center',
-    borderColor: colors.neutral.border,
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.subtleBorder,
     borderRadius: radius.control,
     borderWidth: 1,
     justifyContent: 'center',
@@ -292,26 +306,30 @@ const styles = StyleSheet.create({
     color: colors.neutral.text,
   },
   estimatePlaceholder: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.border,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    padding: spacing.md,
+    backgroundColor: colors.neutral.canvas,
+    borderLeftColor: colors.neutral.border,
+    borderLeftWidth: 2,
+    padding: spacing.sm,
   },
   priceRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    backgroundColor: colors.operational.ink,
+    gap: spacing.sm,
     justifyContent: 'space-between',
+    padding: spacing.md,
   },
-  fieldLabel: {
-    ...typography.label,
-    color: colors.neutral.mutedText,
+  priceLabel: {
+    ...typography.caption,
+    color: colors.operational.inkMuted,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
   price: {
     ...typography.sectionTitle,
-    color: colors.neutral.text,
+    color: colors.brand.text,
   },
   notice: {
     borderLeftWidth: 4,

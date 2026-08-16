@@ -3,9 +3,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
+import { LedgerSection } from '../../../ui/LedgerSection';
 import { MapPanel } from '../../../ui/MapPanel';
 import { PaymentSummary } from '../../../ui/PaymentSummary';
 import { RouteSpine } from '../../../ui/RouteSpine';
+import { RouteMapSchematic } from '../../../ui/RouteMapSchematic';
 import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
 import { StatusBadge } from '../../../ui/StatusBadge';
@@ -28,7 +30,14 @@ export type CustomerOrderDetailScreenProps = Readonly<{
 function TrackingPanel({
   tracking,
   onRetry,
-}: Readonly<{ tracking: CustomerTrackingView; onRetry?: () => void }>) {
+  originLabel,
+  destinationLabel,
+}: Readonly<{
+  tracking: CustomerTrackingView;
+  onRetry?: () => void;
+  originLabel: string;
+  destinationLabel: string;
+}>) {
   if (tracking.kind === 'loading') {
     return <MapPanel state="loading" summary="Bản đồ lộ trình đang tải" />;
   }
@@ -50,9 +59,7 @@ function TrackingPanel({
       <View style={styles.section}>
         <Text style={styles.body}>{tracking.message}</Text>
         <MapPanel state="ready" summary="Bản đồ lộ trình; chưa có tài xế">
-          <View style={styles.mapPlaceholder}>
-            <Text style={styles.body}>Lộ trình đã sẵn sàng; chưa có marker tài xế.</Text>
-          </View>
+          <RouteMapSchematic destinationLabel={destinationLabel} originLabel={originLabel} />
         </MapPanel>
       </View>
     );
@@ -63,18 +70,17 @@ function TrackingPanel({
         <Text style={styles.driver}>{tracking.driverLabel}</Text>
         <Text style={styles.body}>{tracking.message}</Text>
         <MapPanel state="ready" summary="Bản đồ lộ trình; chưa có vị trí tài xế">
-          <View style={styles.mapPlaceholder}>
-            <Text style={styles.body}>Route-only map · chưa có vị trí tài xế.</Text>
-          </View>
+          <RouteMapSchematic destinationLabel={destinationLabel} originLabel={originLabel} />
         </MapPanel>
       </View>
     );
   }
   const mapContent = (
-    <View style={styles.mapPlaceholder}>
-      <Text style={styles.driver}>{tracking.driverLabel}</Text>
-      <Text style={styles.body}>Marker vị trí mô phỏng · không phải tracking trực tiếp.</Text>
-    </View>
+    <RouteMapSchematic
+      destinationLabel={destinationLabel}
+      markerLabel={`${tracking.driverLabel} · marker mô phỏng`}
+      originLabel={originLabel}
+    />
   );
   if (tracking.kind === 'fresh') {
     return (
@@ -102,6 +108,26 @@ function TrackingPanel({
         {mapContent}
       </MapPanel>
     </View>
+  );
+}
+
+function MediaLedger({ media }: Readonly<{ media: CustomerDetailContentView['order']['media'] }>) {
+  return (
+    <LedgerSection index="04" title={media.label}>
+      {media.kind === 'available' ? (
+        <View style={styles.mediaGrid}>
+          {['01', '02'].map((index) => (
+            <View key={index} style={styles.mediaTile}>
+              <Text style={styles.mediaIndex}>{index}</Text>
+              <Text style={styles.mediaLabel}>Ảnh mô phỏng</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      <Text accessibilityRole={media.kind === 'error' ? 'alert' : undefined} style={styles.body}>
+        {media.description}
+      </Text>
+    </LedgerSection>
   );
 }
 
@@ -138,11 +164,21 @@ function CustomerDetailContent({
 }: Readonly<Omit<CustomerOrderDetailScreenProps, 'view'> & { view: CustomerDetailContentView }>) {
   const { order } = view;
   return (
-    <ScreenScaffold subtitle={`Cập nhật ${order.updatedAtLabel}`} title={`Đơn ${order.reference}`}>
+    <ScreenScaffold
+      eyebrow="CUSTOMER · JOURNEY SHEET"
+      subtitle={`Cập nhật ${order.updatedAtLabel}`}
+      title={`Đơn ${order.reference}`}
+    >
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.statusRow}>
-          <StatusBadge domain="order" status={order.status} />
-          <Text style={styles.price}>Giá dự kiến · {order.priceLabel}</Text>
+        <View style={styles.journeyStatusSlab}>
+          <Text style={styles.slabEyebrow}>LIVE JOURNEY</Text>
+          <View style={styles.statusRow}>
+            <StatusBadge domain="order" status={order.status} />
+            <Text style={styles.slabPrice}>{order.priceLabel}</Text>
+          </View>
+          <Text style={styles.slabHelper}>
+            Giá dự kiến · lifecycle và tracking được trình bày tách biệt
+          </Text>
         </View>
         {view.notice ? (
           <View accessibilityLiveRegion="polite" style={styles.notice}>
@@ -150,42 +186,54 @@ function CustomerDetailContent({
           </View>
         ) : null}
 
-        <View style={styles.section}>
-          <SectionHeading title="Lộ trình" />
+        <LedgerSection
+          description={`Khoảng cách ${order.route.distanceLabel}`}
+          index="01"
+          title="Lộ trình"
+          tone="signal"
+        >
           <RouteSpine
             destination={order.route.destination}
             origin={order.route.origin}
             stops={order.route.stops}
           />
-          <Text style={styles.helper}>Khoảng cách {order.route.distanceLabel}</Text>
           <EtaIndicator durationSeconds={order.etaDurationSeconds} source={order.etaSource} />
-        </View>
+        </LedgerSection>
 
-        <View style={styles.section}>
-          <SectionHeading title="Tài xế và tracking" />
-          <TrackingPanel onRetry={onRetry} tracking={order.tracking} />
-        </View>
+        <LedgerSection index="02" title="Tài xế và tracking">
+          <TrackingPanel
+            destinationLabel={order.route.destination.label}
+            onRetry={onRetry}
+            originLabel={order.route.origin.label}
+            tracking={order.tracking}
+          />
+        </LedgerSection>
 
-        <PaymentSummary
-          action={
-            order.payment.action
-              ? {
-                  disabled: order.payment.action.disabled,
-                  isLoading: order.payment.action.isPending,
-                  label: order.payment.action.label,
-                  loadingLabel: order.payment.action.pendingLabel,
-                  onPress: onPaymentAction
-                    ? () => onPaymentAction(order.payment.action?.id ?? 'payment')
-                    : undefined,
-                }
-              : undefined
-          }
-          amountLabel={order.payment.amountLabel}
-          expiresAtLabel={order.payment.expiresAtLabel}
-          referenceLabel={order.payment.referenceLabel}
-          sourceLabel={order.payment.sourceLabel}
-          status={order.payment.status}
-        />
+        <View style={styles.paymentLedger}>
+          <Text style={styles.ledgerIndex}>03</Text>
+          <View style={styles.paymentContent}>
+            <PaymentSummary
+              action={
+                order.payment.action
+                  ? {
+                      disabled: order.payment.action.disabled,
+                      isLoading: order.payment.action.isPending,
+                      label: order.payment.action.label,
+                      loadingLabel: order.payment.action.pendingLabel,
+                      onPress: onPaymentAction
+                        ? () => onPaymentAction(order.payment.action?.id ?? 'payment')
+                        : undefined,
+                    }
+                  : undefined
+              }
+              amountLabel={order.payment.amountLabel}
+              expiresAtLabel={order.payment.expiresAtLabel}
+              referenceLabel={order.payment.referenceLabel}
+              sourceLabel={order.payment.sourceLabel}
+              status={order.payment.status}
+            />
+          </View>
+        </View>
         {order.payment.notice ? (
           <View style={order.payment.qrState === 'expired' ? styles.expiredNotice : styles.notice}>
             <Text
@@ -197,15 +245,7 @@ function CustomerDetailContent({
           </View>
         ) : null}
 
-        <View style={styles.section}>
-          <SectionHeading title={order.media.label} />
-          <Text
-            accessibilityRole={order.media.kind === 'error' ? 'alert' : undefined}
-            style={styles.body}
-          >
-            {order.media.description}
-          </Text>
-        </View>
+        <MediaLedger media={order.media} />
 
         <StatusTimeline entries={order.history} />
 
@@ -239,7 +279,7 @@ function CustomerDetailContent({
 export function CustomerOrderDetailScreen(props: CustomerOrderDetailScreenProps) {
   if (props.view.kind !== 'content') {
     return (
-      <ScreenScaffold title="Chi tiết đơn">
+      <ScreenScaffold eyebrow="CUSTOMER · JOURNEY SHEET" title="Chi tiết đơn">
         <ScreenState
           actionLabel={props.view.kind === 'error' ? 'Thử lại' : undefined}
           message={props.view.message}
@@ -259,6 +299,20 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   section: { gap: spacing.sm },
+  journeyStatusSlab: {
+    backgroundColor: colors.operational.ink,
+    borderLeftColor: colors.brand.background,
+    borderLeftWidth: 4,
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  slabEyebrow: {
+    ...typography.caption,
+    color: colors.brand.softBackground,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
   statusRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
@@ -266,9 +320,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     justifyContent: 'space-between',
   },
-  price: {
+  slabPrice: {
     ...typography.label,
-    color: colors.neutral.text,
+    color: colors.brand.text,
+    flexShrink: 1,
+  },
+  slabHelper: {
+    ...typography.caption,
+    color: colors.operational.inkMuted,
     flexShrink: 1,
   },
   driver: {
@@ -291,12 +350,46 @@ const styles = StyleSheet.create({
     color: colors.warning.text,
     flexShrink: 1,
   },
-  mapPlaceholder: {
-    alignItems: 'center',
-    flex: 1,
-    gap: spacing.xs,
-    justifyContent: 'center',
+  paymentLedger: {
+    alignItems: 'flex-start',
+    backgroundColor: colors.neutral.background,
+    borderColor: colors.neutral.subtleBorder,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
     padding: spacing.md,
+  },
+  ledgerIndex: {
+    ...typography.caption,
+    backgroundColor: colors.operational.ink,
+    color: colors.brand.text,
+    fontWeight: '700',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  paymentContent: { flex: 1, minWidth: 0 },
+  mediaGrid: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  mediaTile: {
+    backgroundColor: colors.operational.mapLand,
+    borderColor: colors.neutral.subtleBorder,
+    borderWidth: 1,
+    flex: 1,
+    gap: spacing.lg,
+    minHeight: 112,
+    padding: spacing.sm,
+  },
+  mediaIndex: {
+    ...typography.sectionTitle,
+    color: colors.brand.background,
+    fontWeight: '700',
+  },
+  mediaLabel: {
+    ...typography.caption,
+    color: colors.neutral.mutedText,
+    fontWeight: '600',
   },
   notice: {
     backgroundColor: colors.warning.background,

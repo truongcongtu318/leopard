@@ -33,7 +33,8 @@ function AvailabilityControl({
   const pending = action?.isPending ?? false;
   const disabled = pending || (action?.disabled ?? false) || !action;
   return (
-    <View style={styles.section}>
+    <View style={styles.availabilityRail}>
+      <Text style={styles.railEyebrow}>SHIFT STATUS</Text>
       <View style={styles.rowBetween}>
         <Text style={styles.sectionLabel}>Trạng thái nhận đơn</Text>
         <StatusBadge domain="driver-availability" status={view.status} />
@@ -70,21 +71,35 @@ function ActiveTripRail({
       accessibilityRole="button"
       onPress={onOpenOrder ? () => onOpenOrder(trip.id) : undefined}
       style={({ pressed }) => [styles.activeRail, pressed ? styles.pressed : null]}
+      testID="driver-active-trip-slab"
     >
+      <Text style={styles.activeEyebrow}>ACTIVE MISSION</Text>
       <Text accessibilityRole="header" style={styles.sectionTitle}>
         Chuyến đang thực hiện
       </Text>
       <View style={styles.rowBetween}>
-        <Text style={styles.reference}>{trip.reference}</Text>
+        <Text style={styles.activeReference}>{trip.reference}</Text>
         <StatusBadge domain="order" status={trip.status} />
       </View>
       <RouteSummary
         destination={trip.route.destination}
         origin={trip.route.origin}
         stops={trip.route.stops}
+        tone="inverse"
       />
-      <Text style={styles.trackingText}>{trip.trackingLabel}</Text>
-      {trip.proofLabel ? <Text style={styles.warningText}>{trip.proofLabel}</Text> : null}
+      <View style={styles.tripSignalRow}>
+        <View style={styles.tripSignalCell}>
+          <Text style={styles.tripSignalLabel}>TRACKING</Text>
+          <Text style={styles.trackingText}>{trip.trackingLabel}</Text>
+        </View>
+        <View style={styles.tripSignalCell}>
+          <Text style={styles.tripSignalLabel}>BẰNG CHỨNG</Text>
+          <Text style={trip.proofLabel ? styles.proofWarning : styles.proofReady}>
+            {trip.proofLabel ?? 'Không yêu cầu ở bước này'}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.activeAffordance}>Mở field cockpit →</Text>
     </Pressable>
   );
 }
@@ -100,6 +115,7 @@ function PublicOrderRow({
       onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
       style={({ pressed }) => [styles.publicRow, pressed ? styles.pressed : null]}
     >
+      <Text style={styles.publicEyebrow}>OPEN ORDER</Text>
       <View style={styles.rowBetween}>
         <Text style={styles.reference}>{item.reference}</Text>
         <StatusBadge domain="order" status={item.status} />
@@ -110,6 +126,7 @@ function PublicOrderRow({
       </Text>
       <Text style={styles.helper}>{item.etaLabel}</Text>
       <Text style={styles.helper}>Cập nhật {item.updatedAtLabel}</Text>
+      <Text style={styles.publicAffordance}>Xem public summary →</Text>
     </Pressable>
   );
 }
@@ -149,7 +166,7 @@ export function DriverOrdersScreen({
 }: DriverOrdersScreenProps) {
   if (view.kind !== 'content') {
     return (
-      <ScreenScaffold title="Đơn của tài xế">
+      <ScreenScaffold eyebrow="DRIVER · FIELD COCKPIT" headerTone="ink" title="Đơn của tài xế">
         <ScreenState
           actionLabel={view.kind === 'error' ? 'Thử tải lại danh sách' : undefined}
           message={view.message}
@@ -165,7 +182,12 @@ export function DriverOrdersScreen({
     <PublicOrderRow item={item} onOpenOrder={onOpenOrder} />
   );
   return (
-    <ScreenScaffold title="Đơn của tài xế" subtitle={`Làm mới ${view.refreshedAtLabel}`}>
+    <ScreenScaffold
+      eyebrow="DRIVER · FIELD COCKPIT"
+      headerTone="ink"
+      title="Đơn của tài xế"
+      subtitle={`Làm mới ${view.refreshedAtLabel}`}
+    >
       <FlatList
         contentContainerStyle={styles.listContent}
         data={view.requestedOrders}
@@ -200,6 +222,22 @@ const styles = StyleSheet.create({
   listContent: { gap: spacing.sm, paddingBottom: spacing.xl },
   headerContent: { gap: spacing.md },
   section: { gap: spacing.sm },
+  availabilityRail: {
+    backgroundColor: colors.neutral.background,
+    borderColor: colors.neutral.subtleBorder,
+    borderLeftColor: colors.brand.background,
+    borderLeftWidth: 4,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  railEyebrow: {
+    ...typography.caption,
+    color: colors.brand.background,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
   rowBetween: {
     alignItems: 'flex-start',
     flexDirection: 'row',
@@ -208,27 +246,81 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionLabel: { ...typography.label, color: colors.neutral.text, flexShrink: 1 },
-  sectionTitle: { ...typography.sectionTitle, color: colors.neutral.text, flexShrink: 1 },
+  sectionTitle: { ...typography.sectionTitle, color: colors.brand.text, flexShrink: 1 },
   reference: { ...typography.label, color: colors.neutral.text, flexShrink: 1 },
+  activeReference: {
+    ...typography.sectionTitle,
+    color: colors.brand.text,
+    flexShrink: 1,
+  },
   routeLabel: { ...typography.body, color: colors.neutral.text, flexShrink: 1, fontWeight: '600' },
   body: { ...typography.body, color: colors.neutral.text, flexShrink: 1 },
   helper: { ...typography.caption, color: colors.neutral.mutedText, flexShrink: 1 },
   dangerText: { ...typography.body, color: colors.danger.text, flexShrink: 1 },
   warningText: { ...typography.body, color: colors.warning.text, flexShrink: 1 },
-  trackingText: { ...typography.label, color: colors.success.text, flexShrink: 1 },
+  trackingText: { ...typography.label, color: colors.success.background, flexShrink: 1 },
   activeRail: {
-    borderColor: colors.active.border,
+    backgroundColor: colors.operational.ink,
+    borderColor: colors.operational.ink,
     borderLeftWidth: 4,
+    borderLeftColor: colors.brand.background,
     gap: spacing.sm,
     minHeight: control.minimumTouchHeight,
     padding: spacing.md,
   },
+  activeEyebrow: {
+    ...typography.caption,
+    color: colors.brand.softBackground,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  tripSignalRow: {
+    borderTopColor: colors.neutral.mutedText,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+  },
+  tripSignalCell: { flexBasis: 128, flexGrow: 1, gap: spacing.xxs },
+  tripSignalLabel: {
+    ...typography.caption,
+    color: colors.operational.inkMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  proofWarning: { ...typography.caption, color: colors.warning.background, flexShrink: 1 },
+  proofReady: { ...typography.caption, color: colors.operational.inkMuted, flexShrink: 1 },
+  activeAffordance: {
+    ...typography.caption,
+    alignSelf: 'flex-end',
+    color: colors.brand.softBackground,
+    fontWeight: '700',
+  },
   publicRow: {
-    borderBottomColor: colors.neutral.border,
-    borderBottomWidth: 1,
+    backgroundColor: colors.neutral.background,
+    borderColor: colors.neutral.subtleBorder,
+    borderLeftColor: colors.neutral.border,
+    borderLeftWidth: 3,
+    borderWidth: 1,
     gap: spacing.xs,
     minHeight: control.minimumTouchHeight,
-    paddingVertical: spacing.sm,
+    padding: spacing.md,
+  },
+  publicEyebrow: {
+    ...typography.caption,
+    color: colors.brand.background,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  publicAffordance: {
+    ...typography.caption,
+    alignSelf: 'flex-end',
+    color: colors.brand.background,
+    fontWeight: '700',
   },
   notice: { borderLeftWidth: 4, gap: spacing.sm, padding: spacing.sm },
   noticeInfo: { backgroundColor: colors.info.background, borderLeftColor: colors.info.border },

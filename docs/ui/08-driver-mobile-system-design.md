@@ -4,9 +4,9 @@
 >
 > **Ownership:** Driver role design document
 >
-> **Trạng thái:** `APPROVED_FOR_STATIC_IMPLEMENTATION`
+> **Trạng thái:** `VISUAL_REMEDIATION_IN_PROGRESS`
 >
-> **Implementation/static-gate evidence:** `PENDING`
+> **Implementation/static-gate evidence:** vòng đầu bị invalidated bởi runtime visual review
 >
 > **Independent review:** Halley (`01a003b1-473a-7112-a0f8-236a160dc5a6`),
 > 2026-08-15 — không có P0/P1/P2
@@ -39,7 +39,20 @@ Driver thao tác ngoài hiện trường, thường bằng một tay, dưới á
 | Memorable detail | `Active-trip rail`: một rail chức năng nối order, trạng thái chuyến, tracking health và proof readiness                         |
 | Constraints      | Mobile-first, WCAG AA, Dynamic Type, safe area, touch target, privacy trước assignment, fixture có guard và backend authority   |
 
-### 1.1 Skill evidence đã áp dụng
+### 1.1 Visual composition — Field Cockpit
+
+| Region           | Silhouette và hierarchy bắt buộc                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Availability     | Một compact control strip; current state đọc được ngoài trời và không cạnh tranh với active trip                                           |
+| Active trip      | Dispatch slab tương phản cao chứa order ID, current status, route summary và tracking/proof signal; đây là visual anchor duy nhất của list |
+| Available orders | Queue dạng ledger, mỗi row có pickup→dropoff, vehicle/cargo và ETA; không lặp full detail hoặc biến mọi metadata thành pill                |
+| Detail/workflow  | Status mast → full Route Spine → cargo/contact → tracking/proof blocker → exactly-one sticky next action `48 px`                           |
+
+Brand/ink tạo độ tương phản cho current work; success/warning/danger chỉ báo condition
+thật từ view model. Proof hoặc GPS đang chặn phải có signal rail + copy, không được
+chìm trong paragraph dài hay một placeholder trống.
+
+### 1.2 Skill evidence đã áp dụng
 
 | Skill                       | Evidence trong design contract này                                                                                                                                                                                |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -50,7 +63,7 @@ Driver thao tác ngoài hiện trường, thường bằng một tay, dưới á
 Tên skill ở đây đi cùng quyết định cụ thể; không được dùng bảng này như implementation
 evidence. Evidence runtime phải theo mục 15 và 16.
 
-### 1.2 Current React Native documentation check
+### 1.3 Current React Native documentation check
 
 Context7 resolved official React Native documentation
 `/react/react-native-website`. The retrieved pages are versioned `0.87`, while this
@@ -626,8 +639,8 @@ hiện requestId để hỗ trợ nhưng không hiện stack, token, file URI ho
 ### 14.1 Proposed ownership
 
 ```text
-apps/mobile/app/(driver)/orders/index.tsx
-apps/mobile/app/(driver)/orders/[id].tsx
+apps/mobile/app/driver/orders/index.tsx
+apps/mobile/app/driver/orders/[id].tsx
 apps/mobile/src/features/driver/orders/
   model.ts
   port.ts
@@ -784,9 +797,9 @@ Không dùng mockup cô lập làm evidence nếu production composition khác. 
 
 ## 16. Mapping mười scorecard categories
 
-Role chưa có implementation/catalogue nên **không chấm điểm** ở W4-DS02. `N/A` cũng
-không được dùng khi W4-S07 review; mỗi category phải có score và evidence thật. Bảng
-này map design decision tới packet cần thu, đồng thời ghi factual baseline hiện tại.
+W4-DS02 không tự chấm implementation. `N/A` cũng không được dùng khi W4-S07 review;
+mỗi category phải có score và evidence thật. Bảng này giữ factual baseline tại thời
+điểm design authoring để so sánh; current remediation status nằm ở mục 17.3.
 
 |   # | Category                | Design contract                                                                   | Implementation evidence còn phải có                       | Factual status lúc viết                                                                              |
 | --: | ----------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -829,22 +842,17 @@ accessibility/AI-slop gate pass và không blocker theo
 - Không import native location/socket/client/picker/storage vào presentational layer.
 - Không fake persistence, fake live marker hoặc fake command success.
 
-### 17.3 Factual residuals
+### 17.3 Runtime checkpoint và factual residuals
 
-| Residual                                          | Evidence hiện tại                                                                                      | Owner/gate                         |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------- |
-| Driver list chưa triển khai                       | `apps/mobile/app/(driver)/orders/index.tsx:3-9` là placeholder                                         | W4-S03                             |
-| Driver detail route chưa tồn tại                  | Không có `apps/mobile/app/(driver)/orders/[id].tsx`                                                    | W4-S03                             |
-| Role components/catalogue chưa tồn tại            | Không có `apps/mobile/src/features/driver/**`                                                          | W4-S03                             |
-| Core mobile parity còn thiếu                      | `pageTitle`, motion/reduced-motion và Driver sticky 48 chưa có đầy đủ runtime token/component evidence | W4-S01                             |
-| Canonical status copy chưa hoàn tất               | Mobile `StatusBadge` đang hiển thị raw enum                                                            | W4-S01                             |
-| Full system-state vocabulary chưa hoàn tất        | Mobile `ScreenState` hiện chỉ có loading, empty, error, success, permission-denied, offline            | W4-S01/W4-S03                      |
-| Server-offered next command chưa có wire field rõ | REST spec mới mô tả `POST /driver/orders/:id/status` input                                             | W4-I01 + Backend/Integration owner |
-| Tracking/location/upload thật chưa nối            | Static track cấm API/Socket/GPS/upload thật                                                            | W4-I02/W4-I03                      |
-| Responsive/a11y/motion/contrast evidence chưa có  | Chưa có Driver production composition để đo                                                            | W4-S03/W4-S07                      |
-| Persistence/E2E chưa có                           | Static spec không chứng minh refresh/relaunch hoặc cross-client journey                                | W4-I05                             |
+| Residual                                          | Evidence hiện tại                                                                                                                                                                          | Owner/gate                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| Visual hierarchy vòng đầu chưa đạt                | `apps/mobile/app/driver/**` và `apps/mobile/src/features/driver/orders/**` đã render đủ list/detail, nhưng screenshot còn text-heavy và active trip chưa tạo được Field Cockpit silhouette | Visual remediation + W4-S07        |
+| Detail route ID chưa bind vào fixture             | Route parse UUID nhưng preview catalogue vòng đầu bỏ qua giá trị đó                                                                                                                        | Mobile remediation P1              |
+| Server-offered next command chưa có wire field rõ | REST spec mới mô tả `POST /driver/orders/:id/status` input                                                                                                                                 | W4-I01 + Backend/Integration owner |
+| Tracking/location/upload thật chưa nối            | Static track cấm API/Socket/GPS/upload thật                                                                                                                                                | W4-I02/W4-I03                      |
+| Device accessibility/persistence E2E chưa có      | Static test không chứng minh VoiceOver/TalkBack, refresh/relaunch hoặc cross-client journey                                                                                                | W4-I05                             |
 
-W4-DS02 có thể chuyển sang design review vì visual hierarchy, anatomy, state,
-component và boundary decisions đã được khóa. Screen implementation chỉ nên bắt đầu
-sau khi Foundation/Integration Owner xác nhận platform API và ownership; full Wave 4
-chỉ hoàn tất sau real adapters, persistence và E2E theo plan.
+Unit/component test, typecheck, lint, export và viewport `360/390` đã chạy ở vòng đầu,
+nhưng không đủ để claim visual quality. W4-S07 phải chụp lại implementation đã
+remediate, inspect ảnh ở kích thước thật và nhận independent reviewer decision. Full
+Wave 4 chỉ hoàn tất sau real adapters, persistence và E2E theo plan.

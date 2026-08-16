@@ -29,6 +29,7 @@ export default function DriverOrderDetailPage() {
   return (
     <DriverPreviewRoute
       localPreviewEnabled={normalizeDriverRouteParam(params.preview) === 'enabled'}
+      orderId={orderId}
       scenario={normalizeDriverRouteParam(params.scenario)}
       screen="detail"
     />

@@ -87,7 +87,11 @@ export function CustomerOrdersScreen({
             ? { label: 'Thử lại', handler: onRetry }
             : undefined;
     return (
-      <ScreenScaffold title="Đơn hàng của tôi" subtitle="Theo dõi các đơn thuộc tài khoản này.">
+      <ScreenScaffold
+        eyebrow="CUSTOMER · SỔ HÀNH TRÌNH"
+        title="Đơn hàng của tôi"
+        subtitle="Theo dõi các đơn thuộc tài khoản này."
+      >
         <ScreenState
           actionLabel={action?.label}
           message={view.message}
@@ -117,29 +121,50 @@ export function CustomerOrdersScreen({
   );
 
   return (
-    <ScreenScaffold title="Đơn hàng của tôi" subtitle={view.resultLabel}>
+    <ScreenScaffold
+      eyebrow="CUSTOMER · SỔ HÀNH TRÌNH"
+      title="Đơn hàng của tôi"
+      subtitle={view.resultLabel}
+    >
       <FlatList
         contentContainerStyle={styles.listContent}
         data={view.orders}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.headerContent}>
-            <Button label="Tạo đơn mới" onPress={onCreate} />
-            <SectionHeading
-              description="Bộ lọc chỉ thay đổi danh sách hiển thị, không thay đổi đơn hàng."
-              title="Trạng thái"
-            />
-            <View accessibilityRole="toolbar" style={styles.filters}>
-              {filters.map((filter) => (
-                <FilterChip
-                  key={filter.value}
-                  label={filter.label}
-                  onPress={onSelectStatus ? () => onSelectStatus(filter.value) : undefined}
-                  selected={view.selectedFilter === filter.value}
-                />
-              ))}
+            <View style={styles.actionRail}>
+              <View style={styles.actionCopy}>
+                <Text style={styles.actionEyebrow}>TUYẾN MỚI</Text>
+                <Text accessibilityRole="header" style={styles.actionTitle}>
+                  Bắt đầu một hành trình
+                </Text>
+                <Text style={styles.actionDescription}>
+                  Khai báo lộ trình, loại xe và nhận estimate trước khi xác nhận.
+                </Text>
+              </View>
+              <Button label="Tạo đơn mới" onPress={onCreate} />
+            </View>
+            <View style={styles.filterLedger}>
+              <SectionHeading
+                description="Bộ lọc chỉ thay đổi danh sách hiển thị, không thay đổi đơn hàng."
+                title="Trạng thái"
+              />
+              <View accessibilityRole="toolbar" style={styles.filters}>
+                {filters.map((filter) => (
+                  <FilterChip
+                    key={filter.value}
+                    label={filter.label}
+                    onPress={onSelectStatus ? () => onSelectStatus(filter.value) : undefined}
+                    selected={view.selectedFilter === filter.value}
+                  />
+                ))}
+              </View>
             </View>
             <Notice view={view} />
+            <SectionHeading
+              description={`${view.orders.length} đơn đang hiển thị · ưu tiên trạng thái và ETA`}
+              title="Hành trình gần đây"
+            />
           </View>
         }
         ListFooterComponent={
@@ -161,11 +186,44 @@ export function CustomerOrdersScreen({
 
 const styles = StyleSheet.create({
   listContent: {
-    gap: spacing.sm,
+    gap: spacing.md,
     paddingBottom: spacing.xl,
   },
   headerContent: {
+    gap: spacing.lg,
+    paddingBottom: spacing.xs,
+  },
+  actionRail: {
+    backgroundColor: colors.operational.ink,
+    borderLeftColor: colors.brand.background,
+    borderLeftWidth: 4,
     gap: spacing.md,
+    padding: spacing.md,
+  },
+  actionCopy: { gap: spacing.xs },
+  actionEyebrow: {
+    ...typography.caption,
+    color: colors.brand.softBackground,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  actionTitle: {
+    ...typography.sectionTitle,
+    color: colors.brand.text,
+    flexShrink: 1,
+  },
+  actionDescription: {
+    ...typography.body,
+    color: colors.operational.inkMuted,
+    flexShrink: 1,
+  },
+  filterLedger: {
+    backgroundColor: colors.neutral.background,
+    borderColor: colors.neutral.subtleBorder,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.md,
   },
   filters: {
     flexDirection: 'row',
@@ -175,7 +233,7 @@ const styles = StyleSheet.create({
   filter: {
     alignItems: 'center',
     backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.border,
+    borderColor: colors.neutral.subtleBorder,
     borderRadius: radius.pill,
     borderWidth: 1,
     justifyContent: 'center',

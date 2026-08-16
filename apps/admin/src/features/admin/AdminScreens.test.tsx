@@ -1,6 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
 
 import { AdminListScreen } from './AdminListScreen';
 import { AdminOrderDetailScreen } from './AdminOrderDetailScreen';
@@ -17,6 +16,10 @@ describe('Admin static operations screens', () => {
     expect(screen.getByText('0')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
     expect(screen.getAllByText('LP-A-260815-101').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Bàn điều phối hiện tại').className).toContain('bg-neutral-text');
+    expect(screen.getByText('Tracking cần kiểm tra').closest('li')?.className).toContain(
+      'border-l-4',
+    );
   });
 
   it('keeps operational context for readiness and offline overview scenarios', () => {
@@ -54,6 +57,33 @@ describe('Admin static operations screens', () => {
     expect(screen.getAllByText('Đã giao').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Đã hủy').length).toBeGreaterThan(0);
     expect(screen.getByLabelText('Kết quả đơn hàng dạng hàng responsive')).toBeTruthy();
+    const filterScope = screen.getByLabelText('Phạm vi điều tra đơn hàng');
+    const resultLedger = screen.getByLabelText('Sổ kết quả đơn hàng');
+    expect(
+      filterScope.compareDocumentPosition(resultLedger) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('keeps preview context on Order links without serializing raw PII', () => {
+    render(
+      <AdminListScreen
+        previewContext={{
+          preview: 'enabled',
+          scenario: 'ADM-ORD-DENSE',
+          rawSearch: '0909 123 456',
+        }}
+        screen="orders"
+        view={createAdminPreviewView('orders', 'ADM-ORD-DENSE')}
+      />,
+    );
+
+    const links = screen.getAllByRole('link', { name: 'Xem đơn LP-A-260815-104' });
+    for (const link of links) {
+      expect(link.getAttribute('href')).toBe(
+        '/admin/orders/33333333-3333-4333-8333-333333333104?preview=enabled&scenario=ADM-ORD-DETAIL',
+      );
+      expect(link.getAttribute('href')).not.toContain('0909');
+    }
   });
 
   it('keeps filter recovery visible when Orders return no results', () => {
@@ -101,6 +131,9 @@ describe('Admin static operations screens', () => {
     expect(screen.getAllByText('Đang tham gia').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: /Xem đơn LP-A-260815-104/ }).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /availability|nhận đơn|cập nhật trạng thái/i })).toBeNull();
+    expect(
+      screen.getByRole('columnheader', { name: 'Thành viên đội xe' }).className,
+    ).toContain('hidden lg:table-cell');
   });
 
   it('renders the investigation workspace, demo ETA, media metadata and Audit Rail', () => {
@@ -113,6 +146,12 @@ describe('Admin static operations screens', () => {
     expect(screen.getByRole('heading', { name: 'Audit Rail' })).toBeTruthy();
     expect(screen.getByText('req-admin-demo-001')).toBeTruthy();
     expect(screen.queryByText(/https?:\/\//)).toBeNull();
+    expect(screen.getByLabelText('Ngữ cảnh điều phối hiện tại').className).toContain(
+      'bg-neutral-text',
+    );
+    expect(screen.getByLabelText('Audit Rail — thao tác đặc quyền').className).toContain(
+      'border-l-4',
+    );
   });
 
   it('renders stale tracking and keeps authorized investigation context', () => {

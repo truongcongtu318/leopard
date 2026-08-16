@@ -9,8 +9,10 @@
 **Baseline đề xuất:** `bfe5a41` — Wave 2 đã đóng và CI xanh. Mỗi lane phải xác nhận lại SHA trước khi tạo worktree.
 
 **Execution checkpoint 2026-08-15:** plan đã publish tại `198bd42` trên `develop`;
-W4-S00, W4-DS00 và W4-DS01..DS04 đã qua independent review; W4-S01 và W4-S04
-đang chạy song song. Static journey và runtime evidence vẫn pending.
+vòng implementation đầu ở `d4b9db9` có đủ route/state nhưng runtime visual review đã
+hạ gate về `REMEDIATION_IN_PROGRESS`. Art direction, responsive density và ba finding
+P1/P2 phải được sửa, evidence phải thu lại trước `STATIC_GATE_PASSED`. PH-12 vẫn
+`IN_PROGRESS`; W4-I01..W4-I05 tiếp tục chờ Wave 3 handoff và real integration.
 
 **Plan liên quan:** `10-fleet-owner.md`, `11-admin-operations.md`, `12-cross-client-integration.md`.
 
@@ -151,8 +153,8 @@ Quy tắc:
 | ------------------------------------------------------------------------------------------ | ---------------------------- | -------------------------------------------- |
 | `apps/api/src/tracking/**`, `media/**`, `payments/**`, `fleets/**`, `admin/**`, `audit/**` | Wave 3                       | Bao gồm policy, persistence, REST và Socket  |
 | `apps/api/test/**`, Prisma, migration, backend seed                                        | Wave 3                       | Wave 4 chỉ consume handoff                   |
-| `apps/mobile/app/(customer)/**`, `src/features/customer/**`                                | Customer UI lane             | Không sửa navigation/auth foundation         |
-| `apps/mobile/app/(driver)/**`, `src/features/driver/**`                                    | Driver UI lane               | Không sửa navigation/auth foundation         |
+| `apps/mobile/app/customer/**`, `src/features/customer/**`                                  | Customer UI lane             | Không sửa navigation/auth foundation         |
+| `apps/mobile/app/driver/**`, `src/features/driver/**`                                      | Driver UI lane               | Không sửa navigation/auth foundation         |
 | `apps/admin/src/app/(fleet)/**`, `src/features/fleet/**`, Fleet Playwright                 | Fleet UI lane                | Nhận phần frontend của PH-10-T03/T04         |
 | `apps/admin/src/app/(admin)/**`, `src/features/admin/**`, Admin Playwright                 | Admin UI lane                | Nhận phần frontend của PH-11-T03/T04         |
 | `apps/mobile/src/ui/**`, `packages/ui/**`                                                  | UI Foundation Owner duy nhất | Merge trước khi mở bốn role lanes            |
@@ -181,12 +183,12 @@ Quy tắc:
 - **Owner:** Client Integration Owner
 - **Dependencies:** Wave 2 `VERIFIED`
 
-- [ ] Kiểm tra branch/diff đang chạy của Wave 3; xác nhận không có client path overlap.
-- [ ] Ghi ownership theo bảng trên vào task registry/handoff trước khi agent bắt đầu.
-- [ ] Định nghĩa feature-local view models, ports và `UiScenario` dùng chung trong từng app.
-- [ ] Tạo preview composition root có production guard và banner dữ liệu mô phỏng.
-- [ ] Viết test trước cho production guard, deterministic fixtures và adapter seam.
-- [ ] Không thêm dependency hoặc sửa lockfile.
+- [x] Kiểm tra branch/diff đang chạy của Wave 3; xác nhận không có client path overlap.
+- [x] Ghi ownership theo bảng trên vào task registry/handoff trước khi agent bắt đầu.
+- [x] Định nghĩa feature-local view models, ports và `UiScenario` dùng chung trong từng app.
+- [x] Tạo preview composition root có production guard và banner dữ liệu mô phỏng.
+- [x] Viết test trước cho production guard, deterministic fixtures và adapter seam.
+- [x] Không thêm dependency hoặc sửa lockfile.
 
 **Done when:** Hai app render được một smoke scenario qua injected fixture; production mode không thể chọn fixture; typecheck/test pass.
 
@@ -196,14 +198,14 @@ Quy tắc:
 - **Dependencies:** W4-S00
 - **Required skills:** `design-system`, `frontend-design-direction`, `frontend-a11y`
 
-- [ ] Audit `docs/ui/04-design-system.md`, mobile tokens/primitives, web tokens/primitives và inline styling theo 10-dimension scorecard.
-- [ ] Benchmark ba giao diện logistics/operations phù hợp làm nguồn tham khảo phụ; chỉ ghi pattern có thể chuyển giao và không để benchmark lấn át source of truth LEOPARD.
-- [ ] Lập inventory colors, typography, spacing, radius, border, shadow, breakpoints, status copy, focus và motion; đánh dấu duplicate/arbitrary values.
-- [ ] Khóa LEOPARD direction là operational clarity: dense/scannable cho web, action-first cho Driver, guided flow cho Customer; ghi `Route Spine` pattern và anti-patterns.
-- [ ] Ghi dark mode là `N/A` cho pilot trừ khi có change request; không để lại partial dark styles.
-- [ ] Đồng bộ semantic meaning giữa mobile/web bằng parity tests; không ép hai platform dùng cùng implementation detail.
-- [ ] Cập nhật core design-system doc và tạo quality scorecard template.
-- [ ] Tạo local preview catalogue shell dùng production fixture guard; không thêm dependency chỉ để trang trí.
+- [x] Audit `docs/ui/04-design-system.md`, mobile tokens/primitives, web tokens/primitives và inline styling theo 10-dimension scorecard.
+- [x] Benchmark ba giao diện logistics/operations phù hợp làm nguồn tham khảo phụ; chỉ ghi pattern có thể chuyển giao và không để benchmark lấn át source of truth LEOPARD.
+- [x] Lập inventory colors, typography, spacing, radius, border, shadow, breakpoints, status copy, focus và motion; đánh dấu duplicate/arbitrary values.
+- [x] Khóa LEOPARD direction là operational clarity: dense/scannable cho web, action-first cho Driver, guided flow cho Customer; ghi `Route Spine` pattern và anti-patterns.
+- [x] Ghi dark mode là `N/A` cho pilot trừ khi có change request; không để lại partial dark styles.
+- [x] Đồng bộ semantic meaning giữa mobile/web bằng parity tests; không ép hai platform dùng cùng implementation detail.
+- [x] Cập nhật core design-system doc và tạo quality scorecard template.
+- [x] Tạo local preview catalogue shell dùng production fixture guard; không thêm dependency chỉ để trang trí.
 
 **Done when:** Core audit có before score/evidence, token vocabulary được duyệt, parity tests pass và không role lane nào cần tự phát minh token nền tảng.
 
@@ -213,11 +215,11 @@ Quy tắc:
 - **Dependencies:** W4-DS00
 - **Required skills:** `frontend-design-direction`, `react-native-patterns`, `design-system`
 
-- [ ] Tạo `docs/ui/07-customer-mobile-system-design.md` theo artifact contract.
-- [ ] Khóa anatomy cho order list, guided create flow và order detail; một primary action mỗi decision point.
-- [ ] Định nghĩa Customer variants của Route Spine, address field, estimate panel, payment panel, tracking map và cancel confirmation.
-- [ ] Preview long address/cargo copy, 0–3 stops, keyboard-visible form, sticky action/safe area và mọi state Customer.
-- [ ] Review touch target, Dynamic Type, screen-reader labels và 360/390 px fit trước implementation.
+- [x] Tạo `docs/ui/07-customer-mobile-system-design.md` theo artifact contract.
+- [x] Khóa anatomy cho order list, guided create flow và order detail; một primary action mỗi decision point.
+- [x] Định nghĩa Customer variants của Route Spine, address field, estimate panel, payment panel, tracking map và cancel confirmation.
+- [x] Preview long address/cargo copy, 0–3 stops, keyboard-visible form, sticky action/safe area và mọi state Customer.
+- [x] Review touch target, Dynamic Type, screen-reader labels và 360/390 px fit trước implementation.
 
 **Done when:** Role spec, component/state catalogue và direction review được duyệt; không còn visual/business decision quan trọng bỏ ngỏ.
 
@@ -227,11 +229,11 @@ Quy tắc:
 - **Dependencies:** W4-DS00
 - **Required skills:** `frontend-design-direction`, `react-native-patterns`, `design-system`
 
-- [ ] Tạo `docs/ui/08-driver-mobile-system-design.md` theo artifact contract.
-- [ ] Khóa active-trip hierarchy: current status, exactly-one next action, tracking health và proof readiness.
-- [ ] Định nghĩa high-contrast/outdoor variants cho availability, active banner, status action, offline/permission và upload states.
-- [ ] Preview one-handed reach, safe-area sticky action, long route/cargo copy và accept-race conflict.
-- [ ] Review list virtualization, touch/Dynamic Type và screen-reader announcement cho status thay đổi.
+- [x] Tạo `docs/ui/08-driver-mobile-system-design.md` theo artifact contract.
+- [x] Khóa active-trip hierarchy: current status, exactly-one next action, tracking health và proof readiness.
+- [x] Định nghĩa high-contrast/outdoor variants cho availability, active banner, status action, offline/permission và upload states.
+- [x] Preview one-handed reach, safe-area sticky action, long route/cargo copy và accept-race conflict.
+- [x] Review list virtualization, touch/Dynamic Type và screen-reader announcement cho status thay đổi.
 
 **Done when:** Role spec, component/state catalogue và direction review được duyệt; action priority không phụ thuộc fixture business logic.
 
@@ -241,11 +243,11 @@ Quy tắc:
 - **Dependencies:** W4-DS00
 - **Required skills:** `frontend-design-direction`, `frontend-patterns`, `frontend-a11y`, `design-system`
 
-- [ ] Tạo `docs/ui/09-fleet-owner-system-design.md` theo artifact contract.
-- [ ] Khóa read-only density, fleet-scope marker, exception-first KPI, driver/order table và detail anatomy.
-- [ ] Định nghĩa desktop table, tablet reduced columns và dưới 768 px row-detail composition.
-- [ ] Preview keyboard filters, pagination, stale location, map fallback, no-result và foreign-resource denial.
-- [ ] Review semantic landmarks/headings, focus order và absence of mutation affordances.
+- [x] Tạo `docs/ui/09-fleet-owner-system-design.md` theo artifact contract.
+- [x] Khóa read-only density, fleet-scope marker, exception-first KPI, driver/order table và detail anatomy.
+- [x] Định nghĩa desktop table, tablet reduced columns và dưới 768 px row-detail composition.
+- [x] Preview keyboard filters, pagination, stale location, map fallback, no-result và foreign-resource denial.
+- [x] Review semantic landmarks/headings, focus order và absence of mutation affordances.
 
 **Done when:** Role spec, component/state catalogue và direction/a11y review được duyệt; read-only rule nhìn thấy rõ trên mọi viewport.
 
@@ -255,11 +257,11 @@ Quy tắc:
 - **Dependencies:** W4-DS00
 - **Required skills:** `frontend-design-direction`, `frontend-patterns`, `frontend-a11y`, `design-system`
 
-- [ ] Tạo `docs/ui/10-admin-operations-system-design.md` theo artifact contract.
-- [ ] Khóa filter-first dashboard/list anatomy, exception severity, order investigation và audit rail.
-- [ ] Định nghĩa command dialog variants với reason/note, irreversible warning, pending/error/success và focus return.
-- [ ] Preview high-density tables, long identifiers, empty filters, readiness warning, permission denial và failed commands.
-- [ ] Review semantic tables/forms/dialogs, keyboard-only journey, live-region feedback và reduced motion.
+- [x] Tạo `docs/ui/10-admin-operations-system-design.md` theo artifact contract.
+- [x] Khóa filter-first dashboard/list anatomy, exception severity, order investigation và audit rail.
+- [x] Định nghĩa command dialog variants với reason/note, irreversible warning, pending/error/success và focus return.
+- [x] Preview high-density tables, long identifiers, empty filters, readiness warning, permission denial và failed commands.
+- [x] Review semantic tables/forms/dialogs, keyboard-only journey, live-region feedback và reduced motion.
 
 **Done when:** Role spec, component/state catalogue và direction/a11y review được duyệt; privileged action context không bị che hoặc giản lược.
 
@@ -269,10 +271,10 @@ Quy tắc:
 - **Dependencies:** W4-DS01, W4-DS02
 - **Required skills:** `design-system`, `react-native-patterns`
 
-- [ ] Bổ sung `ScreenScaffold`, section header, order summary, route summary, timeline, payment status, map/loading/fallback và preview banner bằng token hiện có.
-- [ ] Chuẩn hóa status copy tiếng Việt nhưng giữ canonical enum trong accessibility label/test.
-- [ ] Bảo đảm touch target tối thiểu 44 px, safe-area cho sticky action và stable layout khi loading/error.
-- [ ] Test trước cho wrapping, permission privacy boundary, disabled/loading action và ETA demo label.
+- [x] Bổ sung `ScreenScaffold`, section header, order summary, route summary, timeline, payment status, map/loading/fallback và preview banner bằng token hiện có.
+- [x] Chuẩn hóa status copy tiếng Việt nhưng giữ canonical enum trong accessibility label/test.
+- [x] Bảo đảm touch target tối thiểu 44 px, safe-area cho sticky action và stable layout khi loading/error.
+- [x] Test trước cho wrapping, permission privacy boundary, disabled/loading action và ETA demo label.
 
 **Done when:** Primitives dùng được ở 360 px, không gọi network và coverage của file mới đạt tối thiểu 80%.
 
@@ -284,11 +286,11 @@ Quy tắc:
 
 **Routes:** `/customer/orders`, `/customer/orders/new`, `/customer/orders/:id`.
 
-- [ ] Order list có status filter, rows, pagination/load-more có kiểm soát và create action.
-- [ ] Create flow có pickup, 0–3 stops, dropoff, vehicle, cargo, route estimate, price và ETA.
-- [ ] Order detail có timeline, route/map, Driver/tracking, cargo media, payment và cancel affordance theo view model.
-- [ ] Render và test toàn bộ scenario trong matrix; callback test xác nhận double-submit bị chặn.
-- [ ] Không validate business rule thay backend ngoài form-shape validation phục vụ UX.
+- [x] Order list có status filter, rows, pagination/load-more có kiểm soát và create action.
+- [x] Create flow có pickup, 0–3 stops, dropoff, vehicle, cargo, route estimate, price và ETA.
+- [x] Order detail có timeline, route/map, Driver/tracking, cargo media, payment và cancel affordance theo view model.
+- [x] Render và test toàn bộ scenario trong matrix; callback test xác nhận double-submit bị chặn.
+- [x] Không validate business rule thay backend ngoài form-shape validation phục vụ UX.
 
 **Done when:** Ba screen/component suites pass, preview journey chạy được bằng fixture và không có horizontal overflow tại 360x800, 390x844.
 
@@ -300,10 +302,10 @@ Quy tắc:
 
 **Routes:** `/driver/orders`, `/driver/orders/:id`.
 
-- [ ] Order list có availability control, active-order banner và danh sách `REQUESTED`.
-- [ ] Detail/workflow có route/cargo summary, accept affordance, đúng một next-state action do view model cung cấp, tracking state và delivery proof field.
-- [ ] Mô phỏng rõ accept race 409, GPS permission denied, offline retry, proof required và upload failure.
-- [ ] File picker/location sender chỉ là port callback; chưa thêm native SDK hoặc logic tracking thật.
+- [x] Order list có availability control, active-order banner và danh sách `REQUESTED`.
+- [x] Detail/workflow có route/cargo summary, accept affordance, đúng một next-state action do view model cung cấp, tracking state và delivery proof field.
+- [x] Mô phỏng rõ accept race 409, GPS permission denied, offline retry, proof required và upload failure.
+- [x] File picker/location sender chỉ là port callback; chưa thêm native SDK hoặc logic tracking thật.
 
 **Done when:** Hai screen/component suites pass, mọi action có pending/disabled/error feedback và preview không tuyên bố dữ liệu đã persist.
 
@@ -313,10 +315,10 @@ Quy tắc:
 - **Dependencies:** W4-DS03, W4-DS04
 - **Required skills:** `design-system`, `frontend-patterns`, `frontend-a11y`
 
-- [ ] Hoàn thiện shared operational patterns còn thiếu: page header, KPI summary, timeline, read-only detail list, alert, permission-denied state, command dialog và preview banner.
-- [ ] Nâng `DataTable`, `FilterBar`, `Pagination`, `MapPanel`, `ScreenState` chỉ trong phạm vi cần thiết; giữ API component tương thích nếu có thể.
-- [ ] Tablet dưới 768 px dùng row-detail layout; 768–1023 px giữ Order/Status/Action và ẩn cột phụ có chủ ý.
-- [ ] Test keyboard focus, dialog focus return, accessible name, clear filters và long-text wrapping.
+- [x] Hoàn thiện shared operational patterns còn thiếu: page header, KPI summary, timeline, read-only detail list, alert, permission-denied state, command dialog và preview banner.
+- [x] Nâng `DataTable`, `FilterBar`, `Pagination`, `MapPanel`, `ScreenState` chỉ trong phạm vi cần thiết; giữ API component tương thích nếu có thể.
+- [x] Tablet dưới 768 px dùng row-detail layout; 768–1023 px giữ Order/Status/Action và ẩn cột phụ có chủ ý.
+- [x] Test keyboard focus, dialog focus return, accessible name, clear filters và long-text wrapping.
 
 **Done when:** Shared web tests pass, không có inline fake business data trong primitives và viewport 768/1024/1440 ổn định.
 
@@ -328,11 +330,11 @@ Quy tắc:
 
 **Routes:** `/fleet`, `/fleet/drivers`, `/fleet/orders`, `/fleet/orders/:id`.
 
-- [ ] Dashboard hiển thị KPI pilot, availability, active orders và cảnh báo cần chú ý.
-- [ ] Drivers/orders có URL-shaped filter state, pagination và clear filters.
-- [ ] Detail hiển thị route, status history, tracking, media và payment summary chỉ đọc.
-- [ ] Không render lifecycle/payment/admin mutation actions trong bất kỳ fixture scenario nào.
-- [ ] Test foreign URL permission state không render private children.
+- [x] Dashboard hiển thị KPI pilot, availability, active orders và cảnh báo cần chú ý.
+- [x] Drivers/orders có URL-shaped filter state, pagination và clear filters.
+- [x] Detail hiển thị route, status history, tracking, media và payment summary chỉ đọc.
+- [x] Không render lifecycle/payment/admin mutation actions trong bất kỳ fixture scenario nào.
+- [x] Test foreign URL permission state không render private children.
 
 **Done when:** Bốn routes có đủ state matrix, Playwright component/page checks pass ở 768x1024, 1024x768 và 1440x900.
 
@@ -344,11 +346,11 @@ Quy tắc:
 
 **Routes:** `/admin`, `/admin/orders`, `/admin/orders/:id`, `/admin/users`, `/admin/fleets`, `/admin/drivers`.
 
-- [ ] Dashboard có KPI vận hành, status distribution, recent orders và readiness warning.
-- [ ] Lists có URL-shaped search/filter/sort/pagination và tablet row-detail fallback.
-- [ ] Order detail có route, timeline, tracking, media, payment và audit timeline.
-- [ ] Command dialogs cho manual payment, user status và cancel yêu cầu reason/note ở lớp form UX; callback vẫn là port.
-- [ ] Test confirmation, cancel, pending, provider error và permission-denied focus flow.
+- [x] Dashboard có KPI vận hành, status distribution, recent orders và readiness warning.
+- [x] Lists có URL-shaped search/filter/sort/pagination và tablet row-detail fallback.
+- [x] Order detail có route, timeline, tracking, media, payment và audit timeline.
+- [x] Command dialogs cho manual payment, user status và cancel yêu cầu reason/note ở lớp form UX; callback vẫn là port.
+- [x] Test confirmation, cancel, pending, provider error và permission-denied focus flow.
 
 **Done when:** Sáu routes có đủ state matrix, action không mutate fixture trực tiếp và web viewport gate pass.
 
@@ -358,14 +360,14 @@ Quy tắc:
 - **Dependencies:** W4-S02, W4-S03, W4-S05, W4-S06
 - **Required skills:** `design-system`, `frontend-design-direction`, `frontend-patterns`, `react-native-patterns`, `frontend-a11y`
 
-- [ ] Chạy mobile/web lint, typecheck, unit/component tests, mobile export và web build.
-- [ ] Coverage file mới/đổi đạt tối thiểu 80%; không hạ threshold hiện có.
-- [ ] Chụp evidence tại 360x800, 390x844, 768x1024, 1024x768, 1440x900.
-- [ ] Kiểm tra overflow, text wrapping, contrast, keyboard/focus, touch target và map aspect ratio tối thiểu 280 px trên mobile.
+- [x] Chạy lại mobile/web lint, typecheck, unit/component tests, mobile export và web build sau remediation.
+- [x] Thu lại coverage cho file mới/đổi; giữ tối thiểu 80% và không hạ threshold hiện có.
+- [x] Chụp lại evidence tại 360x800, 390x844, 768x1024, 1024x768, 1440x900.
+- [x] Kiểm tra lại overflow, text wrapping, contrast, keyboard/focus, touch target và map aspect ratio tối thiểu 280 px trên mobile.
 - [ ] Chấm lại 10-dimension scorecard cho từng role: tổng ít nhất 85/100, không tiêu chí dưới 8/10.
-- [ ] Chạy design consistency và AI-slop review; đối chiếu từng screen với role system-design specification đã duyệt.
-- [ ] Review diff: không API/schema/contract/root lockfile, không secret/PII, không fixture production default.
-- [ ] Ghi milestone evidence `STATIC_GATE_PASSED`; giữ PH-12 ở `IN_PROGRESS`.
+- [ ] Chạy design consistency và AI-slop review từ ảnh runtime; đối chiếu từng screen với role system-design specification đã duyệt.
+- [x] Review diff: không API/schema/contract/root lockfile, không secret/PII, không fixture production default.
+- [ ] Chỉ ghi milestone evidence `STATIC_GATE_PASSED` sau independent review; giữ PH-12 ở `IN_PROGRESS`.
 
 ## Wave 3 handoff bắt buộc trước khi nối backend
 

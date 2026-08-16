@@ -120,6 +120,22 @@ export function serializeFleetOrderFilters(
   return params.toString();
 }
 
+export function fleetPreviewHref(
+  href: string,
+  scenario: string,
+  context?: FleetPreviewContext,
+): string {
+  if (context?.preview !== 'enabled') return href;
+  const url = new URL(href, 'http://leopard.local');
+  url.searchParams.set('preview', 'enabled');
+  url.searchParams.set('scenario', scenario);
+  return `${url.pathname}?${url.searchParams.toString()}${url.hash}`;
+}
+
+export function fleetOrderDetailHref(href: string, context?: FleetPreviewContext): string {
+  return fleetPreviewHref(href, 'fleet-order-detail-success', context);
+}
+
 export function parseFleetOrderId(value: string | readonly string[] | undefined): string | null {
   const candidate = first(value);
   return UUID_PATTERN.test(candidate) ? candidate : null;

@@ -1,4 +1,4 @@
-import { describe, expect, it, jest, beforeEach } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
@@ -7,6 +7,7 @@ import { httpClient } from '../api/http-client';
 import { sessionStore } from './session-store';
 
 const mockReplace = jest.fn();
+const originalPreviewFlag = process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({
@@ -30,6 +31,12 @@ jest.mock('./session-store', () => ({
 describe('LoginRoute (Mobile)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    delete process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
+  });
+
+  afterEach(() => {
+    if (originalPreviewFlag === undefined) delete process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
+    else process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = originalPreviewFlag;
   });
 
   it('renders LoginScreen component', async () => {
@@ -72,6 +79,29 @@ describe('LoginRoute (Mobile)', () => {
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/driver/orders');
+    });
+
+    await screen.unmount();
+  });
+
+  it.each([
+    { destination: '/customer/orders?preview=enabled', role: 'CUSTOMER' },
+    { destination: '/driver/orders?preview=enabled', role: 'DRIVER' },
+  ] as const)('preserves local preview mode when $role signs in', async ({ destination, role }) => {
+    process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = 'enabled';
+    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      user: { id: `usr-${role.toLowerCase()}`, role },
+    });
+
+    const screen = await render(<LoginRoute />);
+    const input = screen.getByLabelText('Số điện thoại hoặc Token');
+    await fireEvent.changeText(input, `${role.toLowerCase()}-token`);
+    await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith(destination);
     });
 
     await screen.unmount();

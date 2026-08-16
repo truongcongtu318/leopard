@@ -32,7 +32,7 @@ export function ResponsiveResultList({
       ) : (
         items.map((item) => (
           <li key={item.id}>
-            <article className="border-b border-neutral-border pb-md text-neutral-text">
+            <article className="border-l-4 border-brand bg-neutral px-md py-md text-neutral-text">
               <header className="flex flex-wrap items-start justify-between gap-xs">
                 <h3 className="min-w-0 font-semibold break-words">{item.heading}</h3>
                 {item.status}

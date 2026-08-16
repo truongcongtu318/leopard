@@ -59,6 +59,7 @@ describe('theme tokens', () => {
     expect(control.stickyPrimaryMinimumHeight).toBe(48);
     expect(Object.keys(colors)).toEqual([
       'neutral',
+      'operational',
       'brand',
       'info',
       'warning',

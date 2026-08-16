@@ -4,10 +4,10 @@
 >
 > **Role:** `ADMIN`
 >
-> **Trạng thái:** `APPROVED_FOR_STATIC_IMPLEMENTATION`; chưa nối backend Wave 3
+> **Trạng thái:** `VISUAL_REMEDIATION_IN_PROGRESS`; chưa nối backend Wave 3
 >
-> **Static milestone:** Chưa ghi `STATIC_GATE_PASSED`; implementation, preview,
-> accessibility run, screenshot matrix và E2E vẫn là evidence bắt buộc ở W4-S06/W4-S07
+> **Static milestone:** Vòng implementation đầu ở `d4b9db9` chưa đạt visual gate;
+> screenshot matrix, P1/P2 remediation và independent review phải chạy lại ở W4-S07
 >
 > **Independent review:** Pauli (`01a003b3-dbb7-7c91-93b0-2850da5bca18`),
 > 2026-08-15 — một P2 về F-11/US-15 log ownership đã được sửa và xác nhận resolved
@@ -42,6 +42,21 @@ phải giúp Admin trả lời nhanh bốn câu hỏi:
 Không dùng hero, lời quảng bá, KPI card cỡ lớn, chart trang trí, gradient, glassmorphism
 hoặc animation để tạo cảm giác “dashboard”. Density không được đổi thành chữ nhỏ,
 hit target nhỏ hoặc thông tin không có thứ bậc.
+
+### 1.1 Visual composition — Investigation Console
+
+| Screen       | Silhouette và hierarchy bắt buộc                                                                                                                                 |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shell        | Ink navigation rail + neutral work canvas; active destination dùng brand signal, không phủ toàn sidebar bằng các card nav                                        |
+| Overview     | Readiness/status strip → exception ledger là region chính → compact metric strip → recent orders; KPI không đồng trọng số với ngoại lệ                           |
+| Lists        | Breadcrumb/page mast → filter workbench → result count/revision → dense table hoặc row-detail; toolbar và result phải đọc như một công cụ duy nhất               |
+| Order detail | Status/ownership mast → desktop split `8/4` investigation + Audit Rail; mobile giữ một cột nhưng command capability đứng trước audit, không bị chôn sau metadata |
+| Command      | Dialog nêu target/current→proposed state/consequence trước reason; destructive action tách thị giác và vẫn dùng được ở text zoom `200%`                          |
+
+Route Spine và Audit Rail là hai rail khác nghĩa nhưng cùng nhịp hình học. Map fallback
+phải cho thấy route schematic có nhãn và freshness; media fallback phải có file/type/
+state, không để một khung trống. Divider/whitespace là cách nhóm mặc định; bordered
+surface chỉ dùng cho workbench, map/media object hoặc vùng command có boundary thật.
 
 ## 2. Phạm vi và traceability
 
@@ -922,3 +937,12 @@ independent reviewer vẫn pending; vì vậy không ghi `STATIC_GATE_PASSED`.
 - **Blocking issue trong system-design scope: 0.** Runtime evidence và independent
   review là điều kiện tiếp theo, không được coi là đã pass static implementation gate.
 - **Reviewer decision:** `SPEC_READY_FOR_REVIEW`; `STATIC_GATE_PASSED` vẫn **pending**.
+
+### Runtime remediation note — 2026-08-15
+
+Implementation vòng đầu đã có sáu Admin routes, fixture catalogue, command dialog và
+automated checks, nhưng ảnh runtime vẫn đọc như generic bordered-card dashboard thay
+vì Investigation Console. Independent review còn phát hiện route ID binding P1,
+preview click-through P2 và command-dialog zoom coverage P2. Runtime score bị
+invalidated; ba finding cùng visual hierarchy phải được sửa và review lại trước static
+gate.

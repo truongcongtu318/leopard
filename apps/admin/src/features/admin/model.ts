@@ -39,6 +39,7 @@ export type AdminOperationalCondition = Readonly<{
   tone: 'neutral' | 'info' | 'warning' | 'success' | 'danger';
   updatedAtLabel: string;
   targetHref?: string;
+  targetScenario?: string;
 }>;
 
 export type AdminMetricView = Readonly<{

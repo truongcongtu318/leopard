@@ -27,6 +27,7 @@ type AdminPreviewCatalogue = Readonly<{
     screen: AdminPreviewScreen,
     requestedScenario: string | null,
     commandKind?: AdminCommandKind | null,
+    orderId?: string | null,
   ) => AdminRouteView;
 }>;
 
@@ -130,10 +131,20 @@ function AdminScreen({
   previewContext: AdminPreviewContext;
 }>) {
   if (screen === 'overview') {
-    return <AdminOverviewScreen view={view as AdminOverviewRouteView} />;
+    return (
+      <AdminOverviewScreen
+        previewContext={previewContext}
+        view={view as AdminOverviewRouteView}
+      />
+    );
   }
   if (screen === 'order-detail') {
-    return <AdminOrderDetailScreen view={view as AdminOrderDetailRouteView} />;
+    return (
+      <AdminOrderDetailScreen
+        previewContext={previewContext}
+        view={view as AdminOrderDetailRouteView}
+      />
+    );
   }
   return (
     <AdminListScreen
@@ -161,7 +172,7 @@ export async function AdminPreviewRoute({
       try {
         const catalogue = await loadCatalogue();
         const view = withUrlState(
-          catalogue.createAdminPreviewView(screen, scenario, commandKind),
+          catalogue.createAdminPreviewView(screen, scenario, commandKind, orderId),
           filters,
         );
         return { kind: 'success', data: view as AdminPreviewValue };

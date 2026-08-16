@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { PREVIEW_BANNER_TEXT, WEB_PREVIEW_ENABLED_FLAG } from '../../preview';
 import { AdminPreviewRoute, type AdminPreviewCatalogueLoader } from './AdminPreviewRoute';
@@ -73,6 +73,38 @@ describe('Admin guarded preview route', () => {
     expect(loadCatalogue).not.toHaveBeenCalled();
     expect(screen.getByText('Mã đơn không hợp lệ')).toBeTruthy();
     expect(screen.queryByText(/LP-A-/)).toBeNull();
+  });
+
+  it('fails closed when a valid Order UUID is absent from the preview catalogue', async () => {
+    render(
+      await AdminPreviewRoute({
+        localFlag: WEB_PREVIEW_ENABLED_FLAG,
+        orderId: '99999999-9999-4999-8999-999999999999',
+        scenario: 'ADM-ORD-DETAIL',
+        screen: 'order-detail',
+      }),
+    );
+
+    expect(screen.getByText('Không thể mở scenario Admin')).toBeTruthy();
+    expect(screen.queryByText(/LP-A-/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Hủy đơn hàng' })).toBeNull();
+  });
+
+  it('renders and commands the exact validated Order UUID requested by the route', async () => {
+    const orderId = '33333333-3333-4333-8333-333333333104';
+    render(
+      await AdminPreviewRoute({
+        localFlag: WEB_PREVIEW_ENABLED_FLAG,
+        orderId,
+        scenario: 'ADM-ORD-DETAIL',
+        screen: 'order-detail',
+      }),
+    );
+
+    expect(screen.getByRole('heading', { name: 'Đơn LP-A-260815-104' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Hủy đơn hàng' }));
+    expect(screen.getByRole('dialog', { name: 'Hủy đơn hàng: Đơn LP-A-260815-104' })).toBeTruthy();
+    expect(screen.getAllByText(orderId).length).toBeGreaterThan(0);
   });
 
   it('maps an unsupported scenario to a safe generic preview error', async () => {

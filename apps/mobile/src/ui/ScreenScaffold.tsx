@@ -9,6 +9,8 @@ export const SCREEN_SCAFFOLD_SAFE_AREA_OWNER = 'root' as const;
 type ScreenScaffoldProps = PropsWithChildren<
   Readonly<{
     stickyFooter?: ReactNode;
+    eyebrow?: string;
+    headerTone?: 'plain' | 'ink';
     subtitle?: string;
     title: string;
   }>
@@ -19,15 +21,34 @@ type SectionHeadingProps = Readonly<{
   title: string;
 }>;
 
-export function ScreenScaffold({ children, stickyFooter, subtitle, title }: ScreenScaffoldProps) {
+export function ScreenScaffold({
+  children,
+  eyebrow,
+  headerTone = 'plain',
+  stickyFooter,
+  subtitle,
+  title,
+}: ScreenScaffoldProps) {
+  const inverse = headerTone === 'ink';
   return (
     <View style={styles.scaffold} testID="screen-scaffold">
       <View style={styles.content} testID="screen-scaffold-content">
-        <View style={styles.pageHeader}>
-          <Text accessibilityRole="header" style={styles.pageTitle}>
+        <View
+          style={[styles.pageHeader, inverse ? styles.pageHeaderInk : null]}
+          testID="screen-scaffold-masthead"
+        >
+          {eyebrow ? (
+            <Text style={[styles.eyebrow, inverse ? styles.eyebrowInk : null]}>{eyebrow}</Text>
+          ) : null}
+          <Text
+            accessibilityRole="header"
+            style={[styles.pageTitle, inverse ? styles.pageTitleInk : null]}
+          >
             {title}
           </Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          {subtitle ? (
+            <Text style={[styles.subtitle, inverse ? styles.subtitleInk : null]}>{subtitle}</Text>
+          ) : null}
         </View>
         <View style={styles.body}>{children}</View>
       </View>
@@ -53,7 +74,7 @@ export function SectionHeading({ description, title }: SectionHeadingProps) {
 
 const styles = StyleSheet.create({
   scaffold: {
-    backgroundColor: colors.neutral.background,
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
   },
   content: {
@@ -66,25 +87,42 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   pageHeader: {
+    borderLeftColor: colors.brand.background,
+    borderLeftWidth: 4,
     gap: spacing.xs,
+    paddingLeft: spacing.sm,
+    paddingVertical: spacing.xs,
   },
+  pageHeaderInk: {
+    backgroundColor: colors.operational.ink,
+    padding: spacing.md,
+  },
+  eyebrow: {
+    ...typography.caption,
+    color: colors.brand.background,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  eyebrowInk: { color: colors.brand.softBackground },
   pageTitle: {
     ...typography.pageTitle,
     color: colors.neutral.text,
     flexShrink: 1,
   },
+  pageTitleInk: { color: colors.brand.text },
   subtitle: {
     ...typography.body,
     color: colors.neutral.mutedText,
     flexShrink: 1,
   },
+  subtitleInk: { color: colors.operational.inkMuted },
   body: {
     flex: 1,
   },
   stickyFooter: {
     alignItems: 'center',
     backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.border,
+    borderColor: colors.neutral.subtleBorder,
     borderTopWidth: 1,
     paddingBottom: spacing.md,
     paddingHorizontal: spacing.md,

@@ -4,6 +4,7 @@ import {
   parseFleetDriverFilters,
   parseFleetOrderFilters,
   parseFleetOrderId,
+  fleetPreviewHref,
   serializeFleetDriverFilters,
   serializeFleetOrderFilters,
 } from './adapter';
@@ -84,6 +85,18 @@ describe('Fleet URL boundary', () => {
     );
     expect(orderQuery).toBe(
       'q=LP-001&status=ALL&sort=updated-desc&page=1&pageSize=20&preview=enabled&scenario=fleet-orders-mixed',
+    );
+  });
+
+  it('adds preview context without corrupting existing query or hash state', () => {
+    expect(
+      fleetPreviewHref(
+        '/fleet/orders/33333333-3333-4333-8333-333333333001?tab=tracking#history',
+        'fleet-order-detail-success',
+        { preview: 'enabled', scenario: 'fleet-orders-mixed' },
+      ),
+    ).toBe(
+      '/fleet/orders/33333333-3333-4333-8333-333333333001?tab=tracking&preview=enabled&scenario=fleet-order-detail-success#history',
     );
   });
 

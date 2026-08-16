@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
+  createAdminPreviewHref,
   parseAdminCommandKind,
   parseAdminEntityId,
   parseAdminListFilters,
@@ -68,6 +69,41 @@ describe('Admin URL and privacy boundary', () => {
     );
     expect(query).not.toContain('0909');
     expect(query).not.toContain('rawSearch');
+  });
+
+  it('keeps only allow-listed preview context on navigation links', () => {
+    const orderId = '33333333-3333-4333-8333-333333333104';
+
+    expect(
+      createAdminPreviewHref(
+        `/admin/orders/${orderId}?q=0909123456&token=private-demo`,
+        'order-detail',
+        {
+          preview: 'enabled',
+          scenario: 'ADM-ORD-DENSE',
+          command: 'CANCEL_ORDER',
+          rawSearch: '0909 123 456',
+        },
+      ),
+    ).toBe(`/admin/orders/${orderId}?preview=enabled&scenario=ADM-ORD-DETAIL`);
+
+    expect(
+      createAdminPreviewHref(`/admin/orders/${orderId}`, 'order-detail', {
+        preview: 'enabled',
+        scenario: 'ADM-CMD-INVALID',
+        command: 'CANCEL_ORDER',
+      }),
+    ).toBe(
+      `/admin/orders/${orderId}?preview=enabled&scenario=ADM-CMD-INVALID&command=CANCEL_ORDER`,
+    );
+
+    expect(
+      createAdminPreviewHref('/admin/orders', 'orders', {
+        preview: 'enabled',
+        scenario: 'ADM-ORD-DENSE',
+        rawSearch: 'customer@example.test',
+      }),
+    ).toBe('/admin/orders?preview=enabled&scenario=ADM-ORD-DENSE');
   });
 
   it('uses per-screen defaults for invalid or missing values', () => {

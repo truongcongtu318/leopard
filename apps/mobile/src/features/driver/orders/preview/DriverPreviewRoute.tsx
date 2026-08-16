@@ -30,6 +30,7 @@ type PreviewState =
 export type DriverPreviewRouteProps = Readonly<{
   screen: DriverPreviewScreen;
   localPreviewEnabled: boolean;
+  orderId?: string | null;
   scenario: string | null;
   onOpenOrder?: (orderId: string) => void;
   loadCatalogue?: DriverPreviewCatalogueLoader;
@@ -65,6 +66,7 @@ function DriverPreviewScreenView({
 export function DriverPreviewRoute({
   screen,
   localPreviewEnabled,
+  orderId = null,
   scenario,
   onOpenOrder,
   loadCatalogue = loadDriverPreviewCatalogue,
@@ -85,7 +87,16 @@ export function DriverPreviewRoute({
       }
       try {
         const catalogue = await loadCatalogue();
-        const view = catalogue.createDriverPreviewView(screen, scenario);
+        const view = catalogue.createDriverPreviewView(screen, scenario, orderId);
+        if (
+          screen === 'detail' &&
+          orderId &&
+          view.kind === 'content' &&
+          'order' in view &&
+          view.order.id !== orderId
+        ) {
+          throw new TypeError('Driver preview order identity mismatch');
+        }
         if (active) setState({ kind: 'fixtures', selection, view, error: null });
       } catch {
         if (active) {
@@ -101,7 +112,7 @@ export function DriverPreviewRoute({
     return () => {
       active = false;
     };
-  }, [loadCatalogue, localPreviewEnabled, scenario, screen]);
+  }, [loadCatalogue, localPreviewEnabled, orderId, scenario, screen]);
 
   if (state.kind === 'resolving') {
     return (

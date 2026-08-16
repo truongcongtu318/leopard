@@ -1,6 +1,6 @@
 # LEOPARD Fleet Owner Operations System Design
 
-> **Trạng thái:** `APPROVED_FOR_STATIC_IMPLEMENTATION` — runtime evidence pending
+> **Trạng thái:** `VISUAL_REMEDIATION_IN_PROGRESS`
 >
 > **Lane:** `FLEET_OWNER` Operations Web
 >
@@ -8,7 +8,7 @@
 >
 > **Core contract:** `docs/ui/04-design-system.md`
 >
-> **Quality gate:** thiết kế tự chấm `92/100`; không tiêu chí dưới `8/10`
+> **Quality gate:** design-spec self-score `92/100`; runtime score vòng đầu đã bị invalidated
 >
 > **Dark mode:** `N/A` cho pilot; cấm partial dark mode
 >
@@ -39,6 +39,20 @@ Hướng thiết kế là **exception-first operations**, không phải dashboar
 diễn. Một số lớn chỉ xuất hiện khi trả lời được câu hỏi vận hành và có điểm đến rõ
 ràng. Không có chart, doanh thu, commission, dispatch, fleet hierarchy hoặc tính năng
 ngoài pilot.
+
+#### Visual composition — Scope Ledger
+
+| Screen         | Silhouette và hierarchy bắt buộc                                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Shell          | Ink navigation rail ở desktop, compact utility header ở mobile; work canvas neutral, không phải một trang trắng với các border box |
+| Dashboard      | Fleet Scope Rail → exception queue chiếm ưu tiên → compact metrics/data strip → recent operational rows                            |
+| Drivers/orders | Scope rail → filter workbench → result ledger; desktop table, tablet chỉ `3–4` priority columns, mobile row-detail                 |
+| Order detail   | Read-only status mast → route/tracking split → history/payment/media; không render command dock                                    |
+
+Tại `768–1023 px`, badge không được co theo cột đến mức wrap từng từ. Nếu không còn
+đủ chiều rộng cho status + route + owner/context, chuyển sang priority columns hoặc
+row-detail thay vì giữ desktop table. Map fallback phải có route schematic và text
+alternative, không dùng vùng trắng lớn làm bằng chứng “đã có map”.
 
 ### 1.2 Kết quả cần đạt
 
@@ -968,3 +982,11 @@ Self-review gates:
   payload và Fleet port không có mutation command.
 - **Blocking issue trong phạm vi tài liệu:** `0`.
 - **Milestone claim:** chưa ghi `STATIC_GATE_PASSED`, chưa ghi PH-12 `VERIFIED`.
+
+### Runtime remediation note — 2026-08-15
+
+Implementation vòng đầu đã có bốn Fleet routes, fixtures và automated checks, nhưng
+ảnh `768×1024` cho thấy desktop table vẫn giữ quá nhiều cột khiến status badge wrap
+từng từ. Điều này vi phạm contract mục 1.1/visual composition dù document self-score
+đạt. Runtime score bị invalidated; Fleet chỉ qua gate sau khi priority-column hoặc
+row-detail strategy được kiểm tra lại bằng screenshot.

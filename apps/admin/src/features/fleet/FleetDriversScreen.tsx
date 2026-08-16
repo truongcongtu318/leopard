@@ -2,13 +2,14 @@
 
 import {
   DataTable,
+  FieldMapSchematic,
   MapPanel,
   OperationsPageHeader,
   ResponsiveResultList,
   ScreenState,
 } from '@leopard/ui';
 
-import { serializeFleetDriverFilters } from './adapter';
+import { fleetOrderDetailHref, serializeFleetDriverFilters } from './adapter';
 import {
   FleetAvailabilityBadge,
   FleetBoundaryState,
@@ -26,7 +27,8 @@ import type {
   FleetPreviewContext,
 } from './model';
 
-const DRIVER_COLUMNS = [
+function driverColumns(previewContext?: FleetPreviewContext) {
+  return [
   {
     key: 'driver',
     header: 'Tài xế',
@@ -57,7 +59,7 @@ const DRIVER_COLUMNS = [
         <a
           aria-label={`Xem đơn ${driver.activeOrder.reference}`}
           className="font-medium text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-          href={driver.activeOrder.href}
+          href={fleetOrderDetailHref(driver.activeOrder.href, previewContext)}
         >
           {driver.activeOrder.reference}
         </a>
@@ -86,7 +88,8 @@ const DRIVER_COLUMNS = [
       );
     },
   },
-];
+  ];
+}
 
 function filterHref(context?: FleetPreviewContext): string {
   const query = serializeFleetDriverFilters(
@@ -106,10 +109,14 @@ function DriverFilters({
   return (
     <form
       aria-label="Lọc tài xế"
-      className="grid gap-sm rounded-card border border-neutral-border bg-neutral-surface p-md md:grid-cols-2 xl:grid-cols-[minmax(14rem,2fr)_minmax(10rem,1fr)_minmax(11rem,1fr)_auto] xl:items-end"
+      className="grid gap-sm border-l-4 border-brand bg-neutral-surface p-md md:grid-cols-2 xl:grid-cols-[minmax(14rem,2fr)_minmax(10rem,1fr)_minmax(11rem,1fr)_auto] xl:items-end"
       method="get"
       role="search"
     >
+      <div className="border-b border-neutral-border pb-sm md:col-span-2 xl:col-span-4">
+        <p className="text-xs font-bold tracking-widest text-brand">SCOPE LEDGER</p>
+        <h2 className="mt-xxs text-section-title font-semibold">Thu hẹp trường tài xế</h2>
+      </div>
       <FleetPreviewHiddenFields context={previewContext} />
       <label className="grid gap-xxs text-body-compact font-medium">
         Tìm tài xế
@@ -189,7 +196,7 @@ function DriverResults({
           <a
             aria-label={`Xem đơn ${driver.activeOrder.reference}`}
             className="font-medium text-brand underline"
-            href={driver.activeOrder.href}
+            href={fleetOrderDetailHref(driver.activeOrder.href, previewContext)}
           >
             {driver.activeOrder.reference}
           </a>
@@ -221,7 +228,7 @@ function DriverResults({
         {view.result.filterSummary} · Snapshot {view.result.asOfLabel}
       </p>
       <div className="hidden min-w-0 overflow-x-auto md:block">
-        <DataTable columns={DRIVER_COLUMNS} rows={rows} />
+        <DataTable columns={driverColumns(previewContext)} rows={rows} />
       </div>
       <ResponsiveResultList ariaLabel="Kết quả tài xế dạng hàng responsive" items={mobileItems} />
       <FleetPaginationLinks
@@ -269,9 +276,12 @@ export function FleetDriversScreen({
           textAlternative={view.result.mapAlternative}
           title="Bản đồ tài xế trong kết quả"
         >
-          <div className="flex h-full min-h-map-min items-center justify-center p-md text-center text-body-compact text-neutral-muted">
-            Vùng bản đồ mô phỏng chỉ phản ánh tập kết quả hiện tại.
-          </div>
+          <FieldMapSchematic
+            fieldLabel={`Đội xe ${view.scope.displayName} · ${view.result.items.length} tài xế trong kết quả`}
+            markerLabels={view.result.items.map(
+              (driver) => `${driver.displayName} · ${driver.lastLocationLabel}`,
+            )}
+          />
         </MapPanel>
       </div>
     </div>

@@ -23,6 +23,7 @@ type PreviewState =
 export type CustomerPreviewRouteProps = Readonly<{
   screen: CustomerPreviewScreen;
   localPreviewEnabled: boolean;
+  orderId?: string | null;
   scenario: string | null;
   onCreate?: () => void;
   onOpenOrder?: (orderId: string) => void;
@@ -78,6 +79,7 @@ function PreviewScreen({
 export function CustomerPreviewRoute({
   screen,
   localPreviewEnabled,
+  orderId = null,
   scenario,
   onCreate,
   onOpenOrder,
@@ -99,7 +101,16 @@ export function CustomerPreviewRoute({
       }
       try {
         const catalogue = await loadCatalogue();
-        const view = catalogue.createCustomerPreviewView(screen, scenario);
+        const view = catalogue.createCustomerPreviewView(screen, scenario, orderId);
+        if (
+          screen === 'detail' &&
+          orderId &&
+          view.kind === 'content' &&
+          'order' in view &&
+          view.order.id !== orderId
+        ) {
+          throw new TypeError('Customer preview order identity mismatch');
+        }
         if (active) setState({ kind: 'fixtures', selection, view, error: null });
       } catch {
         if (active) {
@@ -115,7 +126,7 @@ export function CustomerPreviewRoute({
     return () => {
       active = false;
     };
-  }, [loadCatalogue, localPreviewEnabled, scenario, screen]);
+  }, [loadCatalogue, localPreviewEnabled, orderId, scenario, screen]);
 
   if (state.kind === 'resolving') {
     return (

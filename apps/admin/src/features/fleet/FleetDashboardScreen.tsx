@@ -5,10 +5,23 @@ import {
   StatusBadge,
 } from '@leopard/ui';
 
-import type { FleetDashboardRouteView } from './model';
-import { FleetBoundaryState, FleetNotice, FleetScopeRail, FleetSurface } from './FleetShared';
+import { fleetOrderDetailHref, fleetPreviewHref } from './adapter';
+import type { FleetDashboardRouteView, FleetPreviewContext } from './model';
+import {
+  FleetBoundaryState,
+  FleetDispatchSlab,
+  FleetNotice,
+  FleetScopeRail,
+  FleetSurface,
+} from './FleetShared';
 
-export function FleetDashboardScreen({ view }: Readonly<{ view: FleetDashboardRouteView }>) {
+export function FleetDashboardScreen({
+  view,
+  previewContext,
+}: Readonly<{
+  view: FleetDashboardRouteView;
+  previewContext?: FleetPreviewContext;
+}>) {
   if (view.kind !== 'dashboard') {
     return (
       <div className="flex flex-col gap-md">
@@ -46,7 +59,7 @@ export function FleetDashboardScreen({ view }: Readonly<{ view: FleetDashboardRo
                   <p className="mt-xs text-xs tabular-nums">Ghi nhận: {item.observedAtLabel}</p>
                   <a
                     className="mt-xs inline-flex min-h-11 items-center font-semibold underline underline-offset-4 focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
-                    href={item.href}
+                    href={fleetOrderDetailHref(item.href, previewContext)}
                   >
                     Xem {item.resourceLabel}
                   </a>
@@ -69,11 +82,14 @@ export function FleetDashboardScreen({ view }: Readonly<{ view: FleetDashboardRo
           ) : (
             <ul className="m-0 grid list-none gap-md p-0">
               {view.activeOrders.map((order) => (
-                <li key={order.id} className="border-b border-neutral-border pb-md last:border-b-0">
+                <li key={order.id} className="border-l-4 border-brand bg-neutral-surface p-md">
+                  <p className="mb-xs text-[0.625rem] font-bold tracking-widest text-brand">
+                    ACTIVE ORDER
+                  </p>
                   <div className="flex flex-wrap items-start justify-between gap-xs">
                     <a
                       className="font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                      href={order.href}
+                      href={fleetOrderDetailHref(order.href, previewContext)}
                     >
                       {order.reference}
                     </a>
@@ -88,23 +104,28 @@ export function FleetDashboardScreen({ view }: Readonly<{ view: FleetDashboardRo
           )}
         </FleetSurface>
 
-        <FleetSurface title="Tình trạng tài xế">
+        <FleetDispatchSlab ariaLabel="Tình trạng tài xế" eyebrow="DRIVER FIELD · SNAPSHOT">
+          <h2 className="text-section-title font-semibold">Tình trạng tài xế</h2>
           {view.unavailableRegionLabel ? (
             <OperationalAlert title="Không thể tải vùng dữ liệu" tone="warning">
               <p>{view.unavailableRegionLabel}</p>
             </OperationalAlert>
           ) : (
             <>
-              <p className="text-lg font-semibold break-words">{view.availabilitySummary}</p>
+              <p className="mt-sm text-lg font-semibold break-words">{view.availabilitySummary}</p>
               <a
-                className="mt-md inline-flex min-h-11 items-center font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                href="/fleet/drivers"
+                className="mt-md inline-flex min-h-11 items-center font-semibold text-brand-soft underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft"
+                href={fleetPreviewHref(
+                  '/fleet/drivers',
+                  'fleet-drivers-mixed',
+                  previewContext,
+                )}
               >
                 Xem danh sách tài xế
               </a>
             </>
           )}
-        </FleetSurface>
+        </FleetDispatchSlab>
       </div>
     </div>
   );

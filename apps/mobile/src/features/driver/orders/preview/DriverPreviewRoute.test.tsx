@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { render, waitFor } from '@testing-library/react-native';
 
 import { DriverPreviewRoute } from './DriverPreviewRoute';
+import type { DriverPreviewRouteProps } from './DriverPreviewRoute';
+import { createDriverDetailFixture } from '../fixtures';
 import { createDriverPreviewView } from './catalogue';
 
 const previousFlag = process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
@@ -61,6 +63,30 @@ describe('DriverPreviewRoute', () => {
     );
     await waitFor(() => expect(screen.getByText('Không thể mở scenario')).toBeTruthy());
     expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
+    await screen.unmount();
+  });
+
+  it('fails closed when a detail catalogue returns a fixture for another order ID', async () => {
+    process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = 'enabled';
+    const routeOrderId = '22222222-2222-4222-8222-222222222099';
+    const loadCatalogue = jest.fn(async () => ({
+      createDriverPreviewView: () => createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED'),
+    }));
+    const props = {
+      loadCatalogue,
+      localPreviewEnabled: true,
+      orderId: routeOrderId,
+      scenario: 'D-DETAIL-PROOF-REQUIRED',
+      screen: 'detail',
+    } as DriverPreviewRouteProps;
+
+    const screen = await render(<DriverPreviewRoute {...props} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Không thể mở scenario')).toBeTruthy();
+    });
+    expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
+    expect(loadCatalogue).toHaveBeenCalledTimes(1);
     await screen.unmount();
   });
 });

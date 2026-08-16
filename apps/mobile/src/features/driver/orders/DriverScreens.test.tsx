@@ -16,6 +16,8 @@ describe('DriverOrdersScreen', () => {
     );
 
     expect(screen.getByRole('header', { name: 'Đơn của tài xế' })).toBeTruthy();
+    expect(screen.getByText('DRIVER · FIELD COCKPIT')).toBeTruthy();
+    expect(screen.getByTestId('driver-active-trip-slab')).toBeTruthy();
     expect(screen.getByText('Trạng thái nhận đơn')).toBeTruthy();
     expect(screen.getByText('Chuyến đang thực hiện')).toBeTruthy();
     expect(screen.getByText('Đơn có thể nhận')).toBeTruthy();
@@ -131,6 +133,8 @@ describe('DriverOrderDetailScreen', () => {
     );
 
     expect(screen.getByText('Ảnh xác nhận đã tải lên')).toBeTruthy();
+    expect(screen.getByText('DRIVER · ACTIVE MISSION')).toBeTruthy();
+    expect(screen.getByTestId('route-map-schematic')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Xác nhận đã giao' }));
     expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-demo');
     await screen.unmount();

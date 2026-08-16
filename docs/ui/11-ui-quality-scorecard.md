@@ -29,11 +29,22 @@ Ghi đầy đủ metadata trước review:
 Không chấm mockup cô lập khi implementation composition khác mockup. Evidence phải
 đến từ local preview/build sử dụng component và token sẽ đi vào production path.
 
+Không được suy ra chất lượng thị giác từ test pass, contrast ratio hoặc việc không có
+overflow. Reviewer phải mở ảnh ở kích thước thật và inspect tối thiểu first viewport,
+một màn hình dense/long-copy và một interaction state của từng role. UI có thể đúng
+semantics và đủ state nhưng vẫn fail nếu đọc như wireframe, template mặc định hoặc
+không có product-specific hierarchy.
+
+Final score phải do reviewer độc lập với implementer xác nhận. Self-score chỉ dùng để
+mở review và không được tạo milestone claim.
+
 ## 2. Cách tính điểm
 
 - Mỗi category có điểm nguyên `0–10`; tổng tối đa `100`.
-- `10`: contract đầy đủ, evidence rõ, không còn issue.
-- `9`: đạt contract, chỉ còn polish nhỏ không ảnh hưởng workflow/a11y.
+- `10`: contract đầy đủ, runtime visual evidence có hierarchy đặc trưng cho sản phẩm,
+  reviewer độc lập không còn issue.
+- `9`: đạt contract và visual direction; chỉ còn polish nhỏ không ảnh hưởng
+  workflow/a11y.
 - `8`: đạt mức production-pilot tối thiểu; có issue không blocking được ghi owner.
 - `0–7`: fail category; role không qua static gate.
 - Không dùng `N/A` cho mười category. Nếu một component không xuất hiện ở role, chấm
@@ -153,6 +164,8 @@ Tất cả phải là `false`. Mỗi mục `true` là blocker cho đến khi lo�
 | Scroll reveal, gratuitous pulse/spin hoặc motion không truyền đạt state          |            |                      |
 | Dependency/font/icon/component duplicate chỉ phục vụ flourish                    |            |                      |
 | Primary workflow bị che bởi marketing explanation                                |            |                      |
+| Màn hình chủ yếu là text + divider mặc định, không có hierarchy/composition đặc trưng cho role |            |                      |
+| Map, media hoặc data visualization là khung trống lớn dù fixture đủ dữ liệu để tạo fallback có nghĩa |            |                      |
 
 ## 7. Automatic blockers ngoài điểm số
 

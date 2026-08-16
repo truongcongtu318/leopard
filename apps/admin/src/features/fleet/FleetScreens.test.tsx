@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 
 import { FleetDashboardScreen } from './FleetDashboardScreen';
 import { FleetDriversScreen } from './FleetDriversScreen';
@@ -32,7 +32,10 @@ function expectReadOnlySurface() {
 describe('Fleet Owner static screens', () => {
   it('renders an exception-first dashboard with valid zero metrics', () => {
     render(
-      <FleetDashboardScreen view={createFleetPreviewView('dashboard', 'fleet-overview-success')} />,
+      <FleetDashboardScreen
+        previewContext={{ preview: 'enabled', scenario: 'fleet-overview-success' }}
+        view={createFleetPreviewView('dashboard', 'fleet-overview-success')}
+      />,
     );
 
     expectReadOnlySurface();
@@ -40,6 +43,14 @@ describe('Fleet Owner static screens', () => {
     expect(screen.getByText('Cần chú ý')).toBeTruthy();
     expect(screen.getByText('0')).toBeTruthy();
     expect(screen.getByText('LP-F-260815-001')).toBeTruthy();
+    for (const link of screen.getAllByRole('link', { name: /LP-F-260815-001/ })) {
+      expect(link.getAttribute('href')).toBe(
+        '/fleet/orders/33333333-3333-4333-8333-333333333001?preview=enabled&scenario=fleet-order-detail-success',
+      );
+    }
+    expect(screen.getByRole('link', { name: 'Xem danh sách tài xế' }).getAttribute('href')).toBe(
+      '/fleet/drivers?preview=enabled&scenario=fleet-drivers-mixed',
+    );
   });
 
   it('renders Driver table, responsive rows, URL-shaped filters and map fallback', () => {
@@ -57,6 +68,11 @@ describe('Fleet Owner static screens', () => {
     expect(screen.getByLabelText('Thông tin thay thế cho bản đồ').textContent).toContain(
       '2 tài xế trong kết quả',
     );
+    for (const link of screen.getAllByRole('link', { name: 'Xem đơn LP-F-260815-001' })) {
+      expect(link.getAttribute('href')).toBe(
+        '/fleet/orders/33333333-3333-4333-8333-333333333001?preview=enabled&scenario=fleet-order-detail-success',
+      );
+    }
   });
 
   it('renders Order filters, status/payment semantics and detail links', () => {
@@ -75,6 +91,43 @@ describe('Fleet Owner static screens', () => {
     expect(screen.getAllByRole('link', { name: /Xem đơn LP-F-260815-001/ }).length).toBeGreaterThan(
       0,
     );
+  });
+
+  it('keeps the tablet order ledger to priority columns with readable row disclosure', () => {
+    render(
+      <FleetOrdersScreen
+        previewContext={{ preview: 'enabled', scenario: 'fleet-orders-mixed' }}
+        view={createFleetPreviewView('orders', 'fleet-orders-mixed')}
+      />,
+    );
+
+    const ledger = screen.getByRole('table', { name: /2 đơn thuộc Đội xe Sao Mai/ });
+    expect(within(ledger).getByRole('columnheader', { name: 'Đơn hàng' })).toBeTruthy();
+    expect(within(ledger).getByRole('columnheader', { name: 'Trạng thái' })).toBeTruthy();
+    expect(within(ledger).getByRole('columnheader', { name: 'Thông tin bổ sung' })).toBeTruthy();
+    expect(within(ledger).getByRole('columnheader', { name: 'Xem' })).toBeTruthy();
+
+    const disclosure = within(ledger).getByRole('button', {
+      name: 'Mở thông tin bổ sung cho đơn LP-F-260815-001',
+    });
+    expect(disclosure.getAttribute('aria-expanded')).toBe('false');
+    expect(
+      within(ledger).queryByRole('region', {
+        name: 'Thông tin bổ sung cho đơn LP-F-260815-001',
+      }),
+    ).toBeNull();
+
+    fireEvent.click(disclosure);
+
+    expect(disclosure.getAttribute('aria-expanded')).toBe('true');
+    const detail = within(ledger).getByRole('region', {
+      name: 'Thông tin bổ sung cho đơn LP-F-260815-001',
+    });
+    expect(within(detail).getByText('Khách hàng')).toBeTruthy();
+    expect(within(detail).getByText('Khách Hàng Lan Mô Phỏng')).toBeTruthy();
+    expect(
+      within(ledger).getByRole('link', { name: 'Xem chi tiết đơn LP-F-260815-001' }),
+    ).toBeTruthy();
   });
 
   it('renders a private-safe read-only order detail with ETA and demo provenance', () => {

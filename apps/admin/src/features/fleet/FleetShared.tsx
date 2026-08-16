@@ -1,4 +1,5 @@
 import { OperationalAlert, ScreenState, StatusBadge, type OperationalAlertTone } from '@leopard/ui';
+import type { ReactNode } from 'react';
 
 import type {
   FleetBoundaryView,
@@ -11,15 +12,15 @@ export function FleetScopeRail({ scope }: Readonly<{ scope: FleetScopeView }>) {
   return (
     <section
       aria-label="Phạm vi truy cập đội xe"
-      className="grid gap-xs border-l-4 border-brand bg-neutral-surface px-md py-sm text-body-compact text-neutral-text sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+      className="grid gap-xs border-l-4 border-brand bg-neutral-text px-md py-md text-body-compact text-brand-text sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
     >
       <div className="min-w-0">
         <p className="font-semibold break-words">Phạm vi truy cập: Đội xe {scope.displayName}</p>
-        <p className="mt-xxs text-neutral-muted break-words">
+        <p className="mt-xxs text-brand-soft break-words">
           Tư cách thành viên: Đang tham gia · Chỉ xem
         </p>
       </div>
-      <p className="text-xs text-neutral-muted tabular-nums break-words sm:text-right">
+      <p className="text-xs text-brand-soft tabular-nums break-words sm:text-right">
         Phạm vi xác nhận lúc {scope.verifiedAtLabel}
       </p>
     </section>
@@ -104,6 +105,26 @@ export function FleetReadOnlyNote() {
   );
 }
 
+export function FleetDispatchSlab({
+  ariaLabel,
+  eyebrow,
+  children,
+}: Readonly<{
+  ariaLabel: string;
+  eyebrow: string;
+  children: ReactNode;
+}>) {
+  return (
+    <section
+      aria-label={ariaLabel}
+      className="min-w-0 border-l-4 border-brand bg-neutral-text p-md text-brand-text"
+    >
+      <p className="text-xs font-bold tracking-widest text-brand-soft">{eyebrow}</p>
+      <div className="mt-sm min-w-0">{children}</div>
+    </section>
+  );
+}
+
 export function FleetSurface({
   title,
   description,
@@ -114,7 +135,7 @@ export function FleetSurface({
   children: React.ReactNode;
 }>) {
   return (
-    <section className="min-w-0 rounded-card border border-neutral-border bg-neutral p-md text-neutral-text">
+    <section className="min-w-0 border-t-2 border-neutral-text bg-neutral pt-md text-neutral-text">
       <header className="mb-md">
         <h2 className="text-section-title font-semibold break-words">{title}</h2>
         {description ? (

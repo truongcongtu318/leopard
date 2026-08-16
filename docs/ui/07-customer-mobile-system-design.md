@@ -6,7 +6,7 @@
 >
 > **Core baseline:** `06c7801` — Wave 4 core design contract
 >
-> **Trạng thái:** `APPROVED_FOR_STATIC_IMPLEMENTATION — RUNTIME_EVIDENCE_PENDING`
+> **Trạng thái:** `VISUAL_REMEDIATION_IN_PROGRESS`
 >
 > **Independent review:** Helmholtz (`01a003b2-71af-7ab0-b3c8-c7a8e46e2082`),
 > 2026-08-15 — không có P0/P1/P2
@@ -39,6 +39,18 @@ Customer UI là workflow vận hành, không phải landing page:
 - Route Spine truyền đạt thứ tự và tiến trình; nó không phải đường trang trí và không
   thay thế bản đồ.
 - Không dùng dashboard KPI giả để lấp màn hình list hoặc detail.
+
+### 1.1 Visual composition — Journey Sheet
+
+| Screen       | Silhouette và hierarchy bắt buộc                                                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Order list   | Header ngắn → active/recent context → filter chips → các order ledger có compact Route Spine; status, ETA và giá nằm trên hai baseline rõ, không trải thành chuỗi paragraph    |
+| Create order | Ba stage có số `01 Lộ trình`, `02 Phương tiện & hàng`, `03 Giá & thời gian`; route composer là object chính; estimate dùng một data strip riêng ngay trước sticky confirmation |
+| Order detail | Status mast gắn order ID + giá → warning có signal rail → Route Spine → tracking/map → payment/media/history; secondary metadata dùng divider/whitespace thay card lồng card   |
+
+Canvas dùng neutral surface, content chính dùng nền sáng và ink; brand chỉ dẫn route
+và primary action, amber chỉ dành cho freshness/payment exception. First viewport
+phải cho thấy ít nhất một order/route signal có ích, không dừng ở title và copy mô tả.
 
 ## 2. Nguồn quyết định và skill evidence
 
@@ -608,7 +620,7 @@ focus to login/session-expired heading.
 
 | File/surface                                           | Responsibility                                                                            |
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `apps/mobile/app/(customer)/orders/*.tsx`              | Thin Expo routes: parse/validate params, select screen; no fetching/business logic.       |
+| `apps/mobile/app/customer/orders/*.tsx`                | Thin Expo routes: parse/validate params, select screen; no fetching/business logic.       |
 | `apps/mobile/src/features/customer/orders/model.ts`    | Readonly display models and discriminated state unions.                                   |
 | `apps/mobile/src/features/customer/orders/port.ts`     | Query/command/event interfaces; no URL, Socket or provider SDK detail.                    |
 | `apps/mobile/src/features/customer/orders/fixtures.ts` | Fresh immutable deterministic snapshots keyed by scenario IDs in mục 13.                  |
@@ -774,23 +786,22 @@ package thực tế.
 - Guarded local preview catalogue/evidence plan và scorecard readiness mapping không
   có fabricated score.
 
-### Runtime evidence/blockers còn mở
+### Runtime checkpoint và blocker còn mở
 
-- Tại thời điểm authoring, source
-  [`orders/index.tsx`](<../../apps/mobile/app/(customer)/orders/index.tsx>) vẫn là
-  placeholder; routes `/new`, `/:id`, role components và Customer catalogue chưa có
-  implementation evidence trong artifact này.
-- Mobile Foundation cần chứng minh platform mapping cho `pageTitle`, motion/reduced
-  motion, scaffold/sticky inset và các component còn thiếu; role lane không tự thêm
-  raw replacement.
+- Vòng implementation đầu tồn tại tại `apps/mobile/app/customer/**`,
+  `apps/mobile/src/features/customer/orders/**` và shared mobile UI; route hiển thị đã
+  được sửa từ route group sang `/customer/**` ở `d4b9db9`.
+- Unit/component test, typecheck, lint, export và viewport `360/390` đã chạy ở vòng
+  đầu, nhưng visual review xác nhận hierarchy còn text-heavy và đọc như wireframe.
+  Scorecard vòng đầu vì vậy bị invalidated; visual remediation và screenshot review
+  độc lập đang chạy.
+- Detail route phải bind chính xác parsed order ID vào immutable fixture/view model;
+  không được render action hoặc dữ liệu của order hard-coded khác.
 - Estimate/QR expiry cần contract adapter rõ từ Wave 3; backend vẫn là authority.
 - Create-order + cargo-media dùng hai API operations; adapter phải chứng minh partial
   success/retry không tạo duplicate order.
-- Chưa có screenshot 360/390/768, long-copy/Dynamic Type/keyboard capture, contrast,
-  touch-target, VoiceOver/TalkBack hoặc reduced-motion result.
-- Chưa chạy Customer component tests, mobile lint/typecheck/export, Maestro,
-  API/Socket/upload/payment integration, persistence hoặc authorization E2E.
+- VoiceOver/TalkBack thiết bị thật, API/Socket/upload/payment integration,
+  persistence và authorization E2E vẫn thuộc W4-I01..W4-I05.
 
-Reviewer chỉ có thể chuyển artifact sang approved role spec sau direction/design review.
-Integration Owner chỉ có thể ghi `STATIC_GATE_PASSED` sau implementation và evidence
-package; PH-12 vẫn chờ real integration và E2E.
+Integration Owner chỉ được ghi `STATIC_GATE_PASSED` sau visual remediation, evidence
+package mới và independent review; PH-12 vẫn chờ real integration và E2E.

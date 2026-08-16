@@ -144,4 +144,35 @@ describe('Fleet guarded preview route', () => {
     );
     expect(screen.getByRole('heading', { name: 'Đơn LP-F-260815-001' })).toBeTruthy();
   });
+
+  it('binds preview detail data to the validated route order ID', async () => {
+    render(
+      await FleetPreviewRoute({
+        localFlag: WEB_PREVIEW_ENABLED_FLAG,
+        orderId: '33333333-3333-4333-8333-333333333002',
+        scenario: 'fleet-order-detail-success',
+        screen: 'order-detail',
+      }),
+    );
+
+    expect(screen.getByRole('heading', { name: 'Đơn LP-F-260815-002' })).toBeTruthy();
+    expect(screen.getAllByText('Tài xế Bình Mô Phỏng').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Điểm giao mô phỏng Quận 3').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Tài xế An Mô Phỏng được phân công/)).toBeNull();
+    expect(screen.queryByText('LP-F-260815-001')).toBeNull();
+  });
+
+  it('fails closed when a valid UUID is outside the Fleet preview scope', async () => {
+    render(
+      await FleetPreviewRoute({
+        localFlag: WEB_PREVIEW_ENABLED_FLAG,
+        orderId: '33333333-3333-4333-8333-333333333099',
+        scenario: 'fleet-order-detail-success',
+        screen: 'order-detail',
+      }),
+    );
+
+    expect(screen.getByText('Bạn không có quyền xem đơn này')).toBeTruthy();
+    expect(screen.queryByText(/LP-F-260815-/)).toBeNull();
+  });
 });

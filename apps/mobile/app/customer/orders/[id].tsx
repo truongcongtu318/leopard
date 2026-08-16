@@ -29,6 +29,7 @@ export default function CustomerOrderDetailPage() {
   return (
     <CustomerPreviewRoute
       localPreviewEnabled={normalizeRouteParam(params.preview) === 'enabled'}
+      orderId={orderId}
       scenario={normalizeRouteParam(params.scenario)}
       screen="detail"
     />

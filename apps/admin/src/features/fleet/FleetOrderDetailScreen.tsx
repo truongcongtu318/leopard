@@ -3,6 +3,7 @@ import {
   OperationsPageHeader,
   OperationalAlert,
   ReadOnlyDetailList,
+  RouteMapSchematic,
   RouteSpine,
   StatusBadge,
   StatusTimeline,
@@ -11,6 +12,7 @@ import {
 import {
   FleetBoundaryState,
   FleetBreadcrumbs,
+  FleetDispatchSlab,
   FleetNotice,
   FleetReadOnlyNote,
   FleetScopeRail,
@@ -42,11 +44,23 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
       <FleetReadOnlyNote />
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
 
-      <div className="flex flex-wrap items-center gap-sm">
-        <StatusBadge domain="orderStatus" status={order.status} />
-        <StatusBadge domain="paymentStatus" status={order.payment.status} />
-        <span className="text-body-compact text-neutral-muted">{order.tracking.statusLabel}</span>
-      </div>
+      <FleetDispatchSlab
+        ariaLabel="Ngữ cảnh chuyến trong phạm vi đội xe"
+        eyebrow="SCOPE LEDGER · ACTIVE ORDER"
+      >
+        <div className="grid gap-md md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div className="min-w-0">
+            <p className="text-section-title font-bold break-words">{order.reference}</p>
+            <p className="mt-xxs text-body-compact text-brand-soft break-words">
+              {order.driverLabel} · {order.tracking.statusLabel}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-sm md:justify-end">
+            <StatusBadge domain="orderStatus" status={order.status} />
+            <StatusBadge domain="paymentStatus" status={order.payment.status} />
+          </div>
+        </div>
+      </FleetDispatchSlab>
 
       <div className="grid gap-lg xl:grid-cols-[minmax(0,3fr)_minmax(18rem,2fr)]">
         <FleetSurface
@@ -82,9 +96,11 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
         textAlternative={order.tracking.mapAlternative}
         title="Tracking và vị trí gần nhất"
       >
-        <div className="flex h-full min-h-map-min items-center justify-center p-md text-center text-body-compact text-neutral-muted">
-          Tuyến và marker mô phỏng; không được mô tả là vị trí trực tiếp.
-        </div>
+        <RouteMapSchematic
+          destinationLabel={order.route.destination.label}
+          markerLabel={`${order.driverLabel} · marker mô phỏng, không phải vị trí trực tiếp`}
+          originLabel={order.route.origin.label}
+        />
       </MapPanel>
 
       <div className="grid gap-lg xl:grid-cols-2">
@@ -130,11 +146,14 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
           <p className="text-body-compact text-neutral-muted">Chưa có media được phép hiển thị.</p>
         ) : (
           <ul className="m-0 grid list-none gap-sm p-0 sm:grid-cols-2">
-            {order.media.items.map((item) => (
+            {order.media.items.map((item, index) => (
               <li
                 key={item.id}
-                className="rounded-control border border-neutral-border bg-neutral-surface p-sm"
+                className="min-h-32 border-l-4 border-brand bg-neutral-surface p-md"
               >
+                <p className="text-section-title font-bold text-brand" aria-hidden="true">
+                  {String(index + 1).padStart(2, '0')}
+                </p>
                 <p className="font-semibold break-words">{item.label}</p>
                 <p className="mt-xxs text-body-compact text-neutral-muted">
                   {item.mediaType} · {item.capturedAtLabel}

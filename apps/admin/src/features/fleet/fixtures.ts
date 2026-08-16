@@ -395,19 +395,28 @@ function orders(scenarioId: FleetPreviewScenarioId): FleetOrdersView {
   };
 }
 
-function orderDetailData(scenarioId: FleetPreviewScenarioId): FleetOrderDetailDataView {
+const DEFAULT_ORDER_DETAIL_ID = '33333333-3333-4333-8333-333333333001';
+
+function orderDetailData(
+  scenarioId: FleetPreviewScenarioId,
+  requestedOrderId: string | null,
+): FleetOrderDetailDataView {
   const staleTracking = scenarioId === 'fleet-order-detail-stale-tracking';
   const noLocation = scenarioId === 'fleet-order-detail-no-location';
   const mediaError = scenarioId === 'fleet-order-detail-media-error';
+  const selectedOrder =
+    orderItems().find((order) => order.id === (requestedOrderId ?? DEFAULT_ORDER_DETAIL_ID)) ??
+    orderItems()[0]!;
+  const isPickingUp = selectedOrder.status === 'PICKING_UP';
   return {
-    id: '33333333-3333-4333-8333-333333333001',
-    reference: 'LP-F-260815-001',
-    status: 'IN_TRANSIT',
-    updatedAtLabel: '14:32 · 15/08/2026',
+    id: selectedOrder.id,
+    reference: selectedOrder.reference,
+    status: selectedOrder.status,
+    updatedAtLabel: selectedOrder.updatedAtLabel,
     route: {
       origin: {
         id: 'fleet-origin',
-        label: 'Kho mô phỏng tại Quận 7',
+        label: selectedOrder.route.originLabel,
         metadata: 'Lấy hàng lúc 13:45',
       },
       stops: [
@@ -419,7 +428,7 @@ function orderDetailData(scenarioId: FleetPreviewScenarioId): FleetOrderDetailDa
       ],
       destination: {
         id: 'fleet-destination',
-        label: 'Điểm giao mô phỏng tại Thành phố Thủ Đức',
+        label: selectedOrder.route.destinationLabel,
         metadata: 'Điểm đến dự kiến',
       },
     },
@@ -427,8 +436,8 @@ function orderDetailData(scenarioId: FleetPreviewScenarioId): FleetOrderDetailDa
       label: 'ETA dự kiến · 18 phút',
       sourceLabel: 'Dữ liệu mô phỏng',
     },
-    driverLabel: 'Tài xế An Mô Phỏng',
-    customerLabel: 'Khách Hàng Lan Mô Phỏng',
+    driverLabel: selectedOrder.driverLabel,
+    customerLabel: selectedOrder.customerLabel,
     cargoSummary: 'Hàng đóng thùng · khoảng 120 kg · ghi chú mô phỏng',
     tracking: {
       state: noLocation ? 'no-location' : staleTracking ? 'stale' : 'route',
@@ -441,10 +450,10 @@ function orderDetailData(scenarioId: FleetPreviewScenarioId): FleetOrderDetailDa
         ? null
         : staleTracking
           ? '14:27 · 15/08/2026'
-          : '14:32 · 15/08/2026',
+          : selectedOrder.updatedAtLabel,
       mapAlternative: noLocation
         ? 'Không vẽ marker giả; lộ trình dạng chữ vẫn được giữ.'
-        : 'Điểm gần nhất: khu vực cầu Kênh Tẻ, đang đi về Thành phố Thủ Đức.',
+        : `Điểm gần nhất: khu vực cầu Kênh Tẻ, đang đi về ${selectedOrder.route.destinationLabel}.`,
     },
     history: [
       {
@@ -460,15 +469,15 @@ function orderDetailData(scenarioId: FleetPreviewScenarioId): FleetOrderDetailDa
         id: 'history-accepted',
         status: 'ACCEPTED',
         label: 'Đã nhận đơn',
-        description: 'Tài xế An Mô Phỏng được phân công.',
+        description: `${selectedOrder.driverLabel} được phân công.`,
         timestampLabel: '13:35 · 15/08/2026',
         dateTime: '2026-08-15T13:35:00+07:00',
         isCurrent: false,
       },
       {
         id: 'history-transit',
-        status: 'IN_TRANSIT',
-        label: 'Đang vận chuyển',
+        status: selectedOrder.status,
+        label: isPickingUp ? 'Đang lấy hàng' : 'Đang vận chuyển',
         description: 'Trạng thái hiện tại do nguồn dữ liệu cung cấp.',
         timestampLabel: '14:00 · 15/08/2026',
         dateTime: '2026-08-15T14:00:00+07:00',
@@ -476,9 +485,12 @@ function orderDetailData(scenarioId: FleetPreviewScenarioId): FleetOrderDetailDa
       },
     ],
     payment: {
-      status: 'UNPAID',
+      status: selectedOrder.paymentStatus,
       amountLabel: '420.000 ₫',
-      methodLabel: 'Chưa có phương thức thanh toán hoàn tất',
+      methodLabel:
+        selectedOrder.paymentStatus === 'QR_CREATED'
+          ? 'VietQR đã được tạo; chưa xác nhận thanh toán'
+          : 'Chưa có phương thức thanh toán hoàn tất',
     },
     media: {
       state: mediaError ? 'error' : 'success',
@@ -498,14 +510,17 @@ function orderDetailData(scenarioId: FleetPreviewScenarioId): FleetOrderDetailDa
   };
 }
 
-function orderDetail(scenarioId: FleetPreviewScenarioId): FleetOrderDetailView {
+function orderDetail(
+  scenarioId: FleetPreviewScenarioId,
+  requestedOrderId: string | null,
+): FleetOrderDetailView {
   const staleTracking = scenarioId === 'fleet-order-detail-stale-tracking';
   const noLocation = scenarioId === 'fleet-order-detail-no-location';
   return {
     scenarioId,
     kind: 'order-detail',
     scope: scope(),
-    order: orderDetailData(scenarioId),
+    order: orderDetailData(scenarioId, requestedOrderId),
     notice: staleTracking
       ? {
           tone: 'warning',
@@ -552,10 +567,12 @@ export function createFleetPreviewView(
 export function createFleetPreviewView(
   screen: FleetPreviewScreen,
   requestedScenario: string | null,
+  requestedOrderId?: string | null,
 ): FleetRouteView;
 export function createFleetPreviewView(
   screen: FleetPreviewScreen,
   requestedScenario: string | null,
+  requestedOrderId: string | null = null,
 ): FleetRouteView {
   const scenarioId = resolveScenario(screen, requestedScenario);
   let view: FleetRouteView;
@@ -583,6 +600,17 @@ export function createFleetPreviewView(
       'Phiên làm việc đã hết hạn',
       'Dữ liệu riêng tư đã được ẩn. Vui lòng đăng nhập lại để tiếp tục.',
     );
+  } else if (
+    screen === 'order-detail' &&
+    requestedOrderId !== null &&
+    !orderItems().some((order) => order.id === requestedOrderId)
+  ) {
+    view = boundary(
+      'fleet-order-foreign-denied',
+      'permission-denied',
+      'Bạn không có quyền xem đơn này',
+      'Không hiển thị hoặc xác nhận dữ liệu nằm ngoài phạm vi được cấp quyền.',
+    );
   } else if (screen === 'dashboard') {
     view = dashboard(scenarioId);
   } else if (screen === 'drivers') {
@@ -590,7 +618,7 @@ export function createFleetPreviewView(
   } else if (screen === 'orders') {
     view = orders(scenarioId);
   } else {
-    view = orderDetail(scenarioId);
+    view = orderDetail(scenarioId, requestedOrderId);
   }
 
   return deepFreeze(view);

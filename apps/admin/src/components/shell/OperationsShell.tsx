@@ -119,14 +119,25 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
 
   const navigation = (
     <div className="p-md">
-      <div className="px-md pb-lg text-section-title font-bold">LEOPARD</div>
-      <p className="mb-xs px-md text-body-compact font-semibold uppercase text-neutral-muted">
+      <div className="mb-xl flex items-center gap-sm px-md">
+        <span className="grid h-10 w-10 place-items-center bg-brand text-section-title font-black text-brand-text">
+          L
+        </span>
+        <div>
+          <p className="font-bold tracking-wide text-brand-text">LEOPARD</p>
+          <p className="text-[0.625rem] font-semibold tracking-widest text-brand-soft">
+            CONTROL LEDGER
+          </p>
+        </div>
+      </div>
+      <p className="mb-xs px-md text-body-compact font-semibold uppercase text-brand-soft">
         {roleContext.contextLabel}
       </p>
       <RoleNavigation
         items={localizedItems}
         currentPath={pathname}
         ariaLabel={roleContext.navigationLabel}
+        tone="dark"
       />
     </div>
   );
@@ -140,19 +151,19 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
         Bỏ qua đến nội dung chính
       </a>
 
-      <aside className="fixed inset-y-0 left-0 hidden w-64 overflow-y-auto border-r border-neutral-border bg-neutral-surface lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 overflow-y-auto border-r-4 border-brand bg-neutral-text text-brand-text lg:block">
         {navigation}
       </aside>
 
-      <div className="flex min-h-screen flex-col lg:ml-64">
-        <header className="sticky top-0 z-20 flex min-h-14 items-center gap-sm border-b border-neutral-border bg-neutral px-md lg:hidden">
+      <div className="flex min-h-screen flex-col lg:ml-72">
+        <header className="sticky top-0 z-20 flex min-h-14 items-center gap-sm border-b-4 border-brand bg-neutral-text px-md text-brand-text lg:hidden">
           <button
             ref={triggerRef}
             type="button"
             onClick={() => setDrawerOpen((open) => !open)}
             aria-label="Mở điều hướng"
             aria-expanded={drawerOpen}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-neutral-border bg-neutral text-neutral-text transition-colors hover:bg-neutral-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-brand-soft bg-neutral-text text-brand-text transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-soft motion-reduce:transition-none"
           >
             <svg
               aria-hidden="true"
@@ -168,7 +179,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
             </svg>
           </button>
           <span className="font-semibold">LEOPARD</span>
-          <span className="text-body-compact text-neutral-muted">{roleContext.contextLabel}</span>
+          <span className="text-body-compact text-brand-soft">{roleContext.contextLabel}</span>
         </header>
 
         <main
@@ -194,9 +205,9 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
             role="dialog"
             aria-modal="true"
             aria-labelledby="operations-drawer-title"
-            className="relative z-10 h-full w-72 max-w-full overflow-y-auto border-r border-neutral-border bg-neutral"
+            className="relative z-10 h-full w-72 max-w-full overflow-y-auto border-r-4 border-brand bg-neutral-text text-brand-text"
           >
-            <div className="flex min-h-14 items-center justify-between border-b border-neutral-border px-md">
+            <div className="flex min-h-14 items-center justify-between border-b border-brand px-md">
               <h2 id="operations-drawer-title" className="font-semibold">
                 {roleContext.drawerLabel}
               </h2>
@@ -205,7 +216,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
                 type="button"
                 onClick={closeDrawer}
                 aria-label="Đóng điều hướng"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-neutral-border bg-neutral text-neutral-text transition-colors hover:bg-neutral-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-brand-soft bg-neutral-text text-brand-text transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-soft motion-reduce:transition-none"
               >
                 <svg
                   aria-hidden="true"
