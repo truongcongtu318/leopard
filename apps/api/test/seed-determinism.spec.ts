@@ -1152,7 +1152,8 @@ async function insertStaleFixture(client: Client): Promise<void> {
        provider,
        "storageKey",
        "contentType",
-       "sizeBytes"
+       "sizeBytes",
+       "checksumSha256"
      )
      VALUES (
        $1::uuid,
@@ -1162,7 +1163,8 @@ async function insertStaleFixture(client: Client): Promise<void> {
        'DEMO',
        'demo/stale-demo-proof.jpg',
        'image/jpeg',
-       1024
+       1024,
+       '1111111111111111111111111111111111111111111111111111111111111111'
      )`,
     [STALE_DEMO.mediaObjectId, STALE_DEMO.orderId, STALE_DEMO.userId],
   );

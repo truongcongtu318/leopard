@@ -31,11 +31,13 @@ Query pagination mặc định `page=1`, `pageSize=20`, tối đa 100. Sort ch�
 | GET | `/orders` | Customer | Danh sách order sở hữu |
 | GET | `/orders/:id` | Owner/assigned/Fleet Owner/Admin | Chi tiết order |
 | POST | `/orders/:id/cancel` | Owner/Admin | Hủy theo rule |
-| GET | `/orders/:id/tracking` | Owner/assigned/Fleet Owner/Admin | Tracking history |
+| GET | `/orders/:id/tracking` | Owner/assigned/Fleet Owner/Admin | Tracking points phân trang |
 
-Create order input gồm `pickup`, `stops` tối đa 3, `dropoff`, `vehicleType` (`MOTORBIKE`, `VAN` hoặc `TRUCK`), `cargoNote`, `cargoWeightKg` tùy chọn và `estimateToken`. Backend không tin giá/ETA do client gửi.
+Create order input gồm `pickup`, `stops` tối đa 3, `dropoff`, `vehicleType` (`MOTORBIKE`, `VAN` hoặc `TRUCK`), `cargoNote`, `cargoWeightKg` tùy chọn trong khoảng `0-10000` kg và `estimateToken`. Address, estimate token và `clientRequestId` nếu có không được là chuỗi rỗng; latitude nằm trong `[-90, 90]`, longitude trong `[-180, 180]`. Backend không tin giá/ETA do client gửi. Input validation trả `422 VALIDATION_ERROR` kèm field details.
 
 Estimate response gồm `estimateToken`, `polyline`, `distanceM`, `durationS`, `estimatedArrivalAt`, `estimatedPriceVnd`, `source`, `isEstimate`, `calculatedAt`, hết hạn sau 10 phút.
+
+Tracking query nhận `from`, `to` dưới dạng ISO 8601 UTC và `page`, `pageSize` (tối đa 100). Response dùng page envelope chuẩn với `items` là `TrackingPoint`: `id`, `orderId`, `driverId`, `clientPointId`, `latitude`, `longitude`, `accuracyM` tùy chọn, `capturedAt`, `createdAt`. Thứ tự ổn định là `capturedAt DESC, id DESC`; endpoint này không trả status-history events.
 
 ## Map lookup
 
@@ -66,9 +68,9 @@ Status input: `{"status":"IN_TRANSIT","clientRequestId":"uuid"}`. Request lặp 
 | GET | `/fleet/drivers` | Fleet Owner | Drivers thuộc fleet có filter |
 | GET | `/fleet/orders` | Fleet Owner | Orders assigned cho Driver thuộc fleet |
 | GET | `/fleet/orders/:id` | Fleet Owner | Order detail nếu thuộc fleet |
-| GET | `/fleet/orders/:id/tracking` | Fleet Owner | Tracking history nếu thuộc fleet |
+| GET | `/fleet/orders/:id/tracking` | Fleet Owner | Tracking points nếu thuộc fleet |
 
-Fleet filters: `driverId`, `status`, `from`, `to`, `q`, pagination và sort allow-list. Fleet Owner không có endpoint xác nhận payment, cập nhật lifecycle hoặc disable user.
+Fleet filters: `driverId`, `status`, `from`, `to`, `q`, pagination và sort allow-list. Fleet tracking dùng đúng query `from`, `to`, `page`, `pageSize`, projection `TrackingPoint` và page envelope như customer/driver endpoint. Fleet Owner không có endpoint xác nhận payment, cập nhật lifecycle hoặc disable user.
 
 ## Media và payment
 
@@ -82,6 +84,12 @@ Fleet filters: `driverId`, `status`, `from`, `to`, `q`, pagination và sort allo
 | POST | `/admin/payments/:id/confirm` | Admin | Manual confirmation |
 
 Manual confirmation input gồm `note` từ 5-500 ký tự và `clientRequestId`.
+
+Hai upload endpoint nhận multipart gồm `file` và `clientRequestId` UUID bắt buộc. `clientRequestId` là idempotency key; file chỉ nhận JPEG, PNG hoặc WebP và tối đa 10 MB.
+
+Tạo QR intent nhận duy nhất `{"clientRequestId":"uuid"}`; amount luôn lấy từ order đã persist. QR response gồm `amountVnd`, payment `provider` (`DEMO`, `PAYOS` hoặc `VIETQR`), `providerReference`, `expiresAt` và `qrPayload`. API không expose raw provider response hay `providerSnapshot`.
+
+Trừ năm endpoint public `/auth/login/demo`, `/auth/firebase`, `/auth/refresh`, `/health/live`, `/health/ready`, mọi endpoint kế thừa `bearerAuth` từ OpenAPI global security. `/auth/refresh` xác thực bằng refresh token trong request body, không yêu cầu access token còn hiệu lực.
 
 ## Admin và operations
 

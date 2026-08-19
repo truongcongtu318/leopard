@@ -61,6 +61,7 @@ paths:
       operationId: auth.refresh
       summary: Rotate refresh token
       tags: [Auth]
+      security: []
       requestBody:
         required: true
         content:
@@ -221,18 +222,22 @@ paths:
   /orders/{id}/tracking:
     get:
       operationId: orders.getTracking
-      summary: Order tracking history
+      summary: Paginated order tracking points
       description: Accessible by owner, assigned driver, fleet owner, or admin.
       tags: [Orders]
       parameters:
         - $ref: "#/components/parameters/OrderIdParam"
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
         "200":
-          description: Tracking history
+          description: Tracking points ordered by capturedAt DESC, id DESC
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TrackingHistory"
+                $ref: "#/components/schemas/TrackingPointPage"
         "401":
           $ref: "#/components/responses/ApiError"
         "404":
@@ -519,17 +524,21 @@ paths:
   /fleet/orders/{id}/tracking:
     get:
       operationId: fleet.getOrderTracking
-      summary: Fleet order tracking history
+      summary: Paginated fleet order tracking points
       tags: [Fleet]
       parameters:
         - $ref: "#/components/parameters/OrderIdParam"
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
         "200":
-          description: Tracking history
+          description: Tracking points ordered by capturedAt DESC, id DESC
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TrackingHistory"
+                $ref: "#/components/schemas/TrackingPointPage"
         "401":
           $ref: "#/components/responses/ApiError"
         "404":
@@ -617,13 +626,19 @@ paths:
       tags: [Payments]
       parameters:
         - $ref: "#/components/parameters/OrderIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentIntentRequest"
       responses:
         "201":
           description: Payment intent created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaymentRecord"
+                $ref: "#/components/schemas/PaymentQrDto"
         "400":
           $ref: "#/components/responses/ApiError"
         "401":
@@ -968,6 +983,22 @@ components:
       schema:
         type: string
       description: Order ID
+    FromParam:
+      name: from
+      in: query
+      schema:
+        type: string
+        format: date-time
+        pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$'
+      description: Inclusive lower capturedAt bound as an ISO 8601 UTC timestamp
+    ToParam:
+      name: to
+      in: query
+      schema:
+        type: string
+        format: date-time
+        pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$'
+      description: Inclusive upper capturedAt bound as an ISO 8601 UTC timestamp
   responses:
     ApiError:
       description: Error response
@@ -1010,6 +1041,25 @@ components:
     ProviderSource:
       type: string
       enum: [VIETMAP, DEMO, PAYOS, VIETQR, LOCAL, S3]
+    PaymentProvider:
+      type: string
+      enum: [DEMO, PAYOS, VIETQR]
+    Wave3ErrorCode:
+      type: string
+      description: Stable transport error codes introduced by Wave 3
+      enum:
+        - TRACKING_FORBIDDEN
+        - TRACKING_INVALID_POINT
+        - TRACKING_RATE_LIMITED
+        - TRACKING_ORDER_INACTIVE
+        - TRACKING_POINT_CONFLICT
+        - MEDIA_INVALID_FILE
+        - MEDIA_TOO_LARGE
+        - MEDIA_REQUEST_CONFLICT
+        - PAYMENT_INTENT_EXISTS
+        - PAYMENT_REQUEST_CONFLICT
+        - PAYMENT_CONFIRMATION_CONFLICT
+        - PROVIDER_UNAVAILABLE
 
     # ══ Envelopes ══
     PaginationEnvelope:
@@ -1295,30 +1345,65 @@ components:
           type: string
 
     # ══ Tracking ══
-    TrackingHistory:
+    TrackingPoint:
       type: object
-      required: [orderId, events]
+      required:
+        [id, orderId, driverId, clientPointId, latitude, longitude, capturedAt, createdAt]
       properties:
+        id:
+          type: string
+          format: uuid
         orderId:
           type: string
-        events:
-          type: array
-          items:
-            $ref: "#/components/schemas/TrackingEvent"
-
-    TrackingEvent:
-      type: object
-      required: [status, timestamp]
-      properties:
-        status:
-          $ref: "#/components/schemas/OrderStatus"
-        timestamp:
+          format: uuid
+        driverId:
+          type: string
+          format: uuid
+        clientPointId:
+          type: string
+          format: uuid
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+        accuracyM:
+          type: number
+          format: double
+          minimum: 0
+        capturedAt:
           type: string
           format: date-time
-        location:
-          $ref: "#/components/schemas/LatLng"
-        note:
+        createdAt:
           type: string
+          format: date-time
+
+    TrackingPointPage:
+      type: object
+      required: [items, page, pageSize, total, totalPages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrackingPoint"
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
 
     LatLng:
       type: object
@@ -1452,15 +1537,20 @@ components:
     # ══ Media ══
     MediaUploadRequest:
       type: object
-      required: [file]
+      required: [file, clientRequestId]
       properties:
         file:
           type: string
           format: binary
           description: Image file (JPEG, PNG, WEBP)
+        clientRequestId:
+          type: string
+          format: uuid
+          description: Idempotency key for this upload
 
     MediaRecord:
       type: object
+      additionalProperties: false
       required: [id, type, orderId, uploadedBy, createdAt]
       properties:
         id:
@@ -1491,8 +1581,37 @@ components:
           format: date-time
 
     # ══ Payments ══
+    CreatePaymentIntentRequest:
+      type: object
+      additionalProperties: false
+      required: [clientRequestId]
+      properties:
+        clientRequestId:
+          type: string
+          format: uuid
+
+    PaymentQrDto:
+      type: object
+      additionalProperties: false
+      required: [amountVnd, provider, providerReference, expiresAt, qrPayload]
+      properties:
+        amountVnd:
+          type: integer
+          minimum: 0
+        provider:
+          $ref: "#/components/schemas/PaymentProvider"
+        providerReference:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        qrPayload:
+          type: string
+          description: Provider-neutral QR representation; never a raw provider response
+
     PaymentRecord:
       type: object
+      additionalProperties: false
       required: [id, orderId, amountVnd, status, createdAt]
       properties:
         id:
@@ -1503,9 +1622,16 @@ components:
           type: integer
         status:
           $ref: "#/components/schemas/PaymentStatus"
-        qrCodeUrl:
+        provider:
+          $ref: "#/components/schemas/PaymentProvider"
+        providerReference:
           type: string
-          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+        qrPayload:
+          type: string
+          description: Provider-neutral QR representation; never a raw provider response
         confirmedBy:
           type: string
         confirmedAt:

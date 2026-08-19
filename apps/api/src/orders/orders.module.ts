@@ -10,6 +10,7 @@ import { OrdersController } from './orders.controller.js';
 import { OrdersRepository } from './orders.repository.js';
 import { OrdersService } from './orders.service.js';
 import { UpdateOrderStatusService } from './update-order-status.service.js';
+import { OrderEventsPublisher } from './order-events.publisher.js';
 
 @Module({
   imports: [AuthModule, DatabaseModule, MapsModule],
@@ -20,6 +21,7 @@ import { UpdateOrderStatusService } from './update-order-status.service.js';
     OrdersRepository,
     AcceptOrderService,
     UpdateOrderStatusService,
+    OrderEventsPublisher,
     CancelOrderService,
     PrismaDeliveryProofReader,
     {
@@ -32,6 +34,7 @@ import { UpdateOrderStatusService } from './update-order-status.service.js';
     OrdersRepository,
     AcceptOrderService,
     UpdateOrderStatusService,
+    OrderEventsPublisher,
     CancelOrderService,
     DeliveryProofReader,
   ],

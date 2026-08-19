@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
+import { requestContextStore } from '../common/logger.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { assertOrderTransition } from './domain/order-state-machine.js';
 import type { CancelOrderDto } from './dto/cancel-order.dto.js';
@@ -19,6 +20,16 @@ export class CancelOrderService {
     orderId: string,
     dto: CancelOrderDto,
   ): Promise<MappedOrderResponse> {
+    const reason = dto.reason?.trim();
+    if (actor.role === 'ADMIN' && !reason) {
+      throw new DomainError(
+        'VALIDATION_ERROR',
+        422,
+        'Validation failed',
+        [{ field: 'reason', messages: ['must not be empty for Admin cancellation'] }],
+      );
+    }
+
     const order = await this.ordersRepository.findById(orderId);
 
     if (!order) {
@@ -34,7 +45,7 @@ export class CancelOrderService {
       to: 'CANCELLED',
       actorRole: actor.role,
       hasDeliveryProof: false,
-      ...(dto.reason ? { cancelReason: dto.reason } : {}),
+      ...(reason ? { cancelReason: reason } : {}),
     });
 
     const now = new Date();
@@ -68,9 +79,25 @@ export class CancelOrderService {
           fromStatus: order.status,
           toStatus: 'CANCELLED',
           actorId: actor.userId,
-          reason: dto.reason?.trim() ?? null,
+          reason: reason ?? null,
         },
       });
+
+      if (actor.role === 'ADMIN') {
+        const requestId = requestContextStore.getStore()?.get('requestId');
+        await tx.auditLog.create({
+          data: {
+            actorId: actor.userId,
+            action: 'ORDER_CANCELLED_BY_ADMIN',
+            resourceType: 'Order',
+            resourceId: orderId,
+            metadata: {
+              reason,
+              ...(typeof requestId === 'string' ? { requestId } : {}),
+            },
+          },
+        });
+      }
 
       return this.ordersRepository.findById(orderId, tx);
     });

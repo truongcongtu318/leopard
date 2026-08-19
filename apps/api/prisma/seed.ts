@@ -83,15 +83,16 @@ type MediaObjectManifest = TimestampedManifest & {
   id: string;
   uploaderId: string;
   type: 'CARGO' | 'DELIVERY_PROOF';
-  provider: 'VIETMAP' | 'DEMO' | 'PAYOS' | 'VIETQR' | 'LOCAL' | 'S3';
+  provider: 'LOCAL' | 'S3';
   storageKey: string;
   contentType: string;
   sizeBytes: number;
+  checksumSha256: string;
 };
 
 type PaymentIntentManifest = TimestampedManifest & {
   id: string;
-  provider: 'VIETMAP' | 'DEMO' | 'PAYOS' | 'VIETQR' | 'LOCAL' | 'S3';
+  provider: 'DEMO' | 'PAYOS' | 'VIETQR' | null;
   status: 'UNPAID' | 'QR_CREATED' | 'PAID_MANUAL' | 'FAILED';
   amountVnd: number;
   qrPayload: string | null;
@@ -677,23 +678,41 @@ async function insertOrderChildren(client: SeedClient, manifest: DemoManifest): 
       `;
     }
 
-    if (order.mediaObjects.length > 0) {
-      await client.mediaObject.createMany({
-        data: order.mediaObjects.map((mediaObject) => ({
-          id: mediaObject.id,
-          orderId: order.id,
-          uploaderId: mediaObject.uploaderId,
-          type: mediaObject.type,
-          provider: mediaObject.provider,
-          storageKey: mediaObject.storageKey,
-          contentType: mediaObject.contentType,
-          sizeBytes: mediaObject.sizeBytes,
-          createdAt: requiredCreatedAt(
-            mediaObject.createdAt,
-            `mediaObjects[${mediaObject.id}]`,
-          ),
-        })),
-      });
+    for (const mediaObject of order.mediaObjects) {
+      const createdAt = requiredCreatedAt(
+        mediaObject.createdAt,
+        `mediaObjects[${mediaObject.id}]`,
+      );
+
+      // Keep Wave 3 media metadata in the same seed transaction as the order children.
+      await client.$executeRaw`
+        INSERT INTO "MediaObject" (
+          id,
+          "orderId",
+          "uploaderId",
+          type,
+          provider,
+          "storageKey",
+          "contentType",
+          "sizeBytes",
+          "checksumSha256",
+          "clientRequestId",
+          "createdAt"
+        )
+        VALUES (
+          ${mediaObject.id}::uuid,
+          ${order.id}::uuid,
+          ${mediaObject.uploaderId}::uuid,
+          ${mediaObject.type}::"MediaType",
+          ${mediaObject.provider}::"ProviderSource",
+          ${mediaObject.storageKey},
+          ${mediaObject.contentType},
+          ${mediaObject.sizeBytes},
+          ${mediaObject.checksumSha256},
+          NULL,
+          ${createdAt}::timestamptz
+        )
+      `;
     }
 
     if (order.paymentIntents.length > 0) {

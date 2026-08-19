@@ -146,7 +146,8 @@ export interface Page<T> {
 | PH-02-T01..T05           | `02-backend-core.md`                   | 1    | PH-01                 | Backend/Data        | `NOT_STARTED` |
 | PH-03-T01..T04           | `03-expo-mobile-foundation.md`         | 1    | PH-01                 | Expo                | `NOT_STARTED` |
 | PH-04-T01..T04           | `04-operations-web-foundation.md`      | 1    | PH-01                 | Web                 | `NOT_STARTED` |
-| PH-05-T01..T05           | `05-auth-and-access.md`                | 2    | PH-02                 | Security/Backend    | `VERIFIED`    |
+| PH-05-T01..T04           | `05-auth-and-access.md`                | 2    | PH-02                 | Security/Backend    | `VERIFIED`    |
+| PH-05-T05                | `05-auth-and-access.md`                | 2    | PH-05-T04            | Client Integration  | `DEFERRED`   |
 | PH-06-T01..T06           | `06-order-and-driver.md`               | 2B   | PH-02, PH-07          | Backend Domain      | `VERIFIED`    |
 | PH-07-T01..T04           | `07-map-pricing-eta.md`                | 2    | PH-02                 | Integration/Backend | `VERIFIED`    |
 | PH-08-T01..T04           | `08-realtime-tracking.md`              | 3    | PH-05, PH-06          | Realtime            | `NOT_STARTED` |

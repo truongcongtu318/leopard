@@ -78,21 +78,22 @@ enum ProviderSource {
 }
 
 model User {
-  id                 String               @id @default(uuid()) @db.Uuid
-  phone              String               @unique @db.VarChar(32)
-  role               Role
-  status             UserStatus           @default(ACTIVE)
-  createdAt          DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt          DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
-  refreshSessions    RefreshSession[]
-  fleetMemberships   FleetMember[]
-  driverProfile      DriverProfile?
-  customerOrders     Order[]              @relation("CustomerOrders")
-  driverOrders       Order[]              @relation("DriverOrders")
-  statusChanges      OrderStatusHistory[] @relation("OrderStatusActor")
-  trackingPoints     TrackingPoint[]      @relation("TrackingDriver")
-  mediaObjects       MediaObject[]        @relation("MediaUploader")
-  auditLogs          AuditLog[]           @relation("AuditActor")
+  id                String               @id @default(uuid()) @db.Uuid
+  phone             String               @unique @db.VarChar(32)
+  role              Role
+  status            UserStatus           @default(ACTIVE)
+  createdAt         DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
+  refreshSessions   RefreshSession[]
+  fleetMemberships  FleetMember[]
+  driverProfile     DriverProfile?
+  customerOrders    Order[]              @relation("CustomerOrders")
+  driverOrders      Order[]              @relation("DriverOrders")
+  statusChanges     OrderStatusHistory[] @relation("OrderStatusActor")
+  trackingPoints    TrackingPoint[]      @relation("TrackingDriver")
+  mediaObjects      MediaObject[]        @relation("MediaUploader")
+  confirmedPayments PaymentIntent[]      @relation("PaymentConfirmer")
+  auditLogs         AuditLog[]           @relation("AuditActor")
 }
 
 model RefreshSession {
@@ -135,134 +136,145 @@ model FleetMember {
 }
 
 model DriverProfile {
-  id                String             @id @default(uuid()) @db.Uuid
-  userId            String             @unique @db.Uuid
-  availability      DriverAvailability @default(OFFLINE)
+  id                String                                @id @default(uuid()) @db.Uuid
+  userId            String                                @unique @db.Uuid
+  availability      DriverAvailability                    @default(OFFLINE)
   vehicleType       VehicleType
   lastKnownLocation Unsupported("geography(Point,4326)")?
-  lastKnownAt       DateTime?          @db.Timestamptz(3)
-  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime           @default(now()) @updatedAt @db.Timestamptz(3)
-  user              User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  lastKnownAt       DateTime?                             @db.Timestamptz(3)
+  createdAt         DateTime                              @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                              @default(now()) @updatedAt @db.Timestamptz(3)
+  user              User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
 }
 
 model Order {
-  id                String               @id @default(uuid()) @db.Uuid
-  customerId        String               @db.Uuid
-  clientRequestId   String?
-  driverId          String?              @db.Uuid
-  status            OrderStatus          @default(REQUESTED)
-  routeSnapshot     Json?
-  providerSource    ProviderSource?
-  distanceMeters    Int?
-  durationSeconds   Int?
-  priceVnd          Int?
-  etaSeconds        Int?
-  acceptedAt        DateTime?            @db.Timestamptz(3)
-  pickingUpAt       DateTime?            @db.Timestamptz(3)
-  inTransitAt       DateTime?            @db.Timestamptz(3)
-  deliveredAt       DateTime?            @db.Timestamptz(3)
-  cancelledAt       DateTime?            @db.Timestamptz(3)
-  createdAt         DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
-  customer          User                 @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
-  driver            User?                @relation("DriverOrders", fields: [driverId], references: [id], onDelete: Restrict)
-  stops             OrderStop[]
-  statusHistory     OrderStatusHistory[]
-  trackingPoints    TrackingPoint[]
-  mediaObjects      MediaObject[]
-  paymentIntents    PaymentIntent[]
+  id              String               @id @default(uuid()) @db.Uuid
+  customerId      String               @db.Uuid
+  clientRequestId String?
+  driverId        String?              @db.Uuid
+  status          OrderStatus          @default(REQUESTED)
+  routeSnapshot   Json?
+  providerSource  ProviderSource?
+  distanceMeters  Int?
+  durationSeconds Int?
+  priceVnd        Int?
+  etaSeconds      Int?
+  acceptedAt      DateTime?            @db.Timestamptz(3)
+  pickingUpAt     DateTime?            @db.Timestamptz(3)
+  inTransitAt     DateTime?            @db.Timestamptz(3)
+  deliveredAt     DateTime?            @db.Timestamptz(3)
+  cancelledAt     DateTime?            @db.Timestamptz(3)
+  createdAt       DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
+  customer        User                 @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  driver          User?                @relation("DriverOrders", fields: [driverId], references: [id], onDelete: Restrict)
+  stops           OrderStop[]
+  statusHistory   OrderStatusHistory[]
+  trackingPoints  TrackingPoint[]
+  mediaObjects    MediaObject[]
+  paymentIntents  PaymentIntent[]
 
   @@unique([customerId, clientRequestId])
-
   @@index([customerId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
 }
 
 model OrderStop {
-  id        String   @id @default(uuid()) @db.Uuid
-  orderId   String   @db.Uuid
+  id        String                               @id @default(uuid()) @db.Uuid
+  orderId   String                               @db.Uuid
   type      StopType
   sequence  Int
   address   String
   location  Unsupported("geography(Point,4326)")
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  createdAt DateTime                             @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime                             @default(now()) @updatedAt @db.Timestamptz(3)
+  order     Order                                @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
   @@unique([orderId, sequence])
 }
 
 model OrderStatusHistory {
-  id         String       @id @default(uuid()) @db.Uuid
-  orderId    String       @db.Uuid
-  fromStatus OrderStatus?
-  toStatus   OrderStatus
-  actorId    String?      @db.Uuid
+  id              String       @id @default(uuid()) @db.Uuid
+  orderId         String       @db.Uuid
+  fromStatus      OrderStatus?
+  toStatus        OrderStatus
+  actorId         String?      @db.Uuid
   clientRequestId String?
-  reason     String?
-  createdAt  DateTime     @default(now()) @db.Timestamptz(3)
-  order      Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  actor      User?        @relation("OrderStatusActor", fields: [actorId], references: [id], onDelete: Restrict)
+  reason          String?
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+  order           Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  actor           User?        @relation("OrderStatusActor", fields: [actorId], references: [id], onDelete: Restrict)
 
   @@unique([orderId, actorId, clientRequestId])
   @@index([orderId, createdAt(sort: Desc)])
 }
 
 model TrackingPoint {
-  id            String   @id @default(uuid()) @db.Uuid
-  orderId       String   @db.Uuid
-  driverId      String   @db.Uuid
+  id            String                               @id @default(uuid()) @db.Uuid
+  orderId       String                               @db.Uuid
+  driverId      String                               @db.Uuid
   clientPointId String
   location      Unsupported("geography(Point,4326)")
-  capturedAt    DateTime @db.Timestamptz(3)
-  createdAt     DateTime @default(now()) @db.Timestamptz(3)
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  driver        User     @relation("TrackingDriver", fields: [driverId], references: [id], onDelete: Restrict)
+  accuracyM     Float?
+  capturedAt    DateTime                             @db.Timestamptz(3)
+  createdAt     DateTime                             @default(now()) @db.Timestamptz(3)
+  order         Order                                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  driver        User                                 @relation("TrackingDriver", fields: [driverId], references: [id], onDelete: Restrict)
 
   @@unique([orderId, clientPointId])
   @@index([orderId, capturedAt(sort: Desc)])
 }
 
 model MediaObject {
-  id         String         @id @default(uuid()) @db.Uuid
-  orderId    String         @db.Uuid
-  uploaderId String         @db.Uuid
-  type       MediaType
-  provider   ProviderSource
-  storageKey String         @unique
-  contentType String
-  sizeBytes  Int
-  createdAt  DateTime       @default(now()) @db.Timestamptz(3)
-  order      Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  uploader   User           @relation("MediaUploader", fields: [uploaderId], references: [id], onDelete: Restrict)
+  id              String         @id @default(uuid()) @db.Uuid
+  orderId         String         @db.Uuid
+  uploaderId      String         @db.Uuid
+  type            MediaType
+  provider        ProviderSource
+  storageKey      String         @unique
+  contentType     String
+  sizeBytes       Int
+  checksumSha256  String
+  clientRequestId String?
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  uploader        User           @relation("MediaUploader", fields: [uploaderId], references: [id], onDelete: Restrict)
 }
 
 model PaymentIntent {
-  id               String          @id @default(uuid()) @db.Uuid
-  orderId          String          @db.Uuid
-  provider         ProviderSource
-  status           PaymentStatus   @default(UNPAID)
-  amountVnd        Int
-  qrPayload        String?
-  providerSnapshot Json?
-  expiresAt        DateTime?       @db.Timestamptz(3)
-  createdAt        DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime        @default(now()) @updatedAt @db.Timestamptz(3)
-  order            Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  id                    String          @id @default(uuid()) @db.Uuid
+  orderId               String          @db.Uuid
+  provider              ProviderSource?
+  status                PaymentStatus   @default(UNPAID)
+  amountVnd             Int
+  clientRequestId       String?
+  providerReference     String?
+  qrPayload             String?
+  providerSnapshot      Json?
+  expiresAt             DateTime?       @db.Timestamptz(3)
+  confirmedById         String?         @db.Uuid
+  confirmedAt           DateTime?       @db.Timestamptz(3)
+  confirmationNote      String?
+  confirmationRequestId String?
+  createdAt             DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime        @default(now()) @updatedAt @db.Timestamptz(3)
+  order                 Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  confirmedBy           User?           @relation("PaymentConfirmer", fields: [confirmedById], references: [id], onDelete: Restrict)
 
   @@index([orderId, createdAt(sort: Desc)])
 }
 
 model AuditLog {
-  id           String   @id @default(uuid()) @db.Uuid
-  actorId      String?  @db.Uuid
-  action       String
-  resourceType String
-  resourceId   String?  @db.Uuid
-  metadata     Json?
-  createdAt    DateTime @default(now()) @db.Timestamptz(3)
-  actor        User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  id                   String   @id @default(uuid()) @db.Uuid
+  actorId              String?  @db.Uuid
+  action               String
+  resourceType         String
+  resourceId           String?  @db.Uuid
+  requestId            String?
+  idempotencyRequestId String?
+  metadata             Json?
+  createdAt            DateTime @default(now()) @db.Timestamptz(3)
+  actor                User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([actorId, createdAt(sort: Desc)])
   @@index([resourceType, resourceId, createdAt(sort: Desc)])

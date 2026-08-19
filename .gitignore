@@ -74,6 +74,9 @@ Desktop.ini
 *.swp
 *.swo
 
+# ECC hooks local override
+.ecc-hooks-disable
+
 # Codex local state and temporary logs
 .codex-log/
 .codex/tmp/

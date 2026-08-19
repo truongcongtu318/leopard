@@ -43,6 +43,13 @@ type IndexRow = {
   tablename: string;
 };
 
+type ColumnRow = {
+  column_name: string;
+  data_type: string;
+  is_nullable: 'NO' | 'YES';
+  table_name: string;
+};
+
 function requireDatabaseUrl(): string {
   const databaseUrl = process.env.DATABASE_URL;
 
@@ -235,6 +242,44 @@ describe('canonical pilot database schema', () => {
     }
   });
 
+  it('stores Wave 3 tracking, media, payment and audit fields with canonical nullability', async () => {
+    const result = await client.query<ColumnRow>(
+      `SELECT table_name, column_name, data_type, is_nullable
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND (table_name, column_name) IN (
+           ('TrackingPoint', 'accuracyM'),
+           ('MediaObject', 'checksumSha256'),
+           ('MediaObject', 'clientRequestId'),
+           ('PaymentIntent', 'provider'),
+           ('PaymentIntent', 'clientRequestId'),
+           ('PaymentIntent', 'providerReference'),
+           ('PaymentIntent', 'confirmedById'),
+           ('PaymentIntent', 'confirmedAt'),
+           ('PaymentIntent', 'confirmationNote'),
+           ('PaymentIntent', 'confirmationRequestId'),
+           ('AuditLog', 'requestId'),
+           ('AuditLog', 'idempotencyRequestId')
+         )
+       ORDER BY table_name, column_name`,
+    );
+
+    expect(result.rows).toEqual([
+      { table_name: 'AuditLog', column_name: 'idempotencyRequestId', data_type: 'text', is_nullable: 'YES' },
+      { table_name: 'AuditLog', column_name: 'requestId', data_type: 'text', is_nullable: 'YES' },
+      { table_name: 'MediaObject', column_name: 'checksumSha256', data_type: 'text', is_nullable: 'NO' },
+      { table_name: 'MediaObject', column_name: 'clientRequestId', data_type: 'text', is_nullable: 'YES' },
+      { table_name: 'PaymentIntent', column_name: 'clientRequestId', data_type: 'text', is_nullable: 'YES' },
+      { table_name: 'PaymentIntent', column_name: 'confirmationNote', data_type: 'text', is_nullable: 'YES' },
+      { table_name: 'PaymentIntent', column_name: 'confirmationRequestId', data_type: 'text', is_nullable: 'YES' },
+      { table_name: 'PaymentIntent', column_name: 'confirmedAt', data_type: 'timestamp with time zone', is_nullable: 'YES' },
+      { table_name: 'PaymentIntent', column_name: 'confirmedById', data_type: 'uuid', is_nullable: 'YES' },
+      { table_name: 'PaymentIntent', column_name: 'provider', data_type: 'USER-DEFINED', is_nullable: 'YES' },
+      { table_name: 'PaymentIntent', column_name: 'providerReference', data_type: 'text', is_nullable: 'YES' },
+      { table_name: 'TrackingPoint', column_name: 'accuracyM', data_type: 'double precision', is_nullable: 'YES' },
+    ]);
+  });
+
   it('enforces canonical lookup, ordering and partial uniqueness indexes', async () => {
     const result = await client.query<IndexRow>(
       `SELECT tablename, indexname, indexdef
@@ -246,11 +291,18 @@ describe('canonical pilot database schema', () => {
         'Order',
         'OrderStatusHistory',
         'OrderStop',
+        'MediaObject',
         'PaymentIntent',
         'TrackingPoint',
       ]],
     );
     const definitions = result.rows.map(({ indexdef }) => indexdef);
+
+    expect(
+      result.rows.filter(
+        ({ indexname }) => indexname === 'PaymentIntent_active_order_key',
+      ),
+    ).toHaveLength(1);
 
     expect(definitions).toEqual(
       expect.arrayContaining([
@@ -278,6 +330,18 @@ describe('canonical pilot database schema', () => {
           /ON public\."PaymentIntent".*\("orderId", "createdAt" DESC\)/,
         ),
         expect.stringMatching(
+          /UNIQUE INDEX.*ON public\."MediaObject".*\("orderId", "uploaderId", type, "clientRequestId"\).*WHERE.*"clientRequestId" IS NOT NULL/,
+        ),
+        expect.stringMatching(
+          /UNIQUE INDEX.*ON public\."PaymentIntent".*\("orderId", "clientRequestId"\).*WHERE.*"clientRequestId" IS NOT NULL/,
+        ),
+        expect.stringMatching(
+          /UNIQUE INDEX.*ON public\."PaymentIntent".*\(provider, "providerReference"\).*WHERE.*"providerReference" IS NOT NULL/,
+        ),
+        expect.stringMatching(
+          /UNIQUE INDEX.*ON public\."PaymentIntent".*\("confirmationRequestId"\).*WHERE.*"confirmationRequestId" IS NOT NULL/,
+        ),
+        expect.stringMatching(
           /UNIQUE INDEX.*ON public\."PaymentIntent".*\("orderId"\).*WHERE.*status.*UNPAID.*QR_CREATED/,
         ),
         expect.stringMatching(
@@ -291,6 +355,121 @@ describe('canonical pilot database schema', () => {
         ),
       ]),
     );
+  });
+
+  it('restricts manual confirmer deletion and narrows payment provider values', async () => {
+    const foreignKey = await client.query<{ delete_rule: string }>(
+      `SELECT rc.delete_rule
+       FROM information_schema.table_constraints AS tc
+       JOIN information_schema.referential_constraints AS rc
+         ON rc.constraint_schema = tc.constraint_schema
+        AND rc.constraint_name = tc.constraint_name
+       WHERE tc.constraint_schema = 'public'
+         AND tc.table_name = 'PaymentIntent'
+         AND tc.constraint_name = 'PaymentIntent_confirmedById_fkey'`,
+    );
+    const checks = await client.query<{ definition: string }>(
+      `SELECT pg_get_constraintdef(oid) AS definition
+       FROM pg_constraint
+       WHERE connamespace = 'public'::regnamespace
+         AND conrelid = '"PaymentIntent"'::regclass
+         AND contype = 'c'`,
+    );
+    const definitions = checks.rows.map(({ definition }) => definition).join('\n');
+
+    expect(foreignKey.rows).toEqual([{ delete_rule: 'RESTRICT' }]);
+    expect(definitions).toMatch(/provider.*DEMO.*PAYOS.*VIETQR/);
+    expect(definitions).toMatch(/UNPAID.*provider.*IS NOT NULL/);
+
+    await client.query('BEGIN');
+    try {
+      const user = await client.query<{ id: string }>(
+        `INSERT INTO "User" (phone, role) VALUES ('+84900000005', 'CUSTOMER') RETURNING id`,
+      );
+      const order = await client.query<{ id: string }>(
+        `INSERT INTO "Order" ("customerId") VALUES ($1) RETURNING id`,
+        [user.rows[0]!.id],
+      );
+
+      await client.query('SAVEPOINT invalid_payment_provider');
+      await expect(
+        client.query(
+          `INSERT INTO "PaymentIntent" ("orderId", provider, status, "amountVnd")
+           VALUES ($1, 'VIETMAP', 'UNPAID', 1000)`,
+          [order.rows[0]!.id],
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
+      await client.query('ROLLBACK TO SAVEPOINT invalid_payment_provider');
+
+      await client.query('SAVEPOINT missing_payment_provider');
+      await expect(
+        client.query(
+          `INSERT INTO "PaymentIntent" ("orderId", provider, status, "amountVnd")
+           VALUES ($1, NULL, 'QR_CREATED', 1000)`,
+          [order.rows[0]!.id],
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
+      await client.query('ROLLBACK TO SAVEPOINT missing_payment_provider');
+
+      await expect(
+        client.query(
+          `INSERT INTO "PaymentIntent" ("orderId", provider, status, "amountVnd")
+           VALUES ($1, NULL, 'UNPAID', 1000)`,
+          [order.rows[0]!.id],
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+    } finally {
+      await client.query('ROLLBACK');
+    }
+  });
+
+  it('enforces optional idempotency keys only when a key is present', async () => {
+    await client.query('BEGIN');
+    try {
+      const user = await client.query<{ id: string }>(
+        `INSERT INTO "User" (phone, role) VALUES ('+84900000003', 'CUSTOMER') RETURNING id`,
+      );
+      const userId = user.rows[0]!.id;
+      const order = await client.query<{ id: string }>(
+        `INSERT INTO "Order" ("customerId") VALUES ($1) RETURNING id`,
+        [userId],
+      );
+      const orderId = order.rows[0]!.id;
+
+      const insertMedia = (clientRequestId: string | null, storageKey: string) =>
+        client.query(
+          `INSERT INTO "MediaObject"
+             ("orderId", "uploaderId", type, provider, "storageKey", "contentType", "sizeBytes", "checksumSha256", "clientRequestId")
+           VALUES ($1, $2, 'CARGO', 'LOCAL', $3, 'image/png', 1, repeat('a', 64), $4)`,
+          [orderId, userId, storageKey, clientRequestId],
+        );
+      await insertMedia(null, 'wave3-null-1');
+      await insertMedia(null, 'wave3-null-2');
+      await insertMedia('media-request', 'wave3-keyed-1');
+      await expect(insertMedia('media-request', 'wave3-keyed-2')).rejects.toMatchObject({ code: '23505' });
+
+      await client.query('ROLLBACK');
+      await client.query('BEGIN');
+      const user2 = await client.query<{ id: string }>(
+        `INSERT INTO "User" (phone, role) VALUES ('+84900000004', 'CUSTOMER') RETURNING id`,
+      );
+      const order2 = await client.query<{ id: string }>(
+        `INSERT INTO "Order" ("customerId") VALUES ($1) RETURNING id`,
+        [user2.rows[0]!.id],
+      );
+      const insertPayment = (clientRequestId: string | null) =>
+        client.query(
+          `INSERT INTO "PaymentIntent" ("orderId", provider, status, "amountVnd", "clientRequestId")
+           VALUES ($1, 'PAYOS', 'FAILED', 1000, $2)`,
+          [order2.rows[0]!.id, clientRequestId],
+        );
+      await insertPayment(null);
+      await insertPayment(null);
+      await insertPayment('payment-request');
+      await expect(insertPayment('payment-request')).rejects.toMatchObject({ code: '23505' });
+    } finally {
+      await client.query('ROLLBACK');
+    }
   });
 
   it('keeps status history append-only and protects order history from cascading deletes', async () => {

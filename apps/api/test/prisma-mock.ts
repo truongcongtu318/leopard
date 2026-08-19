@@ -10,20 +10,21 @@ import type {
   OrderStatus,
   Role,
   FleetMember,
+  AuditLog,
 } from '@prisma/client';
 
 export class InMemoryPrismaService {
   public users = new Map<string, User>();
-  public mediaObject = {
-    findFirst: jest.fn(async () => null),
-  };
   public refreshSessions = new Map<string, RefreshSession>();
   public driverProfiles = new Map<string, DriverProfile>();
   public fleetMembers = new Map<string, FleetMember>();
+  public fleets = new Map<string, any>();
   public orders = new Map<string, Order>();
   public orderStops = new Map<string, OrderStop & { lat: number; lng: number }>();
   public orderStatusHistories = new Map<string, OrderStatusHistory>();
   public paymentIntents = new Map<string, PaymentIntent>();
+  public mediaObjects = new Map<string, any>();
+  public auditLogs = new Map<string, AuditLog>();
 
   async $transaction<T>(fn: (tx: InMemoryPrismaService) => Promise<T>): Promise<T> {
     return fn(this);
@@ -244,8 +245,26 @@ export class InMemoryPrismaService {
     }),
   };
 
+  fleet = {
+    findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
+      return this.fleets.get(where.id) ?? null;
+    }),
+    findMany: jest.fn(async () => {
+      return Array.from(this.fleets.values());
+    }),
+    count: jest.fn(async () => {
+      return this.fleets.size;
+    }),
+    create: jest.fn(async ({ data }: { data: any }) => {
+      const id = data.id ?? `fleet-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const fleet = { id, ...data, createdAt: new Date() };
+      this.fleets.set(id, fleet);
+      return fleet;
+    }),
+  };
+
   fleetMember = {
-    findMany: jest.fn(async ({ where, select }: { where?: any; select?: any }) => {
+    findMany: jest.fn(async ({ where, select, include }: { where?: any; select?: any; include?: any } = {}) => {
       let filtered = Array.from(this.fleetMembers.values());
       if (where) {
         if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
@@ -259,9 +278,19 @@ export class InMemoryPrismaService {
       if (select?.fleetId) {
         return filtered.map((m) => ({ fleetId: m.fleetId }));
       }
+      if (include?.user) {
+        return filtered.map((m) => {
+          const user = this.users.get(m.userId);
+          const driverProfile = Array.from(this.driverProfiles.values()).find((p) => p.userId === m.userId) ?? null;
+          return {
+            ...m,
+            user: user ? { ...user, driverProfile } : null,
+          };
+        });
+      }
       return filtered;
     }),
-    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+    findFirst: jest.fn(async ({ where }: { where?: any } = {}) => {
       let filtered = Array.from(this.fleetMembers.values());
       if (where) {
         if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
@@ -273,11 +302,13 @@ export class InMemoryPrismaService {
       }
       return filtered[0] ?? null;
     }),
-    count: jest.fn(async ({ where }: { where?: any }) => {
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
       let filtered = Array.from(this.fleetMembers.values());
       if (where) {
         if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
         if (where.status) filtered = filtered.filter((m) => m.status === where.status);
+        if (where.fleetId) filtered = filtered.filter((m) => m.fleetId === where.fleetId);
+        if (where.role) filtered = filtered.filter((m) => m.role === where.role);
       }
       return filtered.length;
     }),
@@ -367,6 +398,9 @@ export class InMemoryPrismaService {
         }
       }
       return filtered.length;
+    }),
+    aggregate: jest.fn(async () => {
+      return { _sum: { priceVnd: 0 } };
     }),
     findFirst: jest.fn(async ({ where }: { where?: any }) => {
       let filtered = Array.from(this.orders.values());
@@ -469,6 +503,115 @@ export class InMemoryPrismaService {
       return Array.from(this.orderStatusHistories.values())
         .filter((h) => h.orderId === where.orderId)
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    }),
+  };
+
+  mediaObject = {
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let list = Array.from(this.mediaObjects.values());
+      if (where?.orderId) list = list.filter((m) => m.orderId === where.orderId);
+      if (where?.uploaderId) list = list.filter((m) => m.uploaderId === where.uploaderId);
+      if (where?.type) list = list.filter((m) => m.type === where.type);
+      if (where?.clientRequestId) list = list.filter((m) => m.clientRequestId === where.clientRequestId);
+      return list[0] ?? null;
+    }),
+    findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
+      return this.mediaObjects.get(where.id) ?? null;
+    }),
+    create: jest.fn(async ({ data }: { data: any }) => {
+      const id = data.id ?? `media-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const media = { id, ...data, createdAt: new Date() };
+      this.mediaObjects.set(id, media);
+      return media;
+    }),
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.mediaObjects.values());
+      if (where?.orderId) list = list.filter((m) => m.orderId === where.orderId);
+      if (where?.type) list = list.filter((m) => m.type === where.type);
+      return list.length;
+    }),
+    findMany: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.mediaObjects.values());
+      if (where?.orderId) list = list.filter((m) => m.orderId === where.orderId);
+      return list;
+    }),
+  };
+
+  paymentIntent = {
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let list = Array.from(this.paymentIntents.values());
+      if (where?.orderId) list = list.filter((p) => p.orderId === where.orderId);
+      if (where?.clientRequestId) list = list.filter((p) => p.clientRequestId === where.clientRequestId);
+      if (where?.confirmationRequestId) list = list.filter((p) => (p as any).confirmationRequestId === where.confirmationRequestId);
+      if (where?.status?.in) list = list.filter((p) => where.status.in.includes(p.status));
+      return list[0] ?? null;
+    }),
+    findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
+      return this.paymentIntents.get(where.id) ?? null;
+    }),
+    create: jest.fn(async ({ data }: { data: any }) => {
+      const id = data.id ?? `payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const payment: PaymentIntent = {
+        id,
+        orderId: data.orderId,
+        provider: data.provider ?? null,
+        status: data.status ?? 'UNPAID',
+        amountVnd: data.amountVnd,
+        clientRequestId: data.clientRequestId ?? null,
+        providerReference: data.providerReference ?? null,
+        qrPayload: data.qrPayload ?? null,
+        providerSnapshot: data.providerSnapshot ?? null,
+        expiresAt: data.expiresAt ?? null,
+        confirmedById: data.confirmedById ?? null,
+        confirmedAt: data.confirmedAt ?? null,
+        confirmationNote: data.confirmationNote ?? null,
+        confirmationRequestId: data.confirmationRequestId ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.paymentIntents.set(id, payment);
+      return payment;
+    }),
+    update: jest.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
+      const existing = this.paymentIntents.get(where.id);
+      if (!existing) throw new Error('Payment not found');
+      const updated = { ...existing, ...data, updatedAt: new Date() };
+      this.paymentIntents.set(where.id, updated);
+      return updated;
+    }),
+    findMany: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.paymentIntents.values());
+      if (where?.orderId) list = list.filter((p) => p.orderId === where.orderId);
+      return list;
+    }),
+  };
+
+  auditLog = {
+    findFirst: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.auditLogs.values());
+      if (where?.idempotencyRequestId) {
+        list = list.filter((a: any) => a.idempotencyRequestId === where.idempotencyRequestId);
+      }
+      return list[0] ?? null;
+    }),
+    create: jest.fn(async ({ data }: { data: Partial<AuditLog> }) => {
+      const id = data.id ?? `audit-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const audit: AuditLog = {
+        id,
+        actorId: data.actorId ?? null,
+        action: data.action ?? '',
+        resourceType: data.resourceType ?? '',
+        resourceId: data.resourceId ?? null,
+        requestId: (data as any).requestId ?? null,
+        idempotencyRequestId: (data as any).idempotencyRequestId ?? null,
+        metadata: data.metadata ?? null,
+        createdAt: new Date(),
+      };
+      this.auditLogs.set(id, audit);
+      return audit;
+    }),
+    findMany: jest.fn(async () => {
+      return Array.from(this.auditLogs.values());
     }),
   };
 }

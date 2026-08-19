@@ -51,7 +51,7 @@ export class OrdersRepository {
           },
           paymentIntents: {
             create: {
-              provider: params.providerSource,
+              provider: null,
               status: 'UNPAID',
               amountVnd: params.priceVnd,
             },

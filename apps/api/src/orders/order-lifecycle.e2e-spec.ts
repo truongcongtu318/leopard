@@ -26,6 +26,8 @@ class TestDeliveryProofReader implements DeliveryProofReader {
 }
 
 class TransactionVisibilityPrismaService extends InMemoryPrismaService {
+  public failAuditWrites = false;
+
   async $transaction<T>(fn: (tx: InMemoryPrismaService) => Promise<T>): Promise<T> {
     const tx = new InMemoryPrismaService();
     tx.users = new Map(this.users);
@@ -36,6 +38,10 @@ class TransactionVisibilityPrismaService extends InMemoryPrismaService {
     tx.orderStops = new Map(this.orderStops);
     tx.orderStatusHistories = new Map(this.orderStatusHistories);
     tx.paymentIntents = new Map(this.paymentIntents);
+    tx.auditLogs = new Map(this.auditLogs);
+    if (this.failAuditWrites) {
+      tx.auditLog.create.mockRejectedValueOnce(new Error('audit unavailable'));
+    }
 
     const result = await fn(tx);
 
@@ -47,6 +53,7 @@ class TransactionVisibilityPrismaService extends InMemoryPrismaService {
     this.orderStops = tx.orderStops;
     this.orderStatusHistories = tx.orderStatusHistories;
     this.paymentIntents = tx.paymentIntents;
+    this.auditLogs = tx.auditLogs;
 
     return result;
   }
@@ -59,6 +66,7 @@ describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
   let adminSession: AuthSessionBody;
   let customerUserId: string;
   let driverUserId: string;
+  let adminUserId: string;
   let proofReader: TestDeliveryProofReader;
   let prismaMock: InMemoryPrismaService;
 
@@ -121,6 +129,7 @@ describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
     const aUser = await prismaMock.user.create({
       data: { phone: '+84910000003', role: 'ADMIN', status: 'ACTIVE' },
     });
+    adminUserId = aUser.id;
     const aSess = await refreshSessions.create(aUser.id);
     adminSession = tokenService.createAuthSession(aUser, aSess);
   });
@@ -281,6 +290,7 @@ describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
     const cancelRes = await request(app.getHttpServer())
       .post(`/orders/${order.id}/cancel`)
       .set('Authorization', `Bearer ${adminSession.accessToken}`)
+      .set('x-request-id', 'admin-cancel-request-1')
       .send({ reason: 'Customer requested cancellation via phone' })
       .expect(200);
 
@@ -288,6 +298,40 @@ describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
 
     const profile = await prismaMock.driverProfile.findUnique({ where: { userId: driverUserId } });
     expect(profile?.availability).toBe('AVAILABLE');
+    expect(Array.from(prismaMock.auditLogs.values())).toEqual([
+      expect.objectContaining({
+        actorId: adminUserId,
+        action: 'ORDER_CANCELLED_BY_ADMIN',
+        resourceType: 'Order',
+        resourceId: order.id,
+        metadata: {
+          reason: 'Customer requested cancellation via phone',
+          requestId: 'admin-cancel-request-1',
+        },
+      }),
+    ]);
+  });
+
+  it('rejects an empty Admin cancellation reason with validation details', async () => {
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: customerUserId,
+        status: 'REQUESTED',
+        distanceMeters: 1000,
+        durationSeconds: 300,
+        priceVnd: 20000,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post(`/orders/${order.id}/cancel`)
+      .set('Authorization', `Bearer ${adminSession.accessToken}`)
+      .send({ reason: '   ' })
+      .expect(422);
+
+    expect(response.body).toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(prismaMock.orders.get(order.id)?.status).toBe('REQUESTED');
+    expect(prismaMock.auditLogs.size).toBe(0);
   });
 });
 
@@ -424,6 +468,42 @@ describe('Order transaction response consistency', () => {
         }),
       ]),
     );
+  });
+
+  it('rolls back order, Driver availability and history when the Admin audit write fails', async () => {
+    const order = await prismaMock.order.create({
+      data: {
+        customerId: customerUserId,
+        driverId: driverUserId,
+        status: 'ACCEPTED',
+        distanceMeters: 1000,
+        durationSeconds: 300,
+        priceVnd: 20000,
+      },
+    });
+    await prismaMock.driverProfile.update({
+      where: { userId: driverUserId },
+      data: { availability: 'BUSY' },
+    });
+    prismaMock.failAuditWrites = true;
+
+    await request(app.getHttpServer())
+      .post(`/orders/${order.id}/cancel`)
+      .set('Authorization', `Bearer ${adminSession.accessToken}`)
+      .send({ reason: 'Operations cancellation with mandatory audit' })
+      .expect(500);
+
+    expect(prismaMock.orders.get(order.id)?.status).toBe('ACCEPTED');
+    expect(
+      (await prismaMock.driverProfile.findUnique({ where: { userId: driverUserId } }))
+        ?.availability,
+    ).toBe('BUSY');
+    expect(
+      Array.from(prismaMock.orderStatusHistories.values()).filter(
+        (history) => history.orderId === order.id && history.toStatus === 'CANCELLED',
+      ),
+    ).toHaveLength(0);
+    expect(prismaMock.auditLogs.size).toBe(0);
   });
 
   it('returns status transition state and history written in the same transaction', async () => {

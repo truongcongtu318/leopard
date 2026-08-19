@@ -13,6 +13,23 @@ export interface PaymentIntent {
   updatedAt: string;
 }
 
+export interface PaymentIntentDto {
+  id: string;
+  orderId: string;
+  provider: ProviderSource | null;
+  status: PaymentStatus;
+  amountVnd: number;
+  clientRequestId?: string;
+  providerReference?: string;
+  qrPayload?: string;
+  expiresAt?: string;
+  confirmedById?: string;
+  confirmedAt?: string;
+  confirmationNote?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreatePaymentQrRequest {
   orderId: string;
   amountVnd?: number;
@@ -28,3 +45,21 @@ export interface PaymentQrResponse {
   expiresAt: string;
   referenceLabel?: string;
 }
+
+export interface PaymentQrDto {
+  amountVnd: number;
+  provider: ProviderSource;
+  providerReference: string;
+  expiresAt: string;
+  qrPayload: string;
+}
+
+export interface CreatePaymentIntentRequest {
+  readonly clientRequestId: string;
+}
+
+export interface AdminConfirmPaymentRequest {
+  readonly note: string;
+  readonly clientRequestId: string;
+}
+

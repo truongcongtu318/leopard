@@ -7,6 +7,7 @@ import { assertOrderTransition } from './domain/order-state-machine.js';
 import type { UpdateOrderStatusDto } from './dto/update-order-status.dto.js';
 import { mapOrderResponse, type MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersRepository } from './orders.repository.js';
+import { OrderEventsPublisher, type OrderStatusChangedEvent } from './order-events.publisher.js';
 
 @Injectable()
 export class UpdateOrderStatusService {
@@ -14,6 +15,7 @@ export class UpdateOrderStatusService {
     private readonly prisma: PrismaService,
     private readonly ordersRepository: OrdersRepository,
     private readonly proofReader: DeliveryProofReader,
+    private readonly eventsPublisher: OrderEventsPublisher,
   ) {}
 
   async updateStatus(
@@ -48,7 +50,10 @@ export class UpdateOrderStatusService {
         });
 
         if (existingHistory) {
-          return this.ordersRepository.findById(orderId, tx);
+          return {
+            order: await this.ordersRepository.findById(orderId, tx),
+            event: null,
+          };
         }
       }
 
@@ -99,7 +104,7 @@ export class UpdateOrderStatusService {
         });
       }
 
-      await tx.orderStatusHistory.create({
+      const history = await tx.orderStatusHistory.create({
         data: {
           orderId,
           fromStatus: order.status,
@@ -109,13 +114,25 @@ export class UpdateOrderStatusService {
         },
       });
 
-      return this.ordersRepository.findById(orderId, tx);
+      return {
+        order: await this.ordersRepository.findById(orderId, tx),
+        event: {
+          orderId,
+          previousStatus: order.status,
+          currentStatus: dto.status,
+          eventId: history.id,
+          occurredAt: history.createdAt.toISOString(),
+        } satisfies OrderStatusChangedEvent,
+      };
     });
 
-    if (!result) {
+    if (!result?.order) {
       throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
     }
 
-    return mapOrderResponse(result);
+    if (result.event) {
+      this.eventsPublisher.publishStatusChanged(result.event);
+    }
+    return mapOrderResponse(result.order);
   }
 }

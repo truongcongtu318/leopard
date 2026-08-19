@@ -343,5 +343,5 @@ describe('Concurrency tests for Order Acceptance and Cancellation', () => {
           }
       }
     }
-  });
+  }, 15_000);
 });

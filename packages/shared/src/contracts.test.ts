@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
+import { PaymentErrorCode, MediaErrorCode } from './errors.js';
 
 import {
   DriverAvailability,
@@ -36,7 +37,7 @@ describe('shared domain contracts', () => {
       FleetMemberRole: ['OWNER', 'DRIVER'],
       FleetMemberStatus: ['INVITED', 'ACTIVE', 'REMOVED'],
       DriverAvailability: ['OFFLINE', 'AVAILABLE', 'BUSY'],
-      OrderStatus: ['REQUESTED', 'ACCEPTED', 'PICKING_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'],
+      OrderStatus: ['REQUESTED', 'ACCEPTED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'],
       StopType: ['PICKUP', 'STOP', 'DROPOFF'],
       MediaType: ['CARGO', 'DELIVERY_PROOF'],
       PaymentStatus: ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'],
@@ -68,5 +69,11 @@ describe('shared domain contracts', () => {
     expect(() => parsePageQuery({ page: '2', pageSize: '101' })).toThrow(
       'pageSize must be between 1 and 100',
     );
+  });
+
+  test('payment and media error codes are defined', () => {
+    expect(PaymentErrorCode).toBeDefined();
+    expect(PaymentErrorCode.activeIntentConflict).toBe('PAYMENT_ACTIVE_INTENT_CONFLICT');
+    expect(MediaErrorCode.unsupportedType).toBe('MEDIA_UNSUPPORTED_TYPE');
   });
 });
