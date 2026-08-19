@@ -2,6 +2,7 @@ import type {
   AdminCommandKind,
   AdminListFilters,
   AdminListRouteView,
+  AdminListScreen,
   AdminOrderDetailRouteView,
   AdminOverviewRouteView,
 } from './model';
@@ -23,6 +24,7 @@ export type AdminCommandInput = Readonly<{
   reason: string;
   contextVersion: string;
   clientRequestId?: string;
+  currentAdminId?: string;
 }>;
 
 export type AdminCommandResult = Readonly<{
@@ -32,18 +34,19 @@ export type AdminCommandResult = Readonly<{
   persistedAt: string | null;
 }>;
 
-export type AdminOperationsPort = Readonly<{
+export type AdminPort = Readonly<{
   readOverview: () => Promise<AdminOverviewRouteView>;
   readOrders: (filters: AdminListFilters) => Promise<AdminListRouteView>;
   readOrderDetail: (orderId: string) => Promise<AdminOrderDetailRouteView>;
   readUsers: (filters: AdminListFilters) => Promise<AdminListRouteView>;
   readFleets: (filters: AdminListFilters) => Promise<AdminListRouteView>;
   readDrivers: (filters: AdminListFilters) => Promise<AdminListRouteView>;
+  readList: (resource: AdminListScreen, filters: AdminListFilters) => Promise<AdminListRouteView>;
   executeAuditedCommand: (input: AdminCommandInput) => Promise<AdminCommandResult>;
+  executeCommand: (input: AdminCommandInput) => Promise<AdminCommandResult>;
   subscribeToReadEvents: (
     onEvent: (event: Readonly<{ resource: string; revision: string }>) => void,
   ) => Readonly<{ unsubscribe: () => void }>;
 }>;
 
-// Wave 4 defines presentation ports only. Wave 3 owns authorization, transactions,
-// idempotency, persisted outcomes, audit writes and realtime reconciliation.
+export type AdminOperationsPort = AdminPort;
