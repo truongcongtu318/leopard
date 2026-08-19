@@ -183,6 +183,10 @@ export const browserClient = {
     return request<T>("PUT", path, body);
   },
 
+  patch<T = unknown>(path: string, body?: unknown): Promise<T> {
+    return request<T>("PATCH", path, body);
+  },
+
   delete<T = unknown>(path: string): Promise<T> {
     return request<T>("DELETE", path);
   },

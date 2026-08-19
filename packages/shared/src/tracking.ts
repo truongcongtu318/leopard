@@ -1,7 +1,19 @@
+import type { GeoPoint } from './order.js';
 import { parsePageQuery } from './api.js';
 import type { Page, PageQuery, PageQueryInput } from './api.js';
 
-// TrackingPointDto — phải khớp đúng field này (design §7)
+export interface TrackingPoint extends GeoPoint {
+  id: string;
+  orderId: string;
+  driverId: string;
+  clientPointId: string;
+  heading?: number | null;
+  speed?: number | null;
+  accuracyM?: number | null;
+  capturedAt: string;
+  createdAt?: string;
+}
+
 export interface TrackingPointDto {
   id: string;
   orderId: string;
@@ -10,20 +22,23 @@ export interface TrackingPointDto {
   latitude: number;
   longitude: number;
   accuracyM?: number;
-  capturedAt: string;   // ISO UTC
-  createdAt: string;    // ISO UTC
+  capturedAt: string; // ISO UTC
+  createdAt: string; // ISO UTC
 }
 
-// Page envelope chuẩn — reuse `Page<T>` từ './api.js'
+export interface TrackingHistoryResponse {
+  orderId: string;
+  points: TrackingPoint[];
+  latestPoint: TrackingPoint | null;
+}
+
 export type TrackingPointPage = Page<TrackingPointDto>;
 
-// Query: from/to là ISO UTC timestamp; page/pageSize giới hạn ≤ 100
 export interface TrackingPointQuery extends PageQuery {
   from?: Date;
   to?: Date;
 }
 
-// Input dạng raw string (controller nhận Query strings)
 export interface TrackingPointQueryInput extends Record<string, unknown> {
   page?: string;
   pageSize?: string;
@@ -35,7 +50,7 @@ export function parseTrackingPointQuery(input: TrackingPointQueryInput | unknown
   const baseQuery = parsePageQuery((input || {}) as PageQueryInput);
   
   const query: TrackingPointQuery = {
-    ...baseQuery
+    ...baseQuery,
   };
 
   const inputObj = (input || {}) as Record<string, unknown>;
@@ -58,3 +73,4 @@ export function parseTrackingPointQuery(input: TrackingPointQueryInput | unknown
 
   return query;
 }
+

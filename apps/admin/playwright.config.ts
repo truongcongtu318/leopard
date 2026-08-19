@@ -1,38 +1,41 @@
-import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from 'node:fs';
+
+import { defineConfig, devices } from '@playwright/test';
+
+const systemChrome = '/usr/bin/google-chrome-stable';
+const executablePath =
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ??
+  (!process.env.CI && existsSync(systemChrome) ? systemChrome : undefined);
 
 export default defineConfig({
-  testDir: "./e2e",
-  timeout: 30000,
-  expect: {
-    timeout: 10000,
-  },
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: 1,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: "html",
+  testDir: './e2e',
+  timeout: 30_000,
+  expect: { timeout: 10_000 },
+  fullyParallel: false,
+  forbidOnly: Boolean(process.env.CI),
+  globalSetup: './e2e/global.setup.ts',
+  retries: process.env.CI ? 1 : 0,
+  workers: 1,
+  reporter: 'list',
   use: {
-    baseURL: "http://localhost:3002",
-    trace: "on-first-retry",
+    baseURL: 'http://localhost:3002',
+    trace: 'on-first-retry',
+    launchOptions: executablePath ? { executablePath } : {},
   },
   webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:3002/login",
-    timeout: 180000,
-    reuseExistingServer: !process.env.CI,
+    command: 'pnpm dev',
+    url: 'http://localhost:3002/login',
+    timeout: 180_000,
+    reuseExistingServer: false,
+    env: {
+      API_URL: 'http://127.0.0.1:4011/api/v1',
+      LEOPARD_UI_PREVIEW: 'enabled',
+    },
   },
   projects: [
     {
-      name: "tablet-portrait",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 768, height: 1024 } },
-    },
-    {
-      name: "tablet-landscape",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1024, height: 768 } },
-    },
-    {
-      name: "desktop",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 });

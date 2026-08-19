@@ -13,8 +13,8 @@ jest.mock('./role-router', () => ({
   useProtectedLayout: (...args: unknown[]) => mockUseProtectedLayout(...args),
 }));
 
-import CustomerLayout from '../../app/(customer)/_layout';
-import DriverLayout from '../../app/(driver)/_layout';
+import CustomerLayout from '../../app/customer/_layout';
+import DriverLayout from '../../app/driver/_layout';
 
 describe('mobile protected layouts', () => {
   beforeEach(() => {
@@ -42,13 +42,13 @@ describe('mobile protected layouts', () => {
       canRenderProtectedContent: false,
       kind: 'denied',
       reason: 'role-mismatch',
-      redirectTo: '/(customer)/orders',
+      redirectTo: '/customer/orders',
     });
 
     await render(<DriverLayout />);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/(customer)/orders');
+      expect(mockReplace).toHaveBeenCalledWith('/customer/orders');
     });
   });
 });

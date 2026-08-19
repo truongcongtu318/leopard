@@ -201,6 +201,16 @@ describe("serverClient", () => {
     expect(init?.method).toBe("PUT");
   });
 
+  it("performs PATCH request with body", async () => {
+    fetchMock().mockResolvedValue(createMockResponse(200, { id: 2, patched: true }));
+
+    await serverClient.patch<{ id: number }>("/orders/2", { status: "ACTIVE" });
+
+    const [, init] = lastFetchArgs();
+    expect(init?.method).toBe("PATCH");
+    expect(init?.body).toBe(JSON.stringify({ status: "ACTIVE" }));
+  });
+
   it("performs DELETE request", async () => {
     fetchMock().mockResolvedValue(createMockResponse(200, {}));
 
@@ -355,6 +365,16 @@ describe("browserClient", () => {
 
     const [, init] = lastFetchArgs();
     expect(init?.method).toBe("PUT");
+  });
+
+  it("performs PATCH with body", async () => {
+    fetchMock().mockResolvedValue(createMockResponse(200, { id: 2, patched: true }));
+
+    await browserClient.patch<{ id: number }>("/orders/2", { status: "DISABLED" });
+
+    const [, init] = lastFetchArgs();
+    expect(init?.method).toBe("PATCH");
+    expect(init?.body).toBe(JSON.stringify({ status: "DISABLED" }));
   });
 
   it("performs DELETE", async () => {

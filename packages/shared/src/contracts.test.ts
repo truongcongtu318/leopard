@@ -37,7 +37,7 @@ describe('shared domain contracts', () => {
       FleetMemberRole: ['OWNER', 'DRIVER'],
       FleetMemberStatus: ['INVITED', 'ACTIVE', 'REMOVED'],
       DriverAvailability: ['OFFLINE', 'AVAILABLE', 'BUSY'],
-      OrderStatus: ['REQUESTED', 'ACCEPTED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'],
+      OrderStatus: ['REQUESTED', 'ACCEPTED', 'PICKING_UP', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'],
       StopType: ['PICKUP', 'STOP', 'DROPOFF'],
       MediaType: ['CARGO', 'DELIVERY_PROOF'],
       PaymentStatus: ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'],

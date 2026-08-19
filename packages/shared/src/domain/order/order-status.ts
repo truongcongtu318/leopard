@@ -1,6 +1,7 @@
 export const OrderStatus = [
   'REQUESTED',
   'ACCEPTED',
+  'PICKING_UP',
   'PICKED_UP',
   'IN_TRANSIT',
   'DELIVERED',
@@ -8,3 +9,4 @@ export const OrderStatus = [
 ] as const;
 
 export type OrderStatus = (typeof OrderStatus)[number];
+

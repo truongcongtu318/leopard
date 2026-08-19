@@ -1,18 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
+
+import { AdminPreviewRoute } from '../../../features/admin/AdminPreviewRoute';
+import type { AdminSearchParams } from '../../../features/admin/adapter';
+import { readAdminPreviewInput } from '../../../features/admin/route-input';
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard — LEOPARD Operations",
+  title: 'Tổng quan vận hành — LEOPARD Operations',
 };
 
-export default function AdminDashboardPage() {
+export default async function AdminOverviewPage({
+  searchParams,
+}: Readonly<{ searchParams: Promise<AdminSearchParams> }>) {
+  const search = await searchParams;
+  const preview = readAdminPreviewInput(search);
   return (
-    <div>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem" }}>
-        Admin Dashboard
-      </h1>
-      <p style={{ color: "#6b7280" }}>
-        Welcome to the administration dashboard.
-      </p>
-    </div>
+    <AdminPreviewRoute
+      commandKind={preview.commandKind}
+      localFlag={preview.localFlag}
+      scenario={preview.scenario}
+      screen="overview"
+    />
   );
 }
