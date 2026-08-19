@@ -45,12 +45,37 @@ ALTER TABLE "PaymentIntent"
   ADD CONSTRAINT "PaymentIntent_confirmedById_fkey"
   FOREIGN KEY ("confirmedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- 7. Idempotency unique constraints (nullable UNIQUE = multiple NULLs allowed by design)
+-- 7. PaymentIntent CHECK constraints
+ALTER TABLE "PaymentIntent"
+  DROP CONSTRAINT IF EXISTS "PaymentIntent_provider_check";
+ALTER TABLE "PaymentIntent"
+  ADD CONSTRAINT "PaymentIntent_provider_check"
+  CHECK ("provider" IS NULL OR "provider" IN ('DEMO', 'PAYOS', 'VIETQR'));
+
+ALTER TABLE "PaymentIntent"
+  DROP CONSTRAINT IF EXISTS "PaymentIntent_provider_not_null_when_not_unpaid";
+ALTER TABLE "PaymentIntent"
+  ADD CONSTRAINT "PaymentIntent_provider_not_null_when_not_unpaid"
+  CHECK ("status" = 'UNPAID' OR "provider" IS NOT NULL);
+
+-- 8. Idempotency unique constraints (nullable UNIQUE = multiple NULLs allowed by design)
+DROP INDEX IF EXISTS "MediaObject_orderId_uploaderId_type_clientRequestId_key";
 CREATE UNIQUE INDEX IF NOT EXISTS "MediaObject_orderId_uploaderId_type_clientRequestId_key"
-  ON "MediaObject"("orderId", "uploaderId", "type", "clientRequestId");
+  ON "MediaObject"("orderId", "uploaderId", "type", "clientRequestId")
+  WHERE "clientRequestId" IS NOT NULL;
+
+DROP INDEX IF EXISTS "PaymentIntent_orderId_clientRequestId_key";
 CREATE UNIQUE INDEX IF NOT EXISTS "PaymentIntent_orderId_clientRequestId_key"
-  ON "PaymentIntent"("orderId", "clientRequestId");
+  ON "PaymentIntent"("orderId", "clientRequestId")
+  WHERE "clientRequestId" IS NOT NULL;
+
+DROP INDEX IF EXISTS "PaymentIntent_provider_providerReference_key";
 CREATE UNIQUE INDEX IF NOT EXISTS "PaymentIntent_provider_providerReference_key"
-  ON "PaymentIntent"("provider", "providerReference");
+  ON "PaymentIntent"("provider", "providerReference")
+  WHERE "providerReference" IS NOT NULL;
+
+DROP INDEX IF EXISTS "PaymentIntent_confirmationRequestId_key";
 CREATE UNIQUE INDEX IF NOT EXISTS "PaymentIntent_confirmationRequestId_key"
-  ON "PaymentIntent"("confirmationRequestId");
+  ON "PaymentIntent"("confirmationRequestId")
+  WHERE "confirmationRequestId" IS NOT NULL;
+
