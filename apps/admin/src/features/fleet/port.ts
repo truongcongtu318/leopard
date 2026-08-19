@@ -35,3 +35,4 @@ export type FleetQueryPort = Readonly<{
 
 // Wave 4 intentionally has no mutation port. Wave 3 will implement these reads
 // behind server-side role + active FleetMember ownership checks.
+export type FleetPort = FleetQueryPort;
