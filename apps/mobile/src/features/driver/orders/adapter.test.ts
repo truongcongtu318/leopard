@@ -2,7 +2,10 @@ import { describe, expect, it, jest } from '@jest/globals';
 
 import { ApiError } from '../../../api/api-error';
 import {
+  ALLOWED_PROOF_MIME_TYPES,
+  MAX_PROOF_FILE_SIZE_BYTES,
   createDriverHttpAdapter,
+  createDriverProofAdapter,
   deepFreeze,
   describeDriverStatus,
   extractOrderIdFromCommand,
@@ -25,8 +28,11 @@ import {
   mapOrderToRouteView,
   normalizeDriverRouteParam,
   parseDriverOrderId,
+  uploadDeliveryProof,
+  validateDeliveryProofFile,
   type DriverHttpClient,
   type MappedDriverOrderResponse,
+  type ProofFileMetadata,
 } from './adapter';
 
 describe('Driver route and string adapter helpers', () => {
@@ -765,6 +771,240 @@ describe('createDriverHttpAdapter', () => {
         `/driver/orders/${sampleRequestedOrder.id}/accept`,
       );
     });
+
+    it('enforces proof gate: maps PROOF_REQUIRED API error to D-DETAIL-PROOF-REQUIRED view', async () => {
+      const client = createMockClient();
+      client.post.mockRejectedValueOnce(
+        new ApiError(
+          400,
+          'PROOF_REQUIRED',
+          'Delivery proof is required before marking order as delivered.',
+        ),
+      );
+
+      const adapter = createDriverHttpAdapter(client);
+      const view = await adapter.executeLifecycle(`cmd-deliver-${sampleOrder.id}`);
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.scenarioId).toBe('D-DETAIL-PROOF-REQUIRED');
+        expect(view.proof.kind).toBe('required');
+        expect(view.primaryTask?.kind).toBe('upload-proof');
+        expect(view.primaryTask?.command.id).toBe(`cmd-select-proof-${sampleOrder.id}`);
+      }
+    });
   });
 });
+
+describe('Driver Delivery Proof Validation and Upload', () => {
+  interface MockDriverHttpClient {
+    get: jest.Mock<DriverHttpClient['get']>;
+    post: jest.Mock<DriverHttpClient['post']>;
+    put: jest.Mock<DriverHttpClient['put']>;
+    patch: jest.Mock<DriverHttpClient['patch']>;
+    delete: jest.Mock<DriverHttpClient['delete']>;
+  }
+
+  function createMockClient(): MockDriverHttpClient & DriverHttpClient {
+    return {
+      get: jest.fn(),
+      post: jest.fn(),
+      put: jest.fn(),
+      patch: jest.fn(),
+      delete: jest.fn(),
+    } as unknown as MockDriverHttpClient & DriverHttpClient;
+  }
+
+  const sampleOrderId = '22222222-2222-4222-8222-222222222001';
+
+  describe('validateDeliveryProofFile', () => {
+    it('validates allowed MIME types (JPEG, PNG, WebP) within 10 MB', () => {
+      const validJpeg: ProofFileMetadata = {
+        name: 'proof.jpg',
+        mimeType: 'image/jpeg',
+        size: 5 * 1024 * 1024,
+      };
+      expect(validateDeliveryProofFile(validJpeg)).toEqual({ valid: true });
+
+      const validPng: ProofFileMetadata = {
+        name: 'proof.png',
+        mimeType: 'image/png',
+        size: 2 * 1024 * 1024,
+      };
+      expect(validateDeliveryProofFile(validPng)).toEqual({ valid: true });
+
+      const validWebp: ProofFileMetadata = {
+        name: 'proof.webp',
+        mimeType: 'image/webp',
+        size: 1 * 1024 * 1024,
+      };
+      expect(validateDeliveryProofFile(validWebp)).toEqual({ valid: true });
+    });
+
+    it('rejects unsupported MIME types with invalid-type view', () => {
+      const invalidPdf: ProofFileMetadata = {
+        name: 'document.pdf',
+        mimeType: 'application/pdf',
+        size: 1024,
+      };
+      const res = validateDeliveryProofFile(invalidPdf);
+      expect(res.valid).toBe(false);
+      expect(res.error).toBe('INVALID_TYPE');
+      expect(res.view?.kind).toBe('invalid-type');
+      expect(res.view?.label).toBe('Định dạng không hợp lệ');
+    });
+
+    it('rejects files larger than 10 MB with too-large view', () => {
+      const oversized: ProofFileMetadata = {
+        name: 'giant-photo.jpg',
+        mimeType: 'image/jpeg',
+        size: 11 * 1024 * 1024, // 11 MB
+      };
+      const res = validateDeliveryProofFile(oversized);
+      expect(res.valid).toBe(false);
+      expect(res.error).toBe('TOO_LARGE');
+      expect(res.view?.kind).toBe('too-large');
+      expect(res.view?.label).toBe('Tệp vượt quá 10 MB');
+    });
+
+    it('handles null / undefined file with empty view', () => {
+      const res = validateDeliveryProofFile(null);
+      expect(res.valid).toBe(false);
+      expect(res.error).toBe('NO_FILE');
+      expect(res.view?.kind).toBe('empty');
+    });
+  });
+
+  describe('uploadDeliveryProof', () => {
+    it('uploads valid proof and returns persisted view with uploaded URL', async () => {
+      const client = createMockClient();
+      client.post.mockResolvedValueOnce({
+        url: 'https://storage.leopard.vn/proofs/proof-123.jpg',
+        deliveryProofUrl: 'https://storage.leopard.vn/proofs/proof-123.jpg',
+      });
+
+      const file: ProofFileMetadata = {
+        name: 'delivery-receipt.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024 * 500,
+      };
+
+      const result = await uploadDeliveryProof(client, sampleOrderId, file);
+      expect(result.kind).toBe('persisted');
+      expect(result.label).toBe('Ảnh xác nhận đã tải lên');
+      expect(result.fileLabel).toBe('https://storage.leopard.vn/proofs/proof-123.jpg');
+      expect(client.post).toHaveBeenCalledWith(
+        `/orders/${sampleOrderId}/media/delivery-proof`,
+        expect.objectContaining({
+          orderId: sampleOrderId,
+          type: 'DELIVERY_PROOF',
+          name: 'delivery-receipt.jpg',
+        }),
+      );
+    });
+
+    it('falls back to /media/upload if specific endpoint errors', async () => {
+      const client = createMockClient();
+      client.post
+        .mockRejectedValueOnce(new Error('Endpoint not found'))
+        .mockResolvedValueOnce({
+          url: 'https://storage.leopard.vn/proofs/fallback-proof.png',
+        });
+
+      const file: ProofFileMetadata = {
+        name: 'proof.png',
+        mimeType: 'image/png',
+        size: 1024 * 200,
+      };
+
+      const result = await uploadDeliveryProof(client, sampleOrderId, file);
+      expect(result.kind).toBe('persisted');
+      expect(result.fileLabel).toBe('https://storage.leopard.vn/proofs/fallback-proof.png');
+    });
+
+    it('returns upload-retry view on server error allowing retry', async () => {
+      const client = createMockClient();
+      client.post
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockRejectedValueOnce(new Error('Network error'));
+
+      const file: ProofFileMetadata = {
+        name: 'proof.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024 * 300,
+      };
+
+      const result = await uploadDeliveryProof(client, sampleOrderId, file);
+      expect(result.kind).toBe('upload-retry');
+      expect(result.label).toBe('Chưa tải được ảnh');
+      expect(result.message).toContain('Ảnh đã chọn vẫn được giữ');
+      expect(result.fileLabel).toBe('proof.jpg');
+    });
+
+    it('fails fast on invalid file format before making network request', async () => {
+      const client = createMockClient();
+      const invalidFile: ProofFileMetadata = {
+        name: 'data.txt',
+        mimeType: 'text/plain',
+        size: 100,
+      };
+
+      const result = await uploadDeliveryProof(client, sampleOrderId, invalidFile);
+      expect(result.kind).toBe('invalid-type');
+      expect(client.post).not.toHaveBeenCalled();
+    });
+
+    it('fails fast on invalid order UUID', async () => {
+      const client = createMockClient();
+      const file: ProofFileMetadata = {
+        name: 'proof.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024,
+      };
+
+      const result = await uploadDeliveryProof(client, 'invalid-order-id', file);
+      expect(result.kind).toBe('upload-retry');
+      expect(result.label).toBe('Mã đơn không hợp lệ');
+      expect(client.post).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createDriverProofAdapter', () => {
+    it('creates DriverProofPort with selectProof and uploadProof implementations', async () => {
+      const client = createMockClient();
+      client.post.mockResolvedValueOnce({
+        deliveryProofUrl: 'https://storage.leopard.vn/proofs/proof-port.jpg',
+      });
+
+      const mockFilePicker = jest.fn<() => Promise<ProofFileMetadata | null>>().mockResolvedValue({
+        name: 'picked-proof.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024 * 400,
+      });
+
+      const adapter = createDriverProofAdapter(client, {
+        filePicker: mockFilePicker,
+      });
+
+      const picked = await adapter.selectProof();
+      expect(picked?.name).toBe('picked-proof.jpg');
+      expect(mockFilePicker).toHaveBeenCalledTimes(1);
+
+      const uploadResult = await adapter.uploadProof(`cmd-select-proof-${sampleOrderId}`);
+      expect(uploadResult.kind).toBe('persisted');
+      expect(uploadResult.fileLabel).toBe('https://storage.leopard.vn/proofs/proof-port.jpg');
+    });
+
+    it('returns error view when uploadProof receives invalid commandId', async () => {
+      const client = createMockClient();
+      const adapter = createDriverProofAdapter(client);
+      const result = await adapter.uploadProof('cmd-invalid');
+
+      expect(result.kind).toBe('upload-retry');
+      expect(result.label).toBe('Mã đơn không hợp lệ');
+      expect(client.post).not.toHaveBeenCalled();
+    });
+  });
+});
+
 

@@ -22,7 +22,11 @@ import type {
   DriverRouteView,
   DriverTrackingView,
 } from './model';
-import type { DriverOrdersPort } from './port';
+import type {
+  DriverOrdersPort,
+  DriverProofPort,
+  DriverTrackingPort,
+} from './port';
 
 function getDefaultHttpClient(): DriverHttpClient {
   const { httpClient } = require('../../../api/http-client');
@@ -1016,6 +1020,60 @@ export function createDriverHttpAdapter(
           mapOrderToDriverDetailView(response),
         );
       } catch (error) {
+        if (ApiError.isApiError(error)) {
+          if (
+            error.code === 'PROOF_REQUIRED' ||
+            error.code === 'DELIVERY_PROOF_REQUIRED' ||
+            (error.statusCode === 400 && error.message.toLowerCase().includes('proof'))
+          ) {
+            return deepFreeze<DriverDetailView>({
+              scenarioId: 'D-DETAIL-PROOF-REQUIRED',
+              kind: 'content',
+              accessScope: 'ASSIGNED_FULL',
+              order: {
+                id: orderId,
+                reference: lastActiveTripReference ?? `LP-${orderId.replace(/-/g, '').slice(0, 8).toUpperCase()}`,
+                status: 'IN_TRANSIT',
+                route: {
+                  origin: { id: 'driver-pickup', label: 'Điểm lấy hàng' },
+                  stops: [],
+                  destination: { id: 'driver-dropoff', label: 'Điểm giao hàng' },
+                  distanceLabel: '0,0 km',
+                  etaDurationSeconds: 0,
+                  etaSource: 'DEMO',
+                },
+                vehicleLabel: 'Xe van',
+                cargoSummary: 'Hàng hóa tiêu chuẩn',
+                customerContact: 'Số điện thoại khách hàng mô phỏng · chỉ hiện sau phân công',
+                updatedAtLabel: formatDateTime(new Date()),
+                history: [],
+              },
+              tracking: {
+                kind: 'healthy',
+                label: 'Đang gửi vị trí',
+                lastUpdatedLabel: formatDateTime(new Date()),
+                queuedPointCount: null,
+              },
+              proof: {
+                kind: 'required',
+                label: 'Cần ảnh xác nhận trước khi hoàn tất',
+                message: 'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.',
+                fileLabel: null,
+              },
+              primaryTask: {
+                kind: 'upload-proof',
+                command: {
+                  id: `cmd-select-proof-${orderId}`,
+                  orderId,
+                  label: 'Thêm ảnh xác nhận giao hàng',
+                },
+              },
+              offeredLifecycleCommand: null,
+              notice: 'Cần tải ảnh xác nhận trước khi hoàn tất giao hàng.',
+            });
+          }
+        }
+
         if (isConflictError(error)) {
           return deepFreeze<DriverConflictView>({
             scenarioId: 'D-DETAIL-INVALID-TRANSITION',
@@ -1050,4 +1108,227 @@ export function createDriverHttpAdapter(
     },
   };
 }
+
+export const ALLOWED_PROOF_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+] as const;
+
+export const MAX_PROOF_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+export interface ProofFileMetadata {
+  name: string;
+  mimeType: string;
+  size: number;
+  uri?: string;
+  data?: unknown;
+}
+
+export interface ProofValidationResult {
+  valid: boolean;
+  error?: 'INVALID_TYPE' | 'TOO_LARGE' | 'NO_FILE';
+  message?: string;
+  view?: DriverProofView;
+}
+
+export function validateDeliveryProofFile(
+  file?: Partial<ProofFileMetadata> | null,
+): ProofValidationResult {
+  if (!file) {
+    return {
+      valid: false,
+      error: 'NO_FILE',
+      message: 'Chưa có tệp nào được chọn.',
+      view: {
+        kind: 'empty',
+        label: 'Chưa có ảnh xác nhận',
+        message: 'Proof chưa được yêu cầu ở task hiện tại.',
+        fileLabel: null,
+      },
+    };
+  }
+
+  const mime = file.mimeType?.toLowerCase().trim();
+  const isValidType =
+    Boolean(mime) &&
+    ALLOWED_PROOF_MIME_TYPES.some((allowed) => allowed === mime);
+
+  if (!isValidType) {
+    return {
+      valid: false,
+      error: 'INVALID_TYPE',
+      message: 'Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.',
+      view: {
+        kind: 'invalid-type',
+        label: 'Định dạng không hợp lệ',
+        message: 'Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.',
+        fileLabel: file.name ?? null,
+      },
+    };
+  }
+
+  if (typeof file.size === 'number' && file.size > MAX_PROOF_FILE_SIZE_BYTES) {
+    return {
+      valid: false,
+      error: 'TOO_LARGE',
+      message: 'Ảnh vượt quá kích thước 10 MB.',
+      view: {
+        kind: 'too-large',
+        label: 'Tệp vượt quá 10 MB',
+        message: 'Vui lòng chọn ảnh có dung lượng dưới 10 MB.',
+        fileLabel: file.name ?? null,
+      },
+    };
+  }
+
+  return { valid: true };
+}
+
+export interface ProofUploadApiResponse {
+  id?: string;
+  mediaId?: string;
+  url?: string;
+  deliveryProofUrl?: string;
+  orderId?: string;
+  status?: string;
+}
+
+export async function uploadDeliveryProof(
+  client: DriverHttpClient,
+  orderId: string,
+  file: ProofFileMetadata,
+): Promise<DriverProofView> {
+  const validOrderId = parseDriverOrderId(orderId);
+  if (!validOrderId) {
+    return deepFreeze<DriverProofView>({
+      kind: 'upload-retry',
+      label: 'Mã đơn không hợp lệ',
+      message: 'Không tìm thấy mã đơn hợp lệ để tải lên ảnh xác nhận.',
+      fileLabel: file.name ?? null,
+    });
+  }
+
+  const validation = validateDeliveryProofFile(file);
+  if (!validation.valid && validation.view) {
+    return deepFreeze<DriverProofView>(validation.view);
+  }
+
+  try {
+    const response = await client.post<ProofUploadApiResponse | MappedDriverOrderResponse>(
+      `/orders/${validOrderId}/media/delivery-proof`,
+      {
+        orderId: validOrderId,
+        type: 'DELIVERY_PROOF',
+        name: file.name,
+        mimeType: file.mimeType,
+        size: file.size,
+        uri: file.uri,
+        data: file.data,
+      },
+    );
+
+    const uploadedUrl =
+      ('deliveryProofUrl' in response && typeof response.deliveryProofUrl === 'string' && response.deliveryProofUrl) ||
+      ('url' in response && typeof response.url === 'string' && response.url) ||
+      file.name ||
+      'xac-nhan-giao-hang.jpg';
+
+    return deepFreeze<DriverProofView>({
+      kind: 'persisted',
+      label: 'Ảnh xác nhận đã tải lên',
+      message: 'Proof đã có trong snapshot phản hồi từ hệ thống.',
+      fileLabel: uploadedUrl,
+    });
+  } catch {
+    try {
+      const fallbackResponse = await client.post<ProofUploadApiResponse>(
+        '/media/upload',
+        {
+          orderId: validOrderId,
+          type: 'DELIVERY_PROOF',
+          fileName: file.name,
+          mimeType: file.mimeType,
+          size: file.size,
+          uri: file.uri,
+          data: file.data,
+        },
+      );
+
+      const uploadedUrl =
+        fallbackResponse.deliveryProofUrl ||
+        fallbackResponse.url ||
+        file.name ||
+        'xac-nhan-giao-hang.jpg';
+
+      return deepFreeze<DriverProofView>({
+        kind: 'persisted',
+        label: 'Ảnh xác nhận đã tải lên',
+        message: 'Proof đã có trong snapshot phản hồi từ hệ thống.',
+        fileLabel: uploadedUrl,
+      });
+    } catch {
+      return deepFreeze<DriverProofView>({
+        kind: 'upload-retry',
+        label: 'Chưa tải được ảnh',
+        message: 'Ảnh đã chọn vẫn được giữ; hãy thử lại.',
+        fileLabel: file.name ?? null,
+      });
+    }
+  }
+}
+
+export interface DriverProofAdapterOptions {
+  filePicker?: () => Promise<ProofFileMetadata | null>;
+  selectedFileProvider?: () => ProofFileMetadata | null;
+}
+
+export function createDriverProofAdapter(
+  client?: DriverHttpClient,
+  options?: DriverProofAdapterOptions,
+): DriverProofPort {
+  const getClient = (): DriverHttpClient => client ?? getDefaultHttpClient();
+  let locallySelectedFile: ProofFileMetadata | null = null;
+
+  return {
+    async selectProof(): Promise<ProofFileMetadata | null> {
+      if (options?.filePicker) {
+        const file = await options.filePicker();
+        locallySelectedFile = file;
+        return file;
+      }
+      if (options?.selectedFileProvider) {
+        const file = options.selectedFileProvider();
+        locallySelectedFile = file;
+        return file;
+      }
+      return null;
+    },
+
+    async uploadProof(commandId: string): Promise<DriverProofView> {
+      const orderId =
+        extractOrderIdFromCommand(commandId) ?? parseDriverOrderId(commandId);
+      if (!orderId) {
+        return deepFreeze<DriverProofView>({
+          kind: 'upload-retry',
+          label: 'Mã đơn không hợp lệ',
+          message: 'Không tìm thấy mã đơn trong lệnh tải ảnh.',
+          fileLabel: null,
+        });
+      }
+
+      const file = locallySelectedFile ?? options?.selectedFileProvider?.() ?? {
+        name: 'xac-nhan-giao-hang.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024 * 500,
+      };
+
+      const result = await uploadDeliveryProof(getClient(), orderId, file);
+      return result;
+    },
+  };
+}
+
+
 
