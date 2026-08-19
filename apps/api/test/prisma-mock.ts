@@ -117,6 +117,12 @@ export class InMemoryPrismaService {
       }
       return { count };
     }),
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.users.values());
+      if (where?.role) list = list.filter((u) => u.role === where.role);
+      if (where?.status) list = list.filter((u) => u.status === where.status);
+      return list.length;
+    }),
   };
 
   refreshSession = {
@@ -249,8 +255,24 @@ export class InMemoryPrismaService {
     findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
       return this.fleets.get(where.id) ?? null;
     }),
-    findMany: jest.fn(async () => {
-      return Array.from(this.fleets.values());
+    findMany: jest.fn(async ({ include }: { include?: any } = {}) => {
+      const list = Array.from(this.fleets.values());
+      if (include?._count?.select?.memberships) {
+        const where = include._count.select.memberships.where;
+        return list.map((f) => {
+          const count = Array.from(this.fleetMembers.values()).filter(
+            (m) =>
+              m.fleetId === f.id &&
+              (!where?.role || m.role === where.role) &&
+              (!where?.status || m.status === where.status),
+          ).length;
+          return {
+            ...f,
+            _count: { memberships: count },
+          };
+        });
+      }
+      return list;
     }),
     count: jest.fn(async () => {
       return this.fleets.size;
@@ -365,6 +387,19 @@ export class InMemoryPrismaService {
             filtered = filtered.filter((o) => where.status.in.includes(o.status));
           }
         }
+        if (where.driver?.fleetMemberships?.some) {
+          const { fleetId, role, status } = where.driver.fleetMemberships.some;
+          filtered = filtered.filter((o) => {
+            if (!o.driverId) return false;
+            return Array.from(this.fleetMembers.values()).some(
+              (m) =>
+                m.userId === o.driverId &&
+                (!fleetId || m.fleetId === fleetId) &&
+                (!role || m.role === role) &&
+                (!status || m.status === status),
+            );
+          });
+        }
       }
 
       filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -374,8 +409,10 @@ export class InMemoryPrismaService {
         return pageItems.map((order) => {
           const stops = Array.from(this.orderStops.values()).filter((s) => s.orderId === order.id);
           const statusHistory = Array.from(this.orderStatusHistories.values()).filter((h) => h.orderId === order.id);
+          const driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
           return {
             ...order,
+            ...(include.driver ? { driver } : {}),
             ...(include.stops ? { stops } : {}),
             ...(include.statusHistory ? { statusHistory } : {}),
           };
@@ -395,6 +432,19 @@ export class InMemoryPrismaService {
           } else if (where.status.in) {
             filtered = filtered.filter((o) => where.status.in.includes(o.status));
           }
+        }
+        if (where.driver?.fleetMemberships?.some) {
+          const { fleetId, role, status } = where.driver.fleetMemberships.some;
+          filtered = filtered.filter((o) => {
+            if (!o.driverId) return false;
+            return Array.from(this.fleetMembers.values()).some(
+              (m) =>
+                m.userId === o.driverId &&
+                (!fleetId || m.fleetId === fleetId) &&
+                (!role || m.role === role) &&
+                (!status || m.status === status),
+            );
+          });
         }
       }
       return filtered.length;
