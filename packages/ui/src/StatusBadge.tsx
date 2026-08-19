@@ -81,6 +81,15 @@ const toneClasses: Readonly<Record<StatusTone, string>> = {
   danger: 'bg-danger text-danger-text border-danger-border',
 };
 
+const dotClasses: Readonly<Record<StatusTone, string>> = {
+  neutral: 'bg-neutral-text/60',
+  info: 'bg-info-text',
+  warning: 'bg-warning-text',
+  active: 'bg-active-text',
+  success: 'bg-success-text',
+  danger: 'bg-danger-text',
+};
+
 const unknownStatus: CanonicalStatus = {
   label: 'Trạng thái chưa được hỗ trợ',
   tone: 'neutral',
@@ -144,6 +153,14 @@ function StatusBadgeView({
         className,
       )}
     >
+      <span
+        className={cn(
+          'mr-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0',
+          canonicalStatus.tone === 'active' ? 'animate-pulse' : '',
+          dotClasses[canonicalStatus.tone],
+        )}
+        aria-hidden="true"
+      />
       {canonicalStatus.label}
     </span>
   );

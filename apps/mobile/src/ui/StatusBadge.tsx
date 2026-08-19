@@ -223,6 +223,15 @@ const colorRoleTextStyles = StyleSheet.create({
   danger: { color: colors.danger.text },
 });
 
+const colorRoleDotStyles = StyleSheet.create({
+  neutral: { backgroundColor: colors.neutral.text },
+  info: { backgroundColor: colors.info.text },
+  warning: { backgroundColor: colors.warning.text },
+  active: { backgroundColor: colors.active.text },
+  success: { backgroundColor: colors.success.text },
+  danger: { backgroundColor: colors.danger.text },
+});
+
 export function StatusBadge(props: StatusBadgeProps) {
   const presentation = resolvePresentation(props);
   const accessibilityLabel =
@@ -237,6 +246,11 @@ export function StatusBadge(props: StatusBadgeProps) {
       accessible
       style={[styles.badge, colorRoleStyles[presentation.colorRole]]}
     >
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+        style={[styles.dot, colorRoleDotStyles[presentation.colorRole]]}
+      />
       <Text style={[styles.text, colorRoleTextStyles[presentation.colorRole]]}>
         {presentation.label}
       </Text>
@@ -250,9 +264,16 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderRadius: radius.pill,
     borderWidth: 1,
+    flexDirection: 'row',
     maxWidth: '100%',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
+  },
+  dot: {
+    borderRadius: radius.pill,
+    height: 6,
+    marginRight: spacing.xs,
+    width: 6,
   },
   text: {
     ...typography.label,

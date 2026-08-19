@@ -1,4 +1,9 @@
-import type { OrderStatus, PaymentStatus, ProviderSource, VehicleType } from '@leopard/shared';
+import type {
+  OrderStatus,
+  PaymentStatus,
+  ProviderSource,
+  VehicleType,
+} from '@leopard/shared';
 
 import { ApiError } from '../../../api/api-error';
 import type {
@@ -68,7 +73,9 @@ export function formatDistance(meters: number | null | undefined): string {
   return `${km.toFixed(1).replace('.', ',')} km`;
 }
 
-export function formatDateTime(dateInput: string | Date | null | undefined): string {
+export function formatDateTime(
+  dateInput: string | Date | null | undefined,
+): string {
   if (!dateInput) return '';
   const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
   if (isNaN(date.getTime())) return '';
@@ -80,7 +87,9 @@ export function formatDateTime(dateInput: string | Date | null | undefined): str
   return `${hours}:${minutes} · ${day}/${month}/${year}`;
 }
 
-export function formatTimeOnly(dateInput: string | Date | null | undefined): string {
+export function formatTimeOnly(
+  dateInput: string | Date | null | undefined,
+): string {
   if (!dateInput) return '';
   const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
   if (isNaN(date.getTime())) return '';
@@ -98,6 +107,19 @@ export function formatOrderReference(order: {
   if (order.id.startsWith('LP-')) return order.id;
   const shortId = order.id.replace(/-/g, '').slice(0, 8).toUpperCase();
   return `LP-${shortId}`;
+}
+
+export function formatPaymentReference(payment: {
+  id?: string;
+  paymentId?: string;
+  referenceLabel?: string;
+}): string {
+  if (payment.referenceLabel) return payment.referenceLabel;
+  const rawId = payment.paymentId ?? payment.id;
+  if (!rawId) return 'LPRD-DEMO-260815-001';
+  if (rawId.startsWith('LPRD-')) return rawId;
+  const shortId = rawId.replace(/-/g, '').slice(0, 8).toUpperCase();
+  return `LPRD-${shortId}`;
 }
 
 export function formatStatusFilterLabel(filter: CustomerOrderFilter): string {
@@ -156,6 +178,54 @@ export interface MappedOrderStatusHistoryResponse {
   createdAt: string;
 }
 
+export interface MappedTrackingPointResponse {
+  id: string;
+  orderId: string;
+  driverId: string;
+  clientPointId?: string;
+  latitude: number;
+  longitude: number;
+  heading?: number | null;
+  speed?: number | null;
+  accuracyM?: number | null;
+  capturedAt: string;
+  createdAt?: string;
+}
+
+export interface MappedTrackingHistoryResponse {
+  orderId: string;
+  points?: MappedTrackingPointResponse[];
+  latestPoint?: MappedTrackingPointResponse | null;
+}
+
+export interface MappedPaymentResponse {
+  id: string;
+  paymentId?: string;
+  orderId: string;
+  provider?: string;
+  status: string;
+  amountVnd?: number;
+  amount?: number;
+  qrPayload?: string | null;
+  providerSnapshot?: Record<string, unknown> | null;
+  expiresAt?: string | null;
+  referenceLabel?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PaymentQrApiResponse {
+  paymentId: string;
+  orderId: string;
+  qrPayload?: string;
+  amountVnd: number;
+  status: PaymentStatus;
+  provider: ProviderSource;
+  expiresAt?: string;
+  referenceLabel?: string;
+  createdAt?: string;
+}
+
 export interface MappedOrderResponse {
   id: string;
   reference?: string;
@@ -177,6 +247,8 @@ export interface MappedOrderResponse {
   updatedAt: string;
   stops?: MappedOrderStopResponse[];
   statusHistory?: MappedOrderStatusHistoryResponse[];
+  tracking?: MappedTrackingHistoryResponse | MappedTrackingPointResponse[];
+  payment?: MappedPaymentResponse | PaymentQrApiResponse;
 }
 
 export interface CustomerOrdersListApiResponse {
@@ -225,8 +297,12 @@ function isForbiddenError(error: unknown): boolean {
   return false;
 }
 
-export function mapOrderToListItem(order: MappedOrderResponse): CustomerOrderListItemView {
-  const pickupStop = order.stops?.find((s) => s.type === 'PICKUP' || s.sequence === 0);
+export function mapOrderToListItem(
+  order: MappedOrderResponse,
+): CustomerOrderListItemView {
+  const pickupStop = order.stops?.find(
+    (s) => s.type === 'PICKUP' || s.sequence === 0,
+  );
   const dropoffStop =
     order.stops?.find((s) => s.type === 'DROPOFF') ??
     order.stops?.[(order.stops?.length ?? 1) - 1];
@@ -281,8 +357,210 @@ export function mapOrderToListItem(order: MappedOrderResponse): CustomerOrderLis
   };
 }
 
-export function mapOrderToDetail(order: MappedOrderResponse): CustomerOrderDetailDataView {
-  const pickupStop = order.stops?.find((s) => s.type === 'PICKUP' || s.sequence === 0);
+export function mapPaymentToView(
+  payment?: MappedPaymentResponse | PaymentQrApiResponse | null,
+  orderPriceVnd?: number | null,
+  orderStatus?: OrderStatus,
+): CustomerPaymentView {
+  const amount =
+    payment?.amountVnd ??
+    (payment as { amount?: number })?.amount ??
+    orderPriceVnd ??
+    0;
+  const amountLabel = formatVndPrice(amount);
+
+  if (!payment) {
+    if (orderStatus === 'DELIVERED') {
+      return {
+        status: 'PAID_MANUAL',
+        amountLabel,
+        sourceLabel: 'Xác nhận thủ công bởi hệ thống',
+        qrState: 'none',
+        notice: 'Thanh toán đã được xác nhận trong snapshot phản hồi.',
+        action: null,
+      };
+    }
+    const canCreate =
+      orderStatus === 'REQUESTED' ||
+      orderStatus === 'ACCEPTED' ||
+      orderStatus === 'PICKING_UP' ||
+      orderStatus === 'IN_TRANSIT';
+    return {
+      status: 'UNPAID',
+      amountLabel,
+      sourceLabel: 'VietQR mô phỏng',
+      qrState: 'none',
+      notice: null,
+      action: canCreate
+        ? {
+            id: 'create-payment',
+            label: 'Tạo mã QR thanh toán',
+            emphasis: 'primary',
+          }
+        : null,
+    };
+  }
+
+  const rawStatus = (payment.status || 'UNPAID') as PaymentStatus;
+  const provider = (payment.provider || 'VIETQR') as ProviderSource;
+  const isDemo = provider === 'DEMO';
+  const sourceLabel =
+    rawStatus === 'PAID_MANUAL'
+      ? 'Xác nhận thủ công bởi hệ thống'
+      : isDemo
+        ? 'VietQR mô phỏng'
+        : 'VietQR';
+
+  const ref = formatPaymentReference(payment);
+
+  if (rawStatus === 'PAID_MANUAL') {
+    return {
+      status: 'PAID_MANUAL',
+      amountLabel,
+      referenceLabel: ref,
+      sourceLabel,
+      qrState: 'none',
+      notice: 'Thanh toán đã được xác nhận trong snapshot phản hồi.',
+      action: null,
+    };
+  }
+
+  if (rawStatus === 'FAILED') {
+    return {
+      status: 'FAILED',
+      amountLabel,
+      referenceLabel: ref,
+      sourceLabel,
+      qrState: 'none',
+      notice: 'Chưa thể tạo thanh toán; không hiển thị chi tiết provider.',
+      action: {
+        id: 'retry-payment',
+        label: 'Thử tạo lại mã QR',
+        emphasis: 'secondary',
+      },
+    };
+  }
+
+  if (rawStatus === 'QR_CREATED') {
+    const isExpired =
+      payment.expiresAt &&
+      !isNaN(new Date(payment.expiresAt).getTime()) &&
+      new Date(payment.expiresAt).getTime() <= Date.now();
+
+    if (isExpired) {
+      return {
+        status: 'QR_CREATED',
+        amountLabel,
+        referenceLabel: ref,
+        expiresAtLabel: 'Đã hết hạn theo phản hồi hệ thống',
+        sourceLabel,
+        qrState: 'expired',
+        notice: 'Mã QR đã hết hạn',
+        action: {
+          id: 'refresh-payment',
+          label: 'Tạo mã QR mới',
+          emphasis: 'secondary',
+        },
+      };
+    }
+
+    return {
+      status: 'QR_CREATED',
+      amountLabel,
+      referenceLabel: ref,
+      expiresAtLabel: payment.expiresAt
+        ? formatDateTime(payment.expiresAt)
+        : undefined,
+      sourceLabel,
+      qrState: 'ready',
+      notice: isDemo
+        ? 'Mã QR mô phỏng, không chứa payload thanh toán thật.'
+        : 'Mã QR đã sẵn sàng thanh toán.',
+      action: null,
+    };
+  }
+
+  return {
+    status: 'UNPAID',
+    amountLabel,
+    referenceLabel: ref,
+    sourceLabel,
+    qrState: 'none',
+    notice: null,
+    action: {
+      id: 'create-payment',
+      label: 'Tạo mã QR thanh toán',
+      emphasis: 'primary',
+    },
+  };
+}
+
+export function mapTrackingToView(
+  order: MappedOrderResponse,
+  trackingData?:
+    | MappedTrackingHistoryResponse
+    | MappedTrackingPointResponse[]
+    | null,
+): CustomerTrackingView {
+  const status = order.status as OrderStatus;
+  if (status === 'REQUESTED' || status === 'CANCELLED' || !order.driverId) {
+    return { kind: 'no-driver', message: 'Chưa có tài xế nhận đơn.' };
+  }
+
+  const driverLabel = 'Tài xế Nguyễn Minh An';
+
+  if (!trackingData) {
+    const lastUpdatedLabel = formatDateTime(order.updatedAt || order.createdAt);
+    const updatedTime = formatTimeOnly(order.updatedAt || order.createdAt);
+    return {
+      kind: 'fresh',
+      driverLabel,
+      lastUpdatedLabel,
+      summary: `Bản đồ lộ trình; vị trí tài xế cập nhật lúc ${updatedTime}.`,
+    };
+  }
+
+  let latestPoint: MappedTrackingPointResponse | null = null;
+  if (Array.isArray(trackingData)) {
+    if (trackingData.length > 0) {
+      latestPoint = trackingData[trackingData.length - 1];
+    }
+  } else if (trackingData.latestPoint) {
+    latestPoint = trackingData.latestPoint;
+  } else if (trackingData.points && trackingData.points.length > 0) {
+    latestPoint = trackingData.points[trackingData.points.length - 1];
+  }
+
+  if (!latestPoint) {
+    return {
+      kind: 'no-location',
+      driverLabel,
+      message: 'Chưa có vị trí tài xế.',
+    };
+  }
+
+  const lastUpdatedLabel = formatDateTime(latestPoint.capturedAt);
+  const updatedTime = formatTimeOnly(latestPoint.capturedAt);
+
+  return {
+    kind: 'fresh',
+    driverLabel,
+    lastUpdatedLabel,
+    summary: `Bản đồ lộ trình; vị trí tài xế cập nhật lúc ${updatedTime}.`,
+  };
+}
+
+export function mapOrderToDetail(
+  order: MappedOrderResponse,
+  trackingData?:
+    | MappedTrackingHistoryResponse
+    | MappedTrackingPointResponse[]
+    | null,
+  paymentData?: MappedPaymentResponse | PaymentQrApiResponse | null,
+): CustomerOrderDetailDataView {
+  const pickupStop = order.stops?.find(
+    (s) => s.type === 'PICKUP' || s.sequence === 0,
+  );
   const dropoffStop =
     order.stops?.find((s) => s.type === 'DROPOFF') ??
     order.stops?.[(order.stops?.length ?? 1) - 1];
@@ -316,35 +594,12 @@ export function mapOrderToDetail(order: MappedOrderResponse): CustomerOrderDetai
   const etaDurationSeconds = order.durationSeconds ?? order.etaSeconds ?? 0;
   const etaSource = (order.providerSource as ProviderSource) ?? 'VIETMAP';
 
-  let tracking: CustomerTrackingView;
-  if (status === 'REQUESTED' || status === 'CANCELLED' || !order.driverId) {
-    tracking = { kind: 'no-driver', message: 'Chưa có tài xế nhận đơn.' };
-  } else {
-    const driverLabel = 'Tài xế Nguyễn Minh An';
-    const lastUpdatedLabel = formatDateTime(order.updatedAt || order.createdAt);
-    const updatedTime = formatTimeOnly(order.updatedAt || order.createdAt);
-    tracking = {
-      kind: 'fresh',
-      driverLabel,
-      lastUpdatedLabel,
-      summary: `Bản đồ lộ trình; vị trí tài xế cập nhật lúc ${updatedTime}.`,
-    };
-  }
-
-  const payment: CustomerPaymentView = {
-    status: (status === 'DELIVERED' ? 'PAID_MANUAL' : 'UNPAID') as PaymentStatus,
-    amountLabel: formatVndPrice(order.priceVnd),
-    sourceLabel: 'VietQR mô phỏng',
-    qrState: 'none',
-    notice:
-      status === 'DELIVERED'
-        ? 'Thanh toán đã được xác nhận trong snapshot phản hồi.'
-        : null,
-    action:
-      status === 'REQUESTED' || status === 'ACCEPTED' || status === 'IN_TRANSIT'
-        ? { id: 'create-payment', label: 'Tạo mã QR thanh toán', emphasis: 'primary' }
-        : null,
-  };
+  const tracking = mapTrackingToView(order, trackingData ?? order.tracking);
+  const payment = mapPaymentToView(
+    paymentData ?? order.payment,
+    order.priceVnd,
+    status,
+  );
 
   const media = {
     kind: 'empty' as const,
@@ -384,13 +639,19 @@ export function mapOrderToDetail(order: MappedOrderResponse): CustomerOrderDetai
   };
 }
 
-export function resolveCancelView(order: MappedOrderResponse): CustomerCancelView {
+export function resolveCancelView(
+  order: MappedOrderResponse,
+): CustomerCancelView {
   const status = order.status as OrderStatus;
   if (status === 'REQUESTED') {
     return {
       kind: 'available',
       message: 'Hủy đơn sẽ dừng yêu cầu tìm tài xế.',
-      action: { id: 'cancel-order', label: 'Hủy đơn', emphasis: 'destructive' },
+      action: {
+        id: 'cancel-order',
+        label: 'Hủy đơn',
+        emphasis: 'destructive',
+      },
     };
   }
   if (
@@ -413,7 +674,9 @@ export function createCustomerHttpAdapter(
   let cachedEstimateToken: string | null = null;
 
   return {
-    async getOrdersView(filter: CustomerOrderFilter): Promise<CustomerListView> {
+    async getOrdersView(
+      filter: CustomerOrderFilter,
+    ): Promise<CustomerListView> {
       const activeClient = getClient();
       try {
         const response = await activeClient.get<
@@ -510,9 +773,13 @@ export function createCustomerHttpAdapter(
       });
     },
 
-    async estimateOrder(form: CustomerCreateFormView): Promise<CustomerCreateView> {
+    async estimateOrder(
+      form: CustomerCreateFormView,
+    ): Promise<CustomerCreateView> {
       const activeClient = getClient();
-      const fieldErrors: Partial<Record<'pickup' | 'dropoff' | 'cargoWeight', string>> = {};
+      const fieldErrors: Partial<
+        Record<'pickup' | 'dropoff' | 'cargoWeight', string>
+      > = {};
 
       if (!form.pickup || !form.pickup.trim()) {
         fieldErrors.pickup = 'Điểm lấy hàng là bắt buộc.';
@@ -649,7 +916,9 @@ export function createCustomerHttpAdapter(
       }
     },
 
-    async createOrder(form: CustomerCreateFormView): Promise<CustomerDetailView> {
+    async createOrder(
+      form: CustomerCreateFormView,
+    ): Promise<CustomerDetailView> {
       const activeClient = getClient();
       if (!form.pickup?.trim() || !form.dropoff?.trim()) {
         return deepFreeze<CustomerDetailView>({
@@ -716,7 +985,9 @@ export function createCustomerHttpAdapter(
           },
           vehicleType: form.vehicleType as VehicleType,
           cargoNote: form.cargoNote?.trim() || undefined,
-          cargoWeightKg: form.cargoWeight ? Number(form.cargoWeight) : undefined,
+          cargoWeightKg: form.cargoWeight
+            ? Number(form.cargoWeight)
+            : undefined,
           estimateToken: token,
         };
 
@@ -772,7 +1043,9 @@ export function createCustomerHttpAdapter(
       }
 
       try {
-        const response = await activeClient.get<MappedOrderResponse>(`/orders/${validId}`);
+        const response = await activeClient.get<MappedOrderResponse>(
+          `/orders/${validId}`,
+        );
 
         return deepFreeze<CustomerDetailContentView>({
           scenarioId: 'C-DETAIL-SUCCESS',
@@ -805,8 +1078,166 @@ export function createCustomerHttpAdapter(
       }
     },
 
-    async executeIntent(intent: CustomerOrderIntent): Promise<CustomerDetailView> {
+    async getTrackingHistory(
+      orderId: string,
+    ): Promise<MappedTrackingHistoryResponse> {
       const activeClient = getClient();
+      const validId = parseCustomerOrderId(orderId);
+      if (!validId) {
+        throw new Error('Mã đơn không hợp lệ');
+      }
+
+      return activeClient.get<MappedTrackingHistoryResponse>(
+        `/orders/${validId}/tracking`,
+      );
+    },
+
+    async reconcileTrackingHistory(
+      orderId: string,
+      currentView?: CustomerDetailView,
+    ): Promise<CustomerDetailView> {
+      const activeClient = getClient();
+      const validId = parseCustomerOrderId(orderId);
+      if (!validId) {
+        return deepFreeze<CustomerDetailView>({
+          scenarioId: 'C-DETAIL-ERROR',
+          kind: 'error',
+          title: 'Mã đơn không hợp lệ',
+          message:
+            'Liên kết đơn hàng không đúng định dạng. Hãy quay lại danh sách đơn.',
+        });
+      }
+
+      try {
+        const [orderResponse, trackingResponse] = await Promise.all([
+          activeClient.get<MappedOrderResponse>(`/orders/${validId}`),
+          activeClient
+            .get<MappedTrackingHistoryResponse>(`/orders/${validId}/tracking`)
+            .catch(() => null),
+        ]);
+
+        return deepFreeze<CustomerDetailContentView>({
+          scenarioId:
+            currentView && currentView.kind === 'content'
+              ? currentView.scenarioId
+              : 'C-DETAIL-SUCCESS',
+          kind: 'content',
+          notice:
+            currentView && currentView.kind === 'content'
+              ? currentView.notice
+              : null,
+          order: mapOrderToDetail(orderResponse, trackingResponse),
+          cancel: resolveCancelView(orderResponse),
+          actions:
+            currentView && currentView.kind === 'content'
+              ? currentView.actions
+              : [],
+        });
+      } catch (error) {
+        if (isForbiddenError(error)) {
+          return deepFreeze<CustomerDetailView>({
+            scenarioId: 'C-DETAIL-PERMISSION',
+            kind: 'permission-denied',
+            title: 'Bạn không có quyền xem đơn hàng này',
+            message:
+              'Không hiển thị route, tài xế, tracking, media hoặc payment của đơn khác.',
+          });
+        }
+
+        return deepFreeze<CustomerDetailView>({
+          scenarioId: 'C-DETAIL-ERROR',
+          kind: 'error',
+          title: 'Không thể tải tracking',
+          message:
+            error instanceof Error && error.message
+              ? error.message
+              : 'Hãy thử lại sau.',
+        });
+      }
+    },
+
+    async createPaymentQr(
+      orderId: string,
+      amountVnd?: number,
+    ): Promise<CustomerDetailView> {
+      const activeClient = getClient();
+      const validId = parseCustomerOrderId(orderId);
+      if (!validId) {
+        return deepFreeze<CustomerDetailView>({
+          scenarioId: 'C-DETAIL-ERROR',
+          kind: 'error',
+          title: 'Mã đơn không hợp lệ',
+          message:
+            'Liên kết đơn hàng không đúng định dạng. Hãy quay lại danh sách đơn.',
+        });
+      }
+
+      try {
+        const paymentResponse = await activeClient.post<PaymentQrApiResponse>(
+          '/payments/qr',
+          { orderId: validId, amountVnd },
+        );
+
+        const orderResponse = await activeClient.get<MappedOrderResponse>(
+          `/orders/${validId}`,
+        );
+
+        return deepFreeze<CustomerDetailContentView>({
+          scenarioId: 'C-DETAIL-QR-READY',
+          kind: 'content',
+          notice:
+            paymentResponse.provider === 'DEMO'
+              ? 'Mã QR mô phỏng, không chứa payload thanh toán thật.'
+              : null,
+          order: mapOrderToDetail(orderResponse, null, paymentResponse),
+          cancel: resolveCancelView(orderResponse),
+          actions: [],
+        });
+      } catch (error) {
+        if (isForbiddenError(error)) {
+          return deepFreeze<CustomerDetailView>({
+            scenarioId: 'C-DETAIL-PERMISSION',
+            kind: 'permission-denied',
+            title: 'Bạn không có quyền thanh toán đơn hàng này',
+            message: 'Không thể tạo thanh toán cho đơn hàng khác.',
+          });
+        }
+
+        return deepFreeze<CustomerDetailView>({
+          scenarioId: 'C-DETAIL-PAYMENT-FAILED',
+          kind: 'error',
+          title: 'Chưa thể tạo thanh toán',
+          message:
+            error instanceof Error && error.message
+              ? error.message
+              : 'Chưa thể tạo thanh toán; không hiển thị chi tiết provider.',
+        });
+      }
+    },
+
+    async getPaymentStatus(paymentId: string): Promise<CustomerPaymentView> {
+      const activeClient = getClient();
+      try {
+        const response = await activeClient.get<PaymentQrApiResponse>(
+          `/payments/${paymentId}`,
+        );
+        return mapPaymentToView(response);
+      } catch {
+        return mapPaymentToView({
+          id: paymentId,
+          paymentId,
+          orderId: '',
+          status: 'FAILED',
+          amountVnd: 0,
+        });
+      }
+    },
+
+    async executeIntent(
+      intent: CustomerOrderIntent,
+    ): Promise<CustomerDetailView> {
+      const activeClient = getClient();
+
       if (intent.actionId === 'cancel-order') {
         const validId = parseCustomerOrderId(intent.orderId);
         if (!validId) {
@@ -856,6 +1287,44 @@ export function createCustomerHttpAdapter(
         }
       }
 
+      if (
+        intent.actionId === 'create-payment' ||
+        intent.actionId === 'refresh-payment' ||
+        intent.actionId === 'retry-payment'
+      ) {
+        const validId = parseCustomerOrderId(intent.orderId);
+        if (!validId) {
+          return deepFreeze<CustomerDetailView>({
+            scenarioId: 'C-DETAIL-ERROR',
+            kind: 'error',
+            title: 'Mã đơn không hợp lệ',
+            message:
+              'Liên kết đơn hàng không đúng định dạng. Hãy quay lại danh sách đơn.',
+          });
+        }
+
+        return this.createPaymentQr
+          ? this.createPaymentQr(validId)
+          : this.getOrderDetailView(validId);
+      }
+
+      if (intent.actionId === 'refresh-tracking') {
+        const validId = parseCustomerOrderId(intent.orderId);
+        if (!validId) {
+          return deepFreeze<CustomerDetailView>({
+            scenarioId: 'C-DETAIL-ERROR',
+            kind: 'error',
+            title: 'Mã đơn không hợp lệ',
+            message:
+              'Liên kết đơn hàng không đúng định dạng. Hãy quay lại danh sách đơn.',
+          });
+        }
+
+        return this.reconcileTrackingHistory
+          ? this.reconcileTrackingHistory(validId)
+          : this.getOrderDetailView(validId);
+      }
+
       if (intent.orderId) {
         return this.getOrderDetailView(intent.orderId);
       }
@@ -869,4 +1338,3 @@ export function createCustomerHttpAdapter(
     },
   };
 }
-

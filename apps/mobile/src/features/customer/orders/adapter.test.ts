@@ -7,14 +7,21 @@ import {
   formatDateTime,
   formatDistance,
   formatOrderReference,
+  formatPaymentReference,
   formatStatusFilterLabel,
   formatTimeOnly,
   formatVndPrice,
+  mapPaymentToView,
+  mapTrackingToView,
   normalizeRouteParam,
   parseCustomerOrderId,
+  resolveCancelView,
   type CustomerHttpClient,
   type MappedOrderResponse,
+  type MappedPaymentResponse,
+  type MappedTrackingHistoryResponse,
   type OrderEstimateApiResponse,
+  type PaymentQrApiResponse,
 } from './adapter';
 import type { CustomerCreateFormView } from './model';
 
@@ -55,15 +62,24 @@ describe('Customer route adapter helpers', () => {
     expect(formatDateTime(null)).toBe('');
     expect(formatTimeOnly(null)).toBe('');
 
-    expect(formatOrderReference({ id: '11111111-1111-4111-8111-111111111001' })).toBe(
-      'LP-11111111',
-    );
+    expect(
+      formatOrderReference({ id: '11111111-1111-4111-8111-111111111001' }),
+    ).toBe('LP-11111111');
     expect(
       formatOrderReference({
         id: '11111111-1111-4111-8111-111111111001',
         reference: 'LP-260815-001',
       }),
     ).toBe('LP-260815-001');
+
+    expect(
+      formatPaymentReference({ id: '11111111-1111-4111-8111-111111111001' }),
+    ).toBe('LPRD-11111111');
+    expect(
+      formatPaymentReference({
+        referenceLabel: 'LPRD-DEMO-260815-001',
+      }),
+    ).toBe('LPRD-DEMO-260815-001');
 
     expect(formatStatusFilterLabel('REQUESTED')).toBe('Chờ tài xế');
     expect(formatStatusFilterLabel('IN_TRANSIT')).toBe('Đang vận chuyển');
@@ -74,10 +90,173 @@ describe('Customer route adapter helpers', () => {
     expect(describeStatus('ACCEPTED')).toBe('Tài xế đã nhận đơn.');
     expect(describeStatus('PICKING_UP')).toBe('Tài xế đang đến lấy hàng.');
     expect(describeStatus('IN_TRANSIT')).toBe('Hàng đang được vận chuyển.');
-    expect(describeStatus('DELIVERED')).toBe('Đơn hàng đã được giao thành công.');
+    expect(describeStatus('DELIVERED')).toBe(
+      'Đơn hàng đã được giao thành công.',
+    );
     expect(describeStatus('CANCELLED')).toBe(
       'Đã nhận snapshot phản hồi với trạng thái Đã hủy.',
     );
+  });
+
+  describe('mapPaymentToView', () => {
+    it('maps unpaid order to create-payment action', () => {
+      const view = mapPaymentToView(null, 286000, 'REQUESTED');
+      expect(view.status).toBe('UNPAID');
+      expect(view.amountLabel).toBe('286.000 ₫');
+      expect(view.action?.id).toBe('create-payment');
+    });
+
+    it('maps delivered order to PAID_MANUAL when no payment payload', () => {
+      const view = mapPaymentToView(null, 286000, 'DELIVERED');
+      expect(view.status).toBe('PAID_MANUAL');
+      expect(view.sourceLabel).toBe('Xác nhận thủ công bởi hệ thống');
+    });
+
+    it('maps active QR payment to ready state', () => {
+      const payment: PaymentQrApiResponse = {
+        paymentId: 'pmt-1',
+        orderId: 'ord-1',
+        amountVnd: 286000,
+        status: 'QR_CREATED',
+        provider: 'DEMO',
+        expiresAt: new Date(Date.now() + 3600000).toISOString(),
+        referenceLabel: 'LPRD-DEMO-260815-001',
+      };
+      const view = mapPaymentToView(payment, 286000);
+      expect(view.status).toBe('QR_CREATED');
+      expect(view.qrState).toBe('ready');
+      expect(view.referenceLabel).toBe('LPRD-DEMO-260815-001');
+      expect(view.sourceLabel).toBe('VietQR mô phỏng');
+      expect(view.notice).toContain('Mã QR mô phỏng');
+    });
+
+    it('maps expired QR payment to expired state with refresh action', () => {
+      const payment: PaymentQrApiResponse = {
+        paymentId: 'pmt-1',
+        orderId: 'ord-1',
+        amountVnd: 286000,
+        status: 'QR_CREATED',
+        provider: 'VIETQR',
+        expiresAt: '2020-01-01T00:00:00.000Z',
+      };
+      const view = mapPaymentToView(payment, 286000);
+      expect(view.status).toBe('QR_CREATED');
+      expect(view.qrState).toBe('expired');
+      expect(view.expiresAtLabel).toBe('Đã hết hạn theo phản hồi hệ thống');
+      expect(view.action?.id).toBe('refresh-payment');
+    });
+
+    it('maps failed payment with retry action', () => {
+      const payment: MappedPaymentResponse = {
+        id: 'pmt-1',
+        orderId: 'ord-1',
+        status: 'FAILED',
+        amountVnd: 286000,
+      };
+      const view = mapPaymentToView(payment, 286000);
+      expect(view.status).toBe('FAILED');
+      expect(view.action?.id).toBe('retry-payment');
+    });
+  });
+
+  describe('mapTrackingToView', () => {
+    const mockOrder: MappedOrderResponse = {
+      id: '11111111-1111-4111-8111-111111111001',
+      status: 'IN_TRANSIT',
+      driverId: 'drv-1',
+      providerSource: 'DEMO',
+      distanceMeters: 10000,
+      durationSeconds: 600,
+      priceVnd: 100000,
+      etaSeconds: 600,
+      createdAt: '2026-08-15T14:00:00.000Z',
+      updatedAt: '2026-08-15T14:30:00.000Z',
+    };
+
+    it('returns no-driver when order has no driver assigned', () => {
+      const view = mapTrackingToView({ ...mockOrder, driverId: null, status: 'REQUESTED' });
+      expect(view.kind).toBe('no-driver');
+    });
+
+    it('returns no-location when history is empty but driver assigned', () => {
+      const view = mapTrackingToView(mockOrder, { orderId: mockOrder.id, points: [] });
+      expect(view.kind).toBe('no-location');
+    });
+
+    it('returns fresh tracking view when tracking points exist', () => {
+      const history: MappedTrackingHistoryResponse = {
+        orderId: mockOrder.id,
+        points: [
+          {
+            id: 'pt-1',
+            orderId: mockOrder.id,
+            driverId: 'drv-1',
+            latitude: 10.75,
+            longitude: 106.68,
+            capturedAt: '2026-08-15T14:32:00.000Z',
+          },
+        ],
+      };
+      const view = mapTrackingToView(mockOrder, history);
+      expect(view.kind).toBe('fresh');
+      if (view.kind === 'fresh') {
+        expect(view.driverLabel).toBe('Tài xế Nguyễn Minh An');
+        expect(view.lastUpdatedLabel).toBeTruthy();
+      }
+    });
+  });
+
+  describe('resolveCancelView', () => {
+    it('returns available cancel action for REQUESTED order', () => {
+      const view = resolveCancelView({
+        id: 'ord-1',
+        status: 'REQUESTED',
+        driverId: null,
+        providerSource: 'DEMO',
+        distanceMeters: 0,
+        durationSeconds: 0,
+        priceVnd: 0,
+        etaSeconds: 0,
+        createdAt: '',
+        updatedAt: '',
+      });
+      expect(view.kind).toBe('available');
+      if (view.kind === 'available') {
+        expect(view.action.id).toBe('cancel-order');
+      }
+    });
+
+    it('returns unavailable reason for assigned order', () => {
+      const view = resolveCancelView({
+        id: 'ord-1',
+        status: 'IN_TRANSIT',
+        driverId: 'drv-1',
+        providerSource: 'DEMO',
+        distanceMeters: 0,
+        durationSeconds: 0,
+        priceVnd: 0,
+        etaSeconds: 0,
+        createdAt: '',
+        updatedAt: '',
+      });
+      expect(view.kind).toBe('unavailable');
+    });
+
+    it('returns hidden for delivered/cancelled order', () => {
+      const view = resolveCancelView({
+        id: 'ord-1',
+        status: 'DELIVERED',
+        driverId: 'drv-1',
+        providerSource: 'DEMO',
+        distanceMeters: 0,
+        durationSeconds: 0,
+        priceVnd: 0,
+        etaSeconds: 0,
+        createdAt: '',
+        updatedAt: '',
+      });
+      expect(view.kind).toBe('hidden');
+    });
   });
 });
 
@@ -390,8 +569,8 @@ describe('createCustomerHttpAdapter', () => {
     it('calls POST /orders and returns detail content view', async () => {
       const client = createMockClient();
       client.post
-        .mockResolvedValueOnce(mockEstimateResponse) // estimateToken resolution
-        .mockResolvedValueOnce(mockOrderResponse); // createOrder
+        .mockResolvedValueOnce(mockEstimateResponse)
+        .mockResolvedValueOnce(mockOrderResponse);
 
       const adapter = createCustomerHttpAdapter(client);
       const view = await adapter.createOrder(validForm);
@@ -491,6 +670,121 @@ describe('createCustomerHttpAdapter', () => {
     });
   });
 
+  describe('Payment endpoints and status', () => {
+    const mockPaymentQrResponse: PaymentQrApiResponse = {
+      paymentId: 'pmt-1',
+      orderId: mockOrderResponse.id,
+      amountVnd: 286000,
+      status: 'QR_CREATED',
+      provider: 'DEMO',
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      referenceLabel: 'LPRD-DEMO-260815-001',
+    };
+
+    it('createPaymentQr calls POST /payments/qr and returns detail view with ready QR', async () => {
+      const client = createMockClient();
+      client.post.mockResolvedValueOnce(mockPaymentQrResponse);
+      client.get.mockResolvedValueOnce(mockOrderResponse);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.createPaymentQr!(mockOrderResponse.id, 286000);
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.scenarioId).toBe('C-DETAIL-QR-READY');
+        expect(view.order.payment.status).toBe('QR_CREATED');
+        expect(view.order.payment.qrState).toBe('ready');
+        expect(view.order.payment.referenceLabel).toBe('LPRD-DEMO-260815-001');
+        expect(view.order.payment.sourceLabel).toBe('VietQR mô phỏng');
+      }
+      expect(client.post).toHaveBeenCalledWith('/payments/qr', {
+        orderId: mockOrderResponse.id,
+        amountVnd: 286000,
+      });
+    });
+
+    it('createPaymentQr handles 403 permission denied', async () => {
+      const client = createMockClient();
+      client.post.mockRejectedValueOnce(
+        new ApiError(403, 'FORBIDDEN', 'Payment denied'),
+      );
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.createPaymentQr!(mockOrderResponse.id);
+
+      expect(view.kind).toBe('permission-denied');
+    });
+
+    it('getPaymentStatus calls GET /payments/:id and returns mapped payment view', async () => {
+      const client = createMockClient();
+      client.get.mockResolvedValueOnce(mockPaymentQrResponse);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.getPaymentStatus!('pmt-1');
+
+      expect(view.status).toBe('QR_CREATED');
+      expect(view.referenceLabel).toBe('LPRD-DEMO-260815-001');
+      expect(client.get).toHaveBeenCalledWith('/payments/pmt-1');
+    });
+  });
+
+  describe('Tracking history and reconciliation', () => {
+    const mockTrackingResponse: MappedTrackingHistoryResponse = {
+      orderId: mockOrderResponse.id,
+      points: [
+        {
+          id: 'pt-1',
+          orderId: mockOrderResponse.id,
+          driverId: 'drv-1',
+          latitude: 10.75,
+          longitude: 106.68,
+          capturedAt: '2026-08-15T14:32:00.000Z',
+        },
+      ],
+      latestPoint: {
+        id: 'pt-1',
+        orderId: mockOrderResponse.id,
+        driverId: 'drv-1',
+        latitude: 10.75,
+        longitude: 106.68,
+        capturedAt: '2026-08-15T14:32:00.000Z',
+      },
+    };
+
+    it('getTrackingHistory calls GET /orders/:id/tracking', async () => {
+      const client = createMockClient();
+      client.get.mockResolvedValueOnce(mockTrackingResponse);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const res = await adapter.getTrackingHistory!(mockOrderResponse.id);
+
+      expect(res).toEqual(mockTrackingResponse);
+      expect(client.get).toHaveBeenCalledWith(
+        `/orders/${mockOrderResponse.id}/tracking`,
+      );
+    });
+
+    it('reconcileTrackingHistory fetches order and tracking and updates detail view', async () => {
+      const client = createMockClient();
+      client.get
+        .mockResolvedValueOnce(mockOrderResponse)
+        .mockResolvedValueOnce(mockTrackingResponse);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.reconcileTrackingHistory!(
+        mockOrderResponse.id,
+      );
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.order.tracking.kind).toBe('fresh');
+        if (view.order.tracking.kind === 'fresh') {
+          expect(view.order.tracking.driverLabel).toBe('Tài xế Nguyễn Minh An');
+        }
+      }
+    });
+  });
+
   describe('executeIntent', () => {
     it('cancels order on cancel-order action and returns cancel success content view', async () => {
       const client = createMockClient();
@@ -522,6 +816,53 @@ describe('createCustomerHttpAdapter', () => {
       );
     });
 
+    it('executes create-payment intent', async () => {
+      const client = createMockClient();
+      const mockPaymentQrResponse: PaymentQrApiResponse = {
+        paymentId: 'pmt-1',
+        orderId: mockOrderResponse.id,
+        amountVnd: 286000,
+        status: 'QR_CREATED',
+        provider: 'DEMO',
+        expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      };
+      client.post.mockResolvedValueOnce(mockPaymentQrResponse);
+      client.get.mockResolvedValueOnce(mockOrderResponse);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.executeIntent({
+        actionId: 'create-payment',
+        orderId: mockOrderResponse.id,
+      });
+
+      expect(view.kind).toBe('content');
+      expect(client.post).toHaveBeenCalledWith('/payments/qr', {
+        orderId: mockOrderResponse.id,
+        amountVnd: undefined,
+      });
+    });
+
+    it('executes refresh-tracking intent', async () => {
+      const client = createMockClient();
+      client.get
+        .mockResolvedValueOnce(mockOrderResponse)
+        .mockResolvedValueOnce({
+          orderId: mockOrderResponse.id,
+          points: [],
+        });
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.executeIntent({
+        actionId: 'refresh-tracking',
+        orderId: mockOrderResponse.id,
+      });
+
+      expect(view.kind).toBe('content');
+      expect(client.get).toHaveBeenCalledWith(
+        `/orders/${mockOrderResponse.id}/tracking`,
+      );
+    });
+
     it('refreshes order on refresh-order action', async () => {
       const client = createMockClient();
       client.get.mockResolvedValueOnce(mockOrderResponse);
@@ -533,7 +874,9 @@ describe('createCustomerHttpAdapter', () => {
       });
 
       expect(view.kind).toBe('content');
-      expect(client.get).toHaveBeenCalledWith(`/orders/${mockOrderResponse.id}`);
+      expect(client.get).toHaveBeenCalledWith(
+        `/orders/${mockOrderResponse.id}`,
+      );
     });
 
     it('handles invalid order ID in cancel intent gracefully', async () => {
@@ -569,4 +912,3 @@ describe('createCustomerHttpAdapter', () => {
     });
   });
 });
-
