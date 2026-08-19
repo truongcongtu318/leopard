@@ -26,15 +26,6 @@ export interface TrackingPointDto {
   createdAt: string; // ISO UTC
 }
 
-export interface SendTrackingPointPayload {
-  orderId: string;
-  clientPointId: string;
-  latitude: number;
-  longitude: number;
-  accuracyM?: number;
-  capturedAt: string;
-}
-
 export interface TrackingHistoryResponse {
   orderId: string;
   points: TrackingPoint[];

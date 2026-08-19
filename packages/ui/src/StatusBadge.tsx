@@ -5,6 +5,7 @@ export type OrderStatus =
   | 'REQUESTED'
   | 'ACCEPTED'
   | 'PICKING_UP'
+  | 'PICKED_UP'
   | 'IN_TRANSIT'
   | 'DELIVERED'
   | 'CANCELLED';
@@ -46,6 +47,7 @@ const STATUS_BY_DOMAIN: CanonicalStatusMap = {
     REQUESTED: { label: 'Chờ tài xế', tone: 'info' },
     ACCEPTED: { label: 'Đã nhận đơn', tone: 'active' },
     PICKING_UP: { label: 'Đang đến điểm lấy', tone: 'warning' },
+    PICKED_UP: { label: 'Đã lấy hàng', tone: 'active' },
     IN_TRANSIT: { label: 'Đang vận chuyển', tone: 'active' },
     DELIVERED: { label: 'Đã giao', tone: 'success' },
     CANCELLED: { label: 'Đã hủy', tone: 'danger' },

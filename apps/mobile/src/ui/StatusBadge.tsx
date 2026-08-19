@@ -60,6 +60,11 @@ const statusPresentations: StatusPresentationCatalog = {
       colorRole: 'warning',
       label: 'Đang đến điểm lấy',
     },
+    PICKED_UP: {
+      accessibilityPrefix: 'Trạng thái đơn',
+      colorRole: 'active',
+      label: 'Đã lấy hàng',
+    },
     IN_TRANSIT: {
       accessibilityPrefix: 'Trạng thái đơn',
       colorRole: 'active',
@@ -150,6 +155,7 @@ const legacyStatusDomains: Readonly<Record<LegacyStatus, StatusDomain>> = {
   REQUESTED: 'order',
   ACCEPTED: 'order',
   PICKING_UP: 'order',
+  PICKED_UP: 'order',
   IN_TRANSIT: 'order',
   DELIVERED: 'order',
   CANCELLED: 'order',

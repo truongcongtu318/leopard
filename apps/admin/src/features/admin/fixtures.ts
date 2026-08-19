@@ -88,6 +88,7 @@ const ORDER_STATUS_LABEL: Readonly<Record<OrderStatus, string>> = {
   REQUESTED: 'Chờ tài xế',
   ACCEPTED: 'Đã nhận đơn',
   PICKING_UP: 'Đang đến điểm lấy',
+  PICKED_UP: 'Đã lấy hàng',
   IN_TRANSIT: 'Đang vận chuyển',
   DELIVERED: 'Đã giao',
   CANCELLED: 'Đã hủy',

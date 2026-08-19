@@ -26,12 +26,6 @@ importers:
 
   apps/admin:
     dependencies:
-      '@leopard/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
-      '@leopard/testkit':
-        specifier: workspace:*
-        version: link:../../packages/testkit
       '@leopard/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -208,12 +202,6 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@leopard/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
-      '@leopard/testkit':
-        specifier: workspace:*
-        version: link:../../packages/testkit
       '@tanstack/react-query':
         specifier: 5.101.2
         version: 5.101.2(react@19.2.7)
@@ -273,15 +261,6 @@ importers:
         specifier: 19.2.7
         version: 19.2.7(react@19.2.7)
 
-  packages/brand:
-    devDependencies:
-      '@leopard/config':
-        specifier: workspace:*
-        version: link:../config
-      typescript:
-        specifier: 7.0.2
-        version: 7.0.2
-
   packages/config:
     devDependencies:
       '@babel/core':
@@ -306,24 +285,8 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.10.1)(jsdom@20.0.3)(vite@8.1.4(@types/node@24.10.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.0))
 
-  packages/testkit:
-    dependencies:
-      '@leopard/shared':
-        specifier: workspace:*
-        version: link:../shared
-    devDependencies:
-      '@leopard/config':
-        specifier: workspace:*
-        version: link:../config
-      typescript:
-        specifier: 7.0.2
-        version: 7.0.2
-
   packages/ui:
     dependencies:
-      '@leopard/shared':
-        specifier: workspace:*
-        version: link:../shared
       clsx:
         specifier: 2.1.1
         version: 2.1.1
