@@ -7,7 +7,7 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 // Refresh endpoint path
 const REFRESH_PATH = '/auth/refresh';
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 interface RequestOptions {
   method: HttpMethod;
@@ -183,6 +183,10 @@ export const httpClient = {
 
   put<T = unknown>(path: string, body?: unknown): Promise<T> {
     return request<T>({ method: 'PUT', path, body });
+  },
+
+  patch<T = unknown>(path: string, body?: unknown): Promise<T> {
+    return request<T>({ method: 'PATCH', path, body });
   },
 
   delete<T = unknown>(path: string): Promise<T> {

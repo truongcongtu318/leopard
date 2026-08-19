@@ -165,6 +165,17 @@ describe('http-client', () => {
     expect(init?.method).toBe('PUT');
   });
 
+  it('performs PATCH request with body', async () => {
+    fetchMock().mockResolvedValue(createMockResponse(200, { availability: 'AVAILABLE' }));
+
+    const body = { availability: 'AVAILABLE' };
+    await httpClient.patch<{ availability: string }>('/driver/availability', body);
+
+    const [, init] = lastFetchArgs();
+    expect(init?.method).toBe('PATCH');
+    expect(init?.body).toBe(JSON.stringify(body));
+  });
+
   it('performs DELETE request', async () => {
     fetchMock().mockResolvedValue(createMockResponse(200, {}));
 
