@@ -183,7 +183,7 @@ export function LoginForm({
         <div className="mt-6 border-t border-neutral-border pt-5">
           <div className="mb-3 flex items-center justify-center gap-2">
             <span className="h-px w-8 bg-neutral-border" />
-            <span className="text-[0.7rem] font-semibold uppercase tracking-widest text-neutral-muted">
+            <span className="text-xs font-semibold uppercase tracking-widest text-neutral-muted">
               Tài khoản demo
             </span>
             <span className="h-px w-8 bg-neutral-border" />
@@ -195,13 +195,13 @@ export function LoginForm({
                 data-testid="demo-admin-button"
                 disabled={isSubmitting}
                 onClick={() => handleDemoLogin("admin", "ADMIN")}
-                className="flex min-h-11 w-full items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:opacity-50"
+                className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold text-neutral-text">Demo Admin</span>
-                  <span className="block text-[0.65rem] text-neutral-muted">Quản trị toàn hệ thống</span>
+                  <span className="block text-xs text-neutral-muted">Quản trị toàn hệ thống</span>
                 </span>
-                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-[0.625rem] font-bold text-brand-soft-text">
+                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-xs font-bold text-brand-soft-text">
                   ADMIN
                 </span>
               </button>
@@ -210,13 +210,13 @@ export function LoginForm({
                 data-testid="demo-fleet-owner-button"
                 disabled={isSubmitting}
                 onClick={() => handleDemoLogin("fleet-owner", "FLEET_OWNER")}
-                className="flex min-h-11 w-full items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:opacity-50"
+                className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold text-neutral-text">Demo Fleet Owner</span>
-                  <span className="block text-[0.65rem] text-neutral-muted">Quản lý đội xe Sao Mai</span>
+                  <span className="block text-xs text-neutral-muted">Quản lý đội xe Sao Mai</span>
                 </span>
-                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-[0.625rem] font-bold text-brand-soft-text">
+                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-xs font-bold text-brand-soft-text">
                   FLEET_OWNER
                 </span>
               </button>
@@ -224,13 +224,13 @@ export function LoginForm({
                 type="button"
                 disabled={isSubmitting}
                 onClick={() => handleDemoLogin("driver", "DRIVER")}
-                className="flex min-h-11 w-full items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:opacity-50"
+                className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold text-neutral-text">Demo Driver</span>
-                  <span className="block text-[0.65rem] text-neutral-muted">Tài xế nhận chuyến</span>
+                  <span className="block text-xs text-neutral-muted">Tài xế nhận chuyến</span>
                 </span>
-                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-[0.625rem] font-bold text-brand-soft-text">
+                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-xs font-bold text-brand-soft-text">
                   DRIVER
                 </span>
               </button>
@@ -238,13 +238,13 @@ export function LoginForm({
                 type="button"
                 disabled={isSubmitting}
                 onClick={() => handleDemoLogin("customer", "CUSTOMER")}
-                className="flex min-h-11 w-full items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:opacity-50"
+                className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold text-neutral-text">Demo Customer</span>
-                  <span className="block text-[0.65rem] text-neutral-muted">Tạo và theo dõi đơn</span>
+                  <span className="block text-xs text-neutral-muted">Tạo và theo dõi đơn</span>
                 </span>
-                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-[0.625rem] font-bold text-brand-soft-text">
+                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-xs font-bold text-brand-soft-text">
                   CUSTOMER
                 </span>
               </button>

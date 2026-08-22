@@ -140,7 +140,7 @@ export function AdminDispatchSlab({
     >
       <div className="flex items-center gap-2 mb-3">
         <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-        <p className="text-[0.7rem] font-bold tracking-wider text-cyan-400 uppercase">{eyebrow}</p>
+        <p className="text-xs font-bold tracking-wider text-cyan-400 uppercase">{eyebrow}</p>
       </div>
       <div className="min-w-0">{children}</div>
     </section>
@@ -204,9 +204,9 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
       <header className="mb-4 flex items-center justify-between border-b border-neutral-border pb-3">
         <div>
           <h2 className="text-section-title font-semibold">Audit Rail</h2>
-          <p className="mt-0.5 text-[0.65rem] text-neutral-muted uppercase tracking-wider font-semibold">Thao tác đặc quyền · Mới nhất trước</p>
+          <p className="mt-0.5 text-xs text-neutral-muted uppercase tracking-wider font-semibold">Thao tác đặc quyền · Mới nhất trước</p>
         </div>
-        <span className="rounded-full bg-neutral-border px-2 py-0.5 text-[0.65rem] font-bold text-neutral-text">AUDITED</span>
+        <span className="rounded-full bg-neutral-border px-2 py-0.5 text-xs font-bold text-neutral-text">AUDITED</span>
       </header>
       {audit.state === 'error' ? (
         <ScreenState
@@ -225,37 +225,37 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
           {audit.entries.map((entry) => (
             <li key={entry.id} className="min-w-0 rounded-control border border-neutral-border bg-neutral p-3.5">
               <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
-                <span className="rounded-full bg-success px-2 py-0.5 text-[0.65rem] font-bold text-success-text border border-success-border">
+                <span className="rounded-full bg-success px-2 py-0.5 text-xs font-bold text-success-text border border-success-border">
                   {entry.outcomeLabel}
                 </span>
-                <time className="text-[0.65rem] font-medium text-neutral-muted tabular-nums" dateTime={entry.dateTime}>
+                <time className="text-xs font-medium text-neutral-muted tabular-nums" dateTime={entry.dateTime}>
                   {entry.timestampLabel}
                 </time>
               </div>
               <h3 className="text-xs font-bold text-neutral-text break-words mb-2">{entry.actionLabel}</h3>
               <dl className="grid gap-1.5 text-xs text-neutral-muted">
                 <div className="flex justify-between gap-2 border-t border-neutral-border pt-1.5">
-                  <dt className="text-[0.7rem] font-semibold text-neutral-muted uppercase">Actor</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Actor</dt>
                   <dd className="font-medium text-neutral-text text-right">{entry.actorLabel}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[0.7rem] font-semibold text-neutral-muted uppercase">Target</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Target</dt>
                   <dd className="font-medium text-neutral-text text-right">{entry.targetLabel}</dd>
                 </div>
                 <div>
-                  <dt className="text-[0.7rem] font-semibold text-neutral-muted uppercase">Lý do đã sanitize</dt>
-                  <dd className="mt-0.5 rounded-control bg-neutral-surface p-2 text-[0.75rem] text-neutral-text whitespace-pre-wrap break-words border border-neutral-border">{entry.reason}</dd>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Lý do đã sanitize</dt>
+                  <dd className="mt-0.5 rounded-control bg-neutral-surface p-2 text-xs text-neutral-text whitespace-pre-wrap break-words border border-neutral-border">{entry.reason}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[0.7rem] font-semibold text-neutral-muted uppercase">Thời gian</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Thời gian</dt>
                   <dd className="mt-xxs"><time dateTime={entry.dateTime}>{entry.timestampLabel}</time></dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[0.7rem] font-semibold text-neutral-muted uppercase">Request ID</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Request ID</dt>
                   <dd className="font-mono text-xs text-neutral-text break-all">{entry.requestId}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[0.7rem] font-semibold text-neutral-muted uppercase">Audit ID</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Audit ID</dt>
                   <dd className="font-mono text-xs text-neutral-text break-all">{entry.auditId}</dd>
                 </div>
               </dl>

@@ -79,14 +79,20 @@ export function FleetDashboardScreen({
           title="Đơn đang hoạt động"
         >
           {view.activeOrders.length === 0 ? (
-            <p className="py-sm text-body-compact text-neutral-muted">
+            <div className="py-sm text-body-compact text-neutral-muted">
               Chưa có đơn đang hoạt động trong đội xe.
-            </p>
+              <a
+                className="mt-xs block min-h-11 font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                href={fleetPreviewHref('/fleet/orders', 'fleet-orders-active', previewContext)}
+              >
+                Xem tất cả đơn của đội xe
+              </a>
+            </div>
           ) : (
             <ul className="m-0 grid list-none gap-md p-0">
               {view.activeOrders.map((order) => (
                 <li key={order.id} className="border-l-4 border-brand bg-neutral-surface p-md">
-                  <p className="mb-xs text-[0.625rem] font-bold tracking-widest text-brand">
+                  <p className="mb-xs text-xs font-bold tracking-widest text-brand">
                     ACTIVE ORDER
                   </p>
                   <div className="flex flex-wrap items-start justify-between gap-xs">

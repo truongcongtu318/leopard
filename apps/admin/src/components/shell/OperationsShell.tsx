@@ -123,14 +123,14 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
       {/* Brand Header */}
       <div className="mb-8 px-2">
         <p className="text-base font-extrabold tracking-tight text-neutral-text">LEOPARD</p>
-        <p className="text-[10px] font-bold tracking-widest text-neutral-muted uppercase">
+        <p className="text-xs font-bold tracking-widest text-neutral-muted uppercase">
           OPERATIONS LEDGER
         </p>
       </div>
 
       {/* Section: MAIN MENU */}
       <div className="mb-2 px-3.5">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-muted">
+        <p className="text-xs font-bold uppercase tracking-wider text-neutral-muted">
           {roleContext.contextLabel}
         </p>
       </div>

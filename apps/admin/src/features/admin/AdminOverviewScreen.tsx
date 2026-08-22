@@ -120,7 +120,12 @@ export function AdminOverviewScreen({
         title="Ngoại lệ cần điều tra"
         description="Hàng được xếp theo tín hiệu adapter; màu và signal rail không thay thế nhãn điều kiện."
       >
-        <ul className="m-0 grid list-none gap-sm p-0">
+        {view.exceptions.length === 0 ? (
+          <p className="py-sm text-body-compact text-neutral-muted">
+            Không có ngoại lệ nào trong snapshot hiện tại. Tiếp tục theo dõi ở sổ trạng thái đơn bên dưới.
+          </p>
+        ) : (
+          <ul className="m-0 grid list-none gap-sm p-0">
           {view.exceptions.map((exception) => (
             <li
               key={exception.id}
@@ -154,7 +159,8 @@ export function AdminOverviewScreen({
               ) : null}
             </li>
           ))}
-        </ul>
+          </ul>
+        )}
       </AdminSurface>
 
       <AdminDispatchSlab ariaLabel="Bàn điều phối hiện tại" eyebrow="CA TRỰC PILOT · TÍN HIỆU HIỆN TẠI">

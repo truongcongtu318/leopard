@@ -13,7 +13,7 @@ export default function LoginPage() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-text">
             LEOPARD Operations
           </h1>
-          <p className="mt-1.5 text-[0.7rem] sm:text-xs font-semibold uppercase tracking-widest text-brand">
+          <p className="mt-1.5 text-xs font-semibold uppercase tracking-widest text-brand">
             Sổ điều phối vận hành logistics
           </p>
           <p className="mt-2 text-xs text-neutral-muted">

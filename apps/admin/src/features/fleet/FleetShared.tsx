@@ -19,7 +19,7 @@ export function FleetScopeRail({ scope }: Readonly<{ scope: FleetScopeView }>) {
     <div>
      <div className="flex items-center gap-2">
       <p className="text-sm font-bold text-brand-text">Phạm vi truy cập: Đội xe {scope.displayName}</p>
-      <span className="rounded-pill border border-brand-text/40 px-2 py-0.5 text-[0.65rem] font-bold">
+      <span className="rounded-pill border border-brand-text/40 px-2 py-0.5 text-xs font-bold">
        CHỈ XEM (READ-ONLY)
       </span>
      </div>
@@ -128,7 +128,7 @@ export function FleetDispatchSlab({
    className="min-w-0 rounded-card bg-brand p-md text-brand-text"
   >
    <div className="mb-3 flex items-center gap-2">
-    <p className="text-[0.7rem] font-bold uppercase tracking-wider text-brand-soft">{eyebrow}</p>
+    <p className="text-xs font-bold uppercase tracking-wider text-brand-soft">{eyebrow}</p>
    </div>
    <div className="min-w-0">{children}</div>
   </section>
