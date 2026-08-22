@@ -101,6 +101,8 @@ export class FleetOwnerService {
       availability: m.user.driverProfile?.availability ?? 'OFFLINE',
       vehicleType: m.user.driverProfile?.vehicleType ?? 'MOTORBIKE',
       lastKnownAt: m.user.driverProfile?.lastKnownAt?.toISOString() ?? null,
+      membershipStatus: m.status,
+      fleetName: null,
     }));
 
     return {
@@ -137,20 +139,36 @@ export class FleetOwnerService {
         where,
         skip,
         take: pageSize,
-        include: { driver: true },
+        include: {
+          driver: true,
+          customer: { select: { phone: true } },
+          stops: { orderBy: { sequence: 'asc' } },
+          paymentIntents: { orderBy: { createdAt: 'desc' }, take: 1 },
+        },
         orderBy: { createdAt: 'desc' },
       }),
     ]);
 
-    type OrderWithDriver = Order & { driver: User | null };
-    const items = orders.map((o: OrderWithDriver) => ({
+    type OrderWithRelations = Order & {
+      driver: User | null;
+      customer: { phone: string };
+      stops: Array<{ type: string; sequence: number; address: string }>;
+      paymentIntents: Array<{ status: string }>;
+    };
+    const items = orders.map((o: OrderWithRelations) => ({
        id: o.id,
        code: o.id.split('-')[0]?.toUpperCase() ?? '',
        status: o.status,
        driverId: o.driverId ?? undefined,
        driverName: o.driver?.phone,
+       customerPhone: o.customer.phone,
+       pickupLabel: o.stops.find((s) => s.type === 'PICKUP')?.address ?? '',
+       dropoffLabel:
+         [...o.stops].reverse().find((s) => s.type === 'DROPOFF')?.address ?? '',
+       paymentStatus: o.paymentIntents[0]?.status ?? 'UNPAID',
        priceVnd: o.priceVnd ?? 0,
        createdAt: o.createdAt.toISOString(),
+       updatedAt: o.updatedAt.toISOString(),
        distanceMeters: o.distanceMeters ?? 0,
     }));
 

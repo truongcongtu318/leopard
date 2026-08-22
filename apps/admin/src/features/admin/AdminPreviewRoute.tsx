@@ -10,6 +10,7 @@ import { AdminListScreen } from './AdminListScreen';
 import { AdminOrderDetailScreen } from './AdminOrderDetailScreen';
 import { AdminOverviewScreen } from './AdminOverviewScreen';
 import type { AdminPreviewScreen } from './fixtures';
+import { adminBoundaryFromError, loadAdminRuntimeView } from './runtime';
 import type {
   AdminCommandKind,
   AdminListFilters,
@@ -72,14 +73,37 @@ function screenTitle(screen: AdminPreviewScreen): string {
   return 'Tài xế';
 }
 
-function RuntimeBoundary({ screen }: Readonly<{ screen: AdminPreviewScreen }>) {
+const BOUNDARY_KINDS: ReadonlySet<string> = new Set([
+  'permission-denied',
+  'session-expired',
+  'loading',
+  'error',
+]);
+
+function AdminBoundaryResult({
+  screen,
+  kind,
+  title,
+  message,
+}: Readonly<{
+  screen: AdminPreviewScreen;
+  kind: string;
+  title: string;
+  message: string;
+}>) {
   return (
     <div className="flex flex-col gap-md">
       <OperationsPageHeader title={screenTitle(screen)} />
       <ScreenState
-        message="Lớp trình bày Admin Wave 4 đã sẵn sàng; runtime query/command ports sẽ được nối sau handoff Wave 3."
-        state="empty"
-        title="Chưa kết nối nguồn dữ liệu"
+        message={message}
+        state={
+          kind === 'permission-denied'
+            ? 'permission-denied'
+            : kind === 'loading'
+              ? 'loading'
+              : 'error'
+        }
+        title={title}
       />
     </div>
   );
@@ -190,6 +214,30 @@ export async function AdminPreviewRoute({
     command: commandKind,
   };
 
+  if (!selection.enabled) {
+    let view: AdminRouteView;
+    try {
+      view = await loadAdminRuntimeView(screen, { orderId, filters });
+    } catch (error) {
+      view = adminBoundaryFromError(error, 'RUNTIME');
+    }
+
+    if (BOUNDARY_KINDS.has(view.kind)) {
+      const boundaryView = view as AdminRouteView & { title: string; message: string };
+      return (
+        <AdminBoundaryResult
+          kind={view.kind}
+          message={boundaryView.message}
+          screen={screen}
+          title={boundaryView.title}
+        />
+      );
+    }
+
+    const runtimeContext: AdminPreviewContext = { rawSearch: null };
+    return <AdminScreen previewContext={runtimeContext} screen={screen} view={view} />;
+  }
+
   return (
     <WebPreviewComposition
       renderFixture={(previewScenario) =>
@@ -203,7 +251,16 @@ export async function AdminPreviewRoute({
           <PreviewScenarioBoundary scenario={previewScenario} />
         )
       }
-      renderRuntime={() => <RuntimeBoundary screen={screen} />}
+      renderRuntime={() => (
+        <div className="flex flex-col gap-md">
+          <OperationsPageHeader title={screenTitle(screen)} />
+          <ScreenState
+            message="Không thể xác định nguồn dữ liệu runtime."
+            state="error"
+            title="Lỗi cấu hình"
+          />
+        </div>
+      )}
       selection={selection}
     />
   );

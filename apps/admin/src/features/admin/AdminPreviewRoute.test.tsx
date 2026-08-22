@@ -56,7 +56,9 @@ describe('Admin guarded preview route', () => {
 
     expect(loadCatalogue).not.toHaveBeenCalled();
     expect(screen.queryByText(PREVIEW_BANNER_TEXT)).toBeNull();
-    expect(screen.getByText('Chưa kết nối nguồn dữ liệu')).toBeTruthy();
+    // Runtime path is live: without a valid session the API layer fails closed
+    // into a boundary state instead of rendering fixtures.
+    expect(screen.getByText(/Không thể tải dữ liệu|Phiên đã hết hạn/)).toBeTruthy();
   });
 
   it('fails closed for an invalid Order detail ID before loading fixtures', async () => {

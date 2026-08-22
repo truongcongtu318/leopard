@@ -36,6 +36,8 @@ export interface MappedOrderResponse {
   cancelledAt: string | null;
   createdAt: string;
   updatedAt: string;
+  customerPhone?: string | undefined;
+  driverPhone?: string | null;
   stops?: MappedOrderStopResponse[];
   statusHistory?: MappedOrderStatusHistoryResponse[];
 }
@@ -44,6 +46,8 @@ export function mapOrderResponse(
   order: Order & {
     stops?: Array<OrderStop & { lat?: number; lng?: number }>;
     statusHistory?: OrderStatusHistory[];
+    customerPhone?: string;
+    driverPhone?: string | null;
   },
 ): MappedOrderResponse {
   return {
@@ -64,6 +68,8 @@ export function mapOrderResponse(
     cancelledAt: order.cancelledAt ? order.cancelledAt.toISOString() : null,
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
+    customerPhone: order.customerPhone,
+    driverPhone: order.driverPhone ?? null,
     ...(order.stops
       ? {
           stops: order.stops
