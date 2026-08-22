@@ -56,7 +56,11 @@ describe('Fleet guarded preview route', () => {
 
     expect(loadCatalogue).not.toHaveBeenCalled();
     expect(screen.queryByText(PREVIEW_BANNER_TEXT)).toBeNull();
-    expect(screen.getByText('Chưa kết nối nguồn dữ liệu')).toBeTruthy();
+    // Runtime path is live: without a valid fleet session the API layer fails
+    // closed into a boundary state instead of rendering fixtures.
+    expect(
+      screen.getByText(/Không thể tải dữ liệu|Phiên đã hết hạn|Bạn không có quyền/),
+    ).toBeTruthy();
   });
 
   it('fails closed for an invalid detail route before loading fixtures', async () => {
