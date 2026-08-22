@@ -35,7 +35,7 @@ import type {
 } from './model';
 
 const fieldClass =
-  'min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm transition-colors focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20';
+  'min-h-10 w-full rounded-control border border-neutral-border bg-neutral px-3 py-2 text-xs text-neutral-text  transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
 
 const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
   orders: 'Đơn hàng',

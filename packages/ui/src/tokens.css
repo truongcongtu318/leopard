@@ -1,9 +1,11 @@
 @theme {
   /* Semantic colors matching mobile design system */
-  --color-brand: #075985;
-  --color-brand-soft: #e0f2fe;
+  /* Brand refreshed to teal (#0f766e) per Wave 5 palette change request.
+     WCAG AA verified: white on #0f766e = 5.47:1; #134e4a on #ccfbf1 > 7:1. */
+  --color-brand: #0f766e;
+  --color-brand-soft: #ccfbf1;
   --color-brand-text: #ffffff;
-  --color-brand-soft-text: #0c4a6e;
+  --color-brand-soft-text: #134e4a;
 
   --color-info: #e0f2fe;
   --color-info-text: #075985;

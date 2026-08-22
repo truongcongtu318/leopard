@@ -83,25 +83,25 @@ export function RoleNavigation({
               <Link
                 href={item.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`group flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all motion-reduce:transition-none ${
+                className={`group flex min-h-11 items-center gap-3 rounded-control px-3.5 py-2.5 text-sm font-semibold transition-colors motion-reduce:transition-none ${
                   isActive
-                    ? 'bg-indigo-50 text-indigo-600 shadow-xs dark:bg-indigo-950/60 dark:text-indigo-400'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-white'
+                    ? 'bg-brand-soft text-brand-soft-text'
+                    : 'text-neutral-muted hover:bg-neutral-surface hover:text-neutral-text'
                 }`}
               >
                 <span
                   aria-hidden="true"
                   className={`transition-colors ${
                     isActive
-                      ? 'text-indigo-600 dark:text-indigo-400'
-                      : 'text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-300'
+                      ? 'text-brand-soft-text'
+                      : 'text-neutral-muted group-hover:text-neutral-text'
                   }`}
                 >
                   {getNavIcon(item.href)}
                 </span>
                 {item.label}
                 {isActive ? (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand" />
                 ) : null}
               </Link>
             </li>

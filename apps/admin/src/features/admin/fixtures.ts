@@ -384,28 +384,25 @@ const defaultFilters: Readonly<Record<AdminListScreen, AdminListFilters>> = {
   },
 };
 
-const VIETNAMESE_NAMES = [
-  'Nguyễn Văn An', 'Trần Thị Bích', 'Lê Hoàng Cường', 'Phạm Minh Đức', 'Vũ Mai Hoa',
-  'Đặng Tuấn Kiệt', 'Bùi Thu Trang', 'Đỗ Hải Yến', 'Hồ Quốc Bảo', 'Ngô Thanh Tùng',
-  'Dương Minh Quân', 'Lý Gia Huy', 'Phan Văn Hậu', 'Trịnh Thùy Linh', 'Đinh Quang Vinh',
-  'Lâm Ánh Tuyết', 'Trương Vĩnh Phát', 'Đoàn Nhật Nam', 'Võ Thị Thanh Thảo', 'Lương Triết Hùng',
-  'Nguyễn Tiến Dũng', 'Trần Đức Bo', 'Lê Khánh Vân', 'Phạm Hồng Phúc', 'Hoàng Kim Chi',
-  'Vũ Đình Trọng', 'Đặng Thảo Nguyên', 'Bùi Quốc Anh', 'Đỗ Minh Trí', 'Hồ Ngọc Hà',
-  'Ngô Kiến Huy', 'Dương Khắc Linh', 'Lý Nhã Kỳ', 'Phan Đinh Tùng', 'Trịnh Thăng Bình',
-  'Đinh Tiến Dũng', 'Lâm Khánh Chi', 'Trương Quỳnh Anh', 'Đoàn Di Băng', 'Võ Hạ Trâm',
-  'Lương Bích Hữu', 'Nguyễn Phi Hùng', 'Trần Thành Trung', 'Lê Bảo Thắng', 'Phạm Gia Khiêm',
-  'Hoàng Yến Chibi', 'Vũ Cát Tường', 'Đặng Thu Thảo', 'Bùi Lan Hương', 'Đỗ Mỹ Linh',
-  'Hồ Bích Trâm', 'Ngô Thanh Vân', 'Dương Cẩm Lynh', 'Lý Hùng', 'Phan Như Thảo',
-  'Trịnh Kim Chi', 'Đinh Ngọc Diệp', 'Lâm Vỹ Dạ', 'Trương Nam Thành', 'Đoàn Thanh Tài',
-  'Võ Hoàng Yến', 'Lương Thế Thành', 'Nguyễn Hưng', 'Trần Bảo Sơn', 'Lê Tuấn Anh',
-  'Phạm Băng Băng', 'Hoàng Dũng', 'Vũ Hà', 'Đặng Siêu', 'Bùi Tiến Dũng',
-  'Đỗ Nhật Nam', 'Hồ Tấn Tài', 'Ngô Hoàng Thịnh', 'Dương Bá Thảo', 'Lý Tự Trọng',
-  'Phan Chu Trinh', 'Trịnh Hoài Đức', 'Đinh Bộ Lĩnh', 'Lâm Văn Bền', 'Trương Định',
-  'Đoàn Văn Bơ', 'Võ Văn Kiệt', 'Lương Định Của', 'Nguyễn Huệ', 'Trần Hưng Đạo',
-  'Lê Lợi', 'Phạm Ngũ Lão', 'Hoàng Hoa Thám', 'Vũ Tùng', 'Đặng Dung',
-  'Bùi Hữu Nghĩa', 'Đỗ Xuân Hợp', 'Hồ Thị Kỷ', 'Ngô Gia Tự', 'Dương Đình Hội',
-  'Lý Thường Kiệt', 'Phan Đăng Lưu', 'Trịnh Đình Trọng', 'Đinh Tiên Hoàng', 'Admin Quản Trị Hệ Thống'
-];
+// Neutral simulated names: no real persons (celebrities or historical
+// figures) may appear in preview fixtures.
+const SIMULATED_FAMILY = [
+  'Nguyễn', 'Trần', 'Lê', 'Phạm', 'Vũ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô',
+] as const;
+const SIMULATED_MIDDLE = ['Văn', 'Thị', 'Hoàng', 'Minh', 'Thu'] as const;
+const SIMULATED_GIVEN = [
+  'An Mô Phỏng', 'Bình Mô Phỏng', 'Chi Mô Phỏng', 'Dũng Mô Phỏng',
+  'Giang Mô Phỏng', 'Hà Mô Phỏng', 'Khang Mô Phỏng', 'Lan Mô Phỏng',
+  'Nam Mô Phỏng', 'Phúc Mô Phỏng',
+] as const;
+
+const VIETNAMESE_NAMES: readonly string[] = Array.from(
+  { length: 100 },
+  (_, index) =>
+    `${SIMULATED_FAMILY[index % SIMULATED_FAMILY.length]} ${
+      SIMULATED_MIDDLE[Math.floor(index / SIMULATED_FAMILY.length) % SIMULATED_MIDDLE.length]
+    } ${SIMULATED_GIVEN[Math.floor(index / (SIMULATED_FAMILY.length * SIMULATED_MIDDLE.length)) % SIMULATED_GIVEN.length]}`,
+);
 
 const TPHCM_DISTRICTS = [
   'Quận 1 (Bến Nghé)', 'Quận 1 (Đa Kao)', 'Quận 3 (Võ Thị Sáu)', 'Quận 4 (Đoàn Văn Bơ)', 'Quận 5 (Chợ Lớn)',

@@ -118,9 +118,9 @@ export function LoginForm({
       {sessionExpired ? (
         <div
           role="alert"
-          className="mb-4 flex items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-950/40 p-3.5 text-xs text-amber-200"
+          className="mb-4 flex items-center gap-2.5 rounded-control border border-warning-border bg-warning p-3.5 text-xs text-warning-text"
         >
-          <svg className="h-4 w-4 shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-4 w-4 shrink-0 text-warning-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <span>Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</span>
@@ -130,9 +130,9 @@ export function LoginForm({
       {errorMessage ? (
         <div
           role="alert"
-          className="mb-4 flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-950/40 p-3.5 text-xs text-red-200"
+          className="mb-4 flex items-center gap-2.5 rounded-control border border-danger-border bg-danger p-3.5 text-xs text-danger-text"
         >
-          <svg className="h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-4 w-4 shrink-0 text-danger-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>{errorMessage}</span>
@@ -143,7 +143,7 @@ export function LoginForm({
         <div className="flex flex-col gap-1.5 text-left">
           <label
             htmlFor="tokenInput"
-            className="text-xs font-semibold uppercase tracking-wider text-slate-300"
+            className="text-xs font-semibold text-neutral-muted"
           >
             Số điện thoại hoặc Token
           </label>
@@ -155,7 +155,7 @@ export function LoginForm({
               onChange={(e) => setTokenInput(e.target.value)}
               disabled={isSubmitting}
               placeholder="Nhập số điện thoại (+84...) hoặc Token"
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 transition-colors focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 disabled:opacity-50"
+              className="w-full rounded-control border border-neutral-border bg-neutral px-4 py-3 text-sm text-neutral-text placeholder-neutral-muted/70 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:opacity-50"
             />
           </div>
         </div>
@@ -163,7 +163,7 @@ export function LoginForm({
         <button
           type="submit"
           disabled={isSubmitting || !tokenInput.trim()}
-          className="flex min-h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-600/25 transition-all hover:from-sky-500 hover:to-cyan-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex min-h-11 w-full items-center justify-center rounded-control bg-brand px-4 py-3 text-sm font-semibold text-brand-text transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">
@@ -180,89 +180,74 @@ export function LoginForm({
       </form>
 
       {allowDemo ? (
-        <div className="mt-6 border-t border-slate-800/80 pt-5">
+        <div className="mt-6 border-t border-neutral-border pt-5">
           <div className="mb-3 flex items-center justify-center gap-2">
-            <span className="h-px w-8 bg-slate-800" />
-            <span className="text-[0.7rem] font-bold uppercase tracking-widest text-slate-400">
+            <span className="h-px w-8 bg-neutral-border" />
+            <span className="text-[0.7rem] font-semibold uppercase tracking-widest text-neutral-muted">
               Tài khoản demo
             </span>
-            <span className="h-px w-8 bg-slate-800" />
+            <span className="h-px w-8 bg-neutral-border" />
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              data-testid="demo-admin-button"
-              disabled={isSubmitting}
-              onClick={() => handleDemoLogin("admin", "ADMIN")}
-              className="group flex flex-col items-center gap-1 rounded-xl border border-slate-800 bg-slate-800/50 p-3 text-left transition-all hover:border-sky-500/50 hover:bg-sky-950/30 hover:shadow-md cursor-pointer"
-            >
-              <div className="flex w-full items-center justify-between pointer-events-none">
-                <span className="text-base">👑</span>
-                <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[0.625rem] font-bold text-sky-400">ADMIN</span>
-              </div>
-              <span className="w-full text-xs font-semibold text-white group-hover:text-sky-300 pointer-events-none">
-                Demo Admin
-              </span>
-              <span className="w-full text-[0.65rem] text-slate-400 pointer-events-none">
-                Quản trị toàn hệ thống
-              </span>
-            </button>
-
-            <button
-              type="button"
-              data-testid="demo-fleet-button"
-              disabled={isSubmitting}
-              onClick={() => handleDemoLogin("fleet-owner", "FLEET_OWNER")}
-              className="group flex flex-col items-center gap-1 rounded-xl border border-slate-800 bg-slate-800/50 p-3 text-left transition-all hover:border-indigo-500/50 hover:bg-indigo-950/30 hover:shadow-md cursor-pointer"
-            >
-              <div className="flex w-full items-center justify-between pointer-events-none">
-                <span className="text-base">🏢</span>
-                <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[0.625rem] font-bold text-indigo-400">FLEET</span>
-              </div>
-              <span className="w-full text-xs font-semibold text-white group-hover:text-indigo-300 pointer-events-none">
-                Demo Fleet Owner
-              </span>
-              <span className="w-full text-[0.65rem] text-slate-400 pointer-events-none">
-                Quản lý đội xe Sao Mai
-              </span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleDemoLogin("driver", "DRIVER")}
-              className="group flex flex-col items-center gap-1 rounded-xl border border-slate-800 bg-slate-800/50 p-3 text-left transition-all hover:border-emerald-500/50 hover:bg-emerald-950/30 hover:shadow-md cursor-pointer"
-            >
-              <div className="flex w-full items-center justify-between pointer-events-none">
-                <span className="text-base">🚗</span>
-                <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[0.625rem] font-bold text-emerald-400">DRIVER</span>
-              </div>
-              <span className="w-full text-xs font-semibold text-white group-hover:text-emerald-300 pointer-events-none">
-                Demo Driver
-              </span>
-              <span className="w-full text-[0.65rem] text-slate-400 pointer-events-none">
-                Tài xế nhận chuyến
-              </span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleDemoLogin("customer", "CUSTOMER")}
-              className="group flex flex-col items-center gap-1 rounded-xl border border-slate-800 bg-slate-800/50 p-3 text-left transition-all hover:border-amber-500/50 hover:bg-amber-950/30 hover:shadow-md cursor-pointer"
-            >
-              <div className="flex w-full items-center justify-between pointer-events-none">
-                <span className="text-base">📦</span>
-                <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[0.625rem] font-bold text-amber-400">CLIENT</span>
-              </div>
-              <span className="w-full text-xs font-semibold text-white group-hover:text-amber-300 pointer-events-none">
-                Demo Customer
-              </span>
-              <span className="w-full text-[0.65rem] text-slate-400 pointer-events-none">
-                Tạo và theo dõi đơn
-              </span>
-            </button>
+          <div className="grid gap-2">
+              <button
+                type="button"
+                data-testid="demo-admin-button"
+                disabled={isSubmitting}
+                onClick={() => handleDemoLogin("admin", "ADMIN")}
+                className="flex min-h-11 w-full items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:opacity-50"
+              >
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-neutral-text">Demo Admin</span>
+                  <span className="block text-[0.65rem] text-neutral-muted">Quản trị toàn hệ thống</span>
+                </span>
+                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-[0.625rem] font-bold text-brand-soft-text">
+                  ADMIN
+                </span>
+              </button>
+              <button
+                type="button"
+                data-testid="demo-fleet-owner-button"
+                disabled={isSubmitting}
+                onClick={() => handleDemoLogin("fleet-owner", "FLEET_OWNER")}
+                className="flex min-h-11 w-full items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:opacity-50"
+              >
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-neutral-text">Demo Fleet Owner</span>
+                  <span className="block text-[0.65rem] text-neutral-muted">Quản lý đội xe Sao Mai</span>
+                </span>
+                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-[0.625rem] font-bold text-brand-soft-text">
+                  FLEET_OWNER
+                </span>
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleDemoLogin("driver", "DRIVER")}
+                className="flex min-h-11 w-full items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:opacity-50"
+              >
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-neutral-text">Demo Driver</span>
+                  <span className="block text-[0.65rem] text-neutral-muted">Tài xế nhận chuyến</span>
+                </span>
+                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-[0.625rem] font-bold text-brand-soft-text">
+                  DRIVER
+                </span>
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleDemoLogin("customer", "CUSTOMER")}
+                className="flex min-h-11 w-full items-center justify-between rounded-control border border-neutral-border bg-neutral px-3 py-2 text-left transition-colors hover:bg-brand-soft disabled:opacity-50"
+              >
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-neutral-text">Demo Customer</span>
+                  <span className="block text-[0.65rem] text-neutral-muted">Tạo và theo dõi đơn</span>
+                </span>
+                <span className="ml-2 shrink-0 rounded-pill bg-brand-soft px-1.5 py-0.5 text-[0.625rem] font-bold text-brand-soft-text">
+                  CUSTOMER
+                </span>
+              </button>
           </div>
         </div>
       ) : null}
