@@ -9,6 +9,7 @@ import {
   StatusTimeline,
 } from '@leopard/ui';
 
+import { LiveOrderRefresher } from '../../components/live/LiveOrderRefresher';
 import {
   FleetBoundaryState,
   FleetBreadcrumbs,
@@ -40,6 +41,7 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
         updatedAt={order.updatedAtLabel}
         title={`Đơn ${order.reference}`}
       />
+      <LiveOrderRefresher enabled={order.status !== 'DELIVERED' && order.status !== 'CANCELLED'} />
       <FleetScopeRail scope={view.scope} />
       <FleetReadOnlyNote />
       {view.notice ? <FleetNotice notice={view.notice} /> : null}

@@ -11,6 +11,7 @@ import {
   StatusTimeline,
 } from '@leopard/ui';
 
+import { LiveOrderRefresher } from '../../components/live/LiveOrderRefresher';
 import { AdminCommandLauncher } from './AdminCommandLauncher';
 import {
   AdminAuditRail,
@@ -22,6 +23,8 @@ import {
 } from './AdminShared';
 import type { AdminOrderDetailRouteView } from './model';
 import type { AdminPreviewContext } from './model';
+
+const TERMINAL_ORDER_STATUSES: ReadonlySet<string> = new Set(['DELIVERED', 'CANCELLED']);
 
 export function AdminOrderDetailScreen({
   commandRuntime,
@@ -55,6 +58,9 @@ export function AdminOrderDetailScreen({
         isStale={order.tracking.state === 'stale'}
         title={`Đơn ${order.reference}`}
         updatedAt={order.updatedAtLabel}
+      />
+      <LiveOrderRefresher
+        enabled={!TERMINAL_ORDER_STATUSES.has(order.status)}
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
       <AdminDispatchSlab

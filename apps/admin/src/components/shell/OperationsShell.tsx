@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
+import { LiveRefreshBridge } from '../live/LiveOrderRefresher';
 import { RoleNavigation, type NavItem } from './RoleNavigation';
 
 export interface OperationsShellProps {
@@ -156,6 +157,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <LiveRefreshBridge />
       <a
         href="#noi-dung-chinh"
         className="fixed left-md top-md z-50 -translate-y-24 rounded-xl bg-indigo-600 px-md py-sm font-semibold text-white transition-transform focus:translate-y-0 motion-reduce:transition-none"
