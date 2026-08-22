@@ -24,11 +24,14 @@ import type { AdminOrderDetailRouteView } from './model';
 import type { AdminPreviewContext } from './model';
 
 export function AdminOrderDetailScreen({
+  commandRuntime,
   view,
   previewContext,
 }: Readonly<{
   view: AdminOrderDetailRouteView;
   previewContext?: AdminPreviewContext;
+  /** Live API command execution (runtime data path); absent in preview renders. */
+  commandRuntime?: boolean | undefined;
 }>) {
   if (view.kind !== 'order-detail') {
     return (
@@ -122,6 +125,7 @@ export function AdminOrderDetailScreen({
             <AdminCommandLauncher
               commands={view.availableCommands}
               dialogPreview={view.dialogPreview}
+              runtime={commandRuntime === true}
             />
           </AdminSurface>
 

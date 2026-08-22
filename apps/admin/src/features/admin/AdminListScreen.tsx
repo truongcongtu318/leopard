@@ -434,6 +434,7 @@ function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: Admin
 }
 
 export function AdminListScreen({
+  commandRuntime,
   screen,
   view,
   previewContext,
@@ -441,6 +442,8 @@ export function AdminListScreen({
   screen: AdminListScreenName;
   view: AdminListRouteView;
   previewContext?: AdminPreviewContext;
+  /** Live API command execution (runtime data path); absent in preview renders. */
+  commandRuntime?: boolean | undefined;
 }>) {
   if (view.kind !== 'list' || view.entity !== screen) {
     if (view.kind === 'list') {
@@ -513,7 +516,11 @@ export function AdminListScreen({
           description="Target và hậu quả phải được đọc trước khi gửi command."
           variant="signal"
         >
-          <AdminCommandLauncher commands={commands} dialogPreview={view.dialogPreview} />
+          <AdminCommandLauncher
+            commands={commands}
+            dialogPreview={view.dialogPreview}
+            runtime={commandRuntime === true}
+          />
         </AdminSurface>
       ) : null}
     </div>

@@ -146,10 +146,12 @@ function PreviewScenarioBoundary({
 }
 
 function AdminScreen({
+  commandRuntime = false,
   screen,
   view,
   previewContext,
 }: Readonly<{
+  commandRuntime?: boolean | undefined;
   screen: AdminPreviewScreen;
   view: AdminRouteView;
   previewContext: AdminPreviewContext;
@@ -165,6 +167,7 @@ function AdminScreen({
   if (screen === 'order-detail') {
     return (
       <AdminOrderDetailScreen
+        commandRuntime={commandRuntime}
         previewContext={previewContext}
         view={view as AdminOrderDetailRouteView}
       />
@@ -172,6 +175,7 @@ function AdminScreen({
   }
   return (
     <AdminListScreen
+      commandRuntime={commandRuntime}
       previewContext={previewContext}
       screen={screen}
       view={view as AdminListRouteView}
@@ -235,7 +239,14 @@ export async function AdminPreviewRoute({
     }
 
     const runtimeContext: AdminPreviewContext = { rawSearch: null };
-    return <AdminScreen previewContext={runtimeContext} screen={screen} view={view} />;
+    return (
+      <AdminScreen
+        commandRuntime
+        previewContext={runtimeContext}
+        screen={screen}
+        view={view}
+      />
+    );
   }
 
   return (
