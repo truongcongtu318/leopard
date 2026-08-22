@@ -380,11 +380,11 @@ function confirmPaymentCommand(
 async function loadDistribution(): Promise<
   readonly { status: OrderStatus; count: number }[]
 > {
+  // Backend OrderStatus enum has no PICKED_UP transition in the pilot.
   const statuses: readonly OrderStatus[] = [
     'REQUESTED',
     'ACCEPTED',
     'PICKING_UP',
-    'PICKED_UP',
     'IN_TRANSIT',
     'DELIVERED',
     'CANCELLED',
@@ -516,6 +516,7 @@ async function loadAdminRuntimeOverview(): Promise<AdminRouteView> {
     };
     return view;
   } catch (error) {
+    console.error('[runtime:overview] load failed:', error);
     return adminBoundaryFromError(error, 'OVERVIEW');
   }
 }

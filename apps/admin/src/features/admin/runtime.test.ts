@@ -66,7 +66,6 @@ describe('loadAdminRuntimeView – overview', () => {
         REQUESTED: 4,
         ACCEPTED: 5,
         PICKING_UP: 4,
-        PICKED_UP: 1,
         IN_TRANSIT: 5,
         DELIVERED: 18,
         CANCELLED: 3,
@@ -110,9 +109,9 @@ describe('loadAdminRuntimeView – overview', () => {
     expect(view.health.readiness).toBe('READY');
 
     const activeOrdersMetric = view.metrics.find((metric) => metric.id === 'active-orders');
-    expect(activeOrdersMetric?.value).toBe(19); // 4+5+4+1+5 non-terminal
+    expect(activeOrdersMetric?.value).toBe(18); // 4+5+4+5 non-terminal
 
-    expect(view.orderDistribution).toHaveLength(7);
+    expect(view.orderDistribution).toHaveLength(6);
     expect(view.orderDistribution.find((entry) => entry.status === 'DELIVERED')?.count).toBe(18);
 
     expect(view.recentOrders).toHaveLength(1);
