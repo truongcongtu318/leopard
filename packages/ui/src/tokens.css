@@ -42,8 +42,31 @@
   --spacing-map-standard: 25rem;
   --spacing-map-large: 37.5rem;
 
-  /* Named operations layout constraint */
+  /* Named operations layout constraints and container scales */
+  --container-xs: 20rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+  --container-xl: 36rem;
+  --container-2xl: 42rem;
   --container-operations: 90rem;
+
+  /* Max-width scale for max-w-* utilities */
+  --max-width-xs: 20rem;
+  --max-width-sm: 24rem;
+  --max-width-md: 28rem;
+  --max-width-lg: 32rem;
+  --max-width-xl: 36rem;
+  --max-width-2xl: 42rem;
+  --max-width-3xl: 48rem;
+  --max-width-4xl: 56rem;
+  --max-width-5xl: 64rem;
+  --max-width-6xl: 72rem;
+  --max-width-7xl: 80rem;
+  --max-width-operations: 90rem;
+  --max-width-map-min: 17.5rem;
+  --max-width-map-standard: 25rem;
+  --max-width-map-large: 37.5rem;
 
   /* Radius */
   --radius-control: 6px;

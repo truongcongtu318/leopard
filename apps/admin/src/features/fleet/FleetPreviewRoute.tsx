@@ -183,8 +183,11 @@ export async function FleetPreviewRoute({
 }: FleetPreviewRouteProps) {
   if (screen === 'order-detail' && !orderId) return <InvalidOrderBoundary />;
 
+  const resolvedLocalFlag =
+    localFlag ?? (process.env.LEOPARD_UI_PREVIEW === 'enabled' ? 'enabled' : null);
+
   const selection = await createWebPreviewSelection<FleetPreviewValue>({
-    localFlag,
+    localFlag: resolvedLocalFlag,
     scenarioProvider: async () => {
       try {
         const catalogue = await loadCatalogue();

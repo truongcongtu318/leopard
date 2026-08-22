@@ -104,19 +104,19 @@ export function AdminSurface({
 }>) {
   const variantClass =
     variant === 'panel'
-      ? 'rounded-card border border-neutral-border bg-neutral p-md'
+      ? 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'
       : variant === 'signal'
-        ? 'border-l-4 border-brand bg-neutral-surface py-md pl-md pr-sm'
-        : 'border-t border-neutral-border pt-md';
+        ? 'rounded-xl border-l-4 border-sky-600 bg-sky-50/50 p-5'
+        : 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm';
   return (
     <section
       aria-label={ariaLabel}
-      className={`min-w-0 text-neutral-text ${variantClass} ${className}`}
+      className={`min-w-0 text-slate-900 ${variantClass} ${className}`}
     >
-      <header className="mb-sm">
-        <h2 className="text-section-title font-semibold break-words">{title}</h2>
+      <header className="mb-4 pb-3 border-b border-slate-100 flex flex-col gap-1">
+        <h2 className="text-base font-bold text-slate-900 break-words">{title}</h2>
         {description ? (
-          <p className="mt-xxs text-body-compact text-neutral-muted break-words">{description}</p>
+          <p className="text-xs font-medium text-slate-500 break-words">{description}</p>
         ) : null}
       </header>
       {children}
@@ -136,10 +136,13 @@ export function AdminDispatchSlab({
   return (
     <section
       aria-label={ariaLabel}
-      className="min-w-0 border-l-4 border-brand bg-neutral-text p-md text-brand-text"
+      className="min-w-0 border-l-4 border-brand bg-neutral-text rounded-2xl p-6 text-brand-text shadow-xl"
     >
-      <p className="text-xs font-semibold tracking-wide text-brand-soft">{eyebrow}</p>
-      <div className="mt-sm min-w-0">{children}</div>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+        <p className="text-[0.7rem] font-bold tracking-wider text-cyan-400 uppercase">{eyebrow}</p>
+      </div>
+      <div className="min-w-0">{children}</div>
     </section>
   );
 }
@@ -170,22 +173,22 @@ export function AdminPaginationLinks({
 }>) {
   if (totalPages <= 1) return null;
   return (
-    <nav aria-label={`Phân trang ${label}`} className="flex flex-wrap items-center justify-between gap-sm">
+    <nav aria-label={`Phân trang ${label}`} className="flex flex-wrap items-center justify-between gap-sm pt-3">
       {page > 1 ? (
         <a
-          className="inline-flex min-h-11 items-center rounded-control border border-neutral-border px-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
           href={hrefForPage(page - 1)}
         >
-          Trang trước
+          ← Trang trước
         </a>
       ) : <span />}
-      <span className="text-body-compact text-neutral-muted">Trang {page} / {totalPages}</span>
+      <span className="text-xs font-medium text-slate-500">Trang {page} / {totalPages}</span>
       {page < totalPages ? (
         <a
-          className="inline-flex min-h-11 items-center rounded-control border border-neutral-border px-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
           href={hrefForPage(page + 1)}
         >
-          Trang sau
+          Trang sau →
         </a>
       ) : <span />}
     </nav>
@@ -196,11 +199,14 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
   return (
     <aside
       aria-label="Audit Rail — thao tác đặc quyền"
-      className="min-w-0 border-l-4 border-brand bg-neutral-surface p-md text-neutral-text"
+      className="min-w-0 border-l-4 border-brand bg-neutral-surface p-md text-neutral-text rounded-2xl shadow-sm"
     >
-      <header className="mb-md border-b border-neutral-border pb-sm">
-        <h2 className="text-section-title font-semibold">Audit Rail</h2>
-        <p className="mt-xxs text-xs text-neutral-muted">Thao tác đặc quyền · Mới nhất trước</p>
+      <header className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+        <div>
+          <h2 className="text-section-title font-semibold">Audit Rail</h2>
+          <p className="mt-0.5 text-[0.65rem] text-slate-500 uppercase tracking-wider font-semibold">Thao tác đặc quyền · Mới nhất trước</p>
+        </div>
+        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[0.65rem] font-bold text-slate-700">AUDITED</span>
       </header>
       {audit.state === 'error' ? (
         <ScreenState
@@ -209,28 +215,49 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
           message={audit.message ?? 'Không thể tải Audit Rail trong lần kiểm tra này.'}
         />
       ) : audit.state === 'empty' ? (
-        <p className="text-body-compact text-neutral-muted">Chưa có thao tác đặc quyền được ghi nhận.</p>
+        <p className="text-xs text-slate-500 italic py-2">Chưa có thao tác đặc quyền được ghi nhận.</p>
       ) : audit.state === 'delayed' ? (
         <OperationalAlert title="Nhật ký đang đồng bộ" tone="info">
           <p>{audit.message ?? 'Command đã persist nhưng audit entry chưa được trả về.'}</p>
         </OperationalAlert>
       ) : (
-        <ol className="m-0 grid list-none gap-md p-0">
+        <ol className="m-0 grid list-none gap-3 p-0">
           {audit.entries.map((entry) => (
-            <li key={entry.id} className="min-w-0 border-l-2 border-brand pl-sm">
-              <div className="flex flex-wrap items-center gap-xs">
-                <span className="rounded-pill border border-success-border bg-success px-xs py-1 text-xs font-medium text-success-text">
+            <li key={entry.id} className="min-w-0 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[0.65rem] font-bold text-emerald-800 border border-emerald-300">
                   {entry.outcomeLabel}
                 </span>
-                <h3 className="font-semibold break-words">{entry.actionLabel}</h3>
+                <time className="text-[0.65rem] font-medium text-slate-400 tabular-nums" dateTime={entry.dateTime}>
+                  {entry.timestampLabel}
+                </time>
               </div>
-              <dl className="mt-sm grid gap-xs text-body-compact">
-                <div><dt className="text-xs font-semibold text-neutral-muted">Actor</dt><dd className="mt-xxs break-words">{entry.actorLabel}</dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Target</dt><dd className="mt-xxs break-words">{entry.targetLabel}</dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Lý do đã sanitize</dt><dd className="mt-xxs whitespace-pre-wrap break-words">{entry.reason}</dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Thời gian</dt><dd className="mt-xxs"><time dateTime={entry.dateTime}>{entry.timestampLabel}</time></dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Request ID</dt><dd className="mt-xxs font-mono text-xs break-all">{entry.requestId}</dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Audit ID</dt><dd className="mt-xxs font-mono text-xs break-all">{entry.auditId}</dd></div>
+              <h3 className="text-xs font-bold text-slate-900 break-words mb-2">{entry.actionLabel}</h3>
+              <dl className="grid gap-1.5 text-xs text-slate-600">
+                <div className="flex justify-between gap-2 border-t border-slate-100 pt-1.5">
+                  <dt className="text-[0.7rem] font-semibold text-slate-400 uppercase">Actor</dt>
+                  <dd className="font-medium text-slate-800 text-right">{entry.actorLabel}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[0.7rem] font-semibold text-slate-400 uppercase">Target</dt>
+                  <dd className="font-medium text-slate-800 text-right">{entry.targetLabel}</dd>
+                </div>
+                <div>
+                  <dt className="text-[0.7rem] font-semibold text-slate-400 uppercase">Lý do đã sanitize</dt>
+                  <dd className="mt-0.5 rounded-lg bg-slate-50 p-2 text-[0.75rem] text-slate-700 whitespace-pre-wrap break-words border border-slate-100">{entry.reason}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[0.7rem] font-semibold text-slate-400 uppercase">Thời gian</dt>
+                  <dd className="mt-xxs"><time dateTime={entry.dateTime}>{entry.timestampLabel}</time></dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[0.7rem] font-semibold text-slate-400 uppercase">Request ID</dt>
+                  <dd className="font-mono text-xs text-slate-700 break-all">{entry.requestId}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[0.7rem] font-semibold text-slate-400 uppercase">Audit ID</dt>
+                  <dd className="font-mono text-xs text-slate-700 break-all">{entry.auditId}</dd>
+                </div>
               </dl>
             </li>
           ))}

@@ -32,7 +32,7 @@ interface AuthResponse {
 
 export function LoginScreen({
   onLoginSuccess,
-  allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true',
+  allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH !== 'false',
   sessionExpired = false,
 }: LoginScreenProps) {
   const [tokenInput, setTokenInput] = useState('');

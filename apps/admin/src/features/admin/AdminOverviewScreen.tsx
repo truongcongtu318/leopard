@@ -1,10 +1,19 @@
 'use client';
 
 import {
+  CapacityBarChart,
   DataTable,
+  DriverCallingCard,
+  HourlyVolumeChart,
+  LiveRouteMapWidget,
   OperationsPageHeader,
+  PackageBreakdownCard,
   ResponsiveResultList,
+  SparklineMetricCard,
   StatusBadge,
+  StatusDistributionVisualizer,
+  TrackingWaypointCard,
+  VehicleSpecCard,
 } from '@leopard/ui';
 
 import {
@@ -115,6 +124,71 @@ export function AdminOverviewScreen({
         updatedAt={view.checkedAtLabel}
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
+
+      {/* Drivergo Row 1: Top KPI Sparkline Analytics */}
+      <div className="grid min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <SparklineMetricCard
+          title="Đơn hàng tháng này"
+          value="156 đơn"
+          delta="+14%"
+          deltaType="increase"
+          sparkColor="#4F46E5"
+          subtitle="Tăng 12 đơn so với tuần trước"
+        />
+        <SparklineMetricCard
+          title="Tỷ lệ giao thành công"
+          value="98.4%"
+          delta="+3.2%"
+          deltaType="increase"
+          sparkColor="#10B981"
+          subtitle="94 / 96 đơn chuẩn thời gian ETA"
+        />
+        <CapacityBarChart
+          title="Tải trọng đội xe"
+          activeWeightTag="30kg - 40kg"
+        />
+      </div>
+
+      {/* Drivergo Row 2: Active Dispatch Center */}
+      <div className="grid min-w-0 gap-5 lg:grid-cols-3">
+        <DriverCallingCard
+          name="Darrell Steward"
+          roleSubtitle="Tài xế đang trực tuyến"
+          company="Đội xe Sao Mai"
+          phone="0908 234 889"
+          acceptLabel="Phân công"
+          rejectLabel="Bỏ qua"
+        />
+        <TrackingWaypointCard
+          trackingNumber="LP-260815-001"
+          statusLabel="Đang vận chuyển"
+        />
+        <VehicleSpecCard
+          modelName="White Bengala Box"
+          plateNumber="51C-882.34"
+          volume="45.2 m³"
+          length="3.6 m"
+          width="1.8 m"
+        />
+      </div>
+
+      {/* Drivergo Row 3: Live Route Map & Package Breakdown */}
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)]">
+        <LiveRouteMapWidget
+          remainingDistance="50 km"
+          remainingEta="1 giờ 20 phút"
+          height={320}
+        />
+        <PackageBreakdownCard
+          totalItems="41.180 kiện"
+        />
+      </div>
+
+      {/* Drivergo Row 4: Operational Trends & Status Distribution */}
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)]">
+        <HourlyVolumeChart />
+        <StatusDistributionVisualizer items={view.orderDistribution} />
+      </div>
 
       <AdminDispatchSlab ariaLabel="Bàn điều phối hiện tại" eyebrow="CA TRỰC PILOT · TÍN HIỆU HIỆN TẠI">
         <div className="grid min-w-0 gap-md lg:grid-cols-[minmax(14rem,1fr)_minmax(0,2fr)] lg:items-end">

@@ -1,8 +1,19 @@
+'use client';
+
 import {
+  CapacityBarChart,
   CompactMetricSummary,
+  DriverCallingCard,
+  FleetUtilizationGauge,
+  HourlyVolumeChart,
+  LiveRouteMapWidget,
   OperationsPageHeader,
   OperationalAlert,
+  PackageBreakdownCard,
+  SparklineMetricCard,
   StatusBadge,
+  TrackingWaypointCard,
+  VehicleSpecCard,
 } from '@leopard/ui';
 
 import { fleetOrderDetailHref, fleetPreviewHref } from './adapter';
@@ -40,6 +51,87 @@ export function FleetDashboardScreen({
       <FleetScopeRail scope={view.scope} />
       <p className="text-xs text-neutral-muted tabular-nums">Snapshot: {view.asOfLabel}</p>
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
+
+      {/* Drivergo Row 1: Fleet KPI Sparkline Cards */}
+      <div className="grid min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <SparklineMetricCard
+          title="Đơn của đội xe tháng này"
+          value="48 đơn"
+          delta="+8.4%"
+          deltaType="increase"
+          sparkColor="#4F46E5"
+          subtitle="Đội xe Sao Mai"
+        />
+        <SparklineMetricCard
+          title="Tỷ lệ hoàn thành đội xe"
+          value="100%"
+          delta="+0%"
+          deltaType="increase"
+          sparkColor="#10B981"
+          subtitle="Tất cả tài xế chấp hành đúng lộ trình"
+        />
+        <CapacityBarChart
+          title="Trọng tải xe đang phục vụ"
+          activeWeightTag="500kg - 1.5 Tấn"
+        />
+      </div>
+
+      {/* Drivergo Row 2: Active Dispatch Center */}
+      <div className="grid min-w-0 gap-5 lg:grid-cols-3">
+        <DriverCallingCard
+          name="Tài xế An Mô Phỏng"
+          roleSubtitle="Đang chạy đơn LP-F-260815-001"
+          company="Đội xe Sao Mai"
+          phone="0908 111 222"
+          acceptLabel="Liên hệ"
+          rejectLabel="Báo bận"
+        />
+        <TrackingWaypointCard
+          trackingNumber="LP-F-260815-001"
+          statusLabel="Đang vận chuyển"
+        />
+        <VehicleSpecCard
+          modelName="Bengala Van 1.2T"
+          plateNumber="59C-102.88"
+          volume="12.5 m³"
+          length="2.8 m"
+          width="1.6 m"
+        />
+      </div>
+
+      {/* Drivergo Row 3: Live Route Map & Package Breakdown */}
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)]">
+        <LiveRouteMapWidget
+          originName="Kho Quận 7"
+          destinationName="TP. Thủ Đức"
+          remainingDistance="18 km"
+          remainingEta="35 phút"
+          height={320}
+        />
+        <PackageBreakdownCard
+          totalItems="120 kg (Hàng thùng)"
+          categories={[
+            { name: 'Điện máy', percentage: 55, countLabel: '65 kg', color: 'bg-indigo-600' },
+            { name: 'Văn phòng phẩm', percentage: 30, countLabel: '35 kg', color: 'bg-sky-500' },
+            { name: 'Khác', percentage: 15, countLabel: '20 kg', color: 'bg-violet-500' },
+          ]}
+        />
+      </div>
+
+      {/* Fleet Telemetry & Utilization */}
+      <div className="grid min-w-0 gap-lg lg:grid-cols-2">
+        <FleetUtilizationGauge
+          activeDrivers={view.activeOrders.length > 0 ? 2 : 0}
+          activeTrips={view.activeOrders.length}
+          totalDrivers={3}
+        />
+        <HourlyVolumeChart
+          title="Lưu lượng đơn đội xe (24h)"
+          subtitle="Nhịp độ vận chuyển của các tài xế thuộc đội xe Sao Mai"
+          peakHourLabel="Đỉnh điểm: 14:00 (18 đơn)"
+        />
+      </div>
+
       <CompactMetricSummary ariaLabel="Tóm tắt vận hành đội xe" items={view.metrics} />
 
       <FleetSurface
