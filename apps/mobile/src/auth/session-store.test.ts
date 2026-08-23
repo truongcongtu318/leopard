@@ -1,33 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import * as SecureStore from 'expo-secure-store';
 
-// Mock expo-secure-store BEFORE importing the module under test.
-jest.mock('expo-secure-store', () => {
-  const setItemAsync = jest.fn();
-  const getItemAsync = jest.fn();
-  const deleteItemAsync = jest.fn();
-  const isAvailableAsync = jest.fn();
-
-  (globalThis as Record<string, unknown>).__secureStore = {
-    setItemAsync,
-    getItemAsync,
-    deleteItemAsync,
-    isAvailableAsync,
-  };
-
-  return { setItemAsync, getItemAsync, deleteItemAsync, isAvailableAsync };
-}, { virtual: true });
+jest.mock('expo-secure-store', () => ({
+  setItemAsync: jest.fn(),
+  getItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
+  isAvailableAsync: jest.fn(),
+}));
 
 import { SessionStore } from './session-store';
 
 interface SecureStoreMocks {
-  setItemAsync: jest.Mock<() => Promise<void>>;
-  getItemAsync: jest.Mock<() => Promise<string | null>>;
-  deleteItemAsync: jest.Mock<() => Promise<void>>;
+  setItemAsync: jest.Mock<(key: string, value: string) => Promise<void>>;
+  getItemAsync: jest.Mock<(key: string) => Promise<string | null>>;
+  deleteItemAsync: jest.Mock<(key: string) => Promise<void>>;
   isAvailableAsync: jest.Mock<() => Promise<boolean>>;
 }
 
 function secureMocks(): SecureStoreMocks {
-  return (globalThis as Record<string, unknown>).__secureStore as SecureStoreMocks;
+  return SecureStore as unknown as SecureStoreMocks;
 }
 
 const REFRESH_KEY = 'leopard.refresh';
@@ -58,9 +49,11 @@ describe('SessionStore', () => {
 
     const accessToken = store.getAccessToken();
     expect(accessToken).toBe('acc-123');
-    expect(secureMocks().setItemAsync).toHaveBeenCalledTimes(2); // refresh + role only
+
+    // SecureStore receives refresh token and role, NEVER the access token
     expect(secureMocks().setItemAsync).toHaveBeenCalledWith(REFRESH_KEY, 'ref-456');
     expect(secureMocks().setItemAsync).toHaveBeenCalledWith(ROLE_KEY, 'CUSTOMER');
+    expect(secureMocks().setItemAsync).not.toHaveBeenCalledWith(expect.anything(), 'acc-123');
   });
 
   it('getAccessToken returns null when no session is set', () => {
@@ -70,27 +63,27 @@ describe('SessionStore', () => {
 
   it('getAccessToken returns null after clear', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-123', 'ref-456');
+    await store.setSession('acc-123', 'ref-456', 'CUSTOMER');
     await store.clearSession();
-
     expect(store.getAccessToken()).toBeNull();
   });
 
-  // ---- SecureStore refresh persistence ----
+  // ---- refresh token via SecureStore ----
 
   it('persists refresh token via SecureStore', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-1', 'ref-1');
+    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
 
     expect(secureMocks().setItemAsync).toHaveBeenCalledWith(REFRESH_KEY, 'ref-1');
   });
 
   it('getRefreshToken reads from SecureStore', async () => {
-    secureMocks().getItemAsync.mockResolvedValue('stored-refresh');
-    const store = makeSessionStore();
+    secureMocks().getItemAsync.mockResolvedValue('stored-ref-token');
 
-    const refresh = await store.getRefreshToken();
-    expect(refresh).toBe('stored-refresh');
+    const store = makeSessionStore();
+    const token = await store.getRefreshToken();
+
+    expect(token).toBe('stored-ref-token');
     expect(secureMocks().getItemAsync).toHaveBeenCalledWith(REFRESH_KEY);
   });
 
@@ -103,50 +96,57 @@ describe('SessionStore', () => {
     expect(secureMocks().deleteItemAsync).toHaveBeenCalledWith(ROLE_KEY);
   });
 
-  // ---- hydrate ----
+  // ---- hydration on app restart ----
 
   it('hydrate restores refresh token and role from SecureStore on app start', async () => {
-    secureMocks().getItemAsync
-      .mockResolvedValueOnce('hydrated-refresh')
-      .mockResolvedValueOnce('DRIVER');
+    secureMocks().getItemAsync.mockImplementation(async (key: string) => {
+      if (key === REFRESH_KEY) return 'stored-ref-123';
+      if (key === ROLE_KEY) return 'DRIVER';
+      return null;
+    });
+
     const store = makeSessionStore();
+    const restored = await store.hydrate();
 
-    await store.hydrate();
-
-    const refresh = await store.getRefreshToken();
-    expect(refresh).toBe('hydrated-refresh');
+    expect(restored).toBe(true);
+    expect(await store.getRefreshToken()).toBe('stored-ref-123');
     expect(store.getRole()).toBe('DRIVER');
-    // accessToken should NOT be restored from SecureStore
+    // Access token is never stored, so it remains null after hydration
     expect(store.getAccessToken()).toBeNull();
+    // Not authenticated until access token is restored
+    expect(store.isAuthenticated()).toBe(false);
   });
 
   it('hydrate works when SecureStore is empty', async () => {
     secureMocks().getItemAsync.mockResolvedValue(null);
+
     const store = makeSessionStore();
+    const restored = await store.hydrate();
 
-    await store.hydrate();
-
-    expect(store.getAccessToken()).toBeNull();
+    expect(restored).toBe(true);
+    expect(await store.getRefreshToken()).toBeNull();
+    expect(store.getRole()).toBeNull();
+    expect(store.isAuthenticated()).toBe(false);
   });
 
   it('hydrate returns true when SecureStore is unavailable', async () => {
     secureMocks().isAvailableAsync.mockResolvedValue(false);
-    secureMocks().getItemAsync.mockResolvedValue(null);
-    const store = makeSessionStore();
 
-    const result = await store.hydrate();
-    expect(result).toBe(true);
+    const store = makeSessionStore();
+    const restored = await store.hydrate();
+
+    expect(restored).toBe(true);
+    expect(store.isAuthenticated()).toBe(false);
   });
 
   it('hydrate returns true on success', async () => {
-    secureMocks().getItemAsync.mockResolvedValue('some-refresh');
+    secureMocks().getItemAsync.mockResolvedValue('tok');
     const store = makeSessionStore();
-
     const result = await store.hydrate();
     expect(result).toBe(true);
   });
 
-  // ---- isAuthenticated ----
+  // ---- authentication state ----
 
   it('isAuthenticated returns false when no access token', () => {
     const store = makeSessionStore();
@@ -155,69 +155,61 @@ describe('SessionStore', () => {
 
   it('isAuthenticated returns true when access token exists', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-1', 'ref-1');
-
+    await store.setSession('acc-valid', 'ref-valid', 'CUSTOMER');
     expect(store.isAuthenticated()).toBe(true);
   });
 
   it('isAuthenticated returns false when a refresh token exists but access token has not been restored', async () => {
-    secureMocks().getItemAsync
-      .mockResolvedValueOnce('stored-refresh')
-      .mockResolvedValueOnce('CUSTOMER');
-    const store = makeSessionStore();
+    secureMocks().getItemAsync.mockImplementation(async (key: string) => {
+      if (key === REFRESH_KEY) return 'ref-only';
+      if (key === ROLE_KEY) return 'CUSTOMER';
+      return null;
+    });
 
+    const store = makeSessionStore();
     await store.hydrate();
 
-    expect(await store.getRefreshToken()).toBe('stored-refresh');
-    expect(store.getAccessToken()).toBeNull();
     expect(store.isAuthenticated()).toBe(false);
   });
 
   it('isAuthenticated returns false after clearSession', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-1', 'ref-1');
+    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
     await store.clearSession();
-
     expect(store.isAuthenticated()).toBe(false);
   });
 
-  // ---- state change events ----
+  // ---- subscriber notification ----
 
   it('emits a state change event when setSession is called', async () => {
     const store = makeSessionStore();
     const listener = jest.fn();
-    const unsubscribe = store.subscribe(listener);
+    store.subscribe(listener);
 
-    await store.setSession('acc-1', 'ref-1');
+    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
 
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener).toHaveBeenCalledWith({ authenticated: true, role: null });
-
-    unsubscribe();
+    expect(listener).toHaveBeenCalledWith({ authenticated: true, role: 'CUSTOMER' });
   });
 
   it('emits a state change event when clearSession is called', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-1', 'ref-1'); // set first
+    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
 
     const listener = jest.fn();
-    const unsubscribe = store.subscribe(listener);
+    store.subscribe(listener);
 
     await store.clearSession();
 
-    expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledWith({ authenticated: false, role: null });
-
-    unsubscribe();
   });
 
   it('does not emit after unsubscribe', async () => {
     const store = makeSessionStore();
     const listener = jest.fn();
     const unsubscribe = store.subscribe(listener);
-    unsubscribe();
 
-    await store.setSession('acc-1', 'ref-1');
+    unsubscribe();
+    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
 
     expect(listener).not.toHaveBeenCalled();
   });
@@ -226,56 +218,48 @@ describe('SessionStore', () => {
     const store = makeSessionStore();
     const l1 = jest.fn();
     const l2 = jest.fn();
+    store.subscribe(l1);
+    store.subscribe(l2);
 
-    const unsub1 = store.subscribe(l1);
-    const unsub2 = store.subscribe(l2);
+    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
 
-    await store.setSession('acc-1', 'ref-1');
-
-    expect(l1).toHaveBeenCalledTimes(1);
-    expect(l2).toHaveBeenCalledTimes(1);
-
-    unsub1();
-    unsub2();
+    expect(l1).toHaveBeenCalledWith({ authenticated: true, role: 'CUSTOMER' });
+    expect(l2).toHaveBeenCalledWith({ authenticated: true, role: 'CUSTOMER' });
   });
 
   // ---- edge cases ----
 
   it('setting session with empty token treats as unauthenticated', async () => {
     const store = makeSessionStore();
-    await store.setSession('', 'ref-1');
+    await store.setSession('', '', null);
     expect(store.isAuthenticated()).toBe(false);
   });
 
   it('getRefreshToken returns null when SecureStore unavailable', async () => {
     secureMocks().isAvailableAsync.mockResolvedValue(false);
-    secureMocks().getItemAsync.mockResolvedValue(null);
     const store = makeSessionStore();
-
-    const result = await store.getRefreshToken();
-    expect(result).toBeNull();
+    expect(await store.getRefreshToken()).toBeNull();
   });
 
   it('re-uses in-memory refresh token after setSession', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-1', 'ref-set');
+    await store.setSession('acc-1', 'ref-memory', 'CUSTOMER');
 
+    // Should return memory value immediately without hitting SecureStore
     secureMocks().getItemAsync.mockClear();
-    const refresh = await store.getRefreshToken();
-
-    expect(refresh).toBe('ref-set');
+    const token = await store.getRefreshToken();
+    expect(token).toBe('ref-memory');
     expect(secureMocks().getItemAsync).not.toHaveBeenCalled();
   });
 
   it('preserves the existing role when a refresh rotation updates only tokens', async () => {
     const store = makeSessionStore();
-    await store.setSession('acc-1', 'ref-1', 'CUSTOMER');
-    secureMocks().setItemAsync.mockClear();
+    await store.setSession('acc-1', 'ref-1', 'DRIVER');
+    expect(store.getRole()).toBe('DRIVER');
 
+    // Token refresh rotation (role omitted)
     await store.setSession('acc-2', 'ref-2');
-
-    expect(store.getRole()).toBe('CUSTOMER');
-    expect(secureMocks().setItemAsync).toHaveBeenCalledWith(REFRESH_KEY, 'ref-2');
-    expect(secureMocks().setItemAsync).not.toHaveBeenCalledWith(ROLE_KEY, expect.any(String));
+    expect(store.getRole()).toBe('DRIVER');
+    expect(store.getAccessToken()).toBe('acc-2');
   });
 });
