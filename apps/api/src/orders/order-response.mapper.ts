@@ -1,4 +1,4 @@
-import type { Order, OrderStop, OrderStatusHistory } from '@prisma/client';
+import type { Order, OrderStop, OrderStatusHistory, MediaObject } from '@prisma/client';
 
 export interface MappedOrderStopResponse {
   id: string;
@@ -38,12 +38,14 @@ export interface MappedOrderResponse {
   updatedAt: string;
   stops?: MappedOrderStopResponse[];
   statusHistory?: MappedOrderStatusHistoryResponse[];
+  media?: Array<{ id: string; type: string; createdAt: string }>;
 }
 
 export function mapOrderResponse(
   order: Order & {
     stops?: Array<OrderStop & { lat?: number; lng?: number }>;
     statusHistory?: OrderStatusHistory[];
+    mediaObjects?: MediaObject[];
   },
 ): MappedOrderResponse {
   return {
@@ -87,6 +89,15 @@ export function mapOrderResponse(
             actorId: history.actorId,
             reason: history.reason,
             createdAt: history.createdAt.toISOString(),
+          })),
+        }
+      : {}),
+    ...(order.mediaObjects
+      ? {
+          media: order.mediaObjects.map((m) => ({
+            id: m.id,
+            type: m.type,
+            createdAt: m.createdAt.toISOString(),
           })),
         }
       : {}),

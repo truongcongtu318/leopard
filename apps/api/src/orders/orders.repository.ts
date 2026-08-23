@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus } from '@prisma/client';
+import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus, MediaObject } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 
 type OrdersPrismaClient = PrismaService | Prisma.TransactionClient;
@@ -24,6 +24,7 @@ export interface CreateOrderParams {
 export interface OrderWithRelations extends Order {
   stops: Array<OrderStop & { lat: number; lng: number }>;
   statusHistory: OrderStatusHistory[];
+  mediaObjects?: MediaObject[];
 }
 
 @Injectable()
@@ -160,6 +161,7 @@ export class OrdersRepository {
       where: { id },
       include: {
         statusHistory: { orderBy: { createdAt: 'desc' } },
+        mediaObjects: true,
       },
     });
 
@@ -187,6 +189,7 @@ export class OrdersRepository {
       ...order,
       stops,
       statusHistory: order.statusHistory,
+      mediaObjects: order.mediaObjects,
     };
   }
 
