@@ -2,7 +2,13 @@ import { Slot, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { TabBar } from '../../src/navigation/TabBar';
 import { useProtectedLayout } from '../../src/navigation/role-router';
+
+const CUSTOMER_TABS = [
+  { id: 'orders', label: 'Đơn hàng', route: '/customer/orders' },
+  { id: 'profile', label: 'Hồ sơ', route: '/customer/profile' },
+] as const;
 
 export default function CustomerLayout() {
   const decision = useProtectedLayout('customer');
@@ -25,7 +31,14 @@ export default function CustomerLayout() {
 
   if (decision.kind === 'denied') return null;
 
-  return <Slot />;
+  return (
+    <View style={styles.flex}>
+      <View style={styles.flex}>
+        <Slot />
+      </View>
+      <TabBar items={CUSTOMER_TABS} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -35,4 +48,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
+  flex: {
+    flex: 1,
+  },
 });
+
