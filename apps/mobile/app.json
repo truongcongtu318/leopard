@@ -19,7 +19,13 @@
       "output": "single"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LEOPARD cần quyền truy cập thư viện ảnh để chọn ảnh hàng hóa hoặc ảnh xác nhận giao hàng."
+        }
+      ]
     ]
   }
 }
