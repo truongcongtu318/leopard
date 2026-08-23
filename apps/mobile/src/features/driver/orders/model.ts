@@ -105,6 +105,7 @@ export type DriverProofView = Readonly<{
   label: string;
   message: string;
   fileLabel: string | null;
+  mediaId?: string | null;
 }>;
 
 export type DriverPrimaryTaskView =

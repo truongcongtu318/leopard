@@ -294,6 +294,7 @@ describe('createDriverHttpAdapter', () => {
   interface MockDriverHttpClient {
     get: jest.Mock<DriverHttpClient['get']>;
     post: jest.Mock<DriverHttpClient['post']>;
+    postForm: jest.Mock<DriverHttpClient['postForm']>;
     put: jest.Mock<DriverHttpClient['put']>;
     patch: jest.Mock<DriverHttpClient['patch']>;
     delete: jest.Mock<DriverHttpClient['delete']>;
@@ -303,6 +304,7 @@ describe('createDriverHttpAdapter', () => {
     return {
       get: jest.fn(),
       post: jest.fn(),
+      postForm: jest.fn(),
       put: jest.fn(),
       patch: jest.fn(),
       delete: jest.fn(),
@@ -800,6 +802,7 @@ describe('Driver Delivery Proof Validation and Upload', () => {
   interface MockDriverHttpClient {
     get: jest.Mock<DriverHttpClient['get']>;
     post: jest.Mock<DriverHttpClient['post']>;
+    postForm: jest.Mock<DriverHttpClient['postForm']>;
     put: jest.Mock<DriverHttpClient['put']>;
     patch: jest.Mock<DriverHttpClient['patch']>;
     delete: jest.Mock<DriverHttpClient['delete']>;
@@ -809,6 +812,7 @@ describe('Driver Delivery Proof Validation and Upload', () => {
     return {
       get: jest.fn(),
       post: jest.fn(),
+      postForm: jest.fn(),
       put: jest.fn(),
       patch: jest.fn(),
       delete: jest.fn(),
@@ -876,11 +880,11 @@ describe('Driver Delivery Proof Validation and Upload', () => {
   });
 
   describe('uploadDeliveryProof', () => {
-    it('uploads valid proof and returns persisted view with uploaded URL', async () => {
+    it('uploads valid proof and returns persisted view with mediaId', async () => {
       const client = createMockClient();
-      client.post.mockResolvedValueOnce({
-        url: 'https://storage.leopard.vn/proofs/proof-123.jpg',
-        deliveryProofUrl: 'https://storage.leopard.vn/proofs/proof-123.jpg',
+      client.postForm.mockResolvedValueOnce({
+        id: 'media-proof-123',
+        type: 'DELIVERY_PROOF',
       });
 
       const file: ProofFileMetadata = {
@@ -892,41 +896,16 @@ describe('Driver Delivery Proof Validation and Upload', () => {
       const result = await uploadDeliveryProof(client, sampleOrderId, file);
       expect(result.kind).toBe('persisted');
       expect(result.label).toBe('Ảnh xác nhận đã tải lên');
-      expect(result.fileLabel).toBe('https://storage.leopard.vn/proofs/proof-123.jpg');
-      expect(client.post).toHaveBeenCalledWith(
+      expect(result.mediaId).toBe('media-proof-123');
+      expect(client.postForm).toHaveBeenCalledWith(
         `/orders/${sampleOrderId}/media/delivery-proof`,
-        expect.objectContaining({
-          orderId: sampleOrderId,
-          type: 'DELIVERY_PROOF',
-          name: 'delivery-receipt.jpg',
-        }),
+        expect.any(FormData),
       );
-    });
-
-    it('falls back to /media/upload if specific endpoint errors', async () => {
-      const client = createMockClient();
-      client.post
-        .mockRejectedValueOnce(new Error('Endpoint not found'))
-        .mockResolvedValueOnce({
-          url: 'https://storage.leopard.vn/proofs/fallback-proof.png',
-        });
-
-      const file: ProofFileMetadata = {
-        name: 'proof.png',
-        mimeType: 'image/png',
-        size: 1024 * 200,
-      };
-
-      const result = await uploadDeliveryProof(client, sampleOrderId, file);
-      expect(result.kind).toBe('persisted');
-      expect(result.fileLabel).toBe('https://storage.leopard.vn/proofs/fallback-proof.png');
     });
 
     it('returns upload-retry view on server error allowing retry', async () => {
       const client = createMockClient();
-      client.post
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockRejectedValueOnce(new Error('Network error'));
+      client.postForm.mockRejectedValueOnce(new Error('Network error'));
 
       const file: ProofFileMetadata = {
         name: 'proof.jpg',
@@ -951,7 +930,7 @@ describe('Driver Delivery Proof Validation and Upload', () => {
 
       const result = await uploadDeliveryProof(client, sampleOrderId, invalidFile);
       expect(result.kind).toBe('invalid-type');
-      expect(client.post).not.toHaveBeenCalled();
+      expect(client.postForm).not.toHaveBeenCalled();
     });
 
     it('fails fast on invalid order UUID', async () => {
@@ -965,21 +944,77 @@ describe('Driver Delivery Proof Validation and Upload', () => {
       const result = await uploadDeliveryProof(client, 'invalid-order-id', file);
       expect(result.kind).toBe('upload-retry');
       expect(result.label).toBe('Mã đơn không hợp lệ');
-      expect(client.post).not.toHaveBeenCalled();
+      expect(client.postForm).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('uploadDeliveryProof — multipart', () => {
+    it('posts a real multipart form via postForm, not a JSON body', async () => {
+      const orderId = '11111111-1111-4111-8111-111111111001';
+      const postForm = jest.fn(async () => ({ id: 'media-77' }));
+      const client = {
+        get: jest.fn(),
+        post: jest.fn(),
+        put: jest.fn(),
+        patch: jest.fn(),
+        delete: jest.fn(),
+        postForm,
+      } as unknown as DriverHttpClient;
+
+      const result = await uploadDeliveryProof(client, orderId, {
+        name: 'proof.jpg',
+        mimeType: 'image/jpeg',
+        size: 2048,
+        uri: 'file:///proof.jpg',
+      });
+
+      expect(postForm).toHaveBeenCalledWith(
+        `/orders/${orderId}/media/delivery-proof`,
+        expect.any(FormData),
+      );
+      expect(result.kind).toBe('persisted');
+      expect(result.mediaId).toBe('media-77');
+    });
+
+    it('does not fall back to the nonexistent /media/upload route on failure', async () => {
+      const orderId = '11111111-1111-4111-8111-111111111001';
+      const postForm = jest.fn(async () => {
+        throw new Error('upload failed');
+      });
+      const post = jest.fn();
+      const client = {
+        get: jest.fn(),
+        post,
+        put: jest.fn(),
+        patch: jest.fn(),
+        delete: jest.fn(),
+        postForm,
+      } as unknown as DriverHttpClient;
+
+      const result = await uploadDeliveryProof(client, orderId, {
+        name: 'proof.jpg',
+        mimeType: 'image/jpeg',
+        size: 2048,
+        uri: 'file:///proof.jpg',
+      });
+
+      expect(post).not.toHaveBeenCalledWith('/media/upload', expect.anything());
+      expect(result.kind).toBe('upload-retry');
     });
   });
 
   describe('createDriverProofAdapter', () => {
     it('creates DriverProofPort with selectProof and uploadProof implementations', async () => {
       const client = createMockClient();
-      client.post.mockResolvedValueOnce({
-        deliveryProofUrl: 'https://storage.leopard.vn/proofs/proof-port.jpg',
+      client.postForm.mockResolvedValueOnce({
+        id: 'media-proof-port',
       });
 
       const mockFilePicker = jest.fn<() => Promise<ProofFileMetadata | null>>().mockResolvedValue({
         name: 'picked-proof.jpg',
         mimeType: 'image/jpeg',
         size: 1024 * 400,
+        uri: 'file:///picked.jpg',
       });
 
       const adapter = createDriverProofAdapter(client, {
@@ -992,7 +1027,7 @@ describe('Driver Delivery Proof Validation and Upload', () => {
 
       const uploadResult = await adapter.uploadProof(`cmd-select-proof-${sampleOrderId}`);
       expect(uploadResult.kind).toBe('persisted');
-      expect(uploadResult.fileLabel).toBe('https://storage.leopard.vn/proofs/proof-port.jpg');
+      expect(uploadResult.mediaId).toBe('media-proof-port');
     });
 
     it('returns error view when uploadProof receives invalid commandId', async () => {
@@ -1002,7 +1037,7 @@ describe('Driver Delivery Proof Validation and Upload', () => {
 
       expect(result.kind).toBe('upload-retry');
       expect(result.label).toBe('Mã đơn không hợp lệ');
-      expect(client.post).not.toHaveBeenCalled();
+      expect(client.postForm).not.toHaveBeenCalled();
     });
   });
 });

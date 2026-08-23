@@ -5,6 +5,7 @@ import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
 import { LedgerSection } from '../../../ui/LedgerSection';
 import { MapPanel } from '../../../ui/MapPanel';
+import { MediaImage } from '../../../ui/MediaImage';
 import { RouteMapSchematic } from '../../../ui/RouteMapSchematic';
 import { RouteSpine } from '../../../ui/RouteSpine';
 import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
@@ -84,6 +85,9 @@ function ProofPanel({ proof }: Readonly<{ proof: DriverProofView }>) {
       title="Ảnh xác nhận giao hàng"
     >
       <View style={[styles.proofPanel, isError ? styles.proofError : null]}>
+        {proof.kind === 'persisted' && proof.mediaId ? (
+          <MediaImage mediaId={proof.mediaId} />
+        ) : null}
         <Text accessibilityRole={isError ? 'alert' : undefined} style={styles.proofTitle}>
           {proof.label}
         </Text>

@@ -27,6 +27,7 @@ import type {
   DriverProofPort,
   DriverTrackingPort,
 } from './port';
+import { pickDeviceImage } from '../../../media/device-image-picker';
 
 function getDefaultHttpClient(): DriverHttpClient {
   const { httpClient } = require('../../../api/http-client');
@@ -255,6 +256,7 @@ export interface MappedDriverOrderResponse {
   updatedAt: string;
   stops?: MappedDriverOrderStopResponse[];
   statusHistory?: MappedDriverOrderStatusHistoryResponse[];
+  media?: Array<{ id: string; type: string; createdAt: string }>;
 }
 
 export interface DriverAvailableOrdersApiResponse {
@@ -276,6 +278,7 @@ export interface DriverAvailabilityApiResponse {
 export interface DriverHttpClient {
   get<T = unknown>(path: string): Promise<T>;
   post<T = unknown>(path: string, body?: unknown): Promise<T>;
+  postForm<T = unknown>(path: string, form: FormData): Promise<T>;
   put<T = unknown>(path: string, body?: unknown): Promise<T>;
   patch<T = unknown>(path: string, body?: unknown): Promise<T>;
   delete<T = unknown>(path: string): Promise<T>;
@@ -436,13 +439,17 @@ export function mapDriverProof(
   order: MappedDriverOrderResponse,
 ): DriverProofView {
   const status = order.status as OrderStatus;
+  const proofMedia = order.media?.find((m) => m.type === 'DELIVERY_PROOF') ?? null;
+  const deliveryProofUrl = proofMedia?.id ?? order.deliveryProofUrl ?? null;
+
   if (status === 'IN_TRANSIT') {
-    if (order.deliveryProofUrl) {
+    if (deliveryProofUrl) {
       return {
         kind: 'persisted',
         label: 'Ảnh xác nhận đã tải lên',
         message: 'Proof đã có trong snapshot phản hồi từ hệ thống.',
-        fileLabel: order.deliveryProofUrl,
+        fileLabel: deliveryProofUrl,
+        mediaId: proofMedia?.id ?? null,
       };
     }
     return {
@@ -450,6 +457,7 @@ export function mapDriverProof(
       label: 'Cần ảnh xác nhận trước khi hoàn tất',
       message: 'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.',
       fileLabel: null,
+      mediaId: null,
     };
   }
   if (status === 'DELIVERED') {
@@ -457,7 +465,8 @@ export function mapDriverProof(
       kind: 'persisted',
       label: 'Ảnh xác nhận đã tải lên',
       message: 'Proof read-only từ snapshot đã hoàn tất.',
-      fileLabel: order.deliveryProofUrl ?? 'xac-nhan-giao-hang.jpg',
+      fileLabel: deliveryProofUrl ?? 'xac-nhan-giao-hang.jpg',
+      mediaId: proofMedia?.id ?? null,
     };
   }
   return {
@@ -465,6 +474,7 @@ export function mapDriverProof(
     label: 'Chưa có ảnh xác nhận',
     message: 'Proof chưa được yêu cầu ở task hiện tại.',
     fileLabel: null,
+    mediaId: null,
   };
 }
 
@@ -1216,66 +1226,38 @@ export async function uploadDeliveryProof(
   }
 
   try {
-    const response = await client.post<ProofUploadApiResponse | MappedDriverOrderResponse>(
-      `/orders/${validOrderId}/media/delivery-proof`,
-      {
-        orderId: validOrderId,
-        type: 'DELIVERY_PROOF',
-        name: file.name,
-        mimeType: file.mimeType,
-        size: file.size,
-        uri: file.uri,
-        data: file.data,
-      },
+    const form = new FormData();
+    form.append('file', {
+      uri: file.uri ?? '',
+      name: file.name,
+      type: file.mimeType,
+    } as unknown as Blob);
+    form.append(
+      'clientRequestId',
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `req-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     );
 
-    const uploadedUrl =
-      ('deliveryProofUrl' in response && typeof response.deliveryProofUrl === 'string' && response.deliveryProofUrl) ||
-      ('url' in response && typeof response.url === 'string' && response.url) ||
-      file.name ||
-      'xac-nhan-giao-hang.jpg';
+    const response = await client.postForm<{ id: string; type?: string }>(
+      `/orders/${validOrderId}/media/delivery-proof`,
+      form,
+    );
 
     return deepFreeze<DriverProofView>({
       kind: 'persisted',
       label: 'Ảnh xác nhận đã tải lên',
       message: 'Proof đã có trong snapshot phản hồi từ hệ thống.',
-      fileLabel: uploadedUrl,
+      fileLabel: file.name || 'xac-nhan-giao-hang.jpg',
+      mediaId: response.id,
     });
   } catch {
-    try {
-      const fallbackResponse = await client.post<ProofUploadApiResponse>(
-        '/media/upload',
-        {
-          orderId: validOrderId,
-          type: 'DELIVERY_PROOF',
-          fileName: file.name,
-          mimeType: file.mimeType,
-          size: file.size,
-          uri: file.uri,
-          data: file.data,
-        },
-      );
-
-      const uploadedUrl =
-        fallbackResponse.deliveryProofUrl ||
-        fallbackResponse.url ||
-        file.name ||
-        'xac-nhan-giao-hang.jpg';
-
-      return deepFreeze<DriverProofView>({
-        kind: 'persisted',
-        label: 'Ảnh xác nhận đã tải lên',
-        message: 'Proof đã có trong snapshot phản hồi từ hệ thống.',
-        fileLabel: uploadedUrl,
-      });
-    } catch {
-      return deepFreeze<DriverProofView>({
-        kind: 'upload-retry',
-        label: 'Chưa tải được ảnh',
-        message: 'Ảnh đã chọn vẫn được giữ; hãy thử lại.',
-        fileLabel: file.name ?? null,
-      });
-    }
+    return deepFreeze<DriverProofView>({
+      kind: 'upload-retry',
+      label: 'Chưa tải được ảnh',
+      message: 'Ảnh đã chọn vẫn được giữ; hãy thử lại.',
+      fileLabel: file.name ?? null,
+    });
   }
 }
 
@@ -1303,7 +1285,16 @@ export function createDriverProofAdapter(
         locallySelectedFile = file;
         return file;
       }
-      return null;
+      const picked = await pickDeviceImage();
+      if (!picked) return null;
+      const file: ProofFileMetadata = {
+        name: picked.name,
+        mimeType: picked.mimeType,
+        size: picked.size,
+        uri: picked.uri,
+      };
+      locallySelectedFile = file;
+      return file;
     },
 
     async uploadProof(commandId: string): Promise<DriverProofView> {
@@ -1322,6 +1313,7 @@ export function createDriverProofAdapter(
         name: 'xac-nhan-giao-hang.jpg',
         mimeType: 'image/jpeg',
         size: 1024 * 500,
+        uri: '',
       };
 
       const result = await uploadDeliveryProof(getClient(), orderId, file);
