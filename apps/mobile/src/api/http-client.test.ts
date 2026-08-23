@@ -131,6 +131,59 @@ describe('http-client', () => {
     expect(headers?.['Content-Type']).toBe('application/json');
   });
 
+  it('performs a postForm request without setting Content-Type manually', async () => {
+    fetchMock().mockResolvedValue(createMockResponse(201, { id: 'media-1' }));
+
+    const form = new FormData();
+    form.append('file', 'fake-binary' as unknown as Blob);
+    form.append('clientRequestId', 'req-1');
+
+    const result = await httpClient.postForm<{ id: string }>('/orders/o1/media/cargo', form);
+
+    const [url, init] = lastFetchArgs();
+    expect(url).toContain('/orders/o1/media/cargo');
+    expect(init?.method).toBe('POST');
+    expect(init?.body).toBe(form);
+    const headers = init?.headers as Record<string, string> | undefined;
+    expect(headers?.['Content-Type']).toBeUndefined();
+    expect(result.id).toBe('media-1');
+  });
+
+  it('still attaches Authorization and x-request-id on postForm requests', async () => {
+    mocks().getAccessToken.mockReturnValue('test-token');
+    fetchMock().mockResolvedValue(createMockResponse(201, { id: 'media-1' }));
+
+    await httpClient.postForm('/orders/o1/media/cargo', new FormData());
+
+    const [, init] = lastFetchArgs();
+    const headers = init?.headers as Record<string, string> | undefined;
+    expect(headers?.Authorization).toBe('Bearer test-token');
+    expect(headers?.['x-request-id']).toBeDefined();
+  });
+
+  it('retries a postForm request through the 401 refresh flow', async () => {
+    mocks().getAccessToken.mockReturnValue('expired-token');
+    mocks().getRefreshToken.mockResolvedValue('refresh-token-1');
+
+    fetchMock()
+      .mockResolvedValueOnce(createMockResponse(401, { code: 'UNAUTHORIZED', message: 'Token expired' }))
+      .mockResolvedValueOnce(createMockResponse(200, {
+        accessToken: 'new-access-token',
+        accessTokenExpiresAt: '2026-08-06T02:15:00.000Z',
+        refreshToken: 'new-refresh-token',
+        refreshTokenExpiresAt: '2026-08-13T02:15:00.000Z',
+      }))
+      .mockResolvedValueOnce(createMockResponse(201, { id: 'media-1' }));
+
+    const form = new FormData();
+    const result = await httpClient.postForm<{ id: string }>('/orders/o1/media/cargo', form);
+
+    expect(result.id).toBe('media-1');
+    expect(fetchMock()).toHaveBeenCalledTimes(3);
+    const retryCall = fetchMock().mock.calls[2] as [string, RequestInit | undefined];
+    expect(retryCall[1]?.body).toBe(form);
+  });
+
   // ---- HTTP methods ----
 
   it('performs GET request', async () => {

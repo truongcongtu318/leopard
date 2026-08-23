@@ -69,7 +69,8 @@ export function refreshSession(): Promise<boolean> {
 // ---- request execution ----
 
 async function request<T>(options: RequestOptions): Promise<T> {
-  const headers = buildHeaders();
+  const isForm = options.body instanceof FormData;
+  const headers = buildHeaders(isForm);
   const url = `${BASE_URL}${options.path}`;
 
   const init: RequestInit = {
@@ -78,7 +79,7 @@ async function request<T>(options: RequestOptions): Promise<T> {
   };
 
   if (options.body !== undefined) {
-    init.body = JSON.stringify(options.body);
+    init.body = isForm ? (options.body as FormData) : JSON.stringify(options.body);
   }
 
   let response: Response;
@@ -93,13 +94,13 @@ async function request<T>(options: RequestOptions): Promise<T> {
     const refreshed = await startRefresh();
     if (refreshed) {
       // Retry original request with new token
-      const retryHeaders = buildHeaders();
+      const retryHeaders = buildHeaders(isForm);
       const retryInit: RequestInit = {
         method: options.method,
         headers: retryHeaders,
       };
       if (options.body !== undefined) {
-        retryInit.body = JSON.stringify(options.body);
+        retryInit.body = isForm ? (options.body as FormData) : JSON.stringify(options.body);
       }
 
       let retryResponse: Response;
@@ -134,11 +135,14 @@ async function request<T>(options: RequestOptions): Promise<T> {
 
 // ---- helpers ----
 
-function buildHeaders(): Record<string, string> {
+function buildHeaders(isForm = false): Record<string, string> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     'x-request-id': generateRequestId(),
   };
+
+  if (!isForm) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const token = sessionStore.getAccessToken();
   if (token) {
@@ -179,6 +183,10 @@ export const httpClient = {
 
   post<T = unknown>(path: string, body?: unknown): Promise<T> {
     return request<T>({ method: 'POST', path, body });
+  },
+
+  postForm<T = unknown>(path: string, form: FormData): Promise<T> {
+    return request<T>({ method: 'POST', path, body: form });
   },
 
   put<T = unknown>(path: string, body?: unknown): Promise<T> {
