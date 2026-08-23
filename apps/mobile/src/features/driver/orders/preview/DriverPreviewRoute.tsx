@@ -4,6 +4,8 @@ import { MobilePreviewComposition, createMobilePreviewSelection } from '../../..
 import type { MobilePreviewSelection } from '../../../../preview/scenario';
 import { ScreenScaffold } from '../../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../../ui/ScreenState';
+import { DriverOrderDetailRuntime } from '../DriverOrderDetailRuntime';
+import { DriverOrdersListRuntime } from '../DriverOrdersListRuntime';
 import { DriverOrderDetailScreen } from '../DriverOrderDetailScreen';
 import { DriverOrdersScreen } from '../DriverOrdersScreen';
 import type { DriverDetailView, DriverListView } from '../model';
@@ -36,16 +38,26 @@ export type DriverPreviewRouteProps = Readonly<{
   loadCatalogue?: DriverPreviewCatalogueLoader;
 }>;
 
-function RuntimeBoundary({ screen }: Readonly<{ screen: DriverPreviewScreen }>) {
-  return (
-    <ScreenScaffold title={screen === 'list' ? 'Đơn của tài xế' : 'Chi tiết đơn'}>
-      <ScreenState
-        message="Lớp trình bày Driver Wave 4 đã sẵn sàng; runtime ports sẽ được nối sau handoff Wave 3."
-        state="empty"
-        title="Chưa kết nối nguồn dữ liệu"
-      />
-    </ScreenScaffold>
-  );
+function RuntimeScreen({
+  screen,
+  orderId,
+  onOpenOrder,
+}: Readonly<{
+  screen: DriverPreviewScreen;
+  orderId: string | null;
+  onOpenOrder?: (orderId: string) => void;
+}>) {
+  if (screen === 'list') {
+    return <DriverOrdersListRuntime onOpenOrder={onOpenOrder ?? (() => {})} />;
+  }
+  if (!orderId) {
+    return (
+      <ScreenScaffold title="Chi tiết đơn">
+        <ScreenState message="Thiếu mã đơn hàng." state="error" title="Không thể mở đơn" />
+      </ScreenScaffold>
+    );
+  }
+  return <DriverOrderDetailRuntime orderId={orderId} />;
 }
 
 function DriverPreviewScreenView({
@@ -138,7 +150,7 @@ export function DriverPreviewRoute({
           </ScreenScaffold>
         )
       }
-      renderRuntime={() => <RuntimeBoundary screen={screen} />}
+      renderRuntime={() => <RuntimeScreen onOpenOrder={onOpenOrder} orderId={orderId} screen={screen} />}
     />
   );
 }

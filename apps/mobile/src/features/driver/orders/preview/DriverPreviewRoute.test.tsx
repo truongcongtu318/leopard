@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, waitFor } from '@testing-library/react-native';
+import React from 'react';
 
 import { DriverPreviewRoute } from './DriverPreviewRoute';
 import type { DriverPreviewRouteProps } from './DriverPreviewRoute';
@@ -13,11 +15,17 @@ afterEach(() => {
   else process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = previousFlag;
 });
 
+async function renderWithClient(ui: React.ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const view = await render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return { ...view, client };
+}
+
 describe('DriverPreviewRoute', () => {
   it('does not load Driver fixtures when either preview opt-in is missing', async () => {
     delete process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
     const loadCatalogue = jest.fn(async () => ({ createDriverPreviewView }));
-    const screen = await render(
+    const screen = await renderWithClient(
       <DriverPreviewRoute
         loadCatalogue={loadCatalogue}
         localPreviewEnabled
@@ -25,16 +33,17 @@ describe('DriverPreviewRoute', () => {
         screen="list"
       />,
     );
-    await waitFor(() => expect(screen.getByText('Chưa kết nối nguồn dữ liệu')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Đơn của tài xế')).toBeTruthy());
     expect(loadCatalogue).not.toHaveBeenCalled();
     expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
     await screen.unmount();
+    screen.client.clear();
   });
 
   it('renders the action-first fixture behind the guarded composition banner', async () => {
     process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = 'enabled';
     const loadCatalogue = jest.fn(async () => ({ createDriverPreviewView }));
-    const screen = await render(
+    const screen = await renderWithClient(
       <DriverPreviewRoute
         loadCatalogue={loadCatalogue}
         localPreviewEnabled
@@ -48,12 +57,13 @@ describe('DriverPreviewRoute', () => {
     expect(screen.getByLabelText('Bản xem trước giao diện — dữ liệu mô phỏng')).toBeTruthy();
     expect(loadCatalogue).toHaveBeenCalledTimes(1);
     await screen.unmount();
+    screen.client.clear();
   });
 
   it('shows a privacy-safe error for an invalid scenario', async () => {
     process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = 'enabled';
     const loadCatalogue = jest.fn(async () => ({ createDriverPreviewView }));
-    const screen = await render(
+    const screen = await renderWithClient(
       <DriverPreviewRoute
         loadCatalogue={loadCatalogue}
         localPreviewEnabled
@@ -64,6 +74,7 @@ describe('DriverPreviewRoute', () => {
     await waitFor(() => expect(screen.getByText('Không thể mở scenario')).toBeTruthy());
     expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
     await screen.unmount();
+    screen.client.clear();
   });
 
   it('fails closed when a detail catalogue returns a fixture for another order ID', async () => {
@@ -80,7 +91,7 @@ describe('DriverPreviewRoute', () => {
       screen: 'detail',
     } as DriverPreviewRouteProps;
 
-    const screen = await render(<DriverPreviewRoute {...props} />);
+    const screen = await renderWithClient(<DriverPreviewRoute {...props} />);
 
     await waitFor(() => {
       expect(screen.getByText('Không thể mở scenario')).toBeTruthy();
@@ -88,5 +99,6 @@ describe('DriverPreviewRoute', () => {
     expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
     expect(loadCatalogue).toHaveBeenCalledTimes(1);
     await screen.unmount();
+    screen.client.clear();
   });
 });
