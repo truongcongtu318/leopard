@@ -9,11 +9,13 @@ Phone/Firebase flow hoặc demo account selector khi được bật. Có trạng
 - `/customer/orders`: status tabs/filter, order rows, pagination/infinite load có kiểm soát và create action.
 - `/customer/orders/new`: pickup, stops, dropoff, vehicle, cargo, route estimate, price và ETA dự kiến. Submit chỉ bật khi estimate token còn hiệu lực.
 - `/customer/orders/:id`: status timeline, route/map, Driver/tracking khi được nhận, media, payment và cancel khi hợp lệ.
+- `/customer/profile`: số điện thoại, vai trò, trạng thái tài khoản, phiên bản ứng dụng, đăng xuất.
 
 ## Driver
 
 - `/driver/orders`: availability control, active-order banner và danh sách `REQUESTED`.
 - `/driver/orders/:id`: route/cargo summary, accept action hoặc active workflow; status action hiển thị đúng next state duy nhất; delivery proof trước `DELIVERED`.
+- `/driver/profile`: số điện thoại, vai trò, trạng thái tài khoản, phiên bản ứng dụng, đăng xuất.
 
 ## Fleet Owner
 
