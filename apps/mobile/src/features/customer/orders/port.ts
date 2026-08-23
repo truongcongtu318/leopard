@@ -3,6 +3,7 @@ import type {
   CustomerCreateView,
   CustomerDetailView,
   CustomerListView,
+  CustomerOrderDetailDataView,
   CustomerOrderFilter,
   CustomerOrderIntent,
   CustomerTrackingView,
@@ -27,6 +28,7 @@ export type CustomerOrdersPort = Readonly<{
 
 export type CustomerMediaPickerPort = Readonly<{
   pickCargoImage: () => Promise<
-    Readonly<{ name: string; mimeType: string; size: number }>
+    Readonly<{ name: string; mimeType: string; size: number; uri: string }> | null
   >;
+  uploadCargoImage: (orderId: string) => Promise<CustomerOrderDetailDataView['media']>;
 }>;

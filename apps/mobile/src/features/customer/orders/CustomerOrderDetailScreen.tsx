@@ -8,6 +8,7 @@ import { MapPanel } from '../../../ui/MapPanel';
 import { PaymentSummary } from '../../../ui/PaymentSummary';
 import { RouteSpine } from '../../../ui/RouteSpine';
 import { RouteMapSchematic } from '../../../ui/RouteMapSchematic';
+import { MediaImage } from '../../../ui/MediaImage';
 import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
 import { StatusBadge } from '../../../ui/StatusBadge';
@@ -25,6 +26,7 @@ export type CustomerOrderDetailScreenProps = Readonly<{
   onPaymentAction?: (actionId: string) => void;
   onCancel?: (actionId: string) => void;
   onRetry?: () => void;
+  onPickCargoImage?: () => void;
 }>;
 
 function TrackingPanel({
@@ -111,22 +113,24 @@ function TrackingPanel({
   );
 }
 
-function MediaLedger({ media }: Readonly<{ media: CustomerDetailContentView['order']['media'] }>) {
+function MediaLedger({
+  media,
+  onPickImage,
+}: Readonly<{
+  media: CustomerDetailContentView['order']['media'];
+  onPickImage?: () => void;
+}>) {
   return (
     <LedgerSection index="04" title={media.label}>
-      {media.kind === 'available' ? (
-        <View style={styles.mediaGrid}>
-          {['01', '02'].map((index) => (
-            <View key={index} style={styles.mediaTile}>
-              <Text style={styles.mediaIndex}>{index}</Text>
-              <Text style={styles.mediaLabel}>Ảnh mô phỏng</Text>
-            </View>
-          ))}
-        </View>
+      {media.kind === 'available' && media.mediaId ? (
+        <MediaImage mediaId={media.mediaId} />
       ) : null}
       <Text accessibilityRole={media.kind === 'error' ? 'alert' : undefined} style={styles.body}>
         {media.description}
       </Text>
+      {media.kind !== 'available' ? (
+        <Button label="Chọn ảnh hàng hóa" onPress={onPickImage} variant="secondary" />
+      ) : null}
     </LedgerSection>
   );
 }
@@ -161,6 +165,7 @@ function CustomerDetailContent({
   onPaymentAction,
   onCancel,
   onRetry,
+  onPickCargoImage,
 }: Readonly<Omit<CustomerOrderDetailScreenProps, 'view'> & { view: CustomerDetailContentView }>) {
   const { order } = view;
   return (
@@ -245,7 +250,7 @@ function CustomerDetailContent({
           </View>
         ) : null}
 
-        <MediaLedger media={order.media} />
+        <MediaLedger media={order.media} onPickImage={onPickCargoImage} />
 
         <StatusTimeline entries={order.history} />
 

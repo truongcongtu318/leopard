@@ -905,6 +905,7 @@ describe('createCustomerHttpAdapter', () => {
       return {
         get: jest.fn() as unknown as CustomerHttpClient['get'],
         post: jest.fn() as unknown as CustomerHttpClient['post'],
+        postForm: jest.fn() as unknown as CustomerHttpClient['postForm'],
         put: jest.fn() as unknown as CustomerHttpClient['put'],
         delete: jest.fn() as unknown as CustomerHttpClient['delete'],
         ...overrides,

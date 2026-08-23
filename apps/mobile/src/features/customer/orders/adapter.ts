@@ -24,7 +24,7 @@ import type {
 } from './model';
 import type { CustomerOrdersPort } from './port';
 
-function getDefaultHttpClient(): CustomerHttpClient {
+export function getDefaultHttpClient(): CustomerHttpClient {
   const { httpClient } = require('../../../api/http-client');
   return httpClient as CustomerHttpClient;
 }
@@ -249,6 +249,7 @@ export interface MappedOrderResponse {
   statusHistory?: MappedOrderStatusHistoryResponse[];
   tracking?: MappedTrackingHistoryResponse | MappedTrackingPointResponse[];
   payment?: MappedPaymentResponse | PaymentQrApiResponse;
+  media?: Array<{ id: string; type: string; createdAt: string }>;
 }
 
 export interface CustomerOrdersListApiResponse {
@@ -274,6 +275,7 @@ export interface OrderEstimateApiResponse {
 export interface CustomerHttpClient {
   get<T = unknown>(path: string): Promise<T>;
   post<T = unknown>(path: string, body?: unknown): Promise<T>;
+  postForm<T = unknown>(path: string, form: FormData): Promise<T>;
   put<T = unknown>(path: string, body?: unknown): Promise<T>;
   delete<T = unknown>(path: string): Promise<T>;
 }
@@ -601,11 +603,20 @@ export function mapOrderToDetail(
     status,
   );
 
-  const media = {
-    kind: 'empty' as const,
-    label: 'Ảnh hàng hóa',
-    description: 'Chưa có ảnh hàng hóa.',
-  };
+  const cargoMedia = order.media?.find((m) => m.type === 'CARGO') ?? null;
+  const media = cargoMedia
+    ? {
+        kind: 'available' as const,
+        label: 'Ảnh hàng hóa',
+        description: 'Ảnh hàng hóa đã tải lên.',
+        mediaId: cargoMedia.id,
+      }
+    : {
+        kind: 'empty' as const,
+        label: 'Ảnh hàng hóa',
+        description: 'Chưa có ảnh hàng hóa.',
+        mediaId: null,
+      };
 
   const history = (order.statusHistory ?? []).map((h) => ({
     id: h.id,

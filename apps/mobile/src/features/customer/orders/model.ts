@@ -170,6 +170,7 @@ export type CustomerOrderDetailDataView = Readonly<{
     kind: 'available' | 'empty' | 'error';
     label: string;
     description: string;
+    mediaId?: string | null;
   }>;
   history: readonly Readonly<{
     id: string;
