@@ -681,13 +681,13 @@ describe('createCustomerHttpAdapter', () => {
       referenceLabel: 'LPRD-DEMO-260815-001',
     };
 
-    it('createPaymentQr calls POST /payments/qr and returns detail view with ready QR', async () => {
+    it('createPaymentQr calls POST /orders/:id/payments and returns detail view with ready QR', async () => {
       const client = createMockClient();
       client.post.mockResolvedValueOnce(mockPaymentQrResponse);
       client.get.mockResolvedValueOnce(mockOrderResponse);
 
       const adapter = createCustomerHttpAdapter(client);
-      const view = await adapter.createPaymentQr!(mockOrderResponse.id, 286000);
+      const view = await adapter.createPaymentQr!(mockOrderResponse.id);
 
       expect(view.kind).toBe('content');
       if (view.kind === 'content') {
@@ -697,10 +697,10 @@ describe('createCustomerHttpAdapter', () => {
         expect(view.order.payment.referenceLabel).toBe('LPRD-DEMO-260815-001');
         expect(view.order.payment.sourceLabel).toBe('VietQR mô phỏng');
       }
-      expect(client.post).toHaveBeenCalledWith('/payments/qr', {
-        orderId: mockOrderResponse.id,
-        amountVnd: 286000,
-      });
+      expect(client.post).toHaveBeenCalledWith(
+        `/orders/${mockOrderResponse.id}/payments`,
+        expect.objectContaining({ clientRequestId: expect.any(String) }),
+      );
     });
 
     it('createPaymentQr handles 403 permission denied', async () => {
@@ -713,18 +713,6 @@ describe('createCustomerHttpAdapter', () => {
       const view = await adapter.createPaymentQr!(mockOrderResponse.id);
 
       expect(view.kind).toBe('permission-denied');
-    });
-
-    it('getPaymentStatus calls GET /payments/:id and returns mapped payment view', async () => {
-      const client = createMockClient();
-      client.get.mockResolvedValueOnce(mockPaymentQrResponse);
-
-      const adapter = createCustomerHttpAdapter(client);
-      const view = await adapter.getPaymentStatus!('pmt-1');
-
-      expect(view.status).toBe('QR_CREATED');
-      expect(view.referenceLabel).toBe('LPRD-DEMO-260815-001');
-      expect(client.get).toHaveBeenCalledWith('/payments/pmt-1');
     });
   });
 
@@ -836,10 +824,10 @@ describe('createCustomerHttpAdapter', () => {
       });
 
       expect(view.kind).toBe('content');
-      expect(client.post).toHaveBeenCalledWith('/payments/qr', {
-        orderId: mockOrderResponse.id,
-        amountVnd: undefined,
-      });
+      expect(client.post).toHaveBeenCalledWith(
+        `/orders/${mockOrderResponse.id}/payments`,
+        expect.objectContaining({ clientRequestId: expect.any(String) }),
+      );
     });
 
     it('executes refresh-tracking intent', async () => {
@@ -909,6 +897,60 @@ describe('createCustomerHttpAdapter', () => {
       if (view.kind === 'permission-denied') {
         expect(view.scenarioId).toBe('C-DETAIL-PERMISSION');
       }
+    });
+  });
+
+  describe('createCustomerHttpAdapter — payment', () => {
+    function makeClient(overrides: Partial<CustomerHttpClient> = {}): CustomerHttpClient {
+      return {
+        get: jest.fn() as unknown as CustomerHttpClient['get'],
+        post: jest.fn() as unknown as CustomerHttpClient['post'],
+        put: jest.fn() as unknown as CustomerHttpClient['put'],
+        delete: jest.fn() as unknown as CustomerHttpClient['delete'],
+        ...overrides,
+      };
+    }
+
+    it('creates a payment via POST orders/:id/payments with only clientRequestId', async () => {
+      const validId = '11111111-1111-4111-8111-111111111001';
+      const post = jest.fn(async (path: string) => {
+        if (path === `/orders/${validId}/payments`) {
+          return { id: 'pmt-1', orderId: validId, status: 'QR_CREATED', amountVnd: 100000, provider: 'DEMO' };
+        }
+        throw new Error(`unexpected POST ${path}`);
+      });
+      const get = jest.fn(async (path: string) => {
+        if (path === `/orders/${validId}`) {
+          return {
+            id: validId,
+            driverId: null,
+            status: 'REQUESTED',
+            providerSource: null,
+            distanceMeters: null,
+            durationSeconds: null,
+            priceVnd: 100000,
+            etaSeconds: null,
+            createdAt: '2026-08-15T00:00:00.000Z',
+            updatedAt: '2026-08-15T00:00:00.000Z',
+          };
+        }
+        throw new Error(`unexpected GET ${path}`);
+      });
+      const client = makeClient({ post: post as unknown as CustomerHttpClient['post'], get: get as unknown as CustomerHttpClient['get'] });
+      const port = createCustomerHttpAdapter(client);
+
+      const view = await port.createPaymentQr?.(validId);
+
+      expect(post).toHaveBeenCalledWith(`/orders/${validId}/payments`, expect.objectContaining({
+        clientRequestId: expect.any(String),
+      }));
+      expect(post).not.toHaveBeenCalledWith('/payments/qr', expect.anything());
+      expect(view?.kind).toBe('content');
+    });
+
+    it('does not call a per-payment status endpoint that does not exist on the backend', () => {
+      const port = createCustomerHttpAdapter(makeClient());
+      expect((port as unknown as { getPaymentStatus?: unknown }).getPaymentStatus).toBeUndefined();
     });
   });
 });

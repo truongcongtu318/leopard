@@ -5,7 +5,6 @@ import type {
   CustomerListView,
   CustomerOrderFilter,
   CustomerOrderIntent,
-  CustomerPaymentView,
   CustomerTrackingView,
 } from './model';
 
@@ -16,11 +15,7 @@ export type CustomerOrdersPort = Readonly<{
   estimateOrder: (form: CustomerCreateFormView) => Promise<CustomerCreateView>;
   createOrder: (form: CustomerCreateFormView) => Promise<CustomerDetailView>;
   executeIntent: (intent: CustomerOrderIntent) => Promise<CustomerDetailView>;
-  createPaymentQr?: (
-    orderId: string,
-    amountVnd?: number,
-  ) => Promise<CustomerDetailView>;
-  getPaymentStatus?: (paymentId: string) => Promise<CustomerPaymentView>;
+  createPaymentQr?: (orderId: string) => Promise<CustomerDetailView>;
   getTrackingHistory?: (
     orderId: string,
   ) => Promise<CustomerTrackingView | unknown>;

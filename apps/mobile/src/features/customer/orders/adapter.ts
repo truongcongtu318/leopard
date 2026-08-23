@@ -1156,10 +1156,7 @@ export function createCustomerHttpAdapter(
       }
     },
 
-    async createPaymentQr(
-      orderId: string,
-      amountVnd?: number,
-    ): Promise<CustomerDetailView> {
+    async createPaymentQr(orderId: string): Promise<CustomerDetailView> {
       const activeClient = getClient();
       const validId = parseCustomerOrderId(orderId);
       if (!validId) {
@@ -1173,9 +1170,14 @@ export function createCustomerHttpAdapter(
       }
 
       try {
+        const clientRequestId =
+          typeof crypto !== 'undefined' && 'randomUUID' in crypto
+            ? crypto.randomUUID()
+            : `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
         const paymentResponse = await activeClient.post<PaymentQrApiResponse>(
-          '/payments/qr',
-          { orderId: validId, amountVnd },
+          `/orders/${validId}/payments`,
+          { clientRequestId },
         );
 
         const orderResponse = await activeClient.get<MappedOrderResponse>(
@@ -1211,24 +1213,6 @@ export function createCustomerHttpAdapter(
             error instanceof Error && error.message
               ? error.message
               : 'Chưa thể tạo thanh toán; không hiển thị chi tiết provider.',
-        });
-      }
-    },
-
-    async getPaymentStatus(paymentId: string): Promise<CustomerPaymentView> {
-      const activeClient = getClient();
-      try {
-        const response = await activeClient.get<PaymentQrApiResponse>(
-          `/payments/${paymentId}`,
-        );
-        return mapPaymentToView(response);
-      } catch {
-        return mapPaymentToView({
-          id: paymentId,
-          paymentId,
-          orderId: '',
-          status: 'FAILED',
-          amountVnd: 0,
         });
       }
     },
