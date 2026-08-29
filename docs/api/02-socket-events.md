@@ -1,6 +1,6 @@
 # Socket.IO events
 
-Namespace: `/tracking`. Handshake: `auth: { token: <accessToken> }`.
+Namespace: `/tracking`. Handshake: `auth: { token: <accessToken> }` or `Authorization: Bearer <accessToken>` header or `leopard.admin.access` httpOnly cookie (web BFF, `withCredentials: true`). Web clients may obtain a short-lived token via `GET /api/v1/auth/socket-token` (BFF, reads httpOnly cookie) and pass it as `auth.token`.
 
 Mọi ack dùng discriminated envelope ổn định:
 

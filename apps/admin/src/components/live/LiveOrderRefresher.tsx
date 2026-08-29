@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
+import { useOrderTrackingSocket } from '../../features/tracking/useOrderTrackingSocket';
+
 export const LIVE_REFRESH_EVENT = 'leopard:live-refresh';
 
 /**
@@ -21,10 +23,14 @@ export const LIVE_REFRESH_EVENT = 'leopard:live-refresh';
 export function LiveOrderRefresher({
   intervalMs = 15000,
   enabled = true,
+  orderId,
 }: Readonly<{
   readonly intervalMs?: number;
   readonly enabled?: boolean;
+  readonly orderId?: string | null;
 }>) {
+  useOrderTrackingSocket({ orderId: orderId ?? null, enabled });
+
   const inFlightRef = React.useRef(false);
 
   React.useEffect(() => {

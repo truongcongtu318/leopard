@@ -61,6 +61,7 @@ export function AdminOrderDetailScreen({
       />
       <LiveOrderRefresher
         enabled={!TERMINAL_ORDER_STATUSES.has(order.status)}
+        orderId={order.id}
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
       <AdminDispatchSlab
