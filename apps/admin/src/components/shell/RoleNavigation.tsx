@@ -74,7 +74,7 @@ export function RoleNavigation({
 
   return (
     <nav aria-label={ariaLabel} className="space-y-1 py-1">
-      <ul className="m-0 list-none space-y-1.5 p-0">
+      <ul className="m-0 list-none space-y-1 p-0">
         {items.map((item) => {
           const isActive = currentHref === item.href;
 
@@ -83,26 +83,28 @@ export function RoleNavigation({
               <Link
                 href={item.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`group flex min-h-11 items-center gap-3 rounded-control px-3.5 py-2.5 text-sm font-semibold transition-colors motion-reduce:transition-none ${
+                className={`group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all motion-reduce:transition-none ${
                   isActive
-                    ? 'bg-brand-soft text-brand-soft-text'
-                    : 'text-neutral-muted hover:bg-neutral-surface hover:text-neutral-text'
+                    ? 'bg-brand text-white shadow-brand translate-x-0.5 motion-reduce:transition-none'
+                    : 'text-neutral-muted hover:bg-neutral-surface hover:text-neutral-text hover:translate-x-0.5 motion-reduce:transition-none'
                 }`}
               >
                 <span
                   aria-hidden="true"
-                  className={`transition-colors ${
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                     isActive
-                      ? 'text-brand-soft-text'
-                      : 'text-neutral-muted group-hover:text-neutral-text'
+                      ? 'bg-white/15 text-white'
+                      : 'bg-neutral-surface text-neutral-muted group-hover:bg-white group-hover:text-neutral-text group-hover:shadow-sm'
                   }`}
                 >
                   {getNavIcon(item.href)}
                 </span>
-                {item.label}
+                <span className="flex-1">{item.label}</span>
                 {isActive ? (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand" />
-                ) : null}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="opacity-80"><path d="m9 18 6-6-6-6"/></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-0 group-hover:opacity-40 transition-opacity"><path d="m9 18 6-6-6-6"/></svg>
+                )}
               </Link>
             </li>
           );

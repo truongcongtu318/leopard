@@ -69,7 +69,7 @@ describe('OperationsShell', () => {
     expect(container.querySelector('style')).toBeNull();
     const mainClasses = screen.getByRole('main').className.split(' ');
     expect(mainClasses).toEqual(
-      expect.arrayContaining(['bg-neutral', 'text-neutral-text', 'max-w-operations']),
+      expect.arrayContaining(['text-neutral-text', 'max-w-operations']),
     );
   });
 

@@ -120,19 +120,21 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
 
   const navigation = (
     <div className="p-5">
-      {/* Brand Header */}
+      {/* Brand Header — premium */}
       <div className="mb-8 px-2">
-        <p className="text-base font-extrabold tracking-tight text-neutral-text">LEOPARD</p>
-        <p className="text-xs font-bold tracking-widest text-neutral-muted uppercase">
-          OPERATIONS LEDGER
-        </p>
-      </div>
-
-      {/* Section: MAIN MENU */}
-      <div className="mb-2 px-3.5">
-        <p className="text-xs font-bold uppercase tracking-wider text-neutral-muted">
-          {roleContext.contextLabel}
-        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-teal-600 text-white shadow-brand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <div>
+            <p className="text-[15px] font-extrabold tracking-tight text-neutral-text leading-none">LEOPARD</p>
+            <p className="text-[10px] font-bold tracking-[0.14em] text-brand uppercase">Operations</p>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-2 rounded-full bg-brand-soft border border-brand/10 px-3 py-1.5">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+          <span className="text-xs font-semibold text-brand-soft-text">{roleContext.contextLabel}</span>
+        </div>
       </div>
 
       <RoleNavigation
@@ -145,34 +147,42 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
   );
 
   return (
-    <div className="min-h-screen bg-neutral-surface text-neutral-text">
+    <div className="min-h-screen bg-[#f8fafb] text-neutral-text selection:bg-brand-soft selection:text-brand-soft-text">
       <LiveRefreshBridge />
       <a
         href="#noi-dung-chinh"
-        className="fixed left-md top-md z-50 -translate-y-24 rounded-control bg-brand px-md py-sm font-semibold text-brand-text transition-transform focus:translate-y-0 motion-reduce:transition-none"
+        className="fixed left-md top-md z-50 -translate-y-24 rounded-control bg-brand px-md py-sm font-semibold text-brand-text shadow-brand transition-transform focus:translate-y-0 motion-reduce:transition-none"
       >
         Bỏ qua đến nội dung chính
       </a>
 
-      {/* Desktop Clean White Sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col justify-between overflow-y-auto border-r border-neutral-border bg-neutral lg:flex">
-        <div>{navigation}</div>
-        <div className="border-t border-neutral-border p-5">
-          <a
-            href="/login"
-            className="flex min-h-11 items-center gap-3 rounded-control px-3.5 py-2.5 text-sm font-semibold text-danger-border transition-colors hover:bg-danger motion-reduce:transition-none"
-          >
-            <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span>Đăng xuất / Đổi vai trò</span>
-          </a>
+      {/* Desktop Sidebar — premium glass + gradient accent */}
+      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col justify-between overflow-y-auto border-r border-neutral-border/60 bg-white/80 backdrop-blur-xl lg:flex shadow-[1px_0_24px_-4px_rgba(0,0,0,0.06)]">
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-gradient-soft via-transparent to-transparent pointer-events-none h-32" />
+        <div className="relative">{navigation}</div>
+        <div className="relative border-t border-neutral-border/60 p-4">
+          <div className="rounded-xl bg-neutral-surface/80 p-3 border border-neutral-border/40">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-brand to-teal-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">AD</div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-neutral-text truncate">Admin Demo</p>
+                <p className="text-[11px] text-neutral-muted">Quản trị viên</p>
+              </div>
+            </div>
+            <a
+              href="/login"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white border border-neutral-border px-3 py-2 text-xs font-semibold text-neutral-text shadow-sm hover:bg-neutral-surface hover:text-danger-text hover:border-danger-border/30 transition-colors motion-reduce:transition-none"
+            >
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+              Đăng xuất
+            </a>
+          </div>
         </div>
       </aside>
 
       <div className="flex min-h-screen flex-col lg:ml-64">
-        {/* Topbar */}
-        <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-neutral-border bg-neutral px-6">
+        {/* Topbar — glass */}
+        <header className="sticky top-0 z-20 flex min-h-14 items-center justify-between border-b border-neutral-border/60 bg-white/70 backdrop-blur-xl px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <button
               ref={triggerRef}
@@ -180,31 +190,41 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
               onClick={() => setDrawerOpen((open) => !open)}
               aria-label="Mở điều hướng"
               aria-expanded={drawerOpen}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-neutral-border bg-neutral text-neutral-text transition-colors hover:bg-neutral-surface motion-reduce:transition-none lg:hidden"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-neutral-border bg-white text-neutral-text shadow-sm transition-all hover:bg-neutral-surface hover:shadow active:scale-95 motion-reduce:transition-none lg:hidden"
             >
               <svg aria-hidden="true" focusable="false" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M3 12h18M3 18h18" />
               </svg>
             </button>
-
+            <div className="hidden sm:flex items-center gap-2 text-xs text-neutral-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-medium">Hệ thống hoạt động</span>
+              <span className="text-neutral-border">•</span>
+              <span className="tabular-nums">Cập nhật vừa xong</span>
+            </div>
           </div>
 
-          {/* Right Header: role context */}
-          <div className="flex items-center gap-2 rounded-control border border-neutral-border bg-neutral px-sm py-xs">
-            <span
-              aria-hidden="true"
-              className="flex h-7 w-7 items-center justify-center rounded-control bg-brand text-xs font-bold text-brand-text"
-            >
-              {role === 'admin' ? 'A' : 'F'}
-            </span>
-            <p className="text-xs font-semibold text-neutral-text">{roleContext.contextLabel}</p>
+          <div className="flex items-center gap-2">
+            <button className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-border bg-white text-neutral-muted shadow-sm hover:text-neutral-text hover:bg-neutral-surface transition-colors">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-6 5-6 5h18s-6 2-6-5"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </button>
+            <div className="flex items-center gap-2.5 rounded-full border border-neutral-border/60 bg-white pl-1 pr-3 py-1 shadow-sm">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand to-teal-600 text-xs font-bold text-white shadow-sm">
+                {role === 'admin' ? 'A' : 'F'}
+              </span>
+              <div className="hidden sm:block text-left leading-none">
+                <p className="text-xs font-semibold text-neutral-text">{role === 'admin' ? 'Admin' : 'Fleet Owner'}</p>
+                <p className="text-[11px] text-neutral-muted">Online</p>
+              </div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-muted"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
           </div>
         </header>
 
         <main
           id="noi-dung-chinh"
           tabIndex={-1}
-          className="mx-auto w-full max-w-operations flex-1 bg-neutral p-6 md:p-8 text-neutral-text"
+          className="mx-auto w-full max-w-operations flex-1 p-6 md:p-8 text-neutral-text bg-[radial-gradient(ellipse_at_top,_rgba(15,118,110,0.04),transparent_60%)]"
         >
           {children}
         </main>

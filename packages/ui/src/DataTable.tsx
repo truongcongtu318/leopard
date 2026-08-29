@@ -47,11 +47,11 @@ export function DataTable({
   className,
 }: DataTableProps) {
   return (
-    <div className={cn('w-full overflow-x-auto border-y border-neutral-border', className)}>
+    <div className={cn('w-full overflow-hidden rounded-xl border border-neutral-border/60 bg-white shadow-sm', className)}>
       <table role="table" className="w-full border-collapse text-left text-sm">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
-          <tr role="row" className="border-b border-neutral-border bg-neutral-text text-brand-text">
+          <tr role="row" className="bg-neutral-surface/70 backdrop-blur border-b border-neutral-border/60">
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -59,8 +59,8 @@ export function DataTable({
                 scope="col"
                 aria-sort={col.sortable && col.key === sortKey ? sortDirection : undefined}
                 className={cn(
-                  'font-semibold text-brand-text',
-                  col.sortable ? 'p-0' : 'px-md py-sm',
+                  'text-xs font-bold tracking-widest uppercase text-neutral-muted',
+                  col.sortable ? 'p-0' : 'px-md py-3',
                   col.className,
                 )}
               >
@@ -69,8 +69,8 @@ export function DataTable({
                     type="button"
                     onClick={() => onSort?.(col.key)}
                     className={cn(
-                      'flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1 bg-transparent px-md py-sm text-left text-sm font-semibold text-brand-text',
-                      'hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-brand-soft focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset',
+                      'flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1.5 bg-transparent px-md py-3 text-left text-xs font-bold tracking-widest uppercase text-neutral-muted',
+                      'hover:text-neutral-text hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-brand-soft focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset',
                     )}
                   >
                     <span>{col.header}</span>
@@ -110,7 +110,7 @@ export function DataTable({
               <tr
                 key={rowIdx}
                 role="row"
-                className="border-b border-neutral-border last:border-b-0 hover:bg-neutral-surface"
+                className="border-b border-neutral-border/40 last:border-b-0 hover:bg-brand-soft/30 transition-colors group"
               >
                 {columns.map((col) => (
                   <td key={col.key} className={cn('px-md py-sm text-neutral-text', col.className)}>

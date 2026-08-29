@@ -94,6 +94,7 @@ export function AdminSurface({
   className = '',
   ariaLabel,
   variant = 'section',
+  icon,
 }: Readonly<{
   title: string;
   description?: string;
@@ -101,23 +102,33 @@ export function AdminSurface({
   className?: string;
   ariaLabel?: string;
   variant?: 'section' | 'panel' | 'signal';
+  icon?: ReactNode;
 }>) {
   const variantClass =
     variant === 'panel'
-      ? 'rounded-card border border-neutral-border bg-neutral p-6 '
+      ? 'rounded-[16px] border border-neutral-border/60 bg-white p-6 shadow-card hover:shadow-card-hover transition-shadow'
       : variant === 'signal'
-        ? 'rounded-control border-l-4 border-brand bg-brand-soft/40 p-5'
-        : 'rounded-card border border-neutral-border bg-neutral p-6 ';
+        ? 'rounded-xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-soft/40 p-5 shadow-sm'
+        : 'rounded-[16px] border border-neutral-border/60 bg-white p-6 shadow-card hover:shadow-card-hover transition-shadow';
   return (
     <section
       aria-label={ariaLabel}
       className={`min-w-0 text-neutral-text ${variantClass} ${className}`}
     >
-      <header className="mb-4 pb-3 border-b border-neutral-border flex flex-col gap-1">
-        <h2 className="text-base font-bold text-neutral-text break-words">{title}</h2>
-        {description ? (
-          <p className="text-xs font-medium text-neutral-muted break-words">{description}</p>
-        ) : null}
+      <header className="mb-5 flex items-start justify-between gap-3">
+        <div className="flex gap-3 min-w-0 flex-1">
+          {icon ? (
+            <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand border border-brand/10">
+              {icon}
+            </div>
+          ) : null}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[15px] font-bold tracking-tight text-neutral-text break-words leading-tight">{title}</h2>
+            {description ? (
+              <p className="mt-1 text-xs leading-relaxed text-neutral-muted break-words">{description}</p>
+            ) : null}
+          </div>
+        </div>
       </header>
       {children}
     </section>
@@ -136,13 +147,24 @@ export function AdminDispatchSlab({
   return (
     <section
       aria-label={ariaLabel}
-      className="min-w-0 border-l-4 border-brand bg-neutral-text rounded-card p-6 text-brand-text shadow-xl"
+      className="min-w-0 overflow-hidden rounded-[16px] border border-neutral-border/20 bg-neutral-text bg-gradient-to-br from-neutral-text via-[#1e293b] to-[#0f172a] p-6 text-white shadow-elevated relative"
     >
-      <div className="flex items-center gap-2 mb-3">
-        <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-        <p className="text-xs font-bold tracking-wider text-cyan-400 uppercase">{eyebrow}</p>
+      <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-teal-600/10 pointer-events-none" />
+      <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand/10 blur-2xl pointer-events-none" />
+      <div className="relative">
+        <div className="flex items-center gap-2.5 mb-4">
+          <span className="flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75 motion-reduce:animate-none" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+          </span>
+          <p className="text-xs font-bold tracking-[0.12em] text-white/90 uppercase">{eyebrow}</p>
+          <span className="ml-auto hidden sm:inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur border border-white/10">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Live
+          </span>
+        </div>
+        <div className="min-w-0">{children}</div>
       </div>
-      <div className="min-w-0">{children}</div>
     </section>
   );
 }

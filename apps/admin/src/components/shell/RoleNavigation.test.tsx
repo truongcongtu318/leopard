@@ -18,14 +18,14 @@ describe('RoleNavigation', () => {
 
   it('highlights current route with aria-current="page"', () => {
     render(<RoleNavigation items={navItems} currentPath="/fleet/drivers" />);
-    const driversLink = screen.getByText('Drivers');
-    expect(driversLink.getAttribute('aria-current')).toBe('page');
+    const driversLink = screen.getByText('Drivers').closest('a');
+    expect(driversLink?.getAttribute('aria-current')).toBe('page');
   });
 
   it('does not set aria-current on inactive items', () => {
     render(<RoleNavigation items={navItems} currentPath="/fleet/drivers" />);
-    const dashboardLink = screen.getByText('Dashboard');
-    expect(dashboardLink.getAttribute('aria-current')).toBeNull();
+    const dashboardLink = screen.getByText('Dashboard').closest('a');
+    expect(dashboardLink?.getAttribute('aria-current')).toBeNull();
   });
 
   it.each([
@@ -49,8 +49,8 @@ describe('RoleNavigation', () => {
     ({ items, currentPath, activeLabel, rootLabel }) => {
       render(<RoleNavigation items={items} currentPath={currentPath} />);
 
-      expect(screen.getByText(activeLabel).getAttribute('aria-current')).toBe('page');
-      expect(screen.getByText(rootLabel).getAttribute('aria-current')).toBeNull();
+      expect(screen.getByText(activeLabel).closest('a')?.getAttribute('aria-current')).toBe('page');
+      expect(screen.getByText(rootLabel).closest('a')?.getAttribute('aria-current')).toBeNull();
     },
   );
 
@@ -66,9 +66,9 @@ describe('RoleNavigation', () => {
       />,
     );
 
-    expect(screen.getByText('Order exceptions').getAttribute('aria-current')).toBe('page');
-    expect(screen.getByText('Orders').getAttribute('aria-current')).toBeNull();
-    expect(screen.getByText('Admin dashboard').getAttribute('aria-current')).toBeNull();
+    expect(screen.getByText('Order exceptions').closest('a')?.getAttribute('aria-current')).toBe('page');
+    expect(screen.getByText('Orders').closest('a')?.getAttribute('aria-current')).toBeNull();
+    expect(screen.getByText('Admin dashboard').closest('a')?.getAttribute('aria-current')).toBeNull();
   });
 
   it.each(['/fleet/unlisted', '/fleet/orders-archive/order-123'])(
@@ -83,8 +83,8 @@ describe('RoleNavigation', () => {
   it('renders links with correct hrefs', () => {
     render(<RoleNavigation items={navItems} currentPath="/fleet" />);
     for (const item of navItems) {
-      const link = screen.getByText(item.label);
-      expect(link.getAttribute('href')).toBe(item.href);
+      const link = screen.getByText(item.label).closest('a');
+      expect(link?.getAttribute('href')).toBe(item.href);
     }
   });
 
