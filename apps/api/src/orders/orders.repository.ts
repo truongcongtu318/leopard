@@ -24,6 +24,8 @@ export interface CreateOrderParams {
 export interface OrderWithRelations extends Order {
   stops: Array<OrderStop & { lat: number; lng: number }>;
   statusHistory: OrderStatusHistory[];
+  customerPhone?: string;
+  driverPhone?: string | null;
 }
 
 @Injectable()
@@ -160,12 +162,22 @@ export class OrdersRepository {
       where: { id },
       include: {
         statusHistory: { orderBy: { createdAt: 'desc' } },
+        customer: { select: { phone: true } },
+        driver: { select: { phone: true } },
       },
     });
 
     if (!order) {
       return null;
     }
+
+    const { customer, driver, ...orderFields } = order;
+    const mapped: OrderWithRelations = {
+      ...orderFields,
+      stops: [],
+      customerPhone: customer.phone,
+      driverPhone: driver?.phone ?? null,
+    };
 
     const stops = await db.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
       SELECT
@@ -184,7 +196,7 @@ export class OrdersRepository {
     `;
 
     return {
-      ...order,
+      ...mapped,
       stops,
       statusHistory: order.statusHistory,
     };

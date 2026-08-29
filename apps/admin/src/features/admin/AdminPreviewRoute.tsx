@@ -10,6 +10,7 @@ import { AdminListScreen } from './AdminListScreen';
 import { AdminOrderDetailScreen } from './AdminOrderDetailScreen';
 import { AdminOverviewScreen } from './AdminOverviewScreen';
 import type { AdminPreviewScreen } from './fixtures';
+import { adminBoundaryFromError, loadAdminRuntimeView } from './runtime';
 import type {
   AdminCommandKind,
   AdminListFilters,
@@ -72,14 +73,37 @@ function screenTitle(screen: AdminPreviewScreen): string {
   return 'Tài xế';
 }
 
-function RuntimeBoundary({ screen }: Readonly<{ screen: AdminPreviewScreen }>) {
+const BOUNDARY_KINDS: ReadonlySet<string> = new Set([
+  'permission-denied',
+  'session-expired',
+  'loading',
+  'error',
+]);
+
+function AdminBoundaryResult({
+  screen,
+  kind,
+  title,
+  message,
+}: Readonly<{
+  screen: AdminPreviewScreen;
+  kind: string;
+  title: string;
+  message: string;
+}>) {
   return (
     <div className="flex flex-col gap-md">
       <OperationsPageHeader title={screenTitle(screen)} />
       <ScreenState
-        message="Lớp trình bày Admin Wave 4 đã sẵn sàng; runtime query/command ports sẽ được nối sau handoff Wave 3."
-        state="empty"
-        title="Chưa kết nối nguồn dữ liệu"
+        message={message}
+        state={
+          kind === 'permission-denied'
+            ? 'permission-denied'
+            : kind === 'loading'
+              ? 'loading'
+              : 'error'
+        }
+        title={title}
       />
     </div>
   );
@@ -122,10 +146,12 @@ function PreviewScenarioBoundary({
 }
 
 function AdminScreen({
+  commandRuntime = false,
   screen,
   view,
   previewContext,
 }: Readonly<{
+  commandRuntime?: boolean | undefined;
   screen: AdminPreviewScreen;
   view: AdminRouteView;
   previewContext: AdminPreviewContext;
@@ -141,6 +167,7 @@ function AdminScreen({
   if (screen === 'order-detail') {
     return (
       <AdminOrderDetailScreen
+        commandRuntime={commandRuntime}
         previewContext={previewContext}
         view={view as AdminOrderDetailRouteView}
       />
@@ -148,6 +175,7 @@ function AdminScreen({
   }
   return (
     <AdminListScreen
+      commandRuntime={commandRuntime}
       previewContext={previewContext}
       screen={screen}
       view={view as AdminListRouteView}
@@ -166,8 +194,11 @@ export async function AdminPreviewRoute({
 }: AdminPreviewRouteProps) {
   if (screen === 'order-detail' && !orderId) return <InvalidOrderBoundary />;
 
+  const resolvedLocalFlag =
+    localFlag ?? (process.env.LEOPARD_UI_PREVIEW === 'enabled' ? 'enabled' : null);
+
   const selection = await createWebPreviewSelection<AdminPreviewValue>({
-    localFlag,
+    localFlag: resolvedLocalFlag,
     scenarioProvider: async () => {
       try {
         const catalogue = await loadCatalogue();
@@ -187,6 +218,37 @@ export async function AdminPreviewRoute({
     command: commandKind,
   };
 
+  if (!selection.enabled) {
+    let view: AdminRouteView;
+    try {
+      view = await loadAdminRuntimeView(screen, { orderId, filters });
+    } catch (error) {
+      view = adminBoundaryFromError(error, 'RUNTIME');
+    }
+
+    if (BOUNDARY_KINDS.has(view.kind)) {
+      const boundaryView = view as AdminRouteView & { title: string; message: string };
+      return (
+        <AdminBoundaryResult
+          kind={view.kind}
+          message={boundaryView.message}
+          screen={screen}
+          title={boundaryView.title}
+        />
+      );
+    }
+
+    const runtimeContext: AdminPreviewContext = { rawSearch: null };
+    return (
+      <AdminScreen
+        commandRuntime
+        previewContext={runtimeContext}
+        screen={screen}
+        view={view}
+      />
+    );
+  }
+
   return (
     <WebPreviewComposition
       renderFixture={(previewScenario) =>
@@ -200,7 +262,16 @@ export async function AdminPreviewRoute({
           <PreviewScenarioBoundary scenario={previewScenario} />
         )
       }
-      renderRuntime={() => <RuntimeBoundary screen={screen} />}
+      renderRuntime={() => (
+        <div className="flex flex-col gap-md">
+          <OperationsPageHeader title={screenTitle(screen)} />
+          <ScreenState
+            message="Không thể xác định nguồn dữ liệu runtime."
+            state="error"
+            title="Lỗi cấu hình"
+          />
+        </div>
+      )}
       selection={selection}
     />
   );

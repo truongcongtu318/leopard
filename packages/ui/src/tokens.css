@@ -1,9 +1,16 @@
 @theme {
-  /* Semantic colors matching mobile design system */
-  --color-brand: #075985;
-  --color-brand-soft: #e0f2fe;
+  /* === LEOPARD 2026 — Premium Operations Design System === */
+  /* Brand — Teal refined with depth (Wave 5: #0f766e WCAG AA 5.47:1) */
+  --color-brand: #0f766e;
+  --color-brand-hover: #115e59;
+  --color-brand-active: #134e4a;
+  --color-brand-soft: #ccfbf1;
+  --color-brand-soft-hover: #99f6e4;
   --color-brand-text: #ffffff;
-  --color-brand-soft-text: #0c4a6e;
+  --color-brand-soft-text: #134e4a;
+  --color-brand-gradient-from: #0f766e;
+  --color-brand-gradient-to: #0e7490;
+  --color-brand-gradient-soft: #f0fdfa;
 
   --color-info: #e0f2fe;
   --color-info-text: #075985;
@@ -42,21 +49,59 @@
   --spacing-map-standard: 25rem;
   --spacing-map-large: 37.5rem;
 
-  /* Named operations layout constraint */
+  /* Named operations layout constraints and container scales */
+  --container-xs: 20rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+  --container-xl: 36rem;
+  --container-2xl: 42rem;
   --container-operations: 90rem;
 
-  /* Radius */
-  --radius-control: 6px;
-  --radius-card: 6px;
+  /* Max-width scale for max-w-* utilities */
+  --max-width-xs: 20rem;
+  --max-width-sm: 24rem;
+  --max-width-md: 28rem;
+  --max-width-lg: 32rem;
+  --max-width-xl: 36rem;
+  --max-width-2xl: 42rem;
+  --max-width-3xl: 48rem;
+  --max-width-4xl: 56rem;
+  --max-width-5xl: 64rem;
+  --max-width-6xl: 72rem;
+  --max-width-7xl: 80rem;
+  --max-width-operations: 90rem;
+  --max-width-map-min: 17.5rem;
+  --max-width-map-standard: 25rem;
+  --max-width-map-large: 37.5rem;
+
+  /* Radius — modern soft */
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-card-lg: 16px;
   --radius-pill: 999px;
+
+  /* Shadows — layered depth */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-card-hover: 0 4px 12px -2px rgb(0 0 0 / 0.12), 0 2px 8px -2px rgb(0 0 0 / 0.08);
+  --shadow-elevated: 0 8px 24px -4px rgb(0 0 0 / 0.12), 0 4px 16px -4px rgb(0 0 0 / 0.08);
+  --shadow-brand: 0 4px 14px -2px rgb(15 118 110 / 0.35);
+
+  /* Glass effect */
+  --glass-bg: rgb(255 255 255 / 0.8);
+  --glass-border: rgb(255 255 255 / 0.2);
+  --glass-blur: 12px;
 
   /* Font */
   --font-sans:
     'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   --text-body-compact: 0.875rem;
   --text-body-compact--line-height: 1.25rem;
   --text-section-title: 1.25rem;
   --text-section-title--line-height: 1.75rem;
   --text-page-title: 1.5rem;
   --text-page-title--line-height: 2rem;
+  --text-display: 1.875rem;
+  --text-display--line-height: 2.25rem;
 }

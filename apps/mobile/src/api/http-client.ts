@@ -1,8 +1,7 @@
 import { ApiError } from './api-error';
 import { sessionStore } from '../auth/session-store';
 
-// Base URL from environment variable, falls back to empty (relative) in dev
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 // Refresh endpoint path
 const REFRESH_PATH = '/auth/refresh';

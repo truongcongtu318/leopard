@@ -13,12 +13,12 @@ describe('Admin static operations screens', () => {
     expect(screen.getByRole('heading', { name: 'Tổng quan vận hành' })).toBeTruthy();
     expect(screen.getByText('Liveness')).toBeTruthy();
     expect(screen.getByText('Readiness')).toBeTruthy();
-    expect(screen.getByText('0')).toBeTruthy();
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
     expect(screen.getAllByText('LP-A-260815-101').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText('Bàn điều phối hiện tại').className).toContain('bg-neutral-text');
+    expect(screen.getByLabelText('Bàn điều phối hiện tại').className).toContain('from-neutral-text');
     expect(screen.getByText('Tracking cần kiểm tra').closest('li')?.className).toContain(
-      'border-l-4',
+      'rounded-xl',
     );
   });
 

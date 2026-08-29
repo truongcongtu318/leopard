@@ -115,7 +115,26 @@ function readToken(client: TrackingSocket): string | undefined {
   const auth = client.handshake?.auth as { token?: unknown } | undefined;
   if (typeof auth?.token === 'string' && auth.token.trim()) return auth.token.trim();
   const header = client.handshake?.headers?.authorization;
-  return typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7).trim() : undefined;
+  if (typeof header === 'string' && header.startsWith('Bearer ')) {
+    const bearer = header.slice(7).trim();
+    if (bearer) return bearer;
+  }
+  const cookieHeader = client.handshake?.headers?.cookie;
+  if (typeof cookieHeader === 'string' && cookieHeader) {
+    for (const part of cookieHeader.split(';')) {
+      const [rawName, ...rawValue] = part.trim().split('=');
+      if (rawName === 'leopard.admin.access') {
+        const value = rawValue.join('=').trim();
+        try {
+          const decoded = decodeURIComponent(value);
+          if (decoded) return decoded;
+        } catch {
+          if (value) return value;
+        }
+      }
+    }
+  }
+  return undefined;
 }
 
 function isUuid(value: unknown): value is string {

@@ -132,6 +132,12 @@ Spine là hai biểu diễn bổ trợ: bản đồ cho không gian, spine cho t
 
 ### 4.1 Semantic colors
 
+> **Wave 5 palette change:** `brand.*` chuyển từ sky (`#075985`) sang teal
+> (`#0F766E`, soft `#CCFBF1`/`#134E4A`). WCAG AA đã kiểm chứng cho cả hai cặp
+> foreground/background (5,47:1 và >7:1). Áp dụng web admin trước; mobile đồng
+> bộ theo change request riêng. `info.*` giữ nguyên hue sky vì là semantic
+> riêng biệt.
+
 Các giá trị dưới đây là baseline đã có trên mobile và package web. Component chỉ
 consume semantic role; không chọn màu theo cảm tính hoặc theo tên hue.
 
@@ -142,10 +148,10 @@ consume semantic role; không chọn màu theo cảm tính hoặc theo tên hue.
 | `neutral.text`         | `#17202A`                     | Nội dung chính                                 |
 | `neutral.mutedText`    | `#4B5563`                     | Metadata và helper text                        |
 | `neutral.border`       | `#6B7280`                     | Border có thể nhận biết trên nền sáng          |
-| `brand.background`     | `#075985`                     | Primary action và active focus identity        |
+| `brand.background`     | `#0F766E`                     | Primary action và active focus identity        |
 | `brand.text`           | `#FFFFFF`                     | Text/icon trên brand background                |
-| `brand.softBackground` | `#E0F2FE`                     | Selection hoặc branded emphasis nhẹ            |
-| `brand.softText`       | `#0C4A6E`                     | Text trên brand soft background                |
+| `brand.softBackground` | `#CCFBF1`                     | Selection hoặc branded emphasis nhẹ            |
+| `brand.softText`       | `#134E4A`                     | Text trên brand soft background                |
 | `info.*`               | `#E0F2FE / #075985 / #0369A1` | Thông tin, `REQUESTED`, QR/ETA metadata        |
 | `warning.*`            | `#FEF3C7 / #78350F / #B45309` | Cần chú ý, `PICKING_UP`, `UNPAID`              |
 | `active.*`             | `#DBEAFE / #1E3A8A / #1D4ED8` | Active trip/tracking, `ACCEPTED`, `IN_TRANSIT` |

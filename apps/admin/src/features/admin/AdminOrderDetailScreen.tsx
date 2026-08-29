@@ -11,6 +11,7 @@ import {
   StatusTimeline,
 } from '@leopard/ui';
 
+import { LiveOrderRefresher } from '../../components/live/LiveOrderRefresher';
 import { AdminCommandLauncher } from './AdminCommandLauncher';
 import {
   AdminAuditRail,
@@ -23,12 +24,17 @@ import {
 import type { AdminOrderDetailRouteView } from './model';
 import type { AdminPreviewContext } from './model';
 
+const TERMINAL_ORDER_STATUSES: ReadonlySet<string> = new Set(['DELIVERED', 'CANCELLED']);
+
 export function AdminOrderDetailScreen({
+  commandRuntime,
   view,
   previewContext,
 }: Readonly<{
   view: AdminOrderDetailRouteView;
   previewContext?: AdminPreviewContext;
+  /** Live API command execution (runtime data path); absent in preview renders. */
+  commandRuntime?: boolean | undefined;
 }>) {
   if (view.kind !== 'order-detail') {
     return (
@@ -52,6 +58,10 @@ export function AdminOrderDetailScreen({
         isStale={order.tracking.state === 'stale'}
         title={`Đơn ${order.reference}`}
         updatedAt={order.updatedAtLabel}
+      />
+      <LiveOrderRefresher
+        enabled={!TERMINAL_ORDER_STATUSES.has(order.status)}
+        orderId={order.id}
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
       <AdminDispatchSlab
@@ -122,6 +132,7 @@ export function AdminOrderDetailScreen({
             <AdminCommandLauncher
               commands={view.availableCommands}
               dialogPreview={view.dialogPreview}
+              runtime={commandRuntime === true}
             />
           </AdminSurface>
 

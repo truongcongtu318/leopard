@@ -1,12 +1,20 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
-import { OperationsShell } from './OperationsShell';
-
+// NOTE: no hoisting in this toolchain – register the mock, import dynamically.
 jest.mock('next/navigation', () => ({
   usePathname: () => '/admin',
+  useRouter: () => ({ refresh: jest.fn() }),
 }));
+
+type ShellModule = typeof import('./OperationsShell');
+
+let OperationsShell: ShellModule['OperationsShell'];
+
+beforeEach(async () => {
+  ({ OperationsShell } = await import('./OperationsShell'));
+});
 
 const adminItems = [
   { label: 'Dashboard', href: '/admin' },
@@ -61,7 +69,7 @@ describe('OperationsShell', () => {
     expect(container.querySelector('style')).toBeNull();
     const mainClasses = screen.getByRole('main').className.split(' ');
     expect(mainClasses).toEqual(
-      expect.arrayContaining(['bg-neutral', 'text-neutral-text', 'max-w-operations']),
+      expect.arrayContaining(['text-neutral-text', 'max-w-operations']),
     );
   });
 

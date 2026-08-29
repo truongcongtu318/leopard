@@ -100,3 +100,8 @@ cypress/videos/
 *.zip
 *.tar
 *.tar.gz
+.expo/
+.agent/
+.agents/
+apps/admin/CLAUDE.md
+apps/admin/AGENTS.md

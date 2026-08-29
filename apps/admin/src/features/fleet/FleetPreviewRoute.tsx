@@ -11,6 +11,7 @@ import { FleetDriversScreen } from './FleetDriversScreen';
 import { FleetOrderDetailScreen } from './FleetOrderDetailScreen';
 import { FleetOrdersScreen } from './FleetOrdersScreen';
 import type { FleetPreviewScreen } from './fixtures';
+import { loadFleetRuntimeView } from './runtime';
 import type {
   FleetDashboardRouteView,
   FleetDriverFilters,
@@ -85,22 +86,34 @@ function withUrlState(
   return view;
 }
 
-function RuntimeBoundary({ screen }: Readonly<{ screen: FleetPreviewScreen }>) {
-  const title =
-    screen === 'dashboard'
-      ? 'Tổng quan đội xe'
-      : screen === 'drivers'
-        ? 'Tài xế'
-        : screen === 'orders'
-          ? 'Đơn của đội xe'
-          : 'Chi tiết đơn';
+function screenTitle(screen: FleetPreviewScreen): string {
+  return screen === 'dashboard'
+    ? 'Tổng quan đội xe'
+    : screen === 'drivers'
+      ? 'Tài xế'
+      : screen === 'orders'
+        ? 'Đơn của đội xe'
+        : 'Chi tiết đơn';
+}
+
+function FleetRuntimeErrorResult({
+  screen,
+  kind,
+  title,
+  message,
+}: Readonly<{
+  screen: FleetPreviewScreen;
+  kind: 'permission-denied' | 'session-expired' | 'error';
+  title: string;
+  message: string;
+}>) {
   return (
     <div className="flex flex-col gap-md">
-      <OperationsPageHeader title={title} />
+      <OperationsPageHeader title={screenTitle(screen)} />
       <ScreenState
-        message="Lớp trình bày Fleet Owner Wave 4 đã sẵn sàng; runtime query ports sẽ được nối sau handoff Wave 3."
-        state="empty"
-        title="Chưa kết nối nguồn dữ liệu"
+        message={message}
+        state={kind === 'permission-denied' ? 'permission-denied' : 'error'}
+        title={title}
       />
     </div>
   );
@@ -183,8 +196,11 @@ export async function FleetPreviewRoute({
 }: FleetPreviewRouteProps) {
   if (screen === 'order-detail' && !orderId) return <InvalidOrderBoundary />;
 
+  const resolvedLocalFlag =
+    localFlag ?? (process.env.LEOPARD_UI_PREVIEW === 'enabled' ? 'enabled' : null);
+
   const selection = await createWebPreviewSelection<FleetPreviewValue>({
-    localFlag,
+    localFlag: resolvedLocalFlag,
     scenarioProvider: async () => {
       try {
         const catalogue = await loadCatalogue();
@@ -199,6 +215,29 @@ export async function FleetPreviewRoute({
       }
     },
   });
+  if (!selection.enabled) {
+    const result = await loadFleetRuntimeView(screen, { orderId, driverFilters, orderFilters });
+    if (!result.ok) {
+      return (
+        <FleetRuntimeErrorResult
+          kind={result.kind}
+          message={result.message}
+          screen={screen}
+          title={result.title}
+        />
+      );
+    }
+
+    const runtimeContext = {} satisfies FleetPreviewContext;
+    return (
+      <FleetScreen
+        previewContext={runtimeContext}
+        screen={screen}
+        view={result.view}
+      />
+    );
+  }
+
   const previewContext = { preview: localFlag, scenario };
 
   return (
@@ -214,7 +253,16 @@ export async function FleetPreviewRoute({
           <PreviewScenarioBoundary scenario={previewScenario} />
         )
       }
-      renderRuntime={() => <RuntimeBoundary screen={screen} />}
+      renderRuntime={() => (
+        <div className="flex flex-col gap-md">
+          <OperationsPageHeader title={screenTitle(screen)} />
+          <ScreenState
+            message="Không thể xác định nguồn dữ liệu runtime."
+            state="error"
+            title="Lỗi cấu hình"
+          />
+        </div>
+      )}
       selection={selection}
     />
   );
