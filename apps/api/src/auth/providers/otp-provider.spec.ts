@@ -51,6 +51,32 @@ describe('OTP provider boundary', () => {
     expect(verifyIdToken).toHaveBeenCalledWith('raw-id-token-secret');
   });
 
+  it('maps Firebase Google tokens (email, no phone) to an email identity', async () => {
+    const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
+    verifyIdToken.mockResolvedValue({
+      uid: 'google-user-1',
+      email: 'sme@leopard.vn',
+    });
+
+    const provider = new FirebaseOtpProvider(verifyIdToken);
+
+    await expect(provider.verify('google-id-token')).resolves.toEqual({
+      providerUserId: 'google-user-1',
+      email: 'sme@leopard.vn',
+    });
+  });
+
+  it('rejects a Firebase token that has neither phone nor email', async () => {
+    const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
+    verifyIdToken.mockResolvedValue({ uid: 'ghost-user' });
+
+    const provider = new FirebaseOtpProvider(verifyIdToken);
+
+    await expect(provider.verify('empty-token')).rejects.toMatchObject({
+      code: 'OTP_PROVIDER_REJECTED',
+    });
+  });
+
   it('redacts provider errors instead of echoing idToken values', async () => {
     const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
     verifyIdToken.mockRejectedValue(

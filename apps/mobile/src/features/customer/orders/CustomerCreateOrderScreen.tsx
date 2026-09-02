@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -8,14 +10,14 @@ import {
   View,
 } from 'react-native';
 
-import { colors, control, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, leopardRadius, pastelTheme, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
 import { FormField } from '../../../ui/FormField';
-import { LedgerSection } from '../../../ui/LedgerSection';
 import { RouteSpine } from '../../../ui/RouteSpine';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
+import { SkeletonBar } from '../../../ui/Skeleton';
 import type { CustomerActionView, CustomerCreateFormScreenView, CustomerCreateView } from './model';
 
 export type CustomerCreateOrderScreenProps = Readonly<{
@@ -26,12 +28,13 @@ export type CustomerCreateOrderScreenProps = Readonly<{
   onSelectVehicle?: (vehicle: 'MOTORBIKE' | 'VAN' | 'TRUCK') => void;
   onPrimaryAction?: (actionId: string) => void;
   onRetry?: () => void;
+  onBack?: () => void;
 }>;
 
 const vehicleOptions = [
-  { value: 'MOTORBIKE', label: 'Xe máy' },
-  { value: 'VAN', label: 'Xe van' },
-  { value: 'TRUCK', label: 'Xe tải' },
+  { value: 'MOTORBIKE', label: 'Xe máy', desc: 'Bưu phẩm, kiện nhỏ < 20 kg' },
+  { value: 'VAN', label: 'Xe van', desc: 'Hàng đóng thùng, tải trọng vừa' },
+  { value: 'TRUCK', label: 'Xe tải', desc: 'Hàng cồng kềnh, tải trọng lớn' },
 ] as const;
 
 function ActionButton({
@@ -53,68 +56,107 @@ function ActionButton({
 }
 
 function EstimatePanel({
-  view,
   onRetry,
+  view,
 }: Readonly<{ view: CustomerCreateFormScreenView; onRetry?: () => void }>) {
   const estimate = view.estimate;
-  if (estimate.kind === 'ready') {
-    return (
-      <LedgerSection
-        description={`Khoảng cách ${estimate.distanceLabel} · tính lúc ${estimate.calculatedAtLabel}`}
-        index="03"
-        title="Kiểm tra estimate"
-        tone="signal"
-      >
-        <View style={styles.priceRow}>
-          <Text style={styles.priceLabel}>Giá dự kiến</Text>
-          <Text style={styles.price}>{estimate.priceLabel}</Text>
-        </View>
-        <EtaIndicator durationSeconds={estimate.durationSeconds} source={estimate.source} />
-      </LedgerSection>
-    );
-  }
+
   if (estimate.kind === 'loading') {
     return (
-      <LedgerSection index="03" title="Kiểm tra estimate" tone="signal">
-        <EtaIndicator durationSeconds={null} isLoading source={estimate.source} />
-      </LedgerSection>
+      <View style={styles.estimatePanel}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionIndex}>03</Text>
+          <Text style={styles.sectionLabel}>GIÁ & XÁC NHẬN</Text>
+        </View>
+        <View style={styles.estimateBox}>
+          <SkeletonBar height={14} width="50%" />
+          <SkeletonBar height={28} width="70%" />
+          <SkeletonBar height={14} width="40%" />
+        </View>
+      </View>
     );
   }
+
   if (estimate.kind === 'error') {
     return (
-      <LedgerSection index="03" title="Kiểm tra estimate" tone="signal">
-        <EtaIndicator
-          durationSeconds={null}
-          error={estimate.message}
-          onRetry={onRetry}
-          source={estimate.source}
-        />
-      </LedgerSection>
+      <View style={styles.estimatePanel}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionIndex}>03</Text>
+          <Text style={styles.sectionLabel}>GIÁ & XÁC NHẬN</Text>
+        </View>
+        <View style={[styles.estimateBox, styles.estimateBoxError]}>
+          <Text style={styles.estimateErrorTitle}>Không thể tính giá và ETA</Text>
+          <Text style={styles.estimateErrorMessage}>{estimate.message}</Text>
+          {onRetry ? (
+            <Button label="Thử lại" onPress={onRetry} variant="secondary" />
+          ) : null}
+        </View>
+      </View>
     );
   }
+
+  if (estimate.kind === 'ready') {
+    const isDemo = estimate.source === 'DEMO';
+    return (
+      <View style={styles.estimatePanel}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionIndex}>03</Text>
+          <Text style={styles.sectionLabel}>GIÁ & XÁC NHẬN</Text>
+        </View>
+        <View style={styles.estimateBox}>
+          <View style={styles.estimateRow}>
+            <Text style={styles.estimateRowLabel}>Khoảng cách</Text>
+            <Text style={styles.estimateRowValue}>{estimate.distanceLabel}</Text>
+          </View>
+          <View style={styles.estimateRow}>
+            <Text style={styles.estimateRowLabel}>Giá dự kiến</Text>
+            <Text style={styles.estimatePrice}>{estimate.priceLabel}</Text>
+          </View>
+          <View style={styles.estimateRow}>
+            <Text style={styles.estimateRowLabel}>ETA dự kiến</Text>
+            <Text style={styles.estimateRowValue}>
+              {Math.round(estimate.durationSeconds / 60)} phút
+            </Text>
+          </View>
+          {isDemo ? (
+            <View style={styles.demoBadge}>
+              <Text style={styles.demoBadgeText}>Dữ liệu mô phỏng</Text>
+            </View>
+          ) : null}
+          <Text style={styles.estimateCalcTime}>Tính lúc {estimate.calculatedAtLabel}</Text>
+        </View>
+      </View>
+    );
+  }
+
   const message =
     estimate.kind === 'expired'
       ? 'Estimate đã hết hiệu lực; hãy tính lại giá và ETA dự kiến.'
       : estimate.kind === 'outdated'
         ? 'Lộ trình đã thay đổi; estimate cũ không còn dùng được.'
-        : 'Hoàn tất lộ trình để tính giá và ETA dự kiến.';
+        : 'Hoàn tất lộ trình và phương tiện để tính giá và ETA dự kiến.';
+
   return (
-    <LedgerSection index="03" title="Kiểm tra estimate" tone="signal">
-      <View style={styles.estimatePlaceholder}>
-        <Text style={styles.body}>{message}</Text>
+    <View style={styles.estimatePanel}>
+      <View style={styles.sectionHeaderRow}>
+        <Text style={styles.sectionIndex}>03</Text>
+        <Text style={styles.sectionLabel}>GIÁ & XÁC NHẬN</Text>
       </View>
-    </LedgerSection>
+      <View style={styles.estimateBox}>
+        <Text style={styles.estimateEmptyMessage}>{message}</Text>
+      </View>
+    </View>
   );
 }
 
-function Notice({ message, isAlert }: Readonly<{ message: string | null; isAlert: boolean }>) {
+function Notice({ isAlert, message }: Readonly<{ message: string | null; isAlert: boolean }>) {
   if (!message) return null;
   return (
     <View
       accessibilityLiveRegion="polite"
       style={[styles.notice, isAlert ? styles.noticeError : styles.noticeInfo]}
     >
-      <Text accessibilityRole={isAlert ? 'alert' : undefined} style={styles.body}>
+      <Text accessibilityRole={isAlert ? 'alert' : undefined} style={styles.noticeText}>
         {message}
       </Text>
     </View>
@@ -122,21 +164,40 @@ function Notice({ message, isAlert }: Readonly<{ message: string | null; isAlert
 }
 
 export function CustomerCreateOrderScreen({
-  view,
-  onFieldChange,
   onAddStop,
-  onRemoveStop,
-  onSelectVehicle,
+  onBack,
+  onFieldChange,
   onPrimaryAction,
+  onRemoveStop,
   onRetry,
+  onSelectVehicle,
+  view,
 }: CustomerCreateOrderScreenProps) {
   if (view.kind === 'permission-denied') {
     return (
-      <ScreenScaffold eyebrow="CUSTOMER · NEW JOURNEY" title="Tạo đơn">
+      <ScreenScaffold eyebrow="CUSTOMER · JOURNEY SHEET" title="Tạo đơn">
         <ScreenState message={view.message} state="permission-denied" title={view.title} />
       </ScreenScaffold>
     );
   }
+
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+
+  const isFormDirty = Boolean(
+    view.form.pickup ||
+    view.form.dropoff ||
+    view.form.stops.some((s) => s.value) ||
+    view.form.cargoWeight ||
+    view.form.cargoNote
+  );
+
+  const handleBackPress = () => {
+    if (isFormDirty) {
+      setShowLeaveModal(true);
+    } else {
+      onBack?.();
+    }
+  };
 
   const primaryAction = view.actions[0];
   const routeStops = view.form.stops.map((stop) => ({
@@ -151,6 +212,8 @@ export function CustomerCreateOrderScreen({
 
   return (
     <ScreenScaffold
+      eyebrow="CUSTOMER · JOURNEY SHEET"
+      onBack={onBack ? handleBackPress : undefined}
       stickyFooter={
         primaryAction ? (
           <ActionButton
@@ -163,8 +226,7 @@ export function CustomerCreateOrderScreen({
           />
         ) : null
       }
-      subtitle="Nhập lộ trình trước, sau đó xác nhận giá và ETA dự kiến."
-      eyebrow="CUSTOMER · NEW JOURNEY"
+      subtitle="Nhập lộ trình, chọn xe và xác nhận báo giá."
       title="Tạo đơn"
     >
       <KeyboardAvoidingView
@@ -175,13 +237,19 @@ export function CustomerCreateOrderScreen({
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+          <View style={styles.stepProgressRow}>
+            <View style={[styles.stepBar, styles.stepBarActive]} />
+            <View style={[styles.stepBar, (view.form.pickup && view.form.dropoff) ? styles.stepBarActive : null]} />
+            <View style={[styles.stepBar, view.estimate.kind === 'ready' ? styles.stepBarActive : null]} />
+          </View>
+
           <Notice isAlert={isAlert} message={view.notice} />
-          <LedgerSection
-            description="Theo thứ tự điểm lấy, tối đa ba điểm dừng và điểm giao."
-            index="01"
-            title="Lộ trình"
-            tone="signal"
-          >
+
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionIndex}>01</Text>
+              <Text style={styles.sectionLabel}>LỘ TRÌNH VẬN CHUYỂN</Text>
+            </View>
             <RouteSpine
               destination={{ id: 'draft-dropoff', label: view.form.dropoff || 'Chưa chọn' }}
               origin={{ id: 'draft-pickup', label: view.form.pickup || 'Chưa chọn' }}
@@ -190,7 +258,9 @@ export function CustomerCreateOrderScreen({
             <FormField
               error={view.form.fieldErrors.pickup}
               label="Điểm lấy hàng"
-              onChangeText={onFieldChange ? (value) => onFieldChange('pickup', value) : undefined}
+              onChangeText={
+                onFieldChange ? (value) => onFieldChange('pickup', value) : undefined
+              }
               placeholder="Nhập địa chỉ lấy hàng"
               value={view.form.pickup}
             />
@@ -199,8 +269,11 @@ export function CustomerCreateOrderScreen({
                 <FormField
                   label={`Điểm dừng ${index + 1}`}
                   onChangeText={
-                    onFieldChange ? (value) => onFieldChange(`stop:${stop.id}`, value) : undefined
+                    onFieldChange
+                      ? (value) => onFieldChange(`stop:${stop.id}`, value)
+                      : undefined
                   }
+                  placeholder="Nhập địa chỉ điểm dừng"
                   value={stop.value}
                 />
                 <Button
@@ -211,37 +284,61 @@ export function CustomerCreateOrderScreen({
               </View>
             ))}
             {view.form.stops.length < 3 ? (
-              <Button label="Thêm điểm dừng" onPress={onAddStop} variant="secondary" />
+              <Pressable
+                accessibilityRole="button"
+                onPress={onAddStop}
+                style={styles.addStopBtn}
+              >
+                <Text style={styles.addStopBtnText}>+ Thêm điểm dừng (0–3)</Text>
+              </Pressable>
             ) : (
               <Text style={styles.helper}>Đã đạt tối đa 3 điểm dừng.</Text>
             )}
             <FormField
               error={view.form.fieldErrors.dropoff}
               label="Điểm giao hàng"
-              onChangeText={onFieldChange ? (value) => onFieldChange('dropoff', value) : undefined}
+              onChangeText={
+                onFieldChange ? (value) => onFieldChange('dropoff', value) : undefined
+              }
               placeholder="Nhập địa chỉ giao hàng"
               value={view.form.dropoff}
             />
-          </LedgerSection>
+          </View>
 
-          <LedgerSection
-            description="Chọn năng lực vận chuyển phù hợp với kiện hàng."
-            index="02"
-            title="Phương tiện và hàng hóa"
-            tone="signal"
-          >
-            <View accessibilityRole="radiogroup" style={styles.vehicleOptions}>
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionIndex}>02</Text>
+              <Text style={styles.sectionLabel}>PHƯƠNG TIỆN & HÀNG HÓA</Text>
+            </View>
+            <View accessibilityRole="radiogroup" style={styles.vehicleGroup}>
               {vehicleOptions.map((option) => {
                 const selected = view.form.vehicleType === option.value;
                 return (
                   <Pressable
+                    accessibilityLabel={option.label}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: selected }}
                     key={option.value}
-                    onPress={onSelectVehicle ? () => onSelectVehicle(option.value) : undefined}
-                    style={[styles.vehicleOption, selected ? styles.vehicleOptionSelected : null]}
+                    onPress={
+                      onSelectVehicle ? () => onSelectVehicle(option.value) : undefined
+                    }
+                    style={[
+                      styles.vehicleCard,
+                      selected ? styles.vehicleCardSelected : null,
+                    ]}
                   >
-                    <Text style={styles.vehicleLabel}>{option.label}</Text>
+                    <View style={styles.vehicleHeader}>
+                      <Text
+                        style={[
+                          styles.vehicleTitle,
+                          selected ? styles.vehicleTitleSelected : null,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                      {selected ? <Text style={styles.checkIcon}>✓</Text> : null}
+                    </View>
+                    <Text style={styles.vehicleDesc}>{option.desc}</Text>
                   </Pressable>
                 );
               })}
@@ -261,14 +358,51 @@ export function CustomerCreateOrderScreen({
               onChangeText={
                 onFieldChange ? (value) => onFieldChange('cargoNote', value) : undefined
               }
+              placeholder="Mô tả loại hàng, yêu cầu bảo quản, người liên hệ..."
               value={view.form.cargoNote}
             />
-            <Text style={styles.helper}>Ảnh hàng hóa: JPEG, PNG hoặc WebP; tối đa 10 MB.</Text>
-          </LedgerSection>
+            <Text style={styles.helper}>Ảnh hàng hóa: JPEG, PNG hoặc WebP tối đa 10 MB.</Text>
+          </View>
 
-          <EstimatePanel onRetry={onRetry} view={view} />
+          <View style={styles.card}>
+            <EstimatePanel onRetry={onRetry} view={view} />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Cảnh báo rời trang khi đang tạo đơn (Stitch Screens 19, 20, 21) */}
+      <Modal animationType="fade" transparent visible={showLeaveModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.leaveModalCard}>
+            <Text style={styles.leaveModalIcon}>⚠️</Text>
+            <Text style={styles.leaveModalTitle}>Rời khỏi trang tạo đơn?</Text>
+            <Text style={styles.leaveModalDesc}>
+              Thông tin lộ trình và hàng hóa bạn đã nhập sẽ không được lưu lại.
+            </Text>
+            <View style={styles.modalActionRow}>
+              <Pressable
+                accessibilityLabel="Ở lại tiếp tục tạo đơn"
+                accessibilityRole="button"
+                onPress={() => setShowLeaveModal(false)}
+                style={[styles.modalBtn, styles.modalBtnStay]}
+              >
+                <Text style={styles.modalBtnStayText}>Ở lại</Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel="Xác nhận rời khỏi trang"
+                accessibilityRole="button"
+                onPress={() => {
+                  setShowLeaveModal(false);
+                  onBack?.();
+                }}
+                style={[styles.modalBtn, styles.modalBtnLeave]}
+              >
+                <Text style={styles.modalBtnLeaveText}>Rời đi</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenScaffold>
   );
 }
@@ -276,81 +410,260 @@ export function CustomerCreateOrderScreen({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: {
-    gap: spacing.lg,
-    paddingBottom: spacing.xl,
+    gap: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  stepProgressRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: spacing.xxs,
+  },
+  stepBar: {
+    backgroundColor: '#DDE7EA',
+    borderRadius: radius.pill,
+    flex: 1,
+    height: 5,
+  },
+  stepBarActive: {
+    backgroundColor: leopardPalette.primarySoft,
+  },
+  card: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.md,
+    shadowColor: leopardPalette.textSlateDark,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  sectionHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  sectionIndex: {
+    backgroundColor: leopardPalette.primaryBg,
+    borderRadius: radius.pill,
+    color: leopardPalette.primaryDark,
+    fontSize: 11,
+    fontWeight: '800',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  sectionLabel: {
+    color: leopardPalette.primaryDark,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
   stopField: {
     gap: spacing.xs,
   },
-  vehicleOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  addStopBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: leopardPalette.primaryBg,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  addStopBtnText: {
+    color: leopardPalette.primaryDark,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  vehicleGroup: {
     gap: spacing.xs,
   },
-  vehicleOption: {
+  vehicleCard: {
+    backgroundColor: '#FFFFFF',
+    borderColor: leopardPalette.inputBorder,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 2,
+    padding: 12,
+  },
+  vehicleCardSelected: {
+    backgroundColor: pastelTheme.blueCard.bg,
+    borderColor: pastelTheme.blueCard.accent,
+  },
+  vehicleHeader: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.subtleBorder,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: control.minimumTouchHeight,
-    paddingHorizontal: spacing.md,
-  },
-  vehicleOptionSelected: {
-    backgroundColor: colors.brand.softBackground,
-    borderColor: colors.brand.background,
-  },
-  vehicleLabel: {
-    ...typography.label,
-    color: colors.neutral.text,
-  },
-  estimatePlaceholder: {
-    backgroundColor: colors.neutral.canvas,
-    borderLeftColor: colors.neutral.border,
-    borderLeftWidth: 2,
-    padding: spacing.sm,
-  },
-  priceRow: {
-    alignItems: 'flex-start',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    backgroundColor: colors.operational.ink,
-    gap: spacing.sm,
     justifyContent: 'space-between',
-    padding: spacing.md,
   },
-  priceLabel: {
-    ...typography.caption,
-    color: colors.operational.inkMuted,
+  vehicleTitle: {
+    color: leopardPalette.textSlateDark,
+    fontSize: 14.5,
     fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
   },
-  price: {
-    ...typography.sectionTitle,
-    color: colors.brand.text,
+  vehicleTitleSelected: {
+    color: leopardPalette.primaryDark,
+  },
+  checkIcon: {
+    color: leopardPalette.primaryDark,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  vehicleDesc: {
+    color: colors.neutral.mutedText,
+    fontSize: 12.5,
+  },
+  estimatePanel: {
+    gap: spacing.xs,
+  },
+  estimateBox: {
+    backgroundColor: colors.brand.softBackground,
+    borderRadius: radius.control,
+    gap: spacing.xs,
+    padding: 16,
+  },
+  estimateBoxError: {
+    backgroundColor: colors.danger.background,
+  },
+  estimateRow: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  estimateRowLabel: {
+    color: colors.brand.softText,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  estimateRowValue: {
+    color: colors.brand.softText,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  estimatePrice: {
+    color: colors.brand.background,
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  demoBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.warning.background,
+    borderRadius: radius.pill,
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  demoBadgeText: {
+    color: colors.warning.text,
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  estimateCalcTime: {
+    color: colors.brand.border,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  estimateEmptyMessage: {
+    color: colors.brand.softText,
+    fontSize: 13.5,
+    lineHeight: 19,
+  },
+  estimateErrorTitle: {
+    color: colors.danger.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  estimateErrorMessage: {
+    color: colors.danger.text,
+    fontSize: 13,
   },
   notice: {
-    borderLeftWidth: 4,
-    padding: spacing.sm,
+    borderRadius: radius.control,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   noticeInfo: {
     backgroundColor: colors.info.background,
-    borderLeftColor: colors.info.border,
   },
   noticeError: {
     backgroundColor: colors.danger.background,
-    borderLeftColor: colors.danger.border,
   },
-  body: {
-    ...typography.body,
+  noticeText: {
+    ...typography.caption,
     color: colors.neutral.text,
-    flexShrink: 1,
+    fontWeight: '600',
+    lineHeight: 18,
   },
   helper: {
     ...typography.caption,
     color: colors.neutral.mutedText,
-    flexShrink: 1,
+  },
+  footerContainer: {
+    gap: spacing.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  leaveModalCard: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderRadius: leopardRadius.xl,
+    padding: spacing.xl,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    gap: spacing.sm,
+    shadowColor: leopardPalette.textSlateDark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  leaveModalIcon: {
+    fontSize: 36,
+    marginBottom: 4,
+  },
+  leaveModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: leopardPalette.textSlateDark,
+    textAlign: 'center',
+  },
+  leaveModalDesc: {
+    fontSize: 14,
+    color: leopardPalette.textMutedSlate,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  modalActionRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    width: '100%',
+  },
+  modalBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: leopardRadius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBtnStay: {
+    backgroundColor: leopardPalette.bgMuted,
+  },
+  modalBtnStayText: {
+    color: leopardPalette.textSlateDark,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  modalBtnLeave: {
+    backgroundColor: colors.danger.border,
+  },
+  modalBtnLeaveText: {
+    color: colors.brand.text,
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

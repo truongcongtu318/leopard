@@ -4,22 +4,18 @@ import React from 'react';
 
 import LoginRoute from '../../app/(public)/login';
 import { httpClient } from '../api/http-client';
-import { sessionStore } from './session-store';
 
 const mockReplace = jest.fn();
-const originalPreviewFlag = process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
+const mockSignInWithGoogle = jest.fn<(...args: any[]) => Promise<any>>();
+
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    replace: mockReplace,
-  }),
+  useRouter: () => ({ replace: mockReplace }),
   useLocalSearchParams: () => ({}),
 }));
 
 jest.mock('../api/http-client', () => ({
-  httpClient: {
-    post: jest.fn(),
-  },
+  httpClient: { post: jest.fn() },
 }));
 
 jest.mock('./session-store', () => ({
@@ -28,120 +24,73 @@ jest.mock('./session-store', () => ({
   },
 }));
 
+jest.mock('./firebase', () => ({
+  isFirebaseConfigured: () => true,
+  getFirebaseApp: () => ({}),
+  getFirebaseAuth: () => ({}),
+}));
+
+jest.mock('./firebase-auth', () => ({
+  sendPhoneOtp: jest.fn(),
+  signInWithGoogle: (...args: unknown[]) => mockSignInWithGoogle(...args),
+  resetRecaptcha: jest.fn(),
+}));
+
+const sessionOf = (role: string) => ({
+  user: { id: `u-${role}`, phone: '0900000001', role, status: 'ACTIVE' },
+  session: {
+    accessToken: 'acc',
+    refreshToken: 'ref',
+    accessTokenExpiresAt: '2026-09-07',
+    refreshTokenExpiresAt: '2026-09-14',
+  },
+});
+
+async function loginWithGoogleAs(role: string) {
+  (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce(
+    sessionOf(role),
+  );
+  const screen = await render(<LoginRoute />);
+  await fireEvent.press(screen.getByLabelText('Đăng nhập với Google'));
+  return screen;
+}
+
 describe('LoginRoute (Mobile)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    delete process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
+    mockSignInWithGoogle.mockResolvedValue('google-id-token');
   });
 
   afterEach(() => {
-    if (originalPreviewFlag === undefined) delete process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW;
-    else process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = originalPreviewFlag;
+    jest.clearAllMocks();
   });
 
-  it('renders LoginScreen component', async () => {
+  it('renders the LoginScreen phone form', async () => {
     const screen = await render(<LoginRoute />);
     expect(screen.getByRole('header', { name: 'Đăng nhập' })).toBeTruthy();
-    expect(screen.getByLabelText('Số điện thoại hoặc Token')).toBeTruthy();
-    await screen.unmount();
-  });
-
-  it('redirects CUSTOMER to /customer/orders upon successful login', async () => {
-    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
-      user: { id: 'usr-c', role: 'CUSTOMER' },
-    });
-
-    const screen = await render(<LoginRoute />);
-    const input = screen.getByLabelText('Số điện thoại hoặc Token');
-    await fireEvent.changeText(input, 'customer-token');
-    await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
-
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/customer/orders');
-    });
-
-    await screen.unmount();
-  });
-
-  it('redirects DRIVER to /driver/orders upon successful login', async () => {
-    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
-      user: { id: 'usr-d', role: 'DRIVER' },
-    });
-
-    const screen = await render(<LoginRoute />);
-    const input = screen.getByLabelText('Số điện thoại hoặc Token');
-    await fireEvent.changeText(input, 'driver-token');
-    await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
-
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/driver/orders');
-    });
-
+    expect(screen.getByLabelText('Số điện thoại')).toBeTruthy();
     await screen.unmount();
   });
 
   it.each([
-    { destination: '/customer/orders?preview=enabled', role: 'CUSTOMER' },
-    { destination: '/driver/orders?preview=enabled', role: 'DRIVER' },
-  ] as const)('preserves local preview mode when $role signs in', async ({ destination, role }) => {
-    process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW = 'enabled';
-    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
-      user: { id: `usr-${role.toLowerCase()}`, role },
-    });
-
-    const screen = await render(<LoginRoute />);
-    const input = screen.getByLabelText('Số điện thoại hoặc Token');
-    await fireEvent.changeText(input, `${role.toLowerCase()}-token`);
-    await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
-
+    { destination: '/customer/home', role: 'CUSTOMER' },
+    { destination: '/driver/orders', role: 'DRIVER' },
+  ] as const)('redirects $role to $destination after login', async ({ destination, role }) => {
+    const screen = await loginWithGoogleAs(role);
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith(destination);
     });
-
     await screen.unmount();
   });
 
-  it('returns unsupported FLEET_OWNER sessions to the mobile login route', async () => {
-    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
-      user: { id: 'usr-f', role: 'FLEET_OWNER' },
-    });
-
-    const screen = await render(<LoginRoute />);
-    const input = screen.getByLabelText('Số điện thoại hoặc Token');
-    await fireEvent.changeText(input, 'fleet-token');
-    await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
-
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
-    });
-
-    await screen.unmount();
-  });
-
-  it('returns unsupported ADMIN sessions to the mobile login route', async () => {
-    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
-      accessToken: 'token',
-      refreshToken: 'refresh',
-      user: { id: 'usr-a', role: 'ADMIN' },
-    });
-
-    const screen = await render(<LoginRoute />);
-    const input = screen.getByLabelText('Số điện thoại hoặc Token');
-    await fireEvent.changeText(input, 'admin-token');
-    await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
-
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
-    });
-
-    await screen.unmount();
-  });
+  it.each([{ role: 'FLEET_OWNER' }, { role: 'ADMIN' }] as const)(
+    'returns unsupported $role sessions to the mobile login route',
+    async ({ role }) => {
+      const screen = await loginWithGoogleAs(role);
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
+      });
+      await screen.unmount();
+    },
+  );
 });

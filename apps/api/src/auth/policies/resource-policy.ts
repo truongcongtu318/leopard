@@ -42,7 +42,7 @@ export class ResourcePolicy {
     throw new DomainError(
       'FORBIDDEN',
       403,
-      'You do not have access to this resource',
+      'Bạn không có quyền truy cập tài nguyên này',
     );
   }
 }

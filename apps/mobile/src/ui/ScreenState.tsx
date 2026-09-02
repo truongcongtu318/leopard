@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
+import { TruckLoader } from './TruckLoader';
 
 export type ScreenStateName =
   | 'loading'
@@ -105,13 +106,23 @@ export function ScreenState({
       <View
         accessibilityLiveRegion={liveRegion}
         accessibilityState={isBusy ? { busy: true } : undefined}
-        style={[styles.messagePanel, panelStyle]}
+        style={[styles.messagePanel, panelStyle, isBusy ? styles.loadingPanel : null]}
         testID="screen-state-panel"
       >
-        <Text accessibilityRole={isAlert ? 'alert' : 'header'} style={styles.title}>
+        {isBusy ? (
+          <View style={styles.loaderArea}>
+            <TruckLoader size="md" />
+          </View>
+        ) : null}
+        <Text
+          accessibilityRole={isAlert ? 'alert' : 'header'}
+          style={[styles.title, isBusy && styles.loadingTextCenter]}
+        >
           {title ?? copy.title}
         </Text>
-        <Text style={styles.message}>{message ?? copy.message}</Text>
+        <Text style={[styles.message, isBusy && styles.loadingTextCenter]}>
+          {message ?? copy.message}
+        </Text>
       </View>
       {!isPrivateBoundary ? children : null}
       {actionLabel && onAction ? (
@@ -134,6 +145,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
+  },
+  loadingPanel: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+  },
+  loaderArea: {
+    marginBottom: spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingTextCenter: {
+    textAlign: 'center',
   },
   alertPanel: {
     backgroundColor: colors.danger.background,
@@ -162,3 +187,4 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 });
+

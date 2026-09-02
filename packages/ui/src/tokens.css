@@ -1,35 +1,35 @@
 @theme {
   /* Semantic colors matching mobile design system */
-  --color-brand: #075985;
+  --color-brand: #0284c7;
   --color-brand-soft: #e0f2fe;
   --color-brand-text: #ffffff;
   --color-brand-soft-text: #0c4a6e;
 
   --color-info: #e0f2fe;
-  --color-info-text: #075985;
-  --color-info-border: #0369a1;
+  --color-info-text: #0369a1;
+  --color-info-border: #38bdf8;
 
   --color-warning: #fef3c7;
   --color-warning-text: #78350f;
-  --color-warning-border: #b45309;
+  --color-warning-border: #f59e0b;
 
-  --color-active: #dbeafe;
-  --color-active-text: #1e3a8a;
-  --color-active-border: #1d4ed8;
+  --color-active: #e0f2fe;
+  --color-active-text: #0369a1;
+  --color-active-border: #0284c7;
 
   --color-success: #dcfce7;
   --color-success-text: #14532d;
-  --color-success-border: #15803d;
+  --color-success-border: #22c55e;
 
   --color-danger: #fee2e2;
-  --color-danger-text: #7f1d1d;
+  --color-danger-text: #b91c1c;
   --color-danger-border: #b91c1c;
 
   --color-neutral: #ffffff;
-  --color-neutral-surface: #f3f4f6;
-  --color-neutral-text: #17202a;
-  --color-neutral-muted: #4b5563;
-  --color-neutral-border: #6b7280;
+  --color-neutral-surface: #f8fafc;
+  --color-neutral-text: #0f172a;
+  --color-neutral-muted: #475569;
+  --color-neutral-border: #e2e8f0;
 
   /* Spacing: only 4/8/12/16/24/32 steps */
   --spacing-xxs: 0.25rem;
@@ -59,4 +59,109 @@
   --text-section-title--line-height: 1.75rem;
   --text-page-title: 1.5rem;
   --text-page-title--line-height: 2rem;
+
+  /* LEOPARD Pastel Palette — mirrors mobile leopardPalette */
+  --leopard-primary: #4A90E2;
+  --leopard-primary-dark: #0284c7;
+  --leopard-primary-soft: #6BA4E8;
+  --leopard-primary-bg: #F0F7FF;
+  --leopard-primary-border: #BAE6FD;
+
+  --leopard-yellow: #F6C358;
+  --leopard-yellow-soft: #FFE699;
+  --leopard-yellow-bg: #FFFBF0;
+  --leopard-yellow-border: #FDE68A;
+
+  --leopard-green: #52C41A;
+  --leopard-green-soft: #8CE196;
+  --leopard-green-bg: #F2FCF0;
+  --leopard-green-border: #BBF7D0;
+
+  --leopard-canvas: #F8FAFC;
+  --leopard-surface: #FFFFFF;
+  --leopard-bg-muted: #F4F7FA;
+  --leopard-text-dark: #1E293B;
+  --leopard-text-muted: #64748B;
+  --leopard-text-subtle: #94A3B8;
+  --leopard-card-border: #E2E8F0;
+  --leopard-divider: #F1F5F9;
+
+  /* Pastel card theme tokens */
+  --pastel-yellow-bg: #FFFDF0;
+  --pastel-yellow-border: #FEF3C7;
+  --pastel-green-bg: #F0FDF4;
+  --pastel-green-border: #DCFCE7;
+  --pastel-blue-bg: #F0F9FF;
+  --pastel-blue-border: #E0F2FE;
 }
+
+@keyframes roadMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-160px); }
+}
+
+@keyframes wheelSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes truckBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+
+@keyframes headlightPulse {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 0.95; }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.anim-road-stripes {
+  animation: roadMove 0.8s linear infinite;
+}
+
+.anim-road-stripes-fast {
+  animation: roadMove 0.35s linear infinite;
+}
+
+.anim-wheel-rotate {
+  animation: wheelSpin 0.7s linear infinite;
+}
+
+.anim-wheel-rotate-fast {
+  animation: wheelSpin 0.3s linear infinite;
+}
+
+.anim-truck-bounce {
+  animation: truckBounce 1.2s ease-in-out infinite;
+}
+
+.anim-headlight-pulse {
+  animation: headlightPulse 2.4s ease-in-out infinite;
+}
+
+.anim-float-slow {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.anim-float-slow-delay {
+  animation: floatSlow 4.5s ease-in-out 1s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-road-stripes,
+  .anim-road-stripes-fast,
+  .anim-wheel-rotate,
+  .anim-wheel-rotate-fast,
+  .anim-truck-bounce,
+  .anim-headlight-pulse,
+  .anim-float-slow,
+  .anim-float-slow-delay {
+    animation: none !important;
+  }
+}
+

@@ -555,7 +555,7 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
         .set('Authorization', `Bearer ${invitedFleetOwnerSession.accessToken}`)
         .expect(403);
 
-      expect(res.body.message).toContain('Fleet membership is not active');
+      expect(res.body.message).toContain('Tư cách thành viên đội xe chưa được kích hoạt');
     });
 
     it('rejects REMOVED fleet owner with 403 ("Fleet membership is not active")', async () => {
@@ -564,7 +564,7 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
         .set('Authorization', `Bearer ${removedFleetOwnerSession.accessToken}`)
         .expect(403);
 
-      expect(res.body.message).toContain('Fleet membership is not active');
+      expect(res.body.message).toContain('Tư cách thành viên đội xe chưa được kích hoạt');
     });
 
     it('rejects FLEET_OWNER with no fleet membership with 403 ("No fleet membership found")', async () => {
@@ -573,7 +573,7 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
         .set('Authorization', `Bearer ${noMembershipFleetOwnerSession.accessToken}`)
         .expect(403);
 
-      expect(res.body.message).toContain('No fleet membership found');
+      expect(res.body.message).toContain('Không tìm thấy tư cách thành viên đội xe');
     });
   });
 

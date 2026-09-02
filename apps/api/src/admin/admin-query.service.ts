@@ -59,7 +59,7 @@ export class AdminQueryService {
 
     const items: AdminUserSummaryDto[] = users.map((u: User) => ({
       id: u.id,
-      phone: u.phone,
+      phone: u.phone ?? '',
       role: u.role,
       status: u.status,
       createdAt: u.createdAt.toISOString(),
@@ -121,8 +121,8 @@ export class AdminQueryService {
     type UserWithProfile = User & { driverProfile: DriverProfile | null };
     const items: FleetDriverSummaryDto[] = users.map((u: UserWithProfile) => ({
       id: u.id,
-      name: u.phone,
-      phone: u.phone,
+      name: u.phone ?? '',
+      phone: u.phone ?? '',
       status: u.status,
       availability: u.driverProfile?.availability ?? 'OFFLINE',
       vehicleType: u.driverProfile?.vehicleType ?? 'MOTORBIKE',
@@ -164,7 +164,7 @@ export class AdminQueryService {
        code: o.id.split('-')[0]?.toUpperCase() ?? '',
        status: o.status,
        driverId: o.driverId ?? undefined,
-       driverName: o.driver?.phone,
+       driverName: o.driver?.phone ?? undefined,
        priceVnd: o.priceVnd ?? 0,
        createdAt: o.createdAt.toISOString(),
        distanceMeters: o.distanceMeters ?? 0,

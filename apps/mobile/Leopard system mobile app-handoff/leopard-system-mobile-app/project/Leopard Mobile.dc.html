@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:#EDEAE3;font-variant-numeric:tabular-nums}
+a{color:#075985}
+a:hover{color:#0C4A6E}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#C8CDC7;border-radius:3px}
+select{font-family:inherit}
+button{font-family:inherit}
+@keyframes skPulse{0%,100%{opacity:.45}50%{opacity:.9}}
+</style>
+</helmet>
+
+<div style="display:flex;min-height:960px;background:#EDEAE3;color:#17202A">
+
+  <div style="width:300px;flex:none;background:#FFFFFF;border-right:1px solid #E5E2DA;padding:24px 20px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;box-sizing:border-box">
+    <div>
+      <div style="display:inline-flex;background:#E0F2FE;color:#075985;font-size:11px;font-weight:800;letter-spacing:.5px;padding:4px 10px;border-radius:999px">LEOPARD</div>
+      <div style="font-size:19px;line-height:26px;font-weight:800;color:#111417;margin-top:8px">Mobile design v3</div>
+      <div style="font-size:13px;line-height:19px;color:#697077;margin-top:6px">Radius 6px cho card/button, pill chỉ cho badge/chip, số tabular, skeleton loading, wizard 3 bước thật.</div>
+    </div>
+
+    <div>
+      <div style="font-size:11px;line-height:15px;font-weight:700;color:#9AA3AC;margin-bottom:8px;letter-spacing:.4px">VAI TRÒ</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;background:#F3F2ED;padding:4px;border-radius:10px">
+        <button onClick="{{ goRoleOnboarding }}" style="{{ roleBtnStyle.onboarding }}">Onboarding</button>
+        <button onClick="{{ goRoleLogin }}" style="{{ roleBtnStyle.login }}">Đăng nhập</button>
+        <button onClick="{{ goRoleRegister }}" style="{{ roleBtnStyle.register }}">Đăng ký</button>
+        <button onClick="{{ goRoleCustomer }}" style="{{ roleBtnStyle.customer }}">Customer</button>
+        <button onClick="{{ goRoleDriver }}" style="{{ roleBtnStyle.driver }}">Driver</button>
+        <button onClick="{{ goRoleErrors }}" style="{{ roleBtnStyle.errors }}">Lỗi hệ thống</button>
+      </div>
+    </div>
+
+    <sc-if value="{{ role_customer }}">
+      <div>
+        <div style="font-size:11px;line-height:15px;font-weight:700;color:#9AA3AC;margin-bottom:8px;letter-spacing:.4px">MÀN HÌNH</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button onClick="{{ goCustOrders }}" style="{{ screenBtnStyle.custOrders }}">Đơn hàng của tôi</button>
+          <button onClick="{{ goCustNew }}" style="{{ screenBtnStyle.custNew }}">Tạo đơn (wizard)</button>
+          <button onClick="{{ goCustDetail }}" style="{{ screenBtnStyle.custDetail }}">Chi tiết đơn</button>
+          <button onClick="{{ goCustNotifications }}" style="{{ screenBtnStyle.custNotifications }}">Thông báo</button>
+          <button onClick="{{ goCustChat }}" style="{{ screenBtnStyle.custChat }}">Chat đơn hàng</button>
+          <button onClick="{{ goCustReview }}" style="{{ screenBtnStyle.custReview }}">Đánh giá &amp; Tip</button>
+          <button onClick="{{ goCustReport }}" style="{{ screenBtnStyle.custReport }}">Báo cáo sự cố</button>
+          <button onClick="{{ goCustSupport }}" style="{{ screenBtnStyle.custSupport }}">Trợ giúp &amp; SOS</button>
+          <button onClick="{{ goCustWallet }}" style="{{ screenBtnStyle.custWallet }}">Ví &amp; thanh toán</button>
+          <button onClick="{{ goCustAddresses }}" style="{{ screenBtnStyle.custAddresses }}">Sổ địa chỉ</button>
+          <button onClick="{{ goCustPromotions }}" style="{{ screenBtnStyle.custPromotions }}">Khuyến mãi</button>
+          <button onClick="{{ goCustProfile }}" style="{{ screenBtnStyle.custProfile }}">Hồ sơ</button>
+          <button onClick="{{ goCustSettings }}" style="{{ screenBtnStyle.custSettings }}">Cài đặt</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ role_driver }}">
+      <div>
+        <div style="font-size:11px;line-height:15px;font-weight:700;color:#9AA3AC;margin-bottom:8px;letter-spacing:.4px">MÀN HÌNH</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button onClick="{{ goDrvOrders }}" style="{{ screenBtnStyle.drvOrders }}">Tổng quan (Dashboard)</button>
+          <button onClick="{{ goDrvDetail }}" style="{{ screenBtnStyle.drvDetail }}">Chi tiết đơn</button>
+          <button onClick="{{ goDrvHistory }}" style="{{ screenBtnStyle.drvHistory }}">Lịch sử giao hàng</button>
+          <button onClick="{{ goDrvChat }}" style="{{ screenBtnStyle.drvChat }}">Chat đơn hàng</button>
+          <button onClick="{{ goDrvWallet }}" style="{{ screenBtnStyle.drvWallet }}">Ví &amp; rút tiền</button>
+          <button onClick="{{ goDrvEarnings }}" style="{{ screenBtnStyle.drvEarnings }}">Báo cáo doanh thu</button>
+          <button onClick="{{ goDrvPerformance }}" style="{{ screenBtnStyle.drvPerformance }}">Điểm hiệu suất</button>
+          <button onClick="{{ goDrvKyc }}" style="{{ screenBtnStyle.drvKyc }}">Hồ sơ KYC</button>
+          <button onClick="{{ goDrvProfile }}" style="{{ screenBtnStyle.drvProfile }}">Hồ sơ</button>
+          <button onClick="{{ goDrvSettings }}" style="{{ screenBtnStyle.drvSettings }}">Cài đặt</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ role_errors }}">
+      <div>
+        <div style="font-size:11px;line-height:15px;font-weight:700;color:#9AA3AC;margin-bottom:8px;letter-spacing:.4px">MÀN HÌNH LỖI DÙNG CHUNG</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button onClick="{{ goErr403 }}" style="{{ screenBtnStyle.err403 }}">403 · Từ chối truy cập</button>
+          <button onClick="{{ goErr404 }}" style="{{ screenBtnStyle.err404 }}">404 · Không tìm thấy</button>
+          <button onClick="{{ goErr500 }}" style="{{ screenBtnStyle.err500 }}">500 · Lỗi máy chủ</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showScenarioPicker }}">
+      <div>
+        <div style="font-size:11px;line-height:15px;font-weight:700;color:#9AA3AC;margin-bottom:8px;letter-spacing:.4px">SCENARIO (docs/ui state matrix)</div>
+        <select key="{{ scenarioKey }}" value="{{ currentScenario }}" onChange="{{ onScenarioChange }}" style="width:100%;box-sizing:border-box;padding:9px 10px;border-radius:6px;border:1px solid #D8D5CC;font-size:13px;color:#17202A;background:#FAFAF7">
+          <sc-for list="{{ scenarioOptionRows }}" as="opt" hint-placeholder-count="3">
+            <option value="{{ opt.value }}" selected="{{ opt.selected }}">{{ opt.value }}</option>
+          </sc-for>
+        </select>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ role_login }}">
+      <div>
+        <div style="font-size:11px;line-height:15px;font-weight:700;color:#9AA3AC;margin-bottom:8px;letter-spacing:.4px">TRẠNG THÁI ĐĂNG NHẬP</div>
+        <select value="{{ state.loginVariant }}" onChange="{{ onLoginVariantChange }}" style="width:100%;box-sizing:border-box;padding:9px 10px;border-radius:6px;border:1px solid #D8D5CC;font-size:13px;color:#17202A;background:#FAFAF7">
+          <option value="default">default (nhập SĐT)</option>
+          <option value="otp">otp (nhập mã xác thực)</option>
+          <option value="session-expired">session-expired</option>
+          <option value="error">error</option>
+          <option value="submitting">submitting</option>
+        </select>
+      </div>
+    </sc-if>
+
+    <div style="margin-top:auto;padding-top:16px;border-top:1px solid #EEEDE7;font-size:11.5px;line-height:16px;color:#9AA3AC">
+      Nguồn: leopard/docs/ui/04–08, apps/mobile/src/theme/tokens.ts, apps/mobile/src/features/**/fixtures.ts. Bản đồ là sơ đồ minh họa, không phải tile thật. KPI tài xế và OTP là mô phỏng cho demo.
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding:56px 32px">
+    <div style="width:390px;flex:none;background:#0D0F10;border-radius:54px;padding:14px;box-shadow:0 40px 80px rgba(0,0,0,0.4)">
+      <div style="width:100%;height:844px;background:#F6F5F1;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column">
+
+        <div style="flex:none;height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:{{ statusBarBg }};box-sizing:border-box;position:relative;z-index:5">
+          <span style="font-size:14px;font-weight:700;color:#FFFFFF">9:41</span>
+          <div style="width:110px;height:26px;background:#0D0F10;border-radius:13px;position:absolute;left:50%;top:8px;transform:translateX(-50%)"></div>
+          <span style="font-size:11px;font-weight:600;color:#FFFFFF">●●● 100%</span>
+        </div>
+
+        <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+
+          <sc-if value="{{ role_onboarding }}">
+            <div style="flex:1;background:#0B2530;display:flex;flex-direction:column;padding:20px 24px 32px;box-sizing:border-box;gap:20px">
+              <div style="display:flex;justify-content:flex-end">
+                <span onClick="{{ goRoleLogin }}" style="cursor:pointer;font-size:13px;font-weight:700;color:#BEE3F8">Bỏ qua</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center">
+                <div style="width:88px;height:88px;border-radius:6px;background:rgba(224,242,254,0.12);display:flex;align-items:center;justify-content:center;color:#BEE3F8">{{ ob.icon }}</div>
+                <div>
+                  <div style="font-size:23px;line-height:29px;font-weight:800;color:#FFFFFF">{{ ob.title }}</div>
+                  <div style="font-size:14px;line-height:20px;color:#BEE3F8;margin-top:10px;max-width:280px">{{ ob.desc }}</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;justify-content:center;gap:6px">
+                  <div style="{{ ob.dot0 }}"></div>
+                  <div style="{{ ob.dot1 }}"></div>
+                  <div style="{{ ob.dot2 }}"></div>
+                </div>
+                <button onClick="{{ onboardNext }}" style="width:100%;box-sizing:border-box;border-radius:6px;border:none;background:#FFFFFF;color:#0B2530;padding:14px 20px;font-size:15px;font-weight:700;min-height:48px;cursor:pointer">{{ ob.buttonLabel }}</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ role_login }}">
+            <div style="flex:1;background:linear-gradient(180deg,#0B2530 0%,#0B2530 220px,#F6F5F1 220px);display:flex;flex-direction:column;padding:0;box-sizing:border-box">
+              <div style="padding:32px 24px 24px;display:flex;flex-direction:column;gap:6px">
+                <div style="width:48px;height:48px;border-radius:6px;background:rgba(224,242,254,0.15);display:flex;align-items:center;justify-content:center;color:#E0F2FE;font-weight:800;font-size:19px">L</div>
+                <div style="font-size:24px;line-height:30px;font-weight:800;color:#FFFFFF;margin-top:10px">{{ login.headline }}</div>
+                <div style="font-size:13.5px;color:#BEE3F8">{{ login.subline }}</div>
+              </div>
+              <div style="flex:1;background:#F6F5F1;border-radius:16px 16px 0 0;margin-top:-2px;padding:24px 20px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box">
+                <sc-if value="{{ login.sessionExpired }}">
+                  <div style="background:#FEF3C7;border-radius:6px;padding:12px 14px">
+                    <div style="font-size:12.5px;line-height:17px;color:#78350F;font-weight:600">Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ login.error }}">
+                  <div style="background:#FEE2E2;border-radius:6px;padding:12px 14px">
+                    <div style="font-size:12.5px;line-height:17px;color:#7F1D1D;font-weight:600">Thông tin đăng nhập không hợp lệ</div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ login.isOtp }}">
+                  <div style="display:flex;justify-content:space-between;gap:8px">
+                    <div style="{{ login.otpBoxStyle }}">•</div>
+                    <div style="{{ login.otpBoxStyle }}">•</div>
+                    <div style="{{ login.otpBoxStyle }}">•</div>
+                    <div style="{{ login.otpBoxStyle }}">•</div>
+                    <div style="{{ login.otpBoxStyleEmpty }}"></div>
+                    <div style="{{ login.otpBoxStyleEmpty }}"></div>
+                  </div>
+                  <div style="font-size:12.5px;color:#697077;text-align:center">Mã đã gửi tới +84 90 000 0001 · Gửi lại sau 00:47</div>
+                </sc-if>
+                <sc-if value="{{ login.isPhone }}">
+                  <div>
+                    <div style="font-size:13px;line-height:18px;font-weight:700;color:#17202A;margin-bottom:6px">Số điện thoại hoặc Token</div>
+                    <div style="border:1px solid #E5E2DA;border-radius:6px;padding:14px 16px;color:#9AA3AC;font-size:15px;background:#fff">Nhập số điện thoại hoặc idToken...</div>
+                  </div>
+                </sc-if>
+
+                <button style="{{ login.submitStyle }}" disabled="{{ login.submitting }}">{{ login.submitLabel }}</button>
+
+                <sc-if value="{{ login.isPhone }}">
+                  <div style="display:flex;align-items:center;gap:10px;margin:6px 0"><div style="flex:1;height:1px;background:#E5E2DA"></div><span style="font-size:11px;color:#9AA3AC;font-weight:700">TÀI KHOẢN DEMO</span><div style="flex:1;height:1px;background:#E5E2DA"></div></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <button onClick="{{ demoLoginCustomer }}" style="{{ secondaryBtnStyle }}">Customer</button>
+                    <button onClick="{{ demoLoginDriver }}" style="{{ secondaryBtnStyle }}">Driver</button>
+                    <button style="{{ secondaryBtnStyle }}">Fleet Owner</button>
+                    <button style="{{ secondaryBtnStyle }}">Admin</button>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ role_register }}">
+            <div style="flex:1;background:#F6F5F1;display:flex;flex-direction:column;padding:32px 20px;gap:18px;box-sizing:border-box">
+              <div>
+                <div style="font-size:24px;line-height:30px;font-weight:800;color:#111417">Tạo tài khoản</div>
+                <div style="font-size:13.5px;color:#697077;margin-top:6px">Nhập số điện thoại và chọn vai trò để bắt đầu.</div>
+              </div>
+              <div>
+                <div style="font-size:13px;line-height:18px;font-weight:700;color:#17202A;margin-bottom:6px">Số điện thoại</div>
+                <div style="border:1px solid #E5E2DA;border-radius:6px;padding:14px 16px;color:#9AA3AC;font-size:15px;background:#fff">Nhập số điện thoại...</div>
+              </div>
+              <div>
+                <div style="font-size:13px;line-height:18px;font-weight:700;color:#17202A;margin-bottom:8px">Bạn muốn sử dụng LEOPARD với vai trò nào?</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="{{ reg.roleCardStyleCustomer }}">
+                    <div style="font-size:14.5px;font-weight:700;color:#17202A">Customer — Người gửi hàng</div>
+                    <div style="font-size:12.5px;color:#697077;margin-top:2px">Tạo đơn, theo dõi và thanh toán vận chuyển.</div>
+                  </div>
+                  <div style="{{ reg.roleCardStyleDriver }}">
+                    <div style="font-size:14.5px;font-weight:700;color:#17202A">Driver — Tài xế</div>
+                    <div style="font-size:12.5px;color:#697077;margin-top:2px">Nhận đơn, giao hàng và xác nhận bằng ảnh.</div>
+                  </div>
+                </div>
+              </div>
+              <button style="{{ secondaryBtnStyleFilled }}">Tiếp tục</button>
+              <div style="text-align:center;font-size:13px;color:#697077">Đã có tài khoản? <span onClick="{{ goRoleLogin }}" style="color:#075985;font-weight:700;cursor:pointer">Đăng nhập</span></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ role_errors }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:18px;text-align:center;box-sizing:border-box">
+              <div style="{{ err.iconWrapStyle }}">{{ err.icon }}</div>
+              <div>
+                <div style="font-size:21px;line-height:27px;font-weight:800;color:#111417">{{ err.title }}</div>
+                <div style="font-size:14px;line-height:20px;color:#697077;margin-top:8px;max-width:280px">{{ err.message }}</div>
+              </div>
+              <sc-if value="{{ err.requestId }}">
+                <div style="font-size:12px;color:#9AA3AC;background:#F3F2ED;border-radius:6px;padding:6px 12px">Mã yêu cầu: {{ err.requestId }}</div>
+              </sc-if>
+              <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:280px;margin-top:6px">
+                <button style="{{ err.primaryBtnStyle }}">{{ err.primaryLabel }}</button>
+                <sc-if value="{{ err.secondaryLabel }}"><button style="{{ secondaryBtnStyle }}">{{ err.secondaryLabel }}</button></sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ role_customer }}">
+
+            <sc-if value="{{ screen_custOrders }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · JOURNEY SHEET</div>
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                    <div>
+                      <div style="{{ titlePlainStyle }}">Đơn hàng của tôi</div>
+                      <div style="font-size:13.5px;color:#697077;margin-top:2px">{{ cl.resultLabel }}</div>
+                    </div>
+                    <button onClick="{{ openCreate }}" style="flex:none;display:flex;align-items:center;gap:6px;background:#075985;color:#fff;border:none;border-radius:6px;padding:11px 16px;font-size:13.5px;font-weight:700;white-space:nowrap;min-height:44px">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                      Tạo đơn
+                    </button>
+                  </div>
+                  <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px">
+                    <span style="{{ chipActiveStyle }}">Tất cả</span>
+                    <span style="{{ chipStyle }}">Đang giao</span>
+                    <span style="{{ chipStyle }}">Hoàn tất</span>
+                    <span style="{{ chipStyle }}">Đã hủy</span>
+                  </div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-if value="{{ cl.isSkeleton }}">
+                    <div style="{{ skeletonCardStyle }}"><div style="{{ skListA }}"></div><div style="{{ skListB }}"></div><div style="{{ skListC }}"></div></div>
+                    <div style="{{ skeletonCardStyle }}"><div style="{{ skListA }}"></div><div style="{{ skListB }}"></div><div style="{{ skListC }}"></div></div>
+                    <div style="{{ skeletonCardStyle }}"><div style="{{ skListA }}"></div><div style="{{ skListB }}"></div><div style="{{ skListC }}"></div></div>
+                  </sc-if>
+                  <sc-if value="{{ cl.isMessage }}">
+                    <div style="{{ panelStyle }}">
+                      <div style="{{ panelTitleStyle }}">{{ cl.title }}</div>
+                      <div style="{{ panelMsgStyle }}">{{ cl.message }}</div>
+                      <sc-if value="{{ cl.requestId }}"><div style="{{ requestIdStyle }}">Mã yêu cầu: {{ cl.requestId }}</div></sc-if>
+                      <sc-if value="{{ cl.ctaLabel }}"><button onClick="{{ cl.ctaAction }}" style="{{ cl.ctaBtnStyle }}">{{ cl.ctaLabel }}</button></sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ cl.isContent }}">
+                    <sc-if value="{{ cl.notice }}">
+                      <div style="{{ cl.noticeStyle }}">{{ cl.notice }}</div>
+                    </sc-if>
+                    <sc-for list="{{ cl.orders }}" as="o" hint-placeholder-count="3">
+                      <div onClick="{{ openDetail }}" style="{{ cardStyle }}">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                          <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                            <div style="{{ o.iconWrapStyle }}">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="8" width="14" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M16 11h3.5L22 14v1h-6z" stroke="currentColor" stroke-width="1.8"/><circle cx="7" cy="17" r="1.6" stroke="currentColor" stroke-width="1.5"/><circle cx="18" cy="17" r="1.6" stroke="currentColor" stroke-width="1.5"/></svg>
+                            </div>
+                            <div style="min-width:0">
+                              <div style="font-size:15px;font-weight:700;color:#111417;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.reference }}</div>
+                              <div style="font-size:11.5px;color:#9AA3AC">{{ o.updatedAtLabel }}</div>
+                            </div>
+                          </div>
+                          <span style="{{ o.badgeStyle }};flex:none"><span style="{{ o.dotStyle }}"></span>{{ o.badgeLabel }}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;background:#F7F6F2;border-radius:6px;padding:10px 12px">
+                          <div style="flex:1;min-width:0">
+                            <div style="font-size:10.5px;color:#9AA3AC;font-weight:700;letter-spacing:.3px">TỪ</div>
+                            <div style="font-size:13px;color:#17202A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.originLabel }}</div>
+                          </div>
+                          <div style="flex:none;display:flex;flex-direction:column;align-items:center;gap:2px">
+                            <div style="width:6px;height:6px;border-radius:999px;background:#075985"></div>
+                            <div style="width:1px;height:14px;background:#D8D5CC"></div>
+                            <div style="width:6px;height:6px;border-radius:999px;background:#1D4ED8"></div>
+                          </div>
+                          <div style="flex:1;min-width:0;text-align:right">
+                            <div style="font-size:10.5px;color:#9AA3AC;font-weight:700;letter-spacing:.3px">ĐẾN</div>
+                            <div style="font-size:13px;color:#17202A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.destLabel }}</div>
+                          </div>
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                          <span style="font-size:17px;font-weight:800;color:#111417">{{ o.priceLabel }}</span>
+                          <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:#697077;font-weight:600">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                            {{ o.etaLabel }}
+                          </span>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </sc-if>
+                </div>
+              </div>
+              <div style="{{ tabBarWrapStyle }}">
+                <div onClick="{{ goCustOrders }}" style="{{ custTab.orders }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <span>Đơn hàng</span>
+                </div>
+                <div onClick="{{ goCustNotifications }}" style="{{ custTab.notifications }}">
+                  <div style="position:relative;display:inline-flex">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 00-5 5v2.5c0 1-.4 2-1.2 2.8L5 14v1h14v-1l-.8-.7c-.8-.8-1.2-1.8-1.2-2.8V8a5 5 0 00-5-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 18a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <sc-if value="{{ notif.hasUnread }}"><span style="position:absolute;top:-1px;right:-1px;width:7px;height:7px;border-radius:999px;background:#B91C1C"></span></sc-if>
+                  </div>
+                  <span>Thông báo</span>
+                </div>
+                <div onClick="{{ goCustWallet }}" style="{{ custTab.wallet }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor"/></svg>
+                  <span>Ví</span>
+                </div>
+                <div onClick="{{ goCustProfile }}" style="{{ custTab.profile }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Hồ sơ</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custNew }}">
+              <div style="{{ scaffoldStyle }}">
+                <sc-if value="{{ cn.isMessage }}">
+                  <div style="{{ headerPlainStyle }}">
+                    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#075985;font-weight:700;font-size:14px" onClick="{{ goCustOrders }}">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      Quay lại
+                    </div>
+                    <div style="{{ titlePlainStyle }}">Tạo đơn</div>
+                  </div>
+                  <div style="{{ bodyStyle }}">
+                    <div style="{{ panelStyle }}">
+                      <div style="{{ panelTitleStyle }}">{{ cn.title }}</div>
+                      <div style="{{ panelMsgStyle }}">{{ cn.message }}</div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ cn.isContent }}">
+                  <div style="{{ headerPlainStyle }}">
+                    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#075985;font-weight:700;font-size:14px" onClick="{{ custNewBack }}">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      Quay lại
+                    </div>
+                    <div style="{{ titlePlainStyle }}">{{ cn.stepHeadline }}</div>
+                    <div style="display:flex;gap:6px">
+                      <div style="{{ cn.stepBarStyle1 }}"></div>
+                      <div style="{{ cn.stepBarStyle2 }}"></div>
+                      <div style="{{ cn.stepBarStyle3 }}"></div>
+                    </div>
+                  </div>
+                  <div style="{{ bodyStyle }}">
+                    <sc-if value="{{ cn.notice }}">
+                      <div style="{{ cn.noticeStyle }}">{{ cn.notice }}</div>
+                    </sc-if>
+
+                    <sc-if value="{{ cn.showStep1 }}">
+                      <div style="{{ sectionLabelStyle }}">01 · LỘ TRÌNH</div>
+                      <div style="{{ cardStyle }}">
+                        <sc-for list="{{ cn.routeNodes }}" as="n" hint-placeholder-count="5">
+                          <div style="display:flex;gap:12px">
+                            <div style="display:flex;flex-direction:column;align-items:center">
+                              <div style="{{ n.markerStyle }}"></div>
+                              <sc-if value="{{ n.hasConnector }}"><div style="width:2px;flex:1;min-height:26px;background:#E5E2DA"></div></sc-if>
+                            </div>
+                            <div style="flex:1;padding-bottom:14px">
+                              <div style="font-size:12px;font-weight:700;color:#9AA3AC;letter-spacing:.2px">{{ n.title }}</div>
+                              <div style="font-size:14.5px;color:#17202A;font-weight:500;margin-top:2px">{{ n.address }}</div>
+                            </div>
+                          </div>
+                        </sc-for>
+                        <div style="display:flex;align-items:center;gap:6px;color:#075985;font-size:13px;font-weight:700;background:#E0F2FE;border-radius:6px;padding:9px 12px;align-self:flex-start">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                          Thêm điểm dừng (0–3)
+                        </div>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ cn.showStep2 }}">
+                      <div style="{{ sectionLabelStyle }}">02 · PHƯƠNG TIỆN &amp; HÀNG</div>
+                      <div style="{{ cardStyle }}">
+                        <div style="display:flex;flex-direction:column;gap:8px">
+                          <span style="{{ cn.vehicleOptStyleVan }}">Xe van</span>
+                          <span style="{{ cn.vehicleOptStyleBike }}">Xe máy</span>
+                          <span style="{{ cn.vehicleOptStyleTruck }}">Xe tải nhỏ</span>
+                        </div>
+                        <div style="font-size:14.5px;color:#17202A;font-weight:600">Khối lượng: {{ cn.cargoWeight }} kg</div>
+                        <div style="font-size:13.5px;color:#697077;line-height:19px">{{ cn.cargoNote }}</div>
+                        <sc-if value="{{ cn.fieldError }}"><div style="font-size:12.5px;color:#B91C1C;font-weight:600">{{ cn.fieldError }}</div></sc-if>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ cn.showStep3 }}">
+                      <div style="{{ sectionLabelStyle }}">03 · GIÁ &amp; XÁC NHẬN</div>
+                      <div style="{{ cn.estimatePanelStyle }}">
+                        <sc-if value="{{ cn.estimateReady }}">
+                          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12.5px;color:#0C4A6E;font-weight:600">Khoảng cách</span><span style="font-size:14px;font-weight:700;color:#0C4A6E">{{ cn.distanceLabel }}</span></div>
+                          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:#0C4A6E;font-weight:600">Giá dự kiến</span><span style="font-size:24px;font-weight:800;color:#075985">{{ cn.priceLabel }}</span></div>
+                          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12.5px;color:#0C4A6E;font-weight:600">ETA dự kiến</span><span style="font-size:14px;font-weight:700;color:#0C4A6E">{{ cn.etaLabel }}</span></div>
+                          <sc-if value="{{ cn.isDemo }}"><div style="display:inline-flex;align-self:flex-start;background:#FEF3C7;color:#78350F;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px">DỮ LIỆU MÔ PHỎNG</div></sc-if>
+                          <div style="font-size:11px;color:#5B8AA0">{{ cn.calculatedAtLabel }}</div>
+                        </sc-if>
+                        <sc-if value="{{ cn.isLoadingEstimate }}">
+                          <div style="{{ skEstA }}"></div><div style="{{ skEstB }}"></div><div style="{{ skEstC }}"></div>
+                        </sc-if>
+                        <sc-if value="{{ cn.estimateEmptyText }}"><div style="font-size:13.5px;color:#0C4A6E">{{ cn.estimateEmptyText }}</div></sc-if>
+                      </div>
+                    </sc-if>
+                  </div>
+                  <div style="{{ stickyFooterStyle }}">
+                    <button style="{{ cn.primaryBtnStyle }}">{{ cn.primaryLabel }}</button>
+                    <sc-if value="{{ cn.primaryDisabledReason }}"><div style="font-size:12px;color:#9AA3AC;text-align:center;margin-top:8px">{{ cn.primaryDisabledReason }}</div></sc-if>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custDetail }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#075985;font-weight:700;font-size:14px" onClick="{{ goCustOrders }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Quay lại
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <div style="{{ titlePlainStyle }};flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ cd.reference }}</div>
+                    <sc-if value="{{ cd.isContent }}"><span style="{{ cd.badgeStyle }};flex:none"><span style="{{ cd.dotStyle }}"></span>{{ cd.badgeLabel }}</span></sc-if>
+                  </div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-if value="{{ cd.isSkeleton }}">
+                    <div style="{{ skDetailBig }}"></div>
+                    <div style="{{ skDetailMed }}"></div>
+                    <div style="{{ skDetailSmall }}"></div>
+                  </sc-if>
+                  <sc-if value="{{ cd.isMessage }}">
+                    <div style="{{ panelStyle }}">
+                      <div style="{{ panelTitleStyle }}">{{ cd.title }}</div>
+                      <div style="{{ panelMsgStyle }}">{{ cd.message }}</div>
+                      <sc-if value="{{ cd.requestId }}"><div style="{{ requestIdStyle }}">Mã yêu cầu: {{ cd.requestId }}</div></sc-if>
+                      <sc-if value="{{ cd.ctaLabel }}"><button style="{{ cd.ctaBtnStyle }}">{{ cd.ctaLabel }}</button></sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ cd.isContent }}">
+                    <sc-if value="{{ cd.notice }}"><div style="{{ cd.noticeStyle }}">{{ cd.notice }}</div></sc-if>
+
+                    <div style="{{ mapWrapStyle }}">
+                      <svg viewBox="0 0 300 170" style="width:100%;height:170px;display:block">
+                        <rect width="300" height="170" fill="#E9EDE6"></rect>
+                        <path d="M0,42 H300 M0,96 H300 M46,0 V170 M188,0 V170" stroke="#D9DEDC" stroke-width="2"></path>
+                        <path d="M32,132 C 90,64 150,150 200,78 S 262,44 272,28" fill="none" stroke="#075985" stroke-width="4" stroke-linecap="round" stroke-dasharray="{{ cd.mapDash }}"></path>
+                        <circle cx="32" cy="132" r="8" style="fill:#075985"></circle>
+                        <circle cx="200" cy="78" r="6" style="fill:#ffffff;stroke:#0369A1;stroke-width:2.4"></circle>
+                        <circle cx="272" cy="28" r="8" style="fill:#1D4ED8"></circle>
+                        <sc-if value="{{ cd.mapShowLive }}">
+                          <circle cx="150" cy="102" r="12" style="fill:{{ cd.mapLiveColor }};opacity:0.18"></circle>
+                          <circle cx="150" cy="102" r="6" style="fill:{{ cd.mapLiveColor }}"></circle>
+                        </sc-if>
+                      </svg>
+                      <div style="position:absolute;left:12px;bottom:10px;font-family:monospace;font-size:10px;color:#4B5563;background:rgba(255,255,255,.85);padding:2px 8px;border-radius:6px">sơ đồ minh họa · không phải tile thật</div>
+                    </div>
+                    <div style="{{ trackingRowStyle }}">
+                      <div style="{{ cd.trackingDotWrap }}"><span style="{{ cd.trackingDot }}"></span></div>
+                      <div style="font-size:13px;color:#17202A;font-weight:600;flex:1">{{ cd.trackingMessage }}</div>
+                    </div>
+
+                    <div style="{{ cardStyle }}">
+                      <sc-for list="{{ cd.routeNodes }}" as="n" hint-placeholder-count="5">
+                        <div style="display:flex;gap:12px">
+                          <div style="display:flex;flex-direction:column;align-items:center">
+                            <div style="{{ n.markerStyle }}"></div>
+                            <sc-if value="{{ n.hasConnector }}"><div style="width:2px;flex:1;min-height:26px;background:#E5E2DA"></div></sc-if>
+                          </div>
+                          <div style="flex:1;padding-bottom:14px">
+                            <div style="font-size:12px;font-weight:700;color:#9AA3AC;letter-spacing:.2px">{{ n.title }}</div>
+                            <div style="font-size:14.5px;color:#17202A;font-weight:500;margin-top:2px">{{ n.address }}</div>
+                          </div>
+                        </div>
+                      </sc-for>
+                      <div style="display:flex;justify-content:space-between;border-top:1px solid #F0EFEA;padding-top:10px">
+                        <span style="font-size:12.5px;color:#697077;font-weight:600">{{ cd.priceLabel }} · {{ cd.etaLabel }}</span>
+                        <span style="font-size:12px;color:#9AA3AC">{{ cd.updatedAtLabel }}</span>
+                      </div>
+                    </div>
+
+                    <div style="{{ sectionLabelStyle }}">THANH TOÁN</div>
+                    <div style="{{ cardStyle }}">
+                      <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:22px;font-weight:800;color:#111417">{{ cd.paymentAmount }}</span>
+                        <span style="{{ cd.paymentBadgeStyle }}"><span style="{{ cd.paymentDotStyle }}"></span>{{ cd.paymentBadgeLabel }}</span>
+                      </div>
+                      <sc-if value="{{ cd.qrReady }}">
+                        <div style="align-self:center;width:132px;height:132px;background:repeating-linear-gradient(45deg,#17202A,#17202A 6px,#fff 6px,#fff 12px);border-radius:6px;border:1px solid #E5E2DA"></div>
+                        <div style="font-size:12px;color:#697077;text-align:center">{{ cd.qrRef }} · {{ cd.qrExpiry }}</div>
+                      </sc-if>
+                      <sc-if value="{{ cd.paymentNotice }}"><div style="font-size:12.5px;color:#697077">{{ cd.paymentNotice }}</div></sc-if>
+                      <sc-if value="{{ cd.paymentAction }}"><button style="{{ cd.paymentActionStyle }}">{{ cd.paymentActionLabel }}</button></sc-if>
+                    </div>
+
+                    <div style="{{ sectionLabelStyle }}">ẢNH HÀNG HÓA</div>
+                    <div style="{{ cardStyle }}">
+                      <sc-if value="{{ cd.mediaHasPhotos }}">
+                        <div style="display:flex;gap:10px">
+                          <div style="width:64px;height:64px;border-radius:6px;background:repeating-linear-gradient(135deg,#EDEBE4,#EDEBE4 6px,#E2DFD6 6px,#E2DFD6 12px);display:flex;align-items:center;justify-content:center;color:#9AA3AC"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg></div>
+                          <div style="width:64px;height:64px;border-radius:6px;background:repeating-linear-gradient(135deg,#EDEBE4,#EDEBE4 6px,#E2DFD6 6px,#E2DFD6 12px);display:flex;align-items:center;justify-content:center;color:#9AA3AC"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg></div>
+                        </div>
+                      </sc-if>
+                      <div style="font-size:13px;color:#697077">{{ cd.mediaDescription }}</div>
+                    </div>
+
+                    <div style="{{ sectionLabelStyle }}">LỊCH SỬ TRẠNG THÁI</div>
+                    <div style="{{ cardStyle }}">
+                      <sc-for list="{{ cd.history }}" as="h" hint-placeholder-count="3">
+                        <div style="display:flex;gap:12px">
+                          <div style="display:flex;flex-direction:column;align-items:center">
+                            <div style="width:8px;height:8px;border-radius:999px;background:#075985;margin-top:5px"></div>
+                            <div style="width:1px;flex:1;min-height:18px;background:#E5E2DA"></div>
+                          </div>
+                          <div style="padding-bottom:12px">
+                            <div style="font-size:12px;color:#9AA3AC;font-weight:700">{{ h.timestampLabel }}</div>
+                            <div style="font-size:13.5px;color:#17202A;margin-top:1px">{{ h.description }}</div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+
+                    <sc-if value="{{ cd.cancelVisible }}">
+                      <div style="{{ cardStyle }}">
+                        <div style="font-size:13.5px;color:#17202A;line-height:19px">{{ cd.cancelMessage }}</div>
+                        <sc-if value="{{ cd.cancelActionLabel }}"><button style="{{ cd.cancelActionStyle }}">{{ cd.cancelActionLabel }}</button></sc-if>
+                      </div>
+                    </sc-if>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custProfile }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · JOURNEY SHEET</div>
+                  <div style="{{ titlePlainStyle }}">Hồ sơ</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }};align-items:center;text-align:center">
+                    <div style="width:64px;height:64px;border-radius:6px;background:#E0F2FE;color:#075985;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800">C</div>
+                    <div style="font-size:17px;font-weight:700;color:#111417">+84 90 000 0001</div>
+                    <span style="{{ activeStatusChip }}">Đang hoạt động</span>
+                  </div>
+                  <div style="{{ cardStyle }}">
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13px;color:#9AA3AC">Vai trò</span><span style="font-size:14px;color:#17202A;font-weight:600">Customer</span></div>
+                    <div style="{{ infoRowStyle }};border-bottom:none"><span style="font-size:13px;color:#9AA3AC">Phiên bản ứng dụng</span><span style="font-size:14px;color:#17202A;font-weight:600">1.0.0-pilot</span></div>
+                  </div>
+                  <div style="{{ cardStyle }};gap:0;padding:4px">
+                    <div onClick="{{ goCustAddresses }}" style="{{ menuRowStyle }}"><span>Sổ địa chỉ</span><span style="color:#9AA3AC">›</span></div>
+                    <div onClick="{{ goCustPromotions }}" style="{{ menuRowStyle }}"><span>Khuyến mãi</span><span style="color:#9AA3AC">›</span></div>
+                    <div onClick="{{ goCustSupport }}" style="{{ menuRowStyle }}"><span>Trợ giúp &amp; SOS</span><span style="color:#9AA3AC">›</span></div>
+                    <div onClick="{{ goCustSettings }}" style="{{ menuRowStyleLast }}"><span>Cài đặt</span><span style="color:#9AA3AC">›</span></div>
+                  </div>
+                </div>
+                <div style="{{ stickyFooterStyle }}"><button style="{{ destructiveBtnStyle }}">Đăng xuất</button></div>
+              </div>
+              <div style="{{ tabBarWrapStyle }}">
+                <div onClick="{{ goCustOrders }}" style="{{ custTab.orders }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <span>Đơn hàng</span>
+                </div>
+                <div onClick="{{ goCustNotifications }}" style="{{ custTab.notifications }}">
+                  <div style="position:relative;display:inline-flex">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 00-5 5v2.5c0 1-.4 2-1.2 2.8L5 14v1h14v-1l-.8-.7c-.8-.8-1.2-1.8-1.2-2.8V8a5 5 0 00-5-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 18a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <sc-if value="{{ notif.hasUnread }}"><span style="position:absolute;top:-1px;right:-1px;width:7px;height:7px;border-radius:999px;background:#B91C1C"></span></sc-if>
+                  </div>
+                  <span>Thông báo</span>
+                </div>
+                <div onClick="{{ goCustWallet }}" style="{{ custTab.wallet }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor"/></svg>
+                  <span>Ví</span>
+                </div>
+                <div onClick="{{ goCustProfile }}" style="{{ custTab.profile }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Hồ sơ</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custNotifications }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · MỚI</div>
+                  <div style="{{ titlePlainStyle }}">Thông báo</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-for list="{{ notif.items }}" as="n" hint-placeholder-count="4">
+                    <div style="{{ cardStyle }};flex-direction:row;align-items:flex-start;gap:12px">
+                      <div style="{{ n.dotWrapStyle }}"></div>
+                      <div style="flex:1">
+                        <div style="font-size:14px;font-weight:700;color:#17202A">{{ n.title }}</div>
+                        <div style="font-size:13px;color:#697077;margin-top:2px">{{ n.body }}</div>
+                        <div style="font-size:11.5px;color:#9AA3AC;margin-top:6px">{{ n.timeLabel }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="{{ tabBarWrapStyle }}">
+                <div onClick="{{ goCustOrders }}" style="{{ custTab.orders }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <span>Đơn hàng</span>
+                </div>
+                <div onClick="{{ goCustNotifications }}" style="{{ custTab.notifications }}">
+                  <div style="position:relative;display:inline-flex">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 00-5 5v2.5c0 1-.4 2-1.2 2.8L5 14v1h14v-1l-.8-.7c-.8-.8-1.2-1.8-1.2-2.8V8a5 5 0 00-5-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 18a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <sc-if value="{{ notif.hasUnread }}"><span style="position:absolute;top:-1px;right:-1px;width:7px;height:7px;border-radius:999px;background:#B91C1C"></span></sc-if>
+                  </div>
+                  <span>Thông báo</span>
+                </div>
+                <div onClick="{{ goCustWallet }}" style="{{ custTab.wallet }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor"/></svg>
+                  <span>Ví</span>
+                </div>
+                <div onClick="{{ goCustProfile }}" style="{{ custTab.profile }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Hồ sơ</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custChat }}">
+              <div style="{{ scaffoldStyle }}">
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custChat }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#075985;font-weight:700;font-size:14px" onClick="{{ goCustDetail }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Quay lại
+                  </div>
+                  <div style="{{ titlePlainStyle }}">Tài xế Nguyễn Minh An</div>
+                  <div style="font-size:12.5px;color:#697077">LP-260815-001 · Đang vận chuyển</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-for list="{{ chat.messages }}" as="m" hint-placeholder-count="4">
+                    <div style="{{ m.rowStyle }}">
+                      <div style="{{ m.bubbleStyle }}">{{ m.text }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="{{ stickyFooterStyle }};display:flex;gap:8px;align-items:center">
+                  <div style="flex:1;border:1px solid #E5E2DA;border-radius:6px;padding:12px 14px;color:#9AA3AC;font-size:14px;background:#fff">Nhập tin nhắn...</div>
+                  <button style="background:#075985;color:#fff;border:none;border-radius:6px;padding:12px 16px;font-size:14px;font-weight:700;min-height:44px">Gửi</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custReview }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · MỚI</div>
+                  <div style="{{ titlePlainStyle }}">Đánh giá chuyến giao</div>
+                  <div style="font-size:12.5px;color:#697077">LP-260814-007 · Đã giao</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }};align-items:center">
+                    <div style="display:flex;gap:6px">
+                      <span style="{{ rev.starStyleFilled }}">★</span><span style="{{ rev.starStyleFilled }}">★</span><span style="{{ rev.starStyleFilled }}">★</span><span style="{{ rev.starStyleFilled }}">★</span><span style="{{ rev.starStyleEmpty }}">★</span>
+                    </div>
+                    <div style="font-size:12.5px;color:#697077">4/5 sao</div>
+                  </div>
+                  <div style="{{ sectionLabelStyle }}">NHẬN XÉT NHANH</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <span style="{{ rev.tagStyleOn }}">Giao đúng giờ</span>
+                    <span style="{{ rev.tagStyleOn }}">Đóng gói cẩn thận</span>
+                    <span style="{{ rev.tagStyleOff }}">Thái độ tốt</span>
+                  </div>
+                  <div style="{{ sectionLabelStyle }}">GỬI TIP CHO TÀI XẾ</div>
+                  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+                    <span style="{{ rev.tipStyleOff }}">10k</span><span style="{{ rev.tipStyleOn }}">20k</span><span style="{{ rev.tipStyleOff }}">50k</span><span style="{{ rev.tipStyleOff }}">Khác</span>
+                  </div>
+                  <div style="border:1px solid #E5E2DA;border-radius:6px;padding:12px 14px;color:#9AA3AC;font-size:14px;background:#fff;min-height:64px">Viết thêm nhận xét (không bắt buộc)...</div>
+                </div>
+                <div style="{{ stickyFooterStyle }}"><button style="{{ primaryBtnStyleFull }}">Gửi đánh giá</button></div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custReport }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · MỚI</div>
+                  <div style="{{ titlePlainStyle }}">Báo cáo sự cố</div>
+                  <div style="font-size:12.5px;color:#697077">LP-260815-001</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ sectionLabelStyle }}">LOẠI SỰ CỐ</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <span style="{{ chipActiveStyle }}">Hàng hư hỏng</span>
+                    <span style="{{ chipStyle }}">Giao trễ</span>
+                    <span style="{{ chipStyle }}">Sai địa chỉ</span>
+                    <span style="{{ chipStyle }}">Thái độ tài xế</span>
+                    <span style="{{ chipStyle }}">Khác</span>
+                  </div>
+                  <div style="{{ sectionLabelStyle }}">MÔ TẢ CHI TIẾT</div>
+                  <div style="border:1px solid #E5E2DA;border-radius:6px;padding:12px 14px;color:#9AA3AC;font-size:14px;background:#fff;min-height:90px">Mô tả sự cố bạn gặp phải...</div>
+                  <div style="{{ sectionLabelStyle }}">ẢNH MINH CHỨNG (không bắt buộc)</div>
+                  <div style="width:72px;height:72px;border-radius:6px;border:1.5px dashed #D8D5CC;display:flex;align-items:center;justify-content:center;color:#9AA3AC;font-size:22px">+</div>
+                </div>
+                <div style="{{ stickyFooterStyle }}"><button style="{{ primaryBtnStyleFull }}">Gửi báo cáo</button></div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custSupport }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · MỚI</div>
+                  <div style="{{ titlePlainStyle }}">Trợ giúp &amp; SOS</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }};border-color:#B91C1C;background:#FEE2E2">
+                    <div style="font-size:14.5px;font-weight:800;color:#7F1D1D">Cần hỗ trợ khẩn cấp?</div>
+                    <div style="font-size:12.5px;color:#7F1D1D">Gọi ngay tổng đài an toàn 24/7.</div>
+                    <button style="{{ sosBtnStyle }}">Gọi tổng đài SOS</button>
+                  </div>
+                  <div style="{{ sectionLabelStyle }}">CÂU HỎI THƯỜNG GẶP</div>
+                  <div style="{{ cardStyle }}">
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13.5px;color:#17202A">Làm sao để hủy đơn hàng?</span><span style="color:#9AA3AC">›</span></div>
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13.5px;color:#17202A">Thanh toán bằng QR như thế nào?</span><span style="color:#9AA3AC">›</span></div>
+                    <div style="{{ infoRowStyle }};border-bottom:none"><span style="font-size:13.5px;color:#17202A">Đơn của tôi bị giao trễ, phải làm gì?</span><span style="color:#9AA3AC">›</span></div>
+                  </div>
+                  <button style="{{ secondaryBtnStyle }}">Gửi yêu cầu hỗ trợ</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custWallet }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · MỚI</div>
+                  <div style="{{ titlePlainStyle }}">Ví &amp; thanh toán</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }};background:#0B2530">
+                    <div style="font-size:12px;color:#BEE3F8;font-weight:700">SỐ DƯ VÍ · MÔ PHỎNG</div>
+                    <div style="font-size:28px;font-weight:800;color:#FFFFFF">120.000 ₫</div>
+                  </div>
+                  <div style="{{ sectionLabelStyle }}">PHƯƠNG THỨC THANH TOÁN</div>
+                  <sc-for list="{{ wallet.methods }}" as="m" hint-placeholder-count="2">
+                    <div style="{{ cardStyle }};flex-direction:row;align-items:center;justify-content:space-between">
+                      <div>
+                        <div style="font-size:14px;font-weight:700;color:#17202A">{{ m.label }}</div>
+                        <div style="font-size:12px;color:#9AA3AC">{{ m.detail }}</div>
+                      </div>
+                      <sc-if value="{{ m.isDefault }}"><span style="{{ chipActiveStyle }}">Mặc định</span></sc-if>
+                    </div>
+                  </sc-for>
+                  <button style="{{ secondaryBtnStyle }}">Thêm phương thức thanh toán</button>
+                </div>
+              </div>
+              <div style="{{ tabBarWrapStyle }}">
+                <div onClick="{{ goCustOrders }}" style="{{ custTab.orders }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <span>Đơn hàng</span>
+                </div>
+                <div onClick="{{ goCustNotifications }}" style="{{ custTab.notifications }}">
+                  <div style="position:relative;display:inline-flex">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 00-5 5v2.5c0 1-.4 2-1.2 2.8L5 14v1h14v-1l-.8-.7c-.8-.8-1.2-1.8-1.2-2.8V8a5 5 0 00-5-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 18a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <sc-if value="{{ notif.hasUnread }}"><span style="position:absolute;top:-1px;right:-1px;width:7px;height:7px;border-radius:999px;background:#B91C1C"></span></sc-if>
+                  </div>
+                  <span>Thông báo</span>
+                </div>
+                <div onClick="{{ goCustWallet }}" style="{{ custTab.wallet }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor"/></svg>
+                  <span>Ví</span>
+                </div>
+                <div onClick="{{ goCustProfile }}" style="{{ custTab.profile }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Hồ sơ</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custAddresses }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · MỚI</div>
+                  <div style="{{ titlePlainStyle }}">Sổ địa chỉ</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-for list="{{ addr.items }}" as="a" hint-placeholder-count="3">
+                    <div style="{{ cardStyle }}">
+                      <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="{{ chipActiveStyle }}">{{ a.label }}</span>
+                        <span style="font-size:12.5px;color:#075985;font-weight:700;cursor:pointer">Sửa</span>
+                      </div>
+                      <div style="font-size:14px;color:#17202A">{{ a.address }}</div>
+                      <div style="font-size:12.5px;color:#697077">{{ a.contact }}</div>
+                    </div>
+                  </sc-for>
+                  <button style="{{ secondaryBtnStyle }}">Thêm địa chỉ mới</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custPromotions }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · MỚI</div>
+                  <div style="{{ titlePlainStyle }}">Khuyến mãi</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-for list="{{ promo.items }}" as="p" hint-placeholder-count="2">
+                    <div style="{{ cardStyle }};flex-direction:row;align-items:center;gap:14px">
+                      <div style="{{ p.iconStyle }}">%</div>
+                      <div style="flex:1">
+                        <div style="font-size:14.5px;font-weight:700;color:#17202A">{{ p.title }}</div>
+                        <div style="font-size:12px;color:#9AA3AC">Mã {{ p.code }} · HSD {{ p.expiry }}</div>
+                      </div>
+                      <button style="{{ p.actionStyle }}">Áp dụng</button>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_custSettings }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerPlainStyle }}">
+                  <div style="{{ eyebrowPlainStyle }}">CUSTOMER · MỚI</div>
+                  <div style="{{ titlePlainStyle }}">Cài đặt</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }}">
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13px;color:#9AA3AC">Ngôn ngữ</span><span style="font-size:14px;color:#17202A;font-weight:600">Tiếng Việt</span></div>
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13px;color:#9AA3AC">Thông báo đẩy</span><span style="{{ toggleOnStyle }}">Bật</span></div>
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13px;color:#9AA3AC">Quyền vị trí</span><span style="font-size:14px;color:#17202A;font-weight:600">Đã cấp</span></div>
+                    <div style="{{ infoRowStyle }};border-bottom:none"><span style="font-size:13px;color:#9AA3AC">Quyền camera</span><span style="font-size:14px;color:#17202A;font-weight:600">Đã cấp</span></div>
+                  </div>
+                  <span style="font-size:13px;color:#B91C1C;font-weight:700;cursor:pointer">Xóa tài khoản</span>
+                </div>
+              </div>
+            </sc-if>
+
+          </sc-if>
+
+          <sc-if value="{{ role_driver }}">
+
+            <sc-if value="{{ screen_drvOrders }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="{{ eyebrowInkStyle }}">DRIVER · FIELD COCKPIT</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <div style="{{ titleInkStyle }}">Tổng quan</div>
+                    <span style="{{ dl.availBadgeStyle }}"><span style="{{ dl.availDotStyle }}"></span>{{ dl.availLabel }}</span>
+                  </div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-if value="{{ dl.isSkeleton }}">
+                    <div style="{{ skeletonCardStyle }}"><div style="{{ skListA }}"></div><div style="{{ skListB }}"></div></div>
+                    <div style="{{ skeletonCardStyle }}"><div style="{{ skListA }}"></div><div style="{{ skListB }}"></div></div>
+                  </sc-if>
+                  <sc-if value="{{ dl.isMessage }}">
+                    <div style="{{ panelStyle }}">
+                      <div style="{{ panelTitleStyle }}">{{ dl.title }}</div>
+                      <div style="{{ panelMsgStyle }}">{{ dl.message }}</div>
+                      <sc-if value="{{ dl.requestId }}"><div style="{{ requestIdStyle }}">Mã yêu cầu: {{ dl.requestId }}</div></sc-if>
+                      <sc-if value="{{ dl.ctaLabel }}"><button style="{{ dl.ctaBtnStyle }}">{{ dl.ctaLabel }}</button></sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ dl.isContent }}">
+                    <sc-if value="{{ dl.notice }}"><div style="{{ dl.noticeStyle }}">{{ dl.notice }}</div></sc-if>
+                    <button style="{{ dl.availActionStyle }}">{{ dl.availActionLabel }}</button>
+                    <sc-if value="{{ dl.availError }}"><div style="font-size:12.5px;color:#B91C1C;font-weight:600">{{ dl.availError }}</div></sc-if>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                      <div style="{{ kpiCardStyle }}"><div style="font-size:11px;color:#9AA3AC;font-weight:700">CHUYẾN HÔM NAY</div><div style="font-size:19px;font-weight:800;color:#111417">{{ dl.kpiTrips }}</div></div>
+                      <div style="{{ kpiCardStyle }}"><div style="font-size:11px;color:#9AA3AC;font-weight:700">THU NHẬP ƯỚC TÍNH</div><div style="font-size:15px;font-weight:800;color:#111417">{{ dl.kpiEarnings }}</div></div>
+                      <div style="{{ kpiCardStyle }}"><div style="font-size:11px;color:#9AA3AC;font-weight:700">ĐÁNH GIÁ TB</div><div style="font-size:19px;font-weight:800;color:#111417">{{ dl.kpiRating }}</div></div>
+                    </div>
+                    <div style="font-size:11px;color:#9AA3AC;margin-top:-8px">Dữ liệu mô phỏng cho demo</div>
+
+                    <sc-if value="{{ dl.activeTrip }}">
+                      <div style="{{ activeRailStyle }}">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                          <div style="font-size:11px;color:#1E3A8A;font-weight:800;letter-spacing:.3px">CHUYẾN ĐANG THỰC HIỆN</div>
+                          <span style="{{ activeBadgeStyle }}">{{ dl.activeBadgeLabel }}</span>
+                        </div>
+                        <div style="font-size:16px;font-weight:800;color:#111417">{{ dl.activeReference }}</div>
+                        <div style="font-size:13px;color:#3B4A57">{{ dl.activeRouteLabel }}</div>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#1D4ED8;font-weight:700">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+                          {{ dl.activeTrackingLabel }}
+                        </div>
+                        <sc-if value="{{ dl.activeProofLabel }}"><div style="font-size:12px;color:#B45309;font-weight:700">{{ dl.activeProofLabel }}</div></sc-if>
+                      </div>
+                    </sc-if>
+
+                    <div style="display:flex;justify-content:space-between;align-items:baseline">
+                      <div style="{{ sectionLabelStyle }}">ĐƠN CÓ THỂ NHẬN</div>
+                      <div style="font-size:11px;color:#9AA3AC">{{ dl.refreshedAtLabel }}</div>
+                    </div>
+                    <sc-if value="{{ dl.isEmpty }}"><div style="font-size:13.5px;color:#697077">Hiện chưa có đơn có thể nhận</div></sc-if>
+                    <sc-for list="{{ dl.orders }}" as="o" hint-placeholder-count="2">
+                      <div onClick="{{ openDriverDetail }}" style="{{ cardStyle }}">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                          <span style="font-size:15px;font-weight:700;color:#111417">{{ o.reference }}</span>
+                          <span style="{{ o.badgeStyle }}"><span style="{{ o.dotStyle }}"></span>{{ o.badgeLabel }}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:14px;color:#17202A;font-weight:600">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.5 7-11.5A7 7 0 105 9.5C5 14.5 12 21 12 21z" stroke="#075985" stroke-width="1.8"/><circle cx="12" cy="9.5" r="2.3" stroke="#075985" stroke-width="1.8"/></svg>
+                          {{ o.publicRouteLabel }}
+                        </div>
+                        <div style="font-size:12.5px;color:#697077">{{ o.vehicleLabel }} · {{ o.cargoSummary }}</div>
+                        <div style="display:flex;justify-content:space-between;border-top:1px solid #F0EFEA;padding-top:10px">
+                          <span style="font-size:12.5px;color:#075985;font-weight:700">{{ o.etaLabel }}</span>
+                          <span style="font-size:12px;color:#9AA3AC">{{ o.updatedAtLabel }}</span>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </sc-if>
+                </div>
+              </div>
+              <div style="{{ tabBarWrapStyle }}">
+                <div onClick="{{ goDrvOrders }}" style="{{ drvTab.orders }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <span>Tổng quan</span>
+                </div>
+                <div onClick="{{ goDrvEarnings }}" style="{{ drvTab.earnings }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M17 7H10a3 3 0 000 6h4a3 3 0 010 6H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Doanh thu</span>
+                </div>
+                <div onClick="{{ goDrvHistory }}" style="{{ drvTab.history }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Lịch sử</span>
+                </div>
+                <div onClick="{{ goDrvProfile }}" style="{{ drvTab.profile }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Hồ sơ</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvDetail }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#BEE3F8;font-weight:700;font-size:14px" onClick="{{ goDrvOrders }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Quay lại
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <div style="{{ titleInkStyle }};flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ dd.reference }}</div>
+                    <sc-if value="{{ dd.isContent }}"><span style="{{ dd.badgeStyle }};flex:none"><span style="{{ dd.dotStyle }}"></span>{{ dd.badgeLabel }}</span></sc-if>
+                  </div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-if value="{{ dd.isSkeleton }}">
+                    <div style="{{ skDetailBig }}"></div>
+                    <div style="{{ skDetailMed }}"></div>
+                  </sc-if>
+                  <sc-if value="{{ dd.isMessage }}">
+                    <div style="{{ panelStyle }}">
+                      <div style="{{ panelTitleStyle }}">{{ dd.title }}</div>
+                      <div style="{{ panelMsgStyle }}">{{ dd.message }}</div>
+                      <sc-if value="{{ dd.requestId }}"><div style="{{ requestIdStyle }}">Mã yêu cầu: {{ dd.requestId }}</div></sc-if>
+                      <sc-if value="{{ dd.recoveryLabel }}"><button style="{{ secondaryBtnStyle }}">{{ dd.recoveryLabel }}</button></sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ dd.isContent }}">
+                    <sc-if value="{{ dd.accessScopeLabel }}"><div style="{{ scopeChipStyle }}">{{ dd.accessScopeLabel }}</div></sc-if>
+                    <sc-if value="{{ dd.notice }}"><div style="{{ dd.noticeStyle }}">{{ dd.notice }}</div></sc-if>
+
+                    <sc-if value="{{ dd.hasFullRoute }}">
+                      <div style="{{ mapWrapStyle }}">
+                        <svg viewBox="0 0 300 170" style="width:100%;height:170px;display:block">
+                          <rect width="300" height="170" fill="#E9EDE6"></rect>
+                          <path d="M0,42 H300 M0,96 H300 M46,0 V170 M188,0 V170" stroke="#D9DEDC" stroke-width="2"></path>
+                          <path d="M32,132 C 90,64 150,150 200,78 S 262,44 272,28" fill="none" stroke="#075985" stroke-width="4" stroke-linecap="round" stroke-dasharray="{{ dd.mapDash }}"></path>
+                          <circle cx="32" cy="132" r="8" style="fill:#075985"></circle>
+                          <circle cx="200" cy="78" r="6" style="fill:#ffffff;stroke:#0369A1;stroke-width:2.4"></circle>
+                          <circle cx="272" cy="28" r="8" style="fill:#1D4ED8"></circle>
+                          <sc-if value="{{ dd.mapShowLive }}">
+                            <circle cx="150" cy="102" r="12" style="fill:{{ dd.mapLiveColor }};opacity:0.18"></circle>
+                            <circle cx="150" cy="102" r="6" style="fill:{{ dd.mapLiveColor }}"></circle>
+                          </sc-if>
+                        </svg>
+                        <div style="position:absolute;left:12px;bottom:10px;font-family:monospace;font-size:10px;color:#4B5563;background:rgba(255,255,255,.85);padding:2px 8px;border-radius:6px">sơ đồ minh họa</div>
+                      </div>
+                      <div style="{{ cardStyle }}">
+                        <sc-for list="{{ dd.routeNodes }}" as="n" hint-placeholder-count="5">
+                          <div style="display:flex;gap:12px">
+                            <div style="display:flex;flex-direction:column;align-items:center">
+                              <div style="{{ n.markerStyle }}"></div>
+                              <sc-if value="{{ n.hasConnector }}"><div style="width:2px;flex:1;min-height:26px;background:#E5E2DA"></div></sc-if>
+                            </div>
+                            <div style="flex:1;padding-bottom:14px">
+                              <div style="font-size:12px;font-weight:700;color:#9AA3AC;letter-spacing:.2px">{{ n.title }}</div>
+                              <div style="font-size:14.5px;color:#17202A;font-weight:500;margin-top:2px">{{ n.address }}</div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="{{ cardStyle }}">
+                        <div style="display:flex;align-items:center;gap:10px">
+                          <div style="{{ iconCircleInfo }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="8" width="14" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M16 11h3.5L22 14v1h-6z" stroke="currentColor" stroke-width="1.8"/></svg></div>
+                          <div style="font-size:14px;color:#17202A;font-weight:600">{{ dd.vehicleLabel }} · {{ dd.cargoSummary }}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px">
+                          <div style="{{ iconCircleInfo }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 3h4l1.5 4-2 1.5a12 12 0 006.5 6.5l1.5-2 4 1.5v4a2 2 0 01-2 2C11 20.5 3.5 13 3 5a2 2 0 013-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+                          <div style="font-size:13px;color:#697077">{{ dd.customerContact }}</div>
+                        </div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ dd.hasPublicRoute }}">
+                      <div style="{{ cardStyle }}">
+                        <div style="display:flex;align-items:center;gap:8px;font-size:14.5px;color:#17202A;font-weight:600">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.5 7-11.5A7 7 0 105 9.5C5 14.5 12 21 12 21z" stroke="#075985" stroke-width="1.8"/><circle cx="12" cy="9.5" r="2.3" stroke="#075985" stroke-width="1.8"/></svg>
+                          {{ dd.publicRouteLabel }}
+                        </div>
+                        <div style="font-size:13px;color:#697077">{{ dd.vehicleLabel }} · {{ dd.cargoSummary }}</div>
+                      </div>
+                    </sc-if>
+
+                    <div style="{{ trackingRowStyle }}">
+                      <div style="{{ dd.trackingDotWrap }}"><span style="{{ dd.trackingDot }}"></span></div>
+                      <div style="font-size:13px;color:#17202A;font-weight:600;flex:1">{{ dd.trackingLabel }}</div>
+                    </div>
+
+                    <sc-if value="{{ dd.proofVisible }}">
+                      <div style="{{ sectionLabelStyle }}">ẢNH XÁC NHẬN GIAO HÀNG</div>
+                      <div style="{{ dd.proofStyle }}">
+                        <div style="display:flex;align-items:center;gap:10px">
+                          <div style="width:44px;height:44px;border-radius:6px;background:#F0EFEA;display:flex;align-items:center;justify-content:center;color:#697077;flex:none">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7l1.5-2.5h5L16 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg>
+                          </div>
+                          <div>
+                            <div style="font-size:14px;font-weight:700;color:#17202A">{{ dd.proofLabel }}</div>
+                            <sc-if value="{{ dd.proofFileLabel }}"><div style="font-size:12px;color:#9AA3AC;font-style:italic">{{ dd.proofFileLabel }}</div></sc-if>
+                          </div>
+                        </div>
+                        <div style="font-size:12.5px;color:#697077">{{ dd.proofMessage }}</div>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ dd.hasHistory }}">
+                      <div style="{{ sectionLabelStyle }}">LỊCH SỬ</div>
+                      <div style="{{ cardStyle }}">
+                        <sc-for list="{{ dd.history }}" as="h" hint-placeholder-count="3">
+                          <div style="display:flex;gap:12px">
+                            <div style="display:flex;flex-direction:column;align-items:center">
+                              <div style="width:8px;height:8px;border-radius:999px;background:#075985;margin-top:5px"></div>
+                              <div style="width:1px;flex:1;min-height:18px;background:#E5E2DA"></div>
+                            </div>
+                            <div style="padding-bottom:12px">
+                              <div style="font-size:12px;color:#9AA3AC;font-weight:700">{{ h.timestampLabel }}</div>
+                              <div style="font-size:13.5px;color:#17202A;margin-top:1px">{{ h.description }}</div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ dd.dockVisible }}">
+                  <div style="{{ stickyFooterStyle }}">
+                    <button style="{{ dd.dockBtnStyle }}">{{ dd.dockLabel }}</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvProfile }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="{{ eyebrowInkStyle }}">DRIVER · FIELD COCKPIT</div>
+                  <div style="{{ titleInkStyle }}">Hồ sơ</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }};align-items:center;text-align:center">
+                    <div style="width:64px;height:64px;border-radius:6px;background:#DBEAFE;color:#1E3A8A;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800">D</div>
+                    <div style="font-size:17px;font-weight:700;color:#111417">+84 90 000 0002</div>
+                    <span style="{{ activeStatusChip }}">Đang hoạt động</span>
+                  </div>
+                  <div style="{{ cardStyle }}">
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13px;color:#9AA3AC">Vai trò</span><span style="font-size:14px;color:#17202A;font-weight:600">Driver</span></div>
+                    <div style="{{ infoRowStyle }};border-bottom:none"><span style="font-size:13px;color:#9AA3AC">Phiên bản ứng dụng</span><span style="font-size:14px;color:#17202A;font-weight:600">1.0.0-pilot</span></div>
+                  </div>
+                  <div style="{{ cardStyle }};gap:0;padding:4px">
+                    <div onClick="{{ goDrvPerformance }}" style="{{ menuRowStyle }}"><span>Điểm hiệu suất</span><span style="color:#9AA3AC">›</span></div>
+                    <div onClick="{{ goDrvKyc }}" style="{{ menuRowStyle }}"><span>Hồ sơ KYC</span><span style="color:#9AA3AC">›</span></div>
+                    <div onClick="{{ goDrvSettings }}" style="{{ menuRowStyleLast }}"><span>Cài đặt</span><span style="color:#9AA3AC">›</span></div>
+                  </div>
+                </div>
+                <div style="{{ stickyFooterStyle }}"><button style="{{ destructiveBtnStyle }}">Đăng xuất</button></div>
+              </div>
+              <div style="{{ tabBarWrapStyle }}">
+                <div onClick="{{ goDrvOrders }}" style="{{ drvTab.orders }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <span>Tổng quan</span>
+                </div>
+                <div onClick="{{ goDrvEarnings }}" style="{{ drvTab.earnings }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M17 7H10a3 3 0 000 6h4a3 3 0 010 6H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Doanh thu</span>
+                </div>
+                <div onClick="{{ goDrvHistory }}" style="{{ drvTab.history }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Lịch sử</span>
+                </div>
+                <div onClick="{{ goDrvProfile }}" style="{{ drvTab.profile }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Hồ sơ</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvHistory }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="{{ eyebrowInkStyle }}">DRIVER · MỚI</div>
+                  <div style="{{ titleInkStyle }}">Lịch sử giao hàng</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-for list="{{ hist.items }}" as="o" hint-placeholder-count="3">
+                    <div style="{{ cardStyle }}">
+                      <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:14.5px;font-weight:700;color:#111417">{{ o.reference }}</span>
+                        <span style="{{ o.badgeStyle }}"><span style="{{ o.dotStyle }}"></span>{{ o.badgeLabel }}</span>
+                      </div>
+                      <div style="font-size:13px;color:#17202A">{{ o.routeLabel }}</div>
+                      <div style="display:flex;justify-content:space-between;border-top:1px solid #F0EFEA;padding-top:10px">
+                    </div>
+                </div>
+              </div>
+              <div style="{{ tabBarWrapStyle }}">
+                <div onClick="{{ goDrvOrders }}" style="{{ drvTab.orders }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <span>Tổng quan</span>
+                </div>
+                <div onClick="{{ goDrvEarnings }}" style="{{ drvTab.earnings }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M17 7H10a3 3 0 000 6h4a3 3 0 010 6H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Doanh thu</span>
+                </div>
+                <div onClick="{{ goDrvHistory }}" style="{{ drvTab.history }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Lịch sử</span>
+                </div>
+                <div onClick="{{ goDrvProfile }}" style="{{ drvTab.profile }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Hồ sơ</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvChat }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#BEE3F8;font-weight:700;font-size:14px" onClick="{{ goDrvDetail }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Quay lại
+                  </div>
+                  <div style="{{ titleInkStyle }}">Khách hàng · LP-D-260815-001</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <sc-for list="{{ chatDrv.messages }}" as="m" hint-placeholder-count="4">
+                    <div style="{{ m.rowStyle }}">
+                      <div style="{{ m.bubbleStyle }}">{{ m.text }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="{{ stickyFooterStyle }};display:flex;gap:8px;align-items:center">
+                  <div style="flex:1;border:1px solid #E5E2DA;border-radius:6px;padding:12px 14px;color:#9AA3AC;font-size:14px;background:#fff">Nhập tin nhắn...</div>
+                  <button style="background:#075985;color:#fff;border:none;border-radius:6px;padding:12px 16px;font-size:14px;font-weight:700;min-height:44px">Gửi</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvWallet }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="{{ eyebrowInkStyle }}">DRIVER · MỚI</div>
+                  <div style="{{ titleInkStyle }}">Ví &amp; rút tiền</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }}">
+                    <div style="font-size:12px;color:#9AA3AC;font-weight:700">SỐ DƯ KHẢ DỤNG · MÔ PHỎNG</div>
+                    <div style="font-size:28px;font-weight:800;color:#111417">1.840.000 ₫</div>
+                    <button style="{{ primaryBtnStyleFull }}">Rút tiền về tài khoản ngân hàng</button>
+                  </div>
+                  <div style="{{ sectionLabelStyle }}">TÀI KHOẢN NHẬN TIỀN</div>
+                  <div style="{{ cardStyle }}">
+                    <div style="font-size:14px;font-weight:700;color:#17202A">Vietcombank ····4821</div>
+                    <div style="font-size:12.5px;color:#697077">Nguyễn Minh An</div>
+                  </div>
+                  <div style="{{ sectionLabelStyle }}">LỊCH SỬ RÚT TIỀN</div>
+                  <sc-for list="{{ walletDrv.history }}" as="w" hint-placeholder-count="2">
+                    <div style="{{ cardStyle }};flex-direction:row;justify-content:space-between;align-items:center">
+                      <div>
+                        <div style="font-size:14px;font-weight:700;color:#17202A">{{ w.amountLabel }}</div>
+                        <div style="font-size:12px;color:#9AA3AC">{{ w.dateLabel }}</div>
+                      </div>
+                      <span style="{{ w.badgeStyle }}">{{ w.statusLabel }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvEarnings }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="{{ eyebrowInkStyle }}">DRIVER · MỚI</div>
+                  <div style="{{ titleInkStyle }}">Báo cáo doanh thu &amp; thưởng</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="font-size:11px;color:#9AA3AC">Tuần 15–21/08/2026 · dữ liệu mô phỏng</div>
+                  <div style="{{ cardStyle }}">
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13.5px;color:#17202A">Số chuyến hoàn thành</span><span style="font-size:14px;font-weight:700;color:#17202A">27</span></div>
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13.5px;color:#17202A">Doanh thu cước phí</span><span style="font-size:14px;font-weight:700;color:#17202A">4.320.000 ₫</span></div>
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13.5px;color:#17202A">Tiền tip khách hàng</span><span style="font-size:14px;font-weight:700;color:#17202A">180.000 ₫</span></div>
+                    <div style="{{ infoRowStyle }};border-bottom:none"><span style="font-size:13.5px;color:#17202A">Thưởng hoàn thành mục tiêu</span><span style="font-size:14px;font-weight:700;color:#166534">200.000 ₫</span></div>
+                  </div>
+                </div>
+              </div>
+              <div style="{{ tabBarWrapStyle }}">
+                <div onClick="{{ goDrvOrders }}" style="{{ drvTab.orders }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <span>Tổng quan</span>
+                </div>
+                <div onClick="{{ goDrvEarnings }}" style="{{ drvTab.earnings }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M17 7H10a3 3 0 000 6h4a3 3 0 010 6H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Doanh thu</span>
+                </div>
+                <div onClick="{{ goDrvHistory }}" style="{{ drvTab.history }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Lịch sử</span>
+                </div>
+                <div onClick="{{ goDrvProfile }}" style="{{ drvTab.profile }}">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span>Hồ sơ</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvPerformance }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="{{ eyebrowInkStyle }}">DRIVER · MỚI</div>
+                  <div style="{{ titleInkStyle }}">Điểm hiệu suất</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }};align-items:center">
+                    <div style="font-size:40px;font-weight:800;color:#111417">4.8</div>
+                    <span style="{{ activeStatusChip }}">Hạng Vàng</span>
+                  </div>
+                  <div style="{{ cardStyle }}">
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13.5px;color:#17202A">Đúng giờ</span><span style="font-size:14px;font-weight:700;color:#17202A">96%</span></div>
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13.5px;color:#17202A">Thái độ phục vụ</span><span style="font-size:14px;font-weight:700;color:#17202A">4.9/5</span></div>
+                    <div style="{{ infoRowStyle }};border-bottom:none"><span style="font-size:13.5px;color:#17202A">Tuân thủ an toàn</span><span style="font-size:14px;font-weight:700;color:#17202A">Đạt</span></div>
+                  </div>
+                  <div style="font-size:11px;color:#9AA3AC">Dữ liệu mô phỏng cho demo</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvKyc }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="{{ eyebrowInkStyle }}">DRIVER · MỚI</div>
+                  <div style="{{ titleInkStyle }}">Hồ sơ KYC</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }}">
+                    <span style="{{ kyc.badgeStyle }}">{{ kyc.statusLabel }}</span>
+                    <div style="font-size:13px;color:#697077;line-height:19px">{{ kyc.message }}</div>
+                  </div>
+                  <div style="{{ sectionLabelStyle }}">GIẤY TỜ ĐÃ NỘP</div>
+                  <sc-for list="{{ kyc.docs }}" as="d" hint-placeholder-count="3">
+                    <div style="{{ cardStyle }};flex-direction:row;justify-content:space-between;align-items:center">
+                      <span style="font-size:14px;color:#17202A;font-weight:600">{{ d.label }}</span>
+                      <span style="{{ d.badgeStyle }}">{{ d.statusLabel }}</span>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ kyc.showResubmit }}"><button style="{{ secondaryBtnStyle }}">Nộp lại giấy tờ</button></sc-if>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ screen_drvSettings }}">
+              <div style="{{ scaffoldStyle }}">
+                <div style="{{ headerInkStyle }}">
+                  <div style="{{ eyebrowInkStyle }}">DRIVER · MỚI</div>
+                  <div style="{{ titleInkStyle }}">Cài đặt</div>
+                </div>
+                <div style="{{ bodyStyle }}">
+                  <div style="{{ cardStyle }}">
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13px;color:#9AA3AC">Ngôn ngữ</span><span style="font-size:14px;color:#17202A;font-weight:600">Tiếng Việt</span></div>
+                    <div style="{{ infoRowStyle }}"><span style="font-size:13px;color:#9AA3AC">Thông báo đơn mới</span><span style="{{ toggleOnStyle }}">Bật</span></div>
+                    <div style="{{ infoRowStyle }};border-bottom:none"><span style="font-size:13px;color:#9AA3AC">Quyền vị trí nền</span><span style="font-size:14px;color:#17202A;font-weight:600">Đã cấp</span></div>
+                  </div>
+                  <span style="font-size:13px;color:#B91C1C;font-weight:700;cursor:pointer">Xóa tài khoản</span>
+                </div>
+              </div>
+            </sc-if>
+
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const COLORS = {
+  neutral: { background:'#F3F2ED', text:'#4B5563', border:'#D8D5CC' },
+  info: { background:'#E0F2FE', text:'#075985', border:'#0369A1' },
+  warning: { background:'#FEF3C7', text:'#92400E', border:'#B45309' },
+  active: { background:'#DBEAFE', text:'#1E3A8A', border:'#1D4ED8' },
+  success: { background:'#DCFCE7', text:'#166534', border:'#15803D' },
+  danger: { background:'#FEE2E2', text:'#B91C1C', border:'#B91C1C' },
+};
+const ORDER_STATUS = {
+  REQUESTED: { role:'info', label:'Chờ tài xế' },
+  ACCEPTED: { role:'active', label:'Đã nhận đơn' },
+  PICKING_UP: { role:'warning', label:'Đang đến điểm lấy' },
+  IN_TRANSIT: { role:'active', label:'Đang vận chuyển' },
+  DELIVERED: { role:'success', label:'Đã giao' },
+  CANCELLED: { role:'danger', label:'Đã hủy' },
+};
+const PAYMENT_STATUS = {
+  UNPAID: { role:'warning', label:'Chưa thanh toán' },
+  QR_CREATED: { role:'info', label:'Đã tạo mã QR' },
+  PAID_MANUAL: { role:'success', label:'Đã xác nhận thanh toán' },
+  FAILED: { role:'danger', label:'Thất bại' },
+};
+const DRIVER_AVAIL = {
+  OFFLINE: { role:'neutral', label:'Ngoại tuyến' },
+  AVAILABLE: { role:'success', label:'Sẵn sàng' },
+  BUSY: { role:'active', label:'Đang bận' },
+};
+
+function badgeVisual(map, status) {
+  const p = map[status] || { role:'neutral', label: status };
+  const c = COLORS[p.role];
+  return {
+    label: p.label,
+    style: 'display:inline-flex;align-items:center;gap:6px;align-self:flex-start;border-radius:999px;background:' + c.background + ';color:' + c.text + ';padding:5px 12px 5px 9px;font-size:12.5px;font-weight:700;white-space:nowrap',
+    dotStyle: 'width:6px;height:6px;border-radius:999px;background:' + c.text,
+  };
+}
+function boundaryExtra(kind, requestId) {
+  if (kind === 'error') return { requestId, ctaLabel:'Thử lại', ctaVariant:'primary' };
+  if (kind === 'no-results') return { requestId:null, ctaLabel:'Xóa bộ lọc', ctaVariant:'secondary' };
+  if (kind === 'permission-denied') return { requestId:null, ctaLabel:'Về trang chủ', ctaVariant:'secondary' };
+  return { requestId:null, ctaLabel:null, ctaVariant:null };
+}
+function noticeVisual(tone) {
+  const c = COLORS[tone] || COLORS.info;
+  return 'background:' + c.background + ';color:' + c.text + ';border-radius:6px;padding:11px 14px;font-size:13px;line-height:18px;font-weight:600';
+}
+function btnVisual(variant, disabled, pending) {
+  const busy = disabled || pending;
+  const base = 'width:100%;box-sizing:border-box;border-radius:6px;border:none;padding:13px 20px;font-size:15px;font-weight:700;min-height:48px;' + (busy ? 'opacity:0.5;cursor:default;' : 'cursor:pointer;');
+  if (variant === 'secondary') return base + 'background:#FFFFFF;color:#075985;border:1.5px solid #BFD9E3';
+  if (variant === 'destructive') return base + 'background:#FEE2E2;color:#B91C1C';
+  return base + 'background:#075985;color:#FFFFFF';
+}
+function routeNodes(r) {
+  const nodes = [];
+  const mk = (kind) => {
+    if (kind === 'origin') return 'width:14px;height:14px;border-radius:4px;background:#075985;margin-top:4px;flex:none';
+    if (kind === 'destination') return 'width:14px;height:14px;border-radius:4px;background:#1D4ED8;margin-top:4px;flex:none';
+    return 'width:14px;height:14px;border-radius:4px;background:#FFFFFF;border:2.5px solid #0369A1;margin-top:4px;flex:none';
+  };
+  nodes.push({ key:'origin', title:'ĐIỂM LẤY HÀNG', address:r.origin.label, hasConnector:true, markerStyle:mk('origin') });
+  r.stops.forEach((s, i) => nodes.push({ key:'stop'+i, title:'ĐIỂM DỪNG ' + (i+1), address:s.label, hasConnector:true, markerStyle:mk('stop') }));
+  nodes.push({ key:'dest', title:'ĐIỂM GIAO HÀNG', address:r.destination.label, hasConnector:false, markerStyle:mk('destination') });
+  return nodes;
+}
+function trackingVisual(tone, label) {
+  const c = COLORS[tone] || COLORS.neutral;
+  return {
+    trackingMessage: label,
+    trackingDotWrap: 'width:34px;height:34px;border-radius:999px;background:' + c.background + ';display:flex;align-items:center;justify-content:center;flex:none',
+    trackingDot: 'width:10px;height:10px;border-radius:999px;background:' + c.text,
+  };
+}
+function mapMeta(tone) {
+  const live = tone === 'success' ? '#15803D' : (tone === 'info' ? '#075985' : '#B45309');
+  return { mapDash: (tone === 'warning' || tone === 'danger') ? '2 8' : 'none', mapShowLive: tone === 'success' || tone === 'info', mapLiveColor: live };
+}
+function skBar(w, h) {
+  return 'width:' + w + '%;height:' + h + 'px;border-radius:4px;background:#E5E2DA;animation:skPulse 1.4s ease-in-out infinite';
+}
+
+function baseRoute() {
+  return {
+    origin: { label: 'Kho mô phỏng Quận 7, Thành phố Hồ Chí Minh' },
+    stops: [
+      { label: 'Điểm dừng mô phỏng Quận 4' },
+      { label: 'Điểm dừng mô phỏng Quận 3' },
+      { label: 'Điểm dừng mô phỏng Quận 1' },
+    ],
+    destination: { label: 'Trung tâm nhận hàng mô phỏng, Thành phố Thủ Đức' },
+  };
+}
+function customerListOrders() {
+  const r = baseRoute();
+  const rows = [
+    { reference:'LP-260815-001', status:'IN_TRANSIT', route:r, etaLabel:'18 phút · mô phỏng', priceLabel:'286.000 ₫', updatedAtLabel:'14:32 · 15/08/2026' },
+    { reference:'LP-260815-002', status:'REQUESTED', route:{ ...r, stops: [] }, etaLabel:'24 phút', priceLabel:'198.000 ₫', updatedAtLabel:'13:05 · 15/08/2026' },
+    { reference:'LP-260814-007', status:'DELIVERED', route:{ ...r, stops: r.stops.slice(0,1) }, etaLabel:'Đã hoàn tất', priceLabel:'242.000 ₫', updatedAtLabel:'17:48 · 14/08/2026' },
+  ];
+  return rows.map((o) => {
+    const b = badgeVisual(ORDER_STATUS, o.status);
+    return { ...o, badgeStyle: b.style, badgeLabel: b.label, dotStyle: b.dotStyle, originLabel: o.route.origin.label, destLabel: o.route.destination.label, iconWrapStyle: 'width:40px;height:40px;border-radius:6px;background:#E0F2FE;color:#075985;display:flex;align-items:center;justify-content:center;flex:none' };
+  });
+}
+
+const CUSTOMER_LIST_SCENARIOS = ['C-LIST-LOADING','C-LIST-SUCCESS','C-LIST-EMPTY','C-LIST-NO-RESULTS','C-LIST-ERROR','C-LIST-REFRESHING','C-LIST-PAGE-ERROR','C-LIST-OFFLINE','C-LIST-PERMISSION'];
+function customerListVM(id) {
+  const boundary = {
+    'C-LIST-LOADING': { kind:'loading', title:'Đang tải đơn hàng', message:'Bố cục danh sách được giữ ổn định trong khi chờ dữ liệu.' },
+    'C-LIST-EMPTY': { kind:'empty', title:'Bạn chưa có đơn hàng nào', message:'Tạo đơn đầu tiên khi bạn đã sẵn sàng gửi hàng.' },
+    'C-LIST-NO-RESULTS': { kind:'no-results', title:'Không có đơn khớp bộ lọc', message:'Bộ lọc hiện tại: Đang vận chuyển.' },
+    'C-LIST-ERROR': { kind:'error', title:'Không thể tải đơn hàng', message:'Vui lòng thử lại.' },
+    'C-LIST-PERMISSION': { kind:'permission-denied', title:'Bạn không có quyền xem danh sách đơn này', message:'Hãy quay về khu vực Customer được cấp quyền.' },
+  }[id];
+  if (boundary) {
+    const ex = boundaryExtra(boundary.kind, 'REQ-C-LIST-01');
+    if (boundary.kind === 'empty') { ex.ctaLabel = 'Tạo đơn mới'; ex.ctaVariant = 'primary'; }
+    return {
+      isSkeleton: boundary.kind === 'loading', isMessage: boundary.kind !== 'loading',
+      ...boundary, ...ex,
+      ctaBtnStyle: ex.ctaLabel ? btnVisual(ex.ctaVariant, false, false) : null,
+      ctaAction: boundary.kind === 'empty' ? 'openCreate' : null,
+    };
+  }
+  const noticeByScenario = {
+    'C-LIST-REFRESHING': 'Đang làm mới danh sách; nội dung hiện tại vẫn được giữ.',
+    'C-LIST-PAGE-ERROR': 'Chưa tải được trang tiếp theo. Các đơn hiện có vẫn được giữ.',
+    'C-LIST-OFFLINE': 'Đang ngoại tuyến · dữ liệu cập nhật lần cuối lúc 14:32.',
+  };
+  return {
+    isContent: true, notice: noticeByScenario[id] || null, noticeStyle: noticeVisual(id === 'C-LIST-OFFLINE' ? 'warning' : 'info'),
+    orders: customerListOrders(), resultLabel: '3 đơn hàng mô phỏng',
+  };
+}
+
+const CUSTOMER_CREATE_SCENARIOS = ['C-NEW-READY','C-NEW-INVALID','C-NEW-ADDRESS-LOADING','C-NEW-ADDRESS-NO-RESULTS','C-NEW-ADDRESS-ERROR','C-NEW-ESTIMATE-LOADING','C-NEW-ESTIMATE-ERROR','C-NEW-ESTIMATE-READY','C-NEW-ESTIMATE-DEMO','C-NEW-ESTIMATE-OUTDATED','C-NEW-ESTIMATE-EXPIRED','C-NEW-MEDIA-INVALID','C-NEW-MEDIA-RETRY','C-NEW-SUBMIT-PENDING','C-NEW-SUBMIT-ERROR','C-NEW-SUBMIT-CONFLICT','C-NEW-CREATED-MEDIA-ERROR','C-NEW-SUCCESS','C-NEW-OFFLINE','C-NEW-PERMISSION'];
+function customerCreateVM(id, step) {
+  if (id === 'C-NEW-PERMISSION') {
+    return { isMessage:true, kind:'permission-denied', title:'Bạn không có quyền tạo đơn', message:'Bản nháp riêng tư không được hiển thị cho role hiện tại.' };
+  }
+  const invalid = id === 'C-NEW-INVALID';
+  const empty = id === 'C-NEW-READY';
+  const r = baseRoute();
+  const noticeByScenario = {
+    'C-NEW-INVALID': ['warning','Kiểm tra các trường được đánh dấu trước khi tiếp tục.'],
+    'C-NEW-ADDRESS-LOADING': ['info','Đang tìm địa điểm phù hợp.'],
+    'C-NEW-ADDRESS-NO-RESULTS': ['info','Không tìm thấy địa điểm phù hợp; nội dung đã nhập được giữ lại.'],
+    'C-NEW-ADDRESS-ERROR': ['danger','Dịch vụ địa điểm chưa khả dụng; hãy thử tìm lại.'],
+    'C-NEW-ESTIMATE-LOADING': ['info','Đang tính giá và ETA dự kiến.'],
+    'C-NEW-ESTIMATE-ERROR': ['danger','Không thể tính estimate; dữ liệu form vẫn được giữ.'],
+    'C-NEW-ESTIMATE-OUTDATED': ['warning','Lộ trình đã thay đổi; estimate cũ không còn dùng để tạo đơn.'],
+    'C-NEW-ESTIMATE-EXPIRED': ['warning','Estimate đã hết hiệu lực theo phản hồi hệ thống.'],
+    'C-NEW-MEDIA-INVALID': ['danger','Chỉ nhận JPEG, PNG hoặc WebP tối đa 10 MB.'],
+    'C-NEW-MEDIA-RETRY': ['warning','Chưa tải được ảnh; lựa chọn mô phỏng vẫn được giữ để thử lại.'],
+    'C-NEW-SUBMIT-PENDING': ['info','Yêu cầu tạo đơn đang chờ phản hồi; không gửi lại.'],
+    'C-NEW-SUBMIT-ERROR': ['danger','Chưa thể tạo đơn; bản nháp không nhạy cảm vẫn được giữ.'],
+    'C-NEW-SUBMIT-CONFLICT': ['warning','Estimate đã thay đổi trên hệ thống; hãy tính lại trước khi tạo đơn.'],
+    'C-NEW-CREATED-MEDIA-ERROR': ['warning','Đơn đã được phản hồi nhưng ảnh hàng hóa chưa tải lên; không tạo lại đơn.'],
+    'C-NEW-SUCCESS': ['success','Đã nhận phản hồi tạo đơn trong kịch bản mô phỏng.'],
+    'C-NEW-OFFLINE': ['warning','Đang ngoại tuyến; chưa thể tính estimate hoặc tạo đơn.'],
+  };
+  const n = noticeByScenario[id];
+  const estimateReadyIds = ['C-NEW-ESTIMATE-READY','C-NEW-ESTIMATE-DEMO','C-NEW-SUBMIT-PENDING','C-NEW-SUBMIT-ERROR','C-NEW-SUBMIT-CONFLICT','C-NEW-CREATED-MEDIA-ERROR','C-NEW-SUCCESS'];
+  const estimateReady = estimateReadyIds.includes(id);
+  const isDemo = id === 'C-NEW-ESTIMATE-DEMO';
+  const isLoadingEstimate = id === 'C-NEW-ESTIMATE-LOADING';
+  let estimateEmptyText = null;
+  if (isLoadingEstimate) {}
+  else if (id === 'C-NEW-ESTIMATE-ERROR') estimateEmptyText = 'Chưa thể tính giá và ETA dự kiến.';
+  else if (id === 'C-NEW-ESTIMATE-OUTDATED') estimateEmptyText = 'Lộ trình/vehicle đã đổi; hãy tính lại giá và ETA dự kiến.';
+  else if (id === 'C-NEW-ESTIMATE-EXPIRED') estimateEmptyText = 'Ước tính đã hết hạn. Hãy tính lại trước khi tạo đơn.';
+  else if (!estimateReady) estimateEmptyText = 'Hoàn tất route/vehicle để tính giá và ETA dự kiến.';
+
+  const submitting = id === 'C-NEW-SUBMIT-PENDING';
+  let primaryLabel = estimateReady ? 'Tạo đơn' : 'Tính giá và ETA dự kiến';
+  let primaryDisabled = empty || id === 'C-NEW-OFFLINE';
+  let primaryDisabledReason = primaryDisabled ? (id === 'C-NEW-OFFLINE' ? 'Cần kết nối mạng để tiếp tục' : 'Nhập điểm lấy và điểm giao để tiếp tục') : null;
+  if (id === 'C-NEW-SUCCESS') primaryLabel = 'Xem chi tiết đơn';
+  if (id === 'C-NEW-CREATED-MEDIA-ERROR') primaryLabel = 'Thử tải lại ảnh';
+  if (id === 'C-NEW-SUBMIT-CONFLICT') primaryLabel = 'Tính lại giá và ETA dự kiến';
+  if (submitting) primaryLabel = 'Đang tạo đơn';
+
+  const stepHeadlines = { 1:'Bước 1/3 · Lộ trình', 2:'Bước 2/3 · Phương tiện & hàng', 3:'Bước 3/3 · Giá & xác nhận' };
+  const stepBar = (idx) => 'flex:1;height:5px;border-radius:99px;background:' + (idx <= step ? '#075985' : '#DDE7EA');
+  const vehicleOpt = (active) => 'padding:12px 14px;border-radius:6px;border:1.5px solid ' + (active ? '#075985' : '#E5E2DA') + ';background:' + (active ? '#E0F2FE' : '#FFFFFF') + ';color:#17202A;font-size:14px;font-weight:600';
+
+  return {
+    isMessage: false, isContent: true,
+    notice: n ? n[1] : null, noticeStyle: n ? noticeVisual(n[0]) : null,
+    stepHeadline: stepHeadlines[step], stepBarStyle1: stepBar(1), stepBarStyle2: stepBar(2), stepBarStyle3: stepBar(3),
+    showStep1: step === 1, showStep2: step === 2, showStep3: step === 3,
+    routeNodes: routeNodes(r),
+    vehicleOptStyleVan: vehicleOpt(true), vehicleOptStyleBike: vehicleOpt(false), vehicleOptStyleTruck: vehicleOpt(false),
+    cargoWeight: invalid ? '-2' : '120',
+    cargoNote: 'Thùng mẫu dễ vỡ; liên hệ tại cổng bảo vệ mô phỏng.',
+    fieldError: invalid ? 'Điểm lấy hàng là bắt buộc · Khối lượng phải lớn hơn 0.' : null,
+    estimatePanelStyle: 'background:#E0F2FE;border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:8px',
+    estimateReady, isDemo, isLoadingEstimate, estimateEmptyText,
+    distanceLabel: '18,4 km', priceLabel: '286.000 ₫', etaLabel: '18 phút', calculatedAtLabel: 'Tính lúc 14:30 · 15/08/2026',
+    primaryLabel, primaryDisabledReason,
+    primaryBtnStyle: btnVisual('primary', primaryDisabled, submitting),
+  };
+}
+
+const CUSTOMER_DETAIL_SCENARIOS = ['C-DETAIL-LOADING','C-DETAIL-SUCCESS','C-DETAIL-ERROR','C-DETAIL-PERMISSION','C-DETAIL-NO-DRIVER','C-DETAIL-NO-LOCATION','C-DETAIL-TRACKING-FRESH','C-DETAIL-TRACKING-STALE','C-DETAIL-TRACKING-RECONNECT','C-DETAIL-TRACKING-DISCONNECTED','C-DETAIL-MAP-ERROR','C-DETAIL-PAYMENT-UNPAID','C-DETAIL-PAYMENT-PENDING','C-DETAIL-QR-READY','C-DETAIL-QR-EXPIRED','C-DETAIL-PAYMENT-PAID','C-DETAIL-PAYMENT-FAILED','C-DETAIL-PAYMENT-CONFLICT','C-DETAIL-MEDIA-EMPTY','C-DETAIL-MEDIA-ERROR','C-DETAIL-CANCEL-AVAILABLE','C-DETAIL-CANCEL-UNAVAILABLE','C-DETAIL-CANCEL-PENDING','C-DETAIL-CANCEL-ERROR','C-DETAIL-CANCEL-CONFLICT','C-DETAIL-CANCEL-SUCCESS','C-DETAIL-OFFLINE'];
+function customerDetailVM(id) {
+  if (id === 'C-DETAIL-LOADING') return { isSkeleton:true };
+  if (id === 'C-DETAIL-ERROR') { const ex = boundaryExtra('error','REQ-C-DETAIL-01'); return { isMessage:true, title:'Không thể tải chi tiết đơn', message:'Vui lòng thử lại.', ...ex, ctaBtnStyle: btnVisual('primary', false, false) }; }
+  if (id === 'C-DETAIL-PERMISSION') { const ex = boundaryExtra('permission-denied'); return { isMessage:true, title:'Bạn không có quyền xem đơn hàng này', message:'Không hiển thị route, tài xế, tracking, media hoặc payment của đơn khác.', ...ex, ctaBtnStyle: btnVisual('secondary', false, false) }; }
+
+  const r = baseRoute();
+  const status = id === 'C-DETAIL-CANCEL-SUCCESS' ? 'CANCELLED' : (['C-DETAIL-CANCEL-AVAILABLE','C-DETAIL-CANCEL-PENDING','C-DETAIL-CANCEL-ERROR'].includes(id) ? 'REQUESTED' : (id === 'C-DETAIL-CANCEL-CONFLICT' ? 'ACCEPTED' : 'IN_TRANSIT'));
+  const badge = badgeVisual(ORDER_STATUS, status);
+
+  const trackingByScenario = {
+    'C-DETAIL-NO-DRIVER': ['neutral','Chưa có tài xế nhận đơn.'],
+    'C-DETAIL-NO-LOCATION': ['neutral','Tài xế đã nhận đơn nhưng chưa có vị trí (Tài xế Nguyễn Minh An).'],
+    'C-DETAIL-TRACKING-STALE': ['warning','Vị trí chưa cập nhật; đang hiển thị điểm gần nhất lúc 14:12.'],
+    'C-DETAIL-TRACKING-RECONNECT': ['info','Đang kết nối lại; vị trí hiện tại chưa được gọi là trực tiếp.'],
+    'C-DETAIL-TRACKING-DISCONNECTED': ['warning','Mất kết nối; vị trí mới chưa được nhận. Cập nhật lần cuối 14:20.'],
+    'C-DETAIL-MAP-ERROR': ['danger','Bản đồ chưa khả dụng; lộ trình dạng danh sách vẫn dùng được.'],
+    'C-DETAIL-OFFLINE': ['warning','Đang ngoại tuyến · dữ liệu cập nhật lần cuối lúc 14:20.'],
+  };
+  const t = trackingByScenario[id] || ['success','Đang gửi vị trí · cập nhật lúc 14:32 (Tài xế Nguyễn Minh An).'];
+  const tv = trackingVisual(t[0], t[1]);
+  const mm = mapMeta(t[0]);
+
+  const paymentByScenario = {
+    'C-DETAIL-PAYMENT-UNPAID': { status:'UNPAID', notice:null, actionLabel:'Tạo mã QR thanh toán', actionVariant:'primary' },
+    'C-DETAIL-PAYMENT-PENDING': { status:'UNPAID', notice:'Đang tạo mã QR; không gửi yêu cầu trùng.', actionLabel:'Đang tạo mã QR', actionVariant:'primary', pending:true },
+    'C-DETAIL-QR-READY': { status:'QR_CREATED', notice:'Mã QR mô phỏng, không chứa payload thanh toán thật.', qrReady:true, qrRef:'LPRD-DEMO-260815-001', qrExpiry:'Hết hạn 15:00 · 15/08/2026' },
+    'C-DETAIL-QR-EXPIRED': { status:'QR_CREATED', notice:'Mã QR đã hết hạn.', qrRef:'LPRD-DEMO-EXPIRED', qrExpiry:'Đã hết hạn theo phản hồi hệ thống', actionLabel:'Tạo mã QR mới', actionVariant:'secondary' },
+    'C-DETAIL-PAYMENT-PAID': { status:'PAID_MANUAL', notice:'Thanh toán đã được xác nhận trong snapshot phản hồi.' },
+    'C-DETAIL-PAYMENT-FAILED': { status:'FAILED', notice:'Chưa thể tạo thanh toán; không hiển thị chi tiết provider.', actionLabel:'Thử tạo lại mã QR', actionVariant:'secondary' },
+    'C-DETAIL-PAYMENT-CONFLICT': { status:'QR_CREATED', notice:'Hệ thống đã có một mã QR đang hoạt động; dữ liệu đã được làm mới.', qrReady:true, qrRef:'LPRD-DEMO-ACTIVE', qrExpiry:'Hết hạn 15:10 · 15/08/2026' },
+  };
+  const pay = paymentByScenario[id] || { status:'UNPAID', notice:null, actionLabel:'Tạo mã QR thanh toán', actionVariant:'primary' };
+  const payBadge = badgeVisual(PAYMENT_STATUS, pay.status);
+
+  const cancelByScenario = {
+    'C-DETAIL-CANCEL-AVAILABLE': { visible:true, message:'Hủy đơn sẽ dừng yêu cầu tìm tài xế.', actionLabel:'Hủy đơn', variant:'destructive' },
+    'C-DETAIL-CANCEL-PENDING': { visible:true, message:'Đang gửi yêu cầu hủy; không gửi lại.', actionLabel:'Đang hủy đơn', variant:'destructive', pending:true },
+    'C-DETAIL-CANCEL-ERROR': { visible:true, message:'Chưa thể hủy đơn; trạng thái hiện tại vẫn được giữ.', actionLabel:'Thử hủy lại', variant:'destructive' },
+    'C-DETAIL-CANCEL-CONFLICT': { visible:true, message:'Trạng thái đơn đã thay đổi; hãy tải dữ liệu mới nhất.', actionLabel:'Tải dữ liệu mới nhất', variant:'secondary' },
+    'C-DETAIL-CANCEL-UNAVAILABLE': { visible:true, message:'Đơn đã có tài xế; quyền hủy không được hệ thống cung cấp.', actionLabel:null },
+  };
+  const cancel = cancelByScenario[id];
+
+  const mediaKind = id === 'C-DETAIL-MEDIA-EMPTY' ? 'empty' : id === 'C-DETAIL-MEDIA-ERROR' ? 'error' : 'available';
+  const mediaDescription = mediaKind === 'empty' ? 'Chưa có ảnh hàng hóa.' : mediaKind === 'error' ? 'Chưa tải được ảnh; metadata mô phỏng vẫn được giữ.' : '2 ảnh mô phỏng · JPEG · không phải dữ liệu thật.';
+
+  const detailNotice = { 'C-DETAIL-CANCEL-SUCCESS': ['success','Đã nhận snapshot phản hồi với trạng thái Đã hủy.'] }[id];
+
+  return {
+    isMessage:false, isContent: true,
+    reference: 'LP-260815-001', badgeStyle: badge.style, badgeLabel: badge.label, dotStyle: badge.dotStyle,
+    notice: detailNotice ? detailNotice[1] : null, noticeStyle: detailNotice ? noticeVisual(detailNotice[0]) : null,
+    routeNodes: routeNodes(r), priceLabel:'286.000 ₫', etaLabel:'18 phút · ETA dự kiến', updatedAtLabel:'14:32 · 15/08/2026',
+    mapDash: mm.mapDash, mapShowLive: mm.mapShowLive, mapLiveColor: mm.mapLiveColor,
+    trackingDotWrap: tv.trackingDotWrap, trackingDot: tv.trackingDot, trackingMessage: tv.trackingMessage,
+    paymentAmount: '286.000 ₫', paymentBadgeStyle: payBadge.style, paymentBadgeLabel: payBadge.label, paymentDotStyle: payBadge.dotStyle,
+    qrReady: !!pay.qrReady, qrRef: pay.qrRef, qrExpiry: pay.qrExpiry,
+    paymentNotice: pay.notice, paymentAction: !!pay.actionLabel, paymentActionLabel: pay.actionLabel,
+    paymentActionStyle: pay.actionLabel ? btnVisual(pay.actionVariant, false, pay.pending) : null,
+    mediaDescription, mediaHasPhotos: mediaKind === 'available',
+    history: [
+      { timestampLabel:'13:58', description:'Đơn đã được ghi nhận.' },
+      { timestampLabel:'14:05', description:'Tài xế đã nhận đơn.' },
+      { timestampLabel:'14:24', description:'Hàng đang được vận chuyển.' },
+    ],
+    cancelVisible: !!cancel, cancelMessage: cancel ? cancel.message : null, cancelActionLabel: cancel ? cancel.actionLabel : null,
+    cancelActionStyle: cancel && cancel.actionLabel ? btnVisual(cancel.variant, false, cancel.pending) : null,
+  };
+}
+
+function assignedRoute() {
+  return {
+    origin: { label: 'Kho riêng tư mô phỏng tại Quận 7' },
+    stops: [ { label:'Điểm dừng mô phỏng tại Quận 4' }, { label:'Điểm dừng mô phỏng tại Quận 3' }, { label:'Điểm dừng mô phỏng tại Quận 1' } ],
+    destination: { label: 'Điểm giao riêng tư mô phỏng tại Thành phố Thủ Đức' },
+  };
+}
+function requestedOrders() {
+  const rows = [
+    { reference:'LP-D-260815-101', status:'REQUESTED', publicRouteLabel:'Khu vực Quận 7 → Thành phố Thủ Đức', vehicleLabel:'Xe van', cargoSummary:'Hàng đóng thùng · khoảng 120 kg', etaLabel:'ETA dự kiến · 18 phút · mô phỏng', updatedAtLabel:'14:30 · 15/08/2026' },
+    { reference:'LP-D-260815-102', status:'REQUESTED', publicRouteLabel:'Khu vực Bình Thạnh → Quận 3', vehicleLabel:'Xe máy', cargoSummary:'Bưu kiện nhỏ · khoảng 8 kg', etaLabel:'ETA dự kiến · 14 phút', updatedAtLabel:'14:28 · 15/08/2026' },
+  ];
+  return rows.map((o) => {
+    const b = badgeVisual(ORDER_STATUS, o.status);
+    return { ...o, badgeStyle: b.style, badgeLabel: b.label, dotStyle: b.dotStyle };
+  });
+}
+
+const DRIVER_LIST_SCENARIOS = ['D-LIST-LOADING','D-LIST-REQUESTED','D-LIST-ACTIVE-REQUESTED','D-LIST-EMPTY','D-LIST-ERROR','D-LIST-PERMISSION','D-LIST-OFFLINE','D-LIST-LOCATION-DENIED','D-LIST-AVAILABILITY-PENDING','D-LIST-AVAILABILITY-ERROR'];
+function driverListVM(id) {
+  if (id === 'D-LIST-LOADING') return { isSkeleton:true };
+  if (id === 'D-LIST-ERROR') { const ex = boundaryExtra('error','REQ-D-LIST-01'); return { isMessage:true, title:'Không thể tải danh sách đơn', message:'Vui lòng thử lại.', ...ex, ctaBtnStyle: btnVisual('primary', false, false) }; }
+  if (id === 'D-LIST-PERMISSION') { const ex = boundaryExtra('permission-denied'); return { isMessage:true, title:'Bạn không có quyền xem khu vực tài xế', message:'Không hiển thị chuyến hoặc đơn có thể nhận cho role hiện tại.', ...ex, ctaBtnStyle: btnVisual('secondary', false, false) }; }
+
+  const isEmpty = id === 'D-LIST-EMPTY';
+  const availStatus = id === 'D-LIST-ACTIVE-REQUESTED' ? 'BUSY' : (isEmpty ? 'OFFLINE' : 'AVAILABLE');
+  const availB = badgeVisual(DRIVER_AVAIL, availStatus);
+  const pending = id === 'D-LIST-AVAILABILITY-PENDING';
+  const blocked = id === 'D-LIST-OFFLINE';
+  const availActionLabel = pending ? 'Đang cập nhật trạng thái nhận đơn' : (availStatus === 'BUSY' ? 'Đang bận' : (availStatus === 'OFFLINE' ? 'Bật sẵn sàng' : 'Tạm dừng nhận đơn'));
+
+  const noticeByScenario = {
+    'D-LIST-OFFLINE': ['warning','Kết nối mạng: Ngoại tuyến · dữ liệu có thể đã cũ.'],
+    'D-LIST-LOCATION-DENIED': ['danger','Chưa được phép dùng vị trí cho hành trình của chuyến.'],
+    'D-LIST-AVAILABILITY-PENDING': ['info','Đang cập nhật trạng thái nhận đơn.'],
+    'D-LIST-AVAILABILITY-ERROR': ['danger','Cập nhật availability thất bại; không đảo trạng thái cục bộ.'],
+  };
+  const n = isEmpty ? ['info','Hiện chưa có đơn có thể nhận; trạng thái nhận đơn vẫn được giữ.'] : noticeByScenario[id];
+  const activeBadge = badgeVisual(ORDER_STATUS, 'IN_TRANSIT');
+
+  return {
+    isMessage:false, isContent: true,
+    availBadgeStyle: availB.style, availLabel: availB.label, availDotStyle: availB.dotStyle,
+    availActionStyle: btnVisual('secondary', availStatus === 'BUSY' || blocked, pending),
+    availActionLabel, availError: id === 'D-LIST-AVAILABILITY-ERROR' ? 'Chưa cập nhật được trạng thái nhận đơn; trạng thái đã lưu vẫn là Sẵn sàng.' : null,
+    notice: n ? n[1] : null, noticeStyle: n ? noticeVisual(n[0]) : null,
+    kpiTrips: '4', kpiEarnings: '620.000 ₫', kpiRating: '4.8',
+    activeTrip: id === 'D-LIST-ACTIVE-REQUESTED',
+    activeReference: 'LP-D-260815-001', activeBadgeLabel: activeBadge.label,
+    activeRouteLabel: 'Kho riêng tư Quận 7 → Điểm giao riêng tư Thành phố Thủ Đức',
+    activeTrackingLabel: 'Đang gửi vị trí · cập nhật lúc 14:32',
+    activeProofLabel: 'Cần ảnh xác nhận trước khi hoàn tất',
+    orders: isEmpty ? [] : requestedOrders(), isEmpty,
+    refreshedAtLabel: 'Làm mới 14:32 · 15/08/2026',
+  };
+}
+
+const DRIVER_DETAIL_SCENARIOS = ['D-DETAIL-LOADING','D-DETAIL-ERROR','D-DETAIL-PERMISSION','D-DETAIL-PUBLIC-REQUESTED','D-DETAIL-ACCEPT-PENDING','D-DETAIL-ACCEPT-RACE','D-DETAIL-ACTIVE-ORDER-CONFLICT','D-DETAIL-ACCEPTED','D-DETAIL-PICKING-UP','D-DETAIL-IN-TRANSIT','D-DETAIL-PROOF-REQUIRED','D-DETAIL-PROOF-SELECTED','D-DETAIL-PROOF-UPLOADING','D-DETAIL-PROOF-RETRY','D-DETAIL-READY-DELIVER','D-DETAIL-TERMINAL-DELIVERED','D-DETAIL-TERMINAL-CANCELLED','D-DETAIL-TRACKING-STALE','D-DETAIL-RECONNECTING','D-DETAIL-LOCATION-DENIED','D-DETAIL-OFFLINE','D-DETAIL-INVALID-TRANSITION'];
+function driverDetailVM(id) {
+  if (id === 'D-DETAIL-LOADING') return { isSkeleton:true };
+  if (id === 'D-DETAIL-ERROR') { const ex = boundaryExtra('error','REQ-D-DETAIL-01'); return { isMessage:true, title:'Không thể tải chi tiết đơn', message:'Vui lòng thử lại.', ...ex }; }
+  if (id === 'D-DETAIL-PERMISSION') return { isMessage:true, title:'Bạn không có quyền xem đơn này', message:'Route, contact, media và tracking riêng tư không được hiển thị.' };
+  if (id === 'D-DETAIL-ACCEPT-RACE') return { isMessage:true, title:'Không thể nhận đơn', message:'Tài xế khác vừa nhận đơn này.', recoveryLabel:'Xem đơn còn trống' };
+  if (id === 'D-DETAIL-ACTIVE-ORDER-CONFLICT') return { isMessage:true, title:'Bạn đã có một chuyến hoạt động', message:'Không thể nhận thêm đơn khi chuyến hiện tại chưa kết thúc.', recoveryLabel:'Mở chuyến đang thực hiện' };
+  if (id === 'D-DETAIL-INVALID-TRANSITION') return { isMessage:true, title:'Trạng thái đơn đã thay đổi', message:'Command cũ không còn hợp lệ; không tự động thử lại transition.', recoveryLabel:'Tải dữ liệu mới nhất' };
+
+  const isPublic = id === 'D-DETAIL-PUBLIC-REQUESTED' || id === 'D-DETAIL-ACCEPT-PENDING';
+  const statusMap = { 'D-DETAIL-ACCEPTED':'ACCEPTED', 'D-DETAIL-PICKING-UP':'PICKING_UP', 'D-DETAIL-TERMINAL-DELIVERED':'DELIVERED', 'D-DETAIL-TERMINAL-CANCELLED':'CANCELLED' };
+  const status = isPublic ? 'REQUESTED' : (statusMap[id] || 'IN_TRANSIT');
+  const badge = badgeVisual(ORDER_STATUS, status);
+  const r = assignedRoute();
+
+  const trackingByScenario = {
+    'D-DETAIL-TRACKING-STALE': ['warning','Vị trí chưa cập nhật · lần cuối 14:27'],
+    'D-DETAIL-RECONNECTING': ['info','Đang kết nối lại'],
+    'D-DETAIL-LOCATION-DENIED': ['danger','Chưa được phép dùng vị trí'],
+    'D-DETAIL-OFFLINE': ['warning','Mất kết nối · 3 điểm đang chờ gửi'],
+    'D-DETAIL-ACCEPTED': ['neutral','Chưa bắt đầu gửi vị trí'],
+    'D-DETAIL-TERMINAL-DELIVERED': ['neutral','Tracking của chuyến đã kết thúc'],
+    'D-DETAIL-TERMINAL-CANCELLED': ['neutral','Tracking của chuyến đã kết thúc'],
+  };
+  const t = trackingByScenario[id] || [isPublic ? 'neutral' : 'success', isPublic ? 'Tracking chỉ bắt đầu sau khi được phân công' : 'Đang gửi vị trí · cập nhật lúc 14:32'];
+  const tv = trackingVisual(t[0], t[1]);
+  const mm = mapMeta(t[0]);
+
+  const proofByScenario = {
+    'D-DETAIL-IN-TRANSIT': { label:'Cần ảnh xác nhận trước khi hoàn tất', message:'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.', fileLabel:null },
+    'D-DETAIL-PROOF-REQUIRED': { label:'Cần ảnh xác nhận trước khi hoàn tất', message:'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.', fileLabel:null },
+    'D-DETAIL-PROOF-SELECTED': { label:'Ảnh đã chọn · chưa tải lên', message:'Ảnh chỉ nằm trên thiết bị cho đến khi port xác nhận upload.', fileLabel:'xac-nhan-demo.jpg' },
+    'D-DETAIL-PROOF-UPLOADING': { label:'Đang tải ảnh xác nhận', message:'Không gửi upload trùng trong khi chờ phản hồi.', fileLabel:'xac-nhan-demo.jpg' },
+    'D-DETAIL-PROOF-RETRY': { label:'Chưa tải được ảnh', message:'Ảnh đã chọn vẫn được giữ; hãy thử lại.', fileLabel:'xac-nhan-demo.jpg' },
+    'D-DETAIL-READY-DELIVER': { label:'Ảnh xác nhận đã tải lên', message:'Proof đã có trong snapshot phản hồi từ hệ thống.', fileLabel:'proof-demo-001.jpg' },
+    'D-DETAIL-TERMINAL-DELIVERED': { label:'Ảnh xác nhận đã tải lên', message:'Proof read-only từ snapshot đã hoàn tất.', fileLabel:'proof-demo-001.jpg' },
+  };
+  const proof = proofByScenario[id];
+
+  let dockLabel = null, dockPending = false;
+  if (id === 'D-DETAIL-PUBLIC-REQUESTED') dockLabel = 'Nhận đơn';
+  if (id === 'D-DETAIL-ACCEPT-PENDING') { dockLabel = 'Đang nhận đơn'; dockPending = true; }
+  if (id === 'D-DETAIL-ACCEPTED') dockLabel = 'Bắt đầu đi lấy hàng';
+  if (id === 'D-DETAIL-PICKING-UP') dockLabel = 'Đã lấy hàng — bắt đầu giao';
+  if (id === 'D-DETAIL-IN-TRANSIT' || id === 'D-DETAIL-PROOF-REQUIRED') dockLabel = 'Thêm ảnh xác nhận giao hàng';
+  if (id === 'D-DETAIL-PROOF-SELECTED') dockLabel = 'Tải ảnh lên';
+  if (id === 'D-DETAIL-PROOF-UPLOADING') { dockLabel = 'Đang tải ảnh xác nhận'; dockPending = true; }
+  if (id === 'D-DETAIL-PROOF-RETRY') dockLabel = 'Thử tải lại ảnh';
+  if (id === 'D-DETAIL-READY-DELIVER') dockLabel = 'Xác nhận đã giao';
+
+  return {
+    isMessage:false, isContent: true,
+    reference: isPublic ? 'LP-D-260815-101' : 'LP-D-260815-001', badgeStyle: badge.style, badgeLabel: badge.label, dotStyle: badge.dotStyle,
+    accessScopeLabel: isPublic ? 'PUBLIC SUMMARY — chưa phân công' : 'ASSIGNED FULL — đã cấp quyền riêng tư',
+    notice: ['warning','danger','info'].includes(t[0]) && !isPublic ? t[1] : null, noticeStyle: noticeVisual(t[0]),
+    hasFullRoute: !isPublic, hasPublicRoute: isPublic,
+    routeNodes: !isPublic ? routeNodes(r) : null,
+    mapDash: mm.mapDash, mapShowLive: mm.mapShowLive, mapLiveColor: mm.mapLiveColor,
+    publicRouteLabel: 'Khu vực Quận 7 → Thành phố Thủ Đức',
+    vehicleLabel: 'Xe van', cargoSummary: 'Hàng đóng thùng dễ vỡ · khoảng 120 kg',
+    customerContact: isPublic ? null : 'Số điện thoại khách hàng mô phỏng · chỉ hiện sau phân công',
+    trackingDotWrap: tv.trackingDotWrap, trackingDot: tv.trackingDot, trackingLabel: tv.trackingMessage,
+    proofVisible: !!proof, proofLabel: proof ? proof.label : null, proofMessage: proof ? proof.message : null, proofFileLabel: proof ? proof.fileLabel : null,
+    proofStyle: 'background:#FFFFFF;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:10px;border:1px solid #E5E2DA',
+    hasHistory: !isPublic,
+    history: [
+      { timestampLabel:'13:58', description:'Đơn đã được ghi nhận.' },
+      { timestampLabel:'14:05', description:'Bạn đã nhận chuyến.' },
+      { timestampLabel:'14:24', description:'Hàng đang được vận chuyển.' },
+    ],
+    dockVisible: !!dockLabel, dockLabel, dockBtnStyle: dockLabel ? btnVisual('primary', false, dockPending) : null,
+  };
+}
+
+const ONBOARD_SLIDES = [
+  { title:'Tạo đơn trong vài bước', desc:'Nhập lộ trình, chọn xe và xem giá, ETA dự kiến trước khi xác nhận.', icon:'📍' },
+  { title:'Theo dõi thời gian thực', desc:'Xem tài xế đang ở đâu trên lộ trình và cập nhật trạng thái từng chặng.', icon:'🧭' },
+  { title:'Xác nhận giao hàng rõ ràng', desc:'Ảnh bằng chứng giao hàng và lịch sử trạng thái đầy đủ cho mỗi đơn.', icon:'✅' },
+];
+
+function chatThread(customerSide) {
+  const rows = [
+    { from:'other', text:'Chào anh/chị, tôi đang trên đường đến điểm lấy hàng ạ.' },
+    { from:'me', text:'Dạ vâng, hàng để ở cổng bảo vệ nhé.' },
+    { from:'other', text:'Tôi đã lấy hàng, đang di chuyển đến điểm giao.' },
+    { from:'me', text:'Cảm ơn anh, giao xong nhắn giúp tôi nhé.' },
+  ];
+  return rows.map((m) => {
+    const isMe = m.from === 'me';
+    return {
+      text: m.text,
+      rowStyle: 'display:flex;' + (isMe ? 'justify-content:flex-end' : 'justify-content:flex-start'),
+      bubbleStyle: 'max-width:75%;padding:10px 14px;border-radius:6px;font-size:14px;line-height:19px;' + (isMe ? 'background:#075985;color:#FFFFFF' : 'background:#FFFFFF;color:#17202A;border:1px solid #E5E2DA'),
+    };
+  });
+}
+function notificationsVM() {
+  const items = [
+    { title:'Tài xế đã nhận đơn LP-260815-001', body:'Nguyễn Minh An đang trên đường đến điểm lấy hàng.', timeLabel:'14:05 · Hôm nay', unread:true },
+    { title:'Đơn LP-260815-001 đang được vận chuyển', body:'Hàng đã được lấy và đang giao đến điểm đích.', timeLabel:'14:24 · Hôm nay', unread:true },
+    { title:'Nhắc thanh toán đơn LP-260814-007', body:'Vui lòng hoàn tất thanh toán để đóng đơn.', timeLabel:'Hôm qua', unread:false },
+    { title:'Đơn LP-260814-007 đã giao thành công', body:'Cảm ơn bạn đã sử dụng LEOPARD.', timeLabel:'Hôm qua', unread:false },
+  ];
+  return { items: items.map((n) => ({ ...n, dotWrapStyle: 'width:10px;height:10px;border-radius:999px;margin-top:5px;background:' + (n.unread ? '#075985' : '#D8D5CC') })), hasUnread: items.some((n) => n.unread) };
+}
+function walletMethodsVM() {
+  return { methods: [
+    { label:'Tiền mặt khi giao hàng', detail:'Thanh toán trực tiếp cho tài xế', isDefault:true },
+    { label:'Chuyển khoản QR', detail:'Quét mã khi tạo đơn', isDefault:false },
+  ]};
+}
+function addressesVM() {
+  return { items: [
+    { label:'Nhà', address:'Kho mô phỏng Quận 7, Thành phố Hồ Chí Minh', contact:'Nguyễn Văn A · 090 000 0001' },
+    { label:'Công ty', address:'Trung tâm nhận hàng mô phỏng, Thành phố Thủ Đức', contact:'Nguyễn Văn A · 090 000 0001' },
+  ]};
+}
+function promotionsVM() {
+  const iconStyle = 'width:44px;height:44px;border-radius:6px;background:#E0F2FE;color:#075985;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex:none';
+  return { items: [
+    { title:'Giảm 20.000 ₫ cho đơn đầu tiên', code:'LEO20', expiry:'31/08/2026', iconStyle, actionStyle: btnVisual('secondary', false, false) },
+    { title:'Miễn phí điểm dừng thứ 2', code:'FREESTOP', expiry:'15/09/2026', iconStyle, actionStyle: btnVisual('secondary', false, false) },
+  ]};
+}
+function driverHistoryVM() {
+  const rows = [
+    { reference:'LP-D-260814-090', status:'DELIVERED', routeLabel:'Quận 7 → Thành phố Thủ Đức', priceLabel:'286.000 ₫', dateLabel:'14/08/2026' },
+    { reference:'LP-D-260813-055', status:'DELIVERED', routeLabel:'Bình Thạnh → Quận 3', priceLabel:'198.000 ₫', dateLabel:'13/08/2026' },
+    { reference:'LP-D-260812-021', status:'CANCELLED', routeLabel:'Quận 1 → Quận 5', priceLabel:'—', dateLabel:'12/08/2026' },
+  ];
+  return { items: rows.map((o) => { const b = badgeVisual(ORDER_STATUS, o.status); return { ...o, badgeStyle:b.style, badgeLabel:b.label, dotStyle:b.dotStyle }; }) };
+}
+function walletDriverVM() {
+  const rows = [
+    { amountLabel:'1.200.000 ₫', dateLabel:'10/08/2026', status:'success' },
+    { amountLabel:'800.000 ₫', dateLabel:'02/08/2026', status:'success' },
+  ];
+  return { history: rows.map((w) => { const b = badgeVisual({ DONE:{role:'success',label:'Đã chuyển'} }, 'DONE'); return { ...w, statusLabel:b.label, badgeStyle:b.style }; }) };
+}
+function kycVM() {
+  const b = badgeVisual({ PENDING:{role:'warning',label:'Đang xét duyệt'} }, 'PENDING');
+  const docBadge = badgeVisual({ OK:{role:'success',label:'Hợp lệ'} }, 'OK');
+  return {
+    badgeStyle: b.style, statusLabel: b.label, message: 'Hồ sơ của bạn đang được đội ngũ LEOPARD xét duyệt, thường mất 1–2 ngày làm việc.',
+    docs: [
+      { label:'Căn cước công dân', statusLabel: docBadge.label, badgeStyle: docBadge.style },
+      { label:'Giấy phép lái xe', statusLabel: docBadge.label, badgeStyle: docBadge.style },
+      { label:'Đăng ký xe', statusLabel: 'Đang xét duyệt', badgeStyle: b.style },
+    ],
+    showResubmit: false,
+  };
+}
+function registerVM() {
+  const card = (active) => 'padding:14px;border-radius:6px;border:1.5px solid ' + (active ? '#075985' : '#E5E2DA') + ';background:' + (active ? '#E0F2FE' : '#FFFFFF');
+  return { roleCardStyleCustomer: card(true), roleCardStyleDriver: card(false) };
+}
+function errorScreenVM(kind) {
+  const c = COLORS.danger;
+  const map = {
+    '403': { icon:'🔒', title:'Không có quyền truy cập', message:'Tài khoản của bạn không có quyền xem trang này.', requestId:null, primaryLabel:'Về trang chủ', secondaryLabel:null },
+    '404': { icon:'🧭', title:'Không tìm thấy trang', message:'Đường dẫn không tồn tại hoặc đã bị thay đổi.', requestId:null, primaryLabel:'Về trang chủ', secondaryLabel:null },
+    '500': { icon:'⚠️', title:'Lỗi hệ thống', message:'Đã có lỗi xảy ra phía máy chủ. Vui lòng thử lại sau.', requestId:'REQ-SYS-500-01', primaryLabel:'Thử lại', secondaryLabel:'Về trang chủ' },
+  };
+  const e = map[kind];
+  return { ...e, iconWrapStyle: 'width:72px;height:72px;border-radius:6px;background:' + COLORS.neutral.background + ';display:flex;align-items:center;justify-content:center;font-size:30px', primaryBtnStyle: btnVisual('primary', false, false) };
+}
+
+class Component extends DCLogic {
+  state = {
+    role: 'customer', screen: 'orders',
+    custListScenario: 'C-LIST-SUCCESS', custNewScenario: 'C-NEW-ESTIMATE-READY', custDetailScenario: 'C-DETAIL-SUCCESS',
+    driverListScenario: 'D-LIST-REQUESTED', driverDetailScenario: 'D-DETAIL-IN-TRANSIT',
+    loginVariant: 'default', onboardIndex: 0, custNewStep: 1, errorScreen: '403',
+  };
+
+  goRoleOnboarding = () => this.setState({ role: 'onboarding', onboardIndex: 0 });
+  goRoleLogin = () => this.setState({ role: 'login' });
+  goRoleCustomer = () => this.setState({ role: 'customer', screen: 'orders' });
+  goRoleDriver = () => this.setState({ role: 'driver', screen: 'orders' });
+  goRoleErrors = () => this.setState({ role: 'errors', errorScreen: '403' });
+  goErr403 = () => this.setState({ errorScreen: '403' });
+  goErr404 = () => this.setState({ errorScreen: '404' });
+  goErr500 = () => this.setState({ errorScreen: '500' });
+  onboardNext = () => {
+    const i = this.state.onboardIndex;
+    if (i >= 2) this.goRoleLogin(); else this.setState({ onboardIndex: i + 1 });
+  };
+  goRoleRegister = () => this.setState({ role: 'register' });
+  goCustOrders = () => this.setState({ screen: 'orders' });
+  goCustNew = () => this.setState({ screen: 'new', custNewStep: 1 });
+  goCustDetail = () => this.setState({ screen: 'detail' });
+  goCustProfile = () => this.setState({ screen: 'profile' });
+  goCustNotifications = () => this.setState({ screen: 'notifications' });
+  goCustChat = () => this.setState({ screen: 'chat' });
+  goCustReview = () => this.setState({ screen: 'review' });
+  goCustReport = () => this.setState({ screen: 'report' });
+  goCustSupport = () => this.setState({ screen: 'support' });
+  goCustWallet = () => this.setState({ screen: 'wallet' });
+  goCustAddresses = () => this.setState({ screen: 'addresses' });
+  goCustPromotions = () => this.setState({ screen: 'promotions' });
+  goCustSettings = () => this.setState({ screen: 'settings' });
+  goDrvHistory = () => this.setState({ screen: 'history' });
+  goDrvChat = () => this.setState({ screen: 'chat' });
+  goDrvWallet = () => this.setState({ screen: 'wallet' });
+  goDrvEarnings = () => this.setState({ screen: 'earnings' });
+  goDrvPerformance = () => this.setState({ screen: 'performance' });
+  goDrvKyc = () => this.setState({ screen: 'kyc' });
+  goDrvSettings = () => this.setState({ screen: 'settings' });
+  goDrvOrders = () => this.setState({ screen: 'orders' });
+  goDrvDetail = () => this.setState({ screen: 'detail' });
+  goDrvProfile = () => this.setState({ screen: 'profile' });
+  openCreate = () => this.setState({ screen: 'new', custNewStep: 1 });
+  openDetail = () => this.setState({ screen: 'detail' });
+  openDriverDetail = () => this.setState({ screen: 'detail' });
+  custNewBack = () => {
+    const step = this.state.custNewStep;
+    if (step > 1) this.setState({ custNewStep: step - 1 }); else this.goCustOrders();
+  };
+  demoLoginCustomer = () => this.setState({ role: 'customer', screen: 'orders' });
+  demoLoginDriver = () => this.setState({ role: 'driver', screen: 'orders' });
+  onLoginVariantChange = (e) => this.setState({ loginVariant: e.target.value });
+  onScenarioChange = (e) => {
+    const v = e.target.value;
+    const s = this.state;
+    if (s.role === 'customer' && s.screen === 'orders') this.setState({ custListScenario: v });
+    else if (s.role === 'customer' && s.screen === 'new') this.setState({ custNewScenario: v });
+    else if (s.role === 'customer' && s.screen === 'detail') this.setState({ custDetailScenario: v });
+    else if (s.role === 'driver' && s.screen === 'orders') this.setState({ driverListScenario: v });
+    else if (s.role === 'driver' && s.screen === 'detail') this.setState({ driverDetailScenario: v });
+  };
+
+  renderVals() {
+    const s = this.state;
+    const navBtn = (active) => 'text-align:left;padding:10px 12px;border-radius:6px;border:none;background:' + (active ? '#075985' : '#FFFFFF') + ';color:' + (active ? '#FFFFFF' : '#17202A') + ';font-size:13.5px;font-weight:700;cursor:pointer';
+    const roleBtn = (active) => 'flex:1;min-width:70px;padding:8px 6px;border-radius:8px;border:none;background:' + (active ? '#075985' : 'transparent') + ';color:' + (active ? '#FFFFFF' : '#4B5563') + ';font-size:12px;font-weight:700;cursor:pointer';
+
+    const scaffoldStyle = 'flex:1;min-height:0;display:flex;flex-direction:column;background:#F6F5F1';
+    const bodyStyle = 'flex:1;min-height:0;overflow-y:auto;padding:18px 16px 24px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box';
+    const headerPlainStyle = 'flex:none;padding:22px 20px 6px;display:flex;flex-direction:column;gap:12px;background:#F6F5F1';
+    const headerInkStyle = 'flex:none;padding:24px 20px 26px;display:flex;flex-direction:column;gap:12px;background:#0B2530;border-radius:0 0 6px 6px';
+    const eyebrowPlainStyle = 'display:inline-flex;align-self:flex-start;background:#E0F2FE;color:#075985;font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:4px 10px;border-radius:999px';
+    const eyebrowInkStyle = 'display:inline-flex;align-self:flex-start;background:rgba(224,242,254,0.15);color:#BEE3F8;font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:4px 10px;border-radius:999px';
+    const titlePlainStyle = 'font-size:27px;line-height:33px;font-weight:800;color:#111417;letter-spacing:-.3px';
+    const titleInkStyle = 'font-size:27px;line-height:33px;font-weight:800;color:#FFFFFF;letter-spacing:-.3px';
+    const stickyFooterStyle = 'flex:none;background:#F6F5F1;padding:10px 16px 18px;box-sizing:border-box;border-top:1px solid #E5E2DA';
+    const tabBarWrapStyle = 'flex:none;margin:0 16px 16px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E2DA;display:flex;padding:6px;gap:4px';
+    const tabItemStyle = 'flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0;border-radius:6px;color:#B0B6BC;font-size:10.5px;font-weight:700;cursor:pointer';
+    const tabItemActiveStyle = 'flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0;border-radius:6px;background:#E0F2FE;color:#075985;font-size:10.5px;font-weight:700;cursor:pointer';
+    const activeRailStyle = 'border-radius:6px;background:#FFFFFF;padding:14px 16px;display:flex;flex-direction:column;gap:6px;border:1px solid #E5E2DA;border-left:4px solid #1D4ED8';
+    const activeBadgeStyle = badgeVisual(ORDER_STATUS, 'IN_TRANSIT').style;
+    const panelTitleStyle = 'font-size:18px;line-height:24px;font-weight:800;color:#17202A';
+    const panelMsgStyle = 'font-size:13.5px;line-height:19px;color:#697077';
+    const secondaryBtnStyle = btnVisual('secondary', false, false);
+    const destructiveBtnStyle = btnVisual('destructive', false, false);
+    const cardStyle = 'background:#FFFFFF;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;border:1px solid #E5E2DA';
+    const skeletonCardStyle = 'background:#FFFFFF;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:10px;border:1px solid #E5E2DA';
+    const panelStyle = 'background:#FFFFFF;border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:8px;border:1px solid #E5E2DA';
+    const requestIdStyle = 'font-family:monospace;font-size:11.5px;color:#9AA3AC;background:#F3F2ED;border-radius:6px;padding:6px 10px;align-self:flex-start';
+    const sectionLabelStyle = 'font-size:11px;line-height:15px;font-weight:800;color:#075985;letter-spacing:.4px';
+    const chipStyle = 'flex:none;padding:7px 14px;border-radius:999px;background:#F0EFEA;color:#697077;font-size:12.5px;font-weight:700;white-space:nowrap';
+    const chipActiveStyle = 'flex:none;padding:7px 14px;border-radius:999px;background:#075985;color:#FFFFFF;font-size:12.5px;font-weight:700;white-space:nowrap';
+    const mapWrapStyle = 'position:relative;border-radius:6px;overflow:hidden;border:1px solid #E5E2DA';
+    const trackingRowStyle = 'display:flex;align-items:center;gap:10px;background:#FFFFFF;border-radius:6px;padding:10px 14px;border:1px solid #E5E2DA';
+    const iconCircleInfo = 'width:36px;height:36px;border-radius:6px;background:#E0F2FE;color:#075985;display:flex;align-items:center;justify-content:center;flex:none';
+    const scopeChipStyle = 'display:inline-flex;align-self:flex-start;font-size:10.5px;font-weight:800;letter-spacing:.3px;color:#5B8AA0;background:rgba(224,242,254,.6);padding:4px 10px;border-radius:999px';
+    const infoRowStyle = 'display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #F0EFEA';
+    const activeStatusChip = badgeVisual({ ACTIVE: { role:'active', label:'Đang hoạt động' } }, 'ACTIVE').style;
+    const kpiCardStyle = 'background:#FFFFFF;border:1px solid #E5E2DA;border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:4px';
+
+    let scenarioOptions = [], currentScenario = null, showScenarioPicker = false, scenarioKey = '';
+    if (s.role === 'customer' && s.screen === 'orders') { scenarioOptions = CUSTOMER_LIST_SCENARIOS; currentScenario = s.custListScenario; showScenarioPicker = true; scenarioKey = 'cl'; }
+    if (s.role === 'customer' && s.screen === 'new') { scenarioOptions = CUSTOMER_CREATE_SCENARIOS; currentScenario = s.custNewScenario; showScenarioPicker = true; scenarioKey = 'cn'; }
+    if (s.role === 'customer' && s.screen === 'detail') { scenarioOptions = CUSTOMER_DETAIL_SCENARIOS; currentScenario = s.custDetailScenario; showScenarioPicker = true; scenarioKey = 'cd'; }
+    if (s.role === 'driver' && s.screen === 'orders') { scenarioOptions = DRIVER_LIST_SCENARIOS; currentScenario = s.driverListScenario; showScenarioPicker = true; scenarioKey = 'dl'; }
+    if (s.role === 'driver' && s.screen === 'detail') { scenarioOptions = DRIVER_DETAIL_SCENARIOS; currentScenario = s.driverDetailScenario; showScenarioPicker = true; scenarioKey = 'dd'; }
+
+    const dotStyle = (active) => 'width:' + (active ? '18px' : '6px') + ';height:6px;border-radius:999px;background:' + (active ? '#FFFFFF' : 'rgba(255,255,255,.35)');
+    const slide = ONBOARD_SLIDES[s.onboardIndex];
+    const ob = {
+      icon: slide.icon, title: slide.title, desc: slide.desc,
+      dot0: dotStyle(s.onboardIndex === 0), dot1: dotStyle(s.onboardIndex === 1), dot2: dotStyle(s.onboardIndex === 2),
+      buttonLabel: s.onboardIndex === 2 ? 'Bắt đầu' : 'Tiếp tục',
+    };
+
+    const isOtp = s.loginVariant === 'otp';
+    const login = {
+      isOtp, isPhone: !isOtp,
+      sessionExpired: s.loginVariant === 'session-expired',
+      error: s.loginVariant === 'error',
+      submitting: s.loginVariant === 'submitting',
+      headline: isOtp ? 'Xác thực số điện thoại' : 'Đăng nhập',
+      subline: isOtp ? 'Nhập mã 6 số đã gửi qua SMS' : 'Nền tảng vận chuyển hàng hóa LEOPARD',
+      submitLabel: s.loginVariant === 'submitting' ? 'Đang xử lý...' : (isOtp ? 'Xác nhận mã' : 'Đăng nhập'),
+      submitStyle: btnVisual('primary', false, s.loginVariant === 'submitting'),
+      otpBoxStyle: 'width:38px;height:46px;border-radius:6px;border:1.5px solid #075985;background:#E0F2FE;color:#075985;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center',
+      otpBoxStyleEmpty: 'width:38px;height:46px;border-radius:6px;border:1.5px solid #E5E2DA;background:#FFFFFF',
+    };
+
+    const isInk = s.role === 'driver' && (s.screen === 'orders' || s.screen === 'detail' || s.screen === 'profile');
+    const custTabActive = (name) => (s.screen === name ? tabItemActiveStyle : tabItemStyle);
+    const custTab = { orders: custTabActive('orders'), notifications: custTabActive('notifications'), wallet: custTabActive('wallet'), profile: custTabActive('profile') };
+    const drvTabActive = (name) => (s.screen === name ? tabItemActiveStyle : tabItemStyle);
+    const drvTab = { orders: drvTabActive('orders'), earnings: drvTabActive('earnings'), history: drvTabActive('history'), profile: drvTabActive('profile') };
+
+    const cnRaw = customerCreateVM(s.custNewScenario, s.custNewStep);
+
+    return {
+      state: s,
+      role_onboarding: s.role === 'onboarding', role_login: s.role === 'login', role_register: s.role === 'register', role_customer: s.role === 'customer', role_driver: s.role === 'driver', role_errors: s.role === 'errors',
+      screen_custOrders: s.role === 'customer' && s.screen === 'orders',
+      screen_custNew: s.role === 'customer' && s.screen === 'new',
+      screen_custDetail: s.role === 'customer' && s.screen === 'detail',
+      screen_custProfile: s.role === 'customer' && s.screen === 'profile',
+      screen_custNotifications: s.role === 'customer' && s.screen === 'notifications',
+      screen_custChat: s.role === 'customer' && s.screen === 'chat',
+      screen_custReview: s.role === 'customer' && s.screen === 'review',
+      screen_custReport: s.role === 'customer' && s.screen === 'report',
+      screen_custSupport: s.role === 'customer' && s.screen === 'support',
+      screen_custWallet: s.role === 'customer' && s.screen === 'wallet',
+      screen_custAddresses: s.role === 'customer' && s.screen === 'addresses',
+      screen_custPromotions: s.role === 'customer' && s.screen === 'promotions',
+      screen_custSettings: s.role === 'customer' && s.screen === 'settings',
+      screen_drvOrders: s.role === 'driver' && s.screen === 'orders',
+      screen_drvDetail: s.role === 'driver' && s.screen === 'detail',
+      screen_drvProfile: s.role === 'driver' && s.screen === 'profile',
+      screen_drvHistory: s.role === 'driver' && s.screen === 'history',
+      screen_drvChat: s.role === 'driver' && s.screen === 'chat',
+      screen_drvWallet: s.role === 'driver' && s.screen === 'wallet',
+      screen_drvEarnings: s.role === 'driver' && s.screen === 'earnings',
+      screen_drvPerformance: s.role === 'driver' && s.screen === 'performance',
+      screen_drvKyc: s.role === 'driver' && s.screen === 'kyc',
+      screen_drvSettings: s.role === 'driver' && s.screen === 'settings',
+      roleBtnStyle: { onboarding: roleBtn(s.role === 'onboarding'), login: roleBtn(s.role === 'login'), register: roleBtn(s.role === 'register'), customer: roleBtn(s.role === 'customer'), driver: roleBtn(s.role === 'driver'), errors: roleBtn(s.role === 'errors') },
+      screenBtnStyle: {
+        custOrders: navBtn(s.role === 'customer' && s.screen === 'orders'), custNew: navBtn(s.role === 'customer' && s.screen === 'new'),
+        custDetail: navBtn(s.role === 'customer' && s.screen === 'detail'), custProfile: navBtn(s.role === 'customer' && s.screen === 'profile'),
+        custNotifications: navBtn(s.role === 'customer' && s.screen === 'notifications'), custChat: navBtn(s.role === 'customer' && s.screen === 'chat'),
+        custReview: navBtn(s.role === 'customer' && s.screen === 'review'), custReport: navBtn(s.role === 'customer' && s.screen === 'report'),
+        custSupport: navBtn(s.role === 'customer' && s.screen === 'support'), custWallet: navBtn(s.role === 'customer' && s.screen === 'wallet'),
+        custAddresses: navBtn(s.role === 'customer' && s.screen === 'addresses'), custPromotions: navBtn(s.role === 'customer' && s.screen === 'promotions'),
+        custSettings: navBtn(s.role === 'customer' && s.screen === 'settings'),
+        drvOrders: navBtn(s.role === 'driver' && s.screen === 'orders'), drvDetail: navBtn(s.role === 'driver' && s.screen === 'detail'),
+        drvProfile: navBtn(s.role === 'driver' && s.screen === 'profile'),
+        drvHistory: navBtn(s.role === 'driver' && s.screen === 'history'), drvChat: navBtn(s.role === 'driver' && s.screen === 'chat'),
+        drvWallet: navBtn(s.role === 'driver' && s.screen === 'wallet'), drvEarnings: navBtn(s.role === 'driver' && s.screen === 'earnings'),
+        drvPerformance: navBtn(s.role === 'driver' && s.screen === 'performance'), drvKyc: navBtn(s.role === 'driver' && s.screen === 'kyc'),
+        drvSettings: navBtn(s.role === 'driver' && s.screen === 'settings'),
+        err403: navBtn(s.errorScreen === '403'), err404: navBtn(s.errorScreen === '404'), err500: navBtn(s.errorScreen === '500'),
+      },
+      scenarioOptions, currentScenario, showScenarioPicker, scenarioKey,
+      scenarioOptionRows: scenarioOptions.map((v) => ({ value: v, selected: v === currentScenario })),
+      goRoleOnboarding: this.goRoleOnboarding, goRoleLogin: this.goRoleLogin, goRoleRegister: this.goRoleRegister, goRoleCustomer: this.goRoleCustomer, goRoleDriver: this.goRoleDriver, goRoleErrors: this.goRoleErrors,
+      goErr403: this.goErr403, goErr404: this.goErr404, goErr500: this.goErr500, onboardNext: this.onboardNext,
+      goCustOrders: this.goCustOrders, goCustNew: this.goCustNew, goCustDetail: this.goCustDetail, goCustProfile: this.goCustProfile,
+      goCustNotifications: this.goCustNotifications, goCustChat: this.goCustChat, goCustReview: this.goCustReview, goCustReport: this.goCustReport,
+      goCustSupport: this.goCustSupport, goCustWallet: this.goCustWallet, goCustAddresses: this.goCustAddresses, goCustPromotions: this.goCustPromotions, goCustSettings: this.goCustSettings,
+      goDrvOrders: this.goDrvOrders, goDrvDetail: this.goDrvDetail, goDrvProfile: this.goDrvProfile,
+      goDrvHistory: this.goDrvHistory, goDrvChat: this.goDrvChat, goDrvWallet: this.goDrvWallet, goDrvEarnings: this.goDrvEarnings, goDrvPerformance: this.goDrvPerformance, goDrvKyc: this.goDrvKyc, goDrvSettings: this.goDrvSettings,
+      openCreate: this.openCreate, openDetail: this.openDetail, openDriverDetail: this.openDriverDetail, custNewBack: this.custNewBack,
+      demoLoginCustomer: this.demoLoginCustomer, demoLoginDriver: this.demoLoginDriver,
+      onLoginVariantChange: this.onLoginVariantChange, onScenarioChange: this.onScenarioChange,
+      login, ob, err: s.role === 'errors' ? errorScreenVM(s.errorScreen) : null,
+      secondaryBtnStyle, destructiveBtnStyle,
+      statusBarBg: (isInk || s.role === 'login' || s.role === 'onboarding') ? '#0B2530' : '#F6F5F1',
+      scaffoldStyle, bodyStyle, headerPlainStyle, headerInkStyle, eyebrowPlainStyle, eyebrowInkStyle, titlePlainStyle, titleInkStyle,
+      stickyFooterStyle, tabBarWrapStyle, tabItemStyle, tabItemActiveStyle, activeRailStyle, activeBadgeStyle, panelTitleStyle, panelMsgStyle,
+      cardStyle, skeletonCardStyle, panelStyle, requestIdStyle, sectionLabelStyle, chipStyle, chipActiveStyle, mapWrapStyle, trackingRowStyle,
+      iconCircleInfo, scopeChipStyle, infoRowStyle, activeStatusChip, kpiCardStyle,
+      skListA: skBar(60,14), skListB: skBar(100,40), skListC: skBar(80,14),
+      skDetailBig: skBar(100,150), skDetailMed: skBar(100,90), skDetailSmall: skBar(100,60),
+      skEstA: skBar(50,12), skEstB: skBar(70,20), skEstC: skBar(40,12),
+      cl: (() => { const v = customerListVM(s.custListScenario); if (v.ctaAction === 'openCreate') v.ctaAction = this.openCreate; return v; })(),
+      cn: cnRaw,
+      cd: customerDetailVM(s.custDetailScenario),
+      dl: driverListVM(s.driverListScenario),
+      dd: driverDetailVM(s.driverDetailScenario),
+      notif: notificationsVM(), chat: { messages: chatThread(true) }, chatDrv: { messages: chatThread(false) },
+      rev: {
+        starStyleFilled: 'font-size:28px;color:#B45309', starStyleEmpty: 'font-size:28px;color:#E5E2DA',
+        tagStyleOn: 'padding:8px 14px;border-radius:999px;background:#075985;color:#fff;font-size:13px;font-weight:700',
+        tagStyleOff: 'padding:8px 14px;border-radius:999px;background:#F0EFEA;color:#697077;font-size:13px;font-weight:700',
+        tipStyleOn: 'padding:10px 0;border-radius:6px;background:#075985;color:#fff;font-size:13.5px;font-weight:700;text-align:center',
+        tipStyleOff: 'padding:10px 0;border-radius:6px;background:#F0EFEA;color:#697077;font-size:13.5px;font-weight:700;text-align:center',
+      },
+      wallet: walletMethodsVM(), addr: addressesVM(), promo: promotionsVM(),
+      hist: driverHistoryVM(), walletDrv: walletDriverVM(), kyc: kycVM(), reg: registerVM(),
+      primaryBtnStyleFull: btnVisual('primary', false, false),
+      secondaryBtnStyleFilled: btnVisual('primary', false, false),
+      sosBtnStyle: 'width:100%;box-sizing:border-box;border-radius:6px;border:none;background:#B91C1C;color:#fff;padding:13px 20px;font-size:15px;font-weight:700;min-height:48px;margin-top:10px',
+      toggleOnStyle: 'font-size:12.5px;font-weight:700;color:#166534;background:#DCFCE7;padding:3px 10px;border-radius:999px',
+      custTab, drvTab,
+      menuRowStyle: 'display:flex;justify-content:space-between;align-items:center;padding:14px 12px;border-bottom:1px solid #F0EFEA;font-size:14px;color:#17202A;font-weight:600;cursor:pointer',
+      menuRowStyleLast: 'display:flex;justify-content:space-between;align-items:center;padding:14px 12px;font-size:14px;color:#17202A;font-weight:600;cursor:pointer',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

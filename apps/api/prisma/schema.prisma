@@ -16,6 +16,9 @@ enum Role {
 enum UserStatus {
   ACTIVE
   DISABLED
+  PENDING_APPROVAL
+  REJECTED
+  SUSPENDED
 }
 
 enum FleetMemberRole {
@@ -79,7 +82,12 @@ enum ProviderSource {
 
 model User {
   id                String               @id @default(uuid()) @db.Uuid
-  phone             String               @unique @db.VarChar(32)
+  firebaseUid       String?              @unique @db.VarChar(128)
+  phone             String?              @unique @db.VarChar(32)
+  email             String?              @unique @db.VarChar(255)
+  name              String?              @db.VarChar(120)
+  phoneVerifiedAt   DateTime?            @db.Timestamptz(3)
+  emailVerifiedAt   DateTime?            @db.Timestamptz(3)
   role              Role
   status            UserStatus           @default(ACTIVE)
   createdAt         DateTime             @default(now()) @db.Timestamptz(3)
@@ -140,11 +148,41 @@ model DriverProfile {
   userId            String                                @unique @db.Uuid
   availability      DriverAvailability                    @default(OFFLINE)
   vehicleType       VehicleType
+  licensePlate      String?                               @db.VarChar(32)
+  licenseNumber     String?                               @db.VarChar(64)
+  submittedAt       DateTime?                             @db.Timestamptz(3)
+  reviewedAt        DateTime?                             @db.Timestamptz(3)
+  reviewedById      String?                               @db.Uuid
+  rejectionReason   String?
   lastKnownLocation Unsupported("geography(Point,4326)")?
   lastKnownAt       DateTime?                             @db.Timestamptz(3)
   createdAt         DateTime                              @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                              @default(now()) @updatedAt @db.Timestamptz(3)
   user              User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  documents         DriverDocument[]
+}
+
+enum DriverDocumentType {
+  LICENSE
+  VEHICLE_REGISTRATION
+  ID_CARD
+  VEHICLE_PHOTO
+}
+
+model DriverDocument {
+  id              String             @id @default(uuid()) @db.Uuid
+  driverProfileId String             @db.Uuid
+  type            DriverDocumentType
+  provider        ProviderSource
+  storageKey      String             @unique
+  contentType     String
+  sizeBytes       Int
+  checksumSha256  String
+  clientRequestId String?
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+  driverProfile   DriverProfile      @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+
+  @@index([driverProfileId, type])
 }
 
 model Order {

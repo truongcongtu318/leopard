@@ -36,11 +36,11 @@ export class TrackingGateway implements OnGatewayConnection {
   public async handleConnection(client: TrackingSocket): Promise<void> {
     const token = readToken(client);
     try {
-      if (!token) throw new DomainError('AUTH_REQUIRED', 401, 'Authentication required');
+      if (!token) throw new DomainError('AUTH_REQUIRED', 401, 'Bạn cần đăng nhập để tiếp tục');
       client.data.actor = await this.auth.authenticate(token);
       client.data.token = token;
     } catch {
-      client.emit(TrackingSocketEvent.sessionError, sessionErrorEvent('AUTH_REQUIRED', 'Authentication required'));
+      client.emit(TrackingSocketEvent.sessionError, sessionErrorEvent('AUTH_REQUIRED', 'Bạn cần đăng nhập để tiếp tục'));
       client.disconnect(true);
     }
   }
@@ -52,7 +52,7 @@ export class TrackingGateway implements OnGatewayConnection {
   ): Promise<SocketAck<{ latestPoint: Awaited<ReturnType<TrackingService['joinOrder']>> }>> {
     try {
       const actor = await this.actor(client);
-      if (!isUuid(payload?.orderId)) throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Order was not found');
+      if (!isUuid(payload?.orderId)) throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
       const latestPoint = await this.tracking.joinOrder(actor, payload.orderId);
       await client.join(room(payload.orderId));
       return { ok: true, latestPoint };
@@ -68,7 +68,7 @@ export class TrackingGateway implements OnGatewayConnection {
   ): Promise<SocketAck> {
     try {
       await this.actor(client);
-      if (!isUuid(payload?.orderId)) throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Order was not found');
+      if (!isUuid(payload?.orderId)) throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
       await client.leave(room(payload.orderId));
       return { ok: true };
     } catch (error) {
@@ -83,7 +83,7 @@ export class TrackingGateway implements OnGatewayConnection {
   ): Promise<SocketAck<{ point: Awaited<ReturnType<TrackingService['recordPoint']>> }>> {
     try {
       const actor = await this.actor(client);
-      if (!isUuid(payload?.orderId)) throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Order was not found');
+      if (!isUuid(payload?.orderId)) throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
       const point = await this.tracking.recordPoint(actor, payload.orderId, payload);
       this.server.to(room(payload.orderId)).emit(TrackingSocketEvent.pointUpdated, trackingPointEvent({ orderId: payload.orderId, point }));
       return { ok: true, point };
@@ -94,15 +94,15 @@ export class TrackingGateway implements OnGatewayConnection {
 
   private async actor(client: TrackingSocket): Promise<AuthenticatedActor> {
     const token = client.data.token;
-    if (!token) throw new DomainError('AUTH_REQUIRED', 401, 'Authentication required');
+    if (!token) throw new DomainError('AUTH_REQUIRED', 401, 'Bạn cần đăng nhập để tiếp tục');
     try {
       const actor = await this.auth.authenticate(token);
       client.data.actor = actor;
       return actor;
     } catch {
-      client.emit(TrackingSocketEvent.sessionError, sessionErrorEvent('SESSION_EXPIRED', 'Session expired'));
+      client.emit(TrackingSocketEvent.sessionError, sessionErrorEvent('SESSION_EXPIRED', 'Phiên đăng nhập đã hết hạn'));
       client.disconnect(true);
-      throw new DomainError('SESSION_EXPIRED', 401, 'Session expired');
+      throw new DomainError('SESSION_EXPIRED', 401, 'Phiên đăng nhập đã hết hạn');
     }
   }
 

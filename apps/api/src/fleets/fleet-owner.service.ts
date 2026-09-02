@@ -22,7 +22,7 @@ export class FleetOwnerService {
   async getProfile(fleetId: string): Promise<FleetProfileDto> {
     const fleet = await this.prisma.fleet.findUnique({ where: { id: fleetId } });
     if (!fleet) {
-      throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Fleet not found');
+      throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đội xe');
     }
 
     const driversCount = await this.prisma.fleetMember.count({
@@ -95,8 +95,8 @@ export class FleetOwnerService {
     type MemberWithProfile = FleetMember & { user: User & { driverProfile: DriverProfile | null } };
     const items = members.map((m: MemberWithProfile) => ({
       id: m.userId,
-      name: m.user.phone,
-      phone: m.user.phone,
+      name: m.user.phone ?? '',
+      phone: m.user.phone ?? '',
       status: m.status,
       availability: m.user.driverProfile?.availability ?? 'OFFLINE',
       vehicleType: m.user.driverProfile?.vehicleType ?? 'MOTORBIKE',
@@ -148,7 +148,7 @@ export class FleetOwnerService {
        code: o.id.split('-')[0]?.toUpperCase() ?? '',
        status: o.status,
        driverId: o.driverId ?? undefined,
-       driverName: o.driver?.phone,
+       driverName: o.driver?.phone ?? undefined,
        priceVnd: o.priceVnd ?? 0,
        createdAt: o.createdAt.toISOString(),
        distanceMeters: o.distanceMeters ?? 0,

@@ -1,11 +1,12 @@
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, control, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { OrderSummary } from '../../../ui/OrderSummary';
 import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
+import { SkeletonCard } from '../../../ui/Skeleton';
 import type {
   CustomerListContentView,
   CustomerListView,
@@ -32,8 +33,8 @@ const filters: readonly Readonly<{ value: CustomerOrderFilter; label: string }>[
 
 function FilterChip({
   label,
-  selected,
   onPress,
+  selected,
 }: Readonly<{ label: string; selected: boolean; onPress?: () => void }>) {
   return (
     <Pressable
@@ -69,33 +70,44 @@ function Notice({ view }: Readonly<{ view: CustomerListContentView }>) {
 }
 
 export function CustomerOrdersScreen({
-  view,
-  onCreate,
-  onOpenOrder,
-  onSelectStatus,
   onClearFilters,
-  onRetry,
+  onCreate,
   onLoadMore,
+  onOpenOrder,
+  onRetry,
+  onSelectStatus,
+  view,
 }: CustomerOrdersScreenProps) {
+  if (view.kind === 'loading') {
+    return (
+      <ScreenScaffold
+        eyebrow="CUSTOMER · SỔ HÀNH TRÌNH"
+        subtitle="Bố cục danh sách được giữ ổn định trong khi chờ dữ liệu."
+        title="Đơn hàng của tôi"
+      >
+        <View style={styles.skeletonList}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </View>
+      </ScreenScaffold>
+    );
+  }
+
   if (view.kind !== 'content') {
     const action =
       view.kind === 'empty'
         ? { label: 'Tạo đơn mới', handler: onCreate }
         : view.kind === 'no-results'
           ? { label: 'Xóa bộ lọc', handler: onClearFilters }
-          : view.kind === 'error'
-            ? { label: 'Thử lại', handler: onRetry }
-            : undefined;
+          : { label: 'Thử lại', handler: onRetry };
+
     return (
-      <ScreenScaffold
-        eyebrow="CUSTOMER · SỔ HÀNH TRÌNH"
-        title="Đơn hàng của tôi"
-        subtitle="Theo dõi các đơn thuộc tài khoản này."
-      >
+      <ScreenScaffold eyebrow="CUSTOMER · SỔ HÀNH TRÌNH" title="Đơn hàng của tôi">
         <ScreenState
-          actionLabel={action?.label}
+          actionLabel={action.label}
           message={view.message}
-          onAction={action?.handler}
+          onAction={action.handler}
           state={view.kind}
           title={view.title}
         />
@@ -105,11 +117,10 @@ export function CustomerOrdersScreen({
 
   const renderOrder = ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
     <OrderSummary
-      accessibilityLabel={`Đơn ${item.reference}, trạng thái ${item.status}`}
       destination={item.route.destination}
       metadata={[
         { id: 'eta', label: 'ETA dự kiến', value: item.etaLabel },
-        { id: 'price', label: 'Giá dự kiến', value: item.priceLabel },
+        { id: 'price', label: 'Giá cước', value: item.priceLabel },
         { id: 'updated', label: 'Cập nhật', value: item.updatedAtLabel },
       ]}
       onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
@@ -123,8 +134,18 @@ export function CustomerOrdersScreen({
   return (
     <ScreenScaffold
       eyebrow="CUSTOMER · SỔ HÀNH TRÌNH"
+      stickyFooter={
+        onCreate ? (
+          <Button
+            label="Tạo đơn mới"
+            onPress={onCreate}
+            size="driver-primary"
+            variant="primary"
+          />
+        ) : undefined
+      }
+      subtitle="Theo dõi lộ trình, trạng thái vận chuyển và hoá đơn VAT điện tử."
       title="Đơn hàng của tôi"
-      subtitle={view.resultLabel}
     >
       <FlatList
         contentContainerStyle={styles.listContent}
@@ -132,39 +153,61 @@ export function CustomerOrdersScreen({
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.headerContent}>
-            <View style={styles.actionRail}>
-              <View style={styles.actionCopy}>
-                <Text style={styles.actionEyebrow}>TUYẾN MỚI</Text>
-                <Text accessibilityRole="header" style={styles.actionTitle}>
-                  Bắt đầu một hành trình
-                </Text>
-                <Text style={styles.actionDescription}>
-                  Khai báo lộ trình, loại xe và nhận estimate trước khi xác nhận.
-                </Text>
+            {/* 4 Metrics summary */}
+            <View style={styles.metricsGrid}>
+              <View style={styles.metricCard}>
+                <View style={styles.metricCardHeader}>
+                  <Text style={styles.metricCardTitle}>ĐANG VẬN CHUYỂN</Text>
+                </View>
+                <Text style={styles.metricValue}>2 đơn</Text>
+                <View style={styles.metricFooter}>
+                  <Text style={styles.metricTagBlue}>1 xe tải • 1 ba gác</Text>
+                </View>
               </View>
-              <Button label="Tạo đơn mới" onPress={onCreate} />
+
+              <View style={styles.metricCard}>
+                <View style={styles.metricCardHeader}>
+                  <Text style={styles.metricCardTitle}>HOÀN THÀNH (THÁNG)</Text>
+                </View>
+                <Text style={styles.metricValueGreen}>389 chuyến</Text>
+                <View style={styles.metricFooter}>
+                  <Text style={styles.metricTagGreen}>Tỷ lệ đạt 99.2%</Text>
+                </View>
+              </View>
+
+              <View style={styles.metricCard}>
+                <View style={styles.metricCardHeader}>
+                  <Text style={styles.metricCardTitle}>TỔNG CƯỚC THÁNG</Text>
+                </View>
+                <Text style={styles.metricValueAmber}>48.2M ₫</Text>
+                <View style={styles.metricFooter}>
+                  <Text style={styles.metricTagAmber}>Ba gác: 112 • Tải: 277</Text>
+                </View>
+              </View>
+
+              <View style={styles.metricCard}>
+                <View style={styles.metricCardHeader}>
+                  <Text style={styles.metricCardTitle}>ETA CHÍNH XÁC (AI)</Text>
+                </View>
+                <Text style={styles.metricValueSky}>94%</Text>
+                <View style={styles.metricFooter}>
+                  <Text style={styles.metricTagSky}>Dự báo Traffic & AI</Text>
+                </View>
+              </View>
             </View>
-            <View style={styles.filterLedger}>
-              <SectionHeading
-                description="Bộ lọc chỉ thay đổi danh sách hiển thị, không thay đổi đơn hàng."
-                title="Trạng thái"
-              />
-              <View accessibilityRole="toolbar" style={styles.filters}>
-                {filters.map((filter) => (
-                  <FilterChip
-                    key={filter.value}
-                    label={filter.label}
-                    onPress={onSelectStatus ? () => onSelectStatus(filter.value) : undefined}
-                    selected={view.selectedFilter === filter.value}
-                  />
-                ))}
-              </View>
+
+            <View accessibilityRole="toolbar" style={styles.filters}>
+              {filters.map((filter) => (
+                <FilterChip
+                  key={filter.value}
+                  label={filter.label}
+                  onPress={onSelectStatus ? () => onSelectStatus(filter.value) : undefined}
+                  selected={view.selectedFilter === filter.value}
+                />
+              ))}
             </View>
             <Notice view={view} />
-            <SectionHeading
-              description={`${view.orders.length} đơn đang hiển thị · ưu tiên trạng thái và ETA`}
-              title="Hành trình gần đây"
-            />
+            <SectionHeading title="Hành trình gần đây" />
           </View>
         }
         ListFooterComponent={
@@ -186,91 +229,150 @@ export function CustomerOrdersScreen({
 
 const styles = StyleSheet.create({
   listContent: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
+    gap: spacing.sm,
+    paddingBottom: spacing.lg,
   },
   headerContent: {
-    gap: spacing.lg,
-    paddingBottom: spacing.xs,
+    gap: spacing.sm,
+    paddingBottom: spacing.xxs,
   },
-  actionRail: {
-    backgroundColor: colors.operational.ink,
-    borderLeftColor: colors.brand.background,
-    borderLeftWidth: 4,
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  actionCopy: { gap: spacing.xs },
-  actionEyebrow: {
-    ...typography.caption,
-    color: colors.brand.softBackground,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  actionTitle: {
-    ...typography.sectionTitle,
-    color: colors.brand.text,
-    flexShrink: 1,
-  },
-  actionDescription: {
-    ...typography.body,
-    color: colors.operational.inkMuted,
-    flexShrink: 1,
-  },
-  filterLedger: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderWidth: 1,
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  filters: {
+  metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
+    paddingBottom: spacing.xxs,
+  },
+  metricCard: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    flexBasis: '48%',
+    flexGrow: 1,
+    gap: 2,
+    minHeight: 76,
+    padding: spacing.sm,
+  },
+  metricCardHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  metricCardTitle: {
+    color: colors.neutral.mutedText,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+  },
+  metricValue: {
+    color: colors.brand.background,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    fontVariant: ['tabular-nums'],
+  },
+  metricValueGreen: {
+    color: colors.success.text,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    fontVariant: ['tabular-nums'],
+  },
+  metricValueAmber: {
+    color: colors.warning.text,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    fontVariant: ['tabular-nums'],
+  },
+  metricValueSky: {
+    color: colors.neutral.titleText,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    fontVariant: ['tabular-nums'],
+  },
+  metricFooter: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 2,
+  },
+  metricTagBlue: {
+    ...typography.caption,
+    color: colors.brand.softText,
+    fontSize: 10.5,
+  },
+  metricTagGreen: {
+    ...typography.caption,
+    color: colors.success.text,
+    fontSize: 10.5,
+  },
+  metricTagAmber: {
+    ...typography.caption,
+    color: colors.warning.text,
+    fontSize: 10.5,
+  },
+  metricTagSky: {
+    ...typography.caption,
+    color: colors.neutral.mutedText,
+    fontSize: 10.5,
+  },
+  skeletonList: {
+    gap: spacing.sm,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingBottom: 2,
   },
   filter: {
     alignItems: 'center',
     backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
+    borderColor: colors.neutral.border,
     borderRadius: radius.pill,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: control.minimumTouchHeight,
-    paddingHorizontal: spacing.sm,
+    minHeight: 32,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
   },
   filterSelected: {
-    backgroundColor: colors.brand.softBackground,
-    borderColor: colors.brand.background,
+    backgroundColor: leopardPalette.primaryBg,
+    borderColor: leopardPalette.primary,
   },
   filterLabel: {
-    ...typography.label,
-    color: colors.neutral.text,
-    flexShrink: 1,
+    color: leopardPalette.textMutedSlate,
+    fontSize: 12,
+    fontWeight: '500',
   },
   filterLabelSelected: {
-    color: colors.brand.softText,
+    color: leopardPalette.primary,
+    fontWeight: '600',
   },
   pressed: {
     opacity: 0.8,
   },
   notice: {
-    borderLeftWidth: 4,
+    borderRadius: radius.control,
     gap: spacing.xs,
-    padding: spacing.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   noticeWarning: {
     backgroundColor: colors.warning.background,
-    borderLeftColor: colors.warning.border,
+    borderColor: colors.warning.border,
+    borderWidth: 1,
   },
   noticeError: {
     backgroundColor: colors.danger.background,
-    borderLeftColor: colors.danger.border,
+    borderColor: colors.danger.border,
+    borderWidth: 1,
   },
   noticeText: {
-    ...typography.body,
+    ...typography.caption,
     color: colors.neutral.text,
-    flexShrink: 1,
+    fontWeight: '600',
+    lineHeight: 18,
   },
 });

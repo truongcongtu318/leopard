@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
 import { LedgerSection } from '../../../ui/LedgerSection';
@@ -9,12 +9,11 @@ import { PaymentSummary } from '../../../ui/PaymentSummary';
 import { RouteSpine } from '../../../ui/RouteSpine';
 import { RouteMapSchematic } from '../../../ui/RouteMapSchematic';
 import { MediaImage } from '../../../ui/MediaImage';
-import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
+import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
 import { StatusBadge } from '../../../ui/StatusBadge';
 import { StatusTimeline } from '../../../ui/StatusTimeline';
 import type {
-  CustomerActionView,
   CustomerDetailContentView,
   CustomerDetailView,
   CustomerTrackingView,
@@ -98,182 +97,150 @@ function TrackingPanel({
   return (
     <View style={styles.section}>
       <Text style={styles.driver}>{tracking.driverLabel}</Text>
-      <Text accessibilityLiveRegion="polite" style={styles.warningText}>
-        {tracking.message}
-      </Text>
-      <MapPanel
-        lastUpdatedLabel={tracking.lastUpdatedLabel}
-        onRetry={onRetry}
-        state="stale"
-        summary={tracking.summary}
-      >
+      <Text style={styles.body}>{tracking.message}</Text>
+      <Text style={styles.helper}>Cập nhật lần cuối: {tracking.lastUpdatedLabel}</Text>
+      <MapPanel lastUpdatedLabel={tracking.lastUpdatedLabel} onRetry={onRetry} state="stale" summary={tracking.summary}>
         {mapContent}
       </MapPanel>
     </View>
   );
 }
 
-function MediaLedger({
-  media,
-  onPickImage,
-}: Readonly<{
-  media: CustomerDetailContentView['order']['media'];
-  onPickImage?: () => void;
-}>) {
-  return (
-    <LedgerSection index="04" title={media.label}>
-      {media.kind === 'available' && media.mediaId ? (
-        <MediaImage mediaId={media.mediaId} />
-      ) : null}
-      <Text accessibilityRole={media.kind === 'error' ? 'alert' : undefined} style={styles.body}>
-        {media.description}
-      </Text>
-      {media.kind !== 'available' ? (
-        <Button label="Chọn ảnh hàng hóa" onPress={onPickImage} variant="secondary" />
-      ) : null}
-    </LedgerSection>
-  );
-}
-
-function ActionButton({
-  action,
-  onPress,
-}: Readonly<{ action: CustomerActionView; onPress?: (actionId: string) => void }>) {
-  return (
-    <Button
-      disabled={action.disabled}
-      isLoading={action.isPending}
-      label={action.label}
-      loadingLabel={action.pendingLabel}
-      onPress={
-        onPress && !action.disabled && !action.isPending ? () => onPress(action.id) : undefined
-      }
-      variant={
-        action.emphasis === 'destructive'
-          ? 'destructive'
-          : action.emphasis === 'secondary'
-            ? 'secondary'
-            : 'primary'
-      }
-    />
-  );
-}
-
 function CustomerDetailContent({
-  view,
-  onPrimaryAction,
-  onPaymentAction,
   onCancel,
-  onRetry,
+  onPaymentAction,
   onPickCargoImage,
-}: Readonly<Omit<CustomerOrderDetailScreenProps, 'view'> & { view: CustomerDetailContentView }>) {
-  const { order } = view;
+  onPrimaryAction,
+  onRetry,
+  view,
+}: Readonly<{
+  view: CustomerDetailContentView;
+  onPrimaryAction?: (actionId: string) => void;
+  onPaymentAction?: (actionId: string) => void;
+  onCancel?: (actionId: string) => void;
+  onRetry?: () => void;
+  onPickCargoImage?: () => void;
+}>) {
+  const order = view.order;
+  const cancelAction = 'action' in view.cancel ? view.cancel.action : null;
+
   return (
     <ScreenScaffold
       eyebrow="CUSTOMER · JOURNEY SHEET"
-      subtitle={`Cập nhật ${order.updatedAtLabel}`}
+      subtitle="Theo dõi chi tiết đơn, hành trình xe chạy và xác nhận thanh toán."
       title={`Đơn ${order.reference}`}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Journey Status Slab */}
         <View style={styles.journeyStatusSlab}>
-          <Text style={styles.slabEyebrow}>LIVE JOURNEY</Text>
+          <Text style={styles.slabEyebrow}>TRẠNG THÁI HIỆN TẠI</Text>
           <View style={styles.statusRow}>
             <StatusBadge domain="order" status={order.status} />
             <Text style={styles.slabPrice}>{order.priceLabel}</Text>
           </View>
-          <Text style={styles.slabHelper}>
-            Giá dự kiến · lifecycle và tracking được trình bày tách biệt
-          </Text>
         </View>
+
         {view.notice ? (
-          <View accessibilityLiveRegion="polite" style={styles.notice}>
+          <View style={styles.notice}>
             <Text style={styles.warningText}>{view.notice}</Text>
           </View>
         ) : null}
 
-        <LedgerSection
-          description={`Khoảng cách ${order.route.distanceLabel}`}
-          index="01"
-          title="Lộ trình"
-          tone="signal"
-        >
+        {/* Section 1: Route */}
+        <LedgerSection description="Điểm lấy, các điểm dừng và điểm giao hàng" index="01" title="Lộ trình vận chuyển">
           <RouteSpine
             destination={order.route.destination}
             origin={order.route.origin}
             stops={order.route.stops}
           />
-          <EtaIndicator durationSeconds={order.etaDurationSeconds} source={order.etaSource} />
         </LedgerSection>
 
-        <LedgerSection index="02" title="Tài xế và tracking">
+        {/* Section 2: Tracking Map */}
+        <LedgerSection description="Vị trí xe và lộ trình theo thời gian thực" index="02" title="Bản đồ hành trình">
           <TrackingPanel
             destinationLabel={order.route.destination.label}
             onRetry={onRetry}
             originLabel={order.route.origin.label}
             tracking={order.tracking}
           />
+          {typeof order.etaDurationSeconds === 'number' && !Number.isNaN(order.etaDurationSeconds) ? (
+            <EtaIndicator
+              durationSeconds={order.etaDurationSeconds}
+              source={order.etaSource}
+            />
+          ) : null}
         </LedgerSection>
 
-        <View style={styles.paymentLedger}>
-          <Text style={styles.ledgerIndex}>03</Text>
-          <View style={styles.paymentContent}>
-            <PaymentSummary
-              action={
-                order.payment.action
-                  ? {
-                      disabled: order.payment.action.disabled,
-                      isLoading: order.payment.action.isPending,
-                      label: order.payment.action.label,
-                      loadingLabel: order.payment.action.pendingLabel,
-                      onPress: onPaymentAction
-                        ? () => onPaymentAction(order.payment.action?.id ?? 'payment')
-                        : undefined,
-                    }
-                  : undefined
-              }
-              amountLabel={order.payment.amountLabel}
-              expiresAtLabel={order.payment.expiresAtLabel}
-              referenceLabel={order.payment.referenceLabel}
-              sourceLabel={order.payment.sourceLabel}
-              status={order.payment.status}
-            />
+        {/* Section 3: Payment */}
+        <PaymentSummary
+          action={
+            order.payment.action
+              ? {
+                  label: order.payment.action.label,
+                  onPress: onPaymentAction ? () => onPaymentAction(order.payment.action!.id) : undefined,
+                  disabled: order.payment.action.disabled,
+                  isLoading: order.payment.action.isPending,
+                  loadingLabel: order.payment.action.pendingLabel,
+                }
+              : undefined
+          }
+          amountLabel={order.payment.amountLabel}
+          expiresAtLabel={order.payment.expiresAtLabel}
+          notice={order.payment.notice}
+          referenceLabel={order.payment.referenceLabel}
+          sourceLabel={order.payment.sourceLabel}
+          status={order.payment.status}
+        />
+
+        {/* Section 4: Media */}
+        <LedgerSection description="Quy cách hàng hóa và hình ảnh đính kèm" index="04" title="Minh chứng hàng hóa">
+          <View style={styles.mediaGrid}>
+            <View style={styles.mediaTile}>
+              <Text style={styles.mediaIndex}>01</Text>
+              <Text style={styles.mediaLabel}>Ảnh hàng hóa</Text>
+              {order.media.mediaId ? (
+                <MediaImage mediaId={order.media.mediaId} />
+              ) : onPickCargoImage ? (
+                <Button label="Tải ảnh lên" onPress={onPickCargoImage} variant="secondary" />
+              ) : (
+                <Text style={styles.helper}>Chưa có ảnh</Text>
+              )}
+            </View>
           </View>
-        </View>
-        {order.payment.notice ? (
-          <View style={order.payment.qrState === 'expired' ? styles.expiredNotice : styles.notice}>
-            <Text
-              accessibilityRole={order.payment.status === 'FAILED' ? 'alert' : undefined}
-              style={styles.body}
-            >
-              {order.payment.notice}
-            </Text>
-          </View>
-        ) : null}
+        </LedgerSection>
 
-        <MediaLedger media={order.media} onPickImage={onPickCargoImage} />
+        {/* Section 5: Timeline */}
+        <StatusTimeline
+          entries={order.history.map((h) => ({
+            id: h.id,
+            status: h.status,
+            timestampLabel: h.timestampLabel,
+            description: h.description,
+            isCurrent: h.status === order.status,
+          }))}
+        />
 
-        <StatusTimeline entries={order.history} />
-
-        {view.actions.map((action) => (
-          <ActionButton action={action} key={action.id} onPress={onPrimaryAction} />
+        {/* Primary Action Buttons */}
+        {view.actions.map((act) => (
+          <Button
+            key={act.id}
+            disabled={act.disabled}
+            isLoading={act.isPending}
+            label={act.label}
+            loadingLabel={act.pendingLabel}
+            onPress={onPrimaryAction ? () => onPrimaryAction(act.id) : undefined}
+          />
         ))}
 
-        {view.cancel.kind === 'unavailable' ? (
-          <View style={styles.section}>
-            <SectionHeading title="Hủy đơn" />
-            <Text style={styles.helper}>{view.cancel.reason}</Text>
-          </View>
-        ) : null}
-        {view.cancel.kind !== 'hidden' && view.cancel.kind !== 'unavailable' ? (
+        {cancelAction ? (
           <View style={styles.cancelSection}>
-            <SectionHeading title="Hủy đơn" />
-            <Text
-              accessibilityRole={view.cancel.kind === 'error' ? 'alert' : undefined}
-              style={styles.body}
-            >
-              {view.cancel.message}
-            </Text>
-            <ActionButton action={view.cancel.action} onPress={onCancel} />
+            <Button
+              disabled={cancelAction.disabled}
+              isLoading={cancelAction.isPending}
+              label={cancelAction.label}
+              onPress={onCancel ? () => onCancel(cancelAction.id) : undefined}
+              variant="destructive"
+            />
           </View>
         ) : null}
       </ScrollView>
@@ -284,7 +251,7 @@ function CustomerDetailContent({
 export function CustomerOrderDetailScreen(props: CustomerOrderDetailScreenProps) {
   if (props.view.kind !== 'content') {
     return (
-      <ScreenScaffold eyebrow="CUSTOMER · JOURNEY SHEET" title="Chi tiết đơn">
+      <ScreenScaffold eyebrow="CUSTOMER · JOURNEY SHEET" title="Chi tiết đơn hàng">
         <ScreenState
           actionLabel={props.view.kind === 'error' ? 'Thử lại' : undefined}
           message={props.view.message}
@@ -305,21 +272,24 @@ const styles = StyleSheet.create({
   },
   section: { gap: spacing.sm },
   journeyStatusSlab: {
-    backgroundColor: colors.operational.ink,
+    backgroundColor: leopardPalette.surfaceWhite,
     borderLeftColor: colors.brand.background,
     borderLeftWidth: 4,
+    borderRadius: radius.card,
+    borderColor: leopardPalette.cardBorder,
+    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
   slabEyebrow: {
     ...typography.caption,
-    color: colors.brand.softBackground,
+    color: colors.brand.softText,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.8,
   },
   statusRow: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
@@ -327,12 +297,10 @@ const styles = StyleSheet.create({
   },
   slabPrice: {
     ...typography.label,
-    color: colors.brand.text,
-    flexShrink: 1,
-  },
-  slabHelper: {
-    ...typography.caption,
-    color: colors.operational.inkMuted,
+    color: leopardPalette.primary,
+    fontSize: 18,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
     flexShrink: 1,
   },
   driver: {
@@ -342,6 +310,7 @@ const styles = StyleSheet.create({
   },
   body: {
     ...typography.body,
+    fontSize: 14,
     color: colors.neutral.text,
     flexShrink: 1,
   },
@@ -352,42 +321,26 @@ const styles = StyleSheet.create({
   },
   warningText: {
     ...typography.body,
+    fontSize: 13.5,
     color: colors.warning.text,
     flexShrink: 1,
   },
-  paymentLedger: {
-    alignItems: 'flex-start',
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  ledgerIndex: {
-    ...typography.caption,
-    backgroundColor: colors.operational.ink,
-    color: colors.brand.text,
-    fontWeight: '700',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs,
-  },
-  paymentContent: { flex: 1, minWidth: 0 },
   mediaGrid: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
   mediaTile: {
-    backgroundColor: colors.operational.mapLand,
-    borderColor: colors.neutral.subtleBorder,
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderRadius: radius.card,
     borderWidth: 1,
     flex: 1,
-    gap: spacing.lg,
-    minHeight: 112,
+    gap: spacing.sm,
+    minHeight: 100,
     padding: spacing.sm,
   },
   mediaIndex: {
-    ...typography.sectionTitle,
+    ...typography.caption,
     color: colors.brand.background,
     fontWeight: '700',
   },
@@ -401,13 +354,7 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.warning.border,
     borderLeftWidth: 4,
     padding: spacing.sm,
-  },
-  expiredNotice: {
-    backgroundColor: colors.danger.background,
-    borderColor: colors.danger.border,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    padding: spacing.sm,
+    borderRadius: radius.cardSm,
   },
   cancelSection: {
     borderTopColor: colors.danger.border,

@@ -49,7 +49,7 @@ function createMockResponse(status: number, body: unknown): Response {
 
 describe('getMobileHome', () => {
   const cases = [
-    ['CUSTOMER', '/customer/orders'],
+    ['CUSTOMER', '/customer/home'],
     ['DRIVER', '/driver/orders'],
     ['FLEET_OWNER', '/(public)/login'],
     ['ADMIN', '/(public)/login'],
@@ -133,7 +133,7 @@ describe('getMobileRouteDecision', () => {
   }
 
   const mismatchedCases = [
-    ['CUSTOMER', 'driver', '/customer/orders'],
+    ['CUSTOMER', 'driver', '/customer/home'],
     ['DRIVER', 'customer', '/driver/orders'],
   ] as const;
 
@@ -253,7 +253,7 @@ describe('useProtectedLayout', () => {
         canRenderProtectedContent: false,
         kind: 'denied',
         reason: 'role-mismatch',
-        redirectTo: '/customer/orders',
+        redirectTo: '/customer/home',
       });
     });
   });
@@ -299,3 +299,83 @@ describe('useProtectedLayout', () => {
     expect(result.current.canRenderProtectedContent).toBe(false);
   });
 });
+
+describe('useRootSessionRouter', () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    originalFetch = globalThis.fetch;
+    globalThis.fetch = jest.fn() as unknown as typeof globalThis.fetch;
+    mockIsAvailableAsync.mockResolvedValue(true);
+    await sessionStore.clearSession();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('resolves unauthenticated session to /(public)/onboarding', async () => {
+    mockGetItemAsync.mockResolvedValue(null);
+    const { useRootSessionRouter } = require('./role-router');
+    const { result } = await renderHook(() => useRootSessionRouter());
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isHydrated: true,
+        redirectTo: '/(public)/onboarding',
+      });
+    });
+  });
+
+  it('resolves CUSTOMER session to /customer/home', async () => {
+    mockGetItemAsync.mockImplementation((key) => {
+      if (key === 'leopard.refresh') return Promise.resolve('refresh-tok');
+      if (key === 'leopard.role') return Promise.resolve('CUSTOMER');
+      return Promise.resolve(null);
+    });
+
+    fetchMock().mockResolvedValue(
+      createMockResponse(200, {
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      }),
+    );
+
+    const { useRootSessionRouter } = require('./role-router');
+    const { result } = await renderHook(() => useRootSessionRouter());
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isHydrated: true,
+        redirectTo: '/customer/home',
+      });
+    });
+  });
+
+  it('resolves DRIVER session to /driver/orders', async () => {
+    mockGetItemAsync.mockImplementation((key) => {
+      if (key === 'leopard.refresh') return Promise.resolve('refresh-tok');
+      if (key === 'leopard.role') return Promise.resolve('DRIVER');
+      return Promise.resolve(null);
+    });
+
+    fetchMock().mockResolvedValue(
+      createMockResponse(200, {
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      }),
+    );
+
+    const { useRootSessionRouter } = require('./role-router');
+    const { result } = await renderHook(() => useRootSessionRouter());
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isHydrated: true,
+        redirectTo: '/driver/orders',
+      });
+    });
+  });
+});
+

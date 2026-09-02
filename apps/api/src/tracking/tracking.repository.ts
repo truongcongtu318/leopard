@@ -23,7 +23,7 @@ export class TrackingRepository {
     return this.prisma.$transaction(async (tx) => {
       const order = await this.findOrderAccessInternal(tx, actorId, orderId);
       if (!order) {
-        throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Order was not found');
+        throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
       }
 
       authorize(order);
@@ -52,7 +52,7 @@ export class TrackingRepository {
            point.longitude !== input.longitude ||
            point.capturedAt.getTime() !== input.capturedAt.getTime()
         ) {
-           throw new DomainError('TRACKING_POINT_CONFLICT', 409, 'Conflict tracking point payload');
+           throw new DomainError('TRACKING_POINT_CONFLICT', 409, 'Dữ liệu điểm theo dõi bị xung đột');
         }
         return point;
       }

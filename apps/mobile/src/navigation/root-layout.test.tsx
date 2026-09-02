@@ -18,7 +18,7 @@ jest.mock('expo-router', () => {
 
 describe('RootLayout providers', () => {
   it('wraps children in QueryClientProvider so useQuery is available', () => {
-    const { default: RootLayout } = require('./_layout');
+    const { default: RootLayout } = require('../../app/_layout');
     expect(() => render(<RootLayout />)).not.toThrow();
     expect(mockState.capturedClient).toBeDefined();
   });

@@ -32,7 +32,7 @@ export function assertCanSendTracking(
     throw new DomainError(
       'TRACKING_ORDER_INACTIVE',
       409,
-      'Tracking is not active for this order',
+      'Đơn hàng này chưa bật theo dõi hành trình',
     );
   }
 }
@@ -76,6 +76,6 @@ function forbidden(): DomainError {
   return new DomainError(
     'TRACKING_FORBIDDEN',
     403,
-    'You do not have access to this order tracking',
+    'Bạn không có quyền theo dõi đơn hàng này',
   );
 }

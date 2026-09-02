@@ -9,6 +9,7 @@ const adminNavItems = [
   { label: 'Người dùng', href: '/admin/users' },
   { label: 'Đội xe', href: '/admin/fleets' },
   { label: 'Tài xế', href: '/admin/drivers' },
+  { label: 'Duyệt tài xế', href: '/admin/driver-applications' },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

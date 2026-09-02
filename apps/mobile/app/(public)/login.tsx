@@ -6,15 +6,14 @@ export default function LoginRoute() {
   const router = useRouter();
   const searchParams = useLocalSearchParams<{ expired?: string }>();
   const isExpired = searchParams.expired === 'true';
-  const previewEnabled = process.env.EXPO_PUBLIC_LEOPARD_UI_PREVIEW === 'enabled';
 
   const handleLoginSuccess = (role: Role) => {
     switch (role) {
       case 'CUSTOMER':
-        router.replace(previewEnabled ? '/customer/orders?preview=enabled' : '/customer/orders');
+        router.replace('/customer/home');
         break;
       case 'DRIVER':
-        router.replace(previewEnabled ? '/driver/orders?preview=enabled' : '/driver/orders');
+        router.replace('/driver/orders');
         break;
       case 'FLEET_OWNER':
       case 'ADMIN':
@@ -26,5 +25,11 @@ export default function LoginRoute() {
     }
   };
 
-  return <LoginScreen onLoginSuccess={handleLoginSuccess} sessionExpired={isExpired} />;
+  return (
+    <LoginScreen
+      onLoginSuccess={handleLoginSuccess}
+      onNavigateRegister={() => router.push('/(public)/register')}
+      sessionExpired={isExpired}
+    />
+  );
 }

@@ -6,6 +6,8 @@
     "orientation": "portrait",
     "scheme": "leopard",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#EEF3F9",
+    "icon": "./assets/brand/leopard-emblem.png",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.leopard.pilot",
@@ -16,7 +18,18 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/brand/leopard-emblem.png",
+      "name": "LEOPARD Pilot",
+      "shortName": "LEOPARD",
+      "lang": "vi",
+      "themeColor": "#1E5BB8",
+      "backgroundColor": "#EEF3F9",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/",
+      "scope": "/",
+      "description": "Kết nối vận tải hàng hóa trọng tải lớn"
     },
     "plugins": [
       "expo-router",

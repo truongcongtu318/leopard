@@ -72,7 +72,7 @@ export class TokenService {
   public verifyAccessToken(token: string): AccessTokenClaims {
     const parts = token.split('.');
     if (parts.length !== 3) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     const [encodedHeader, encodedPayload, encodedSignature] = parts as [
@@ -83,12 +83,12 @@ export class TokenService {
     const expectedSignature = this.sign(`${encodedHeader}.${encodedPayload}`);
 
     if (!this.signatureMatches(encodedSignature, expectedSignature)) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     const header = this.decodeJson(encodedHeader);
     if (header['alg'] !== JWT_ALGORITHM || header['typ'] !== JWT_TYPE) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     const payload = this.decodeJson(encodedPayload);
@@ -98,15 +98,15 @@ export class TokenService {
       typeof payload['sessionId'] !== 'string' ||
       typeof payload['exp'] !== 'number'
     ) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     if (!TOKEN_ROLES.has(payload['role'] as Role)) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     if (payload['exp'] <= this.nowSeconds()) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     return {
@@ -155,7 +155,7 @@ export class TokenService {
         unknown
       >;
     } catch {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
   }
 

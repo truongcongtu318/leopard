@@ -445,7 +445,7 @@ describe('Maps REST API', () => {
       expect(response.body).toMatchObject({
         statusCode: 429,
         code: 'RATE_LIMITED',
-        message: 'Rate limit exceeded',
+        message: 'Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau',
       });
     } finally {
       await app.close();
@@ -472,7 +472,7 @@ describe('Maps REST API', () => {
       expect(response.body).toMatchObject({
         statusCode: 503,
         code: 'MAP_PROVIDER_UNAVAILABLE',
-        message: 'Map provider unavailable',
+        message: 'Dịch vụ bản đồ tạm thời không khả dụng',
       });
       expect(JSON.stringify(response.body)).not.toContain('test-vietmap-key');
     } finally {

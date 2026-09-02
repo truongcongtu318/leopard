@@ -29,7 +29,10 @@ export class LocalStorageProvider extends StorageProvider {
   }
 
   async createReadUrl(key: string, _expiresInSeconds: number = 3600): Promise<string> {
-    return `/files/${key}`;
+    // PUBLIC_FILES_BASE_URL (e.g. http://localhost:3000) makes the URL absolute
+    // so browsers on a different origin (admin web) can load dev images.
+    const base = (process.env.PUBLIC_FILES_BASE_URL ?? '').replace(/\/$/, '');
+    return `${base}/files/${key}`;
   }
 
   async delete(key: string): Promise<void> {

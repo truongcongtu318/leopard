@@ -723,7 +723,7 @@ describe('PH-05-T04 guards and resource policy', () => {
         allowedRoles: ['ADMIN'],
       }),
     ).rejects.toEqual(
-      new DomainError('FORBIDDEN', 403, 'You do not have access to this resource'),
+      new DomainError('FORBIDDEN', 403, 'Bạn không có quyền truy cập tài nguyên này'),
     );
   });
 });

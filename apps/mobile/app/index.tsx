@@ -1,12 +1,29 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { BrandSplashScreen } from '../src/features/splash/BrandSplashScreen';
+import { useRootSessionRouter } from '../src/navigation/role-router';
+import { colors } from '../src/theme/tokens';
 
 export default function IndexRoute() {
+  const { isHydrated, redirectTo } = useRootSessionRouter();
+  const router = useRouter();
+  const [isSplashDone, setIsSplashDone] = useState(false);
+
+  useEffect(() => {
+    if (isSplashDone && isHydrated && redirectTo) {
+      router.replace(redirectTo);
+    }
+  }, [isSplashDone, isHydrated, redirectTo, router]);
+
+  const handleSplashFinish = () => {
+    setIsSplashDone(true);
+  };
+
   return (
     <View style={styles.container}>
-      <Text accessibilityRole="header" style={styles.title}>
-        LEOPARD Pilot
-      </Text>
-      <Text>Ứng dụng vận hành đang được khởi tạo.</Text>
+      <BrandSplashScreen onFinish={handleSplashFinish} />
     </View>
   );
 }
@@ -14,13 +31,6 @@ export default function IndexRoute() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
+    backgroundColor: colors.neutral.canvas,
   },
 });

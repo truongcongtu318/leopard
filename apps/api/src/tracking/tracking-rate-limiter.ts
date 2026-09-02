@@ -97,7 +97,7 @@ function rateLimited(retryAfterMs: number): DomainError {
   return new DomainError(
     'TRACKING_RATE_LIMITED',
     429,
-    'Too many tracking points',
+    'Gửi vị trí quá nhanh, vui lòng thử lại sau',
     { retryAfterMs },
   );
 }

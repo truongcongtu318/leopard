@@ -1,11 +1,13 @@
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
 
-import { colors, control, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
-import { RouteSummary } from '../../../ui/RouteSpine';
+import { IconLocationPin } from '../../../ui/icons/CoreIcons';
 import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
+import { SkeletonCard } from '../../../ui/Skeleton';
 import { StatusBadge } from '../../../ui/StatusBadge';
 import type {
   DriverActiveTripView,
@@ -23,8 +25,8 @@ export type DriverOrdersScreenProps = Readonly<{
 }>;
 
 function AvailabilityControl({
-  view,
   onSetAvailability,
+  view,
 }: Readonly<{
   view: DriverListContentView['availability'];
   onSetAvailability?: (commandId: string) => void;
@@ -32,23 +34,20 @@ function AvailabilityControl({
   const action = view.action;
   const pending = action?.isPending ?? false;
   const disabled = pending || (action?.disabled ?? false) || !action;
+
   return (
     <View style={styles.availabilityRail}>
-      <Text style={styles.railEyebrow}>SHIFT STATUS</Text>
-      <View style={styles.rowBetween}>
-        <Text style={styles.sectionLabel}>Trạng thái nhận đơn</Text>
-        <StatusBadge domain="driver-availability" status={view.status} />
-      </View>
+      <Text style={styles.sectionLabel}>Trạng thái nhận đơn</Text>
+      <StatusBadge domain="driver-availability" status={view.status} />
       {action ? (
         <Button
           disabled={disabled}
-          disabledLabel={
-            action.disabledReason ? `${action.label} — ${action.disabledReason}` : undefined
-          }
           isLoading={pending}
           label={action.label}
           loadingLabel="Đang cập nhật trạng thái nhận đơn"
-          onPress={onSetAvailability && !disabled ? () => onSetAvailability(action.id) : undefined}
+          onPress={
+            onSetAvailability && !disabled ? () => onSetAvailability(action.id) : undefined
+          }
           variant="secondary"
         />
       ) : null}
@@ -62,49 +61,47 @@ function AvailabilityControl({
 }
 
 function ActiveTripRail({
-  trip,
   onOpenOrder,
-}: Readonly<{ trip: DriverActiveTripView; onOpenOrder?: (orderId: string) => void }>) {
+  trip,
+}: Readonly<{
+  trip: DriverActiveTripView;
+  onOpenOrder?: (orderId: string) => void;
+}>) {
   return (
     <Pressable
-      accessibilityLabel={`Mở chuyến ${trip.reference}, ${trip.trackingLabel}`}
+      accessibilityHint="Mở chi tiết chuyến đang thực hiện"
+      accessibilityLabel={`Mở chuyến ${trip.reference}, trạng thái ${trip.status}`}
       accessibilityRole="button"
       onPress={onOpenOrder ? () => onOpenOrder(trip.id) : undefined}
       style={({ pressed }) => [styles.activeRail, pressed ? styles.pressed : null]}
       testID="driver-active-trip-slab"
     >
-      <Text style={styles.activeEyebrow}>ACTIVE MISSION</Text>
-      <Text accessibilityRole="header" style={styles.sectionTitle}>
-        Chuyến đang thực hiện
-      </Text>
-      <View style={styles.rowBetween}>
-        <Text style={styles.activeReference}>{trip.reference}</Text>
+      <View style={styles.activeTopRow}>
+        <Text accessibilityRole="header" style={styles.activeReference}>
+          {trip.reference}
+        </Text>
         <StatusBadge domain="order" status={trip.status} />
       </View>
-      <RouteSummary
-        destination={trip.route.destination}
-        origin={trip.route.origin}
-        stops={trip.route.stops}
-        tone="inverse"
-      />
-      <View style={styles.tripSignalRow}>
-        <View style={styles.tripSignalCell}>
-          <Text style={styles.tripSignalLabel}>TRACKING</Text>
+      <Text numberOfLines={2} style={styles.activeRoute}>
+        {trip.route.origin.label} → {trip.route.destination.label}
+      </Text>
+      <View style={styles.activeSignalRow}>
+        <View style={styles.liveTrackingIndicator}>
+          <View style={styles.liveDot} />
           <Text style={styles.trackingText}>{trip.trackingLabel}</Text>
         </View>
-        <View style={styles.tripSignalCell}>
-          <Text style={styles.tripSignalLabel}>BẰNG CHỨNG</Text>
-          <Text style={trip.proofLabel ? styles.proofWarning : styles.proofReady}>
-            {trip.proofLabel ?? 'Không yêu cầu ở bước này'}
-          </Text>
-        </View>
+        {trip.proofLabel ? (
+          <Text style={styles.proofNoticeText}>{trip.proofLabel}</Text>
+        ) : null}
       </View>
-      <Text style={styles.activeAffordance}>Mở field cockpit →</Text>
+      <View style={styles.cardFooter}>
+        <Text style={styles.etaText}>ETA {trip.route.distanceLabel}</Text>
+      </View>
     </Pressable>
   );
 }
 
-function PublicOrderRow({
+function PublicOrderCard({
   item,
   onOpenOrder,
 }: Readonly<{ item: DriverPublicOrderView; onOpenOrder?: (orderId: string) => void }>) {
@@ -113,27 +110,32 @@ function PublicOrderRow({
       accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
       accessibilityRole="button"
       onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-      style={({ pressed }) => [styles.publicRow, pressed ? styles.pressed : null]}
+      style={({ pressed }) => [styles.orderCard, pressed ? styles.pressed : null]}
     >
-      <Text style={styles.publicEyebrow}>OPEN ORDER</Text>
-      <View style={styles.rowBetween}>
-        <Text style={styles.reference}>{item.reference}</Text>
+      <View style={styles.cardHeader}>
+        <Text style={styles.referenceText}>{item.reference}</Text>
         <StatusBadge domain="order" status={item.status} />
       </View>
-      <Text style={styles.routeLabel}>{item.publicRouteLabel}</Text>
-      <Text style={styles.body}>
+      <View style={styles.routeRow}>
+        <IconLocationPin color={leopardPalette.primary} size={16} />
+        <Text numberOfLines={2} style={styles.routeText}>
+          {item.publicRouteLabel}
+        </Text>
+      </View>
+      <Text style={styles.cargoSummaryText}>
         {item.vehicleLabel} · {item.cargoSummary}
       </Text>
-      <Text style={styles.helper}>{item.etaLabel}</Text>
-      <Text style={styles.helper}>Cập nhật {item.updatedAtLabel}</Text>
-      <Text style={styles.publicAffordance}>Xem public summary →</Text>
+      <View style={styles.cardFooter}>
+        <Text style={styles.priceText}>{item.etaLabel}</Text>
+        <Text style={styles.updatedText}>{item.updatedAtLabel}</Text>
+      </View>
     </Pressable>
   );
 }
 
 function DriverNotice({
-  view,
   onNoticeAction,
+  view,
 }: Readonly<{ view: DriverListContentView; onNoticeAction?: () => void }>) {
   if (!view.notice) return null;
   const toneStyle =
@@ -142,14 +144,10 @@ function DriverNotice({
       : view.notice.tone === 'warning'
         ? styles.noticeWarning
         : styles.noticeInfo;
+
   return (
-    <View accessibilityLiveRegion="polite" style={[styles.notice, toneStyle]}>
-      <Text
-        accessibilityRole={view.notice.tone === 'danger' ? 'alert' : undefined}
-        style={styles.body}
-      >
-        {view.notice.message}
-      </Text>
+    <View accessibilityRole="alert" style={[styles.notice, toneStyle]}>
+      <Text style={styles.noticeBody}>{view.notice.message}</Text>
       {view.notice.actionLabel ? (
         <Button label={view.notice.actionLabel} onPress={onNoticeAction} variant="secondary" />
       ) : null}
@@ -158,12 +156,30 @@ function DriverNotice({
 }
 
 export function DriverOrdersScreen({
-  view,
-  onSetAvailability,
+  onNoticeAction,
   onOpenOrder,
   onRetry,
-  onNoticeAction,
+  onSetAvailability,
+  view,
 }: DriverOrdersScreenProps) {
+  const [activeTab, setActiveTab] = useState<'WAITING' | 'ACTIVE'>('WAITING');
+
+  if (view.kind === 'loading') {
+    return (
+      <ScreenScaffold
+        eyebrow="DRIVER · FIELD COCKPIT"
+        headerTone="ink"
+        subtitle="Bố cục được giữ ổn định trong khi tải dữ liệu."
+        title="Đơn của tài xế"
+      >
+        <View style={styles.skeletonList}>
+          <SkeletonCard />
+          <SkeletonCard />
+        </View>
+      </ScreenScaffold>
+    );
+  }
+
   if (view.kind !== 'content') {
     return (
       <ScreenScaffold eyebrow="DRIVER · FIELD COCKPIT" headerTone="ink" title="Đơn của tài xế">
@@ -178,159 +194,312 @@ export function DriverOrdersScreen({
     );
   }
 
+  const waitingCount = view.requestedOrders.length;
+  const activeCount = view.activeTrip ? 1 : 0;
+
   const renderOrder = ({ item }: ListRenderItemInfo<DriverPublicOrderView>) => (
-    <PublicOrderRow item={item} onOpenOrder={onOpenOrder} />
+    <PublicOrderCard item={item} onOpenOrder={onOpenOrder} />
   );
+
   return (
     <ScreenScaffold
       eyebrow="DRIVER · FIELD COCKPIT"
       headerTone="ink"
       title="Đơn của tài xế"
-      subtitle={`Làm mới ${view.refreshedAtLabel}`}
     >
-      <FlatList
-        contentContainerStyle={styles.listContent}
-        data={view.requestedOrders}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <ScreenState
-            message="Trạng thái nhận đơn của bạn vẫn được giữ."
-            state="empty"
-            title="Hiện chưa có đơn có thể nhận"
-          />
-        }
-        ListHeaderComponent={
-          <View style={styles.headerContent}>
-            <AvailabilityControl onSetAvailability={onSetAvailability} view={view.availability} />
-            <DriverNotice onNoticeAction={onNoticeAction} view={view} />
-            {view.activeTrip ? (
-              <ActiveTripRail onOpenOrder={onOpenOrder} trip={view.activeTrip} />
-            ) : null}
-            <SectionHeading
-              description="Chỉ hiển thị public summary cho đến khi bạn được phân công."
-              title="Đơn có thể nhận"
-            />
-          </View>
-        }
-        renderItem={renderOrder}
-      />
+      <View style={styles.headerContent}>
+        <AvailabilityControl
+          onSetAvailability={onSetAvailability}
+          view={view.availability}
+        />
+        <DriverNotice onNoticeAction={onNoticeAction} view={view} />
+        
+        <View style={styles.tabContainer}>
+          <Pressable
+            style={[styles.tab, activeTab === 'WAITING' ? styles.tabActive : null]}
+            onPress={() => setActiveTab('WAITING')}
+          >
+            <Text style={[styles.tabText, activeTab === 'WAITING' ? styles.tabTextActive : null]}>Chờ nhận</Text>
+            {waitingCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{waitingCount}</Text>
+              </View>
+            )}
+          </Pressable>
+          <Pressable
+            style={[styles.tab, activeTab === 'ACTIVE' ? styles.tabActive : null]}
+            onPress={() => setActiveTab('ACTIVE')}
+          >
+            <Text style={[styles.tabText, activeTab === 'ACTIVE' ? styles.tabTextActive : null]}>Đang thực hiện</Text>
+            {activeCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{activeCount}</Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
+      </View>
+
+      {view.activeTrip ? (
+        <View style={styles.section}>
+          <SectionHeading title="Chuyến đang thực hiện" />
+          <ActiveTripRail onOpenOrder={onOpenOrder} trip={view.activeTrip} />
+        </View>
+      ) : null}
+
+      <View style={styles.section}>
+        <SectionHeading title="Đơn có thể nhận" />
+        <FlatList
+          contentContainerStyle={styles.listContent}
+          data={view.requestedOrders}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <View style={styles.emptyBox}>
+              <Text style={styles.emptyTitle}>Chưa có đơn mới</Text>
+              <Text style={styles.emptyMessage}>
+                Hệ thống sẽ thông báo ngay khi có đơn hàng mới phù hợp với bạn.
+              </Text>
+            </View>
+          }
+          renderItem={renderOrder}
+          scrollEnabled={false}
+        />
+      </View>
     </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  listContent: { gap: spacing.sm, paddingBottom: spacing.xl },
-  headerContent: { gap: spacing.md },
-  section: { gap: spacing.sm },
-  availabilityRail: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderLeftColor: colors.brand.background,
-    borderLeftWidth: 4,
-    borderWidth: 1,
+  headerContent: {
     gap: spacing.sm,
+  },
+  skeletonList: {
+    gap: spacing.sm,
+  },
+  section: {
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  listContent: {
+    gap: spacing.sm,
+  },
+  availabilityRail: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.xs,
     padding: spacing.md,
   },
-  railEyebrow: {
+  sectionLabel: {
     ...typography.caption,
-    color: colors.brand.background,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
+    color: leopardPalette.textMutedSlate,
+    fontWeight: '600',
   },
-  rowBetween: {
-    alignItems: 'flex-start',
+  tabContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: leopardPalette.cardBorder,
+    padding: 3,
+    marginTop: spacing.xs,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    gap: 6,
+    borderRadius: radius.control - 2,
+  },
+  tabActive: {
+    backgroundColor: leopardPalette.primaryBg,
+  },
+  tabText: {
+    fontSize: 13.5,
+    fontWeight: '500',
+    color: leopardPalette.textMutedSlate,
+  },
+  tabTextActive: {
+    color: leopardPalette.primary,
+    fontWeight: '600',
+  },
+  badge: {
+    backgroundColor: leopardPalette.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    minWidth: 18,
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  activeRail: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.brand.background,
+    borderRadius: radius.card,
+    borderWidth: 1,
     gap: spacing.xs,
+    padding: spacing.md,
+    minHeight: 48,
+  },
+  activeTopRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sectionLabel: { ...typography.label, color: colors.neutral.text, flexShrink: 1 },
-  sectionTitle: { ...typography.sectionTitle, color: colors.brand.text, flexShrink: 1 },
-  reference: { ...typography.label, color: colors.neutral.text, flexShrink: 1 },
   activeReference: {
-    ...typography.sectionTitle,
-    color: colors.brand.text,
-    flexShrink: 1,
+    color: leopardPalette.textSlateDark,
+    fontSize: 15,
+    fontWeight: '600',
   },
-  routeLabel: { ...typography.body, color: colors.neutral.text, flexShrink: 1, fontWeight: '600' },
-  body: { ...typography.body, color: colors.neutral.text, flexShrink: 1 },
-  helper: { ...typography.caption, color: colors.neutral.mutedText, flexShrink: 1 },
-  dangerText: { ...typography.body, color: colors.danger.text, flexShrink: 1 },
-  warningText: { ...typography.body, color: colors.warning.text, flexShrink: 1 },
-  trackingText: { ...typography.label, color: colors.success.background, flexShrink: 1 },
-  activeRail: {
-    backgroundColor: colors.operational.ink,
-    borderColor: colors.operational.ink,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.brand.background,
-    gap: spacing.sm,
-    minHeight: control.minimumTouchHeight,
-    padding: spacing.md,
+  activeRoute: {
+    color: leopardPalette.textSlateDark,
+    fontSize: 13.5,
+    lineHeight: 19,
+    marginTop: 2,
   },
-  activeEyebrow: {
-    ...typography.caption,
-    color: colors.brand.softBackground,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  tripSignalRow: {
-    borderTopColor: colors.neutral.mutedText,
-    borderTopWidth: 1,
+  activeSignalRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    paddingTop: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
-  tripSignalCell: { flexBasis: 128, flexGrow: 1, gap: spacing.xxs },
-  tripSignalLabel: {
-    ...typography.caption,
-    color: colors.operational.inkMuted,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+  liveTrackingIndicator: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
-  proofWarning: { ...typography.caption, color: colors.warning.background, flexShrink: 1 },
-  proofReady: { ...typography.caption, color: colors.operational.inkMuted, flexShrink: 1 },
-  activeAffordance: {
-    ...typography.caption,
-    alignSelf: 'flex-end',
-    color: colors.brand.softBackground,
-    fontWeight: '700',
+  liveDot: {
+    backgroundColor: colors.brand.background,
+    borderRadius: radius.pill,
+    height: 7,
+    width: 7,
   },
-  publicRow: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderLeftColor: colors.neutral.border,
-    borderLeftWidth: 3,
+  trackingText: {
+    color: colors.brand.background,
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
+  proofNoticeText: {
+    color: colors.warning.text,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  orderCard: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderRadius: radius.card,
     borderWidth: 1,
     gap: spacing.xs,
-    minHeight: control.minimumTouchHeight,
     padding: spacing.md,
+    minHeight: 48,
   },
-  publicEyebrow: {
-    ...typography.caption,
-    color: colors.brand.background,
-    fontSize: 10,
+  cardHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  referenceText: {
+    color: leopardPalette.textSlateDark,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  routeRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+  },
+  routeText: {
+    color: leopardPalette.textSlateDark,
+    fontSize: 13.5,
+    lineHeight: 19,
+    flex: 1,
+  },
+  cargoSummaryText: {
+    color: leopardPalette.textMutedSlate,
+    fontSize: 12.5,
+    marginTop: 2,
+  },
+  cardFooter: {
+    alignItems: 'center',
+    borderTopColor: leopardPalette.subtleDivider,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  priceText: {
+    color: leopardPalette.primary,
+    fontSize: 14.5,
     fontWeight: '700',
-    letterSpacing: 0.8,
+    fontVariant: ['tabular-nums'],
   },
-  publicAffordance: {
+  etaText: {
+    color: colors.info.text,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  updatedText: {
+    color: leopardPalette.textSubtle,
+    fontSize: 11.5,
+  },
+  emptyBox: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: 4,
+    padding: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+  },
+  emptyTitle: {
+    ...typography.label,
+    color: leopardPalette.textSlateDark,
+  },
+  emptyMessage: {
     ...typography.caption,
-    alignSelf: 'flex-end',
-    color: colors.brand.background,
-    fontWeight: '700',
+    color: leopardPalette.textMutedSlate,
+    textAlign: 'center',
   },
-  notice: { borderLeftWidth: 4, gap: spacing.sm, padding: spacing.sm },
-  noticeInfo: { backgroundColor: colors.info.background, borderLeftColor: colors.info.border },
+  notice: {
+    borderRadius: radius.control,
+    gap: spacing.xs,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  noticeInfo: {
+    backgroundColor: colors.info.background,
+  },
   noticeWarning: {
     backgroundColor: colors.warning.background,
-    borderLeftColor: colors.warning.border,
   },
   noticeDanger: {
     backgroundColor: colors.danger.background,
-    borderLeftColor: colors.danger.border,
   },
-  pressed: { opacity: 0.8 },
+  noticeBody: {
+    ...typography.caption,
+    color: colors.neutral.text,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  dangerText: {
+    ...typography.caption,
+    color: colors.danger.text,
+    fontWeight: '600',
+  },
+  pressed: {
+    opacity: 0.85,
+  },
 });

@@ -3,6 +3,9 @@ import baseConfig from '../../packages/config/eslint/base.mjs';
 export default [
   ...baseConfig,
   {
+    ignores: ['Leopard system mobile app-handoff/**', 'dist/**', '.expo/**'],
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {

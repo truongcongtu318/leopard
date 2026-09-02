@@ -1,8 +1,8 @@
 import { ApiError } from './api-error';
 import { sessionStore } from '../auth/session-store';
 
-// Base URL from environment variable, falls back to empty (relative) in dev
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
+// Base URL from environment variable, falls back to local backend API in dev
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 // Refresh endpoint path
 const REFRESH_PATH = '/auth/refresh';
@@ -85,7 +85,7 @@ async function request<T>(options: RequestOptions): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, init);
-  } catch (networkError) {
+  } catch {
     throw new ApiError(0, 'NETWORK_ERROR', 'Network request failed');
   }
 
@@ -106,16 +106,24 @@ async function request<T>(options: RequestOptions): Promise<T> {
       let retryResponse: Response;
       try {
         retryResponse = await fetch(url, retryInit);
-      } catch (networkError) {
+      } catch {
         throw new ApiError(0, 'NETWORK_ERROR', 'Network request failed after token refresh');
       }
 
+      const retryBody = await safeParseJson(retryResponse);
       if (!retryResponse.ok) {
-        const retryBody = await safeParseJson(retryResponse);
         throw await ApiError.fromResponse(retryResponse.status, retryBody);
       }
 
-      return (await retryResponse.json()) as T;
+      if (typeof retryBody === 'string' && retryBody.trim().startsWith('<')) {
+        throw new ApiError(
+          retryResponse.status,
+          'INVALID_RESPONSE',
+          'Máy chủ trả về dữ liệu không đúng định dạng JSON.',
+        );
+      }
+
+      return retryBody as T;
     }
 
     // Refresh failed -> clear session and throw
@@ -124,13 +132,22 @@ async function request<T>(options: RequestOptions): Promise<T> {
     throw await ApiError.fromResponse(response.status, body);
   }
 
+  const body = await safeParseJson(response);
+
   // Non-OK (not 401) -> throw
   if (!response.ok) {
-    const body = await safeParseJson(response);
     throw await ApiError.fromResponse(response.status, body);
   }
 
-  return (await response.json()) as T;
+  if (typeof body === 'string' && body.trim().startsWith('<')) {
+    throw new ApiError(
+      response.status,
+      'INVALID_RESPONSE',
+      'Máy chủ trả về dữ liệu không đúng định dạng JSON.',
+    );
+  }
+
+  return body as T;
 }
 
 // ---- helpers ----

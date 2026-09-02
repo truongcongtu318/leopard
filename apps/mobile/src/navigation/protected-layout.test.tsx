@@ -6,6 +6,7 @@ const mockUseProtectedLayout = jest.fn();
 
 jest.mock('expo-router', () => ({
   Slot: () => null,
+  usePathname: () => '/customer/orders',
   useRouter: () => ({ replace: mockReplace }),
 }));
 
@@ -42,13 +43,13 @@ describe('mobile protected layouts', () => {
       canRenderProtectedContent: false,
       kind: 'denied',
       reason: 'role-mismatch',
-      redirectTo: '/customer/orders',
+      redirectTo: '/customer/home',
     });
 
     await render(<DriverLayout />);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/customer/orders');
+      expect(mockReplace).toHaveBeenCalledWith('/customer/home');
     });
   });
 });

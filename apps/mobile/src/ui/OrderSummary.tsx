@@ -1,10 +1,11 @@
+import React from 'react';
 import type { OrderStatus } from '@leopard/shared';
 import type { PressableProps } from 'react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, control, spacing, typography } from '../theme/tokens';
+import { colors, control, radius, spacing, typography } from '../theme/tokens';
+import { IconSpeedTruck } from './icons/CoreIcons';
 import type { RoutePoint } from './RouteSpine';
-import { RouteSummary } from './RouteSpine';
 import { StatusBadge } from './StatusBadge';
 
 export type OrderSummaryMetadata = Readonly<{
@@ -22,7 +23,7 @@ export type OrderSummaryProps = Readonly<{
   orderReference: string;
   origin: RoutePoint;
   status: OrderStatus;
-  stops: readonly RoutePoint[];
+  stops?: readonly RoutePoint[];
 }>;
 
 function OrderSummaryContent({
@@ -31,36 +32,93 @@ function OrderSummaryContent({
   orderReference,
   origin,
   status,
-  stops,
 }: Omit<OrderSummaryProps, 'accessibilityHint' | 'accessibilityLabel' | 'onPress'>) {
+  const etaItem = metadata.find((m) => m.id === 'eta');
+  const priceItem = metadata.find((m) => m.id === 'price');
+  const updatedItem = metadata.find((m) => m.id === 'updated');
+
   return (
     <>
-      <Text style={styles.eyebrow}>JOURNEY LEDGER</Text>
       <View style={styles.header}>
-        <Text style={styles.reference}>Đơn {orderReference}</Text>
+        <View style={styles.headerLeft}>
+          <View style={styles.iconBox}>
+            <IconSpeedTruck color={colors.brand.background} size={20} />
+          </View>
+          <View style={styles.titleWrap}>
+            <Text numberOfLines={1} style={styles.reference}>
+              Đơn {orderReference}
+            </Text>
+            {updatedItem ? (
+              <Text numberOfLines={1} style={styles.updatedAt}>
+                {updatedItem.value}
+              </Text>
+            ) : null}
+          </View>
+        </View>
         <StatusBadge domain="order" status={status} />
       </View>
-      <RouteSummary destination={destination} origin={origin} stops={stops} />
-      {metadata.length > 0 ? (
-        <View style={styles.metadata}>
-          {metadata.map((item) => (
-            <View key={item.id} style={styles.metadataItem}>
-              <Text style={styles.metadataLabel}>{item.label}</Text>
-              <Text style={styles.metadataValue}>{item.value}</Text>
-            </View>
-          ))}
+
+      <View style={styles.routeBox}>
+        <View style={styles.routeColLeft}>
+          <Text style={styles.routeLabel}>TỪ</Text>
+          <Text numberOfLines={1} style={styles.routeAddress}>
+            {origin.label}
+          </Text>
         </View>
-      ) : null}
-      <Text style={styles.affordance}>Xem hành trình →</Text>
+
+        <View style={styles.routeConnector}>
+          <View style={[styles.connectorDot, { backgroundColor: colors.brand.background }]} />
+          <View style={styles.connectorLine} />
+          <View style={[styles.connectorDot, { backgroundColor: colors.active.border }]} />
+        </View>
+
+        <View style={styles.routeColRight}>
+          <Text style={styles.routeLabel}>ĐẾN</Text>
+          <Text numberOfLines={1} style={[styles.routeAddress, { textAlign: 'right' }]}>
+            {destination.label}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.footerRow}>
+        <Text style={styles.priceText}>{priceItem?.value ?? '—'}</Text>
+        {etaItem ? (
+          <View style={styles.etaBox}>
+            <Text style={styles.etaLabel}>{etaItem.label}</Text>
+            <Text style={styles.etaText}>{etaItem.value}</Text>
+          </View>
+        ) : null}
+      </View>
     </>
   );
 }
 
-export function OrderSummary(props: OrderSummaryProps) {
+function OrderSummaryComponent(props: OrderSummaryProps) {
   const content = <OrderSummaryContent {...props} />;
 
+  const accentColor = (() => {
+    switch (props.status) {
+      case 'REQUESTED':
+        return colors.info.border;
+      case 'ACCEPTED':
+      case 'IN_TRANSIT':
+        return colors.active.border;
+      case 'DELIVERED':
+        return colors.success.border;
+      case 'CANCELLED':
+        return colors.danger.border;
+      default:
+        return colors.neutral.border;
+    }
+  })();
+
+  const containerStyle = [
+    styles.container,
+    { borderLeftWidth: 4, borderLeftColor: accentColor },
+  ];
+
   if (!props.onPress) {
-    return <View style={styles.container}>{content}</View>;
+    return <View style={containerStyle}>{content}</View>;
   }
 
   return (
@@ -69,7 +127,7 @@ export function OrderSummary(props: OrderSummaryProps) {
       accessibilityLabel={props.accessibilityLabel}
       accessibilityRole="button"
       onPress={props.onPress}
-      style={({ pressed }) => [styles.container, pressed ? styles.pressed : null]}
+      style={({ pressed }) => [containerStyle, pressed ? styles.pressed : null]}
       testID={`order-summary-${props.orderReference}`}
     >
       {content}
@@ -77,67 +135,139 @@ export function OrderSummary(props: OrderSummaryProps) {
   );
 }
 
+export const OrderSummary = React.memo(OrderSummaryComponent);
+
 const styles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderLeftColor: colors.brand.background,
-    borderLeftWidth: 4,
+    backgroundColor: '#FFFFFF',
+    borderColor: colors.neutral.border,
+    borderRadius: radius.card,
     borderWidth: 1,
     gap: spacing.sm,
     minHeight: control.minimumTouchHeight,
     padding: spacing.md,
   },
-  pressed: {
-    backgroundColor: colors.brand.softBackground,
-  },
-  eyebrow: {
-    ...typography.caption,
-    color: colors.brand.background,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  header: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    justifyContent: 'space-between',
-  },
-  reference: {
-    ...typography.sectionTitle,
-    color: colors.neutral.text,
-    flexShrink: 1,
-  },
-  metadata: {
-    borderTopColor: colors.neutral.subtleBorder,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    paddingTop: spacing.sm,
-  },
-  metadataItem: {
-    flexBasis: 92,
-    flexGrow: 1,
-    gap: spacing.xxs,
-  },
-  metadataLabel: {
+  etaLabel: {
     ...typography.caption,
     color: colors.neutral.mutedText,
-    flexShrink: 1,
+    fontSize: 11,
+    fontWeight: '500',
   },
-  metadataValue: {
-    ...typography.label,
-    color: colors.neutral.text,
-    flexShrink: 1,
+  pressed: {
+    opacity: 0.85,
   },
-  affordance: {
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  headerLeft: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    minWidth: 0,
+  },
+  iconBox: {
+    alignItems: 'center',
+    backgroundColor: colors.brand.softBackground,
+    borderRadius: radius.control,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  titleWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  reference: {
+    color: colors.neutral.titleText,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  updatedAt: {
     ...typography.caption,
-    alignSelf: 'flex-end',
+    color: colors.neutral.subtleText,
+    marginTop: 1,
+  },
+  routeBox: {
+    alignItems: 'center',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 8,
+  },
+  routeColLeft: {
+    flex: 1,
+    minWidth: 0,
+  },
+  routeColRight: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'flex-end',
+  },
+  routeLabel: {
+    ...typography.caption,
+    color: colors.brand.softText,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  routeAddress: {
+    color: colors.neutral.text,
+    fontSize: 13,
+    fontWeight: '400',
+    marginTop: 1,
+  },
+  routeConnector: {
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: 2,
+    paddingHorizontal: 4,
+  },
+  connectorDot: {
+    borderRadius: radius.pill,
+    height: 6,
+    width: 6,
+  },
+  connectorLine: {
+    backgroundColor: colors.neutral.border,
+    height: 12,
+    width: 1,
+  },
+  footerRow: {
+    alignItems: 'center',
+    borderTopColor: colors.neutral.rowDivider,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: spacing.xs,
+  },
+  priceText: {
     color: colors.brand.background,
+    fontSize: 16,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  etaBox: {
+    alignItems: 'center',
+    backgroundColor: colors.info.background,
+    borderRadius: radius.pill,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  etaText: {
+    ...typography.caption,
+    color: colors.info.text,
+    fontSize: 11.5,
+    fontWeight: '600',
   },
 });

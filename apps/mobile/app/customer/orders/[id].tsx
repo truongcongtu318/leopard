@@ -1,20 +1,14 @@
 import { useLocalSearchParams } from 'expo-router';
 
-import {
-  normalizeRouteParam,
-  parseCustomerOrderId,
-} from '../../../src/features/customer/orders/adapter';
-import { CustomerPreviewRoute } from '../../../src/features/customer/orders/preview/CustomerPreviewRoute';
+import { parseCustomerOrderId } from '../../../src/features/customer/orders/adapter';
+import { CustomerOrderDetailRuntime } from '../../../src/features/customer/orders/CustomerOrderDetailRuntime';
 import { ScreenScaffold } from '../../../src/ui/ScreenScaffold';
 import { ScreenState } from '../../../src/ui/ScreenState';
 
 export default function CustomerOrderDetailPage() {
-  const params = useLocalSearchParams<{
-    id?: string | string[];
-    preview?: string | string[];
-    scenario?: string | string[];
-  }>();
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
   const orderId = parseCustomerOrderId(params.id);
+
   if (!orderId) {
     return (
       <ScreenScaffold title="Chi tiết đơn">
@@ -26,12 +20,7 @@ export default function CustomerOrderDetailPage() {
       </ScreenScaffold>
     );
   }
-  return (
-    <CustomerPreviewRoute
-      localPreviewEnabled={normalizeRouteParam(params.preview) === 'enabled'}
-      orderId={orderId}
-      scenario={normalizeRouteParam(params.scenario)}
-      screen="detail"
-    />
-  );
+
+  return <CustomerOrderDetailRuntime orderId={orderId} />;
 }
+

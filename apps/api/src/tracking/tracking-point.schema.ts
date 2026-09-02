@@ -71,7 +71,7 @@ function invalidPoint(details: Record<string, unknown>): DomainError {
   return new DomainError(
     'TRACKING_INVALID_POINT',
     400,
-    'Tracking point is invalid',
+    'Dữ liệu vị trí không hợp lệ',
     details,
   );
 }

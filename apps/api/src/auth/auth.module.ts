@@ -5,6 +5,8 @@ import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { AuthRateLimiter } from './auth-rate-limiter.js';
+import { AuthThrottleGuard } from './guards/auth-throttle.guard.js';
 import {
   ACCOUNT_STATUS_CACHE_OPTIONS,
   AccountStatusCache,
@@ -28,7 +30,7 @@ function createFirebaseOtpProvider(): FirebaseOtpProvider {
   const localVerifier = createConfiguredLocalFirebaseVerifier();
   const verifier =
     localVerifier ??
-    (process.env.NODE_ENV === 'production'
+    (process.env.FIREBASE_PROJECT_ID || process.env.NODE_ENV === 'production'
       ? createProductionFirebaseVerifier(process.env)
       : undefined);
 
@@ -103,6 +105,8 @@ function parseFirebaseTokenFixture(
     ResourcePolicy,
     RefreshSessionRepository,
     TokenService,
+    { provide: AuthRateLimiter, useFactory: () => new AuthRateLimiter() },
+    AuthThrottleGuard,
     { provide: OTP_PROVIDER, useFactory: createFirebaseOtpProvider },
     { provide: APP_FILTER, useClass: ApiExceptionFilter },
   ],

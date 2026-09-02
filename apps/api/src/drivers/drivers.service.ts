@@ -35,6 +35,15 @@ export class DriversService {
 
     const updated = await this.prisma.$transaction(async (tx) => {
       if (dto.availability === 'AVAILABLE') {
+        const driver = await tx.user.findUnique({ where: { id: actor.userId } });
+        if (!driver || driver.status !== 'ACTIVE') {
+          throw new DomainError(
+            'DRIVER_NOT_APPROVED',
+            403,
+            'Tài khoản tài xế chưa được duyệt',
+          );
+        }
+
         const activeOrdersCount = await tx.order.count({
           where: {
             driverId: actor.userId,
@@ -43,7 +52,7 @@ export class DriversService {
         });
 
         if (activeOrdersCount > 0) {
-          throw new DomainError('DRIVER_HAS_ACTIVE_ORDER', 409, 'Driver has an active order');
+          throw new DomainError('DRIVER_HAS_ACTIVE_ORDER', 409, 'Tài xế đang có đơn hàng hoạt động');
         }
       }
 

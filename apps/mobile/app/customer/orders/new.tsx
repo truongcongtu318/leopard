@@ -1,18 +1,14 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 
-import { normalizeRouteParam } from '../../../src/features/customer/orders/adapter';
-import { CustomerPreviewRoute } from '../../../src/features/customer/orders/preview/CustomerPreviewRoute';
+import { CustomerCreateOrderRuntime } from '../../../src/features/customer/orders/CustomerCreateOrderRuntime';
 
 export default function CustomerCreateOrderPage() {
-  const params = useLocalSearchParams<{
-    preview?: string | string[];
-    scenario?: string | string[];
-  }>();
+  const router = useRouter();
+
   return (
-    <CustomerPreviewRoute
-      localPreviewEnabled={normalizeRouteParam(params.preview) === 'enabled'}
-      scenario={normalizeRouteParam(params.scenario)}
-      screen="create"
+    <CustomerCreateOrderRuntime
+      onCreated={(orderId) => router.replace(`/customer/orders/${orderId}`)}
     />
   );
 }
+

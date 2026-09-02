@@ -91,7 +91,7 @@ export class MapsService {
     return new DomainError(
       'MAP_PROVIDER_UNAVAILABLE',
       503,
-      'Map provider unavailable',
+      'Dịch vụ bản đồ tạm thời không khả dụng',
     );
   }
 }

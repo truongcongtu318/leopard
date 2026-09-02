@@ -13,11 +13,32 @@ import { InMemoryPrismaService } from '../../test/prisma-mock.js';
 
 interface StoredUser {
   readonly id: string;
-  readonly phone: string;
+  firebaseUid: string | null;
+  phone: string | null;
+  email: string | null;
+  phoneVerifiedAt: Date | null;
+  emailVerifiedAt: Date | null;
   readonly role: Role;
   status: UserStatus;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+}
+
+interface UserWhere {
+  readonly id?: string;
+  readonly phone?: string;
+  readonly email?: string;
+  readonly firebaseUid?: string;
+}
+
+interface UserWriteData {
+  readonly firebaseUid?: string | null;
+  readonly phone?: string | null;
+  readonly email?: string | null;
+  readonly phoneVerifiedAt?: Date | null;
+  readonly emailVerifiedAt?: Date | null;
+  readonly role?: Role;
+  readonly status?: UserStatus;
 }
 
 interface StoredRefreshSession {
@@ -39,42 +60,60 @@ interface AuthSessionBody {
 
 function createPrismaDouble() {
   const users = new Map<string, StoredUser>();
-  const usersByPhone = new Map<string, string>();
   const refreshSessions = new Map<string, StoredRefreshSession>();
+
+  const findByWhere = (where: UserWhere): StoredUser | null => {
+    if (where.id) {
+      return users.get(where.id) ?? null;
+    }
+    for (const user of users.values()) {
+      if (where.phone && user.phone === where.phone) return user;
+      if (where.email && user.email === where.email) return user;
+      if (where.firebaseUid && user.firebaseUid === where.firebaseUid)
+        return user;
+    }
+    return null;
+  };
 
   const prisma = {
     user: {
-      findUnique: jest.fn(({ where }: { where: { id?: string; phone?: string } }) => {
-        if (where.id) {
-          return Promise.resolve(users.get(where.id) ?? null);
-        }
-
-        if (where.phone) {
-          const id = usersByPhone.get(where.phone);
-          return Promise.resolve(id ? users.get(id) ?? null : null);
-        }
-
-        return Promise.resolve(null);
-      }),
-      create: jest.fn(
-        ({
-          data,
-        }: {
-          data: { phone: string; role: Role; status?: UserStatus };
-        }) => {
-          const user: StoredUser = {
-            id: `user-${users.size + 1}`,
-            phone: data.phone,
-            role: data.role,
-            status: data.status ?? 'ACTIVE',
-            createdAt: new Date('2026-08-01T00:00:00.000Z'),
-            updatedAt: new Date('2026-08-01T00:00:00.000Z'),
-          };
-          users.set(user.id, user);
-          usersByPhone.set(user.phone, user.id);
-          return Promise.resolve(user);
+      findUnique: jest.fn(({ where }: { where: UserWhere }) =>
+        Promise.resolve(findByWhere(where)),
+      ),
+      update: jest.fn(
+        ({ where, data }: { where: UserWhere; data: UserWriteData }) => {
+          const existing = findByWhere(where);
+          if (!existing) {
+            return Promise.reject(new Error('User not found'));
+          }
+          if (data.firebaseUid !== undefined)
+            existing.firebaseUid = data.firebaseUid;
+          if (data.phone !== undefined) existing.phone = data.phone;
+          if (data.email !== undefined) existing.email = data.email;
+          if (data.phoneVerifiedAt !== undefined)
+            existing.phoneVerifiedAt = data.phoneVerifiedAt;
+          if (data.emailVerifiedAt !== undefined)
+            existing.emailVerifiedAt = data.emailVerifiedAt;
+          if (data.status !== undefined) existing.status = data.status;
+          return Promise.resolve(existing);
         },
       ),
+      create: jest.fn(({ data }: { data: UserWriteData }) => {
+        const user: StoredUser = {
+          id: `user-${users.size + 1}`,
+          firebaseUid: data.firebaseUid ?? null,
+          phone: data.phone ?? null,
+          email: data.email ?? null,
+          phoneVerifiedAt: data.phoneVerifiedAt ?? null,
+          emailVerifiedAt: data.emailVerifiedAt ?? null,
+          role: data.role ?? 'CUSTOMER',
+          status: data.status ?? 'ACTIVE',
+          createdAt: new Date('2026-08-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+        };
+        users.set(user.id, user);
+        return Promise.resolve(user);
+      }),
     },
     refreshSession: {
       create: jest.fn(

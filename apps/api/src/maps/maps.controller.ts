@@ -111,7 +111,7 @@ export class MapsRateLimitGuard implements CanActivate {
 
     if (activeHistory.length >= rateLimit.maxRequests) {
       this.requestTimestampsByCaller.set(callerKey, activeHistory);
-      throw new DomainError('RATE_LIMITED', 429, 'Rate limit exceeded');
+      throw new DomainError('RATE_LIMITED', 429, 'Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau');
     }
 
     activeHistory.push(now);
@@ -146,7 +146,7 @@ export class MapsRateLimitGuard implements CanActivate {
     const ip = request.ip?.trim() || 'unknown';
 
     if (!actor) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     return `actor:${actor.userId}:${ip}`;
@@ -408,7 +408,7 @@ function validateCoordinate(
 }
 
 function validationError(issues: ValidationIssue[]): never {
-  throw new DomainError('BAD_REQUEST', 400, 'Validation failed', issues);
+  throw new DomainError('BAD_REQUEST', 400, 'Dữ liệu không hợp lệ', issues);
 }
 
 function recordOrNull(value: unknown): Record<string, unknown> | null {

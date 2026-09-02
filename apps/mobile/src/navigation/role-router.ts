@@ -5,9 +5,10 @@ import { refreshSession } from '../api/http-client';
 import { sessionStore } from '../auth/session-store';
 
 export type MobileHome =
-  | '/customer/orders'
+  | '/customer/home'
   | '/driver/orders'
-  | '/(public)/login';
+  | '/(public)/login'
+  | '/(public)/onboarding';
 
 export type MobileProtectedRouteGroup = 'customer' | 'driver';
 
@@ -36,7 +37,7 @@ type MobileRouteContext = {
 export function getMobileHome(role: Role): MobileHome {
   switch (role) {
     case 'CUSTOMER':
-      return '/customer/orders';
+      return '/customer/home';
     case 'DRIVER':
       return '/driver/orders';
     case 'FLEET_OWNER':
@@ -135,3 +136,62 @@ export function useProtectedLayout(
 
   return getMobileRouteDecision({ isHydrated, role, routeGroup });
 }
+
+/**
+ * Hook for the root index route to hydrate the session and determine the
+ * target redirect path based on authentication state and user role.
+ */
+export function useRootSessionRouter(): {
+  isHydrated: boolean;
+  redirectTo: MobileHome | null;
+} {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initSession() {
+      try {
+        await sessionStore.hydrate();
+        const hasRefreshToken = (await sessionStore.getRefreshToken()) !== null;
+        if (hasRefreshToken && !sessionStore.getAccessToken()) {
+          const refreshed = await refreshSession();
+          if (!refreshed) {
+            await sessionStore.clearSession();
+          }
+        }
+      } catch {
+        await sessionStore.clearSession();
+      } finally {
+        if (!cancelled) {
+          setIsHydrated(true);
+        }
+      }
+    }
+
+    void initSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!isHydrated) {
+    return { isHydrated: false, redirectTo: null };
+  }
+
+  if (!sessionStore.isAuthenticated()) {
+    return { isHydrated: true, redirectTo: '/(public)/onboarding' };
+  }
+
+  const role = sessionStore.getRole();
+  if (role === 'CUSTOMER') {
+    return { isHydrated: true, redirectTo: '/customer/home' };
+  }
+  if (role === 'DRIVER') {
+    return { isHydrated: true, redirectTo: '/driver/orders' };
+  }
+
+  return { isHydrated: true, redirectTo: '/(public)/login' };
+}
+

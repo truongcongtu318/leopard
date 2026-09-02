@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Role, UserStatus } from '@prisma/client';
-import type { OtpProvider } from './providers/otp-provider.js';
+import type { OtpIdentity, OtpProvider } from './providers/otp-provider.js';
 
 import { DomainError } from '../common/domain-error.js';
 import { PrismaService } from '../database/prisma.service.js';
@@ -11,7 +11,7 @@ import { type AuthSession, TokenService } from './token.service.js';
 
 export interface AuthUser {
   readonly id: string;
-  readonly phone: string;
+  readonly phone: string | null;
   readonly role: Role;
   readonly status: UserStatus;
 }
@@ -19,6 +19,18 @@ export interface AuthUser {
 export interface AuthResponse {
   readonly user: AuthUser;
   readonly session: AuthSession;
+}
+
+/** Account fields read while resolving/linking a provider identity. */
+interface AuthAccount {
+  readonly id: string;
+  readonly firebaseUid: string | null;
+  readonly phone: string | null;
+  readonly email: string | null;
+  readonly phoneVerifiedAt: Date | null;
+  readonly emailVerifiedAt: Date | null;
+  readonly role: Role;
+  readonly status: UserStatus;
 }
 
 const DEMO_ROLES = new Map<string, Role>([
@@ -44,7 +56,7 @@ export class AuthService {
     });
     const identity = await this.verifyProviderToken(() => provider.verify(accountId), {
       disabledCode: 'DEMO_LOGIN_DISABLED',
-      disabledMessage: 'Demo login is disabled',
+      disabledMessage: 'Đăng nhập demo đang bị tắt',
     });
     const role = DEMO_ROLES.get(accountId);
 
@@ -52,11 +64,11 @@ export class AuthService {
       throw new DomainError(
         'INVALID_PROVIDER_TOKEN',
         401,
-        'Provider token is invalid',
+        'Thông tin xác thực không hợp lệ',
       );
     }
 
-    return this.loginIdentity(identity.phoneNumber, role);
+    return this.loginWithIdentity(identity, role);
   }
 
   public async loginFirebase(idToken: string): Promise<AuthResponse> {
@@ -64,7 +76,46 @@ export class AuthService {
       this.firebaseOtpProvider.verify(idToken),
     );
 
-    return this.loginIdentity(identity.phoneNumber, 'CUSTOMER');
+    // Role is resolved from the account (existing role, or CUSTOMER for a
+    // brand-new self sign-up). DRIVER is granted only via driver onboarding.
+    return this.loginWithIdentity(identity, 'CUSTOMER');
+  }
+
+  public async linkPhone(
+    authorization: string | undefined,
+    idToken: string,
+  ): Promise<AuthUser> {
+    const token = this.extractBearerToken(authorization);
+    const claims = this.tokenService.verifyAccessToken(token);
+    const identity = await this.verifyProviderToken(() =>
+      this.firebaseOtpProvider.verify(idToken),
+    );
+
+    if (!identity.phoneNumber) {
+      throw new DomainError(
+        'INVALID_PROVIDER_TOKEN',
+        401,
+        'Thông tin xác thực không hợp lệ',
+      );
+    }
+
+    const owner = await this.prisma.user.findUnique({
+      where: { phone: identity.phoneNumber },
+    });
+    if (owner && owner.id !== claims.sub) {
+      throw new DomainError(
+        'PHONE_ALREADY_LINKED',
+        409,
+        'Số điện thoại đã được liên kết với tài khoản khác',
+      );
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: claims.sub },
+      data: { phone: identity.phoneNumber, phoneVerifiedAt: new Date() },
+    });
+
+    return this.requireActiveUser(user);
   }
 
   public async getCurrentUser(authorization: string | undefined): Promise<AuthUser> {
@@ -79,12 +130,12 @@ export class AuthService {
       session.revokedAt !== null ||
       session.expiresAt.getTime() <= Date.now()
     ) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: claims.sub } });
     if (!user) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     return this.requireActiveUser(user);
@@ -97,7 +148,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     return this.tokenService.createAuthSession(
@@ -113,26 +164,100 @@ export class AuthService {
     await this.refreshSessions.revoke(claims.sessionId);
   }
 
-  private async loginIdentity(phone: string, role: Role): Promise<AuthResponse> {
-    const existingUser = await this.prisma.user.findUnique({ where: { phone } });
-    const user =
-      existingUser ??
-      (await this.prisma.user.create({
-        data: {
-          phone,
-          role,
-          status: 'ACTIVE',
-        },
-      }));
+  private async loginWithIdentity(
+    identity: OtpIdentity,
+    newUserRole: Role,
+  ): Promise<AuthResponse> {
+    const user = await this.upsertIdentityUser(identity, newUserRole);
     const activeUser = this.requireActiveUser(user);
     const session = await this.tokenService.createSession(activeUser);
 
     return { user: activeUser, session };
   }
 
+  /**
+   * Resolves the account for a verified provider identity, keyed on the stable
+   * Firebase uid, then linked by verified phone or email. A first-time sign-in
+   * creates the account with the given default role; existing accounts keep
+   * their role and get the newly verified channels back-filled.
+   */
+  private async upsertIdentityUser(
+    identity: OtpIdentity,
+    newUserRole: Role,
+  ): Promise<AuthUser> {
+    const existing = await this.findLinkableUser(identity);
+    const now = new Date();
+
+    if (existing) {
+      return this.prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          firebaseUid: existing.firebaseUid ?? identity.providerUserId,
+          ...(identity.phoneNumber && !existing.phone
+            ? { phone: identity.phoneNumber }
+            : {}),
+          ...(identity.email && !existing.email
+            ? { email: identity.email }
+            : {}),
+          ...(identity.phoneNumber && !existing.phoneVerifiedAt
+            ? { phoneVerifiedAt: now }
+            : {}),
+          ...(identity.email && !existing.emailVerifiedAt
+            ? { emailVerifiedAt: now }
+            : {}),
+        },
+      });
+    }
+
+    return this.prisma.user.create({
+      data: {
+        firebaseUid: identity.providerUserId,
+        role: newUserRole,
+        status: 'ACTIVE',
+        ...(identity.phoneNumber
+          ? { phone: identity.phoneNumber, phoneVerifiedAt: now }
+          : {}),
+        ...(identity.email
+          ? { email: identity.email, emailVerifiedAt: now }
+          : {}),
+      },
+    });
+  }
+
+  private async findLinkableUser(
+    identity: OtpIdentity,
+  ): Promise<AuthAccount | null> {
+    const byUid = await this.prisma.user.findUnique({
+      where: { firebaseUid: identity.providerUserId },
+    });
+    if (byUid) {
+      return byUid;
+    }
+
+    if (identity.phoneNumber) {
+      const byPhone = await this.prisma.user.findUnique({
+        where: { phone: identity.phoneNumber },
+      });
+      if (byPhone) {
+        return byPhone;
+      }
+    }
+
+    if (identity.email) {
+      const byEmail = await this.prisma.user.findUnique({
+        where: { email: identity.email },
+      });
+      if (byEmail) {
+        return byEmail;
+      }
+    }
+
+    return null;
+  }
+
   private requireActiveUser(user: AuthUser): AuthUser {
     if (user.status === 'DISABLED') {
-      throw new DomainError('ACCOUNT_DISABLED', 403, 'Account is disabled');
+      throw new DomainError('ACCOUNT_DISABLED', 403, 'Tài khoản đã bị vô hiệu hóa');
     }
 
     return this.serializeUser(user);
@@ -158,7 +283,7 @@ export class AuthService {
         throw new DomainError(
           options?.disabledCode ?? 'OTP_PROVIDER_UNAVAILABLE',
           options ? 403 : 503,
-          options?.disabledMessage ?? 'OTP provider is unavailable',
+          options?.disabledMessage ?? 'Hệ thống xác thực tạm thời không khả dụng',
         );
       }
 
@@ -166,26 +291,26 @@ export class AuthService {
         throw new DomainError(
           'OTP_PROVIDER_UNAVAILABLE',
           503,
-          'OTP provider is unavailable',
+          'Hệ thống xác thực tạm thời không khả dụng',
         );
       }
 
       throw new DomainError(
         'INVALID_PROVIDER_TOKEN',
         401,
-        'Provider token is invalid',
+        'Thông tin xác thực không hợp lệ',
       );
     }
   }
 
   private extractBearerToken(authorization: string | undefined): string {
     if (!authorization?.startsWith('Bearer ')) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     const token = authorization.slice('Bearer '.length).trim();
     if (!token) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     return token;

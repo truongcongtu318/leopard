@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing, typography } from '../theme/tokens';
+import { colors, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
 
 export type LedgerSectionProps = PropsWithChildren<
   Readonly<{
@@ -19,19 +19,21 @@ export function LedgerSection({
   title,
   tone = 'plain',
 }: LedgerSectionProps) {
-  const inverse = tone === 'ink';
+  const isInk = tone === 'ink';
+  const isSignal = tone === 'signal';
+
   return (
     <View
       style={[
         styles.container,
-        tone === 'signal' ? styles.signal : null,
-        inverse ? styles.ink : null,
+        isSignal && styles.signal,
+        isInk && styles.ink,
       ]}
     >
       <View style={styles.header}>
         {index ? (
-          <View style={[styles.index, inverse ? styles.indexInverse : null]}>
-            <Text style={[styles.indexText, inverse ? styles.indexTextInverse : null]}>
+          <View style={[styles.index, isInk && styles.indexInk]}>
+            <Text style={[styles.indexText, isInk && styles.indexTextInk]}>
               {index}
             </Text>
           </View>
@@ -39,12 +41,12 @@ export function LedgerSection({
         <View style={styles.headingCopy}>
           <Text
             accessibilityRole="header"
-            style={[styles.title, inverse ? styles.titleInverse : null]}
+            style={[styles.title, isInk && styles.titleInk]}
           >
             {title}
           </Text>
           {description ? (
-            <Text style={[styles.description, inverse ? styles.descriptionInverse : null]}>
+            <Text style={[styles.description, isInk && styles.descriptionInk]}>
               {description}
             </Text>
           ) : null}
@@ -58,24 +60,26 @@ export function LedgerSection({
 const styles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',
-    borderTopColor: colors.neutral.subtleBorder,
+    borderTopColor: leopardPalette.subtleDivider,
     borderTopWidth: 1,
     gap: spacing.md,
     paddingTop: spacing.md,
   },
   signal: {
-    backgroundColor: colors.neutral.background,
-    borderLeftColor: colors.brand.background,
+    backgroundColor: colors.warning.background,
+    borderLeftColor: colors.warning.border,
     borderLeftWidth: 4,
     borderTopWidth: 0,
     padding: spacing.md,
+    borderRadius: leopardRadius.md,
   },
   ink: {
-    backgroundColor: colors.operational.ink,
+    backgroundColor: colors.brand.softBackground,
     borderLeftColor: colors.brand.background,
     borderLeftWidth: 4,
     borderTopWidth: 0,
     padding: spacing.md,
+    borderRadius: leopardRadius.md,
   },
   header: {
     alignItems: 'flex-start',
@@ -84,21 +88,22 @@ const styles = StyleSheet.create({
   },
   index: {
     alignItems: 'center',
-    backgroundColor: colors.operational.ink,
+    backgroundColor: leopardPalette.primaryBg,
+    borderRadius: leopardRadius.sm,
     height: spacing.xl,
     justifyContent: 'center',
     width: spacing.xl,
   },
-  indexInverse: {
-    backgroundColor: colors.brand.background,
+  indexInk: {
+    backgroundColor: leopardPalette.primaryDark,
   },
   indexText: {
     ...typography.caption,
-    color: colors.brand.text,
+    color: leopardPalette.primaryDark,
     fontWeight: '700',
   },
-  indexTextInverse: {
-    color: colors.brand.text,
+  indexTextInk: {
+    color: leopardPalette.surfaceWhite,
   },
   headingCopy: {
     flex: 1,
@@ -107,19 +112,19 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.sectionTitle,
-    color: colors.neutral.text,
+    color: leopardPalette.textSlateDark,
     flexShrink: 1,
   },
-  titleInverse: {
-    color: colors.brand.text,
+  titleInk: {
+    color: leopardPalette.textSlateDark,
   },
   description: {
     ...typography.caption,
-    color: colors.neutral.mutedText,
+    color: leopardPalette.textMutedSlate,
     flexShrink: 1,
   },
-  descriptionInverse: {
-    color: colors.operational.inkMuted,
+  descriptionInk: {
+    color: leopardPalette.textMutedSlate,
   },
   content: {
     gap: spacing.sm,

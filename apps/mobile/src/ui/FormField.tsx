@@ -2,7 +2,7 @@ import { useId } from 'react';
 import type { TextInputProps } from 'react-native';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { colors, control, radius, spacing, typography } from '../theme/tokens';
+import { colors, control, leopardPalette, radius, spacing, typography } from '../theme/tokens';
 
 type FormFieldProps = Omit<TextInputProps, 'style'> & {
   label: string;
@@ -56,26 +56,27 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.label,
-    color: colors.neutral.text,
+    color: leopardPalette.textSlateDark,
     flexShrink: 1,
   },
   input: {
     ...typography.body,
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.border,
+    backgroundColor: leopardPalette.inputBg,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: radius.control,
     borderWidth: 1,
-    color: colors.neutral.text,
+    color: leopardPalette.textSlateDark,
     minHeight: control.minimumTouchHeight,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },
   inputError: {
     borderColor: colors.danger.border,
+    backgroundColor: colors.danger.background,
   },
   hint: {
     ...typography.caption,
-    color: colors.neutral.mutedText,
+    color: leopardPalette.textMutedSlate,
     flexShrink: 1,
   },
   errorArea: {

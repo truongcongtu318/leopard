@@ -20,6 +20,17 @@ export class AcceptOrderService {
       throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế mới có thể nhận đơn hàng');
     }
 
+    const driver = await this.prisma.user.findUnique({
+      where: { id: actor.userId },
+    });
+    if (!driver || driver.status !== 'ACTIVE') {
+      throw new DomainError(
+        'DRIVER_NOT_APPROVED',
+        403,
+        'Tài khoản tài xế chưa được duyệt',
+      );
+    }
+
     const existingOrder = await this.prisma.order.findUnique({
       where: { id: orderId },
     });

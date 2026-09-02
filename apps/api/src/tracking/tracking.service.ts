@@ -74,7 +74,7 @@ function concealForbidden(error: unknown): unknown {
 }
 
 function notFound(): DomainError {
-  return new DomainError('RESOURCE_NOT_FOUND', 404, 'Order was not found');
+  return new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;

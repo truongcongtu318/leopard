@@ -4,12 +4,13 @@
     "strict": true,
     "jsx": "react-jsx",
     "paths": {
-      "@leopard/shared": ["../../packages/shared/src/index.ts"]
+      "@leopard/shared": [
+        "../../packages/shared/src/index.ts"
+      ]
     }
   },
   "include": [
     "app",
-    "src",
-    "expo-env.d.ts"
+    "src"
   ]
 }
