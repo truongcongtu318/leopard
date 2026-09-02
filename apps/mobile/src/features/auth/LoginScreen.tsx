@@ -8,7 +8,7 @@ import { sessionStore } from '../../auth/session-store';
 import { ApiError } from '../../api/api-error';
 
 export interface LoginScreenProps {
-  onLoginSuccess?: (role: Role) => void;
+  onLoginSuccess?: (role: Role, profileComplete: boolean) => void;
   onNavigateRegister?: () => void;
   allowDemo?: boolean;
   sessionExpired?: boolean;
@@ -18,8 +18,11 @@ interface AuthResponse {
   user: {
     id: string;
     phone: string;
+    email: string | null;
+    name: string | null;
     role: Role;
     status: string;
+    profileComplete: boolean;
   };
   session: {
     accessToken: string;
@@ -52,9 +55,9 @@ export function LoginScreen({
       const refreshToken = res.session?.refreshToken ?? '';
       await sessionStore.setSession(accessToken, refreshToken, res.user.role);
       const role = res.user?.role ?? 'CUSTOMER';
-      
+
       setStatus('redirecting');
-      onLoginSuccess?.(role);
+      onLoginSuccess?.(role, res.user?.profileComplete ?? false);
     } catch (err) {
       const trimmed = idToken.trim().toLowerCase();
       const isNetworkError = !(err instanceof ApiError) || err.statusCode === 0;
@@ -63,13 +66,13 @@ export function LoginScreen({
         if (trimmed === '+840000000001' || trimmed === '0900000001' || trimmed === 'customer') {
           await sessionStore.setSession('preview-acc-token', 'preview-ref-token', 'CUSTOMER');
           setStatus('redirecting');
-          onLoginSuccess?.('CUSTOMER');
+          onLoginSuccess?.('CUSTOMER', true);
           return;
         }
         if (trimmed === '+840000000002' || trimmed === '0900000002' || trimmed === 'driver') {
           await sessionStore.setSession('preview-acc-token', 'preview-ref-token', 'DRIVER');
           setStatus('redirecting');
-          onLoginSuccess?.('DRIVER');
+          onLoginSuccess?.('DRIVER', true);
           return;
         }
       }
@@ -100,9 +103,9 @@ export function LoginScreen({
       const refreshToken = res.session?.refreshToken ?? '';
       await sessionStore.setSession(accessToken, refreshToken, res.user.role);
       const role = res.user?.role ?? defaultRole;
-      
+
       setStatus('redirecting');
-      onLoginSuccess?.(role);
+      onLoginSuccess?.(role, res.user?.profileComplete ?? false);
     } catch (err) {
       setStatus('error');
       const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;

@@ -7,7 +7,11 @@ export default function LoginRoute() {
   const searchParams = useLocalSearchParams<{ expired?: string }>();
   const isExpired = searchParams.expired === 'true';
 
-  const handleLoginSuccess = (role: Role) => {
+  const handleLoginSuccess = (role: Role, profileComplete: boolean) => {
+    if (!profileComplete) {
+      router.replace('/(public)/customer-register');
+      return;
+    }
     switch (role) {
       case 'CUSTOMER':
         router.replace('/customer/home');

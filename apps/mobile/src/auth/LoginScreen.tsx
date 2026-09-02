@@ -65,7 +65,7 @@ const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-container';
 
 
 export interface LoginScreenProps {
-  onLoginSuccess?: (role: Role) => void;
+  onLoginSuccess?: (role: Role, profileComplete: boolean) => void;
   onNavigateRegister?: () => void;
   allowDemo?: boolean;
   sessionExpired?: boolean;
@@ -75,8 +75,11 @@ interface AuthResponse {
   user: {
     id: string;
     phone: string;
+    email: string | null;
+    name: string | null;
     role: Role;
     status: string;
+    profileComplete: boolean;
   };
   session: {
     accessToken: string;
@@ -551,7 +554,7 @@ export function LoginScreen({
     const accessToken = res.session?.accessToken ?? '';
     const refreshToken = res.session?.refreshToken ?? '';
     await sessionStore.setSession(accessToken, refreshToken, res.user.role);
-    onLoginSuccess?.(res.user?.role ?? 'CUSTOMER');
+    onLoginSuccess?.(res.user?.role ?? 'CUSTOMER', res.user?.profileComplete ?? false);
   };
 
   const describeAuthError = (err: unknown): string => {
@@ -674,7 +677,7 @@ export function LoginScreen({
       const refreshToken = res.session?.refreshToken ?? '';
       await sessionStore.setSession(accessToken, refreshToken, res.user.role);
       const role = res.user?.role ?? defaultRole;
-      onLoginSuccess?.(role);
+      onLoginSuccess?.(role, res.user?.profileComplete ?? false);
     } catch (err) {
       const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
       const message = (err as { message?: string })?.message;

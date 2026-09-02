@@ -36,8 +36,16 @@ jest.mock('./firebase-auth', () => ({
   resetRecaptcha: jest.fn(),
 }));
 
-const sessionOf = (role: string) => ({
-  user: { id: `u-${role}`, phone: '0900000001', role, status: 'ACTIVE' },
+const sessionOf = (role: string, profileComplete = true) => ({
+  user: {
+    id: `u-${role}`,
+    phone: '0900000001',
+    email: null,
+    name: null,
+    role,
+    status: 'ACTIVE',
+    profileComplete,
+  },
   session: {
     accessToken: 'acc',
     refreshToken: 'ref',
@@ -46,9 +54,9 @@ const sessionOf = (role: string) => ({
   },
 });
 
-async function loginWithGoogleAs(role: string) {
+async function loginWithGoogleAs(role: string, profileComplete = true) {
   (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce(
-    sessionOf(role),
+    sessionOf(role, profileComplete),
   );
   const screen = await render(<LoginRoute />);
   await fireEvent.press(screen.getByLabelText('Đăng nhập với Google'));
@@ -79,6 +87,14 @@ describe('LoginRoute (Mobile)', () => {
     const screen = await loginWithGoogleAs(role);
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith(destination);
+    });
+    await screen.unmount();
+  });
+
+  it('routes a not-yet-onboarded user to customer-register', async () => {
+    const screen = await loginWithGoogleAs('CUSTOMER', false);
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/customer-register');
     });
     await screen.unmount();
   });
