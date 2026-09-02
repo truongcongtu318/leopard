@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { httpClient } from '../../src/api/http-client';
 import { ApiError } from '../../src/api/api-error';
 import { sessionStore } from '../../src/auth/session-store';
+import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '../../src/auth/firebase-auth';
+
+const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-register';
 
 interface MeResponse {
   phone: string | null;
@@ -18,6 +21,13 @@ const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 export default function CustomerRegisterScreen() {
   const router = useRouter();
   const [phone, setPhone] = useState<string | null>(null);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneBusy, setPhoneBusy] = useState(false);
+  const challengeRef = useRef<OtpChallenge | null>(null);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [consentTerms, setConsentTerms] = useState(false);
@@ -45,13 +55,48 @@ export default function CustomerRegisterScreen() {
     };
   }, []);
 
+  const phoneReady = Boolean(phone) || phoneVerified;
+
   const canSubmit =
     Boolean(name.trim()) &&
     isValidEmail(email) &&
-    Boolean(phone) &&
+    phoneReady &&
     consentTerms &&
     consentService &&
     !isSubmitting;
+
+  const sendOtp = async () => {
+    if (phoneBusy || !phoneInput.trim()) return;
+    setPhoneBusy(true);
+    setErrorMsg(null);
+    try {
+      challengeRef.current = await sendPhoneOtp(phoneInput.trim(), RECAPTCHA_CONTAINER_ID);
+      setOtpSent(true);
+    } catch {
+      resetRecaptcha();
+      setErrorMsg('Không gửi được mã OTP, vui lòng thử lại');
+    } finally {
+      setPhoneBusy(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    const challenge = challengeRef.current;
+    if (phoneBusy || !challenge || otpCode.trim().length < 6) return;
+    setPhoneBusy(true);
+    setErrorMsg(null);
+    try {
+      const idToken = await challenge.confirm(otpCode.trim());
+      const linked = await httpClient.post<{ phone: string }>('/auth/phone/link', { idToken });
+      setPhone(linked.phone);
+      setPhoneVerified(true);
+    } catch (err) {
+      const message = (err as { message?: string })?.message;
+      setErrorMsg(message ?? 'Xác minh số điện thoại thất bại');
+    } finally {
+      setPhoneBusy(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -114,10 +159,62 @@ export default function CustomerRegisterScreen() {
 
       <View style={styles.card}>
         <Text style={styles.label}>Số điện thoại</Text>
-        <View style={[styles.inputWrap, styles.inputLocked]}>
-          <Text style={styles.lockedText}>{phone ?? '—'}</Text>
-          <Text style={styles.lockIcon}>🔒</Text>
-        </View>
+        {phoneReady ? (
+          <View style={[styles.inputWrap, styles.inputLocked]}>
+            <Text style={styles.lockedText}>{phone ?? phoneInput}</Text>
+            <Text style={styles.lockIcon}>{phoneVerified ? '✅' : '🔒'}</Text>
+          </View>
+        ) : (
+          <View style={{ gap: 8 }}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TextInput
+                accessibilityLabel="Số điện thoại"
+                editable={!otpSent}
+                keyboardType="phone-pad"
+                onChangeText={setPhoneInput}
+                placeholder="VD: 0900 000 001"
+                placeholderTextColor="#94A3B8"
+                style={[styles.input, { flex: 1 }]}
+                testID="cr-phone-input"
+                value={phoneInput}
+              />
+              <Pressable
+                accessibilityRole="button"
+                disabled={phoneBusy || !phoneInput.trim()}
+                onPress={sendOtp}
+                style={styles.secondaryBtn}
+                testID="cr-send-otp"
+              >
+                <Text style={styles.secondaryBtnText}>{otpSent ? 'Gửi lại' : 'Gửi mã'}</Text>
+              </Pressable>
+            </View>
+            {otpSent ? (
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TextInput
+                  accessibilityLabel="Mã OTP"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  onChangeText={setOtpCode}
+                  placeholder="Nhập 6 số OTP"
+                  placeholderTextColor="#94A3B8"
+                  style={[styles.input, { flex: 1 }]}
+                  testID="cr-otp-input"
+                  value={otpCode}
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={phoneBusy || otpCode.trim().length < 6}
+                  onPress={verifyOtp}
+                  style={styles.secondaryBtn}
+                  testID="cr-verify-otp"
+                >
+                  <Text style={styles.secondaryBtnText}>Xác minh</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        )}
+        <View nativeID={RECAPTCHA_CONTAINER_ID} />
 
         <Text style={styles.label}>Họ và tên</Text>
         <TextInput
@@ -197,6 +294,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85 },
   errorBox: { backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12 },
   errorText: { color: '#B91C1C', fontSize: 13 },
+  secondaryBtn: { backgroundColor: '#E0E7FF', borderRadius: 12, paddingHorizontal: 14, justifyContent: 'center' },
+  secondaryBtnText: { color: '#3730A3', fontWeight: '700' },
   driverLink: { alignItems: 'center', paddingVertical: 8 },
   driverLinkText: { color: '#2563EB', fontSize: 14, fontWeight: '600' },
 });

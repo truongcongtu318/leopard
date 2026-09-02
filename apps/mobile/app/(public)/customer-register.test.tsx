@@ -4,9 +4,15 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import CustomerRegisterScreen from './customer-register';
 import { httpClient } from '../../src/api/http-client';
 import { ApiError } from '../../src/api/api-error';
+import { sendPhoneOtp, resetRecaptcha } from '../../src/auth/firebase-auth';
 
 jest.mock('../../src/api/http-client', () => ({
-  httpClient: { get: jest.fn(), patch: jest.fn() },
+  httpClient: { get: jest.fn(), patch: jest.fn(), post: jest.fn() },
+}));
+
+jest.mock('../../src/auth/firebase-auth', () => ({
+  sendPhoneOtp: jest.fn(),
+  resetRecaptcha: jest.fn(),
 }));
 
 // Mock the session store so setSession does not touch expo-secure-store in tests.
@@ -25,8 +31,12 @@ jest.mock('expo-router', () => ({
 }));
 
 describe('CustomerRegisterScreen', () => {
+  const mockConfirm = jest.fn<() => Promise<string>>();
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockConfirm.mockResolvedValue('goog-otp-idtoken');
+    (sendPhoneOtp as any).mockResolvedValue({ confirm: mockConfirm });
     (httpClient.get as any).mockResolvedValue({
       id: 'u1',
       phone: '+84900000001',
@@ -37,6 +47,7 @@ describe('CustomerRegisterScreen', () => {
       profileComplete: false,
     });
     (httpClient.patch as any).mockResolvedValue({ role: 'CUSTOMER', profileComplete: true });
+    (httpClient.post as any).mockResolvedValue({ phone: '+84900000001' });
   });
 
   it('keeps submit disabled until name, email and required consents are provided', async () => {
@@ -151,6 +162,60 @@ describe('CustomerRegisterScreen', () => {
 
     await fireEvent.press(screen.getByText('Đăng ký làm tài xế đối tác →'));
     expect(mockPush).toHaveBeenCalledWith('/(public)/driver-register');
+    await screen.unmount();
+  });
+
+  it('requires phone verification for a Google user before submit is enabled', async () => {
+    (httpClient.get as any).mockResolvedValue({
+      id: 'u1',
+      phone: null,
+      email: 'an@example.com',
+      name: 'An',
+      role: 'CUSTOMER',
+      status: 'ACTIVE',
+      profileComplete: false,
+    });
+
+    const screen = await render(<CustomerRegisterScreen />);
+    await waitFor(() => expect(httpClient.get).toHaveBeenCalled());
+
+    // Name and email are prefilled from /me; consent checkboxes toggled
+    await fireEvent.press(screen.getByTestId('cr-consent-terms'));
+    await fireEvent.press(screen.getByTestId('cr-consent-service'));
+
+    // Submit is disabled because phone is not yet verified
+    expect(screen.getByTestId('cr-submit').props.accessibilityState.disabled).toBe(true);
+
+    // Enter phone, request OTP, enter OTP, verify
+    await fireEvent.changeText(screen.getByTestId('cr-phone-input'), '0900000001');
+    await fireEvent.press(screen.getByTestId('cr-send-otp'));
+
+    await waitFor(() => expect(screen.getByTestId('cr-otp-input')).toBeTruthy());
+    await fireEvent.changeText(screen.getByTestId('cr-otp-input'), '123456');
+    await fireEvent.press(screen.getByTestId('cr-verify-otp'));
+
+    await waitFor(() => {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/phone/link', {
+        idToken: 'goog-otp-idtoken',
+      });
+      expect(screen.getByTestId('cr-submit').props.accessibilityState.disabled).toBe(false);
+    });
+
+    // Now submit works
+    await fireEvent.press(screen.getByTestId('cr-submit'));
+    await waitFor(() => {
+      expect(httpClient.patch).toHaveBeenCalledWith(
+        '/users/me',
+        expect.objectContaining({
+          name: 'An',
+          email: 'an@example.com',
+          consentTerms: true,
+          consentService: true,
+        }),
+      );
+      expect(mockReplace).toHaveBeenCalledWith('/customer/home');
+    });
+
     await screen.unmount();
   });
 });
