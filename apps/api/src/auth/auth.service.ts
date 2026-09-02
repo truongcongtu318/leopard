@@ -12,8 +12,22 @@ import { type AuthSession, TokenService } from './token.service.js';
 export interface AuthUser {
   readonly id: string;
   readonly phone: string | null;
+  readonly email: string | null;
+  readonly name: string | null;
   readonly role: Role;
   readonly status: UserStatus;
+  readonly profileComplete: boolean;
+}
+
+/** Prisma user shape needed to serialize an AuthUser response. */
+interface SerializableUser {
+  readonly id: string;
+  readonly phone: string | null;
+  readonly email: string | null;
+  readonly name: string | null;
+  readonly role: Role;
+  readonly status: UserStatus;
+  readonly onboardedAt: Date | null;
 }
 
 export interface AuthResponse {
@@ -29,6 +43,7 @@ interface AuthAccount {
   readonly email: string | null;
   readonly phoneVerifiedAt: Date | null;
   readonly emailVerifiedAt: Date | null;
+  readonly name: string | null;
   readonly role: Role;
   readonly status: UserStatus;
 }
@@ -184,7 +199,7 @@ export class AuthService {
   private async upsertIdentityUser(
     identity: OtpIdentity,
     newUserRole: Role,
-  ): Promise<AuthUser> {
+  ): Promise<SerializableUser> {
     const existing = await this.findLinkableUser(identity);
     const now = new Date();
 
@@ -205,6 +220,7 @@ export class AuthService {
           ...(identity.email && !existing.emailVerifiedAt
             ? { emailVerifiedAt: now }
             : {}),
+          ...(identity.name && !existing.name ? { name: identity.name } : {}),
         },
       });
     }
@@ -220,6 +236,7 @@ export class AuthService {
         ...(identity.email
           ? { email: identity.email, emailVerifiedAt: now }
           : {}),
+        ...(identity.name ? { name: identity.name } : {}),
       },
     });
   }
@@ -255,7 +272,7 @@ export class AuthService {
     return null;
   }
 
-  private requireActiveUser(user: AuthUser): AuthUser {
+  private requireActiveUser(user: SerializableUser): AuthUser {
     if (user.status === 'DISABLED') {
       throw new DomainError('ACCOUNT_DISABLED', 403, 'Tài khoản đã bị vô hiệu hóa');
     }
@@ -263,12 +280,15 @@ export class AuthService {
     return this.serializeUser(user);
   }
 
-  private serializeUser(user: AuthUser): AuthUser {
+  private serializeUser(user: SerializableUser): AuthUser {
     return {
       id: user.id,
       phone: user.phone,
+      email: user.email,
+      name: user.name,
       role: user.role,
       status: user.status,
+      profileComplete: user.onboardedAt != null,
     };
   }
 
