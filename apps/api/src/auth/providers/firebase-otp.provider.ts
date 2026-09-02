@@ -8,6 +8,7 @@ export interface FirebaseDecodedIdToken {
   readonly uid?: unknown;
   readonly phone_number?: unknown;
   readonly email?: unknown;
+  readonly name?: unknown;
 }
 
 export type FirebaseIdTokenVerifier = (
@@ -66,6 +67,7 @@ export class FirebaseOtpProvider implements OtpProvider {
     const phoneNumber =
       typeof decoded.phone_number === 'string' ? decoded.phone_number : '';
     const email = typeof decoded.email === 'string' ? decoded.email : '';
+    const name = typeof decoded.name === 'string' ? decoded.name.trim() : '';
 
     // A valid identity needs a stable provider uid plus at least one verifiable
     // contact channel: phone (Phone Auth) or email (Google/Apple).
@@ -80,6 +82,7 @@ export class FirebaseOtpProvider implements OtpProvider {
       providerUserId: uid,
       ...(phoneNumber.length > 0 ? { phoneNumber } : {}),
       ...(email.length > 0 ? { email } : {}),
+      ...(name.length > 0 ? { name } : {}),
     };
   }
 }

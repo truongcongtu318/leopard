@@ -66,6 +66,31 @@ describe('OTP provider boundary', () => {
     });
   });
 
+  it('captures the display name from a Google identity token', async () => {
+    const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
+    const provider = new FirebaseOtpProvider(async () => ({
+      uid: 'g-123',
+      email: 'an@example.com',
+      name: 'Nguyễn Văn An',
+    }));
+
+    const identity = await provider.verify('tok');
+
+    expect(identity.name).toBe('Nguyễn Văn An');
+  });
+
+  it('omits name when the phone token has none', async () => {
+    const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
+    const provider = new FirebaseOtpProvider(async () => ({
+      uid: 'p-1',
+      phone_number: '+84900000001',
+    }));
+
+    const identity = await provider.verify('tok');
+
+    expect(identity.name).toBeUndefined();
+  });
+
   it('rejects a Firebase token that has neither phone nor email', async () => {
     const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
     verifyIdToken.mockResolvedValue({ uid: 'ghost-user' });
