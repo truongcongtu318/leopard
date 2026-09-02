@@ -88,6 +88,12 @@ model User {
   name              String?              @db.VarChar(120)
   phoneVerifiedAt   DateTime?            @db.Timestamptz(3)
   emailVerifiedAt   DateTime?            @db.Timestamptz(3)
+  onboardedAt       DateTime?            @db.Timestamptz(3)
+  consentTermsAt    DateTime?            @db.Timestamptz(3)
+  consentServiceAt  DateTime?            @db.Timestamptz(3)
+  consentMarketing  Boolean              @default(false)
+  consentThirdParty Boolean              @default(false)
+  avatarMediaId     String?              @db.Uuid
   role              Role
   status            UserStatus           @default(ACTIVE)
   createdAt         DateTime             @default(now()) @db.Timestamptz(3)
