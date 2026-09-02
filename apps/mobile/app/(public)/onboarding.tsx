@@ -10,7 +10,7 @@ export default function OnboardingRoute() {
 
   return (
     <OnboardingScreen
-      onDriverRegister={() => router.push('/(public)/register')}
+      onDriverRegister={() => router.push('/(public)/driver-register')}
       onExploreGuest={handleGoToLogin}
       onGetStarted={handleGoToLogin}
     />

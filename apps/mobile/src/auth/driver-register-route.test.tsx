@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-import RegisterScreen from '../../app/(public)/register';
+import RegisterScreen from '../../app/(public)/driver-register';
 import { httpClient } from '../api/http-client';
 import { sessionStore } from './session-store';
 import { pickDeviceImage } from '../media/device-image-picker';

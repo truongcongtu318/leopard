@@ -32,7 +32,7 @@ export default function LoginRoute() {
   return (
     <LoginScreen
       onLoginSuccess={handleLoginSuccess}
-      onNavigateRegister={() => router.push('/(public)/register')}
+      onNavigateRegister={() => router.push('/(public)/driver-register')}
       sessionExpired={isExpired}
     />
   );
