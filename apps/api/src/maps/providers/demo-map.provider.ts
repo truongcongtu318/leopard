@@ -42,7 +42,7 @@ export class DemoMapProvider implements MapProvider {
     };
   }
 
-  async route(input: RouteInput): Promise<RouteEstimate> {
+  async route(input: RouteInput): Promise<RouteEstimate[]> {
     return this.estimator.estimate(input);
   }
 }

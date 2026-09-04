@@ -15,16 +15,19 @@ describe('DemoRouteEstimator', () => {
       vehicleType: 'MOTORBIKE',
     });
 
-    expect(estimate).toEqual({
-      polyline: '???_ibE_ibE?',
-      distanceM: 277_987,
-      durationS: 33_660,
-      estimatedArrivalAt: '2026-08-01T12:21:00.000Z',
-      estimatedPriceVnd: 0,
-      source: 'DEMO',
-      isEstimate: true,
-      calculatedAt: '2026-08-01T03:00:00.000Z',
-    });
+    expect(estimate).toEqual([
+      {
+        polyline: '???_ibE_ibE?',
+        distanceM: 277_987,
+        durationS: 33_660,
+        estimatedArrivalAt: '2026-08-01T12:21:00.000Z',
+        estimatedPriceVnd: 0,
+        source: 'DEMO',
+        isEstimate: true,
+        calculatedAt: '2026-08-01T03:00:00.000Z',
+        congestionLevel: 'unknown',
+      },
+    ]);
   });
 
   it('returns stable output for repeated estimates with the same input and clock', async () => {
@@ -42,5 +45,20 @@ describe('DemoRouteEstimator', () => {
     await expect(estimator.estimate(input)).resolves.toEqual(
       await estimator.estimate(input),
     );
+  });
+
+  it('always returns exactly one route (demo data does not simulate alternatives)', async () => {
+    const estimator = new DemoRouteEstimator(() => calculatedAt);
+
+    const estimate = await estimator.estimate({
+      pickup: { latitude: 10.7, longitude: 106.6 },
+      stops: [],
+      dropoff: { latitude: 10.8, longitude: 106.7 },
+      vehicleType: 'TRUCK',
+      cargoWeightKg: 2_000,
+    });
+
+    expect(estimate).toHaveLength(1);
+    expect(estimate[0]?.congestionLevel).toBe('unknown');
   });
 });
