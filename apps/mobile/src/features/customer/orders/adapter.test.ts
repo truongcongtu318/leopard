@@ -320,16 +320,23 @@ describe('createCustomerHttpAdapter', () => {
     ],
   };
 
-  const mockEstimateResponse: OrderEstimateApiResponse = {
+  const mockRouteOption = {
+    routeId: 'route-0',
     estimateToken: 'token-xyz-123',
+    isRecommended: true,
     polyline: 'abcxyz',
     distanceM: 18400,
     durationS: 1080,
     estimatedArrivalAt: '2026-08-15T14:48:00.000Z',
     estimatedPriceVnd: 286000,
-    source: 'DEMO',
+    source: 'DEMO' as const,
     calculatedAt: '2026-08-15T14:30:00.000Z',
     isEstimate: true,
+    congestionLevel: 'unknown' as const,
+  };
+
+  const mockEstimateResponse: OrderEstimateApiResponse = {
+    routes: [mockRouteOption],
   };
 
   interface MockCustomerHttpClient {
@@ -507,8 +514,11 @@ describe('createCustomerHttpAdapter', () => {
         expect(view.phase).toBe('estimate-ready');
         expect(view.estimate.kind).toBe('ready');
         if (view.estimate.kind === 'ready') {
-          expect(view.estimate.priceLabel).toBe('286.000 ₫');
-          expect(view.estimate.distanceLabel).toBe('18,4 km');
+          expect(view.estimate.routes).toHaveLength(1);
+          expect(view.estimate.routes[0].priceLabel).toBe('286.000 ₫');
+          expect(view.estimate.routes[0].distanceLabel).toBe('18,4 km');
+          expect(view.estimate.routes[0].congestionLabel).toBe('Chưa rõ giao thông');
+          expect(view.estimate.selectedRouteId).toBe('route-0');
           expect(view.estimate.source).toBe('DEMO');
         }
         expect(view.actions[0].id).toBe('create-order');
@@ -521,6 +531,47 @@ describe('createCustomerHttpAdapter', () => {
           dropoff: expect.objectContaining({ address: 'Thủ Đức' }),
           vehicleType: 'VAN',
         }),
+      );
+    });
+
+    it('requires cargoWeight when vehicleType is TRUCK', async () => {
+      const client = createMockClient();
+      const adapter = createCustomerHttpAdapter(client);
+
+      const truckForm: CustomerCreateFormView = {
+        ...validForm,
+        vehicleType: 'TRUCK',
+        cargoWeight: '',
+      };
+
+      const view = await adapter.estimateOrder(truckForm);
+
+      expect(view.kind).toBe('form');
+      if (view.kind === 'form') {
+        expect(view.scenarioId).toBe('C-NEW-INVALID');
+        expect(view.form.fieldErrors.cargoWeight).toBe(
+          'Khối lượng là bắt buộc khi chọn xe tải.',
+        );
+      }
+      expect(client.post).not.toHaveBeenCalled();
+    });
+
+    it('sends cargoWeightKg when vehicleType is TRUCK', async () => {
+      const client = createMockClient();
+      client.post.mockResolvedValueOnce(mockEstimateResponse);
+      const adapter = createCustomerHttpAdapter(client);
+
+      const truckForm: CustomerCreateFormView = {
+        ...validForm,
+        vehicleType: 'TRUCK',
+        cargoWeight: '2000',
+      };
+
+      await adapter.estimateOrder(truckForm);
+
+      expect(client.post).toHaveBeenCalledWith(
+        '/orders/estimate',
+        expect.objectContaining({ vehicleType: 'TRUCK', cargoWeightKg: 2000 }),
       );
     });
 
@@ -566,14 +617,12 @@ describe('createCustomerHttpAdapter', () => {
       fieldErrors: {},
     };
 
-    it('calls POST /orders and returns detail content view', async () => {
+    it('calls POST /orders with the given estimateToken and returns detail content view', async () => {
       const client = createMockClient();
-      client.post
-        .mockResolvedValueOnce(mockEstimateResponse)
-        .mockResolvedValueOnce(mockOrderResponse);
+      client.post.mockResolvedValueOnce(mockOrderResponse);
 
       const adapter = createCustomerHttpAdapter(client);
-      const view = await adapter.createOrder(validForm);
+      const view = await adapter.createOrder(validForm, 'token-xyz-123');
 
       expect(view.kind).toBe('content');
       if (view.kind === 'content') {
@@ -582,6 +631,7 @@ describe('createCustomerHttpAdapter', () => {
         expect(view.order.reference).toBe('LP-260815-001');
         expect(view.order.priceLabel).toBe('286.000 ₫');
       }
+      expect(client.post).toHaveBeenCalledTimes(1);
       expect(client.post).toHaveBeenCalledWith(
         '/orders',
         expect.objectContaining({
@@ -596,31 +646,28 @@ describe('createCustomerHttpAdapter', () => {
     it('returns error boundary view when route fields are incomplete', async () => {
       const client = createMockClient();
       const adapter = createCustomerHttpAdapter(client);
-      const view = await adapter.createOrder({
-        ...validForm,
-        pickup: '',
-      });
+      const view = await adapter.createOrder({ ...validForm, pickup: '' }, 'token-xyz-123');
 
       expect(view.kind).toBe('error');
       if (view.kind === 'error') {
         expect(view.scenarioId).toBe('C-DETAIL-ERROR');
         expect(view.message).toContain('lộ trình không đầy đủ');
       }
+      expect(client.post).not.toHaveBeenCalled();
     });
 
     it('returns permission-denied boundary view on 403 response', async () => {
       const client = createMockClient();
-      client.post
-        .mockResolvedValueOnce(mockEstimateResponse)
-        .mockRejectedValueOnce(new ApiError(403, 'FORBIDDEN', 'Access denied'));
+      client.post.mockRejectedValueOnce(new ApiError(403, 'FORBIDDEN', 'Access denied'));
 
       const adapter = createCustomerHttpAdapter(client);
-      const view = await adapter.createOrder(validForm);
+      const view = await adapter.createOrder(validForm, 'token-xyz-123');
 
       expect(view.kind).toBe('permission-denied');
       if (view.kind === 'permission-denied') {
         expect(view.scenarioId).toBe('C-DETAIL-PERMISSION');
       }
+      expect(client.post).toHaveBeenCalledTimes(1);
     });
   });
 

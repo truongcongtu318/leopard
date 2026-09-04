@@ -21,6 +21,8 @@ import type {
   CustomerRoutePoint,
   CustomerRouteView,
   CustomerTrackingView,
+  CongestionLevel,
+  CustomerRouteOptionView,
 } from './model';
 import type { CustomerOrdersPort } from './port';
 
@@ -260,8 +262,10 @@ export interface CustomerOrdersListApiResponse {
   totalPages: number;
 }
 
-export interface OrderEstimateApiResponse {
+export interface RouteOptionApiResponse {
+  routeId: string;
   estimateToken: string;
+  isRecommended: boolean;
   polyline: string;
   distanceM: number;
   durationS: number;
@@ -270,6 +274,39 @@ export interface OrderEstimateApiResponse {
   source: ProviderSource;
   calculatedAt: string;
   isEstimate: boolean;
+  congestionLevel: CongestionLevel;
+}
+
+export interface OrderEstimateApiResponse {
+  routes: RouteOptionApiResponse[];
+}
+
+export function describeCongestionLevel(level: CongestionLevel): string {
+  switch (level) {
+    case 'low':
+      return 'Thông thoáng';
+    case 'moderate':
+      return 'Hơi đông';
+    case 'heavy':
+      return 'Kẹt xe';
+    case 'severe':
+      return 'Rất kẹt xe';
+    default:
+      return 'Chưa rõ giao thông';
+  }
+}
+
+export function mapRouteOptionToView(route: RouteOptionApiResponse): CustomerRouteOptionView {
+  return {
+    routeId: route.routeId,
+    estimateToken: route.estimateToken,
+    isRecommended: route.isRecommended,
+    durationSeconds: route.durationS,
+    distanceLabel: formatDistance(route.distanceM),
+    priceLabel: formatVndPrice(route.estimatedPriceVnd),
+    congestionLevel: route.congestionLevel,
+    congestionLabel: describeCongestionLevel(route.congestionLevel),
+  };
 }
 
 export interface CustomerHttpClient {
@@ -682,7 +719,6 @@ export function createCustomerHttpAdapter(
   client?: CustomerHttpClient,
 ): CustomerOrdersPort {
   const getClient = (): CustomerHttpClient => client ?? getDefaultHttpClient();
-  let cachedEstimateToken: string | null = null;
 
   return {
     async getOrdersView(
@@ -798,7 +834,9 @@ export function createCustomerHttpAdapter(
       if (!form.dropoff || !form.dropoff.trim()) {
         fieldErrors.dropoff = 'Điểm giao hàng là bắt buộc.';
       }
-      if (
+      if (form.vehicleType === 'TRUCK' && !form.cargoWeight.trim()) {
+        fieldErrors.cargoWeight = 'Khối lượng là bắt buộc khi chọn xe tải.';
+      } else if (
         form.cargoWeight &&
         (isNaN(Number(form.cargoWeight)) || Number(form.cargoWeight) <= 0)
       ) {
@@ -851,6 +889,9 @@ export function createCustomerHttpAdapter(
             lng: 106.7725,
           },
           vehicleType: form.vehicleType as VehicleType,
+          ...(form.vehicleType === 'TRUCK'
+            ? { cargoWeightKg: Number(form.cargoWeight) }
+            : {}),
         };
 
         const response = await activeClient.post<OrderEstimateApiResponse>(
@@ -858,13 +899,14 @@ export function createCustomerHttpAdapter(
           payload,
         );
 
-        cachedEstimateToken = response.estimateToken;
+        const routes = response.routes.map(mapRouteOptionToView);
+        const recommended = routes.find((r) => r.isRecommended) ?? routes[0];
+        const primarySource = response.routes[0]?.source ?? 'VIETMAP';
+        const primaryCalculatedAt = response.routes[0]?.calculatedAt ?? new Date().toISOString();
 
         return deepFreeze<CustomerCreateView>({
           scenarioId:
-            response.source === 'DEMO'
-              ? 'C-NEW-ESTIMATE-DEMO'
-              : 'C-NEW-ESTIMATE-READY',
+            primarySource === 'DEMO' ? 'C-NEW-ESTIMATE-DEMO' : 'C-NEW-ESTIMATE-READY',
           kind: 'form',
           phase: 'estimate-ready',
           form: {
@@ -873,11 +915,10 @@ export function createCustomerHttpAdapter(
           },
           estimate: {
             kind: 'ready',
-            source: response.source,
-            durationSeconds: response.durationS,
-            distanceLabel: formatDistance(response.distanceM),
-            priceLabel: formatVndPrice(response.estimatedPriceVnd),
-            calculatedAtLabel: formatDateTime(response.calculatedAt),
+            source: primarySource,
+            routes,
+            selectedRouteId: recommended.routeId,
+            calculatedAtLabel: formatDateTime(primaryCalculatedAt),
           },
           notice: null,
           actions: [
@@ -929,6 +970,7 @@ export function createCustomerHttpAdapter(
 
     async createOrder(
       form: CustomerCreateFormView,
+      estimateToken: string,
     ): Promise<CustomerDetailView> {
       const activeClient = getClient();
       if (!form.pickup?.trim() || !form.dropoff?.trim()) {
@@ -941,38 +983,6 @@ export function createCustomerHttpAdapter(
       }
 
       try {
-        let token = cachedEstimateToken;
-        if (!token) {
-          const estimatePayload = {
-            pickup: {
-              type: 'PICKUP',
-              address: form.pickup.trim(),
-              lat: 10.7326,
-              lng: 106.7168,
-            },
-            stops: form.stops
-              .filter((s) => s.value.trim().length > 0)
-              .map((s, idx) => ({
-                type: 'STOP',
-                address: s.value.trim(),
-                lat: 10.7626 + idx * 0.01,
-                lng: 106.6601 + idx * 0.01,
-              })),
-            dropoff: {
-              type: 'DROPOFF',
-              address: form.dropoff.trim(),
-              lat: 10.8498,
-              lng: 106.7725,
-            },
-            vehicleType: form.vehicleType as VehicleType,
-          };
-          const est = await activeClient.post<OrderEstimateApiResponse>(
-            '/orders/estimate',
-            estimatePayload,
-          );
-          token = est.estimateToken;
-        }
-
         const createPayload = {
           pickup: {
             type: 'PICKUP',
@@ -996,18 +1006,14 @@ export function createCustomerHttpAdapter(
           },
           vehicleType: form.vehicleType as VehicleType,
           cargoNote: form.cargoNote?.trim() || undefined,
-          cargoWeightKg: form.cargoWeight
-            ? Number(form.cargoWeight)
-            : undefined,
-          estimateToken: token,
+          cargoWeightKg: form.cargoWeight ? Number(form.cargoWeight) : undefined,
+          estimateToken,
         };
 
         const response = await activeClient.post<MappedOrderResponse>(
           '/orders',
           createPayload,
         );
-
-        cachedEstimateToken = null;
 
         return deepFreeze<CustomerDetailContentView>({
           scenarioId: 'C-DETAIL-SUCCESS',
