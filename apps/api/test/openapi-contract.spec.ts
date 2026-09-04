@@ -344,20 +344,28 @@ describe('OpenAPI 3.1 Contract', () => {
   });
 
   describe('EstimateResponse schema', () => {
-    it('should include estimateToken, polyline, and price fields', () => {
+    it('should be a routes array wrapping per-route price, ETA and token fields', () => {
       const schema = doc.components.schemas.EstimateResponse;
 
       expect(schema).toBeDefined();
       expect(schema.type).toBe('object');
-      expect(schema.required).toContain('estimateToken');
-      expect(schema.required).toContain('polyline');
-      expect(schema.required).toContain('distanceM');
-      expect(schema.required).toContain('durationS');
-      expect(schema.required).toContain('estimatedArrivalAt');
-      expect(schema.required).toContain('estimatedPriceVnd');
-      expect(schema.required).toContain('source');
-      expect(schema.required).toContain('isEstimate');
-      expect(schema.required).toContain('calculatedAt');
+      expect(schema.required).toContain('routes');
+
+      const routeOption = doc.components.schemas.RouteOption;
+      expect(routeOption).toBeDefined();
+      expect(routeOption.type).toBe('object');
+      expect(routeOption.required).toContain('routeId');
+      expect(routeOption.required).toContain('estimateToken');
+      expect(routeOption.required).toContain('isRecommended');
+      expect(routeOption.required).toContain('polyline');
+      expect(routeOption.required).toContain('distanceM');
+      expect(routeOption.required).toContain('durationS');
+      expect(routeOption.required).toContain('estimatedArrivalAt');
+      expect(routeOption.required).toContain('estimatedPriceVnd');
+      expect(routeOption.required).toContain('source');
+      expect(routeOption.required).toContain('isEstimate');
+      expect(routeOption.required).toContain('calculatedAt');
+      expect(routeOption.required).toContain('congestionLevel');
     });
   });
 

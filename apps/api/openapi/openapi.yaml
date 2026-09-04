@@ -1232,16 +1232,24 @@ components:
           $ref: "#/components/schemas/EstopSchema"
         vehicleType:
           $ref: "#/components/schemas/VehicleType"
+        cargoWeightKg:
+          type: integer
+          description: Cargo weight in kilograms; required when vehicleType is TRUCK
 
-    EstimateResponse:
+    RouteOption:
       type: object
       required:
-        [estimateToken, polyline, distanceM, durationS, estimatedArrivalAt,
-         estimatedPriceVnd, source, isEstimate, calculatedAt]
+        [routeId, estimateToken, isRecommended, polyline, distanceM, durationS,
+         estimatedArrivalAt, estimatedPriceVnd, source, isEstimate, calculatedAt,
+         congestionLevel]
       properties:
+        routeId:
+          type: string
         estimateToken:
           type: string
-          description: Opaque token valid for 10 minutes
+          description: Opaque token valid for 10 minutes, bound to this specific route
+        isRecommended:
+          type: boolean
         polyline:
           type: string
           description: Encoded route polyline
@@ -1264,6 +1272,19 @@ components:
         calculatedAt:
           type: string
           format: date-time
+        congestionLevel:
+          type: string
+          enum: [low, moderate, heavy, severe, unknown]
+
+    EstimateResponse:
+      type: object
+      required: [routes]
+      properties:
+        routes:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/RouteOption"
 
     CreateOrderRequest:
       type: object
