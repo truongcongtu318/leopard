@@ -9,7 +9,7 @@ describe('EstimateTokenService', () => {
   const issuedAt = new Date('2026-08-01T03:00:00.000Z');
   const secret = 'test-estimate-token-secret-32-bytes';
 
-  it('issues a signed token that binds the normalized route, quote and 10-minute expiry', () => {
+  it('issues a signed token that binds the normalized route, quote, routeId and 10-minute expiry', () => {
     const service = new EstimateTokenService({
       secret,
       now: () => issuedAt,
@@ -19,6 +19,7 @@ describe('EstimateTokenService', () => {
       routeInput: routeInput(),
       estimate: routeEstimate(),
       quote: { amountVnd: 87_654, currency: 'VND' },
+      routeId: 'route-0',
     });
 
     const verified = service.verify(token);
@@ -26,6 +27,7 @@ describe('EstimateTokenService', () => {
     expect(verified).toEqual({
       ...routeEstimate(),
       estimatedPriceVnd: 87_654,
+      routeId: 'route-0',
       normalizedInput: {
         pickup: { latitude: 10.762623, longitude: 106.660172 },
         stops: [{ latitude: 10.776889, longitude: 106.700807 }],
@@ -37,21 +39,17 @@ describe('EstimateTokenService', () => {
   });
 
   it('rejects a token whose signed route payload was tampered', () => {
-    const service = new EstimateTokenService({
-      secret,
-      now: () => issuedAt,
-    });
+    const service = new EstimateTokenService({ secret, now: () => issuedAt });
     const token = service.issue({
       routeInput: routeInput(),
       estimate: routeEstimate(),
       quote: { amountVnd: 87_654, currency: 'VND' },
+      routeId: 'route-0',
     });
     const [payload, signature] = token.split('.');
     const tamperedPayload = JSON.parse(
       Buffer.from(payload ?? '', 'base64url').toString('utf8'),
-    ) as {
-      routeInput: RouteInput;
-    };
+    ) as { routeInput: RouteInput };
 
     tamperedPayload.routeInput.vehicleType = 'TRUCK';
     const tamperedToken = `${Buffer.from(JSON.stringify(tamperedPayload)).toString(
@@ -62,21 +60,17 @@ describe('EstimateTokenService', () => {
   });
 
   it('rejects a token whose signed quote payload was tampered', () => {
-    const service = new EstimateTokenService({
-      secret,
-      now: () => issuedAt,
-    });
+    const service = new EstimateTokenService({ secret, now: () => issuedAt });
     const token = service.issue({
       routeInput: routeInput(),
       estimate: routeEstimate(),
       quote: { amountVnd: 87_654, currency: 'VND' },
+      routeId: 'route-0',
     });
     const [payload, signature] = token.split('.');
     const tamperedPayload = JSON.parse(
       Buffer.from(payload ?? '', 'base64url').toString('utf8'),
-    ) as {
-      quote: { amountVnd: number };
-    };
+    ) as { quote: { amountVnd: number } };
 
     tamperedPayload.quote.amountVnd = 1;
     const tamperedToken = `${Buffer.from(JSON.stringify(tamperedPayload)).toString(
@@ -88,14 +82,12 @@ describe('EstimateTokenService', () => {
 
   it('rejects expired estimate tokens', () => {
     let now = issuedAt;
-    const service = new EstimateTokenService({
-      secret,
-      now: () => now,
-    });
+    const service = new EstimateTokenService({ secret, now: () => now });
     const token = service.issue({
       routeInput: routeInput(),
       estimate: routeEstimate(),
       quote: { amountVnd: 87_654, currency: 'VND' },
+      routeId: 'route-0',
     });
 
     now = new Date('2026-08-01T03:10:00.001Z');
@@ -104,10 +96,7 @@ describe('EstimateTokenService', () => {
   });
 
   it('does not expose the HMAC secret in token errors', () => {
-    const service = new EstimateTokenService({
-      secret,
-      now: () => issuedAt,
-    });
+    const service = new EstimateTokenService({ secret, now: () => issuedAt });
 
     expect(() => service.verify('bad.token')).toThrow(/Estimate token/);
 
@@ -117,6 +106,67 @@ describe('EstimateTokenService', () => {
       expect(error).toBeInstanceOf(Error);
       expect((error as Error).message).not.toContain(secret);
     }
+  });
+
+  it('rejects issuing a token with an empty routeId', () => {
+    const service = new EstimateTokenService({ secret, now: () => issuedAt });
+
+    expect(() =>
+      service.issue({
+        routeInput: routeInput(),
+        estimate: routeEstimate(),
+        quote: { amountVnd: 87_654, currency: 'VND' },
+        routeId: '',
+      }),
+    ).toThrow('Estimate token routeId is invalid');
+  });
+
+  it('binds cargoWeightKg into the signed route and rejects a mismatched weight at verify time', () => {
+    const service = new EstimateTokenService({ secret, now: () => issuedAt });
+    const token = service.issue({
+      routeInput: { ...routeInput(), vehicleType: 'TRUCK', cargoWeightKg: 1_250 },
+      estimate: routeEstimate(),
+      quote: { amountVnd: 87_654, currency: 'VND' },
+      routeId: 'route-0',
+    });
+
+    expect(() =>
+      service.verify(token, { ...routeInput(), vehicleType: 'TRUCK', cargoWeightKg: 2_000 }),
+    ).toThrow('Estimate parameters mismatch');
+
+    expect(() =>
+      service.verify(token, { ...routeInput(), vehicleType: 'TRUCK', cargoWeightKg: 1_250 }),
+    ).not.toThrow();
+  });
+
+  it('keeps every route in a multi-route estimate bound to its own token: decoding Token A never returns Route B data', () => {
+    const service = new EstimateTokenService({ secret, now: () => issuedAt });
+    const tokenA = service.issue({
+      routeInput: routeInput(),
+      estimate: { ...routeEstimate(), distanceM: 12_000, durationS: 1_800 },
+      quote: { amountVnd: 50_000, currency: 'VND' },
+      routeId: 'route-0',
+    });
+    const tokenB = service.issue({
+      routeInput: routeInput(),
+      estimate: { ...routeEstimate(), distanceM: 14_000, durationS: 1_620 },
+      quote: { amountVnd: 58_000, currency: 'VND' },
+      routeId: 'route-1',
+    });
+
+    const verifiedA = service.verify(tokenA);
+    const verifiedB = service.verify(tokenB);
+
+    expect(verifiedA.routeId).toBe('route-0');
+    expect(verifiedA.distanceM).toBe(12_000);
+    expect(verifiedA.estimatedPriceVnd).toBe(50_000);
+
+    expect(verifiedB.routeId).toBe('route-1');
+    expect(verifiedB.distanceM).toBe(14_000);
+    expect(verifiedB.estimatedPriceVnd).toBe(58_000);
+
+    expect(verifiedA.routeId).not.toBe(verifiedB.routeId);
+    expect(verifiedA.distanceM).not.toBe(verifiedB.distanceM);
   });
 });
 
@@ -139,5 +189,6 @@ function routeEstimate(): RouteEstimate {
     source: 'DEMO',
     calculatedAt: '2026-08-01T03:00:00.000Z',
     isEstimate: true,
+    congestionLevel: 'low',
   };
 }
