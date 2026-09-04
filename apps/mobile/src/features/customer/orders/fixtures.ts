@@ -242,9 +242,19 @@ function estimateFor(scenarioId: CustomerCreateScenarioId): CustomerEstimateView
     return {
       kind: 'ready',
       source: scenarioId === 'C-NEW-ESTIMATE-DEMO' ? 'DEMO' : 'VIETMAP',
-      durationSeconds: 1080,
-      distanceLabel: '18,4 km',
-      priceLabel: '286.000 ₫',
+      routes: [
+        {
+          routeId: 'route-0',
+          estimateToken: 'demo-estimate-token',
+          isRecommended: true,
+          durationSeconds: 1080,
+          distanceLabel: '18,4 km',
+          priceLabel: '286.000 ₫',
+          congestionLevel: 'unknown',
+          congestionLabel: 'Chưa rõ giao thông',
+        },
+      ],
+      selectedRouteId: 'route-0',
       calculatedAtLabel: '14:30 · 15/08/2026',
     };
   }
