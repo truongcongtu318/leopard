@@ -16,10 +16,38 @@ describe('Admin static operations screens', () => {
     expect(screen.getAllByText('0').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
     expect(screen.getAllByText('LP-A-260815-101').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText('Bàn điều phối hiện tại').className).toContain('from-neutral-text');
+    expect(screen.getByLabelText('Bàn điều phối hiện tại').className).toContain('shadow-sm');
     expect(screen.getByText('Tracking cần kiểm tra').closest('li')?.className).toContain(
-      'rounded-xl',
+      'rounded-card',
     );
+  });
+
+  it('renders Realtime Da Nang map, quick dispatch feeds, and modern telemetry cards', () => {
+    render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
+
+    // Map and vehicle filters
+    expect(screen.getByText('BẢN ĐỒ THEO DÕI REAL-TIME')).toBeTruthy();
+    const pickupFilter = screen.getByRole('button', { name: /Bán tải/ });
+    const heavyFilter = screen.getByRole('button', { name: /Tải nặng/ });
+    expect(pickupFilter).toBeTruthy();
+    expect(heavyFilter).toBeTruthy();
+
+    // Interactive filter toggle
+    fireEvent.click(pickupFilter);
+    expect(pickupFilter.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(pickupFilter);
+    expect(pickupFilter.getAttribute('aria-pressed')).toBe('false');
+
+    // Quick dispatch feeds
+    expect(screen.getByText('YÊU CẦU ĐƠN MỚI')).toBeTruthy();
+    expect(screen.getByText('SME ABC')).toBeTruthy();
+    expect(screen.getByText('TÀI XẾ GẦN ĐÂY')).toBeTruthy();
+    expect(screen.getByText('Sáu sign ups')).toBeTruthy();
+
+    // Telemetry KPI cards
+    expect(screen.getByText('ĐƠN HÀNG HÔM NAY')).toBeTruthy();
+    expect(screen.getByText('XE ĐANG HOẠT ĐỘNG')).toBeTruthy();
+    expect(screen.getByText(/ETA DỰ KIẾN/)).toBeTruthy();
   });
 
   it('keeps operational context for readiness and offline overview scenarios', () => {
@@ -147,7 +175,7 @@ describe('Admin static operations screens', () => {
     expect(screen.getByText('req-admin-demo-001')).toBeTruthy();
     expect(screen.queryByText(/https?:\/\//)).toBeNull();
     expect(screen.getByLabelText('Ngữ cảnh điều phối hiện tại').className).toContain(
-      'bg-neutral-text',
+      'shadow-sm',
     );
     expect(screen.getByLabelText('Audit Rail — thao tác đặc quyền').className).toContain(
       'border-l-4',

@@ -26,6 +26,14 @@ const DEMO_ROLES = new Map<string, Role>([
   ['driver', 'DRIVER'],
   ['fleet-owner', 'FLEET_OWNER'],
   ['admin', 'ADMIN'],
+  ['+840000000001', 'CUSTOMER'],
+  ['+840000000002', 'DRIVER'],
+  ['+840000000003', 'FLEET_OWNER'],
+  ['+840000000004', 'ADMIN'],
+  ['0900000001', 'CUSTOMER'],
+  ['0900000002', 'DRIVER'],
+  ['0900000003', 'FLEET_OWNER'],
+  ['0900000004', 'ADMIN'],
 ]);
 
 @Injectable()

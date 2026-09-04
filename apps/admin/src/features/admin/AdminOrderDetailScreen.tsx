@@ -54,7 +54,7 @@ export function AdminOrderDetailScreen({
         screen="order-detail"
       />
       <OperationsPageHeader
-        context="Investigation workspace · lifecycle history tách biệt với privileged audit"
+        context="Khu vực điều tra · lịch sử lifecycle tách biệt với audit đặc quyền"
         isStale={order.tracking.state === 'stale'}
         title={`Đơn ${order.reference}`}
         updatedAt={order.updatedAtLabel}
@@ -66,13 +66,13 @@ export function AdminOrderDetailScreen({
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
       <AdminDispatchSlab
         ariaLabel="Ngữ cảnh điều phối hiện tại"
-        eyebrow="INVESTIGATION CONTEXT · LIVE SNAPSHOT"
+        eyebrow="NGỮ CẢNH ĐƠN · DỮ LIỆU TRỰC TIẾP"
       >
         <div className="grid min-w-0 gap-md md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-brand-soft">TARGET ORDER</p>
-            <p className="mt-xxs text-section-title font-bold break-words">{order.reference}</p>
-            <p className="mt-xs text-body-compact text-brand-soft break-words">
+            <p className="text-xs font-bold tracking-wide text-slate-500 uppercase">Mã đơn</p>
+            <p className="mt-xxs text-xl sm:text-2xl font-black text-slate-800 break-words">{order.reference}</p>
+            <p className="mt-xs text-xs sm:text-sm text-slate-600 break-words font-medium">
               {order.driverLabel} · {order.tracking.statusLabel}
             </p>
           </div>
@@ -112,6 +112,7 @@ export function AdminOrderDetailScreen({
           </AdminSurface>
 
           <MapPanel
+            className="rounded-[22px] sm:rounded-[26px] border border-white/80 shadow-xs overflow-hidden"
             height="large"
             lastUpdated={order.tracking.lastUpdatedLabel}
             state={order.tracking.state}
@@ -163,15 +164,23 @@ export function AdminOrderDetailScreen({
                 Chưa có media được phép hiển thị.
               </p>
             ) : (
-              <ul className="m-0 grid list-none gap-sm p-0 sm:grid-cols-2">
-                {order.media.items.map((item) => (
+              <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
+                {order.media.items.map((item, index) => (
                   <li
                     key={item.id}
-                    className="rounded-control border border-neutral-border bg-neutral-surface p-sm"
+                    className="rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-4 shadow-2xs hover:shadow-xs transition-shadow"
                   >
-                    <p className="font-semibold break-words">{item.label}</p>
-                    <p className="mt-xxs text-body-compact text-neutral-muted">
-                      {item.mediaType} · {item.capturedAtLabel}
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-xs font-bold text-brand uppercase tracking-wider" aria-hidden="true">
+                        Tệp #{String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className="rounded-full bg-slate-200/70 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                        {item.mediaType}
+                      </span>
+                    </div>
+                    <p className="font-bold text-slate-800 break-words text-sm">{item.label}</p>
+                    <p className="mt-1 text-xs text-neutral-muted tabular-nums">
+                      {item.capturedAtLabel}
                     </p>
                   </li>
                 ))}

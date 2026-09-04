@@ -10,16 +10,21 @@ export interface DemoOtpProviderOptions {
 }
 
 const DEMO_IDENTITIES = new Map<string, OtpIdentity>([
-  [
-    'customer',
-    { providerUserId: 'demo:customer', phoneNumber: '+840000000001' },
-  ],
+  ['customer', { providerUserId: 'demo:customer', phoneNumber: '+840000000001' }],
   ['driver', { providerUserId: 'demo:driver', phoneNumber: '+840000000002' }],
   [
     'fleet-owner',
     { providerUserId: 'demo:fleet-owner', phoneNumber: '+840000000003' },
   ],
   ['admin', { providerUserId: 'demo:admin', phoneNumber: '+840000000004' }],
+  ['+840000000001', { providerUserId: 'demo:customer', phoneNumber: '+840000000001' }],
+  ['+840000000002', { providerUserId: 'demo:driver', phoneNumber: '+840000000002' }],
+  ['+840000000003', { providerUserId: 'demo:fleet-owner', phoneNumber: '+840000000003' }],
+  ['+840000000004', { providerUserId: 'demo:admin', phoneNumber: '+840000000004' }],
+  ['0900000001', { providerUserId: 'demo:customer', phoneNumber: '+840000000001' }],
+  ['0900000002', { providerUserId: 'demo:driver', phoneNumber: '+840000000002' }],
+  ['0900000003', { providerUserId: 'demo:fleet-owner', phoneNumber: '+840000000003' }],
+  ['0900000004', { providerUserId: 'demo:admin', phoneNumber: '+840000000004' }],
 ]);
 
 const ALLOWED_DEMO_ENVS = new Set(['development', 'local', 'test']);

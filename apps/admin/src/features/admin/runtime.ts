@@ -197,8 +197,9 @@ function maskPhone(phone: string | null | undefined): string {
 }
 
 function referenceOf(orderId: string): string {
-  const head = orderId.split('-')[0];
-  return head ? head.toUpperCase() : orderId;
+  const rawId = orderId.replace(/-/g, '');
+  const suffix = rawId.slice(-4).toUpperCase();
+  return `LP-${suffix}`;
 }
 
 function toOrderStatus(raw: string): OrderStatus {

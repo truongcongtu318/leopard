@@ -61,33 +61,33 @@ function FleetOrderLedger({
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   return (
-    <div className="overflow-x-auto border-y border-neutral-border">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
       <table className="w-full min-w-[42rem] border-collapse text-left text-body-compact">
         <caption className="sr-only">
           {orders.length} đơn thuộc Đội xe {fleetName}
         </caption>
-        <thead className="bg-neutral-text text-brand-text">
+        <thead className="border-b border-slate-200/80 bg-slate-50/90 text-slate-500">
           <tr>
-            <th className="px-md py-sm font-semibold" scope="col">
+            <th className="px-md py-3 font-extrabold text-[11px] uppercase tracking-wider" scope="col">
               Đơn hàng
             </th>
-            <th className="px-md py-sm font-semibold" scope="col">
+            <th className="px-md py-3 font-extrabold text-[11px] uppercase tracking-wider" scope="col">
               Trạng thái
             </th>
-            <th className="px-md py-sm font-semibold" scope="col">
+            <th className="px-md py-3 font-extrabold text-[11px] uppercase tracking-wider" scope="col">
               Thông tin bổ sung
             </th>
-            <th className="px-md py-sm font-semibold" scope="col">
+            <th className="px-md py-3 font-extrabold text-[11px] uppercase tracking-wider" scope="col">
               Xem
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-slate-100">
           {orders.map((order) => {
             const expanded = expandedOrderId === order.id;
             return (
               <tr
-                className="border-b border-neutral-border align-top last:border-b-0"
+                className="align-top hover:bg-slate-50/60 transition-colors"
                 key={order.id}
               >
                 <td className="border-l-4 border-brand px-md py-md">
@@ -104,7 +104,7 @@ function FleetOrderLedger({
                     aria-controls={`fleet-order-detail-${order.id}`}
                     aria-expanded={expanded}
                     aria-label={`Mở thông tin bổ sung cho đơn ${order.reference}`}
-                    className="inline-flex min-h-11 items-center gap-xs font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="inline-flex min-h-10 items-center gap-xs font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand text-xs"
                     onClick={() =>
                       setExpandedOrderId((current) => (current === order.id ? null : order.id))
                     }
@@ -116,35 +116,35 @@ function FleetOrderLedger({
                   {expanded ? (
                     <div
                       aria-label={`Thông tin bổ sung cho đơn ${order.reference}`}
-                      className="mt-sm border-l-2 border-brand bg-neutral-surface p-sm"
+                      className="mt-sm rounded-xl border border-slate-200/80 bg-[#f8fbff] p-3.5 shadow-inner"
                       id={`fleet-order-detail-${order.id}`}
                       role="region"
                     >
-                      <dl className="grid gap-xs sm:grid-cols-2">
+                      <dl className="grid gap-2 sm:grid-cols-2 text-xs">
                         <div className="sm:col-span-2">
-                          <dt className="text-xs font-semibold text-neutral-muted">Lộ trình</dt>
-                          <dd className="mt-xxs break-words">
+                          <dt className="font-semibold text-neutral-muted">Lộ trình</dt>
+                          <dd className="mt-0.5 font-medium text-slate-800 break-words">
                             {order.route.originLabel} → {order.route.destinationLabel}
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-xs font-semibold text-neutral-muted">Khách hàng</dt>
-                          <dd className="mt-xxs break-words">{order.customerLabel}</dd>
+                          <dt className="font-semibold text-neutral-muted">Khách hàng</dt>
+                          <dd className="mt-0.5 font-medium text-slate-800 break-words">{order.customerLabel}</dd>
                         </div>
                         <div>
-                          <dt className="text-xs font-semibold text-neutral-muted">Tài xế</dt>
-                          <dd className="mt-xxs break-words">{order.driverLabel}</dd>
+                          <dt className="font-semibold text-neutral-muted">Tài xế</dt>
+                          <dd className="mt-0.5 font-medium text-slate-800 break-words">{order.driverLabel}</dd>
                         </div>
                         <div>
-                          <dt className="text-xs font-semibold text-neutral-muted">Thanh toán</dt>
-                          <dd className="mt-xxs">
+                          <dt className="font-semibold text-neutral-muted">Thanh toán</dt>
+                          <dd className="mt-0.5">
                             <StatusBadge domain="paymentStatus" status={order.paymentStatus} />
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-xs font-semibold text-neutral-muted">Tracking</dt>
+                          <dt className="font-semibold text-neutral-muted">Tracking</dt>
                           <dd
-                            className={`mt-xxs break-words ${order.trackingFreshness === 'stale' ? 'font-semibold text-warning-text' : ''}`}
+                            className={`mt-0.5 break-words ${order.trackingFreshness === 'stale' ? 'font-semibold text-warning-text' : 'text-slate-600'}`}
                           >
                             {order.trackingLabel}
                           </dd>
@@ -156,7 +156,7 @@ function FleetOrderLedger({
                 <td className="px-md py-md">
                   <a
                     aria-label={`Xem chi tiết đơn ${order.reference}`}
-                    className="inline-flex min-h-11 items-center font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="inline-flex min-h-10 items-center font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand text-xs"
                     href={detailHref(order, previewContext)}
                   >
                     Mở →
@@ -197,20 +197,22 @@ function OrderFilters({
   previewContext: FleetPreviewContext | undefined;
 }>) {
   const fieldClass =
-    'min-h-11 w-full rounded-control border border-neutral-border bg-neutral px-sm text-neutral-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand';
+    'min-h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-white focus:bg-white px-3.5 py-2 text-xs text-slate-800 shadow-2xs transition-all focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand';
   return (
     <form
       aria-label="Lọc đơn của đội xe"
-      className="grid gap-sm border-l-4 border-brand bg-neutral-surface p-md md:grid-cols-2 xl:grid-cols-4"
+      className="grid gap-4 rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text md:grid-cols-2 xl:grid-cols-4"
       method="get"
       role="search"
     >
-      <div className="border-b border-neutral-border pb-sm md:col-span-2 xl:col-span-4">
-        <p className="text-xs font-bold tracking-widest text-brand">SCOPE LEDGER</p>
-        <h2 className="mt-xxs text-section-title font-semibold">Thu hẹp tập đơn chỉ xem</h2>
+      <div className="border-b border-slate-100 pb-3 md:col-span-2 xl:col-span-4">
+        <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand uppercase">
+          BỘ LỌC
+        </span>
+        <h2 className="mt-1 text-base sm:text-lg font-bold text-neutral-text">Thu hẹp tập đơn chỉ xem</h2>
       </div>
       <FleetPreviewHiddenFields context={previewContext} />
-      <label className="grid gap-xxs text-body-compact font-medium xl:col-span-2">
+      <label className="grid gap-1.5 text-xs font-semibold text-slate-700 xl:col-span-2">
         Tìm đơn
         <input
           className={fieldClass}
@@ -221,7 +223,7 @@ function OrderFilters({
           type="search"
         />
       </label>
-      <label className="grid gap-xxs text-body-compact font-medium">
+      <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
         Trạng thái
         <select className={fieldClass} defaultValue={filters.status} name="status">
           <option value="ALL">Tất cả</option>
@@ -233,7 +235,7 @@ function OrderFilters({
           <option value="CANCELLED">Đã hủy</option>
         </select>
       </label>
-      <label className="grid gap-xxs text-body-compact font-medium">
+      <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
         Customer
         <input
           className={fieldClass}
@@ -243,7 +245,7 @@ function OrderFilters({
           placeholder="Tên hiển thị"
         />
       </label>
-      <label className="grid gap-xxs text-body-compact font-medium">
+      <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
         Driver
         <select className={fieldClass} defaultValue={filters.driverId} name="driverId">
           <option value="">Tất cả tài xế</option>
@@ -251,15 +253,15 @@ function OrderFilters({
           <option value="22222222-2222-4222-8222-222222222002">Tài xế Bình Mô Phỏng</option>
         </select>
       </label>
-      <label className="grid gap-xxs text-body-compact font-medium">
+      <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
         Từ ngày
         <input className={fieldClass} defaultValue={filters.from} name="from" type="date" />
       </label>
-      <label className="grid gap-xxs text-body-compact font-medium">
+      <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
         Đến ngày
         <input className={fieldClass} defaultValue={filters.to} name="to" type="date" />
       </label>
-      <label className="grid gap-xxs text-body-compact font-medium">
+      <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
         Sắp xếp
         <select className={fieldClass} defaultValue={filters.sort} name="sort">
           <option value="updated-desc">Mới cập nhật trước</option>
@@ -269,15 +271,15 @@ function OrderFilters({
       </label>
       <input name="page" type="hidden" value="1" />
       <input name="pageSize" type="hidden" value={filters.pageSize} />
-      <div className="flex flex-wrap items-end gap-xs md:col-span-2 xl:col-span-4">
+      <div className="flex flex-wrap items-end gap-2 md:col-span-2 xl:col-span-4">
         <button
-          className="inline-flex min-h-11 items-center rounded-control bg-brand px-md font-semibold text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          className="inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
           type="submit"
         >
           Áp dụng
         </button>
         <a
-          className="inline-flex min-h-11 items-center rounded-control border border-neutral-border px-md font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           href={clearFilterHref(previewContext)}
         >
           Xóa bộ lọc
@@ -379,6 +381,7 @@ export function FleetOrdersScreen({
           <OrderResults previewContext={previewContext} view={view} />
         </FleetSurface>
         <MapPanel
+          className="rounded-[22px] sm:rounded-[26px] border border-white/80 shadow-xs overflow-hidden"
           height="large"
           lastUpdated={view.result.asOfLabel}
           state={view.result.mapState}

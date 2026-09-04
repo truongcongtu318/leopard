@@ -43,7 +43,11 @@ export function FleetDashboardScreen({
       <p className="text-xs text-neutral-muted tabular-nums">Snapshot: {view.asOfLabel}</p>
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
 
-      <CompactMetricSummary ariaLabel="Tóm tắt vận hành đội xe" items={view.metrics} />
+      <CompactMetricSummary
+        ariaLabel="Tóm tắt vận hành đội xe"
+        className="rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 shadow-xs backdrop-blur-sm"
+        items={view.metrics}
+      />
 
       <FleetSurface
         description="Chỉ hiển thị ngoại lệ đã được nguồn dữ liệu phân loại."
@@ -73,7 +77,7 @@ export function FleetDashboardScreen({
         )}
       </FleetSurface>
 
-      <div className="grid gap-lg xl:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
+      <div className="grid gap-lg xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
         <FleetSurface
           description="Các đơn đang hoạt động do snapshot đã xác thực cung cấp."
           title="Đơn đang hoạt động"
@@ -89,41 +93,54 @@ export function FleetDashboardScreen({
               </a>
             </div>
           ) : (
-            <ul className="m-0 grid list-none gap-md p-0">
+            <ul className="m-0 grid list-none gap-3 p-0">
               {view.activeOrders.map((order) => (
-                <li key={order.id} className="border-l-4 border-brand bg-neutral-surface p-md">
-                  <p className="mb-xs text-xs font-bold tracking-widest text-brand">
-                    ACTIVE ORDER
-                  </p>
-                  <div className="flex flex-wrap items-start justify-between gap-xs">
+                <li
+                  key={order.id}
+                  className="rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-4 shadow-2xs transition-shadow hover:shadow-xs"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-brand uppercase">
+                      ĐƠN ĐANG CHẠY
+                    </span>
+                    <StatusBadge domain="orderStatus" status={order.status} />
+                  </div>
+                  <div className="flex flex-wrap items-baseline justify-between gap-xs">
                     <a
-                      className="font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                      className="font-bold text-brand hover:underline underline-offset-4 focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                       href={fleetOrderDetailHref(order.href, previewContext)}
                     >
                       {order.reference}
                     </a>
-                    <StatusBadge domain="orderStatus" status={order.status} />
                   </div>
-                  <p className="mt-xs text-body-compact">{order.routeLabel}</p>
-                  <p className="mt-xxs text-body-compact text-neutral-muted">{order.driverLabel}</p>
-                  <p className="mt-xxs text-xs text-neutral-muted">{order.trackingLabel}</p>
+                  <p className="mt-1 text-sm font-medium text-slate-800 break-words">{order.routeLabel}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-muted">
+                    <span className="font-medium text-slate-600">{order.driverLabel}</span>
+                    <span>·</span>
+                    <span className="text-slate-500">{order.trackingLabel}</span>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </FleetSurface>
 
-        <FleetDispatchSlab ariaLabel="Tình trạng tài xế" eyebrow="DRIVER FIELD · SNAPSHOT">
+        <FleetDispatchSlab ariaLabel="Tình trạng tài xế" eyebrow="TÀI XẾ · SNAPSHOT HIỆN TẠI">
           <h2 className="text-section-title font-semibold">Tình trạng tài xế</h2>
           {view.unavailableRegionLabel ? (
-            <OperationalAlert title="Không thể tải vùng dữ liệu" tone="warning">
-              <p>{view.unavailableRegionLabel}</p>
-            </OperationalAlert>
+            <div className="mt-3">
+              <OperationalAlert title="Không thể tải vùng dữ liệu" tone="warning">
+                <p>{view.unavailableRegionLabel}</p>
+              </OperationalAlert>
+            </div>
           ) : (
-            <>
-              <p className="mt-sm text-lg font-semibold break-words">{view.availabilitySummary}</p>
+            <div className="mt-4 flex flex-col gap-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xs">
+                <p className="text-xs font-medium text-white/60">Tóm tắt khả dụng</p>
+                <p className="mt-1 text-lg font-bold text-white break-words">{view.availabilitySummary}</p>
+              </div>
               <a
-                className="mt-md inline-flex min-h-11 items-center font-semibold text-brand-soft underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft"
+                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-white/15 px-4 text-xs font-semibold text-white hover:bg-white/25 transition-colors focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 href={fleetPreviewHref(
                   '/fleet/drivers',
                   'fleet-drivers-mixed',
@@ -132,7 +149,7 @@ export function FleetDashboardScreen({
               >
                 Xem danh sách tài xế
               </a>
-            </>
+            </div>
           )}
         </FleetDispatchSlab>
       </div>

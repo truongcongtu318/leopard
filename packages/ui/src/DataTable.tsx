@@ -47,11 +47,11 @@ export function DataTable({
   className,
 }: DataTableProps) {
   return (
-    <div className={cn('w-full overflow-hidden rounded-xl border border-neutral-border/60 bg-white shadow-sm', className)}>
-      <table role="table" className="w-full border-collapse text-left text-sm">
+    <div className={cn('w-full overflow-hidden rounded-card rounded-2xl border border-slate-200/80 bg-white shadow-2xs', className)}>
+      <table role="table" className="w-full border-collapse text-left text-xs sm:text-sm">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
-          <tr role="row" className="bg-neutral-surface/70 backdrop-blur border-b border-neutral-border/60">
+          <tr role="row" className="border-b border-slate-200/80 bg-slate-50/90">
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -59,8 +59,8 @@ export function DataTable({
                 scope="col"
                 aria-sort={col.sortable && col.key === sortKey ? sortDirection : undefined}
                 className={cn(
-                  'text-xs font-bold tracking-widest uppercase text-neutral-muted',
-                  col.sortable ? 'p-0' : 'px-md py-3',
+                  'text-[11px] font-extrabold tracking-wider uppercase text-slate-500 py-3',
+                  col.sortable ? 'p-0' : 'px-4',
                   col.className,
                 )}
               >
@@ -69,13 +69,13 @@ export function DataTable({
                     type="button"
                     onClick={() => onSort?.(col.key)}
                     className={cn(
-                      'flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1.5 bg-transparent px-md py-3 text-left text-xs font-bold tracking-widest uppercase text-neutral-muted',
-                      'hover:text-neutral-text hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-brand-soft focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset',
+                      'flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1.5 bg-transparent px-4 py-3 text-left text-[11px] font-extrabold tracking-wider uppercase text-slate-500',
+                      'hover:text-slate-800 hover:bg-slate-100/60 focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-brand-soft focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset motion-reduce:transition-none',
                     )}
                   >
                     <span>{col.header}</span>
                     <svg
-                      className="h-3 w-3 text-brand-soft"
+                      className="h-3 w-3 text-slate-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -101,7 +101,7 @@ export function DataTable({
             Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} columns={columns} />)
           ) : rows.length === 0 ? (
             <tr role="row">
-              <td colSpan={columns.length} className="px-md py-lg text-center text-neutral-muted">
+              <td colSpan={columns.length} className="px-md py-lg text-center text-slate-400">
                 {emptyMessage}
               </td>
             </tr>
@@ -110,10 +110,10 @@ export function DataTable({
               <tr
                 key={rowIdx}
                 role="row"
-                className="border-b border-neutral-border/40 last:border-b-0 hover:bg-brand-soft/30 transition-colors group"
+                className="border-b border-slate-100/90 last:border-b-0 hover:bg-sky-50/40 transition-colors"
               >
                 {columns.map((col) => (
-                  <td key={col.key} className={cn('px-md py-sm text-neutral-text', col.className)}>
+                  <td key={col.key} className={cn('px-4 py-3.5 text-slate-700', col.className)}>
                     {col.render ? col.render(row) : String(row[col.key] ?? '')}
                   </td>
                 ))}

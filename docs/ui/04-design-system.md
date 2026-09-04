@@ -37,26 +37,25 @@ Operational clarity có nghĩa là:
   Driver ưu tiên current state và đúng một next action.
 - UI chỉ phản ánh permission, lifecycle, giá, ETA và payment state do backend trả về.
 
-### 1.1 Visual language — Dispatch Control / Road Ledger
+### 1.1 Visual language — Luminous Modern Dispatch / Road Ledger
 
 `Operational clarity` phải nhìn thấy được trong composition, không chỉ tồn tại trong
-component API. Visual language của LEOPARD được gọi là **Dispatch Control / Road
-Ledger**: giao diện giống một sổ điều phối hiện đại, nơi tuyến đường, trạng thái hiện
-tại và ngoại lệ tạo thành cấu trúc chính.
+component API. Visual language của LEOPARD trên nền tảng web điều hành được định nghĩa
+là **Luminous Modern Dispatch / Road Ledger**: giao diện bàn điều phối logistics thông minh,
+nơi tuyến đường, vị trí phương tiện thời gian thực, ngoại lệ và dữ liệu telemetry tạo thành cấu trúc chính.
 
 | Layer            | Cách thể hiện                                                                                | Không được làm                                      |
 | ---------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Work canvas      | Nền neutral dịu; surface trắng chỉ dùng cho vùng cần tách khỏi canvas                        | Phủ toàn màn hình bằng các card viền giống nhau     |
-| Dispatch slab    | Một vùng ink/brand tương phản cao cho active trip, current task hoặc context quan trọng nhất | Dùng slab như hero marketing hoặc lặp ở mọi section |
-| Signal rail      | Rail `3–4 px` ở cạnh trái cho scope, exception hoặc freshness state                          | Dùng màu không kèm label/copy                       |
-| Route instrument | Route Spine/schematic là motif chức năng xuyên list, form và detail                          | Để map fallback thành hình chữ nhật trống           |
-| Data strip       | Giá, ETA, timestamp, count dùng tabular numerals và baseline thẳng hàng                      | Rải metadata thành nhiều pill/card nhỏ              |
+| Ambient Canvas   | Nền ambient pastel gradient dịu mắt (`#d6e8fb` sang `#fef3ca`), giảm mỏi mắt cho ca trực dài| Dùng gradient tím neon tối hoặc hiệu ứng tối mù mịt |
+| Elevated Cards   | Thẻ trắng nổi tinh tế, bo góc mềm mại `20–26px` (`rounded-3xl`), shadow êm nhẹ (`shadow-xs`)| Dùng viền hộp thô cứng hoặc bóng mờ quá đà che nội dung |
+| Navigation Dock  | Thanh Dock icon thanh mảnh bên trái + Topbar tích hợp tìm kiếm pill và thông báo              | Che khuất tầm nhìn bản đồ hoặc lạm dụng menu đa cấp |
+| Real-time Map    | Bản đồ vector trực quan hóa mạng lưới đường sá, địa danh, xe tải/bán tải và tuyến phân màu  | Để map fallback thành hình chữ nhật trống           |
+| Telemetry Strip  | Đồ thị trực quan: wave sparklines, multi-bars, donut ring, area chart cho chỉ số ca trực    | Dùng biểu đồ giả không gắn với nghiệp vụ vận hành   |
 
-Tỷ lệ thị giác mặc định là **neutral canvas chiếm đa số, ink tạo khung, brand dẫn
-đường và amber chỉ báo ngoại lệ**. Màu semantic hiện có vẫn là source of truth; role
-không tạo palette riêng. Typography dùng ba nhịp rõ: eyebrow/micro-label, heading có
-trọng lượng và value/tabular numerals. Divider và whitespace phân nhóm trước khi dùng
-border; shadow chỉ dành cho layer nổi thật.
+Tỷ lệ thị giác mặc định là **canvas pastel dịu nhẹ làm nền, thẻ trắng tinh tế tạo không gian làm việc,
+sky/brand dẫn đường, emerald chỉ báo hoạt động tốt và amber chỉ báo ngoại lệ**. Màu semantic hiện có
+vẫn là source of truth; role không tạo palette riêng. Typography dùng ba nhịp rõ: eyebrow/micro-label,
+heading có trọng lượng và value/tabular numerals.
 
 Silhouette theo role:
 
@@ -68,9 +67,9 @@ Silhouette theo role:
 - **Fleet — Scope Ledger:** fleet scope rail luôn xuất hiện trước dữ liệu riêng tư;
   exception và availability quan trọng hơn KPI trang trí; route/list/map có selection
   và hierarchy chung.
-- **Admin — Investigation Console:** filter/result là workbench, detail dùng split
-  investigation + Audit Rail; command nằm trong vùng capability rõ, không trộn với
-  metadata đọc-only.
+- **Admin — Modern Dispatch & Investigation Console:** Bố cục điều phối 2 cột thông minh:
+  Bản đồ theo dõi real-time + Cột tác vụ nhanh (Đơn mới, Tài xế gần đây, Ngoại lệ) + Hàng 6 thẻ
+  chỉ số telemetry + Sổ đơn cập nhật gần đây (DataTable).
 
 Responsive không chỉ là “không overflow”. Tại `768–1023 px`, table không được giữ
 `5–6` cột semantic rồi ép badge/text; chỉ giữ `3–4` cột quyết định hoặc chuyển sang
@@ -233,12 +232,14 @@ Scale duy nhất: `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`, `xl=32` px.
 
 ### 4.5 Radius, border và elevation
 
-- `radius.control=6`, `radius.card=6`; `radius.pill=999` chỉ dùng cho status badge,
-  compact filter chip hoặc presence indicator.
-- Border trung tính 1 px là cách phân tách mặc định. Không bo tròn mọi container.
-- Page section không có shadow. Shadow chỉ dùng cho popover, drawer và modal cần tách
-  khỏi mặt phẳng nội dung.
-- Không dùng glass blur, translucent card hoặc shadow nhiều lớp.
+- **Radius tiêu chuẩn:**
+  - `radius.card`: Với các thẻ container và widget trên bàn điều phối (**Modern Dispatch Dashboard**), sử dụng `20–26px` (`rounded-2xl` / `rounded-3xl`) tạo khối nổi êm ái, thân thiện và hiện đại. Đối với table row hoặc form con, dùng `6–8px`.
+  - `radius.control`: `10–14px` cho các button công cụ, và `radius.pill=999` cho status badge, thanh tìm kiếm search pill, filter chips và floating vehicle toggle buttons.
+- **Border & Phân tách:**
+  - Border trung tính siêu mảnh (`border-slate-100` hoặc `border-white/80` trên nền canvas) kết hợp đổ bóng nhẹ để tạo sự tách biệt tự nhiên mà không gây gắt mắt.
+- **Elevation & Shadow:**
+  - Các thẻ chính trên bàn điều phối sử dụng shadow êm nhẹ (`box-shadow: 0 10px 25px -5px rgba(15, 60, 110, 0.05)`) tạo độ nổi tự nhiên trên nền canvas ambient. Popover, dialog và drawer dùng elevation cao hơn để phân lớp tương tác.
+  - Không lạm dụng hiệu ứng neon sặc sỡ hoặc shadow đen đậm làm tối giao diện.
 
 ### 4.6 Focus
 
@@ -347,20 +348,12 @@ Gate chi tiết và mẫu evidence nằm tại `docs/ui/11-ui-quality-scorecard.
 
 Các pattern sau bị chặn ở static gate:
 
-- Gradient tím/xanh mặc định, glassmorphism, decorative blob hoặc atmospheric stock
-  image không phục vụ tác vụ.
-- Oversized hero, marketing card hoặc câu mô tả tính năng che workflow thật ở first
-  viewport.
-- Card lồng card, mọi vùng đều bo tròn, shadow nhiều lớp hoặc pill dùng cho control
-  thông thường.
-- KPI/chart không gắn với acceptance criteria, dữ liệu giả không có preview banner
-  hoặc số ngẫu nhiên tạo cảm giác “dashboard”.
-- Một hue chiếm toàn bộ UI, status chỉ dựa vào màu hoặc icon/emoji không có label.
-- Animation scroll/reveal, marker nhấp nháy hoặc transition kéo dài không truyền đạt
-  state.
-- Generic English copy, lorem ipsum, vague empty state hoặc action label như “Submit”,
-  “Manage”, “Learn more” khi có thể nói rõ nghiệp vụ bằng tiếng Việt.
-- Tạo dependency, font, icon set hoặc component duplicate chỉ để thêm flourish.
+- Hiệu ứng tối mù mịt (dark purple neon gradient), decorative hero che khuất tác vụ điều phối, hoặc hình ảnh stock trang trí không phục vụ nghiệp vụ.
+- Thẻ marketing giả mạo tính năng (ví dụ tự nhận có AI XGBoost hay báo cáo ESG xanh khi backend chưa hỗ trợ).
+- Một hue chiếm toàn bộ UI, status chỉ dựa vào màu sắc mà không có nhãn văn bản tiếng Việt rõ ràng.
+- Animation cuộn trang gây xao nhãng, marker nhấp nháy liên tục làm phân tán sự tập trung của điều phối viên.
+- Generic English copy, lorem ipsum, vague empty state hoặc action label chung chung như “Submit”, “Manage”, “Learn more” khi có thể nói rõ nghiệp vụ bằng tiếng Việt.
+- *Lưu ý phân biệt:* Tông nền ambient pastel dịu mắt (`#d6e8fb` sang `#fef3ca`), thẻ nổi bo tròn mềm mại 20–26px, và các biểu đồ đo lường vận hành (wave sparkline, bar chart, donut chart, area chart) trên bàn điều phối **Modern Dispatch Console** là **thiết kế chuẩn được phê duyệt**, không bị xếp vào anti-pattern.
 
 ## 10. Dark mode
 
