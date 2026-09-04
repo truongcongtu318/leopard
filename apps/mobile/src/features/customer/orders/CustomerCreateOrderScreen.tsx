@@ -25,7 +25,12 @@ import { RouteSpine } from '../../../ui/RouteSpine';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
 import { SkeletonBar } from '../../../ui/Skeleton';
-import type { CustomerActionView, CustomerCreateFormScreenView, CustomerCreateView } from './model';
+import type {
+  CustomerActionView,
+  CustomerCreateFormScreenView,
+  CustomerCreateView,
+  CustomerRouteOptionView,
+} from './model';
 
 export type CustomerCreateOrderScreenProps = Readonly<{
   view: CustomerCreateView;
@@ -33,6 +38,7 @@ export type CustomerCreateOrderScreenProps = Readonly<{
   onAddStop?: () => void;
   onRemoveStop?: (stopId: string) => void;
   onSelectVehicle?: (vehicle: 'MOTORBIKE' | 'VAN' | 'TRUCK') => void;
+  onSelectRoute?: (routeId: string) => void;
   onPrimaryAction?: (actionId: string) => void;
   onRetry?: () => void;
   onBack?: () => void;
@@ -85,10 +91,73 @@ function ActionButton({
   );
 }
 
+const CONGESTION_BADGE_STYLE: Record<CustomerRouteOptionView['congestionLevel'], { bg: string; text: string }> = {
+  low: { bg: '#DCFCE7', text: '#15803D' },
+  moderate: { bg: '#FEF3C7', text: '#B45309' },
+  heavy: { bg: '#FFEDD5', text: '#C2410C' },
+  severe: { bg: '#FEE2E2', text: '#B91C1C' },
+  unknown: { bg: '#F1F5F9', text: '#64748B' },
+};
+
+function RouteOptionCard({
+  onPress,
+  option,
+  selected,
+}: Readonly<{
+  onPress?: () => void;
+  option: CustomerRouteOptionView;
+  selected: boolean;
+}>) {
+  const badge = CONGESTION_BADGE_STYLE[option.congestionLevel];
+  return (
+    <Pressable
+      accessibilityLabel={`Tuyến ${option.priceLabel}, ${Math.round(option.durationSeconds / 60)} phút`}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.routeCard,
+        selected ? styles.routeCardSelected : null,
+        pressed ? styles.pressed : null,
+      ]}
+    >
+      {option.isRecommended ? (
+        <View style={styles.recommendedTag}>
+          <Text style={styles.recommendedTagText}>⭐ Đề xuất</Text>
+        </View>
+      ) : null}
+      <View style={styles.priceHeaderRow}>
+        <Text style={styles.estimateRowLabel}>Giá dự kiến</Text>
+        <Text style={styles.estimatePrice}>{option.priceLabel}</Text>
+      </View>
+      <View style={styles.metricsBadgeRow}>
+        <View style={styles.metricPill}>
+          <Text style={styles.metricLabel}>ETA dự kiến</Text>
+          <Text style={styles.metricValue}>{Math.round(option.durationSeconds / 60)} phút</Text>
+        </View>
+        <View style={styles.metricPill}>
+          <Text style={styles.metricLabel}>Khoảng cách</Text>
+          <Text style={styles.metricValue}>{option.distanceLabel}</Text>
+        </View>
+      </View>
+      <View style={[styles.congestionBadge, { backgroundColor: badge.bg }]}>
+        <Text style={[styles.congestionBadgeText, { color: badge.text }]}>
+          🚦 <Text>{option.congestionLabel}</Text>
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
 function EstimatePanel({
   onRetry,
+  onSelectRoute,
   view,
-}: Readonly<{ view: CustomerCreateFormScreenView; onRetry?: () => void }>) {
+}: Readonly<{
+  view: CustomerCreateFormScreenView;
+  onRetry?: () => void;
+  onSelectRoute?: (routeId: string) => void;
+}>) {
   const estimate = view.estimate;
 
   if (estimate.kind === 'loading') {
@@ -139,34 +208,25 @@ function EstimatePanel({
           </View>
           <Text style={styles.sectionLabel}>GIÁ & XÁC NHẬN</Text>
         </View>
-        <View style={styles.estimateCardReady}>
-          <View style={styles.priceHeaderRow}>
-            <Text style={styles.estimateRowLabel}>Giá dự kiến</Text>
-            <Text style={styles.estimatePrice}>{estimate.priceLabel}</Text>
+
+        {isDemo ? (
+          <View style={styles.demoBadge}>
+            <Text style={styles.demoBadgeText}>Dữ liệu mô phỏng</Text>
           </View>
+        ) : null}
 
-          <View style={styles.metricsBadgeRow}>
-            <View style={styles.metricPill}>
-              <Text style={styles.metricLabel}>ETA dự kiến</Text>
-              <Text style={styles.metricValue}>
-                {Math.round(estimate.durationSeconds / 60)} phút
-              </Text>
-            </View>
-
-            <View style={styles.metricPill}>
-              <Text style={styles.metricLabel}>Khoảng cách</Text>
-              <Text style={styles.metricValue}>{estimate.distanceLabel}</Text>
-            </View>
-          </View>
-
-          {isDemo ? (
-            <View style={styles.demoBadge}>
-              <Text style={styles.demoBadgeText}>Dữ liệu mô phỏng</Text>
-            </View>
-          ) : null}
-
-          <Text style={styles.estimateCalcTime}>Tính lúc {estimate.calculatedAtLabel}</Text>
+        <View accessibilityRole="radiogroup" style={styles.routeList}>
+          {estimate.routes.map((option) => (
+            <RouteOptionCard
+              key={option.routeId}
+              onPress={onSelectRoute ? () => onSelectRoute(option.routeId) : undefined}
+              option={option}
+              selected={option.routeId === estimate.selectedRouteId}
+            />
+          ))}
         </View>
+
+        <Text style={styles.estimateCalcTime}>Tính lúc {estimate.calculatedAtLabel}</Text>
       </View>
     );
   }
@@ -214,6 +274,7 @@ export function CustomerCreateOrderScreen({
   onPrimaryAction,
   onRemoveStop,
   onRetry,
+  onSelectRoute,
   onSelectVehicle,
   view,
 }: CustomerCreateOrderScreenProps) {
@@ -484,7 +545,7 @@ export function CustomerCreateOrderScreen({
 
           {/* 💰 Card 03: Giá & Xác Nhận (EstimatePanel) */}
           <View style={styles.card}>
-            <EstimatePanel onRetry={onRetry} view={view} />
+            <EstimatePanel onRetry={onRetry} onSelectRoute={onSelectRoute} view={view} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -738,6 +799,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 12,
     padding: 16,
+  },
+  routeList: {
+    gap: spacing.sm,
+  },
+  routeCard: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 12,
+    padding: 16,
+  },
+  routeCardSelected: {
+    backgroundColor: '#F0F9FF',
+    borderColor: '#0284C7',
+  },
+  recommendedTag: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF9C3',
+    borderColor: '#FDE047',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  recommendedTagText: {
+    color: '#854D0E',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  congestionBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  congestionBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   priceHeaderRow: {
     flexDirection: 'row',

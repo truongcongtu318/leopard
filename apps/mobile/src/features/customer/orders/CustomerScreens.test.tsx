@@ -125,6 +125,44 @@ describe('CustomerCreateOrderScreen', () => {
     await screen.unmount();
   });
 
+  it('lets the customer pick a different route and reports its routeId', async () => {
+    const onSelectRoute = jest.fn();
+    const baseView = createCustomerCreateFixture('C-NEW-ESTIMATE-READY');
+    const multiRouteView =
+      baseView.kind === 'form' && baseView.estimate.kind === 'ready'
+        ? {
+            ...baseView,
+            estimate: {
+              ...baseView.estimate,
+              routes: [
+                ...baseView.estimate.routes,
+                {
+                  routeId: 'route-1',
+                  estimateToken: 'demo-estimate-token-1',
+                  isRecommended: false,
+                  durationSeconds: 1320,
+                  distanceLabel: '20,1 km',
+                  priceLabel: '312.000 ₫',
+                  congestionLevel: 'heavy' as const,
+                  congestionLabel: 'Kẹt xe',
+                },
+              ],
+            },
+          }
+        : baseView;
+
+    const screen = await render(
+      <CustomerCreateOrderScreen onSelectRoute={onSelectRoute} view={multiRouteView} />,
+    );
+
+    expect(screen.getByText('⭐ Đề xuất')).toBeTruthy();
+    expect(screen.getByText('Kẹt xe')).toBeTruthy();
+
+    await fireEvent.press(screen.getByText('312.000 ₫'));
+    expect(onSelectRoute).toHaveBeenCalledWith('route-1');
+    await screen.unmount();
+  });
+
   it('blocks duplicate submit while the static command is pending', async () => {
     const onPrimaryAction = jest.fn();
     const screen = await render(
