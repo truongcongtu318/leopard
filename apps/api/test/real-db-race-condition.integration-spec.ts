@@ -324,6 +324,7 @@ describeRealDb(
       const pickup = { latitude: 10.762622, longitude: 106.660172 };
       const dropoff = { latitude: 10.772622, longitude: 106.670172 };
       const estimateToken = estimateTokenService.issue({
+        routeId: 'route-0',
         routeInput: { pickup, stops: [], dropoff, vehicleType: 'MOTORBIKE' },
         estimate: {
           polyline: 'real-db-idempotency',
@@ -334,6 +335,7 @@ describeRealDb(
           source: 'DEMO',
           calculatedAt: new Date().toISOString(),
           isEstimate: true,
+          congestionLevel: 'unknown',
         },
         quote: { amountVnd: 15_000, currency: 'VND' },
       });

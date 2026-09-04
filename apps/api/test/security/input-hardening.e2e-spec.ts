@@ -204,11 +204,14 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
           pickup: { type: 'PICKUP', address: 'South Pole', lat: -90, lng: -180 },
           dropoff: { type: 'DROPOFF', address: 'North Pole', lat: 90, lng: 180 },
           vehicleType: 'TRUCK',
+          cargoWeightKg: 2000,
         })
         .expect(200);
 
-      expect(res.body).toHaveProperty('estimatedPriceVnd');
-      expect(res.body).toHaveProperty('estimateToken');
+      expect(res.body.routes).toBeInstanceOf(Array);
+      expect(res.body.routes.length).toBeGreaterThan(0);
+      expect(res.body.routes[0]).toHaveProperty('estimatedPriceVnd');
+      expect(res.body.routes[0]).toHaveProperty('estimateToken');
     });
 
     it('rejects more than 3 intermediate stops (> 3 stops) with 400 Bad Request', async () => {
