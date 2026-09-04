@@ -74,6 +74,14 @@ export function CustomerCreateOrderRuntime({ onCreated }: CustomerCreateOrderRun
     applyFormChange({ ...currentForm, vehicleType: vehicle });
   }
 
+  function handleSelectRoute(routeId: string) {
+    if (!view || view.kind !== 'form' || view.estimate.kind !== 'ready') return;
+    setView({
+      ...view,
+      estimate: { ...view.estimate, selectedRouteId: routeId },
+    });
+  }
+
   async function handlePrimaryAction(actionId: string) {
     if (!currentForm) return;
     if (actionId === 'estimate-order') {
@@ -82,7 +90,11 @@ export function CustomerCreateOrderRuntime({ onCreated }: CustomerCreateOrderRun
       return;
     }
     if (actionId === 'create-order') {
-      const detail = await port.createOrder(currentForm);
+      if (!view || view.kind !== 'form' || view.estimate.kind !== 'ready') return;
+      const estimate = view.estimate;
+      const selected = estimate.routes.find((route) => route.routeId === estimate.selectedRouteId);
+      if (!selected) return;
+      const detail = await port.createOrder(currentForm, selected.estimateToken);
       if (detail.kind === 'content') {
         onCreated(detail.order.id);
       }
@@ -96,6 +108,7 @@ export function CustomerCreateOrderRuntime({ onCreated }: CustomerCreateOrderRun
       onPrimaryAction={(id) => void handlePrimaryAction(id)}
       onRemoveStop={handleRemoveStop}
       onRetry={() => void port.getCreateView().then(setView)}
+      onSelectRoute={handleSelectRoute}
       onSelectVehicle={handleSelectVehicle}
       view={view}
     />
