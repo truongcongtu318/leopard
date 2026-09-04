@@ -217,7 +217,7 @@ export function CommandDialog({
   if (isPrivacyBoundary) {
     const copy = privacyCopy[state];
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-text/40 p-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6">
         <div
           ref={dialogRef}
           role="dialog"
@@ -225,7 +225,7 @@ export function CommandDialog({
           aria-labelledby={titleId}
           onKeyDown={handleKeyDown}
           className={cn(
-            'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card border border-danger-border bg-neutral p-lg text-neutral-text shadow-xl',
+            'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card rounded-[24px] border border-danger-border/40 bg-white p-6 sm:p-7 text-neutral-text shadow-2xl transition-all',
             className,
           )}
         >
@@ -233,15 +233,15 @@ export function CommandDialog({
             ref={feedbackRef as React.RefObject<HTMLHeadingElement>}
             id={titleId}
             tabIndex={-1}
-            className="text-section-title font-semibold break-words"
+            className="text-lg font-bold tracking-tight text-slate-900 break-words"
           >
             {copy.title}
           </h2>
-          <p role="alert" className="mt-sm text-body-compact text-danger-text">
+          <p role="alert" className="mt-2 text-xs leading-relaxed text-danger-text">
             {copy.message}
           </p>
-          <div className="mt-lg flex justify-end">
-            <Button variant="secondary" onPress={onClose}>
+          <div className="mt-6 flex justify-end">
+            <Button variant="secondary" onPress={onClose} className="shadow-2xs">
               Đóng
             </Button>
           </div>
@@ -266,7 +266,7 @@ export function CommandDialog({
     .join(' ');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-text/40 p-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6">
       <div
         ref={dialogRef}
         role="dialog"
@@ -275,7 +275,7 @@ export function CommandDialog({
         aria-describedby={describedBy}
         onKeyDown={handleKeyDown}
         className={cn(
-          'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card border border-neutral-border bg-neutral p-lg text-neutral-text shadow-xl',
+          'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card rounded-[24px] border border-slate-200/80 bg-white/95 backdrop-blur-md p-6 sm:p-7 text-neutral-text shadow-2xl transition-all',
           className,
         )}
       >
@@ -287,75 +287,75 @@ export function CommandDialog({
           }
           id={titleId}
           tabIndex={-1}
-          className="text-section-title font-semibold break-words"
+          className="text-lg font-bold tracking-tight text-slate-900 break-words"
         >
           {renderedTitle}
         </h2>
 
         {state === 'success' ? (
           <>
-            <p role="status" aria-live="polite" className="mt-md break-words">
+            <p role="status" aria-live="polite" className="mt-3 text-xs leading-relaxed text-slate-600 break-words">
               {message ?? 'Thao tác đã được ghi nhận từ phản hồi hệ thống.'}
             </p>
-            <div className="mt-lg flex justify-end">
-              <Button variant="secondary" onPress={onClose}>
+            <div className="mt-6 flex justify-end">
+              <Button variant="secondary" onPress={onClose} className="shadow-2xs">
                 Đóng
               </Button>
             </div>
           </>
         ) : (
           <>
-            <p id={consequenceId} className="mt-sm text-body-compact break-words">
+            <p id={consequenceId} className="mt-2 text-xs leading-relaxed text-slate-600 break-words">
               {consequence}
             </p>
             <ReadOnlyDetailList
               ariaLabel="Ngữ cảnh thao tác"
               items={targetItems}
-              className="mt-md border-y border-neutral-border py-sm"
+              className="mt-4 border-y border-slate-100 py-3"
             />
 
             {state === 'conflict' ? (
-              <div className="mt-md">
-                <p className="text-warning-text break-words">
+              <div className="mt-4 rounded-xl border border-warning-border/40 bg-warning/30 p-3.5">
+                <p className="text-xs font-semibold text-warning-text break-words">
                   {message ?? 'Dữ liệu đã thay đổi trong khi bạn thao tác.'}
                 </p>
                 {onResolveConflict ? (
-                  <Button variant="secondary" onPress={onResolveConflict} className="mt-md">
+                  <Button variant="secondary" onPress={onResolveConflict} className="mt-3 shadow-2xs">
                     Tải dữ liệu mới nhất
                   </Button>
                 ) : null}
               </div>
             ) : (
-              <form noValidate onSubmit={handleSubmit} className="mt-md">
+              <form noValidate onSubmit={handleSubmit} className="mt-4">
                 {state === 'error' ? (
                   <div
                     ref={feedbackRef as React.RefObject<HTMLDivElement>}
                     role="alert"
                     tabIndex={-1}
-                    className="mb-md border-l-4 border-danger-border bg-danger px-sm py-xs text-danger-text break-words"
+                    className="mb-4 rounded-xl border-l-4 border-danger-border bg-danger p-3 text-xs font-semibold text-danger-text break-words shadow-2xs"
                   >
                     {message ?? 'Không thể hoàn tất thao tác. Vui lòng thử lại.'}
                   </div>
                 ) : null}
 
-                <label htmlFor={reasonId} className="block text-sm font-semibold">
+                <label htmlFor={reasonId} className="block text-xs font-bold text-slate-700">
                   {reasonLabel}
                   {reasonPolicy.required ? (
-                    <span className="ml-xxs text-danger-text">
+                    <span className="ml-1 text-danger-text">
                       <span aria-hidden="true">*</span>
                       <span className="sr-only"> (bắt buộc)</span>
                     </span>
                   ) : null}
                 </label>
                 {reasonPolicy.hint ? (
-                  <p id={reasonHintId} className="mt-xxs text-xs text-neutral-muted">
+                  <p id={reasonHintId} className="mt-1 text-[11px] text-slate-500">
                     {reasonPolicy.hint}
                   </p>
                 ) : null}
                 <textarea
                   ref={textareaRef}
                   id={reasonId}
-                  rows={5}
+                  rows={4}
                   value={reasonValue}
                   required={reasonPolicy.required}
                   maxLength={reasonPolicy.maxLength}
@@ -364,10 +364,10 @@ export function CommandDialog({
                   aria-describedby={reasonDescribedBy || undefined}
                   onChange={handleReasonChange}
                   disabled={state === 'pending'}
-                  className="mt-xs w-full resize-y rounded-control border border-neutral-border bg-neutral px-sm py-xs text-neutral-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-neutral-surface"
+                  className="mt-1.5 w-full resize-y rounded-xl border border-slate-200/90 bg-slate-50/70 p-3 text-xs text-slate-800 shadow-2xs transition-all focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-slate-100"
                 />
                 {reasonPolicy.maxLength !== undefined ? (
-                  <p id={reasonCountId} className="mt-xxs text-xs text-neutral-muted">
+                  <p id={reasonCountId} className="mt-1 text-[11px] text-slate-400">
                     {reasonValue.length}/{reasonPolicy.maxLength} ký tự
                   </p>
                 ) : null}
@@ -375,23 +375,23 @@ export function CommandDialog({
                   <p
                     id={reasonErrorId}
                     role="alert"
-                    className="mt-xs text-sm font-semibold text-danger-text"
+                    className="mt-1.5 text-xs font-semibold text-danger-text"
                   >
                     {effectiveReasonError}
                   </p>
                 ) : null}
 
                 {state === 'pending' ? (
-                  <p role="status" aria-live="polite" className="mt-sm text-sm">
+                  <p role="status" aria-live="polite" className="mt-3 text-xs font-medium text-slate-600">
                     Đang xử lý yêu cầu…
                   </p>
                 ) : null}
 
-                <div className="mt-lg flex flex-wrap justify-end gap-xs">
-                  <Button variant="secondary" onPress={onClose} isDisabled={state === 'pending'}>
+                <div className="mt-6 flex flex-wrap justify-end gap-2.5">
+                  <Button variant="secondary" onPress={onClose} isDisabled={state === 'pending'} className="shadow-2xs">
                     Hủy thao tác
                   </Button>
-                  <Button type="submit" variant={commandVariant} isLoading={state === 'pending'}>
+                  <Button type="submit" variant={commandVariant} isLoading={state === 'pending'} className="shadow-2xs">
                     {state === 'pending' ? 'Đang xử lý…' : commandLabel}
                   </Button>
                 </div>

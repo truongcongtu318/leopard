@@ -217,9 +217,12 @@ export class AdminQueryService {
       stops: Array<{ type: string; sequence: number; address: string }>;
       paymentIntents: Array<{ status: string }>;
     };
-    const items: FleetOrderSummaryDto[] = orders.map((o: OrderWithRelations) => ({
-       id: o.id,
-       code: o.id.split('-')[0]?.toUpperCase() ?? '',
+    const items: FleetOrderSummaryDto[] = orders.map((o: OrderWithRelations) => {
+      const rawId = o.id.replace(/-/g, '');
+      const suffix = rawId.slice(-4).toUpperCase();
+      return {
+        id: o.id,
+        code: `LP-${suffix}`,
        status: o.status,
        driverId: o.driverId ?? undefined,
        driverName: o.driver?.phone,
@@ -232,7 +235,8 @@ export class AdminQueryService {
        createdAt: o.createdAt.toISOString(),
        updatedAt: o.updatedAt.toISOString(),
        distanceMeters: o.distanceMeters ?? 0,
-    }));
+     };
+    });
 
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }

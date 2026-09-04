@@ -27,34 +27,51 @@ export function CompactMetricSummary({
     <section
       aria-label={ariaLabel}
       aria-busy={isLoading ? 'true' : undefined}
-      className={cn('overflow-hidden rounded-[16px] border border-neutral-border/20 bg-gradient-to-br from-neutral-text via-[#1e293b] to-[#0f172a] shadow-elevated relative', className)}
+      className={cn(
+        'overflow-hidden rounded-card rounded-[22px] border border-white/80 bg-white/95 backdrop-blur-md shadow-xs transition-all',
+        className,
+      )}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-teal-600/10 pointer-events-none" />
-      <dl className="relative grid gap-0 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
+      <dl className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100/90">
         {items.map((item) => (
-          <div key={item.id} className="min-w-0 p-5">
-            <dt className="text-xs font-semibold tracking-wide text-white/60 uppercase break-words">{item.label}</dt>
-            <dd className="mt-2 min-h-lg text-2xl font-bold tabular-nums break-words text-white">
+          <div key={item.id} className="min-w-0 p-5 sm:p-5.5 hover:bg-sky-50/20 transition-colors">
+            <dt className="text-[11px] font-extrabold tracking-wider text-slate-500 uppercase break-words">
+              {item.label}
+            </dt>
+            <dd className="mt-2 min-h-7 text-2xl font-black tracking-tight tabular-nums break-words text-slate-900">
               {isLoading ? (
                 <span
-                  className="block h-7 w-20 animate-pulse rounded-lg bg-white/20 motion-reduce:animate-none"
+                  className="block h-7 w-20 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none"
                   aria-hidden="true"
                 />
               ) : item.href ? (
                 <a
                   href={item.href}
                   aria-label={item.accessibleLabel}
-                  className="inline-flex items-center gap-1.5 text-white underline-offset-4 hover:underline decoration-white/30 focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                  className="inline-flex items-center gap-1.5 text-slate-900 hover:text-brand transition-colors focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   {item.value}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-60"><path d="m9 18 6-6-6-6"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    aria-hidden="true"
+                    className="text-slate-400 group-hover:text-brand"
+                  >
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
                 </a>
               ) : (
                 item.value
               )}
             </dd>
             {!isLoading && item.detail ? (
-              <dd className="mt-1 text-xs leading-relaxed text-white/60 break-words">{item.detail}</dd>
+              <dd className="mt-1 text-xs font-medium leading-relaxed text-slate-500 break-words">
+                {item.detail}
+              </dd>
             ) : null}
           </div>
         ))}

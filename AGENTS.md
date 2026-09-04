@@ -70,14 +70,18 @@ Nếu thiếu thông tin làm thay đổi đáng kể solution, đọc tài li�
 
 ## UI Rules
 
-LEOPARD là operational logistics UI, không phải landing page.
+LEOPARD là hệ thống vận hành logistics thông minh, kết hợp tính chính xác trong điều phối với giao diện người dùng hiện đại, tinh tế và trực quan:
 
-- Customer và Driver mobile-first; Fleet Owner/Admin cô đọng và dễ quét.
-- Tuân thủ `docs/ui/04-design-system.md` và responsive rules.
-- Mọi màn hình chính có loading, empty, error, success và permission-denied state.
-- ETA dùng nhãn “ETA dự kiến”; source demo phải hiện “Dữ liệu mô phỏng”.
-- Không dùng gradient tím, glassmorphism, decorative hero hoặc fake marketing card.
-- Kiểm tra text overflow, overlap, keyboard focus và contrast trước khi hoàn tất.
+- Customer và Driver theo định dạng mobile-first; Fleet Owner/Admin sử dụng giao diện **Modern Dispatch Console**:
+  - Tông nền ambient pastel dịu mắt (`from-[#d6e8fb] via-[#fbf6de] to-[#fef3ca]`), tạo cảm giác thoáng đãng, dễ chịu cho ca trực dài.
+  - Hệ thống thẻ nổi màu trắng tinh tế, bo góc mềm mại `rounded-2xl` / `rounded-3xl` (16px–26px) với đổ bóng êm ái (`shadow-xs` / `shadow-sm`).
+  - Thanh Dock điều hướng dạng icon thanh mảnh bên trái và Topbar tích hợp tìm kiếm, thông báo và hồ sơ quản trị.
+  - Bản đồ theo dõi thời gian thực (Real-time tracking map) hiển thị trực quan mạng lưới logistics (Đà Nẵng), các tuyến đường phân màu, vị trí xe tải/bán tải và bộ lọc phương tiện dạng pill nổi.
+  - Các thẻ chỉ số đo lường trực quan (KPI telemetry cards) tích hợp biểu đồ trực quan (wave sparklines, bar charts, donut charts, area charts).
+- Mọi màn hình chính có đầy đủ loading, empty, error, success và permission-denied state.
+- ETA luôn dùng nhãn “ETA dự kiến”; dữ liệu demo/mô phỏng phải hiển thị rõ “Dữ liệu mô phỏng”.
+- Dữ liệu hiển thị phải phản ánh đúng phạm vi pilot (không đưa các giả định AI XGBoost hay báo cáo ESG ngoài scope vào nghiệp vụ thực).
+- Kiểm tra text overflow, overlap, keyboard focus và tương phản màu sắc (WCAG AA) trước khi hoàn tất.
 
 ## Verification
 

@@ -301,25 +301,27 @@ export function ScreenState({
         aria-atomic="true"
         aria-busy={config.isBusy === true ? 'true' : undefined}
         className={cn(
-          'flex flex-col items-center justify-center gap-xs rounded-card border p-md text-center',
+          'flex flex-col items-center justify-center gap-2.5 rounded-card rounded-[24px] border p-8 sm:p-10 text-center shadow-xs transition-all',
           toneClasses[config.tone],
         )}
       >
-        <StateIndicator indicator={config.indicator} />
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 shadow-2xs border border-white/60 mb-1">
+          <StateIndicator indicator={config.indicator} />
+        </div>
         <h2
           ref={headingRef}
           tabIndex={focusesHeading ? -1 : undefined}
-          className="text-xl font-semibold"
+          className="text-lg font-bold tracking-tight text-slate-900"
         >
           {title ?? copy.title}
         </h2>
-        <p className="text-sm">{message ?? copy.message}</p>
+        <p className="max-w-md text-xs leading-relaxed text-slate-600">{message ?? copy.message}</p>
       </div>
 
       {config.preservesContext ? children : null}
 
       {action ? (
-        <Button variant="secondary" onPress={action.handler} className="self-center">
+        <Button variant="secondary" onPress={action.handler} className="self-center shadow-2xs">
           {action.label}
         </Button>
       ) : null}

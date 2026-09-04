@@ -35,7 +35,7 @@ import type {
 } from './model';
 
 const fieldClass =
-  'min-h-10 w-full rounded-control border border-neutral-border bg-neutral px-3 py-2 text-xs text-neutral-text  transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
+  'min-h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-white focus:bg-white px-3.5 py-2 text-xs text-slate-800 shadow-2xs transition-all focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand';
 
 const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
   orders: 'Đơn hàng',
@@ -47,15 +47,15 @@ const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
 function OrderRouteLedger({ order }: Readonly<{ order: AdminOrderListItemView }>) {
   const [origin = order.routeLabel, destination = order.routeLabel] = order.routeLabel.split(' → ');
   return (
-    <div aria-label={`Tuyến ${order.reference}`} className="min-w-64 text-body-compact">
-      <div className="flex gap-xs">
-        <span aria-hidden="true" className="mt-xs h-xs w-xs shrink-0 rounded-pill bg-brand" />
-        <p className="font-medium break-words">{origin}</p>
+    <div aria-label={`Tuyến ${order.reference}`} className="min-w-64 text-xs">
+      <div className="flex items-start gap-2">
+        <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+        <p className="font-semibold text-slate-800 break-words">{origin}</p>
       </div>
-      <div aria-hidden="true" className="ml-xxs h-sm border-l-2 border-neutral-border" />
-      <div className="flex gap-xs">
-        <span aria-hidden="true" className="mt-xs h-xs w-xs shrink-0 rounded-pill border-2 border-brand bg-neutral" />
-        <p className="font-medium break-words">{destination}</p>
+      <div aria-hidden="true" className="ml-1 h-3 border-l-2 border-slate-200/90 my-0.5" />
+      <div className="flex items-start gap-2">
+        <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full border-2 border-sky-600 bg-white ring-2 ring-sky-600/20" />
+        <p className="font-semibold text-slate-700 break-words">{destination}</p>
       </div>
     </div>
   );
@@ -393,14 +393,16 @@ function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: Admin
   return (
     <section
       aria-label={`Phạm vi điều tra ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-      className="border-l-4 border-brand bg-neutral-surface p-md text-neutral-text"
+      className="rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text"
     >
-      <header className="mb-md flex flex-wrap items-end justify-between gap-sm border-b border-neutral-border pb-sm">
+      <header className="mb-md flex flex-wrap items-end justify-between gap-sm border-b border-slate-100 pb-sm">
         <div>
-          <p className="text-xs font-semibold tracking-wide text-brand">PHẠM VI ĐIỀU TRA</p>
-          <h2 className="mt-xxs text-section-title font-semibold">Thu hẹp sổ dữ liệu</h2>
+          <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand uppercase">
+            PHẠM VI ĐIỀU TRA
+          </span>
+          <h2 className="mt-1 text-base sm:text-lg font-bold text-neutral-text">Thu hẹp sổ dữ liệu</h2>
         </div>
-        <p className="max-w-xl text-body-compact text-neutral-muted text-pretty">
+        <p className="max-w-xl text-xs text-neutral-muted text-pretty">
           Trường tìm nhanh chỉ tồn tại trong phiên; URL chỉ giữ filter đã được allow-list.
         </p>
       </header>
@@ -414,15 +416,15 @@ function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: Admin
         <FilterFields screen={screen} view={view} />
         <input name="page" type="hidden" value="1" />
         <input name="pageSize" type="hidden" value={view.filters.pageSize} />
-        <div className="flex flex-wrap items-end gap-xs md:col-span-2 lg:col-span-3 xl:col-span-4">
+        <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-3 xl:col-span-4">
           <button
-            className="inline-flex min-h-11 items-center rounded-control bg-brand px-md font-semibold text-brand-text transition-colors hover:brightness-90 active:brightness-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 motion-reduce:transition-none"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             type="submit"
           >
             Áp dụng bộ lọc
           </button>
           <a
-            className="inline-flex min-h-11 items-center rounded-control border border-neutral-border bg-neutral px-md font-semibold transition-colors hover:bg-neutral-surface active:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand motion-reduce:transition-none"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             href={`/admin/${screen}?${resetQuery}`}
           >
             Xóa bộ lọc
@@ -459,7 +461,7 @@ export function AdminListScreen({
     : [];
 
   return (
-    <div className="flex min-w-0 flex-col gap-xl">
+    <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
       <AdminBreadcrumbs previewContext={previewContext} screen={screen} />
       <OperationsPageHeader
         context="Bàn điều tra theo bộ lọc · dữ liệu pilot trong quyền Admin"
@@ -479,23 +481,23 @@ export function AdminListScreen({
           <div className="flex min-w-0 flex-col gap-md">
             <dl
               aria-label="Chỉ số tập kết quả"
-              className="grid grid-cols-2 border-y border-neutral-border sm:grid-cols-3"
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 p-3 rounded-2xl bg-slate-50/80 border border-slate-200/60"
             >
-              <div className="min-w-0 border-r border-neutral-border px-sm py-xs">
-                <dt className="text-xs font-semibold text-neutral-muted">Kết quả</dt>
-                <dd aria-live="polite" className="mt-xxs font-semibold tabular-nums">
+              <div className="min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs">
+                <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Kết quả</dt>
+                <dd aria-live="polite" className="mt-1 text-base sm:text-lg font-black text-slate-800 tabular-nums">
                   {view.result.totalItems}
                 </dd>
               </div>
-              <div className="min-w-0 px-sm py-xs sm:border-r sm:border-neutral-border">
-                <dt className="text-xs font-semibold text-neutral-muted">Trang</dt>
-                <dd className="mt-xxs font-semibold tabular-nums">
+              <div className="min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs">
+                <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Trang</dt>
+                <dd className="mt-1 text-base sm:text-lg font-black text-slate-800 tabular-nums">
                   {view.result.page} / {Math.max(view.result.totalPages, 1)}
                 </dd>
               </div>
-              <div className="col-span-2 min-w-0 border-t border-neutral-border px-sm py-xs sm:col-span-1 sm:border-t-0">
-                <dt className="text-xs font-semibold text-neutral-muted">Revision</dt>
-                <dd className="mt-xxs font-mono text-xs break-all">{view.result.revision}</dd>
+              <div className="col-span-2 min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs sm:col-span-1">
+                <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Revision</dt>
+                <dd className="mt-1 font-mono text-xs font-semibold text-slate-700 break-all">{view.result.revision}</dd>
               </div>
             </dl>
             <div className="hidden min-w-0 overflow-x-auto md:block">

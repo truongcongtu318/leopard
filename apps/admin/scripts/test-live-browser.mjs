@@ -10,7 +10,7 @@ async function main() {
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 
-  const artifactDir = '/home/tuinfi/.gemini/antigravity/brain/6101f63a-22ac-4e65-9afe-2440388eeec5';
+  const artifactDir = '/home/tuinfi/.gemini/antigravity/brain/34a8f11b-3a7c-40f3-af21-099ec932c3c5';
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
 
@@ -95,9 +95,9 @@ async function main() {
     console.log('\n🔑 Authenticating as Demo Fleet Owner...');
     await context.clearCookies();
     await page.goto('http://localhost:3002/login', { waitUntil: 'networkidle' });
-    await page.waitForSelector('[data-testid="demo-fleet-button"]', { state: 'visible', timeout: 5000 });
+    await page.waitForSelector('[data-testid="demo-fleet-owner-button"]', { state: 'visible', timeout: 5000 });
     await page.evaluate(() => {
-      const el = document.querySelector('[data-testid="demo-fleet-button"]');
+      const el = document.querySelector('[data-testid="demo-fleet-owner-button"]');
       if (el) el.click();
     });
     await page.waitForURL('**/fleet**', { timeout: 10000 });

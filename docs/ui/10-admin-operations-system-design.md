@@ -39,16 +39,16 @@ phải giúp Admin trả lời nhanh bốn câu hỏi:
 | Memorable detail | `Audit Rail`: actor–action–reason–request ID luôn gắn với command đặc quyền               |
 | Constraints      | WCAG AA, keyboard-first, privacy by default, responsive, tiếng Việt, dữ liệu tĩnh có nhãn |
 
-Không dùng hero, lời quảng bá, KPI card cỡ lớn, chart trang trí, gradient, glassmorphism
-hoặc animation để tạo cảm giác “dashboard”. Density không được đổi thành chữ nhỏ,
-hit target nhỏ hoặc thông tin không có thứ bậc.
+Không dùng hero quảng cáo rườm rà, marketing card sai lệch tính năng hoặc animation kéo dài gây chậm trễ.
+Giao diện kết hợp tính trực quan của **Modern Dispatch Console** với độ chính xác cao: nền pastel dịu mắt, thẻ nổi 20–26px,
+thanh Dock điều hướng bên trái và các widget telemetry phục vụ trực tiếp cho giám sát vận hành.
 
-### 1.1 Visual composition — Investigation Console
+### 1.1 Visual composition — Modern Dispatch & Investigation Console
 
 | Screen       | Silhouette và hierarchy bắt buộc                                                                                                                                 |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shell        | Ink navigation rail + neutral work canvas; active destination dùng brand signal, không phủ toàn sidebar bằng các card nav                                        |
-| Overview     | Readiness/status strip → exception ledger là region chính → compact metric strip → recent orders; KPI không đồng trọng số với ngoại lệ                           |
+| Shell        | Slim navigation dock bên trái + Topbar tích hợp search pill, thông báo và hồ sơ; canvas pastel dịu mắt                                                          |
+| Overview     | Bố cục 2 cột: Bản đồ theo dõi real-time (Đà Nẵng) + Cột tác vụ nhanh (Đơn mới, Tài xế gần đây, Cảnh báo) + Hàng 6 thẻ telemetry đồ thị + Sổ đơn DataTable gần đây |
 | Lists        | Breadcrumb/page mast → filter workbench → result count/revision → dense table hoặc row-detail; toolbar và result phải đọc như một công cụ duy nhất               |
 | Order detail | Status/ownership mast → desktop split `8/4` investigation + Audit Rail; mobile giữ một cột nhưng command capability đứng trước audit, không bị chôn sau metadata |
 | Command      | Dialog nêu target/current→proposed state/consequence trước reason; destructive action tách thị giác và vẫn dùng được ở text zoom `200%`                          |

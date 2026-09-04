@@ -51,34 +51,35 @@ export function AdminBreadcrumbs({
   previewContext?: AdminPreviewContext | undefined;
 }>) {
   return (
-    <nav aria-label="Đường dẫn" className="text-body-compact text-neutral-muted">
-      <ol className="m-0 flex flex-wrap items-center gap-xs p-0">
+    <nav aria-label="Đường dẫn" className="text-xs text-neutral-muted">
+      <ol className="m-0 flex flex-wrap items-center gap-1.5 p-0">
         <li className="list-none">
           <a
-            className="rounded-control underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-slate-600 hover:text-brand hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand font-medium motion-reduce:transition-none"
             href={createAdminPreviewHref('/admin', 'overview', previewContext)}
           >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
             Tổng quan
           </a>
         </li>
-        <li aria-hidden="true" className="list-none">/</li>
+        <li aria-hidden="true" className="list-none text-slate-300">/</li>
         {screen === 'order-detail' ? (
           <>
             <li className="list-none">
               <a
-                className="rounded-control underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="inline-flex items-center rounded-lg px-2.5 py-1 text-slate-600 hover:text-brand hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand font-medium motion-reduce:transition-none"
                 href={createAdminPreviewHref('/admin/orders', 'orders', previewContext)}
               >
                 Đơn hàng
               </a>
             </li>
-            <li aria-hidden="true" className="list-none">/</li>
-            <li aria-current="page" className="list-none font-medium text-neutral-text break-all">
+            <li aria-hidden="true" className="list-none text-slate-300">/</li>
+            <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 break-all bg-white/70 rounded-lg shadow-2xs border border-white/60">
               {orderReference}
             </li>
           </>
         ) : (
-          <li aria-current="page" className="list-none font-medium text-neutral-text">
+          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
             {listLabel[screen]}
           </li>
         )}
@@ -105,11 +106,9 @@ export function AdminSurface({
   icon?: ReactNode;
 }>) {
   const variantClass =
-    variant === 'panel'
-      ? 'rounded-[16px] border border-neutral-border/60 bg-white p-6 shadow-card hover:shadow-card-hover transition-shadow'
-      : variant === 'signal'
-        ? 'rounded-xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-soft/40 p-5 shadow-sm'
-        : 'rounded-[16px] border border-neutral-border/60 bg-white p-6 shadow-card hover:shadow-card-hover transition-shadow';
+    variant === 'signal'
+      ? 'rounded-[22px] sm:rounded-[26px] border border-amber-200 bg-amber-50/70 p-5 shadow-xs'
+      : 'rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs';
   return (
     <section
       aria-label={ariaLabel}
@@ -118,12 +117,12 @@ export function AdminSurface({
       <header className="mb-5 flex items-start justify-between gap-3">
         <div className="flex gap-3 min-w-0 flex-1">
           {icon ? (
-            <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand border border-brand/10">
+            <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-soft-text">
               {icon}
             </div>
           ) : null}
           <div className="min-w-0 flex-1">
-            <h2 className="text-[15px] font-bold tracking-tight text-neutral-text break-words leading-tight">{title}</h2>
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-text break-words leading-tight">{title}</h2>
             {description ? (
               <p className="mt-1 text-xs leading-relaxed text-neutral-muted break-words">{description}</p>
             ) : null}
@@ -147,24 +146,19 @@ export function AdminDispatchSlab({
   return (
     <section
       aria-label={ariaLabel}
-      className="min-w-0 overflow-hidden rounded-[16px] border border-neutral-border/20 bg-neutral-text bg-gradient-to-br from-neutral-text via-[#1e293b] to-[#0f172a] p-6 text-white shadow-elevated relative"
+      className="min-w-0 rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/95 backdrop-blur-sm p-5 sm:p-6 text-slate-800 shadow-sm"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-teal-600/10 pointer-events-none" />
-      <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand/10 blur-2xl pointer-events-none" />
-      <div className="relative">
-        <div className="flex items-center gap-2.5 mb-4">
-          <span className="flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75 motion-reduce:animate-none" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-          </span>
-          <p className="text-xs font-bold tracking-[0.12em] text-white/90 uppercase">{eyebrow}</p>
-          <span className="ml-auto hidden sm:inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur border border-white/10">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Live
-          </span>
-        </div>
-        <div className="min-w-0">{children}</div>
+      <div className="flex items-center gap-2.5 mb-4">
+        <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20 animate-pulse" />
+        <p className="text-xs font-bold tracking-[0.12em] text-brand uppercase">
+          {eyebrow}
+        </p>
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Live
+        </span>
       </div>
+      <div className="min-w-0">{children}</div>
     </section>
   );
 }
@@ -198,19 +192,19 @@ export function AdminPaginationLinks({
     <nav aria-label={`Phân trang ${label}`} className="flex flex-wrap items-center justify-between gap-sm pt-3">
       {page > 1 ? (
         <a
-          className="inline-flex min-h-10 items-center rounded-control border border-neutral-border bg-neutral px-4 text-xs font-semibold text-neutral-text  hover:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="inline-flex min-h-10 items-center rounded-xl border border-slate-200/80 bg-white/90 px-4 text-xs font-semibold text-neutral-text shadow-2xs hover:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           href={hrefForPage(page - 1)}
         >
-          ← Trang trước
+          Trang trước
         </a>
       ) : <span />}
       <span className="text-xs font-medium text-neutral-muted">Trang {page} / {totalPages}</span>
       {page < totalPages ? (
         <a
-          className="inline-flex min-h-10 items-center rounded-control border border-neutral-border bg-neutral px-4 text-xs font-semibold text-neutral-text  hover:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="inline-flex min-h-10 items-center rounded-xl border border-slate-200/80 bg-white/90 px-4 text-xs font-semibold text-neutral-text shadow-2xs hover:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           href={hrefForPage(page + 1)}
         >
-          Trang sau →
+          Trang sau
         </a>
       ) : <span />}
     </nav>
@@ -221,14 +215,14 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
   return (
     <aside
       aria-label="Audit Rail — thao tác đặc quyền"
-      className="min-w-0 border-l-4 border-brand bg-neutral-surface p-md text-neutral-text rounded-card"
+      className="min-w-0 rounded-[22px] sm:rounded-[26px] border-l-4 border-l-brand border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text"
     >
-      <header className="mb-4 flex items-center justify-between border-b border-neutral-border pb-3">
+      <header className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-section-title font-semibold">Audit Rail</h2>
+          <h2 className="text-base sm:text-lg font-bold text-neutral-text">Audit Rail</h2>
           <p className="mt-0.5 text-xs text-neutral-muted uppercase tracking-wider font-semibold">Thao tác đặc quyền · Mới nhất trước</p>
         </div>
-        <span className="rounded-full bg-neutral-border px-2 py-0.5 text-xs font-bold text-neutral-text">AUDITED</span>
+        <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">AUDITED</span>
       </header>
       {audit.state === 'error' ? (
         <ScreenState
@@ -245,9 +239,9 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
       ) : (
         <ol className="m-0 grid list-none gap-3 p-0">
           {audit.entries.map((entry) => (
-            <li key={entry.id} className="min-w-0 rounded-control border border-neutral-border bg-neutral p-3.5">
+            <li key={entry.id} className="min-w-0 rounded-xl border border-slate-200/80 bg-[#f8fbff] p-3.5 shadow-2xs">
               <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
-                <span className="rounded-full bg-success px-2 py-0.5 text-xs font-bold text-success-text border border-success-border">
+                <span className="rounded-full bg-success px-2 py-0.5 text-[11px] font-bold text-success-text border border-success-border">
                   {entry.outcomeLabel}
                 </span>
                 <time className="text-xs font-medium text-neutral-muted tabular-nums" dateTime={entry.dateTime}>
@@ -256,7 +250,7 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
               </div>
               <h3 className="text-xs font-bold text-neutral-text break-words mb-2">{entry.actionLabel}</h3>
               <dl className="grid gap-1.5 text-xs text-neutral-muted">
-                <div className="flex justify-between gap-2 border-t border-neutral-border pt-1.5">
+                <div className="flex justify-between gap-2 border-t border-slate-200/60 pt-1.5">
                   <dt className="text-xs font-semibold text-neutral-muted uppercase">Actor</dt>
                   <dd className="font-medium text-neutral-text text-right">{entry.actorLabel}</dd>
                 </div>
@@ -266,7 +260,7 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
                 </div>
                 <div>
                   <dt className="text-xs font-semibold text-neutral-muted uppercase">Lý do đã sanitize</dt>
-                  <dd className="mt-0.5 rounded-control bg-neutral-surface p-2 text-xs text-neutral-text whitespace-pre-wrap break-words border border-neutral-border">{entry.reason}</dd>
+                  <dd className="mt-0.5 rounded-xl bg-white p-2 text-xs text-neutral-text whitespace-pre-wrap break-words border border-slate-200/80 shadow-2xs">{entry.reason}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-xs font-semibold text-neutral-muted uppercase">Thời gian</dt>
