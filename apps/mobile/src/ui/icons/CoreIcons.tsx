@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
 
 const leopardWordmarkSource = require('../../../assets/brand/leopard-wordmark.png');
 const leopardEmblemSource = require('../../../assets/brand/leopard-emblem.png');
@@ -281,6 +281,174 @@ export function IconQrPayment({
 }
 
 /**
+ * 🏦 Vector Icon: Ngân hàng / Tổ chức tín dụng (Bank Building)
+ */
+export function IconBank({
+  color = '#0284C7',
+  size = 22,
+  strokeWidth = 1.75,
+  testID = 'icon-bank',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 9.5L12 4L21 9.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M5 10V18M10 10V18M14 10V18M19 10V18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M2 20H22" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 📥 Vector Icon: Tiền vào / Nạp tiền (Topup / Incoming Transaction)
+ */
+export function IconTxTopup({
+  color = '#16A34A',
+  size = 20,
+  strokeWidth = 2,
+  testID = 'icon-tx-topup',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 7L7 17M7 17H15M7 17V9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <Text style={{ color, fontSize: size * 0.7, fontWeight: '800' }}>↓</Text>
+    </View>
+  );
+}
+
+/**
+ * 📤 Vector Icon: Tiền ra / Thanh toán (Payment / Outgoing Transaction)
+ */
+export function IconTxPayment({
+  color = '#475569',
+  size = 20,
+  strokeWidth = 2,
+  testID = 'icon-tx-payment',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 17L17 7M17 7H9M17 7V15" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <Text style={{ color, fontSize: size * 0.7, fontWeight: '800' }}>↑</Text>
+    </View>
+  );
+}
+
+/**
+ * ↺ Vector Icon: Hoàn tiền (Refund Transaction)
+ */
+export function IconTxRefund({
+  color = '#D97706',
+  size = 20,
+  strokeWidth = 2,
+  testID = 'icon-tx-refund',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 10H14C17.3137 10 20 12.6863 20 16C20 19.3137 17.3137 22 14 22H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M7 6L3 10L7 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <Text style={{ color, fontSize: size * 0.7, fontWeight: '800' }}>↺</Text>
+    </View>
+  );
+}
+
+/**
+ * 📋 Vector Icon: Sao chép (Copy to Clipboard)
+ */
+export function IconCopy({
+  color = '#0284C7',
+  size = 18,
+  strokeWidth = 1.75,
+  testID = 'icon-copy',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <rect height="13" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} width="13" x="9" y="9" />
+        <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 👁️ Vector Icon: Mắt hiển thị (Eye)
+ */
+export function IconEye({
+  color = '#94A3B8',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-eye',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <circle cx="12" cy="12" r="3" stroke={color} strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeCircle, { width: size * 0.5, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 🙈 Vector Icon: Mắt ẩn (Eye Off)
+ */
+export function IconEyeOff({
+  color = '#94A3B8',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-eye-off',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12A18.45 18.45 0 0 1 5.06 6.06L17.94 17.94Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4C19 4 23 12 23 12A18.5 18.5 0 0 1 19.82 16.14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M1 1L23 23" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeCircle, { width: size * 0.5, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
  * 🏠 Vector Icon: Trang chủ (Home)
  */
 export function IconHome({
@@ -522,6 +690,85 @@ export function IconMessage({
 }
 
 /**
+ * 🛵 Vector Icon Phương Tiện: Xe Máy (Motorbike / Scooter)
+ */
+export function IconVehicleMotorbike({
+  color = '#0284C7',
+  size = 28,
+  strokeWidth = 1.75,
+  testID = 'icon-vehicle-motorbike',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 28 28" width={size} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="7" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={strokeWidth} />
+        <circle cx="21" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={strokeWidth} />
+        <path d="M7 19H12L15 13H19L21 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M15 13L17 7H19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M10 11H13.5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 🚐 Vector Icon Phương Tiện: Xe Van (Delivery Van)
+ */
+export function IconVehicleVan({
+  color = '#0284C7',
+  size = 28,
+  strokeWidth = 1.75,
+  testID = 'icon-vehicle-van',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 28 28" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 8C3 7.44772 3.44772 7 4 7H17V18H3V8Z" stroke={color} strokeWidth={strokeWidth} />
+        <path d="M17 9H21.5C22.1 9 22.6 9.4 22.8 10L24.5 13.5C24.7 13.8 24.8 14.1 24.8 14.5V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <rect height="4" rx="0.5" stroke={color} strokeWidth={strokeWidth} width="4.5" x="17.5" y="10" />
+        <circle cx="7.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+        <circle cx="20.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.75, height: size * 0.45, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * ⚠️ Vector Icon: Cảnh báo / Thoát (Warning Shield)
+ */
+export function IconWarningShield({
+  color = '#D97706',
+  size = 32,
+  strokeWidth = 1.75,
+  testID = 'icon-warning-shield',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} x1="12" x2="12" y1="8" y2="13" />
+        <circle cx="12" cy="16.5" fill={color} r="1" />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeShield, { width: size * 0.6, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
  * 🛺 Vector Icon Phương Tiện: Xe Ba Gác (3-Wheel Bike)
  */
 export function IconVehicle3Wheel({
@@ -735,6 +982,477 @@ export function LeopardMobileLogo({
   return <LeopardWordmark height={height} testID={testID} />;
 }
 
+/**
+ * 🇻🇳 Vector Icon: Cờ đỏ sao vàng Việt Nam (Vietnam Flag)
+ * Tỉ lệ chuẩn 3:2 với nền đỏ tươi (#DA251D) và ngôi sao vàng 5 cánh ở chính giữa,
+ * hoạt động sắc nét trên mọi nền tảng (Web, Windows, iOS, Android).
+ */
+export function VietnamFlagIcon({
+  width = 22,
+  height = 15,
+  borderRadius = 3,
+  testID = 'vietnam-flag-icon',
+}: {
+  width?: number;
+  height?: number;
+  borderRadius?: number;
+  testID?: string;
+}) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        height={height}
+        style={{
+          borderRadius,
+          overflow: 'hidden',
+          flexShrink: 0,
+          boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+          display: 'inline-block',
+          verticalAlign: 'middle',
+        }}
+        viewBox="0 0 30 20"
+        width={width}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect fill="#DA251D" height="20" width="30" />
+        <polygon
+          fill="#FFFF00"
+          points="15,3.8 16.6,8.6 21.7,8.6 17.6,11.6 19.2,16.4 15,13.4 10.8,16.4 12.4,11.6 8.3,8.6 13.4,8.6"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View
+      style={[
+        styles.vietnamFlagNative,
+        {
+          width,
+          height,
+          borderRadius,
+        },
+      ]}
+      testID={testID}
+    >
+      <Text style={[styles.vietnamStarText, { fontSize: height * 0.78, lineHeight: height }]}>
+        ★
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * 📱 Animated OTP Phone Verification Hero Component
+ * Displays a sleek modern smartphone with animated pulsing signal rings and SMS message indicator.
+ */
+export function OtpPhoneHeroIcon({
+  size = 56,
+  isVerified = false,
+  testID = 'otp-phone-hero-icon',
+}: {
+  size?: number;
+  isVerified?: boolean;
+  testID?: string;
+}) {
+  const pulseAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1800,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [pulseAnim]);
+
+  const ringScale = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.95, 1.45],
+  });
+
+  const ringOpacity = pulseAnim.interpolate({
+    inputRange: [0, 0.4, 1],
+    outputRange: [0.65, 0.35, 0],
+  });
+
+  if (isVerified) {
+    return (
+      <View style={[styles.phoneHeroWrap, { width: size + 16, height: size + 16 }]} testID={testID}>
+        <View style={[styles.phoneVerifiedCircle, { width: size, height: size, borderRadius: size / 2 }]}>
+          <Text style={styles.phoneVerifiedCheck}>✓</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const phoneW = Math.round(size * 0.64);
+  const phoneH = size;
+
+  return (
+    <View style={[styles.phoneHeroWrap, { width: size + 16, height: size + 16 }]} testID={testID}>
+      {/* Animated Glowing Signal Wave */}
+      <Animated.View
+        style={[
+          styles.phoneSignalRing,
+          {
+            width: size + 6,
+            height: size + 6,
+            borderRadius: (size + 6) / 2,
+            transform: [{ scale: ringScale }],
+            opacity: ringOpacity,
+          },
+        ]}
+      />
+
+      {/* Main Smartphone Shell */}
+      <View style={[styles.phoneShell, { width: phoneW, height: phoneH }]}>
+        {/* Top Speaker Earpiece */}
+        <View style={styles.phoneEarpiece} />
+
+        {/* Screen Display */}
+        <View style={styles.phoneInnerScreen}>
+          {/* SMS Code Pill Preview */}
+          <View style={styles.phoneSmsPill}>
+            <View style={styles.phoneSmsDot} />
+            <View style={styles.phoneSmsDot} />
+            <View style={styles.phoneSmsDot} />
+          </View>
+        </View>
+
+        {/* Bottom Home Indicator Bar */}
+        <View style={styles.phoneHomeBar} />
+      </View>
+
+      {/* Floating Animated Badge */}
+      <View style={styles.phoneFloatingBadge}>
+        <Text style={styles.phoneFloatingBadgeText}>💬</Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * 🏢 Vector Icon: Kho hàng (Warehouse / Depot)
+ */
+export function IconWarehouse({
+  color = '#2563EB',
+  size = 18,
+  strokeWidth = 1.75,
+  testID = 'icon-warehouse',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 21V8L12 3L21 8V21H3Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <path
+          d="M9 21V13H15V21"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <path
+          d="M9 17H15"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={{ width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }} />
+    </View>
+  );
+}
+
+
+/**
+ * 🏢 Vector Icon: Văn phòng / Tòa nhà công ty (Office / Corporate Building)
+ */
+export function IconOffice({
+  color = '#2563EB',
+  size = 18,
+  strokeWidth = 1.75,
+  testID = 'icon-office',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect
+          height="18"
+          rx="1"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+          width="14"
+          x="5"
+          y="3"
+        />
+        <path d="M9 7H11" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M13 7H15" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M9 11H11" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M13 11H15" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M10 21V17H14V21" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={{ width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }} />
+    </View>
+  );
+}
+
+/**
+ * 🏷️ Vector Icon: Nhãn / Khác (Tag / Label)
+ */
+export function IconTag({
+  color = '#2563EB',
+  size = 18,
+  strokeWidth = 1.75,
+  testID = 'icon-tag',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 2H2V12L13.59 23.59C14.37 24.37 15.63 24.37 16.41 23.59L22.59 17.41C23.37 16.63 23.37 15.37 22.59 14.59L12 2Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <circle cx="7" cy="7" fill={color} r="1.5" />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={{ width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }} />
+    </View>
+  );
+}
+
+/**
+ * ⚙️ Vector Icon: Cài đặt hệ thống (Settings Gear)
+ */
+export function IconSettings({
+  color = '#64748B',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-settings',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="12" cy="12" r="3" stroke={color} strokeWidth={strokeWidth} />
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View
+        style={{
+          width: size * 0.7,
+          height: size * 0.7,
+          borderRadius: (size * 0.7) / 2,
+          borderColor: color,
+          borderWidth: strokeWidth,
+        }}
+      />
+    </View>
+  );
+}
+
+/**
+ * 🗑️ Vector Icon: Thùng rác / Xóa (Trash / Delete)
+ */
+export function IconTrash({
+  color = '#EF4444',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-trash',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View
+        style={[
+          styles.nativeRect,
+          { width: size * 0.65, height: size * 0.7, borderColor: color, borderWidth: strokeWidth },
+        ]}
+      />
+    </View>
+  );
+}
+
+/**
+ * ⭐ Vector Icon: Ngôi sao / Mặc định (Star / Default)
+ */
+export function IconStar({
+  color = '#F59E0B',
+  fill = 'none',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-star',
+}: VectorIconProps & { fill?: string }) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill={fill}
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <polygon
+          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View
+        style={[
+          styles.nativeCircle,
+          { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth },
+        ]}
+      />
+    </View>
+  );
+}
+
+/**
+ * ➕ Vector Icon: Dấu cộng (Plus / Add)
+ */
+export function IconPlus({
+  color = '#FFFFFF',
+  size = 18,
+  strokeWidth = 2,
+  testID = 'icon-plus',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 5v14M5 12h14"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View
+        style={[
+          styles.nativeCircle,
+          { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth },
+        ]}
+      />
+    </View>
+  );
+}
+
+
 const styles = StyleSheet.create({
   centerBox: {
     alignItems: 'center',
@@ -762,5 +1480,123 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: 1.5,
+  },
+  vietnamFlagNative: {
+    backgroundColor: '#DA251D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  vietnamStarText: {
+    color: '#FFFF00',
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  phoneHeroWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  phoneSignalRing: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderColor: '#38BDF8',
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+  },
+  phoneShell: {
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#334155',
+    padding: 3,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  phoneEarpiece: {
+    width: 12,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: '#64748B',
+    marginTop: 1,
+  },
+  phoneInnerScreen: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#1E293B',
+    borderRadius: 6,
+    marginVertical: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  phoneSmsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    backgroundColor: '#0284C7',
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  phoneSmsDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  phoneHomeBar: {
+    width: 14,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: '#64748B',
+    marginBottom: 1,
+  },
+  phoneFloatingBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#F59E0B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  phoneFloatingBadgeText: {
+    fontSize: 9,
+  },
+  phoneVerifiedCircle: {
+    backgroundColor: '#16A34A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#16A34A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  phoneVerifiedCheck: {
+    color: '#FFFFFF',
+    fontSize: 26,
+    fontWeight: '900',
   },
 });
