@@ -107,13 +107,18 @@ describe('VietmapProvider', () => {
             distance: 2_194.4,
             time: 351_400,
             points: '}s{`Ac_hjSjAkCFQRu@',
-            annotations: { congestion: ['low', 'moderate'] },
+            annotations: {
+              congestion: [
+                { value: 'low', first: 0, last: 5 },
+                { value: 'moderate', first: 5, last: 12 },
+              ],
+            },
           },
           {
             distance: 2_600.1,
             time: 300_000,
             points: 'abcDefgHijkL',
-            annotations: { congestion: ['severe'] },
+            annotations: { congestion: [{ value: 'severe', first: 0, last: 3 }] },
           },
         ],
       }),

@@ -306,7 +306,9 @@ function deriveCongestionLevel(path: VietmapRoutePath): CongestionLevel {
   let worst: CongestionLevel = 'unknown';
   let worstRank = -1;
 
-  for (const level of annotations.congestion) {
+  for (const entry of annotations.congestion) {
+    // Vietmap returns segment objects ({ value, first, last }), not bare level strings.
+    const level = isRecord(entry) ? entry.value : entry;
     const rank = CONGESTION_SEVERITY.indexOf(level as CongestionLevel);
 
     if (rank > worstRank) {
