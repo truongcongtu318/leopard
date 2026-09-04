@@ -15,9 +15,16 @@ import type {
 import { MapProviderNotFoundError } from './providers/map-provider.js';
 
 export const MAP_PROVIDER = Symbol('MAP_PROVIDER');
+const MAX_ROUTES = 3;
 
-export interface OrderEstimateResponse extends RouteEstimate {
+export interface RouteOptionResponse extends RouteEstimate {
+  routeId: string;
   estimateToken: string;
+  isRecommended: boolean;
+}
+
+export interface OrderEstimateResponse {
+  routes: RouteOptionResponse[];
 }
 
 export class MapPlaceNotFoundError extends Error {
@@ -53,26 +60,40 @@ export class MapsService {
   }
 
   async estimate(input: RouteInput): Promise<OrderEstimateResponse> {
-    const estimate = await this.withProvider(() => this.mapProvider.route(input));
-    const quote = this.pricingService.quote({
-      vehicleType: input.vehicleType,
-      distanceMeters: estimate.distanceM,
-      stopCount: input.stops.length,
-    });
-    const pricedEstimate = {
-      ...estimate,
-      estimatedPriceVnd: quote.amountVnd,
-    };
-    const estimateToken = this.estimateTokenService.issue({
-      routeInput: input,
-      estimate: pricedEstimate,
-      quote,
+    const routeEstimates = await this.withProvider(() => this.mapProvider.route(input));
+
+    if (routeEstimates.length === 0) {
+      throw this.providerUnavailableError();
+    }
+
+    const limited = [...routeEstimates]
+      .sort((a, b) => a.durationS - b.durationS)
+      .slice(0, MAX_ROUTES);
+
+    const routes = limited.map((estimate, index) => {
+      const routeId = `route-${index}`;
+      const quote = this.pricingService.quote({
+        vehicleType: input.vehicleType,
+        distanceMeters: estimate.distanceM,
+        stopCount: input.stops.length,
+      });
+      const pricedEstimate = { ...estimate, estimatedPriceVnd: quote.amountVnd };
+      const estimateToken = this.estimateTokenService.issue({
+        routeInput: input,
+        estimate: pricedEstimate,
+        quote,
+        routeId,
+      });
+
+      return {
+        ...pricedEstimate,
+        routeId,
+        estimateToken,
+        isRecommended: index === 0,
+      };
     });
 
-    return {
-      estimateToken,
-      ...pricedEstimate,
-    };
+    return { routes };
   }
 
   defaultSource(): MapProviderSource {
