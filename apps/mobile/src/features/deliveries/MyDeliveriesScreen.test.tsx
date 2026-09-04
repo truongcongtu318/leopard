@@ -46,7 +46,7 @@ const mockOrders: DeliveryOrder[] = [
 ];
 
 describe('MyDeliveriesScreen', () => {
-  it('renders page title, search bar, filter chips, and order cards', async () => {
+  it('renders the "Đang giao" title, search bar, active filter chips, and active order cards', async () => {
     const onOrderPress = jest.fn();
     const onCreateOrder = jest.fn();
 
@@ -58,16 +58,16 @@ describe('MyDeliveriesScreen', () => {
       />,
     );
 
-    // Header
-    expect(screen.getByText('Đơn hàng của tôi')).toBeTruthy();
+    // Header uses the active-shipment identity, not "Đơn hàng của tôi"
+    expect(screen.getByRole('header', { name: 'Đang giao' })).toBeTruthy();
 
-    // Filter chips
+    // Filter chips scoped to in-progress shipments only (no "Hoàn thành")
     expect(screen.getByText('Tất cả')).toBeTruthy();
     expect(screen.getByText('Đang chạy')).toBeTruthy();
     expect(screen.getByText('Đang bốc')).toBeTruthy();
-    expect(screen.getAllByText('Hoàn thành').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText('Hoàn thành')).toBeNull();
 
-    // Order data renders
+    // Active order data renders
     expect(screen.getByText('3 tấn Xi Măng Hà Tiên')).toBeTruthy();
     expect(screen.getByText('#LP-00201')).toBeTruthy();
     expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
@@ -85,43 +85,63 @@ describe('MyDeliveriesScreen', () => {
     await screen.unmount();
   });
 
-  it('filters orders when a chip is pressed', async () => {
-    const screen = await render(
-      <MyDeliveriesScreen orders={mockOrders} />,
-    );
+  it('never shows delivered/cancelled orders — this tab is active shipments only', async () => {
+    const screen = await render(<MyDeliveriesScreen orders={mockOrders} />);
 
-    // Press "Hoàn thành" filter
-    const deliveredChip = screen.getByLabelText(/Lọc: Hoàn thành/);
-    await fireEvent.press(deliveredChip);
+    // Active orders present
+    expect(screen.getByText('#LP-00201')).toBeTruthy(); // IN_TRANSIT
+    expect(screen.getByText('#LP-00205')).toBeTruthy(); // LOADING
 
-    // Only the delivered order should be visible
-    expect(screen.getByText('#LP-00198')).toBeTruthy();
+    // Delivered order is absent even under the default "Tất cả" chip
+    expect(screen.queryByText('#LP-00198')).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('filters active orders when a chip is pressed', async () => {
+    const screen = await render(<MyDeliveriesScreen orders={mockOrders} />);
+
+    // Press "Đang bốc" — should keep the LOADING order, drop the IN_TRANSIT one
+    const loadingChip = screen.getByLabelText(/Lọc: Đang bốc/);
+    await fireEvent.press(loadingChip);
+
+    expect(screen.getByText('#LP-00205')).toBeTruthy();
     expect(screen.queryByText('#LP-00201')).toBeNull();
-    expect(screen.queryByText('#LP-00205')).toBeNull();
 
     await screen.unmount();
   });
 
-  it('shows empty state when no orders match filter', async () => {
-    const screen = await render(
-      <MyDeliveriesScreen orders={[]} />,
-    );
+  it('shows the active-shipment empty state when there are no active orders', async () => {
+    // Only a delivered order → nothing active → empty state
+    const deliveredOnly = mockOrders.filter((o) => o.status === 'DELIVERED');
+    const screen = await render(<MyDeliveriesScreen orders={deliveredOnly} />);
 
-    expect(screen.getByText('Không có đơn hàng nào')).toBeTruthy();
+    expect(screen.getByText('Chưa có chuyến đang giao')).toBeTruthy();
 
     await screen.unmount();
   });
 
-  it('filters orders by search query', async () => {
+  it('offers a link to the order history from the empty state', async () => {
+    const onViewHistory = jest.fn();
     const screen = await render(
-      <MyDeliveriesScreen orders={mockOrders} />,
+      <MyDeliveriesScreen onViewHistory={onViewHistory} orders={[]} />,
     );
+
+    const historyBtn = screen.getByLabelText('Xem lịch sử đơn');
+    await fireEvent.press(historyBtn);
+    expect(onViewHistory).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('filters active orders by search query', async () => {
+    const screen = await render(<MyDeliveriesScreen orders={mockOrders} />);
 
     const searchInput = screen.getByLabelText('Tìm kiếm đơn hàng');
     await fireEvent.changeText(searchInput, 'Xi Măng');
 
     expect(screen.getByText('#LP-00201')).toBeTruthy();
-    expect(screen.queryByText('#LP-00198')).toBeNull();
+    expect(screen.queryByText('#LP-00205')).toBeNull();
 
     await screen.unmount();
   });

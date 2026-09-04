@@ -1,11 +1,19 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View, ScrollView } from 'react-native';
 
-import { colors, leopardPalette, pastelTheme, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
 import { StatusBadge } from '../../../ui/StatusBadge';
+import {
+  IconIdCard,
+  IconLicense,
+  IconPhone,
+  IconSecurityShield,
+  IconStar,
+  IconUser,
+} from '../../../ui/icons/CoreIcons';
 import type { DriverProfileView } from './model';
 
 export type DriverProfileScreenProps = Readonly<{
@@ -14,11 +22,29 @@ export type DriverProfileScreenProps = Readonly<{
   onRetry?: () => void;
 }>;
 
-function StatBox({ label, value }: { label: string; value: string }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+  badge,
+  isLast = false,
+}: Readonly<{
+  icon: React.ReactNode;
+  label: string;
+  value?: string;
+  badge?: React.ReactNode;
+  isLast?: boolean;
+}>) {
   return (
-    <View style={styles.statBox}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+    <View style={[styles.infoRow, isLast ? styles.infoRowLast : null]}>
+      <View style={styles.infoRowIconChip}>
+        {icon}
+      </View>
+      <Text style={styles.infoRowLabel}>{label}</Text>
+      <View style={styles.infoRowRight}>
+        {value ? <Text style={styles.infoRowValue}>{value}</Text> : null}
+        {badge}
+      </View>
     </View>
   );
 }
@@ -82,48 +108,58 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
           <Text style={styles.driverName}>{driverName}</Text>
           <Text style={styles.vehicleInfo}>{vehicleInfo}</Text>
           <View style={styles.ratingRow}>
-            <Text style={styles.starIcon}>⭐</Text>
+            <IconStar color={leopardPalette.accentYellow} fill={leopardPalette.accentYellow} size={14} />
             <Text style={styles.ratingText}>{rating}</Text>
           </View>
         </View>
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          <StatBox label="Chuyến xe" value="1,245" />
-          <StatBox label="Đánh giá" value={rating} />
-          <StatBox label="Tham gia" value="2 năm" />
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>1,245</Text>
+            <Text style={styles.statLabel}>Chuyến xe</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{rating}</Text>
+            <Text style={styles.statLabel}>Đánh giá</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>2 năm</Text>
+            <Text style={styles.statLabel}>Tham gia</Text>
+          </View>
         </View>
 
-        {/* Info Cards */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
-          <View style={[styles.infoCard, { backgroundColor: pastelTheme.blueCard.bg, borderColor: pastelTheme.blueCard.border }]}>
-            <Text style={[styles.cardTitle, { color: pastelTheme.blueCard.text }]}>Liên hệ</Text>
-            <Text style={[styles.cardBody, { color: pastelTheme.blueCard.text }]}>SĐT: {view.phone}</Text>
-            <Text style={[styles.cardBody, { color: pastelTheme.blueCard.text }]}>Vai trò: {view.roleLabel}</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hồ sơ năng lực</Text>
-          <View style={[styles.infoCard, { backgroundColor: pastelTheme.greenCard.bg, borderColor: pastelTheme.greenCard.border }]}>
-            <Text style={[styles.cardTitle, { color: pastelTheme.greenCard.text }]}>Phương tiện & Bằng lái</Text>
-            <Text style={[styles.cardBody, { color: pastelTheme.greenCard.text }]}>Hạng GPLX: C</Text>
-            <Text style={[styles.cardBody, { color: pastelTheme.greenCard.text }]}>Trạng thái xe: Đã kiểm định</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Trạng thái tài khoản</Text>
-          <View style={[styles.infoCard, { backgroundColor: pastelTheme.yellowCard.bg, borderColor: pastelTheme.yellowCard.border }]}>
-            <Text style={[styles.cardTitle, { color: pastelTheme.yellowCard.text }]}>Xác thực KYC (Đang chờ)</Text>
-            <Text style={[styles.cardBody, { color: pastelTheme.yellowCard.text }]}>Hồ sơ của bạn đang được xem xét.</Text>
+          <View style={styles.infoListCard}>
+            <InfoRow
+              icon={<IconPhone color={colors.brand.softText} size={16} />}
+              label="SĐT"
+              value={view.phone}
+            />
+            <InfoRow
+              icon={<IconUser color={colors.brand.softText} size={16} />}
+              label="Vai trò"
+              value={view.roleLabel}
+            />
+            <InfoRow
+              icon={<IconLicense color={colors.brand.softText} size={16} />}
+              label="Hạng GPLX"
+              value="C"
+            />
+            <InfoRow
+              badge={<StatusBadge domain="kyc" status="PENDING" />}
+              icon={<IconSecurityShield color={colors.brand.softText} size={16} />}
+              isLast
+              label="KYC"
+            />
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Cài đặt hệ thống</Text>
           <View style={styles.menuCard}>
+            <MenuRow label="Ví & rút tiền" onPress={() => router.push('/driver/wallet')} />
             <MenuRow label="Điểm hiệu suất" onPress={() => router.push('/driver/performance')} />
             <MenuRow label="Hồ sơ KYC" onPress={() => router.push('/driver/kyc')} />
             <MenuRow label="Cài đặt" onPress={() => router.push('/driver/settings')} />
@@ -233,19 +269,47 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginTop: 8,
   },
-  infoCard: {
+  infoListCard: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
     borderRadius: radius.card,
     borderWidth: 1,
-    padding: spacing.md,
-    gap: 4,
   },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 4,
+  infoRow: {
+    alignItems: 'center',
+    borderBottomColor: leopardPalette.subtleDivider,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
   },
-  cardBody: {
-    fontSize: 14,
+  infoRowLast: {
+    borderBottomWidth: 0,
+  },
+  infoRowIconChip: {
+    alignItems: 'center',
+    backgroundColor: colors.brand.softBackground,
+    borderRadius: radius.card,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
+  infoRowLabel: {
+    color: leopardPalette.textMutedSlate,
+    flex: 1,
+    fontSize: 13.5,
+    fontWeight: '600',
+  },
+  infoRowRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  infoRowValue: {
+    color: leopardPalette.textSlateDark,
+    fontSize: 13.5,
+    fontWeight: '600',
   },
   menuCard: {
     backgroundColor: leopardPalette.surfaceWhite,

@@ -1,7 +1,8 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { IconTrophy, StarRating } from '../../../ui/icons/CoreIcons';
 
 type ReviewFeedItem = {
   id: string;
@@ -47,18 +48,27 @@ export function DriverPerformanceScreen() {
         <View style={styles.overviewCard}>
           <View style={styles.ratingBox}>
             <Text style={styles.ratingNumber}>4.8</Text>
-            <Text style={styles.ratingStars}>★★★★★</Text>
+            <StarRating rating={4.8} size={14} />
             <Text style={styles.ratingCount}>128 đánh giá</Text>
           </View>
           <View style={styles.tierBox}>
             <View style={styles.tierBadge}>
-              <Text style={styles.tierBadgeText}>HẠNG VÀNG 🏆</Text>
+              <View style={styles.tierIconChip}>
+                <IconTrophy color="#B45309" size={14} />
+              </View>
+              <Text style={styles.tierBadgeText}>HẠNG VÀNG</Text>
             </View>
             <Text style={styles.tierDesc}>Ưu tiên phân công các đơn hàng cước cao.</Text>
+            <View style={styles.tierProgressWrap}>
+              <View style={styles.tierProgressBar}>
+                <View style={[styles.tierProgressFill, { width: '72%' }]} />
+              </View>
+              <Text style={styles.tierProgressLabel}>Còn 28 chuyến để lên hạng Bạch Kim</Text>
+            </View>
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>CHỈ SỐ VẬN HÀNH</Text>
+        <Text style={styles.sectionLabel}>Chỉ số vận hành</Text>
         <View style={styles.metricsCard}>
           <View style={styles.metricRow}>
             <View style={styles.metricLeft}>
@@ -93,7 +103,7 @@ export function DriverPerformanceScreen() {
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>ĐÁNH GIÁ GẦN ĐÂY CỦA KHÁCH HÀNG</Text>
+        <Text style={styles.sectionLabel}>Đánh giá gần đây</Text>
         <FlatList
           contentContainerStyle={styles.reviewList}
           data={mockReviews}
@@ -101,7 +111,7 @@ export function DriverPerformanceScreen() {
           renderItem={({ item }) => (
             <View style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
-                <Text style={styles.reviewStars}>{'★'.repeat(item.rating)}</Text>
+                <StarRating rating={item.rating} size={12} />
                 <Text style={styles.reviewTime}>{item.createdAtLabel}</Text>
               </View>
               <View style={styles.tagRow}>
@@ -145,7 +155,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   ratingStars: {
-    color: '#F59E0B',
+    color: leopardPalette.accentYellow,
     fontSize: 14,
     marginTop: 2,
   },
@@ -160,14 +170,21 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   tierBadge: {
+    alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: colors.warning.background,
     borderRadius: radius.pill,
+    flexDirection: 'row',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
+  tierIconChip: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tierBadgeText: {
-    color: '#B45309',
+    color: colors.warning.text,
     fontSize: 11,
     fontWeight: '800',
   },
@@ -176,12 +193,30 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     lineHeight: 17,
   },
+  tierProgressWrap: {
+    gap: 4,
+    marginTop: 6,
+  },
+  tierProgressBar: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 3,
+    height: 6,
+    width: '100%',
+  },
+  tierProgressFill: {
+    backgroundColor: colors.warning.border,
+    borderRadius: 3,
+    height: 6,
+  },
+  tierProgressLabel: {
+    color: colors.operational.inkMuted,
+    fontSize: 10.5,
+  },
   sectionLabel: {
-    color: colors.brand.background,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-    marginTop: spacing.xxs,
+    color: leopardPalette.textMutedSlate,
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: spacing.xs,
   },
   metricsCard: {
     backgroundColor: colors.neutral.background,
@@ -236,7 +271,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   reviewStars: {
-    color: '#F59E0B',
+    color: leopardPalette.accentYellow,
     fontSize: 14,
   },
   reviewTime: {

@@ -24,6 +24,7 @@ export type OrderSummaryProps = Readonly<{
   origin: RoutePoint;
   status: OrderStatus;
   stops?: readonly RoutePoint[];
+  variant?: 'horizontal' | 'vertical';
 }>;
 
 function OrderSummaryContent({
@@ -32,6 +33,8 @@ function OrderSummaryContent({
   orderReference,
   origin,
   status,
+  stops = [],
+  variant = 'vertical',
 }: Omit<OrderSummaryProps, 'accessibilityHint' | 'accessibilityLabel' | 'onPress'>) {
   const etaItem = metadata.find((m) => m.id === 'eta');
   const priceItem = metadata.find((m) => m.id === 'price');
@@ -58,36 +61,83 @@ function OrderSummaryContent({
         <StatusBadge domain="order" status={status} />
       </View>
 
-      <View style={styles.routeBox}>
-        <View style={styles.routeColLeft}>
-          <Text style={styles.routeLabel}>TỪ</Text>
-          <Text numberOfLines={1} style={styles.routeAddress}>
-            {origin.label}
-          </Text>
-        </View>
+      {variant === 'horizontal' ? (
+        <View style={styles.routeBox}>
+          <View style={styles.routeColLeft}>
+            <Text style={styles.routeLabel}>TỪ</Text>
+            <Text numberOfLines={1} style={styles.routeAddress}>
+              {origin.label}
+            </Text>
+          </View>
 
-        <View style={styles.routeConnector}>
-          <View style={[styles.connectorDot, { backgroundColor: colors.brand.background }]} />
-          <View style={styles.connectorLine} />
-          <View style={[styles.connectorDot, { backgroundColor: colors.active.border }]} />
-        </View>
+          <View style={styles.routeConnector}>
+            <View style={[styles.connectorDot, { backgroundColor: colors.brand.background }]} />
+            <View style={styles.connectorLine} />
+            <View style={[styles.connectorDot, { backgroundColor: colors.active.border }]} />
+          </View>
 
-        <View style={styles.routeColRight}>
-          <Text style={styles.routeLabel}>ĐẾN</Text>
-          <Text numberOfLines={1} style={[styles.routeAddress, { textAlign: 'right' }]}>
-            {destination.label}
-          </Text>
+          <View style={styles.routeColRight}>
+            <Text style={styles.routeLabel}>ĐẾN</Text>
+            <Text numberOfLines={1} style={[styles.routeAddress, { textAlign: 'right' }]}>
+              {destination.label}
+            </Text>
+          </View>
         </View>
-      </View>
+      ) : (
+        <View style={styles.verticalRoute}>
+          <View style={styles.verticalRouteRow}>
+            <View style={styles.markerCol}>
+              <View style={[styles.originMarker, { backgroundColor: colors.brand.background }]} />
+              <View style={styles.connectorLineVertical} />
+            </View>
+            <View style={styles.addressCol}>
+              <Text style={styles.routeSubLabel}>ĐIỂM LẤY HÀNG</Text>
+              <Text numberOfLines={2} style={styles.routeAddressVertical}>
+                {origin.label}
+              </Text>
+            </View>
+          </View>
+
+          {stops && stops.length > 0 ? (
+            <View style={styles.verticalRouteRow}>
+              <View style={styles.markerCol}>
+                <View style={styles.stopMarker} />
+                <View style={styles.connectorLineVertical} />
+              </View>
+              <View style={styles.addressCol}>
+                <Text style={styles.stopsBadge}>{`+ ${stops.length} điểm dừng`}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          <View style={styles.verticalRouteRow}>
+            <View style={styles.markerCol}>
+              <View style={[styles.destMarker, { backgroundColor: colors.warning.border }]} />
+            </View>
+            <View style={styles.addressCol}>
+              <Text style={styles.routeSubLabel}>ĐIỂM GIAO HÀNG</Text>
+              <Text numberOfLines={2} style={styles.routeAddressVertical}>
+                {destination.label}
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       <View style={styles.footerRow}>
-        <Text style={styles.priceText}>{priceItem?.value ?? '—'}</Text>
-        {etaItem ? (
-          <View style={styles.etaBox}>
-            <Text style={styles.etaLabel}>{etaItem.label}</Text>
-            <Text style={styles.etaText}>{etaItem.value}</Text>
-          </View>
-        ) : null}
+        <View style={styles.priceContainer}>
+          <Text style={styles.priceSubLabel}>Giá cước</Text>
+          <Text style={styles.priceText}>{priceItem?.value ?? '—'}</Text>
+        </View>
+        <View style={styles.footerRight}>
+          {etaItem ? (
+            <View style={styles.etaBox}>
+              <Text style={styles.etaLabel}>{etaItem.label}</Text>
+              <Text style={styles.etaText}>{etaItem.value}</Text>
+            </View>
+          ) : null}
+          <Text style={styles.chevron}>›</Text>
+        </View>
       </View>
     </>
   );
@@ -141,21 +191,26 @@ const styles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',
     backgroundColor: '#FFFFFF',
-    borderColor: colors.neutral.border,
-    borderRadius: radius.card,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
     borderWidth: 1,
     gap: spacing.sm,
     minHeight: control.minimumTouchHeight,
     padding: spacing.md,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   etaLabel: {
     ...typography.caption,
-    color: colors.neutral.mutedText,
+    color: colors.info.text,
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.88,
   },
   header: {
     alignItems: 'center',
@@ -185,7 +240,7 @@ const styles = StyleSheet.create({
   reference: {
     color: colors.neutral.titleText,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   updatedAt: {
     ...typography.caption,
@@ -241,24 +296,106 @@ const styles = StyleSheet.create({
     height: 12,
     width: 1,
   },
+  verticalRoute: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  verticalRouteRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  markerCol: {
+    alignItems: 'center',
+    width: 16,
+    paddingTop: 3,
+  },
+  originMarker: {
+    borderRadius: 999,
+    height: 8,
+    width: 8,
+  },
+  destMarker: {
+    borderRadius: 2,
+    height: 8,
+    width: 8,
+  },
+  stopMarker: {
+    backgroundColor: colors.neutral.border,
+    borderRadius: 999,
+    height: 6,
+    width: 6,
+  },
+  connectorLineVertical: {
+    backgroundColor: '#CBD5E1',
+    flex: 1,
+    marginVertical: 2,
+    minHeight: 14,
+    width: 1.5,
+  },
+  addressCol: {
+    flex: 1,
+    minWidth: 0,
+    paddingBottom: 4,
+  },
+  routeSubLabel: {
+    color: colors.neutral.mutedText,
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    marginBottom: 1,
+  },
+  routeAddressVertical: {
+    color: colors.neutral.text,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  stopsBadge: {
+    ...typography.caption,
+    color: colors.brand.background,
+    fontSize: 11,
+    fontWeight: '600',
+    paddingVertical: 1,
+  },
   footerRow: {
     alignItems: 'center',
-    borderTopColor: colors.neutral.rowDivider,
+    borderTopColor: '#F1F5F9',
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: spacing.xs,
   },
+  priceContainer: {
+    gap: 1,
+  },
+  priceSubLabel: {
+    color: colors.neutral.mutedText,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
   priceText: {
     color: colors.brand.background,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
+  },
+  footerRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   etaBox: {
     alignItems: 'center',
     backgroundColor: colors.info.background,
+    borderColor: colors.info.border,
     borderRadius: radius.pill,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
     paddingHorizontal: 8,
@@ -268,6 +405,13 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.info.text,
     fontSize: 11.5,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  chevron: {
+    color: colors.neutral.mutedText,
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 18,
+    marginLeft: 2,
   },
 });

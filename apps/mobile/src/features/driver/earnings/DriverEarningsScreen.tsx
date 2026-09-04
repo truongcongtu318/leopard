@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import {
+  IconClock,
+  IconEarnings,
+  IconOrders,
+  IconSpeedTruck,
+  IconStar,
+  IconTrophy,
+} from '../../../ui/icons/CoreIcons';
 
 type EarningsTrip = {
   id: string;
@@ -103,29 +111,43 @@ export function DriverEarningsScreen() {
         </View>
 
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryEyebrow}>TỔNG THỰC NHẬN ({period === 'today' ? 'HÔM NAY' : period === 'week' ? 'TUẦN NÀY' : 'THÁNG NÀY'})</Text>
+          <Text style={styles.summaryEyebrow}>
+            Thu nhập thực nhận ({period === 'today' ? 'Hôm nay' : period === 'week' ? 'Tuần này' : 'Tháng này'})
+          </Text>
           <Text style={styles.totalAmount}>{formatCurrency(totalEarnings)}</Text>
           <View style={styles.statGrid}>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Số chuyến</Text>
+              <View style={styles.statLabelRow}>
+                <IconOrders color={colors.neutral.subtleText} size={13} />
+                <Text style={styles.statLabel}>Chuyến</Text>
+              </View>
               <Text style={styles.statValue}>4 chuyến</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Online</Text>
+              <View style={styles.statLabelRow}>
+                <IconClock color={colors.neutral.subtleText} size={13} />
+                <Text style={styles.statLabel}>Online</Text>
+              </View>
               <Text style={styles.statValue}>5.5 giờ</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Tiền tip</Text>
+              <View style={styles.statLabelRow}>
+                <IconEarnings color={colors.neutral.subtleText} size={13} />
+                <Text style={styles.statLabel}>Tiền tip</Text>
+              </View>
               <Text style={styles.statValue}>40.000 ₫</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Thưởng</Text>
+              <View style={styles.statLabelRow}>
+                <IconTrophy color={colors.neutral.subtleText} size={13} />
+                <Text style={styles.statLabel}>Thưởng</Text>
+              </View>
               <Text style={styles.statValue}>30.000 ₫</Text>
             </View>
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>CHI TIẾT CÁC CHUYẾN ĐÃ HOÀN TẤT</Text>
+        <Text style={styles.sectionLabel}>Chi tiết các chuyến đã hoàn tất</Text>
 
         <FlatList
           contentContainerStyle={styles.tripList}
@@ -134,9 +156,14 @@ export function DriverEarningsScreen() {
           renderItem={({ item }) => (
             <View style={styles.tripCard}>
               <View style={styles.tripHeader}>
-                <View>
-                  <Text style={styles.tripRef}>{item.reference}</Text>
-                  <Text style={styles.tripTime}>Hoàn tất lúc {item.completedAt}</Text>
+                <View style={styles.tripHeaderLeft}>
+                  <View style={styles.tripIconChip}>
+                    <IconSpeedTruck color={colors.brand.background} size={16} />
+                  </View>
+                  <View>
+                    <Text style={styles.tripRef}>{item.reference}</Text>
+                    <Text style={styles.tripTime}>Hoàn tất lúc {item.completedAt}</Text>
+                  </View>
                 </View>
                 <Text style={styles.tripTotal}>{formatCurrency(item.total)}</Text>
               </View>
@@ -165,11 +192,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   periodChip: {
+    alignItems: 'center',
     backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: radius.pill,
     flex: 1,
     paddingVertical: 8,
-    alignItems: 'center',
   },
   periodChipActive: {
     backgroundColor: colors.brand.background,
@@ -191,15 +218,15 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   summaryEyebrow: {
-    color: colors.brand.background,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: leopardPalette.textMutedSlate,
+    fontSize: 12,
+    fontWeight: '700',
   },
   totalAmount: {
     color: colors.neutral.titleText,
     fontSize: 28,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   statGrid: {
     borderTopColor: colors.neutral.rowDivider,
@@ -210,7 +237,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   statItem: {
-    gap: 2,
+    gap: 3,
+  },
+  statLabelRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
   },
   statLabel: {
     color: colors.neutral.subtleText,
@@ -220,12 +252,12 @@ const styles = StyleSheet.create({
     color: colors.neutral.titleText,
     fontSize: 13,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   sectionLabel: {
-    color: colors.brand.background,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    color: leopardPalette.textMutedSlate,
+    fontSize: 13,
+    fontWeight: '700',
     marginTop: spacing.xxs,
   },
   tripList: {
@@ -241,13 +273,26 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   tripHeader: {
-    alignItems: 'baseline',
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  tripHeaderLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  tripIconChip: {
+    alignItems: 'center',
+    backgroundColor: colors.brand.softBackground,
+    borderRadius: radius.card,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
   tripRef: {
     color: colors.neutral.titleText,
-    fontSize: 14.5,
+    fontSize: 14,
     fontWeight: '700',
   },
   tripTime: {
@@ -258,6 +303,7 @@ const styles = StyleSheet.create({
     color: colors.brand.background,
     fontSize: 16,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   tripBreakdown: {
     borderTopColor: colors.neutral.rowDivider,

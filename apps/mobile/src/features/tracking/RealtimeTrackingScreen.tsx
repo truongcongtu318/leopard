@@ -21,8 +21,8 @@ import {
   IconPhone,
   IconQrPayment,
   IconRoleDriver,
-  IconSpeedTruck,
 } from '../../ui/icons/CoreIcons';
+import { RealInteractiveMap } from '../../ui/RealInteractiveMap';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -95,6 +95,7 @@ export function RealtimeTrackingScreen({
   onShowVietQR,
   onViewDeliveryProof,
   trip,
+  truckLocation,
 }: RealtimeTrackingScreenProps) {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const statusPres = TRACKING_STATUS[trip.status];
@@ -107,43 +108,18 @@ export function RealtimeTrackingScreen({
     <View style={styles.container}>
       {/* ── Top Half: Map Area ─────────────────────────────── */}
       <View style={styles.mapArea}>
-        {/* Simulated vector map with route polyline */}
+        {/* Real Interactive Leaflet/GPS Map */}
         <View style={styles.mapCanvas}>
-          <View style={styles.mapTilesBg} />
-
-          {/* Polyline route (simulated) */}
-          <View style={styles.polylineRoute}>
-            <View style={styles.polylineSegmentDone} />
-            <View style={styles.polylineSegmentRemaining} />
-          </View>
-
-          {/* Origin marker */}
-          <View style={styles.originMarker}>
-            <View style={styles.originMarkerDot} />
-            <View style={styles.originLabel}>
-              <Text style={styles.originLabelText}>{trip.origin}</Text>
-            </View>
-          </View>
-
-          {/* Destination marker */}
-          <View style={styles.destMarker}>
-            <View style={styles.destMarkerDot} />
-            <View style={styles.destLabel}>
-              <Text style={styles.destLabelText}>{trip.destination}</Text>
-            </View>
-          </View>
-
-          {/* Truck pin with live ETA badge */}
-          <View style={styles.truckPinWrap}>
-            <View style={styles.truckPin}>
-              <IconSpeedTruck color="#FFFFFF" size={18} />
-            </View>
-            <View style={styles.etaFloatingBadge}>
-              <Text style={styles.etaFloatingText}>
-                {trip.etaMinutes > 0 ? `${trip.etaMinutes} phút` : 'Đã đến'}
-              </Text>
-            </View>
-          </View>
+          <RealInteractiveMap
+            destination={{ label: trip.destination }}
+            height="100%"
+            mode="tracking"
+            origin={{ label: trip.origin }}
+            truckEtaMinutes={trip.etaMinutes}
+            truckLocation={
+              truckLocation ? { lat: truckLocation.lat, lng: truckLocation.lng } : undefined
+            }
+          />
         </View>
 
         {/* Top overlay bar */}
@@ -363,122 +339,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: colors.operational.mapLand,
     overflow: 'hidden',
-  },
-  mapTilesBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.15,
-  },
-  polylineRoute: {
-    position: 'absolute',
-    top: '30%',
-    left: '20%',
-    right: '20%',
-    height: 4,
-    flexDirection: 'row',
-  },
-  polylineSegmentDone: {
-    flex: 6,
-    backgroundColor: leopardPalette.primary,
-    height: 4,
-    borderRadius: 2,
-  },
-  polylineSegmentRemaining: {
-    flex: 4,
-    backgroundColor: colors.operational.road,
-    height: 4,
-    borderRadius: 2,
-  },
-  originMarker: {
-    position: 'absolute',
-    top: '26%',
-    left: '18%',
-    alignItems: 'center',
-  },
-  originMarkerDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: leopardPalette.primary,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  originLabel: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderWidth: 1,
-    borderRadius: leopardRadius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginTop: 4,
-  },
-  originLabelText: {
-    ...typography.caption,
-    fontSize: 10,
-    fontWeight: '600',
-    color: leopardPalette.textSlateDark,
-  },
-  destMarker: {
-    position: 'absolute',
-    top: '26%',
-    right: '18%',
-    alignItems: 'center',
-  },
-  destMarkerDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.success.border,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  destLabel: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderWidth: 1,
-    borderRadius: leopardRadius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginTop: 4,
-  },
-  destLabelText: {
-    ...typography.caption,
-    fontSize: 10,
-    fontWeight: '600',
-    color: leopardPalette.textSlateDark,
-  },
-  truckPinWrap: {
-    position: 'absolute',
-    top: '24%',
-    left: '52%',
-    alignItems: 'center',
-  },
-  truckPin: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: leopardPalette.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    ...leopardElevation.subtle,
-  },
-  etaFloatingBadge: {
-    backgroundColor: colors.operational.ink,
-    borderRadius: leopardRadius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginTop: 4,
-  },
-  etaFloatingText: {
-    ...typography.caption,
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
   },
   mapTopBar: {
     position: 'absolute',

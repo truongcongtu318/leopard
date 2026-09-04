@@ -2,29 +2,31 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, leopardElevation, leopardPalette, leopardRadius, spacing } from '../theme/tokens';
-import { IconHome, IconOrders, IconRoute, IconUser } from './icons/CoreIcons';
+import { IconClock, IconEarnings, IconHome, IconOrders, IconSpeedTruck, IconUser } from './icons/CoreIcons';
 
 export type TabKey = 'home' | 'orders' | 'tracking' | 'account';
 
 export type NavItem = Readonly<{
-  key: TabKey;
+  key: string;
   label: string;
   badge?: number;
+  icon?: (active: boolean) => React.ReactNode;
 }>;
 
 export type FloatingNavBarProps = Readonly<{
-  activeTab: TabKey;
-  onTabChange: (key: TabKey) => void;
+  activeTab: string;
+  onTabChange: ((key: TabKey) => void) | ((key: string) => void);
+  items?: readonly NavItem[];
 }>;
 
-const navItems: readonly NavItem[] = [
+const defaultNavItems: readonly NavItem[] = [
   { key: 'home', label: 'Trang chủ' },
   { key: 'orders', label: 'Đơn hàng' },
-  { key: 'tracking', label: 'Lộ trình', badge: 2 },
+  { key: 'tracking', label: 'Đang giao', badge: 2 },
   { key: 'account', label: 'Tài khoản' },
 ];
 
-function renderNavIcon(key: TabKey, isActive: boolean) {
+function renderDefaultNavIcon(key: string, isActive: boolean) {
   const color = isActive ? leopardPalette.primary : leopardPalette.textMutedSlate;
   switch (key) {
     case 'home':
@@ -32,13 +34,17 @@ function renderNavIcon(key: TabKey, isActive: boolean) {
     case 'orders':
       return <IconOrders color={color} size={22} />;
     case 'tracking':
-      return <IconRoute color={color} size={22} />;
+      return <IconSpeedTruck color={color} size={22} />;
     case 'account':
       return <IconUser color={color} size={22} />;
+    default:
+      return null;
   }
 }
 
-function FloatingNavBarComponent({ activeTab, onTabChange }: FloatingNavBarProps) {
+function FloatingNavBarComponent({ activeTab, onTabChange, items }: FloatingNavBarProps) {
+  const navItems = items ?? defaultNavItems;
+
   return (
     <View style={styles.container}>
       <View style={styles.dock}>
@@ -50,7 +56,7 @@ function FloatingNavBarComponent({ activeTab, onTabChange }: FloatingNavBarProps
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
               key={item.key}
-              onPress={() => onTabChange(item.key)}
+              onPress={() => (onTabChange as (k: any) => void)(item.key)}
               style={({ pressed }) => [
                 styles.tabItem,
                 isActive ? styles.tabItemActive : null,
@@ -58,7 +64,9 @@ function FloatingNavBarComponent({ activeTab, onTabChange }: FloatingNavBarProps
               ]}
             >
               <View style={styles.iconWrap}>
-                {renderNavIcon(item.key, isActive)}
+                {item.icon
+                  ? item.icon(isActive)
+                  : renderDefaultNavIcon(item.key, isActive)}
                 {item.badge ? (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{item.badge}</Text>
@@ -108,6 +116,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: leopardRadius.md,
+    minHeight: 44,
+    minWidth: 44,
   },
   tabItemActive: {
     backgroundColor: leopardPalette.primaryBg,
@@ -148,3 +158,4 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
 });
+

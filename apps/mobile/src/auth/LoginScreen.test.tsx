@@ -128,16 +128,11 @@ describe('LoginScreen (Mobile web auth)', () => {
     await screen.unmount();
   });
 
-  it('rejects an invalid phone number before calling Firebase', async () => {
+  it('disables the send OTP button for invalid phone numbers before calling Firebase', async () => {
     const screen = await render(<LoginScreen />);
     await fireEvent.changeText(screen.getByLabelText('Số điện thoại'), '123');
-    await fireEvent.press(screen.getByRole('button', { name: 'Gửi mã OTP' }));
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert').props.children).toContain(
-        'Số điện thoại không hợp lệ',
-      );
-    });
+    const sendButton = screen.getByRole('button', { name: 'Gửi mã OTP' });
+    expect(sendButton.props.accessibilityState?.disabled).toBe(true);
     expect(mockSendPhoneOtp).not.toHaveBeenCalled();
     await screen.unmount();
   });

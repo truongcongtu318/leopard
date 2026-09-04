@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
@@ -6,6 +6,7 @@ import { colors, leopardPalette, leopardRadius, spacing, typography } from '../t
 export type LedgerSectionProps = PropsWithChildren<
   Readonly<{
     description?: string;
+    icon?: ReactNode;
     index?: string;
     title: string;
     tone?: 'plain' | 'signal' | 'ink';
@@ -15,6 +16,7 @@ export type LedgerSectionProps = PropsWithChildren<
 export function LedgerSection({
   children,
   description,
+  icon,
   index,
   title,
   tone = 'plain',
@@ -31,7 +33,11 @@ export function LedgerSection({
       ]}
     >
       <View style={styles.header}>
-        {index ? (
+        {icon ? (
+          <View style={[styles.index, isInk && styles.indexInk]}>
+            {icon}
+          </View>
+        ) : index ? (
           <View style={[styles.index, isInk && styles.indexInk]}>
             <Text style={[styles.indexText, isInk && styles.indexTextInk]}>
               {index}

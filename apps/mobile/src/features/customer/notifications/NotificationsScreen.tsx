@@ -1,9 +1,21 @@
 import { useState } from 'react';
-import { SectionList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  SectionList,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, pastelTheme, radius, spacing, typography } from '../../../theme/tokens';
-import { Button } from '../../../ui/Button';
+import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import {
+  IconBell,
+  IconOrders,
+  IconTag,
+  IconTxPayment,
+} from '../../../ui/icons/CoreIcons';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 
 export type NotificationItem = Readonly<{
@@ -53,12 +65,29 @@ const mockNotifications: readonly NotificationItem[] = [
   },
 ];
 
+export type NotificationFilter = 'all' | 'unread' | 'order' | 'payment' | 'promo' | 'system';
+
+const filterOptions: readonly Readonly<{ id: NotificationFilter; label: string }>[] = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'unread', label: 'Chưa đọc' },
+  { id: 'order', label: 'Đơn hàng' },
+  { id: 'payment', label: 'Thanh toán' },
+  { id: 'promo', label: 'Ưu đãi' },
+  { id: 'system', label: 'Hệ thống' },
+];
+
 export function NotificationsScreen() {
   const router = useRouter();
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [filter, setFilter] = useState<NotificationFilter>('all');
   const [notifications, setNotifications] = useState<readonly NotificationItem[]>(mockNotifications);
 
-  const displayedList = notifications.filter((n) => (filter === 'unread' ? !n.isRead : true));
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const displayedList = notifications.filter((n) => {
+    if (filter === 'all') return true;
+    if (filter === 'unread') return !n.isRead;
+    return n.type === filter;
+  });
 
   const handleMarkAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -73,7 +102,41 @@ export function NotificationsScreen() {
     }
   };
 
-  const markAllButton = (
+  const getItemMeta = (type: NotificationItem['type']) => {
+    switch (type) {
+      case 'order':
+        return {
+          icon: <IconOrders color="#0284C7" size={18} />,
+          bg: '#E0F2FE',
+          badgeText: 'Đơn hàng',
+          badgeColor: '#0284C7',
+        };
+      case 'payment':
+        return {
+          icon: <IconTxPayment color="#16A34A" size={18} />,
+          bg: '#DCFCE7',
+          badgeText: 'Thanh toán',
+          badgeColor: '#16A34A',
+        };
+      case 'promo':
+        return {
+          icon: <IconTag color="#D97706" size={18} />,
+          bg: '#FEF3C7',
+          badgeText: 'Ưu đãi',
+          badgeColor: '#D97706',
+        };
+      case 'system':
+      default:
+        return {
+          icon: <IconBell color="#475569" size={18} />,
+          bg: '#F1F5F9',
+          badgeText: 'Hệ thống',
+          badgeColor: '#475569',
+        };
+    }
+  };
+
+  const markAllButton = unreadCount > 0 ? (
     <Pressable
       accessibilityLabel="Đọc tất cả thông báo"
       accessibilityRole="button"
@@ -82,83 +145,93 @@ export function NotificationsScreen() {
     >
       <Text style={styles.markAllBtnText}>Đọc tất cả</Text>
     </Pressable>
-  );
+  ) : null;
 
   return (
     <ScreenScaffold
       eyebrow="CUSTOMER · NOTIFICATIONS"
       headerRight={markAllButton}
-      subtitle="Cập nhật trạng thái đơn hàng và tin tức hệ thống."
+      subtitle="Cập nhật trạng thái đơn hàng, thanh toán và tin tức hệ thống."
       title="Thông báo"
     >
       <View style={styles.container}>
-        <View accessibilityRole="toolbar" style={styles.filterRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: filter === 'all' }}
-            onPress={() => setFilter('all')}
-            style={[styles.filterChip, filter === 'all' ? styles.filterChipActive : null]}
+        {/* 🏷️ 1. Thanh Chip Lọc Phân Loại (Topic Filter Toolbar) */}
+        <View style={styles.filterWrap}>
+          <ScrollView
+            accessibilityLabel="Thanh lọc danh mục thông báo"
+            contentContainerStyle={styles.filterStrip}
+            horizontal
+            showsHorizontalScrollIndicator={false}
           >
-            <Text
-              style={[
-                styles.filterChipText,
-                filter === 'all' ? styles.filterChipTextActive : null,
-              ]}
-            >
-              Tất cả ({notifications.length})
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: filter === 'unread' }}
-            onPress={() => setFilter('unread')}
-            style={[styles.filterChip, filter === 'unread' ? styles.filterChipActive : null]}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                filter === 'unread' ? styles.filterChipTextActive : null,
-              ]}
-            >
-              Chưa đọc ({notifications.filter((n) => !n.isRead).length})
-            </Text>
-          </Pressable>
+            {filterOptions.map((opt) => {
+              const active = filter === opt.id;
+              let countLabel = '';
+              if (opt.id === 'all') {
+                countLabel = ` (${notifications.length})`;
+              } else if (opt.id === 'unread') {
+                countLabel = unreadCount > 0 ? ` (${unreadCount})` : ' (0)';
+              } else {
+                const count = notifications.filter((n) => n.type === opt.id).length;
+                countLabel = count > 0 ? ` (${count})` : '';
+              }
+
+              return (
+                <Pressable
+                  accessibilityLabel={opt.label}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  key={opt.id}
+                  onPress={() => setFilter(opt.id)}
+                  style={({ pressed }) => [
+                    styles.filterChip,
+                    active ? styles.filterChipActive : null,
+                    pressed ? styles.pressed : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      active ? styles.filterChipTextActive : null,
+                    ]}
+                  >
+                    {opt.label}
+                    {countLabel}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
 
+        {/* 📜 2. Danh Sách Thông Báo Phân Nhóm Thời Gian (SectionList) */}
         <SectionList
           contentContainerStyle={styles.listContent}
-          sections={[
-            { title: 'Hôm nay', data: displayedList.filter(n => !n.createdAtLabel.includes('ngày')) },
-            { title: 'Trước đó', data: displayedList.filter(n => n.createdAtLabel.includes('ngày')) }
-          ].filter(s => s.data.length > 0)}
           keyExtractor={(item) => item.id}
-          renderSectionHeader={({ section: { title } }) => (
-            <Text style={styles.sectionHeader}>{title}</Text>
-          )}
           ListEmptyComponent={
             <View style={styles.emptyBox}>
-              <Text style={styles.emptyTitle}>Không có thông báo</Text>
+              <View style={styles.emptyIconCircle}>
+                <IconBell color="#94A3B8" size={32} />
+              </View>
+              <Text style={styles.emptyTitle}>Không có thông báo nào</Text>
               <Text style={styles.emptyMessage}>
                 {filter === 'unread'
-                  ? 'Bạn đã đọc tất cả thông báo.'
-                  : 'Chưa có thông báo nào trong hộp thư của bạn.'}
+                  ? 'Tuyệt vời! Bạn đã đọc tất cả thông báo trong hộp thư.'
+                  : 'Chưa có thông báo nào phù hợp với bộ lọc hiện tại.'}
               </Text>
+              {filter !== 'all' ? (
+                <Pressable
+                  accessibilityLabel="Xem tất cả thông báo"
+                  accessibilityRole="button"
+                  onPress={() => setFilter('all')}
+                  style={styles.resetFilterBtn}
+                >
+                  <Text style={styles.resetFilterBtnText}>Xem tất cả thông báo</Text>
+                </Pressable>
+              ) : null}
             </View>
           }
           renderItem={({ item }) => {
-            const iconSymbol =
-              item.type === 'order'
-                ? '📦'
-                : item.type === 'payment'
-                  ? '💰'
-                  : item.type === 'promo'
-                    ? '🎁'
-                    : '📢';
-
-            const cardTheme = item.type === 'order' ? pastelTheme.blueCard :
-                              item.type === 'payment' ? pastelTheme.greenCard :
-                              item.type === 'promo' ? pastelTheme.yellowCard :
-                              pastelTheme.slateCard;
+            const meta = getItemMeta(item.type);
 
             return (
               <Pressable
@@ -167,27 +240,54 @@ export function NotificationsScreen() {
                 onPress={() => handleNotificationPress(item)}
                 style={({ pressed }) => [
                   styles.card,
-                  { backgroundColor: cardTheme.bg, borderColor: cardTheme.border },
                   !item.isRead ? styles.cardUnread : null,
                   pressed ? styles.pressed : null,
                 ]}
               >
                 <View style={styles.cardHeader}>
-                  <View style={styles.iconCircle}>
-                    <Text style={styles.iconText}>{iconSymbol}</Text>
+                  {/* Hộp Vector Icon Phân Loại Chuẩn 100% */}
+                  <View style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
+                    {meta.icon}
                   </View>
+
                   <View style={styles.cardHeaderContent}>
+                    <View style={styles.cardMetaTopRow}>
+                      <View style={[styles.typeBadge, { backgroundColor: meta.bg }]}>
+                        <Text style={[styles.typeBadgeText, { color: meta.badgeColor }]}>
+                          {meta.badgeText}
+                        </Text>
+                      </View>
+                      <Text style={styles.cardTime}>{item.createdAtLabel}</Text>
+                    </View>
+
                     <Text numberOfLines={1} style={styles.cardTitle}>
                       {item.title}
                     </Text>
-                    <Text style={styles.cardTime}>{item.createdAtLabel}</Text>
                   </View>
+
+                  {/* Chấm Xanh Chỉ Báo Chưa Đọc */}
                   {!item.isRead ? <View style={styles.unreadDot} /> : null}
                 </View>
+
                 <Text style={styles.cardBody}>{item.body}</Text>
               </Pressable>
             );
           }}
+          renderSectionHeader={({ section: { title } }) => (
+            <View style={styles.sectionHeaderWrap}>
+              <Text style={styles.sectionHeader}>{title}</Text>
+            </View>
+          )}
+          sections={[
+            {
+              title: 'Hôm nay',
+              data: displayedList.filter((n) => !n.createdAtLabel.includes('ngày')),
+            },
+            {
+              title: 'Trước đó',
+              data: displayedList.filter((n) => n.createdAtLabel.includes('ngày')),
+            },
+          ].filter((s) => s.data.length > 0)}
         />
       </View>
     </ScreenScaffold>
@@ -199,42 +299,87 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.sm,
   },
-  filterRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
+  pressed: {
+    opacity: 0.75,
   },
-  filterChip: {
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+  // Header Action
+  markAllBtn: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  filterChipActive: {
-    backgroundColor: colors.brand.background,
-  },
-  filterChipText: {
-    color: colors.neutral.mutedText,
-    fontSize: 12.5,
+  markAllBtnText: {
+    color: '#0284C7',
+    fontSize: 12,
     fontWeight: '700',
   },
-  filterChipTextActive: {
-    color: colors.neutral.background,
+
+  // 1. Topic Filter Toolbar
+  filterWrap: {
+    marginBottom: 2,
   },
+  filterStrip: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingBottom: 2,
+  },
+  filterChip: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  filterChipActive: {
+    backgroundColor: '#0F172A',
+    borderColor: '#0F172A',
+  },
+  filterChipText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+  // 2. Notification Card List
   listContent: {
     gap: spacing.sm,
     paddingBottom: spacing.xl,
   },
+  sectionHeaderWrap: {
+    paddingVertical: 4,
+  },
+  sectionHeader: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
   card: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderRadius: radius.card,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   cardUnread: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#FAFCFF',
     borderColor: '#BAE6FD',
+    borderLeftColor: '#0284C7',
+    borderLeftWidth: 3.5,
   },
   cardHeader: {
     alignItems: 'center',
@@ -243,76 +388,96 @@ const styles = StyleSheet.create({
   },
   iconCircle: {
     alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: radius.control,
-    height: 36,
+    borderRadius: 19,
+    height: 38,
     justifyContent: 'center',
-    width: 36,
-  },
-  iconText: {
-    fontSize: 16,
+    width: 38,
   },
   cardHeaderContent: {
     flex: 1,
     minWidth: 0,
+    gap: 2,
   },
-  sectionHeader: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 16,
+  cardMetaTopRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  typeBadge: {
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  typeBadgeText: {
+    fontSize: 10,
     fontWeight: '700',
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
   },
   cardTitle: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 14.5,
+    color: '#0F172A',
+    fontSize: 14,
     fontWeight: '700',
   },
   cardTime: {
-    color: leopardPalette.textMutedSlate,
+    color: '#94A3B8',
     fontSize: 11.5,
-    marginTop: 1,
   },
   unreadDot: {
-    backgroundColor: leopardPalette.primaryDark,
-    borderRadius: radius.pill,
+    backgroundColor: '#0284C7',
+    borderRadius: 4,
     height: 8,
     width: 8,
+    alignSelf: 'center',
   },
   cardBody: {
-    color: colors.neutral.text,
-    fontSize: 13,
+    color: '#475569',
+    fontSize: 12.5,
     lineHeight: 18,
+    paddingLeft: 46, // Indent aligned with title
   },
+
+  // Empty State
   emptyBox: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderRadius: radius.card,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
     borderWidth: 1,
-    gap: 4,
-    padding: spacing.lg,
-    textAlign: 'center',
+    gap: 6,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
+  },
+  emptyIconCircle: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 30,
+    height: 60,
+    justifyContent: 'center',
+    marginBottom: 4,
+    width: 60,
   },
   emptyTitle: {
-    color: colors.neutral.titleText,
+    color: '#0F172A',
     fontSize: 15,
     fontWeight: '700',
+    textAlign: 'center',
   },
   emptyMessage: {
-    color: colors.neutral.mutedText,
-    fontSize: 13,
+    color: '#64748B',
+    fontSize: 12.5,
     lineHeight: 18,
+    textAlign: 'center',
   },
-  markAllBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  resetFilterBtn: {
+    marginTop: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: '#F1F5F9',
   },
-  markAllBtnText: {
-    color: colors.brand.background,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.8,
+  resetFilterBtnText: {
+    color: '#0F172A',
+    fontSize: 12.5,
+    fontWeight: '600',
   },
 });

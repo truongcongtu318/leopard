@@ -78,6 +78,7 @@ export default function CustomerDeliveriesPage() {
     <MyDeliveriesScreen
       onCreateOrder={() => router.push('/customer/orders/new')}
       onOrderPress={() => router.push('/customer/tracking')}
+      onViewHistory={() => router.push('/customer/orders')}
       orders={demoOrders}
     />
   );

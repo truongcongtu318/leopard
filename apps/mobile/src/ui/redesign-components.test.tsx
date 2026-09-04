@@ -106,10 +106,10 @@ describe('FloatingNavBar', () => {
 
     expect(screen.getByText('Trang chủ')).toBeTruthy();
     expect(screen.getByText('Đơn hàng')).toBeTruthy();
-    expect(screen.getByText('Lộ trình')).toBeTruthy();
+    expect(screen.getByText('Đang giao')).toBeTruthy();
     expect(screen.getByText('Tài khoản')).toBeTruthy();
 
-    const trackingTab = screen.getByLabelText('Lộ trình');
+    const trackingTab = screen.getByLabelText('Đang giao');
     await fireEvent.press(trackingTab);
     expect(onTabChange).toHaveBeenCalledWith('tracking');
 

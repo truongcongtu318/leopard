@@ -9,7 +9,9 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
-export type StatusDomain = 'order' | 'payment' | 'driver-availability' | 'fleet-member' | 'user';
+export type KycStatus = 'VERIFIED' | 'PENDING' | 'REJECTED' | 'EXPIRED';
+
+export type StatusDomain = 'order' | 'payment' | 'driver-availability' | 'fleet-member' | 'user' | 'kyc';
 
 type LegacyStatus = Exclude<
   DriverAvailability | FleetMemberStatus | OrderStatus | PaymentStatus | UserStatus,
@@ -21,7 +23,8 @@ type DomainStatusBadgeProps =
   | Readonly<{ domain: 'payment'; status: PaymentStatus }>
   | Readonly<{ domain: 'driver-availability'; status: DriverAvailability }>
   | Readonly<{ domain: 'fleet-member'; status: FleetMemberStatus }>
-  | Readonly<{ domain: 'user'; status: UserStatus }>;
+  | Readonly<{ domain: 'user'; status: UserStatus }>
+  | Readonly<{ domain: 'kyc'; status: KycStatus }>;
 
 export type StatusBadgeProps =
   | DomainStatusBadgeProps
@@ -41,6 +44,7 @@ type StatusPresentationCatalog = Readonly<{
   'driver-availability': Readonly<Record<DriverAvailability, StatusPresentation>>;
   'fleet-member': Readonly<Record<FleetMemberStatus, StatusPresentation>>;
   user: Readonly<Record<UserStatus, StatusPresentation>>;
+  kyc: Readonly<Record<KycStatus, StatusPresentation>>;
 }>;
 
 const statusPresentations: StatusPresentationCatalog = {
@@ -147,6 +151,28 @@ const statusPresentations: StatusPresentationCatalog = {
       accessibilityPrefix: 'Trạng thái tài khoản',
       colorRole: 'danger',
       label: 'Đã vô hiệu hóa',
+    },
+  },
+  kyc: {
+    VERIFIED: {
+      accessibilityPrefix: 'Trạng thái xác thực giấy tờ',
+      colorRole: 'success',
+      label: 'Đã duyệt',
+    },
+    PENDING: {
+      accessibilityPrefix: 'Trạng thái xác thực giấy tờ',
+      colorRole: 'warning',
+      label: 'Chờ duyệt',
+    },
+    REJECTED: {
+      accessibilityPrefix: 'Trạng thái xác thực giấy tờ',
+      colorRole: 'danger',
+      label: 'Từ chối',
+    },
+    EXPIRED: {
+      accessibilityPrefix: 'Trạng thái xác thực giấy tờ',
+      colorRole: 'neutral',
+      label: 'Hết hạn',
     },
   },
 };

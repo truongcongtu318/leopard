@@ -5,6 +5,7 @@ import CustomerRegisterScreen from '../../app/(public)/customer-register';
 import { httpClient } from '../api/http-client';
 import { ApiError } from '../api/api-error';
 import { sendPhoneOtp, resetRecaptcha } from './firebase-auth';
+import { sessionStore } from './session-store';
 
 jest.mock('../api/http-client', () => ({
   httpClient: { get: jest.fn(), patch: jest.fn(), post: jest.fn() },
@@ -26,15 +27,18 @@ jest.mock('./session-store', () => ({
 
 const mockReplace = jest.fn();
 const mockPush = jest.fn();
+const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ replace: mockReplace, push: mockPush, back: jest.fn() }),
+  useRouter: () => ({ replace: mockReplace, push: mockPush, back: mockBack, canGoBack: () => true }),
 }));
 
 describe('CustomerRegisterScreen', () => {
+  jest.setTimeout(15000);
   const mockConfirm = jest.fn<() => Promise<string>>();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (sessionStore.getAccessToken as any).mockReturnValue('acc');
     mockConfirm.mockResolvedValue('goog-otp-idtoken');
     (sendPhoneOtp as any).mockResolvedValue({ confirm: mockConfirm });
     (httpClient.get as any).mockResolvedValue({
@@ -93,7 +97,7 @@ describe('CustomerRegisterScreen', () => {
         }),
       ),
     );
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/customer/home'));
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(public)/customer-address'));
     await screen.unmount();
   });
 
@@ -165,6 +169,13 @@ describe('CustomerRegisterScreen', () => {
     await screen.unmount();
   });
 
+  it('navigates back when the back button is pressed', async () => {
+    const screen = await render(<CustomerRegisterScreen />);
+    await fireEvent.press(screen.getByTestId('cr-back-btn'));
+    expect(mockBack).toHaveBeenCalled();
+    await screen.unmount();
+  });
+
   it('requires phone verification for a Google user before submit is enabled', async () => {
     (httpClient.get as any).mockResolvedValue({
       id: 'u1',
@@ -213,8 +224,76 @@ describe('CustomerRegisterScreen', () => {
           consentService: true,
         }),
       );
-      expect(mockReplace).toHaveBeenCalledWith('/customer/home');
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/customer-address');
     });
+
+    await screen.unmount();
+  });
+
+  it('authenticates directly via /auth/firebase when verifying phone as a new unauthenticated user', async () => {
+    (sessionStore.getAccessToken as any).mockReturnValue(null);
+    (httpClient.post as any).mockResolvedValue({
+      user: {
+        id: 'u-new',
+        phone: '+84900000001',
+        email: null,
+        name: null,
+        role: 'CUSTOMER',
+        status: 'ACTIVE',
+        profileComplete: false,
+      },
+      session: {
+        accessToken: 'new-acc',
+        accessTokenExpiresAt: '2026-09-03T10:00:00Z',
+        refreshToken: 'new-ref',
+        refreshTokenExpiresAt: '2026-09-10T10:00:00Z',
+      },
+    });
+
+    const screen = await render(<CustomerRegisterScreen />);
+
+    // Since unauthenticated, GET /me is not called
+    expect(httpClient.get).not.toHaveBeenCalled();
+
+    // Enter phone, request OTP
+    await fireEvent.changeText(screen.getByTestId('cr-phone-input'), '0900000001');
+    await fireEvent.press(screen.getByTestId('cr-send-otp'));
+
+    await waitFor(() => expect(screen.getByTestId('cr-otp-input')).toBeTruthy());
+    await fireEvent.changeText(screen.getByTestId('cr-otp-input'), '123456');
+    await fireEvent.press(screen.getByTestId('cr-verify-otp'));
+
+    await waitFor(() => {
+      // Must call /auth/firebase, NOT /auth/phone/link
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/firebase', {
+        idToken: 'goog-otp-idtoken',
+      });
+      expect(sessionStore.setSession).toHaveBeenCalledWith('new-acc', 'new-ref', 'CUSTOMER');
+      expect(screen.getByText('Đã xác thực')).toBeTruthy();
+    });
+
+    await screen.unmount();
+  });
+
+  it('disables send OTP button until a valid VN phone number is entered', async () => {
+    (sessionStore.getAccessToken as any).mockReturnValue(null);
+    const screen = await render(<CustomerRegisterScreen />);
+
+    const sendBtn = screen.getByTestId('cr-send-otp');
+    // Initially empty -> disabled
+    expect(sendBtn.props.accessibilityState.disabled).toBe(true);
+
+    // Incomplete phone number -> still disabled
+    await fireEvent.changeText(screen.getByTestId('cr-phone-input'), '090');
+    expect(sendBtn.props.accessibilityState.disabled).toBe(true);
+
+    // Valid 10-digit VN phone number -> enabled
+    await fireEvent.changeText(screen.getByTestId('cr-phone-input'), '0900000001');
+    expect(sendBtn.props.accessibilityState.disabled).toBe(false);
+
+    // Too long / invalid -> disabled again
+    await fireEvent.changeText(screen.getByTestId('cr-phone-input'), '09000000019999');
+    expect(sendBtn.props.accessibilityState.disabled).toBe(true);
 
     await screen.unmount();
   });

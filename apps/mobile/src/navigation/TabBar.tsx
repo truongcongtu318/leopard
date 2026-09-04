@@ -3,6 +3,14 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing } from '../theme/tokens';
+import {
+  IconBell,
+  IconClock,
+  IconEarnings,
+  IconOrders,
+  IconUser,
+  IconWallet,
+} from '../ui/icons/CoreIcons';
 
 export type TabBarItem = Readonly<{
   badgeCount?: number;
@@ -24,39 +32,37 @@ function TabIconFallback({ active, id }: { active: boolean; id: string }) {
     case 'orders':
       return (
         <View style={styles.iconBox}>
-          <View style={[styles.barIconLine, { backgroundColor: iconColor }]} />
-          <View style={[styles.barIconLine, { backgroundColor: iconColor }]} />
-          <View style={[styles.barIconLine, { backgroundColor: iconColor }]} />
+          <IconOrders color={iconColor} size={20} />
         </View>
       );
     case 'notifications':
       return (
         <View style={styles.iconBox}>
-          <Text style={[styles.symbolIcon, { color: iconColor }]}>🔔</Text>
+          <IconBell color={iconColor} size={20} />
         </View>
       );
     case 'wallet':
       return (
         <View style={styles.iconBox}>
-          <Text style={[styles.symbolIcon, { color: iconColor }]}>💳</Text>
+          <IconWallet color={iconColor} size={20} />
         </View>
       );
     case 'earnings':
       return (
         <View style={styles.iconBox}>
-          <Text style={[styles.symbolIcon, { color: iconColor }]}>💰</Text>
+          <IconEarnings color={iconColor} size={20} />
         </View>
       );
     case 'history':
       return (
         <View style={styles.iconBox}>
-          <Text style={[styles.symbolIcon, { color: iconColor }]}>🕒</Text>
+          <IconClock color={iconColor} size={20} />
         </View>
       );
     case 'profile':
       return (
         <View style={styles.iconBox}>
-          <Text style={[styles.symbolIcon, { color: iconColor }]}>👤</Text>
+          <IconUser color={iconColor} size={20} />
         </View>
       );
     default:

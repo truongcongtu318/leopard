@@ -4,7 +4,13 @@ import { useState } from 'react';
 
 import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
-import { IconLocationPin } from '../../../ui/icons/CoreIcons';
+import {
+  IconClock,
+  IconLocationPin,
+  IconRoute,
+  IconSpeedTruck,
+  IconStar,
+} from '../../../ui/icons/CoreIcons';
 import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
 import { SkeletonCard } from '../../../ui/Skeleton';
@@ -34,11 +40,22 @@ function AvailabilityControl({
   const action = view.action;
   const pending = action?.isPending ?? false;
   const disabled = pending || (action?.disabled ?? false) || !action;
+  const isOnline = view.status === 'AVAILABLE';
 
   return (
     <View style={styles.availabilityRail}>
-      <Text style={styles.sectionLabel}>Trạng thái nhận đơn</Text>
-      <StatusBadge domain="driver-availability" status={view.status} />
+      <View style={styles.availabilityHeaderRow}>
+        <View style={styles.availabilityTitleBlock}>
+          <View
+            style={[
+              styles.availabilityStatusDot,
+              isOnline ? styles.dotOnline : styles.dotOffline,
+            ]}
+          />
+          <Text style={styles.sectionLabel}>Trạng thái nhận đơn</Text>
+        </View>
+        <StatusBadge domain="driver-availability" status={view.status} />
+      </View>
       {action ? (
         <Button
           disabled={disabled}
@@ -48,7 +65,7 @@ function AvailabilityControl({
           onPress={
             onSetAvailability && !disabled ? () => onSetAvailability(action.id) : undefined
           }
-          variant="secondary"
+          variant={isOnline ? 'secondary' : 'primary'}
         />
       ) : null}
       {view.error ? (
@@ -56,6 +73,31 @@ function AvailabilityControl({
           {view.error}
         </Text>
       ) : null}
+    </View>
+  );
+}
+
+function DriverKpiStrip() {
+  return (
+    <View style={styles.kpiContainer}>
+      <View style={styles.kpiCard}>
+        <Text style={styles.kpiLabel}>HÔM NAY</Text>
+        <Text style={styles.kpiValue}>4 chuyến</Text>
+        <Text style={styles.kpiSub}>100% đúng giờ</Text>
+      </View>
+      <View style={styles.kpiCard}>
+        <Text style={styles.kpiLabel}>THỰC NHẬN</Text>
+        <Text style={styles.kpiValue}>620.000 ₫</Text>
+        <Text style={styles.kpiSub}>+50k thưởng</Text>
+      </View>
+      <View style={styles.kpiCard}>
+        <Text style={styles.kpiLabel}>ĐÁNH GIÁ</Text>
+        <View style={styles.kpiRatingRow}>
+          <IconStar color="#F59E0B" size={13} />
+          <Text style={styles.kpiValue}>4.95</Text>
+        </View>
+        <Text style={styles.kpiSub}>Hạng Vàng</Text>
+      </View>
     </View>
   );
 }
@@ -77,14 +119,22 @@ function ActiveTripRail({
       testID="driver-active-trip-slab"
     >
       <View style={styles.activeTopRow}>
-        <Text accessibilityRole="header" style={styles.activeReference}>
-          {trip.reference}
-        </Text>
+        <View style={styles.activeTopRowLeft}>
+          <View style={styles.tripIconChip}>
+            <IconSpeedTruck color={colors.brand.background} size={18} />
+          </View>
+          <Text accessibilityRole="header" style={styles.activeReference}>
+            {trip.reference}
+          </Text>
+        </View>
         <StatusBadge domain="order" status={trip.status} />
       </View>
-      <Text numberOfLines={2} style={styles.activeRoute}>
-        {trip.route.origin.label} → {trip.route.destination.label}
-      </Text>
+      <View style={styles.activeRouteRow}>
+        <IconRoute color={colors.brand.softText} size={14} />
+        <Text numberOfLines={2} style={styles.activeRoute}>
+          {trip.route.origin.label} → {trip.route.destination.label}
+        </Text>
+      </View>
       <View style={styles.activeSignalRow}>
         <View style={styles.liveTrackingIndicator}>
           <View style={styles.liveDot} />
@@ -95,7 +145,10 @@ function ActiveTripRail({
         ) : null}
       </View>
       <View style={styles.cardFooter}>
-        <Text style={styles.etaText}>ETA {trip.route.distanceLabel}</Text>
+        <View style={styles.etaRow}>
+          <IconClock color={colors.neutral.subtleText} size={13} />
+          <Text style={styles.etaText}>ETA {trip.route.distanceLabel}</Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -212,6 +265,7 @@ export function DriverOrdersScreen({
           onSetAvailability={onSetAvailability}
           view={view.availability}
         />
+        <DriverKpiStrip />
         <DriverNotice onNoticeAction={onNoticeAction} view={view} />
         
         <View style={styles.tabContainer}>
@@ -288,8 +342,63 @@ const styles = StyleSheet.create({
     borderColor: leopardPalette.cardBorder,
     borderRadius: radius.card,
     borderWidth: 1,
-    gap: spacing.xs,
+    gap: spacing.sm,
     padding: spacing.md,
+  },
+  availabilityHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  availabilityTitleBlock: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  availabilityStatusDot: {
+    borderRadius: radius.pill,
+    height: 8,
+    width: 8,
+  },
+  dotOnline: {
+    backgroundColor: '#16A34A',
+  },
+  dotOffline: {
+    backgroundColor: colors.neutral.subtleText,
+  },
+  kpiContainer: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  kpiCard: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    flex: 1,
+    gap: 2,
+    padding: spacing.sm,
+  },
+  kpiLabel: {
+    color: leopardPalette.textMutedSlate,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  kpiValue: {
+    color: leopardPalette.textSlateDark,
+    fontSize: 14,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  kpiSub: {
+    color: leopardPalette.textMutedSlate,
+    fontSize: 10.5,
+  },
+  kpiRatingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 3,
   },
   sectionLabel: {
     ...typography.caption,
@@ -355,16 +464,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  activeTopRowLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tripIconChip: {
+    alignItems: 'center',
+    backgroundColor: colors.brand.softBackground,
+    borderRadius: radius.card,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
   activeReference: {
     color: leopardPalette.textSlateDark,
     fontSize: 15,
     fontWeight: '600',
   },
+  activeRouteRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 2,
+  },
   activeRoute: {
     color: leopardPalette.textSlateDark,
     fontSize: 13.5,
     lineHeight: 19,
-    marginTop: 2,
+    flex: 1,
+  },
+  etaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
   },
   activeSignalRow: {
     flexDirection: 'row',

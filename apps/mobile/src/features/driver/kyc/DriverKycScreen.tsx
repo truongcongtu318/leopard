@@ -1,8 +1,16 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { StatusBadge } from '../../../ui/StatusBadge';
+import {
+  IconIdCard,
+  IconInsuranceDoc,
+  IconLicense,
+  IconSecurityShield,
+  IconSpeedTruck,
+} from '../../../ui/icons/CoreIcons';
 
 type DocumentItem = {
   id: string;
@@ -47,6 +55,22 @@ const mockDocuments: DocumentItem[] = [
   },
 ];
 
+function getDocIcon(title: string) {
+  if (title.includes('CCCD') || title.includes('Căn cước')) {
+    return <IconIdCard color={colors.brand.softText} size={18} />;
+  }
+  if (title.includes('GPLX') || title.includes('Giấy phép lái xe')) {
+    return <IconLicense color={colors.brand.softText} size={18} />;
+  }
+  if (title.includes('đăng ký xe') || title.includes('Cà vẹt')) {
+    return <IconSpeedTruck color={colors.brand.softText} size={18} />;
+  }
+  if (title.includes('Bảo hiểm')) {
+    return <IconInsuranceDoc color={colors.brand.softText} size={18} />;
+  }
+  return <IconSecurityShield color={colors.brand.softText} size={18} />;
+}
+
 export function DriverKycScreen() {
   return (
     <ScreenScaffold
@@ -58,31 +82,39 @@ export function DriverKycScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.verifiedCard}>
           <View style={styles.verifiedLeft}>
-            <Text style={styles.verifiedIcon}>🛡️</Text>
+            <View style={styles.shieldChip}>
+              <IconSecurityShield color={colors.success.text} size={20} />
+            </View>
             <View>
-              <Text style={styles.verifiedTitle}>HỒ SƠ ĐÃ ĐƯỢC XÁC THỰC</Text>
+              <Text style={styles.verifiedTitle}>Hồ sơ đã được xác thực</Text>
               <Text style={styles.verifiedSub}>Bạn đủ điều kiện nhận toàn bộ các chuyến hàng.</Text>
             </View>
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>GIẤY TỜ PHÁP LÝ ĐÃ NỘP</Text>
+        <Text style={styles.sectionLabel}>Giấy tờ pháp lý đã nộp</Text>
 
         <View style={styles.docList}>
-          {mockDocuments.map((doc) => (
-            <View key={doc.id} style={styles.docCard}>
-              <View style={styles.docHeader}>
-                <Text style={styles.docTitle}>{doc.title}</Text>
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusBadgeText}>✓ Đã duyệt</Text>
+          {mockDocuments.map((doc, index) => {
+            const docIcon = getDocIcon(doc.title);
+            return (
+              <View key={doc.id} style={styles.docCard}>
+                <View style={styles.docHeader}>
+                  <View style={styles.docTitleRow}>
+                    <View style={styles.docIconChip}>
+                      {docIcon}
+                    </View>
+                    <Text style={styles.docTitle}>{doc.title}</Text>
+                  </View>
+                  <StatusBadge domain="kyc" status={doc.status} />
                 </View>
+                <Text style={styles.docNumber}>{doc.number}</Text>
+                {doc.expiryDate ? (
+                  <Text style={styles.docExpiry}>Hết hạn: {doc.expiryDate}</Text>
+                ) : null}
               </View>
-              <Text style={styles.docNumber}>{doc.number}</Text>
-              {doc.expiryDate ? (
-                <Text style={styles.docExpiry}>Hết hạn: {doc.expiryDate}</Text>
-              ) : null}
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         <View style={styles.updateCard}>
@@ -103,8 +135,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   verifiedCard: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
     borderRadius: radius.card,
     borderWidth: 1,
     padding: spacing.md,
@@ -114,25 +146,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  verifiedIcon: {
-    fontSize: 24,
+  shieldChip: {
+    alignItems: 'center',
+    backgroundColor: colors.success.border,
+    borderRadius: 22,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
   },
   verifiedTitle: {
-    color: '#065F46',
+    color: colors.success.text,
     fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    fontWeight: '700',
   },
   verifiedSub: {
-    color: '#047857',
+    color: colors.success.text,
     fontSize: 12,
     marginTop: 2,
   },
   sectionLabel: {
-    color: colors.brand.background,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    color: leopardPalette.textMutedSlate,
+    fontSize: 13,
+    fontWeight: '700',
   },
   docList: {
     gap: spacing.xs,
@@ -150,20 +185,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  docTitleRow: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    marginRight: spacing.xs,
+  },
+  docIconChip: {
+    alignItems: 'center',
+    backgroundColor: colors.brand.softBackground,
+    borderRadius: radius.card,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
   docTitle: {
     color: colors.neutral.titleText,
+    flex: 1,
     fontSize: 13.5,
-    fontWeight: '700',
-  },
-  statusBadge: {
-    backgroundColor: '#ECFDF5',
-    borderRadius: radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  statusBadgeText: {
-    color: '#065F46',
-    fontSize: 11,
     fontWeight: '700',
   },
   docNumber: {

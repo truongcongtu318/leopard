@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
-import { LedgerSection } from '../../../ui/LedgerSection';
+import { IconMessage, IconPhone } from '../../../ui/icons/CoreIcons';
 import { MapPanel } from '../../../ui/MapPanel';
 import { PaymentSummary } from '../../../ui/PaymentSummary';
 import { RouteSpine } from '../../../ui/RouteSpine';
@@ -28,11 +28,41 @@ export type CustomerOrderDetailScreenProps = Readonly<{
   onPickCargoImage?: () => void;
 }>;
 
+function DriverCard({
+  driverLabel,
+  status = 'Tài xế nhận chuyến',
+}: Readonly<{
+  driverLabel: string;
+  status?: string;
+}>) {
+  const initial = driverLabel.replace(/^Tài xế\s*/i, '').trim().charAt(0) || 'T';
+
+  return (
+    <View style={styles.driverCard}>
+      <View style={styles.driverAvatar}>
+        <Text style={styles.driverAvatarText}>{initial}</Text>
+      </View>
+      <View style={styles.driverInfo}>
+        <Text style={styles.driverName}>{driverLabel}</Text>
+        <Text style={styles.driverStatusText}>{status} • ★ 4.9</Text>
+      </View>
+      <View style={styles.driverActions}>
+        <View style={styles.driverActionBtn}>
+          <IconPhone color={colors.brand.background} size={18} />
+        </View>
+        <View style={styles.driverActionBtn}>
+          <IconMessage color={colors.brand.background} size={18} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function TrackingPanel({
-  tracking,
+  destinationLabel,
   onRetry,
   originLabel,
-  destinationLabel,
+  tracking,
 }: Readonly<{
   tracking: CustomerTrackingView;
   onRetry?: () => void;
@@ -45,7 +75,7 @@ function TrackingPanel({
   if (tracking.kind === 'map-error') {
     return (
       <View style={styles.section}>
-        <Text style={styles.body}>{tracking.driverLabel}</Text>
+        <Text style={styles.driverText}>{tracking.driverLabel}</Text>
         <MapPanel
           fallbackMessage={tracking.message}
           onRetry={onRetry}
@@ -58,7 +88,9 @@ function TrackingPanel({
   if (tracking.kind === 'no-driver') {
     return (
       <View style={styles.section}>
-        <Text style={styles.body}>{tracking.message}</Text>
+        <View style={styles.infoBanner}>
+          <Text style={styles.body}>{tracking.message}</Text>
+        </View>
         <MapPanel state="ready" summary="Bản đồ lộ trình; chưa có tài xế">
           <RouteMapSchematic destinationLabel={destinationLabel} originLabel={originLabel} />
         </MapPanel>
@@ -68,8 +100,10 @@ function TrackingPanel({
   if (tracking.kind === 'no-location') {
     return (
       <View style={styles.section}>
-        <Text style={styles.driver}>{tracking.driverLabel}</Text>
-        <Text style={styles.body}>{tracking.message}</Text>
+        <DriverCard driverLabel={tracking.driverLabel} status="Đang định vị" />
+        <View style={styles.infoBanner}>
+          <Text style={styles.body}>{tracking.message}</Text>
+        </View>
         <MapPanel state="ready" summary="Bản đồ lộ trình; chưa có vị trí tài xế">
           <RouteMapSchematic destinationLabel={destinationLabel} originLabel={originLabel} />
         </MapPanel>
@@ -86,8 +120,11 @@ function TrackingPanel({
   if (tracking.kind === 'fresh') {
     return (
       <View style={styles.section}>
-        <Text style={styles.driver}>{tracking.driverLabel}</Text>
-        <Text style={styles.helper}>Cập nhật lần cuối: {tracking.lastUpdatedLabel}</Text>
+        <DriverCard driverLabel={tracking.driverLabel} status="Đang di chuyển" />
+        <View style={styles.freshnessRow}>
+          <View style={styles.pulseDotGreen} />
+          <Text style={styles.helper}>Cập nhật lần cuối: {tracking.lastUpdatedLabel}</Text>
+        </View>
         <MapPanel state="ready" summary={tracking.summary}>
           {mapContent}
         </MapPanel>
@@ -96,8 +133,10 @@ function TrackingPanel({
   }
   return (
     <View style={styles.section}>
-      <Text style={styles.driver}>{tracking.driverLabel}</Text>
-      <Text style={styles.body}>{tracking.message}</Text>
+      <DriverCard driverLabel={tracking.driverLabel} status="Vị trí chưa cập nhật" />
+      <View style={styles.warningBanner}>
+        <Text style={styles.body}>{tracking.message}</Text>
+      </View>
       <Text style={styles.helper}>Cập nhật lần cuối: {tracking.lastUpdatedLabel}</Text>
       <MapPanel lastUpdatedLabel={tracking.lastUpdatedLabel} onRetry={onRetry} state="stale" summary={tracking.summary}>
         {mapContent}
@@ -127,7 +166,6 @@ function CustomerDetailContent({
   return (
     <ScreenScaffold
       eyebrow="CUSTOMER · JOURNEY SHEET"
-      subtitle="Theo dõi chi tiết đơn, hành trình xe chạy và xác nhận thanh toán."
       title={`Đơn ${order.reference}`}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -146,17 +184,14 @@ function CustomerDetailContent({
           </View>
         ) : null}
 
-        {/* Section 1: Route */}
-        <LedgerSection description="Điểm lấy, các điểm dừng và điểm giao hàng" index="01" title="Lộ trình vận chuyển">
-          <RouteSpine
-            destination={order.route.destination}
-            origin={order.route.origin}
-            stops={order.route.stops}
-          />
-        </LedgerSection>
-
-        {/* Section 2: Tracking Map */}
-        <LedgerSection description="Vị trí xe và lộ trình theo thời gian thực" index="02" title="Bản đồ hành trình">
+        {/* Section: Tracking Map & Driver Hero */}
+        <View style={styles.modernCard}>
+          <View style={styles.cardHeader}>
+            <Text accessibilityRole="header" style={styles.cardTitle}>
+              Bản đồ hành trình
+            </Text>
+            <Text style={styles.cardSubtitle}>Vị trí xe và lộ trình theo thời gian thực</Text>
+          </View>
           <TrackingPanel
             destinationLabel={order.route.destination.label}
             onRetry={onRetry}
@@ -169,9 +204,24 @@ function CustomerDetailContent({
               source={order.etaSource}
             />
           ) : null}
-        </LedgerSection>
+        </View>
 
-        {/* Section 3: Payment */}
+        {/* Section: Route */}
+        <View style={styles.modernCard}>
+          <View style={styles.cardHeader}>
+            <Text accessibilityRole="header" style={styles.cardTitle}>
+              Lộ trình vận chuyển
+            </Text>
+            <Text style={styles.cardSubtitle}>Điểm lấy, các điểm dừng và điểm giao hàng</Text>
+          </View>
+          <RouteSpine
+            destination={order.route.destination}
+            origin={order.route.origin}
+            stops={order.route.stops}
+          />
+        </View>
+
+        {/* Section: Payment */}
         <PaymentSummary
           action={
             order.payment.action
@@ -192,8 +242,14 @@ function CustomerDetailContent({
           status={order.payment.status}
         />
 
-        {/* Section 4: Media */}
-        <LedgerSection description="Quy cách hàng hóa và hình ảnh đính kèm" index="04" title="Minh chứng hàng hóa">
+        {/* Section: Media */}
+        <View style={styles.modernCard}>
+          <View style={styles.cardHeader}>
+            <Text accessibilityRole="header" style={styles.cardTitle}>
+              Minh chứng hàng hóa
+            </Text>
+            <Text style={styles.cardSubtitle}>Quy cách hàng hóa và hình ảnh đính kèm</Text>
+          </View>
           <View style={styles.mediaGrid}>
             <View style={styles.mediaTile}>
               <Text style={styles.mediaIndex}>01</Text>
@@ -207,9 +263,9 @@ function CustomerDetailContent({
               )}
             </View>
           </View>
-        </LedgerSection>
+        </View>
 
-        {/* Section 5: Timeline */}
+        {/* Section: Timeline */}
         <StatusTimeline
           entries={order.history.map((h) => ({
             id: h.id,
@@ -267,10 +323,35 @@ export function CustomerOrderDetailScreen(props: CustomerOrderDetailScreenProps)
 
 const styles = StyleSheet.create({
   scrollContent: {
-    gap: spacing.lg,
+    gap: spacing.md,
     paddingBottom: spacing.xl,
   },
-  section: { gap: spacing.sm },
+  section: {
+    gap: spacing.sm,
+  },
+  modernCard: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  cardHeader: {
+    gap: 2,
+    marginBottom: spacing.xxs,
+  },
+  cardTitle: {
+    ...typography.sectionTitle,
+    color: colors.neutral.titleText,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  cardSubtitle: {
+    ...typography.caption,
+    color: colors.neutral.mutedText,
+    fontSize: 12,
+  },
   journeyStatusSlab: {
     backgroundColor: leopardPalette.surfaceWhite,
     borderLeftColor: colors.brand.background,
@@ -278,7 +359,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     borderColor: leopardPalette.cardBorder,
     borderWidth: 1,
-    gap: spacing.sm,
+    gap: spacing.xs,
     padding: spacing.md,
   },
   slabEyebrow: {
@@ -298,12 +379,65 @@ const styles = StyleSheet.create({
   slabPrice: {
     ...typography.label,
     color: leopardPalette.primary,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
     flexShrink: 1,
   },
-  driver: {
+  driverCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: spacing.sm,
+    gap: spacing.sm,
+  },
+  driverAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.brand.softBackground,
+    borderWidth: 1,
+    borderColor: colors.brand.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  driverAvatarText: {
+    color: colors.brand.background,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  driverInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  driverName: {
+    color: colors.neutral.titleText,
+    fontSize: 14.5,
+    fontWeight: '700',
+  },
+  driverStatusText: {
+    color: colors.neutral.mutedText,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  driverActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  driverActionBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  driverText: {
     ...typography.label,
     color: colors.neutral.text,
     flexShrink: 1,
@@ -318,6 +452,31 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.neutral.mutedText,
     flexShrink: 1,
+  },
+  freshnessRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pulseDotGreen: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.success.border,
+  },
+  infoBanner: {
+    backgroundColor: colors.info.background,
+    borderColor: colors.info.border,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    padding: spacing.sm,
+  },
+  warningBanner: {
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    padding: spacing.sm,
   },
   warningText: {
     ...typography.body,

@@ -1,69 +1,363 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 
-import { HomeDashboardScreen } from './HomeDashboardScreen';
+import { addressStore } from '../customer/addresses/address-store';
+import { getTimeOfDayGreeting, HomeDashboardScreen } from './HomeDashboardScreen';
+
+const activeShipment = {
+  orderId: 'ord-active-1',
+  status: 'IN_TRANSIT' as const,
+  origin: 'Kho Tân Bình',
+  destination: 'KCN Tân Tạo',
+  cargoNote: '1.2 tấn xi măng',
+  driverName: 'Nguyễn Văn Hùng',
+  plate: '59C-882.14',
+  etaMinutes: 18,
+};
+
+const recentOrders = [
+  {
+    id: 'ord-2',
+    reference: 'LP-240902',
+    status: 'DELIVERED' as const,
+    origin: 'Quận 7',
+    destination: 'Thủ Đức',
+    price: '420.000 ₫',
+    updated: 'Hôm qua',
+  },
+  {
+    id: 'ord-3',
+    reference: 'LP-240831',
+    status: 'REQUESTED' as const,
+    origin: 'Bình Tân',
+    destination: 'Long An',
+    price: '650.000 ₫',
+    updated: '31/08',
+  },
+];
 
 describe('HomeDashboardScreen', () => {
-  it('renders top bar, analytics card, vehicle selection, and handles booking flow', async () => {
-    const onSelectVehicleAndBook = jest.fn();
+  beforeEach(() => {
+    addressStore.clearAll();
+  });
+  it('surfaces operational work first and wires the primary actions', async () => {
+    const onCreateOrder = jest.fn();
+    const onOpenActiveOrder = jest.fn();
+    const onOpenOrder = jest.fn();
+    const onViewAllOrders = jest.fn();
     const onOpenNotifications = jest.fn();
     const onSwitchRole = jest.fn();
+    const onSelectVehicleAndBook = jest.fn();
+    const onTopUpWallet = jest.fn();
+    const onOpenQrScan = jest.fn();
 
     const screen = await render(
       <HomeDashboardScreen
+        activeShipment={activeShipment}
+        onCreateOrder={onCreateOrder}
+        onOpenActiveOrder={onOpenActiveOrder}
         onOpenNotifications={onOpenNotifications}
+        onOpenOrder={onOpenOrder}
+        onOpenQrScan={onOpenQrScan}
         onSelectVehicleAndBook={onSelectVehicleAndBook}
         onSwitchRole={onSwitchRole}
+        onTopUpWallet={onTopUpWallet}
+        onViewAllOrders={onViewAllOrders}
+        recentOrders={recentOrders}
         smeName="Cửa hàng VLXD Đại Phát"
         userName="Anh Hoàng"
+        walletBalance="1.850.000 ₫"
       />,
     );
 
-    expect(screen.getByText('Xin chào, Anh Hoàng')).toBeTruthy();
+    // Header identity
     expect(screen.getByText('Cửa hàng VLXD Đại Phát')).toBeTruthy();
-    expect(screen.getByText('1.850.000 ₫')).toBeTruthy();
-    expect(screen.getByText('Xe Tải Nhẹ (1.5 Tấn)')).toBeTruthy();
+    expect(screen.getByText(/Anh Hoàng/)).toBeTruthy();
 
-    const notifBtn = screen.getByLabelText(/Thông báo/);
-    await fireEvent.press(notifBtn);
+    // Header actions
+    await fireEvent.press(screen.getByLabelText(/Thông báo/));
     expect(onOpenNotifications).toHaveBeenCalledTimes(1);
-
-    const roleBtn = screen.getByLabelText('Chuyển vai trò');
-    await fireEvent.press(roleBtn);
+    await fireEvent.press(screen.getByLabelText('Chuyển vai trò'));
     expect(onSwitchRole).toHaveBeenCalledWith('DRIVER');
 
-    // Click on Ba Gác to select
-    const baGacCard = screen.getByRole('radio', { name: /Xe Ba Gác/ });
-    await fireEvent.press(baGacCard);
+    // Single primary action: create order
+    await fireEvent.press(screen.getByText('Tạo đơn vận chuyển'));
+    expect(onCreateOrder).toHaveBeenCalledTimes(1);
 
-    // Book button
-    const bookBtn = screen.getByLabelText(/Đặt .* ngay/);
-    await fireEvent.press(bookBtn);
+    // Active shipment sits at the top: status + route + ETA, opens on press
+    expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
+    expect(screen.getByText('Kho Tân Bình')).toBeTruthy();
+    expect(screen.getByText(/18 phút/)).toBeTruthy();
+    expect(screen.getByText(/59C-882\.14/)).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText(/Chuyến đang vận chuyển/));
+    expect(onOpenActiveOrder).toHaveBeenCalledWith('ord-active-1');
 
-    // Processing modal opens
-    expect(screen.getByText('Đang tìm xe & ghép tuyến')).toBeTruthy();
+    // Recent orders as ledger rows
+    expect(screen.getByText('Đơn LP-240902')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('order-summary-LP-240902'));
+    expect(onOpenOrder).toHaveBeenCalledWith('ord-2');
+    await fireEvent.press(screen.getByLabelText('Xem tất cả đơn hàng'));
+    expect(onViewAllOrders).toHaveBeenCalledTimes(1);
 
-    // Click demo success
-    const demoBtn = screen.getByLabelText('Kết nối ngay (Demo)');
-    await fireEvent.press(demoBtn);
+    // Quick book by vehicle jumps into the create flow
+    await fireEvent.press(screen.getByLabelText('Đặt nhanh Xe Tải Nhẹ'));
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
 
-    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('3_WHEEL_BIKE');
-    // FloatingNavBar is hidden by default
+    // Wallet utility strip (no fabricated KPIs)
+    expect(screen.getByText('1.850.000 ₫')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Nạp tiền vào ví'));
+    expect(onTopUpWallet).toHaveBeenCalledTimes(1);
+    await fireEvent.press(screen.getByLabelText('Quét mã QR thanh toán'));
+    expect(onOpenQrScan).toHaveBeenCalledTimes(1);
+
+    // FloatingNavBar hidden by default
     expect(screen.queryByLabelText('Trang chủ')).toBeNull();
+
+    await screen.unmount();
+  }, 60000);
+
+  it('renders calm empty states when there is no work yet', async () => {
+    const screen = await render(
+      <HomeDashboardScreen activeShipment={null} recentOrders={[]} />,
+    );
+
+    expect(screen.getByText('Chưa có chuyến nào đang chạy')).toBeTruthy();
+    expect(screen.getByText('Bạn chưa có đơn hàng nào.')).toBeTruthy();
 
     await screen.unmount();
   });
 
-  it('renders floating nav bar when showFloatingNavBar is true', async () => {
+  it('renders the floating nav bar when enabled', async () => {
     const onNavigateTab = jest.fn();
     const screen = await render(
-      <HomeDashboardScreen onNavigateTab={onNavigateTab} showFloatingNavBar={true} />,
+      <HomeDashboardScreen onNavigateTab={onNavigateTab} showFloatingNavBar />,
     );
 
-    const trackingTab = screen.getByLabelText('Lộ trình');
+    const trackingTab = screen.getByLabelText('Đang giao');
     expect(trackingTab).toBeTruthy();
     await fireEvent.press(trackingTab);
     expect(onNavigateTab).toHaveBeenCalledWith('tracking');
+
+    await screen.unmount();
+  });
+
+  it('renders time-of-day greeting correctly', () => {
+    expect(getTimeOfDayGreeting(new Date(2026, 8, 3, 8, 0))).toBe('Chào buổi sáng');
+    expect(getTimeOfDayGreeting(new Date(2026, 8, 3, 14, 0))).toBe('Chào buổi chiều');
+    expect(getTimeOfDayGreeting(new Date(2026, 8, 3, 20, 0))).toBe('Chào buổi tối');
+  });
+
+  it('triggers onRegisterDriver when driver registration button is pressed', async () => {
+    const onRegisterDriver = jest.fn();
+    const screen = await render(
+      <HomeDashboardScreen onRegisterDriver={onRegisterDriver} />,
+    );
+
+    const driverBtn = screen.getByTestId('home-driver-btn');
+    expect(driverBtn).toBeTruthy();
+    expect(screen.getByText('Đăng ký tài xế')).toBeTruthy();
+    await fireEvent.press(driverBtn);
+    expect(onRegisterDriver).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('submits quick route booking with custom pickup and dropoff', async () => {
+    const onQuickBook = jest.fn();
+    const screen = await render(
+      <HomeDashboardScreen onQuickBook={onQuickBook} />,
+    );
+
+    // Default pickup location is prefilled
+    expect(screen.getByDisplayValue('Kho Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
+
+    // Type a destination
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
+      'KCN Sóng Thần, Bình Dương',
+    );
+    await fireEvent.press(screen.getByText('Tạo đơn vận chuyển'));
+
+    expect(onQuickBook).toHaveBeenCalledWith(
+      'Kho Tân Bình, TP. Hồ Chí Minh',
+      'KCN Sóng Thần, Bình Dương',
+    );
+
+    await screen.unmount();
+  });
+
+  it('navigates promo carousel on dot press', async () => {
+    const screen = await render(<HomeDashboardScreen />);
+
+    expect(screen.getByText('Giảm 50.000₫ chuyến đầu tiên')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Chuyển đến ưu đãi 2'));
+    expect(screen.getByText('Cam kết có xe trong 15 phút')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('loads customer confirmed address from addressStore into pickup input with label', async () => {
+    addressStore.saveAddress({
+      label: 'Kho hàng',
+      address: '120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
+      isDefault: true,
+      category: 'WAREHOUSE',
+    });
+
+    const screen = await render(<HomeDashboardScreen />);
+
+    // Renders the saved warehouse address
+    expect(
+      screen.getByDisplayValue('120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh'),
+    ).toBeTruthy();
+    expect(screen.getAllByText('Kho hàng').length).toBeGreaterThanOrEqual(1);
+
+    await screen.unmount();
+  });
+
+  it('allows switching pickup location when customer taps a saved address chip', async () => {
+    addressStore.saveAddress({
+      id: 'addr-warehouse',
+      label: 'Kho hàng',
+      address: 'Kho A1 - 120 Trường Chinh, Quận Tân Bình',
+      isDefault: true,
+      category: 'WAREHOUSE',
+    });
+    addressStore.saveAddress({
+      id: 'addr-home',
+      label: 'Nhà riêng',
+      address: '135 Nam Kỳ Khởi Nghĩa, Quận 1',
+      isDefault: false,
+      category: 'HOME',
+    });
+
+    const onSelectSavedAddress = jest.fn();
+    const screen = await render(
+      <HomeDashboardScreen onSelectSavedAddress={onSelectSavedAddress} />,
+    );
+
+    // Initial default is warehouse
+    expect(
+      screen.getByDisplayValue('Kho A1 - 120 Trường Chinh, Quận Tân Bình'),
+    ).toBeTruthy();
+
+    // Tap on Sổ địa chỉ to open bottom sheet modal
+    await fireEvent.press(screen.getByLabelText('Mở sổ địa chỉ'));
+
+    // Tap on Nhà riêng in the modal
+    const homeChip = screen.getByTestId('pickup-chip-addr-home');
+    expect(homeChip).toBeTruthy();
+    await fireEvent.press(homeChip);
+
+    // Input changes to home address
+    expect(
+      screen.getByDisplayValue('135 Nam Kỳ Khởi Nghĩa, Quận 1'),
+    ).toBeTruthy();
+    expect(onSelectSavedAddress).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'addr-home', label: 'Nhà riêng' }),
+    );
+
+    await screen.unmount();
+  });
+
+  it('supports entering address and confirming location via map picker modal', async () => {
+    const screen = await render(
+      <HomeDashboardScreen userName="Anh Hoàng" userPhone="0901234567" />,
+    );
+
+    // Clear pickup input
+    const clearPickupBtn = screen.getByLabelText('Xóa điểm lấy hàng');
+    expect(clearPickupBtn).toBeTruthy();
+    await fireEvent.press(clearPickupBtn);
+    expect(screen.getByPlaceholderText('Nhập địa chỉ lấy hàng...').props.value).toBe('');
+
+    // Focus pickup input to open dropdown
+    await fireEvent(screen.getByTestId('cr-pickup-input'), 'focus');
+
+    // Tap "Xác nhận vị trí trên bản đồ"
+    const mapActionBtn = screen.getByLabelText('Xác nhận vị trí trên bản đồ');
+    expect(mapActionBtn).toBeTruthy();
+    await fireEvent.press(mapActionBtn);
+
+    // Map modal is shown
+    expect(screen.getAllByText('Thông tin người gửi').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Lấy hàng tại')).toBeTruthy();
+
+    // Enter real address in modal input
+    const addressInput = screen.getByLabelText('Địa chỉ lấy hàng');
+    expect(addressInput).toBeTruthy();
+    await fireEvent.changeText(addressInput, 'Kho Tân Bình, TP. Hồ Chí Minh');
+
+    // Test "Thay đổi" button: clears to re-enter without opening address book modal
+    const changeBtn = screen.getByLabelText('Thay đổi địa chỉ');
+    expect(changeBtn).toBeTruthy();
+    await fireEvent.press(changeBtn);
+    expect(screen.getByLabelText('Địa chỉ lấy hàng').props.value).toBe('');
+
+    // Type final address
+    await fireEvent.changeText(screen.getByLabelText('Địa chỉ lấy hàng'), '120 Trường Chinh, Quận Tân Bình');
+
+    // Tap "Tôi là người gửi" shortcut
+    await fireEvent.press(screen.getByLabelText('Tôi là người gửi'));
+    expect(screen.getByDisplayValue('Anh Hoàng')).toBeTruthy();
+    expect(screen.getByDisplayValue('0901234567')).toBeTruthy();
+
+    // Tap "Lưu" to confirm
+    await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
+
+    // Address is applied to pickup text
+    expect(screen.getByDisplayValue('120 Trường Chinh, Quận Tân Bình')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('supports entering destination address and filling receiver info with logged in customer', async () => {
+    const screen = await render(
+      <HomeDashboardScreen userName="Nguyễn Văn A" userPhone="0987654321" />,
+    );
+
+    // Click direct map pin button on dropoff input
+    const dropoffMapBtn = screen.getByLabelText('Mở bản đồ chọn điểm giao');
+    await fireEvent.press(dropoffMapBtn);
+
+    // Map modal is shown for dropoff
+    expect(screen.getAllByText('Thông tin người nhận').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Giao hàng đến')).toBeTruthy();
+
+    // Enter dropoff address directly in modal
+    await fireEvent.changeText(
+      screen.getByLabelText('Địa chỉ giao hàng'),
+      'Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh',
+    );
+
+    // Tap "Tôi là người nhận"
+    await fireEvent.press(screen.getByLabelText('Tôi là người nhận'));
+    expect(screen.getByDisplayValue('Nguyễn Văn A')).toBeTruthy();
+    expect(screen.getByDisplayValue('0987654321')).toBeTruthy();
+
+    // Save
+    await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
+    expect(screen.getByDisplayValue('Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('supports opening map picker directly via input map pin button', async () => {
+    const screen = await render(
+      <HomeDashboardScreen userName="Anh Hoàng" />,
+    );
+
+    // Direct map pin button on pickup row
+    const directMapBtn = screen.getByLabelText('Mở bản đồ chọn điểm lấy');
+    expect(directMapBtn).toBeTruthy();
+    await fireEvent.press(directMapBtn);
+
+    // Map modal is shown immediately
+    expect(screen.getAllByText('Thông tin người gửi').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Lấy hàng tại')).toBeTruthy();
+
+    // Close map modal
+    await fireEvent.press(screen.getByLabelText('Đóng màn hình bản đồ'));
 
     await screen.unmount();
   });

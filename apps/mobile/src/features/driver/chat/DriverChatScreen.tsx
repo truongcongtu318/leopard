@@ -14,6 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { colors, radius, spacing, typography } from '../../../theme/tokens';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { IconPhone } from '../../../ui/icons/CoreIcons';
 
 type DriverChatMessage = {
   id: string;
@@ -82,7 +83,8 @@ export function DriverChatScreen() {
       onPress={handleCall}
       style={styles.callBtn}
     >
-      <Text style={styles.callBtnText}>📞 Gọi khách</Text>
+      <IconPhone color="#FFFFFF" size={14} />
+      <Text style={styles.callBtnText}>Gọi khách</Text>
     </Pressable>
   );
 
@@ -167,8 +169,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   callBtn: {
+    alignItems: 'center',
     backgroundColor: colors.brand.background,
     borderRadius: radius.control,
+    flexDirection: 'row',
+    gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },

@@ -5,12 +5,13 @@ import React from 'react';
 import LoginRoute from '../../app/(public)/login';
 import { httpClient } from '../api/http-client';
 
+const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockSignInWithGoogle = jest.fn<(...args: any[]) => Promise<any>>();
 
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ replace: mockReplace }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
   useLocalSearchParams: () => ({}),
 }));
 
@@ -77,6 +78,13 @@ describe('LoginRoute (Mobile)', () => {
     const screen = await render(<LoginRoute />);
     expect(screen.getByRole('header', { name: 'Đăng nhập' })).toBeTruthy();
     expect(screen.getByLabelText('Số điện thoại')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('navigates to customer-register when "Đăng ký ngay" is pressed', async () => {
+    const screen = await render(<LoginRoute />);
+    await fireEvent.press(screen.getByText('Đăng ký ngay'));
+    expect(mockPush).toHaveBeenCalledWith('/(public)/customer-register');
     await screen.unmount();
   });
 

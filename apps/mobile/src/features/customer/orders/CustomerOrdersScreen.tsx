@@ -1,7 +1,7 @@
 import type { ListRenderItemInfo } from 'react-native';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { OrderSummary } from '../../../ui/OrderSummary';
 import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
@@ -144,7 +144,6 @@ export function CustomerOrdersScreen({
           />
         ) : undefined
       }
-      subtitle="Theo dõi lộ trình, trạng thái vận chuyển và hoá đơn VAT điện tử."
       title="Đơn hàng của tôi"
     >
       <FlatList
@@ -153,50 +152,13 @@ export function CustomerOrdersScreen({
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View style={styles.headerContent}>
-            {/* 4 Metrics summary */}
-            <View style={styles.metricsGrid}>
-              <View style={styles.metricCard}>
-                <View style={styles.metricCardHeader}>
-                  <Text style={styles.metricCardTitle}>ĐANG VẬN CHUYỂN</Text>
-                </View>
-                <Text style={styles.metricValue}>2 đơn</Text>
-                <View style={styles.metricFooter}>
-                  <Text style={styles.metricTagBlue}>1 xe tải • 1 ba gác</Text>
-                </View>
-              </View>
-
-              <View style={styles.metricCard}>
-                <View style={styles.metricCardHeader}>
-                  <Text style={styles.metricCardTitle}>HOÀN THÀNH (THÁNG)</Text>
-                </View>
-                <Text style={styles.metricValueGreen}>389 chuyến</Text>
-                <View style={styles.metricFooter}>
-                  <Text style={styles.metricTagGreen}>Tỷ lệ đạt 99.2%</Text>
-                </View>
-              </View>
-
-              <View style={styles.metricCard}>
-                <View style={styles.metricCardHeader}>
-                  <Text style={styles.metricCardTitle}>TỔNG CƯỚC THÁNG</Text>
-                </View>
-                <Text style={styles.metricValueAmber}>48.2M ₫</Text>
-                <View style={styles.metricFooter}>
-                  <Text style={styles.metricTagAmber}>Ba gác: 112 • Tải: 277</Text>
-                </View>
-              </View>
-
-              <View style={styles.metricCard}>
-                <View style={styles.metricCardHeader}>
-                  <Text style={styles.metricCardTitle}>ETA CHÍNH XÁC (AI)</Text>
-                </View>
-                <Text style={styles.metricValueSky}>94%</Text>
-                <View style={styles.metricFooter}>
-                  <Text style={styles.metricTagSky}>Dự báo Traffic & AI</Text>
-                </View>
-              </View>
-            </View>
-
-            <View accessibilityRole="toolbar" style={styles.filters}>
+            {/* Horizontal Filter Bar */}
+            <ScrollView
+              accessibilityRole="toolbar"
+              contentContainerStyle={styles.filtersScroll}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
               {filters.map((filter) => (
                 <FilterChip
                   key={filter.value}
@@ -205,20 +167,23 @@ export function CustomerOrdersScreen({
                   selected={view.selectedFilter === filter.value}
                 />
               ))}
-            </View>
+            </ScrollView>
+
             <Notice view={view} />
             <SectionHeading title="Hành trình gần đây" />
           </View>
         }
         ListFooterComponent={
           view.canLoadMore || view.contentState === 'page-error' ? (
-            <Button
-              isLoading={view.isLoadingMore}
-              label={view.contentState === 'page-error' ? 'Thử tải thêm' : 'Tải thêm đơn hàng'}
-              loadingLabel="Đang tải thêm"
-              onPress={onLoadMore}
-              variant="secondary"
-            />
+            <View style={styles.loadMoreContainer}>
+              <Button
+                isLoading={view.isLoadingMore}
+                label={view.contentState === 'page-error' ? 'Thử tải thêm' : 'Tải thêm đơn hàng'}
+                loadingLabel="Đang tải thêm"
+                onPress={onLoadMore}
+                variant="secondary"
+              />
+            </View>
           ) : null
         }
         renderItem={renderOrder}
@@ -230,128 +195,46 @@ export function CustomerOrdersScreen({
 const styles = StyleSheet.create({
   listContent: {
     gap: spacing.sm,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
   },
   headerContent: {
-    gap: spacing.sm,
-    paddingBottom: spacing.xxs,
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.xs,
     paddingBottom: spacing.xxs,
-  },
-  metricCard: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    flexBasis: '48%',
-    flexGrow: 1,
-    gap: 2,
-    minHeight: 76,
-    padding: spacing.sm,
-  },
-  metricCardHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  metricCardTitle: {
-    color: colors.neutral.mutedText,
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.4,
-  },
-  metricValue: {
-    color: colors.brand.background,
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    fontVariant: ['tabular-nums'],
-  },
-  metricValueGreen: {
-    color: colors.success.text,
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    fontVariant: ['tabular-nums'],
-  },
-  metricValueAmber: {
-    color: colors.warning.text,
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    fontVariant: ['tabular-nums'],
-  },
-  metricValueSky: {
-    color: colors.neutral.titleText,
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    fontVariant: ['tabular-nums'],
-  },
-  metricFooter: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 2,
-  },
-  metricTagBlue: {
-    ...typography.caption,
-    color: colors.brand.softText,
-    fontSize: 10.5,
-  },
-  metricTagGreen: {
-    ...typography.caption,
-    color: colors.success.text,
-    fontSize: 10.5,
-  },
-  metricTagAmber: {
-    ...typography.caption,
-    color: colors.warning.text,
-    fontSize: 10.5,
-  },
-  metricTagSky: {
-    ...typography.caption,
-    color: colors.neutral.mutedText,
-    fontSize: 10.5,
   },
   skeletonList: {
     gap: spacing.sm,
   },
-  filters: {
+  filtersScroll: {
     flexDirection: 'row',
     gap: spacing.xs,
-    paddingBottom: 2,
+    paddingVertical: spacing.xxs,
   },
   filter: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.border,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
     borderRadius: radius.pill,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 32,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    minHeight: 36,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
   },
   filterSelected: {
-    backgroundColor: leopardPalette.primaryBg,
-    borderColor: leopardPalette.primary,
+    backgroundColor: colors.brand.softBackground,
+    borderColor: colors.brand.background,
   },
   filterLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 12,
+    color: colors.neutral.mutedText,
+    fontSize: 13,
     fontWeight: '500',
   },
   filterLabelSelected: {
-    color: leopardPalette.primary,
-    fontWeight: '600',
+    color: colors.brand.softText,
+    fontWeight: '700',
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
   notice: {
     borderRadius: radius.control,
@@ -374,5 +257,8 @@ const styles = StyleSheet.create({
     color: colors.neutral.text,
     fontWeight: '600',
     lineHeight: 18,
+  },
+  loadMoreContainer: {
+    paddingTop: spacing.xs,
   },
 });

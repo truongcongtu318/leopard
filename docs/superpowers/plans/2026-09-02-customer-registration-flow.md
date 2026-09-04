@@ -42,7 +42,7 @@
 
 ---
 
-## Task B1: Bắt tên (displayName) từ Firebase token
+## Task 1: Bắt tên (displayName) từ Firebase token
 
 **Files:**
 - Modify: `apps/api/src/auth/providers/otp-provider.ts:3-7`
@@ -137,7 +137,7 @@ git commit -m "feat(auth): capture display name from firebase identity token"
 
 ---
 
-## Task B2: Prisma migration — onboarding + consent + avatar
+## Task 2: Prisma migration — onboarding + consent + avatar
 
 **Files:**
 - Modify: `apps/api/prisma/schema.prisma:83-105` (model User)
@@ -184,7 +184,7 @@ git commit -m "feat(db): add onboarding + consent + avatar columns to User with 
 
 ---
 
-## Task B3: AuthUser — profileComplete + prefill (name/email) + lưu name khi upsert
+## Task 3: AuthUser — profileComplete + prefill (name/email) + lưu name khi upsert
 
 **Files:**
 - Modify: `apps/api/src/auth/auth.service.ts:12-17` (AuthUser), `:184-225` (upsertIdentityUser), `:258-273` (requireActiveUser/serializeUser)
@@ -311,7 +311,7 @@ git commit -m "feat(auth): expose profileComplete + name/email and persist provi
 
 ---
 
-## Task B4: Endpoint PATCH /users/me (hoàn tất hồ sơ)
+## Task 4: Endpoint PATCH /users/me (hoàn tất hồ sơ)
 
 **Files:**
 - Create: `apps/api/src/users/dto/complete-profile.dto.ts`
@@ -557,7 +557,7 @@ git commit -m "feat(users): add PATCH /users/me to complete customer profile"
 
 ---
 
-## Task M1: Điều hướng theo profileComplete (bao phủ SĐT & Google)
+## Task 5: Điều hướng theo profileComplete (bao phủ SĐT & Google)
 
 **Files:**
 - Modify: `apps/mobile/src/auth/LoginScreen.tsx:67-72` (props), `:74-80` (AuthResponse), `:548-555` (exchangeIdToken), `:672-677` (demo)
@@ -666,7 +666,7 @@ git commit -m "feat(mobile): route not-yet-onboarded users to customer registrat
 
 ---
 
-## Task M2: Đổi tên trang đăng ký tài xế
+## Task 6: Đổi tên trang đăng ký tài xế
 
 **Files:**
 - Rename: `apps/mobile/app/(public)/register.tsx` → `apps/mobile/app/(public)/driver-register.tsx`
@@ -702,7 +702,7 @@ git commit -m "refactor(mobile): rename register route to driver-register"
 
 ---
 
-## Task M3: Màn customer-register (prefill + tên/email + consent + submit)
+## Task 7: Màn customer-register (prefill + tên/email + consent + submit)
 
 Phạm vi task này phục vụ user **đăng nhập bằng SĐT** (SĐT có sẵn, khóa). Nhánh verify SĐT cho Google ở Task M4.
 
@@ -993,7 +993,7 @@ git commit -m "feat(mobile): add customer registration screen with consent gatin
 
 ---
 
-## Task M4: Verify SĐT cho user Google trong customer-register
+## Task 8: Verify SĐT cho user Google trong customer-register
 
 **Files:**
 - Modify: `apps/mobile/app/(public)/customer-register.tsx`
@@ -1194,7 +1194,7 @@ git commit -m "feat(mobile): verify phone via OTP for Google users in customer r
 
 ---
 
-## Task M5 (tùy chọn): Avatar cho customer
+## Task 9: Avatar cho customer
 
 Có thể bỏ qua mà vẫn có tính năng hoàn chỉnh (avatar là tùy chọn). Nếu làm:
 

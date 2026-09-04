@@ -16,6 +16,14 @@ import {
   spacing,
   typography,
 } from '../../theme/tokens';
+import {
+  IconOrders,
+  IconSearch,
+  IconSpeedTruck,
+  IconTag,
+  IconVehicle3Wheel,
+  IconVehicleHeavyTruck,
+} from '../../ui/icons/CoreIcons';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -44,23 +52,48 @@ export type DeliveryOrder = Readonly<{
   priceVnd: string;
 }>;
 
-export type FilterChip = 'ALL' | 'IN_TRANSIT' | 'LOADING' | 'DELIVERED';
+export type FilterChip = 'ALL' | 'IN_TRANSIT' | 'LOADING';
 
 export type MyDeliveriesScreenProps = Readonly<{
   orders: readonly DeliveryOrder[];
   onOrderPress?: (orderId: string) => void;
   onCreateOrder?: () => void;
+  onViewHistory?: () => void;
 }>;
+
+/**
+ * This tab shows only in-progress shipments. Delivered and cancelled orders
+ * live in the "Đơn hàng" ledger tab, so they are filtered out here.
+ */
+const ACTIVE_STATUSES: readonly DeliveryStatus[] = [
+  'REQUESTED',
+  'ACCEPTED',
+  'LOADING',
+  'IN_TRANSIT',
+  'ARRIVED',
+];
+
+function isActiveStatus(status: DeliveryStatus): boolean {
+  return ACTIVE_STATUSES.includes(status);
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-const CARGO_ICONS: Record<CargoType, string> = {
-  CEMENT_STEEL: '🧱',
-  FURNITURE: '🪑',
-  BA_GAC_MISC: '🛺',
-  PRODUCE: '🌾',
-  GENERAL: '📦',
-};
+function CargoIcon({ type }: { type: CargoType }) {
+  switch (type) {
+    case 'CEMENT_STEEL':
+      return <IconVehicleHeavyTruck color={leopardPalette.primaryDark} size={20} />;
+    case 'FURNITURE':
+      return <IconOrders color={leopardPalette.primaryDark} size={20} />;
+    case 'BA_GAC_MISC':
+      return <IconVehicle3Wheel color={leopardPalette.primaryDark} size={20} />;
+    case 'PRODUCE':
+      return <IconTag color={leopardPalette.primaryDark} size={20} />;
+    case 'GENERAL':
+    default:
+      return <IconSpeedTruck color={leopardPalette.primaryDark} size={20} />;
+  }
+}
 
 type StatusPresentation = Readonly<{
   label: string;
@@ -83,14 +116,12 @@ const FILTER_CHIPS: readonly { key: FilterChip; label: string }[] = [
   { key: 'ALL', label: 'Tất cả' },
   { key: 'IN_TRANSIT', label: 'Đang chạy' },
   { key: 'LOADING', label: 'Đang bốc' },
-  { key: 'DELIVERED', label: 'Hoàn thành' },
 ];
 
 function matchesFilter(status: DeliveryStatus, filter: FilterChip): boolean {
   if (filter === 'ALL') return true;
-  if (filter === 'IN_TRANSIT') return status === 'IN_TRANSIT' || status === 'ACCEPTED';
-  if (filter === 'LOADING') return status === 'LOADING' || status === 'REQUESTED';
-  return status === 'DELIVERED';
+  if (filter === 'IN_TRANSIT') return status === 'IN_TRANSIT' || status === 'ARRIVED' || status === 'ACCEPTED';
+  return status === 'LOADING' || status === 'REQUESTED';
 }
 
 function getStepperProgress(status: DeliveryStatus): number {
@@ -165,7 +196,7 @@ function OrderCardComponent({ index, onPress, order }: OrderCardProps) {
           <View style={styles.leftCol}>
             <View style={styles.cargoIconRow}>
               <View style={styles.cargoIconBox}>
-                <Text style={styles.cargoIcon}>{CARGO_ICONS[order.cargoType]}</Text>
+                <CargoIcon type={order.cargoType} />
               </View>
               <View style={styles.cargoMeta}>
                 <Text numberOfLines={1} style={styles.cargoLabel}>
@@ -190,8 +221,9 @@ function OrderCardComponent({ index, onPress, order }: OrderCardProps) {
             </View>
 
             <View style={styles.metaRow}>
-              <Text style={styles.metaText}>📅 {order.scheduledDate}</Text>
-              <Text style={styles.metaText}>⚖️ {order.weightKg} kg</Text>
+              <Text style={styles.metaText}>{order.scheduledDate}</Text>
+              <Text style={styles.metaDot}>•</Text>
+              <Text style={styles.metaText}>{order.weightKg} kg</Text>
             </View>
           </View>
 
@@ -263,12 +295,16 @@ const OrderCard = React.memo(OrderCardComponent);
 export function MyDeliveriesScreen({
   onCreateOrder,
   onOrderPress,
+  onViewHistory,
   orders,
 }: MyDeliveriesScreenProps) {
   const [activeFilter, setActiveFilter] = useState<FilterChip>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filtered = orders.filter((o) => {
+  // Only in-progress shipments belong on this tab.
+  const activeOrders = orders.filter((o) => isActiveStatus(o.status));
+
+  const filtered = activeOrders.filter((o) => {
     if (!matchesFilter(o.status, activeFilter)) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -283,10 +319,9 @@ export function MyDeliveriesScreen({
   });
 
   const chipCounts: Record<FilterChip, number> = {
-    ALL: orders.length,
-    IN_TRANSIT: orders.filter((o) => matchesFilter(o.status, 'IN_TRANSIT')).length,
-    LOADING: orders.filter((o) => matchesFilter(o.status, 'LOADING')).length,
-    DELIVERED: orders.filter((o) => matchesFilter(o.status, 'DELIVERED')).length,
+    ALL: activeOrders.length,
+    IN_TRANSIT: activeOrders.filter((o) => matchesFilter(o.status, 'IN_TRANSIT')).length,
+    LOADING: activeOrders.filter((o) => matchesFilter(o.status, 'LOADING')).length,
   };
 
   const renderItem = useCallback(
@@ -304,7 +339,7 @@ export function MyDeliveriesScreen({
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <Text accessibilityRole="header" style={styles.pageTitle}>
-            Đơn hàng của tôi
+            Đang giao
           </Text>
           {onCreateOrder ? (
             <Pressable
@@ -320,7 +355,7 @@ export function MyDeliveriesScreen({
 
         {/* Search bar */}
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <IconSearch color={leopardPalette.textMutedSlate} size={18} />
           <TextInput
             accessibilityLabel="Tìm kiếm đơn hàng"
             onChangeText={setSearchQuery}
@@ -371,13 +406,25 @@ export function MyDeliveriesScreen({
       {/* Order List */}
       {filtered.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyTitle}>Không có đơn hàng nào</Text>
+          <View style={styles.emptyIconCircle}>
+            <IconSpeedTruck color={leopardPalette.primary} size={36} />
+          </View>
+          <Text style={styles.emptyTitle}>Chưa có chuyến đang giao</Text>
           <Text style={styles.emptySubtext}>
             {searchQuery
               ? `Không tìm thấy kết quả cho "${searchQuery}"`
-              : 'Bạn chưa có đơn hàng trong danh mục này'}
+              : 'Các chuyến đang vận chuyển sẽ xuất hiện ở đây để bạn theo dõi.'}
           </Text>
+          {!searchQuery && onViewHistory ? (
+            <Pressable
+              accessibilityLabel="Xem lịch sử đơn"
+              accessibilityRole="button"
+              onPress={onViewHistory}
+              style={({ pressed }) => [styles.historyBtn, pressed ? styles.pressed : null]}
+            >
+              <Text style={styles.historyBtnText}>Xem lịch sử đơn</Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : (
         <FlatList
@@ -602,12 +649,18 @@ const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems: 'center',
+    gap: 6,
     marginTop: 4,
   },
   metaText: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11,
+    fontSize: 11.5,
+    fontWeight: '500',
+  },
+  metaDot: {
+    color: leopardPalette.cardBorder,
+    fontSize: 10,
   },
   rightCol: {
     alignItems: 'flex-end',
@@ -706,8 +759,13 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.xs,
   },
-  emptyIcon: {
-    fontSize: 40,
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: leopardPalette.primaryBg,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.xs,
   },
   emptyTitle: {
@@ -719,6 +777,19 @@ const styles = StyleSheet.create({
     color: leopardPalette.textMutedSlate,
     fontSize: 13,
     textAlign: 'center',
+  },
+  historyBtn: {
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: leopardPalette.primary,
+    borderRadius: leopardRadius.pill,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+  },
+  historyBtnText: {
+    color: leopardPalette.primary,
+    fontSize: 13,
+    fontWeight: '700',
   },
   pressed: {
     transform: [{ scale: 0.96 }],

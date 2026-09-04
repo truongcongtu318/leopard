@@ -114,9 +114,16 @@ export class AuthService {
       );
     }
 
-    const owner = await this.prisma.user.findUnique({
-      where: { phone: identity.phoneNumber },
-    });
+    const altPhone = this.alternateVnPhone(identity.phoneNumber);
+    const owner =
+      (await this.prisma.user.findUnique({
+        where: { phone: identity.phoneNumber },
+      })) ??
+      (altPhone
+        ? await this.prisma.user.findUnique({
+            where: { phone: altPhone },
+          })
+        : null);
     if (owner && owner.id !== claims.sub) {
       throw new DomainError(
         'PHONE_ALREADY_LINKED',
@@ -208,7 +215,7 @@ export class AuthService {
         where: { id: existing.id },
         data: {
           firebaseUid: existing.firebaseUid ?? identity.providerUserId,
-          ...(identity.phoneNumber && !existing.phone
+          ...(identity.phoneNumber && (!existing.phone || existing.phone !== identity.phoneNumber)
             ? { phone: identity.phoneNumber }
             : {}),
           ...(identity.email && !existing.email
@@ -258,6 +265,16 @@ export class AuthService {
       if (byPhone) {
         return byPhone;
       }
+
+      const altPhone = this.alternateVnPhone(identity.phoneNumber);
+      if (altPhone) {
+        const byAlt = await this.prisma.user.findUnique({
+          where: { phone: altPhone },
+        });
+        if (byAlt) {
+          return byAlt;
+        }
+      }
     }
 
     if (identity.email) {
@@ -269,6 +286,16 @@ export class AuthService {
       }
     }
 
+    return null;
+  }
+
+  private alternateVnPhone(phone: string): string | null {
+    if (phone.startsWith('+84') && phone.length === 12) {
+      return '0' + phone.slice(3);
+    }
+    if (phone.startsWith('0') && phone.length === 10) {
+      return '+84' + phone.slice(1);
+    }
     return null;
   }
 

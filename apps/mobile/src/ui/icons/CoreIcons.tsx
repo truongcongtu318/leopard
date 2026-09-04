@@ -1453,6 +1453,198 @@ export function IconPlus({
 }
 
 
+/**
+ * 🏆 Vector Icon: Huy chương / Cúp (Trophy / Achievement)
+ */
+export function IconTrophy({
+  color = '#D97706',
+  size = 24,
+  strokeWidth = 1.75,
+  testID = 'icon-trophy',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 9H4C3.44772 9 3 8.55228 3 8V5C3 4.44772 3.44772 4 4 4H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M18 9H20C20.5523 9 21 8.55228 21 8V5C21 4.44772 20.5523 4 20 4H18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M6 4H18V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M12 17V20" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M8 20H16" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 🪪 Vector Icon: Thẻ căn cước / CCCD (ID Card)
+ */
+export function IconIdCard({
+  color = '#0284C7',
+  size = 24,
+  strokeWidth = 1.75,
+  testID = 'icon-id-card',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <rect height="16" rx="2" stroke={color} strokeWidth={strokeWidth} width="20" x="2" y="4" />
+        <circle cx="8" cy="11" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+        <path d="M4 18C4 16 5.5 14.5 8 14.5C10.5 14.5 12 16 12 18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M14 9H19" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M14 13H18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 📄 Vector Icon: Giấy phép lái xe / GPLX (Driver License)
+ */
+export function IconLicense({
+  color = '#0284C7',
+  size = 24,
+  strokeWidth = 1.75,
+  testID = 'icon-license',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <rect height="16" rx="2" stroke={color} strokeWidth={strokeWidth} width="20" x="2" y="4" />
+        <path d="M6 8H10" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M6 12H9" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <circle cx="16" cy="10" r="3" stroke={color} strokeWidth={strokeWidth} />
+        <path d="M6 16H18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 📋 Vector Icon: Giấy tờ bảo hiểm (Insurance Document)
+ */
+export function IconInsuranceDoc({
+  color = '#0284C7',
+  size = 24,
+  strokeWidth = 1.75,
+  testID = 'icon-insurance-doc',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M14 2V8H20" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M12 11L10 15H14L12 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.75, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 🕒 Vector Icon: Đồng hồ / Lịch sử (Clock / History)
+ */
+export function IconClock({
+  color = '#0F172A',
+  size = 24,
+  strokeWidth = 1.75,
+  testID = 'icon-clock',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth={strokeWidth} />
+        <path d="M12 6V12L16 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeCircle, { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 💰 Vector Icon: Thu nhập / Doanh thu (Earnings / Revenue)
+ */
+export function IconEarnings({
+  color = '#0F172A',
+  size = 24,
+  strokeWidth = 1.75,
+  testID = 'icon-earnings',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2V22" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * ⭐ Star Rating Component: Hiển thị đánh giá sao SVG (không dùng text/emoji)
+ */
+export function StarRating({
+  rating = 0,
+  maxStars = 5,
+  size = 16,
+  color = '#F59E0B',
+  emptyColor = '#E2E8F0',
+  testID = 'star-rating',
+}: {
+  rating?: number;
+  maxStars?: number;
+  size?: number;
+  color?: string;
+  emptyColor?: string;
+  testID?: string;
+}) {
+  const stars = [];
+  for (let i = 0; i < maxStars; i++) {
+    const fillAmount = Math.min(1, Math.max(0, rating - i));
+    stars.push(
+      <IconStar
+        key={i}
+        color={fillAmount > 0 ? color : emptyColor}
+        fill={fillAmount >= 1 ? color : 'none'}
+        size={size}
+        testID={`${testID}-star-${i}`}
+      />,
+    );
+  }
+  return (
+    <View style={{ flexDirection: 'row', gap: 2 }} testID={testID}>
+      {stars}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   centerBox: {
     alignItems: 'center',

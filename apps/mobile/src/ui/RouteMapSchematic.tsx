@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '../theme/tokens';
+import { RealInteractiveMap } from './RealInteractiveMap';
 
 export type RouteMapSchematicProps = Readonly<{
   destinationLabel: string;
@@ -20,22 +21,13 @@ export function RouteMapSchematic({
         importantForAccessibility="no-hide-descendants"
         style={styles.map}
       >
-        <View style={[styles.roadVertical, styles.roadOne]} />
-        <View style={[styles.roadVertical, styles.roadTwo]} />
-        <View style={[styles.roadHorizontal, styles.roadThree]} />
-        <View style={[styles.roadHorizontal, styles.roadFour]} />
-        <View style={styles.routeVertical} />
-        <View style={styles.routeHorizontal} />
-        <View style={[styles.routeNode, styles.originNode]} />
-        <View style={[styles.routeNode, styles.destinationNode]} />
-        {markerLabel ? (
-          <View style={styles.driverMarker}>
-            <View style={styles.driverMarkerCore} />
-          </View>
-        ) : null}
-        <View style={styles.mapStamp}>
-          <Text style={styles.mapStampText}>ROUTE / PREVIEW</Text>
-        </View>
+        <RealInteractiveMap
+          destination={{ label: destinationLabel }}
+          height="100%"
+          mode={markerLabel ? 'tracking' : 'route'}
+          origin={{ label: originLabel }}
+          truckEtaLabel={markerLabel}
+        />
       </View>
       <View style={styles.routeLedger}>
         <View style={styles.location}>
@@ -72,85 +64,6 @@ const styles = StyleSheet.create({
     minHeight: 180,
     overflow: 'hidden',
     position: 'relative',
-  },
-  roadVertical: {
-    backgroundColor: colors.neutral.background,
-    bottom: -16,
-    position: 'absolute',
-    top: -16,
-    width: 18,
-  },
-  roadOne: { left: '18%', transform: [{ rotate: '12deg' }] },
-  roadTwo: { right: '17%', transform: [{ rotate: '-18deg' }] },
-  roadHorizontal: {
-    backgroundColor: colors.neutral.background,
-    height: 16,
-    left: -20,
-    position: 'absolute',
-    right: -20,
-  },
-  roadThree: { top: '27%', transform: [{ rotate: '-5deg' }] },
-  roadFour: { bottom: '22%', transform: [{ rotate: '7deg' }] },
-  routeVertical: {
-    backgroundColor: colors.brand.background,
-    bottom: 48,
-    left: '28%',
-    position: 'absolute',
-    top: 28,
-    width: 4,
-  },
-  routeHorizontal: {
-    backgroundColor: colors.brand.background,
-    bottom: 48,
-    height: 4,
-    left: '28%',
-    position: 'absolute',
-    right: '17%',
-  },
-  routeNode: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.brand.background,
-    borderRadius: radius.pill,
-    borderWidth: 4,
-    height: 18,
-    position: 'absolute',
-    width: 18,
-  },
-  originNode: { left: '25.8%', top: 19 },
-  destinationNode: { bottom: 41, right: '14.8%' },
-  driverMarker: {
-    alignItems: 'center',
-    backgroundColor: colors.warning.background,
-    borderColor: colors.warning.border,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    height: 26,
-    justifyContent: 'center',
-    left: '51%',
-    position: 'absolute',
-    top: '46%',
-    width: 26,
-  },
-  driverMarkerCore: {
-    backgroundColor: colors.warning.border,
-    borderRadius: radius.pill,
-    height: 8,
-    width: 8,
-  },
-  mapStamp: {
-    backgroundColor: colors.operational.ink,
-    left: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xxs,
-    position: 'absolute',
-    top: spacing.sm,
-  },
-  mapStampText: {
-    ...typography.caption,
-    color: colors.brand.text,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
   },
   routeLedger: {
     alignItems: 'flex-start',

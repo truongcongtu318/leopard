@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { colors, radius, spacing, typography } from '../../../theme/tokens';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { StatusBadge } from '../../../ui/StatusBadge';
+import { IconCameraProof } from '../../../ui/icons/CoreIcons';
 
 type HistoryTripItem = {
   id: string;
@@ -159,7 +160,10 @@ export function DriverHistoryScreen() {
                 <View style={styles.footerLeft}>
                   <Text style={styles.timeText}>{item.completedAtLabel}</Text>
                   {item.hasProof ? (
-                    <Text style={styles.proofBadge}>📸 Đã nộp POD</Text>
+                    <View style={styles.proofBadge}>
+                      <IconCameraProof color={colors.success.text} size={12} />
+                      <Text style={styles.proofBadgeText}>Đã nộp POD</Text>
+                    </View>
                   ) : null}
                 </View>
                 <Text style={styles.payoutText}>
@@ -270,8 +274,17 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
   },
   proofBadge: {
-    color: colors.success.background,
-    fontSize: 11.5,
+    alignItems: 'center',
+    backgroundColor: colors.success.background,
+    borderRadius: radius.pill,
+    flexDirection: 'row',
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  proofBadgeText: {
+    color: colors.success.text,
+    fontSize: 11,
     fontWeight: '700',
   },
   payoutText: {

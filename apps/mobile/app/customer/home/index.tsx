@@ -1,10 +1,50 @@
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
 import { sessionStore } from '../../../src/auth/session-store';
+import { addressStore, type SavedAddress } from '../../../src/features/customer/addresses/address-store';
 import { HomeDashboardScreen } from '../../../src/features/home/HomeDashboardScreen';
 
 export default function CustomerHomePage() {
   const router = useRouter();
+  const [defaultAddress, setDefaultAddress] = useState<SavedAddress | null>(() =>
+    addressStore.getDefaultAddress(),
+  );
+
+  const [customerUser, setCustomerUser] = useState<{ name?: string; phone?: string } | null>(null);
+
+  // Sync address when screen is active
+  useEffect(() => {
+    const addr = addressStore.getDefaultAddress();
+    if (addr) {
+      setDefaultAddress(addr);
+    }
+  }, []);
+
+  // Sync authenticated user info from /me
+  useEffect(() => {
+    let mounted = true;
+    async function loadCustomerUser() {
+      try {
+        if (sessionStore.isAuthenticated()) {
+          const { httpClient } = require('../../../src/api/http-client');
+          const user = await httpClient.get('/me');
+          if (mounted && user) {
+            setCustomerUser({
+              name: user.name || undefined,
+              phone: user.phone || undefined,
+            });
+          }
+        }
+      } catch {
+        // Silently ignore if unauthenticated or network unavailable
+      }
+    }
+    void loadCustomerUser();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSwitchRole = async (targetRole: 'CUSTOMER' | 'DRIVER') => {
     await sessionStore.setSession('preview-acc-token', 'preview-ref-token', targetRole);
@@ -17,6 +57,11 @@ export default function CustomerHomePage() {
 
   return (
     <HomeDashboardScreen
+      defaultPickupLabel={defaultAddress?.label}
+      defaultPickupLocation={defaultAddress?.address}
+      userName={customerUser?.name}
+      userPhone={customerUser?.phone}
+      onCreateOrder={() => router.push('/customer/orders/new')}
       onNavigateTab={(tab) => {
         switch (tab) {
           case 'orders':
@@ -34,10 +79,21 @@ export default function CustomerHomePage() {
       }}
       onOpenActiveOrder={() => router.push('/customer/tracking')}
       onOpenNotifications={() => router.push('/customer/notifications')}
+      onOpenOrder={(orderId) => router.push(`/customer/orders/${orderId}`)}
       onOpenProfile={() => router.push('/customer/profile')}
-      onSelectVehicleAndBook={() => router.push('/customer/tracking')}
+      onOpenQrScan={() => router.push('/customer/wallet')}
+      onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
+      onQuickBook={(pickup, dropoff) =>
+        router.push({
+          pathname: '/customer/orders/new',
+          params: { pickup, dropoff },
+        })
+      }
+      onRegisterDriver={() => router.push('/(public)/driver-register')}
+      onSelectVehicleAndBook={() => router.push('/customer/orders/new')}
       onSwitchRole={handleSwitchRole}
       onTopUpWallet={() => router.push('/customer/wallet')}
+      onViewAllOrders={() => router.push('/customer/orders')}
     />
   );
 }

@@ -1,8 +1,14 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing, typography } from '../../../theme/tokens';
+import { colors, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
+import {
+  IconCameraProof,
+  IconLocationPin,
+  IconOrders,
+  IconRoute,
+} from '../../../ui/icons/CoreIcons';
 import { LedgerSection } from '../../../ui/LedgerSection';
 import { MapPanel } from '../../../ui/MapPanel';
 import { RouteMapSchematic } from '../../../ui/RouteMapSchematic';
@@ -80,14 +86,24 @@ function ProofPanel({ proof }: Readonly<{ proof: DriverProofView }>) {
   return (
     <LedgerSection
       description="JPEG, PNG hoặc WebP; tối đa 10 MB. File picker được cung cấp qua port."
-      index="03"
+      icon={<IconCameraProof color={colors.brand.background} size={16} />}
       title="Ảnh xác nhận giao hàng"
     >
       <View style={[styles.proofPanel, isError ? styles.proofError : null]}>
-        <Text accessibilityRole={isError ? 'alert' : undefined} style={styles.proofTitle}>
-          {proof.label}
-        </Text>
-        <Text style={styles.body}>{proof.message}</Text>
+        <View style={styles.proofHeaderRow}>
+          <View style={styles.proofIconChip}>
+            <IconCameraProof
+              color={isError ? colors.danger.text : colors.brand.background}
+              size={18}
+            />
+          </View>
+          <View style={styles.proofHeaderText}>
+            <Text accessibilityRole={isError ? 'alert' : undefined} style={styles.proofTitle}>
+              {proof.label}
+            </Text>
+            <Text style={styles.body}>{proof.message}</Text>
+          </View>
+        </View>
         {proof.fileLabel ? (
           <Text style={styles.helper}>Tệp mô phỏng: {proof.fileLabel}</Text>
         ) : null}
@@ -226,6 +242,7 @@ function AssignedDetail({
   return (
     <ScreenScaffold
       eyebrow="DRIVER · ACTIVE MISSION"
+      headerRight={<StatusBadge domain="order" status={view.order.status} />}
       headerTone="ink"
       stickyFooter={
         view.primaryTask ? (
@@ -260,7 +277,7 @@ function AssignedDetail({
         ) : null}
         <LedgerSection
           description={`Khoảng cách ${view.order.route.distanceLabel}`}
-          index="01"
+          icon={<IconRoute color={colors.brand.background} size={16} />}
           title="Lộ trình được phân công"
           tone="signal"
         >
@@ -274,13 +291,19 @@ function AssignedDetail({
             source={view.order.route.etaSource}
           />
         </LedgerSection>
-        <LedgerSection index="02" title="Hàng hóa và liên hệ">
+        <LedgerSection
+          icon={<IconOrders color={colors.brand.background} size={16} />}
+          title="Hàng hóa và liên hệ"
+        >
           <Text style={styles.body}>{view.order.vehicleLabel}</Text>
           <Text style={styles.body}>{view.order.cargoSummary}</Text>
           <Text style={styles.body}>{view.order.customerContact}</Text>
         </LedgerSection>
         <ProofPanel proof={view.proof} />
-        <LedgerSection index="04" title="Tracking và bản đồ tuyến">
+        <LedgerSection
+          icon={<IconLocationPin color={colors.brand.background} size={16} />}
+          title="Tracking và bản đồ tuyến"
+        >
           <TrackingPanel
             destinationLabel={view.order.route.destination.label}
             onOpenLocationSettings={onOpenLocationSettings}
@@ -352,27 +375,30 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   missionStatusSlab: {
-    backgroundColor: colors.operational.ink,
+    backgroundColor: colors.neutral.background,
+    borderColor: colors.neutral.subtleBorder,
     borderLeftColor: colors.brand.background,
     borderLeftWidth: 4,
-    gap: spacing.sm,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.xs,
     padding: spacing.md,
   },
   missionEyebrow: {
     ...typography.caption,
-    color: colors.brand.softBackground,
+    color: colors.neutral.subtleText,
     fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   missionTracking: {
     ...typography.label,
-    color: colors.brand.text,
+    color: colors.brand.background,
     flexShrink: 1,
   },
   missionHelper: {
     ...typography.caption,
-    color: colors.operational.inkMuted,
+    color: colors.neutral.mutedText,
     flexShrink: 1,
   },
   routeLabel: { ...typography.sectionTitle, color: colors.neutral.text, flexShrink: 1 },
@@ -388,10 +414,27 @@ const styles = StyleSheet.create({
   proofPanel: {
     backgroundColor: colors.neutral.background,
     borderColor: colors.neutral.subtleBorder,
-    borderStyle: 'dashed',
-    borderWidth: 2,
+    borderRadius: radius.card,
+    borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
+  },
+  proofHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  proofIconChip: {
+    alignItems: 'center',
+    backgroundColor: colors.brand.softBackground,
+    borderRadius: radius.card,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  proofHeaderText: {
+    flex: 1,
+    gap: 2,
   },
   proofError: { backgroundColor: colors.danger.background, borderColor: colors.danger.border },
   proofTitle: { ...typography.label, color: colors.neutral.text, flexShrink: 1 },

@@ -33,7 +33,11 @@ import {
   IconRoleFleet,
   LeopardEmblem,
   LeopardMobileLogo,
+  OtpPhoneHeroIcon,
+  VietnamFlagIcon,
 } from '../ui/icons/CoreIcons';
+import { TruckLoader } from '../ui/TruckLoader';
+import { OtpSixCellInput } from './OtpSixCellInput';
 
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -179,12 +183,42 @@ export function LoginScreen({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(60);
+  const [isVerified, setIsVerified] = useState(false);
+  const [resendSuccessMsg, setResendSuccessMsg] = useState<string | null>(null);
   const [stage, setStage] = useState<StageSize>({ width: 0, height: 0 });
   const otpChallengeRef = useRef<OtpChallenge | null>(null);
   const firebaseReady = isFirebaseConfigured();
 
   const reduceMotion = useReducedMotion();
   const screenEntranceAnim = useRef(new Animated.Value(0)).current;
+  const iconPopAnim = useRef(new Animated.Value(0)).current;
+
+  // Pop-in animation for OTP Hero Icon
+  useEffect(() => {
+    if (authPhase === 'otp') {
+      if (reduceMotion) {
+        iconPopAnim.setValue(1);
+      } else {
+        iconPopAnim.setValue(0);
+        Animated.spring(iconPopAnim, {
+          toValue: 1,
+          friction: 6,
+          tension: 80,
+          useNativeDriver: USE_NATIVE_DRIVER,
+        }).start();
+      }
+    }
+  }, [authPhase, iconPopAnim, reduceMotion]);
+
+  // Real-time Resend countdown timer
+  useEffect(() => {
+    if (authPhase !== 'otp' || resendSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setResendSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [authPhase, resendSeconds]);
 
   // Animation Controllers:
   // 1. roadScrollAnim: 0 -> 1 looping (continuous smooth highway dashed line travel)
@@ -554,7 +588,11 @@ export function LoginScreen({
     const accessToken = res.session?.accessToken ?? '';
     const refreshToken = res.session?.refreshToken ?? '';
     await sessionStore.setSession(accessToken, refreshToken, res.user.role);
-    onLoginSuccess?.(res.user?.role ?? 'CUSTOMER', res.user?.profileComplete ?? false);
+    if (res.user?.profileComplete !== undefined) {
+      onLoginSuccess?.(res.user?.role ?? 'CUSTOMER', res.user.profileComplete);
+    } else {
+      (onLoginSuccess as any)?.(res.user?.role ?? 'CUSTOMER');
+    }
   };
 
   const describeAuthError = (err: unknown): string => {
@@ -610,9 +648,12 @@ export function LoginScreen({
 
     setIsSubmitting(true);
     setErrorMsg(null);
+    setResendSuccessMsg(null);
     try {
       otpChallengeRef.current = await sendPhoneOtp(phone, RECAPTCHA_CONTAINER_ID);
       setOtpCode('');
+      setResendSeconds(60);
+      setIsVerified(false);
       setAuthPhase('otp');
     } catch (err) {
       resetRecaptcha();
@@ -622,20 +663,42 @@ export function LoginScreen({
     }
   };
 
-  const handleVerifyOtp = async () => {
+  const handleResendOtp = async () => {
+    if (isSubmitting || resendSeconds > 0) return;
+    setIsSubmitting(true);
+    setErrorMsg(null);
+    setResendSuccessMsg(null);
+    try {
+      otpChallengeRef.current = await sendPhoneOtp(phone, RECAPTCHA_CONTAINER_ID);
+      setResendSeconds(60);
+      setOtpCode('');
+      setResendSuccessMsg('Đã gửi lại mã OTP mới');
+    } catch (err) {
+      resetRecaptcha();
+      setErrorMsg(describeAuthError(err) || 'Không gửi lại được mã OTP, vui lòng thử lại');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyOtp = async (explicitCode?: string) => {
+    const codeToVerify = (typeof explicitCode === 'string' ? explicitCode : otpCode).trim();
     const challenge = otpChallengeRef.current;
     if (isSubmitting || !challenge) return;
-    if (otpCode.trim().length < 6) {
+    if (codeToVerify.length < 6) {
       setErrorMsg('Vui lòng nhập đủ 6 số mã OTP');
       return;
     }
 
     setIsSubmitting(true);
     setErrorMsg(null);
+    setResendSuccessMsg(null);
     try {
-      const idToken = await challenge.confirm(otpCode.trim());
+      const idToken = await challenge.confirm(codeToVerify);
+      setIsVerified(true);
       await exchangeIdToken(idToken);
     } catch (err) {
+      setIsVerified(false);
       setErrorMsg(describeAuthError(err));
     } finally {
       setIsSubmitting(false);
@@ -662,6 +725,8 @@ export function LoginScreen({
     otpChallengeRef.current = null;
     setOtpCode('');
     setErrorMsg(null);
+    setResendSuccessMsg(null);
+    setIsVerified(false);
     setAuthPhase('phone');
   };
 
@@ -677,7 +742,11 @@ export function LoginScreen({
       const refreshToken = res.session?.refreshToken ?? '';
       await sessionStore.setSession(accessToken, refreshToken, res.user.role);
       const role = res.user?.role ?? defaultRole;
-      onLoginSuccess?.(role, res.user?.profileComplete ?? false);
+      if (res.user?.profileComplete !== undefined) {
+        onLoginSuccess?.(role, res.user.profileComplete);
+      } else {
+        (onLoginSuccess as any)?.(role);
+      }
     } catch (err) {
       const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
       const message = (err as { message?: string })?.message;
@@ -958,152 +1027,116 @@ export function LoginScreen({
 
         {/* ================= LUXURY LOGIN FORM CARD ================= */}
         <View style={styles.luxuryCard}>
-          {authPhase === 'phone' ? (
-            <>
-              <View style={styles.fieldGroup}>
-                <Text style={styles.inputLabel}>Số điện thoại</Text>
-
-                <View
-                  style={[
-                    styles.customInputWrapper,
-                    isInputFocused && styles.customInputWrapperFocused,
-                  ]}
-                >
-                  <View style={styles.countryBadge}>
-                    <Text style={styles.countryFlag}>🇻🇳</Text>
-                    <Text style={styles.countryCode}>+84</Text>
-                    <View style={styles.badgeDivider} />
-                  </View>
-
-                  <TextInput
-                    accessibilityLabel="Số điện thoại"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isSubmitting}
-                    keyboardType="phone-pad"
-                    onBlur={() => setIsInputFocused(false)}
-                    onChangeText={setPhone}
-                    onFocus={() => setIsInputFocused(true)}
-                    placeholder="Nhập số điện thoại..."
-                    placeholderTextColor="#94A3B8"
-                    style={styles.customTextInput}
-                    value={phone}
-                  />
+          <View style={styles.fieldGroup}>
+            <View style={styles.labelRow}>
+              <Text style={styles.inputLabel}>Số điện thoại</Text>
+              {isLikelyVnPhone(phone) ? (
+                <View style={styles.validBadge}>
+                  <Text style={styles.validCheckIcon}>✓</Text>
+                  <Text style={styles.validText}>Hợp lệ</Text>
                 </View>
-              </View>
-
-              <Pressable
-                accessibilityLabel="Gửi mã OTP"
-                accessibilityRole="button"
-                accessibilityState={{
-                  busy: isSubmitting,
-                  disabled: isSubmitting || !phone.trim() || !firebaseReady,
-                }}
-                disabled={isSubmitting || !phone.trim() || !firebaseReady}
-                onPress={handleSendOtp}
-                style={({ pressed }) => [
-                  styles.primaryCtaBtn,
-                  (!phone.trim() || isSubmitting || !firebaseReady) &&
-                  styles.primaryCtaBtnDisabled,
-                  pressed && styles.primaryCtaBtnPressed,
-                ]}
-              >
-                <View pointerEvents="none" style={styles.ctaHighlight} />
-                <Text style={styles.primaryCtaText}>
-                  {isSubmitting ? 'Đang gửi...' : 'Gửi mã OTP'}
-                </Text>
-              </Pressable>
-
-              <View style={styles.orRow}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.orText}>hoặc</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <Pressable
-                accessibilityLabel="Đăng nhập với Google"
-                accessibilityRole="button"
-                disabled={isSubmitting || !firebaseReady}
-                onPress={handleGoogleLogin}
-                style={({ pressed }) => [
-                  styles.googleBtn,
-                  (isSubmitting || !firebaseReady) && styles.googleBtnDisabled,
-                  pressed && styles.primaryCtaBtnPressed,
-                ]}
-              >
-                <Text style={styles.googleG}>G</Text>
-                <Text style={styles.googleBtnText}>Đăng nhập với Google</Text>
-              </Pressable>
-
-              {!firebaseReady ? (
-                <Text style={styles.configNote}>
-                  Chưa cấu hình Firebase — dùng tài khoản demo bên dưới.
-                </Text>
               ) : null}
-            </>
-          ) : (
-            <>
-              <View style={styles.fieldGroup}>
-                <Text style={styles.inputLabel}>
-                  Nhập mã OTP gửi tới {toE164Vn(phone)}
-                </Text>
+            </View>
 
-                <View
-                  style={[
-                    styles.customInputWrapper,
-                    isInputFocused && styles.customInputWrapperFocused,
-                  ]}
-                >
-                  <TextInput
-                    accessibilityLabel="Mã OTP"
-                    autoFocus
-                    editable={!isSubmitting}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    onBlur={() => setIsInputFocused(false)}
-                    onChangeText={setOtpCode}
-                    onFocus={() => setIsInputFocused(true)}
-                    placeholder="______"
-                    placeholderTextColor="#94A3B8"
-                    style={[styles.customTextInput, styles.otpInput]}
-                    value={otpCode}
-                  />
-                </View>
+            <View
+              style={[
+                styles.customInputWrapper,
+                isInputFocused && styles.customInputWrapperFocused,
+                !isInputFocused && isLikelyVnPhone(phone) && styles.customInputWrapperValid,
+              ]}
+            >
+              <View style={styles.countryBadge}>
+                <VietnamFlagIcon height={15} width={22} />
+                <Text style={styles.countryCode}>+84</Text>
+                <Text style={styles.countryChevron}>▾</Text>
               </View>
 
-              <Pressable
-                accessibilityLabel="Xác nhận mã OTP"
-                accessibilityRole="button"
-                accessibilityState={{
-                  busy: isSubmitting,
-                  disabled: isSubmitting || otpCode.trim().length < 6,
-                }}
-                disabled={isSubmitting || otpCode.trim().length < 6}
-                onPress={handleVerifyOtp}
-                style={({ pressed }) => [
-                  styles.primaryCtaBtn,
-                  (otpCode.trim().length < 6 || isSubmitting) &&
-                  styles.primaryCtaBtnDisabled,
-                  pressed && styles.primaryCtaBtnPressed,
-                ]}
-              >
-                <View pointerEvents="none" style={styles.ctaHighlight} />
-                <Text style={styles.primaryCtaText}>
-                  {isSubmitting ? 'Đang xác nhận...' : 'Xác nhận'}
-                </Text>
-              </Pressable>
+              <View style={styles.badgeDivider} />
 
-              <Pressable
-                accessibilityRole="button"
-                disabled={isSubmitting}
-                hitSlop={8}
-                onPress={handleChangePhone}
-                style={styles.changePhoneBtn}
-              >
-                <Text style={styles.changePhoneLink}>← Đổi số điện thoại</Text>
-              </Pressable>
-            </>
-          )}
+              <TextInput
+                accessibilityLabel="Số điện thoại"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isSubmitting}
+                keyboardType="phone-pad"
+                onBlur={() => setIsInputFocused(false)}
+                onChangeText={setPhone}
+                onFocus={() => setIsInputFocused(true)}
+                placeholder="Nhập số điện thoại..."
+                placeholderTextColor="#94A3B8"
+                style={styles.customTextInput}
+                value={phone}
+              />
+
+              {phone.length > 0 && !isSubmitting ? (
+                <Pressable
+                  accessibilityLabel="Xóa số điện thoại"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => setPhone('')}
+                  style={styles.clearBtn}
+                >
+                  <Text style={styles.clearBtnText}>✕</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+
+          {/* Animated Truck Loader while sending OTP */}
+          {isSubmitting ? (
+            <View style={styles.submittingTruckWrap}>
+              <TruckLoader showRoad={true} showText={false} size="sm" />
+            </View>
+          ) : null}
+
+          <Pressable
+            accessibilityLabel="Gửi mã OTP"
+            accessibilityRole="button"
+            accessibilityState={{
+              busy: isSubmitting,
+              disabled: isSubmitting || !isLikelyVnPhone(phone) || !firebaseReady,
+            }}
+            disabled={isSubmitting || !isLikelyVnPhone(phone) || !firebaseReady}
+            onPress={handleSendOtp}
+            style={({ pressed }) => [
+              styles.primaryCtaBtn,
+              (!isLikelyVnPhone(phone) || isSubmitting || !firebaseReady) &&
+                styles.primaryCtaBtnDisabled,
+              pressed && styles.primaryCtaBtnPressed,
+            ]}
+          >
+            <View pointerEvents="none" style={styles.ctaHighlight} />
+            <Text style={styles.primaryCtaText}>
+              {isSubmitting ? 'Đang gửi mã...' : 'Gửi mã OTP'}
+            </Text>
+          </Pressable>
+
+          <View style={styles.orRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.orText}>hoặc</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <Pressable
+            accessibilityLabel="Đăng nhập với Google"
+            accessibilityRole="button"
+            disabled={isSubmitting || !firebaseReady}
+            onPress={handleGoogleLogin}
+            style={({ pressed }) => [
+              styles.googleBtn,
+              (isSubmitting || !firebaseReady) && styles.googleBtnDisabled,
+              pressed && styles.primaryCtaBtnPressed,
+            ]}
+          >
+            <Text style={styles.googleG}>G</Text>
+            <Text style={styles.googleBtnText}>Đăng nhập với Google</Text>
+          </Pressable>
+
+          {!firebaseReady ? (
+            <Text style={styles.configNote}>
+              Chưa cấu hình Firebase — dùng tài khoản demo bên dưới.
+            </Text>
+          ) : null}
 
           {/* Invisible reCAPTCHA container required by Firebase web Phone Auth */}
           <View nativeID={RECAPTCHA_CONTAINER_ID} style={styles.recaptcha} />
@@ -1212,6 +1245,164 @@ export function LoginScreen({
           </View>
         ) : null}
       </Animated.View>
+
+      {/* ================= FLOATING CENTERED OTP MODAL WITH DIMMED / BLURRED BACKDROP ================= */}
+      {authPhase === 'otp' && (
+        <View style={styles.modalOverlay}>
+          <Pressable
+            accessibilityLabel="Đóng modal xác thực"
+            onPress={handleChangePhone}
+            style={styles.modalBackdrop}
+          />
+
+          <View style={styles.modalContentCard}>
+            {/* Top Navigation Row: Back Button */}
+            <View style={styles.otpHeaderRow}>
+              <Pressable
+                accessibilityLabel="Đổi số điện thoại"
+                accessibilityRole="button"
+                disabled={isSubmitting}
+                hitSlop={8}
+                onPress={handleChangePhone}
+                style={styles.otpBackBtn}
+              >
+                <Text style={styles.otpBackBtnText}>← Đổi số điện thoại</Text>
+              </Pressable>
+            </View>
+
+            {/* Hero Icon with Pop-in / Bounce Animation & Pulse Waves */}
+            <View style={styles.otpHeroWrapper}>
+              <Animated.View
+                style={[
+                  styles.otpHeroBadge,
+                  isVerified && styles.otpHeroBadgeSuccess,
+                  { transform: [{ scale: iconPopAnim }] },
+                ]}
+              >
+                <OtpPhoneHeroIcon isVerified={isVerified} size={50} />
+              </Animated.View>
+            </View>
+
+            {/* Title & Subtitle */}
+            <View style={styles.otpTitleGroup}>
+              <Text style={styles.otpHeadline}>
+                {isVerified ? 'Xác thực thành công! 🎉' : 'Xác nhận mã OTP'}
+              </Text>
+              <Text style={styles.otpSubline}>
+                {isVerified
+                  ? `Số điện thoại ${toE164Vn(phone)} đã được xác thực an toàn.`
+                  : 'Nhập mã gồm 6 chữ số đã được gửi tới '}
+                {!isVerified ? (
+                  <Text style={styles.otpPhoneHighlight}>{toE164Vn(phone)}</Text>
+                ) : null}
+              </Text>
+            </View>
+
+            {/* 6-Digit PIN Cells Input with Auto-advance & Shake feedback */}
+            <OtpSixCellInput
+              autoFocus
+              editable={!isSubmitting && !isVerified}
+              hasError={Boolean(errorMsg)}
+              isSubmitting={isSubmitting}
+              onChangeText={(text) => {
+                setOtpCode(text);
+                if (errorMsg) setErrorMsg(null);
+                if (resendSuccessMsg) setResendSuccessMsg(null);
+              }}
+              onComplete={(code) => {
+                void handleVerifyOtp(code);
+              }}
+              value={otpCode}
+            />
+
+            {/* Animated Truck Loader while verifying OTP */}
+            {isSubmitting ? (
+              <View style={styles.submittingTruckWrap}>
+                <TruckLoader showRoad={true} showText={false} size="sm" />
+              </View>
+            ) : null}
+
+            {/* Error Box inside modal if error during OTP verification */}
+            {errorMsg ? (
+              <View style={styles.errorBox} testID="otp-error-banner">
+                <Text accessibilityRole="alert" style={styles.errorText}>
+                  {errorMsg}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Success Info Banner if verified */}
+            {isVerified ? (
+              <View style={styles.verifiedSuccessBox}>
+                <View style={styles.verifiedDot} />
+                <Text style={styles.verifiedSuccessText}>Đang chuyển hướng vào hệ thống...</Text>
+              </View>
+            ) : null}
+
+            {/* Optional Resend feedback message */}
+            {resendSuccessMsg ? (
+              <View style={styles.infoBanner}>
+                <Text style={styles.infoBannerText}>✓ {resendSuccessMsg}</Text>
+              </View>
+            ) : null}
+
+            {/* Primary Submit CTA Button (Accessibility + Auto/Manual Trigger) */}
+            <Pressable
+              accessibilityLabel="Xác nhận mã OTP"
+              accessibilityRole="button"
+              accessibilityState={{
+                busy: isSubmitting,
+                disabled: isSubmitting || otpCode.trim().length < 6 || isVerified,
+              }}
+              disabled={isSubmitting || otpCode.trim().length < 6 || isVerified}
+              onPress={() => void handleVerifyOtp()}
+              style={({ pressed }) => [
+                styles.primaryCtaBtn,
+                styles.otpSubmitBtn,
+                isVerified && styles.primaryCtaBtnVerified,
+                (otpCode.trim().length < 6 || isSubmitting) &&
+                  !isVerified &&
+                  styles.primaryCtaBtnDisabled,
+                pressed && styles.primaryCtaBtnPressed,
+              ]}
+            >
+              <View pointerEvents="none" style={styles.ctaHighlight} />
+              <Text style={styles.primaryCtaText}>
+                {isVerified
+                  ? '✓ Đã xác thực'
+                  : isSubmitting
+                  ? 'Đang xác thực...'
+                  : 'Xác nhận mã OTP'}
+              </Text>
+            </Pressable>
+
+            {/* Rate Limiting Resend Countdown */}
+            {!isVerified ? (
+              <View style={styles.resendArea}>
+                {resendSeconds > 0 ? (
+                  <Text style={styles.resendCountdownText}>
+                    Gửi lại mã sau{' '}
+                    <Text style={styles.resendCountdownTime}>
+                      00:{resendSeconds < 10 ? `0${resendSeconds}` : resendSeconds}
+                    </Text>
+                  </Text>
+                ) : (
+                  <Pressable
+                    accessibilityLabel="Gửi lại mã OTP"
+                    accessibilityRole="button"
+                    disabled={isSubmitting}
+                    hitSlop={8}
+                    onPress={handleResendOtp}
+                    style={styles.resendBtn}
+                  >
+                    <Text style={styles.resendActionLink}>Gửi lại mã OTP</Text>
+                  </Pressable>
+                )}
+              </View>
+            ) : null}
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -1223,6 +1414,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
+    minHeight: '100%',
+    position: 'relative',
     justifyContent: 'space-between',
   },
 
@@ -1514,6 +1707,30 @@ const styles = StyleSheet.create({
   fieldGroup: {
     gap: spacing.xs,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  validBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  validCheckIcon: {
+    color: '#16A34A',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  validText: {
+    color: '#15803D',
+    fontSize: 11,
+    fontWeight: '700',
+  },
   inputLabel: {
     fontSize: 13,
     fontWeight: '700',
@@ -1524,46 +1741,84 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderColor: '#CBD5E1',
-    borderRadius: radius.card,
+    borderRadius: 14,
     borderWidth: 1.5,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 10,
     height: 52,
+    gap: 8,
   },
   customInputWrapperFocused: {
     borderColor: scene.ctaTop,
+    backgroundColor: '#FFFFFF',
     shadowColor: scene.ctaTop,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  customInputWrapperValid: {
+    borderColor: '#86EFAC',
   },
   countryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingRight: spacing.xs,
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: radius.control,
   },
   countryFlag: {
-    fontSize: 16,
+    fontSize: 15,
   },
   countryCode: {
     fontSize: 13.5,
     fontWeight: '700',
     color: scene.ink,
   },
+  countryChevron: {
+    fontSize: 10,
+    color: scene.muted,
+    fontWeight: '700',
+    marginTop: -1,
+  },
   badgeDivider: {
     width: 1,
-    height: 20,
-    backgroundColor: '#CBD5E1',
-    marginLeft: 6,
+    height: 22,
+    backgroundColor: '#E2E8F0',
   },
   customTextInput: {
     flex: 1,
-    fontSize: 14.5,
+    fontSize: 16,
     color: scene.ink,
-    paddingHorizontal: spacing.xs,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    paddingHorizontal: spacing.xxs,
     fontWeight: '600',
+    letterSpacing: 0.3,
+    height: '100%',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        outlineWidth: 0,
+      } as any,
+    }),
+  },
+  clearBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearBtnText: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '700',
+    lineHeight: 13,
+  },
+  otpInputWrapper: {
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
   },
 
   /* Primary Gradient Button */
@@ -1606,11 +1861,209 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
 
-  /* OTP + Google + reCAPTCHA */
-  otpInput: {
-    letterSpacing: 8,
+  /* Floating Centered Modal & Backdrop */
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+      } as any,
+    }),
+  },
+  modalContentCard: {
+    width: '100%',
+    maxWidth: 390,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: spacing.lg,
+    gap: spacing.md,
+    alignItems: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.28,
+    shadowRadius: 28,
+    elevation: 16,
+  },
+
+  /* OTP Confirmation Card & States */
+  otpCardBody: {
+    gap: spacing.md,
+    alignItems: 'center',
+    width: '100%',
+  },
+  otpHeaderRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  otpBackBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderRadius: radius.control,
+  },
+  otpBackBtnText: {
+    color: scene.ctaTop,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  otpHeroWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  otpHeroBadge: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  otpHeroBadgeSuccess: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#86EFAC',
+    shadowColor: '#16A34A',
+  },
+  submittingTruckWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 2,
+    marginVertical: 4,
+  },
+  otpPhoneIconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  otpHeroIconText: {
+    fontSize: 30,
+  },
+  otpHeroSuccessIcon: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#16A34A',
+  },
+  otpTitleGroup: {
+    alignItems: 'center',
+    gap: 4,
+    width: '100%',
+    paddingHorizontal: spacing.xs,
+  },
+  otpHeadline: {
+    color: scene.ink,
     fontSize: 20,
+    fontWeight: '800',
     textAlign: 'center',
+  },
+  otpSubline: {
+    color: scene.muted,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  otpPhoneHighlight: {
+    color: scene.ink,
+    fontWeight: '700',
+  },
+  otpSubmitBtn: {
+    width: '100%',
+    marginTop: 4,
+  },
+  primaryCtaBtnVerified: {
+    backgroundColor: '#16A34A',
+    shadowColor: '#16A34A',
+  },
+  verifiedSuccessBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: radius.card,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  verifiedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+  },
+  verifiedSuccessText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#15803D',
+  },
+  infoBanner: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    borderRadius: radius.control,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  infoBannerText: {
+    color: '#1E40AF',
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
+  resendArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  resendCountdownText: {
+    fontSize: 13,
+    color: scene.muted,
+    fontWeight: '500',
+  },
+  resendCountdownTime: {
+    fontWeight: '700',
+    color: scene.ink,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  resendBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  resendActionLink: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: scene.ctaTop,
+    textDecorationLine: 'underline',
   },
   orRow: {
     alignItems: 'center',
