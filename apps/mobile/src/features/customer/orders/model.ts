@@ -66,6 +66,19 @@ export type CustomerCreateFormView = Readonly<{
   fieldErrors: Readonly<Partial<Record<'pickup' | 'dropoff' | 'cargoWeight', string>>>;
 }>;
 
+export type CongestionLevel = 'low' | 'moderate' | 'heavy' | 'severe' | 'unknown';
+
+export type CustomerRouteOptionView = Readonly<{
+  routeId: string;
+  estimateToken: string;
+  isRecommended: boolean;
+  durationSeconds: number;
+  distanceLabel: string;
+  priceLabel: string;
+  congestionLevel: CongestionLevel;
+  congestionLabel: string;
+}>;
+
 export type CustomerEstimateView =
   | Readonly<{ kind: 'none' | 'outdated' | 'expired' }>
   | Readonly<{ kind: 'loading'; source: ProviderSource }>
@@ -73,9 +86,8 @@ export type CustomerEstimateView =
   | Readonly<{
       kind: 'ready';
       source: ProviderSource;
-      durationSeconds: number;
-      distanceLabel: string;
-      priceLabel: string;
+      routes: readonly CustomerRouteOptionView[];
+      selectedRouteId: string;
       calculatedAtLabel: string;
     }>;
 

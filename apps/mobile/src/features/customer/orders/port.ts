@@ -14,7 +14,7 @@ export type CustomerOrdersPort = Readonly<{
   getCreateView: () => Promise<CustomerCreateView>;
   getOrderDetailView: (orderId: string) => Promise<CustomerDetailView>;
   estimateOrder: (form: CustomerCreateFormView) => Promise<CustomerCreateView>;
-  createOrder: (form: CustomerCreateFormView) => Promise<CustomerDetailView>;
+  createOrder: (form: CustomerCreateFormView, estimateToken: string) => Promise<CustomerDetailView>;
   executeIntent: (intent: CustomerOrderIntent) => Promise<CustomerDetailView>;
   createPaymentQr?: (orderId: string) => Promise<CustomerDetailView>;
   getTrackingHistory?: (
