@@ -4,6 +4,7 @@ import type {
   PlaceCandidate,
   RouteEstimate,
   RouteInput,
+  CongestionLevel,
 } from './map-provider.js';
 import { MapProviderNotFoundError } from './map-provider.js';
 
@@ -43,6 +44,7 @@ interface VietmapRoutePath {
   distance?: unknown;
   time?: unknown;
   points?: unknown;
+  annotations?: unknown;
 }
 
 interface VietmapRouteResponse {
@@ -106,39 +108,63 @@ export class VietmapProvider implements MapProvider {
     };
   }
 
-  async route(input: RouteInput): Promise<RouteEstimate> {
+  async route(input: RouteInput): Promise<RouteEstimate[]> {
     const url = this.buildRouteUrl(input);
     const payload = await this.getJson<VietmapRouteResponse>(url, 'route');
-    const path = firstRoutePath(payload, this.options.apiKey);
-    const distance = numberOrNull(path.distance);
-    const durationMs = numberOrNull(path.time);
+    const paths = allRoutePaths(payload, this.options.apiKey);
+    const calculatedAt = this.now();
 
-    if (distance === null || durationMs === null || typeof path.points !== 'string') {
-      throw new VietmapProviderError('Vietmap route failed: missing route path');
+    const estimates = paths.flatMap((path) => {
+      const distance = numberOrNull(path.distance);
+      const durationMs = numberOrNull(path.time);
+
+      if (distance === null || durationMs === null || typeof path.points !== 'string') {
+        return [];
+      }
+
+      const durationS = Math.round(durationMs / 1_000);
+      const estimatedArrivalAt = new Date(calculatedAt.getTime() + durationS * 1_000);
+
+      return [
+        {
+          polyline: path.points,
+          distanceM: Math.round(distance),
+          durationS,
+          estimatedArrivalAt: estimatedArrivalAt.toISOString(),
+          estimatedPriceVnd: 0,
+          source: 'VIETMAP' as const,
+          calculatedAt: calculatedAt.toISOString(),
+          isEstimate: true,
+          congestionLevel: deriveCongestionLevel(path),
+        },
+      ];
+    });
+
+    if (estimates.length === 0) {
+      throw new VietmapProviderError('Vietmap route failed: no valid route path in response');
     }
 
-    const calculatedAt = this.now();
-    const durationS = Math.round(durationMs / 1_000);
-    const estimatedArrivalAt = new Date(calculatedAt.getTime() + durationS * 1_000);
-
-    return {
-      polyline: path.points,
-      distanceM: Math.round(distance),
-      durationS,
-      estimatedArrivalAt: estimatedArrivalAt.toISOString(),
-      estimatedPriceVnd: 0,
-      source: 'VIETMAP',
-      calculatedAt: calculatedAt.toISOString(),
-      isEstimate: true,
-    };
+    return estimates;
   }
 
   private buildRouteUrl(input: RouteInput): URL {
     const points = [input.pickup, ...input.stops, input.dropoff];
-    const url = this.buildUrl('/api/route/v4', {
+    const params: Record<string, string> = {
       points_encoded: 'true',
       vehicle: mapVehicleType(input.vehicleType),
-    });
+      alternative: 'true',
+      annotations: 'congestion',
+    };
+
+    if (input.vehicleType === 'TRUCK') {
+      if (input.cargoWeightKg === undefined) {
+        throw new VietmapProviderError('Vietmap route failed: cargoWeightKg is required for truck routing');
+      }
+
+      params.capacity = String(input.cargoWeightKg);
+    }
+
+    const url = this.buildUrl('/api/route/v4', params);
 
     for (const point of points) {
       url.searchParams.append('point', `${point.latitude},${point.longitude}`);
@@ -255,13 +281,8 @@ function mapPlaceCandidate(item: unknown): PlaceCandidate | null {
   };
 }
 
-function firstRoutePath(payload: VietmapRouteResponse, apiKey: string): VietmapRoutePath {
-  if (
-    payload.code !== 'OK' ||
-    !Array.isArray(payload.paths) ||
-    payload.paths.length === 0 ||
-    !isRecord(payload.paths[0])
-  ) {
+function allRoutePaths(payload: VietmapRouteResponse, apiKey: string): VietmapRoutePath[] {
+  if (payload.code !== 'OK' || !Array.isArray(payload.paths) || payload.paths.length === 0) {
     throw new VietmapProviderError(
       redactSecrets(
         `Vietmap route failed: ${stringOrNull(payload.messages) ?? 'no route found'}`,
@@ -270,7 +291,31 @@ function firstRoutePath(payload: VietmapRouteResponse, apiKey: string): VietmapR
     );
   }
 
-  return payload.paths[0] as VietmapRoutePath;
+  return payload.paths.filter((path): path is VietmapRoutePath => isRecord(path));
+}
+
+const CONGESTION_SEVERITY: readonly CongestionLevel[] = ['low', 'moderate', 'heavy', 'severe'];
+
+function deriveCongestionLevel(path: VietmapRoutePath): CongestionLevel {
+  const annotations = path.annotations;
+
+  if (!isRecord(annotations) || !Array.isArray(annotations.congestion)) {
+    return 'unknown';
+  }
+
+  let worst: CongestionLevel = 'unknown';
+  let worstRank = -1;
+
+  for (const level of annotations.congestion) {
+    const rank = CONGESTION_SEVERITY.indexOf(level as CongestionLevel);
+
+    if (rank > worstRank) {
+      worstRank = rank;
+      worst = level as CongestionLevel;
+    }
+  }
+
+  return worst;
 }
 
 async function responseMessage(response: Response): Promise<string> {

@@ -31,7 +31,7 @@ export class ResilientMapProvider implements MapProvider {
     return this.withDemoFallback((provider) => provider.geocode(placeId));
   }
 
-  async route(input: RouteInput): Promise<RouteEstimate> {
+  async route(input: RouteInput): Promise<RouteEstimate[]> {
     return this.withDemoFallback((provider) => provider.route(input));
   }
 
