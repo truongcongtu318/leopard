@@ -247,21 +247,51 @@ hiệu hóa người dùng” là feedback command thành công, trong khi statu
 
 ## 6. Screen anatomy
 
-### 6.1 `/admin` — Operations overview
+### 6.1 `/admin` — Operations overview (NexaFleet Bento Dispatch Console)
 
-Thứ tự region:
+Bố cục màn hình điều phối tổng quan tuân thủ chuẩn Bento 2 cột:
 
-1. `h1` “Tổng quan vận hành”, checked time và refresh action.
-2. Readiness alert chỉ khi failed/degraded; liveness/readiness không gộp thành một số.
-3. Compact metric strip: chỉ metric từ `/admin/dashboard`, có label, value, scope và
-   updated time; zero là dữ liệu hợp lệ, không bị thay bằng empty placeholder.
-4. Order status distribution bằng compact list/`dl`, dùng canonical labels.
-5. Exception queue filter theo domain/severity nếu response hỗ trợ; mỗi row có entity,
-   condition, updated time và link điều tra.
-6. Recent orders semantic table với Order, Status, Payment, Updated và Action.
+```text
++--------------------------------------------------------------------------------------------------+
+| Topbar: [Logo LEOPARD]      [Overview (Active)] Orders Drivers Fleets Users      [Search] (Bell) [Profile] |
++--------------------------------------------------------------------------------------------------+
+|                                                                 |                                |
+|  [CỘT TRÁI - ~62%]                                               |  [CỘT PHẢI - ~38%]              |
+|  +-----------------------------------------------------------+  |  +--------------------------+  |
+|  | BentoMapCard (Bản đồ Realtime Dark Mode)                  |  |  | StatusOverviewCard       |  |
+|  | - Search box kính mờ floating top-left                   |  |  | - 17% Đang xếp (amber)   |  |
+|  | - Fullscreen button & Zoom controls (+ / -)               |  |  | - 32% Đang giao (emerald)|  |
+|  | - Marker hộp bưu kiện 3D & active marker xanh ngọc lục bảo|  |  | - 13% Đang dỡ (coral)    |  |
+|  +-----------------------------------------------------------+  |  | - 38% Đã giao (magenta)  |  |
+|                                                                 |  | - Segmented Progress Bar |  |
+|  +-----------------------------------------------------------+  |  +--------------------------+  |
+|  | BentoOrdersCard (Sổ Đơn Hàng Orders (301))                |  |                                |
+|  | - Pill Filters: Tất cả | Chờ nhận | [Đã gán] | Hoàn thành |  |  +--------------------------+  |
+|  | - Table: Mã đơn | Khách hàng | Tuyến đường (A -> B)       |  |  | FulfillmentPerformance   |  |
+|  |          Trọng tải | ETA | Trạng thái (Pill Emerald/Pink) |  |  | - 89% KPI trung bình     |  |
+|  +-----------------------------------------------------------+  |  | - Cột đứng xanh lục      |  |
+|                                                                 |  +--------------------------+  |
+|                                                                 |                                |
+|                                                                 |  +--------------------------+  |
+|                                                                 |  | RevenueOverTimeCard      |  |
+|                                                                 |  | - Thẻ Gradient hoàng hôn |  |
+|                                                                 |  | - Doanh thu $239,187.00  |  |
+|                                                                 |  | - Đường sóng trắng mềm mại|  |
+|                                                                 |  | - [Tuần] [Tháng] [6T][Năm|  |
+|                                                                 |  +--------------------------+  |
++--------------------------------------------------------------------------------------------------+
+```
 
-Không tạo chart hoặc metric ngoài response để lấp khoảng trống. Khi chưa có activity,
-render trạng thái “Chưa có hoạt động vận hành” cùng timestamp, không tạo fake trend.
+Thứ tự region và cấu trúc chi tiết:
+1. **Header & Context Bar**: `h1` "Tổng quan vận hành", badge "Ca trực Pilot Đang Chạy" (pulse emerald), chỉ số liveness/readiness và thời gian snapshot.
+2. **Cột trái (~62% width)**:
+   - `BentoMapCard`: Container `rounded-3xl` tối ưu tỷ lệ hiển thị mạng lưới tuyến đường logistics Đà Nẵng, thanh tìm kiếm kính mờ, zoom controls và marker phân loại phương tiện/bưu kiện.
+   - `BentoOrdersCard`: Thẻ trắng `rounded-3xl` chứa bộ lọc pill và bảng danh sách đơn hàng tinh giản hiển thị rõ Tuyến đường mũi tên, Trọng tải, ETA và badge trạng thái.
+3. **Cột phải (~38% width)**:
+   - `StatusOverviewCard`: Tỷ lệ % phân bổ trạng thái kèm thanh phân đoạn màu liền mạch.
+   - `FulfillmentPerformanceCard`: Chỉ số tỷ lệ hoàn thành trung bình (89%) và biểu đồ cột đứng màu xanh ngọc lục bảo.
+   - `RevenueOverTimeCard`: Thẻ gradient hoàng hôn ấm áp với biểu đồ sóng trắng mềm mại và mốc thời gian.
+4. **Active Exceptions**: Khối cảnh báo ngoại lệ vận hành chỉ hiển thị khi có sự cố phát sinh thực tế.
 
 ### 6.2 List workbench dùng chung
 
