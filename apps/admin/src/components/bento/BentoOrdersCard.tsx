@@ -18,11 +18,11 @@ export interface BentoOrderItem {
 }
 
 export interface BentoOrdersCardProps {
-  title?: string;
-  totalCount?: number;
-  orders?: readonly BentoOrderItem[];
-  activeFilter?: string;
-  onFilterChange?: (filter: string) => void;
+  title?: string | undefined;
+  totalCount?: number | undefined;
+  orders?: readonly BentoOrderItem[] | undefined;
+  activeFilter?: string | undefined;
+  onFilterChange?: ((filter: string) => void) | undefined;
 }
 
 const DEFAULT_ORDERS: readonly BentoOrderItem[] = [

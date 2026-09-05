@@ -58,35 +58,34 @@ export function AdminOverviewScreen({
   const cancelledCount = view.orderDistribution.find((o) => o.status === 'CANCELLED')?.count ?? 2;
 
   const totalDistribution = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0) || 100;
-  const loadingCount = view.orderDistribution.find((o) => o.status === 'ACCEPTED' || o.status === 'ASSIGNED_DRIVER')?.count ?? 17;
-  const unloadingCount = view.orderDistribution.find((o) => o.status === 'ARRIVED_AT_DROPOFF')?.count ?? 13;
+  const loadingCount = view.orderDistribution.find((o) => o.status === 'REQUESTED' || o.status === 'PICKING_UP')?.count ?? 17;
+  const unloadingCount = view.orderDistribution.find((o) => o.status === 'PICKED_UP')?.count ?? 13;
 
   const loadingPercent = Math.round((loadingCount / totalDistribution) * 100) || 17;
   const inTransitPercent = Math.round((inTransitCount / totalDistribution) * 100) || 32;
   const unloadingPercent = Math.round((unloadingCount / totalDistribution) * 100) || 13;
   const deliveredPercent = Math.round((deliveredCount / totalDistribution) * 100) || 38;
 
+  const customerNames = ['Nova Retail', 'GreenMart', 'Alpha Trading', 'EuroParts'] as const;
+  const routes = [
+    { from: 'Berlin', to: 'Hamburg' },
+    { from: 'Munich', to: 'Vienna' },
+    { from: 'Warsaw', to: 'Prague' },
+    { from: 'Rotterdam', to: 'Paris' },
+  ] as const;
+  const weights = ['1.8 t', '0.9 t', '2.4 t', '3.2 t'] as const;
+
   const bentoOrders: BentoOrderItem[] | undefined = view.recentOrders.length > 0
-    ? view.recentOrders.slice(0, 4).map((o, idx) => {
-        const customerNames = ['Nova Retail', 'GreenMart', 'Alpha Trading', 'EuroParts'];
-        const routes = [
-          { from: 'Berlin', to: 'Hamburg' },
-          { from: 'Munich', to: 'Vienna' },
-          { from: 'Warsaw', to: 'Prague' },
-          { from: 'Rotterdam', to: 'Paris' },
-        ];
-        const weights = ['1.8 t', '0.9 t', '2.4 t', '3.2 t'];
-        return {
-          id: o.reference || o.id,
-          customer: customerNames[idx % customerNames.length],
-          route: routes[idx % routes.length],
-          weight: weights[idx % weights.length],
-          eta: o.updatedAtLabel,
-          status: o.status,
-          statusLabel: o.status === 'IN_TRANSIT' ? 'In Transit' : o.status === 'DELIVERED' ? 'Delivered' : o.status,
-          href: createAdminPreviewHref(o.href, 'order-detail', previewContext),
-        };
-      })
+    ? view.recentOrders.slice(0, 4).map((o, idx) => ({
+        id: o.reference || o.id,
+        customer: customerNames[idx % customerNames.length] ?? 'Khách hàng',
+        route: routes[idx % routes.length] ?? { from: 'Hải Châu', to: 'Sơn Trà' },
+        weight: weights[idx % weights.length] ?? '1.5 t',
+        eta: o.updatedAtLabel,
+        status: o.status,
+        statusLabel: o.status === 'IN_TRANSIT' ? 'In Transit' : o.status === 'DELIVERED' ? 'Delivered' : o.status,
+        href: createAdminPreviewHref(o.href, 'order-detail', previewContext),
+      }))
     : undefined;
 
   return (

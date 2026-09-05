@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Button,
   DataTable,
   OperationsPageHeader,
   ResponsiveResultList,
@@ -9,7 +10,7 @@ import {
   type DataTableColumn,
   type ResponsiveResultItem,
 } from '@leopard/ui';
-import type { ReactNode } from 'react';
+import React, { useState, type ReactNode } from 'react';
 
 import { createAdminPreviewHref, serializeAdminListFilters } from './adapter';
 import { AdminCommandLauncher } from './AdminCommandLauncher';
@@ -120,24 +121,75 @@ function orderColumns(previewContext?: AdminPreviewContext): DataTableColumn[] {
         return <div className="min-w-40"><StatusBadge domain="paymentStatus" status={order.paymentStatus} /><p className="mt-xxs text-xs tabular-nums">{order.amountLabel}</p></div>;
       },
     },
-    { key: 'action', header: 'Chi tiết', render: (row) => <OrderLink order={row.item as AdminOrderListItemView} previewContext={previewContext} /> },
+    {
+      key: 'action',
+      header: 'Hành động',
+      render: (row) => {
+        const order = row.item as AdminOrderListItemView;
+        return (
+          <a
+            aria-label={`Xem đơn ${order.reference}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs text-brand bg-brand/5 hover:bg-brand/10 border border-brand/20 transition-all shadow-2xs hover:shadow-xs group focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            href={createAdminPreviewHref(order.href, 'order-detail', previewContext)}
+          >
+            <span>Chi tiết</span>
+            <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+        );
+      },
+    },
   ];
 }
 
-function userColumns(): DataTableColumn[] {
+function userColumns(onSelectCommand?: (command: AdminCommandView) => void): DataTableColumn[] {
   return [
     {
       key: 'identity', header: 'Người dùng', render: (row) => {
         const user = row.item as AdminUserListItemView;
-        return <div className="min-w-48"><p className="font-semibold break-words">{user.displayName}</p><p className="mt-xxs text-xs text-neutral-muted">{user.maskedPhone}</p></div>;
+        return <div className="min-w-48"><p className="font-semibold break-words text-slate-800">{user.displayName}</p><p className="mt-xxs text-xs text-neutral-muted">{user.maskedPhone}</p></div>;
       },
     },
-    { key: 'role', header: 'Role', render: (row) => <span className="font-mono text-xs">{(row.item as AdminUserListItemView).role}</span> },
+    {
+      key: 'role',
+      header: 'Role',
+      render: (row) => (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-slate-100 text-slate-700">
+          {(row.item as AdminUserListItemView).role}
+        </span>
+      ),
+    },
     { key: 'status', header: 'Tài khoản', render: (row) => <StatusBadge domain="userStatus" status={(row.item as AdminUserListItemView).status} /> },
     {
       key: 'updated', header: 'Cập nhật', render: (row) => {
         const user = row.item as AdminUserListItemView;
-        return <div className="min-w-40"><p className="tabular-nums">{user.updatedAtLabel}</p>{user.exceptionLabel ? <p className="mt-xxs text-xs font-semibold text-danger-text">{user.exceptionLabel}</p> : null}</div>;
+        return <div className="min-w-36"><p className="tabular-nums text-xs text-slate-600">{user.updatedAtLabel}</p>{user.exceptionLabel ? <p className="mt-xxs text-xs font-semibold text-danger-text">{user.exceptionLabel}</p> : null}</div>;
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Hành động',
+      render: (row) => {
+        const user = row.item as AdminUserListItemView;
+        if (!user.availableCommands || user.availableCommands.length === 0) {
+          return <span className="text-xs text-slate-400 font-medium">—</span>;
+        }
+        return (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {user.availableCommands.map((command) => (
+              <Button
+                key={`${command.kind}-${command.targetId}`}
+                variant={command.buttonVariant}
+                size="sm"
+                className="h-8 min-h-[32px] px-2.5 text-xs font-semibold rounded-lg shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+                onPress={() => onSelectCommand?.(command)}
+              >
+                {command.commandLabel}
+              </Button>
+            ))}
+          </div>
+        );
       },
     },
   ];
@@ -210,9 +262,10 @@ function driverColumns(previewContext?: AdminPreviewContext): DataTableColumn[] 
 function columnsFor(
   screen: AdminListScreenName,
   previewContext?: AdminPreviewContext,
+  onSelectCommand?: (command: AdminCommandView) => void,
 ): DataTableColumn[] {
   if (screen === 'orders') return orderColumns(previewContext);
-  if (screen === 'users') return userColumns();
+  if (screen === 'users') return userColumns(onSelectCommand);
   if (screen === 'fleets') return fleetColumns();
   return driverColumns(previewContext);
 }
@@ -220,6 +273,7 @@ function columnsFor(
 function mobileItem(
   item: AdminListItemView,
   previewContext?: AdminPreviewContext,
+  onSelectCommand?: (command: AdminCommandView) => void,
 ): ResponsiveResultItem {
   if (item.entity === 'order') {
     return {
@@ -233,7 +287,18 @@ function mobileItem(
         { id: 'payment', label: 'Thanh toán', value: <StatusBadge domain="paymentStatus" status={item.paymentStatus} /> },
         { id: 'amount', label: 'Số tiền', value: item.amountLabel },
       ],
-      actions: <OrderLink order={item} previewContext={previewContext} />,
+      actions: (
+        <a
+          aria-label={`Xem đơn ${item.reference}`}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs text-brand bg-brand/5 hover:bg-brand/10 border border-brand/20 transition-all shadow-2xs"
+          href={createAdminPreviewHref(item.href, 'order-detail', previewContext)}
+        >
+          <span>Chi tiết</span>
+          <svg className="w-3.5 h-3.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+      ),
     };
   }
   if (item.entity === 'user') {
@@ -247,6 +312,21 @@ function mobileItem(
         { id: 'updated', label: 'Cập nhật', value: item.updatedAtLabel },
         ...(item.exceptionLabel ? [{ id: 'exception', label: 'Ngoại lệ', value: item.exceptionLabel }] : []),
       ],
+      actions: item.availableCommands.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {item.availableCommands.map((command) => (
+            <Button
+              key={`${command.kind}-${command.targetId}`}
+              variant={command.buttonVariant}
+              size="sm"
+              className="h-8 min-h-[32px] px-2.5 text-xs font-semibold rounded-lg shadow-2xs"
+              onPress={() => onSelectCommand?.(command)}
+            >
+              {command.commandLabel}
+            </Button>
+          ))}
+        </div>
+      ) : undefined,
     };
   }
   if (item.entity === 'fleet') {
@@ -447,6 +527,16 @@ export function AdminListScreen({
   /** Live API command execution (runtime data path); absent in preview renders. */
   commandRuntime?: boolean | undefined;
 }>) {
+  const commands: readonly AdminCommandView[] = screen === 'users' && view.kind === 'list' && view.entity === 'users'
+    ? view.result.items.flatMap((item) => item.entity === 'user' ? item.availableCommands : [])
+    : [];
+
+  const initialCommand = view.kind === 'list' && view.dialogPreview && screen === 'users'
+    ? commands.find((candidate) => candidate.kind === view.dialogPreview?.commandKind) ?? null
+    : null;
+
+  const [activeCommand, setActiveCommand] = useState<AdminCommandView | null>(initialCommand);
+
   if (view.kind !== 'list' || view.entity !== screen) {
     if (view.kind === 'list') {
       return <ScreenState state="error" title="Sai phạm vi màn hình" message="Không render dữ liệu từ một Admin surface khác." />;
@@ -455,10 +545,7 @@ export function AdminListScreen({
   }
 
   const rows = view.result.items.map((item) => ({ id: item.id, item }));
-  const mobileItems = view.result.items.map((item) => mobileItem(item, previewContext));
-  const commands: readonly AdminCommandView[] = screen === 'users'
-    ? view.result.items.flatMap((item) => item.entity === 'user' ? item.availableCommands : [])
-    : [];
+  const mobileItems = view.result.items.map((item) => mobileItem(item, previewContext, (cmd) => setActiveCommand(cmd)));
 
   return (
     <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
@@ -470,61 +557,58 @@ export function AdminListScreen({
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
       <AdminFilters previewContext={previewContext} screen={screen} view={view} />
-      <AdminSurface
-        ariaLabel={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-        title={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-        description={view.result.filterSummary}
-      >
-        {view.state === 'no-results' ? (
-          <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hiện tại; dùng Xóa bộ lọc để phục hồi." />
-        ) : (
-          <div className="flex min-w-0 flex-col gap-md">
-            <dl
-              aria-label="Chỉ số tập kết quả"
-              className="grid grid-cols-2 gap-3 sm:grid-cols-3 p-3 rounded-2xl bg-slate-50/80 border border-slate-200/60"
-            >
-              <div className="min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs">
-                <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Kết quả</dt>
-                <dd aria-live="polite" className="mt-1 text-base sm:text-lg font-black text-slate-800 tabular-nums">
-                  {view.result.totalItems}
-                </dd>
-              </div>
-              <div className="min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs">
-                <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Trang</dt>
-                <dd className="mt-1 text-base sm:text-lg font-black text-slate-800 tabular-nums">
-                  {view.result.page} / {Math.max(view.result.totalPages, 1)}
-                </dd>
-              </div>
-              <div className="col-span-2 min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs sm:col-span-1">
-                <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Revision</dt>
-                <dd className="mt-1 font-mono text-xs font-semibold text-slate-700 break-all">{view.result.revision}</dd>
-              </div>
-            </dl>
-            <div className="hidden min-w-0 overflow-x-auto md:block">
-              <DataTable
-                caption={`${titleByScreen[screen]} trong phạm vi Admin và bộ lọc hiện tại`}
-                columns={columnsFor(screen, previewContext)}
-                rows={rows}
-              />
-            </div>
-            <ResponsiveResultList ariaLabel={`Kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')} dạng hàng responsive`} items={mobileItems} />
-            <AdminPaginationLinks hrefForPage={(page) => `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, page }, previewContext)}`} label={titleByScreen[screen].toLocaleLowerCase('vi')} page={view.result.page} totalPages={view.result.totalPages} />
-          </div>
-        )}
-      </AdminSurface>
-      {commands.length > 0 ? (
+      <div aria-hidden={activeCommand ? 'true' : undefined} className="min-w-0">
         <AdminSurface
-          title="Kiểm tra command người dùng"
-          description="Target và hậu quả phải được đọc trước khi gửi command."
-          variant="signal"
+          ariaLabel={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
+          title={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
+          description={view.result.filterSummary}
         >
-          <AdminCommandLauncher
-            commands={commands}
-            dialogPreview={view.dialogPreview}
-            runtime={commandRuntime === true}
-          />
+          {view.state === 'no-results' ? (
+            <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hiện tại; dùng Xóa bộ lọc để phục hồi." />
+          ) : (
+            <div className="flex min-w-0 flex-col gap-md">
+              <dl
+                aria-label="Chỉ số tập kết quả"
+                className="grid grid-cols-2 gap-3 sm:grid-cols-3 p-3 rounded-2xl bg-slate-50/80 border border-slate-200/60"
+              >
+                <div className="min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs">
+                  <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Kết quả</dt>
+                  <dd aria-live="polite" className="mt-1 text-base sm:text-lg font-black text-slate-800 tabular-nums">
+                    {view.result.totalItems}
+                  </dd>
+                </div>
+                <div className="min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs">
+                  <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Trang</dt>
+                  <dd className="mt-1 text-base sm:text-lg font-black text-slate-800 tabular-nums">
+                    {view.result.page} / {Math.max(view.result.totalPages, 1)}
+                  </dd>
+                </div>
+                <div className="col-span-2 min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs sm:col-span-1">
+                  <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Revision</dt>
+                  <dd className="mt-1 font-mono text-xs font-semibold text-slate-700 break-all">{view.result.revision}</dd>
+                </div>
+              </dl>
+              <div className="hidden min-w-0 overflow-x-auto md:block">
+                <DataTable
+                  caption={`${titleByScreen[screen]} trong phạm vi Admin và bộ lọc hiện tại`}
+                  columns={columnsFor(screen, previewContext, (cmd) => setActiveCommand(cmd))}
+                  rows={rows}
+                />
+              </div>
+              <ResponsiveResultList ariaLabel={`Kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')} dạng hàng responsive`} items={mobileItems} />
+              <AdminPaginationLinks hrefForPage={(page) => `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, page }, previewContext)}`} label={titleByScreen[screen].toLocaleLowerCase('vi')} page={view.result.page} totalPages={view.result.totalPages} />
+            </div>
+          )}
         </AdminSurface>
-      ) : null}
+      </div>
+      <AdminCommandLauncher
+        activeCommand={activeCommand}
+        commands={commands}
+        dialogPreview={view.dialogPreview}
+        hideTriggerList
+        onActiveCommandChange={setActiveCommand}
+        runtime={commandRuntime === true}
+      />
     </div>
   );
 }

@@ -108,7 +108,7 @@ export function FleetDashboardScreen({
         {/* Left Column (~62% width): Fleet Map + Orders Table */}
         <div className="xl:col-span-8 flex flex-col gap-4">
           <BentoMapCard
-            title={`Bản đồ điều phối ${view.scope.fleetName}`}
+            title={`Bản đồ điều phối ${view.scope.displayName}`}
             activeOrderCode="43C-182.91 Đang chạy"
             searchPlaceholder="Tìm kiếm đơn đội xe..."
           />

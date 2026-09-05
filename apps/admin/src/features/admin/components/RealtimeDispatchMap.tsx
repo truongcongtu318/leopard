@@ -268,13 +268,18 @@ export function RealtimeDispatchMap() {
             type="button"
             onClick={() => setFilter((curr) => (curr === 'PICKUP' ? 'ALL' : 'PICKUP'))}
             aria-pressed={filter === 'PICKUP'}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold shadow-md transition-all ${
+            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold shadow-xs transition-all motion-reduce:transition-none cursor-pointer ${
               filter === 'PICKUP'
-                ? 'bg-sky-600 text-white ring-2 ring-white'
-                : 'bg-[#38bdf8] text-white hover:opacity-95'
+                ? 'bg-sky-600 text-white ring-2 ring-white shadow-sky-600/30'
+                : 'bg-sky-500 text-white hover:bg-sky-600'
             }`}
           >
-            <span>🚚</span>
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <rect x="1" y="3" width="15" height="13" rx="2" />
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+              <circle cx="5.5" cy="18.5" r="2.5" />
+              <circle cx="18.5" cy="18.5" r="2.5" />
+            </svg>
             <span>Bán tải</span>
           </button>
 
@@ -282,13 +287,18 @@ export function RealtimeDispatchMap() {
             type="button"
             onClick={() => setFilter((curr) => (curr === 'HEAVY' ? 'ALL' : 'HEAVY'))}
             aria-pressed={filter === 'HEAVY'}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold shadow-md transition-all ${
+            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold shadow-xs transition-all motion-reduce:transition-none cursor-pointer ${
               filter === 'HEAVY'
-                ? 'bg-amber-500 text-slate-900 ring-2 ring-white'
-                : 'bg-[#fbbf24] text-slate-800 hover:opacity-95'
+                ? 'bg-amber-500 text-slate-950 ring-2 ring-white shadow-amber-500/30'
+                : 'bg-amber-400 text-slate-900 hover:bg-amber-500'
             }`}
           >
-            <span>🚛</span>
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="M10 17h4V5H2v12h3" />
+              <path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1" />
+              <circle cx="7.5" cy="17.5" r="2.5" />
+              <circle cx="17.5" cy="17.5" r="2.5" />
+            </svg>
             <span>Tải nặng</span>
           </button>
         </div>
@@ -299,7 +309,7 @@ export function RealtimeDispatchMap() {
             type="button"
             onClick={() => setZoom((z) => Math.min(z + 0.15, 1.6))}
             aria-label="Phóng to bản đồ"
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200/80 bg-white/95 text-sm font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
           >
             +
           </button>
@@ -307,7 +317,7 @@ export function RealtimeDispatchMap() {
             type="button"
             onClick={() => setZoom((z) => Math.max(z - 0.15, 0.85))}
             aria-label="Thu nhỏ bản đồ"
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200/80 bg-white/95 text-sm font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
           >
             −
           </button>
@@ -315,10 +325,10 @@ export function RealtimeDispatchMap() {
 
         {/* Selected Truck Inspector Card on Bottom-Left */}
         {selectedTruck ? (
-          <div className="absolute bottom-3 left-3 max-w-xs rounded-xl border border-slate-200 bg-white/95 p-3 shadow-md backdrop-blur-xs text-xs">
+          <div className="absolute bottom-3 left-3 max-w-xs rounded-2xl border border-white/80 bg-white/95 p-3.5 shadow-md backdrop-blur-md text-xs">
             <div className="flex items-center justify-between gap-2">
-              <span className="font-bold text-sky-700">{selectedTruck.plate}</span>
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+              <span className="font-mono font-bold text-sky-700">{selectedTruck.plate}</span>
+              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
                 {selectedTruck.status}
               </span>
             </div>
@@ -335,7 +345,7 @@ export function RealtimeDispatchMap() {
         ) : null}
 
         {/* Info Icon on Bottom-Right */}
-        <div className="absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-xs font-serif font-bold text-slate-700 shadow-xs">
+        <div className="absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 text-xs font-serif font-bold text-slate-600 shadow-xs border border-slate-200/60">
           i
         </div>
       </div>
