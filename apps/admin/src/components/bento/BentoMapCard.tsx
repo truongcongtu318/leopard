@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 export interface MapPackageMarker {
   readonly id: string;
@@ -252,13 +253,11 @@ export function BentoMapCard({
           aria-label={isFullscreen ? 'Thu nhỏ bản đồ' : 'Phóng to toàn màn hình'}
           className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-md"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            {isFullscreen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M4 10h6m0 0V4m0 6L3 3m17 7h-6m0 0V4m0 6l7-7" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            )}
-          </svg>
+          {isFullscreen ? (
+            <Minimize2 className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
+          ) : (
+            <Maximize2 className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
+          )}
         </button>
       </div>
 

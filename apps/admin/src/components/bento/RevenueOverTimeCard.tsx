@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 
 export interface RevenueOverTimeCardProps {
   title?: string;

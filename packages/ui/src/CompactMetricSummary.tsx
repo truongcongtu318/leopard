@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from './cn';
 
 export type CompactMetricSummaryItem = Readonly<{
@@ -51,18 +52,7 @@ export function CompactMetricSummary({
                   className="inline-flex items-center gap-1.5 text-slate-900 hover:text-brand transition-colors focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   {item.value}
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    aria-hidden="true"
-                    className="text-slate-400 group-hover:text-brand"
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-brand" aria-hidden="true" />
                 </a>
               ) : (
                 item.value

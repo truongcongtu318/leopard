@@ -1,6 +1,39 @@
 'use client';
 
 import React from 'react';
+import { ExternalLink, FileText } from 'lucide-react';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+} from 'recharts';
+
+const SPARKLINE_DATA = [
+  { t: '08h', val: 12 },
+  { t: '10h', val: 28 },
+  { t: '12h', val: 18 },
+  { t: '14h', val: 38 },
+  { t: '16h', val: 25 },
+  { t: '18h', val: 34 },
+];
+
+const VEHICLE_BAR_DATA = [
+  { cat: '1', val: 5 },
+  { cat: '2', val: 8 },
+  { cat: '3', val: 4 },
+  { cat: '4', val: 7 },
+  { cat: '5', val: 12 },
+];
+
+const ETA_DONUT_DATA = [
+  { name: 'OnTime', value: 94 },
+  { name: 'Variance', value: 6 },
+];
 
 export type ModernTelemetryProps = Readonly<{
   totalOrders?: number;
@@ -34,28 +67,26 @@ export function ModernTelemetryCards({
           </p>
         </div>
 
-        {/* Blue Wave Sparkline */}
-        <div className="my-2 h-10 w-full">
-          <svg className="h-full w-full" viewBox="0 0 100 40" fill="none" aria-hidden="true" focusable="false">
-            <path
-              d="M 0 30 C 15 35 25 15 40 25 C 55 35 65 10 80 20 C 90 28 95 15 100 18"
-              stroke="#0ea5e9"
-              strokeWidth="2.5"
-              fill="none"
-              strokeLinecap="round"
-            />
-            <path
-              d="M 0 30 C 15 35 25 15 40 25 C 55 35 65 10 80 20 C 90 28 95 15 100 18 L 100 40 L 0 40 Z"
-              fill="url(#blueWaveGrad2)"
-              opacity="0.3"
-            />
-            <defs>
-              <linearGradient id="blueWaveGrad2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#38bdf8" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-          </svg>
+        {/* Blue Wave Sparkline (Recharts) */}
+        <div className="my-2 h-10 w-full" aria-hidden="true">
+          <ResponsiveContainer width="100%" height={40} initialDimension={{ width: 220, height: 40 }}>
+            <AreaChart data={SPARKLINE_DATA} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="blueWaveGrad2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey="val"
+                stroke="#0ea5e9"
+                strokeWidth={2.5}
+                fill="url(#blueWaveGrad2)"
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Breakdown Dots */}
@@ -110,13 +141,13 @@ export function ModernTelemetryCards({
           </div>
         </div>
 
-        {/* Vertical Green Bars */}
-        <div className="flex h-9 items-end justify-between gap-1 px-1" aria-hidden="true">
-          <div className="h-5 w-3 rounded-xs bg-emerald-400" />
-          <div className="h-7 w-3 rounded-xs bg-emerald-500" />
-          <div className="h-4 w-3 rounded-xs bg-emerald-400" />
-          <div className="h-6 w-3 rounded-xs bg-emerald-500" />
-          <div className="h-9 w-3 rounded-xs bg-emerald-600" />
+        {/* Vertical Green Bars (Recharts) */}
+        <div className="h-9 w-full px-1" aria-hidden="true">
+          <ResponsiveContainer width="100%" height={36} initialDimension={{ width: 220, height: 36 }}>
+            <BarChart data={VEHICLE_BAR_DATA} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <Bar dataKey="val" fill="#10b981" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -128,25 +159,27 @@ export function ModernTelemetryCards({
           </p>
         </div>
 
-        {/* Circular Donut Ring Chart */}
+        {/* Circular Donut Ring Chart (Recharts) */}
         <div className="my-2 flex items-center justify-center">
           <div className="relative h-16 w-16">
-            <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
-              <path
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="#e0f2fe"
-                strokeWidth="4"
-              />
-              <path
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="#0ea5e9"
-                strokeDasharray="94, 100"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-            </svg>
+            <ResponsiveContainer width={64} height={64}>
+              <PieChart>
+                <Pie
+                  data={ETA_DONUT_DATA}
+                  dataKey="value"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={22}
+                  outerRadius={30}
+                  startAngle={90}
+                  endAngle={-270}
+                  isAnimationActive={false}
+                >
+                  <Cell fill="#0ea5e9" />
+                  <Cell fill="#e0f2fe" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center font-mono text-sm font-bold text-slate-800">
               94%
             </div>
@@ -188,9 +221,7 @@ export function ModernTelemetryCards({
             href="/admin/orders"
             className="flex items-center gap-2 text-slate-700 hover:text-emerald-600 transition-colors"
           >
-            <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <FileText className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
             <span className="line-clamp-1 leading-tight font-medium">Báo cáo ca trực Đà Nẵng</span>
             <span className="ml-auto text-slate-400 text-xs" aria-hidden="true">↗</span>
           </a>
@@ -198,9 +229,7 @@ export function ModernTelemetryCards({
             href="/admin/orders"
             className="flex items-center gap-2 text-slate-700 hover:text-emerald-600 transition-colors"
           >
-            <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <FileText className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
             <span className="line-clamp-1 leading-tight font-medium">Đối soát VietQR / payOS</span>
             <span className="ml-auto text-slate-400 text-xs" aria-hidden="true">↗</span>
           </a>
