@@ -151,11 +151,21 @@ export function BentoMapCard({
             attributionControl: false,
           });
 
-          // High-contrast Enterprise Dark CartoDB Tiles
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            subdomains: 'abcd',
-          }).addTo(map);
+          // Clean Professional Dark Gray GIS Basemap (No API key required, zero watermark)
+          L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+            {
+              maxZoom: 16,
+            },
+          ).addTo(map);
+
+          // Clean Street Names & Geography Labels Overlay
+          L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+            {
+              maxZoom: 16,
+            },
+          ).addTo(map);
 
           // Add Delivery Route Polyline (KCN Hòa Khánh -> Cảng Tiên Sa)
           const routeCoords: [number, number][] = [
@@ -312,7 +322,7 @@ export function BentoMapCard({
       <div className="relative z-20 flex items-center justify-between p-3 sm:p-4 pointer-events-auto">
         <div className="flex items-center gap-2 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 px-3 py-1 text-[11px] font-medium text-slate-300 shadow-md">
           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Bản đồ số thực tế · CartoDB Dark Matter</span>
+          <span>Bản đồ số thực tế · GIS Dark Mode</span>
         </div>
 
         {/* Custom Zoom Controls connected directly to Leaflet engine */}
