@@ -4,7 +4,12 @@ import { AuthService } from './auth.service.js';
 
 describe('AuthService.serializeUser', () => {
   const svc = Object.create(AuthService.prototype) as {
-    serializeUser: (u: unknown) => { profileComplete: boolean; name: string | null; email: string | null };
+    serializeUser: (u: unknown) => {
+      profileComplete: boolean;
+      name: string | null;
+      email: string | null;
+      avatarStorageKey: string | null;
+    };
   };
 
   it('marks profileComplete when onboardedAt is set and exposes name/email', () => {
@@ -23,5 +28,14 @@ describe('AuthService.serializeUser', () => {
       role: 'CUSTOMER', status: 'ACTIVE', onboardedAt: null,
     });
     expect(out.profileComplete).toBe(false);
+  });
+
+  it('includes avatarStorageKey in the serialized user when set', () => {
+    const out = svc.serializeUser({
+      id: 'u1', phone: '+84900000001', email: 'a@b.com', name: 'An',
+      role: 'CUSTOMER', status: 'ACTIVE', onboardedAt: new Date(),
+      avatarStorageKey: 'avatars/u1/x.png',
+    });
+    expect(out.avatarStorageKey).toBe('avatars/u1/x.png');
   });
 });

@@ -47,7 +47,7 @@ export class UsersService {
 
   private serialize(u: {
     id: string; phone: string | null; email: string | null; name: string | null;
-    role: Role; status: UserStatus; onboardedAt: Date | null;
+    role: Role; status: UserStatus; onboardedAt: Date | null; avatarStorageKey: string | null;
   }): AuthUser {
     return {
       id: u.id,
@@ -57,6 +57,7 @@ export class UsersService {
       role: u.role,
       status: u.status,
       profileComplete: u.onboardedAt != null,
+      avatarStorageKey: u.avatarStorageKey,
     };
   }
 }
