@@ -137,23 +137,8 @@ export function AdminOverviewScreen({
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {/* Clean Operations Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-800">
-            Tổng quan vận hành
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-1 text-xs text-slate-600 font-medium shadow-2xs">
-            <span className={`h-1.5 w-1.5 rounded-full ${view.health.liveness === 'UP' && view.health.readiness === 'READY' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-            <span>Hệ thống: {view.health.liveness === 'UP' && view.health.readiness === 'READY' ? 'Hoạt động bình thường' : 'Đang kiểm tra kết nối'}</span>
-          </div>
-          <div className="hidden sm:inline text-xs text-slate-400 tabular-nums font-medium">
-            Cập nhật: {view.checkedAtLabel}
-          </div>
-        </div>
-      </div>
+      {/* Screen Title (Screen Reader Only to maximize vertical dispatch map canvas) */}
+      <h1 className="sr-only">Tổng quan vận hành</h1>
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
 
       {/* NexaFleet Modern Bento Dispatch Console Grid: 2 Columns */}
