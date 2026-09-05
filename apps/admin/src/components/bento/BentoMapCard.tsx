@@ -19,6 +19,7 @@ export interface BentoMapCardProps {
   activeOrderCode?: string;
   searchPlaceholder?: string;
   markers?: readonly MapPackageMarker[];
+  selectedOrderId?: string | null | undefined;
   onSelectOrder?: (orderRef: string) => void;
   onSearch?: (query: string) => void;
 }
@@ -86,6 +87,7 @@ export function BentoMapCard({
   activeOrderCode = 'LP-A-260815-101 · Vinamilk Đà Nẵng ➔ Cảng Tiên Sa',
   searchPlaceholder = 'Tìm kiếm đơn hàng, phương tiện, tài xế...',
   markers = DEFAULT_MARKERS,
+  selectedOrderId,
   onSelectOrder,
   onSearch,
 }: BentoMapCardProps) {
@@ -96,6 +98,23 @@ export function BentoMapCard({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string>(markers[0]?.id ?? 'pkg-1');
   const [userClickedMarker, setUserClickedMarker] = useState<MapPackageMarker | null>(null);
+
+  // Sync external selectedOrderId with map view and marker selection
+  useEffect(() => {
+    if (!selectedOrderId) return;
+    const target = markers.find(
+      (m) => m.id === selectedOrderId || m.orderRef === selectedOrderId,
+    );
+    if (target) {
+      setSelectedMarkerId(target.id);
+      setUserClickedMarker(target);
+      if (mapInstanceRef.current) {
+        const lat = target.lat ?? (16.14 - (target.y / 100) * 0.16);
+        const lng = target.lng ?? (108.12 + (target.x / 100) * 0.15);
+        mapInstanceRef.current.flyTo([lat, lng], 13, { duration: 1.2 });
+      }
+    }
+  }, [selectedOrderId, markers]);
 
   const activeMarker = markers.find((m) => m.id === selectedMarkerId) ?? markers[0] ?? DEFAULT_MARKERS[0];
   const displayActiveLabel = userClickedMarker

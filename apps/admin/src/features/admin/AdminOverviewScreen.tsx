@@ -1,5 +1,7 @@
 'use client';
 
+import React, { useState } from 'react';
+
 import {
   AdminBoundaryState,
   AdminNotice,
@@ -36,6 +38,8 @@ export function AdminOverviewScreen({
   view: AdminOverviewRouteView;
   previewContext?: AdminPreviewContext;
 }>) {
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
   if (view.kind !== 'overview') {
     return (
       <div className="flex flex-col gap-md">
@@ -98,6 +102,39 @@ export function AdminOverviewScreen({
     };
   });
 
+  const hubCoordinates: Record<string, { lat: number; lng: number }> = {
+    'kcn hòa khánh': { lat: 16.075, lng: 108.145 },
+    'cảng tiên sa': { lat: 16.122, lng: 108.228 },
+    'cảng liên chiểu': { lat: 16.115, lng: 108.150 },
+    'kcn hòa cầm': { lat: 16.015, lng: 108.185 },
+    'kho cẩm lệ': { lat: 16.025, lng: 108.210 },
+    'kcn điện ngọc': { lat: 15.975, lng: 108.245 },
+    'hải châu': { lat: 16.068, lng: 108.220 },
+    'sơn trà': { lat: 16.085, lng: 108.240 },
+    'thanh khê': { lat: 16.062, lng: 108.180 },
+    'ngũ hành sơn': { lat: 16.020, lng: 108.248 },
+  };
+
+  const dynamicMarkers = bentoOrders.map((o, idx) => {
+    const fromLower = o.route.from.toLowerCase();
+    const toLower = o.route.to.toLowerCase();
+    const foundCoord = hubCoordinates[fromLower] ?? hubCoordinates[toLower] ?? {
+      lat: 16.05 + ((idx * 0.02) % 0.08),
+      lng: 108.18 + ((idx * 0.03) % 0.07),
+    };
+    return {
+      id: o.id,
+      orderRef: o.id,
+      customer: o.customer,
+      routeLabel: `${o.route.from} ➔ ${o.route.to}`,
+      x: 30 + ((idx * 15) % 50),
+      y: 30 + ((idx * 15) % 50),
+      lat: foundCoord.lat,
+      lng: foundCoord.lng,
+      status: o.status,
+    };
+  });
+
   return (
     <div className="flex min-w-0 flex-col gap-4">
       {/* Clean Operations Header */}
@@ -131,11 +168,16 @@ export function AdminOverviewScreen({
                 : 'Chưa có chuyến xe nào đang hoạt động'
             }
             searchPlaceholder="Tìm kiếm đơn hàng, tài xế..."
+            markers={dynamicMarkers.length > 0 ? dynamicMarkers : undefined}
+            selectedOrderId={selectedOrderId}
+            onSelectOrder={setSelectedOrderId}
           />
           <BentoOrdersCard
             title="Sổ điều phối đơn hàng"
             totalCount={totalOrdersCount}
             orders={bentoOrders}
+            selectedOrderId={selectedOrderId}
+            onSelectOrder={setSelectedOrderId}
           />
         </div>
 

@@ -22,7 +22,9 @@ export interface BentoOrdersCardProps {
   totalCount?: number | undefined;
   orders?: readonly BentoOrderItem[] | undefined;
   activeFilter?: string | undefined;
+  selectedOrderId?: string | null | undefined;
   onFilterChange?: ((filter: string) => void) | undefined;
+  onSelectOrder?: ((orderId: string) => void) | undefined;
 }
 
 const DEFAULT_ORDERS: readonly BentoOrderItem[] = [
@@ -77,7 +79,9 @@ export function BentoOrdersCard({
   totalCount,
   orders = DEFAULT_ORDERS,
   activeFilter: controlledFilter,
+  selectedOrderId,
   onFilterChange,
+  onSelectOrder,
 }: BentoOrdersCardProps) {
   const [internalFilter, setInternalFilter] = useState('all');
   const currentFilter = controlledFilter ?? internalFilter;
@@ -224,34 +228,54 @@ export function BentoOrdersCard({
                 </td>
               </tr>
             ) : (
-              displayedOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
-                  <td className="py-3 font-semibold text-slate-900">
-                    {order.href ? (
-                      <Link
-                        href={order.href}
-                        className="text-slate-900 hover:text-emerald-600 transition-colors inline-flex items-center gap-1 font-semibold"
-                      >
-                        {order.id}
-                      </Link>
-                    ) : (
-                      order.id
-                    )}
-                  </td>
-                  <td className="py-3 font-medium text-slate-700">{order.customer}</td>
-                  <td className="py-3 text-slate-600">
-                    <span className="text-slate-400">Từ </span>
-                    <span className="font-medium text-slate-800">{order.route.from}</span>
-                    <span className="text-slate-400"> ➔ Đến </span>
-                    <span className="font-medium text-slate-800">{order.route.to}</span>
-                  </td>
-                  <td className="py-3 font-medium text-slate-700">{order.weight}</td>
-                  <td className="py-3 text-slate-600 tabular-nums">{order.eta}</td>
-                  <td className="py-3 text-right">
-                    {getStatusBadge(order.status, order.statusLabel)}
-                  </td>
-                </tr>
-              ))
+              displayedOrders.map((order) => {
+                const isSelected = selectedOrderId === order.id;
+                return (
+                  <tr
+                    key={order.id}
+                    onClick={() => onSelectOrder?.(order.id)}
+                    className={`transition-colors cursor-pointer group ${
+                      isSelected
+                        ? 'bg-emerald-50/80 hover:bg-emerald-50'
+                        : 'hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <td className="py-3 font-semibold text-slate-900">
+                      <div className="flex items-center gap-2">
+                        {isSelected ? (
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+                        ) : null}
+                        {order.href ? (
+                          <Link
+                            href={order.href}
+                            onClick={(e) => {
+                              // Allow row click to fire onSelectOrder as well
+                              onSelectOrder?.(order.id);
+                            }}
+                            className="text-slate-900 hover:text-emerald-600 transition-colors inline-flex items-center gap-1 font-semibold"
+                          >
+                            {order.id}
+                          </Link>
+                        ) : (
+                          order.id
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 font-medium text-slate-700">{order.customer}</td>
+                    <td className="py-3 text-slate-600">
+                      <span className="text-slate-400">Từ </span>
+                      <span className="font-medium text-slate-800">{order.route.from}</span>
+                      <span className="text-slate-400"> ➔ Đến </span>
+                      <span className="font-medium text-slate-800">{order.route.to}</span>
+                    </td>
+                    <td className="py-3 font-medium text-slate-700">{order.weight}</td>
+                    <td className="py-3 text-slate-600 tabular-nums">{order.eta}</td>
+                    <td className="py-3 text-right">
+                      {getStatusBadge(order.status, order.statusLabel)}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
