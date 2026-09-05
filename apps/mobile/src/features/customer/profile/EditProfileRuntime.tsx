@@ -32,6 +32,9 @@ export function CustomerEditProfileRuntime() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['customer', 'profile'] });
     },
+    onError: (error: unknown) => {
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể tải ảnh lên.');
+    },
   });
 
   const view = query.data;

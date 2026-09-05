@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Button } from '../../../ui/Button';
 import { FormField } from '../../../ui/FormField';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { colors, radius, spacing } from '../../../theme/tokens';
+import { colors, spacing } from '../../../theme/tokens';
 
 export type EditProfileScreenProps = Readonly<{
   initialName: string;
