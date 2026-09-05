@@ -10,21 +10,7 @@ export interface RevenueOverTimeCardProps {
   onPeriodChange?: (period: string) => void;
 }
 
-const PERIODS = [
-  { id: 'week', label: 'Tuần' },
-  { id: 'month', label: 'Tháng' },
-  { id: '6months', label: '6 tháng' },
-  { id: 'year', label: 'Năm' },
-] as const;
-
-const PERIOD_DATA: Record<string, { amount: string; growth: string }> = {
-  week: { amount: '58.200.000 ₫', growth: '+8% so với tuần trước' },
-  month: { amount: '239.187.000 ₫', growth: '+15% so với tháng trước' },
-  '6months': { amount: '1.428.500.000 ₫', growth: '+22% so với nửa năm trước' },
-  year: { amount: '2.894.100.000 ₫', growth: '+31% so với năm trước' },
-};
-
-const DEFAULT_PERIOD_DATA = { amount: '239.187.000 ₫', growth: '+15% so với tháng trước' };
+const PERIODS = [{ id: 'month', label: 'Tháng' }] as const;
 
 export function RevenueOverTimeCard({
   title = 'Doanh thu cước vận chuyển',
@@ -35,9 +21,8 @@ export function RevenueOverTimeCard({
 }: RevenueOverTimeCardProps) {
   const [internalPeriod, setInternalPeriod] = useState('month');
   const currentPeriod = controlledPeriod ?? internalPeriod;
-  const currentData = PERIOD_DATA[currentPeriod] ?? DEFAULT_PERIOD_DATA;
-  const displayAmount = amount && currentPeriod === 'month' ? amount : currentData.amount;
-  const displayGrowth = growthLabel && currentPeriod === 'month' ? growthLabel : currentData.growth;
+  const displayAmount = amount ?? '0 ₫';
+  const displayGrowth = growthLabel ?? 'Tổng giá trị đơn DELIVERED';
 
   const handlePeriodClick = (id: string) => {
     setInternalPeriod(id);
@@ -47,7 +32,7 @@ export function RevenueOverTimeCard({
   const isZeroRevenue = displayAmount === '0 ₫' || displayAmount === '0' || displayAmount === '0 VND';
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-5 sm:p-6 text-white border border-slate-800/90 shadow-sm flex flex-col justify-between min-h-[220px]">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-5 sm:p-6 text-white border border-slate-800/90 shadow-sm flex flex-1 flex-col justify-between">
       {/* Subtle ambient glow */}
       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" aria-hidden="true" />
       <div className="absolute -left-10 -bottom-10 h-36 w-36 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" aria-hidden="true" />

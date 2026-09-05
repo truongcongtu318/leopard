@@ -27,45 +27,6 @@ export interface BentoOrdersCardProps {
   onSelectOrder?: ((orderId: string) => void) | undefined;
 }
 
-const DEFAULT_ORDERS: readonly BentoOrderItem[] = [
-  {
-    id: 'LP-A-260815-101',
-    customer: 'Vinamilk Đà Nẵng',
-    route: { from: 'KCN Hòa Khánh', to: 'Cảng Tiên Sa' },
-    weight: '1,8 tấn',
-    eta: '10:30',
-    status: 'IN_TRANSIT',
-    statusLabel: 'Đang vận chuyển',
-  },
-  {
-    id: 'LP-A-260815-102',
-    customer: 'Dược phẩm Danapha',
-    route: { from: 'KCN Điện Ngọc', to: 'Kho Cẩm Lệ' },
-    weight: '0,9 tấn',
-    eta: '11:15',
-    status: 'IN_TRANSIT',
-    statusLabel: 'Đang vận chuyển',
-  },
-  {
-    id: 'LP-A-260815-103',
-    customer: 'Thép Hòa Phát',
-    route: { from: 'Cảng Liên Chiểu', to: 'KCN Hòa Cầm' },
-    weight: '2,4 tấn',
-    eta: '09:45',
-    status: 'DELIVERED',
-    statusLabel: 'Đã giao hàng',
-  },
-  {
-    id: 'LP-A-260815-104',
-    customer: 'Dệt may 29/3',
-    route: { from: 'Hải Châu', to: 'Sơn Trà' },
-    weight: '3,2 tấn',
-    eta: '08:30',
-    status: 'DELIVERED',
-    statusLabel: 'Đã giao hàng',
-  },
-];
-
 const FILTERS = [
   { id: 'all', label: 'Tất cả' },
   { id: 'pending', label: 'Chờ tiếp nhận' },
@@ -77,7 +38,7 @@ const FILTERS = [
 export function BentoOrdersCard({
   title = 'Sổ điều phối đơn hàng',
   totalCount,
-  orders = DEFAULT_ORDERS,
+  orders = [],
   activeFilter: controlledFilter,
   selectedOrderId,
   onFilterChange,
@@ -185,7 +146,7 @@ export function BentoOrdersCard({
   };
 
   return (
-    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-col justify-between gap-4">
+    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-1 flex-col justify-between gap-4 h-full">
       {/* Header: Title + Filter Pills */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-2">

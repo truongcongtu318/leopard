@@ -20,7 +20,7 @@ export function StatusOverviewCard({
   deliveredPercent = 38,
 }: StatusOverviewCardProps) {
   return (
-    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-col justify-between gap-4">
+    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-1 flex-col justify-between gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>

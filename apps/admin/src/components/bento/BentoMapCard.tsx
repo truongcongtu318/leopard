@@ -24,69 +24,11 @@ export interface BentoMapCardProps {
   onSearch?: ((query: string) => void) | undefined;
 }
 
-const DEFAULT_MARKERS: readonly MapPackageMarker[] = [
-  {
-    id: 'pkg-1',
-    orderRef: 'LP-A-260815-101',
-    customer: 'Vinamilk Đà Nẵng',
-    routeLabel: 'KCN Hòa Khánh ➔ Cảng Tiên Sa',
-    x: 46,
-    y: 42,
-    lat: 16.075,
-    lng: 108.185,
-    status: 'IN_TRANSIT',
-  },
-  {
-    id: 'pkg-2',
-    orderRef: 'LP-A-260815-102',
-    customer: 'Dược phẩm Danapha',
-    routeLabel: 'KCN Điện Ngọc ➔ Kho Cẩm Lệ',
-    x: 18,
-    y: 30,
-    lat: 16.015,
-    lng: 108.21,
-    status: 'IN_TRANSIT',
-  },
-  {
-    id: 'pkg-3',
-    orderRef: 'LP-A-260815-103',
-    customer: 'Thép Hòa Phát',
-    routeLabel: 'Cảng Liên Chiểu ➔ KCN Hòa Cầm',
-    x: 74,
-    y: 22,
-    lat: 16.115,
-    lng: 108.15,
-    status: 'DELIVERED',
-  },
-  {
-    id: 'pkg-4',
-    orderRef: 'LP-A-260815-104',
-    customer: 'Dệt may 29/3',
-    routeLabel: 'Hải Châu ➔ Sơn Trà',
-    x: 20,
-    y: 68,
-    lat: 16.068,
-    lng: 108.225,
-    status: 'LOADING',
-  },
-  {
-    id: 'pkg-5',
-    orderRef: 'LP-A-260815-105',
-    customer: 'Thaco Trường Hải',
-    routeLabel: 'Cảng Tiên Sa ➔ KCN Điện Ngọc',
-    x: 78,
-    y: 64,
-    lat: 16.12,
-    lng: 108.235,
-    status: 'UNLOADING',
-  },
-];
-
 export function BentoMapCard({
   title = 'Bản đồ điều phối thời gian thực',
-  activeOrderCode = 'LP-A-260815-101 · Vinamilk Đà Nẵng ➔ Cảng Tiên Sa',
+  activeOrderCode = 'Chưa có chuyến xe nào đang hoạt động',
   searchPlaceholder = 'Tìm kiếm đơn hàng, phương tiện, tài xế...',
-  markers = DEFAULT_MARKERS,
+  markers = [],
   selectedOrderId,
   onSelectOrder,
   onSearch,
@@ -96,7 +38,7 @@ export function BentoMapCard({
 
   const [searchValue, setSearchValue] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedMarkerId, setSelectedMarkerId] = useState<string>(markers[0]?.id ?? 'pkg-1');
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(markers[0]?.id ?? null);
   const [userClickedMarker, setUserClickedMarker] = useState<MapPackageMarker | null>(null);
 
   // Sync external selectedOrderId with map view and marker selection
@@ -116,10 +58,10 @@ export function BentoMapCard({
     }
   }, [selectedOrderId, markers]);
 
-  const activeMarker = markers.find((m) => m.id === selectedMarkerId) ?? markers[0] ?? DEFAULT_MARKERS[0];
+  const activeMarker = markers.find((m) => m.id === selectedMarkerId) ?? markers[0] ?? null;
   const displayActiveLabel = userClickedMarker
     ? `${userClickedMarker.orderRef} · ${userClickedMarker.routeLabel}`
-    : (activeOrderCode || (activeMarker ? `${activeMarker.orderRef}` : 'LP-A-260815-101'));
+    : (activeOrderCode || (activeMarker ? `${activeMarker.orderRef}` : 'Chưa có chuyến xe nào đang hoạt động'));
 
   const handleMarkerClick = (marker: MapPackageMarker) => {
     setSelectedMarkerId(marker.id);
@@ -260,8 +202,8 @@ export function BentoMapCard({
   return (
     <div
       aria-label={title}
-      className={`relative overflow-hidden rounded-3xl bg-[#0b111a] border border-slate-800/80 shadow-sm transition-all duration-300 flex flex-col justify-between select-none ${
-        isFullscreen ? 'fixed inset-4 z-50 min-h-[90vh]' : 'min-h-[380px] sm:min-h-[430px]'
+      className={`relative overflow-hidden rounded-3xl bg-[#0b111a] border border-slate-800/80 shadow-sm transition-all duration-300 flex flex-1 flex-col justify-between select-none ${
+        isFullscreen ? 'fixed inset-4 z-50 min-h-[90vh]' : 'min-h-[380px] sm:min-h-[430px] xl:min-h-0 h-full'
       }`}
     >
       {/* Real Live Leaflet GIS Dark Matter Map Container */}

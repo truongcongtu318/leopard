@@ -7,7 +7,6 @@ import {
   AdminNotice,
 } from './AdminShared';
 import { createAdminPreviewHref } from './adapter';
-import { ModernTelemetryCards } from './components/ModernTelemetryCards';
 import {
   BentoMapCard,
   BentoOrdersCard,
@@ -174,10 +173,10 @@ export function AdminOverviewScreen({
       <h1 className="sr-only">Tổng quan vận hành</h1>
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
 
-      {/* NexaFleet Modern Bento Dispatch Console Grid: 2 Columns */}
+      {/* NexaFleet Dispatch Console: 5 widgets, no scroll */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        {/* Left Column (~62% width): Realtime Da Nang Map & Orders Table Card */}
-        <div className="xl:col-span-8 flex flex-col gap-4">
+        {/* Left Column (~62% width): Map + Orders Table */}
+        <div className="xl:col-span-8 flex flex-col gap-4 min-h-0">
           <BentoMapCard
             title="Bản đồ điều phối thời gian thực"
             activeOrderCode={
@@ -199,8 +198,8 @@ export function AdminOverviewScreen({
           />
         </div>
 
-        {/* Right Column (~38% width): Status Overview + Fulfillment Performance + Revenue Over Time */}
-        <div className="xl:col-span-4 flex flex-col gap-4">
+        {/* Right Column (~38% width): Status + OTD + Revenue */}
+        <div className="xl:col-span-4 flex flex-col gap-4 min-h-0">
           <StatusOverviewCard
             title="Cơ cấu trạng thái đơn"
             loadingPercent={loadingPercent}
@@ -286,17 +285,6 @@ export function AdminOverviewScreen({
         </div>
       )}
 
-
-      {/* Modern Telemetry 4 Practical KPI Cards Row */}
-      <ModernTelemetryCards
-        totalOrders={totalOrdersCount}
-        inTransitOrders={inTransitCount}
-        deliveredOrders={deliveredCount}
-        cancelledOrders={cancelledCount}
-        activeVehicles={12}
-        liveness={view.health.liveness}
-        readiness={view.health.readiness}
-      />
 
       {/* Zero-safe operational metrics summary for accessibility & monitoring */}
       <dl className="sr-only" aria-label="Chỉ số hệ thống">

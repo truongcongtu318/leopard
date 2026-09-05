@@ -10,10 +10,6 @@ export interface FulfillmentPerformanceCardProps {
   bars?: readonly number[];
 }
 
-const DEFAULT_BAR_MULTIPLIERS = [
-  0.88, 0.96, 1.04, 0.92, 1.08, 0.98, 0.86, 1.02, 0.94, 1.06, 0.96, 1.04, 0.88, 1.02, 0.94, 1.0,
-] as const;
-
 export function FulfillmentPerformanceCard({
   title = 'Hiệu suất giao đúng hạn (OTD)',
   periodLabel = 'Tháng này',
@@ -21,14 +17,11 @@ export function FulfillmentPerformanceCard({
   subtitle = 'trung bình ca trực',
   bars,
 }: FulfillmentPerformanceCardProps) {
-  const renderedBars =
-    bars ??
-    DEFAULT_BAR_MULTIPLIERS.map((m) =>
-      Math.min(100, Math.max(12, Math.round((rate || 89) * m))),
-    );
+  // ponytail: bars required from BE (no fake multiplier), pass explicit bars when available
+  const renderedBars = bars ?? [rate];
 
   return (
-    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-col justify-between gap-4">
+    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-1 flex-col justify-between gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>
