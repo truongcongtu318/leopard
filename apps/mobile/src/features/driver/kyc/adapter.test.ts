@@ -19,12 +19,12 @@ describe('createDriverKycHttpAdapter', () => {
     ]);
   });
 
-  it('returns an empty list when the request fails', async () => {
+  it('rejects when the request fails', async () => {
     const get = jest.fn(async () => {
       throw new Error('network');
     });
     const adapter = createDriverKycHttpAdapter({ get: get as any });
 
-    await expect(adapter.listDocuments()).resolves.toEqual([]);
+    await expect(adapter.listDocuments()).rejects.toThrow('network');
   });
 });

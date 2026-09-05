@@ -11,5 +11,5 @@ export function DriverKycRuntime() {
     queryFn: () => adapter.listDocuments(),
   });
 
-  return <DriverKycScreen documents={query.data ?? []} isLoading={query.isLoading} />;
+  return <DriverKycScreen documents={query.data ?? []} isLoading={query.isLoading} isError={query.isError} />;
 }

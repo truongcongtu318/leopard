@@ -14,6 +14,7 @@ import {
 export type DriverKycScreenProps = Readonly<{
   documents: readonly { id: string; title: string; url: string; createdAt: string }[];
   isLoading: boolean;
+  isError?: boolean;
 }>;
 
 function getDocIcon(title: string) {
@@ -32,7 +33,7 @@ function getDocIcon(title: string) {
   return <IconSecurityShield color={colors.brand.softText} size={18} />;
 }
 
-export function DriverKycScreen({ documents, isLoading }: DriverKycScreenProps) {
+export function DriverKycScreen({ documents, isLoading, isError }: DriverKycScreenProps) {
   return (
     <ScreenScaffold
       eyebrow="DRIVER · IDENTITY & KYC"
@@ -57,6 +58,8 @@ export function DriverKycScreen({ documents, isLoading }: DriverKycScreenProps) 
 
         {isLoading ? (
           <Text style={styles.loadingText}>Đang tải danh sách giấy tờ…</Text>
+        ) : isError ? (
+          <Text style={styles.loadingText}>Không thể tải danh sách giấy tờ. Vui lòng thử lại sau.</Text>
         ) : documents.length === 0 ? (
           <Text style={styles.loadingText}>Chưa có giấy tờ nào được nộp.</Text>
         ) : (

@@ -36,17 +36,13 @@ export function createDriverKycHttpAdapter(client?: KycHttpClient) {
 
   return {
     async listDocuments(): Promise<DriverDocumentItem[]> {
-      try {
-        const docs = await getClient().get<DriverDocumentResponse[]>('/driver/documents');
-        return docs.map((d) => ({
-          id: d.id,
-          title: DOCUMENT_TITLE[d.type] ?? d.type,
-          url: d.url,
-          createdAt: d.createdAt,
-        }));
-      } catch {
-        return [];
-      }
+      const docs = await getClient().get<DriverDocumentResponse[]>('/driver/documents');
+      return docs.map((d) => ({
+        id: d.id,
+        title: DOCUMENT_TITLE[d.type] ?? d.type,
+        url: d.url,
+        createdAt: d.createdAt,
+      }));
     },
   };
 }
