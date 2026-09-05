@@ -423,7 +423,7 @@ async function loadAdminRuntimeOverview(): Promise<AdminRouteView> {
         ? 'readiness-failed'
         : 'ready';
     const dependencyLabel = !readiness.ok
-      ? 'Không thể kiểm tra readiness hiện tại.'
+      ? 'Không thể kiểm tra trạng thái dịch vụ hiện tại.'
       : readiness.body?.status === 'ready'
         ? `Database ${readiness.body.database ?? 'đã kết nối'}`
         : 'Một dependency đang lỗi, dữ liệu có thể cũ.';
@@ -468,7 +468,7 @@ async function loadAdminRuntimeOverview(): Promise<AdminRouteView> {
               id: 'health-liveness',
               domain: 'health' as const,
               label: 'Mất kết nối với API',
-              detail: 'Liveness probe thất bại; số liệu bên dưới là lần tải thành công gần nhất.',
+              detail: 'Mất tín hiệu kết nối máy chủ; số liệu bên dưới là lần tải thành công gần nhất.',
               tone: 'danger' as const,
               updatedAtLabel: formatDateTime(checkedAt.toISOString()),
             },
@@ -478,7 +478,7 @@ async function loadAdminRuntimeOverview(): Promise<AdminRouteView> {
               {
                 id: 'health-readiness',
                 domain: 'health' as const,
-                label: 'Readiness chưa đạt',
+                label: 'Dịch vụ liên kết chưa sẵn sàng',
                 detail: dependencyLabel,
                 tone: 'warning' as const,
                 updatedAtLabel: formatDateTime(checkedAt.toISOString()),

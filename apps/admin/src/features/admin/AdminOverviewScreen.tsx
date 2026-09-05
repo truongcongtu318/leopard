@@ -104,9 +104,9 @@ export function AdminOverviewScreen({
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-0.5 text-xs text-slate-500 font-medium shadow-2xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Hệ thống: <span>Liveness</span> ({view.health.liveness}) · <span>Readiness</span> ({view.health.readiness})</span>
+          <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-0.5 text-xs text-slate-600 font-medium shadow-2xs">
+            <span className={`h-1.5 w-1.5 rounded-full ${view.health.liveness === 'UP' && view.health.readiness === 'READY' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            <span>Hệ thống: {view.health.liveness === 'UP' && view.health.readiness === 'READY' ? 'Hoạt động bình thường' : 'Đang kiểm tra kết nối'}</span>
           </div>
           <div className="text-xs text-slate-400 tabular-nums font-medium">
             Lần cập nhật: {view.checkedAtLabel}

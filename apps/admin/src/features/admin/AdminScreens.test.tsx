@@ -11,8 +11,8 @@ describe('Admin static operations screens', () => {
     render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
 
     expect(screen.getByRole('heading', { name: 'Tổng quan vận hành' })).toBeTruthy();
-    expect(screen.getByText('Liveness')).toBeTruthy();
-    expect(screen.getByText('Readiness')).toBeTruthy();
+    expect(screen.getByText(/Hệ thống: Hoạt động bình thường/)).toBeTruthy();
+    expect(screen.getByText('Trực tuyến')).toBeTruthy();
     expect(screen.getAllByText('0').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
     expect(screen.getAllByText('LP-A-260815-101').length).toBeGreaterThan(0);

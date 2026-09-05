@@ -352,7 +352,7 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
       ? {
           tone: 'danger',
           title: 'Hệ thống chưa sẵn sàng',
-          message: 'Liveness vẫn UP; một dependency readiness cần được kiểm tra.',
+          message: 'Máy chủ đang trực tuyến; một dịch vụ liên kết cần được kiểm tra kết nối.',
           requestId: 'req-health-demo-004',
         }
       : offline

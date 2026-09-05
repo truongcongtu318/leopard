@@ -997,7 +997,7 @@ export function createAdminHttpAdapter(client?: ApiClient): AdminPort {
             ? {
                 tone: 'danger',
                 title: 'Hệ thống chưa sẵn sàng',
-                message: 'Liveness vẫn UP; một dependency readiness cần được kiểm tra.',
+                message: 'Máy chủ đang trực tuyến; một dịch vụ liên kết cần được kiểm tra kết nối.',
                 ...(health.requestId ? { requestId: health.requestId } : {}),
               }
             : offline
