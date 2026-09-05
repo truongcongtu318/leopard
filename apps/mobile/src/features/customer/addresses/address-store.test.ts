@@ -53,4 +53,25 @@ describe('addressStore', () => {
     const list = await addressStore.getAddresses();
     expect(list.find((x) => x.id === a.id)?.isDefault).toBe(false);
   });
+
+  it('deleteAddress removes the address from the persisted list', async () => {
+    const a = await addressStore.saveAddress({ label: 'A', address: 'addr A', isDefault: true });
+    const b = await addressStore.saveAddress({ label: 'B', address: 'addr B', isDefault: false });
+
+    await addressStore.deleteAddress(a.id);
+
+    const list = await addressStore.getAddresses();
+    expect(list).toHaveLength(1);
+    expect(list.find((x) => x.id === a.id)).toBeUndefined();
+    expect(list[0].id).toBe(b.id);
+  });
+
+  it('deleteAddress persists the removal across a fresh read (simulates app relaunch)', async () => {
+    const a = await addressStore.saveAddress({ label: 'A', address: 'addr A', isDefault: true });
+
+    await addressStore.deleteAddress(a.id);
+
+    // A second, independent read must not see the deleted address come back.
+    await expect(addressStore.getAddresses()).resolves.toEqual([]);
+  });
 });

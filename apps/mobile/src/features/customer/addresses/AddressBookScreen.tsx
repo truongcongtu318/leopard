@@ -91,20 +91,9 @@ export function AddressBookScreen() {
     setIsAdding(false);
   };
 
-  const handleDelete = (id: string) => {
-    // NOTE: address-store has no delete API yet — this remains a local-only
-    // removal for this render pass. A subsequent addressStore.getAddresses()
-    // call (e.g. after adding or setting a default) will restore the item
-    // from persisted storage. See task-3-report.md "Concerns".
-    setAddresses((prev) => {
-      const remaining = prev.filter((a) => a.id !== id);
-      // If deleted address was default and there are other addresses, promote first one
-      const wasDefault = prev.find((a) => a.id === id)?.isDefault;
-      if (wasDefault && remaining.length > 0) {
-        return remaining.map((a, idx) => ({ ...a, isDefault: idx === 0 }));
-      }
-      return remaining;
-    });
+  const handleDelete = async (id: string) => {
+    await addressStore.deleteAddress(id);
+    setAddresses(await addressStore.getAddresses());
   };
 
   const handleSetDefault = async (id: string) => {

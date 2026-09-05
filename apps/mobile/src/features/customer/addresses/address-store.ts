@@ -81,6 +81,12 @@ export const addressStore = {
     await AsyncStorage.setItem(DEFAULT_ADDR_KEY, id).catch(() => {});
   },
 
+  async deleteAddress(id: string): Promise<void> {
+    const list = await readList();
+    const updatedList = list.filter((a) => a.id !== id);
+    await writeList(updatedList);
+  },
+
   async clearAll(): Promise<void> {
     await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     await AsyncStorage.removeItem(DEFAULT_ADDR_KEY).catch(() => {});
