@@ -427,7 +427,7 @@ function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; 
           className={fieldClass}
           id={`${idPrefix}-search`}
           maxLength={100}
-          placeholder="Tên, mã hoặc liên hệ — không lưu vào URL"
+          placeholder="Tìm kiếm theo tên, mã đơn hoặc SĐT..."
           type="search"
         />
       </FilterField>
