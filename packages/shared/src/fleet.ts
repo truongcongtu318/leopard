@@ -34,7 +34,11 @@ export interface FleetOrderSummaryDto {
   driverName?: string | undefined;
   customerPhone: string | null;
   pickupLabel: string;
+  pickupLat?: number | null;
+  pickupLng?: number | null;
   dropoffLabel: string;
+  dropoffLat?: number | null;
+  dropoffLng?: number | null;
   paymentStatus: string;
   priceVnd: number;
   createdAt: string;

@@ -50,10 +50,8 @@ export function BentoMapCard({
     if (target) {
       setSelectedMarkerId(target.id);
       setUserClickedMarker(target);
-      if (mapInstanceRef.current) {
-        const lat = target.lat ?? (16.14 - (target.y / 100) * 0.16);
-        const lng = target.lng ?? (108.12 + (target.x / 100) * 0.15);
-        mapInstanceRef.current.flyTo([lat, lng], 13, { duration: 1.2 });
+      if (mapInstanceRef.current && target.lat !== undefined && target.lng !== undefined) {
+        mapInstanceRef.current.flyTo([target.lat, target.lng], 13, { duration: 1.2 });
       }
     }
   }, [selectedOrderId, markers]);
@@ -68,10 +66,8 @@ export function BentoMapCard({
     setUserClickedMarker(marker);
     onSelectOrder?.(marker.orderRef);
 
-    if (mapInstanceRef.current) {
-      const lat = marker.lat ?? (16.14 - (marker.y / 100) * 0.16);
-      const lng = marker.lng ?? (108.12 + (marker.x / 100) * 0.15);
-      mapInstanceRef.current.panTo([lat, lng], { animate: true });
+    if (mapInstanceRef.current && marker.lat !== undefined && marker.lng !== undefined) {
+      mapInstanceRef.current.panTo([marker.lat, marker.lng], { animate: true });
     }
   };
 
@@ -105,8 +101,9 @@ export function BentoMapCard({
         }
 
         try {
+          const firstWithCoords = markers.find((m) => m.lat !== undefined && m.lng !== undefined);
           const map = L.map(mapContainerRef.current, {
-            center: [16.068, 108.212], // Da Nang Central Logistics Hub
+            center: firstWithCoords ? [firstWithCoords.lat as number, firstWithCoords.lng as number] : [10.8, 106.68],
             zoom: 12,
             zoomControl: false,
             attributionControl: false,
@@ -128,25 +125,11 @@ export function BentoMapCard({
             },
           ).addTo(map);
 
-          // Add Delivery Route Polyline (KCN Hòa Khánh -> Cảng Tiên Sa)
-          const routeCoords: [number, number][] = [
-            [16.075, 108.145], // KCN Hòa Khánh
-            [16.065, 108.185], // Cầu vượt Hòa Cầm
-            [16.068, 108.215], // Cầu Rồng
-            [16.085, 108.235], // Đường Ngô Quyền
-            [16.122, 108.228], // Cảng Tiên Sa
-          ];
-          L.polyline(routeCoords, {
-            color: '#10b981',
-            weight: 3.5,
-            opacity: 0.85,
-            dashArray: '6, 6',
-          }).addTo(map);
-
-          // Add Custom Markers
+          // Add Custom Markers (BE coords only, no estimated fallback)
           markers.forEach((marker) => {
-            const lat = marker.lat ?? (16.14 - (marker.y / 100) * 0.16);
-            const lng = marker.lng ?? (108.12 + (marker.x / 100) * 0.15);
+            if (marker.lat === undefined || marker.lng === undefined) return;
+            const lat = marker.lat;
+            const lng = marker.lng;
             const isSelected = marker.id === selectedMarkerId;
 
             const iconHtml = isSelected

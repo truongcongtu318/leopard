@@ -62,7 +62,11 @@ interface OrderSummaryDto {
   readonly driverName?: string;
   readonly customerPhone: string | null;
   readonly pickupLabel: string;
+  readonly pickupLat?: number | null;
+  readonly pickupLng?: number | null;
   readonly dropoffLabel: string;
+  readonly dropoffLat?: number | null;
+  readonly dropoffLng?: number | null;
   readonly paymentStatus: string;
   readonly priceVnd: number;
   readonly createdAt: string;
@@ -501,6 +505,10 @@ async function loadAdminRuntimeOverview(): Promise<AdminRouteView> {
         customerLabel: order.customerPhone ? maskPhone(order.customerPhone) : 'Khách hàng',
         routeLabel,
         amountLabel: formatVnd(order.priceVnd),
+        pickupLat: order.pickupLat ?? null,
+        pickupLng: order.pickupLng ?? null,
+        dropoffLat: order.dropoffLat ?? null,
+        dropoffLng: order.dropoffLng ?? null,
       };
     });
 

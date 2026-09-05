@@ -60,6 +60,10 @@ export type AdminOrderSummaryView = Readonly<{
   customerLabel?: string;
   routeLabel?: string;
   amountLabel?: string;
+  pickupLat?: number | null;
+  pickupLng?: number | null;
+  dropoffLat?: number | null;
+  dropoffLng?: number | null;
 }>;
 
 export type AdminOverviewView = Readonly<{
