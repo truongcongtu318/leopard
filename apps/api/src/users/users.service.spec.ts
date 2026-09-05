@@ -57,6 +57,19 @@ describe('UsersService.completeProfile', () => {
     );
   });
 
+  it('clears email to null when a null email is provided', async () => {
+    const { service, update } = makeService({ id: 'u1', phone: '+84900000001' });
+    await expect(
+      service.completeProfile('u1', { ...dto, email: null as unknown as string }),
+    ).resolves.toBeDefined();
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'u1' },
+        data: expect.objectContaining({ email: null }),
+      }),
+    );
+  });
+
   it('maps P2002 unique constraint violation on email to EMAIL_ALREADY_USED', async () => {
     const update = jest.fn().mockRejectedValue({
       code: 'P2002',

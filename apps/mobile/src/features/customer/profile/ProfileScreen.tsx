@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, layout, radius, spacing } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
@@ -105,10 +105,15 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
       >
         {/* 👤 1. Thẻ Thông tin Khách hàng (User Hero Card) */}
       <View style={styles.userHeroCard}>
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarText}>C</Text>
-        </View>
+        {view.avatarUrl ? (
+          <Image source={{ uri: view.avatarUrl }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>{(view.name ?? 'K').charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
         <View style={styles.userInfoCol}>
+          {view.name ? <Text style={styles.nameText}>{view.name}</Text> : null}
           <View style={styles.phoneRow}>
             <Text style={styles.phoneText}>{view.phone}</Text>
             <IconSecurityShield color="#0284C7" size={16} />
@@ -122,6 +127,14 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
             <StatusBadge domain="driver-availability" status="AVAILABLE" />
           </View>
         </View>
+        <Pressable
+          accessibilityLabel="Chỉnh sửa hồ sơ"
+          accessibilityRole="button"
+          onPress={() => router.push('/customer/profile-edit')}
+          style={styles.editButton}
+        >
+          <Text style={styles.editButtonText}>Sửa</Text>
+        </Pressable>
       </View>
 
       {/* ⚡ 2. Lối tắt Tài chính Nhanh (Quick Utility Strip) */}
@@ -269,6 +282,29 @@ const styles = StyleSheet.create({
     color: '#0284C7',
     fontSize: 24,
     fontWeight: '800',
+  },
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: '#BAE6FD',
+  },
+  nameText: {
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  editButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#F1F5F9',
+  },
+  editButtonText: {
+    color: '#0284C7',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   userInfoCol: {
     flex: 1,

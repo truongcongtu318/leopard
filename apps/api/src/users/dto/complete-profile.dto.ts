@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   Equals,
   IsBoolean,
@@ -15,9 +16,11 @@ export class CompleteProfileDto {
   @MaxLength(120)
   declare name: string;
 
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => (value === '' ? null : value))
   @IsEmail()
   @MaxLength(255)
-  declare email: string;
+  declare email?: string | null;
 
   @IsOptional()
   @IsUUID()

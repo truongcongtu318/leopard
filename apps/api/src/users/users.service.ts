@@ -27,7 +27,9 @@ export class UsersService {
         where: { id: userId },
         data: {
           name: dto.name.trim(),
-          email: dto.email.trim(),
+          ...(dto.email !== undefined
+            ? { email: dto.email === null ? null : dto.email.trim() }
+            : {}),
           ...(dto.avatarMediaId ? { avatarMediaId: dto.avatarMediaId } : {}),
           consentTermsAt: now,
           consentServiceAt: now,
@@ -47,7 +49,7 @@ export class UsersService {
 
   private serialize(u: {
     id: string; phone: string | null; email: string | null; name: string | null;
-    role: Role; status: UserStatus; onboardedAt: Date | null;
+    role: Role; status: UserStatus; onboardedAt: Date | null; avatarStorageKey: string | null;
   }): AuthUser {
     return {
       id: u.id,
@@ -57,6 +59,7 @@ export class UsersService {
       role: u.role,
       status: u.status,
       profileComplete: u.onboardedAt != null,
+      avatarStorageKey: u.avatarStorageKey,
     };
   }
 }

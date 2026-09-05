@@ -17,6 +17,7 @@ export interface AuthUser {
   readonly role: Role;
   readonly status: UserStatus;
   readonly profileComplete: boolean;
+  readonly avatarStorageKey: string | null;
 }
 
 /** Prisma user shape needed to serialize an AuthUser response. */
@@ -28,6 +29,7 @@ interface SerializableUser {
   readonly role: Role;
   readonly status: UserStatus;
   readonly onboardedAt: Date | null;
+  readonly avatarStorageKey: string | null;
 }
 
 export interface AuthResponse {
@@ -316,6 +318,7 @@ export class AuthService {
       role: user.role,
       status: user.status,
       profileComplete: user.onboardedAt != null,
+      avatarStorageKey: user.avatarStorageKey,
     };
   }
 

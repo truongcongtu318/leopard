@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View, ScrollView } from 'react-native';
 
 import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
@@ -7,11 +7,9 @@ import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';
 import { StatusBadge } from '../../../ui/StatusBadge';
 import {
-  IconIdCard,
   IconLicense,
   IconPhone,
   IconSecurityShield,
-  IconStar,
   IconUser,
 } from '../../../ui/icons/CoreIcons';
 import type { DriverProfileView } from './model';
@@ -88,11 +86,6 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
     );
   }
 
-  // Mock data for the new design
-  const driverName = "Nguyễn Văn A";
-  const rating = "4.9";
-  const vehicleInfo = "Xe tải 1 Tấn · 29H-123.45";
-
   return (
     <ScreenScaffold
       eyebrow="DRIVER · FIELD COCKPIT"
@@ -102,29 +95,36 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <View style={styles.avatarBox}>
-            <Text style={styles.avatarText}>A</Text>
-          </View>
-          <Text style={styles.driverName}>{driverName}</Text>
-          <Text style={styles.vehicleInfo}>{vehicleInfo}</Text>
-          <View style={styles.ratingRow}>
-            <IconStar color={leopardPalette.accentYellow} fill={leopardPalette.accentYellow} size={14} />
-            <Text style={styles.ratingText}>{rating}</Text>
-          </View>
+          {view.avatarUrl ? (
+            <Image source={{ uri: view.avatarUrl }} style={styles.avatarImage} />
+          ) : (
+            <View style={styles.avatarBox}>
+              <Text style={styles.avatarText}>{(view.name ?? 'T').charAt(0).toUpperCase()}</Text>
+            </View>
+          )}
+          <Text style={styles.driverName}>{view.name ?? 'Tài xế LEOPARD'}</Text>
+          <Text style={styles.vehicleInfo}>{view.vehicleLabel ?? 'Chưa cập nhật phương tiện'}</Text>
+          <Pressable
+            accessibilityLabel="Chỉnh sửa hồ sơ"
+            accessibilityRole="button"
+            onPress={() => router.push('/driver/profile-edit')}
+          >
+            <Text style={styles.changeAvatarLink}>Chỉnh sửa hồ sơ</Text>
+          </Pressable>
         </View>
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={styles.statValue}>1,245</Text>
+            <Text style={styles.statValue}>—</Text>
             <Text style={styles.statLabel}>Chuyến xe</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statValue}>{rating}</Text>
+            <Text style={styles.statValue}>—</Text>
             <Text style={styles.statLabel}>Đánh giá</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statValue}>2 năm</Text>
+            <Text style={styles.statValue}>—</Text>
             <Text style={styles.statLabel}>Tham gia</Text>
           </View>
         </View>
@@ -210,30 +210,18 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
   },
+  avatarImage: { width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: leopardPalette.primaryBorder },
   driverName: {
     color: leopardPalette.textSlateDark,
     fontSize: 22,
     fontWeight: '700',
     marginTop: 8,
   },
+  changeAvatarLink: { color: leopardPalette.primaryDark, fontSize: 12.5, fontWeight: '700', marginTop: 6 },
   vehicleInfo: {
     color: leopardPalette.textMutedSlate,
     fontSize: 14,
     fontWeight: '600',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  starIcon: {
-    fontSize: 14,
-  },
-  ratingText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: leopardPalette.accentYellow,
   },
   statsRow: {
     flexDirection: 'row',

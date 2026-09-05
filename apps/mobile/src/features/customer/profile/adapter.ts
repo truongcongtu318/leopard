@@ -3,9 +3,13 @@ import type { Role } from '@leopard/shared';
 import type { CustomerProfileView } from './model';
 import type { CustomerProfilePort } from './port';
 
+const FILES_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1').replace(/\/api\/v1\/?$/, '');
+
 export interface ProfileHttpClient {
   get<T = unknown>(path: string): Promise<T>;
   post<T = unknown>(path: string, body?: unknown): Promise<T>;
+  patch<T = unknown>(path: string, body?: unknown): Promise<T>;
+  postForm<T = unknown>(path: string, form: FormData): Promise<T>;
 }
 
 interface AuthUserResponse {
@@ -13,6 +17,9 @@ interface AuthUserResponse {
   phone: string;
   role: Role;
   status: string;
+  name: string | null;
+  email: string | null;
+  avatarStorageKey: string | null;
 }
 
 const APP_VERSION = '0.0.0';
@@ -33,6 +40,10 @@ function statusView(status: string): Readonly<{ label: string; tone: 'active' | 
   return { label: 'Đang hoạt động', tone: 'active' };
 }
 
+function avatarUrl(key: string | null): string | null {
+  return key ? `${FILES_BASE_URL}/files/${key}` : null;
+}
+
 export function createCustomerProfileHttpAdapter(
   client?: ProfileHttpClient,
 ): CustomerProfilePort {
@@ -47,6 +58,9 @@ export function createCustomerProfileHttpAdapter(
           scenarioId: 'CP-PROFILE-SUCCESS',
           kind: 'content',
           phone: user.phone,
+          name: user.name,
+          email: user.email,
+          avatarUrl: avatarUrl(user.avatarStorageKey),
           roleLabel: roleLabel(user.role),
           statusLabel: status.label,
           statusTone: status.tone,
@@ -70,6 +84,23 @@ export function createCustomerProfileHttpAdapter(
       } catch {
         // Logout must always succeed on the client even if the server call fails
       }
+    },
+
+    async updateProfile(input: { name: string; email: string }): Promise<void> {
+      await getClient().patch('/users/me', {
+        name: input.name,
+        email: input.email,
+        consentTerms: true,
+        consentService: true,
+      });
+    },
+
+    async uploadAvatar(
+      file: { uri: string; name: string; type: string },
+    ): Promise<{ avatarStorageKey: string }> {
+      const form = new FormData();
+      form.append('file', file as unknown as Blob);
+      return getClient().postForm('/users/me/avatar', form);
     },
   };
 }

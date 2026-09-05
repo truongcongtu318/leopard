@@ -1,5 +1,5 @@
-import { DriverKycScreen } from '../../src/features/driver/kyc/DriverKycScreen';
+import { DriverKycRuntime } from '../../src/features/driver/kyc/DriverKycRuntime';
 
 export default function DriverKycRoute() {
-  return <DriverKycScreen />;
+  return <DriverKycRuntime />;
 }
