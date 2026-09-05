@@ -45,6 +45,21 @@ const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
   drivers: 'Tài xế',
 };
 
+function formatUserRole(role: string): string {
+  switch (role) {
+    case 'ADMIN':
+      return 'Quản trị viên';
+    case 'FLEET_OWNER':
+      return 'Chủ đội xe';
+    case 'DRIVER':
+      return 'Tài xế';
+    case 'CUSTOMER':
+      return 'Khách hàng';
+    default:
+      return role;
+  }
+}
+
 function OrderRouteLedger({ order }: Readonly<{ order: AdminOrderListItemView }>) {
   const [origin = order.routeLabel, destination = order.routeLabel] = order.routeLabel.split(' → ');
   return (
@@ -155,8 +170,8 @@ function userColumns(onSelectCommand?: (command: AdminCommandView) => void): Dat
       key: 'role',
       header: 'Vai trò',
       render: (row) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-slate-100 text-slate-700">
-          {(row.item as AdminUserListItemView).role}
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-medium text-xs bg-slate-100 text-slate-700">
+          {formatUserRole((row.item as AdminUserListItemView).role)}
         </span>
       ),
     },
@@ -308,7 +323,7 @@ function mobileItem(
       status: <StatusBadge domain="userStatus" status={item.status} />,
       details: [
         { id: 'phone', label: 'Số điện thoại', value: item.maskedPhone },
-        { id: 'role', label: 'Vai trò', value: item.role },
+        { id: 'role', label: 'Vai trò', value: formatUserRole(item.role) },
         { id: 'updated', label: 'Cập nhật', value: item.updatedAtLabel },
         ...(item.exceptionLabel ? [{ id: 'exception', label: 'Ngoại lệ', value: item.exceptionLabel }] : []),
       ],

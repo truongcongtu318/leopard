@@ -76,11 +76,11 @@ export function FleetDashboardScreen({
   return (
     <div className="flex flex-col gap-4">
       <OperationsPageHeader
-        context="Ngoại lệ và snapshot vận hành thuộc đúng phạm vi đội xe"
+        context="Ngoại lệ và tình hình vận hành thuộc đúng phạm vi đội xe"
         title="Tổng quan đội xe"
       />
       <FleetScopeRail scope={view.scope} />
-      <p className="text-xs text-neutral-muted tabular-nums">Snapshot: {view.asOfLabel}</p>
+      <p className="text-xs text-neutral-muted tabular-nums">Dữ liệu lúc: {view.asOfLabel}</p>
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
 
       <CompactMetricSummary

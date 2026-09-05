@@ -144,7 +144,7 @@ describe('Fleet Owner static screens', () => {
     expect(screen.getByText(/Dữ liệu mô phỏng/)).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Lịch sử trạng thái' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Thanh toán' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Media' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Hình ảnh xác nhận giao nhận' })).toBeTruthy();
   });
 
   it('never leaks private order or scope data in a foreign-resource denial', () => {

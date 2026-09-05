@@ -142,14 +142,14 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
 
       <FleetSurface
         description="Chỉ hiển thị metadata đã được backend cho phép; không lộ signed URL."
-        title="Media"
+        title="Hình ảnh xác nhận giao nhận"
       >
         {order.media.state === 'error' ? (
           <OperationalAlert title="Không thể tải media" tone="warning">
             <p>{order.media.message}</p>
           </OperationalAlert>
         ) : order.media.items.length === 0 ? (
-          <p className="text-body-compact text-neutral-muted">Chưa có media được phép hiển thị.</p>
+          <p className="text-body-compact text-neutral-muted">Chưa có hình ảnh xác nhận được phép hiển thị.</p>
         ) : (
           <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
             {order.media.items.map((item, index) => (

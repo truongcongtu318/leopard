@@ -44,7 +44,7 @@ function driverColumns(previewContext?: FleetPreviewContext) {
   },
   {
     key: 'availability',
-    header: 'Availability',
+    header: 'Tình trạng sẵn sàng',
     render: (row: Record<string, unknown>) => {
       const driver = row.driver as FleetDriverListItemView;
       return <FleetAvailabilityBadge status={driver.availability} />;
@@ -230,7 +230,7 @@ function DriverResults({
   return (
     <div className="flex flex-col gap-md">
       <p aria-live="polite" className="text-body-compact text-neutral-muted">
-        {view.result.filterSummary} · Snapshot {view.result.asOfLabel}
+        {view.result.filterSummary} · Dữ liệu lúc {view.result.asOfLabel}
       </p>
       <div className="hidden min-w-0 overflow-x-auto md:block">
         <DataTable columns={driverColumns(previewContext)} rows={rows} />

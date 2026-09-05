@@ -28,7 +28,7 @@ export function AdminNotice({ notice }: Readonly<{ notice: AdminNoticeView }>) {
     >
       <p>{notice.message}</p>
       {notice.requestId ? (
-        <p className="mt-xxs font-mono text-xs break-all">Request ID: {notice.requestId}</p>
+        <p className="mt-xxs font-mono text-xs break-all">Mã yêu cầu: {notice.requestId}</p>
       ) : null}
     </OperationalAlert>
   );
@@ -214,12 +214,12 @@ export function AdminPaginationLinks({
 export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }>) {
   return (
     <aside
-      aria-label="Audit Rail — thao tác đặc quyền"
+      aria-label="Nhật ký kiểm toán — thao tác đặc quyền"
       className="min-w-0 rounded-[22px] sm:rounded-[26px] border-l-4 border-l-brand border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text"
     >
       <header className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-neutral-text">Audit Rail</h2>
+          <h2 className="text-base sm:text-lg font-bold text-neutral-text">Nhật ký kiểm toán</h2>
           <p className="mt-0.5 text-xs text-neutral-muted uppercase tracking-wider font-semibold">Thao tác đặc quyền · Mới nhất trước</p>
         </div>
         <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">ĐÃ KIỂM TOÁN</span>
@@ -228,7 +228,7 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
         <ScreenState
           state="error"
           title="Không thể tải nhật ký"
-          message={audit.message ?? 'Không thể tải Audit Rail trong lần kiểm tra này.'}
+          message={audit.message ?? 'Không thể tải nhật ký kiểm toán trong lần kiểm tra này.'}
         />
       ) : audit.state === 'empty' ? (
         <p className="text-xs text-neutral-muted italic py-2">Chưa có thao tác đặc quyền được ghi nhận.</p>

@@ -331,7 +331,7 @@ function OrderResults({
   return (
     <div className="flex flex-col gap-md">
       <p aria-live="polite" className="text-body-compact text-neutral-muted">
-        {view.result.filterSummary} · Snapshot {view.result.asOfLabel}
+        {view.result.filterSummary} · Dữ liệu lúc {view.result.asOfLabel}
       </p>
       <div className="hidden min-w-0 overflow-x-auto md:block">
         <FleetOrderLedger

@@ -61,7 +61,7 @@ describe('Admin static operations screens', () => {
     render(<AdminOrderDetailScreen view={createAdminPreviewView('order-detail', 'ADM-DENIED')} />);
     expect(screen.getByText('Bạn không có quyền xem dữ liệu này')).toBeTruthy();
     expect(screen.queryByText(/LP-A-/)).toBeNull();
-    expect(screen.queryByText('Audit Rail')).toBeNull();
+    expect(screen.queryByText('Nhật ký kiểm toán')).toBeNull();
   });
 
   it('renders all canonical Order states in table and responsive rows', () => {
@@ -162,15 +162,15 @@ describe('Admin static operations screens', () => {
     expect(screen.getByRole('heading', { name: 'Đơn LP-A-260815-101' })).toBeTruthy();
     expect(screen.getByText(/ETA dự kiến/)).toBeTruthy();
     expect(screen.getByText(/Dữ liệu mô phỏng/)).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Tracking và vị trí gần nhất' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Media evidence' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Audit Rail' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Giám sát hành trình & Vị trí thực tế' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Hình ảnh xác nhận giao nhận' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Nhật ký kiểm toán' })).toBeTruthy();
     expect(screen.getByText('req-admin-demo-001')).toBeTruthy();
     expect(screen.queryByText(/https?:\/\//)).toBeNull();
     expect(screen.getByLabelText('Ngữ cảnh điều phối hiện tại').className).toContain(
       'shadow-sm',
     );
-    expect(screen.getByLabelText('Audit Rail — thao tác đặc quyền').className).toContain(
+    expect(screen.getByLabelText('Nhật ký kiểm toán — thao tác đặc quyền').className).toContain(
       'border-l-4',
     );
   });
@@ -179,7 +179,7 @@ describe('Admin static operations screens', () => {
     render(<AdminOrderDetailScreen view={createAdminPreviewView('order-detail', 'ADM-TRK-STALE')} />);
     expect(screen.getByText('Tracking cần làm mới')).toBeTruthy();
     expect(screen.getByText('Dữ liệu bản đồ có thể đã cũ')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Audit Rail' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Nhật ký kiểm toán' })).toBeTruthy();
   });
 
   it('shows persisted command success and its matching audit receipt', () => {

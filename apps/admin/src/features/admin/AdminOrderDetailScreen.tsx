@@ -117,7 +117,7 @@ export function AdminOrderDetailScreen({
             lastUpdated={order.tracking.lastUpdatedLabel}
             state={order.tracking.state}
             textAlternative={order.tracking.mapAlternative}
-            title="Tracking và vị trí gần nhất"
+            title="Giám sát hành trình & Vị trí thực tế"
           >
             <RouteMapSchematic
               destinationLabel={order.route.destination.label}
@@ -153,7 +153,7 @@ export function AdminOrderDetailScreen({
 
           <AdminSurface
             description="Dữ liệu xác nhận an toàn; không hiển thị URL chữ ký bảo mật hoặc storage key."
-            title="Media evidence"
+            title="Hình ảnh xác nhận giao nhận"
           >
             {order.media.state === 'error' ? (
               <OperationalAlert title="Không thể tải ảnh" tone="danger">

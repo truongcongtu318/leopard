@@ -196,7 +196,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
             </svg>
             <input
               type="text"
-              placeholder="Tìm kiếm..."
+              placeholder="Tìm kiếm đơn hàng, phương tiện, tài xế..."
               aria-label="Tìm kiếm trong hệ thống"
               className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-full focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white text-slate-700"
             />
