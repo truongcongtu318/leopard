@@ -121,6 +121,15 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
     };
   }, [closeDrawer, drawerOpen]);
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore network errors during logout
+    }
+    window.location.href = '/login';
+  };
+
   return (
     <div className="min-h-screen bg-[#F4F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
       <LiveRefreshBridge />
@@ -207,24 +216,25 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
 
           {/* User Profile Capsule */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700 ring-1 ring-slate-300">
-              {role === 'admin' ? 'AD' : 'FO'}
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-700 ring-1 ring-slate-300">
+              {role === 'admin' ? 'QTV' : 'CĐX'}
             </span>
             <div className="hidden text-left sm:block">
               <p className="text-xs font-bold text-slate-800 leading-tight">
-                {role === 'admin' ? 'Admin Nam' : roleContext.roleLabel}
+                {role === 'admin' ? 'Nguyễn Hoài Nam' : 'Trần Quốc Tuấn'}
               </p>
               <p className="text-[10px] font-medium text-slate-400 leading-none">
-                {role === 'admin' ? 'Điều phối viên' : 'Chủ đội xe'}
+                {role === 'admin' ? 'Quản trị viên điều phối' : 'Chủ đội xe Sao Mai'}
               </p>
             </div>
           </div>
 
           {/* Logout Action Button */}
-          <Link
-            href="/login"
+          <button
+            type="button"
+            onClick={handleLogout}
             aria-label="Đăng xuất khỏi phiên làm việc"
-            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors motion-reduce:transition-none"
+            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors motion-reduce:transition-none cursor-pointer"
           >
             <svg
               className="w-4 h-4"
@@ -236,7 +246,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-          </Link>
+          </button>
 
           {/* Mobile Drawer Trigger */}
           <button

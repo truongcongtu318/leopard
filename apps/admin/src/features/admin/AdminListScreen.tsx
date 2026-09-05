@@ -101,7 +101,7 @@ function orderColumns(previewContext?: AdminPreviewContext): DataTableColumn[] {
       },
     },
     {
-      key: 'people', header: 'Customer / Driver', className: 'hidden xl:table-cell', render: (row) => {
+      key: 'people', header: 'Khách hàng / Tài xế', className: 'hidden xl:table-cell', render: (row) => {
         const order = row.item as AdminOrderListItemView;
         return <div className="min-w-48"><p className="break-words">{order.customerLabel}</p><p className="mt-xxs text-xs text-neutral-muted break-words">{order.driverLabel}</p></div>;
       },
@@ -110,7 +110,7 @@ function orderColumns(previewContext?: AdminPreviewContext): DataTableColumn[] {
       key: 'status', header: 'Trạng thái', render: (row) => <StatusBadge domain="orderStatus" status={(row.item as AdminOrderListItemView).status} />,
     },
     {
-      key: 'tracking', header: 'Tracking', className: 'hidden lg:table-cell', render: (row) => {
+      key: 'tracking', header: 'Định vị GPS', className: 'hidden lg:table-cell', render: (row) => {
         const order = row.item as AdminOrderListItemView;
         return <p className={`min-w-40 break-words ${order.trackingTone === 'warning' ? 'font-semibold text-warning-text' : 'text-neutral-muted'}`}>{order.trackingLabel}</p>;
       },
@@ -153,7 +153,7 @@ function userColumns(onSelectCommand?: (command: AdminCommandView) => void): Dat
     },
     {
       key: 'role',
-      header: 'Role',
+      header: 'Vai trò',
       render: (row) => (
         <span className="inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-slate-100 text-slate-700">
           {(row.item as AdminUserListItemView).role}
@@ -203,11 +203,11 @@ function fleetColumns(): DataTableColumn[] {
         return <div className="min-w-48"><p className="font-semibold break-words">{fleet.displayName}</p><p className="mt-xxs font-mono text-xs text-neutral-muted break-all">{fleet.displayId}</p></div>;
       },
     },
-    { key: 'owner', header: 'Owner / membership', className: 'hidden xl:table-cell', render: (row) => <p className="min-w-48 break-words">{(row.item as AdminFleetListItemView).ownerSummary}</p> },
+    { key: 'owner', header: 'Chủ sở hữu & Liên kết', className: 'hidden xl:table-cell', render: (row) => <p className="min-w-48 break-words">{(row.item as AdminFleetListItemView).ownerSummary}</p> },
     {
       key: 'counts', header: 'Quy mô', render: (row) => {
         const fleet = row.item as AdminFleetListItemView;
-        return <dl className="min-w-40 text-body-compact"><div className="flex justify-between gap-sm"><dt>Membership</dt><dd className="tabular-nums">{fleet.activeMembershipCount}</dd></div><div className="flex justify-between gap-sm"><dt>Driver</dt><dd className="tabular-nums">{fleet.driverCount}</dd></div><div className="flex justify-between gap-sm"><dt>Order</dt><dd className="tabular-nums">{fleet.orderCount}</dd></div></dl>;
+        return <dl className="min-w-40 text-body-compact"><div className="flex justify-between gap-sm"><dt>Thành viên</dt><dd className="tabular-nums">{fleet.activeMembershipCount}</dd></div><div className="flex justify-between gap-sm"><dt>Tài xế</dt><dd className="tabular-nums">{fleet.driverCount}</dd></div><div className="flex justify-between gap-sm"><dt>Đơn hàng</dt><dd className="tabular-nums">{fleet.orderCount}</dd></div></dl>;
       },
     },
     {
@@ -282,8 +282,8 @@ function mobileItem(
       status: <StatusBadge domain="orderStatus" status={item.status} />,
       details: [
         { id: 'route', label: 'Lộ trình', value: item.routeLabel },
-        { id: 'people', label: 'Customer / Driver', value: `${item.customerLabel} · ${item.driverLabel}` },
-        { id: 'tracking', label: 'Tracking', value: item.trackingLabel },
+        { id: 'people', label: 'Khách hàng / Tài xế', value: `${item.customerLabel} · ${item.driverLabel}` },
+        { id: 'tracking', label: 'Định vị GPS', value: item.trackingLabel },
         { id: 'payment', label: 'Thanh toán', value: <StatusBadge domain="paymentStatus" status={item.paymentStatus} /> },
         { id: 'amount', label: 'Số tiền', value: item.amountLabel },
       ],
@@ -308,7 +308,7 @@ function mobileItem(
       status: <StatusBadge domain="userStatus" status={item.status} />,
       details: [
         { id: 'phone', label: 'Số điện thoại', value: item.maskedPhone },
-        { id: 'role', label: 'Role', value: item.role },
+        { id: 'role', label: 'Vai trò', value: item.role },
         { id: 'updated', label: 'Cập nhật', value: item.updatedAtLabel },
         ...(item.exceptionLabel ? [{ id: 'exception', label: 'Ngoại lệ', value: item.exceptionLabel }] : []),
       ],
@@ -334,10 +334,10 @@ function mobileItem(
       id: item.id,
       heading: <span className="block border-l-4 border-brand pl-sm">{item.displayName}</span>,
       details: [
-        { id: 'id', label: 'Fleet ID', value: item.displayId },
-        { id: 'owner', label: 'Owner / membership', value: item.ownerSummary },
-        { id: 'drivers', label: 'Driver', value: String(item.driverCount) },
-        { id: 'orders', label: 'Order', value: String(item.orderCount) },
+        { id: 'id', label: 'Mã đội xe', value: item.displayId },
+        { id: 'owner', label: 'Chủ sở hữu & Liên kết', value: item.ownerSummary },
+        { id: 'drivers', label: 'Tài xế', value: String(item.driverCount) },
+        { id: 'orders', label: 'Đơn hàng', value: String(item.orderCount) },
         { id: 'membership', label: 'Tình trạng thành viên', value: item.membershipMessage },
       ],
     };
@@ -421,11 +421,11 @@ function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; 
           <FilterField id={`${idPrefix}-status`} label="Trạng thái">
             <select id={`${idPrefix}-status`} className={fieldClass} defaultValue={filters.status} name="status"><option value="ALL">Tất cả</option><option value="REQUESTED">Chờ tài xế</option><option value="ACCEPTED">Đã nhận đơn</option><option value="PICKING_UP">Đang đến điểm lấy</option><option value="IN_TRANSIT">Đang vận chuyển</option><option value="DELIVERED">Đã giao</option><option value="CANCELLED">Đã hủy</option></select>
           </FilterField>
-          <FilterField id={`${idPrefix}-customer`} label="Customer ID">
-            <input id={`${idPrefix}-customer`} className={fieldClass} defaultValue={filters.customerId} name="customerId" placeholder="UUID được phép chia sẻ" />
+          <FilterField id={`${idPrefix}-customer`} label="Mã khách hàng">
+            <input id={`${idPrefix}-customer`} className={fieldClass} defaultValue={filters.customerId} name="customerId" placeholder="Mã hoặc ID khách hàng" />
           </FilterField>
-          <FilterField id={`${idPrefix}-driver`} label="Driver ID">
-            <input id={`${idPrefix}-driver`} className={fieldClass} defaultValue={filters.driverId} name="driverId" placeholder="UUID được phép chia sẻ" />
+          <FilterField id={`${idPrefix}-driver`} label="Mã tài xế">
+            <input id={`${idPrefix}-driver`} className={fieldClass} defaultValue={filters.driverId} name="driverId" placeholder="Mã hoặc ID tài xế" />
           </FilterField>
           <FilterField id={`${idPrefix}-from`} label="Từ ngày">
             <input id={`${idPrefix}-from`} className={fieldClass} defaultValue={filters.from} name="from" type="date" />
@@ -436,8 +436,8 @@ function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; 
         </>
       ) : screen === 'users' ? (
         <>
-          <FilterField id={`${idPrefix}-role`} label="Role">
-            <select id={`${idPrefix}-role`} className={fieldClass} defaultValue={filters.role} name="role"><option value="ALL">Tất cả</option><option value="CUSTOMER">Customer</option><option value="DRIVER">Driver</option><option value="FLEET_OWNER">Fleet Owner</option><option value="ADMIN">Admin</option></select>
+          <FilterField id={`${idPrefix}-role`} label="Vai trò">
+            <select id={`${idPrefix}-role`} className={fieldClass} defaultValue={filters.role} name="role"><option value="ALL">Tất cả</option><option value="CUSTOMER">Khách hàng</option><option value="DRIVER">Tài xế</option><option value="FLEET_OWNER">Chủ đội xe</option><option value="ADMIN">Quản trị viên</option></select>
           </FilterField>
           <FilterField id={`${idPrefix}-account`} label="Tài khoản">
             <select id={`${idPrefix}-account`} className={fieldClass} defaultValue={filters.userStatus} name="userStatus"><option value="ALL">Tất cả</option><option value="ACTIVE">Đang hoạt động</option><option value="DISABLED">Đã vô hiệu hóa</option></select>
@@ -451,11 +451,11 @@ function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; 
           <FilterField id={`${idPrefix}-account`} label="Tài khoản">
             <select id={`${idPrefix}-account`} className={fieldClass} defaultValue={filters.userStatus} name="userStatus"><option value="ALL">Tất cả</option><option value="ACTIVE">Đang hoạt động</option><option value="DISABLED">Đã vô hiệu hóa</option></select>
           </FilterField>
-          <FilterField id={`${idPrefix}-membership`} label="Membership">
+          <FilterField id={`${idPrefix}-membership`} label="Liên kết đội xe">
             <select id={`${idPrefix}-membership`} className={fieldClass} defaultValue={filters.membershipStatus} name="membershipStatus"><option value="ALL">Tất cả</option><option value="INVITED">Đã mời</option><option value="ACTIVE">Đang tham gia</option><option value="REMOVED">Đã gỡ khỏi đội xe</option></select>
           </FilterField>
-          <FilterField id={`${idPrefix}-fleet`} label="Fleet ID">
-            <input id={`${idPrefix}-fleet`} className={fieldClass} defaultValue={filters.fleetId} name="fleetId" placeholder="UUID đội xe" />
+          <FilterField id={`${idPrefix}-fleet`} label="Mã đội xe">
+            <input id={`${idPrefix}-fleet`} className={fieldClass} defaultValue={filters.fleetId} name="fleetId" placeholder="Mã hoặc ID đội xe" />
           </FilterField>
         </>
       ) : null}
@@ -584,7 +584,7 @@ export function AdminListScreen({
                   </dd>
                 </div>
                 <div className="col-span-2 min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs sm:col-span-1">
-                  <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Revision</dt>
+                  <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Phiên bản dữ liệu</dt>
                   <dd className="mt-1 font-mono text-xs font-semibold text-slate-700 break-all">{view.result.revision}</dd>
                 </div>
               </dl>

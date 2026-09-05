@@ -12,8 +12,8 @@ export interface StatusOverviewCardProps {
 }
 
 export function StatusOverviewCard({
-  title = 'Status Overview',
-  periodLabel = 'Month',
+  title = 'Cơ cấu trạng thái đơn',
+  periodLabel = 'Tháng này',
   loadingPercent = 17,
   inTransitPercent = 32,
   unloadingPercent = 13,
@@ -24,66 +24,63 @@ export function StatusOverviewCard({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>
-        <div className="flex items-center gap-1 rounded-full bg-slate-100/90 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer">
-          <span>{periodLabel}</span>
-          <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+        <span className="rounded-full bg-slate-100/90 px-3 py-1 text-xs font-semibold text-slate-600">
+          {periodLabel}
+        </span>
       </div>
 
       {/* 4 Status Metric Columns */}
       <div className="grid grid-cols-4 gap-2 text-center sm:text-left">
-        {/* Loading */}
+        {/* Đang lấy hàng */}
         <div>
           <p className="text-base sm:text-lg font-bold text-slate-900 tabular-nums">{loadingPercent}%</p>
-          <p className="text-[11px] font-medium text-slate-400">Loading</p>
+          <p className="text-[11px] font-medium text-slate-400">Đang lấy hàng</p>
         </div>
 
-        {/* In Transit */}
+        {/* Đang vận chuyển */}
         <div>
           <p className="text-base sm:text-lg font-bold text-slate-900 tabular-nums">{inTransitPercent}%</p>
-          <p className="text-[11px] font-medium text-slate-400">In Transit</p>
+          <p className="text-[11px] font-medium text-slate-400">Đang vận chuyển</p>
         </div>
 
-        {/* Unloading */}
+        {/* Đang dỡ hàng */}
         <div>
           <p className="text-base sm:text-lg font-bold text-slate-900 tabular-nums">{unloadingPercent}%</p>
-          <p className="text-[11px] font-medium text-slate-400">Unloading</p>
+          <p className="text-[11px] font-medium text-slate-400">Đang dỡ hàng</p>
         </div>
 
-        {/* Delivered */}
+        {/* Đã giao hàng */}
         <div>
           <p className="text-base sm:text-lg font-bold text-slate-900 tabular-nums">{deliveredPercent}%</p>
-          <p className="text-[11px] font-medium text-slate-400">Delivered</p>
+          <p className="text-[11px] font-medium text-slate-400">Đã giao hàng</p>
         </div>
       </div>
 
       {/* Continuous Segmented Progress Bar */}
       <div className="flex h-5 w-full items-stretch gap-1 rounded-xl p-0.5" aria-hidden="true">
-        {/* Loading (Amber) */}
+        {/* Đang lấy hàng (Amber) */}
         <div
           style={{ width: `${loadingPercent}%` }}
           className="rounded-lg bg-[#fbbf24] transition-all"
-          title={`Loading: ${loadingPercent}%`}
+          title={`Đang lấy hàng: ${loadingPercent}%`}
         />
-        {/* In Transit (Emerald Green) */}
+        {/* Đang vận chuyển (Emerald Green) */}
         <div
           style={{ width: `${inTransitPercent}%` }}
           className="rounded-lg bg-[#10b981] transition-all"
-          title={`In Transit: ${inTransitPercent}%`}
+          title={`Đang vận chuyển: ${inTransitPercent}%`}
         />
-        {/* Unloading (Coral / Red) */}
+        {/* Đang dỡ hàng (Coral / Red) */}
         <div
           style={{ width: `${unloadingPercent}%` }}
           className="rounded-lg bg-[#f87171] transition-all"
-          title={`Unloading: ${unloadingPercent}%`}
+          title={`Đang dỡ hàng: ${unloadingPercent}%`}
         />
-        {/* Delivered (Pink / Magenta) */}
+        {/* Đã giao hàng (Pink / Magenta) */}
         <div
           style={{ width: `${deliveredPercent}%` }}
           className="rounded-lg bg-[#ec4899] transition-all"
-          title={`Delivered: ${deliveredPercent}%`}
+          title={`Đã giao hàng: ${deliveredPercent}%`}
         />
       </div>
     </div>

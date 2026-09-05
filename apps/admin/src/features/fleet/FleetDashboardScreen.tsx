@@ -43,17 +43,32 @@ export function FleetDashboardScreen({
 
   const bentoOrders: BentoOrderItem[] = view.activeOrders.map((order) => {
     const routeParts = order.routeLabel.split('➔').map((s) => s.trim());
+    const statusLabel =
+      order.status === 'IN_TRANSIT'
+        ? 'Đang vận chuyển'
+        : order.status === 'DELIVERED'
+          ? 'Đã giao hàng'
+          : order.status === 'PICKING_UP'
+            ? 'Đang lấy hàng'
+            : order.status === 'REQUESTED'
+              ? 'Chờ tiếp nhận'
+              : order.status === 'ACCEPTED'
+                ? 'Đã nhận đơn'
+                : order.status === 'CANCELLED'
+                  ? 'Đã hủy'
+                  : order.status;
+
     return {
       id: order.reference,
-      customer: order.driverLabel || 'Khách hàng',
+      customer: order.customerLabel || 'Khách hàng',
       route: {
         from: routeParts[0] || 'Điểm lấy',
         to: routeParts[1] || 'Điểm giao',
       },
-      weight: '1.8 t',
+      weight: '1,8 tấn',
       eta: order.trackingLabel,
       status: order.status,
-      statusLabel: order.status === 'IN_TRANSIT' ? 'In Transit' : order.status === 'DELIVERED' ? 'Delivered' : order.status,
+      statusLabel,
       href: fleetOrderDetailHref(order.href, previewContext),
     };
   });

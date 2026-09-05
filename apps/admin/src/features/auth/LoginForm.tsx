@@ -208,7 +208,7 @@ export function LoginForm({
               Đăng nhập nhanh theo vai trò hệ thống
             </p>
             <span className="rounded-full bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-              PostgreSQL Active
+              Môi trường thử nghiệm
             </span>
           </div>
 

@@ -87,11 +87,11 @@ export function AdminOrderDetailScreen({
         <div className="flex min-w-0 flex-col gap-lg lg:col-span-8">
           <AdminSurface title="Ngữ cảnh đơn và phân công">
             <ReadOnlyDetailList
-              ariaLabel="Ngữ cảnh đơn, Customer và Driver"
+              ariaLabel="Ngữ cảnh đơn, Khách hàng và Tài xế"
               items={[
-                { id: 'reference', label: 'Order ID', value: order.reference },
-                { id: 'customer', label: 'Customer', value: order.customerLabel },
-                { id: 'driver', label: 'Driver được phân công', value: order.driverLabel },
+                { id: 'reference', label: 'Mã đơn hàng', value: order.reference },
+                { id: 'customer', label: 'Khách hàng', value: order.customerLabel },
+                { id: 'driver', label: 'Tài xế tiếp nhận', value: order.driverLabel },
                 { id: 'cargo', label: 'Hàng hóa', value: order.cargoSummary },
                 { id: 'updated', label: 'Cập nhật', value: order.updatedAtLabel },
               ]}
@@ -127,8 +127,8 @@ export function AdminOrderDetailScreen({
           </MapPanel>
 
           <AdminSurface
-            description="Command chỉ xuất hiện từ availableCommands; UI không tự suy lifecycle hoặc payment capability."
-            title="Command được phép"
+            description="Thao tác chỉ xuất hiện từ availableCommands; UI không tự ý chuyển trạng thái hoặc can thiệp thanh toán trái quyền."
+            title="Thao tác điều phối khả dụng"
           >
             <AdminCommandLauncher
               commands={view.availableCommands}
@@ -152,7 +152,7 @@ export function AdminOrderDetailScreen({
           </AdminSurface>
 
           <AdminSurface
-            description="Metadata-first; không render signed URL hoặc storage key."
+            description="Dữ liệu xác nhận an toàn; không hiển thị URL chữ ký bảo mật hoặc storage key."
             title="Media evidence"
           >
             {order.media.state === 'error' ? (
@@ -161,7 +161,7 @@ export function AdminOrderDetailScreen({
               </OperationalAlert>
             ) : order.media.items.length === 0 ? (
               <p className="text-body-compact text-neutral-muted">
-                Chưa có media được phép hiển thị.
+                Chưa có hình ảnh xác nhận được phép hiển thị.
               </p>
             ) : (
               <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
@@ -198,7 +198,7 @@ export function AdminOrderDetailScreen({
                   value: <StatusBadge domain="paymentStatus" status={order.payment.status} />,
                 },
                 { id: 'amount', label: 'Số tiền', value: order.payment.amountLabel },
-                { id: 'reference', label: 'Reference', value: order.payment.referenceLabel },
+                { id: 'reference', label: 'Mã tham chiếu', value: order.payment.referenceLabel },
                 { id: 'source', label: 'Nguồn', value: order.payment.sourceLabel },
                 {
                   id: 'expiry',

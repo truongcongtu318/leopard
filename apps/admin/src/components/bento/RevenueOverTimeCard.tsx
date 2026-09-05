@@ -11,16 +11,16 @@ export interface RevenueOverTimeCardProps {
 }
 
 const PERIODS = [
-  { id: 'week', label: 'Week' },
-  { id: 'month', label: 'Month' },
-  { id: '6months', label: '6 months' },
-  { id: 'year', label: 'Year' },
+  { id: 'week', label: 'Tuần' },
+  { id: 'month', label: 'Tháng' },
+  { id: '6months', label: '6 tháng' },
+  { id: 'year', label: 'Năm' },
 ] as const;
 
 export function RevenueOverTimeCard({
-  title = 'Revenue Over Time',
-  amount = '$239,187.00',
-  growthLabel = '+15% this month',
+  title = 'Doanh thu cước vận chuyển',
+  amount = '239.187.000 ₫',
+  growthLabel = '+15% so với tháng trước',
   period: controlledPeriod,
   onPeriodChange,
 }: RevenueOverTimeCardProps) {

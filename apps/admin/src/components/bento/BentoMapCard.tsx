@@ -24,7 +24,7 @@ export interface BentoMapCardProps {
 const DEFAULT_MARKERS: readonly MapPackageMarker[] = [
   {
     id: 'pkg-1',
-    orderRef: 'OR-1000 GreenMart',
+    orderRef: 'LP-A-260815-101',
     customer: 'Vinamilk Đà Nẵng',
     routeLabel: 'KCN Hòa Khánh ➔ Cảng Tiên Sa',
     x: 46,
@@ -33,16 +33,16 @@ const DEFAULT_MARKERS: readonly MapPackageMarker[] = [
   },
   {
     id: 'pkg-2',
-    orderRef: 'LP-A-260815-101',
+    orderRef: 'LP-A-260815-102',
     customer: 'Dược phẩm Danapha',
-    routeLabel: 'KCN Hòa Khánh ➔ Cảng Tiên Sa',
+    routeLabel: 'KCN Điện Ngọc ➔ Kho Cẩm Lệ',
     x: 18,
     y: 30,
     status: 'IN_TRANSIT',
   },
   {
     id: 'pkg-3',
-    orderRef: 'LP-A-260815-102',
+    orderRef: 'LP-A-260815-103',
     customer: 'Thép Hòa Phát',
     routeLabel: 'Cảng Liên Chiểu ➔ KCN Hòa Cầm',
     x: 74,
@@ -51,7 +51,7 @@ const DEFAULT_MARKERS: readonly MapPackageMarker[] = [
   },
   {
     id: 'pkg-4',
-    orderRef: 'LP-A-260815-103',
+    orderRef: 'LP-A-260815-104',
     customer: 'Dệt may 29/3',
     routeLabel: 'Hải Châu ➔ Sơn Trà',
     x: 20,
@@ -60,7 +60,7 @@ const DEFAULT_MARKERS: readonly MapPackageMarker[] = [
   },
   {
     id: 'pkg-5',
-    orderRef: 'LP-A-260815-104',
+    orderRef: 'LP-A-260815-105',
     customer: 'Thaco Trường Hải',
     routeLabel: 'Cảng Tiên Sa ➔ KCN Điện Ngọc',
     x: 78,
@@ -71,8 +71,8 @@ const DEFAULT_MARKERS: readonly MapPackageMarker[] = [
 
 export function BentoMapCard({
   title = 'Bản đồ điều phối thời gian thực',
-  activeOrderCode = 'OR-1000 GreenMart',
-  searchPlaceholder = 'Tìm kiếm đơn...',
+  activeOrderCode = 'LP-A-260815-101 · Vinamilk Đà Nẵng ➔ Cảng Tiên Sa',
+  searchPlaceholder = 'Tìm kiếm đơn hàng, phương tiện, tài xế...',
   markers = DEFAULT_MARKERS,
   onSelectOrder,
   onSearch,
@@ -86,7 +86,7 @@ export function BentoMapCard({
   const handleZoomOut = () => setZoomLevel((z) => Math.max(z - 0.15, 0.85));
 
   const activeMarker = markers.find((m) => m.id === selectedMarkerId) ?? markers[0] ?? DEFAULT_MARKERS[0];
-  const displayActiveLabel = activeOrderCode || (activeMarker ? `${activeMarker.orderRef}` : 'OR-1000 GreenMart');
+  const displayActiveLabel = activeOrderCode || (activeMarker ? `${activeMarker.orderRef}` : 'LP-A-260815-101');
 
   const handleMarkerClick = (marker: MapPackageMarker) => {
     setSelectedMarkerId(marker.id);
@@ -354,7 +354,7 @@ export function BentoMapCard({
       <div className="relative z-30 flex items-center justify-between p-3 sm:p-4 pointer-events-auto">
         <div className="flex items-center gap-2 rounded-xl bg-slate-900/75 backdrop-blur-md border border-white/15 px-3 py-1 text-[11px] font-medium text-slate-300 shadow-sm">
           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Trạm điều phối Đà Nẵng · Realtime GPS</span>
+          <span>Trạm điều phối Đà Nẵng · Giám sát GPS trực tiếp</span>
         </div>
 
         {/* Zoom Controls */}

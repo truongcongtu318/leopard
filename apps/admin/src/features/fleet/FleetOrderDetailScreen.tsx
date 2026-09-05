@@ -85,8 +85,8 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
           <ReadOnlyDetailList
             ariaLabel="Thông tin phân công và hàng hóa"
             items={[
-              { id: 'driver', label: 'Driver', value: order.driverLabel },
-              { id: 'customer', label: 'Customer', value: order.customerLabel },
+              { id: 'driver', label: 'Tài xế', value: order.driverLabel },
+              { id: 'customer', label: 'Khách hàng', value: order.customerLabel },
               { id: 'cargo', label: 'Hàng hóa', value: order.cargoSummary },
               { id: 'updated', label: 'Cập nhật', value: order.updatedAtLabel },
             ]}
@@ -100,7 +100,7 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
         lastUpdated={order.tracking.lastUpdatedLabel}
         state={order.tracking.state}
         textAlternative={order.tracking.mapAlternative}
-        title="Tracking và vị trí gần nhất"
+        title="Giám sát hành trình & Vị trí thực tế"
       >
         <RouteMapSchematic
           destinationLabel={order.route.destination.label}

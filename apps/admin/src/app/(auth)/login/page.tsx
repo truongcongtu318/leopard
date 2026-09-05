@@ -33,12 +33,12 @@ export default function LoginPage() {
                 Pilot
               </span>
             </div>
-            <p className="text-xs text-neutral-muted">Operations Dispatch Portal</p>
+            <p className="text-xs text-neutral-muted">Cổng điều phối vận tải trực tuyến</p>
           </div>
         </div>
 
         <main className="rounded-[28px] sm:rounded-[32px] border border-white/80 bg-white/95 backdrop-blur-md p-6 sm:p-8 shadow-card text-neutral-text">
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-text">LEOPARD Operations</h1>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-text">Điều hành Vận tải LEOPARD</h1>
           <p className="mt-1 text-xs sm:text-sm text-neutral-muted">
             Đăng nhập để tiếp tục điều phối vận hành
           </p>

@@ -142,7 +142,7 @@ function FleetOrderLedger({
                           </dd>
                         </div>
                         <div>
-                          <dt className="font-semibold text-neutral-muted">Tracking</dt>
+                          <dt className="font-semibold text-neutral-muted">Định vị GPS</dt>
                           <dd
                             className={`mt-0.5 break-words ${order.trackingFreshness === 'stale' ? 'font-semibold text-warning-text' : 'text-slate-600'}`}
                           >
@@ -236,7 +236,7 @@ function OrderFilters({
         </select>
       </label>
       <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
-        Customer
+        Khách hàng
         <input
           className={fieldClass}
           defaultValue={filters.customer}
@@ -246,7 +246,7 @@ function OrderFilters({
         />
       </label>
       <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
-        Driver
+        Tài xế
         <select className={fieldClass} defaultValue={filters.driverId} name="driverId">
           <option value="">Tất cả tài xế</option>
           <option value="22222222-2222-4222-8222-222222222001">Tài xế An Mô Phỏng</option>
@@ -316,14 +316,14 @@ function OrderResults({
         label: 'Lộ trình',
         value: `${order.route.originLabel} → ${order.route.destinationLabel}`,
       },
-      { id: 'customer', label: 'Customer', value: order.customerLabel },
-      { id: 'driver', label: 'Driver', value: order.driverLabel },
+      { id: 'customer', label: 'Khách hàng', value: order.customerLabel },
+      { id: 'driver', label: 'Tài xế', value: order.driverLabel },
       {
         id: 'payment',
         label: 'Thanh toán',
         value: <StatusBadge domain="paymentStatus" status={order.paymentStatus} />,
       },
-      { id: 'tracking', label: 'Tracking', value: order.trackingLabel },
+      { id: 'tracking', label: 'Định vị GPS', value: order.trackingLabel },
       { id: 'updated', label: 'Cập nhật', value: order.updatedAtLabel },
     ],
   }));
@@ -369,7 +369,7 @@ export function FleetOrdersScreen({
     <div className="flex flex-col gap-lg">
       <FleetBreadcrumbs current="orders" />
       <OperationsPageHeader
-        context="Danh sách read-only theo trạng thái, Customer, Driver và khoảng ngày"
+        context="Danh sách chỉ xem theo trạng thái, Khách hàng, Tài xế và khoảng ngày"
         isStale={view.state === 'offline'}
         title="Đơn của đội xe"
       />

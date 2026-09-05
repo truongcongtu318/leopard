@@ -79,10 +79,10 @@ export function AdminOverviewScreen({
         id: o.reference || o.id,
         customer: customerNames[idx % customerNames.length] ?? 'Doanh nghiệp',
         route: routes[idx % routes.length] ?? { from: 'Hải Châu', to: 'Sơn Trà' },
-        weight: weights[idx % weights.length] ?? '1.8 t',
+        weight: weights[idx % weights.length] ?? '1,8 tấn',
         eta: o.updatedAtLabel,
         status: o.status,
-        statusLabel: o.status === 'IN_TRANSIT' ? 'In Transit' : o.status === 'DELIVERED' ? 'Delivered' : o.status,
+        statusLabel: o.status === 'IN_TRANSIT' ? 'Đang vận chuyển' : o.status === 'DELIVERED' ? 'Đã giao hàng' : o.status,
         href: createAdminPreviewHref(o.href, 'order-detail', previewContext),
       }))
     : undefined;
@@ -106,7 +106,7 @@ export function AdminOverviewScreen({
         <div className="flex items-center gap-3">
           <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-0.5 text-xs text-slate-500 font-medium shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Hạ tầng: <span>Liveness</span> ({view.health.liveness}) · <span>Readiness</span> ({view.health.readiness})</span>
+            <span>Hệ thống: <span>Liveness</span> ({view.health.liveness}) · <span>Readiness</span> ({view.health.readiness})</span>
           </div>
           <div className="text-xs text-slate-400 tabular-nums font-medium">
             Lần cập nhật: {view.checkedAtLabel}
@@ -115,47 +115,7 @@ export function AdminOverviewScreen({
       </div>
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
 
-      {/* NexaFleet Modern Bento Dispatch Console Grid: 2 Columns */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        {/* Left Column (~62% width): Realtime Da Nang Map & Orders Table Card */}
-        <div className="xl:col-span-8 flex flex-col gap-4">
-          <BentoMapCard
-            title="Bản đồ điều phối thời gian thực"
-            activeOrderCode="LP-A-260815-101 · Vinamilk Đà Nẵng ➔ Cảng Tiên Sa"
-            searchPlaceholder="Tìm kiếm đơn hàng, tài xế..."
-          />
-          <BentoOrdersCard
-            title="Orders"
-            totalCount={totalOrdersCount}
-            orders={bentoOrders}
-          />
-        </div>
-
-        {/* Right Column (~38% width): Status Overview + Fulfillment Performance + Revenue Over Time */}
-        <div className="xl:col-span-4 flex flex-col gap-4">
-          <StatusOverviewCard
-            loadingPercent={loadingPercent}
-            inTransitPercent={inTransitPercent}
-            unloadingPercent={unloadingPercent}
-            deliveredPercent={deliveredPercent}
-          />
-          <FulfillmentPerformanceCard rate={89} subtitle="on average" />
-          <RevenueOverTimeCard amount="239.187.000 ₫" growthLabel="+15% tháng này" />
-        </div>
-      </div>
-
-      {/* Modern Telemetry 6 KPI Cards Row */}
-      <ModernTelemetryCards
-        totalOrders={totalOrdersCount}
-        inTransitOrders={inTransitCount}
-        deliveredOrders={deliveredCount}
-        cancelledOrders={cancelledCount}
-        activeVehicles={389}
-        liveness={view.health.liveness}
-        readiness={view.health.readiness}
-      />
-
-      {/* Active Exceptions: Only displayed when operational incidents occur */}
+      {/* Active Exceptions: Displayed at the TOP of the page so dispatchers see incidents immediately */}
       {view.exceptions.length > 0 ? (
         <div
           aria-label="Bàn điều phối hiện tại"
@@ -214,6 +174,55 @@ export function AdminOverviewScreen({
           <h2 className="sr-only">Ngoại lệ cần điều tra</h2>
         </div>
       )}
+
+      {/* NexaFleet Modern Bento Dispatch Console Grid: 2 Columns */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        {/* Left Column (~62% width): Realtime Da Nang Map & Orders Table Card */}
+        <div className="xl:col-span-8 flex flex-col gap-4">
+          <BentoMapCard
+            title="Bản đồ điều phối thời gian thực"
+            activeOrderCode="LP-A-260815-101 · Vinamilk Đà Nẵng ➔ Cảng Tiên Sa"
+            searchPlaceholder="Tìm kiếm đơn hàng, tài xế..."
+          />
+          <BentoOrdersCard
+            title="Sổ điều phối đơn hàng"
+            totalCount={totalOrdersCount}
+            orders={bentoOrders}
+          />
+        </div>
+
+        {/* Right Column (~38% width): Status Overview + Fulfillment Performance + Revenue Over Time */}
+        <div className="xl:col-span-4 flex flex-col gap-4">
+          <StatusOverviewCard
+            title="Cơ cấu trạng thái đơn"
+            loadingPercent={loadingPercent}
+            inTransitPercent={inTransitPercent}
+            unloadingPercent={unloadingPercent}
+            deliveredPercent={deliveredPercent}
+          />
+          <FulfillmentPerformanceCard
+            title="Hiệu suất giao đúng hạn (OTD)"
+            subtitle="trung bình ca trực"
+            rate={89}
+          />
+          <RevenueOverTimeCard
+            title="Doanh thu cước vận chuyển"
+            amount="239.187.000 ₫"
+            growthLabel="+15% so với tháng trước"
+          />
+        </div>
+      </div>
+
+      {/* Modern Telemetry 4 Practical KPI Cards Row */}
+      <ModernTelemetryCards
+        totalOrders={totalOrdersCount}
+        inTransitOrders={inTransitCount}
+        deliveredOrders={deliveredCount}
+        cancelledOrders={cancelledCount}
+        activeVehicles={12}
+        liveness={view.health.liveness}
+        readiness={view.health.readiness}
+      />
 
       {/* Zero-safe operational metrics summary for accessibility & monitoring */}
       <dl className="sr-only" aria-label="Chỉ số hệ thống">

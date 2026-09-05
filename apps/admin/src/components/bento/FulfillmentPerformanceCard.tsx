@@ -13,10 +13,10 @@ export interface FulfillmentPerformanceCardProps {
 const DEFAULT_BARS = [65, 88, 72, 94, 52, 68, 98, 76, 89, 58, 70, 92, 86, 78, 64, 95] as const;
 
 export function FulfillmentPerformanceCard({
-  title = 'Fulfillment Performance',
-  periodLabel = 'Month',
+  title = 'Hiệu suất giao đúng hạn (OTD)',
+  periodLabel = 'Tháng này',
   rate = 89,
-  subtitle = 'on average',
+  subtitle = 'trung bình ca trực',
   bars = DEFAULT_BARS,
 }: FulfillmentPerformanceCardProps) {
   return (
@@ -24,12 +24,9 @@ export function FulfillmentPerformanceCard({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>
-        <div className="flex items-center gap-1 rounded-full bg-slate-100/90 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer">
-          <span>{periodLabel}</span>
-          <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+        <span className="rounded-full bg-slate-100/90 px-3 py-1 text-xs font-semibold text-slate-600">
+          {periodLabel}
+        </span>
       </div>
 
       {/* KPI Metric */}
@@ -50,7 +47,7 @@ export function FulfillmentPerformanceCard({
             <div
               style={{ height: `${heightPercent}%` }}
               className="w-full max-w-[12px] rounded-full bg-[#10b981] transition-all group-hover:bg-[#059669]"
-              title={`Day ${index + 1}: ${heightPercent}%`}
+              title={`Ngày ${index + 1}: ${heightPercent}%`}
             />
           </div>
         ))}

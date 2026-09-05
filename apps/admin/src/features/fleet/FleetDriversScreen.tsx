@@ -135,7 +135,7 @@ function DriverFilters({
         />
       </label>
       <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
-        Availability
+        Tình trạng sẵn sàng
         <select
           className={inputClass}
           defaultValue={filters.availability}
@@ -156,7 +156,7 @@ function DriverFilters({
         >
           <option value="name-asc">Tên A–Z</option>
           <option value="name-desc">Tên Z–A</option>
-          <option value="availability">Availability</option>
+          <option value="availability">Tình trạng sẵn sàng</option>
           <option value="location-updated">Vị trí cập nhật gần nhất</option>
         </select>
       </label>
@@ -264,7 +264,7 @@ export function FleetDriversScreen({
     <div className="flex flex-col gap-lg">
       <FleetBreadcrumbs current="drivers" />
       <OperationsPageHeader
-        context="Theo dõi availability, phân công và vị trí gần nhất trong phạm vi được cấp quyền"
+        context="Theo dõi tình trạng sẵn sàng, phân công và vị trí gần nhất trong phạm vi được cấp quyền"
         title="Tài xế"
       />
       <FleetScopeRail scope={view.scope} />

@@ -16,13 +16,13 @@ describe('NexaFleet Bento Widgets', () => {
       <BentoMapCard
         title="Bản đồ thời gian thực"
         activeOrderCode="OR-1000 GreenMart"
-        searchPlaceholder="Search order..."
+        searchPlaceholder="Tìm kiếm đơn hàng..."
       />,
     );
 
     expect(screen.getByLabelText('Bản đồ thời gian thực')).toBeTruthy();
     expect(screen.getByText('OR-1000 GreenMart')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Search order...')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Tìm kiếm đơn hàng...')).toBeTruthy();
     expect(screen.getByLabelText('Phóng to bản đồ')).toBeTruthy();
     expect(screen.getByLabelText('Thu nhỏ bản đồ')).toBeTruthy();
   });
@@ -31,20 +31,20 @@ describe('NexaFleet Bento Widgets', () => {
     const onFilterChange = jest.fn();
     render(
       <BentoOrdersCard
-        title="Orders"
+        title="Sổ điều phối đơn hàng"
         totalCount={301}
         onFilterChange={onFilterChange}
       />,
     );
 
-    expect(screen.getByText('Orders')).toBeTruthy();
+    expect(screen.getByText('Sổ điều phối đơn hàng')).toBeTruthy();
     expect(screen.getByText('(301)')).toBeTruthy();
     expect(screen.getByText('LP-A-260815-101')).toBeTruthy();
     expect(screen.getByText('Vinamilk Đà Nẵng')).toBeTruthy();
     expect(screen.getByText('KCN Hòa Khánh')).toBeTruthy();
     expect(screen.getByText('Cảng Tiên Sa')).toBeTruthy();
 
-    const pendingBtn = screen.getByRole('button', { name: 'Pending' });
+    const pendingBtn = screen.getByRole('button', { name: 'Chờ tiếp nhận' });
     fireEvent.click(pendingBtn);
     expect(onFilterChange).toHaveBeenCalledWith('pending');
   });
@@ -52,7 +52,7 @@ describe('NexaFleet Bento Widgets', () => {
   it('renders StatusOverviewCard with all 4 status categories and metrics', () => {
     render(
       <StatusOverviewCard
-        title="Status Overview"
+        title="Cơ cấu trạng thái đơn"
         loadingPercent={17}
         inTransitPercent={32}
         unloadingPercent={13}
@@ -60,45 +60,47 @@ describe('NexaFleet Bento Widgets', () => {
       />,
     );
 
-    expect(screen.getByText('Status Overview')).toBeTruthy();
+    expect(screen.getByText('Cơ cấu trạng thái đơn')).toBeTruthy();
     expect(screen.getByText('17%')).toBeTruthy();
     expect(screen.getByText('32%')).toBeTruthy();
     expect(screen.getByText('13%')).toBeTruthy();
     expect(screen.getByText('38%')).toBeTruthy();
-    expect(screen.getByText('Loading')).toBeTruthy();
-    expect(screen.getByText('In Transit')).toBeTruthy();
-    expect(screen.getByText('Unloading')).toBeTruthy();
-    expect(screen.getByText('Delivered')).toBeTruthy();
+    expect(screen.getByText('Đang lấy hàng')).toBeTruthy();
+    expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
+    expect(screen.getByText('Đang dỡ hàng')).toBeTruthy();
+    expect(screen.getByText('Đã giao hàng')).toBeTruthy();
   });
 
   it('renders FulfillmentPerformanceCard with KPI rate and subtitle', () => {
     render(
       <FulfillmentPerformanceCard
+        title="Hiệu suất giao đúng hạn (OTD)"
         rate={89}
-        subtitle="on average"
+        subtitle="trung bình ca trực"
       />,
     );
 
-    expect(screen.getByText('Fulfillment Performance')).toBeTruthy();
+    expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)')).toBeTruthy();
     expect(screen.getByText('89%')).toBeTruthy();
-    expect(screen.getByText('on average')).toBeTruthy();
+    expect(screen.getByText('trung bình ca trực')).toBeTruthy();
   });
 
   it('renders RevenueOverTimeCard with amount and period options', () => {
     const onPeriodChange = jest.fn();
     render(
       <RevenueOverTimeCard
-        amount="$239,187.00"
-        growthLabel="+15% this month"
+        title="Doanh thu cước vận chuyển"
+        amount="239.187.000 ₫"
+        growthLabel="+15% so với tháng trước"
         onPeriodChange={onPeriodChange}
       />,
     );
 
-    expect(screen.getByText('Revenue Over Time')).toBeTruthy();
-    expect(screen.getByText('$239,187.00')).toBeTruthy();
-    expect(screen.getByText('+15% this month')).toBeTruthy();
+    expect(screen.getByText('Doanh thu cước vận chuyển')).toBeTruthy();
+    expect(screen.getByText('239.187.000 ₫')).toBeTruthy();
+    expect(screen.getByText('+15% so với tháng trước')).toBeTruthy();
 
-    const weekBtn = screen.getByRole('button', { name: 'Week' });
+    const weekBtn = screen.getByRole('button', { name: 'Tuần' });
     fireEvent.click(weekBtn);
     expect(onPeriodChange).toHaveBeenCalledWith('week');
   });

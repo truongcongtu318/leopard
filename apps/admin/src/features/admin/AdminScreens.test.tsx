@@ -32,10 +32,10 @@ describe('Admin static operations screens', () => {
     expect(screen.getByLabelText('Thu nhỏ bản đồ')).toBeTruthy();
 
     // Bento Orders Table
-    expect(screen.getByText('Orders')).toBeTruthy();
-    expect(screen.getByText('Status Overview')).toBeTruthy();
-    expect(screen.getByText('Fulfillment Performance')).toBeTruthy();
-    expect(screen.getByText('Revenue Over Time')).toBeTruthy();
+    expect(screen.getByText('Sổ điều phối đơn hàng')).toBeTruthy();
+    expect(screen.getByText('Cơ cấu trạng thái đơn')).toBeTruthy();
+    expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)')).toBeTruthy();
+    expect(screen.getByText('Doanh thu cước vận chuyển')).toBeTruthy();
 
     // Telemetry KPI cards
     expect(screen.getByText('ĐƠN HÀNG HÔM NAY')).toBeTruthy();
