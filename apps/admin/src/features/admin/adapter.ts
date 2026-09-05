@@ -997,7 +997,7 @@ export function createAdminHttpAdapter(client?: ApiClient): AdminPort {
             ? {
                 tone: 'danger',
                 title: 'Hệ thống chưa sẵn sàng',
-                message: 'Liveness vẫn UP; một dependency readiness cần được kiểm tra.',
+                message: 'Máy chủ đang trực tuyến; một dịch vụ liên kết cần được kiểm tra kết nối.',
                 ...(health.requestId ? { requestId: health.requestId } : {}),
               }
             : offline
@@ -1393,7 +1393,7 @@ export function createAdminHttpAdapter(client?: ApiClient): AdminPort {
             orderData.tracking?.mapAlternative ??
             (trackingState === 'no-location'
               ? 'Không vẽ marker giả; lộ trình dạng chữ vẫn được giữ.'
-              : 'Điểm gần nhất ở cấp khu vực Quận 7; không lộ tọa độ thô.'),
+              : 'Điểm gần nhất ở cấp khu vực Hải Châu, Đà Nẵng; không lộ tọa độ thô.'),
         };
 
         // StatusTimeline: Strictly for order lifecycle

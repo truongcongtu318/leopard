@@ -40,15 +40,16 @@ phải giúp Admin trả lời nhanh bốn câu hỏi:
 | Constraints      | WCAG AA, keyboard-first, privacy by default, responsive, tiếng Việt, dữ liệu tĩnh có nhãn |
 
 Không dùng hero quảng cáo rườm rà, marketing card sai lệch tính năng hoặc animation kéo dài gây chậm trễ.
-Giao diện kết hợp tính trực quan của **Modern Dispatch Console** với độ chính xác cao: nền pastel dịu mắt, thẻ nổi 20–26px,
-thanh Dock điều hướng bên trái và các widget telemetry phục vụ trực tiếp cho giám sát vận hành.
+Giao diện tuân thủ chuẩn **NexaFleet Modern Bento Dispatch Console** với độ chính xác và thẩm mỹ cao:
+nền canvas xám sáng thanh lịch (`#F4F5F7`), thẻ bento trắng tinh khôi bo góc `rounded-3xl` (24–28px),
+topbar pill đen tuyền ở trung tâm, bản đồ Dark Mode thời gian thực và các khối telemetry giàu tính trực quan.
 
-### 1.1 Visual composition — Modern Dispatch & Investigation Console
+### 1.1 Visual composition — NexaFleet Modern Bento Dispatch Console
 
 | Screen       | Silhouette và hierarchy bắt buộc                                                                                                                                 |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shell        | Slim navigation dock bên trái + Topbar tích hợp search pill, thông báo và hồ sơ; canvas pastel dịu mắt                                                          |
-| Overview     | Bố cục 2 cột: Bản đồ theo dõi real-time (Đà Nẵng) + Cột tác vụ nhanh (Đơn mới, Tài xế gần đây, Cảnh báo) + Hàng 6 thẻ telemetry đồ thị + Sổ đơn DataTable gần đây |
+| Shell        | Topbar nổi bo góc với logo LEOPARD bên trái, cụm menu trung tâm với tab active dạng pill đen tuyền (`bg-slate-900 text-white rounded-full`), ô search, chuông và user capsule; canvas xám sáng `#F4F5F7` |
+| Overview     | Bố cục Bento 2 cột: Cột trái gồm Bản đồ Realtime Dark Mode + Thẻ bảng đơn hàng Orders (301) kèm pill filters; Cột phải gồm Status Overview (thanh phân đoạn 4 màu) + Fulfillment Performance (cột xanh lục) + Revenue Over Time (gradient hoàng hôn + sóng trắng) |
 | Lists        | Breadcrumb/page mast → filter workbench → result count/revision → dense table hoặc row-detail; toolbar và result phải đọc như một công cụ duy nhất               |
 | Order detail | Status/ownership mast → desktop split `8/4` investigation + Audit Rail; mobile giữ một cột nhưng command capability đứng trước audit, không bị chôn sau metadata |
 | Command      | Dialog nêu target/current→proposed state/consequence trước reason; destructive action tách thị giác và vẫn dùng được ở text zoom `200%`                          |
@@ -246,21 +247,51 @@ hiệu hóa người dùng” là feedback command thành công, trong khi statu
 
 ## 6. Screen anatomy
 
-### 6.1 `/admin` — Operations overview
+### 6.1 `/admin` — Operations overview (NexaFleet Bento Dispatch Console)
 
-Thứ tự region:
+Bố cục màn hình điều phối tổng quan tuân thủ chuẩn Bento 2 cột:
 
-1. `h1` “Tổng quan vận hành”, checked time và refresh action.
-2. Readiness alert chỉ khi failed/degraded; liveness/readiness không gộp thành một số.
-3. Compact metric strip: chỉ metric từ `/admin/dashboard`, có label, value, scope và
-   updated time; zero là dữ liệu hợp lệ, không bị thay bằng empty placeholder.
-4. Order status distribution bằng compact list/`dl`, dùng canonical labels.
-5. Exception queue filter theo domain/severity nếu response hỗ trợ; mỗi row có entity,
-   condition, updated time và link điều tra.
-6. Recent orders semantic table với Order, Status, Payment, Updated và Action.
+```text
++--------------------------------------------------------------------------------------------------+
+| Topbar: [Logo LEOPARD]      [Overview (Active)] Orders Drivers Fleets Users      [Search] (Bell) [Profile] |
++--------------------------------------------------------------------------------------------------+
+|                                                                 |                                |
+|  [CỘT TRÁI - ~62%]                                               |  [CỘT PHẢI - ~38%]              |
+|  +-----------------------------------------------------------+  |  +--------------------------+  |
+|  | BentoMapCard (Bản đồ Realtime Dark Mode)                  |  |  | StatusOverviewCard       |  |
+|  | - Search box kính mờ floating top-left                   |  |  | - 17% Đang xếp (amber)   |  |
+|  | - Fullscreen button & Zoom controls (+ / -)               |  |  | - 32% Đang giao (emerald)|  |
+|  | - Marker hộp bưu kiện 3D & active marker xanh ngọc lục bảo|  |  | - 13% Đang dỡ (coral)    |  |
+|  +-----------------------------------------------------------+  |  | - 38% Đã giao (magenta)  |  |
+|                                                                 |  | - Segmented Progress Bar |  |
+|  +-----------------------------------------------------------+  |  +--------------------------+  |
+|  | BentoOrdersCard (Sổ Đơn Hàng Orders (301))                |  |                                |
+|  | - Pill Filters: Tất cả | Chờ nhận | [Đã gán] | Hoàn thành |  |  +--------------------------+  |
+|  | - Table: Mã đơn | Khách hàng | Tuyến đường (A -> B)       |  |  | FulfillmentPerformance   |  |
+|  |          Trọng tải | ETA | Trạng thái (Pill Emerald/Pink) |  |  | - 89% KPI trung bình     |  |
+|  +-----------------------------------------------------------+  |  | - Cột đứng xanh lục      |  |
+|                                                                 |  +--------------------------+  |
+|                                                                 |                                |
+|                                                                 |  +--------------------------+  |
+|                                                                 |  | RevenueOverTimeCard      |  |
+|                                                                 |  | - Thẻ Gradient hoàng hôn |  |
+|                                                                 |  | - Doanh thu $239,187.00  |  |
+|                                                                 |  | - Đường sóng trắng mềm mại|  |
+|                                                                 |  | - [Tuần] [Tháng] [6T][Năm|  |
+|                                                                 |  +--------------------------+  |
++--------------------------------------------------------------------------------------------------+
+```
 
-Không tạo chart hoặc metric ngoài response để lấp khoảng trống. Khi chưa có activity,
-render trạng thái “Chưa có hoạt động vận hành” cùng timestamp, không tạo fake trend.
+Thứ tự region và cấu trúc chi tiết:
+1. **Header & Context Bar**: `h1` "Tổng quan vận hành", badge "Ca trực Pilot Đang Chạy" (pulse emerald), chỉ số liveness/readiness và thời gian snapshot.
+2. **Cột trái (~62% width)**:
+   - `BentoMapCard`: Container `rounded-3xl` tối ưu tỷ lệ hiển thị mạng lưới tuyến đường logistics Đà Nẵng, thanh tìm kiếm kính mờ, zoom controls và marker phân loại phương tiện/bưu kiện.
+   - `BentoOrdersCard`: Thẻ trắng `rounded-3xl` chứa bộ lọc pill và bảng danh sách đơn hàng tinh giản hiển thị rõ Tuyến đường mũi tên, Trọng tải, ETA và badge trạng thái.
+3. **Cột phải (~38% width)**:
+   - `StatusOverviewCard`: Tỷ lệ % phân bổ trạng thái kèm thanh phân đoạn màu liền mạch.
+   - `FulfillmentPerformanceCard`: Chỉ số tỷ lệ hoàn thành trung bình (89%) và biểu đồ cột đứng màu xanh ngọc lục bảo.
+   - `RevenueOverTimeCard`: Thẻ gradient hoàng hôn ấm áp với biểu đồ sóng trắng mềm mại và mốc thời gian.
+4. **Active Exceptions**: Khối cảnh báo ngoại lệ vận hành chỉ hiển thị khi có sự cố phát sinh thực tế.
 
 ### 6.2 List workbench dùng chung
 

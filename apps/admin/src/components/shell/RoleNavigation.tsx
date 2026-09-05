@@ -77,7 +77,7 @@ export function RoleNavigation({
   if (orientation === 'horizontal') {
     return (
       <nav aria-label={ariaLabel} className="hidden md:flex items-center">
-        <ul className="m-0 list-none flex items-center gap-5 lg:gap-7 p-0 text-sm font-semibold text-slate-600">
+        <ul className="m-0 list-none flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100/70 rounded-full text-xs font-medium text-slate-600">
           {items.map((item) => {
             const isActive = currentHref === item.href;
             return (
@@ -85,10 +85,10 @@ export function RoleNavigation({
                 <Link
                   href={item.href}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`flex min-h-11 items-center gap-1.5 transition-colors motion-reduce:transition-none ${
+                  className={`flex min-h-8 items-center px-3.5 py-1.5 rounded-full transition-all motion-reduce:transition-none ${
                     isActive
-                      ? 'text-sky-600 font-bold border-b-2 border-sky-600 pb-0.5'
-                      : 'text-slate-600 hover:text-sky-600'
+                      ? 'bg-slate-900 text-white font-semibold shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
                   }`}
                 >
                   <span>{item.label}</span>

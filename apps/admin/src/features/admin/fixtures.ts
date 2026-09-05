@@ -352,7 +352,7 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
       ? {
           tone: 'danger',
           title: 'Hệ thống chưa sẵn sàng',
-          message: 'Liveness vẫn UP; một dependency readiness cần được kiểm tra.',
+          message: 'Máy chủ đang trực tuyến; một dịch vụ liên kết cần được kiểm tra kết nối.',
           requestId: 'req-health-demo-004',
         }
       : offline
@@ -404,22 +404,20 @@ const VIETNAMESE_NAMES: readonly string[] = Array.from(
     } ${SIMULATED_GIVEN[Math.floor(index / (SIMULATED_FAMILY.length * SIMULATED_MIDDLE.length)) % SIMULATED_GIVEN.length]}`,
 );
 
-const TPHCM_DISTRICTS = [
-  'Quận 1 (Bến Nghé)', 'Quận 1 (Đa Kao)', 'Quận 3 (Võ Thị Sáu)', 'Quận 4 (Đoàn Văn Bơ)', 'Quận 5 (Chợ Lớn)',
-  'Quận 7 (Phú Mỹ Hưng)', 'Quận 7 (Tân Thuận)', 'Quận 8 (Tạ Quang Bửu)', 'Quận 10 (3 Tháng 2)',
-  'Quận 11 (Lạc Long Quân)', 'Quận 12 (Tân Thới Hiệp)', 'Bình Thạnh (Hàng Xanh)', 'Bình Thạnh (Thanh Đa)',
-  'Tân Bình (Cộng Hòa)', 'Tân Bình (Sân Bay TSN)', 'Tân Phú (Lũy Bán Bích)', 'Gò Vấp (Quang Trung)',
-  'Phú Nhuận (Phan Xích Long)', 'TP. Thủ Đức (Thảo Điền)', 'TP. Thủ Đức (KCN Cao)', 'TP. Thủ Đức (Linh Trung)',
-  'Bình Chánh (Vĩnh Lộc)', 'Nhà Bè (Hiệp Phước)', 'Hóc Môn (Bà Điểm)'
+const DANANG_DISTRICTS = [
+  'Hải Châu (Bạch Đằng)', 'Hải Châu (Trần Phú)', 'Thanh Khê (Điện Biên Phủ)', 'Thanh Khê (Hà Huy Tập)',
+  'Sơn Trà (Cảng Tiên Sa)', 'Sơn Trà (Ngô Quyền)', 'Ngũ Hành Sơn (Lê Văn Hiến)', 'Ngũ Hành Sơn (Non Nước)',
+  'Cẩm Lệ (Kho Cẩm Lệ)', 'Cẩm Lệ (Hòa Xuân)', 'Liên Chiểu (KCN Hòa Khánh)', 'Liên Chiểu (Nguyễn Lương Bằng)',
+  'Hòa Vang (Hòa Nhơn)', 'Hòa Vang (KCN Hòa Cầm)'
 ];
 
 const FLEET_NAMES = [
   'Đội xe Sao Mai Mô Phỏng',
-  'Vận Tải Đông Nam Logistics',
-  'Đội xe Hoàng Gia Express',
-  'Giao Hàng Siêu Tốc Sài Gòn',
-  'Vận Tải Tân Cảng Fleet',
-  'Vận Tải Miền Nam Fleet'
+  'Vận Tải Miền Trung Logistics',
+  'Đội xe Hoàng Long Đà Nẵng',
+  'Vận Tải Cảng Tiên Sa Fleet',
+  'Vận Tải Sông Hàn Express',
+  'Đội xe Hải Vân Trans'
 ];
 
 function orderItems(): readonly AdminOrderListItemView[] {
@@ -468,8 +466,8 @@ function orderItems(): readonly AdminOrderListItemView[] {
 
   extraStatuses.forEach(([status, paymentStatus, trackingLabel], i) => {
     const num = 107 + i;
-    const fromDistrict = TPHCM_DISTRICTS[i % TPHCM_DISTRICTS.length] ?? 'Quận 1';
-    const toDistrict = TPHCM_DISTRICTS[(i + 7) % TPHCM_DISTRICTS.length] ?? 'Quận 7';
+    const fromDistrict = DANANG_DISTRICTS[i % DANANG_DISTRICTS.length] ?? 'Hải Châu';
+    const toDistrict = DANANG_DISTRICTS[(i + 7) % DANANG_DISTRICTS.length] ?? 'Cẩm Lệ';
     const customer = VIETNAMESE_NAMES[(i + 5) % VIETNAMESE_NAMES.length] ?? 'Khách Hàng';
     const driver = status === 'REQUESTED' ? 'Chưa phân công' : `Tài xế ${VIETNAMESE_NAMES[(i + 15) % VIETNAMESE_NAMES.length] ?? 'Trần Văn An'}`;
     const amount = (180 + (i * 45) % 800) * 1000;
@@ -586,12 +584,12 @@ function driverItems(): readonly AdminDriverListItemView[] {
       entity: 'driver', id: '22222222-2222-4222-8222-222222222001', displayName: 'Tài xế An Mô Phỏng',
       maskedPhone: '••• ••• 1201', accountStatus: 'ACTIVE', availability: 'BUSY', membershipStatus: 'ACTIVE',
       fleetLabel: 'Đội xe Sao Mai Mô Phỏng', activeOrder: { reference: 'LP-A-260815-104', href: '/admin/orders/33333333-3333-4333-8333-333333333104' },
-      locationLabel: 'Khu vực Quận 7', locationUpdatedAtLabel: '14:22 · 15/08/2026', locationCondition: 'stale',
+      locationLabel: 'Khu vực Hải Châu, Đà Nẵng', locationUpdatedAtLabel: '14:22 · 15/08/2026', locationCondition: 'stale',
     },
     {
       entity: 'driver', id: '22222222-2222-4222-8222-222222222002', displayName: 'Tài xế Bình Mô Phỏng',
       maskedPhone: '••• ••• 1202', accountStatus: 'ACTIVE', availability: 'AVAILABLE', membershipStatus: 'INVITED',
-      fleetLabel: 'Đội xe Sao Mai Mô Phỏng', activeOrder: null, locationLabel: 'Khu vực Bình Thạnh',
+      fleetLabel: 'Đội xe Sao Mai Mô Phỏng', activeOrder: null, locationLabel: 'Khu vực Cẩm Lệ, Đà Nẵng',
       locationUpdatedAtLabel: '14:31 · 15/08/2026', locationCondition: 'current',
     },
     {
@@ -615,7 +613,7 @@ function driverItems(): readonly AdminDriverListItemView[] {
     const num = i + 4;
     const idSuffix = String(num).padStart(3, '0');
     const fleet = FLEET_NAMES[i % FLEET_NAMES.length] ?? 'Đội xe Sao Mai';
-    const location = TPHCM_DISTRICTS[(i * 3) % TPHCM_DISTRICTS.length] ?? 'Quận 1';
+    const location = DANANG_DISTRICTS[(i * 3) % DANANG_DISTRICTS.length] ?? 'Hải Châu';
     const availabilities: ('AVAILABLE' | 'BUSY' | 'OFFLINE')[] = ['AVAILABLE', 'BUSY', 'AVAILABLE', 'OFFLINE', 'BUSY'];
     const availability = availabilities[i % availabilities.length] ?? 'AVAILABLE';
     const isBusy = availability === 'BUSY';
@@ -769,7 +767,7 @@ function baseOrderDetail(
           : trackingStale
             ? '14:22 · 15/08/2026'
             : selectedOrder.createdAtLabel,
-      mapAlternative: 'Điểm gần nhất ở cấp khu vực Quận 7; không lộ tọa độ thô.',
+      mapAlternative: 'Điểm gần nhất ở cấp khu vực Hải Châu, Đà Nẵng; không lộ tọa độ thô.',
     },
     history: historyFor(selectedOrder),
     media: {

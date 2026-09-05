@@ -54,7 +54,6 @@ export function AdminOrderDetailScreen({
         screen="order-detail"
       />
       <OperationsPageHeader
-        context="Khu vực điều tra · lịch sử lifecycle tách biệt với audit đặc quyền"
         isStale={order.tracking.state === 'stale'}
         title={`Đơn ${order.reference}`}
         updatedAt={order.updatedAtLabel}
@@ -66,12 +65,11 @@ export function AdminOrderDetailScreen({
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
       <AdminDispatchSlab
         ariaLabel="Ngữ cảnh điều phối hiện tại"
-        eyebrow="NGỮ CẢNH ĐƠN · DỮ LIỆU TRỰC TIẾP"
+        eyebrow="THÔNG TIN ĐIỀU PHỐI TRỰC TIẾP"
       >
         <div className="grid min-w-0 gap-md md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div className="min-w-0">
-            <p className="text-xs font-bold tracking-wide text-slate-500 uppercase">Mã đơn</p>
-            <p className="mt-xxs text-xl sm:text-2xl font-black text-slate-800 break-words">{order.reference}</p>
+            <p className="text-xl sm:text-2xl font-black text-slate-800 break-words">{order.reference}</p>
             <p className="mt-xs text-xs sm:text-sm text-slate-600 break-words font-medium">
               {order.driverLabel} · {order.tracking.statusLabel}
             </p>
@@ -87,11 +85,11 @@ export function AdminOrderDetailScreen({
         <div className="flex min-w-0 flex-col gap-lg lg:col-span-8">
           <AdminSurface title="Ngữ cảnh đơn và phân công">
             <ReadOnlyDetailList
-              ariaLabel="Ngữ cảnh đơn, Customer và Driver"
+              ariaLabel="Ngữ cảnh đơn, Khách hàng và Tài xế"
               items={[
-                { id: 'reference', label: 'Order ID', value: order.reference },
-                { id: 'customer', label: 'Customer', value: order.customerLabel },
-                { id: 'driver', label: 'Driver được phân công', value: order.driverLabel },
+                { id: 'reference', label: 'Mã đơn hàng', value: order.reference },
+                { id: 'customer', label: 'Khách hàng', value: order.customerLabel },
+                { id: 'driver', label: 'Tài xế tiếp nhận', value: order.driverLabel },
                 { id: 'cargo', label: 'Hàng hóa', value: order.cargoSummary },
                 { id: 'updated', label: 'Cập nhật', value: order.updatedAtLabel },
               ]}
@@ -117,7 +115,7 @@ export function AdminOrderDetailScreen({
             lastUpdated={order.tracking.lastUpdatedLabel}
             state={order.tracking.state}
             textAlternative={order.tracking.mapAlternative}
-            title="Tracking và vị trí gần nhất"
+            title="Giám sát hành trình & Vị trí thực tế"
           >
             <RouteMapSchematic
               destinationLabel={order.route.destination.label}
@@ -126,10 +124,7 @@ export function AdminOrderDetailScreen({
             />
           </MapPanel>
 
-          <AdminSurface
-            description="Command chỉ xuất hiện từ availableCommands; UI không tự suy lifecycle hoặc payment capability."
-            title="Command được phép"
-          >
+          <AdminSurface title="Thao tác điều phối khả dụng">
             <AdminCommandLauncher
               commands={view.availableCommands}
               dialogPreview={view.dialogPreview}
@@ -151,17 +146,14 @@ export function AdminOrderDetailScreen({
             />
           </AdminSurface>
 
-          <AdminSurface
-            description="Metadata-first; không render signed URL hoặc storage key."
-            title="Media evidence"
-          >
+          <AdminSurface title="Hình ảnh xác nhận giao nhận">
             {order.media.state === 'error' ? (
               <OperationalAlert title="Không thể tải ảnh" tone="danger">
                 <p>{order.media.message}</p>
               </OperationalAlert>
             ) : order.media.items.length === 0 ? (
               <p className="text-body-compact text-neutral-muted">
-                Chưa có media được phép hiển thị.
+                Chưa có hình ảnh xác nhận được phép hiển thị.
               </p>
             ) : (
               <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
@@ -198,7 +190,7 @@ export function AdminOrderDetailScreen({
                   value: <StatusBadge domain="paymentStatus" status={order.payment.status} />,
                 },
                 { id: 'amount', label: 'Số tiền', value: order.payment.amountLabel },
-                { id: 'reference', label: 'Reference', value: order.payment.referenceLabel },
+                { id: 'reference', label: 'Mã tham chiếu', value: order.payment.referenceLabel },
                 { id: 'source', label: 'Nguồn', value: order.payment.sourceLabel },
                 {
                   id: 'expiry',

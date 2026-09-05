@@ -592,6 +592,7 @@ export function createFleetHttpAdapter(client?: ApiClient): FleetPort {
           const origin = order.pickup?.label ?? order.pickup?.address ?? 'Điểm lấy';
           const dest = order.dropoff?.label ?? order.dropoff?.address ?? 'Điểm giao';
           const driverName = order.driver?.name ?? order.driverLabel ?? 'Chưa phân công';
+          const customerName = order.customer?.name ?? order.customerLabel ?? 'Khách hàng';
           const ref = order.reference ?? formatOrderReference(order);
           const trackingLabel =
             order.tracking?.statusLabel ??
@@ -603,6 +604,7 @@ export function createFleetHttpAdapter(client?: ApiClient): FleetPort {
             reference: ref,
             status: order.status,
             routeLabel: `${origin} → ${dest}`,
+            customerLabel: customerName,
             driverLabel: driverName,
             trackingLabel,
             href: `/fleet/orders/${order.id}`,

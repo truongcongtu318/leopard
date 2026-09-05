@@ -32,10 +32,22 @@
   --color-danger-border: #b91c1c;
 
   --color-neutral: #ffffff;
-  --color-neutral-surface: #f3f4f6;
-  --color-neutral-text: #17202a;
-  --color-neutral-muted: #4b5563;
-  --color-neutral-border: #6b7280;
+  --color-neutral-surface: #f4f5f7;
+  --color-canvas: #f4f5f7;
+  --color-neutral-text: #0f172a;
+  --color-neutral-muted: #64748b;
+  --color-neutral-border: #e2e8f0;
+
+  /* NexaFleet Modern Bento Colors */
+  --color-dispatch-active: #0f172a;
+  --color-transit: #10b981;
+  --color-transit-soft: #d1fae5;
+  --color-delivered: #ec4899;
+  --color-delivered-soft: #fce7f3;
+  --color-loading: #f59e0b;
+  --color-loading-soft: #fef3c7;
+  --color-unloading: #f87171;
+  --color-unloading-soft: #fee2e2;
 
   /* Spacing: only 4/8/12/16/24/32 steps */
   --spacing-xxs: 0.25rem;

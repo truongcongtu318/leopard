@@ -26,11 +26,11 @@ function commandList(commands: readonly AdminCommandView[], onOpen: (command: Ad
 function launcherCopy() {
   return (
     <>
-      <h3 id="admin-command-heading" className="font-semibold text-neutral-text">
-        Command được backend cho phép
+      <h3 id="admin-command-heading" className="font-semibold text-slate-800 text-sm">
+        Thao tác điều phối
       </h3>
-      <p className="mt-xxs text-body-compact text-neutral-muted">
-        UI chỉ hiển thị capability có trong view model; kết quả thật phải đến từ persisted response.
+      <p className="mt-0.5 text-xs text-slate-500">
+        Các quyền hạn và thao tác xử lý khả dụng cho đối tượng này.
       </p>
     </>
   );
@@ -43,38 +43,69 @@ function launcherCopy() {
 function PreviewCommandLauncher({
   commands,
   dialogPreview,
+  activeCommand: controlledActiveCommand,
+  onActiveCommandChange,
+  hideTriggerList = false,
 }: Readonly<{
   commands: readonly AdminCommandView[];
   dialogPreview: AdminDialogPreviewView | null;
+  activeCommand?: AdminCommandView | null | undefined;
+  onActiveCommandChange?: ((command: AdminCommandView | null) => void) | undefined;
+  hideTriggerList?: boolean | undefined;
 }>) {
   const initialCommand = dialogPreview
     ? commands.find((candidate) => candidate.kind === dialogPreview.commandKind) ?? null
     : null;
   const fallbackFocusRef = React.useRef<HTMLHeadingElement>(null);
-  const [activeCommand, setActiveCommand] = React.useState<AdminCommandView | null>(initialCommand);
+  const [internalActiveCommand, setInternalActiveCommand] = React.useState<AdminCommandView | null>(initialCommand);
+  const activeCommand = controlledActiveCommand !== undefined ? controlledActiveCommand : internalActiveCommand;
+
+  const setActiveCommand = React.useCallback(
+    (command: AdminCommandView | null) => {
+      setInternalActiveCommand(command);
+      onActiveCommandChange?.(command);
+    },
+    [onActiveCommandChange],
+  );
+
   const [reason, setReason] = React.useState(dialogPreview?.reasonValue ?? '');
   const [state, setState] = React.useState<CommandDialogState>(dialogPreview?.state ?? 'idle');
 
-  if (commands.length === 0) return null;
+  React.useEffect(() => {
+    if (dialogPreview) {
+      setReason(dialogPreview.reasonValue ?? '');
+      setState(dialogPreview.state ?? 'idle');
+      if (controlledActiveCommand === undefined) {
+        const candidate = commands.find((c) => c.kind === dialogPreview.commandKind) ?? null;
+        setInternalActiveCommand(candidate);
+      }
+    }
+  }, [dialogPreview, commands, controlledActiveCommand]);
+
+  if (commands.length === 0 && !activeCommand) return null;
 
   return (
-    <section aria-labelledby="admin-command-heading" className="min-w-0">
-      {launcherCopy()}
-      <div aria-hidden={activeCommand ? 'true' : undefined} className="mt-sm flex flex-wrap gap-xs">
-        {commands.map((command) => (
-          <Button
-            key={`${command.kind}-${command.targetId}`}
-            variant={command.buttonVariant}
-            onPress={() => {
-              setActiveCommand(command);
-              setReason('');
-              setState('idle');
-            }}
-          >
-            {command.commandLabel}
-          </Button>
-        ))}
-      </div>
+    <>
+      {!hideTriggerList ? (
+        <section aria-labelledby="admin-command-heading" className="min-w-0">
+          {launcherCopy()}
+          <div aria-hidden={activeCommand ? 'true' : undefined} className="mt-sm flex flex-wrap gap-xs">
+            {commands.map((command) => (
+              <Button
+                key={`${command.kind}-${command.targetId}`}
+                variant={command.buttonVariant}
+                onPress={() => {
+                  setActiveCommand(command);
+                  setReason('');
+                  setState('idle');
+                }}
+              >
+                {command.commandLabel}
+              </Button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {activeCommand ? (
         <CommandDialog
@@ -104,7 +135,7 @@ function PreviewCommandLauncher({
           title={`${activeCommand.commandLabel}: ${activeCommand.targetLabel}`}
         />
       ) : null}
-    </section>
+    </>
   );
 }
 
@@ -114,16 +145,34 @@ function PreviewCommandLauncher({
  */
 function RuntimeCommandLauncher({
   commands,
-}: Readonly<{ commands: readonly AdminCommandView[] }>) {
+  activeCommand: controlledActiveCommand,
+  onActiveCommandChange,
+  hideTriggerList = false,
+}: Readonly<{
+  commands: readonly AdminCommandView[];
+  activeCommand?: AdminCommandView | null | undefined;
+  onActiveCommandChange?: ((command: AdminCommandView | null) => void) | undefined;
+  hideTriggerList?: boolean | undefined;
+}>) {
   const router = useRouter();
   const fallbackFocusRef = React.useRef<HTMLHeadingElement>(null);
-  const [activeCommand, setActiveCommand] = React.useState<AdminCommandView | null>(null);
+  const [internalActiveCommand, setInternalActiveCommand] = React.useState<AdminCommandView | null>(null);
+  const activeCommand = controlledActiveCommand !== undefined ? controlledActiveCommand : internalActiveCommand;
+
+  const setActiveCommand = React.useCallback(
+    (command: AdminCommandView | null) => {
+      setInternalActiveCommand(command);
+      onActiveCommandChange?.(command);
+    },
+    [onActiveCommandChange],
+  );
+
   const [reason, setReason] = React.useState('');
   const [state, setState] = React.useState<CommandDialogState>('idle');
   const [dialogMessage, setDialogMessage] = React.useState<string | null>(null);
   const [reasonError, setReasonError] = React.useState<string | null>(null);
 
-  if (commands.length === 0) return null;
+  if (commands.length === 0 && !activeCommand) return null;
 
   const close = () => {
     setActiveCommand(null);
@@ -147,8 +196,6 @@ function RuntimeCommandLauncher({
     if (result.state === 'success') {
       setState('success');
       setDialogMessage(result.message);
-      // Re-render the server components so the list/detail reflects the
-      // persisted backend state instead of optimistic local mutation.
       router.refresh();
       return;
     }
@@ -159,8 +206,6 @@ function RuntimeCommandLauncher({
   const submit = async () => {
     if (!activeCommand) return;
 
-    // Local policy pre-check mirrors the backend reason contract so obvious
-    // mistakes never leave the browser.
     const trimmed = reason.trim();
     const { minLength = 0, maxLength = Number.POSITIVE_INFINITY } = activeCommand.reasonPolicy;
     if (trimmed.length < Math.max(minLength, 5)) {
@@ -179,15 +224,19 @@ function RuntimeCommandLauncher({
   };
 
   return (
-    <section aria-labelledby="admin-command-heading" className="min-w-0">
-      {launcherCopy()}
-      {commandList(commands, (command) => {
-        setActiveCommand(command);
-        setReason('');
-        setState('idle');
-        setDialogMessage(null);
-        setReasonError(null);
-      })}
+    <>
+      {!hideTriggerList ? (
+        <section aria-labelledby="admin-command-heading" className="min-w-0">
+          {launcherCopy()}
+          {commandList(commands, (command) => {
+            setActiveCommand(command);
+            setReason('');
+            setState('idle');
+            setDialogMessage(null);
+            setReasonError(null);
+          })}
+        </section>
+      ) : null}
 
       {activeCommand ? (
         <CommandDialog
@@ -214,7 +263,7 @@ function RuntimeCommandLauncher({
           title={`${activeCommand.commandLabel}: ${activeCommand.targetLabel}`}
         />
       ) : null}
-    </section>
+    </>
   );
 }
 
@@ -222,14 +271,35 @@ export function AdminCommandLauncher({
   commands,
   dialogPreview,
   runtime = false,
+  activeCommand,
+  onActiveCommandChange,
+  hideTriggerList = false,
 }: Readonly<{
   commands: readonly AdminCommandView[];
   dialogPreview: AdminDialogPreviewView | null;
   /** When true the dialog submits through the live API instead of preview state. */
-  runtime?: boolean;
+  runtime?: boolean | undefined;
+  activeCommand?: AdminCommandView | null | undefined;
+  onActiveCommandChange?: ((command: AdminCommandView | null) => void) | undefined;
+  hideTriggerList?: boolean | undefined;
 }>) {
   if (runtime) {
-    return <RuntimeCommandLauncher commands={commands} />;
+    return (
+      <RuntimeCommandLauncher
+        activeCommand={activeCommand}
+        commands={commands}
+        hideTriggerList={hideTriggerList}
+        onActiveCommandChange={onActiveCommandChange}
+      />
+    );
   }
-  return <PreviewCommandLauncher commands={commands} dialogPreview={dialogPreview} />;
+  return (
+    <PreviewCommandLauncher
+      activeCommand={activeCommand}
+      commands={commands}
+      dialogPreview={dialogPreview}
+      hideTriggerList={hideTriggerList}
+      onActiveCommandChange={onActiveCommandChange}
+    />
+  );
 }

@@ -44,7 +44,7 @@ function driverColumns(previewContext?: FleetPreviewContext) {
   },
   {
     key: 'availability',
-    header: 'Availability',
+    header: 'Tình trạng sẵn sàng',
     render: (row: Record<string, unknown>) => {
       const driver = row.driver as FleetDriverListItemView;
       return <FleetAvailabilityBadge status={driver.availability} />;
@@ -116,11 +116,9 @@ function DriverFilters({
       method="get"
       role="search"
     >
-      <div className="border-b border-slate-100 pb-3 md:col-span-2 xl:col-span-4">
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand uppercase">
-          BỘ LỌC
-        </span>
-        <h2 className="mt-1 text-base sm:text-lg font-bold text-neutral-text">Thu hẹp trường tài xế</h2>
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3 md:col-span-2 xl:col-span-4">
+        <h2 className="text-sm font-bold text-slate-800">Bộ lọc tài xế</h2>
+        <span className="text-xs text-slate-400 font-medium">Tìm kiếm & trạng thái</span>
       </div>
       <FleetPreviewHiddenFields context={previewContext} />
       <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
@@ -135,7 +133,7 @@ function DriverFilters({
         />
       </label>
       <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
-        Availability
+        Tình trạng sẵn sàng
         <select
           className={inputClass}
           defaultValue={filters.availability}
@@ -156,7 +154,7 @@ function DriverFilters({
         >
           <option value="name-asc">Tên A–Z</option>
           <option value="name-desc">Tên Z–A</option>
-          <option value="availability">Availability</option>
+          <option value="availability">Tình trạng sẵn sàng</option>
           <option value="location-updated">Vị trí cập nhật gần nhất</option>
         </select>
       </label>
@@ -230,7 +228,7 @@ function DriverResults({
   return (
     <div className="flex flex-col gap-md">
       <p aria-live="polite" className="text-body-compact text-neutral-muted">
-        {view.result.filterSummary} · Snapshot {view.result.asOfLabel}
+        {view.result.filterSummary} · Dữ liệu lúc {view.result.asOfLabel}
       </p>
       <div className="hidden min-w-0 overflow-x-auto md:block">
         <DataTable columns={driverColumns(previewContext)} rows={rows} />
@@ -264,10 +262,9 @@ export function FleetDriversScreen({
     <div className="flex flex-col gap-lg">
       <FleetBreadcrumbs current="drivers" />
       <OperationsPageHeader
-        context="Theo dõi availability, phân công và vị trí gần nhất trong phạm vi được cấp quyền"
+        actions={<FleetScopeRail scope={view.scope} />}
         title="Tài xế"
       />
-      <FleetScopeRail scope={view.scope} />
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
       <DriverFilters filters={view.filters} previewContext={previewContext} />
       <div className="grid gap-lg xl:grid-cols-[minmax(0,3fr)_minmax(20rem,2fr)]">

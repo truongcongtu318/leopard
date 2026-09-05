@@ -16,6 +16,14 @@ import {
   FleetScopeRail,
   FleetSurface,
 } from './FleetShared';
+import {
+  BentoMapCard,
+  BentoOrdersCard,
+  StatusOverviewCard,
+  FulfillmentPerformanceCard,
+  RevenueOverTimeCard,
+  type BentoOrderItem,
+} from '@/components/bento';
 
 export function FleetDashboardScreen({
   view,
@@ -33,22 +41,92 @@ export function FleetDashboardScreen({
     );
   }
 
+  const bentoOrders: BentoOrderItem[] = view.activeOrders.map((order) => {
+    const routeParts = order.routeLabel.split('➔').map((s) => s.trim());
+    const statusLabel =
+      order.status === 'IN_TRANSIT'
+        ? 'Đang vận chuyển'
+        : order.status === 'DELIVERED'
+          ? 'Đã giao hàng'
+          : order.status === 'PICKING_UP'
+            ? 'Đang lấy hàng'
+            : order.status === 'REQUESTED'
+              ? 'Chờ tiếp nhận'
+              : order.status === 'ACCEPTED'
+                ? 'Đã nhận đơn'
+                : order.status === 'CANCELLED'
+                  ? 'Đã hủy'
+                  : order.status;
+
+    return {
+      id: order.reference,
+      customer: order.customerLabel || 'Khách hàng',
+      route: {
+        from: routeParts[0] || 'Điểm lấy',
+        to: routeParts[1] || 'Điểm giao',
+      },
+      weight: '1,8 tấn',
+      eta: order.trackingLabel,
+      status: order.status,
+      statusLabel,
+      href: fleetOrderDetailHref(order.href, previewContext),
+    };
+  });
+
   return (
-    <div className="flex flex-col gap-lg">
+    <div className="flex flex-col gap-4">
       <OperationsPageHeader
-        context="Ngoại lệ và snapshot vận hành thuộc đúng phạm vi đội xe"
+        actions={<FleetScopeRail scope={view.scope} />}
         title="Tổng quan đội xe"
+        updatedAt={view.asOfLabel}
       />
-      <FleetScopeRail scope={view.scope} />
-      <p className="text-xs text-neutral-muted tabular-nums">Snapshot: {view.asOfLabel}</p>
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
+
+      {/* NexaFleet Bento 2-Column Grid for Fleet Owner */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        {/* Left Column (~62% width): Fleet Map + Orders Table */}
+        <div className="xl:col-span-8 flex flex-col gap-4">
+          <BentoMapCard
+            title={`Bản đồ điều phối ${view.scope.displayName}`}
+            activeOrderCode="43C-182.91 Đang chạy"
+            searchPlaceholder="Tìm kiếm đơn đội xe..."
+          />
+          <BentoOrdersCard
+            title="Đơn đang hoạt động"
+            totalCount={view.activeOrders.length}
+            orders={bentoOrders.length > 0 ? bentoOrders : undefined}
+          />
+        </div>
+
+        {/* Right Column (~38% width): Status Overview + Fulfillment Performance + Revenue */}
+        <div className="xl:col-span-4 flex flex-col gap-4">
+          <StatusOverviewCard
+            title="Trạng thái đội xe"
+            loadingPercent={18}
+            inTransitPercent={52}
+            unloadingPercent={12}
+            deliveredPercent={18}
+          />
+          <FulfillmentPerformanceCard
+            title="Hiệu suất đội xe"
+            rate={94}
+            subtitle="tỷ lệ hoàn thành"
+          />
+          <RevenueOverTimeCard
+            title="Doanh thu đội xe"
+            amount="148.500.000 ₫"
+            growthLabel="+18% tháng này"
+          />
+        </div>
+      </div>
 
       <CompactMetricSummary
         ariaLabel="Tóm tắt vận hành đội xe"
-        className="rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 shadow-xs backdrop-blur-sm"
+        className="rounded-[22px] sm:rounded-3xl border border-white/80 bg-white/90 shadow-xs backdrop-blur-sm"
         items={view.metrics}
       />
 
+      {/* Attention / Exceptions */}
       <FleetSurface
         description="Chỉ hiển thị ngoại lệ đã được nguồn dữ liệu phân loại."
         title="Cần chú ý"
@@ -77,82 +155,35 @@ export function FleetDashboardScreen({
         )}
       </FleetSurface>
 
-      <div className="grid gap-lg xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
-        <FleetSurface
-          description="Các đơn đang hoạt động do snapshot đã xác thực cung cấp."
-          title="Đơn đang hoạt động"
-        >
-          {view.activeOrders.length === 0 ? (
-            <div className="py-sm text-body-compact text-neutral-muted">
-              Chưa có đơn đang hoạt động trong đội xe.
-              <a
-                className="mt-xs block min-h-11 font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                href={fleetPreviewHref('/fleet/orders', 'fleet-orders-active', previewContext)}
-              >
-                Xem tất cả đơn của đội xe
-              </a>
-            </div>
-          ) : (
-            <ul className="m-0 grid list-none gap-3 p-0">
-              {view.activeOrders.map((order) => (
-                <li
-                  key={order.id}
-                  className="rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-4 shadow-2xs transition-shadow hover:shadow-xs"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-brand uppercase">
-                      ĐƠN ĐANG CHẠY
-                    </span>
-                    <StatusBadge domain="orderStatus" status={order.status} />
-                  </div>
-                  <div className="flex flex-wrap items-baseline justify-between gap-xs">
-                    <a
-                      className="font-bold text-brand hover:underline underline-offset-4 focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                      href={fleetOrderDetailHref(order.href, previewContext)}
-                    >
-                      {order.reference}
-                    </a>
-                  </div>
-                  <p className="mt-1 text-sm font-medium text-slate-800 break-words">{order.routeLabel}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-muted">
-                    <span className="font-medium text-slate-600">{order.driverLabel}</span>
-                    <span>·</span>
-                    <span className="text-slate-500">{order.trackingLabel}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </FleetSurface>
 
-        <FleetDispatchSlab ariaLabel="Tình trạng tài xế" eyebrow="TÀI XẾ · SNAPSHOT HIỆN TẠI">
-          <h2 className="text-section-title font-semibold">Tình trạng tài xế</h2>
-          {view.unavailableRegionLabel ? (
-            <div className="mt-3">
-              <OperationalAlert title="Không thể tải vùng dữ liệu" tone="warning">
-                <p>{view.unavailableRegionLabel}</p>
-              </OperationalAlert>
+      {/* Driver Status Slab */}
+      <FleetDispatchSlab ariaLabel="Tình trạng tài xế" eyebrow="TÀI XẾ · SNAPSHOT HIỆN TẠI">
+        <h2 className="text-section-title font-semibold">Tình trạng tài xế</h2>
+        {view.unavailableRegionLabel ? (
+          <div className="mt-3">
+            <OperationalAlert title="Không thể tải vùng dữ liệu" tone="warning">
+              <p>{view.unavailableRegionLabel}</p>
+            </OperationalAlert>
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xs flex-1">
+              <p className="text-xs font-medium text-white/60">Tóm tắt khả dụng</p>
+              <p className="mt-1 text-lg font-bold text-white break-words">{view.availabilitySummary}</p>
             </div>
-          ) : (
-            <div className="mt-4 flex flex-col gap-4">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xs">
-                <p className="text-xs font-medium text-white/60">Tóm tắt khả dụng</p>
-                <p className="mt-1 text-lg font-bold text-white break-words">{view.availabilitySummary}</p>
-              </div>
-              <a
-                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-white/15 px-4 text-xs font-semibold text-white hover:bg-white/25 transition-colors focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                href={fleetPreviewHref(
-                  '/fleet/drivers',
-                  'fleet-drivers-mixed',
-                  previewContext,
-                )}
-              >
-                Xem danh sách tài xế
-              </a>
-            </div>
-          )}
-        </FleetDispatchSlab>
-      </div>
+            <a
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white/15 px-5 text-xs font-semibold text-white hover:bg-white/25 transition-colors focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              href={fleetPreviewHref(
+                '/fleet/drivers',
+                'fleet-drivers-mixed',
+                previewContext,
+              )}
+            >
+              Xem danh sách tài xế
+            </a>
+          </div>
+        )}
+      </FleetDispatchSlab>
     </div>
   );
 }

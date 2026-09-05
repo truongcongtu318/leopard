@@ -205,6 +205,43 @@ describe("admin auth BFF routes", () => {
     });
     expect(fetchMock()).not.toHaveBeenCalled();
   });
+
+  it("falls back to offline demo session when backend is unreachable", async () => {
+    const { POST } = await import("./login/demo/route");
+    fetchMock().mockRejectedValueOnce(new TypeError("fetch failed: ECONNREFUSED"));
+
+    const response = await POST(jsonRequest("/api/v1/auth/login/demo", { accountId: "admin" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      user: {
+        id: "usr-admin-1",
+        phone: "+840000000004",
+        role: "ADMIN",
+        status: "ACTIVE",
+      },
+      session: {
+        accessTokenExpiresAt: expect.any(String),
+      },
+    });
+    expect(response.headers.get("set-cookie")).toContain("leopard.admin.access=qa-admin");
+    expect(response.headers.get("set-cookie")).toContain("leopard.admin.refresh=refresh-qa-admin");
+  });
+
+  it("renews demo session when backend is unreachable during refresh", async () => {
+    const { POST } = await import("./refresh/route");
+    fetchMock().mockRejectedValueOnce(new TypeError("fetch failed: ECONNREFUSED"));
+
+    const response = await POST(
+      jsonRequest("/api/v1/auth/refresh", {}, "leopard.admin.refresh=refresh-qa-admin"),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.session.accessTokenExpiresAt).toBeDefined();
+    expect(response.headers.get("set-cookie")).toContain("leopard.admin.access=qa-admin");
+  });
 });
 
 function createOneShotTextResponse(status: number, body: string): Response {

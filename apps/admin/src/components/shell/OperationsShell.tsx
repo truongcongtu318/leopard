@@ -121,8 +121,17 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
     };
   }, [closeDrawer, drawerOpen]);
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore network errors during logout
+    }
+    window.location.href = '/login';
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#d6e8fb] via-[#e8f2fc] via-30% via-[#fbf6de] via-70% to-[#fef3ca] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
+    <div className="min-h-screen bg-[#F4F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
       <LiveRefreshBridge />
       <a
         href="#noi-dung-chinh"
@@ -132,14 +141,14 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
       </a>
 
       {/* Top Application Header Bar */}
-      <header className="bg-white/90 backdrop-blur-md rounded-2xl px-4 sm:px-6 py-2.5 mb-3 flex items-center justify-between shadow-xs border border-white/80 shrink-0">
+      <header className="bg-white rounded-2xl sm:rounded-3xl px-4 sm:px-6 py-3 mb-3 flex items-center justify-between shadow-xs border border-slate-100/90 shrink-0">
         {/* Left: Brand Logo & Horizontal Tabs */}
         <div className="flex items-center gap-6 lg:gap-8">
           <Link
             href={role === 'admin' ? '/admin' : '/fleet'}
             className="flex items-center gap-2.5 transition-opacity motion-reduce:transition-none"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-[#0d5ca8] text-white shadow-2xs">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white shadow-2xs">
               <svg
                 aria-hidden="true"
                 focusable="false"
@@ -157,7 +166,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
               </svg>
             </div>
             <div>
-              <span className="font-extrabold text-base tracking-tight text-brand">LEOPARD</span>
+              <span className="font-extrabold text-base tracking-tight text-slate-900">LEOPARD</span>
               <p className="text-[10px] font-semibold text-slate-400 leading-none">{roleContext.contextLabel}</p>
             </div>
           </Link>
@@ -171,52 +180,52 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
           />
         </div>
 
-        {/* Right: Search, Notifications, Profile & Mobile Trigger */}
-        <div className="flex items-center gap-3">
-          {/* Search Pill */}
-          <div className="relative hidden sm:block w-48 lg:w-56">
+        {/* Right: Notifications, Profile & Mobile Trigger */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Notification Bell */}
+          <button
+            type="button"
+            aria-label="Thông báo hệ thống"
+            className="relative p-2 rounded-full border border-slate-200/70 hover:bg-slate-50 text-slate-600 transition-colors motion-reduce:transition-none"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </button>
+
+          {/* User Profile Capsule */}
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-700 ring-1 ring-slate-300">
+              {role === 'admin' ? 'QTV' : 'CĐX'}
+            </span>
+            <div className="hidden text-left sm:block">
+              <p className="text-xs font-bold text-slate-800 leading-tight">
+                {role === 'admin' ? 'Nguyễn Hoài Nam' : 'Trần Quốc Tuấn'}
+              </p>
+              <p className="text-[10px] font-medium text-slate-400 leading-none">
+                {role === 'admin' ? 'Quản trị viên điều phối' : 'Chủ đội xe Sao Mai'}
+              </p>
+            </div>
+          </div>
+
+          {/* Logout Action Button */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label="Đăng xuất khỏi phiên làm việc"
+            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors motion-reduce:transition-none cursor-pointer"
+          >
             <svg
-              className="w-4 h-4 text-slate-400 absolute left-3 top-2.5"
+              className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
               aria-hidden="true"
               focusable="false"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <input
-              type="text"
-              placeholder="Search"
-              aria-label="Tìm kiếm trong hệ thống"
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white text-slate-700"
-            />
-          </div>
-
-          {/* Notification Bell */}
-          <button
-            type="button"
-            aria-label="Thông báo hệ thống"
-            className="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 transition-colors motion-reduce:transition-none"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
           </button>
-
-          {/* User Profile Pill */}
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-700">
-              {role === 'admin' ? 'AD' : 'FO'}
-            </span>
-            <div className="hidden text-left sm:block">
-              <p className="text-[10px] text-slate-400 leading-none">Chào,</p>
-              <p className="text-xs font-bold text-slate-700 leading-tight">
-                {role === 'admin' ? 'Admin Nam' : roleContext.roleLabel}
-              </p>
-            </div>
-          </div>
 
           {/* Mobile Drawer Trigger */}
           <button
@@ -242,105 +251,8 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
         </div>
       </header>
 
-      {/* Main Workspace Layout: Slim Dock + Main Content */}
-      <div className="flex gap-3 flex-1 items-stretch min-w-0">
-        {/* Left Slim Navigation Dock (Icon buttons only, aria-hidden to not duplicate landmarks) */}
-        <aside
-          aria-hidden="true"
-          className="w-14 bg-white/80 backdrop-blur-md rounded-2xl p-2 hidden lg:flex flex-col items-center justify-between shadow-xs border border-white/80 shrink-0"
-        >
-          {/* Top Menu Icons */}
-          <div className="flex flex-col items-center gap-3 pt-1 w-full">
-            <Link
-              href={role === 'admin' ? '/admin' : '/fleet'}
-              tabIndex={-1}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all motion-reduce:transition-none ${
-                pathname === '/admin' || pathname === '/fleet'
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
-                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-              </svg>
-            </Link>
-
-            <Link
-              href={role === 'admin' ? '/admin/orders' : '/fleet/orders'}
-              tabIndex={-1}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all motion-reduce:transition-none ${
-                pathname.includes('/orders')
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
-                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </Link>
-
-            <Link
-              href={role === 'admin' ? '/admin/users' : '/fleet/drivers'}
-              tabIndex={-1}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all motion-reduce:transition-none ${
-                pathname.includes('/users')
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
-                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </Link>
-
-            <Link
-              href={role === 'admin' ? '/admin/fleets' : '/fleet/drivers'}
-              tabIndex={-1}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all motion-reduce:transition-none ${
-                pathname.includes('/fleets')
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
-                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </Link>
-
-            <Link
-              href={role === 'admin' ? '/admin/drivers' : '/fleet/drivers'}
-              tabIndex={-1}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all motion-reduce:transition-none ${
-                pathname.includes('/drivers')
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
-                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </Link>
-          </div>
-
-          {/* Bottom: Logout */}
-          <a
-            href="/login"
-            tabIndex={-1}
-            className="w-10 h-10 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors pb-1 motion-reduce:transition-none"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-          </a>
-        </aside>
-
+      {/* Main Workspace Layout */}
+      <div className="flex flex-1 items-stretch min-w-0">
         {/* Main Central Content */}
         <main
           id="noi-dung-chinh"

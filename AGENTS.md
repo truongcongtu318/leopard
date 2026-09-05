@@ -72,12 +72,12 @@ Nếu thiếu thông tin làm thay đổi đáng kể solution, đọc tài li�
 
 LEOPARD là hệ thống vận hành logistics thông minh, kết hợp tính chính xác trong điều phối với giao diện người dùng hiện đại, tinh tế và trực quan:
 
-- Customer và Driver theo định dạng mobile-first; Fleet Owner/Admin sử dụng giao diện **Modern Dispatch Console**:
-  - Tông nền ambient pastel dịu mắt (`from-[#d6e8fb] via-[#fbf6de] to-[#fef3ca]`), tạo cảm giác thoáng đãng, dễ chịu cho ca trực dài.
-  - Hệ thống thẻ nổi màu trắng tinh tế, bo góc mềm mại `rounded-2xl` / `rounded-3xl` (16px–26px) với đổ bóng êm ái (`shadow-xs` / `shadow-sm`).
-  - Thanh Dock điều hướng dạng icon thanh mảnh bên trái và Topbar tích hợp tìm kiếm, thông báo và hồ sơ quản trị.
-  - Bản đồ theo dõi thời gian thực (Real-time tracking map) hiển thị trực quan mạng lưới logistics (Đà Nẵng), các tuyến đường phân màu, vị trí xe tải/bán tải và bộ lọc phương tiện dạng pill nổi.
-  - Các thẻ chỉ số đo lường trực quan (KPI telemetry cards) tích hợp biểu đồ trực quan (wave sparklines, bar charts, donut charts, area charts).
+- Customer và Driver theo định dạng mobile-first; Fleet Owner/Admin sử dụng giao diện **NexaFleet Modern Bento Dispatch Console**:
+  - Tông nền canvas xám sáng thanh lịch (`#F4F5F7` / `#F8FAFC`), tạo độ tương phản cao và tôn vinh các thẻ bento trắng tinh khôi.
+  - Hệ thống thẻ nổi màu trắng tinh tế (`bg-white`), bo góc mềm mại `rounded-3xl` (24px–28px), viền mỏng kín đáo `border-slate-100` với đổ bóng êm ái (`shadow-xs` / `shadow-sm`).
+  - Topbar nổi bo góc với logo thương hiệu bên trái, cụm điều hướng trung tâm với tab active dạng pill đen tuyền (`bg-slate-900 text-white rounded-full`), chuông thông báo tròn và capsule hồ sơ người dùng bên phải.
+  - Bản đồ theo dõi thời gian thực Dark Mode (Real-time tracking map) tích hợp thanh tìm kiếm kính mờ, nút phóng to, zoom `+ / -` và marker bưu kiện 3D / selected pill xanh lục.
+  - Bố cục Bento 2 cột trực quan: Cột trái gồm Bản đồ tối & Bảng danh sách đơn hàng có pill filter; Cột phải gồm Tổng quan trạng thái (thanh phân đoạn 4 màu), Hiệu suất thực hiện (cột đứng xanh lục) và Doanh thu vận hành (thẻ gradient hoàng hôn kèm biểu đồ sóng trắng mềm mại).
 - Mọi màn hình chính có đầy đủ loading, empty, error, success và permission-denied state.
 - ETA luôn dùng nhãn “ETA dự kiến”; dữ liệu demo/mô phỏng phải hiển thị rõ “Dữ liệu mô phỏng”.
 - Dữ liệu hiển thị phải phản ánh đúng phạm vi pilot (không đưa các giả định AI XGBoost hay báo cáo ESG ngoài scope vào nghiệp vụ thực).

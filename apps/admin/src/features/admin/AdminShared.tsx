@@ -28,7 +28,7 @@ export function AdminNotice({ notice }: Readonly<{ notice: AdminNoticeView }>) {
     >
       <p>{notice.message}</p>
       {notice.requestId ? (
-        <p className="mt-xxs font-mono text-xs break-all">Request ID: {notice.requestId}</p>
+        <p className="mt-xxs font-mono text-xs break-all">Mã yêu cầu: {notice.requestId}</p>
       ) : null}
     </OperationalAlert>
   );
@@ -155,7 +155,7 @@ export function AdminDispatchSlab({
         </p>
         <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600">
           <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          Live
+          Trực tiếp
         </span>
       </div>
       <div className="min-w-0">{children}</div>
@@ -214,27 +214,27 @@ export function AdminPaginationLinks({
 export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }>) {
   return (
     <aside
-      aria-label="Audit Rail — thao tác đặc quyền"
+      aria-label="Nhật ký kiểm toán — thao tác đặc quyền"
       className="min-w-0 rounded-[22px] sm:rounded-[26px] border-l-4 border-l-brand border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text"
     >
       <header className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-neutral-text">Audit Rail</h2>
+          <h2 className="text-base sm:text-lg font-bold text-neutral-text">Nhật ký kiểm toán</h2>
           <p className="mt-0.5 text-xs text-neutral-muted uppercase tracking-wider font-semibold">Thao tác đặc quyền · Mới nhất trước</p>
         </div>
-        <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">AUDITED</span>
+        <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">ĐÃ KIỂM TOÁN</span>
       </header>
       {audit.state === 'error' ? (
         <ScreenState
           state="error"
-          title="Không thể tải audit"
-          message={audit.message ?? 'Không thể tải Audit Rail trong lần kiểm tra này.'}
+          title="Không thể tải nhật ký"
+          message={audit.message ?? 'Không thể tải nhật ký kiểm toán trong lần kiểm tra này.'}
         />
       ) : audit.state === 'empty' ? (
         <p className="text-xs text-neutral-muted italic py-2">Chưa có thao tác đặc quyền được ghi nhận.</p>
       ) : audit.state === 'delayed' ? (
         <OperationalAlert title="Nhật ký đang đồng bộ" tone="info">
-          <p>{audit.message ?? 'Command đã persist nhưng audit entry chưa được trả về.'}</p>
+          <p>{audit.message ?? 'Thao tác đã lưu nhưng mục kiểm toán chưa được trả về.'}</p>
         </OperationalAlert>
       ) : (
         <ol className="m-0 grid list-none gap-3 p-0">
@@ -251,15 +251,15 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
               <h3 className="text-xs font-bold text-neutral-text break-words mb-2">{entry.actionLabel}</h3>
               <dl className="grid gap-1.5 text-xs text-neutral-muted">
                 <div className="flex justify-between gap-2 border-t border-slate-200/60 pt-1.5">
-                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Actor</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Người thực hiện</dt>
                   <dd className="font-medium text-neutral-text text-right">{entry.actorLabel}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Target</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Đối tượng</dt>
                   <dd className="font-medium text-neutral-text text-right">{entry.targetLabel}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Lý do đã sanitize</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Lý do đã kiểm duyệt</dt>
                   <dd className="mt-0.5 rounded-xl bg-white p-2 text-xs text-neutral-text whitespace-pre-wrap break-words border border-slate-200/80 shadow-2xs">{entry.reason}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
@@ -267,11 +267,11 @@ export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }
                   <dd className="mt-xxs"><time dateTime={entry.dateTime}>{entry.timestampLabel}</time></dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Request ID</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Mã yêu cầu</dt>
                   <dd className="font-mono text-xs text-neutral-text break-all">{entry.requestId}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Audit ID</dt>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Mã kiểm toán</dt>
                   <dd className="font-mono text-xs text-neutral-text break-all">{entry.auditId}</dd>
                 </div>
               </dl>
