@@ -73,6 +73,23 @@ export function FleetDashboardScreen({
     };
   });
 
+  const totalActive = view.activeOrders.length;
+  const loadingCount = view.activeOrders.filter(
+    (o) => o.status === 'REQUESTED' || o.status === 'ACCEPTED' || o.status === 'PICKING_UP',
+  ).length;
+  const inTransitCount = view.activeOrders.filter((o) => o.status === 'IN_TRANSIT').length;
+  const unloadingCount = view.activeOrders.filter((o) => o.status === 'PICKED_UP').length;
+  const deliveredCount = view.activeOrders.filter((o) => o.status === 'DELIVERED').length;
+
+  const loadingPercent = totalActive > 0 ? Math.round((loadingCount / totalActive) * 100) : 0;
+  const inTransitPercent = totalActive > 0 ? Math.round((inTransitCount / totalActive) * 100) : 0;
+  const unloadingPercent = totalActive > 0 ? Math.round((unloadingCount / totalActive) * 100) : 0;
+  const deliveredPercent = totalActive > 0 ? Math.round((deliveredCount / totalActive) * 100) : 0;
+
+  const revenueMetric = view.metrics.find((m) => m.id === 'today-revenue');
+  const revenueVnd = revenueMetric?.value ?? 0;
+  const formattedRevenue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenueVnd);
+
   return (
     <div className="flex flex-col gap-4">
       <OperationsPageHeader
@@ -88,13 +105,17 @@ export function FleetDashboardScreen({
         <div className="xl:col-span-8 flex flex-col gap-4">
           <BentoMapCard
             title={`Bản đồ điều phối ${view.scope.displayName}`}
-            activeOrderCode="43C-182.91 Đang chạy"
+            activeOrderCode={
+              bentoOrders.length > 0
+                ? `${bentoOrders[0].id} · ${bentoOrders[0].route.from} ➔ ${bentoOrders[0].route.to}`
+                : 'Không có đơn hàng nào đang vận chuyển'
+            }
             searchPlaceholder="Tìm kiếm đơn đội xe..."
           />
           <BentoOrdersCard
             title="Đơn đang hoạt động"
             totalCount={view.activeOrders.length}
-            orders={bentoOrders.length > 0 ? bentoOrders : undefined}
+            orders={bentoOrders}
           />
         </div>
 
@@ -102,20 +123,20 @@ export function FleetDashboardScreen({
         <div className="xl:col-span-4 flex flex-col gap-4">
           <StatusOverviewCard
             title="Trạng thái đội xe"
-            loadingPercent={18}
-            inTransitPercent={52}
-            unloadingPercent={12}
-            deliveredPercent={18}
+            loadingPercent={loadingPercent}
+            inTransitPercent={inTransitPercent}
+            unloadingPercent={unloadingPercent}
+            deliveredPercent={deliveredPercent}
           />
           <FulfillmentPerformanceCard
             title="Hiệu suất đội xe"
-            rate={94}
-            subtitle="tỷ lệ hoàn thành"
+            rate={totalActive > 0 ? Math.round((deliveredCount / totalActive) * 100) : 100}
+            subtitle={totalActive > 0 ? `${deliveredCount}/${totalActive} đơn hoàn tất` : 'tỷ lệ hoàn thành'}
           />
           <RevenueOverTimeCard
             title="Doanh thu đội xe"
-            amount="148.500.000 ₫"
-            growthLabel="+18% tháng này"
+            amount={formattedRevenue}
+            growthLabel={revenueMetric?.detail ?? 'Doanh thu hôm nay'}
           />
         </div>
       </div>

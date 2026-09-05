@@ -413,7 +413,49 @@ function SortOptions({ screen }: Readonly<{ screen: AdminListScreenName }>) {
   );
 }
 
-function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; view: AdminListView }>) {
+function matchesSessionSearch(item: AdminListItemView, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (item.entity === 'order') {
+    return (
+      item.reference.toLowerCase().includes(q) ||
+      item.routeLabel.toLowerCase().includes(q) ||
+      item.customerLabel.toLowerCase().includes(q) ||
+      item.driverLabel.toLowerCase().includes(q)
+    );
+  }
+  if (item.entity === 'user') {
+    return (
+      item.displayName.toLowerCase().includes(q) ||
+      item.maskedPhone.toLowerCase().includes(q) ||
+      item.role.toLowerCase().includes(q)
+    );
+  }
+  if (item.entity === 'fleet') {
+    return (
+      item.displayName.toLowerCase().includes(q) ||
+      item.displayId.toLowerCase().includes(q) ||
+      item.ownerSummary.toLowerCase().includes(q)
+    );
+  }
+  return (
+    item.displayName.toLowerCase().includes(q) ||
+    item.maskedPhone.toLowerCase().includes(q) ||
+    item.fleetLabel.toLowerCase().includes(q)
+  );
+}
+
+function FilterFields({
+  screen,
+  view,
+  sessionSearch,
+  onSessionSearchChange,
+}: Readonly<{
+  screen: AdminListScreenName;
+  view: AdminListView;
+  sessionSearch?: string;
+  onSessionSearchChange?: (value: string) => void;
+}>) {
   const filters = view.filters;
   const idPrefix = `admin-${screen}`;
   return (
@@ -429,6 +471,8 @@ function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; 
           maxLength={100}
           placeholder="Tên, mã hoặc liên hệ — không lưu vào URL"
           type="search"
+          value={sessionSearch ?? ''}
+          onChange={(e) => onSessionSearchChange?.(e.target.value)}
         />
       </FilterField>
       {screen === 'orders' ? (
@@ -483,7 +527,19 @@ function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; 
   );
 }
 
-function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: AdminListScreenName; view: AdminListView; previewContext: AdminPreviewContext | undefined }>) {
+function AdminFilters({
+  screen,
+  view,
+  previewContext,
+  sessionSearch,
+  onSessionSearchChange,
+}: Readonly<{
+  screen: AdminListScreenName;
+  view: AdminListView;
+  previewContext: AdminPreviewContext | undefined;
+  sessionSearch?: string;
+  onSessionSearchChange?: (value: string) => void;
+}>) {
   const resetQuery = serializeAdminListFilters(screen, { ...view.filters, status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL', fleetId: '', customerId: '', driverId: '', from: '', to: '', page: 1 }, previewContext);
   return (
     <section
@@ -501,7 +557,12 @@ function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: Admin
         role="search"
       >
         <AdminPreviewHiddenFields context={previewContext} />
-        <FilterFields screen={screen} view={view} />
+        <FilterFields
+          screen={screen}
+          view={view}
+          sessionSearch={sessionSearch}
+          onSessionSearchChange={onSessionSearchChange}
+        />
         <input name="page" type="hidden" value="1" />
         <input name="pageSize" type="hidden" value={view.filters.pageSize} />
         <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-3 xl:col-span-4 pt-2">
@@ -535,6 +596,7 @@ export function AdminListScreen({
   /** Live API command execution (runtime data path); absent in preview renders. */
   commandRuntime?: boolean | undefined;
 }>) {
+  const [sessionSearch, setSessionSearch] = useState('');
   const commands: readonly AdminCommandView[] = screen === 'users' && view.kind === 'list' && view.entity === 'users'
     ? view.result.items.flatMap((item) => item.entity === 'user' ? item.availableCommands : [])
     : [];
@@ -552,8 +614,11 @@ export function AdminListScreen({
     return <div className="flex flex-col gap-md"><OperationsPageHeader title={titleByScreen[screen]} /><AdminBoundaryState view={view} /></div>;
   }
 
-  const rows = view.result.items.map((item) => ({ id: item.id, item }));
-  const mobileItems = view.result.items.map((item) => mobileItem(item, previewContext, (cmd) => setActiveCommand(cmd)));
+  const displayedItems = view.result.items.filter((item) =>
+    matchesSessionSearch(item, sessionSearch),
+  );
+  const rows = displayedItems.map((item) => ({ id: item.id, item }));
+  const mobileItems = displayedItems.map((item) => mobileItem(item, previewContext, (cmd) => setActiveCommand(cmd)));
 
   return (
     <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
@@ -563,15 +628,21 @@ export function AdminListScreen({
         updatedAt={view.checkedAtLabel}
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
-      <AdminFilters previewContext={previewContext} screen={screen} view={view} />
+      <AdminFilters
+        previewContext={previewContext}
+        screen={screen}
+        view={view}
+        sessionSearch={sessionSearch}
+        onSessionSearchChange={setSessionSearch}
+      />
       <div aria-hidden={activeCommand ? 'true' : undefined} className="min-w-0">
         <AdminSurface
           ariaLabel={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
           title={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-          description={`${view.result.totalItems} kết quả · Trang ${view.result.page}/${Math.max(view.result.totalPages, 1)}`}
+          description={`${displayedItems.length}${displayedItems.length !== view.result.totalItems ? ` / ${view.result.totalItems}` : ''} kết quả · Trang ${view.result.page}/${Math.max(view.result.totalPages, 1)}`}
         >
-          {view.state === 'no-results' ? (
-            <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hiện tại; dùng Xóa bộ lọc để phục hồi." />
+          {displayedItems.length === 0 ? (
+            <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hoặc từ khóa tìm kiếm hiện tại; dùng Xóa bộ lọc để phục hồi." />
           ) : (
             <div className="flex min-w-0 flex-col gap-md">
               <div className="hidden min-w-0 overflow-x-auto md:block">
