@@ -107,8 +107,8 @@ export function AdminSurface({
 }>) {
   const variantClass =
     variant === 'signal'
-      ? 'rounded-[22px] sm:rounded-[26px] border border-amber-200 bg-amber-50/70 p-5 shadow-xs'
-      : 'rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs';
+      ? 'rounded-3xl border border-amber-200/80 bg-amber-50/70 p-5 sm:p-6 shadow-sm'
+      : 'rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm';
   return (
     <section
       aria-label={ariaLabel}
@@ -117,14 +117,14 @@ export function AdminSurface({
       <header className="mb-5 flex items-start justify-between gap-3">
         <div className="flex gap-3 min-w-0 flex-1">
           {icon ? (
-            <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-soft-text">
+            <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
               {icon}
             </div>
           ) : null}
           <div className="min-w-0 flex-1">
-            <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-text break-words leading-tight">{title}</h2>
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 break-words leading-tight">{title}</h2>
             {description ? (
-              <p className="mt-1 text-xs leading-relaxed text-neutral-muted break-words">{description}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-400 break-words">{description}</p>
             ) : null}
           </div>
         </div>
@@ -146,7 +146,7 @@ export function AdminDispatchSlab({
   return (
     <section
       aria-label={ariaLabel}
-      className="min-w-0 rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/95 backdrop-blur-sm p-5 sm:p-6 text-slate-800 shadow-sm"
+      className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 text-slate-800 shadow-sm"
     >
       <div className="flex items-center gap-2.5 mb-4">
         <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20 animate-pulse" />

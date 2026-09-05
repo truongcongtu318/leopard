@@ -126,34 +126,47 @@ export function BentoOrdersCard({
 
     if (status === 'IN_TRANSIT') {
       return (
-        <span className="inline-flex items-center rounded-full bg-[#10b981] px-3 py-0.5 text-xs font-semibold text-white shadow-2xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0" aria-hidden="true" />
           {displayLabel}
         </span>
       );
     }
-    if (status === 'DELIVERED') {
+    if (status === 'DELIVERED' || status === 'COMPLETED') {
       return (
-        <span className="inline-flex items-center rounded-full bg-[#ec4899] px-3 py-0.5 text-xs font-semibold text-white shadow-2xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
           {displayLabel}
         </span>
       );
     }
     if (status === 'LOADING' || status === 'PICKING_UP') {
       return (
-        <span className="inline-flex items-center rounded-full bg-amber-400 px-3 py-0.5 text-xs font-semibold text-slate-900 shadow-2xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" aria-hidden="true" />
           {displayLabel}
         </span>
       );
     }
     if (status === 'UNLOADING' || status === 'PICKED_UP') {
       return (
-        <span className="inline-flex items-center rounded-full bg-red-400 px-3 py-0.5 text-xs font-semibold text-white shadow-2xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0" aria-hidden="true" />
+          {displayLabel}
+        </span>
+      );
+    }
+    if (status === 'CANCELLED') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" aria-hidden="true" />
           {displayLabel}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-0.5 text-xs font-semibold text-slate-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/80 px-2.5 py-0.5 text-xs font-semibold shadow-2xs">
+        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" aria-hidden="true" />
         {displayLabel}
       </span>
     );

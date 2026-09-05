@@ -36,7 +36,7 @@ import type {
 } from './model';
 
 const fieldClass =
-  'min-h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-white focus:bg-white px-3.5 py-2 text-xs text-slate-800 shadow-2xs transition-all focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand';
+  'min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3.5 py-2 text-xs text-slate-800 transition-colors focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900';
 
 const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
   orders: 'Đơn hàng',
@@ -488,7 +488,7 @@ function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: Admin
   return (
     <section
       aria-label={`Phạm vi điều tra ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-      className="rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text"
+      className="rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm text-neutral-text"
     >
       <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <h2 className="text-sm font-bold text-slate-800">Bộ lọc tìm kiếm</h2>
@@ -504,15 +504,15 @@ function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: Admin
         <FilterFields screen={screen} view={view} />
         <input name="page" type="hidden" value="1" />
         <input name="pageSize" type="hidden" value={view.filters.pageSize} />
-        <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-3 xl:col-span-4">
+        <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-3 xl:col-span-4 pt-2">
           <button
-            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
             type="submit"
           >
             Áp dụng bộ lọc
           </button>
           <a
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
             href={`/admin/${screen}?${resetQuery}`}
           >
             Xóa bộ lọc

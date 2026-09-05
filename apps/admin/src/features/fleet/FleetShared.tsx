@@ -120,7 +120,7 @@ export function FleetDispatchSlab({
   return (
    <section
     aria-label={ariaLabel}
-    className="min-w-0 rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/95 backdrop-blur-sm p-5 sm:p-6 text-slate-800 shadow-sm"
+    className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 text-slate-800 shadow-sm"
    >
     <div className="flex items-center justify-between gap-2 mb-4">
       <div className="flex items-center gap-2">
@@ -147,15 +147,15 @@ export function FleetSurface({
   children: React.ReactNode;
 }>) {
   return (
-   <section className="min-w-0 rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 text-neutral-text shadow-xs">
+   <section className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 text-neutral-text shadow-sm">
     <header className="mb-5 flex items-start gap-3">
-     <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-soft-text">
+     <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
      </div>
      <div className="min-w-0 flex-1">
-       <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-text break-words leading-tight">{title}</h2>
+       <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 break-words leading-tight">{title}</h2>
        {description ? (
-        <p className="mt-1 text-xs leading-relaxed text-neutral-muted break-words">{description}</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-400 break-words">{description}</p>
        ) : null}
      </div>
     </header>
