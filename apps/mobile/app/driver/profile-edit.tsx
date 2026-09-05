@@ -35,6 +35,7 @@ export default function DriverProfileEditRoute() {
   return (
     <EditProfileScreen
       avatarUrl={avatarUrl}
+      eyebrow="DRIVER · HỒ SƠ"
       errorMessage={errorMessage}
       initialEmail=""
       initialName={initialName}

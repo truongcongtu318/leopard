@@ -8,6 +8,7 @@ import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { colors, spacing } from '../../../theme/tokens';
 
 export type EditProfileScreenProps = Readonly<{
+  eyebrow?: string;
   initialName: string;
   initialEmail: string;
   avatarUrl: string | null;
@@ -20,6 +21,7 @@ export type EditProfileScreenProps = Readonly<{
 export function EditProfileScreen({
   avatarUrl,
   errorMessage,
+  eyebrow = 'CUSTOMER · HỒ SƠ',
   initialEmail,
   initialName,
   isSaving,
@@ -46,7 +48,7 @@ export function EditProfileScreen({
 
   return (
     <ScreenScaffold
-      eyebrow="CUSTOMER · HỒ SƠ"
+      eyebrow={eyebrow}
       stickyFooter={
         <Button
           isLoading={isSaving}
