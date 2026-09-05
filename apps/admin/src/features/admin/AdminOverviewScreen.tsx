@@ -159,27 +159,31 @@ export function AdminOverviewScreen({
 
       {/* NexaFleet Dispatch Console: 5 widgets fill viewport height */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:h-[calc(100vh-132px)] xl:min-h-[640px]">
-        {/* Left Column (~62% width): Map + Orders Table */}
+        {/* Left Column (~62% width): Map (3/5 height) + Orders Table (2/5 height) */}
         <div className="xl:col-span-8 flex flex-col gap-4 min-h-0">
-          <BentoMapCard
-            title="Bản đồ điều phối thời gian thực"
-            activeOrderCode={
-              bentoOrders[0]
-                ? `${bentoOrders[0].id} · ${bentoOrders[0].customer} ➔ ${bentoOrders[0].route.to}`
-                : 'Chưa có chuyến xe nào đang hoạt động'
-            }
-            searchPlaceholder="Tìm kiếm đơn hàng, tài xế..."
-            markers={dynamicMarkers.length > 0 ? dynamicMarkers : undefined}
-            selectedOrderId={selectedOrderId}
-            onSelectOrder={setSelectedOrderId}
-          />
-          <BentoOrdersCard
-            title="Sổ điều phối đơn hàng"
-            totalCount={totalOrdersCount}
-            orders={bentoOrders}
-            selectedOrderId={selectedOrderId}
-            onSelectOrder={setSelectedOrderId}
-          />
+          <div className="flex-[3] flex flex-col min-h-0">
+            <BentoMapCard
+              title="Bản đồ điều phối thời gian thực"
+              activeOrderCode={
+                bentoOrders[0]
+                  ? `${bentoOrders[0].id} · ${bentoOrders[0].customer} ➔ ${bentoOrders[0].route.to}`
+                  : 'Chưa có chuyến xe nào đang hoạt động'
+              }
+              searchPlaceholder="Tìm kiếm đơn hàng, tài xế..."
+              markers={dynamicMarkers.length > 0 ? dynamicMarkers : undefined}
+              selectedOrderId={selectedOrderId}
+              onSelectOrder={setSelectedOrderId}
+            />
+          </div>
+          <div className="flex-[2] flex flex-col min-h-0">
+            <BentoOrdersCard
+              title="Sổ điều phối đơn hàng"
+              totalCount={totalOrdersCount}
+              orders={bentoOrders}
+              selectedOrderId={selectedOrderId}
+              onSelectOrder={setSelectedOrderId}
+            />
+          </div>
         </div>
 
         {/* Right Column (~38% width): Status + OTD + Revenue */}
