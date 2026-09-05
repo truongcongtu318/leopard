@@ -39,10 +39,10 @@ describe('NexaFleet Bento Widgets', () => {
 
     expect(screen.getByText('Orders')).toBeTruthy();
     expect(screen.getByText('(301)')).toBeTruthy();
-    expect(screen.getByText('OR-1001')).toBeTruthy();
-    expect(screen.getByText('Nova Retail')).toBeTruthy();
-    expect(screen.getByText('Berlin')).toBeTruthy();
-    expect(screen.getByText('Hamburg')).toBeTruthy();
+    expect(screen.getByText('LP-A-260815-101')).toBeTruthy();
+    expect(screen.getByText('Vinamilk Đà Nẵng')).toBeTruthy();
+    expect(screen.getByText('KCN Hòa Khánh')).toBeTruthy();
+    expect(screen.getByText('Cảng Tiên Sa')).toBeTruthy();
 
     const pendingBtn = screen.getByRole('button', { name: 'Pending' });
     fireEvent.click(pendingBtn);

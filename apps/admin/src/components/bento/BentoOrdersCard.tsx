@@ -27,42 +27,43 @@ export interface BentoOrdersCardProps {
 
 const DEFAULT_ORDERS: readonly BentoOrderItem[] = [
   {
-    id: 'OR-1001',
-    customer: 'Nova Retail',
-    route: { from: 'Berlin', to: 'Hamburg' },
+    id: 'LP-A-260815-101',
+    customer: 'Vinamilk Đà Nẵng',
+    route: { from: 'KCN Hòa Khánh', to: 'Cảng Tiên Sa' },
     weight: '1.8 t',
-    eta: '06 Jun, 2:30',
+    eta: '10:30',
     status: 'IN_TRANSIT',
     statusLabel: 'In Transit',
   },
   {
-    id: 'OR-1000',
-    customer: 'GreenMart',
-    route: { from: 'Munich', to: 'Vienna' },
+    id: 'LP-A-260815-102',
+    customer: 'Dược phẩm Danapha',
+    route: { from: 'KCN Điện Ngọc', to: 'Kho Cẩm Lệ' },
     weight: '0.9 t',
-    eta: '06 Jun, 7:20',
+    eta: '11:15',
     status: 'IN_TRANSIT',
     statusLabel: 'In Transit',
   },
   {
-    id: 'OR-0999',
-    customer: 'Alpha Trading',
-    route: { from: 'Warsaw', to: 'Prague' },
+    id: 'LP-A-260815-103',
+    customer: 'Thép Hòa Phát',
+    route: { from: 'Cảng Liên Chiểu', to: 'KCN Hòa Cầm' },
     weight: '2.4 t',
-    eta: '05 Jun, 3:15',
+    eta: '09:45',
     status: 'DELIVERED',
     statusLabel: 'Delivered',
   },
   {
-    id: 'OR-0998',
-    customer: 'EuroParts',
-    route: { from: 'Rotterdam', to: 'Paris' },
+    id: 'LP-A-260815-104',
+    customer: 'Dệt may 29/3',
+    route: { from: 'Hải Châu', to: 'Sơn Trà' },
     weight: '3.2 t',
-    eta: '05 Jun, 3:00',
+    eta: '08:30',
     status: 'DELIVERED',
     statusLabel: 'Delivered',
   },
 ];
+
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -180,53 +181,34 @@ export function BentoOrdersCard({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50 text-xs">
-            {orders.map((order) => {
-              const rowContent = (
-                <>
-                  <td className="py-3 font-semibold text-slate-900">{order.id}</td>
-                  <td className="py-3 font-medium text-slate-700">{order.customer}</td>
-                  <td className="py-3 text-slate-600">
-                    <span className="text-slate-400">from </span>
-                    <span className="font-medium text-slate-800">{order.route.from}</span>
-                    <span className="text-slate-400"> → to </span>
-                    <span className="font-medium text-slate-800">{order.route.to}</span>
-                  </td>
-                  <td className="py-3 font-medium text-slate-700">{order.weight}</td>
-                  <td className="py-3 text-slate-600 tabular-nums">{order.eta}</td>
-                  <td className="py-3 text-right">
-                    {getStatusBadge(order.status, order.statusLabel)}
-                  </td>
-                </>
-              );
-
-              if (order.href) {
-                return (
-                  <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
-                    <td colSpan={6} className="p-0">
-                      <Link href={order.href} className="flex items-center justify-between w-full py-3 px-1">
-                        <span className="font-semibold text-slate-900">{order.id}</span>
-                        <span className="font-medium text-slate-700">{order.customer}</span>
-                        <span className="text-slate-600">
-                          <span className="text-slate-400">from </span>
-                          <span className="font-medium text-slate-800">{order.route.from}</span>
-                          <span className="text-slate-400"> → to </span>
-                          <span className="font-medium text-slate-800">{order.route.to}</span>
-                        </span>
-                        <span className="font-medium text-slate-700">{order.weight}</span>
-                        <span className="text-slate-600 tabular-nums">{order.eta}</span>
-                        <span>{getStatusBadge(order.status, order.statusLabel)}</span>
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              }
-
-              return (
-                <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
-                  {rowContent}
-                </tr>
-              );
-            })}
+            {orders.map((order) => (
+              <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
+                <td className="py-3 font-semibold text-slate-900">
+                  {order.href ? (
+                    <Link
+                      href={order.href}
+                      className="text-slate-900 hover:text-emerald-600 transition-colors inline-flex items-center gap-1 font-semibold"
+                    >
+                      {order.id}
+                    </Link>
+                  ) : (
+                    order.id
+                  )}
+                </td>
+                <td className="py-3 font-medium text-slate-700">{order.customer}</td>
+                <td className="py-3 text-slate-600">
+                  <span className="text-slate-400">from </span>
+                  <span className="font-medium text-slate-800">{order.route.from}</span>
+                  <span className="text-slate-400"> → to </span>
+                  <span className="font-medium text-slate-800">{order.route.to}</span>
+                </td>
+                <td className="py-3 font-medium text-slate-700">{order.weight}</td>
+                <td className="py-3 text-slate-600 tabular-nums">{order.eta}</td>
+                <td className="py-3 text-right">
+                  {getStatusBadge(order.status, order.statusLabel)}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

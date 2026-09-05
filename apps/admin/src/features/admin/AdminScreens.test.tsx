@@ -22,27 +22,20 @@ describe('Admin static operations screens', () => {
     );
   });
 
-  it('renders Realtime Da Nang map, quick dispatch feeds, and modern telemetry cards', () => {
+  it('renders Realtime Da Nang Bento map, Bento orders table, and modern telemetry cards', () => {
     render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
 
-    // Map and vehicle filters
-    expect(screen.getByText('BẢN ĐỒ THEO DÕI REAL-TIME')).toBeTruthy();
-    const pickupFilter = screen.getByRole('button', { name: /Bán tải/ });
-    const heavyFilter = screen.getByRole('button', { name: /Tải nặng/ });
-    expect(pickupFilter).toBeTruthy();
-    expect(heavyFilter).toBeTruthy();
+    // Bento Map Card
+    expect(screen.getByLabelText('Bản đồ điều phối thời gian thực')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Tìm kiếm đơn hàng, tài xế...')).toBeTruthy();
+    expect(screen.getByLabelText('Phóng to bản đồ')).toBeTruthy();
+    expect(screen.getByLabelText('Thu nhỏ bản đồ')).toBeTruthy();
 
-    // Interactive filter toggle
-    fireEvent.click(pickupFilter);
-    expect(pickupFilter.getAttribute('aria-pressed')).toBe('true');
-    fireEvent.click(pickupFilter);
-    expect(pickupFilter.getAttribute('aria-pressed')).toBe('false');
-
-    // Quick dispatch feeds
-    expect(screen.getByText('YÊU CẦU ĐƠN MỚI')).toBeTruthy();
-    expect(screen.getByText('SME ABC')).toBeTruthy();
-    expect(screen.getByText('TÀI XẾ GẦN ĐÂY')).toBeTruthy();
-    expect(screen.getByText('Sáu sign ups')).toBeTruthy();
+    // Bento Orders Table
+    expect(screen.getByText('Orders')).toBeTruthy();
+    expect(screen.getByText('Status Overview')).toBeTruthy();
+    expect(screen.getByText('Fulfillment Performance')).toBeTruthy();
+    expect(screen.getByText('Revenue Over Time')).toBeTruthy();
 
     // Telemetry KPI cards
     expect(screen.getByText('ĐƠN HÀNG HÔM NAY')).toBeTruthy();

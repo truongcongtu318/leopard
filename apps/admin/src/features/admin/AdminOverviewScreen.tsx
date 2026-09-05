@@ -5,10 +5,9 @@ import {
   AdminNotice,
 } from './AdminShared';
 import { createAdminPreviewHref } from './adapter';
-import { RealtimeDispatchMap } from './components/RealtimeDispatchMap';
 import { ModernTelemetryCards } from './components/ModernTelemetryCards';
-import { QuickDispatchFeed } from './components/QuickDispatchFeed';
 import {
+  BentoMapCard,
   BentoOrdersCard,
   StatusOverviewCard,
   FulfillmentPerformanceCard,
@@ -66,21 +65,21 @@ export function AdminOverviewScreen({
   const unloadingPercent = Math.round((unloadingCount / totalDistribution) * 100) || 13;
   const deliveredPercent = Math.round((deliveredCount / totalDistribution) * 100) || 38;
 
-  const customerNames = ['Nova Retail', 'GreenMart', 'Alpha Trading', 'EuroParts'] as const;
+  const customerNames = ['Vinamilk Đà Nẵng', 'Dược phẩm Danapha', 'Thép Hòa Phát', 'Dệt may 29/3'] as const;
   const routes = [
-    { from: 'Berlin', to: 'Hamburg' },
-    { from: 'Munich', to: 'Vienna' },
-    { from: 'Warsaw', to: 'Prague' },
-    { from: 'Rotterdam', to: 'Paris' },
+    { from: 'KCN Hòa Khánh', to: 'Cảng Tiên Sa' },
+    { from: 'KCN Điện Ngọc', to: 'Kho Cẩm Lệ' },
+    { from: 'Cảng Liên Chiểu', to: 'KCN Hòa Cầm' },
+    { from: 'Hải Châu', to: 'Sơn Trà' },
   ] as const;
   const weights = ['1.8 t', '0.9 t', '2.4 t', '3.2 t'] as const;
 
   const bentoOrders: BentoOrderItem[] | undefined = view.recentOrders.length > 0
     ? view.recentOrders.slice(0, 4).map((o, idx) => ({
         id: o.reference || o.id,
-        customer: customerNames[idx % customerNames.length] ?? 'Khách hàng',
+        customer: customerNames[idx % customerNames.length] ?? 'Doanh nghiệp',
         route: routes[idx % routes.length] ?? { from: 'Hải Châu', to: 'Sơn Trà' },
-        weight: weights[idx % weights.length] ?? '1.5 t',
+        weight: weights[idx % weights.length] ?? '1.8 t',
         eta: o.updatedAtLabel,
         status: o.status,
         statusLabel: o.status === 'IN_TRANSIT' ? 'In Transit' : o.status === 'DELIVERED' ? 'Delivered' : o.status,
@@ -118,9 +117,13 @@ export function AdminOverviewScreen({
 
       {/* NexaFleet Modern Bento Dispatch Console Grid: 2 Columns */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        {/* Left Column (~62% width): Realtime Da Nang Map & Orders (301) Table Card */}
+        {/* Left Column (~62% width): Realtime Da Nang Map & Orders Table Card */}
         <div className="xl:col-span-8 flex flex-col gap-4">
-          <RealtimeDispatchMap />
+          <BentoMapCard
+            title="Bản đồ điều phối thời gian thực"
+            activeOrderCode="LP-A-260815-101 · Vinamilk Đà Nẵng ➔ Cảng Tiên Sa"
+            searchPlaceholder="Tìm kiếm đơn hàng, tài xế..."
+          />
           <BentoOrdersCard
             title="Orders"
             totalCount={totalOrdersCount}
@@ -137,8 +140,7 @@ export function AdminOverviewScreen({
             deliveredPercent={deliveredPercent}
           />
           <FulfillmentPerformanceCard rate={89} subtitle="on average" />
-          <RevenueOverTimeCard amount="$239,187.00" growthLabel="+15% this month" />
-          <QuickDispatchFeed previewContext={previewContext} />
+          <RevenueOverTimeCard amount="239.187.000 ₫" growthLabel="+15% tháng này" />
         </div>
       </div>
 

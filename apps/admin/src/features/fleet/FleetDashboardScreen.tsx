@@ -138,36 +138,37 @@ export function FleetDashboardScreen({
             amount="148.500.000 ₫"
             growthLabel="+18% tháng này"
           />
-
-          <FleetDispatchSlab ariaLabel="Tình trạng tài xế" eyebrow="TÀI XẾ · SNAPSHOT HIỆN TẠI">
-            <h2 className="text-section-title font-semibold">Tình trạng tài xế</h2>
-            {view.unavailableRegionLabel ? (
-              <div className="mt-3">
-                <OperationalAlert title="Không thể tải vùng dữ liệu" tone="warning">
-                  <p>{view.unavailableRegionLabel}</p>
-                </OperationalAlert>
-              </div>
-            ) : (
-              <div className="mt-4 flex flex-col gap-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xs">
-                  <p className="text-xs font-medium text-white/60">Tóm tắt khả dụng</p>
-                  <p className="mt-1 text-lg font-bold text-white break-words">{view.availabilitySummary}</p>
-                </div>
-                <a
-                  className="inline-flex min-h-10 items-center justify-center rounded-xl bg-white/15 px-4 text-xs font-semibold text-white hover:bg-white/25 transition-colors focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  href={fleetPreviewHref(
-                    '/fleet/drivers',
-                    'fleet-drivers-mixed',
-                    previewContext,
-                  )}
-                >
-                  Xem danh sách tài xế
-                </a>
-              </div>
-            )}
-          </FleetDispatchSlab>
         </div>
       </div>
+
+      {/* Driver Status Slab */}
+      <FleetDispatchSlab ariaLabel="Tình trạng tài xế" eyebrow="TÀI XẾ · SNAPSHOT HIỆN TẠI">
+        <h2 className="text-section-title font-semibold">Tình trạng tài xế</h2>
+        {view.unavailableRegionLabel ? (
+          <div className="mt-3">
+            <OperationalAlert title="Không thể tải vùng dữ liệu" tone="warning">
+              <p>{view.unavailableRegionLabel}</p>
+            </OperationalAlert>
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xs flex-1">
+              <p className="text-xs font-medium text-white/60">Tóm tắt khả dụng</p>
+              <p className="mt-1 text-lg font-bold text-white break-words">{view.availabilitySummary}</p>
+            </div>
+            <a
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white/15 px-5 text-xs font-semibold text-white hover:bg-white/25 transition-colors focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              href={fleetPreviewHref(
+                '/fleet/drivers',
+                'fleet-drivers-mixed',
+                previewContext,
+              )}
+            >
+              Xem danh sách tài xế
+            </a>
+          </div>
+        )}
+      </FleetDispatchSlab>
     </div>
   );
 }
