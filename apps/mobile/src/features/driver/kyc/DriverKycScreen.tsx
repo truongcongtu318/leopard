@@ -1,9 +1,8 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { StatusBadge } from '../../../ui/StatusBadge';
 import {
   IconIdCard,
   IconInsuranceDoc,
@@ -12,48 +11,10 @@ import {
   IconSpeedTruck,
 } from '../../../ui/icons/CoreIcons';
 
-type DocumentItem = {
-  id: string;
-  title: string;
-  number: string;
-  status: 'VERIFIED' | 'PENDING' | 'EXPIRED';
-  expiryDate?: string;
-};
-
-const mockDocuments: DocumentItem[] = [
-  {
-    id: 'doc-1',
-    title: 'Căn cước công dân (CCCD)',
-    number: '079090001234',
-    status: 'VERIFIED',
-  },
-  {
-    id: 'doc-2',
-    title: 'Giấy phép lái xe (GPLX Hạng B2)',
-    number: '790123456789',
-    status: 'VERIFIED',
-    expiryDate: '10/2030',
-  },
-  {
-    id: 'doc-3',
-    title: 'Giấy chứng nhận đăng ký xe (Cà vẹt)',
-    number: '59D-123.45 (Xe Van Suzuki)',
-    status: 'VERIFIED',
-  },
-  {
-    id: 'doc-4',
-    title: 'Bảo hiểm TNDS bắt buộc',
-    number: 'BH-2026-987654',
-    status: 'VERIFIED',
-    expiryDate: '12/2026',
-  },
-  {
-    id: 'doc-5',
-    title: 'Phiếu lý lịch tư pháp (Số 2)',
-    number: 'LLTP-79-2026-00123',
-    status: 'VERIFIED',
-  },
-];
+export type DriverKycScreenProps = Readonly<{
+  documents: readonly { id: string; title: string; url: string; createdAt: string }[];
+  isLoading: boolean;
+}>;
 
 function getDocIcon(title: string) {
   if (title.includes('CCCD') || title.includes('Căn cước')) {
@@ -71,7 +32,7 @@ function getDocIcon(title: string) {
   return <IconSecurityShield color={colors.brand.softText} size={18} />;
 }
 
-export function DriverKycScreen() {
+export function DriverKycScreen({ documents, isLoading }: DriverKycScreenProps) {
   return (
     <ScreenScaffold
       eyebrow="DRIVER · IDENTITY & KYC"
@@ -86,36 +47,32 @@ export function DriverKycScreen() {
               <IconSecurityShield color={colors.success.text} size={20} />
             </View>
             <View>
-              <Text style={styles.verifiedTitle}>Hồ sơ đã được xác thực</Text>
-              <Text style={styles.verifiedSub}>Bạn đủ điều kiện nhận toàn bộ các chuyến hàng.</Text>
+              <Text style={styles.verifiedTitle}>Hồ sơ đã nộp</Text>
+              <Text style={styles.verifiedSub}>Đơn đăng ký tài xế đang được kiểm duyệt hoặc đã được duyệt.</Text>
             </View>
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>Giấy tờ pháp lý đã nộp</Text>
+        <Text style={styles.sectionLabel}>Giấy tờ đã nộp</Text>
 
-        <View style={styles.docList}>
-          {mockDocuments.map((doc, index) => {
-            const docIcon = getDocIcon(doc.title);
-            return (
+        {isLoading ? (
+          <Text style={styles.loadingText}>Đang tải danh sách giấy tờ…</Text>
+        ) : documents.length === 0 ? (
+          <Text style={styles.loadingText}>Chưa có giấy tờ nào được nộp.</Text>
+        ) : (
+          <View style={styles.docList}>
+            {documents.map((doc) => (
               <View key={doc.id} style={styles.docCard}>
                 <View style={styles.docHeader}>
                   <View style={styles.docTitleRow}>
-                    <View style={styles.docIconChip}>
-                      {docIcon}
-                    </View>
+                    <View style={styles.docIconChip}>{getDocIcon(doc.title)}</View>
                     <Text style={styles.docTitle}>{doc.title}</Text>
                   </View>
-                  <StatusBadge domain="kyc" status={doc.status} />
                 </View>
-                <Text style={styles.docNumber}>{doc.number}</Text>
-                {doc.expiryDate ? (
-                  <Text style={styles.docExpiry}>Hết hạn: {doc.expiryDate}</Text>
-                ) : null}
               </View>
-            );
-          })}
-        </View>
+            ))}
+          </View>
+        )}
 
         <View style={styles.updateCard}>
           <Text style={styles.updateTitle}>Cập nhật giấy tờ mới?</Text>
@@ -169,6 +126,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  loadingText: {
+    color: leopardPalette.textMutedSlate,
+    fontSize: 13,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
+  },
   docList: {
     gap: spacing.xs,
   },
@@ -205,14 +168,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13.5,
     fontWeight: '700',
-  },
-  docNumber: {
-    color: colors.neutral.text,
-    fontSize: 13,
-  },
-  docExpiry: {
-    color: colors.neutral.subtleText,
-    fontSize: 11.5,
   },
   updateCard: {
     backgroundColor: colors.neutral.background,
