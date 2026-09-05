@@ -94,6 +94,8 @@ model User {
   consentMarketing  Boolean              @default(false)
   consentThirdParty Boolean              @default(false)
   avatarMediaId     String?              @db.Uuid
+  avatarStorageKey  String?              @db.VarChar(500)
+  avatarContentType String?              @db.VarChar(100)
   role              Role
   status            UserStatus           @default(ACTIVE)
   createdAt         DateTime             @default(now()) @db.Timestamptz(3)
