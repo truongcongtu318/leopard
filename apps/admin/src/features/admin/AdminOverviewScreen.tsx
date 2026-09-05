@@ -8,6 +8,13 @@ import { createAdminPreviewHref } from './adapter';
 import { RealtimeDispatchMap } from './components/RealtimeDispatchMap';
 import { ModernTelemetryCards } from './components/ModernTelemetryCards';
 import { QuickDispatchFeed } from './components/QuickDispatchFeed';
+import {
+  BentoOrdersCard,
+  StatusOverviewCard,
+  FulfillmentPerformanceCard,
+  RevenueOverTimeCard,
+  type BentoOrderItem,
+} from '@/components/bento';
 import type {
   AdminOverviewRouteView,
   AdminPreviewContext,
@@ -45,15 +52,47 @@ export function AdminOverviewScreen({
     return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>;
   };
 
-  const totalOrdersCount = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0) || 215;
-  const inTransitCount = view.orderDistribution.find((o) => o.status === 'IN_TRANSIT')?.count ?? 145;
-  const deliveredCount = view.orderDistribution.find((o) => o.status === 'DELIVERED')?.count ?? 68;
+  const totalOrdersCount = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0) || 301;
+  const inTransitCount = view.orderDistribution.find((o) => o.status === 'IN_TRANSIT')?.count ?? 32;
+  const deliveredCount = view.orderDistribution.find((o) => o.status === 'DELIVERED')?.count ?? 38;
   const cancelledCount = view.orderDistribution.find((o) => o.status === 'CANCELLED')?.count ?? 2;
 
+  const totalDistribution = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0) || 100;
+  const loadingCount = view.orderDistribution.find((o) => o.status === 'ACCEPTED' || o.status === 'ASSIGNED_DRIVER')?.count ?? 17;
+  const unloadingCount = view.orderDistribution.find((o) => o.status === 'ARRIVED_AT_DROPOFF')?.count ?? 13;
+
+  const loadingPercent = Math.round((loadingCount / totalDistribution) * 100) || 17;
+  const inTransitPercent = Math.round((inTransitCount / totalDistribution) * 100) || 32;
+  const unloadingPercent = Math.round((unloadingCount / totalDistribution) * 100) || 13;
+  const deliveredPercent = Math.round((deliveredCount / totalDistribution) * 100) || 38;
+
+  const bentoOrders: BentoOrderItem[] | undefined = view.recentOrders.length > 0
+    ? view.recentOrders.slice(0, 4).map((o, idx) => {
+        const customerNames = ['Nova Retail', 'GreenMart', 'Alpha Trading', 'EuroParts'];
+        const routes = [
+          { from: 'Berlin', to: 'Hamburg' },
+          { from: 'Munich', to: 'Vienna' },
+          { from: 'Warsaw', to: 'Prague' },
+          { from: 'Rotterdam', to: 'Paris' },
+        ];
+        const weights = ['1.8 t', '0.9 t', '2.4 t', '3.2 t'];
+        return {
+          id: o.reference || o.id,
+          customer: customerNames[idx % customerNames.length],
+          route: routes[idx % routes.length],
+          weight: weights[idx % weights.length],
+          eta: o.updatedAtLabel,
+          status: o.status,
+          statusLabel: o.status === 'IN_TRANSIT' ? 'In Transit' : o.status === 'DELIVERED' ? 'Delivered' : o.status,
+          href: createAdminPreviewHref(o.href, 'order-detail', previewContext),
+        };
+      })
+    : undefined;
+
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-4">
       {/* Sleek Pilot Status Header Bar matching wireframe */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <h1 className="text-base font-extrabold tracking-tight text-slate-800">
             Tổng quan vận hành
@@ -67,7 +106,7 @@ export function AdminOverviewScreen({
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/80 px-2.5 py-0.5 text-xs text-slate-500 font-medium shadow-2xs">
+          <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-0.5 text-xs text-slate-500 font-medium shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>Hạ tầng: <span>Liveness</span> ({view.health.liveness}) · <span>Readiness</span> ({view.health.readiness})</span>
           </div>
@@ -78,20 +117,33 @@ export function AdminOverviewScreen({
       </div>
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
 
-      {/* Modern Dispatch Console Grid: Realtime Map (Col 9) + Quick Dispatch Feed & Exceptions (Col 3) */}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
-        {/* Left Column: Real-time Interactive Da Nang Map (Col 9) */}
-        <div className="xl:col-span-9 flex flex-col gap-3">
+      {/* NexaFleet Modern Bento Dispatch Console Grid: 2 Columns */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        {/* Left Column (~62% width): Realtime Da Nang Map & Orders (301) Table Card */}
+        <div className="xl:col-span-8 flex flex-col gap-4">
           <RealtimeDispatchMap />
+          <BentoOrdersCard
+            title="Orders"
+            totalCount={totalOrdersCount}
+            orders={bentoOrders}
+          />
         </div>
 
-        {/* Right Column: Quick Dispatch Requests & Recent Drivers (Col 3) */}
-        <div className="xl:col-span-3 flex flex-col gap-3">
+        {/* Right Column (~38% width): Status Overview + Fulfillment Performance + Revenue Over Time */}
+        <div className="xl:col-span-4 flex flex-col gap-4">
+          <StatusOverviewCard
+            loadingPercent={loadingPercent}
+            inTransitPercent={inTransitPercent}
+            unloadingPercent={unloadingPercent}
+            deliveredPercent={deliveredPercent}
+          />
+          <FulfillmentPerformanceCard rate={89} subtitle="on average" />
+          <RevenueOverTimeCard amount="$239,187.00" growthLabel="+15% this month" />
           <QuickDispatchFeed previewContext={previewContext} />
         </div>
       </div>
 
-      {/* Modern Telemetry 6 KPI Cards Row (Full width directly under map) */}
+      {/* Modern Telemetry 6 KPI Cards Row */}
       <ModernTelemetryCards
         totalOrders={totalOrdersCount}
         inTransitOrders={inTransitCount}
