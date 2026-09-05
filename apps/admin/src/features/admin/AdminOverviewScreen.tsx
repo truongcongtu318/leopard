@@ -157,8 +157,8 @@ export function AdminOverviewScreen({
       <h1 className="sr-only">Tổng quan vận hành</h1>
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
 
-      {/* NexaFleet Dispatch Console: 5 widgets, no scroll */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+      {/* NexaFleet Dispatch Console: 5 widgets fill viewport height */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:h-[calc(100vh-132px)] xl:min-h-[640px]">
         {/* Left Column (~62% width): Map + Orders Table */}
         <div className="xl:col-span-8 flex flex-col gap-4 min-h-0">
           <BentoMapCard
