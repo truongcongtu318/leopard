@@ -57,6 +57,9 @@ export type AdminOrderSummaryView = Readonly<{
   paymentStatus: PaymentStatus;
   updatedAtLabel: string;
   href: string;
+  customerLabel?: string;
+  routeLabel?: string;
+  amountLabel?: string;
 }>;
 
 export type AdminOverviewView = Readonly<{

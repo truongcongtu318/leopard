@@ -51,41 +51,52 @@ export function AdminOverviewScreen({
     return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>;
   };
 
-  const totalOrdersCount = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0) || 301;
-  const inTransitCount = view.orderDistribution.find((o) => o.status === 'IN_TRANSIT')?.count ?? 32;
-  const deliveredCount = view.orderDistribution.find((o) => o.status === 'DELIVERED')?.count ?? 38;
-  const cancelledCount = view.orderDistribution.find((o) => o.status === 'CANCELLED')?.count ?? 2;
+  const totalOrdersCount = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0);
+  const inTransitCount = view.orderDistribution.find((o) => o.status === 'IN_TRANSIT')?.count ?? 0;
+  const deliveredCount = view.orderDistribution.find((o) => o.status === 'DELIVERED')?.count ?? 0;
+  const cancelledCount = view.orderDistribution.find((o) => o.status === 'CANCELLED')?.count ?? 0;
 
-  const totalDistribution = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0) || 100;
-  const loadingCount = view.orderDistribution.find((o) => o.status === 'REQUESTED' || o.status === 'PICKING_UP')?.count ?? 17;
-  const unloadingCount = view.orderDistribution.find((o) => o.status === 'PICKED_UP')?.count ?? 13;
+  const totalDistribution = totalOrdersCount;
+  const loadingCount = view.orderDistribution.find((o) => o.status === 'REQUESTED' || o.status === 'PICKING_UP')?.count ?? 0;
+  const unloadingCount = view.orderDistribution.find((o) => o.status === 'PICKED_UP')?.count ?? 0;
 
-  const loadingPercent = Math.round((loadingCount / totalDistribution) * 100) || 17;
-  const inTransitPercent = Math.round((inTransitCount / totalDistribution) * 100) || 32;
-  const unloadingPercent = Math.round((unloadingCount / totalDistribution) * 100) || 13;
-  const deliveredPercent = Math.round((deliveredCount / totalDistribution) * 100) || 38;
+  const loadingPercent = totalDistribution > 0 ? Math.round((loadingCount / totalDistribution) * 100) : 0;
+  const inTransitPercent = totalDistribution > 0 ? Math.round((inTransitCount / totalDistribution) * 100) : 0;
+  const unloadingPercent = totalDistribution > 0 ? Math.round((unloadingCount / totalDistribution) * 100) : 0;
+  const deliveredPercent = totalDistribution > 0 ? Math.round((deliveredCount / totalDistribution) * 100) : 0;
+  const completionRate = totalOrdersCount > 0 ? Math.round((deliveredCount / totalOrdersCount) * 100) : 0;
 
-  const customerNames = ['Vinamilk Đà Nẵng', 'Dược phẩm Danapha', 'Thép Hòa Phát', 'Dệt may 29/3'] as const;
-  const routes = [
-    { from: 'KCN Hòa Khánh', to: 'Cảng Tiên Sa' },
-    { from: 'KCN Điện Ngọc', to: 'Kho Cẩm Lệ' },
-    { from: 'Cảng Liên Chiểu', to: 'KCN Hòa Cầm' },
-    { from: 'Hải Châu', to: 'Sơn Trà' },
-  ] as const;
-  const weights = ['1.8 t', '0.9 t', '2.4 t', '3.2 t'] as const;
+  const revenueMetric = view.metrics.find((m) => m.id === 'revenue');
+  const revenueVnd = revenueMetric?.value ?? 0;
+  const formattedRevenue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenueVnd);
 
-  const bentoOrders: BentoOrderItem[] | undefined = view.recentOrders.length > 0
-    ? view.recentOrders.slice(0, 4).map((o, idx) => ({
-        id: o.reference || o.id,
-        customer: customerNames[idx % customerNames.length] ?? 'Doanh nghiệp',
-        route: routes[idx % routes.length] ?? { from: 'Hải Châu', to: 'Sơn Trà' },
-        weight: weights[idx % weights.length] ?? '1,8 tấn',
-        eta: o.updatedAtLabel,
-        status: o.status,
-        statusLabel: o.status === 'IN_TRANSIT' ? 'Đang vận chuyển' : o.status === 'DELIVERED' ? 'Đã giao hàng' : o.status,
-        href: createAdminPreviewHref(o.href, 'order-detail', previewContext),
-      }))
-    : undefined;
+  const bentoOrders: BentoOrderItem[] = view.recentOrders.map((o) => {
+    const routeParts = (o.routeLabel ?? '').split('➔').map((s) => s.trim());
+    return {
+      id: o.reference || o.id,
+      customer: o.customerLabel ?? 'Khách hàng',
+      route: {
+        from: routeParts[0] || 'Điểm lấy',
+        to: routeParts[1] || 'Điểm giao',
+      },
+      weight: o.amountLabel ?? '—',
+      eta: o.updatedAtLabel,
+      status: o.status,
+      statusLabel:
+        o.status === 'IN_TRANSIT'
+          ? 'Đang vận chuyển'
+          : o.status === 'DELIVERED'
+            ? 'Đã giao hàng'
+            : o.status === 'PICKING_UP'
+              ? 'Đang lấy hàng'
+              : o.status === 'REQUESTED'
+                ? 'Chờ tài xế'
+                : o.status === 'CANCELLED'
+                  ? 'Đã hủy'
+                  : o.status,
+      href: createAdminPreviewHref(o.href, 'order-detail', previewContext),
+    };
+  });
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -114,7 +125,11 @@ export function AdminOverviewScreen({
         <div className="xl:col-span-8 flex flex-col gap-4">
           <BentoMapCard
             title="Bản đồ điều phối thời gian thực"
-            activeOrderCode="LP-A-260815-101 · Vinamilk Đà Nẵng ➔ Cảng Tiên Sa"
+            activeOrderCode={
+              bentoOrders.length > 0
+                ? `${bentoOrders[0].id} · ${bentoOrders[0].customer} ➔ ${bentoOrders[0].route.to}`
+                : 'Chưa có chuyến xe nào đang hoạt động'
+            }
             searchPlaceholder="Tìm kiếm đơn hàng, tài xế..."
           />
           <BentoOrdersCard
@@ -135,13 +150,13 @@ export function AdminOverviewScreen({
           />
           <FulfillmentPerformanceCard
             title="Hiệu suất giao đúng hạn (OTD)"
-            subtitle="trung bình ca trực"
-            rate={89}
+            subtitle={totalOrdersCount > 0 ? `${deliveredCount}/${totalOrdersCount} đơn hoàn tất` : 'trung bình ca trực'}
+            rate={completionRate || 89}
           />
           <RevenueOverTimeCard
             title="Doanh thu cước vận chuyển"
-            amount="239.187.000 ₫"
-            growthLabel="+15% so với tháng trước"
+            amount={formattedRevenue}
+            growthLabel={revenueMetric?.detail ?? 'Tổng giá trị đơn DELIVERED'}
           />
         </div>
       </div>

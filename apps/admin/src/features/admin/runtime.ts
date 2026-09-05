@@ -486,14 +486,23 @@ async function loadAdminRuntimeOverview(): Promise<AdminRouteView> {
             ]
           : [];
 
-    const recentOrders: readonly AdminOrderSummaryView[] = recentOrdersPage.items.map((order) => ({
-      id: order.id,
-      reference: order.code || referenceOf(order.id),
-      status: toOrderStatus(order.status),
-      paymentStatus: toPaymentStatus(order.paymentStatus),
-      updatedAtLabel: formatDateTime(order.updatedAt),
-      href: `/admin/orders/${order.id}`,
-    }));
+    const recentOrders: readonly AdminOrderSummaryView[] = recentOrdersPage.items.map((order) => {
+      const pickup = order.pickupLabel || '';
+      const dropoff = order.dropoffLabel || '';
+      const routeLabel =
+        pickup && dropoff ? `${pickup} ➔ ${dropoff}` : pickup || dropoff || 'Chưa có lộ trình';
+      return {
+        id: order.id,
+        reference: order.code || referenceOf(order.id),
+        status: toOrderStatus(order.status),
+        paymentStatus: toPaymentStatus(order.paymentStatus),
+        updatedAtLabel: formatDateTime(order.updatedAt),
+        href: `/admin/orders/${order.id}`,
+        customerLabel: order.customerPhone ? maskPhone(order.customerPhone) : 'Khách hàng',
+        routeLabel,
+        amountLabel: formatVnd(order.priceVnd),
+      };
+    });
 
     const view: AdminOverviewView = {
       scenarioId: `${SCENARIO_PREFIX}-OVERVIEW`,

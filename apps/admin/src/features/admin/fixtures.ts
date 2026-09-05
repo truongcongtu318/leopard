@@ -347,6 +347,9 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
       paymentStatus: item.paymentStatus,
       updatedAtLabel: item.createdAtLabel,
       href: item.href,
+      customerLabel: item.customerLabel,
+      routeLabel: item.routeLabel,
+      amountLabel: item.amountLabel,
     })),
     notice: readinessFailed
       ? {
