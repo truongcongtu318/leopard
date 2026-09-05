@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Maximize2, Minimize2, Package, Search } from 'lucide-react';
 
 export interface MapPackageMarker {
   readonly id: string;
@@ -278,11 +279,7 @@ export function BentoMapCard({
                 className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2.5 rounded-2xl bg-[#10b981] px-3.5 py-1.5 text-white shadow-2xl ring-2 ring-white/90 hover:scale-105 transition-all cursor-pointer pointer-events-auto"
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white text-slate-900 shadow-xs">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-                    <path d="m3.3 7 8.7 5 8.7-5" />
-                    <path d="M12 22V12" />
-                  </svg>
+                  <Package className="w-3.5 h-3.5" strokeWidth={2.2} aria-hidden="true" />
                 </div>
                 <div className="flex flex-col items-start leading-tight">
                   <span className="text-xs font-bold tracking-tight">{displayActiveLabel}</span>
@@ -301,12 +298,7 @@ export function BentoMapCard({
               aria-label={`Kiện hàng: ${marker.orderRef} - ${marker.customer}`}
               className="group absolute z-10 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center h-8 w-8 rounded-xl bg-white text-slate-800 shadow-xl border border-slate-200/90 hover:scale-110 hover:border-emerald-400 hover:shadow-2xl transition-all cursor-pointer pointer-events-auto"
             >
-              <svg className="w-4 h-4 text-slate-700 group-hover:text-emerald-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m7.5 4.27 9 5.15" />
-                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-                <path d="m3.3 7 8.7 5 8.7-5" />
-                <path d="M12 22V12" />
-              </svg>
+              <Package className="w-4 h-4 text-slate-700 group-hover:text-emerald-600 transition-colors" strokeWidth={2.2} aria-hidden="true" />
             </button>
           );
         })}
@@ -315,15 +307,7 @@ export function BentoMapCard({
       {/* Floating Header Controls: Frosted Glass Search Input on Left, Fullscreen on Right */}
       <div className="relative z-30 flex items-center justify-between p-3 sm:p-4 pointer-events-auto">
         <div className="relative w-52 sm:w-64">
-          <svg
-            className="w-3.5 h-3.5 text-slate-300 absolute left-3 top-2.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <Search className="w-3.5 h-3.5 text-slate-300 absolute left-3 top-2.5" aria-hidden="true" />
           <input
             type="text"
             value={searchValue}
@@ -344,13 +328,11 @@ export function BentoMapCard({
           aria-label={isFullscreen ? 'Thu nhỏ bản đồ' : 'Phóng to toàn màn hình'}
           className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900/75 backdrop-blur-md border border-white/15 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            {isFullscreen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M4 10h6m0 0V4m0 6L3 3m17 7h-6m0 0V4m0 6l7-7" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            )}
-          </svg>
+          {isFullscreen ? (
+            <Minimize2 className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
+          ) : (
+            <Maximize2 className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
+          )}
         </button>
       </div>
 

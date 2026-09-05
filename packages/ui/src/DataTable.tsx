@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ArrowUpDown } from 'lucide-react';
 import { cn } from './cn';
 
 export type DataTableColumn = {
@@ -74,20 +75,7 @@ export function DataTable({
                     )}
                   >
                     <span>{col.header}</span>
-                    <svg
-                      className="h-3 w-3 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                      />
-                    </svg>
+                    <ArrowUpDown className="h-3 w-3 text-slate-400" aria-hidden="true" />
                   </button>
                 ) : (
                   col.header

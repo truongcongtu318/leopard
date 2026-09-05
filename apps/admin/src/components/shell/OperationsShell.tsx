@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-
+import { Bell, LogOut, Menu, ShieldCheck, X } from 'lucide-react';
 import { LiveRefreshBridge } from '../live/LiveOrderRefresher';
 import { RoleNavigation, type NavItem } from './RoleNavigation';
 
@@ -149,21 +149,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
             className="flex items-center gap-2.5 transition-opacity motion-reduce:transition-none"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white shadow-2xs">
-              <svg
-                aria-hidden="true"
-                focusable="false"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
+              <ShieldCheck className="w-[18px] h-[18px]" strokeWidth={2.2} aria-hidden="true" />
             </div>
             <div>
               <span className="font-extrabold text-base tracking-tight text-slate-900">LEOPARD</span>
@@ -188,9 +174,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
             aria-label="Thông báo hệ thống"
             className="relative p-2 rounded-full border border-slate-200/70 hover:bg-slate-50 text-slate-600 transition-colors motion-reduce:transition-none"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
+            <Bell className="w-4 h-4" aria-hidden="true" />
           </button>
 
           {/* User Profile Capsule */}
@@ -215,16 +199,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
             aria-label="Đăng xuất khỏi phiên làm việc"
             className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors motion-reduce:transition-none cursor-pointer"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+            <LogOut className="w-4 h-4" aria-hidden="true" />
           </button>
 
           {/* Mobile Drawer Trigger */}
@@ -236,17 +211,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
             aria-expanded={drawerOpen}
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 motion-reduce:transition-none md:hidden"
           >
-            <svg
-              aria-hidden="true"
-              focusable="false"
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
+            <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -291,13 +256,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
                 aria-label="Đóng điều hướng"
                 className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-neutral-border text-neutral-text motion-reduce:transition-none"
               >
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
 

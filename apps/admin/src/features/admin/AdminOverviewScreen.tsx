@@ -1,5 +1,6 @@
 'use client';
 
+import { AlertCircle, AlertTriangle, ArrowRight, Info } from 'lucide-react';
 import {
   AdminBoundaryState,
   AdminNotice,
@@ -46,9 +47,9 @@ export function AdminOverviewScreen({
   }
 
   const exceptionIcon = (tone: string) => {
-    if (tone === 'danger') return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
-    if (tone === 'warning') return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
-    return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>;
+    if (tone === 'danger') return <AlertCircle className="w-4 h-4" strokeWidth={1.8} aria-hidden="true" />;
+    if (tone === 'warning') return <AlertTriangle className="w-4 h-4" strokeWidth={1.8} aria-hidden="true" />;
+    return <Info className="w-4 h-4" strokeWidth={1.8} aria-hidden="true" />;
   };
 
   const totalOrdersCount = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0) || 301;
@@ -155,11 +156,7 @@ export function AdminOverviewScreen({
           <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
             <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
+                <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2.2} aria-hidden="true" />
               </span>
               Ngoại lệ cần điều tra
             </h2>
@@ -198,7 +195,7 @@ export function AdminOverviewScreen({
                     )}
                   >
                     Điều tra đơn
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
                   </a>
                 ) : null}
               </li>

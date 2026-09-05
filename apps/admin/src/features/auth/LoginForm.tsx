@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AlertTriangle, ArrowRight, Loader2, Phone, XCircle } from 'lucide-react';
 import { browserClient } from "../../lib/api/browser-client";
 import { setSession } from "../../lib/auth/session";
 import { ApiError } from "../../lib/api/api-error";
@@ -138,9 +139,7 @@ export function LoginForm({
           role="alert"
           className="mb-4 flex items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/90 p-3.5 text-xs text-amber-900 shadow-2xs backdrop-blur-xs"
         >
-          <svg className="h-4 w-4 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" strokeWidth={2} aria-hidden="true" />
           <span>Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</span>
         </div>
       ) : null}
@@ -150,9 +149,7 @@ export function LoginForm({
           role="alert"
           className="mb-4 flex items-center gap-2.5 rounded-2xl border border-rose-200 bg-rose-50/90 p-3.5 text-xs text-rose-900 shadow-2xs backdrop-blur-xs"
         >
-          <svg className="h-4 w-4 shrink-0 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <XCircle className="h-4 w-4 shrink-0 text-rose-600" strokeWidth={2} aria-hidden="true" />
           <span>{errorMessage}</span>
         </div>
       ) : null}
@@ -167,7 +164,7 @@ export function LoginForm({
           </label>
           <div className="relative group">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 group-focus-within:text-brand transition-colors">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 5 12.91 19.79 19.79 0 0 1 2.07 4.3 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12 1.28.44 2.52.94 3.69a2 2 0 0 1-.57 2.11L8.09 10.91a16 16 0 0 0 6 6l1.39-1.39a2 2 0 0 1 2.11-.57c1.17.5 2.41.82 3.69.94A2 2 0 0 1 22 16.92z"/></svg>
+              <Phone className="w-4 h-4" strokeWidth={1.8} />
             </div>
             <input
               id="tokenInput"
@@ -188,14 +185,11 @@ export function LoginForm({
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">
-              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               Đang xử lý...
             </span>
           ) : (
-            <span className="flex items-center gap-2">Đăng nhập <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <span className="flex items-center gap-2">Đăng nhập <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" /></span>
           )}
         </button>
       </form>

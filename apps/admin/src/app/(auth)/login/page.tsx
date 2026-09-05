@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShieldCheck } from 'lucide-react';
 import { LoginClientWrapper } from "./LoginClientWrapper";
 
 export const metadata: Metadata = {
@@ -21,10 +22,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[28rem]">
         <div className="mb-6 flex items-center justify-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-[#0d5ca8] text-white shadow-xs">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
+            <ShieldCheck className="w-[22px] h-[22px]" strokeWidth={2.2} aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-center gap-2">
