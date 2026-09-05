@@ -2,6 +2,9 @@ export type ProfileContentView = Readonly<{
   scenarioId: string;
   kind: 'content';
   phone: string;
+  name: string | null;
+  avatarUrl: string | null;
+  vehicleLabel: string | null;
   roleLabel: string;
   statusLabel: string;
   statusTone: 'active' | 'danger';

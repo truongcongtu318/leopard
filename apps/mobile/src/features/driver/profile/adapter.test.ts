@@ -3,7 +3,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { createDriverProfileHttpAdapter, type ProfileHttpClient } from './adapter';
 
 function makeClient(overrides: Partial<ProfileHttpClient> = {}): ProfileHttpClient {
-  return { get: jest.fn() as any, post: jest.fn() as any, ...overrides };
+  return { get: jest.fn() as any, post: jest.fn() as any, patch: jest.fn() as any, postForm: jest.fn() as any, ...overrides };
 }
 
 describe('createDriverProfileHttpAdapter', () => {
@@ -47,5 +47,31 @@ describe('createDriverProfileHttpAdapter', () => {
 
     await expect(port.logout()).resolves.toBeUndefined();
     expect(post).toHaveBeenCalledWith('/auth/logout');
+  });
+
+  it('maps name/avatarUrl/vehicleLabel from /me and /driver/application', async () => {
+    const get = jest.fn((path: string) => {
+      if (path === '/me') {
+        return Promise.resolve({
+          id: 'u1', phone: '0900000002', role: 'DRIVER', status: 'ACTIVE',
+          name: 'Trần Tài Xế', email: null, avatarStorageKey: null,
+        });
+      }
+      if (path === '/driver/application') {
+        return Promise.resolve({
+          status: 'ACTIVE', vehicleType: 'TRUCK', licensePlate: '29H-123.45',
+          licenseNumber: 'X', submittedAt: null, reviewedAt: null, rejectionReason: null,
+        });
+      }
+      throw new Error(`unexpected path ${path}`);
+    });
+    const port = createDriverProfileHttpAdapter(makeClient({ get: get as any }));
+
+    const view = await port.getProfileView();
+
+    expect(view).toMatchObject({
+      name: 'Trần Tài Xế',
+      vehicleLabel: 'Xe tải · 29H-123.45',
+    });
   });
 });
