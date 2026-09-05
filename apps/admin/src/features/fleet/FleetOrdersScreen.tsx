@@ -205,11 +205,9 @@ function OrderFilters({
       method="get"
       role="search"
     >
-      <div className="border-b border-slate-100 pb-3 md:col-span-2 xl:col-span-4">
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand uppercase">
-          BỘ LỌC
-        </span>
-        <h2 className="mt-1 text-base sm:text-lg font-bold text-neutral-text">Thu hẹp tập đơn chỉ xem</h2>
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3 md:col-span-2 xl:col-span-4">
+        <h2 className="text-sm font-bold text-slate-800">Bộ lọc đơn hàng</h2>
+        <span className="text-xs text-slate-400 font-medium">Tìm kiếm & phân loại</span>
       </div>
       <FleetPreviewHiddenFields context={previewContext} />
       <label className="grid gap-1.5 text-xs font-semibold text-slate-700 xl:col-span-2">
@@ -369,11 +367,10 @@ export function FleetOrdersScreen({
     <div className="flex flex-col gap-lg">
       <FleetBreadcrumbs current="orders" />
       <OperationsPageHeader
-        context="Danh sách chỉ xem theo trạng thái, Khách hàng, Tài xế và khoảng ngày"
+        actions={<FleetScopeRail scope={view.scope} />}
         isStale={view.state === 'offline'}
         title="Đơn của đội xe"
       />
-      <FleetScopeRail scope={view.scope} />
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
       <OrderFilters filters={view.filters} previewContext={previewContext} />
       <div className="grid gap-lg 2xl:grid-cols-[minmax(0,7fr)_minmax(20rem,3fr)]">

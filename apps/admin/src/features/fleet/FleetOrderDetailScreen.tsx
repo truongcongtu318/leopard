@@ -36,7 +36,7 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
     <div className="flex flex-col gap-lg">
       <FleetBreadcrumbs current="order-detail" orderReference={order.reference} />
       <OperationsPageHeader
-        context="Chi tiết vận hành thuộc phạm vi đội xe"
+        actions={<FleetScopeRail scope={view.scope} />}
         isStale={order.tracking.state === 'stale'}
         updatedAt={order.updatedAtLabel}
         title={`Đơn ${order.reference}`}
@@ -45,13 +45,14 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
         enabled={order.status !== 'DELIVERED' && order.status !== 'CANCELLED'}
         orderId={order.id}
       />
-      <FleetScopeRail scope={view.scope} />
-      <FleetReadOnlyNote />
+      <div className="flex flex-wrap items-center gap-2">
+        <FleetReadOnlyNote />
+      </div>
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
 
       <FleetDispatchSlab
         ariaLabel="Ngữ cảnh chuyến trong phạm vi đội xe"
-        eyebrow="ĐƠN ĐANG HOẠT ĐỘNG"
+        eyebrow="THÔNG TIN ĐƠN HÀNG"
       >
         <div className="grid gap-md md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div className="min-w-0">

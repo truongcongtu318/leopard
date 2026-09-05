@@ -231,17 +231,15 @@ export function LoginForm({
                     <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white transition-colors">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={acc.icon} /></svg>
                     </div>
-                    <span className="rounded-full border border-slate-200/80 bg-white px-1.5 py-0.2 font-mono text-[9px] font-semibold text-slate-600">
-                      {acc.role}
+                    <span className="rounded-full border border-slate-200/80 bg-white px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                      {acc.role === 'ADMIN' ? 'Admin' : acc.role === 'FLEET_OWNER' ? 'Fleet' : acc.role === 'DRIVER' ? 'Tài xế' : 'Khách'}
                     </span>
                   </div>
                   <div>
                     <span className="sr-only">{acc.testLabel}</span>
                     <div className="text-xs font-bold text-slate-800">{acc.title}</div>
-                    <div className="text-[11px] text-neutral-muted">{acc.desc}</div>
-                  </div>
-                  <div className="font-mono text-[10px] text-slate-400 mt-0.5">
-                    {acc.phone}
+                    <div className="text-[11px] text-slate-400">{acc.desc}</div>
+                    <span className="sr-only">{acc.phone}</span>
                   </div>
                 </button>
               ))}

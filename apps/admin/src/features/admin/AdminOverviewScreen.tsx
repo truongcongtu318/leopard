@@ -89,91 +89,24 @@ export function AdminOverviewScreen({
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {/* Sleek Pilot Status Header Bar matching wireframe */}
+      {/* Clean Operations Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-base font-extrabold tracking-tight text-slate-800">
+          <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-800">
             Tổng quan vận hành
           </h1>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Ca trực Pilot Đang Chạy
-          </span>
-          <span className="hidden sm:inline text-xs text-slate-400 font-medium">
-            Cập nhật thời gian thực qua WebSocket · Trạm điều phối Đà Nẵng
-          </span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-0.5 text-xs text-slate-600 font-medium shadow-2xs">
+          <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-1 text-xs text-slate-600 font-medium shadow-2xs">
             <span className={`h-1.5 w-1.5 rounded-full ${view.health.liveness === 'UP' && view.health.readiness === 'READY' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
             <span>Hệ thống: {view.health.liveness === 'UP' && view.health.readiness === 'READY' ? 'Hoạt động bình thường' : 'Đang kiểm tra kết nối'}</span>
           </div>
-          <div className="text-xs text-slate-400 tabular-nums font-medium">
-            Lần cập nhật: {view.checkedAtLabel}
+          <div className="hidden sm:inline text-xs text-slate-400 tabular-nums font-medium">
+            Cập nhật: {view.checkedAtLabel}
           </div>
         </div>
       </div>
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
-
-      {/* Active Exceptions: Displayed at the TOP of the page so dispatchers see incidents immediately */}
-      {view.exceptions.length > 0 ? (
-        <div
-          aria-label="Bàn điều phối hiện tại"
-          className="rounded-[26px] border border-amber-200/80 bg-white/95 p-4 sm:p-5 shadow-sm backdrop-blur-md"
-        >
-          <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4">
-            <h2 className="text-sm font-bold text-amber-900 flex items-center gap-2 mb-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-600">
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              Ngoại lệ cần điều tra
-            </h2>
-            <ul className="m-0 grid list-none gap-2.5 p-0 sm:grid-cols-2">
-              {view.exceptions.map((exception) => (
-                <li
-                  key={exception.id}
-                  className={`rounded-card border p-3.5 transition-shadow ${
-                    exception.tone === 'danger'
-                      ? 'border-danger-border/60 bg-danger-surface/50'
-                      : 'border-warning-border/60 bg-warning-surface/50'
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className={exception.tone === 'danger' ? 'text-danger' : 'text-warning'}>
-                        {exceptionIcon(exception.tone)}
-                      </span>
-                      <p className="text-sm font-bold text-neutral-text">{exception.label}</p>
-                    </div>
-                    <span className="text-xs text-neutral-muted tabular-nums">{exception.updatedAtLabel}</span>
-                  </div>
-                  <p className="mt-1 text-xs text-neutral-muted leading-relaxed">{exception.detail}</p>
-                  {exception.targetHref ? (
-                    <a
-                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-brand underline-offset-4 hover:underline"
-                      href={createAdminPreviewHref(
-                        exception.targetHref,
-                        screenForHref(exception.targetHref),
-                        previewContext,
-                        exception.targetScenario,
-                      )}
-                    >
-                      Điều tra đơn
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </a>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      ) : (
-        <div aria-label="Bàn điều phối hiện tại" className="hidden shadow-sm">
-          <h2 className="sr-only">Ngoại lệ cần điều tra</h2>
-        </div>
-      )}
 
       {/* NexaFleet Modern Bento Dispatch Console Grid: 2 Columns */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
@@ -212,6 +145,72 @@ export function AdminOverviewScreen({
           />
         </div>
       </div>
+
+      {/* Active Exceptions: Positioned below Bento console for clean enterprise layout */}
+      {view.exceptions.length > 0 ? (
+        <div
+          aria-label="Bàn điều phối hiện tại"
+          className="rounded-3xl border border-slate-200/80 bg-white/95 p-5 shadow-sm backdrop-blur-md"
+        >
+          <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </span>
+              Ngoại lệ cần điều tra
+            </h2>
+            <span className="text-xs text-slate-400 font-medium">
+              {view.exceptions.length} sự cố ghi nhận
+            </span>
+          </div>
+          <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
+            {view.exceptions.map((exception) => (
+              <li
+                key={exception.id}
+                className={`rounded-card border p-3.5 transition-all ${
+                  exception.tone === 'danger'
+                    ? 'border-rose-200 bg-rose-50/50'
+                    : 'border-amber-200 bg-amber-50/50'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className={exception.tone === 'danger' ? 'text-rose-600' : 'text-amber-600'}>
+                      {exceptionIcon(exception.tone)}
+                    </span>
+                    <p className="text-sm font-bold text-slate-800">{exception.label}</p>
+                  </div>
+                  <span className="text-xs text-slate-400 tabular-nums">{exception.updatedAtLabel}</span>
+                </div>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">{exception.detail}</p>
+                {exception.targetHref ? (
+                  <a
+                    className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
+                    href={createAdminPreviewHref(
+                      exception.targetHref,
+                      screenForHref(exception.targetHref),
+                      previewContext,
+                      exception.targetScenario,
+                    )}
+                  >
+                    Điều tra đơn
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </a>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div aria-label="Bàn điều phối hiện tại" className="hidden shadow-sm">
+          <h2 className="sr-only">Ngoại lệ cần điều tra</h2>
+        </div>
+      )}
+
 
       {/* Modern Telemetry 4 Practical KPI Cards Row */}
       <ModernTelemetryCards

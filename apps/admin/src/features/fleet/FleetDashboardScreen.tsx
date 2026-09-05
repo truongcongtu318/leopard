@@ -76,12 +76,49 @@ export function FleetDashboardScreen({
   return (
     <div className="flex flex-col gap-4">
       <OperationsPageHeader
-        context="Ngoại lệ và tình hình vận hành thuộc đúng phạm vi đội xe"
+        actions={<FleetScopeRail scope={view.scope} />}
         title="Tổng quan đội xe"
+        updatedAt={view.asOfLabel}
       />
-      <FleetScopeRail scope={view.scope} />
-      <p className="text-xs text-neutral-muted tabular-nums">Dữ liệu lúc: {view.asOfLabel}</p>
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
+
+      {/* NexaFleet Bento 2-Column Grid for Fleet Owner */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        {/* Left Column (~62% width): Fleet Map + Orders Table */}
+        <div className="xl:col-span-8 flex flex-col gap-4">
+          <BentoMapCard
+            title={`Bản đồ điều phối ${view.scope.displayName}`}
+            activeOrderCode="43C-182.91 Đang chạy"
+            searchPlaceholder="Tìm kiếm đơn đội xe..."
+          />
+          <BentoOrdersCard
+            title="Đơn đang hoạt động"
+            totalCount={view.activeOrders.length}
+            orders={bentoOrders.length > 0 ? bentoOrders : undefined}
+          />
+        </div>
+
+        {/* Right Column (~38% width): Status Overview + Fulfillment Performance + Revenue */}
+        <div className="xl:col-span-4 flex flex-col gap-4">
+          <StatusOverviewCard
+            title="Trạng thái đội xe"
+            loadingPercent={18}
+            inTransitPercent={52}
+            unloadingPercent={12}
+            deliveredPercent={18}
+          />
+          <FulfillmentPerformanceCard
+            title="Hiệu suất đội xe"
+            rate={94}
+            subtitle="tỷ lệ hoàn thành"
+          />
+          <RevenueOverTimeCard
+            title="Doanh thu đội xe"
+            amount="148.500.000 ₫"
+            growthLabel="+18% tháng này"
+          />
+        </div>
+      </div>
 
       <CompactMetricSummary
         ariaLabel="Tóm tắt vận hành đội xe"
@@ -118,43 +155,6 @@ export function FleetDashboardScreen({
         )}
       </FleetSurface>
 
-      {/* NexaFleet Bento 2-Column Grid for Fleet Owner */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        {/* Left Column (~62% width): Fleet Map + Orders Table */}
-        <div className="xl:col-span-8 flex flex-col gap-4">
-          <BentoMapCard
-            title={`Bản đồ điều phối ${view.scope.displayName}`}
-            activeOrderCode="43C-182.91 Đang chạy"
-            searchPlaceholder="Tìm kiếm đơn đội xe..."
-          />
-          <BentoOrdersCard
-            title="Đơn đang hoạt động"
-            totalCount={view.activeOrders.length}
-            orders={bentoOrders.length > 0 ? bentoOrders : undefined}
-          />
-        </div>
-
-        {/* Right Column (~38% width): Status Overview + Fulfillment Performance + Revenue + Driver Slab */}
-        <div className="xl:col-span-4 flex flex-col gap-4">
-          <StatusOverviewCard
-            title="Trạng thái đội xe"
-            loadingPercent={18}
-            inTransitPercent={52}
-            unloadingPercent={12}
-            deliveredPercent={18}
-          />
-          <FulfillmentPerformanceCard
-            title="Hiệu suất đội xe"
-            rate={94}
-            subtitle="tỷ lệ hoàn thành"
-          />
-          <RevenueOverTimeCard
-            title="Doanh thu đội xe"
-            amount="148.500.000 ₫"
-            growthLabel="+18% tháng này"
-          />
-        </div>
-      </div>
 
       {/* Driver Status Slab */}
       <FleetDispatchSlab ariaLabel="Tình trạng tài xế" eyebrow="TÀI XẾ · SNAPSHOT HIỆN TẠI">

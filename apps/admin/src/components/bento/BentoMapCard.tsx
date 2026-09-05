@@ -80,16 +80,20 @@ export function BentoMapCard({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [searchValue, setSearchValue] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedMarkerId, setSelectedMarkerId] = useState<string>('pkg-1');
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string>(markers[0]?.id ?? 'pkg-1');
+  const [userClickedMarker, setUserClickedMarker] = useState<MapPackageMarker | null>(null);
 
   const handleZoomIn = () => setZoomLevel((z) => Math.min(z + 0.15, 1.6));
   const handleZoomOut = () => setZoomLevel((z) => Math.max(z - 0.15, 0.85));
 
   const activeMarker = markers.find((m) => m.id === selectedMarkerId) ?? markers[0] ?? DEFAULT_MARKERS[0];
-  const displayActiveLabel = activeOrderCode || (activeMarker ? `${activeMarker.orderRef}` : 'LP-A-260815-101');
+  const displayActiveLabel = userClickedMarker
+    ? `${userClickedMarker.orderRef} · ${userClickedMarker.routeLabel}`
+    : (activeOrderCode || (activeMarker ? `${activeMarker.orderRef}` : 'LP-A-260815-101'));
 
   const handleMarkerClick = (marker: MapPackageMarker) => {
     setSelectedMarkerId(marker.id);
+    setUserClickedMarker(marker);
     onSelectOrder?.(marker.orderRef);
   };
 
@@ -354,7 +358,7 @@ export function BentoMapCard({
       <div className="relative z-30 flex items-center justify-between p-3 sm:p-4 pointer-events-auto">
         <div className="flex items-center gap-2 rounded-xl bg-slate-900/75 backdrop-blur-md border border-white/15 px-3 py-1 text-[11px] font-medium text-slate-300 shadow-sm">
           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Trạm điều phối Đà Nẵng · Giám sát GPS trực tiếp</span>
+          <span>Giám sát GPS trực tiếp · Đà Nẵng</span>
         </div>
 
         {/* Zoom Controls */}

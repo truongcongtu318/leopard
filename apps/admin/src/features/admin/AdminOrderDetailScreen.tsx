@@ -54,7 +54,6 @@ export function AdminOrderDetailScreen({
         screen="order-detail"
       />
       <OperationsPageHeader
-        context="Khu vực điều tra · lịch sử lifecycle tách biệt với audit đặc quyền"
         isStale={order.tracking.state === 'stale'}
         title={`Đơn ${order.reference}`}
         updatedAt={order.updatedAtLabel}
@@ -66,12 +65,11 @@ export function AdminOrderDetailScreen({
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
       <AdminDispatchSlab
         ariaLabel="Ngữ cảnh điều phối hiện tại"
-        eyebrow="NGỮ CẢNH ĐƠN · DỮ LIỆU TRỰC TIẾP"
+        eyebrow="THÔNG TIN ĐIỀU PHỐI TRỰC TIẾP"
       >
         <div className="grid min-w-0 gap-md md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div className="min-w-0">
-            <p className="text-xs font-bold tracking-wide text-slate-500 uppercase">Mã đơn</p>
-            <p className="mt-xxs text-xl sm:text-2xl font-black text-slate-800 break-words">{order.reference}</p>
+            <p className="text-xl sm:text-2xl font-black text-slate-800 break-words">{order.reference}</p>
             <p className="mt-xs text-xs sm:text-sm text-slate-600 break-words font-medium">
               {order.driverLabel} · {order.tracking.statusLabel}
             </p>
@@ -126,10 +124,7 @@ export function AdminOrderDetailScreen({
             />
           </MapPanel>
 
-          <AdminSurface
-            description="Thao tác chỉ xuất hiện từ availableCommands; UI không tự ý chuyển trạng thái hoặc can thiệp thanh toán trái quyền."
-            title="Thao tác điều phối khả dụng"
-          >
+          <AdminSurface title="Thao tác điều phối khả dụng">
             <AdminCommandLauncher
               commands={view.availableCommands}
               dialogPreview={view.dialogPreview}
@@ -151,10 +146,7 @@ export function AdminOrderDetailScreen({
             />
           </AdminSurface>
 
-          <AdminSurface
-            description="Dữ liệu xác nhận an toàn; không hiển thị URL chữ ký bảo mật hoặc storage key."
-            title="Hình ảnh xác nhận giao nhận"
-          >
+          <AdminSurface title="Hình ảnh xác nhận giao nhận">
             {order.media.state === 'error' ? (
               <OperationalAlert title="Không thể tải ảnh" tone="danger">
                 <p>{order.media.message}</p>

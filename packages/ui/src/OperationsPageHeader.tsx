@@ -58,10 +58,6 @@ export function OperationsPageHeader({
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight break-words">{title}</h1>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Ca trực Pilot
-          </span>
         </div>
         {context ? (
           <div className="mt-1.5 max-w-3xl text-xs sm:text-sm text-slate-500 font-medium leading-relaxed break-words">

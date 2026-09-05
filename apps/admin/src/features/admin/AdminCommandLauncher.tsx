@@ -26,11 +26,11 @@ function commandList(commands: readonly AdminCommandView[], onOpen: (command: Ad
 function launcherCopy() {
   return (
     <>
-      <h3 id="admin-command-heading" className="font-semibold text-neutral-text">
-        Command được backend cho phép
+      <h3 id="admin-command-heading" className="font-semibold text-slate-800 text-sm">
+        Thao tác điều phối
       </h3>
-      <p className="mt-xxs text-body-compact text-neutral-muted">
-        UI chỉ hiển thị capability có trong view model; kết quả thật phải đến từ persisted response.
+      <p className="mt-0.5 text-xs text-slate-500">
+        Các quyền hạn và thao tác xử lý khả dụng cho đối tượng này.
       </p>
     </>
   );

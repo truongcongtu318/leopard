@@ -38,9 +38,9 @@ export default function LoginPage() {
         </div>
 
         <main className="rounded-[28px] sm:rounded-[32px] border border-white/80 bg-white/95 backdrop-blur-md p-6 sm:p-8 shadow-card text-neutral-text">
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-text">Điều hành Vận tải LEOPARD</h1>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-text">Đăng nhập tài khoản</h1>
           <p className="mt-1 text-xs sm:text-sm text-neutral-muted">
-            Đăng nhập để tiếp tục điều phối vận hành
+            Truy cập cổng vận hành và điều phối logistics
           </p>
           <div className="mt-5">
             <LoginClientWrapper />
@@ -48,7 +48,7 @@ export default function LoginPage() {
         </main>
 
         <p className="mt-6 text-center text-xs text-neutral-muted">
-          Hệ thống Điều phối Vận tải & Logistics LEOPARD · Cổng Quản trị Vận hành
+          Hệ thống Quản trị & Điều phối Vận tải LEOPARD
         </p>
       </div>
     </div>

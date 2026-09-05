@@ -116,11 +116,9 @@ function DriverFilters({
       method="get"
       role="search"
     >
-      <div className="border-b border-slate-100 pb-3 md:col-span-2 xl:col-span-4">
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand uppercase">
-          BỘ LỌC
-        </span>
-        <h2 className="mt-1 text-base sm:text-lg font-bold text-neutral-text">Thu hẹp trường tài xế</h2>
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3 md:col-span-2 xl:col-span-4">
+        <h2 className="text-sm font-bold text-slate-800">Bộ lọc tài xế</h2>
+        <span className="text-xs text-slate-400 font-medium">Tìm kiếm & trạng thái</span>
       </div>
       <FleetPreviewHiddenFields context={previewContext} />
       <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
@@ -264,10 +262,9 @@ export function FleetDriversScreen({
     <div className="flex flex-col gap-lg">
       <FleetBreadcrumbs current="drivers" />
       <OperationsPageHeader
-        context="Theo dõi tình trạng sẵn sàng, phân công và vị trí gần nhất trong phạm vi được cấp quyền"
+        actions={<FleetScopeRail scope={view.scope} />}
         title="Tài xế"
       />
-      <FleetScopeRail scope={view.scope} />
       {view.notice ? <FleetNotice notice={view.notice} /> : null}
       <DriverFilters filters={view.filters} previewContext={previewContext} />
       <div className="grid gap-lg xl:grid-cols-[minmax(0,3fr)_minmax(20rem,2fr)]">

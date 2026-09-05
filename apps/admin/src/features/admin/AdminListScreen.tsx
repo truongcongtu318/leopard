@@ -490,16 +490,9 @@ function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: Admin
       aria-label={`Phạm vi điều tra ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
       className="rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text"
     >
-      <header className="mb-md flex flex-wrap items-end justify-between gap-sm border-b border-slate-100 pb-sm">
-        <div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand uppercase">
-            PHẠM VI ĐIỀU TRA
-          </span>
-          <h2 className="mt-1 text-base sm:text-lg font-bold text-neutral-text">Thu hẹp sổ dữ liệu</h2>
-        </div>
-        <p className="max-w-xl text-xs text-neutral-muted text-pretty">
-          Trường tìm nhanh chỉ tồn tại trong phiên; URL chỉ giữ filter đã được allow-list.
-        </p>
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <h2 className="text-sm font-bold text-slate-800">Bộ lọc tìm kiếm</h2>
+        <span className="text-xs text-slate-400 font-medium">Tìm kiếm & phân loại dữ liệu</span>
       </header>
       <form
         aria-label={`Lọc ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
@@ -566,7 +559,6 @@ export function AdminListScreen({
     <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
       <AdminBreadcrumbs previewContext={previewContext} screen={screen} />
       <OperationsPageHeader
-        context="Bàn điều tra theo bộ lọc · dữ liệu pilot trong quyền Admin"
         title={view.title}
         updatedAt={view.checkedAtLabel}
       />
@@ -576,33 +568,12 @@ export function AdminListScreen({
         <AdminSurface
           ariaLabel={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
           title={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-          description={view.result.filterSummary}
+          description={`${view.result.totalItems} kết quả · Trang ${view.result.page}/${Math.max(view.result.totalPages, 1)}`}
         >
           {view.state === 'no-results' ? (
             <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hiện tại; dùng Xóa bộ lọc để phục hồi." />
           ) : (
             <div className="flex min-w-0 flex-col gap-md">
-              <dl
-                aria-label="Chỉ số tập kết quả"
-                className="grid grid-cols-2 gap-3 sm:grid-cols-3 p-3 rounded-2xl bg-slate-50/80 border border-slate-200/60"
-              >
-                <div className="min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs">
-                  <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Kết quả</dt>
-                  <dd aria-live="polite" className="mt-1 text-base sm:text-lg font-black text-slate-800 tabular-nums">
-                    {view.result.totalItems}
-                  </dd>
-                </div>
-                <div className="min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs">
-                  <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Trang</dt>
-                  <dd className="mt-1 text-base sm:text-lg font-black text-slate-800 tabular-nums">
-                    {view.result.page} / {Math.max(view.result.totalPages, 1)}
-                  </dd>
-                </div>
-                <div className="col-span-2 min-w-0 rounded-xl bg-white p-3.5 border border-slate-100 shadow-2xs sm:col-span-1">
-                  <dt className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Phiên bản dữ liệu</dt>
-                  <dd className="mt-1 font-mono text-xs font-semibold text-slate-700 break-all">{view.result.revision}</dd>
-                </div>
-              </dl>
               <div className="hidden min-w-0 overflow-x-auto md:block">
                 <DataTable
                   caption={`${titleByScreen[screen]} trong phạm vi Admin và bộ lọc hiện tại`}

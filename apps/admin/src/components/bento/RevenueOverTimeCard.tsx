@@ -17,15 +17,27 @@ const PERIODS = [
   { id: 'year', label: 'Năm' },
 ] as const;
 
+const PERIOD_DATA: Record<string, { amount: string; growth: string }> = {
+  week: { amount: '58.200.000 ₫', growth: '+8% so với tuần trước' },
+  month: { amount: '239.187.000 ₫', growth: '+15% so với tháng trước' },
+  '6months': { amount: '1.428.500.000 ₫', growth: '+22% so với nửa năm trước' },
+  year: { amount: '2.894.100.000 ₫', growth: '+31% so với năm trước' },
+};
+
+const DEFAULT_PERIOD_DATA = { amount: '239.187.000 ₫', growth: '+15% so với tháng trước' };
+
 export function RevenueOverTimeCard({
   title = 'Doanh thu cước vận chuyển',
-  amount = '239.187.000 ₫',
-  growthLabel = '+15% so với tháng trước',
+  amount,
+  growthLabel,
   period: controlledPeriod,
   onPeriodChange,
 }: RevenueOverTimeCardProps) {
   const [internalPeriod, setInternalPeriod] = useState('month');
   const currentPeriod = controlledPeriod ?? internalPeriod;
+  const currentData = PERIOD_DATA[currentPeriod] ?? DEFAULT_PERIOD_DATA;
+  const displayAmount = amount && currentPeriod === 'month' ? amount : currentData.amount;
+  const displayGrowth = growthLabel && currentPeriod === 'month' ? growthLabel : currentData.growth;
 
   const handlePeriodClick = (id: string) => {
     setInternalPeriod(id);
@@ -39,10 +51,10 @@ export function RevenueOverTimeCard({
         <h2 className="text-sm font-bold text-slate-900/90 tracking-tight">{title}</h2>
         <div className="mt-2">
           <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 tabular-nums">
-            {amount}
+            {displayAmount}
           </p>
           <p className="mt-0.5 text-xs font-semibold text-slate-900/80">
-            {growthLabel}
+            {displayGrowth}
           </p>
         </div>
       </div>

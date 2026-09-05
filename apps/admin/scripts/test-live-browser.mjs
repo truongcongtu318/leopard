@@ -10,7 +10,7 @@ async function main() {
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 
-  const artifactDir = '/home/tuinfi/.gemini/antigravity/brain/34a8f11b-3a7c-40f3-af21-099ec932c3c5';
+  const artifactDir = '/home/tuinfi/.gemini/antigravity/brain/0976fb9e-323b-4d9c-9d38-0f307a3564e1';
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
 
