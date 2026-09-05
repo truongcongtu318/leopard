@@ -73,3 +73,16 @@ function isApiErrorBody(value: unknown): value is ApiErrorBody {
   const obj = value as Record<string, unknown>;
   return typeof obj.code === "string" && typeof obj.message === "string";
 }
+
+/**
+ * Safely parse a response as JSON, falling back to raw text if parsing fails.
+ */
+export async function safeParseJson(response: Response): Promise<unknown> {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+

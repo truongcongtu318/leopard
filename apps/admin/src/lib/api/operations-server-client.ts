@@ -2,7 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
-import { ApiError } from "./api-error";
+import { ApiError, safeParseJson } from "./api-error";
 import {
   ADMIN_ACCESS_COOKIE,
   ADMIN_REFRESH_COOKIE,
@@ -21,15 +21,6 @@ function buildUrl(path: string, query?: ServerQuery): string {
     }
   }
   return url.toString();
-}
-
-async function readBody(response: Response): Promise<unknown> {
-  const text = await response.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
 }
 
 function isUsableAccessToken(value: string | undefined): value is string {
@@ -123,7 +114,7 @@ export async function operationsServerGet<T>(
   }
 
   if (!response.ok) {
-    throw await ApiError.fromResponse(response.status, await readBody(response));
+    throw await ApiError.fromResponse(response.status, await safeParseJson(response));
   }
 
   try {

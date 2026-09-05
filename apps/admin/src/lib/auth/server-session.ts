@@ -3,7 +3,7 @@ import 'server-only';
 import { cookies } from 'next/headers';
 
 import { ApiError } from '../api/api-error';
-import { ADMIN_ACCESS_COOKIE, getApiBaseUrl } from './bff-session';
+import { ADMIN_ACCESS_COOKIE, getApiBaseUrl, readResponseBody } from './bff-session';
 import type { Role } from './role-policy';
 
 export type VerifiedOperationsUser = Readonly<{
@@ -27,15 +27,6 @@ function isVerifiedProfile(value: unknown): value is {
     OPERATIONS_ROLES.has(profile.role as Role) &&
     profile.status === 'ACTIVE'
   );
-}
-
-async function readResponseBody(response: Response): Promise<unknown> {
-  const body = await response.text();
-  try {
-    return JSON.parse(body);
-  } catch {
-    return body;
-  }
 }
 
 /**

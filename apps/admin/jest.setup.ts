@@ -1,5 +1,14 @@
 import { TextDecoder, TextEncoder } from "node:util";
 import { ReadableStream, TransformStream, WritableStream } from "node:stream/web";
+import { randomUUID } from "node:crypto";
+
+if (!globalThis.crypto?.randomUUID) {
+  Object.defineProperty(globalThis.crypto, "randomUUID", {
+    value: randomUUID,
+    writable: true,
+    configurable: true,
+  });
+}
 
 Object.assign(globalThis, {
   ReadableStream,

@@ -18,18 +18,7 @@ export type CommandExecutionResult =
   | { state: "error" | "permission-denied" | "session-expired"; message: string };
 
 function clientRequestId(): string {
-  try {
-    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-      return crypto.randomUUID();
-    }
-  } catch {
-    // fall through to the manual generator
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return crypto.randomUUID();
 }
 
 function reasonErrorFromDetails(details: unknown, fallback: string): string {
