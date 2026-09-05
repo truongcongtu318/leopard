@@ -453,8 +453,8 @@ function FilterFields({
 }: Readonly<{
   screen: AdminListScreenName;
   view: AdminListView;
-  sessionSearch?: string;
-  onSessionSearchChange?: (value: string) => void;
+  sessionSearch?: string | undefined;
+  onSessionSearchChange?: ((value: string) => void) | undefined;
 }>) {
   const filters = view.filters;
   const idPrefix = `admin-${screen}`;
@@ -537,8 +537,8 @@ function AdminFilters({
   screen: AdminListScreenName;
   view: AdminListView;
   previewContext: AdminPreviewContext | undefined;
-  sessionSearch?: string;
-  onSessionSearchChange?: (value: string) => void;
+  sessionSearch?: string | undefined;
+  onSessionSearchChange?: ((value: string) => void) | undefined;
 }>) {
   const resetQuery = serializeAdminListFilters(screen, { ...view.filters, status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL', fleetId: '', customerId: '', driverId: '', from: '', to: '', page: 1 }, previewContext);
   return (

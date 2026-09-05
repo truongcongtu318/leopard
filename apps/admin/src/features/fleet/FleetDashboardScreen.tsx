@@ -106,7 +106,7 @@ export function FleetDashboardScreen({
           <BentoMapCard
             title={`Bản đồ điều phối ${view.scope.displayName}`}
             activeOrderCode={
-              bentoOrders.length > 0
+              bentoOrders[0]
                 ? `${bentoOrders[0].id} · ${bentoOrders[0].route.from} ➔ ${bentoOrders[0].route.to}`
                 : 'Không có đơn hàng nào đang vận chuyển'
             }

@@ -126,7 +126,7 @@ export function AdminOverviewScreen({
           <BentoMapCard
             title="Bản đồ điều phối thời gian thực"
             activeOrderCode={
-              bentoOrders.length > 0
+              bentoOrders[0]
                 ? `${bentoOrders[0].id} · ${bentoOrders[0].customer} ➔ ${bentoOrders[0].route.to}`
                 : 'Chưa có chuyến xe nào đang hoạt động'
             }
