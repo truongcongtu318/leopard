@@ -293,7 +293,7 @@ export default function CustomerAddressSetupScreen() {
     setSearchResults([]);
   };
 
-  const handleSaveAndContinue = () => {
+  const handleSaveAndContinue = async () => {
     const fullAddress = addressDetail.trim()
       ? `${addressDetail.trim()}, ${selectedAddress}`
       : selectedAddress;
@@ -314,7 +314,7 @@ export default function CustomerAddressSetupScreen() {
       isDefault,
     };
 
-    addressStore.saveAddress(saved);
+    await addressStore.saveAddress(saved);
     router.replace('/customer/home');
   };
 

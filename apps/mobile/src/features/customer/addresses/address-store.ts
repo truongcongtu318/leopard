@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export interface SavedAddress {
   id: string;
   label: string;
@@ -13,39 +15,38 @@ export interface SavedAddress {
 const STORAGE_KEY = 'leopard_customer_addresses_v1';
 const DEFAULT_ADDR_KEY = 'leopard_customer_default_address_v1';
 
-let inMemoryAddresses: SavedAddress[] = [];
-let inMemoryDefaultId: string | null = null;
+async function readList(): Promise<SavedAddress[]> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as SavedAddress[]) : [];
+  } catch {
+    return [];
+  }
+}
 
-function isBrowser(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+async function writeList(list: SavedAddress[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    // Storage quota / unavailable — the in-memory update already happened
+    // for this session; next app launch will just start from empty.
+  }
 }
 
 export const addressStore = {
-  getAddresses(): SavedAddress[] {
-    if (isBrowser()) {
-      try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          return JSON.parse(raw) as SavedAddress[];
-        }
-      } catch {
-        // Fallback to in-memory
-      }
-    }
-    return inMemoryAddresses;
+  async getAddresses(): Promise<SavedAddress[]> {
+    return readList();
   },
 
-  getDefaultAddress(): SavedAddress | null {
-    const list = this.getAddresses();
+  async getDefaultAddress(): Promise<SavedAddress | null> {
+    const list = await readList();
     if (list.length === 0) return null;
 
-    let defaultId: string | null = inMemoryDefaultId;
-    if (isBrowser()) {
-      try {
-        defaultId = window.localStorage.getItem(DEFAULT_ADDR_KEY);
-      } catch {
-        // ignore
-      }
+    let defaultId: string | null = null;
+    try {
+      defaultId = await AsyncStorage.getItem(DEFAULT_ADDR_KEY);
+    } catch {
+      // ignore
     }
 
     if (defaultId) {
@@ -56,68 +57,32 @@ export const addressStore = {
     return list.find((a) => a.isDefault) ?? list[0] ?? null;
   },
 
-  saveAddress(addr: Omit<SavedAddress, 'id'> & { id?: string }): SavedAddress {
-    const list = this.getAddresses();
+  async saveAddress(addr: Omit<SavedAddress, 'id'> & { id?: string }): Promise<SavedAddress> {
+    const list = await readList();
     const id = addr.id || `addr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const newAddress: SavedAddress = {
-      ...addr,
-      id,
-    };
+    const newAddress: SavedAddress = { ...addr, id };
 
     let updatedList: SavedAddress[];
     if (newAddress.isDefault) {
-      updatedList = list.map((a) => ({ ...a, isDefault: false }));
-      updatedList = [newAddress, ...updatedList];
-      inMemoryDefaultId = id;
+      updatedList = [newAddress, ...list.map((a) => ({ ...a, isDefault: false }))];
+      await AsyncStorage.setItem(DEFAULT_ADDR_KEY, id).catch(() => {});
     } else {
       updatedList = [newAddress, ...list.filter((a) => a.id !== id)];
     }
 
-    inMemoryAddresses = updatedList;
-
-    if (isBrowser()) {
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
-        if (newAddress.isDefault) {
-          window.localStorage.setItem(DEFAULT_ADDR_KEY, id);
-        }
-      } catch {
-        // ignore storage quota error
-      }
-    }
-
+    await writeList(updatedList);
     return newAddress;
   },
 
-  setDefaultAddress(id: string): void {
-    const list = this.getAddresses();
-    const updatedList = list.map((a) => ({
-      ...a,
-      isDefault: a.id === id,
-    }));
-    inMemoryAddresses = updatedList;
-    inMemoryDefaultId = id;
-
-    if (isBrowser()) {
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
-        window.localStorage.setItem(DEFAULT_ADDR_KEY, id);
-      } catch {
-        // ignore
-      }
-    }
+  async setDefaultAddress(id: string): Promise<void> {
+    const list = await readList();
+    const updatedList = list.map((a) => ({ ...a, isDefault: a.id === id }));
+    await writeList(updatedList);
+    await AsyncStorage.setItem(DEFAULT_ADDR_KEY, id).catch(() => {});
   },
 
-  clearAll(): void {
-    inMemoryAddresses = [];
-    inMemoryDefaultId = null;
-    if (isBrowser()) {
-      try {
-        window.localStorage.removeItem(STORAGE_KEY);
-        window.localStorage.removeItem(DEFAULT_ADDR_KEY);
-      } catch {
-        // ignore
-      }
-    }
+  async clearAll(): Promise<void> {
+    await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    await AsyncStorage.removeItem(DEFAULT_ADDR_KEY).catch(() => {});
   },
 };
