@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
 import {
   IconBell,
   IconOrders,
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   // 2. Notification Card List
   listContent: {
     gap: spacing.sm,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
   },
   sectionHeaderWrap: {
     paddingVertical: 4,

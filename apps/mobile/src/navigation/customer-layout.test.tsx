@@ -13,13 +13,13 @@ jest.mock('./role-router', () => ({
 }));
 
 describe('Customer layout', () => {
-  it('renders tabs for Home, Orders, Active shipments and Account', async () => {
+  it('renders tabs for Home, Orders, Wallet and Account', async () => {
     const { default: CustomerLayout } = require('../../app/customer/_layout');
     const view = await render(<CustomerLayout />);
 
     expect(view.getByRole('tab', { name: 'Trang chủ' })).toBeTruthy();
     expect(view.getByRole('tab', { name: 'Đơn hàng' })).toBeTruthy();
-    expect(view.getByRole('tab', { name: 'Đang giao' })).toBeTruthy();
+    expect(view.getByRole('tab', { name: 'Ví' })).toBeTruthy();
     expect(view.getByRole('tab', { name: 'Tài khoản' })).toBeTruthy();
     await view.unmount();
   });

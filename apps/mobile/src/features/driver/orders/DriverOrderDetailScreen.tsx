@@ -1,13 +1,17 @@
+import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
 import {
   IconCameraProof,
+  IconClock,
   IconLocationPin,
   IconOrders,
+  IconPhone,
   IconRoute,
+  IconSpeedTruck,
 } from '../../../ui/icons/CoreIcons';
 import { LedgerSection } from '../../../ui/LedgerSection';
 import { MapPanel } from '../../../ui/MapPanel';
@@ -227,6 +231,83 @@ function PublicDetail({
   );
 }
 
+function MissionStepper({ status }: Readonly<{ status: string }>) {
+  let activeIndex = 0;
+  if (status === 'ARRIVED_PICKUP') activeIndex = 1;
+  else if (status === 'IN_TRANSIT') activeIndex = 2;
+  else if (
+    status === 'DELIVERED' ||
+    status === 'COMPLETED' ||
+    status === 'PROOF_REQUIRED' ||
+    status === 'READY_DELIVER'
+  ) {
+    activeIndex = 3;
+  }
+
+  const steps = [
+    { label: 'Đến kho', index: 0 },
+    { label: 'Bốc hàng', index: 1 },
+    { label: 'Vận chuyển', index: 2 },
+    { label: 'Giao hàng', index: 3 },
+  ];
+
+  return (
+    <View style={styles.stepperContainer}>
+      {steps.map((step, idx) => {
+        const isCurrent = idx === activeIndex;
+        const isPast = idx < activeIndex;
+        return (
+          <React.Fragment key={step.index}>
+            <View style={styles.stepItem}>
+              <View
+                style={[
+                  styles.stepDot,
+                  isCurrent
+                    ? styles.stepDotCurrent
+                    : isPast
+                      ? styles.stepDotPast
+                      : styles.stepDotFuture,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.stepDotNumber,
+                    isCurrent || isPast
+                      ? styles.stepDotNumberActive
+                      : styles.stepDotNumberFuture,
+                  ]}
+                >
+                  {idx + 1}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.stepLabel,
+                  isCurrent
+                    ? styles.stepLabelCurrent
+                    : isPast
+                      ? styles.stepLabelPast
+                      : styles.stepLabelFuture,
+                ]}
+              >
+                {step.label}
+              </Text>
+            </View>
+            {idx < steps.length - 1 ? (
+              <View
+                style={[
+                  styles.stepLine,
+                  idx < activeIndex ? styles.stepLineActive : styles.stepLineFuture,
+                ]}
+              />
+            ) : null}
+          </React.Fragment>
+        );
+      })}
+    </View>
+  );
+}
+
 function AssignedDetail({
   view,
   onExecuteTask,
@@ -258,6 +339,9 @@ function AssignedDetail({
       title={`Đơn ${view.order.reference}`}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Mission Stepper Header */}
+        <MissionStepper status={view.order.status} />
+
         <View style={styles.missionStatusSlab}>
           <Text style={styles.missionEyebrow}>CURRENT LEG</Text>
           <View style={styles.rowBetween}>
@@ -295,9 +379,23 @@ function AssignedDetail({
           icon={<IconOrders color={colors.brand.background} size={16} />}
           title="Hàng hóa và liên hệ"
         >
-          <Text style={styles.body}>{view.order.vehicleLabel}</Text>
-          <Text style={styles.body}>{view.order.cargoSummary}</Text>
-          <Text style={styles.body}>{view.order.customerContact}</Text>
+          <View style={styles.specItemRow}>
+            <IconSpeedTruck color="#475569" size={15} />
+            <Text style={styles.body}>{view.order.vehicleLabel}</Text>
+          </View>
+          <View style={styles.specItemRow}>
+            <IconOrders color="#475569" size={15} />
+            <Text style={styles.body}>{view.order.cargoSummary}</Text>
+          </View>
+          <View style={styles.contactCardRow}>
+            <View style={styles.contactIconChip}>
+              <IconPhone color="#0284C7" size={15} />
+            </View>
+            <View style={styles.contactTextColumn}>
+              <Text style={styles.contactCaption}>LIÊN HỆ KHÁCH HÀNG / THỦ KHO</Text>
+              <Text style={styles.contactValue}>{view.order.customerContact}</Text>
+            </View>
+          </View>
         </LedgerSection>
         <ProofPanel proof={view.proof} />
         <LedgerSection
@@ -351,6 +449,118 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  /* Stepper */
+  stepperContainer: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  stepItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  stepDot: {
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 20,
+    justifyContent: 'center',
+    width: 20,
+  },
+  stepDotCurrent: {
+    backgroundColor: leopardPalette.primary,
+  },
+  stepDotPast: {
+    backgroundColor: '#16A34A',
+  },
+  stepDotFuture: {
+    backgroundColor: '#E2E8F0',
+  },
+  stepDotNumber: {
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  stepDotNumberActive: {
+    color: '#FFFFFF',
+  },
+  stepDotNumberFuture: {
+    color: '#94A3B8',
+  },
+  stepLabel: {
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
+  stepLabelCurrent: {
+    color: leopardPalette.primary,
+    fontWeight: '800',
+  },
+  stepLabelPast: {
+    color: '#16A34A',
+  },
+  stepLabelFuture: {
+    color: '#94A3B8',
+  },
+  stepLine: {
+    flex: 1,
+    height: 2,
+    marginBottom: 14,
+    marginHorizontal: 4,
+  },
+  stepLineActive: {
+    backgroundColor: '#16A34A',
+  },
+  stepLineFuture: {
+    backgroundColor: '#E2E8F0',
+  },
+
+  /* Cargo & Contact Rows */
+  specItemRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 2,
+  },
+  contactCardRow: {
+    alignItems: 'center',
+    backgroundColor: '#F0F9FF',
+    borderColor: '#BAE6FD',
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: spacing.xs,
+    padding: spacing.sm,
+  },
+  contactIconChip: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  contactTextColumn: {
+    flex: 1,
+    gap: 1,
+  },
+  contactCaption: {
+    color: '#0369A1',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  contactValue: {
+    color: leopardPalette.textSlateDark,
+    fontSize: 13.5,
+    fontWeight: '700',
+  },
+
   scrollContent: { gap: spacing.lg, paddingBottom: spacing.xl },
   section: { gap: spacing.sm },
   rowBetween: {

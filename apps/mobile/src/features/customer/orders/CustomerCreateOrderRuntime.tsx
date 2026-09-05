@@ -7,22 +7,39 @@ import { CustomerCreateOrderScreen } from './CustomerCreateOrderScreen';
 import type { CustomerCreateFormView, CustomerCreateView } from './model';
 
 export type CustomerCreateOrderRuntimeProps = Readonly<{
+  initialPickup?: string;
+  initialDropoff?: string;
   onCreated: (orderId: string) => void;
 }>;
 
-export function CustomerCreateOrderRuntime({ onCreated }: CustomerCreateOrderRuntimeProps) {
+export function CustomerCreateOrderRuntime({
+  initialDropoff,
+  initialPickup,
+  onCreated,
+}: CustomerCreateOrderRuntimeProps) {
   const port = useMemo(() => createCustomerHttpAdapter(), []);
   const [view, setView] = useState<CustomerCreateView | null>(null);
 
   useEffect(() => {
     let active = true;
     void port.getCreateView().then((v) => {
-      if (active) setView(v);
+      if (active) {
+        if (v.kind === 'form' && (initialPickup || initialDropoff)) {
+          const nextForm = {
+            ...v.form,
+            pickup: initialPickup ?? v.form.pickup,
+            dropoff: initialDropoff ?? v.form.dropoff,
+          };
+          setView({ ...v, form: nextForm });
+        } else {
+          setView(v);
+        }
+      }
     });
     return () => {
       active = false;
     };
-  }, [port]);
+  }, [initialDropoff, initialPickup, port]);
 
   if (!view) {
     return (

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { FormField } from '../../../ui/FormField';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
@@ -135,7 +135,7 @@ export function SupportSosScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
   },
   hotlineCard: {
     alignItems: 'center',

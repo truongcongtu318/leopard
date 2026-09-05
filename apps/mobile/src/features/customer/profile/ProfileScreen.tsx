@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '../../../theme/tokens';
+import { colors, layout, radius, spacing } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import {
   IconLocationPin,
@@ -86,6 +86,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
   return (
     <ScreenScaffold
       eyebrow="CUSTOMER · JOURNEY SHEET"
+      hasFloatingNavBar
       stickyFooter={
         <Button
           disabledLabel="Đăng xuất"
@@ -98,7 +99,11 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
       }
       title="Hồ sơ"
     >
-      {/* 👤 1. Thẻ Thông tin Khách hàng (User Hero Card) */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 👤 1. Thẻ Thông tin Khách hàng (User Hero Card) */}
       <View style={styles.userHeroCard}>
         <View style={styles.avatarCircle}>
           <Text style={styles.avatarText}>C</Text>
@@ -218,18 +223,23 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
         </View>
       </View>
 
-      {/* ℹ️ 6. Chân trang Phiên bản (App Version Footer) */}
-      <View style={styles.footerInfoBox}>
-        <Text style={styles.footerVersionText}>
-          Phiên bản ứng dụng: <Text style={styles.footerVersionBold}>{view.appVersion}</Text>
-        </Text>
-        <Text style={styles.footerCopyrightText}>LEOPARD Logistics Pilot · Hệ thống kết nối vận tải</Text>
-      </View>
+        {/* ℹ️ 6. Chân trang Phiên bản (App Version Footer) */}
+        <View style={styles.footerInfoBox}>
+          <Text style={styles.footerVersionText}>
+            Phiên bản ứng dụng: <Text style={styles.footerVersionBold}>{view.appVersion}</Text>
+          </Text>
+          <Text style={styles.footerCopyrightText}>LEOPARD Logistics Pilot · Hệ thống kết nối vận tải</Text>
+        </View>
+      </ScrollView>
     </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    gap: spacing.md,
+    paddingBottom: spacing.lg,
+  },
   userHeroCard: {
     flexDirection: 'row',
     alignItems: 'center',

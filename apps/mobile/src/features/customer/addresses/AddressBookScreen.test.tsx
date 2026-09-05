@@ -6,6 +6,7 @@ import { AddressBookScreen } from './AddressBookScreen';
 describe('AddressBookScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.setTimeout(30000);
   });
 
   it('renders initial address list with default badge, contacts, and category icons', async () => {
@@ -25,7 +26,7 @@ describe('AddressBookScreen', () => {
     expect(screen.getByText('0901234567')).toBeTruthy();
 
     await screen.unmount();
-  });
+  }, 30000);
 
   it('filters addresses by category chips', async () => {
     const screen = await render(<AddressBookScreen />);

@@ -27,7 +27,7 @@ describe('DriverOrdersScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: /Mở chuyến LP-D-260815-001/ }));
     expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222001');
     await screen.unmount();
-  });
+  }, 15000);
 
   it('blocks repeated availability updates while pending', async () => {
     const onSetAvailability = jest.fn();

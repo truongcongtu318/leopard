@@ -33,6 +33,10 @@ export const motion = {
 export const layout = {
   contentMaxWidth: 768,
   mapMinimumHeight: 280,
+  floatingNavHeight: 64,
+  floatingNavBottomOffset: 16,
+  floatingNavTotalHeight: 80,
+  bottomNavClearance: 104,
 } as const;
 
 const sectionTitle = {

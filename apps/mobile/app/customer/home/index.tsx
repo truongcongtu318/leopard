@@ -65,10 +65,11 @@ export default function CustomerHomePage() {
       onNavigateTab={(tab) => {
         switch (tab) {
           case 'orders':
+          case 'tracking':
             router.push('/customer/orders');
             break;
-          case 'tracking':
-            router.push('/customer/deliveries');
+          case 'wallet':
+            router.push('/customer/wallet');
             break;
           case 'account':
             router.push('/customer/profile');

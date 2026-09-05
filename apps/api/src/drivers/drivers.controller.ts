@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { DriverDocumentType } from '@prisma/client';
+import { AllowUserStatuses } from '../auth/decorators/allow-user-statuses.js';
 import { CurrentUser, type AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { RequireRoles } from '../auth/decorators/require-roles.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
@@ -52,6 +53,7 @@ export class DriversController {
   // Onboarding — no @RequireRoles: a CUSTOMER (or previously rejected driver)
   // may submit an application; it upgrades them to DRIVER / PENDING_APPROVAL.
   @Post('apply')
+  @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
   @HttpCode(HttpStatus.CREATED)
   apply(
     @CurrentUser() actor: AuthenticatedActor,
@@ -61,12 +63,14 @@ export class DriversController {
   }
 
   @Get('application')
+  @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
   getMyApplication(@CurrentUser() actor: AuthenticatedActor) {
     return this.driverApplicationService.getMyApplication(actor);
   }
 
   // KYC document upload (GPLX / cà-vẹt / CCCD / ảnh xe) — multipart/form-data.
   @Post('documents')
+  @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('file'))
   uploadDocument(
@@ -93,6 +97,7 @@ export class DriversController {
   }
 
   @Get('documents')
+  @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
   listMyDocuments(@CurrentUser() actor: AuthenticatedActor) {
     return this.driverDocumentService.listMyDocuments(actor);
   }

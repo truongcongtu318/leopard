@@ -259,7 +259,7 @@ export default function CustomerRegisterScreen() {
         (await sessionStore.getRefreshToken()) ?? '',
         (res.role as never) ?? 'CUSTOMER',
       );
-      router.replace('/(public)/customer-address');
+      router.replace('/customer/home');
     } catch (err) {
       const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
       const message = (err as { message?: string })?.message;

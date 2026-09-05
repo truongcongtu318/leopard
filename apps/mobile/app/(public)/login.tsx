@@ -8,7 +8,7 @@ export default function LoginRoute() {
   const isExpired = searchParams.expired === 'true';
 
   const handleLoginSuccess = (role: Role, profileComplete: boolean) => {
-    if (!profileComplete) {
+    if (role === 'CUSTOMER' && !profileComplete) {
       router.replace('/(public)/customer-register');
       return;
     }

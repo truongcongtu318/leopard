@@ -1,8 +1,10 @@
 import {
   Injectable,
+  Optional,
   type CanActivate,
   type ExecutionContext,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { UserStatus } from '@prisma/client';
 
 import { DomainError } from '../../common/domain-error.js';
@@ -13,6 +15,7 @@ import {
 } from '../decorators/current-user.js';
 import { TokenService } from '../token.service.js';
 import { AccountStatusCache } from './account-status-cache.js';
+import { ALLOW_USER_STATUSES_KEY } from '../decorators/allow-user-statuses.js';
 
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
@@ -20,6 +23,7 @@ export class AccessTokenGuard implements CanActivate {
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
     private readonly accountStatusCache: AccountStatusCache,
+    @Optional() private readonly reflector?: Reflector,
   ) {}
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -73,7 +77,17 @@ export class AccessTokenGuard implements CanActivate {
       status = currentUser.status;
     }
 
-    if (status !== 'ACTIVE') {
+    if (status === 'DISABLED' || status === 'SUSPENDED') {
+      throw this.unauthorized();
+    }
+
+    const allowedStatuses = this.reflector?.getAllAndOverride<
+      readonly UserStatus[]
+    >(ALLOW_USER_STATUSES_KEY, [context.getHandler(), context.getClass()]) ?? [
+      'ACTIVE',
+    ];
+
+    if (!allowedStatuses.includes(status)) {
       throw this.unauthorized();
     }
 

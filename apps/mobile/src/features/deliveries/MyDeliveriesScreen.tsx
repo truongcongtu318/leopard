@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import {
+  layout,
   leopardElevation,
   leopardPalette,
   leopardRadius,
@@ -559,7 +560,7 @@ const styles = StyleSheet.create({
   listContent: {
     padding: spacing.md,
     gap: spacing.sm,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
   },
   cardWrapper: {},
   card: {
@@ -757,6 +758,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
+    paddingBottom: layout.bottomNavClearance,
     gap: spacing.xs,
   },
   emptyIconCircle: {

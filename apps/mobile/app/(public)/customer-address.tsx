@@ -17,12 +17,19 @@ import {
   IconHome,
   IconLocationPin,
   IconOffice,
+  IconPhone,
   IconSearch,
   IconTag,
+  IconUser,
   IconWarehouse,
   LeopardEmblem,
   LeopardMobileLogo,
 } from '../../src/ui/icons/CoreIcons';
+import {
+  POPULAR_MAP_SUGGESTIONS,
+  reverseGeocodeCoords,
+  searchVietmapDirect,
+} from '../../src/features/home/components/MapAddressPickerModal';
 
 interface SearchResultItem {
   id: string;
@@ -32,112 +39,22 @@ interface SearchResultItem {
   lng?: number;
 }
 
-const POPULAR_SUGGESTIONS: readonly SearchResultItem[] = [
-  {
-    id: 'sug-1',
-    name: 'Kho Tân Bình',
-    address: '120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
-    lat: 10.795,
-    lng: 106.652,
-  },
-  {
-    id: 'sug-2',
-    name: 'KCN Tân Tạo',
-    address: 'Đường Số 2, Tân Tạo A, Quận Bình Tân, TP. Hồ Chí Minh',
-    lat: 10.758,
-    lng: 106.574,
-  },
-  {
-    id: 'sug-3',
-    name: 'Cảng Cát Lái',
-    address: 'Đường Nguyễn Thị Định, Phường Cát Lái, TP. Thủ Đức, TP. Hồ Chí Minh',
-    lat: 10.764,
-    lng: 106.796,
-  },
-  {
-    id: 'sug-4',
-    name: 'Chợ Bến Thành',
-    address: 'Đường Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
-    lat: 10.7725,
-    lng: 106.698,
-  },
-];
+const POPULAR_SUGGESTIONS: readonly SearchResultItem[] = POPULAR_MAP_SUGGESTIONS.map((s) => ({
+  id: s.id,
+  name: s.label,
+  address: s.address,
+  lat: s.lat,
+  lng: s.lng,
+}));
 
 type AddressCategory = 'WAREHOUSE' | 'HOME' | 'OFFICE' | 'OTHER';
 
-async function fetchReverseGeocode(lat: number, lng: number): Promise<string | null> {
-  // 1. Primary: ArcGIS World Geocoding Service (Độ chính xác cao đến từng số nhà, tên đường, phường quận)
-  try {
-    if (typeof fetch === 'function') {
-      const res = await fetch(
-        `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?location=${lng},${lat}&f=json`,
-      );
-      if (res.ok) {
-        const data = (await res.json()) as {
-          address?: {
-            Address?: string;
-            Neighborhood?: string;
-            District?: string;
-            City?: string;
-            Region?: string;
-            Match_addr?: string;
-          };
-        };
-        const addr = data.address;
-        if (addr) {
-          const parts = [
-            addr.Address,
-            addr.Neighborhood,
-            addr.District || addr.City,
-            addr.Region,
-          ].filter(Boolean);
-
-          if (parts.length >= 2) {
-            const unique = Array.from(new Set(parts));
-            return unique.join(', ');
-          }
-
-          if (addr.Match_addr) {
-            return addr.Match_addr
-              .replace(/, [0-9]{5,6}/, '')
-              .replace(/, VNM$/, '')
-              .replace(/, Việt Nam$/, '');
-          }
-        }
-      }
-    }
-  } catch {
-    // fallback
-  }
-
-  // 2. Secondary fallback: BigDataCloud (CORS enabled, Fastly global edge CDN)
-  try {
-    if (typeof fetch === 'function') {
-      const res = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=vi`,
-      );
-      if (res.ok) {
-        const data = (await res.json()) as {
-          locality?: string;
-          city?: string;
-          principalSubdivision?: string;
-        };
-        const parts = [data.locality, data.city || data.principalSubdivision].filter(Boolean);
-        if (parts.length > 0) {
-          return parts.join(', ');
-        }
-      }
-    }
-  } catch {
-    // fallback
-  }
-
-  return null;
-}
-
-export default function CustomerAddressSetupScreen() {
+export default function CustomerAddAddressScreen() {
   const router = useRouter();
 
+  const [addressLabel, setAddressLabel] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<readonly SearchResultItem[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lng: number }>({
@@ -155,61 +72,93 @@ export default function CustomerAddressSetupScreen() {
   const [locationSuccessMsg, setLocationSuccessMsg] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  // Debounced search via /maps/search or fallback suggestions
+  // Debounced search via /maps/search, Vietmap direct, or popular suggestions
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
+    const q = searchQuery.trim();
+    if (!q) {
+      if (focusedField === 'search') {
+        setSearchResults(POPULAR_SUGGESTIONS);
+      } else {
+        setSearchResults([]);
+      }
+      return;
+    }
+
+    if (q.length < 2) {
+      setSearchResults(POPULAR_SUGGESTIONS);
       return;
     }
 
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await httpClient.get<{
-          results: Array<{
-            id: string;
-            name?: string;
-            address?: string;
-            label?: string;
-            lat?: number;
-            lng?: number;
-          }>;
-        }>(`/maps/search?q=${encodeURIComponent(searchQuery.trim())}`);
+        const vietmapApiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+        let list: SearchResultItem[] = [];
 
-        if (res.results && res.results.length > 0) {
-          setSearchResults(
-            res.results.map((r) => ({
-              id: r.id,
-              name: r.name || r.label || 'Địa điểm',
-              address: r.address || r.label || r.name || '',
-              lat: r.lat,
-              lng: r.lng,
-            })),
-          );
-        } else {
-          // Fallback filter
-          const q = searchQuery.toLowerCase();
-          setSearchResults(
-            POPULAR_SUGGESTIONS.filter(
-              (s) => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q),
-            ),
+        try {
+          const res = await httpClient.get<{
+            source?: string;
+            results: Array<{
+              id: string;
+              name?: string;
+              address?: string;
+              label?: string;
+              lat?: number;
+              lng?: number;
+              source?: string;
+            }>;
+          }>(`/maps/search?q=${encodeURIComponent(q)}`);
+
+          if (res?.source !== 'DEMO' && Array.isArray(res?.results)) {
+            list = res.results
+              .filter(
+                (r) =>
+                  r.source !== 'DEMO' &&
+                  !r.name?.includes('(Demo data)') &&
+                  !r.address?.includes('(Demo data)'),
+              )
+              .map((r) => ({
+                id: r.id,
+                name: (r.name || r.label || 'Địa điểm').replace(/\s*\(Demo data\)/gi, '').trim(),
+                address: (r.address || r.label || r.name || '').replace(/\s*\(Demo data\)/gi, '').trim(),
+                lat: r.lat,
+                lng: r.lng,
+              }));
+          }
+        } catch {
+          // fallback
+        }
+
+        if (list.length === 0 && vietmapApiKey) {
+          const direct = await searchVietmapDirect(q, vietmapApiKey);
+          list = direct.map((d) => ({
+            id: d.id,
+            name: d.label,
+            address: d.address,
+            lat: d.lat,
+            lng: d.lng,
+          }));
+        }
+
+        if (list.length === 0) {
+          list = POPULAR_SUGGESTIONS.filter(
+            (s) =>
+              s.id !== 'popular-gps' &&
+              (s.name.toLowerCase().includes(q.toLowerCase()) ||
+                s.address.toLowerCase().includes(q.toLowerCase())),
           );
         }
+
+        setSearchResults(list);
       } catch {
-        // Fallback filter
-        const q = searchQuery.toLowerCase();
-        setSearchResults(
-          POPULAR_SUGGESTIONS.filter(
-            (s) => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q),
-          ),
-        );
+        setSearchResults([]);
       } finally {
         setIsSearching(false);
       }
-    }, 280);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [focusedField, searchQuery]);
 
   // Listen to interactive map pin moves on web
   useEffect(() => {
@@ -220,11 +169,15 @@ export default function CustomerAddressSetupScreen() {
         const { lat, lng } = event.data as { lat?: number; lng?: number };
         if (typeof lat === 'number' && typeof lng === 'number') {
           setCoords({ lat, lng });
-          const resolved =
-            (await fetchReverseGeocode(lat, lng)) ||
-            `Vị trí (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-          setSelectedAddress(resolved);
-          setLocationSuccessMsg(`Đã chọn vị trí: ${resolved}`);
+          const vietmapApiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+          try {
+            const resolved = await reverseGeocodeCoords({ lat, lng }, vietmapApiKey);
+            setSelectedAddress(resolved || 'Vị trí đã chọn');
+            setLocationSuccessMsg(`Đã chọn vị trí: ${resolved || 'Vị trí đã chọn'}`);
+          } catch {
+            setSelectedAddress('Vị trí đã chọn');
+            setLocationSuccessMsg('Đã chọn vị trí trên bản đồ');
+          }
         }
       }
     };
@@ -237,13 +190,15 @@ export default function CustomerAddressSetupScreen() {
     if (typeof router.canGoBack === 'function' && router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(public)/customer-register');
+      router.replace('/customer/home');
     }
   };
 
   const handleGetCurrentLocation = () => {
     setIsLocating(true);
     setLocationSuccessMsg(null);
+
+    const vietmapApiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
 
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -253,13 +208,14 @@ export default function CustomerAddressSetupScreen() {
           const lng = pos.coords.longitude;
           setCoords({ lat, lng });
 
-          // Reverse geocode coordinate to real Vietnamese address
-          const resolved =
-            (await fetchReverseGeocode(lat, lng)) ||
-            `Vị trí hiện tại (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-
-          setSelectedAddress(resolved);
-          setLocationSuccessMsg(`Đã xác định vị trí hiện tại: ${resolved}`);
+          try {
+            const resolved = await reverseGeocodeCoords({ lat, lng }, vietmapApiKey);
+            setSelectedAddress(resolved || 'Vị trí hiện tại của bạn');
+            setLocationSuccessMsg(`Đã xác định vị trí: ${resolved || 'Vị trí hiện tại của bạn'}`);
+          } catch {
+            setSelectedAddress('Vị trí hiện tại của bạn');
+            setLocationSuccessMsg('Đã xác định vị trí hiện tại của bạn');
+          }
         },
         () => {
           setIsLocating(false);
@@ -284,6 +240,12 @@ export default function CustomerAddressSetupScreen() {
   };
 
   const handleSelectSuggestion = (item: SearchResultItem) => {
+    if (item.id === 'popular-gps') {
+      handleGetCurrentLocation();
+      setSearchQuery('');
+      setSearchResults([]);
+      return;
+    }
     setSelectedAddress(item.address);
     if (item.lat && item.lng) {
       setCoords({ lat: item.lat, lng: item.lng });
@@ -293,7 +255,7 @@ export default function CustomerAddressSetupScreen() {
     setSearchResults([]);
   };
 
-  const handleSaveAndContinue = () => {
+  const handleSaveAddress = () => {
     const fullAddress = addressDetail.trim()
       ? `${addressDetail.trim()}, ${selectedAddress}`
       : selectedAddress;
@@ -305,21 +267,26 @@ export default function CustomerAddressSetupScreen() {
       OTHER: 'Địa chỉ đã lưu',
     };
 
+    const effectiveLabel = addressLabel.trim() || labelMap[category];
+
     const saved: Omit<SavedAddress, 'id'> = {
-      label: labelMap[category],
+      label: effectiveLabel,
       address: fullAddress,
       category,
+      contactName: contactName.trim() || undefined,
+      contactPhone: contactPhone.trim() || undefined,
       latitude: coords.lat,
       longitude: coords.lng,
       isDefault,
     };
 
     addressStore.saveAddress(saved);
-    router.replace('/customer/home');
-  };
 
-  const handleSkip = () => {
-    router.replace('/customer/home');
+    if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/customer/home');
+    }
   };
 
   // Real interactive Leaflet/OpenStreetMap HTML template
@@ -385,18 +352,19 @@ export default function CustomerAddressSetupScreen() {
       zoomControl: true
     });
 
-    var primaryTiles = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=vi', {
+    var primaryTiles = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=vi', {
       maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      subdomains: ['0', '1', '2', '3'],
       attribution: '© Google Maps'
     }).addTo(map);
 
     primaryTiles.on('tileerror', function() {
-      if (!window._esriFallback) {
-        window._esriFallback = true;
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      if (!window._cartoFallback) {
+        window._cartoFallback = true;
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png', {
           maxZoom: 19,
-          attribution: '© Esri'
+          subdomains: ['a', 'b', 'c', 'd'],
+          attribution: '© CARTO'
         }).addTo(map);
       }
     });
@@ -468,11 +436,73 @@ export default function CustomerAddressSetupScreen() {
           {/* Header Title */}
           <View style={styles.cardMasthead}>
             <Text accessibilityRole="header" style={styles.headline}>
-              Thiết lập địa chỉ
+              Thêm địa chỉ mới
             </Text>
             <Text style={styles.subline}>
-              Lưu sẵn địa chỉ kho hàng, văn phòng hoặc nhà riêng để bắt đầu đặt xe vận chuyển nhanh chóng.
+              Lưu thông tin kho bãi, văn phòng hoặc điểm nhận/gửi hàng vào sổ địa chỉ để thuận tiện tạo đơn vận chuyển.
             </Text>
+          </View>
+
+          <View style={styles.sectionDivider} />
+
+          {/* 1. Tên gợi nhớ địa chỉ */}
+          <View style={styles.sectionGroup}>
+            <Text style={styles.sectionTitle}>Tên gợi nhớ địa chỉ</Text>
+            <TextInput
+              accessibilityLabel="Tên gợi nhớ địa chỉ"
+              onBlur={() => setFocusedField(null)}
+              onChangeText={setAddressLabel}
+              onFocus={() => setFocusedField('label')}
+              placeholder="VD: Kho tổng Tân Bình, Cửa hàng Q1, Xưởng may..."
+              placeholderTextColor="#94A3B8"
+              style={[
+                styles.input,
+                focusedField === 'label' && styles.inputFocused,
+              ]}
+              testID="ca-label-input"
+              value={addressLabel}
+            />
+          </View>
+
+          {/* 2. Người liên hệ & Số điện thoại (tùy chọn) */}
+          <View style={styles.sectionGroup}>
+            <Text style={styles.sectionTitle}>Thông tin liên hệ tại địa chỉ này (tùy chọn)</Text>
+            <View style={styles.contactRow}>
+              <View style={styles.contactCol}>
+                <View style={styles.contactInputWrap}>
+                  <IconUser color="#64748B" size={16} />
+                  <TextInput
+                    accessibilityLabel="Tên người liên hệ"
+                    onBlur={() => setFocusedField(null)}
+                    onChangeText={setContactName}
+                    onFocus={() => setFocusedField('contactName')}
+                    placeholder="Tên người liên hệ"
+                    placeholderTextColor="#94A3B8"
+                    style={styles.contactTextInput}
+                    testID="ca-contact-name"
+                    value={contactName}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.contactCol}>
+                <View style={styles.contactInputWrap}>
+                  <IconPhone color="#64748B" size={16} />
+                  <TextInput
+                    accessibilityLabel="Số điện thoại"
+                    keyboardType="phone-pad"
+                    onBlur={() => setFocusedField(null)}
+                    onChangeText={setContactPhone}
+                    onFocus={() => setFocusedField('contactPhone')}
+                    placeholder="Số điện thoại"
+                    placeholderTextColor="#94A3B8"
+                    style={styles.contactTextInput}
+                    testID="ca-contact-phone"
+                    value={contactPhone}
+                  />
+                </View>
+              </View>
+            </View>
           </View>
 
           <View style={styles.sectionDivider} />
@@ -552,7 +582,7 @@ export default function CustomerAddressSetupScreen() {
                   {selectedAddress}
                 </Text>
                 <Text style={styles.selectedCoordsText}>
-                  Tọa độ: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                  Đã ghim vị trí chính xác trên bản đồ
                 </Text>
               </View>
             </View>
@@ -624,7 +654,7 @@ export default function CustomerAddressSetupScreen() {
                 onBlur={() => setFocusedField(null)}
                 onChangeText={setAddressDetail}
                 onFocus={() => setFocusedField('detail')}
-                placeholder="VD: Cổng số 2, Kho A3 hoặc Phòng 402"
+                placeholder="VD: Cổng số 2, Kho A3 hoặc Tầng 4, Phòng 402"
                 placeholderTextColor="#94A3B8"
                 style={[
                   styles.input,
@@ -694,29 +724,22 @@ export default function CustomerAddressSetupScreen() {
           </Pressable>
         </View>
 
-        {/* ================= PRIMARY ACTION & SKIP ================= */}
+        {/* ================= PRIMARY ACTION ================= */}
         <Pressable
+          accessibilityLabel="Lưu vào sổ địa chỉ"
           accessibilityRole="button"
-          onPress={handleSaveAndContinue}
+          onPress={handleSaveAddress}
           style={({ pressed }) => [styles.primaryBtn, pressed && styles.pressed]}
           testID="ca-submit-btn"
         >
-          <Text style={styles.primaryBtnText}>Xác nhận địa chỉ & Tiếp tục</Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={handleSkip}
-          style={({ pressed }) => [styles.skipBtn, pressed && styles.pressed]}
-          testID="ca-skip-btn"
-        >
-          <Text style={styles.skipBtnText}>Bỏ qua, thiết lập sau →</Text>
+          <Text style={styles.primaryBtnText}>Lưu vào sổ địa chỉ</Text>
         </Pressable>
       </View>
     </ScrollView>
   );
 }
+
+export const CustomerAddressSetupScreen = CustomerAddAddressScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -826,6 +849,39 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F1F5F9',
     marginVertical: 4,
+  },
+
+  /* Contact Person & Phone Row */
+  contactRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  contactCol: {
+    flex: 1,
+  },
+  contactInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    height: 46,
+    backgroundColor: '#FFFFFF',
+  },
+  contactTextInput: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 13.5,
+    color: '#0F172A',
+    fontWeight: '500',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        outlineWidth: 0,
+      } as any,
+    }),
   },
 
   /* GPS Action Button */
@@ -988,9 +1044,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DBEAFE',
   },
-  selectedPinText: {
-    fontSize: 14,
-  },
   selectedAddressCol: {
     flex: 1,
     gap: 2,
@@ -1009,7 +1062,7 @@ const styles = StyleSheet.create({
 
   /* Search Section */
   sectionGroup: {
-    gap: 10,
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 14,
@@ -1210,16 +1263,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.2,
-  },
-  skipBtn: {
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  skipBtnText: {
-    color: '#64748B',
-    fontSize: 14,
-    fontWeight: '600',
   },
   pressed: {
     opacity: 0.85,

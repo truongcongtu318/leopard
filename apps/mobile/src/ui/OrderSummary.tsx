@@ -17,6 +17,7 @@ export type OrderSummaryMetadata = Readonly<{
 export type OrderSummaryProps = Readonly<{
   accessibilityHint?: string;
   accessibilityLabel?: string;
+  actionButton?: React.ReactNode;
   destination: RoutePoint;
   metadata?: readonly OrderSummaryMetadata[];
   onPress?: PressableProps['onPress'];
@@ -28,6 +29,7 @@ export type OrderSummaryProps = Readonly<{
 }>;
 
 function OrderSummaryContent({
+  actionButton,
   destination,
   metadata = [],
   orderReference,
@@ -136,7 +138,7 @@ function OrderSummaryContent({
               <Text style={styles.etaText}>{etaItem.value}</Text>
             </View>
           ) : null}
-          <Text style={styles.chevron}>›</Text>
+          {actionButton ? actionButton : <Text style={styles.chevron}>›</Text>}
         </View>
       </View>
     </>
@@ -192,15 +194,15 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     gap: spacing.sm,
     minHeight: control.minimumTouchHeight,
     padding: spacing.md,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
   },
   etaLabel: {

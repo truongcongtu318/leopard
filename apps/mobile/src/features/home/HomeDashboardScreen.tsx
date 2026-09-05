@@ -2,9 +2,10 @@ import type { OrderStatus } from '@leopard/shared';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Animated,
+  Dimensions,
   Easing,
+  Image,
   ImageBackground,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -17,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   colors,
+  layout,
   leopardElevation,
   leopardPalette,
   leopardRadius,
@@ -40,15 +42,28 @@ import {
   IconWallet,
 } from '../../ui/icons/CoreIcons';
 import { OrderSummary } from '../../ui/OrderSummary';
-import { RealInteractiveMap, resolveLocationCoords } from '../../ui/RealInteractiveMap';
 import { RouteSpine } from '../../ui/RouteSpine';
 import { StatusBadge } from '../../ui/StatusBadge';
 import type { VehicleCategory } from '../../ui/VehicleSelectCard';
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
 import { httpClient } from '../../api/http-client';
 import { sessionStore } from '../../auth/session-store';
+import {
+  MapAddressPickerModal,
+  reverseGeocodeCoords,
+  SavedAddressPickerModal,
+} from './components';
 
 const customerHeroBgSource = require('../../../assets/brand/customer-hero-bg.jpg');
+const bannerPromo1Source = require('../../../assets/brand/banner-promo-1.png');
+const bannerPromo2Source = require('../../../assets/brand/banner-promo-2.png');
+const bannerPromo3Source = require('../../../assets/brand/banner-promo-3.png');
+const service3WheelSource = require('../../../assets/brand/service-3wheel.png');
+const serviceLightTruckSource = require('../../../assets/brand/service-light-truck.png');
+const serviceHeavyTruckSource = require('../../../assets/brand/service-heavy-truck.png');
+const serviceExpressSource = require('../../../assets/brand/service-express.png');
+const serviceLoadingSource = require('../../../assets/brand/service-loading.png');
+const serviceCodSource = require('../../../assets/brand/service-cod.png');
 
 function formatVietnamesePhone(phone?: string | null): string {
   if (!phone) return '';
@@ -324,51 +339,31 @@ export function AnimatedGreetingIcon({
   );
 }
 
-type PromoBanner = Readonly<{
+type PromoSlide = Readonly<{
   id: string;
-  badge: string;
-  badgeColor: string;
-  badgeBg: string;
+  source: any;
   title: string;
-  desc: string;
-  ctaText: string;
-  accentBorder: string;
-  cardBg: string;
+  subtitle: string;
 }>;
 
-const PROMO_BANNERS: readonly PromoBanner[] = [
+const PROMO_SLIDES: readonly PromoSlide[] = [
   {
     id: 'promo-1',
-    badge: 'ƯU ĐÃI THÁNG 9',
-    badgeColor: '#16A34A',
-    badgeBg: '#DCFCE7',
+    source: bannerPromo1Source,
     title: 'Giảm 50.000₫ chuyến đầu tiên',
-    desc: 'Nhập mã LEOPARD50 khi tạo đơn giao hàng mới',
-    ctaText: 'Dùng mã ngay',
-    accentBorder: '#BFDBFE',
-    cardBg: '#EFF6FF',
+    subtitle: 'Nhập mã LEOPARD50 khi tạo đơn giao hàng mới',
   },
   {
     id: 'promo-2',
-    badge: 'HỎA TỐC NỘI THÀNH',
-    badgeColor: '#EA580C',
-    badgeBg: '#FFEDD5',
+    source: bannerPromo2Source,
     title: 'Cam kết có xe trong 15 phút',
-    desc: 'Mạng lưới xe ba gác & tải nhẹ phủ sóng toàn thành phố',
-    ctaText: 'Đặt hỏa tốc',
-    accentBorder: '#BAE6FD',
-    cardBg: '#F0F9FF',
+    subtitle: 'Mạng lưới xe ba gác & tải nhẹ phủ sóng toàn thành phố',
   },
   {
     id: 'promo-3',
-    badge: 'BẢO HIỂM TOÀN DIỆN',
-    badgeColor: '#2563EB',
-    badgeBg: '#DBEAFE',
+    source: bannerPromo3Source,
     title: 'Bảo hiểm 100% giá trị hàng',
-    desc: 'An tâm tuyệt đối cho vật liệu công trình & đồ dọn nhà',
-    ctaText: 'Xem chính sách',
-    accentBorder: '#BBF7D0',
-    cardBg: '#F0FDF4',
+    subtitle: 'An tâm tuyệt đối cho vật liệu công trình & đồ dọn nhà',
   },
 ];
 
@@ -378,16 +373,62 @@ type QuickService = Readonly<{
   name: string;
   label: string;
   tag: string;
+  imageSource: any;
   iconType: '3wheel' | 'light' | 'heavy' | 'express' | 'loading' | 'cod';
 }>;
 
 const quickServices: readonly QuickService[] = [
-  { id: '3_WHEEL_BIKE', vehicleId: '3_WHEEL_BIKE', label: 'Xe Ba Gác', name: 'Ba gác', tag: '< 500kg', iconType: '3wheel' },
-  { id: 'LIGHT_TRUCK', vehicleId: 'LIGHT_TRUCK', label: 'Xe Tải Nhẹ', name: 'Tải nhẹ', tag: '≤ 1.5 tấn', iconType: 'light' },
-  { id: 'HEAVY_TRUCK', vehicleId: 'HEAVY_TRUCK', label: 'Xe Tải Nặng', name: 'Tải nặng', tag: '5–10 tấn', iconType: 'heavy' },
-  { id: 'EXPRESS', label: 'Giao Hỏa Tốc', name: 'Hỏa tốc', tag: 'Dưới 1h', iconType: 'express' },
-  { id: 'LOADING', label: 'Dịch Vụ Bốc Xếp', name: 'Bốc xếp', tag: 'Kèm phụ xe', iconType: 'loading' },
-  { id: 'COD', label: 'Thu Hộ COD', name: 'Thu COD', tag: 'Đối soát 24h', iconType: 'cod' },
+  {
+    id: '3_WHEEL_BIKE',
+    vehicleId: '3_WHEEL_BIKE',
+    label: 'Xe Ba Gác',
+    name: 'Ba gác',
+    tag: '< 500kg',
+    imageSource: service3WheelSource,
+    iconType: '3wheel',
+  },
+  {
+    id: 'LIGHT_TRUCK',
+    vehicleId: 'LIGHT_TRUCK',
+    label: 'Xe Tải Nhẹ',
+    name: 'Tải nhẹ',
+    tag: '≤ 1.5 tấn',
+    imageSource: serviceLightTruckSource,
+    iconType: 'light',
+  },
+  {
+    id: 'HEAVY_TRUCK',
+    vehicleId: 'HEAVY_TRUCK',
+    label: 'Xe Tải Nặng',
+    name: 'Tải nặng',
+    tag: '5–10 tấn',
+    imageSource: serviceHeavyTruckSource,
+    iconType: 'heavy',
+  },
+  {
+    id: 'EXPRESS',
+    label: 'Giao Hỏa Tốc',
+    name: 'Hỏa tốc',
+    tag: 'Dưới 1h',
+    imageSource: serviceExpressSource,
+    iconType: 'express',
+  },
+  {
+    id: 'LOADING',
+    label: 'Dịch Vụ Bốc Xếp',
+    name: 'Bốc xếp',
+    tag: 'Kèm phụ xe',
+    imageSource: serviceLoadingSource,
+    iconType: 'loading',
+  },
+  {
+    id: 'COD',
+    label: 'Thu Hộ COD',
+    name: 'Thu COD',
+    tag: 'Đối soát 24h',
+    imageSource: serviceCodSource,
+    iconType: 'cod',
+  },
 ];
 
 const DEFAULT_ACTIVE_SHIPMENT: ActiveShipment = {
@@ -489,16 +530,7 @@ export function HomeDashboardScreen({
   const [savedAddressModalTarget, setSavedAddressModalTarget] = useState<'pickup' | 'dropoff'>('pickup');
   const [showMapPickerModal, setShowMapPickerModal] = useState(false);
   const [mapTarget, setMapTarget] = useState<'pickup' | 'dropoff'>('pickup');
-  const [modalAddress, setModalAddress] = useState(initialAddress);
-  const [customPinCoords, setCustomPinCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [isLocatingGps, setIsLocatingGps] = useState(false);
-  const [mapAddressNote, setMapAddressNote] = useState('');
-  const [senderName, setSenderName] = useState(userName || 'Anh Hoàng');
-  const [senderPhone, setSenderPhone] = useState(userPhone || '0901234567');
-  const [isSenderMe, setIsSenderMe] = useState(false);
-  const [focusedModalInput, setFocusedModalInput] = useState<'address' | 'note' | 'name' | 'phone' | null>(null);
   const [loggedInCustomer, setLoggedInCustomer] = useState<{ name?: string; phone?: string } | null>(null);
-  const modalAddressInputRef = React.useRef<TextInput>(null);
 
   // Sync authenticated customer profile from /me
   useEffect(() => {
@@ -512,12 +544,6 @@ export function HomeDashboardScreen({
               name: user.name || undefined,
               phone: user.phone || undefined,
             });
-            if (user.name) {
-              setSenderName(user.name);
-            }
-            if (user.phone) {
-              setSenderPhone(formatVietnamesePhone(user.phone));
-            }
           }
         }
       } catch {
@@ -530,81 +556,26 @@ export function HomeDashboardScreen({
     };
   }, []);
 
-  const mapCoords = useMemo(() => {
-    if (customPinCoords) return customPinCoords;
-    if (modalAddress && modalAddress.trim()) {
-      return resolveLocationCoords(modalAddress);
-    }
-    const defaultReference = mapTarget === 'pickup' ? pickupText : dropoffText;
-    if (defaultReference && defaultReference.trim()) {
-      return resolveLocationCoords(defaultReference);
-    }
-    return resolveLocationCoords(initialAddress);
-  }, [customPinCoords, modalAddress, mapTarget, pickupText, dropoffText, initialAddress]);
-
   const handleOpenMapPicker = (target: 'pickup' | 'dropoff') => {
     setMapTarget(target);
-    const current = target === 'pickup' ? pickupText : dropoffText;
-    if (current && current.trim()) {
-      setModalAddress(current.trim());
-    } else {
-      setModalAddress(target === 'pickup' ? initialAddress : '');
-    }
-    setCustomPinCoords(null);
     setShowMapPickerModal(true);
   };
 
-  const handleChangeAddress = () => {
-    setModalAddress('');
-    setCustomPinCoords(null);
-    setTimeout(() => {
-      modalAddressInputRef.current?.focus();
-    }, 60);
-  };
-
-  const handleGetCurrentGpsLocation = () => {
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      setIsLocatingGps(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setIsLocatingGps(false);
-          const lat = Number(pos.coords.latitude.toFixed(5));
-          const lng = Number(pos.coords.longitude.toFixed(5));
-          setCustomPinCoords({ lat, lng });
-          setModalAddress(`Vị trí GPS (${lat}, ${lng})`);
-        },
-        (err) => {
-          setIsLocatingGps(false);
-          console.warn('Geolocation error:', err.message);
-        },
-        { enableHighAccuracy: true, timeout: 8000 },
-      );
-    }
-  };
-
-  const handleConfirmMapLocation = () => {
-    const finalAddress =
-      modalAddress.trim() ||
-      (customPinCoords
-        ? `Tọa độ (${customPinCoords.lat.toFixed(4)}, ${customPinCoords.lng.toFixed(4)})`
-        : initialAddress);
+  const handleConfirmMapLocation = (finalAddress: string) => {
     if (mapTarget === 'pickup') {
       setPickupText(finalAddress);
       setPickupLabel(null);
+      if (dropoffText.trim().length >= 3) {
+        triggerNavigation(finalAddress, dropoffText);
+      }
     } else {
       setDropoffText(finalAddress);
+      if (pickupText.trim().length >= 3) {
+        triggerNavigation(pickupText, finalAddress);
+      }
     }
     setShowMapPickerModal(false);
     setFocusedField(null);
-  };
-
-  const handleFillMySenderInfo = () => {
-    const resolvedName = loggedInCustomer?.name || userName || 'Anh Hoàng';
-    const rawPhone = loggedInCustomer?.phone || userPhone;
-    const resolvedPhone = formatVietnamesePhone(rawPhone) || rawPhone || '0901234567';
-    setSenderName(resolvedName);
-    setSenderPhone(resolvedPhone);
-    setIsSenderMe(true);
   };
 
   // Keep pickup location synchronized if prop changes or addressStore updates
@@ -620,6 +591,46 @@ export function HomeDashboardScreen({
       }
     }
   }, [defaultPickupLocation, defaultPickupLabel]);
+
+  // Auto-detect current GPS location for pickup address if customer has no saved default address
+  useEffect(() => {
+    const saved = addressStore.getDefaultAddress();
+    if (defaultPickupLocation || saved?.address) {
+      return;
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          try {
+            const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
+            if (resolved && resolved.trim().length > 0) {
+              setPickupText(resolved);
+              setPickupLabel('Vị trí hiện tại');
+              addressStore.saveAddress({
+                label: 'Vị trí hiện tại',
+                address: resolved,
+                category: 'OTHER',
+                latitude: lat,
+                longitude: lng,
+                isDefault: true,
+              });
+              setAddressStoreVersion((v) => v + 1);
+            }
+          } catch {
+            // Keep default fallback
+          }
+        },
+        () => {
+          // Permission denied or unavailable - keep fallback
+        },
+        { enableHighAccuracy: true, timeout: 8000 },
+      );
+    }
+  }, [defaultPickupLocation]);
 
   // Dismiss dropdown when clicking or tapping outside on Web
   useEffect(() => {
@@ -646,16 +657,103 @@ export function HomeDashboardScreen({
     }
   }, [focusedField]);
 
-  // List of saved addresses for quick switching
-  const addressList = savedAddresses ?? addressStore.getAddresses();
+  // Scroll animation for sticky header
+  const scrollY = React.useRef(new Animated.Value(0)).current;
+  const [isAutoNavigating, setIsAutoNavigating] = useState(false);
+  const navigationTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasNavigatedRef = React.useRef(false);
+  const [quickTrackCode, setQuickTrackCode] = useState('');
 
-  // Auto-advance banner every 5 seconds
+  const triggerNavigation = (pickup: string, dropoff: string) => {
+    if (hasNavigatedRef.current) return;
+    if (!pickup.trim() || !dropoff.trim()) return;
+    hasNavigatedRef.current = true;
+    setIsAutoNavigating(true);
+    if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
+    navigationTimeoutRef.current = setTimeout(() => {
+      if (onQuickBook) {
+        onQuickBook(pickup, dropoff);
+      } else {
+        onCreateOrder?.();
+      }
+      setTimeout(() => {
+        setIsAutoNavigating(false);
+        hasNavigatedRef.current = false;
+      }, 1500);
+    }, 400);
+  };
+
+  // Auto-navigate debounce when user types dropoff address
+  useEffect(() => {
+    if (
+      focusedField === 'dropoff' &&
+      pickupText.trim().length >= 3 &&
+      dropoffText.trim().length >= 5 &&
+      !hasNavigatedRef.current
+    ) {
+      const timer = setTimeout(() => {
+        triggerNavigation(pickupText, dropoffText);
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [dropoffText, pickupText, focusedField]);
+
+  const [addressStoreVersion, setAddressStoreVersion] = useState(0);
+
+  // List of saved addresses for quick switching
+  const addressList = React.useMemo(
+    () => savedAddresses ?? addressStore.getAddresses(),
+    [savedAddresses, addressStoreVersion],
+  );
+
+  const [bannerWidth, setBannerWidth] = useState(() => {
+    const windowWidth = Dimensions.get('window').width;
+    return Math.max(280, windowWidth - 32);
+  });
+  const slideAnim = React.useRef(new Animated.Value(0)).current;
+  const currentSlideIdxRef = React.useRef(activeBannerIdx);
+  currentSlideIdxRef.current = activeBannerIdx;
+
+  const goToSlide = React.useCallback(
+    (targetIdx: number) => {
+      const currentIdx = currentSlideIdxRef.current;
+      if (currentIdx === targetIdx) return;
+
+      slideAnim.stopAnimation();
+      setActiveBannerIdx(targetIdx);
+
+      // Khi lướt vòng tròn từ slide cuối sang slide đầu, trượt tiếp về phía trước qua clone rồi âm thầm reset về 0
+      if (currentIdx === PROMO_SLIDES.length - 1 && targetIdx === 0) {
+        Animated.timing(slideAnim, {
+          duration: 750,
+          easing: Easing.out(Easing.cubic),
+          toValue: -PROMO_SLIDES.length * bannerWidth,
+          useNativeDriver: Platform.OS !== 'web',
+        }).start(({ finished }) => {
+          if (finished) {
+            slideAnim.setValue(0);
+          }
+        });
+      } else {
+        Animated.timing(slideAnim, {
+          duration: 750,
+          easing: Easing.out(Easing.cubic),
+          toValue: -targetIdx * bannerWidth,
+          useNativeDriver: Platform.OS !== 'web',
+        }).start();
+      }
+    },
+    [bannerWidth, slideAnim],
+  );
+
+  // Auto-advance banner every 5 seconds forward in a loop (không lướt ngược lại)
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveBannerIdx((prev) => (prev + 1) % PROMO_BANNERS.length);
+      const next = (currentSlideIdxRef.current + 1) % PROMO_SLIDES.length;
+      goToSlide(next);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [goToSlide]);
 
   const handleTabChange = (key: TabKey) => {
     setActiveTab(key);
@@ -680,74 +778,103 @@ export function HomeDashboardScreen({
 
   const timeOfDay = useMemo(() => getTimeOfDay(), []);
   const greeting = useMemo(() => getTimeOfDayGreeting(), []);
-  const currentBanner = PROMO_BANNERS[activeBannerIdx];
+  const currentSlide = PROMO_SLIDES[activeBannerIdx];
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, 120],
+    outputRange: [-80, 0],
+    extrapolate: 'clamp',
+  });
+
+  const heroActionsOpacity = scrollY.interpolate({
+    inputRange: [0, 35],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
+        {/* Animated Sticky Header: Translucent white, slides down on scroll, hidden at top 0 */}
+        <Animated.View
+          style={[
+            styles.stickyHeader,
+            {
+              opacity: headerOpacity,
+              transform: [{ translateY: headerTranslateY }],
+            },
+          ]}
+        >
+          <View style={styles.greetingPill}>
+            <AnimatedGreetingIcon size={20} timeOfDay={timeOfDay} />
+            <Text numberOfLines={1} style={styles.greetingTitleText}>
+              {greeting}
+              {userName ? (
+                <Text style={styles.greetingNameText}>, {userName}</Text>
+              ) : null}
+            </Text>
+          </View>
+
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel={
+                unreadMessages > 0
+                  ? `Tin nhắn (${unreadMessages} chưa đọc)`
+                  : 'Tin nhắn'
+              }
+              accessibilityRole="button"
+              onPress={onOpenChat}
+              style={styles.headerIconBtn}
+            >
+              <IconMessage color="#0F172A" size={18} />
+              {unreadMessages > 0 ? (
+                <View style={styles.badgePill}>
+                  <Text style={styles.badgePillText}>{unreadMessages}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+
+            {onOpenNotifications ? (
+              <Pressable
+                accessibilityLabel={`Thông báo (${unreadNotifications} chưa đọc)`}
+                accessibilityRole="button"
+                onPress={onOpenNotifications}
+                style={styles.headerIconBtn}
+              >
+                <IconBell color="#0F172A" size={18} />
+                {unreadNotifications > 0 ? (
+                  <View style={styles.badgePill}>
+                    <Text style={styles.badgePillText}>{unreadNotifications}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
+            ) : null}
+          </View>
+        </Animated.View>
+
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          onScroll={(e) => {
+            scrollY.setValue(e.nativeEvent.contentOffset.y);
+          }}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          {/* 1. Hero Artwork Background + Integrated Header */}
+          {/* 1. Hero Artwork Background */}
           <ImageBackground
             accessibilityLabel="Hình ảnh thương hiệu LEOPARD"
             imageStyle={styles.heroBackgroundImage}
             resizeMode="cover"
             source={customerHeroBgSource}
             style={styles.heroBackground}
-          >
-            {/* Header: Đặt trực tiếp trên nền ảnh hero, thanh pill sang trọng đồng bộ nút icon */}
-            <View style={styles.topHeader}>
-              <View style={styles.greetingPill}>
-                <AnimatedGreetingIcon size={20} timeOfDay={timeOfDay} />
-                <Text numberOfLines={1} style={styles.greetingTitleText}>
-                  {greeting}
-                  {userName ? (
-                    <Text style={styles.greetingNameText}>, {userName}</Text>
-                  ) : null}
-                </Text>
-              </View>
-
-              {/* Action Icons: Tin nhắn & Thông báo (nằm trên vùng trời cao, không đè nhân vật) */}
-              <View style={styles.headerActions}>
-                <Pressable
-                  accessibilityLabel={
-                    unreadMessages > 0
-                      ? `Tin nhắn (${unreadMessages} chưa đọc)`
-                      : 'Tin nhắn'
-                  }
-                  accessibilityRole="button"
-                  onPress={onOpenChat}
-                  style={styles.headerIconBtn}
-                >
-                  <IconMessage color="#0F172A" size={18} />
-                  {unreadMessages > 0 ? (
-                    <View style={styles.badgePill}>
-                      <Text style={styles.badgePillText}>{unreadMessages}</Text>
-                    </View>
-                  ) : null}
-                </Pressable>
-
-                {onOpenNotifications ? (
-                  <Pressable
-                    accessibilityLabel={`Thông báo (${unreadNotifications} chưa đọc)`}
-                    accessibilityRole="button"
-                    onPress={onOpenNotifications}
-                    style={styles.headerIconBtn}
-                  >
-                    <IconBell color="#0F172A" size={18} />
-                    {unreadNotifications > 0 ? (
-                      <View style={styles.badgePill}>
-                        <Text style={styles.badgePillText}>{unreadNotifications}</Text>
-                      </View>
-                    ) : null}
-                  </Pressable>
-                ) : null}
-              </View>
-            </View>
-          </ImageBackground>
+          />
 
           {/* Main Content: Thân trang xếp lớp phủ nhẹ lên chân ảnh hero */}
           <View style={styles.mainSheet}>
@@ -763,21 +890,6 @@ export function HomeDashboardScreen({
                   <View style={styles.liveIndicatorDot} />
                   <Text style={styles.routeBookingTitle}>ĐẶT XE GIAO HÀNG NHANH</Text>
                 </View>
-                <Pressable
-                  accessibilityLabel="Mở sổ địa chỉ"
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setSavedAddressModalTarget('pickup');
-                    setShowSavedAddressModal(true);
-                  }}
-                  style={({ pressed }) => [
-                    styles.savedAddressesLink,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <IconLocationPin color="#2563EB" size={13} />
-                  <Text style={styles.savedAddressesText}>Sổ địa chỉ</Text>
-                </Pressable>
               </View>
 
               {/* Unified Route Box: Trục hành trình thẳng đứng liền mạch */}
@@ -866,6 +978,11 @@ export function HomeDashboardScreen({
                         autoCorrect={false}
                         onChangeText={setDropoffText}
                         onFocus={() => setFocusedField('dropoff')}
+                        onSubmitEditing={() => {
+                          if (pickupText.trim().length >= 3 && dropoffText.trim().length >= 3) {
+                            triggerNavigation(pickupText, dropoffText);
+                          }
+                        }}
                         placeholder="Bạn muốn giao hàng đến đâu?..."
                         placeholderTextColor="#94A3B8"
                         style={styles.locationTextInput}
@@ -882,6 +999,19 @@ export function HomeDashboardScreen({
                         style={styles.clearBtn}
                       >
                         <Text style={styles.clearBtnText}>✕</Text>
+                      </Pressable>
+                    ) : null}
+
+                    {pickupText.trim().length >= 3 && dropoffText.trim().length >= 3 ? (
+                      <Pressable
+                        accessibilityLabel="Chuyển sang tạo đơn ngay"
+                        accessibilityRole="button"
+                        hitSlop={8}
+                        onPress={() => triggerNavigation(pickupText, dropoffText)}
+                        style={styles.fastForwardBtn}
+                        testID="quick-book-submit-btn"
+                      >
+                        <Text style={styles.fastForwardBtnText}>→</Text>
                       </Pressable>
                     ) : null}
 
@@ -974,18 +1104,18 @@ export function HomeDashboardScreen({
                 </View>
               ) : null}
 
-              {/* CTA: Create order / Quote */}
-              <View style={styles.bookingActionWrap}>
-                <Button
-                  label="Tạo đơn vận chuyển"
-                  onPress={handleBookPress}
-                  size="driver-primary"
-                  variant="primary"
-                />
-              </View>
+              {/* Status banner when auto-navigating */}
+              {isAutoNavigating ? (
+                <View style={styles.autoNavigatingBanner}>
+                  <View style={styles.liveIndicatorDotActive} />
+                  <Text style={styles.autoNavigatingText}>
+                    Đã xác định lộ trình · Đang chuyển tiếp...
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
-          {/* 4. Grid: Services & Fleet Squircle Tiles (6 items) */}
+          {/* 4. Grid: Services & Fleet Illustrated Tiles (6 items) */}
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionLabel}>DỊCH VỤ VẬN TẢI & ĐỘI XE</Text>
@@ -1009,15 +1139,22 @@ export function HomeDashboardScreen({
                     pressed ? styles.serviceCardPressed : null,
                   ]}
                 >
-                  <View style={styles.serviceIconSquircle}>
-                    {renderServiceIcon(service.iconType)}
+                  <View style={styles.serviceImageContainer}>
+                    <Image
+                      accessibilityLabel={service.label}
+                      resizeMode="cover"
+                      source={service.imageSource}
+                      style={styles.serviceImage}
+                    />
                   </View>
                   <Text numberOfLines={1} style={styles.serviceName}>
                     {service.name}
                   </Text>
-                  <Text numberOfLines={1} style={styles.serviceTagText}>
-                    {service.tag}
-                  </Text>
+                  <View style={styles.serviceTagBadge}>
+                    <Text numberOfLines={1} style={styles.serviceTagText}>
+                      {service.tag}
+                    </Text>
+                  </View>
                 </Pressable>
               ))}
             </View>
@@ -1045,54 +1182,74 @@ export function HomeDashboardScreen({
             </Pressable>
           </View>
 
-          {/* 6. Operational Signal Banner Carousel */}
-          <View style={styles.promoContainer}>
-            <View
-              style={[
-                styles.promoCard,
-                { backgroundColor: currentBanner.cardBg, borderColor: currentBanner.accentBorder },
-              ]}
-            >
-              <View style={styles.promoContent}>
-                <View
-                  style={[
-                    styles.promoBadge,
-                    { backgroundColor: currentBanner.badgeBg },
-                  ]}
-                >
-                  <Text style={[styles.promoBadgeText, { color: currentBanner.badgeColor }]}>
-                    {currentBanner.badge}
-                  </Text>
-                </View>
+          {/* 6. Operational Signal Banner Carousel (Hình ảnh banner thực tế) */}
+          <View
+            onLayout={(e) => {
+              const w = Math.round(e.nativeEvent.layout.width);
+              if (w > 0 && Math.abs(w - bannerWidth) > 2) {
+                setBannerWidth(w);
+              }
+            }}
+            style={styles.promoContainer}
+          >
+            <View style={styles.promoTrackWindow}>
+              <Animated.View
+                style={[
+                  styles.promoTrack,
+                  {
+                    width: bannerWidth * (PROMO_SLIDES.length + 1),
+                    transform: [{ translateX: slideAnim }],
+                  },
+                ]}
+              >
+                {PROMO_SLIDES.map((slide) => (
+                  <Pressable
+                    accessibilityLabel={`Ưu đãi: ${slide.title}`}
+                    accessibilityRole="button"
+                    key={slide.id}
+                    onPress={() => onCreateOrder?.()}
+                    style={[styles.promoSlideItem, { width: bannerWidth }]}
+                  >
+                    <Image
+                      accessibilityLabel={slide.title}
+                      resizeMode="cover"
+                      source={slide.source}
+                      style={styles.promoBannerImage}
+                    />
+                    <View style={styles.srOnly}>
+                      <Text>{slide.title}</Text>
+                      <Text>{slide.subtitle}</Text>
+                    </View>
+                  </Pressable>
+                ))}
 
-                <Text numberOfLines={1} style={styles.promoTitle}>
-                  {currentBanner.title}
-                </Text>
-                <Text numberOfLines={2} style={styles.promoDesc}>
-                  {currentBanner.desc}
-                </Text>
-
+                {/* Clone của slide đầu tiên để trượt vòng tròn mượt mà, không bao giờ lướt ngược lại */}
                 <Pressable
+                  accessibilityElementsHidden
                   accessibilityRole="button"
+                  importantForAccessibility="no"
+                  key="promo-slide-clone"
                   onPress={() => onCreateOrder?.()}
-                  style={styles.promoCtaLink}
+                  style={[styles.promoSlideItem, { width: bannerWidth }]}
                 >
-                  <Text style={[styles.promoCtaText, { color: currentBanner.badgeColor }]}>
-                    {currentBanner.ctaText} →
-                  </Text>
+                  <Image
+                    resizeMode="cover"
+                    source={PROMO_SLIDES[0].source}
+                    style={styles.promoBannerImage}
+                  />
                 </Pressable>
-              </View>
+              </Animated.View>
             </View>
 
             {/* Carousel Dots */}
             <View style={styles.dotsRow}>
-              {PROMO_BANNERS.map((banner, idx) => (
+              {PROMO_SLIDES.map((slide, idx) => (
                 <Pressable
                   accessibilityLabel={`Chuyển đến ưu đãi ${idx + 1}`}
                   accessibilityRole="button"
                   hitSlop={6}
-                  key={banner.id}
-                  onPress={() => setActiveBannerIdx(idx)}
+                  key={slide.id}
+                  onPress={() => goToSlide(idx)}
                   style={[
                     styles.dot,
                     activeBannerIdx === idx ? styles.dotActive : styles.dotInactive,
@@ -1102,9 +1259,20 @@ export function HomeDashboardScreen({
             </View>
           </View>
 
-          {/* 7. Live Tracking Activity Capsule (Active Shipment) */}
+          {/* 7. Live Tracking Activity Capsule (Active Shipment / Quick Tracking) */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>ĐANG VẬN CHUYỂN</Text>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionTitleWithBadge}>
+                {activeShipment ? <View style={styles.liveIndicatorDotActive} /> : null}
+                <Text style={styles.sectionLabel}>ĐANG VẬN CHUYỂN</Text>
+              </View>
+              {activeShipment ? (
+                <View style={styles.liveTagBadge}>
+                  <Text style={styles.liveTagText}>Trực tiếp</Text>
+                </View>
+              ) : null}
+            </View>
+
             {activeShipment ? (
               <Pressable
                 accessibilityHint="Mở theo dõi lộ trình"
@@ -1116,70 +1284,78 @@ export function HomeDashboardScreen({
                 <View style={styles.activeTop}>
                   <StatusBadge domain="order" status={activeShipment.status} />
                   {activeShipment.etaMinutes !== undefined ? (
-                    <Text style={styles.etaText}>ETA dự kiến {activeShipment.etaMinutes} phút</Text>
+                    <View style={styles.etaPill}>
+                      <Text style={styles.etaText}>ETA dự kiến {activeShipment.etaMinutes} phút</Text>
+                    </View>
                   ) : null}
                 </View>
 
-                <RouteSpine
-                  destination={{ id: 'active-dest', label: activeShipment.destination }}
-                  origin={{ id: 'active-origin', label: activeShipment.origin }}
-                  stops={[]}
-                />
+                <View style={styles.activeRouteWell}>
+                  <RouteSpine
+                    destination={{ id: 'active-dest', label: activeShipment.destination }}
+                    origin={{ id: 'active-origin', label: activeShipment.origin }}
+                    stops={[]}
+                  />
+                </View>
 
                 <View style={styles.activeMeta}>
-                  <Text numberOfLines={1} style={styles.driverText}>
-                    {activeShipment.cargoNote ? `${activeShipment.cargoNote} · ` : ''}
-                    {activeShipment.driverName ?? 'Chưa có tài xế'}
-                    {activeShipment.plate ? (
-                      <Text style={styles.plateText}> · {activeShipment.plate}</Text>
-                    ) : null}
-                  </Text>
-                  <Text style={styles.trackText}>Theo dõi →</Text>
+                  <View style={styles.activeDriverBox}>
+                    <View style={styles.activeDriverIconBox}>
+                      <IconRoleDriver color="#0284C7" secondaryColor="#E0F2FE" size={18} />
+                    </View>
+                    <Text numberOfLines={1} style={styles.driverText}>
+                      {activeShipment.cargoNote ? `${activeShipment.cargoNote} · ` : ''}
+                      {activeShipment.driverName ?? 'Chưa có tài xế'}
+                      {activeShipment.plate ? (
+                        <Text style={styles.plateText}> · {activeShipment.plate}</Text>
+                      ) : null}
+                    </Text>
+                  </View>
+                  <View style={styles.activeTrackPill}>
+                    <Text style={styles.trackText}>Theo dõi →</Text>
+                  </View>
                 </View>
               </Pressable>
             ) : (
-              <View style={styles.emptyBox}>
+              <View style={styles.emptyActivityBox}>
                 <Text style={styles.emptyTitle}>Chưa có chuyến nào đang chạy</Text>
                 <Text style={styles.emptyBody}>
                   Tạo đơn vận chuyển để bắt đầu theo dõi lộ trình theo thời gian thực.
                 </Text>
+                {/* Thanh tra cứu nhanh mã vận đơn */}
+                <View style={styles.quickTrackingBar}>
+                  <View style={styles.trackingInputWrap}>
+                    <IconLocationPin color="#0284C7" size={16} />
+                    <TextInput
+                      accessibilityLabel="Tra cứu mã vận đơn"
+                      autoCapitalize="characters"
+                      onChangeText={setQuickTrackCode}
+                      placeholder="Tra cứu nhanh mã vận đơn..."
+                      placeholderTextColor="#94A3B8"
+                      style={styles.trackingInput}
+                      value={quickTrackCode}
+                    />
+                  </View>
+                  <Pressable
+                    accessibilityLabel="Tra cứu đơn hàng"
+                    accessibilityRole="button"
+                    onPress={() => {
+                      if (quickTrackCode.trim()) {
+                        onOpenOrder?.(quickTrackCode.trim());
+                      } else {
+                        onViewAllOrders?.();
+                      }
+                    }}
+                    style={styles.trackingSearchBtn}
+                  >
+                    <Text style={styles.trackingSearchBtnText}>Tra cứu</Text>
+                  </Pressable>
+                </View>
               </View>
             )}
           </View>
 
-          {/* 8. VietQR Wallet & Financial Utilities */}
-          <View style={styles.walletStrip}>
-            <View style={styles.walletInfo}>
-              <View style={styles.walletIconBox}>
-                <IconWallet color={leopardPalette.primary} size={18} />
-              </View>
-              <View>
-                <Text style={styles.walletLabel}>Ví VietQR</Text>
-                <Text style={styles.walletBalance}>{walletBalance}</Text>
-              </View>
-            </View>
-            <View style={styles.walletActions}>
-              <Pressable
-                accessibilityLabel="Nạp tiền vào ví"
-                accessibilityRole="button"
-                onPress={onTopUpWallet}
-                style={({ pressed }) => [styles.walletBtn, pressed ? styles.pressed : null]}
-              >
-                <Text style={styles.walletBtnText}>Nạp tiền</Text>
-              </Pressable>
-              <Pressable
-                accessibilityLabel="Quét mã QR thanh toán"
-                accessibilityRole="button"
-                onPress={onOpenQrScan}
-                style={({ pressed }) => [styles.walletBtn, pressed ? styles.pressed : null]}
-              >
-                <IconQrPayment color={leopardPalette.primaryDark} size={15} />
-                <Text style={styles.walletBtnText}>Quét QR</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* 9. Recent Orders Ledger */}
+          {/* 8. Recent Orders Ledger with 1-Tap Reorder */}
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionLabel}>ĐƠN GẦN ĐÂY</Text>
@@ -1195,21 +1371,43 @@ export function HomeDashboardScreen({
             {recentOrders.length > 0 ? (
               <View style={styles.orderList}>
                 {recentOrders.map((order) => (
-                  <OrderSummary
-                    accessibilityLabel={`Đơn ${order.reference}, từ ${order.origin} đến ${order.destination}`}
-                    destination={{ id: `${order.id}-dest`, label: order.destination }}
-                    key={order.id}
-                    metadata={[
-                      ...(order.price ? [{ id: 'price', label: 'Giá', value: order.price }] : []),
-                      ...(order.updated
-                        ? [{ id: 'updated', label: 'Cập nhật', value: order.updated }]
-                        : []),
-                    ]}
-                    onPress={() => onOpenOrder?.(order.id)}
-                    orderReference={order.reference}
-                    origin={{ id: `${order.id}-origin`, label: order.origin }}
-                    status={order.status}
-                  />
+                  <View key={order.id} style={styles.recentOrderItemWrap}>
+                    <OrderSummary
+                      accessibilityLabel={`Đơn ${order.reference}, từ ${order.origin} đến ${order.destination}`}
+                      actionButton={
+                        <Pressable
+                          accessibilityLabel={`Đặt lại chuyến ${order.reference}`}
+                          accessibilityRole="button"
+                          hitSlop={6}
+                          onPress={(e) => {
+                            if (Platform.OS === 'web') {
+                              (e as any).stopPropagation?.();
+                            }
+                            setPickupText(order.origin);
+                            setDropoffText(order.destination);
+                            triggerNavigation(order.origin, order.destination);
+                          }}
+                          style={({ pressed }) => [
+                            styles.reorderInlineBtn,
+                            pressed && styles.reorderInlineBtnPressed,
+                          ]}
+                        >
+                          <Text style={styles.reorderInlineBtnText}>Đặt lại chuyến này →</Text>
+                        </Pressable>
+                      }
+                      destination={{ id: `${order.id}-dest`, label: order.destination }}
+                      metadata={[
+                        ...(order.price ? [{ id: 'price', label: 'Giá', value: order.price }] : []),
+                        ...(order.updated
+                          ? [{ id: 'updated', label: 'Cập nhật', value: order.updated }]
+                          : []),
+                      ]}
+                      onPress={() => onOpenOrder?.(order.id)}
+                      orderReference={order.reference}
+                      origin={{ id: `${order.id}-origin`, label: order.origin }}
+                      status={order.status}
+                    />
+                  </View>
                 ))}
               </View>
             ) : (
@@ -1232,417 +1430,61 @@ export function HomeDashboardScreen({
       </View>
 
       {/* ================= MODAL SỔ ĐỊA CHỈ (SLIDE UP BOTTOM SHEET) ================= */}
-      <Modal
-        animationType="slide"
-        onRequestClose={() => setShowSavedAddressModal(false)}
-        transparent
+      <SavedAddressPickerModal
+        addressList={addressList}
+        currentAddress={
+          savedAddressModalTarget === 'pickup' ? pickupText : dropoffText
+        }
+        onClose={() => setShowSavedAddressModal(false)}
+        onOpenMapPicker={(target) => {
+          setShowSavedAddressModal(false);
+          handleOpenMapPicker(target);
+        }}
+        onOpenSavedAddresses={
+          onOpenSavedAddresses
+            ? () => {
+                setShowSavedAddressModal(false);
+                onOpenSavedAddresses();
+              }
+            : undefined
+        }
+        onSelectAddress={(addr) => {
+          if (savedAddressModalTarget === 'pickup') {
+            setPickupText(addr.address);
+            setPickupLabel(addr.label);
+            addressStore.setDefaultAddress(addr.id);
+            if (dropoffText.trim().length >= 3) {
+              triggerNavigation(addr.address, dropoffText);
+            }
+          } else {
+            setDropoffText(addr.address);
+            if (pickupText.trim().length >= 3) {
+              triggerNavigation(pickupText, addr.address);
+            }
+          }
+          onSelectSavedAddress?.(addr);
+          setShowSavedAddressModal(false);
+        }}
+        onDeleteAddress={(id) => {
+          addressStore.deleteAddress(id);
+          setAddressStoreVersion((v) => v + 1);
+        }}
+        target={savedAddressModalTarget}
         visible={showSavedAddressModal}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable
-            accessibilityLabel="Đóng sổ địa chỉ"
-            onPress={() => setShowSavedAddressModal(false)}
-            style={styles.modalBackdrop}
-          />
-          <View style={styles.bottomSheetCard}>
-            <View style={styles.bottomSheetHandle} />
-            <View style={styles.bottomSheetHeader}>
-              <View>
-                <Text style={styles.bottomSheetTitle}>Sổ địa chỉ đã lưu</Text>
-                <Text style={styles.bottomSheetSub}>
-                  Chọn địa chỉ cho {savedAddressModalTarget === 'pickup' ? 'điểm lấy hàng' : 'điểm giao hàng'}
-                </Text>
-              </View>
-              <Pressable
-                accessibilityLabel="Đóng modal sổ địa chỉ"
-                hitSlop={8}
-                onPress={() => setShowSavedAddressModal(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Text style={styles.modalCloseBtnText}>✕</Text>
-              </Pressable>
-            </View>
+      />
 
-            <ScrollView
-              contentContainerStyle={styles.savedAddressListScroll}
-              keyboardShouldPersistTaps="handled"
-              style={styles.savedAddressScrollArea}
-            >
-              {addressList.map((addr) => {
-                const isSelected =
-                  savedAddressModalTarget === 'pickup'
-                    ? pickupText === addr.address
-                    : dropoffText === addr.address;
-                return (
-                  <Pressable
-                    accessibilityLabel={`Chọn ${addr.label}: ${addr.address}`}
-                    accessibilityRole="button"
-                    key={addr.id}
-                    onPress={() => {
-                      if (savedAddressModalTarget === 'pickup') {
-                        setPickupText(addr.address);
-                        setPickupLabel(addr.label);
-                        addressStore.setDefaultAddress(addr.id);
-                      } else {
-                        setDropoffText(addr.address);
-                      }
-                      onSelectSavedAddress?.(addr);
-                      setShowSavedAddressModal(false);
-                    }}
-                    style={({ pressed }) => [
-                      styles.savedAddressItemRow,
-                      isSelected ? styles.savedAddressItemRowActive : null,
-                      pressed ? styles.pressed : null,
-                    ]}
-                    testID={`pickup-chip-${addr.id}`}
-                  >
-                    <View
-                      style={[
-                        styles.savedAddrIconSquircle,
-                        isSelected ? styles.savedAddrIconSquircleActive : null,
-                      ]}
-                    >
-                      <IconLocationPin
-                        color={isSelected ? '#2563EB' : '#64748B'}
-                        size={18}
-                      />
-                    </View>
-                    <View style={styles.savedAddrTextCol}>
-                      <View style={styles.savedAddrLabelRow}>
-                        <Text style={styles.savedAddrLabelTitle}>{addr.label}</Text>
-                        {addr.isDefault ? (
-                          <View style={styles.defaultBadge}>
-                            <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                          </View>
-                        ) : null}
-                      </View>
-                      <Text numberOfLines={2} style={styles.savedAddrFullText}>
-                        {addr.address}
-                      </Text>
-                    </View>
-                    {isSelected ? (
-                      <View style={styles.checkCircle}>
-                        <Text style={styles.checkCircleText}>✓</Text>
-                      </View>
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <View style={styles.bottomSheetFooter}>
-              <Pressable
-                accessibilityLabel="Ghim vị trí trên bản đồ"
-                accessibilityRole="button"
-                onPress={() => {
-                  setShowSavedAddressModal(false);
-                  handleOpenMapPicker(savedAddressModalTarget);
-                }}
-                style={styles.bottomSheetMapBtn}
-              >
-                <IconLocationPin color="#EA580C" size={15} />
-                <Text style={styles.bottomSheetMapBtnText}>Ghim vị trí trên bản đồ</Text>
-              </Pressable>
-
-              {onOpenSavedAddresses ? (
-                <Pressable
-                  accessibilityLabel="Thêm địa chỉ mới"
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setShowSavedAddressModal(false);
-                    onOpenSavedAddresses();
-                  }}
-                  style={styles.bottomSheetManageBtn}
-                >
-                  <Text style={styles.bottomSheetManageBtnText}>+ Thêm địa chỉ mới</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ================= MODAL XÁC NHẬN BẢN ĐỒ & THÔNG TIN NGƯỜI GỬI (THEO MOCKUP ẢNH 2) ================= */}
-      <Modal
-        animationType="slide"
-        onRequestClose={() => setShowMapPickerModal(false)}
-        transparent
+      {/* ================= MODAL XÁC NHẬN BẢN ĐỒ & THÔNG TIN NGƯỜI GỬI ================= */}
+      <MapAddressPickerModal
+        defaultFallbackAddress={initialAddress}
+        initialAddress={mapTarget === 'pickup' ? pickupText : dropoffText}
+        loggedInCustomer={loggedInCustomer}
+        onClose={() => setShowMapPickerModal(false)}
+        onConfirm={handleConfirmMapLocation}
+        target={mapTarget}
+        userName={userName}
+        userPhone={userPhone}
         visible={showMapPickerModal}
-      >
-        <View style={styles.mapModalOverlay}>
-          <SafeAreaView edges={['top', 'bottom']} style={styles.mapModalSafeArea}>
-          {/* Top Bar with Close X and Title */}
-          <View style={styles.mapModalTopBar}>
-            <Pressable
-              accessibilityLabel="Đóng màn hình bản đồ"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => setShowMapPickerModal(false)}
-              style={styles.mapModalCloseBtn}
-            >
-              <Text style={styles.mapModalCloseBtnText}>✕</Text>
-            </Pressable>
-            <Text style={styles.mapModalTopBarTitle}>
-              {mapTarget === 'pickup' ? 'Thông tin người gửi' : 'Thông tin người nhận'}
-            </Text>
-            <View style={{ width: 32 }} />
-          </View>
-
-          <ScrollView
-            contentContainerStyle={styles.mapModalScrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Real Interactive Map Stage */}
-            <View style={styles.mapStageContainer}>
-              <RealInteractiveMap
-                height={260}
-                initialPinCoords={mapCoords}
-                interactive={true}
-                mode="pin"
-                onLocationChange={(coords) => {
-                  setCustomPinCoords(coords);
-                }}
-                origin={{ label: modalAddress || 'Vị trí đã chọn', coords: mapCoords }}
-                title="Xác nhận vị trí giao nhận"
-              />
-
-              {/* Top-Left Close overlay pill */}
-              <Pressable
-                accessibilityLabel="Đóng bản đồ"
-                onPress={() => setShowMapPickerModal(false)}
-                style={styles.mapOverlayCloseBtn}
-              >
-                <Text style={styles.mapOverlayCloseBtnText}>‹ Đóng</Text>
-              </Pressable>
-            </View>
-
-            {/* Detail Address Card */}
-            <View style={styles.mapAddressCard}>
-              <View style={styles.mapAddressHeaderRow}>
-                <View style={styles.mapAddressHeaderLabelRow}>
-                  <View
-                    style={[
-                      styles.mapAddressTypeDot,
-                      mapTarget === 'pickup'
-                        ? styles.mapAddressTypeDotPickup
-                        : styles.mapAddressTypeDotDropoff,
-                    ]}
-                  />
-                  <Text style={styles.mapAddressSectionTitle}>
-                    {mapTarget === 'pickup' ? 'Lấy hàng tại' : 'Giao hàng đến'}
-                  </Text>
-                </View>
-
-                <Pressable
-                  accessibilityLabel="Thay đổi địa chỉ"
-                  accessibilityRole="button"
-                  onPress={handleChangeAddress}
-                  style={styles.mapChangeAddrBtn}
-                >
-                  <Text style={styles.mapChangeAddrBtnText}>Thay đổi</Text>
-                </Pressable>
-              </View>
-
-              {/* Address Input Field (Real editable address, no mock text!) */}
-              <View
-                style={[
-                  styles.mapInputWrapper,
-                  styles.mapAddressInputWrapper,
-                  focusedModalInput === 'address' && styles.mapInputWrapperFocused,
-                ]}
-              >
-                <View style={styles.mapInputLeadingIcon}>
-                  <IconLocationPin
-                    color={mapTarget === 'pickup' ? '#16A34A' : '#0284C7'}
-                    size={20}
-                  />
-                </View>
-                <TextInput
-                  accessibilityLabel={mapTarget === 'pickup' ? 'Địa chỉ lấy hàng' : 'Địa chỉ giao hàng'}
-                  onBlur={() => setFocusedModalInput(null)}
-                  onChangeText={(val) => {
-                    setModalAddress(val);
-                    setCustomPinCoords(null);
-                  }}
-                  onFocus={() => setFocusedModalInput('address')}
-                  placeholder={
-                    mapTarget === 'pickup'
-                      ? 'Nhập địa chỉ lấy hàng (số nhà, đường, quận...)'
-                      : 'Nhập địa chỉ giao hàng (số nhà, đường, quận...)'
-                  }
-                  placeholderTextColor="#94A3B8"
-                  ref={modalAddressInputRef}
-                  style={styles.mapTextInput}
-                  value={modalAddress}
-                />
-                {modalAddress.length > 0 ? (
-                  <Pressable
-                    accessibilityLabel="Xóa địa chỉ"
-                    hitSlop={8}
-                    onPress={() => {
-                      setModalAddress('');
-                      setCustomPinCoords(null);
-                      modalAddressInputRef.current?.focus();
-                    }}
-                    style={styles.clearBtn}
-                  >
-                    <Text style={styles.clearBtnText}>✕</Text>
-                  </Pressable>
-                ) : null}
-
-                <Pressable
-                  accessibilityLabel="Lấy vị trí hiện tại"
-                  accessibilityRole="button"
-                  hitSlop={8}
-                  onPress={handleGetCurrentGpsLocation}
-                  style={styles.gpsPillBtn}
-                >
-                  <Text style={styles.gpsPillBtnText}>
-                    {isLocatingGps ? 'Đang định vị…' : '📍 GPS'}
-                  </Text>
-                </Pressable>
-              </View>
-
-              {/* Address Note Input */}
-              <View
-                style={[
-                  styles.mapInputWrapper,
-                  focusedModalInput === 'note' && styles.mapInputWrapperFocused,
-                ]}
-              >
-                <TextInput
-                  accessibilityLabel="Thêm ghi chú địa chỉ"
-                  onBlur={() => setFocusedModalInput(null)}
-                  onChangeText={setMapAddressNote}
-                  onFocus={() => setFocusedModalInput('note')}
-                  placeholder="Thêm ghi chú địa chỉ (tòa nhà, số tầng, chỉ dẫn...)"
-                  placeholderTextColor="#94A3B8"
-                  style={styles.mapTextInput}
-                  value={mapAddressNote}
-                />
-                {mapAddressNote.length > 0 ? (
-                  <Pressable
-                    accessibilityLabel="Xóa ghi chú"
-                    hitSlop={8}
-                    onPress={() => setMapAddressNote('')}
-                    style={styles.clearBtn}
-                  >
-                    <Text style={styles.clearBtnText}>✕</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            </View>
-
-            <View style={styles.mapSectionSeparator} />
-
-            {/* Sender / Contact Information Section */}
-            <View style={styles.mapSenderSection}>
-              <View style={styles.mapSenderHeaderRow}>
-                <Text style={styles.mapSenderSectionTitle}>
-                  {mapTarget === 'pickup' ? 'THÔNG TIN NGƯỜI GỬI' : 'THÔNG TIN NGƯỜI NHẬN'}
-                </Text>
-                <Pressable
-                  accessibilityLabel={mapTarget === 'pickup' ? 'Tôi là người gửi' : 'Tôi là người nhận'}
-                  onPress={handleFillMySenderInfo}
-                  style={styles.mapSenderMeBtn}
-                >
-                  <Text style={styles.mapSenderMeBtnText}>
-                    {mapTarget === 'pickup' ? 'Tôi là người gửi' : 'Tôi là người nhận'}
-                  </Text>
-                </Pressable>
-              </View>
-
-              {/* Name Input */}
-              <View
-                style={[
-                  styles.mapInputWrapper,
-                  focusedModalInput === 'name' && styles.mapInputWrapperFocused,
-                ]}
-              >
-                <TextInput
-                  accessibilityLabel={mapTarget === 'pickup' ? 'Tên người gửi' : 'Tên người nhận'}
-                  onBlur={() => setFocusedModalInput(null)}
-                  onChangeText={setSenderName}
-                  onFocus={() => setFocusedModalInput('name')}
-                  placeholder={mapTarget === 'pickup' ? 'Tên người gửi' : 'Tên người nhận'}
-                  placeholderTextColor="#94A3B8"
-                  style={styles.mapTextInput}
-                  value={senderName}
-                />
-                {senderName.length > 0 ? (
-                  <Pressable
-                    accessibilityLabel="Xóa tên người gửi"
-                    hitSlop={8}
-                    onPress={() => setSenderName('')}
-                    style={styles.clearBtn}
-                  >
-                    <Text style={styles.clearBtnText}>✕</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-
-              {/* Phone Input */}
-              <View
-                style={[
-                  styles.mapInputWrapper,
-                  focusedModalInput === 'phone' && styles.mapInputWrapperFocused,
-                ]}
-              >
-                <TextInput
-                  accessibilityLabel="Số điện thoại"
-                  keyboardType="phone-pad"
-                  onBlur={() => setFocusedModalInput(null)}
-                  onChangeText={setSenderPhone}
-                  onFocus={() => setFocusedModalInput('phone')}
-                  placeholder="Số điện thoại liên hệ"
-                  placeholderTextColor="#94A3B8"
-                  style={styles.mapTextInput}
-                  value={senderPhone}
-                />
-                {senderPhone.length > 0 ? (
-                  <Pressable
-                    accessibilityLabel="Xóa số điện thoại"
-                    hitSlop={8}
-                    onPress={() => setSenderPhone('')}
-                    style={styles.clearBtn}
-                  >
-                    <Text style={styles.clearBtnText}>✕</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            </View>
-          </ScrollView>
-
-          {/* Bottom Sticky Action Bar (Hủy / Lưu) */}
-          <View style={styles.mapModalBottomBar}>
-            <Pressable
-              accessibilityLabel="Hủy xác nhận địa chỉ"
-              accessibilityRole="button"
-              onPress={() => setShowMapPickerModal(false)}
-              style={({ pressed }) => [
-                styles.mapCancelBtn,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.mapCancelBtnText}>Hủy</Text>
-            </Pressable>
-
-            <Pressable
-              accessibilityLabel="Lưu thông tin vị trí"
-              accessibilityRole="button"
-              onPress={handleConfirmMapLocation}
-              style={({ pressed }) => [
-                styles.mapSaveBtn,
-                pressed && styles.mapSaveBtnPressed,
-              ]}
-            >
-              <Text style={styles.mapSaveBtnText}>Lưu</Text>
-            </Pressable>
-          </View>
-          </SafeAreaView>
-        </View>
-      </Modal>
+      />
     </SafeAreaView>
   );
 }
@@ -1669,28 +1511,71 @@ const styles = StyleSheet.create({
   heroBackgroundImage: {
     resizeMode: 'cover',
   },
-  topHeader: {
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(226, 232, 240, 0.85)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      } as any,
+    }),
+  },
+  heroActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
     paddingHorizontal: spacing.md,
     paddingTop: 10,
   },
-  greetingPill: {
+  heroIconBtn: {
+    width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    backgroundColor: 'rgba(15, 23, 42, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.85)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  greetingPill: {
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 0.95)',
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 6,
     maxWidth: '72%',
   },
   greetingTitleText: {
@@ -1709,20 +1594,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerIconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
+    borderColor: 'rgba(226, 232, 240, 0.95)',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 6,
   },
   badgePill: {
     position: 'absolute',
@@ -1950,6 +1835,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 6,
   },
+  fastForwardBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#16A34A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+    shadowColor: '#16A34A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  fastForwardBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  autoNavigatingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderColor: '#86EFAC',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    marginTop: 6,
+  },
+  autoNavigatingText: {
+    color: '#15803D',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  liveIndicatorDotActive: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+  },
 
   /* Dropdown Gợi ý & Xác nhận vị trí khi đang focus */
   addressDropdownWrap: {
@@ -2049,468 +1977,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     marginVertical: 2,
   },
-
-  /* Modal Sổ địa chỉ (Bottom Sheet) */
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    ...Platform.select({
-      web: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 9998,
-      } as any,
-    }),
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 1,
-  },
-  bottomSheetCard: {
-    position: 'relative',
-    zIndex: 2,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 24,
-    maxHeight: '80%',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  bottomSheetHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#CBD5E1',
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  bottomSheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  bottomSheetTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  bottomSheetSub: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  modalCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseBtnText: {
-    fontSize: 14,
-    color: '#64748B',
-    fontWeight: '700',
-  },
-  savedAddressListScroll: {
-    gap: 8,
-    paddingVertical: 4,
-  },
-  savedAddressScrollArea: {
-    maxHeight: 320,
-  },
-  savedAddressItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 12,
-  },
-  savedAddressItemRowActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#93C5FD',
-  },
-  savedAddrIconSquircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  savedAddrIconSquircleActive: {
-    backgroundColor: '#DBEAFE',
-    borderColor: '#BFDBFE',
-  },
-  savedAddrTextCol: {
-    flex: 1,
-  },
-  savedAddrLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 3,
-  },
-  savedAddrLabelTitle: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  defaultBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  defaultBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#15803D',
-  },
-  savedAddrFullText: {
-    fontSize: 12,
-    color: '#64748B',
-    lineHeight: 16,
-  },
-  checkCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#2563EB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkCircleText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  bottomSheetFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-  },
-  bottomSheetMapBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    borderRadius: 12,
-    height: 44,
-  },
-  bottomSheetMapBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0284C7',
-  },
-  bottomSheetManageBtn: {
-    paddingHorizontal: 14,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-  },
-  bottomSheetManageBtnText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#475569',
-  },
-
-  /* Modal Xác nhận Bản đồ & Thông tin người gửi */
-  mapModalOverlay: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    ...Platform.select({
-      web: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 9999,
-      } as any,
-    }),
-  },
-  mapModalSafeArea: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  mapModalTopBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
-  },
-  mapModalCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
-  },
-  mapModalCloseBtnText: {
-    fontSize: 16,
-    color: '#334155',
-    fontWeight: '700',
-  },
-  mapModalTopBarTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.2,
-  },
-  mapModalScrollContent: {
-    paddingBottom: 24,
-  },
-  mapStageContainer: {
-    height: 260,
-    backgroundColor: '#E2E8F0',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  mapOverlayCloseBtn: {
-    position: 'absolute',
-    top: 14,
-    left: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
-    zIndex: 10,
-  },
-  mapOverlayCloseBtnText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-
-  /* Card chi tiết địa chỉ */
-  mapAddressCard: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    gap: 12,
-  },
-  mapAddressHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  mapAddressHeaderLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  mapAddressSectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  mapAddressTypeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  mapAddressTypeDotPickup: {
-    backgroundColor: '#16A34A',
-  },
-  mapAddressTypeDotDropoff: {
-    backgroundColor: '#DC2626',
-  },
-  mapChangeAddrBtn: {
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
-  },
-  mapChangeAddrBtnText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#0284C7',
-  },
-  mapAddressInputWrapper: {
-    borderColor: '#94A3B8',
-  },
-  mapInputLeadingIcon: {
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gpsPillBtn: {
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    marginLeft: 6,
-  },
-  gpsPillBtnText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#0284C7',
-  },
-
-  /* Khung nhập liệu chuẩn hệ thống (Luxury design giống Login) */
-  mapInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 50,
-    minHeight: 50,
-  },
-  mapInputWrapperFocused: {
-    borderColor: '#0284C7',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  mapTextInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#0F172A',
-    fontWeight: '600',
-    padding: 0,
-    ...Platform.select({
-      web: {
-        outlineStyle: 'none',
-        outlineWidth: 0,
-      } as any,
-    }),
-  },
-
-  mapSectionSeparator: {
-    height: 8,
-    backgroundColor: '#F8FAFC',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-
-  /* Phần thông tin người gửi / người nhận */
-  mapSenderSection: {
-    padding: 16,
-    gap: 12,
-  },
-  mapSenderHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  mapSenderSectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  mapSenderMeBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-  },
-  mapSenderMeBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0284C7',
-  },
-
-  /* Thanh nút thao tác dính đáy (Sticky bottom) */
-  mapModalBottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
-  },
-  mapCancelBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapCancelBtnText: {
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  mapSaveBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: '#0284C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  mapSaveBtnPressed: {
-    backgroundColor: '#0369A1',
-    transform: [{ scale: 0.98 }],
-  },
-  mapSaveBtnText: {
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
   bookingActionWrap: {
     marginTop: spacing.xxs,
   },
 
-  /* 4. Services Grid: Modern Squircle Tiles */
+  /* 4. Services Grid: Modern Illustrated Tiles */
   serviceGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -2521,44 +1992,60 @@ const styles = StyleSheet.create({
     width: '31.3%',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    paddingVertical: 12,
+    paddingTop: 8,
+    paddingBottom: 10,
     paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
     borderWidth: 1,
     borderColor: '#F1F5F9',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
   },
   serviceCardPressed: {
     transform: [{ scale: 0.96 }],
     backgroundColor: '#F8FAFC',
   },
-  serviceIconSquircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: '#F0F9FF',
+  serviceImageContainer: {
+    width: '100%',
+    aspectRatio: 1.25,
+    maxHeight: 70,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#E0F2FE',
+    borderColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    marginBottom: 6,
+  },
+  serviceImage: {
+    width: '100%',
+    height: '100%',
   },
   serviceName: {
     color: '#0F172A',
     fontSize: 12.5,
     fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: -0.1,
+  },
+  serviceTagBadge: {
+    backgroundColor: '#F0F9FF',
+    borderColor: '#E0F2FE',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    marginTop: 3,
   },
   serviceTagText: {
     color: '#0284C7',
-    fontSize: 10.5,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
     textAlign: 'center',
   },
 
@@ -2623,49 +2110,36 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* 6. Operational Signal Banner Carousel */
+  /* 6. Operational Signal Banner Carousel (Hình ảnh) */
   promoContainer: {
-    gap: 6,
+    gap: 8,
   },
-  promoCard: {
+  promoTrackWindow: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    maxHeight: 200,
     borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    padding: spacing.md,
-    ...leopardElevation.subtle,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  promoContent: {
-    gap: 4,
+  promoTrack: {
+    flexDirection: 'row',
+    height: '100%',
   },
-  promoBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginBottom: 2,
+  promoSlideItem: {
+    height: '100%',
+    overflow: 'hidden',
   },
-  promoBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  promoTitle: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-  promoDesc: {
-    color: '#475569',
-    fontSize: 11.5,
-    lineHeight: 15,
-  },
-  promoCtaLink: {
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
-  promoCtaText: {
-    fontSize: 12,
-    fontWeight: '700',
+  promoBannerImage: {
+    width: '100%',
+    height: '100%',
   },
   dotsRow: {
     flexDirection: 'row',
@@ -2695,6 +2169,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  sectionTitleWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  liveTagBadge: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#BBF7D0',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  liveTagText: {
+    color: '#15803D',
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
   sectionLabel: {
     ...typography.caption,
     color: leopardPalette.textSubtle,
@@ -2710,50 +2202,96 @@ const styles = StyleSheet.create({
 
   /* 7. Active Shipment Card */
   activeCard: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: colors.active.border,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
     borderLeftWidth: 4,
+    borderLeftColor: '#0284C7',
     borderWidth: 1,
-    borderRadius: leopardRadius.lg,
+    borderRadius: 18,
     padding: spacing.md,
-    gap: spacing.xs,
-    ...leopardElevation.subtle,
+    gap: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  activeRouteWell: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#F1F5F9',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   activeTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.xs,
-    marginBottom: spacing.xxs,
+  },
+  etaPill: {
+    backgroundColor: '#F0F9FF',
+    borderColor: '#BAE6FD',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   etaText: {
-    color: leopardPalette.primaryDark,
-    fontSize: 12.5,
-    fontWeight: '600',
+    color: '#0369A1',
+    fontSize: 12,
+    fontWeight: '700',
   },
   activeMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.xs,
-    paddingTop: spacing.xs,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: leopardPalette.subtleDivider,
+    borderTopColor: '#F1F5F9',
+  },
+  activeDriverBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  },
+  activeDriverIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   driverText: {
     flex: 1,
-    color: leopardPalette.textMutedSlate,
+    color: '#334155',
     fontSize: 12,
+    fontWeight: '500',
   },
   plateText: {
-    color: leopardPalette.textSlateDark,
-    fontWeight: '600',
+    color: '#0F172A',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
+  activeTrackPill: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
   trackText: {
-    color: leopardPalette.primary,
-    fontSize: 12.5,
-    fontWeight: '600',
+    color: '#2563EB',
+    fontSize: 12,
+    fontWeight: '700',
   },
   orderList: {
     gap: spacing.sm,
@@ -2767,6 +2305,15 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xxs,
   },
+  emptyActivityBox: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderColor: leopardPalette.cardBorder,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: leopardRadius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
   emptyTitle: {
     ...typography.label,
     color: leopardPalette.textSlateDark,
@@ -2779,77 +2326,80 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
 
-  /* 8. Wallet Strip */
-  walletStrip: {
+  /* Quick Tracking Bar */
+  quickTrackingBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderWidth: 1,
-    borderRadius: leopardRadius.lg,
-    padding: spacing.sm,
-    ...leopardElevation.subtle,
+    gap: 8,
+    marginTop: 6,
   },
-  walletInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+  trackingInputWrap: {
     flex: 1,
-    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 6,
   },
-  walletIconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: leopardRadius.md,
-    backgroundColor: leopardPalette.primaryBg,
+  trackingInput: {
+    flex: 1,
+    color: '#0F172A',
+    fontSize: 12.5,
+    fontWeight: '600',
+    padding: 0,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        outlineWidth: 0,
+      } as any,
+    }),
+  },
+  trackingSearchBtn: {
+    backgroundColor: leopardPalette.primary,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: leopardPalette.primaryBorder,
   },
-  walletLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 10.5,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-  walletBalance: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 16,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  walletActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  walletBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: leopardPalette.primaryBg,
-    borderColor: leopardPalette.primaryBorder,
-    borderWidth: 1,
-    borderRadius: leopardRadius.md,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-    minHeight: 40,
-  },
-  walletBtnText: {
-    color: leopardPalette.primaryDark,
+  trackingSearchBtnText: {
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+
+  /* 8. Recent Orders & 1-Tap Reorder */
+  recentOrderItemWrap: {
+    gap: 4,
+  },
+  reorderInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  reorderInlineBtnPressed: {
+    backgroundColor: '#DBEAFE',
+  },
+  reorderInlineBtnText: {
+    color: '#2563EB',
+    fontSize: 11.5,
+    fontWeight: '700',
   },
 
   bottomSpacer: {
-    height: spacing.md,
+    height: layout.bottomNavClearance,
   },
   bottomSpacerFloating: {
-    height: 88,
+    height: layout.bottomNavClearance,
   },
   pressed: {
     opacity: 0.85,

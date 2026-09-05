@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -9,7 +9,9 @@ import {
   View,
 } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { httpClient } from '../../../api/http-client';
+import { addressStore } from './address-store';
+import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { FormField } from '../../../ui/FormField';
 import {
@@ -26,6 +28,12 @@ import {
 } from '../../../ui/icons/CoreIcons';
 import { RealInteractiveMap, resolveLocationCoords } from '../../../ui/RealInteractiveMap';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import {
+  POPULAR_MAP_SUGGESTIONS,
+  reverseGeocodeCoords,
+  searchVietmapDirect,
+  type AddressSuggestion,
+} from '../../home/components/MapAddressPickerModal';
 
 export type AddressCategory = 'WAREHOUSE' | 'OFFICE' | 'HOME' | 'OTHER';
 
@@ -78,8 +86,31 @@ const categoryOptions = [
   { id: 'OTHER' as const, label: 'Khác', color: '#64748B', bg: '#F1F5F9' },
 ] as const;
 
-export function AddressBookScreen() {
-  const [addresses, setAddresses] = useState<readonly SavedAddress[]>(mockAddresses);
+export type AddressBookScreenProps = Readonly<{
+  onOpenAddAddress?: () => void;
+}>;
+
+export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps = {}) {
+  const [addresses, setAddresses] = useState<readonly SavedAddress[]>(() => {
+    const stored = addressStore.getAddresses();
+    if (stored && stored.length > 0) {
+      const storedIds = new Set(stored.map((s) => s.id));
+      const remainingMocks = mockAddresses.filter((m) => !storedIds.has(m.id));
+      return [
+        ...stored.map((s) => ({
+          id: s.id,
+          label: s.label,
+          address: s.address,
+          contactName: s.contactName || 'Người nhận',
+          contactPhone: s.contactPhone || '0900000000',
+          isDefault: s.isDefault,
+          category: s.category || 'OTHER',
+        })),
+        ...remainingMocks,
+      ];
+    }
+    return mockAddresses;
+  });
   const [isAdding, setIsAdding] = useState(false);
   const [expandedMapId, setExpandedMapId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,6 +123,151 @@ export function AddressBookScreen() {
   const [newPhone, setNewPhone] = useState('');
   const [newCategory, setNewCategory] = useState<AddressCategory>('WAREHOUSE');
   const [newIsDefault, setNewIsDefault] = useState(false);
+  const [newPinCoords, setNewPinCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<readonly AddressSuggestion[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const pinDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleAddressChange = (text: string) => {
+    setNewAddress(text);
+    if (!text.trim() || text.trim().length < 2) {
+      setAddressSuggestions(POPULAR_MAP_SUGGESTIONS);
+      setShowAddressSuggestions(true);
+      return;
+    }
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    searchDebounceRef.current = setTimeout(async () => {
+      setIsSearchingAddress(true);
+      try {
+        const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+        let results: AddressSuggestion[] = [];
+
+        try {
+          const res = await httpClient.get<{
+            source?: string;
+            results: Array<{
+              id: string;
+              name?: string;
+              address?: string;
+              label?: string;
+              lat?: number;
+              lng?: number;
+              source?: string;
+            }>;
+          }>(`/maps/search?q=${encodeURIComponent(text.trim())}`);
+
+          if (res?.source !== 'DEMO' && Array.isArray(res?.results)) {
+            results = res.results
+              .filter(
+                (r) =>
+                  r.source !== 'DEMO' &&
+                  !r.name?.includes('(Demo data)') &&
+                  !r.address?.includes('(Demo data)'),
+              )
+              .map((r) => ({
+                id: r.id,
+                label: (r.name || r.label || 'Địa điểm').replace(/\s*\(Demo data\)/gi, '').trim(),
+                address: (r.address || r.label || r.name || '').replace(/\s*\(Demo data\)/gi, '').trim(),
+                lat: r.lat || 10.7725,
+                lng: r.lng || 106.698,
+              }));
+          }
+        } catch {
+          // ignore
+        }
+
+        if (results.length === 0 && apiKey) {
+          results = await searchVietmapDirect(text.trim(), apiKey);
+        }
+
+        if (results.length === 0) {
+          results = POPULAR_MAP_SUGGESTIONS.filter(
+            (s) =>
+              s.id !== 'popular-gps' &&
+              (s.label.toLowerCase().includes(text.toLowerCase()) ||
+                s.address.toLowerCase().includes(text.toLowerCase())),
+          );
+        }
+
+        setAddressSuggestions(results);
+        setShowAddressSuggestions(true);
+      } catch {
+        setAddressSuggestions([]);
+      } finally {
+        setIsSearchingAddress(false);
+      }
+    }, 300);
+  };
+
+  const handleSelectAddressSuggestion = (item: AddressSuggestion) => {
+    if (item.id === 'popular-gps') {
+      handleGetGpsForNewAddress();
+      setShowAddressSuggestions(false);
+      return;
+    }
+
+    setNewAddress(item.address);
+    if (item.lat && item.lng) {
+      setNewPinCoords({ lat: item.lat, lng: item.lng });
+    }
+    setShowAddressSuggestions(false);
+  };
+
+  const handleGetGpsForNewAddress = () => {
+    const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      setIsReverseGeocoding(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = Number(pos.coords.latitude.toFixed(5));
+          const lng = Number(pos.coords.longitude.toFixed(5));
+          setNewPinCoords({ lat, lng });
+          try {
+            const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
+            if (resolved) {
+              setNewAddress(resolved);
+            }
+          } catch {
+            // keep
+          } finally {
+            setIsReverseGeocoding(false);
+          }
+        },
+        () => {
+          setIsReverseGeocoding(false);
+        },
+        { enableHighAccuracy: true, timeout: 8000 },
+      );
+    }
+  };
+
+  const handlePinMoved = (coords: { lat: number; lng: number }) => {
+    setNewPinCoords(coords);
+    if (pinDebounceRef.current) {
+      clearTimeout(pinDebounceRef.current);
+    }
+    setIsReverseGeocoding(true);
+    pinDebounceRef.current = setTimeout(async () => {
+      try {
+        const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+        const resolved = await reverseGeocodeCoords(coords, apiKey);
+        if (resolved) {
+          setNewAddress(resolved);
+        }
+      } catch {
+        // keep
+      } finally {
+        setIsReverseGeocoding(false);
+      }
+    }, 500);
+  };
 
   const handleAddAddress = () => {
     if (!newLabel.trim() || !newAddress.trim()) return;
@@ -114,16 +290,31 @@ export function AddressBookScreen() {
       return [newItem, ...base];
     });
 
+    addressStore.saveAddress({
+      id: newItem.id,
+      label: newItem.label,
+      address: newItem.address,
+      contactName: newItem.contactName,
+      contactPhone: newItem.contactPhone,
+      isDefault: newItem.isDefault,
+      category: newItem.category,
+      latitude: newPinCoords?.lat,
+      longitude: newPinCoords?.lng,
+    });
+
     setNewLabel('');
     setNewAddress('');
     setNewContact('');
     setNewPhone('');
     setNewCategory('WAREHOUSE');
     setNewIsDefault(false);
+    setNewPinCoords(null);
+    setShowAddressSuggestions(false);
     setIsAdding(false);
   };
 
   const handleDelete = (id: string) => {
+    addressStore.deleteAddress(id);
     setAddresses((prev) => {
       const remaining = prev.filter((a) => a.id !== id);
       // If deleted address was default and there are other addresses, promote first one
@@ -136,6 +327,7 @@ export function AddressBookScreen() {
   };
 
   const handleSetDefault = (id: string) => {
+    addressStore.setDefaultAddress(id);
     setAddresses((prev) =>
       prev.map((a) => ({ ...a, isDefault: a.id === id })),
     );
@@ -364,14 +556,80 @@ export function AddressBookScreen() {
               value={newLabel}
             />
 
-            <FormField
-              label="Địa chỉ chi tiết"
-              onChangeText={setNewAddress}
-              placeholder="Số nhà, tên đường, phường, quận, tỉnh/thành..."
-              value={newAddress}
-            />
+            <View style={styles.addressFieldWrapper}>
+              <FormField
+                label="Địa chỉ chi tiết"
+                onChangeText={handleAddressChange}
+                onFocus={() => {
+                  if (!newAddress.trim() || newAddress.trim().length < 2) {
+                    setAddressSuggestions(POPULAR_MAP_SUGGESTIONS);
+                  }
+                  setShowAddressSuggestions(true);
+                }}
+                placeholder="Số nhà, tên đường, phường, quận, tỉnh/thành..."
+                value={newAddress}
+              />
+              {showAddressSuggestions && addressSuggestions.length > 0 ? (
+                <View style={styles.suggestionsContainer}>
+                  <View style={styles.suggestionsHeader}>
+                    <Text style={styles.suggestionsHeaderTitle}>
+                      {newAddress.trim().length < 2 ? 'GỢI Ý ĐỊA ĐIỂM PHỔ BIẾN' : 'GỢI Ý TỪ BẢN ĐỒ'}
+                    </Text>
+                    <Pressable
+                      accessibilityLabel="Đóng danh sách gợi ý"
+                      hitSlop={8}
+                      onPress={() => setShowAddressSuggestions(false)}
+                    >
+                      <Text style={styles.suggestionsCloseText}>✕ Đóng</Text>
+                    </Pressable>
+                  </View>
+                  <ScrollView
+                    keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled
+                    style={styles.suggestionsListScroll}
+                  >
+                    {addressSuggestions.map((item) => {
+                      const isGpsItem = item.id === 'popular-gps';
+                      return (
+                        <Pressable
+                          key={item.id}
+                          onPress={() => handleSelectAddressSuggestion(item)}
+                          style={({ pressed }) => [
+                            styles.suggestionItem,
+                            pressed && styles.suggestionItemPressed,
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.suggestionIconBox,
+                              isGpsItem && styles.suggestionIconBoxGps,
+                            ]}
+                          >
+                            <IconLocationPin
+                              color={isGpsItem ? '#16A34A' : '#0284C7'}
+                              size={16}
+                            />
+                          </View>
+                          <View style={styles.suggestionTextCol}>
+                            <Text numberOfLines={1} style={styles.suggestionTitle}>
+                              {item.label}
+                            </Text>
+                            <Text numberOfLines={1} style={styles.suggestionSubtitle}>
+                              {item.address}
+                            </Text>
+                          </View>
+                          <Text style={styles.suggestionActionText}>
+                            {isGpsItem ? 'Định vị ›' : 'Chọn ›'}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null}
+            </View>
 
-            {/* 📍 Ghim vị trí thực tế trên bản đồ vệ tinh / đường phố */}
+            {/* Định vị vị trí thực tế trên bản đồ vệ tinh / đường phố */}
             <View style={styles.mapPinSection}>
               <View style={styles.mapPinHeader}>
                 <View style={styles.mapPinTitleRow}>
@@ -383,11 +641,20 @@ export function AddressBookScreen() {
               <View style={styles.mapPinBox}>
                 <RealInteractiveMap
                   height={150}
-                  initialPinCoords={resolveLocationCoords(newAddress)}
+                  initialPinCoords={newPinCoords || resolveLocationCoords(newAddress)}
+                  interactive={true}
                   mode="pin"
+                  onLocationChange={handlePinMoved}
                   title="Bản đồ định vị địa chỉ mới"
                 />
               </View>
+              {newAddress.trim() || newPinCoords ? (
+                <View style={styles.pinnedNotice}>
+                  <Text numberOfLines={2} style={styles.pinnedNoticeText}>
+                    {isReverseGeocoding ? 'Đang cập nhật địa chỉ…' : `Đã ghim: ${newAddress || 'Vị trí đã chọn'}`}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             <View style={styles.contactFieldsRow}>
@@ -837,7 +1104,7 @@ const styles = StyleSheet.create({
   // 4. Address Cards List
   listContent: {
     gap: spacing.sm,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
   },
   addressCard: {
     backgroundColor: '#FFFFFF',
@@ -1097,5 +1364,102 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  addressFieldWrapper: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  suggestionsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    marginTop: -8,
+    marginBottom: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  suggestionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#F8FAFC',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  suggestionsHeaderTitle: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.5,
+  },
+  suggestionsCloseText: {
+    fontSize: 11,
+    color: '#0284C7',
+    fontWeight: '600',
+  },
+  suggestionsListScroll: {
+    maxHeight: 180,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    gap: 10,
+  },
+  suggestionItemPressed: {
+    backgroundColor: '#F0F9FF',
+  },
+  suggestionIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  suggestionIconBoxGps: {
+    backgroundColor: '#DCFCE7',
+  },
+  suggestionTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  suggestionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  suggestionSubtitle: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  suggestionActionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0284C7',
+  },
+  pinnedNotice: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radius.cardLg,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  pinnedNoticeText: {
+    fontSize: 12,
+    color: '#15803D',
+    fontWeight: '600',
   },
 });

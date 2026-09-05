@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
 import { IconMessage, IconPhone } from '../../../ui/icons/CoreIcons';
@@ -324,7 +324,7 @@ export function CustomerOrderDetailScreen(props: CustomerOrderDetailScreenProps)
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
   },
   section: {
     gap: spacing.sm,

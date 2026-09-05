@@ -262,4 +262,23 @@ describe('SessionStore', () => {
     expect(store.getRole()).toBe('DRIVER');
     expect(store.getAccessToken()).toBe('acc-2');
   });
+
+  it('persists and hydrates via localStorage fallback when SecureStore is unavailable', async () => {
+    secureMocks().isAvailableAsync.mockResolvedValue(false);
+    const store = makeSessionStore();
+    await store.setSession('acc-web', 'ref-web', 'CUSTOMER');
+
+    expect(secureMocks().setItemAsync).not.toHaveBeenCalled();
+
+    // Create a new store to test hydration from fallback storage
+    const newStore = makeSessionStore();
+    const hydrated = await newStore.hydrate();
+    expect(hydrated).toBe(true);
+    expect(await newStore.getRefreshToken()).toBe('ref-web');
+    expect(newStore.getRole()).toBe('CUSTOMER');
+
+    await newStore.clearSession();
+    expect(await newStore.getRefreshToken()).toBeNull();
+    expect(newStore.getRole()).toBeNull();
+  });
 });

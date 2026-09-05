@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import {
   IconBank,
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
   },
   historyList: {
     gap: 8,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
   },
   txRow: {
     alignItems: 'center',

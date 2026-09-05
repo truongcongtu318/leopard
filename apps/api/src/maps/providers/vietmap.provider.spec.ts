@@ -61,6 +61,44 @@ describe('VietmapProvider', () => {
     expect(requestedUrl.searchParams.get('display_type')).toBe('5');
   });
 
+  it('resolves coordinates via Place v4 when autocomplete payload omits lat and lng', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(200, [
+          {
+            ref_id: 'auto:ben-thanh',
+            display: 'Chợ Bến Thành',
+            name: 'Chợ Bến Thành',
+            address: 'Phường Bến Thành, Quận 1',
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          display: 'Chợ Bến Thành, Phường Bến Thành, Quận 1',
+          lat: 10.772517,
+          lng: 106.698021,
+        }),
+      );
+    const provider = vietmapProvider(fetchMock);
+
+    const results = await provider.search('Chợ Bến Thành');
+
+    expect(results).toEqual([
+      {
+        placeId: 'auto:ben-thanh',
+        label: 'Chợ Bến Thành, Phường Bến Thành, Quận 1',
+        address: 'Phường Bến Thành, Quận 1',
+        point: {
+          latitude: 10.772517,
+          longitude: 106.698021,
+        },
+        source: 'VIETMAP',
+      },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('maps Place v4 payloads to shared coordinates', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(200, {

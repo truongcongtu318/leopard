@@ -106,12 +106,12 @@ describe('FloatingNavBar', () => {
 
     expect(screen.getByText('Trang chủ')).toBeTruthy();
     expect(screen.getByText('Đơn hàng')).toBeTruthy();
-    expect(screen.getByText('Đang giao')).toBeTruthy();
+    expect(screen.getByText('Ví')).toBeTruthy();
     expect(screen.getByText('Tài khoản')).toBeTruthy();
 
-    const trackingTab = screen.getByLabelText('Đang giao');
-    await fireEvent.press(trackingTab);
-    expect(onTabChange).toHaveBeenCalledWith('tracking');
+    const walletTab = screen.getByLabelText('Ví');
+    await fireEvent.press(walletTab);
+    expect(onTabChange).toHaveBeenCalledWith('wallet');
 
     await screen.unmount();
   });

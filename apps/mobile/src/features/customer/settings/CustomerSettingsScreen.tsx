@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 
 export function CustomerSettingsScreen() {
@@ -106,7 +106,7 @@ export function CustomerSettingsScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.sm,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
   },
   sectionLabel: {
     color: colors.brand.background,

@@ -10,6 +10,7 @@ type ScreenScaffoldProps = PropsWithChildren<
   Readonly<{
     stickyFooter?: ReactNode;
     eyebrow?: string;
+    hasFloatingNavBar?: boolean;
     headerTone?: 'plain' | 'ink';
     headerRight?: ReactNode;
     headerLeading?: ReactNode;
@@ -27,6 +28,7 @@ type SectionHeadingProps = Readonly<{
 export function ScreenScaffold({
   children,
   eyebrow,
+  hasFloatingNavBar = false,
   headerLeading,
   headerRight,
   headerTone = 'plain',
@@ -97,7 +99,13 @@ export function ScreenScaffold({
       </View>
 
       {stickyFooter ? (
-        <View style={styles.stickyFooter} testID="screen-scaffold-sticky-footer">
+        <View
+          style={[
+            styles.stickyFooter,
+            hasFloatingNavBar ? styles.stickyFooterWithFloatingNav : null,
+          ]}
+          testID="screen-scaffold-sticky-footer"
+        >
           <View style={styles.footerContent}>{stickyFooter}</View>
         </View>
       ) : null}
@@ -243,6 +251,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     position: 'relative',
+  },
+  stickyFooterWithFloatingNav: {
+    paddingBottom: layout.bottomNavClearance,
   },
   footerContent: {
     maxWidth: layout.contentMaxWidth,

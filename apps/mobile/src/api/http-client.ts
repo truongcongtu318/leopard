@@ -1,3 +1,4 @@
+import type { Role } from '@leopard/shared';
 import { ApiError } from './api-error';
 import { sessionStore } from '../auth/session-store';
 
@@ -13,6 +14,33 @@ interface RequestOptions {
   method: HttpMethod;
   path: string;
   body?: unknown;
+}
+
+// ---- token role decoding helper ----
+
+function decodeRoleFromToken(token: string): Role | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json =
+      typeof atob === 'function'
+        ? atob(base64)
+        : Buffer.from(base64, 'base64').toString('utf8');
+    const parsed = JSON.parse(json) as { role?: unknown };
+    const role = parsed?.role;
+    if (
+      role === 'CUSTOMER' ||
+      role === 'DRIVER' ||
+      role === 'FLEET_OWNER' ||
+      role === 'ADMIN'
+    ) {
+      return role;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // ---- concurrent refresh deduplication ----
@@ -43,9 +71,16 @@ async function performRefresh(): Promise<boolean> {
     };
 
     if (body.accessToken && body.refreshToken) {
-      await sessionStore.setSession(body.accessToken, body.refreshToken);
+      const tokenRole = decodeRoleFromToken(body.accessToken);
+      const roleToPreserve = tokenRole ?? sessionStore.getRole();
+      await sessionStore.setSession(
+        body.accessToken,
+        body.refreshToken,
+        roleToPreserve,
+      );
       return true;
     }
+
 
     return false;
   } catch {

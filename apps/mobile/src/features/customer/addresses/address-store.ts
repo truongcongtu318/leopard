@@ -108,6 +108,29 @@ export const addressStore = {
     }
   },
 
+  deleteAddress(id: string): void {
+    const list = this.getAddresses();
+    const updatedList = list.filter((a) => a.id !== id);
+    inMemoryAddresses = updatedList;
+
+    if (inMemoryDefaultId === id) {
+      inMemoryDefaultId = updatedList[0]?.id ?? null;
+    }
+
+    if (isBrowser()) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
+        if (inMemoryDefaultId) {
+          window.localStorage.setItem(DEFAULT_ADDR_KEY, inMemoryDefaultId);
+        } else {
+          window.localStorage.removeItem(DEFAULT_ADDR_KEY);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  },
+
   clearAll(): void {
     inMemoryAddresses = [];
     inMemoryDefaultId = null;

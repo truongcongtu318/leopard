@@ -9,6 +9,7 @@ import {
 
 import {
   colors,
+  layout,
   leopardElevation,
   leopardPalette,
   leopardRadius,
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
   },
   sheetContent: {
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
     gap: spacing.md,
   },
   driverSection: {

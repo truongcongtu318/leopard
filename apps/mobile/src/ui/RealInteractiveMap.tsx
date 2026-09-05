@@ -39,10 +39,11 @@ export type RealInteractiveMapProps = Readonly<{
   style?: StyleProp<ViewStyle>;
   interactive?: boolean;
   title?: string;
+  vietmapApiKey?: string;
 }>;
 
 // ── Vietnamese Logistics Hubs Dictionary ────────────────────────────────
-const VIETNAM_LOCATION_DICT: Record<string, MapCoordinate> = {
+export const VIETNAM_LOCATION_DICT: Record<string, MapCoordinate> = {
   'tân bình': { lat: 10.795, lng: 106.652 },
   'kho vlxd tân bình': { lat: 10.795, lng: 106.652 },
   'kho tân bình': { lat: 10.795, lng: 106.652 },
@@ -128,6 +129,7 @@ function buildLeafletHtml({
   stopsCoords,
   truckCoords,
   truckEtaLabel,
+  vietmapApiKey,
 }: {
   destinationCoords: MapCoordinate;
   destinationLabel: string;
@@ -140,6 +142,7 @@ function buildLeafletHtml({
   stopsCoords: readonly { label: string; coords: MapCoordinate }[];
   truckCoords: MapCoordinate;
   truckEtaLabel: string;
+  vietmapApiKey?: string;
 }): string {
   const pointsJson = JSON.stringify({
     mode,
@@ -207,19 +210,23 @@ function buildLeafletHtml({
       L.control.zoom({ position: 'topright' }).addTo(map);
     }
 
-    // Primary Google Maps tiles with OpenStreetMap fallback
-    var tiles = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=vi', {
+    // Primary map tile provider: Google Maps (Fast, Vietnamese language labels, high detail in Vietnam)
+    // Fallback: CartoDB Voyager (never blocked in Vietnam, crisp retina tiles)
+    var googleTileUrl = 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=vi';
+    var tiles = L.tileLayer(googleTileUrl, {
       maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      subdomains: ['0', '1', '2', '3'],
       attribution: '© Google Maps'
     }).addTo(map);
 
     tiles.on('tileerror', function() {
-      if (!window._osmFallback) {
-        window._osmFallback = true;
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      if (!window._cartoFallback) {
+        window._cartoFallback = true;
+        try { map.removeLayer(tiles); } catch(e) {}
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png', {
           maxZoom: 19,
-          attribution: '© OpenStreetMap'
+          subdomains: ['a', 'b', 'c', 'd'],
+          attribution: '© CARTO'
         }).addTo(map);
       }
     });
@@ -372,6 +379,7 @@ export function RealInteractiveMap({
   truckEtaLabel = '',
   truckEtaMinutes,
   truckLocation,
+  vietmapApiKey,
 }: RealInteractiveMapProps) {
   const mapInstanceId = useId();
 
@@ -439,6 +447,8 @@ export function RealInteractiveMap({
   }, [mapInstanceId, onLocationChange]);
 
   const mapHtml = useMemo(() => {
+    const resolvedVietmapKey =
+      vietmapApiKey || process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
     return buildLeafletHtml({
       destinationCoords,
       destinationLabel: destination?.label || 'Điểm giao',
@@ -451,6 +461,7 @@ export function RealInteractiveMap({
       stopsCoords,
       truckCoords,
       truckEtaLabel: displayEta,
+      vietmapApiKey: resolvedVietmapKey,
     });
   }, [
     destination?.label,
@@ -464,6 +475,7 @@ export function RealInteractiveMap({
     pinCoords,
     stopsCoords,
     truckCoords,
+    vietmapApiKey,
   ]);
 
   const containerStyle: StyleProp<ViewStyle> = [

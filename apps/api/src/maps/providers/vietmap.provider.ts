@@ -77,9 +77,39 @@ export class VietmapProvider implements MapProvider {
       throw new VietmapProviderError('Vietmap search failed: unexpected response');
     }
 
-    return payload
-      .map((item) => mapPlaceCandidate(item))
-      .filter((candidate): candidate is PlaceCandidate => candidate !== null);
+    const items = payload
+      .map((item) => parseCandidateMeta(item))
+      .filter((candidate): candidate is ParsedCandidateMeta => candidate !== null)
+      .slice(0, 5);
+
+    const candidates = await Promise.all(
+      items.map(async (item): Promise<PlaceCandidate | null> => {
+        if (item.lat !== null && item.lng !== null) {
+          return {
+            placeId: item.placeId,
+            label: item.label,
+            ...(item.address ? { address: item.address } : {}),
+            point: { latitude: item.lat, longitude: item.lng },
+            source: 'VIETMAP',
+          };
+        }
+
+        try {
+          const geocoded = await this.geocode(item.placeId);
+          return {
+            placeId: item.placeId,
+            label: geocoded.label || item.label,
+            ...(geocoded.address || item.address ? { address: geocoded.address ?? item.address } : {}),
+            point: geocoded.point,
+            source: 'VIETMAP',
+          };
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    return candidates.filter((candidate): candidate is PlaceCandidate => candidate !== null);
   }
 
   async geocode(placeId: string): Promise<GeocodeResult> {
@@ -251,7 +281,15 @@ export class VietmapProviderError extends Error {
   }
 }
 
-function mapPlaceCandidate(item: unknown): PlaceCandidate | null {
+interface ParsedCandidateMeta {
+  placeId: string;
+  label: string;
+  address?: string;
+  lat: number | null;
+  lng: number | null;
+}
+
+function parseCandidateMeta(item: unknown): ParsedCandidateMeta | null {
   if (!isRecord(item)) {
     return null;
   }
@@ -264,20 +302,16 @@ function mapPlaceCandidate(item: unknown): PlaceCandidate | null {
     return null;
   }
 
-  const latitude = numberOrNull(result.lat);
-  const longitude = numberOrNull(result.lng);
+  const lat = numberOrNull(result.lat);
+  const lng = numberOrNull(result.lng);
   const address = stringOrNull(result.address);
-
-  if (latitude === null || longitude === null) {
-    return null;
-  }
 
   return {
     placeId,
     label,
     ...(address ? { address } : {}),
-    point: { latitude, longitude },
-    source: 'VIETMAP',
+    lat,
+    lng,
   };
 }
 

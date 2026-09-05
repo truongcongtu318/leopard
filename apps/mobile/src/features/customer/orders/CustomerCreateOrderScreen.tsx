@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
 import { FormField } from '../../../ui/FormField';
 import {
@@ -321,6 +321,7 @@ export function CustomerCreateOrderScreen({
   return (
     <ScreenScaffold
       eyebrow="CUSTOMER · JOURNEY SHEET"
+      hasFloatingNavBar
       onBack={onBack ? handleBackPress : undefined}
       stickyFooter={
         primaryAction ? (
@@ -601,7 +602,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: layout.bottomNavClearance,
   },
   stepProgressRow: {
     flexDirection: 'row',

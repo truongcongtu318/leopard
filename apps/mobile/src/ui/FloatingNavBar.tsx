@@ -2,9 +2,9 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, leopardElevation, leopardPalette, leopardRadius, spacing } from '../theme/tokens';
-import { IconClock, IconEarnings, IconHome, IconOrders, IconSpeedTruck, IconUser } from './icons/CoreIcons';
+import { IconClock, IconEarnings, IconHome, IconOrders, IconSpeedTruck, IconUser, IconWallet } from './icons/CoreIcons';
 
-export type TabKey = 'home' | 'orders' | 'tracking' | 'account';
+export type TabKey = 'home' | 'orders' | 'wallet' | 'account';
 
 export type NavItem = Readonly<{
   key: string;
@@ -22,7 +22,7 @@ export type FloatingNavBarProps = Readonly<{
 const defaultNavItems: readonly NavItem[] = [
   { key: 'home', label: 'Trang chủ' },
   { key: 'orders', label: 'Đơn hàng' },
-  { key: 'tracking', label: 'Đang giao', badge: 2 },
+  { key: 'wallet', label: 'Ví' },
   { key: 'account', label: 'Tài khoản' },
 ];
 
@@ -33,8 +33,8 @@ function renderDefaultNavIcon(key: string, isActive: boolean) {
       return <IconHome color={color} size={22} />;
     case 'orders':
       return <IconOrders color={color} size={22} />;
-    case 'tracking':
-      return <IconSpeedTruck color={color} size={22} />;
+    case 'wallet':
+      return <IconWallet color={color} size={22} />;
     case 'account':
       return <IconUser color={color} size={22} />;
     default:

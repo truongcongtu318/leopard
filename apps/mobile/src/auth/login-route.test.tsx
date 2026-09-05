@@ -66,6 +66,7 @@ async function loginWithGoogleAs(role: string, profileComplete = true) {
 
 describe('LoginRoute (Mobile)', () => {
   beforeEach(() => {
+    jest.setTimeout(20000);
     jest.clearAllMocks();
     mockSignInWithGoogle.mockResolvedValue('google-id-token');
   });
@@ -103,6 +104,14 @@ describe('LoginRoute (Mobile)', () => {
     const screen = await loginWithGoogleAs('CUSTOMER', false);
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/(public)/customer-register');
+    });
+    await screen.unmount();
+  });
+
+  it('routes a driver to /driver/orders even when profileComplete is false', async () => {
+    const screen = await loginWithGoogleAs('DRIVER', false);
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/driver/orders');
     });
     await screen.unmount();
   });

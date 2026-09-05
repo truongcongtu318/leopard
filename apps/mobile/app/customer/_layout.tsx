@@ -35,17 +35,20 @@ export default function CustomerLayout() {
   if (decision.kind === 'denied') return null;
 
   const getActiveTab = (): TabKey => {
-    if (pathname.includes('/customer/orders')) {
+    if (
+      pathname.includes('/customer/orders') ||
+      pathname.includes('/customer/deliveries') ||
+      pathname.includes('/customer/tracking')
+    ) {
       return 'orders';
     }
-    if (pathname.includes('/customer/deliveries') || pathname.includes('/customer/tracking')) {
-      return 'tracking';
+    if (pathname.includes('/customer/wallet')) {
+      return 'wallet';
     }
     if (
       pathname.includes('/customer/profile') ||
       pathname.includes('/customer/settings') ||
       pathname.includes('/customer/addresses') ||
-      pathname.includes('/customer/wallet') ||
       pathname.includes('/customer/promotions')
     ) {
       return 'account';
@@ -61,8 +64,8 @@ export default function CustomerLayout() {
       case 'orders':
         router.push('/customer/orders');
         break;
-      case 'tracking':
-        router.push('/customer/deliveries');
+      case 'wallet':
+        router.push('/customer/wallet');
         break;
       case 'account':
         router.push('/customer/profile');
@@ -70,12 +73,19 @@ export default function CustomerLayout() {
     }
   };
 
+  const isSubScreenWithoutNav =
+    pathname.includes('/customer/chat') ||
+    pathname.includes('/customer/report') ||
+    pathname.includes('/customer/review');
+
   return (
     <View style={styles.flex}>
       <View style={styles.flex}>
         <Slot />
       </View>
-      <FloatingNavBar activeTab={getActiveTab()} onTabChange={handleTabChange} />
+      {!isSubScreenWithoutNav ? (
+        <FloatingNavBar activeTab={getActiveTab()} onTabChange={handleTabChange} />
+      ) : null}
     </View>
   );
 }

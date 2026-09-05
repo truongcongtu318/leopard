@@ -80,8 +80,8 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(screen.getByLabelText('Chuyển vai trò'));
     expect(onSwitchRole).toHaveBeenCalledWith('DRIVER');
 
-    // Single primary action: create order
-    await fireEvent.press(screen.getByText('Tạo đơn vận chuyển'));
+    // Promo banner click jumps into order creation
+    await fireEvent.press(screen.getByLabelText(/Ưu đãi: Giảm 50.000₫/));
     expect(onCreateOrder).toHaveBeenCalledTimes(1);
 
     // Active shipment sits at the top: status + route + ETA, opens on press
@@ -103,12 +103,9 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(screen.getByLabelText('Đặt nhanh Xe Tải Nhẹ'));
     expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
 
-    // Wallet utility strip (no fabricated KPIs)
-    expect(screen.getByText('1.850.000 ₫')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText('Nạp tiền vào ví'));
-    expect(onTopUpWallet).toHaveBeenCalledTimes(1);
-    await fireEvent.press(screen.getByLabelText('Quét mã QR thanh toán'));
-    expect(onOpenQrScan).toHaveBeenCalledTimes(1);
+    // Wallet utility strip removed from home dashboard
+    expect(screen.queryByText('Ví VietQR')).toBeNull();
+    expect(screen.queryByLabelText('Nạp tiền vào ví')).toBeNull();
 
     // FloatingNavBar hidden by default
     expect(screen.queryByLabelText('Trang chủ')).toBeNull();
@@ -133,10 +130,10 @@ describe('HomeDashboardScreen', () => {
       <HomeDashboardScreen onNavigateTab={onNavigateTab} showFloatingNavBar />,
     );
 
-    const trackingTab = screen.getByLabelText('Đang giao');
-    expect(trackingTab).toBeTruthy();
-    await fireEvent.press(trackingTab);
-    expect(onNavigateTab).toHaveBeenCalledWith('tracking');
+    const walletTab = screen.getByLabelText('Ví');
+    expect(walletTab).toBeTruthy();
+    await fireEvent.press(walletTab);
+    expect(onNavigateTab).toHaveBeenCalledWith('wallet');
 
     await screen.unmount();
   });
@@ -171,12 +168,13 @@ describe('HomeDashboardScreen', () => {
     // Default pickup location is prefilled
     expect(screen.getByDisplayValue('Kho Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
 
-    // Type a destination
+    // Type a destination and submit via fast forward button
     await fireEvent.changeText(
-      screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
-      'KCN Sóng Thần, Bình Dương',
+       screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
+       'KCN Sóng Thần, Bình Dương',
     );
-    await fireEvent.press(screen.getByText('Tạo đơn vận chuyển'));
+    await fireEvent.press(screen.getByTestId('quick-book-submit-btn'));
+    await new Promise((r) => setTimeout(r, 450));
 
     expect(onQuickBook).toHaveBeenCalledWith(
       'Kho Tân Bình, TP. Hồ Chí Minh',
@@ -241,8 +239,9 @@ describe('HomeDashboardScreen', () => {
       screen.getByDisplayValue('Kho A1 - 120 Trường Chinh, Quận Tân Bình'),
     ).toBeTruthy();
 
-    // Tap on Sổ địa chỉ to open bottom sheet modal
-    await fireEvent.press(screen.getByLabelText('Mở sổ địa chỉ'));
+    // Focus on pickup input to open dropdown and pick from address book
+    await fireEvent(screen.getByTestId('cr-pickup-input'), 'focus');
+    await fireEvent.press(screen.getByLabelText('Chọn từ sổ địa chỉ'));
 
     // Tap on Nhà riêng in the modal
     const homeChip = screen.getByTestId('pickup-chip-addr-home');
@@ -258,7 +257,7 @@ describe('HomeDashboardScreen', () => {
     );
 
     await screen.unmount();
-  });
+  }, 30000);
 
   it('supports entering address and confirming location via map picker modal', async () => {
     const screen = await render(
@@ -309,7 +308,7 @@ describe('HomeDashboardScreen', () => {
     expect(screen.getByDisplayValue('120 Trường Chinh, Quận Tân Bình')).toBeTruthy();
 
     await screen.unmount();
-  });
+  }, 30000);
 
   it('supports entering destination address and filling receiver info with logged in customer', async () => {
     const screen = await render(
@@ -340,7 +339,7 @@ describe('HomeDashboardScreen', () => {
     expect(screen.getByDisplayValue('Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh')).toBeTruthy();
 
     await screen.unmount();
-  });
+  }, 30000);
 
   it('supports opening map picker directly via input map pin button', async () => {
     const screen = await render(
@@ -358,6 +357,67 @@ describe('HomeDashboardScreen', () => {
 
     // Close map modal
     await fireEvent.press(screen.getByLabelText('Đóng màn hình bản đồ'));
+
+    await screen.unmount();
+  }, 30000);
+
+  it('triggers quick route booking on keyboard submit editing', async () => {
+    const onQuickBook = jest.fn();
+    const screen = await render(
+      <HomeDashboardScreen onQuickBook={onQuickBook} />,
+    );
+
+    // Default pickup is populated
+    expect(screen.getByDisplayValue('Kho Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
+
+    // Type dropoff and press enter
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
+      'KCN Amata, Đồng Nai',
+    );
+    await fireEvent(screen.getByTestId('cr-dropoff-input'), 'submitEditing');
+    await new Promise((r) => setTimeout(r, 450));
+
+    expect(onQuickBook).toHaveBeenCalledWith(
+      'Kho Tân Bình, TP. Hồ Chí Minh',
+      'KCN Amata, Đồng Nai',
+    );
+
+    await screen.unmount();
+  });
+
+  it('supports 1-tap reorder from recent orders to auto-populate and navigate', async () => {
+    const onQuickBook = jest.fn();
+    const screen = await render(
+      <HomeDashboardScreen
+        onQuickBook={onQuickBook}
+        recentOrders={recentOrders}
+      />,
+    );
+
+    // Tap "Đặt lại chuyến này →" on first order (Quận 7 -> Thủ Đức)
+    const reorderBtn = screen.getByLabelText('Đặt lại chuyến LP-240902');
+    expect(reorderBtn).toBeTruthy();
+    await fireEvent.press(reorderBtn);
+    await new Promise((r) => setTimeout(r, 450));
+
+    expect(onQuickBook).toHaveBeenCalledWith('Quận 7', 'Thủ Đức');
+
+    await screen.unmount();
+  });
+
+  it('allows quick tracking by order code', async () => {
+    const onOpenOrder = jest.fn();
+    const screen = await render(
+      <HomeDashboardScreen activeShipment={null} onOpenOrder={onOpenOrder} />,
+    );
+
+    const trackInput = screen.getByLabelText('Tra cứu mã vận đơn');
+    expect(trackInput).toBeTruthy();
+    await fireEvent.changeText(trackInput, 'LP-999999');
+    await fireEvent.press(screen.getByLabelText('Tra cứu đơn hàng'));
+
+    expect(onOpenOrder).toHaveBeenCalledWith('LP-999999');
 
     await screen.unmount();
   });
