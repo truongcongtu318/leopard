@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertCircle } from 'lucide-react';
 
 export default function NotFound() {
   return (
@@ -16,21 +17,7 @@ export default function NotFound() {
       <div className="relative z-10 w-full max-w-md text-center">
         <div className="rounded-[28px] sm:rounded-[32px] border border-white/80 bg-white/95 backdrop-blur-md p-8 shadow-card">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 shadow-2xs mb-4">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+            <AlertCircle className="w-7 h-7" strokeWidth={2} aria-hidden="true" />
           </div>
 
           <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-0.5 text-xs font-bold text-amber-800 uppercase tracking-wider mb-2">

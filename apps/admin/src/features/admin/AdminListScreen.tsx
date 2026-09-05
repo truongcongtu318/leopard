@@ -11,6 +11,7 @@ import {
   type ResponsiveResultItem,
 } from '@leopard/ui';
 import React, { useState, type ReactNode } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 import { createAdminPreviewHref, serializeAdminListFilters } from './adapter';
 import { AdminCommandLauncher } from './AdminCommandLauncher';
@@ -148,9 +149,7 @@ function orderColumns(previewContext?: AdminPreviewContext): DataTableColumn[] {
             href={createAdminPreviewHref(order.href, 'order-detail', previewContext)}
           >
             <span>Chi tiết</span>
-            <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-            </svg>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 text-brand" strokeWidth={2.5} aria-hidden="true" />
           </a>
         );
       },
@@ -309,9 +308,7 @@ function mobileItem(
           href={createAdminPreviewHref(item.href, 'order-detail', previewContext)}
         >
           <span>Chi tiết</span>
-          <svg className="w-3.5 h-3.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-          </svg>
+          <ArrowRight className="w-3.5 h-3.5 text-brand" strokeWidth={2.5} aria-hidden="true" />
         </a>
       ),
     };
