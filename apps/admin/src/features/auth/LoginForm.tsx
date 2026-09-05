@@ -23,6 +23,21 @@ interface AuthResponse {
   };
 }
 
+const DEMO_ACCOUNT_MAP: Record<string, string> = {
+  admin: "admin",
+  "fleet-owner": "fleet-owner",
+  driver: "driver",
+  customer: "customer",
+  "+840000000004": "admin",
+  "+840000000003": "fleet-owner",
+  "+840000000002": "driver",
+  "+840000000001": "customer",
+  "0900000004": "admin",
+  "0900000003": "fleet-owner",
+  "0900000002": "driver",
+  "0900000001": "customer",
+};
+
 export function LoginForm({
   allowDemo = process.env.NEXT_PUBLIC_ALLOW_DEMO_AUTH !== "false",
   sessionExpired = false,
@@ -40,9 +55,9 @@ export function LoginForm({
     setErrorMessage(null);
 
     const input = tokenInput.trim();
-    const isDemoAccount = ["admin", "fleet-owner", "driver", "customer"].includes(input.toLowerCase());
-    const endpoint = isDemoAccount ? "/auth/login/demo" : "/auth/firebase";
-    const payload = isDemoAccount ? { accountId: input.toLowerCase() } : { idToken: input };
+    const demoAccountId = DEMO_ACCOUNT_MAP[input.toLowerCase()];
+    const endpoint = demoAccountId ? "/auth/login/demo" : "/auth/firebase";
+    const payload = demoAccountId ? { accountId: demoAccountId } : { idToken: input };
 
     try {
       const res = await browserClient.post<AuthResponse>(endpoint, payload);
