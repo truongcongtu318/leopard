@@ -15,13 +15,13 @@ export interface MapPackageMarker {
 }
 
 export interface BentoMapCardProps {
-  title?: string;
-  activeOrderCode?: string;
-  searchPlaceholder?: string;
-  markers?: readonly MapPackageMarker[];
+  title?: string | undefined;
+  activeOrderCode?: string | undefined;
+  searchPlaceholder?: string | undefined;
+  markers?: readonly MapPackageMarker[] | undefined;
   selectedOrderId?: string | null | undefined;
-  onSelectOrder?: (orderRef: string) => void;
-  onSearch?: (query: string) => void;
+  onSelectOrder?: ((orderRef: string) => void) | undefined;
+  onSearch?: ((query: string) => void) | undefined;
 }
 
 const DEFAULT_MARKERS: readonly MapPackageMarker[] = [
