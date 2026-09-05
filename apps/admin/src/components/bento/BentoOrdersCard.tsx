@@ -117,13 +117,13 @@ export function BentoOrdersCard({
 
   const getStatusBadge = (status: string, label?: string) => {
     let displayLabel = label;
-    if (!displayLabel) {
+    if (!displayLabel || displayLabel === status) {
       if (status === 'IN_TRANSIT') displayLabel = 'Đang vận chuyển';
       else if (status === 'DELIVERED') displayLabel = 'Đã giao hàng';
       else if (status === 'LOADING' || status === 'PICKING_UP') displayLabel = 'Đang lấy hàng';
-      else if (status === 'UNLOADING' || status === 'PICKED_UP') displayLabel = 'Đang dỡ hàng';
-      else if (status === 'REQUESTED' || status === 'PENDING') displayLabel = 'Chờ tiếp nhận';
-      else if (status === 'ASSIGNED' || status === 'ACCEPTED') displayLabel = 'Đã gán xe';
+      else if (status === 'UNLOADING' || status === 'PICKED_UP') displayLabel = 'Đã lấy hàng';
+      else if (status === 'REQUESTED' || status === 'PENDING') displayLabel = 'Chờ tài xế';
+      else if (status === 'ASSIGNED' || status === 'ACCEPTED') displayLabel = 'Đã nhận đơn';
       else if (status === 'CANCELLED') displayLabel = 'Đã hủy';
       else displayLabel = status;
     }
@@ -152,7 +152,15 @@ export function BentoOrdersCard({
         </span>
       );
     }
-    if (status === 'UNLOADING' || status === 'PICKED_UP') {
+    if (status === 'REQUESTED' || status === 'PENDING') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" aria-hidden="true" />
+          {displayLabel}
+        </span>
+      );
+    }
+    if (status === 'ACCEPTED' || status === 'ASSIGNED' || status === 'PICKED_UP' || status === 'UNLOADING') {
       return (
         <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
           <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0" aria-hidden="true" />
@@ -215,7 +223,7 @@ export function BentoOrdersCard({
               <th scope="col" className="pb-2.5 font-medium">Mã đơn hàng</th>
               <th scope="col" className="pb-2.5 font-medium">Khách hàng</th>
               <th scope="col" className="pb-2.5 font-medium">Lộ trình</th>
-              <th scope="col" className="pb-2.5 font-medium">Tải trọng</th>
+              <th scope="col" className="pb-2.5 font-medium">Cước phí</th>
               <th scope="col" className="pb-2.5 font-medium">Giờ đến dự kiến</th>
               <th scope="col" className="pb-2.5 text-right font-medium">Trạng thái</th>
             </tr>
@@ -249,7 +257,6 @@ export function BentoOrdersCard({
                           <Link
                             href={order.href}
                             onClick={(e) => {
-                              // Allow row click to fire onSelectOrder as well
                               onSelectOrder?.(order.id);
                             }}
                             className="text-slate-900 hover:text-emerald-600 transition-colors inline-flex items-center gap-1 font-semibold"
@@ -263,12 +270,11 @@ export function BentoOrdersCard({
                     </td>
                     <td className="py-3 font-medium text-slate-700">{order.customer}</td>
                     <td className="py-3 text-slate-600">
-                      <span className="text-slate-400">Từ </span>
                       <span className="font-medium text-slate-800">{order.route.from}</span>
-                      <span className="text-slate-400"> ➔ Đến </span>
+                      <span className="text-slate-400 mx-1.5 font-sans" aria-hidden="true">➔</span>
                       <span className="font-medium text-slate-800">{order.route.to}</span>
                     </td>
-                    <td className="py-3 font-medium text-slate-700">{order.weight}</td>
+                    <td className="py-3 font-medium text-slate-700 tabular-nums">{order.weight}</td>
                     <td className="py-3 text-slate-600 tabular-nums">{order.eta}</td>
                     <td className="py-3 text-right">
                       {getStatusBadge(order.status, order.statusLabel)}

@@ -10,15 +10,23 @@ export interface FulfillmentPerformanceCardProps {
   bars?: readonly number[];
 }
 
-const DEFAULT_BARS = [65, 88, 72, 94, 52, 68, 98, 76, 89, 58, 70, 92, 86, 78, 64, 95] as const;
+const DEFAULT_BAR_MULTIPLIERS = [
+  0.88, 0.96, 1.04, 0.92, 1.08, 0.98, 0.86, 1.02, 0.94, 1.06, 0.96, 1.04, 0.88, 1.02, 0.94, 1.0,
+] as const;
 
 export function FulfillmentPerformanceCard({
   title = 'Hiệu suất giao đúng hạn (OTD)',
   periodLabel = 'Tháng này',
   rate = 89,
   subtitle = 'trung bình ca trực',
-  bars = DEFAULT_BARS,
+  bars,
 }: FulfillmentPerformanceCardProps) {
+  const renderedBars =
+    bars ??
+    DEFAULT_BAR_MULTIPLIERS.map((m) =>
+      Math.min(100, Math.max(12, Math.round((rate || 89) * m))),
+    );
+
   return (
     <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-col justify-between gap-4">
       {/* Header */}
@@ -39,7 +47,7 @@ export function FulfillmentPerformanceCard({
 
       {/* Vertical Bar Chart (Emerald Green Bars) */}
       <div className="flex h-20 items-end justify-between gap-1 sm:gap-1.5 pt-2" aria-hidden="true">
-        {bars.map((heightPercent, index) => (
+        {renderedBars.map((heightPercent, index) => (
           <div
             key={index}
             className="flex-1 flex flex-col justify-end items-center h-full group"

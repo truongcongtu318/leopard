@@ -56,18 +56,37 @@ export function AdminOverviewScreen({
   };
 
   const totalOrdersCount = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0);
-  const inTransitCount = view.orderDistribution.find((o) => o.status === 'IN_TRANSIT')?.count ?? 0;
-  const deliveredCount = view.orderDistribution.find((o) => o.status === 'DELIVERED')?.count ?? 0;
+
+  // Group into 4 categories that cleanly sum to 100%:
+  // 1. Loading/Preparing: REQUESTED + ACCEPTED + PICKING_UP
+  const loadingCount = view.orderDistribution
+    .filter((o) => o.status === 'REQUESTED' || o.status === 'ACCEPTED' || o.status === 'PICKING_UP')
+    .reduce((sum, o) => sum + o.count, 0);
+
+  // 2. In Transit: IN_TRANSIT
+  const inTransitCount = view.orderDistribution
+    .filter((o) => o.status === 'IN_TRANSIT')
+    .reduce((sum, o) => sum + o.count, 0);
+
+  // 3. Delivered: DELIVERED
+  const deliveredCount = view.orderDistribution
+    .filter((o) => o.status === 'DELIVERED')
+    .reduce((sum, o) => sum + o.count, 0);
+
+  // 4. Unloading / Cancelled / Others: PICKED_UP + CANCELLED
   const cancelledCount = view.orderDistribution.find((o) => o.status === 'CANCELLED')?.count ?? 0;
+  const otherCount = view.orderDistribution
+    .filter((o) => o.status === 'PICKED_UP' || o.status === 'CANCELLED')
+    .reduce((sum, o) => sum + o.count, 0);
 
-  const totalDistribution = totalOrdersCount;
-  const loadingCount = view.orderDistribution.find((o) => o.status === 'REQUESTED' || o.status === 'PICKING_UP')?.count ?? 0;
-  const unloadingCount = view.orderDistribution.find((o) => o.status === 'PICKED_UP')?.count ?? 0;
+  const totalDistribution = totalOrdersCount || 1;
+  const loadingPercent = totalOrdersCount > 0 ? Math.round((loadingCount / totalDistribution) * 100) : 0;
+  const inTransitPercent = totalOrdersCount > 0 ? Math.round((inTransitCount / totalDistribution) * 100) : 0;
+  const deliveredPercent = totalOrdersCount > 0 ? Math.round((deliveredCount / totalDistribution) * 100) : 0;
+  const unloadingPercent = totalOrdersCount > 0
+    ? Math.max(0, 100 - loadingPercent - inTransitPercent - deliveredPercent)
+    : 0;
 
-  const loadingPercent = totalDistribution > 0 ? Math.round((loadingCount / totalDistribution) * 100) : 0;
-  const inTransitPercent = totalDistribution > 0 ? Math.round((inTransitCount / totalDistribution) * 100) : 0;
-  const unloadingPercent = totalDistribution > 0 ? Math.round((unloadingCount / totalDistribution) * 100) : 0;
-  const deliveredPercent = totalDistribution > 0 ? Math.round((deliveredCount / totalDistribution) * 100) : 0;
   const completionRate = totalOrdersCount > 0 ? Math.round((deliveredCount / totalOrdersCount) * 100) : 0;
 
   const revenueMetric = view.metrics.find((m) => m.id === 'revenue');
@@ -75,29 +94,43 @@ export function AdminOverviewScreen({
   const formattedRevenue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenueVnd);
 
   const bentoOrders: BentoOrderItem[] = view.recentOrders.map((o) => {
-    const routeParts = (o.routeLabel ?? '').split('➔').map((s) => s.trim());
+    const rawRoute = o.routeLabel ?? '';
+    const routeParts = rawRoute.includes('➔')
+      ? rawRoute.split('➔').map((s) => s.trim())
+      : rawRoute.includes('→')
+        ? rawRoute.split('→').map((s) => s.trim())
+        : rawRoute.includes('->')
+          ? rawRoute.split('->').map((s) => s.trim())
+          : [rawRoute, rawRoute];
+
+    const statusLabel =
+      o.status === 'IN_TRANSIT'
+        ? 'Đang vận chuyển'
+        : o.status === 'DELIVERED'
+          ? 'Đã giao hàng'
+          : o.status === 'PICKING_UP'
+            ? 'Đang lấy hàng'
+            : o.status === 'PICKED_UP'
+              ? 'Đã lấy hàng'
+              : o.status === 'REQUESTED'
+                ? 'Chờ tài xế'
+                : o.status === 'ACCEPTED'
+                  ? 'Đã nhận đơn'
+                  : o.status === 'CANCELLED'
+                    ? 'Đã hủy'
+                    : o.status;
+
     return {
       id: o.reference || o.id,
       customer: o.customerLabel ?? 'Khách hàng',
       route: {
         from: routeParts[0] || 'Điểm lấy',
-        to: routeParts[1] || 'Điểm giao',
+        to: routeParts[1] || routeParts[0] || 'Điểm giao',
       },
       weight: o.amountLabel ?? '—',
       eta: o.updatedAtLabel,
       status: o.status,
-      statusLabel:
-        o.status === 'IN_TRANSIT'
-          ? 'Đang vận chuyển'
-          : o.status === 'DELIVERED'
-            ? 'Đã giao hàng'
-            : o.status === 'PICKING_UP'
-              ? 'Đang lấy hàng'
-              : o.status === 'REQUESTED'
-                ? 'Chờ tài xế'
-                : o.status === 'CANCELLED'
-                  ? 'Đã hủy'
-                  : o.status,
+      statusLabel,
       href: createAdminPreviewHref(o.href, 'order-detail', previewContext),
     };
   });
