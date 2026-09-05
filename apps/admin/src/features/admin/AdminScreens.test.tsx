@@ -14,6 +14,17 @@ describe('Admin static operations screens', () => {
     expect(screen.getAllByText('LP-A-260815-101').length).toBeGreaterThan(0);
   });
 
+  it('renders KPI strip with BE numbers and formatted revenue', () => {
+    render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
+
+    const strip = screen.getByLabelText('Chỉ số tổng quan');
+    expect(strip).toBeTruthy();
+    expect(strip.textContent).toContain('Người dùng');
+    expect(strip.textContent).toContain('Đơn đang chạy');
+    expect(strip.textContent).toContain('Đội xe');
+    expect(strip.textContent).toContain('Doanh thu');
+  });
+
   it('renders Bento map, orders table, status, OTD and revenue cards', () => {
     render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
 
