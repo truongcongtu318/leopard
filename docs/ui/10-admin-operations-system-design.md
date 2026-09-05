@@ -40,15 +40,16 @@ phải giúp Admin trả lời nhanh bốn câu hỏi:
 | Constraints      | WCAG AA, keyboard-first, privacy by default, responsive, tiếng Việt, dữ liệu tĩnh có nhãn |
 
 Không dùng hero quảng cáo rườm rà, marketing card sai lệch tính năng hoặc animation kéo dài gây chậm trễ.
-Giao diện kết hợp tính trực quan của **Modern Dispatch Console** với độ chính xác cao: nền pastel dịu mắt, thẻ nổi 20–26px,
-thanh Dock điều hướng bên trái và các widget telemetry phục vụ trực tiếp cho giám sát vận hành.
+Giao diện tuân thủ chuẩn **NexaFleet Modern Bento Dispatch Console** với độ chính xác và thẩm mỹ cao:
+nền canvas xám sáng thanh lịch (`#F4F5F7`), thẻ bento trắng tinh khôi bo góc `rounded-3xl` (24–28px),
+topbar pill đen tuyền ở trung tâm, bản đồ Dark Mode thời gian thực và các khối telemetry giàu tính trực quan.
 
-### 1.1 Visual composition — Modern Dispatch & Investigation Console
+### 1.1 Visual composition — NexaFleet Modern Bento Dispatch Console
 
 | Screen       | Silhouette và hierarchy bắt buộc                                                                                                                                 |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shell        | Slim navigation dock bên trái + Topbar tích hợp search pill, thông báo và hồ sơ; canvas pastel dịu mắt                                                          |
-| Overview     | Bố cục 2 cột: Bản đồ theo dõi real-time (Đà Nẵng) + Cột tác vụ nhanh (Đơn mới, Tài xế gần đây, Cảnh báo) + Hàng 6 thẻ telemetry đồ thị + Sổ đơn DataTable gần đây |
+| Shell        | Topbar nổi bo góc với logo LEOPARD bên trái, cụm menu trung tâm với tab active dạng pill đen tuyền (`bg-slate-900 text-white rounded-full`), ô search, chuông và user capsule; canvas xám sáng `#F4F5F7` |
+| Overview     | Bố cục Bento 2 cột: Cột trái gồm Bản đồ Realtime Dark Mode + Thẻ bảng đơn hàng Orders (301) kèm pill filters; Cột phải gồm Status Overview (thanh phân đoạn 4 màu) + Fulfillment Performance (cột xanh lục) + Revenue Over Time (gradient hoàng hôn + sóng trắng) |
 | Lists        | Breadcrumb/page mast → filter workbench → result count/revision → dense table hoặc row-detail; toolbar và result phải đọc như một công cụ duy nhất               |
 | Order detail | Status/ownership mast → desktop split `8/4` investigation + Audit Rail; mobile giữ một cột nhưng command capability đứng trước audit, không bị chôn sau metadata |
 | Command      | Dialog nêu target/current→proposed state/consequence trước reason; destructive action tách thị giác và vẫn dùng được ở text zoom `200%`                          |

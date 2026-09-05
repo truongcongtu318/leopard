@@ -17,29 +17,32 @@ Phone/Firebase flow hoặc demo account selector khi được bật. Có trạng
 
 ## Fleet Owner
 
-- `/fleet`: KPI fleet pilot, drivers theo availability, active orders và cảnh báo cần chú ý.
+- `/fleet`: Giao diện **NexaFleet Bento Dispatch Console** dành cho Chủ đội xe, giới hạn nghiêm ngặt theo phạm vi đội xe:
+  - **Thanh phạm vi đội xe (`FleetScopeRail`):** Xác nhận tên và ID đội xe đang quản trị.
+  - **Cột trái (~62%):**
+    - **Bản đồ Realtime Dark Mode:** Hiển thị vị trí xe tải/bán tải thuộc đội xe và các tuyến đường chuyến đi đang chạy trong khu vực Đà Nẵng, thanh tìm kiếm kính mờ, zoom controls và marker bưu kiện.
+    - **Bảng danh sách đơn hàng đội xe:** Hiển thị danh sách đơn của đội xe với bộ lọc pill (`Tất cả`, `Chờ nhận`, `Đã phản hồi`, `Đã gán`, `Hoàn thành`), cột lộ trình có mũi tên (`từ A -> đến B`), trọng tải, ETA và badge trạng thái xanh lục / hồng sen.
+  - **Cột phải (~38%):**
+    - **Tổng quan trạng thái (Status Overview):** Tỷ lệ % và thanh phân đoạn 4 màu (Đang xếp hàng, Đang vận chuyển, Đang dỡ hàng, Đã giao) trong đội xe.
+    - **Hiệu suất thực hiện (Fulfillment Performance):** Chỉ số KPI % trung bình kèm biểu đồ cột đứng màu xanh ngọc lục bảo.
+    - **Doanh thu vận hành (Revenue Over Time):** Thẻ gradient hoàng hôn rực rỡ, số liệu doanh thu đội xe kèm biểu đồ sóng trắng mềm mại và bộ lọc mốc thời gian (Tuần / Tháng / 6 tháng / Năm).
+  - **Khu vực ngoại lệ & chú ý:** Hiển thị các cảnh báo vận hành cần xử lý thuộc đội xe.
 - `/fleet/drivers`: table/list drivers thuộc fleet, availability, active order và last known location nếu có quyền.
 - `/fleet/orders`: server pagination, filters theo status/driver/khoảng ngày và payment summary.
 - `/fleet/orders/:id`: route, status history, tracking, media và payment summary chỉ đọc.
 
 ## Admin
 
-- `/admin`: Giao diện Bàn điều phối hiện đại (**Modern Dispatch Console**) bao gồm:
-  - **Thanh Dock điều hướng bên trái:** Nút Dashboard, Quản lý khách hàng, Đội xe & tài xế, Đơn hoàn thành, Cài đặt và Đăng xuất.
-  - **Topbar trên cùng:** Logo LEOPARD, Menu điều hướng (Dự án, Khách hàng, Tài xế, Đơn hàng, Hệ thống & Pilot, Cài đặt), Ô tìm kiếm bo tròn pill, Chuông thông báo và Profile quản trị.
-  - **Bản đồ theo dõi Real-Time (Trung tâm):** Trực quan hóa bản đồ Đà Nẵng với mạng lưới đường sá, địa danh, các tuyến lộ trình đa sắc, vị trí xe tải/bán tải di chuyển thời gian thực, nút lọc phương tiện nổi ("Bán tải", "Tải nặng"), nút chế độ lớp ("Nhìn Thảm") và cụm điều khiển zoom.
-  - **Cột tác vụ điều hành bên phải:**
-    - Thẻ "Yêu cầu đơn mới": Danh sách đơn `REQUESTED` cần phân công (Khách hàng, Tải trọng, Loại hàng, Nơi đến).
-    - Thẻ "Tài xế gần đây": Danh sách tài xế với avatar tròn màu, loại xe/tải trọng, đánh giá sao ⭐ và liên kết chi tiết.
-    - Thẻ "Cảnh báo vận hành": Danh sách ngoại lệ cần kiểm tra (Tracking cũ, Lỗi thanh toán VietQR) kèm liên kết điều tra.
-  - **Hàng 6 thẻ chỉ số đo lường trực quan (Bottom KPI Row):**
-    - Đơn hàng hôm nay (215): Biểu đồ sóng mềm mại (wave sparkline) kèm phân bổ Đang giao (145), Hoàn thành (68), Hủy (2).
-    - Xe đang hoạt động (389): Thống kê theo phân loại xe (Ba gác, Bán tải, Tải nhẹ, Tải nặng) và biểu đồ cột.
-    - Tiến độ & ETA dự kiến: Biểu đồ tròn donut tỷ lệ đúng hạn (88%) và độ khớp ETA (94%) kèm nhãn chuẩn "ETA dự kiến (Dữ liệu mô phỏng)".
-    - Sức khỏe dịch vụ: Biểu đồ cột đôi so sánh trạng thái Liveness UP và Readiness READY giữa các dịch vụ hệ thống.
-    - Doanh thu & đối soát: Biểu đồ dải màu diện tích (area chart) theo dõi dòng tiền và đối soát VietQR pilot.
-    - Báo cáo mới: Danh sách tài liệu ca trực kèm liên kết xuất PDF/CSV.
-  - **Sổ đơn cập nhật gần đây:** Bảng dữ liệu `DataTable` có server pagination, responsive hàng cho mobile và audited commands.
+- `/admin`: Giao diện Bàn điều phối hiện đại (**NexaFleet Modern Bento Dispatch Console**) bao quát toàn bộ mạng lưới logistics:
+  - **Topbar trên cùng nổi bo góc:** Logo thương hiệu LEOPARD, Menu điều hướng trung tâm với tab active dạng pill đen tuyền (`bg-slate-900 text-white rounded-full`), ô tìm kiếm bo tròn pill, Chuông thông báo và Profile quản trị (avatar + tên + chức danh).
+  - **Cột bên trái (~62%):**
+    - **Bản đồ Realtime Dark Mode:** Trực quan hóa toàn bộ mạng lưới logistics Đà Nẵng, thanh tìm kiếm đơn kính mờ nổi góc trên-trái, nút phóng to màn hình, cụm nút zoom `+ / -` kính mờ góc dưới-phải, marker bưu kiện dạng hộp 3D trắng và marker đơn đang chọn xanh ngọc lục bảo.
+    - **Bảng danh sách đơn hàng toàn hệ thống:** Thẻ trắng bo góc `rounded-3xl` với tiêu đề số lượng đơn và cụm nút lọc pill (`Tất cả`, `Chờ nhận`, `Đã phản hồi`, `Đã gán`, `Hoàn thành`). Bảng hiển thị rõ Mã đơn, Khách hàng, Lộ trình (`từ A -> đến B`), Trọng tải, ETA và Badge trạng thái NexaFleet (Xanh ngọc lục bảo cho In Transit, Hồng sen cho Delivered).
+  - **Cột bên phải (~38%):**
+    - **Thẻ Status Overview:** Tỷ lệ % phân bổ 4 trạng thái vận hành chính (Đang xếp hàng, Đang vận chuyển, Đang dỡ hàng, Đã giao) kèm thanh tiến trình phân đoạn nhiều màu liền mạch.
+    - **Thẻ Fulfillment Performance:** Chỉ số tỷ lệ hoàn thành trung bình (89%) kết hợp biểu đồ cột đứng bo tròn màu xanh ngọc lục bảo.
+    - **Thẻ Doanh thu vận hành (Revenue Over Time):** Thẻ nền gradient hoàng hôn ấm áp, số tiền doanh thu lớn, biểu đồ sóng trắng mềm mại và bộ lọc mốc thời gian (Tuần / Tháng / 6 tháng / Năm).
+  - **Ngoại lệ ca trực & Cảnh báo an toàn:** Khối thông báo ngoại lệ vận hành tự động hiển thị khi có sự cố phát sinh.
 - `/admin/orders`: table có server pagination, filters, sort và clear filters.
 - `/admin/orders/:id`: route, status history, tracking, media, payment và audited commands.
 - `/admin/users`, `/admin/fleets`, `/admin/drivers`: search/filter, status và chi tiết cần thiết.
