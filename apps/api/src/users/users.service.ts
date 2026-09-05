@@ -27,7 +27,9 @@ export class UsersService {
         where: { id: userId },
         data: {
           name: dto.name.trim(),
-          email: dto.email.trim(),
+          ...(dto.email !== undefined
+            ? { email: dto.email === null ? null : dto.email.trim() }
+            : {}),
           ...(dto.avatarMediaId ? { avatarMediaId: dto.avatarMediaId } : {}),
           consentTermsAt: now,
           consentServiceAt: now,
