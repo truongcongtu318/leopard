@@ -37,7 +37,7 @@ import type {
 } from './model';
 
 const fieldClass =
-  'min-h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-white focus:bg-white px-3.5 py-2 text-xs text-slate-800 shadow-2xs transition-all focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand';
+  'min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3.5 py-2 text-xs text-slate-800 transition-colors focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900';
 
 const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
   orders: 'Đơn hàng',
@@ -410,7 +410,49 @@ function SortOptions({ screen }: Readonly<{ screen: AdminListScreenName }>) {
   );
 }
 
-function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; view: AdminListView }>) {
+function matchesSessionSearch(item: AdminListItemView, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (item.entity === 'order') {
+    return (
+      item.reference.toLowerCase().includes(q) ||
+      item.routeLabel.toLowerCase().includes(q) ||
+      item.customerLabel.toLowerCase().includes(q) ||
+      item.driverLabel.toLowerCase().includes(q)
+    );
+  }
+  if (item.entity === 'user') {
+    return (
+      item.displayName.toLowerCase().includes(q) ||
+      item.maskedPhone.toLowerCase().includes(q) ||
+      item.role.toLowerCase().includes(q)
+    );
+  }
+  if (item.entity === 'fleet') {
+    return (
+      item.displayName.toLowerCase().includes(q) ||
+      item.displayId.toLowerCase().includes(q) ||
+      item.ownerSummary.toLowerCase().includes(q)
+    );
+  }
+  return (
+    item.displayName.toLowerCase().includes(q) ||
+    item.maskedPhone.toLowerCase().includes(q) ||
+    item.fleetLabel.toLowerCase().includes(q)
+  );
+}
+
+function FilterFields({
+  screen,
+  view,
+  sessionSearch,
+  onSessionSearchChange,
+}: Readonly<{
+  screen: AdminListScreenName;
+  view: AdminListView;
+  sessionSearch?: string | undefined;
+  onSessionSearchChange?: ((value: string) => void) | undefined;
+}>) {
   const filters = view.filters;
   const idPrefix = `admin-${screen}`;
   return (
@@ -426,6 +468,8 @@ function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; 
           maxLength={100}
           placeholder="Tìm kiếm theo tên, mã đơn hoặc SĐT..."
           type="search"
+          value={sessionSearch ?? ''}
+          onChange={(e) => onSessionSearchChange?.(e.target.value)}
         />
       </FilterField>
       {screen === 'orders' ? (
@@ -480,12 +524,24 @@ function FilterFields({ screen, view }: Readonly<{ screen: AdminListScreenName; 
   );
 }
 
-function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: AdminListScreenName; view: AdminListView; previewContext: AdminPreviewContext | undefined }>) {
+function AdminFilters({
+  screen,
+  view,
+  previewContext,
+  sessionSearch,
+  onSessionSearchChange,
+}: Readonly<{
+  screen: AdminListScreenName;
+  view: AdminListView;
+  previewContext: AdminPreviewContext | undefined;
+  sessionSearch?: string | undefined;
+  onSessionSearchChange?: ((value: string) => void) | undefined;
+}>) {
   const resetQuery = serializeAdminListFilters(screen, { ...view.filters, status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL', fleetId: '', customerId: '', driverId: '', from: '', to: '', page: 1 }, previewContext);
   return (
     <section
       aria-label={`Phạm vi điều tra ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-      className="rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text"
+      className="rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm text-neutral-text"
     >
       <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <h2 className="text-sm font-bold text-slate-800">Bộ lọc tìm kiếm</h2>
@@ -498,18 +554,23 @@ function AdminFilters({ screen, view, previewContext }: Readonly<{ screen: Admin
         role="search"
       >
         <AdminPreviewHiddenFields context={previewContext} />
-        <FilterFields screen={screen} view={view} />
+        <FilterFields
+          screen={screen}
+          view={view}
+          sessionSearch={sessionSearch}
+          onSessionSearchChange={onSessionSearchChange}
+        />
         <input name="page" type="hidden" value="1" />
         <input name="pageSize" type="hidden" value={view.filters.pageSize} />
-        <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-3 xl:col-span-4">
+        <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-3 xl:col-span-4 pt-2">
           <button
-            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
             type="submit"
           >
             Áp dụng bộ lọc
           </button>
           <a
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
             href={`/admin/${screen}?${resetQuery}`}
           >
             Xóa bộ lọc
@@ -532,6 +593,7 @@ export function AdminListScreen({
   /** Live API command execution (runtime data path); absent in preview renders. */
   commandRuntime?: boolean | undefined;
 }>) {
+  const [sessionSearch, setSessionSearch] = useState('');
   const commands: readonly AdminCommandView[] = screen === 'users' && view.kind === 'list' && view.entity === 'users'
     ? view.result.items.flatMap((item) => item.entity === 'user' ? item.availableCommands : [])
     : [];
@@ -549,8 +611,11 @@ export function AdminListScreen({
     return <div className="flex flex-col gap-md"><OperationsPageHeader title={titleByScreen[screen]} /><AdminBoundaryState view={view} /></div>;
   }
 
-  const rows = view.result.items.map((item) => ({ id: item.id, item }));
-  const mobileItems = view.result.items.map((item) => mobileItem(item, previewContext, (cmd) => setActiveCommand(cmd)));
+  const displayedItems = view.result.items.filter((item) =>
+    matchesSessionSearch(item, sessionSearch),
+  );
+  const rows = displayedItems.map((item) => ({ id: item.id, item }));
+  const mobileItems = displayedItems.map((item) => mobileItem(item, previewContext, (cmd) => setActiveCommand(cmd)));
 
   return (
     <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
@@ -560,15 +625,21 @@ export function AdminListScreen({
         updatedAt={view.checkedAtLabel}
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
-      <AdminFilters previewContext={previewContext} screen={screen} view={view} />
+      <AdminFilters
+        previewContext={previewContext}
+        screen={screen}
+        view={view}
+        sessionSearch={sessionSearch}
+        onSessionSearchChange={setSessionSearch}
+      />
       <div aria-hidden={activeCommand ? 'true' : undefined} className="min-w-0">
         <AdminSurface
           ariaLabel={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
           title={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-          description={`${view.result.totalItems} kết quả · Trang ${view.result.page}/${Math.max(view.result.totalPages, 1)}`}
+          description={`${displayedItems.length}${displayedItems.length !== view.result.totalItems ? ` / ${view.result.totalItems}` : ''} kết quả · Trang ${view.result.page}/${Math.max(view.result.totalPages, 1)}`}
         >
-          {view.state === 'no-results' ? (
-            <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hiện tại; dùng Xóa bộ lọc để phục hồi." />
+          {displayedItems.length === 0 ? (
+            <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hoặc từ khóa tìm kiếm hiện tại; dùng Xóa bộ lọc để phục hồi." />
           ) : (
             <div className="flex min-w-0 flex-col gap-md">
               <div className="hidden min-w-0 overflow-x-auto md:block">

@@ -27,26 +27,42 @@ describe('NexaFleet Bento Widgets', () => {
     expect(screen.getByLabelText('Thu nhỏ bản đồ')).toBeTruthy();
   });
 
-  it('renders BentoOrdersCard with order rows and handles filter clicks', () => {
+  it('renders BentoOrdersCard with explicit BE orders and handles filter clicks', () => {
     const onFilterChange = jest.fn();
     render(
       <BentoOrdersCard
         title="Sổ điều phối đơn hàng"
-        totalCount={301}
+        totalCount={1}
+        orders={[
+          {
+            id: 'LP-BE-001',
+            customer: 'Khách BE',
+            route: { from: 'Kho A', to: 'Kho B' },
+            weight: '100.000 ₫',
+            eta: '14:30',
+            status: 'IN_TRANSIT',
+            statusLabel: 'Đang vận chuyển',
+          },
+        ]}
         onFilterChange={onFilterChange}
       />,
     );
 
     expect(screen.getByText('Sổ điều phối đơn hàng')).toBeTruthy();
-    expect(screen.getByText('(301)')).toBeTruthy();
-    expect(screen.getByText('LP-A-260815-101')).toBeTruthy();
-    expect(screen.getByText('Vinamilk Đà Nẵng')).toBeTruthy();
-    expect(screen.getByText('KCN Hòa Khánh')).toBeTruthy();
-    expect(screen.getByText('Cảng Tiên Sa')).toBeTruthy();
+    expect(screen.getByText('(1)')).toBeTruthy();
+    expect(screen.getByText('LP-BE-001')).toBeTruthy();
+    expect(screen.getByText('Khách BE')).toBeTruthy();
+    expect(screen.getByText('Kho A')).toBeTruthy();
+    expect(screen.getByText('Kho B')).toBeTruthy();
 
     const pendingBtn = screen.getByRole('button', { name: 'Chờ tiếp nhận' });
     fireEvent.click(pendingBtn);
     expect(onFilterChange).toHaveBeenCalledWith('pending');
+  });
+
+  it('renders empty state when BE returns no orders', () => {
+    render(<BentoOrdersCard title="Sổ điều phối đơn hàng" totalCount={0} orders={[]} />);
+    expect(screen.getByText('Không có đơn hàng nào trong trạng thái này.')).toBeTruthy();
   });
 
   it('renders StatusOverviewCard with all 4 status categories and metrics', () => {
@@ -85,23 +101,28 @@ describe('NexaFleet Bento Widgets', () => {
     expect(screen.getByText('trung bình ca trực')).toBeTruthy();
   });
 
-  it('renders RevenueOverTimeCard with amount and period options', () => {
+  it('renders RevenueOverTimeCard with BE amount only', () => {
     const onPeriodChange = jest.fn();
     render(
       <RevenueOverTimeCard
         title="Doanh thu cước vận chuyển"
-        amount="239.187.000 ₫"
-        growthLabel="+15% so với tháng trước"
+        amount="184.000 ₫"
+        growthLabel="Tổng giá trị đơn DELIVERED"
         onPeriodChange={onPeriodChange}
       />,
     );
 
     expect(screen.getByText('Doanh thu cước vận chuyển')).toBeTruthy();
-    expect(screen.getByText('239.187.000 ₫')).toBeTruthy();
-    expect(screen.getByText('+15% so với tháng trước')).toBeTruthy();
+    expect(screen.getByText('184.000 ₫')).toBeTruthy();
+    expect(screen.getByText('Tổng giá trị đơn DELIVERED')).toBeTruthy();
 
-    const weekBtn = screen.getByRole('button', { name: 'Tuần' });
-    fireEvent.click(weekBtn);
-    expect(onPeriodChange).toHaveBeenCalledWith('week');
+    const monthBtn = screen.getByRole('button', { name: 'Tháng' });
+    fireEvent.click(monthBtn);
+    expect(onPeriodChange).toHaveBeenCalledWith('month');
+  });
+
+  it('renders zero-revenue state from BE', () => {
+    render(<RevenueOverTimeCard title="Doanh thu cước vận chuyển" amount="0 ₫" />);
+    expect(screen.getByText('Chưa phát sinh doanh thu')).toBeTruthy();
   });
 });

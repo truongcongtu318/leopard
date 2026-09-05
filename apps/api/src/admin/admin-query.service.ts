@@ -11,7 +11,8 @@ import type {
   FleetOrderSummaryDto,
   FleetOrderQuery,
 } from '@leopard/shared';
-import type { Prisma, User, Fleet, DriverProfile, Order } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import type { User, Fleet, DriverProfile, Order } from '@prisma/client';
 import type { Role, UserStatus, OrderStatus, FleetMemberStatus } from '@prisma/client';
 
 @Injectable()
@@ -214,12 +215,34 @@ export class AdminQueryService {
     type OrderWithRelations = Order & {
       driver: User | null;
       customer: { phone: string };
-      stops: Array<{ type: string; sequence: number; address: string }>;
+      stops: Array<{ id: string; type: string; sequence: number; address: string }>;
       paymentIntents: Array<{ status: string }>;
     };
+    // ponytail: one raw query for all stop coords (N+1 findMany per order if upgraded naively)
+    const orderIds = orders.map((o) => o.id);
+    const stopCoords: Array<{ orderId: string; type: string; lat: number | null; lng: number | null }> =
+      orderIds.length > 0
+        ? await this.prisma.$queryRaw`
+            SELECT "orderId", type,
+              ST_Y(location::geometry) as lat,
+              ST_X(location::geometry) as lng
+            FROM "OrderStop"
+            WHERE "orderId" IN (${Prisma.join(orderIds.map((id) => Prisma.sql`${id}::uuid`))})
+          `
+        : [];
+    const coordsByOrder = new Map<string, typeof stopCoords>();
+    for (const row of stopCoords) {
+      const list = coordsByOrder.get(row.orderId) ?? [];
+      list.push(row);
+      coordsByOrder.set(row.orderId, list);
+    }
     const items: FleetOrderSummaryDto[] = orders.map((o: OrderWithRelations) => {
       const rawId = o.id.replace(/-/g, '');
       const suffix = rawId.slice(-4).toUpperCase();
+      const pickup = o.stops.find((s) => s.type === 'PICKUP');
+      const dropoff = [...o.stops].reverse().find((s) => s.type === 'DROPOFF');
+      const pickupCoord = coordsByOrder.get(o.id)?.find((c) => c.type === 'PICKUP');
+      const dropoffCoord = coordsByOrder.get(o.id)?.find((c) => c.type === 'DROPOFF');
       return {
         id: o.id,
         code: `LP-${suffix}`,
@@ -227,9 +250,12 @@ export class AdminQueryService {
        driverId: o.driverId ?? undefined,
        driverName: o.driver?.phone,
        customerPhone: o.customer.phone,
-       pickupLabel: o.stops.find((s) => s.type === 'PICKUP')?.address ?? '',
-       dropoffLabel:
-         [...o.stops].reverse().find((s) => s.type === 'DROPOFF')?.address ?? '',
+       pickupLabel: pickup?.address ?? '',
+       pickupLat: pickupCoord?.lat ?? null,
+       pickupLng: pickupCoord?.lng ?? null,
+       dropoffLabel: dropoff?.address ?? '',
+       dropoffLat: dropoffCoord?.lat ?? null,
+       dropoffLng: dropoffCoord?.lng ?? null,
        paymentStatus: o.paymentIntents[0]?.status ?? 'UNPAID',
        priceVnd: o.priceVnd ?? 0,
        createdAt: o.createdAt.toISOString(),

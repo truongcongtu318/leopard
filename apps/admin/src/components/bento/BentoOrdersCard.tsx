@@ -22,47 +22,10 @@ export interface BentoOrdersCardProps {
   totalCount?: number | undefined;
   orders?: readonly BentoOrderItem[] | undefined;
   activeFilter?: string | undefined;
+  selectedOrderId?: string | null | undefined;
   onFilterChange?: ((filter: string) => void) | undefined;
+  onSelectOrder?: ((orderId: string) => void) | undefined;
 }
-
-const DEFAULT_ORDERS: readonly BentoOrderItem[] = [
-  {
-    id: 'LP-A-260815-101',
-    customer: 'Vinamilk Đà Nẵng',
-    route: { from: 'KCN Hòa Khánh', to: 'Cảng Tiên Sa' },
-    weight: '1,8 tấn',
-    eta: '10:30',
-    status: 'IN_TRANSIT',
-    statusLabel: 'Đang vận chuyển',
-  },
-  {
-    id: 'LP-A-260815-102',
-    customer: 'Dược phẩm Danapha',
-    route: { from: 'KCN Điện Ngọc', to: 'Kho Cẩm Lệ' },
-    weight: '0,9 tấn',
-    eta: '11:15',
-    status: 'IN_TRANSIT',
-    statusLabel: 'Đang vận chuyển',
-  },
-  {
-    id: 'LP-A-260815-103',
-    customer: 'Thép Hòa Phát',
-    route: { from: 'Cảng Liên Chiểu', to: 'KCN Hòa Cầm' },
-    weight: '2,4 tấn',
-    eta: '09:45',
-    status: 'DELIVERED',
-    statusLabel: 'Đã giao hàng',
-  },
-  {
-    id: 'LP-A-260815-104',
-    customer: 'Dệt may 29/3',
-    route: { from: 'Hải Châu', to: 'Sơn Trà' },
-    weight: '3,2 tấn',
-    eta: '08:30',
-    status: 'DELIVERED',
-    statusLabel: 'Đã giao hàng',
-  },
-];
 
 const FILTERS = [
   { id: 'all', label: 'Tất cả' },
@@ -75,9 +38,11 @@ const FILTERS = [
 export function BentoOrdersCard({
   title = 'Sổ điều phối đơn hàng',
   totalCount,
-  orders = DEFAULT_ORDERS,
+  orders = [],
   activeFilter: controlledFilter,
+  selectedOrderId,
   onFilterChange,
+  onSelectOrder,
 }: BentoOrdersCardProps) {
   const [internalFilter, setInternalFilter] = useState('all');
   const currentFilter = controlledFilter ?? internalFilter;
@@ -113,54 +78,75 @@ export function BentoOrdersCard({
 
   const getStatusBadge = (status: string, label?: string) => {
     let displayLabel = label;
-    if (!displayLabel) {
+    if (!displayLabel || displayLabel === status) {
       if (status === 'IN_TRANSIT') displayLabel = 'Đang vận chuyển';
       else if (status === 'DELIVERED') displayLabel = 'Đã giao hàng';
       else if (status === 'LOADING' || status === 'PICKING_UP') displayLabel = 'Đang lấy hàng';
-      else if (status === 'UNLOADING' || status === 'PICKED_UP') displayLabel = 'Đang dỡ hàng';
-      else if (status === 'REQUESTED' || status === 'PENDING') displayLabel = 'Chờ tiếp nhận';
-      else if (status === 'ASSIGNED' || status === 'ACCEPTED') displayLabel = 'Đã gán xe';
+      else if (status === 'UNLOADING' || status === 'PICKED_UP') displayLabel = 'Đã lấy hàng';
+      else if (status === 'REQUESTED' || status === 'PENDING') displayLabel = 'Chờ tài xế';
+      else if (status === 'ASSIGNED' || status === 'ACCEPTED') displayLabel = 'Đã nhận đơn';
       else if (status === 'CANCELLED') displayLabel = 'Đã hủy';
       else displayLabel = status;
     }
 
     if (status === 'IN_TRANSIT') {
       return (
-        <span className="inline-flex items-center rounded-full bg-[#10b981] px-3 py-0.5 text-xs font-semibold text-white shadow-2xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0" aria-hidden="true" />
           {displayLabel}
         </span>
       );
     }
-    if (status === 'DELIVERED') {
+    if (status === 'DELIVERED' || status === 'COMPLETED') {
       return (
-        <span className="inline-flex items-center rounded-full bg-[#ec4899] px-3 py-0.5 text-xs font-semibold text-white shadow-2xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
           {displayLabel}
         </span>
       );
     }
     if (status === 'LOADING' || status === 'PICKING_UP') {
       return (
-        <span className="inline-flex items-center rounded-full bg-amber-400 px-3 py-0.5 text-xs font-semibold text-slate-900 shadow-2xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" aria-hidden="true" />
           {displayLabel}
         </span>
       );
     }
-    if (status === 'UNLOADING' || status === 'PICKED_UP') {
+    if (status === 'REQUESTED' || status === 'PENDING') {
       return (
-        <span className="inline-flex items-center rounded-full bg-red-400 px-3 py-0.5 text-xs font-semibold text-white shadow-2xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" aria-hidden="true" />
+          {displayLabel}
+        </span>
+      );
+    }
+    if (status === 'ACCEPTED' || status === 'ASSIGNED' || status === 'PICKED_UP' || status === 'UNLOADING') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0" aria-hidden="true" />
+          {displayLabel}
+        </span>
+      );
+    }
+    if (status === 'CANCELLED') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" aria-hidden="true" />
           {displayLabel}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-0.5 text-xs font-semibold text-slate-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/80 px-2.5 py-0.5 text-xs font-semibold shadow-2xs">
+        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" aria-hidden="true" />
         {displayLabel}
       </span>
     );
   };
 
   return (
-    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-col justify-between gap-4">
+    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-1 flex-col justify-between gap-4 h-full">
       {/* Header: Title + Filter Pills */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-2">
@@ -198,7 +184,7 @@ export function BentoOrdersCard({
               <th scope="col" className="pb-2.5 font-medium">Mã đơn hàng</th>
               <th scope="col" className="pb-2.5 font-medium">Khách hàng</th>
               <th scope="col" className="pb-2.5 font-medium">Lộ trình</th>
-              <th scope="col" className="pb-2.5 font-medium">Tải trọng</th>
+              <th scope="col" className="pb-2.5 font-medium">Cước phí</th>
               <th scope="col" className="pb-2.5 font-medium">Giờ đến dự kiến</th>
               <th scope="col" className="pb-2.5 text-right font-medium">Trạng thái</th>
             </tr>
@@ -211,34 +197,52 @@ export function BentoOrdersCard({
                 </td>
               </tr>
             ) : (
-              displayedOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
-                  <td className="py-3 font-semibold text-slate-900">
-                    {order.href ? (
-                      <Link
-                        href={order.href}
-                        className="text-slate-900 hover:text-emerald-600 transition-colors inline-flex items-center gap-1 font-semibold"
-                      >
-                        {order.id}
-                      </Link>
-                    ) : (
-                      order.id
-                    )}
-                  </td>
-                  <td className="py-3 font-medium text-slate-700">{order.customer}</td>
-                  <td className="py-3 text-slate-600">
-                    <span className="text-slate-400">Từ </span>
-                    <span className="font-medium text-slate-800">{order.route.from}</span>
-                    <span className="text-slate-400"> ➔ Đến </span>
-                    <span className="font-medium text-slate-800">{order.route.to}</span>
-                  </td>
-                  <td className="py-3 font-medium text-slate-700">{order.weight}</td>
-                  <td className="py-3 text-slate-600 tabular-nums">{order.eta}</td>
-                  <td className="py-3 text-right">
-                    {getStatusBadge(order.status, order.statusLabel)}
-                  </td>
-                </tr>
-              ))
+              displayedOrders.map((order) => {
+                const isSelected = selectedOrderId === order.id;
+                return (
+                  <tr
+                    key={order.id}
+                    onClick={() => onSelectOrder?.(order.id)}
+                    className={`transition-colors cursor-pointer group ${
+                      isSelected
+                        ? 'bg-emerald-50/80 hover:bg-emerald-50'
+                        : 'hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <td className="py-3 font-semibold text-slate-900">
+                      <div className="flex items-center gap-2">
+                        {isSelected ? (
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+                        ) : null}
+                        {order.href ? (
+                          <Link
+                            href={order.href}
+                            onClick={(e) => {
+                              onSelectOrder?.(order.id);
+                            }}
+                            className="text-slate-900 hover:text-emerald-600 transition-colors inline-flex items-center gap-1 font-semibold"
+                          >
+                            {order.id}
+                          </Link>
+                        ) : (
+                          order.id
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 font-medium text-slate-700">{order.customer}</td>
+                    <td className="py-3 text-slate-600">
+                      <span className="font-medium text-slate-800">{order.route.from}</span>
+                      <span className="text-slate-400 mx-1.5 font-sans" aria-hidden="true">➔</span>
+                      <span className="font-medium text-slate-800">{order.route.to}</span>
+                    </td>
+                    <td className="py-3 font-medium text-slate-700 tabular-nums">{order.weight}</td>
+                    <td className="py-3 text-slate-600 tabular-nums">{order.eta}</td>
+                    <td className="py-3 text-right">
+                      {getStatusBadge(order.status, order.statusLabel)}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

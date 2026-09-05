@@ -96,7 +96,7 @@ export function FleetOrderDetailScreen({ view }: Readonly<{ view: FleetOrderDeta
       </div>
 
       <MapPanel
-        className="rounded-[22px] sm:rounded-[26px] border border-white/80 shadow-xs overflow-hidden"
+        className="rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
         height="large"
         lastUpdated={order.tracking.lastUpdatedLabel}
         state={order.tracking.state}

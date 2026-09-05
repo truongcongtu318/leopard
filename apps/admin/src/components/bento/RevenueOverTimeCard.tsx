@@ -11,60 +11,7 @@ export interface RevenueOverTimeCardProps {
   onPeriodChange?: (period: string) => void;
 }
 
-const PERIODS = [
-  { id: 'week', label: 'Tuần' },
-  { id: 'month', label: 'Tháng' },
-  { id: '6months', label: '6 tháng' },
-  { id: 'year', label: 'Năm' },
-] as const;
-
-const REVENUE_CHART_DATA: Record<string, Array<{ p: string; val: number }>> = {
-  week: [
-    { p: 'T2', val: 7.2 },
-    { p: 'T3', val: 8.5 },
-    { p: 'T4', val: 6.8 },
-    { p: 'T5', val: 9.4 },
-    { p: 'T6', val: 11.2 },
-    { p: 'T7', val: 8.9 },
-    { p: 'CN', val: 6.2 },
-  ],
-  month: [
-    { p: 'W1', val: 48 },
-    { p: 'W2', val: 56 },
-    { p: 'W3', val: 62 },
-    { p: 'W4', val: 73 },
-  ],
-  '6months': [
-    { p: 'T3', val: 180 },
-    { p: 'T4', val: 210 },
-    { p: 'T5', val: 240 },
-    { p: 'T6', val: 235 },
-    { p: 'T7', val: 270 },
-    { p: 'T8', val: 290 },
-  ],
-  year: [
-    { p: 'Q1', val: 580 },
-    { p: 'Q2', val: 690 },
-    { p: 'Q3', val: 780 },
-    { p: 'Q4', val: 844 },
-  ],
-};
-
-const DEFAULT_REVENUE_SERIES: Array<{ p: string; val: number }> = [
-  { p: 'W1', val: 48 },
-  { p: 'W2', val: 56 },
-  { p: 'W3', val: 62 },
-  { p: 'W4', val: 73 },
-];
-
-const PERIOD_DATA: Record<string, { amount: string; growth: string }> = {
-  week: { amount: '58.200.000 ₫', growth: '+8% so với tuần trước' },
-  month: { amount: '239.187.000 ₫', growth: '+15% so với tháng trước' },
-  '6months': { amount: '1.428.500.000 ₫', growth: '+22% so với nửa năm trước' },
-  year: { amount: '2.894.100.000 ₫', growth: '+31% so với năm trước' },
-};
-
-const DEFAULT_PERIOD_DATA = { amount: '239.187.000 ₫', growth: '+15% so với tháng trước' };
+const PERIODS = [{ id: 'month', label: 'Tháng' }] as const;
 
 export function RevenueOverTimeCard({
   title = 'Doanh thu cước vận chuyển',
@@ -75,53 +22,90 @@ export function RevenueOverTimeCard({
 }: RevenueOverTimeCardProps) {
   const [internalPeriod, setInternalPeriod] = useState('month');
   const currentPeriod = controlledPeriod ?? internalPeriod;
-  const currentData = PERIOD_DATA[currentPeriod] ?? DEFAULT_PERIOD_DATA;
-  const displayAmount = amount && currentPeriod === 'month' ? amount : currentData.amount;
-  const displayGrowth = growthLabel && currentPeriod === 'month' ? growthLabel : currentData.growth;
+  const displayAmount = amount ?? '0 ₫';
+  const displayGrowth = growthLabel ?? 'Tổng giá trị đơn DELIVERED';
 
   const handlePeriodClick = (id: string) => {
     setInternalPeriod(id);
     onPeriodChange?.(id);
   };
 
+  const isZeroRevenue = displayAmount === '0 ₫' || displayAmount === '0' || displayAmount === '0 VND';
+
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-[#fcd34d] via-[#fb923c] to-[#f472b6] p-5 sm:p-6 text-slate-950 shadow-sm flex flex-col justify-between min-h-[220px]">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-5 sm:p-6 text-white border border-slate-800/90 shadow-sm flex flex-1 flex-col justify-between">
+      {/* Subtle ambient glow */}
+      <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" aria-hidden="true" />
+      <div className="absolute -left-10 -bottom-10 h-36 w-36 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" aria-hidden="true" />
+
       {/* Top Header & Amounts */}
       <div className="relative z-10">
-        <h2 className="text-sm font-bold text-slate-900/90 tracking-tight">{title}</h2>
-        <div className="mt-2">
-          <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 tabular-nums">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">{title}</h2>
+        <div className="mt-2.5 flex flex-wrap items-baseline gap-2.5">
+          <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white tabular-nums">
             {displayAmount}
           </p>
-          <p className="mt-0.5 text-xs font-semibold text-slate-900/80">
-            {displayGrowth}
-          </p>
+          {!isZeroRevenue ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                <polyline points="16 7 22 7 22 13" />
+              </svg>
+              {displayGrowth}
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-slate-800 border border-slate-700/60 px-2 py-0.5 text-[11px] font-semibold text-slate-400">
+              Chưa phát sinh doanh thu
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Smooth Flowing White Wave Sparkline Chart (Recharts) */}
-      <div className="absolute inset-x-0 bottom-12 h-24 overflow-hidden pointer-events-none" aria-hidden="true">
-        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 96 }}>
-          <AreaChart
-            data={(currentPeriod in REVENUE_CHART_DATA ? REVENUE_CHART_DATA[currentPeriod] : undefined) ?? DEFAULT_REVENUE_SERIES}
-            margin={{ top: 12, right: 0, left: 0, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="whiteWaveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <Area
-              type="natural"
-              dataKey="val"
-              stroke="#ffffff"
-              strokeWidth={3}
-              fill="url(#whiteWaveGrad)"
-              isAnimationActive={false}
+      {/* SVG Smooth Flowing Emerald Wave Sparkline Chart */}
+      <div className="absolute inset-x-0 bottom-14 h-24 overflow-hidden pointer-events-none" aria-hidden="true">
+        <svg
+          className="w-full h-full"
+          viewBox="0 0 400 100"
+          preserveAspectRatio="none"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="revenue-wave-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+          {isZeroRevenue ? (
+            /* Subtle flat baseline for 0 revenue */
+            <line
+              x1="0"
+              y1="82"
+              x2="400"
+              y2="82"
+              stroke="#334155"
+              strokeWidth="2"
+              strokeDasharray="4 4"
+              opacity="0.6"
             />
-          </AreaChart>
-        </ResponsiveContainer>
+          ) : (
+            <>
+              {/* Translucent area fill */}
+              <path
+                d="M 0 65 Q 60 85 120 48 T 240 68 T 340 32 T 400 48 L 400 100 L 0 100 Z"
+                fill="url(#revenue-wave-gradient)"
+              />
+              {/* Crisp emerald stroke line */}
+              <path
+                d="M 0 65 Q 60 85 120 48 T 240 68 T 340 32 T 400 48"
+                stroke="#10b981"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                fill="none"
+              />
+            </>
+          )}
+        </svg>
       </div>
 
       {/* Bottom Period Filter Pills */}
@@ -135,8 +119,8 @@ export function RevenueOverTimeCard({
               onClick={() => handlePeriodClick(p.id)}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-slate-950 text-white shadow-xs'
-                  : 'bg-white/40 hover:bg-white/60 text-slate-900 backdrop-blur-xs'
+                  ? 'bg-white text-slate-900 shadow-xs font-bold'
+                  : 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60 backdrop-blur-xs'
               }`}
             >
               {p.label}

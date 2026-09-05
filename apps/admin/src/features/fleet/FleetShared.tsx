@@ -119,7 +119,7 @@ export function FleetDispatchSlab({
   return (
    <section
     aria-label={ariaLabel}
-    className="min-w-0 rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/95 backdrop-blur-sm p-5 sm:p-6 text-slate-800 shadow-sm"
+    className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 text-slate-800 shadow-sm"
    >
     <div className="flex items-center justify-between gap-2 mb-4">
       <div className="flex items-center gap-2">
@@ -146,15 +146,15 @@ export function FleetSurface({
   children: React.ReactNode;
 }>) {
   return (
-   <section className="min-w-0 rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 text-neutral-text shadow-xs">
+   <section className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 text-neutral-text shadow-sm">
     <header className="mb-5 flex items-start gap-3">
-     <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-soft-text">
+     <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
         <FileText className="w-[18px] h-[18px]" strokeWidth={1.8} aria-hidden="true" />
      </div>
      <div className="min-w-0 flex-1">
-       <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-text break-words leading-tight">{title}</h2>
+       <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 break-words leading-tight">{title}</h2>
        {description ? (
-        <p className="mt-1 text-xs leading-relaxed text-neutral-muted break-words">{description}</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-400 break-words">{description}</p>
        ) : null}
      </div>
     </header>

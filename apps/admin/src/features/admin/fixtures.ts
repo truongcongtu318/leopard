@@ -347,6 +347,9 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
       paymentStatus: item.paymentStatus,
       updatedAtLabel: item.createdAtLabel,
       href: item.href,
+      customerLabel: item.customerLabel,
+      routeLabel: item.routeLabel,
+      amountLabel: item.amountLabel,
     })),
     notice: readinessFailed
       ? {
@@ -437,25 +440,43 @@ function orderItems(): readonly AdminOrderListItemView[] {
     ['PICKING_UP', 'UNPAID', 'Tài xế đang đến kho'],
     ['ACCEPTED', 'UNPAID', 'Tài xế vừa nhận đơn'],
     ['DELIVERED', 'PAID_MANUAL', 'Giao thành công'],
-    ['IN_TRANSIT', 'PAID_MANUAL', 'Đang trên đường Mai Chí Thọ'],
+    ['IN_TRANSIT', 'PAID_MANUAL', 'Đang trên đường Nguyễn Văn Linh'],
     ['REQUESTED', 'UNPAID', 'Đang tìm tài xế gần nhất'],
     ['DELIVERED', 'PAID_MANUAL', 'Đã ký nhận POD'],
     ['CANCELLED', 'UNPAID', 'Khách hàng đổi lộ trình'],
     ['DELIVERED', 'PAID_MANUAL', 'Giao thành công đúng hẹn'],
-    ['IN_TRANSIT', 'QR_CREATED', 'Đang giao qua Cầu Sài Gòn'],
+    ['IN_TRANSIT', 'QR_CREATED', 'Đang giao qua Cầu Rồng'],
     ['DELIVERED', 'PAID_MANUAL', 'Giao hoàn tất'],
-    ['ACCEPTED', 'UNPAID', 'Đã gán cho xe tải 51C-882.34'],
+    ['ACCEPTED', 'UNPAID', 'Đã gán cho xe tải 43C-882.34'],
     ['DELIVERED', 'PAID_MANUAL', 'Giao thành công'],
   ];
+
+  const danangBaseRoutes = [
+    'KCN Hòa Khánh → Cảng Tiên Sa',
+    'Hải Châu → Kho Cẩm Lệ',
+    'KCN Điện Ngọc → Cảng Liên Chiểu',
+    'Sơn Trà → KCN Hòa Cầm',
+    'Thanh Khê → Ngũ Hành Sơn',
+    'Cảng Tiên Sa → KCN Hòa Khánh',
+  ] as const;
+
+  const danangBaseCustomers = [
+    'Vinamilk Đà Nẵng',
+    'Dược phẩm Danapha',
+    'Thép Hòa Phát',
+    'Dệt may 29/3',
+    'Thaco Trường Hải',
+    'Cao su Đà Nẵng',
+  ] as const;
 
   const list: AdminOrderListItemView[] = baseRows.map(([suffix, status, paymentStatus, trackingLabel], index) => ({
     entity: 'order',
     id: `33333333-3333-4333-8333-333333333${suffix}`,
     reference: `LP-A-260815-${suffix}`,
     createdAtLabel: `14:${String(32 - index).padStart(2, '0')} · 15/08/2026`,
-    routeLabel: `Điểm lấy mô phỏng Quận ${index + 1} → Điểm giao mô phỏng Thành phố Thủ Đức`,
-    customerLabel: `Khách Hàng ${index + 1} Mô Phỏng`,
-    driverLabel: index === 0 ? 'Chưa phân công' : `Tài xế ${index} Mô Phỏng`,
+    routeLabel: danangBaseRoutes[index] ?? 'KCN Hòa Khánh → Cảng Tiên Sa',
+    customerLabel: danangBaseCustomers[index] ?? `Khách Hàng ${index + 1}`,
+    driverLabel: index === 1 ? 'Chưa phân công' : `Tài xế ${VIETNAMESE_NAMES[index] ?? 'Nguyễn Văn An'}`,
     status,
     trackingLabel,
     trackingTone: trackingLabel.includes('cũ') ? 'warning' : trackingLabel.includes('Cập nhật') ? 'success' : 'neutral',

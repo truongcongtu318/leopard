@@ -11,21 +11,21 @@ export interface FulfillmentPerformanceCardProps {
   bars?: readonly number[];
 }
 
-const DEFAULT_BARS = [65, 88, 72, 94, 52, 68, 98, 76, 89, 58, 70, 92, 86, 78, 64, 95] as const;
-
 export function FulfillmentPerformanceCard({
   title = 'Hiệu suất giao đúng hạn (OTD)',
   periodLabel = 'Tháng này',
   rate = 89,
   subtitle = 'trung bình ca trực',
-  bars = DEFAULT_BARS,
+  bars,
 }: FulfillmentPerformanceCardProps) {
+  // ponytail: bars from BE when available, else single rate bar (no fake multiplier series)
+  const effectiveBars = bars ?? [rate];
   const chartData = React.useMemo(
-    () => bars.map((heightPercent, index) => ({ day: `D${index + 1}`, rate: heightPercent })),
-    [bars],
+    () => effectiveBars.map((heightPercent, index) => ({ day: `D${index + 1}`, rate: heightPercent })),
+    [effectiveBars],
   );
   return (
-    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-col justify-between gap-4">
+    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-1 flex-col justify-between gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>

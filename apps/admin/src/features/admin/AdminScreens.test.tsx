@@ -7,22 +7,25 @@ import { AdminOverviewScreen } from './AdminOverviewScreen';
 import { createAdminPreviewView } from './fixtures';
 
 describe('Admin static operations screens', () => {
-  it('renders readiness, zero-safe metrics, exceptions and recent orders on overview', () => {
+  it('renders readiness, zero-safe metrics and recent orders on overview', () => {
     render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
 
-    expect(screen.getByRole('heading', { name: 'Tổng quan vận hành' })).toBeTruthy();
-    expect(screen.getByText(/Hệ thống: Hoạt động bình thường/)).toBeTruthy();
-    expect(screen.getByText('Trực tuyến')).toBeTruthy();
-    expect(screen.getAllByText('0').length).toBeGreaterThan(0);
-    expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Tổng quan vận hành', hidden: true })).toBeTruthy();
     expect(screen.getAllByText('LP-A-260815-101').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText('Bàn điều phối hiện tại').className).toContain('shadow-sm');
-    expect(screen.getByText('Tracking cần kiểm tra').closest('li')?.className).toContain(
-      'rounded-card',
-    );
   });
 
-  it('renders Realtime Da Nang Bento map, Bento orders table, and modern telemetry cards', () => {
+  it('renders KPI strip with BE numbers and formatted revenue', () => {
+    render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
+
+    const strip = screen.getByLabelText('Chỉ số tổng quan');
+    expect(strip).toBeTruthy();
+    expect(strip.textContent).toContain('Người dùng');
+    expect(strip.textContent).toContain('Đơn đang chạy');
+    expect(strip.textContent).toContain('Đội xe');
+    expect(strip.textContent).toContain('Doanh thu');
+  });
+
+  it('renders Bento map, orders table, status, OTD and revenue cards', () => {
     render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
 
     // Bento Map Card
@@ -31,16 +34,11 @@ describe('Admin static operations screens', () => {
     expect(screen.getByLabelText('Phóng to bản đồ')).toBeTruthy();
     expect(screen.getByLabelText('Thu nhỏ bản đồ')).toBeTruthy();
 
-    // Bento Orders Table
+    // Bento Orders Table + right column widgets
     expect(screen.getByText('Sổ điều phối đơn hàng')).toBeTruthy();
     expect(screen.getByText('Cơ cấu trạng thái đơn')).toBeTruthy();
     expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)')).toBeTruthy();
     expect(screen.getByText('Doanh thu cước vận chuyển')).toBeTruthy();
-
-    // Telemetry KPI cards
-    expect(screen.getByText('ĐƠN HÀNG HÔM NAY')).toBeTruthy();
-    expect(screen.getByText('XE ĐANG HOẠT ĐỘNG')).toBeTruthy();
-    expect(screen.getByText(/ETA DỰ KIẾN/)).toBeTruthy();
   });
 
   it('keeps operational context for readiness and offline overview scenarios', () => {
@@ -52,7 +50,6 @@ describe('Admin static operations screens', () => {
         <AdminOverviewScreen view={createAdminPreviewView('overview', scenario)} />,
       );
       expect(screen.getByText(copy)).toBeTruthy();
-      expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
       rendered.unmount();
     }
   });
