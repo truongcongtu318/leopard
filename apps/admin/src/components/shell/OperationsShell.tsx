@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import * as Dialog from '@radix-ui/react-dialog';
 import { Bell, LogOut, Menu, ShieldCheck, X } from 'lucide-react';
 import { LiveRefreshBridge } from '../live/LiveOrderRefresher';
 import { RoleNavigation, type NavItem } from './RoleNavigation';
@@ -83,43 +84,45 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
     triggerRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    if (!drawerOpen) return;
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeDrawer();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
 
     const drawer = drawerRef.current;
     if (!drawer) return;
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeDrawer();
-        return;
-      }
+    const focusable = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    if (focusable.length === 0) return;
 
-      if (event.key !== 'Tab') return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
 
-      const focusable = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-      if (focusable.length === 0) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  };
 
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
+  const prevDrawerOpen = useRef(drawerOpen);
+  useEffect(() => {
+    if (prevDrawerOpen.current && !drawerOpen) {
+      triggerRef.current?.focus();
+    }
+    prevDrawerOpen.current = drawerOpen;
+  }, [drawerOpen]);
 
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    };
-
-    drawer.addEventListener('keydown', handleKeyDown);
+  useEffect(() => {
+    if (!drawerOpen) return;
     closeButtonRef.current?.focus();
-
-    return () => {
-      drawer.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [closeDrawer, drawerOpen]);
+  }, [drawerOpen]);
 
   const handleLogout = async () => {
     try {
@@ -131,14 +134,15 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
-      <LiveRefreshBridge />
-      <a
-        href="#noi-dung-chinh"
-        className="fixed left-md top-md z-50 -translate-y-24 rounded-control bg-brand px-md py-sm font-semibold text-brand-text transition-transform focus:translate-y-0 motion-reduce:transition-none"
-      >
-        Bỏ qua đến nội dung chính
-      </a>
+    <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
+      <div className="min-h-screen bg-[#F4F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
+        <LiveRefreshBridge />
+        <a
+          href="#noi-dung-chinh"
+          className="fixed left-md top-md z-50 -translate-y-24 rounded-control bg-brand px-md py-sm font-semibold text-brand-text transition-transform focus:translate-y-0 motion-reduce:transition-none"
+        >
+          Bỏ qua đến nội dung chính
+        </a>
 
       {/* Top Application Header Bar */}
       <header className="bg-white rounded-2xl sm:rounded-3xl px-4 sm:px-6 py-3 mb-3 flex items-center justify-between shadow-xs border border-slate-100/90 shrink-0">
@@ -203,16 +207,16 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
           </button>
 
           {/* Mobile Drawer Trigger */}
-          <button
-            ref={triggerRef}
-            type="button"
-            onClick={() => setDrawerOpen((open) => !open)}
-            aria-label="Mở điều hướng"
-            aria-expanded={drawerOpen}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 motion-reduce:transition-none md:hidden"
-          >
-            <Menu className="h-5 w-5" aria-hidden="true" />
-          </button>
+          <Dialog.Trigger asChild>
+            <button
+              ref={triggerRef}
+              type="button"
+              aria-label="Mở điều hướng"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 motion-reduce:transition-none md:hidden"
+            >
+              <Menu className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </Dialog.Trigger>
         </div>
       </header>
 
@@ -229,24 +233,29 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
       </div>
 
       {/* Mobile Drawer (Responsive Menu) */}
-      {drawerOpen ? (
+      <Dialog.Portal>
         <div className="fixed inset-0 z-40">
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-hidden="true"
-            onClick={closeDrawer}
-            className="absolute inset-0 bg-neutral-text/60"
-          />
-          <div
+          <Dialog.Overlay className="fixed inset-0 bg-neutral-text/60" />
+          <Dialog.Content
             ref={drawerRef}
-            role="dialog"
             aria-modal="true"
             aria-label={roleContext.drawerLabel}
-            className="relative z-10 h-full w-72 max-w-full overflow-y-auto border-r border-neutral-border bg-neutral p-4"
+            onKeyDown={handleKeyDown}
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              closeButtonRef.current?.focus();
+            }}
+            onCloseAutoFocus={(e) => {
+              e.preventDefault();
+              triggerRef.current?.focus();
+            }}
+            className="relative z-10 h-full w-72 max-w-full overflow-y-auto border-r border-neutral-border bg-neutral p-4 focus:outline-none"
           >
+            <Dialog.Title className="sr-only">
+              {roleContext.drawerLabel}
+            </Dialog.Title>
             <div className="flex min-h-16 items-center justify-between border-b border-neutral-border pb-3 mb-4">
-              <h2 className="font-bold text-neutral-text text-sm">
+              <h2 className="font-bold text-neutral-text text-sm" aria-hidden="true">
                 {roleContext.drawerLabel}
               </h2>
               <button
@@ -266,9 +275,10 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
               ariaLabel={roleContext.navigationLabel}
               orientation="vertical"
             />
-          </div>
+          </Dialog.Content>
         </div>
-      ) : null}
+      </Dialog.Portal>
     </div>
+  </Dialog.Root>
   );
 }
