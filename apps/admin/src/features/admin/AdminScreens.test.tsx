@@ -7,16 +7,11 @@ import { AdminOverviewScreen } from './AdminOverviewScreen';
 import { createAdminPreviewView } from './fixtures';
 
 describe('Admin static operations screens', () => {
-  it('renders readiness, zero-safe metrics, exceptions and recent orders on overview', () => {
+  it('renders readiness, zero-safe metrics and recent orders on overview', () => {
     render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
 
     expect(screen.getByRole('heading', { name: 'Tổng quan vận hành', hidden: true })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
     expect(screen.getAllByText('LP-A-260815-101').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText('Bàn điều phối hiện tại').className).toContain('shadow-sm');
-    expect(screen.getByText('Tracking cần kiểm tra').closest('li')?.className).toContain(
-      'rounded-card',
-    );
   });
 
   it('renders Bento map, orders table, status, OTD and revenue cards', () => {
@@ -44,7 +39,6 @@ describe('Admin static operations screens', () => {
         <AdminOverviewScreen view={createAdminPreviewView('overview', scenario)} />,
       );
       expect(screen.getByText(copy)).toBeTruthy();
-      expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
       rendered.unmount();
     }
   });

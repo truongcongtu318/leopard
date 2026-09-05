@@ -18,17 +18,7 @@ import {
 import type {
   AdminOverviewRouteView,
   AdminPreviewContext,
-  AdminPreviewScreen,
 } from './model';
-
-function screenForHref(href: string): AdminPreviewScreen {
-  if (/^\/admin\/orders\/[^/]+/.test(href)) return 'order-detail';
-  if (href === '/admin/orders') return 'orders';
-  if (href === '/admin/users') return 'users';
-  if (href === '/admin/fleets') return 'fleets';
-  if (href === '/admin/drivers') return 'drivers';
-  return 'overview';
-}
 
 export function AdminOverviewScreen({
   view,
@@ -47,12 +37,6 @@ export function AdminOverviewScreen({
       </div>
     );
   }
-
-  const exceptionIcon = (tone: string) => {
-    if (tone === 'danger') return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
-    if (tone === 'warning') return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
-    return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>;
-  };
 
   const totalOrdersCount = view.orderDistribution.reduce((acc, curr) => acc + curr.count, 0);
 
@@ -219,72 +203,6 @@ export function AdminOverviewScreen({
           />
         </div>
       </div>
-
-      {/* Active Exceptions: Positioned below Bento console for clean enterprise layout */}
-      {view.exceptions.length > 0 ? (
-        <div
-          aria-label="Bàn điều phối hiện tại"
-          className="rounded-3xl border border-slate-200/80 bg-white/95 p-5 shadow-sm backdrop-blur-md"
-        >
-          <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
-            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-              </span>
-              Ngoại lệ cần điều tra
-            </h2>
-            <span className="text-xs text-slate-400 font-medium">
-              {view.exceptions.length} sự cố ghi nhận
-            </span>
-          </div>
-          <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
-            {view.exceptions.map((exception) => (
-              <li
-                key={exception.id}
-                className={`rounded-card border p-3.5 transition-all ${
-                  exception.tone === 'danger'
-                    ? 'border-rose-200 bg-rose-50/50'
-                    : 'border-amber-200 bg-amber-50/50'
-                }`}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className={exception.tone === 'danger' ? 'text-rose-600' : 'text-amber-600'}>
-                      {exceptionIcon(exception.tone)}
-                    </span>
-                    <p className="text-sm font-bold text-slate-800">{exception.label}</p>
-                  </div>
-                  <span className="text-xs text-slate-400 tabular-nums">{exception.updatedAtLabel}</span>
-                </div>
-                <p className="mt-1 text-xs text-slate-600 leading-relaxed">{exception.detail}</p>
-                {exception.targetHref ? (
-                  <a
-                    className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
-                    href={createAdminPreviewHref(
-                      exception.targetHref,
-                      screenForHref(exception.targetHref),
-                      previewContext,
-                      exception.targetScenario,
-                    )}
-                  >
-                    Điều tra đơn
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                  </a>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div aria-label="Bàn điều phối hiện tại" className="hidden shadow-sm">
-          <h2 className="sr-only">Ngoại lệ cần điều tra</h2>
-        </div>
-      )}
-
 
       {/* Zero-safe operational metrics summary for accessibility & monitoring */}
       <dl className="sr-only" aria-label="Chỉ số hệ thống">
