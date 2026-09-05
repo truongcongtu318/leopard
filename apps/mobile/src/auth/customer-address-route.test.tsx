@@ -25,9 +25,9 @@ jest.mock('../api/http-client', () => ({
 }));
 
 describe('CustomerAddressSetupScreen', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
-    addressStore.clearAll();
+    await addressStore.clearAll();
     (httpClient.get as any).mockResolvedValue({ results: [] });
   });
 
@@ -83,7 +83,7 @@ describe('CustomerAddressSetupScreen', () => {
     expect(mockReplace).toHaveBeenCalledWith('/customer/home');
 
     // Verify persisted in addressStore
-    const saved = addressStore.getDefaultAddress();
+    const saved = await addressStore.getDefaultAddress();
     expect(saved).not.toBeNull();
     expect(saved?.label).toBe('Kho hàng');
     expect(saved?.address).toContain('Kho A1');

@@ -473,13 +473,10 @@ export function HomeDashboardScreen({
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [activeBannerIdx, setActiveBannerIdx] = useState(0);
 
-  // Address initialization: prioritize prop -> addressStore.getDefaultAddress() -> fallback
-  const initialSaved = addressStore.getDefaultAddress();
-  const initialAddress =
-    defaultPickupLocation ??
-    initialSaved?.address ??
-    'Kho Tân Bình, TP. Hồ Chí Minh';
-  const initialLabel = defaultPickupLabel ?? initialSaved?.label ?? null;
+  // Address initialization: prioritize prop -> fallback; the addressStore default
+  // (async) is loaded below and applied once it resolves.
+  const initialAddress = defaultPickupLocation ?? 'Kho Tân Bình, TP. Hồ Chí Minh';
+  const initialLabel = defaultPickupLabel ?? null;
 
   const [pickupText, setPickupText] = useState(initialAddress);
   const [pickupLabel, setPickupLabel] = useState<string | null>(initialLabel);
@@ -607,18 +604,28 @@ export function HomeDashboardScreen({
     setIsSenderMe(true);
   };
 
-  // Keep pickup location synchronized if prop changes or addressStore updates
+  // Keep pickup location synchronized if prop changes or addressStore updates.
+  // Also covers the initial load, since addressStore is async and can't seed
+  // useState synchronously.
   useEffect(() => {
     if (defaultPickupLocation) {
       setPickupText(defaultPickupLocation);
       setPickupLabel(defaultPickupLabel ?? null);
-    } else {
-      const saved = addressStore.getDefaultAddress();
-      if (saved?.address) {
+      return;
+    }
+
+    let isMounted = true;
+    async function loadDefaultPickup() {
+      const saved = await addressStore.getDefaultAddress();
+      if (isMounted && saved?.address) {
         setPickupText(saved.address);
         setPickupLabel(saved.label || null);
       }
     }
+    void loadDefaultPickup();
+    return () => {
+      isMounted = false;
+    };
   }, [defaultPickupLocation, defaultPickupLabel]);
 
   // Dismiss dropdown when clicking or tapping outside on Web
@@ -646,8 +653,24 @@ export function HomeDashboardScreen({
     }
   }, [focusedField]);
 
-  // List of saved addresses for quick switching
-  const addressList = savedAddresses ?? addressStore.getAddresses();
+  // List of saved addresses for quick switching. `savedAddresses` (prop) wins when
+  // provided; otherwise load from the async addressStore.
+  const [loadedAddresses, setLoadedAddresses] = useState<SavedAddress[]>([]);
+  useEffect(() => {
+    if (savedAddresses) return;
+    let isMounted = true;
+    async function loadAddresses() {
+      const list = await addressStore.getAddresses();
+      if (isMounted) {
+        setLoadedAddresses(list);
+      }
+    }
+    void loadAddresses();
+    return () => {
+      isMounted = false;
+    };
+  }, [savedAddresses]);
+  const addressList = savedAddresses ?? loadedAddresses;
 
   // Auto-advance banner every 5 seconds
   useEffect(() => {
@@ -1282,7 +1305,7 @@ export function HomeDashboardScreen({
                       if (savedAddressModalTarget === 'pickup') {
                         setPickupText(addr.address);
                         setPickupLabel(addr.label);
-                        addressStore.setDefaultAddress(addr.id);
+                        void addressStore.setDefaultAddress(addr.id);
                       } else {
                         setDropoffText(addr.address);
                       }

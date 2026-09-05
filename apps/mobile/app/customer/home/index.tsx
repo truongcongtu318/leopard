@@ -7,18 +7,23 @@ import { HomeDashboardScreen } from '../../../src/features/home/HomeDashboardScr
 
 export default function CustomerHomePage() {
   const router = useRouter();
-  const [defaultAddress, setDefaultAddress] = useState<SavedAddress | null>(() =>
-    addressStore.getDefaultAddress(),
-  );
+  const [defaultAddress, setDefaultAddress] = useState<SavedAddress | null>(null);
 
   const [customerUser, setCustomerUser] = useState<{ name?: string; phone?: string } | null>(null);
 
   // Sync address when screen is active
   useEffect(() => {
-    const addr = addressStore.getDefaultAddress();
-    if (addr) {
-      setDefaultAddress(addr);
+    let mounted = true;
+    async function loadDefaultAddress() {
+      const addr = await addressStore.getDefaultAddress();
+      if (mounted && addr) {
+        setDefaultAddress(addr);
+      }
     }
+    void loadDefaultAddress();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Sync authenticated user info from /me

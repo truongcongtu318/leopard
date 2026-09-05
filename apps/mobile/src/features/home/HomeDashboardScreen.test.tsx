@@ -37,8 +37,8 @@ const recentOrders = [
 ];
 
 describe('HomeDashboardScreen', () => {
-  beforeEach(() => {
-    addressStore.clearAll();
+  beforeEach(async () => {
+    await addressStore.clearAll();
   });
   it('surfaces operational work first and wires the primary actions', async () => {
     const onCreateOrder = jest.fn();
@@ -197,7 +197,7 @@ describe('HomeDashboardScreen', () => {
   });
 
   it('loads customer confirmed address from addressStore into pickup input with label', async () => {
-    addressStore.saveAddress({
+    await addressStore.saveAddress({
       label: 'Kho hàng',
       address: '120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
       isDefault: true,
@@ -206,9 +206,9 @@ describe('HomeDashboardScreen', () => {
 
     const screen = await render(<HomeDashboardScreen />);
 
-    // Renders the saved warehouse address
+    // Renders the saved warehouse address (loaded asynchronously from addressStore)
     expect(
-      screen.getByDisplayValue('120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh'),
+      await screen.findByDisplayValue('120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh'),
     ).toBeTruthy();
     expect(screen.getAllByText('Kho hàng').length).toBeGreaterThanOrEqual(1);
 
@@ -216,14 +216,14 @@ describe('HomeDashboardScreen', () => {
   });
 
   it('allows switching pickup location when customer taps a saved address chip', async () => {
-    addressStore.saveAddress({
+    await addressStore.saveAddress({
       id: 'addr-warehouse',
       label: 'Kho hàng',
       address: 'Kho A1 - 120 Trường Chinh, Quận Tân Bình',
       isDefault: true,
       category: 'WAREHOUSE',
     });
-    addressStore.saveAddress({
+    await addressStore.saveAddress({
       id: 'addr-home',
       label: 'Nhà riêng',
       address: '135 Nam Kỳ Khởi Nghĩa, Quận 1',
@@ -236,9 +236,9 @@ describe('HomeDashboardScreen', () => {
       <HomeDashboardScreen onSelectSavedAddress={onSelectSavedAddress} />,
     );
 
-    // Initial default is warehouse
+    // Initial default is warehouse (loaded asynchronously from addressStore)
     expect(
-      screen.getByDisplayValue('Kho A1 - 120 Trường Chinh, Quận Tân Bình'),
+      await screen.findByDisplayValue('Kho A1 - 120 Trường Chinh, Quận Tân Bình'),
     ).toBeTruthy();
 
     // Tap on Sổ địa chỉ to open bottom sheet modal
