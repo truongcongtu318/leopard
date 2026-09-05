@@ -415,43 +415,43 @@ export function AddressBookScreen() {
             keyExtractor={(item) => item.id}
             ListEmptyComponent={
               isLoading ? null : (
-              <View style={styles.emptyBox}>
-                <View style={styles.emptyIconCircle}>
-                  <IconLocationPin color="#94A3B8" size={32} />
+                <View style={styles.emptyBox}>
+                  <View style={styles.emptyIconCircle}>
+                    <IconLocationPin color="#94A3B8" size={32} />
+                  </View>
+                  <Text style={styles.emptyTitle}>
+                    {searchQuery || selectedFilter !== 'ALL'
+                      ? 'Không tìm thấy địa chỉ phù hợp'
+                      : 'Chưa có địa chỉ nào trong sổ'}
+                  </Text>
+                  <Text style={styles.emptyMessage}>
+                    {searchQuery || selectedFilter !== 'ALL'
+                      ? 'Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc danh mục.'
+                      : 'Lưu sẵn địa chỉ thường dùng để tạo đơn và giao nhận nhanh chóng hơn.'}
+                  </Text>
+                  {searchQuery || selectedFilter !== 'ALL' ? (
+                    <Pressable
+                      accessibilityLabel="Xóa bộ lọc"
+                      accessibilityRole="button"
+                      onPress={() => {
+                        setSearchQuery('');
+                        setSelectedFilter('ALL');
+                      }}
+                      style={styles.resetFilterBtn}
+                    >
+                      <Text style={styles.resetFilterBtnText}>Xem tất cả địa chỉ</Text>
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      accessibilityLabel="+ Thêm địa chỉ đầu tiên"
+                      accessibilityRole="button"
+                      onPress={() => setIsAdding(true)}
+                      style={styles.firstAddBtn}
+                    >
+                      <Text style={styles.firstAddBtnText}>+ Thêm địa chỉ đầu tiên</Text>
+                    </Pressable>
+                  )}
                 </View>
-                <Text style={styles.emptyTitle}>
-                  {searchQuery || selectedFilter !== 'ALL'
-                    ? 'Không tìm thấy địa chỉ phù hợp'
-                    : 'Chưa có địa chỉ nào trong sổ'}
-                </Text>
-                <Text style={styles.emptyMessage}>
-                  {searchQuery || selectedFilter !== 'ALL'
-                    ? 'Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc danh mục.'
-                    : 'Lưu sẵn địa chỉ thường dùng để tạo đơn và giao nhận nhanh chóng hơn.'}
-                </Text>
-                {searchQuery || selectedFilter !== 'ALL' ? (
-                  <Pressable
-                    accessibilityLabel="Xóa bộ lọc"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      setSearchQuery('');
-                      setSelectedFilter('ALL');
-                    }}
-                    style={styles.resetFilterBtn}
-                  >
-                    <Text style={styles.resetFilterBtnText}>Xem tất cả địa chỉ</Text>
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    accessibilityLabel="+ Thêm địa chỉ đầu tiên"
-                    accessibilityRole="button"
-                    onPress={() => setIsAdding(true)}
-                    style={styles.firstAddBtn}
-                  >
-                    <Text style={styles.firstAddBtnText}>+ Thêm địa chỉ đầu tiên</Text>
-                  </Pressable>
-                )}
-              </View>
               )
             }
             renderItem={({ item }) => {
