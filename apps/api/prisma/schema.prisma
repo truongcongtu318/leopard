@@ -162,12 +162,15 @@ model DriverProfile {
   reviewedAt        DateTime?                             @db.Timestamptz(3)
   reviewedById      String?                               @db.Uuid
   rejectionReason   String?
+  contractVersion   String?                               @db.VarChar(32)
+  contractSignedAt  DateTime?                             @db.Timestamptz(3)
   lastKnownLocation Unsupported("geography(Point,4326)")?
   lastKnownAt       DateTime?                             @db.Timestamptz(3)
   createdAt         DateTime                              @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                              @default(now()) @updatedAt @db.Timestamptz(3)
   user              User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
   documents         DriverDocument[]
+  contracts         DriverContract[]
 }
 
 enum DriverDocumentType {
@@ -191,6 +194,22 @@ model DriverDocument {
   driverProfile   DriverProfile      @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
 
   @@index([driverProfileId, type])
+}
+
+model DriverContract {
+  id                  String        @id @default(uuid()) @db.Uuid
+  driverProfileId     String        @db.Uuid
+  version             String        @db.VarChar(32)
+  pdfStorageKey       String        @unique
+  signatureStorageKey String?       @unique
+  signedByName        String        @db.VarChar(120)
+  signedAt            DateTime      @db.Timestamptz(3)
+  ipAddress           String?       @db.VarChar(64)
+  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
+  driverProfile       DriverProfile @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([driverProfileId, version])
+  @@index([driverProfileId])
 }
 
 model Order {

@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, URL } from 'node:url';
+import { copyPdfAssets } from './copy-pdf-assets.mjs';
 
 const apiRoot = fileURLToPath(new URL('../', import.meta.url));
 const distMain = fileURLToPath(new URL('../dist/main.js', import.meta.url));
@@ -190,6 +191,8 @@ async function main() {
     console.error(`[api:dev] initial TypeScript compile failed with ${reason}`);
     process.exit(initialResult.code ?? 1);
   }
+
+  await copyPdfAssets();
 
   const compilerWatch = spawnNode([
     typescriptCli,

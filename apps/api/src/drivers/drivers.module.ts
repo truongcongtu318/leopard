@@ -6,6 +6,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { MediaModule } from '../media/media.module.js';
 import { StorageProvider } from '../media/storage.provider.js';
 import { OrdersModule } from '../orders/orders.module.js';
+import { PdfModule } from '../pdf/pdf.module.js';
 import { DriversController } from './drivers.controller.js';
 import { DriversRepository } from './drivers.repository.js';
 import { DriversService } from './drivers.service.js';
@@ -13,7 +14,7 @@ import { DriverApplicationService } from './driver-application.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
 
 @Module({
-  imports: [AuthModule, DatabaseModule, OrdersModule, MediaModule],
+  imports: [AuthModule, DatabaseModule, OrdersModule, MediaModule, PdfModule],
   controllers: [DriversController],
   providers: [
     AccountStatusCache,
