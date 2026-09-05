@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -26,48 +26,9 @@ import {
 } from '../../../ui/icons/CoreIcons';
 import { RealInteractiveMap, resolveLocationCoords } from '../../../ui/RealInteractiveMap';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { addressStore, type SavedAddress } from './address-store';
 
-export type AddressCategory = 'WAREHOUSE' | 'OFFICE' | 'HOME' | 'OTHER';
-
-export type SavedAddress = Readonly<{
-  id: string;
-  label: string;
-  address: string;
-  contactName: string;
-  contactPhone: string;
-  isDefault: boolean;
-  category?: AddressCategory;
-}>;
-
-const mockAddresses: readonly SavedAddress[] = [
-  {
-    id: 'addr-1',
-    label: 'Kho trung tâm Quận 7',
-    address: '123 Đường Huỳnh Tấn Phát, Phường Tân Phú, Quận 7, TP.HCM',
-    contactName: 'Nguyễn Văn A',
-    contactPhone: '0901234567',
-    isDefault: true,
-    category: 'WAREHOUSE',
-  },
-  {
-    id: 'addr-2',
-    label: 'Văn phòng đại diện',
-    address: '45 Lê Duẩn, Phường Bến Nghé, Quận 1, TP.HCM',
-    contactName: 'Trần Thị B',
-    contactPhone: '0912345678',
-    isDefault: false,
-    category: 'OFFICE',
-  },
-  {
-    id: 'addr-3',
-    label: 'Xưởng may Tân Bình',
-    address: '78 Trường Chinh, Phường 12, Quận Tân Bình, TP.HCM',
-    contactName: 'Lê Văn C',
-    contactPhone: '0987654321',
-    isDefault: false,
-    category: 'WAREHOUSE',
-  },
-];
+export type AddressCategory = NonNullable<SavedAddress['category']>;
 
 type FilterCategory = 'ALL' | AddressCategory;
 
@@ -79,7 +40,8 @@ const categoryOptions = [
 ] as const;
 
 export function AddressBookScreen() {
-  const [addresses, setAddresses] = useState<readonly SavedAddress[]>(mockAddresses);
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [expandedMapId, setExpandedMapId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,26 +55,32 @@ export function AddressBookScreen() {
   const [newCategory, setNewCategory] = useState<AddressCategory>('WAREHOUSE');
   const [newIsDefault, setNewIsDefault] = useState(false);
 
-  const handleAddAddress = () => {
+  useEffect(() => {
+    let cancelled = false;
+    addressStore.getAddresses().then((list) => {
+      if (!cancelled) {
+        setAddresses(list);
+        setIsLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleAddAddress = async () => {
     if (!newLabel.trim() || !newAddress.trim()) return;
     const shouldBeDefault = newIsDefault || addresses.length === 0;
 
-    const newItem: SavedAddress = {
-      id: `addr-${Date.now()}`,
+    await addressStore.saveAddress({
       label: newLabel.trim(),
       address: newAddress.trim(),
       contactName: newContact.trim() || 'Người nhận',
       contactPhone: newPhone.trim() || '0900000000',
       isDefault: shouldBeDefault,
       category: newCategory,
-    };
-
-    setAddresses((prev) => {
-      const base = shouldBeDefault
-        ? prev.map((a) => ({ ...a, isDefault: false }))
-        : prev;
-      return [newItem, ...base];
     });
+    setAddresses(await addressStore.getAddresses());
 
     setNewLabel('');
     setNewAddress('');
@@ -124,6 +92,10 @@ export function AddressBookScreen() {
   };
 
   const handleDelete = (id: string) => {
+    // NOTE: address-store has no delete API yet — this remains a local-only
+    // removal for this render pass. A subsequent addressStore.getAddresses()
+    // call (e.g. after adding or setting a default) will restore the item
+    // from persisted storage. See task-3-report.md "Concerns".
     setAddresses((prev) => {
       const remaining = prev.filter((a) => a.id !== id);
       // If deleted address was default and there are other addresses, promote first one
@@ -135,10 +107,9 @@ export function AddressBookScreen() {
     });
   };
 
-  const handleSetDefault = (id: string) => {
-    setAddresses((prev) =>
-      prev.map((a) => ({ ...a, isDefault: a.id === id })),
-    );
+  const handleSetDefault = async (id: string) => {
+    await addressStore.setDefaultAddress(id);
+    setAddresses(await addressStore.getAddresses());
   };
 
   // Filter & search logic
@@ -153,8 +124,8 @@ export function AddressBookScreen() {
       const q = searchQuery.toLowerCase().trim();
       const matchLabel = item.label.toLowerCase().includes(q);
       const matchAddress = item.address.toLowerCase().includes(q);
-      const matchContact = item.contactName.toLowerCase().includes(q);
-      const matchPhone = item.contactPhone.toLowerCase().includes(q);
+      const matchContact = (item.contactName ?? '').toLowerCase().includes(q);
+      const matchPhone = (item.contactPhone ?? '').toLowerCase().includes(q);
       return matchLabel || matchAddress || matchContact || matchPhone;
     }
     return true;
@@ -443,6 +414,7 @@ export function AddressBookScreen() {
             data={filteredAddresses}
             keyExtractor={(item) => item.id}
             ListEmptyComponent={
+              isLoading ? null : (
               <View style={styles.emptyBox}>
                 <View style={styles.emptyIconCircle}>
                   <IconLocationPin color="#94A3B8" size={32} />
@@ -480,6 +452,7 @@ export function AddressBookScreen() {
                   </Pressable>
                 )}
               </View>
+              )
             }
             renderItem={({ item }) => {
               const meta = getCategoryMeta(item.category);
