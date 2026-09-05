@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 
 export interface RevenueOverTimeCardProps {
   title?: string;
@@ -16,6 +17,45 @@ const PERIODS = [
   { id: '6months', label: '6 tháng' },
   { id: 'year', label: 'Năm' },
 ] as const;
+
+const REVENUE_CHART_DATA: Record<string, Array<{ p: string; val: number }>> = {
+  week: [
+    { p: 'T2', val: 7.2 },
+    { p: 'T3', val: 8.5 },
+    { p: 'T4', val: 6.8 },
+    { p: 'T5', val: 9.4 },
+    { p: 'T6', val: 11.2 },
+    { p: 'T7', val: 8.9 },
+    { p: 'CN', val: 6.2 },
+  ],
+  month: [
+    { p: 'W1', val: 48 },
+    { p: 'W2', val: 56 },
+    { p: 'W3', val: 62 },
+    { p: 'W4', val: 73 },
+  ],
+  '6months': [
+    { p: 'T3', val: 180 },
+    { p: 'T4', val: 210 },
+    { p: 'T5', val: 240 },
+    { p: 'T6', val: 235 },
+    { p: 'T7', val: 270 },
+    { p: 'T8', val: 290 },
+  ],
+  year: [
+    { p: 'Q1', val: 580 },
+    { p: 'Q2', val: 690 },
+    { p: 'Q3', val: 780 },
+    { p: 'Q4', val: 844 },
+  ],
+};
+
+const DEFAULT_REVENUE_SERIES: Array<{ p: string; val: number }> = [
+  { p: 'W1', val: 48 },
+  { p: 'W2', val: 56 },
+  { p: 'W3', val: 62 },
+  { p: 'W4', val: 73 },
+];
 
 const PERIOD_DATA: Record<string, { amount: string; growth: string }> = {
   week: { amount: '58.200.000 ₫', growth: '+8% so với tuần trước' },
@@ -59,29 +99,29 @@ export function RevenueOverTimeCard({
         </div>
       </div>
 
-      {/* SVG Smooth Flowing White Wave Sparkline Chart */}
+      {/* Smooth Flowing White Wave Sparkline Chart (Recharts) */}
       <div className="absolute inset-x-0 bottom-12 h-24 overflow-hidden pointer-events-none" aria-hidden="true">
-        <svg
-          className="w-full h-full"
-          viewBox="0 0 400 100"
-          preserveAspectRatio="none"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Subtle translucent area fill */}
-          <path
-            d="M 0 60 Q 60 80 120 45 T 240 70 T 340 30 T 400 50 L 400 100 L 0 100 Z"
-            fill="rgba(255, 255, 255, 0.25)"
-          />
-          {/* Crisp white stroke line */}
-          <path
-            d="M 0 60 Q 60 80 120 45 T 240 70 T 340 30 T 400 50"
-            stroke="#ffffff"
-            strokeWidth="3"
-            strokeLinecap="round"
-            fill="none"
-          />
-        </svg>
+        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 96 }}>
+          <AreaChart
+            data={(currentPeriod in REVENUE_CHART_DATA ? REVENUE_CHART_DATA[currentPeriod] : undefined) ?? DEFAULT_REVENUE_SERIES}
+            margin={{ top: 12, right: 0, left: 0, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="whiteWaveGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <Area
+              type="natural"
+              dataKey="val"
+              stroke="#ffffff"
+              strokeWidth={3}
+              fill="url(#whiteWaveGrad)"
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Bottom Period Filter Pills */}
