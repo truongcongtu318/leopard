@@ -15,7 +15,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Response } from 'express';
 import type { DriverDocumentType } from '@prisma/client';
 import { CONTRACT_VERSION } from './driver-contract-template.js';
 import { DriverContractService } from './driver-contract.service.js';
@@ -41,6 +40,17 @@ const DRIVER_DOCUMENT_TYPES: readonly DriverDocumentType[] = [
   'ID_CARD',
   'VEHICLE_PHOTO',
 ];
+
+/**
+ * Minimal response contract for streaming the contract PDF — satisfied by
+ * both Express and Fastify, avoiding a direct `express` type dependency
+ * (mirrors `HttpServerResponse` in `api-exception.filter.ts`).
+ */
+interface PdfHttpResponse {
+  setHeader(name: string, value: string): this;
+  status(code: number): this;
+  send(body: Buffer): void;
+}
 
 @Controller('driver')
 @UseFilters(ApiExceptionFilter)
@@ -85,7 +95,7 @@ export class DriversController {
   @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
   async getContractPdf(
     @Query('version') version: string | undefined,
-    @Res() res: Response,
+    @Res() res: PdfHttpResponse,
   ): Promise<void> {
     const buffer = await this.driverContractService.renderUnsignedTemplatePdf(version);
 
