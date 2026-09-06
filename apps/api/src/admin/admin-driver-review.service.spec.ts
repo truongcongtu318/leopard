@@ -28,6 +28,18 @@ interface FakeUser {
   } | null;
 }
 
+function createContractServiceMock() {
+  return {
+    getSignedContractForAdmin: jest.fn(async () => ({
+      version: 'v1',
+      signedByName: 'Nguyễn Văn A',
+      signedAt: '2026-09-01T00:00:00.000Z',
+      pdfUrl: 'https://signed.example/contracts/p-1/pdf/x.pdf',
+      signatureUrl: null,
+    })),
+  };
+}
+
 function createMock(user: FakeUser | null, list: FakeUser[] = []) {
   const tx = {
     user: { update: jest.fn(async () => user) },
@@ -73,7 +85,11 @@ describe('AdminDriverReviewService', () => {
       },
     ];
     const { prisma, audit } = createMock(null, list);
-    const service = new AdminDriverReviewService(prisma as never, audit as never);
+    const service = new AdminDriverReviewService(
+      prisma as never,
+      audit as never,
+      createContractServiceMock(),
+    );
 
     const result = await service.listApplications();
 
@@ -110,7 +126,11 @@ describe('AdminDriverReviewService', () => {
       },
     };
     const { prisma, audit, tx } = createMock(user);
-    const service = new AdminDriverReviewService(prisma as never, audit as never);
+    const service = new AdminDriverReviewService(
+      prisma as never,
+      audit as never,
+      createContractServiceMock(),
+    );
 
     await service.approve(admin, 'u-1');
 
@@ -146,7 +166,11 @@ describe('AdminDriverReviewService', () => {
       },
     };
     const { prisma, tx } = createMock(user);
-    const service = new AdminDriverReviewService(prisma as never, { append: jest.fn(async () => ({})) } as never);
+    const service = new AdminDriverReviewService(
+      prisma as never,
+      { append: jest.fn(async () => ({})) } as never,
+      createContractServiceMock(),
+    );
 
     await service.reject(admin, 'u-1', 'Ảnh giấy tờ mờ, cần chụp lại');
 
@@ -168,7 +192,11 @@ describe('AdminDriverReviewService', () => {
       status: 'PENDING_APPROVAL',
       driverProfile: null,
     });
-    const service = new AdminDriverReviewService(prisma as never, audit as never);
+    const service = new AdminDriverReviewService(
+      prisma as never,
+      audit as never,
+      createContractServiceMock(),
+    );
 
     await expect(service.reject(admin, 'u-1', 'no')).rejects.toMatchObject({
       code: 'VALIDATION_ERROR',
@@ -192,7 +220,11 @@ describe('AdminDriverReviewService', () => {
         rejectionReason: null,
       },
     });
-    const service = new AdminDriverReviewService(prisma as never, audit as never);
+    const service = new AdminDriverReviewService(
+      prisma as never,
+      audit as never,
+      createContractServiceMock(),
+    );
 
     await expect(service.approve(admin, 'u-1')).rejects.toMatchObject({
       code: 'DRIVER_APPLICATION_NOT_PENDING',
@@ -207,10 +239,55 @@ describe('AdminDriverReviewService', () => {
       status: 'ACTIVE',
       driverProfile: null,
     });
-    const service = new AdminDriverReviewService(prisma as never, audit as never);
+    const service = new AdminDriverReviewService(
+      prisma as never,
+      audit as never,
+      createContractServiceMock(),
+    );
 
     await expect(service.approve(admin, 'u-1')).rejects.toMatchObject({
       code: 'RESOURCE_NOT_FOUND',
+    });
+  });
+
+  describe('getContractEvidence', () => {
+    it('delegates to DriverContractService, projecting only metadata and signed URLs', async () => {
+      const { prisma, audit } = createMock(null);
+      const contractService = createContractServiceMock();
+      const service = new AdminDriverReviewService(
+        prisma as never,
+        audit as never,
+        contractService as never,
+      );
+
+      const result = await service.getContractEvidence('u-1');
+
+      expect(contractService.getSignedContractForAdmin).toHaveBeenCalledWith('u-1');
+      expect(result).toEqual({
+        version: 'v1',
+        signedByName: 'Nguyễn Văn A',
+        signedAt: '2026-09-01T00:00:00.000Z',
+        pdfUrl: 'https://signed.example/contracts/p-1/pdf/x.pdf',
+        signatureUrl: null,
+      });
+      expect(JSON.stringify(result)).not.toContain('storageKey');
+    });
+
+    it('propagates 404 when the driver has no signed contract evidence', async () => {
+      const { prisma, audit } = createMock(null);
+      const contractService = createContractServiceMock();
+      contractService.getSignedContractForAdmin.mockRejectedValueOnce(
+        Object.assign(new Error('not found'), { code: 'RESOURCE_NOT_FOUND', status: 404 }),
+      );
+      const service = new AdminDriverReviewService(
+        prisma as never,
+        audit as never,
+        contractService as never,
+      );
+
+      await expect(service.getContractEvidence('missing-user')).rejects.toMatchObject({
+        code: 'RESOURCE_NOT_FOUND',
+      });
     });
   });
 });

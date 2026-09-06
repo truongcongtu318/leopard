@@ -11,6 +11,7 @@ import { DriversController } from './drivers.controller.js';
 import { DriversRepository } from './drivers.repository.js';
 import { DriversService } from './drivers.service.js';
 import { DriverApplicationService } from './driver-application.service.js';
+import { DriverContractService } from './driver-contract.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
 
 @Module({
@@ -20,6 +21,7 @@ import { DriverDocumentService } from './driver-document.service.js';
     AccountStatusCache,
     DriversService,
     DriverApplicationService,
+    DriverContractService,
     DriversRepository,
     {
       provide: DriverDocumentService,
@@ -33,6 +35,6 @@ import { DriverDocumentService } from './driver-document.service.js';
       inject: [StorageProvider, PrismaService],
     },
   ],
-  exports: [DriversService, DriversRepository, DriverDocumentService],
+  exports: [DriversService, DriversRepository, DriverDocumentService, DriverContractService],
 })
 export class DriversModule {}

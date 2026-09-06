@@ -100,6 +100,11 @@ export class AdminController {
     return this.driverDocumentService.listDocumentsForUser(id);
   }
 
+  @Get('drivers/:id/contract')
+  async getDriverContract(@Param('id') id: string) {
+    return this.driverReviewService.getContractEvidence(id);
+  }
+
   @Post('drivers/:id/approve')
   async approveDriver(
     @CurrentUser() actor: AuthenticatedActor,

@@ -8,13 +8,17 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UploadedFile,
   UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import type { DriverDocumentType } from '@prisma/client';
+import { CONTRACT_VERSION } from './driver-contract-template.js';
+import { DriverContractService } from './driver-contract.service.js';
 import { AllowUserStatuses } from '../auth/decorators/allow-user-statuses.js';
 import { CurrentUser, type AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { RequireRoles } from '../auth/decorators/require-roles.js';
@@ -46,6 +50,7 @@ export class DriversController {
     private readonly driversService: DriversService,
     private readonly driverApplicationService: DriverApplicationService,
     private readonly driverDocumentService: DriverDocumentService,
+    private readonly driverContractService: DriverContractService,
     private readonly acceptOrderService: AcceptOrderService,
     private readonly updateOrderStatusService: UpdateOrderStatusService,
   ) {}
@@ -66,6 +71,30 @@ export class DriversController {
   @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
   getMyApplication(@CurrentUser() actor: AuthenticatedActor) {
     return this.driverApplicationService.getMyApplication(actor);
+  }
+
+  // Contract review, before applying: version + a link to the unsigned
+  // template PDF. No DB row is created for this read-only preview.
+  @Get('contract')
+  @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
+  getContract() {
+    return this.driverContractService.getContractPreview();
+  }
+
+  @Get('contract/pdf')
+  @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
+  async getContractPdf(
+    @Query('version') version: string | undefined,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.driverContractService.renderUnsignedTemplatePdf(version);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="hop-dong-tai-xe-${CONTRACT_VERSION}.pdf"`,
+    );
+    res.status(HttpStatus.OK).send(buffer);
   }
 
   // KYC document upload (GPLX / cà-vẹt / CCCD / ảnh xe) — multipart/form-data.

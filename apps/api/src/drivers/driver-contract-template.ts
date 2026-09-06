@@ -1,3 +1,5 @@
+import type { VehicleType } from '@prisma/client';
+
 import type { PdfLabeledField, PdfSection } from '../pdf/pdf.types.js';
 
 /**
@@ -24,6 +26,28 @@ export interface DriverContractPartyDetails {
 }
 
 export const DRIVER_CONTRACT_DOCUMENT_TITLE = 'HỢP ĐỒNG HỢP TÁC VẬN CHUYỂN';
+
+/** Vietnamese vehicle-type labels for the contract's printed party fields. */
+export const VEHICLE_TYPE_LABELS_VI: Readonly<Record<VehicleType, string>> = {
+  MOTORBIKE: 'Xe máy / Ba gác',
+  VAN: 'Xe van',
+  TRUCK: 'Xe tải',
+};
+
+/**
+ * Placeholder party-B details for the unsigned, read-only preview PDF
+ * (`GET /driver/contract/pdf`) — rendered before any applicant data exists,
+ * so it must not depend on a driver profile or DB read.
+ */
+const PREVIEW_PLACEHOLDER = '(Điền khi nộp hồ sơ đăng ký)';
+
+export const DRIVER_CONTRACT_PREVIEW_PARTY_DETAILS: DriverContractPartyDetails = {
+  driverName: PREVIEW_PLACEHOLDER,
+  driverPhone: PREVIEW_PLACEHOLDER,
+  vehicleTypeLabel: PREVIEW_PLACEHOLDER,
+  licensePlate: PREVIEW_PLACEHOLDER,
+  licenseNumber: PREVIEW_PLACEHOLDER,
+};
 
 export function buildDriverContractPartyFields(
   details: DriverContractPartyDetails,

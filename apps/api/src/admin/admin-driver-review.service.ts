@@ -5,6 +5,10 @@ import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { AuditService } from '../audit/audit.service.js';
 import { DomainError } from '../common/domain-error.js';
 import { PrismaService } from '../database/prisma.service.js';
+import {
+  DriverContractService,
+  type AdminDriverContractView,
+} from '../drivers/driver-contract.service.js';
 
 export interface DriverApplicationSummary {
   readonly userId: string;
@@ -26,7 +30,13 @@ export class AdminDriverReviewService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly driverContractService: DriverContractService,
   ) {}
+
+  /** Admin: signed contract evidence (metadata + short-lived URLs) for one driver. */
+  getContractEvidence(userId: string): Promise<AdminDriverContractView> {
+    return this.driverContractService.getSignedContractForAdmin(userId);
+  }
 
   async listApplications(
     status: UserStatus = 'PENDING_APPROVAL',
