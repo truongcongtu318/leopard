@@ -296,7 +296,10 @@ describe('DriverApplicationService', () => {
 
     await expect(service.apply(actor, validDto)).rejects.toThrow('db exploded');
 
-    expect(contractService.cleanupUploaded).toHaveBeenCalledWith(PREPARED);
+    expect(contractService.cleanupUploaded).toHaveBeenCalledWith(
+      PREPARED,
+      expect.objectContaining({ driverProfileId: expect.any(String), version: 'v1' }),
+    );
     expect(contractService.deleteSupersededFiles).not.toHaveBeenCalled();
   });
 

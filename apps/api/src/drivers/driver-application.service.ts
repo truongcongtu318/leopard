@@ -76,7 +76,10 @@ export class DriverApplicationService {
     try {
       profile = await this.commitApplication(user.id, profileId, dto, prepared);
     } catch (error) {
-      await this.driverContractService.cleanupUploaded(prepared);
+      await this.driverContractService.cleanupUploaded(prepared, {
+        driverProfileId: profileId,
+        version: CONTRACT_VERSION,
+      });
       throw error;
     }
 

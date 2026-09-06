@@ -1,6 +1,8 @@
-import { Module } from '@nestjs/common';
+import { type MiddlewareConsumer, Module, type NestModule, RequestMethod } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
 import { AccountStatusCache } from '../auth/guards/account-status-cache.js';
+import { DRIVER_APPLY_JSON_BODY_LIMIT_BYTES } from '../common/body-size-limits.js';
+import { createJsonBodyLimitMiddleware } from '../common/json-body-limit.middleware.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { MediaModule } from '../media/media.module.js';
@@ -37,4 +39,14 @@ import { DriverDocumentService } from './driver-document.service.js';
   ],
   exports: [DriversService, DriversRepository, DriverDocumentService, DriverContractService],
 })
-export class DriversModule {}
+export class DriversModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    // POST /driver/apply carries a base64 signature image and needs a
+    // larger JSON body cap than the app-wide default (see
+    // AppModule.configure(), which excludes exactly this route from that
+    // smaller cap).
+    consumer
+      .apply(createJsonBodyLimitMiddleware({ limitBytes: DRIVER_APPLY_JSON_BODY_LIMIT_BYTES }))
+      .forRoutes({ path: 'driver/apply', method: RequestMethod.POST });
+  }
+}

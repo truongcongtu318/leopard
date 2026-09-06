@@ -169,13 +169,33 @@ export class DriverContractService {
     });
   }
 
-  /** Best-effort delete of freshly-uploaded evidence after a failed DB write. */
-  async cleanupUploaded(evidence: PreparedSignedContract): Promise<void> {
+  /**
+   * Best-effort delete of freshly-uploaded evidence after a failed DB write.
+   * Never throws — the caller has already rolled back the transaction and
+   * is rethrowing the original error; a delete failure here must not mask
+   * it, but it also must not vanish silently (an orphaned blob left behind
+   * by a repeated failure would otherwise be invisible in production), so
+   * it is logged with the same profile/version context as
+   * {@link deleteSupersededFiles}.
+   */
+  async cleanupUploaded(
+    evidence: PreparedSignedContract,
+    context: { readonly driverProfileId: string; readonly version: string },
+  ): Promise<void> {
     const keys = [evidence.pdfStorageKey, evidence.signatureStorageKey].filter(
       (key): key is string => key !== null,
     );
 
-    await Promise.all(keys.map((key) => this.storage.delete(key).catch(() => {})));
+    await Promise.all(
+      keys.map((key) =>
+        this.storage.delete(key).catch((error: unknown) => {
+          this.logger.error(
+            `Failed to delete orphaned contract file after a failed transaction (profile=${context.driverProfileId}, version=${context.version}, key=${key})`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        }),
+      ),
+    );
   }
 
   /**

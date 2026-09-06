@@ -194,14 +194,46 @@ describe('DriverContractService', () => {
     it('deletes both keys and swallows delete failures', async () => {
       mocks.storage.delete.mockRejectedValueOnce(new Error('boom'));
 
-      await service.cleanupUploaded({
-        signedByName: 'x',
-        signedAt: new Date(),
-        pdfStorageKey: 'contracts/p-1/pdf/a.pdf',
-        signatureStorageKey: 'contracts/p-1/signature/a.png',
-      });
+      await service.cleanupUploaded(
+        {
+          signedByName: 'x',
+          signedAt: new Date(),
+          pdfStorageKey: 'contracts/p-1/pdf/a.pdf',
+          signatureStorageKey: 'contracts/p-1/signature/a.png',
+        },
+        { driverProfileId: 'p-1', version: CONTRACT_VERSION },
+      );
 
       expect(mocks.storage.delete).toHaveBeenCalledTimes(2);
+    });
+
+    it('never throws when a delete fails — only logs with profile/version context', async () => {
+      const loggerErrorSpy = jest.spyOn(
+        (service as unknown as { logger: { error: (...args: unknown[]) => void } }).logger,
+        'error',
+      );
+      mocks.storage.delete.mockRejectedValueOnce(new Error('disk gone'));
+
+      await expect(
+        service.cleanupUploaded(
+          {
+            signedByName: 'x',
+            signedAt: new Date(),
+            pdfStorageKey: 'contracts/p-1/pdf/a.pdf',
+            signatureStorageKey: 'contracts/p-1/signature/a.png',
+          },
+          { driverProfileId: 'p-1', version: CONTRACT_VERSION },
+        ),
+      ).resolves.toBeUndefined();
+
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('profile=p-1'),
+        expect.anything(),
+      );
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`version=${CONTRACT_VERSION}`),
+        expect.anything(),
+      );
     });
   });
 

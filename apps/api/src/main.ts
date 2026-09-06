@@ -15,21 +15,17 @@ import type { AppEnv } from './config/env.schema.js';
 export async function createApplication(env: AppEnv): Promise<INestApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: false,
-    // Disabled so the larger json limit below (needed for base64 signature
-    // images up to MAX_IMAGE_SIZE_BYTES on POST /driver/apply) replaces
-    // Nest's default body parser instead of running alongside it.
+    // Disabled globally: JSON body-size limits are scoped per route instead
+    // (AppModule.configure() applies a small, Express-default-sized cap to
+    // every route; DriversModule.configure() applies a larger one scoped
+    // only to POST /driver/apply, which carries a base64 signature image).
+    // Registering Nest's own default parser here would apply a single limit
+    // to every route with no way to scope an exception to just one of them.
     bodyParser: false,
   });
 
   app.enableShutdownHooks();
   app.setGlobalPrefix('api/v1');
-
-  // A signature data-URI (image, base64) can be up to ~13.4MB for a
-  // MAX_IMAGE_SIZE_BYTES (10MB) image, so json/urlencoded need a higher
-  // limit than body-parser's 100kb default. bodyParser:false above prevents
-  // Nest from also registering its own default-limit parsers first.
-  app.useBodyParser('json', { limit: '15mb' });
-  app.useBodyParser('urlencoded', { extended: true, limit: '15mb' });
 
   // Serve locally-stored uploads (KYC docs, cargo/proof media) at /files when
   // not using S3. In production with S3, signed absolute URLs are used instead.
