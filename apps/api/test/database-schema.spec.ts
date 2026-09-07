@@ -36,13 +36,7 @@ const expectedEnums = {
   ProviderSource: ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'],
   Role: ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'],
   StopType: ['PICKUP', 'STOP', 'DROPOFF'],
-  UserStatus: [
-    'ACTIVE',
-    'DISABLED',
-    'PENDING_APPROVAL',
-    'REJECTED',
-    'SUSPENDED',
-  ],
+  UserStatus: ['ACTIVE', 'DISABLED'],
   VehicleType: ['MOTORBIKE', 'VAN', 'TRUCK'],
 } as const;
 
@@ -60,18 +54,13 @@ type ColumnRow = {
 };
 
 function requireDatabaseUrl(): string {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const envContent = fs.readFileSync(path.resolve(__dirname, '../.env'), 'utf8');
-    const match = envContent.match(/^DATABASE_URL=(.*)$/m);
-    if (match) return match[1].trim().replace(/^["']|["']$/g, '');
-  } catch {
-    // ignore if .env cannot be read
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is required for database schema tests');
   }
 
-  throw new Error('DATABASE_URL is required for database schema tests');
+  return databaseUrl;
 }
 
 describe('canonical pilot database schema', () => {
@@ -98,7 +87,7 @@ describe('canonical pilot database schema', () => {
       [expectedTables],
     );
 
-    expect(extension.rows[0]?.extversion).toMatch(/^3\.[45]/);
+    expect(extension.rows[0]?.extversion).toMatch(/^3\.5/);
     expect(tables.rows.map(({ tablename }) => tablename)).toEqual(expectedTables);
   });
 
@@ -177,7 +166,7 @@ describe('canonical pilot database schema', () => {
     expect(
       timestamps.rows.every(({ data_type }) => data_type === 'timestamp with time zone'),
     ).toBe(true);
-    expect(operationalValues.rows.length).toBe(8);
+    expect(operationalValues.rows.length).toBe(7);
     expect(operationalValues.rows.every(({ data_type }) => data_type === 'integer')).toBe(
       true,
     );
