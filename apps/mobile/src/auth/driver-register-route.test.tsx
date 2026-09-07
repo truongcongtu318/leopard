@@ -144,6 +144,33 @@ describe('RegisterScreen (Driver registration)', () => {
     await screen.unmount();
   });
 
+  it('shows an error state and does not crash when GET /driver/contract fails', async () => {
+    (httpClient.get as jest.Mock).mockImplementation((path: unknown) => {
+      if (path === '/driver/contract') {
+        return Promise.reject(new Error('network down'));
+      }
+      if (path === '/driver/application') {
+        return Promise.resolve({
+          status: 'PENDING_APPROVAL',
+          rejectionReason: null,
+          contractVersion: null,
+          contractSignedAt: null,
+        } as never);
+      }
+      return Promise.reject(new Error(`unexpected path: ${String(path)}`));
+    });
+
+    const screen = await render(<RegisterScreen />);
+    await fillBasicInfo(screen);
+
+    expect(
+      await screen.findByText('Không tải được hợp đồng, vui lòng thử lại'),
+    ).toBeTruthy();
+    // No "Xem hợp đồng" link should render since the contract descriptor never loaded.
+    expect(screen.queryByLabelText('Xem hợp đồng')).toBeNull();
+    await screen.unmount();
+  });
+
   it('keeps the submit CTA disabled until consent is checked and a signature is confirmed', async () => {
     const screen = await render(<RegisterScreen />);
     await fillFormAndDocs(screen);

@@ -77,6 +77,27 @@ function formatSignedAt(iso: string): string {
   }
 }
 
+/** Maps a failed `POST /driver/apply` error to the Vietnamese user-facing message. */
+function mapApplyError(err: unknown): string {
+  const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
+  const code = (err as { code?: string })?.code;
+  const message = (err as { message?: string })?.message;
+
+  if (statusCode === 401) {
+    return 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại';
+  }
+  if (code === 'CONTRACT_NOT_ACCEPTED') {
+    return message ?? 'Bạn cần đồng ý với hợp đồng tài xế trước khi đăng ký';
+  }
+  if (code === 'SIGNATURE_INVALID') {
+    return message ?? 'Chữ ký không hợp lệ, vui lòng nhập lại họ tên xác nhận';
+  }
+  if (err instanceof ApiError && statusCode >= 400 && statusCode < 500) {
+    return message ?? 'Thông tin đăng ký chưa hợp lệ';
+  }
+  return message ?? 'Đã xảy ra lỗi khi gửi hồ sơ, vui lòng thử lại';
+}
+
 export default function RegisterScreen() {
   const router = useRouter();
   const isAuthenticated = sessionStore.getAccessToken() != null;
@@ -233,20 +254,7 @@ export default function RegisterScreen() {
 
       setSuccess(true);
     } catch (err) {
-      const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
-      const code = (err as { code?: string })?.code;
-      const message = (err as { message?: string })?.message;
-      if (statusCode === 401) {
-        setErrorMsg('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
-      } else if (code === 'CONTRACT_NOT_ACCEPTED') {
-        setErrorMsg(message ?? 'Bạn cần đồng ý với hợp đồng tài xế trước khi đăng ký');
-      } else if (code === 'SIGNATURE_INVALID') {
-        setErrorMsg(message ?? 'Chữ ký không hợp lệ, vui lòng nhập lại họ tên xác nhận');
-      } else if (err instanceof ApiError && statusCode >= 400 && statusCode < 500) {
-        setErrorMsg(message ?? 'Thông tin đăng ký chưa hợp lệ');
-      } else {
-        setErrorMsg(message ?? 'Đã xảy ra lỗi khi gửi hồ sơ, vui lòng thử lại');
-      }
+      setErrorMsg(mapApplyError(err));
     } finally {
       setIsSubmitting(false);
     }
