@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type { DriverProfile, UserStatus } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
@@ -80,7 +81,7 @@ export class DriverApplicationService {
         driverProfileId: profileId,
         version: CONTRACT_VERSION,
       });
-      throw error;
+      throw this.toDomainError(error);
     }
 
     if (existingContract) {
@@ -230,6 +231,36 @@ export class DriverApplicationService {
 
       return profile;
     });
+  }
+
+  /**
+   * Maps the rare concurrent-double-submit race to a clean, retryable
+   * `DomainError` instead of letting a raw Prisma error surface.
+   *
+   * `loadExistingContractContext` speculatively generates a `profileId`
+   * client-side (before the transaction) so contract evidence can be
+   * uploaded ahead of time. If the same user double-submits concurrently,
+   * two requests can each generate a different speculative id and both
+   * enter `commitApplication`. Whichever transaction commits first wins:
+   * its `driverProfile.upsert` either creates the row with its own id, or —
+   * if a profile already existed for that `userId` — updates that existing
+   * row instead (the upsert is keyed by `userId`, not the speculative id).
+   * The losing transaction's `persistSignedContract` then tries to insert a
+   * `DriverContract` row whose `driverProfileId` FK points at an id that
+   * was never actually written, which Prisma reports as `P2003`. This is
+   * not data-corrupting — the winner's write is fine — so we simply turn it
+   * into a normal 409 the losing client can retry.
+   */
+  private toDomainError(error: unknown): unknown {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return new DomainError(
+        'DRIVER_APPLICATION_CONFLICT',
+        409,
+        'Hồ sơ tài xế đang được xử lý, vui lòng thử lại',
+      );
+    }
+
+    return error;
   }
 
   private toView(

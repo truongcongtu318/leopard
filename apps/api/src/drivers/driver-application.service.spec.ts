@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { Prisma } from '@prisma/client';
 import type { Role, UserStatus } from '@prisma/client';
 
 import { DriverApplicationService } from './driver-application.service.js';
@@ -301,6 +302,43 @@ describe('DriverApplicationService', () => {
       expect.objectContaining({ driverProfileId: expect.any(String), version: 'v1' }),
     );
     expect(contractService.deleteSupersededFiles).not.toHaveBeenCalled();
+  });
+
+  it('maps a P2003 FK violation from a concurrent double-submit race to a clean 409 DomainError', async () => {
+    // Simulates the losing side of a concurrent double-submit: the winning
+    // transaction's driverProfile.upsert matched a pre-existing row (keyed
+    // by userId), so this transaction's persistSignedContract insert -
+    // referencing its own speculative profileId - violates the
+    // DriverContract.driverProfileId FK constraint.
+    mock = createPrismaMock({ id: 'user-1', role: 'CUSTOMER', status: 'ACTIVE' });
+    const fkViolation = new Prisma.PrismaClientKnownRequestError('Foreign key constraint violated', {
+      code: 'P2003',
+      clientVersion: '7.8.0',
+    });
+    mock.prisma.$transaction.mockRejectedValueOnce(fkViolation);
+    const service = new DriverApplicationService(mock.prisma as never, contractService as never);
+
+    await expect(service.apply(actor, validDto)).rejects.toMatchObject({
+      code: 'DRIVER_APPLICATION_CONFLICT',
+      status: 409,
+    });
+
+    expect(contractService.cleanupUploaded).toHaveBeenCalledWith(
+      PREPARED,
+      expect.objectContaining({ driverProfileId: expect.any(String), version: 'v1' }),
+    );
+  });
+
+  it('rethrows a non-FK transaction error unchanged', async () => {
+    mock = createPrismaMock({ id: 'user-1', role: 'CUSTOMER', status: 'ACTIVE' });
+    const otherViolation = new Prisma.PrismaClientKnownRequestError('Unique constraint violated', {
+      code: 'P2002',
+      clientVersion: '7.8.0',
+    });
+    mock.prisma.$transaction.mockRejectedValueOnce(otherViolation);
+    const service = new DriverApplicationService(mock.prisma as never, contractService as never);
+
+    await expect(service.apply(actor, validDto)).rejects.toBe(otherViolation);
   });
 
   it('propagates SIGNATURE_INVALID from contract preparation without starting a transaction', async () => {
