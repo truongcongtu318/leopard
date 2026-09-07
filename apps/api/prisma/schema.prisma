@@ -80,6 +80,13 @@ enum ProviderSource {
   S3
 }
 
+enum NotificationType {
+  ORDER
+  PAYMENT
+  PROMO
+  SYSTEM
+}
+
 model User {
   id                String               @id @default(uuid()) @db.Uuid
   firebaseUid       String?              @unique @db.VarChar(128)
@@ -110,6 +117,8 @@ model User {
   mediaObjects      MediaObject[]        @relation("MediaUploader")
   confirmedPayments PaymentIntent[]      @relation("PaymentConfirmer")
   auditLogs         AuditLog[]           @relation("AuditActor")
+  notifications     Notification[]
+  deviceTokens      DeviceToken[]
 }
 
 model RefreshSession {
@@ -343,4 +352,32 @@ model AuditLog {
 
   @@index([actorId, createdAt(sort: Desc)])
   @@index([resourceType, resourceId, createdAt(sort: Desc)])
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?        @db.Timestamptz(3)
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model DeviceToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  token      String   @unique
+  platform   String   @db.VarChar(16)
+  lastUsedAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lastUsedAt(sort: Desc)])
 }
