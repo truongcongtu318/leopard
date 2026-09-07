@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -13,6 +13,11 @@ import { useRouter } from 'expo-router';
 import { httpClient } from '../../src/api/http-client';
 import { ApiError } from '../../src/api/api-error';
 import { sessionStore } from '../../src/auth/session-store';
+import {
+  DriverContractSection,
+  type DriverContractPreview,
+} from '../../src/features/driver/contract/DriverContractSection';
+import { openDriverContractPdf } from '../../src/features/driver/contract/contract-pdf';
 import {
   pickDeviceImage,
   type DeviceImageAsset,
@@ -58,6 +63,20 @@ function newRequestId(): string {
   }
 }
 
+function formatSignedAt(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
 export default function RegisterScreen() {
   const router = useRouter();
   const isAuthenticated = sessionStore.getAccessToken() != null;
@@ -73,17 +92,58 @@ export default function RegisterScreen() {
   const [success, setSuccess] = useState(false);
   const [appStatus, setAppStatus] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [contractVersionInfo, setContractVersionInfo] = useState<string | null>(null);
+  const [contractSignedAtInfo, setContractSignedAtInfo] = useState<string | null>(null);
 
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+
+  const [contract, setContract] = useState<DriverContractPreview | null>(null);
+  const [contractLoading, setContractLoading] = useState(false);
+  const [contractLoadError, setContractLoadError] = useState<string | null>(null);
+  const [contractPdfOpening, setContractPdfOpening] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [signatureName, setSignatureName] = useState('');
+  const [signatureTouched, setSignatureTouched] = useState(false);
+
+  // Fetch the contract descriptor once the driver is authenticated, so the
+  // "Xem hợp đồng" link is ready by the time the contract step is reached.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    setContractLoading(true);
+    void (async () => {
+      try {
+        const data = await httpClient.get<DriverContractPreview>('/driver/contract');
+        if (active) setContract(data);
+      } catch {
+        if (active) setContractLoadError('Không tải được hợp đồng, vui lòng thử lại');
+      } finally {
+        if (active) setContractLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated]);
+
+  // The typed signature pre-fills from the driver's name but stays an
+  // independent, editable field once the driver touches it directly.
+  useEffect(() => {
+    if (!signatureTouched) setSignatureName(name);
+  }, [name, signatureTouched]);
 
   const refreshStatus = async () => {
     try {
       const app = await httpClient.get<{
         status: string;
         rejectionReason: string | null;
+        contractVersion: string | null;
+        contractSignedAt: string | null;
       }>('/driver/application');
       setAppStatus(app.status);
       setRejectionReason(app.rejectionReason ?? null);
+      setContractVersionInfo(app.contractVersion ?? null);
+      setContractSignedAtInfo(app.contractSignedAt ?? null);
     } catch {
       // transient errors ignored
     }
@@ -101,14 +161,20 @@ export default function RegisterScreen() {
     setRejectionReason(null);
     setDocs({});
     setErrorMsg(null);
+    setConsentChecked(false);
+    setContractVersionInfo(null);
+    setContractSignedAtInfo(null);
   };
 
   const requiredDocsReady = DOC_SLOTS.every((slot) => docs[slot.type]);
+  const signatureValid = signatureName.trim().length > 0 && signatureName.trim().length <= 120;
   const canSubmit =
     Boolean(name.trim()) &&
     Boolean(licensePlate.trim()) &&
     Boolean(licenseNumber.trim()) &&
     requiredDocsReady &&
+    consentChecked &&
+    signatureValid &&
     !isSubmitting;
 
   const pickDoc = async (type: DocType) => {
@@ -118,18 +184,38 @@ export default function RegisterScreen() {
     }
   };
 
+  const handleViewContract = async () => {
+    if (!contract || contractPdfOpening) return;
+    setContractPdfOpening(true);
+    setContractLoadError(null);
+    try {
+      await openDriverContractPdf(contract.pdfUrl, sessionStore.getAccessToken());
+    } catch {
+      setContractLoadError('Không thể mở hợp đồng, vui lòng thử lại sau');
+    } finally {
+      setContractPdfOpening(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
 
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await httpClient.post('/driver/apply', {
+      const applied = await httpClient.post<{
+        contractVersion: string | null;
+        contractSignedAt: string | null;
+      }>('/driver/apply', {
         name: name.trim(),
         vehicleType,
         licensePlate: licensePlate.trim(),
         licenseNumber: licenseNumber.trim(),
+        contractAccepted: true,
+        signature: signatureName.trim(),
       });
+      setContractVersionInfo(applied.contractVersion ?? null);
+      setContractSignedAtInfo(applied.contractSignedAt ?? null);
 
       for (const slot of DOC_SLOTS) {
         const asset = docs[slot.type];
@@ -148,9 +234,14 @@ export default function RegisterScreen() {
       setSuccess(true);
     } catch (err) {
       const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
+      const code = (err as { code?: string })?.code;
       const message = (err as { message?: string })?.message;
       if (statusCode === 401) {
         setErrorMsg('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+      } else if (code === 'CONTRACT_NOT_ACCEPTED') {
+        setErrorMsg(message ?? 'Bạn cần đồng ý với hợp đồng tài xế trước khi đăng ký');
+      } else if (code === 'SIGNATURE_INVALID') {
+        setErrorMsg(message ?? 'Chữ ký không hợp lệ, vui lòng nhập lại họ tên xác nhận');
       } else if (err instanceof ApiError && statusCode >= 400 && statusCode < 500) {
         setErrorMsg(message ?? 'Thông tin đăng ký chưa hợp lệ');
       } else {
@@ -226,6 +317,12 @@ export default function RegisterScreen() {
                 <Text style={styles.successText}>
                   {rejectionReason ?? 'Vui lòng kiểm tra lại giấy tờ và nộp lại.'}
                 </Text>
+                {contractVersionInfo && contractSignedAtInfo ? (
+                  <Text style={styles.contractMetaText}>
+                    Đã ký hợp đồng phiên bản {contractVersionInfo} lúc{' '}
+                    {formatSignedAt(contractSignedAtInfo)}
+                  </Text>
+                ) : null}
                 <Pressable
                   accessibilityRole="button"
                   onPress={resetForReapply}
@@ -242,6 +339,12 @@ export default function RegisterScreen() {
                 <Text style={styles.successText}>
                   Hồ sơ tài xế đang chờ LEOPARD duyệt. Nhấn "Kiểm tra lại" để cập nhật kết quả.
                 </Text>
+                {contractVersionInfo && contractSignedAtInfo ? (
+                  <Text style={styles.contractMetaText}>
+                    Đã ký hợp đồng phiên bản {contractVersionInfo} lúc{' '}
+                    {formatSignedAt(contractSignedAtInfo)}
+                  </Text>
+                ) : null}
                 <Pressable
                   accessibilityRole="button"
                   disabled={isCheckingStatus}
@@ -399,6 +502,30 @@ export default function RegisterScreen() {
                 );
               })}
             </View>
+
+            {/* Bước ký hợp đồng — hiện sau khi thông tin tài xế đã hợp lệ */}
+            {Boolean(name.trim()) &&
+            Boolean(licensePlate.trim()) &&
+            Boolean(licenseNumber.trim()) ? (
+              <DriverContractSection
+                consentChecked={consentChecked}
+                contract={contract}
+                isLoading={contractLoading}
+                isPdfOpening={contractPdfOpening}
+                isSignatureFocused={focusedField === 'signature'}
+                isSubmitting={isSubmitting}
+                loadError={contractLoadError}
+                onBlurSignature={() => setFocusedField(null)}
+                onChangeSignature={(value) => {
+                  setSignatureName(value);
+                  setSignatureTouched(true);
+                }}
+                onFocusSignature={() => setFocusedField('signature')}
+                onToggleConsent={() => setConsentChecked((v) => !v)}
+                onViewContract={() => void handleViewContract()}
+                signatureName={signatureName}
+              />
+            ) : null}
 
             <Pressable
               accessibilityLabel="Gửi hồ sơ đăng ký"
@@ -603,6 +730,12 @@ const styles = StyleSheet.create({
     color: scene.muted,
     fontSize: 13,
     lineHeight: 19,
+    textAlign: 'center',
+  },
+  contractMetaText: {
+    color: scene.muted,
+    fontSize: 11.5,
+    fontWeight: '600',
     textAlign: 'center',
   },
 });
