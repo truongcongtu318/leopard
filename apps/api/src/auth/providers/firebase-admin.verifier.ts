@@ -39,6 +39,28 @@ export function createFirebaseAdminVerifier(auth: FirebaseAdminAuth): FirebaseId
   };
 }
 
+const FIREBASE_APP_NAME = 'leopard-auth';
+
+/**
+ * Returns the shared `leopard-auth` Firebase Admin app, initializing it on
+ * first use. Both the OTP verifier below and `FirebaseMessagingService`
+ * (notifications push, see apps/api/src/notifications/) call this so the
+ * process only ever initializes one Firebase Admin app for the project.
+ */
+export async function getOrCreateFirebaseAdminApp(
+  projectId: string,
+  source: NodeJS.ProcessEnv = process.env,
+) {
+  const { applicationDefault, cert, getApp, initializeApp } = await import('firebase-admin/app');
+
+  try {
+    return getApp(FIREBASE_APP_NAME);
+  } catch {
+    const credential = resolveFirebaseCredential(source, cert, applicationDefault);
+    return initializeApp({ credential, projectId }, FIREBASE_APP_NAME);
+  }
+}
+
 export function createProductionFirebaseVerifier(
   source: NodeJS.ProcessEnv = process.env,
 ): FirebaseIdTokenVerifier {
@@ -52,22 +74,10 @@ export function createProductionFirebaseVerifier(
 
   return async (idToken) => {
     try {
-      const [{ applicationDefault, cert, getApp, initializeApp }, { getAuth }] =
-        await Promise.all([import('firebase-admin/app'), import('firebase-admin/auth')]);
-
-      let app;
-      try {
-        app = getApp('leopard-auth');
-      } catch {
-        const credential = resolveFirebaseCredential(source, cert, applicationDefault);
-        app = initializeApp(
-          {
-            credential,
-            projectId,
-          },
-          'leopard-auth',
-        );
-      }
+      const [{ getAuth }, app] = await Promise.all([
+        import('firebase-admin/auth'),
+        getOrCreateFirebaseAdminApp(projectId, source),
+      ]);
 
       return createFirebaseAdminVerifier(getAuth(app))(idToken);
     } catch (error) {
@@ -113,7 +123,7 @@ function resolveFirebaseCredential(
   return appDefaultFn();
 }
 
-function firebaseErrorCode(error: unknown): string {
+export function firebaseErrorCode(error: unknown): string {
   if (typeof error !== 'object' || error === null || !('code' in error)) {
     return '';
   }

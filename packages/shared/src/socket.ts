@@ -98,3 +98,26 @@ export interface SessionErrorEvent {
   message: string;
 }
 
+export const NOTIFICATIONS_NAMESPACE = '/notifications';
+
+export const NotificationSocketEvent = {
+  created: 'notification:new',
+  sessionError: 'session:error',
+} as const;
+export type NotificationSocketEvent =
+  (typeof NotificationSocketEvent)[keyof typeof NotificationSocketEvent];
+
+/**
+ * Realtime payload for `notification:new`. Deliberately narrower than the
+ * `Notification` Prisma model: no `userId` (the socket room already scopes
+ * delivery to the owning user), no raw `data` JSON (may carry fields not
+ * meant for the client), and `orderId` is only included when present.
+ */
+export interface NotificationCreatedEvent {
+  readonly id: string;
+  readonly type: string;
+  readonly title: string;
+  readonly body: string;
+  readonly createdAt: string;
+  readonly orderId?: string;
+}

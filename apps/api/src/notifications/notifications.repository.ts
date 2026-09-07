@@ -111,6 +111,11 @@ export class NotificationsRepository {
     });
   }
 
+  /** Used by push fan-out to look up which device tokens to send FCM to. */
+  async findTokensForUser(userId: string): Promise<DeviceToken[]> {
+    return this.prisma.deviceToken.findMany({ where: { userId } });
+  }
+
   /** Scoped by `{ userId, token }` so a caller can only ever remove their own token. */
   async removeToken(userId: string, token: string): Promise<number> {
     const result = await this.prisma.deviceToken.deleteMany({

@@ -19,6 +19,7 @@ describe('NotificationsRepository', () => {
       deviceToken: {
         upsert: jest.fn(),
         deleteMany: jest.fn(),
+        findMany: jest.fn(),
       },
     };
     repo = new NotificationsRepository(prisma);
@@ -108,6 +109,18 @@ describe('NotificationsRepository', () => {
         }),
       });
       expect(result).toBe(token);
+    });
+  });
+
+  describe('findTokensForUser', () => {
+    test('scopes the lookup to the given user only', async () => {
+      const tokens = [{ id: 'dt-1', userId: 'user-1', token: 'tok-abc123', platform: 'ANDROID' }];
+      prisma.deviceToken.findMany.mockResolvedValue(tokens);
+
+      const result = await repo.findTokensForUser('user-1');
+
+      expect(prisma.deviceToken.findMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+      expect(result).toBe(tokens);
     });
   });
 
