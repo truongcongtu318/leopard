@@ -74,13 +74,28 @@ export class InMemoryPrismaService {
   }
 
   user = {
-    findUnique: jest.fn(async ({ where }: { where: { id?: string; phone?: string } }) => {
-      if (where.id) return this.users.get(where.id) ?? null;
-      if (where.phone) {
-        return Array.from(this.users.values()).find((u) => u.phone === where.phone) ?? null;
-      }
-      return null;
-    }),
+    findUnique: jest.fn(
+      async ({
+        where,
+        include,
+      }: {
+        where: { id?: string; phone?: string };
+        include?: { driverProfile?: boolean };
+      }) => {
+        let user: User | null = null;
+        if (where.id) user = this.users.get(where.id) ?? null;
+        else if (where.phone) {
+          user = Array.from(this.users.values()).find((u) => u.phone === where.phone) ?? null;
+        }
+        if (!user) return null;
+        if (include?.driverProfile) {
+          const driverProfile =
+            Array.from(this.driverProfiles.values()).find((p) => p.userId === user!.id) ?? null;
+          return { ...user, driverProfile };
+        }
+        return user;
+      },
+    ),
     findMany: jest.fn(async ({ where }: { where?: { phone?: { in?: string[] } } } = {}) => {
       let list = Array.from(this.users.values());
       if (where?.phone?.in) {
@@ -249,6 +264,98 @@ export class InMemoryPrismaService {
       }
       return { count };
     }),
+    // Driver-contract onboarding flow (`DriverApplicationService.commitApplication`)
+    // upserts by `userId` — one profile per user, created on first apply.
+    upsert: jest.fn(
+      async ({
+        where,
+        create,
+        update,
+      }: {
+        where: { userId: string };
+        create: Partial<DriverProfile> & { userId: string };
+        update: Partial<DriverProfile>;
+      }) => {
+        const existing = Array.from(this.driverProfiles.values()).find(
+          (p) => p.userId === where.userId,
+        );
+        if (existing) {
+          const updated = { ...existing, ...update, updatedAt: new Date() } as DriverProfile;
+          this.driverProfiles.set(existing.id, updated);
+          return updated;
+        }
+        const id = create.id ?? `profile-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        const profile = {
+          id,
+          userId: create.userId,
+          availability: create.availability ?? 'OFFLINE',
+          vehicleType: create.vehicleType ?? 'MOTORBIKE',
+          licensePlate: create.licensePlate ?? null,
+          licenseNumber: create.licenseNumber ?? null,
+          submittedAt: create.submittedAt ?? null,
+          reviewedAt: create.reviewedAt ?? null,
+          reviewedById: create.reviewedById ?? null,
+          rejectionReason: create.rejectionReason ?? null,
+          contractVersion: create.contractVersion ?? null,
+          contractSignedAt: create.contractSignedAt ?? null,
+          lastKnownAt: create.lastKnownAt ?? null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as DriverProfile;
+        this.driverProfiles.set(id, profile);
+        return profile;
+      },
+    ),
+  };
+
+  public driverContracts = new Map<string, any>();
+
+  // `DriverContractService.persistSignedContract`/`getSignedContractForAdmin`
+  // only ever look a contract up by its `driverProfileId_version` compound
+  // unique key — mirrors the real Prisma `@@unique([driverProfileId, version])`.
+  driverContract = {
+    findUnique: jest.fn(
+      async ({
+        where,
+      }: {
+        where: { driverProfileId_version: { driverProfileId: string; version: string } };
+      }) => {
+        const { driverProfileId, version } = where.driverProfileId_version;
+        return (
+          Array.from(this.driverContracts.values()).find(
+            (c) => c.driverProfileId === driverProfileId && c.version === version,
+          ) ?? null
+        );
+      },
+    ),
+    upsert: jest.fn(
+      async ({
+        where,
+        create,
+        update,
+      }: {
+        where: { driverProfileId_version: { driverProfileId: string; version: string } };
+        create: Record<string, unknown> & { driverProfileId: string; version: string };
+        update: Record<string, unknown>;
+      }) => {
+        const { driverProfileId, version } = where.driverProfileId_version;
+        const key = `${driverProfileId}::${version}`;
+        const existing = this.driverContracts.get(key);
+        if (existing) {
+          const updated = { ...existing, ...update };
+          this.driverContracts.set(key, updated);
+          return updated;
+        }
+        const record = {
+          id: `contract-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          ipAddress: null,
+          createdAt: new Date(),
+          ...create,
+        };
+        this.driverContracts.set(key, record);
+        return record;
+      },
+    ),
   };
 
   fleet = {

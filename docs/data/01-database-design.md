@@ -5,7 +5,8 @@
 - `User`: identity, phone, role, status và timestamps.
 - `Fleet`: hồ sơ đội xe ở mức pilot.
 - `FleetMember`: quan hệ Fleet Owner/Driver với fleet và trạng thái membership.
-- `DriverProfile`: availability, vehicle type và last known location tùy chọn.
+- `DriverProfile`: availability, vehicle type, last known location tùy chọn, và `contractVersion`/`contractSignedAt` (nullable) ghi lại version hợp đồng và thời điểm ký gần nhất.
+- `DriverContract`: một bản ghi PDF hợp đồng đã ký cho mỗi cặp `(driverProfileId, version)` — storage key của PDF và (nếu có) ảnh chữ ký, tên người ký, thời điểm ký.
 - `Order`: owner, assigned Driver, route snapshot, price, ETA và lifecycle.
 - `OrderStop`: pickup/stop/dropoff theo thứ tự.
 - `OrderStatusHistory`: transition append-only.
@@ -55,6 +56,21 @@ ProviderSource: VIETMAP | DEMO | PAYOS | VIETQR | LOCAL | S3
   tồn tại; reference chỉ unique trong phạm vi payment provider.
 - Partial unique `PaymentIntent(confirmationRequestId)` khi confirmation request ID
   tồn tại.
+- Unique `DriverContract(driverProfileId, version)` — một bản ghi hợp đồng cho mỗi
+  version trên mỗi hồ sơ tài xế; index `DriverContract(driverProfileId)`.
+  `pdfStorageKey` và `signatureStorageKey` (khi có) đều unique riêng để tránh
+  trùng object storage key.
+
+## Driver contract (hợp đồng tài xế)
+
+`DriverContract` gồm `id`, `driverProfileId` (FK `DriverProfile`, `onDelete: Cascade`),
+`version` (`VarChar(32)`), `pdfStorageKey` (unique), `signatureStorageKey` (nullable,
+unique — `null` khi chữ ký là chữ ký gõ chứ không phải ảnh), `signedByName`
+(`VarChar(120)`), `signedAt`, `ipAddress` (nullable `VarChar(64)`) và `createdAt`.
+Nộp lại hồ sơ ở cùng version sẽ upsert theo khóa unique
+`(driverProfileId, version)` — không tạo dòng mới, PDF/chữ ký cũ bị xóa khỏi
+storage sau khi transaction commit thành công. Cột `ipAddress` đã có trong
+schema nhưng luồng `POST /driver/apply` hiện tại chưa ghi giá trị (luôn `null`).
 
 ## Payment provider integrity
 

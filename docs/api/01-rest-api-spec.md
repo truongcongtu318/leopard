@@ -60,6 +60,28 @@ Hai endpoint trả `source`; provider error dùng error envelope chuẩn. Client
 
 Status input: `{"status":"IN_TRANSIT","clientRequestId":"uuid"}`. Request lặp với cùng ID trả kết quả cũ.
 
+## Đăng ký tài xế (driver onboarding)
+
+| Method | Path | Role | Mô tả |
+| --- | --- | --- | --- |
+| POST | `/driver/apply` | Customer hoặc Driver `REJECTED` | Nộp hồ sơ đăng ký + ký hợp đồng, chuyển tài khoản sang `DRIVER`/`PENDING_APPROVAL` |
+| GET | `/driver/application` | Customer/Driver đang đăng ký | Trạng thái hồ sơ hiện tại |
+| POST | `/driver/documents` | Customer/Driver đang đăng ký | Upload giấy tờ KYC (multipart) |
+| GET | `/driver/documents` | Customer/Driver đang đăng ký | Danh sách giấy tờ đã upload |
+| GET | `/driver/contract` | Customer/Driver đang đăng ký | Xem trước hợp đồng: version hiện hành + link PDF |
+| GET | `/driver/contract/pdf` | Customer/Driver đang đăng ký | PDF hợp đồng bản mẫu (chưa ký, party-B là placeholder) |
+
+Cả 6 route dùng chung guard `AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')` — tài khoản `DISABLED`/`SUSPENDED` bị chặn ở tầng `AccessTokenGuard` (401). Role thực tế được phép nộp hồ sơ (chỉ `CUSTOMER` hoặc `DRIVER` đã từng bị từ chối) là domain rule trong `DriverApplicationService`, không phải route guard — role khác (vd `FLEET_OWNER`, `ADMIN`) nhận `403 DRIVER_APPLICATION_FORBIDDEN`; `DRIVER`/`ACTIVE` nhận `409 DRIVER_ALREADY_ACTIVE`; `DRIVER`/`PENDING_APPROVAL` nhận `409 DRIVER_APPLICATION_PENDING`.
+
+`POST /driver/apply` body: `name`, `vehicleType` (`MOTORBIKE`, `VAN` hoặc `TRUCK`), `licensePlate`, `licenseNumber`, `contractAccepted` (boolean; phải là `true`) và `signature` tùy chọn (chữ ký gõ tên, tối đa 120 ký tự, hoặc ảnh chữ ký dạng `data:` base64 tối đa 10 MB, JPEG/PNG/WebP xác định qua magic bytes — MIME khai báo trong header không được tin; bỏ trống `signature` thì `name` được dùng làm chữ ký gõ). Lỗi hợp đồng trả `422`:
+
+- `CONTRACT_NOT_ACCEPTED` khi `contractAccepted` không phải `true` (kiểm tra trước mọi ghi dữ liệu).
+- `SIGNATURE_INVALID` khi `signature` sai định dạng, rỗng, quá 120 ký tự (chữ ký gõ), quá 10 MB, không decode được base64, hoặc magic bytes không khớp JPEG/PNG/WebP.
+
+`GET /driver/application` trả thêm `contractVersion` (string hoặc `null`) và `contractSignedAt` (ISO 8601 hoặc `null`) — set khi `apply` thành công, giữ nguyên qua approve/reject, và cập nhật lại khi driver nộp lại hồ sơ sau khi bị từ chối (ký lại cùng version, bằng chứng cũ bị xoá sau khi commit thành công).
+
+`GET /driver/contract` không tạo DB row — trả `{"version":"v1","pdfUrl":"/driver/contract/pdf?version=v1"}`. `GET /driver/contract/pdf` stream PDF bản mẫu generic (không cá nhân hoá theo dữ liệu form đang nhập, vì applicant có thể chưa có `DriverProfile`); chỉ `POST /driver/apply` mới tạo và lưu PDF đã ký, cá nhân hoá theo dữ liệu đã nộp. Version không hợp lệ trả `404 RESOURCE_NOT_FOUND`.
+
 ## Fleet Owner
 
 | Method | Path | Role | Mô tả |
@@ -100,8 +122,11 @@ Trừ năm endpoint public `/auth/login/demo`, `/auth/firebase`, `/auth/refresh`
 | PATCH | `/admin/users/:id/status` | Admin | Enable/disable |
 | GET | `/admin/fleets` | Admin | Fleets và membership có filter |
 | GET | `/admin/drivers` | Admin | Drivers có filter |
+| GET | `/admin/drivers/:id/contract` | Admin | Bằng chứng hợp đồng đã ký của tài xế |
 | GET | `/admin/orders` | Admin | Orders có filter |
 | GET | `/health/live` | Public | Liveness |
 | GET | `/health/ready` | Internal/public pilot | Readiness |
 
 Admin order filters: `status`, `customerId`, `driverId`, `from`, `to`, `q`, pagination và sort allow-list.
+
+`GET /admin/drivers/:id/contract` (`:id` là `User.id` của tài xế) trả `version`, `signedByName`, `signedAt`, `pdfUrl` và `signatureUrl` (`null` nếu chữ ký là chữ ký gõ, không phải ảnh) — không bao giờ trả storage key thô. `pdfUrl`/`signatureUrl` là read URL từ `StorageProvider` hiện tại: presigned và hết hạn sau 3600 giây trên S3; là đường dẫn tĩnh, không hết hạn trên local dev storage (`STORAGE_PROVIDER=local`). `404 RESOURCE_NOT_FOUND` khi tài xế chưa có hồ sơ hoặc chưa ký hợp đồng ở version hiện tại của `DriverProfile.contractVersion`. Authorization dùng chung guard lớp `AdminController` (`RequireRoles('ADMIN')`), không có scoping theo fleet.
