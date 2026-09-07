@@ -6,10 +6,11 @@ import { DatabaseModule } from '../database/database.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { OrdersModule } from '../orders/orders.module.js';
 import { AuditModule } from '../audit/audit.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 import { PaymentProvider, DemoPaymentProvider, PayOsPaymentProvider, VietQrPaymentProvider } from './payment.provider.js';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, OrdersModule, AuditModule],
+  imports: [DatabaseModule, AuthModule, OrdersModule, AuditModule, NotificationsModule],
   controllers: [PaymentsController],
   providers: [
     PaymentsRepository,

@@ -10,6 +10,7 @@ describe('PaymentsService', () => {
   let prisma: any;
   let ordersRepo: any;
   let auditService: any;
+  let notificationTriggers: any;
   let adminActor = { userId: 'admin1', role: 'ADMIN' as const };
   let customerActor = { userId: 'cust1', role: 'CUSTOMER' as const };
 
@@ -33,7 +34,10 @@ describe('PaymentsService', () => {
     auditService = {
       append: jest.fn(),
     };
-    service = new PaymentsService(repo, provider, prisma, ordersRepo, auditService);
+    notificationTriggers = {
+      notifyPaymentConfirmed: jest.fn().mockResolvedValue(undefined),
+    };
+    service = new PaymentsService(repo, provider, prisma, ordersRepo, auditService, notificationTriggers);
   });
 
   test('create intent with same clientRequestId returns existing', async () => {
@@ -76,18 +80,69 @@ describe('PaymentsService', () => {
 
   test('confirm flow with audit', async () => {
     repo.findByConfirmationRequestId.mockResolvedValue(null);
-    repo.findById.mockResolvedValue({ id: 'payment1', status: 'UNPAID' });
-    repo.updateStatus.mockResolvedValue({ id: 'payment1', status: 'PAID_MANUAL' });
+    repo.findById.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'UNPAID' });
+    repo.updateStatus.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'PAID_MANUAL' });
+    ordersRepo.findById.mockResolvedValue({ id: 'order1', customerId: 'cust1' });
 
     const res = await service.confirmPayment(adminActor, 'payment1', 'good note', 'req1');
     expect(res.status).toBe('PAID_MANUAL');
     expect(auditService.append).toHaveBeenCalled();
   });
 
+  test('confirm triggers exactly one PAYMENT notification for the order customer, post-commit', async () => {
+    repo.findByConfirmationRequestId.mockResolvedValue(null);
+    repo.findById.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'UNPAID' });
+    repo.updateStatus.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'PAID_MANUAL' });
+    ordersRepo.findById.mockResolvedValue({ id: 'order1', customerId: 'cust1' });
+
+    await service.confirmPayment(adminActor, 'payment1', 'good note', 'req1');
+
+    expect(notificationTriggers.notifyPaymentConfirmed).toHaveBeenCalledTimes(1);
+    expect(notificationTriggers.notifyPaymentConfirmed).toHaveBeenCalledWith({
+      customerId: 'cust1',
+      orderId: 'order1',
+      amountVnd: 20000,
+    });
+  });
+
+  test('confirm does not notify when the order can no longer be found', async () => {
+    repo.findByConfirmationRequestId.mockResolvedValue(null);
+    repo.findById.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'UNPAID' });
+    repo.updateStatus.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'PAID_MANUAL' });
+    ordersRepo.findById.mockResolvedValue(null);
+
+    const res = await service.confirmPayment(adminActor, 'payment1', 'good note', 'req1');
+
+    expect(res.status).toBe('PAID_MANUAL');
+    expect(notificationTriggers.notifyPaymentConfirmed).not.toHaveBeenCalled();
+  });
+
+  test('a notification-trigger failure never fails an already-committed confirmation', async () => {
+    repo.findByConfirmationRequestId.mockResolvedValue(null);
+    repo.findById.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'UNPAID' });
+    repo.updateStatus.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'PAID_MANUAL' });
+    ordersRepo.findById.mockRejectedValue(new Error('db hiccup'));
+
+    const res = await service.confirmPayment(adminActor, 'payment1', 'good note', 'req1');
+
+    expect(res.status).toBe('PAID_MANUAL');
+  });
+
   test('confirm idempotency', async () => {
     repo.findByConfirmationRequestId.mockResolvedValue({ id: 'payment1', status: 'PAID_MANUAL' });
     const res = await service.confirmPayment(adminActor, 'payment1', 'good note', 'req1');
     expect(res.status).toBe('PAID_MANUAL');
+    expect(notificationTriggers.notifyPaymentConfirmed).not.toHaveBeenCalled();
+  });
+
+  test('a replayed confirmation (already PAID_MANUAL) does not trigger a second notification', async () => {
+    repo.findByConfirmationRequestId.mockResolvedValue(null);
+    repo.findById.mockResolvedValue({ id: 'payment1', orderId: 'order1', amountVnd: 20000, status: 'PAID_MANUAL' });
+
+    const res = await service.confirmPayment(adminActor, 'payment1', 'good note', 'req1');
+
+    expect(res.status).toBe('PAID_MANUAL');
+    expect(notificationTriggers.notifyPaymentConfirmed).not.toHaveBeenCalled();
   });
 
   test('confirm with invalid note length', async () => {

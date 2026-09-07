@@ -6,6 +6,7 @@ import { DomainError } from '../common/domain-error.js';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { OrdersRepository } from '../orders/orders.repository.js';
 import { AuditService } from '../audit/audit.service.js';
+import { NotificationTriggers } from '../notifications/notification-triggers.service.js';
 import type { PaymentIntent } from '@prisma/client';
 import type { PaymentQr } from './payment.provider.js';
 
@@ -17,6 +18,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly ordersRepo: OrdersRepository,
     private readonly auditService: AuditService,
+    private readonly notificationTriggers: NotificationTriggers,
   ) {}
 
   async createPaymentIntent(actor: AuthenticatedActor, orderId: string, clientRequestId: string): Promise<PaymentIntent> {
@@ -112,8 +114,8 @@ export class PaymentsService {
       throw new DomainError('PAYMENT_ALREADY_CONFIRMED', 409, 'Thanh toán không ở trạng thái có thể xác nhận');
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await this.paymentsRepo.updateStatus(paymentId, {
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const updatedIntent = await this.paymentsRepo.updateStatus(paymentId, {
         status: 'PAID_MANUAL',
         confirmedById: actor.userId,
         confirmedAt: new Date(),
@@ -129,8 +131,33 @@ export class PaymentsService {
         idempotencyRequestId: clientRequestId,
       }, tx);
 
-      return updated;
+      return updatedIntent;
     });
+
+    // Post-commit, best-effort: a notification-trigger failure must never
+    // fail a payment confirmation that already succeeded. The idempotency
+    // guards above (confirmationRequestId lookup, PAID_MANUAL short-circuit)
+    // mean a replayed confirmation never reaches this line, so it never
+    // creates a second PAYMENT notification.
+    await this.dispatchPaymentConfirmedNotification(updated);
+
+    return updated;
+  }
+
+  private async dispatchPaymentConfirmedNotification(intent: PaymentIntent): Promise<void> {
+    try {
+      const order = await this.ordersRepo.findById(intent.orderId);
+      if (!order) {
+        return;
+      }
+      await this.notificationTriggers.notifyPaymentConfirmed({
+        customerId: order.customerId,
+        orderId: intent.orderId,
+        amountVnd: intent.amountVnd,
+      });
+    } catch {
+      // Swallowed: notification delivery must never fail payment confirmation.
+    }
   }
 
   async getPaymentHistory(actor: AuthenticatedActor, orderId: string): Promise<PaymentIntent[]> {
