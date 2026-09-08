@@ -1095,6 +1095,26 @@ export function createCustomerHttpAdapter(
       }
     },
 
+    async getInvoiceDownloadUrl(invoiceId: string): Promise<string> {
+      const { sessionStore } = require('../../../auth/session-store');
+      const base = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+      const token = sessionStore.getAccessToken();
+      const response = await fetch(`${base}/invoices/${invoiceId}/download`, {
+        method: 'GET',
+        redirect: 'manual',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const location = response.headers.get('Location');
+      if (!location) {
+        throw new ApiError(
+          response.status,
+          'INVALID_RESPONSE',
+          'Không lấy được liên kết hóa đơn.',
+        );
+      }
+      return location;
+    },
+
     async getTrackingHistory(
       orderId: string,
     ): Promise<MappedTrackingHistoryResponse> {

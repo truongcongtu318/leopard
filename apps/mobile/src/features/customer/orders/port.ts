@@ -24,6 +24,7 @@ export type CustomerOrdersPort = Readonly<{
     orderId: string,
     currentView?: CustomerDetailView,
   ) => Promise<CustomerDetailView>;
+  getInvoiceDownloadUrl?: (invoiceId: string) => Promise<string>;
 }>;
 
 export type CustomerMediaPickerPort = Readonly<{

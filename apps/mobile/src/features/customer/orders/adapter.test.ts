@@ -1001,4 +1001,38 @@ describe('createCustomerHttpAdapter', () => {
       expect((port as unknown as { getPaymentStatus?: unknown }).getPaymentStatus).toBeUndefined();
     });
   });
+
+  describe('getInvoiceDownloadUrl', () => {
+    const originalFetch = global.fetch;
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it('resolves the signed URL from the redirect Location header', async () => {
+      global.fetch = jest.fn(async () => ({
+        status: 302,
+        headers: { get: (name: string) => (name === 'Location' ? 'https://signed.example/x.pdf' : null) },
+      })) as unknown as typeof fetch;
+
+      const adapter = createCustomerHttpAdapter();
+      const url = await adapter.getInvoiceDownloadUrl!('invoice-1');
+
+      expect(url).toBe('https://signed.example/x.pdf');
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/invoices/invoice-1/download'),
+        expect.objectContaining({ redirect: 'manual' }),
+      );
+    });
+
+    it('throws when the server does not return a redirect', async () => {
+      global.fetch = jest.fn(async () => ({
+        status: 404,
+        headers: { get: () => null },
+      })) as unknown as typeof fetch;
+
+      const adapter = createCustomerHttpAdapter();
+      await expect(adapter.getInvoiceDownloadUrl!('invoice-1')).rejects.toThrow();
+    });
+  });
 });
