@@ -79,7 +79,8 @@ export default function CustomerLayout() {
   const isSubScreenWithoutNav =
     pathname.includes('/customer/chat') ||
     pathname.includes('/customer/report') ||
-    pathname.includes('/customer/review');
+    pathname.includes('/customer/review') ||
+    pathname.includes('/customer/invoice-preview');
 
   return (
     <View style={styles.flex}>
