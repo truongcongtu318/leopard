@@ -1,5 +1,7 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { render, waitFor } from '@testing-library/react-native';
+import React from 'react';
 
 const mockReplace = jest.fn();
 const mockUseProtectedLayout = jest.fn();
@@ -14,8 +16,25 @@ jest.mock('./role-router', () => ({
   useProtectedLayout: (...args: unknown[]) => mockUseProtectedLayout(...args),
 }));
 
+// CustomerLayout mounts `useNotificationsBootstrap`, which transitively
+// imports the real `firebase/app` ESM package via `src/auth/firebase.ts` —
+// untransformable under Jest's default config. Mock it the same way
+// `src/auth/login-route.test.tsx` does; this suite only exercises the
+// redirect-on-denied path, not the notifications/firebase flow.
+jest.mock('../auth/firebase', () => ({
+  isFirebaseConfigured: () => false,
+  getFirebaseApp: () => ({}),
+  getFirebaseAuth: () => ({}),
+  getFirebaseWebConfig: () => ({}),
+}));
+
 import CustomerLayout from '../../app/customer/_layout';
 import DriverLayout from '../../app/driver/_layout';
+
+function renderWithQueryClient(ui: React.ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
 
 describe('mobile protected layouts', () => {
   beforeEach(() => {
@@ -30,7 +49,7 @@ describe('mobile protected layouts', () => {
       redirectTo: '/(public)/login',
     });
 
-    const screen = await render(<CustomerLayout />);
+    const screen = await renderWithQueryClient(<CustomerLayout />);
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
@@ -46,7 +65,7 @@ describe('mobile protected layouts', () => {
       redirectTo: '/customer/home',
     });
 
-    await render(<DriverLayout />);
+    await renderWithQueryClient(<DriverLayout />);
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/customer/home');

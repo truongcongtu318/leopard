@@ -1,71 +1,19 @@
 import { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  SectionList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
-import {
-  IconBell,
-  IconOrders,
-  IconTag,
-  IconTxPayment,
-} from '../../../ui/icons/CoreIcons';
+import { IconBell, IconOrders, IconTag, IconTxPayment } from '../../../ui/icons/CoreIcons';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { isOlderThanOneDay } from './adapter';
+import type { NotificationFilter, NotificationItemView, NotificationsContentView } from './model';
 
-export type NotificationItem = Readonly<{
-  id: string;
-  type: 'order' | 'payment' | 'promo' | 'system';
-  title: string;
-  body: string;
-  createdAtLabel: string;
-  isRead: boolean;
-  orderId?: string;
+export type NotificationsScreenProps = Readonly<{
+  view: NotificationsContentView;
+  onBack: () => void;
+  onLoadMore: () => void;
+  onMarkAllRead: () => void;
+  onPressItem: (item: NotificationItemView) => void;
 }>;
-
-const mockNotifications: readonly NotificationItem[] = [
-  {
-    id: 'n-001',
-    type: 'order',
-    title: 'Tài xế đang giao hàng',
-    body: 'Đơn hàng LP-D-260815-001 đang trên đường đến điểm giao.',
-    createdAtLabel: '5 phút trước',
-    isRead: false,
-    orderId: 'ord-001',
-  },
-  {
-    id: 'n-002',
-    type: 'payment',
-    title: 'Thanh toán thành công',
-    body: 'Giao dịch 150.000 ₫ cho đơn LP-D-260815-001 đã được xác nhận qua VietQR.',
-    createdAtLabel: '30 phút trước',
-    isRead: false,
-    orderId: 'ord-001',
-  },
-  {
-    id: 'n-003',
-    type: 'promo',
-    title: 'Ưu đãi 20% cước xe tải',
-    body: 'Nhập mã LEOPARD20 để được giảm giá cho chuyến hàng liên tỉnh.',
-    createdAtLabel: '2 giờ trước',
-    isRead: true,
-  },
-  {
-    id: 'n-004',
-    type: 'system',
-    title: 'Bảo trì hệ thống định kỳ',
-    body: 'Hệ thống sẽ bảo trì nhẹ từ 02:00 đến 03:00 ngày 25/08.',
-    createdAtLabel: '1 ngày trước',
-    isRead: true,
-  },
-];
-
-export type NotificationFilter = 'all' | 'unread' | 'order' | 'payment' | 'promo' | 'system';
 
 const filterOptions: readonly Readonly<{ id: NotificationFilter; label: string }>[] = [
   { id: 'all', label: 'Tất cả' },
@@ -76,86 +24,82 @@ const filterOptions: readonly Readonly<{ id: NotificationFilter; label: string }
   { id: 'system', label: 'Hệ thống' },
 ];
 
-export function NotificationsScreen() {
-  const router = useRouter();
+function getItemMeta(type: NotificationItemView['type']) {
+  switch (type) {
+    case 'order':
+      return {
+        icon: <IconOrders color="#0B1E42" size={18} />,
+        bg: '#F0F4F9',
+        badgeText: 'Đơn hàng',
+        badgeColor: '#0B1E42',
+      };
+    case 'payment':
+      return {
+        icon: <IconTxPayment color="#16A34A" size={18} />,
+        bg: '#DCFCE7',
+        badgeText: 'Thanh toán',
+        badgeColor: '#16A34A',
+      };
+    case 'promo':
+      return {
+        icon: <IconTag color="#D97706" size={18} />,
+        bg: '#FEF3C7',
+        badgeText: 'Ưu đãi',
+        badgeColor: '#D97706',
+      };
+    case 'system':
+    default:
+      return {
+        icon: <IconBell color="#475569" size={18} />,
+        bg: '#F1F5F9',
+        badgeText: 'Hệ thống',
+        badgeColor: '#475569',
+      };
+  }
+}
+
+export function NotificationsScreen({
+  view,
+  onBack,
+  onLoadMore,
+  onMarkAllRead,
+  onPressItem,
+}: NotificationsScreenProps) {
   const [filter, setFilter] = useState<NotificationFilter>('all');
-  const [notifications, setNotifications] = useState<readonly NotificationItem[]>(mockNotifications);
+  const { items, unreadCount, canLoadMore, isLoadingMore, notice } = view;
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  const displayedList = notifications.filter((n) => {
+  const displayedList = items.filter((n) => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !n.isRead;
     return n.type === filter;
   });
 
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-  };
-
-  const handleNotificationPress = (item: NotificationItem) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
-    );
-    if (item.orderId) {
-      router.push(`/customer/orders/${item.orderId}`);
-    }
-  };
-
-  const getItemMeta = (type: NotificationItem['type']) => {
-    switch (type) {
-      case 'order':
-        return {
-          icon: <IconOrders color="#0284C7" size={18} />,
-          bg: '#E0F2FE',
-          badgeText: 'Đơn hàng',
-          badgeColor: '#0284C7',
-        };
-      case 'payment':
-        return {
-          icon: <IconTxPayment color="#16A34A" size={18} />,
-          bg: '#DCFCE7',
-          badgeText: 'Thanh toán',
-          badgeColor: '#16A34A',
-        };
-      case 'promo':
-        return {
-          icon: <IconTag color="#D97706" size={18} />,
-          bg: '#FEF3C7',
-          badgeText: 'Ưu đãi',
-          badgeColor: '#D97706',
-        };
-      case 'system':
-      default:
-        return {
-          icon: <IconBell color="#475569" size={18} />,
-          bg: '#F1F5F9',
-          badgeText: 'Hệ thống',
-          badgeColor: '#475569',
-        };
-    }
-  };
-
-  const markAllButton = unreadCount > 0 ? (
-    <Pressable
-      accessibilityLabel="Đọc tất cả thông báo"
-      accessibilityRole="button"
-      onPress={handleMarkAllRead}
-      style={({ pressed }) => [styles.markAllBtn, pressed ? styles.pressed : null]}
-    >
-      <Text style={styles.markAllBtnText}>Đọc tất cả</Text>
-    </Pressable>
-  ) : null;
+  const markAllButton =
+    unreadCount > 0 ? (
+      <Pressable
+        accessibilityLabel="Đọc tất cả thông báo"
+        accessibilityRole="button"
+        onPress={onMarkAllRead}
+        style={({ pressed }) => [styles.markAllBtn, pressed ? styles.pressed : null]}
+      >
+        <Text style={styles.markAllBtnText}>Đọc tất cả</Text>
+      </Pressable>
+    ) : null;
 
   return (
     <ScreenScaffold
-      eyebrow="CUSTOMER · NOTIFICATIONS"
       headerRight={markAllButton}
+      onBack={onBack}
       subtitle="Cập nhật trạng thái đơn hàng, thanh toán và tin tức hệ thống."
       title="Thông báo"
     >
       <View style={styles.container}>
-        {/* 🏷️ 1. Thanh Chip Lọc Phân Loại (Topic Filter Toolbar) */}
+        {notice ? (
+          <View accessibilityLiveRegion="polite" style={styles.noticeBox}>
+            <Text style={styles.noticeText}>{notice}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.filterWrap}>
           <ScrollView
             accessibilityLabel="Thanh lọc danh mục thông báo"
@@ -167,11 +111,11 @@ export function NotificationsScreen() {
               const active = filter === opt.id;
               let countLabel = '';
               if (opt.id === 'all') {
-                countLabel = ` (${notifications.length})`;
+                countLabel = ` (${items.length})`;
               } else if (opt.id === 'unread') {
-                countLabel = unreadCount > 0 ? ` (${unreadCount})` : ' (0)';
+                countLabel = ` (${unreadCount})`;
               } else {
-                const count = notifications.filter((n) => n.type === opt.id).length;
+                const count = items.filter((n) => n.type === opt.id).length;
                 countLabel = count > 0 ? ` (${count})` : '';
               }
 
@@ -203,7 +147,6 @@ export function NotificationsScreen() {
           </ScrollView>
         </View>
 
-        {/* 📜 2. Danh Sách Thông Báo Phân Nhóm Thời Gian (SectionList) */}
         <SectionList
           contentContainerStyle={styles.listContent}
           keyExtractor={(item) => item.id}
@@ -230,6 +173,25 @@ export function NotificationsScreen() {
               ) : null}
             </View>
           }
+          ListFooterComponent={
+            canLoadMore ? (
+              <Pressable
+                accessibilityLabel="Tải thêm thông báo"
+                accessibilityRole="button"
+                accessibilityState={{ busy: isLoadingMore }}
+                disabled={isLoadingMore}
+                onPress={onLoadMore}
+                style={({ pressed }) => [
+                  styles.loadMoreBtn,
+                  pressed ? styles.pressed : null,
+                ]}
+              >
+                <Text style={styles.loadMoreBtnText}>
+                  {isLoadingMore ? 'Đang tải…' : 'Tải thêm thông báo'}
+                </Text>
+              </Pressable>
+            ) : null
+          }
           renderItem={({ item }) => {
             const meta = getItemMeta(item.type);
 
@@ -237,7 +199,7 @@ export function NotificationsScreen() {
               <Pressable
                 accessibilityLabel={item.title}
                 accessibilityRole="button"
-                onPress={() => handleNotificationPress(item)}
+                onPress={() => onPressItem(item)}
                 style={({ pressed }) => [
                   styles.card,
                   !item.isRead ? styles.cardUnread : null,
@@ -245,7 +207,6 @@ export function NotificationsScreen() {
                 ]}
               >
                 <View style={styles.cardHeader}>
-                  {/* Hộp Vector Icon Phân Loại Chuẩn 100% */}
                   <View style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
                     {meta.icon}
                   </View>
@@ -265,7 +226,6 @@ export function NotificationsScreen() {
                     </Text>
                   </View>
 
-                  {/* Chấm Xanh Chỉ Báo Chưa Đọc */}
                   {!item.isRead ? <View style={styles.unreadDot} /> : null}
                 </View>
 
@@ -281,11 +241,11 @@ export function NotificationsScreen() {
           sections={[
             {
               title: 'Hôm nay',
-              data: displayedList.filter((n) => !n.createdAtLabel.includes('ngày')),
+              data: displayedList.filter((n) => !isOlderThanOneDay(n.createdAt)),
             },
             {
               title: 'Trước đó',
-              data: displayedList.filter((n) => n.createdAtLabel.includes('ngày')),
+              data: displayedList.filter((n) => isOlderThanOneDay(n.createdAt)),
             },
           ].filter((s) => s.data.length > 0)}
         />
@@ -302,7 +262,17 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.75,
   },
-  // Header Action
+  noticeBox: {
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    padding: spacing.sm,
+  },
+  noticeText: {
+    ...typography.body,
+    color: colors.neutral.text,
+  },
   markAllBtn: {
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
@@ -311,12 +281,10 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   markAllBtnText: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 12,
     fontWeight: '700',
   },
-
-  // 1. Topic Filter Toolbar
   filterWrap: {
     marginBottom: 2,
   },
@@ -346,8 +314,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
-
-  // 2. Notification Card List
   listContent: {
     gap: spacing.sm,
     paddingBottom: layout.bottomNavClearance,
@@ -377,8 +343,8 @@ const styles = StyleSheet.create({
   },
   cardUnread: {
     backgroundColor: '#FAFCFF',
-    borderColor: '#BAE6FD',
-    borderLeftColor: '#0284C7',
+    borderColor: '#CBD5E1',
+    borderLeftColor: '#0B1E42',
     borderLeftWidth: 3.5,
   },
   cardHeader: {
@@ -422,7 +388,7 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
   },
   unreadDot: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
     borderRadius: 4,
     height: 8,
     width: 8,
@@ -432,10 +398,8 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontSize: 12.5,
     lineHeight: 18,
-    paddingLeft: 46, // Indent aligned with title
+    paddingLeft: 46,
   },
-
-  // Empty State
   emptyBox: {
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -479,5 +443,17 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontSize: 12.5,
     fontWeight: '600',
+  },
+  loadMoreBtn: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 999,
+    marginTop: spacing.sm,
+    paddingVertical: 10,
+  },
+  loadMoreBtnText: {
+    color: '#0B1E42',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
 });

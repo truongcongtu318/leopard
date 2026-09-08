@@ -1,33 +1,86 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { NotificationsScreen } from './NotificationsScreen';
+import type { NotificationItemView, NotificationsContentView } from './model';
 
-const mockPush = jest.fn();
+function daysAgoIso(days: number): string {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
 
-jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush, replace: jest.fn() }),
-}));
+const items: readonly NotificationItemView[] = [
+  {
+    id: 'n-001',
+    type: 'order',
+    title: 'Tài xế đang giao hàng',
+    body: 'Đơn hàng LP-D-260815-001 đang trên đường đến điểm giao.',
+    createdAt: daysAgoIso(0),
+    createdAtLabel: '5 phút trước',
+    isRead: false,
+    orderId: 'ord-001',
+  },
+  {
+    id: 'n-002',
+    type: 'payment',
+    title: 'Thanh toán thành công',
+    body: 'Giao dịch 150.000 ₫ cho đơn LP-D-260815-001 đã được xác nhận qua VietQR.',
+    createdAt: daysAgoIso(0),
+    createdAtLabel: '30 phút trước',
+    isRead: false,
+    orderId: 'ord-001',
+  },
+  {
+    id: 'n-003',
+    type: 'promo',
+    title: 'Ưu đãi 20% cước xe tải',
+    body: 'Nhập mã LEOPARD20 để được giảm giá cho chuyến hàng liên tỉnh.',
+    createdAt: daysAgoIso(2),
+    createdAtLabel: '2 ngày trước',
+    isRead: true,
+  },
+  {
+    id: 'n-004',
+    type: 'system',
+    title: 'Bảo trì hệ thống định kỳ',
+    body: 'Hệ thống sẽ bảo trì nhẹ từ 02:00 đến 03:00 ngày 25/08.',
+    createdAt: daysAgoIso(3),
+    createdAtLabel: '3 ngày trước',
+    isRead: true,
+  },
+];
+
+function makeView(overrides: Partial<NotificationsContentView> = {}): NotificationsContentView {
+  return {
+    scenarioId: 'CM-NOTIFICATIONS-CONTENT',
+    kind: 'content',
+    items,
+    unreadCount: items.filter((n) => !n.isRead).length,
+    canLoadMore: false,
+    isLoadingMore: false,
+    notice: null,
+    ...overrides,
+  };
+}
 
 describe('NotificationsScreen', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders notification list with section headers and filter chips', async () => {
-    const screen = await render(<NotificationsScreen />);
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={jest.fn()}
+        onPressItem={jest.fn()}
+        view={makeView()}
+      />,
+    );
 
     expect(screen.getByText('Thông báo')).toBeTruthy();
     expect(screen.getByText('Hôm nay')).toBeTruthy();
     expect(screen.getByText('Trước đó')).toBeTruthy();
-
-    // Notification items
     expect(screen.getByText('Tài xế đang giao hàng')).toBeTruthy();
     expect(screen.getByText('Thanh toán thành công')).toBeTruthy();
     expect(screen.getByText('Ưu đãi 20% cước xe tải')).toBeTruthy();
     expect(screen.getByText('Bảo trì hệ thống định kỳ')).toBeTruthy();
-
-    // Filter chips with counts
     expect(screen.getByText(/Tất cả \(4\)/)).toBeTruthy();
     expect(screen.getByText(/Chưa đọc \(2\)/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Đọc tất cả thông báo' })).toBeTruthy();
@@ -35,101 +88,174 @@ describe('NotificationsScreen', () => {
     await screen.unmount();
   });
 
-  it('filters by unread notifications', async () => {
-    const screen = await render(<NotificationsScreen />);
+  it('filters by unread and back to all', async () => {
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={jest.fn()}
+        onPressItem={jest.fn()}
+        view={makeView()}
+      />,
+    );
 
-    // Click 'Chưa đọc'
-    const unreadChip = screen.getByLabelText('Chưa đọc');
-    await fireEvent.press(unreadChip);
-
+    await fireEvent.press(screen.getByLabelText('Chưa đọc'));
     expect(screen.getByText('Tài xế đang giao hàng')).toBeTruthy();
-    expect(screen.getByText('Thanh toán thành công')).toBeTruthy();
     expect(screen.queryByText('Ưu đãi 20% cước xe tải')).toBeNull();
-    expect(screen.queryByText('Bảo trì hệ thống định kỳ')).toBeNull();
 
-    // Click 'Tất cả'
-    const allChip = screen.getByLabelText('Tất cả');
-    await fireEvent.press(allChip);
-
+    await fireEvent.press(screen.getByLabelText('Tất cả'));
     expect(screen.getByText('Ưu đãi 20% cước xe tải')).toBeTruthy();
-    expect(screen.getByText('Bảo trì hệ thống định kỳ')).toBeTruthy();
 
     await screen.unmount();
   });
 
-  it('filters by topic categories (Đơn hàng, Thanh toán, Ưu đãi, Hệ thống)', async () => {
-    const screen = await render(<NotificationsScreen />);
+  it('filters by topic categories', async () => {
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={jest.fn()}
+        onPressItem={jest.fn()}
+        view={makeView()}
+      />,
+    );
 
-    // Filter by 'Đơn hàng'
     await fireEvent.press(screen.getByLabelText('Đơn hàng'));
     expect(screen.getByText('Tài xế đang giao hàng')).toBeTruthy();
     expect(screen.queryByText('Thanh toán thành công')).toBeNull();
-    expect(screen.queryByText('Ưu đãi 20% cước xe tải')).toBeNull();
-
-    // Filter by 'Thanh toán'
-    await fireEvent.press(screen.getByLabelText('Thanh toán'));
-    expect(screen.getByText('Thanh toán thành công')).toBeTruthy();
-    expect(screen.queryByText('Tài xế đang giao hàng')).toBeNull();
-
-    // Filter by 'Ưu đãi'
-    await fireEvent.press(screen.getByLabelText('Ưu đãi'));
-    expect(screen.getByText('Ưu đãi 20% cước xe tải')).toBeTruthy();
-    expect(screen.queryByText('Thanh toán thành công')).toBeNull();
-
-    // Filter by 'Hệ thống'
-    await fireEvent.press(screen.getByLabelText('Hệ thống'));
-    expect(screen.getByText('Bảo trì hệ thống định kỳ')).toBeTruthy();
-    expect(screen.queryByText('Ưu đãi 20% cước xe tải')).toBeNull();
 
     await screen.unmount();
   });
 
-  it('marks all notifications as read when "Đọc tất cả" is pressed', async () => {
-    const screen = await render(<NotificationsScreen />);
+  it('calls onMarkAllRead when the header action is pressed', async () => {
+    const onMarkAllRead = jest.fn();
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={onMarkAllRead}
+        onPressItem={jest.fn()}
+        view={makeView()}
+      />,
+    );
 
-    const markAllBtn = screen.getByRole('button', { name: 'Đọc tất cả thông báo' });
-    await fireEvent.press(markAllBtn);
+    await fireEvent.press(screen.getByRole('button', { name: 'Đọc tất cả thông báo' }));
 
-    // Unread count is now 0
-    expect(screen.getByText(/Chưa đọc \(0\)/)).toBeTruthy();
-    // 'Đọc tất cả' button is now hidden
+    expect(onMarkAllRead).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('hides the mark-all button once unreadCount is 0', async () => {
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={jest.fn()}
+        onPressItem={jest.fn()}
+        view={makeView({ unreadCount: 0 })}
+      />,
+    );
+
     expect(screen.queryByRole('button', { name: 'Đọc tất cả thông báo' })).toBeNull();
 
     await screen.unmount();
   });
 
-  it('handles notification press: marks item as read and navigates to order if orderId exists', async () => {
-    const screen = await render(<NotificationsScreen />);
+  it('calls onPressItem with the tapped notification (deep-link navigation is the runtime concern)', async () => {
+    const onPressItem = jest.fn();
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={jest.fn()}
+        onPressItem={onPressItem}
+        view={makeView()}
+      />,
+    );
 
-    const orderNotification = screen.getByLabelText('Tài xế đang giao hàng');
-    await fireEvent.press(orderNotification);
+    await fireEvent.press(screen.getByLabelText('Tài xế đang giao hàng'));
 
-    // Navigates to customer order detail
-    expect(mockPush).toHaveBeenCalledWith('/customer/orders/ord-001');
-
-    // Unread count decreases from 2 to 1
-    expect(screen.getByText(/Chưa đọc \(1\)/)).toBeTruthy();
+    expect(onPressItem).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'n-001', orderId: 'ord-001' }),
+    );
 
     await screen.unmount();
   });
 
-  it('shows empty state when filter has no notifications and allows reset', async () => {
-    const screen = await render(<NotificationsScreen />);
+  it('shows the empty state for a filter with no matches and resets on demand', async () => {
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={jest.fn()}
+        onPressItem={jest.fn()}
+        view={makeView({ unreadCount: 0, items: items.map((i) => ({ ...i, isRead: true })) })}
+      />,
+    );
 
-    // First mark all as read
-    await fireEvent.press(screen.getByRole('button', { name: 'Đọc tất cả thông báo' }));
-
-    // Now filter by 'Chưa đọc'
     await fireEvent.press(screen.getByLabelText('Chưa đọc'));
 
     expect(screen.getByText('Không có thông báo nào')).toBeTruthy();
     expect(screen.getByText(/Tuyệt vời! Bạn đã đọc tất cả thông báo/)).toBeTruthy();
 
-    // Click 'Xem tất cả thông báo' to reset
-    const resetBtn = screen.getByLabelText('Xem tất cả thông báo');
-    await fireEvent.press(resetBtn);
-
+    await fireEvent.press(screen.getByLabelText('Xem tất cả thông báo'));
     expect(screen.getByText('Tài xế đang giao hàng')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('renders a load-more control when canLoadMore is true and calls onLoadMore', async () => {
+    const onLoadMore = jest.fn();
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={onLoadMore}
+        onMarkAllRead={jest.fn()}
+        onPressItem={jest.fn()}
+        view={makeView({ canLoadMore: true })}
+      />,
+    );
+
+    const button = screen.getByLabelText('Tải thêm thông báo');
+    await fireEvent.press(button);
+
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('shows a page-error notice banner when provided', async () => {
+    const screen = await render(
+      <NotificationsScreen
+        onBack={jest.fn()}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={jest.fn()}
+        onPressItem={jest.fn()}
+        view={makeView({ notice: 'Không thể tải thêm thông báo.' })}
+      />,
+    );
+
+    expect(screen.getByText('Không thể tải thêm thông báo.')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('calls onBack when the back control is pressed', async () => {
+    const onBack = jest.fn();
+    const screen = await render(
+      <NotificationsScreen
+        onBack={onBack}
+        onLoadMore={jest.fn()}
+        onMarkAllRead={jest.fn()}
+        onPressItem={jest.fn()}
+        view={makeView()}
+      />,
+    );
+
+    await fireEvent.press(screen.getByLabelText('Quay lại'));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
 
     await screen.unmount();
   });

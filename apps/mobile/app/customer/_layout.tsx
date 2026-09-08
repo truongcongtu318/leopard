@@ -2,6 +2,7 @@ import { Slot, usePathname, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useNotificationsBootstrap } from '../../src/features/customer/notifications/useNotificationsBootstrap';
 import { useProtectedLayout } from '../../src/navigation/role-router';
 import { spacing, typography } from '../../src/theme/tokens';
 import { FloatingNavBar, type TabKey } from '../../src/ui/FloatingNavBar';
@@ -12,6 +13,8 @@ export default function CustomerLayout() {
   const router = useRouter();
   const pathname = usePathname();
   const redirectTo = decision.kind === 'denied' ? decision.redirectTo : null;
+
+  useNotificationsBootstrap(decision.kind === 'authorized');
 
   useEffect(() => {
     if (redirectTo) {
