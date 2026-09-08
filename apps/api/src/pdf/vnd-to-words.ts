@@ -20,7 +20,10 @@ function readThreeDigits(group: number, isFirstGroup: boolean): string {
   const parts: string[] = [];
 
   if (hundreds > 0 || !isFirstGroup) {
-    parts.push(DIGITS_VI[hundreds], 'trăm');
+    // hundreds/tens/ones are always 0-9 (derived from % 10 / % 100), so
+    // DIGITS_VI[...] is always in-bounds; the ?? '' just keeps tsc's
+    // strict array-indexing happy without restructuring the algorithm.
+    parts.push(DIGITS_VI[hundreds] ?? '', 'trăm');
   }
 
   if (tens === 0) {
@@ -30,7 +33,7 @@ function readThreeDigits(group: number, isFirstGroup: boolean): string {
   } else if (tens === 1) {
     parts.push('mười');
   } else {
-    parts.push(DIGITS_VI[tens], 'mươi');
+    parts.push(DIGITS_VI[tens] ?? '', 'mươi');
   }
 
   if (ones === 1 && tens >= 2) {
@@ -40,7 +43,7 @@ function readThreeDigits(group: number, isFirstGroup: boolean): string {
   } else if (ones === 4 && tens >= 2) {
     parts.push('tư');
   } else if (ones > 0) {
-    parts.push(DIGITS_VI[ones]);
+    parts.push(DIGITS_VI[ones] ?? '');
   }
 
   return parts.join(' ');
@@ -61,10 +64,12 @@ export function vndAmountToWords(amountVnd: number): string {
 
   const words: string[] = [];
   for (let i = 0; i < groups.length; i++) {
-    const group = groups[i];
+    // i is always < groups.length here, so both indexed accesses below
+    // are in-bounds; the fallbacks just satisfy tsc's strict indexing.
+    const group = groups[i] ?? 0;
     if (group === 0) continue;
     const isFirstGroup = i === 0;
-    const unit = GROUP_UNITS[groups.length - 1 - i];
+    const unit = GROUP_UNITS[groups.length - 1 - i] ?? '';
     words.push(readThreeDigits(group, isFirstGroup));
     if (unit) words.push(unit);
   }
