@@ -81,4 +81,42 @@ describe('production environment schema', () => {
       }),
     ).toThrow();
   });
+
+  it('accepts FCM_ENABLED=true alongside FIREBASE_PROJECT_ID', () => {
+    expect(
+      parseEnv({ ...validProductionEnv, FCM_ENABLED: 'true' }),
+    ).toMatchObject({ FCM_ENABLED: true });
+  });
+
+  it('fails fast when FCM_ENABLED=true but FIREBASE_PROJECT_ID is missing', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        FCM_ENABLED: 'true',
+        FIREBASE_PROJECT_ID: undefined,
+      }),
+    ).toThrow();
+  });
+});
+
+describe('FCM_ENABLED outside production', () => {
+  const baseDevEnv: NodeJS.ProcessEnv = {
+    NODE_ENV: 'development',
+    DATABASE_URL: 'postgresql://leopard:secret@localhost:5432/leopard',
+    CORS_ORIGINS: 'http://localhost:3000',
+  };
+
+  it('defaults to disabled and requires no Firebase configuration', () => {
+    expect(parseEnv(baseDevEnv)).toMatchObject({ FCM_ENABLED: undefined });
+  });
+
+  it('still requires FIREBASE_PROJECT_ID when explicitly enabled in development', () => {
+    expect(() => parseEnv({ ...baseDevEnv, FCM_ENABLED: 'true' })).toThrow();
+  });
+
+  it('passes when enabled together with FIREBASE_PROJECT_ID in development', () => {
+    expect(
+      parseEnv({ ...baseDevEnv, FCM_ENABLED: 'true', FIREBASE_PROJECT_ID: 'leopard-dev' }),
+    ).toMatchObject({ FCM_ENABLED: true });
+  });
 });

@@ -15,6 +15,8 @@
 - `PaymentIntent`: QR, amount, payment provider tùy chọn ở trạng thái `UNPAID`, provider reference và các trường xác nhận thủ công.
 - `RefreshSession`: refresh token hash và revocation.
 - `AuditLog`: privileged action append-only với request/idempotency correlation IDs tùy chọn.
+- `Notification`: thông báo in-app đã persist cho một `User`, gồm `type`, `title`, `body`, `data` (JSONB tùy chọn) và trạng thái đọc.
+- `DeviceToken`: push token (FCM/APNs/web-push) của một `User` theo platform, dùng để gửi push khi có thông báo mới.
 
 ## Enum chuẩn
 
@@ -28,6 +30,7 @@ VehicleType: MOTORBIKE | VAN | TRUCK
 OrderStatus: REQUESTED | ACCEPTED | PICKING_UP | IN_TRANSIT | DELIVERED | CANCELLED
 StopType: PICKUP | STOP | DROPOFF
 MediaType: CARGO | DELIVERY_PROOF
+NotificationType: ORDER | PAYMENT | PROMO | SYSTEM
 PaymentStatus: UNPAID | QR_CREATED | PAID_MANUAL | FAILED
 ProviderSource: VIETMAP | DEMO | PAYOS | VIETQR | LOCAL | S3
 ```
@@ -38,7 +41,7 @@ ProviderSource: VIETMAP | DEMO | PAYOS | VIETQR | LOCAL | S3
 - `timestamptz` cho mọi timestamp.
 - Integer cho VND, meter và second.
 - PostGIS `geography(Point,4326)` cho stop/tracking; đồng thời API dùng latitude/longitude số thực.
-- JSONB chỉ cho provider snapshot/audit metadata có schema ở application layer.
+- JSONB chỉ cho provider snapshot/audit metadata có schema ở application layer (bao gồm `Notification.data`, ví dụ `{"orderId": "...", "status": "..."}`).
 
 ## Index quan trọng
 
@@ -60,6 +63,25 @@ ProviderSource: VIETMAP | DEMO | PAYOS | VIETQR | LOCAL | S3
   version trên mỗi hồ sơ tài xế; index `DriverContract(driverProfileId)`.
   `pdfStorageKey` và `signatureStorageKey` (khi có) đều unique riêng để tránh
   trùng object storage key.
+- `Notification(userId, isRead, createdAt desc)` và `Notification(userId, createdAt desc)`
+  cho danh sách/đếm chưa đọc theo user, mới nhất trước.
+- `DeviceToken(userId, lastUsedAt desc)`; unique `DeviceToken(token)` — token là khóa
+  toàn hệ thống nên đăng ký lại cùng token dưới user khác sẽ upsert-reassign, không
+  tạo dòng trùng.
+
+## Notifications
+
+`Notification` và `DeviceToken` phục vụ hệ thống thông báo in-app (xem
+`docs/api/01-rest-api-spec.md#notifications`). `Notification` không có cascade
+xoá đặc biệt ngoài `onDelete: Cascade` theo `User` (xoá user thì xoá luôn thông
+báo của họ). `Notification.data` không có schema cố định giữa các `type` —
+application layer tự diễn giải theo `type`, ví dụ trigger từ order lifecycle
+ghi `{"orderId", "status"}`.
+
+`DeviceToken.token` unique toàn hệ thống (không unique theo user) vì một push
+token vật lý luôn thuộc về đúng một phiên đăng nhập hiện tại trên thiết bị đó —
+`upsert` theo `token` khi đăng ký lại dưới user khác sẽ chuyển quyền sở hữu
+token sang user mới thay vì tạo bản ghi trùng.
 
 ## Driver contract (hợp đồng tài xế)
 

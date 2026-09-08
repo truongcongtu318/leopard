@@ -113,6 +113,31 @@ Tạo QR intent nhận duy nhất `{"clientRequestId":"uuid"}`; amount luôn l�
 
 Trừ năm endpoint public `/auth/login/demo`, `/auth/firebase`, `/auth/refresh`, `/health/live`, `/health/ready`, mọi endpoint kế thừa `bearerAuth` từ OpenAPI global security. `/auth/refresh` xác thực bằng refresh token trong request body, không yêu cầu access token còn hiệu lực.
 
+## Notifications
+
+| Method | Path | Role | Mô tả |
+| --- | --- | --- | --- |
+| GET | `/notifications` | Authenticated | Danh sách thông báo sở hữu, phân trang |
+| GET | `/notifications/unread-count` | Authenticated | Số thông báo chưa đọc |
+| POST | `/notifications/read-all` | Authenticated | Đánh dấu tất cả đã đọc |
+| POST | `/notifications/register-token` | Authenticated | Đăng ký device token nhận push |
+| DELETE | `/notifications/register-token` | Authenticated | Gỡ device token |
+| POST | `/notifications/:id/read` | Owner | Đánh dấu một thông báo đã đọc |
+
+Route tĩnh (`unread-count`, `read-all`, `register-token`) khai báo trước route có param (`:id/read`) để Nest/Express không khớp nhầm segment tĩnh vào `:id`. Không có `POST /notifications` — tạo thông báo chỉ là API nội bộ (`NotificationsService.create`), gọi trực tiếp từ business event (order lifecycle, xác nhận thanh toán), không expose qua REST.
+
+`GET /notifications` nhận `page`, `pageSize` (tối đa 100, mặc định `page=1`/`pageSize=20`) và trả page envelope chuẩn, `items` sắp xếp `createdAt DESC`. Mọi read/write đều scope theo `userId` của caller ngay trong điều kiện WHERE của câu lệnh Prisma (không phải kiểm tra ở tầng ứng dụng trước một write chỉ lọc theo `id`) — gọi `POST /notifications/:id/read` trên thông báo của người khác trả `404 NOTIFICATION_NOT_FOUND` thay vì tiết lộ thông báo đó tồn tại cho ai khác. `POST /notifications/:id/read` và `POST /notifications/read-all` đều idempotent — gọi lại trên thông báo đã đọc không lỗi.
+
+`POST /notifications/register-token` nhận `{"token": string, "platform": "IOS"|"ANDROID"|"WEB"}`. `token` là khóa unique toàn hệ thống: đăng ký lại một token đã thuộc user khác (thiết bị dùng lại sau khi đổi tài khoản) sẽ gán token đó sang user hiện tại. `DELETE /notifications/register-token` nhận `{"token": string}`, chỉ xoá token thuộc về caller (`userId` + `token` cùng điều kiện xoá) — token không tồn tại hoặc thuộc người khác trả `success: true` không lỗi (idempotent).
+
+Notification `type` là enum `ORDER | PAYMENT | PROMO | SYSTEM`. `data` (JSONB, tùy chọn) mang thông tin phụ trợ theo type — ví dụ `{"orderId": "...", "status": "..."}` cho `ORDER`; không có contract cố định giữa các type.
+
+### Realtime và push
+
+Kênh Socket.IO namespace `/notifications` (xem `docs/architecture/01-system-architecture.md`) phát event `notification:new` ngay sau khi thông báo được ghi vào DB, tới đúng room `user:<userId>` của người nhận — không có event nào client có thể subscribe để join room khác. Client mất kết nối vẫn thấy thông báo qua `GET /notifications` khi kết nối lại (nguồn dữ liệu là DB, không phải riêng socket).
+
+Push (FCM) là kênh bổ sung, không bắt buộc: thất bại gửi push hoặc gửi socket không bao giờ làm thất bại việc ghi thông báo đã persist. Chỉ gửi khi biến môi trường `FCM_ENABLED=true` và có `FIREBASE_PROJECT_ID` hợp lệ; token bị Firebase báo lỗi vĩnh viễn (không còn đăng ký, sai định dạng) sẽ tự động bị xoá khỏi `DeviceToken`; lỗi tạm thời (mạng, quota) giữ nguyên token cho lần gửi sau.
+
 ## Admin và operations
 
 | Method | Path | Role | Mô tả |

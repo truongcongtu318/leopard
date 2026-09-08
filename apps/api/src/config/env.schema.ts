@@ -81,6 +81,7 @@ const envSchema = z
     ALLOW_DEMO_PAYMENT_PROVIDER: booleanFlagSchema.optional(),
     VIETMAP_API_KEY: z.string().trim().min(10).optional(),
     FIREBASE_PROJECT_ID: z.string().trim().min(1).optional(),
+    FCM_ENABLED: booleanFlagSchema.optional(),
     S3_ACCESS_KEY_ID: optionalProviderValue(10),
     S3_SECRET_ACCESS_KEY: optionalProviderValue(10),
     S3_BUCKET: optionalProviderValue(),
@@ -107,6 +108,16 @@ const envSchema = z
         'when PAYMENT_PROVIDER=payos',
         context,
       );
+    }
+
+    // Unlike ALLOW_*, FCM_ENABLED is not a demo/insecure-provider bypass — it
+    // turns on the real push provider. Without FIREBASE_PROJECT_ID the
+    // service would otherwise start up and silently no-op on every send, so
+    // this is a plain conditional-requirement check (like the S3/PAYOS ones
+    // above) applied in every environment, not an ALLOW_*-style
+    // production-only acknowledgment gate.
+    if (env.FCM_ENABLED === true) {
+      requireConfiguration(env, ['FIREBASE_PROJECT_ID'], 'when FCM_ENABLED=true', context);
     }
 
     if (env.NODE_ENV !== 'production') {
@@ -271,6 +282,7 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     ALLOW_DEMO_PAYMENT_PROVIDER: source.ALLOW_DEMO_PAYMENT_PROVIDER,
     VIETMAP_API_KEY: source.VIETMAP_API_KEY,
     FIREBASE_PROJECT_ID: source.FIREBASE_PROJECT_ID,
+    FCM_ENABLED: source.FCM_ENABLED,
     S3_ACCESS_KEY_ID: source.S3_ACCESS_KEY_ID,
     S3_SECRET_ACCESS_KEY: source.S3_SECRET_ACCESS_KEY,
     S3_BUCKET: source.S3_BUCKET,

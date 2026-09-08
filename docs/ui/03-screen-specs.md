@@ -10,6 +10,7 @@ Phone/Firebase flow hoặc demo account selector khi được bật. Có trạng
 - `/customer/orders/new`: pickup, stops, dropoff, vehicle, cargo, route estimate, price và ETA dự kiến. Submit chỉ bật khi estimate token còn hiệu lực.
 - `/customer/orders/:id`: status timeline, route/map, Driver/tracking khi được nhận, media, payment và cancel khi hợp lệ.
 - `/customer/profile`: số điện thoại, vai trò, trạng thái tài khoản, phiên bản ứng dụng, đăng xuất.
+- `/customer/notifications`: hộp thư thông báo, filter chip (Tất cả/Chưa đọc/Đơn hàng/Thanh toán/Ưu đãi/Hệ thống) kèm số đếm, nhóm theo "Hôm nay"/"Trước đó", nút "Đọc tất cả" khi còn thông báo chưa đọc, "Tải thêm thông báo" khi còn trang kế tiếp (thất bại tải thêm chỉ hiện banner nhỏ, không mất danh sách đã hiển thị), nhấn một thông báo đánh dấu đã đọc và điều hướng tới `/customer/orders/:id` nếu thông báo gắn với một order. Nhận cập nhật realtime qua socket khi ứng dụng đang mở (mount cùng lúc với layout Customer đã đăng nhập) và đăng ký device token nhận push trên bản PWA/web khi trình duyệt hỗ trợ và người dùng cho phép.
 
 ## Driver
 
