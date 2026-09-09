@@ -10,21 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import {
-  IconBank,
-  IconClock,
-  IconEye,
-  IconEyeOff,
-  IconOrders,
-  IconSecurityShield,
-  IconTrophy,
-  IconTxPayment,
-  IconTxTopup,
-  IconWallet,
-} from '../../../ui/icons/CoreIcons';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconBank, IconClock, IconEye, IconEyeOff, IconOrders, IconSecurityShield, IconTrophy, IconTxPayment, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
 
 export type DriverTransaction = Readonly<{
   id: string;

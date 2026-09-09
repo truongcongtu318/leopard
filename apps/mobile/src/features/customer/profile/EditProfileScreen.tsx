@@ -11,16 +11,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, leopardPalette, radius, spacing } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import {
-  IconCamera,
-  IconIdCard,
-  IconSecurityShield,
-  IconSupport247,
-  IconUser,
-} from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconCamera, IconIdCard, IconSecurityShield, IconSupport247, IconUser } from '@leopard/mobile-core';
 
 export type EditProfileScreenProps = Readonly<{
   eyebrow?: string;

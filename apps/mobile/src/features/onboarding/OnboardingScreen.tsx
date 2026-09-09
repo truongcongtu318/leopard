@@ -14,8 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
-import { spacing } from '@leopard/mobile-core';
-import { LeopardEmblem } from '../../ui/icons/CoreIcons';
+import { spacing, LeopardEmblem } from '@leopard/mobile-core';
 
 const onboarding1 = require('../../../assets/brand/onboarding-1.jpg');
 const onboarding2 = require('../../../assets/brand/onboarding-2.jpg');

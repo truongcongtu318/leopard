@@ -1,4 +1,4 @@
-import { ErrorScreen } from '../src/ui/ErrorScreen';
+import { ErrorScreen } from '@leopard/mobile-core';
 
 export default function NotFoundRoute() {
   return <ErrorScreen type="404" />;

@@ -1,21 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import {
-  IconBank,
-  IconCopy,
-  IconEye,
-  IconEyeOff,
-  IconQrPayment,
-  IconSecurityShield,
-  IconTxPayment,
-  IconTxRefund,
-  IconTxTopup,
-  IconWallet,
-} from '../../../ui/icons/CoreIcons';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { colors, layout, radius, spacing, typography, Button, IconBank, IconCopy, IconEye, IconEyeOff, IconQrPayment, IconSecurityShield, IconTxPayment, IconTxRefund, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
 
 export type WalletTransaction = Readonly<{
   id: string;

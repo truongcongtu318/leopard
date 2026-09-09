@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
 
 type MapPanelProps =

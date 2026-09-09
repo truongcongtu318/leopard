@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 import { CustomerOrdersScreen } from './CustomerOrdersScreen';
 import type { CustomerOrderFilter } from './model';

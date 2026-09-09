@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardElevation, leopardPalette, leopardRadius, spacing } from '@leopard/mobile-core';
+import { colors, leopardElevation, leopardPalette, leopardRadius, spacing } from '../theme/tokens';
 import { IconClock, IconEarnings, IconHome, IconOrders, IconSpeedTruck, IconUser, IconWallet } from './icons/CoreIcons';
 
 export type TabKey = 'home' | 'orders' | 'wallet' | 'account';

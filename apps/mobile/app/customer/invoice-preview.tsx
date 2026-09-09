@@ -1,8 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { InvoicePreviewScreen } from '../../src/features/customer/orders/InvoicePreviewScreen';
-import { ScreenScaffold } from '../../src/ui/ScreenScaffold';
-import { ScreenState } from '../../src/ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 
 export default function InvoicePreviewPage() {
   const { invoiceId } = useLocalSearchParams<{ invoiceId?: string }>();

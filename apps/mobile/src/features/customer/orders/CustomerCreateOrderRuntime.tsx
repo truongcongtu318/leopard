@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { pickDeviceImage } from '@leopard/mobile-core';
-import { resolveLocationCoords } from '../../../ui/RealInteractiveMap';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
+import { pickDeviceImage, resolveLocationCoords, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 import { CustomerCreateOrderScreen } from './CustomerCreateOrderScreen';
 import type {

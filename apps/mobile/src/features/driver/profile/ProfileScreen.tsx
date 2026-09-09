@@ -2,24 +2,7 @@ import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
-import { StatusBadge } from '../../../ui/StatusBadge';
-import {
-  IconClock,
-  IconIdCard,
-  IconInsuranceDoc,
-  IconLicense,
-  IconPhone,
-  IconSecurityShield,
-  IconSpeedTruck,
-  IconSupport247,
-  IconTrophy,
-  IconUser,
-  IconWallet,
-} from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, ScreenState, StatusBadge, IconClock, IconIdCard, IconInsuranceDoc, IconLicense, IconPhone, IconSecurityShield, IconSpeedTruck, IconSupport247, IconTrophy, IconUser, IconWallet } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 import type { DriverProfileView } from './model';

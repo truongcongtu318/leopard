@@ -9,15 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '@leopard/mobile-core';
-import {
-  IconOrders,
-  IconSearch,
-  IconSpeedTruck,
-  IconTag,
-  IconVehicle3Wheel,
-  IconVehicleHeavyTruck,
-} from '../../ui/icons/CoreIcons';
+import { layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
 
 // ── Types ────────────────────────────────────────────────────────────
 

@@ -8,23 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import {
-  IconCameraProof,
-  IconClock,
-  IconLocationPin,
-  IconOrders,
-  IconPhone,
-  IconRadarPulse,
-  IconRoute,
-  IconSpeedTruck,
-} from '../../../ui/icons/CoreIcons';
-import { RealInteractiveMap } from '../../../ui/RealInteractiveMap';
-import { ScreenScaffold, SectionHeading } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
-import { StatusBadge } from '../../../ui/StatusBadge';
-import { StatusTimeline } from '../../../ui/StatusTimeline';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconCameraProof, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconSpeedTruck, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
 import type {
   DriverAssignedDetailView,
   DriverCommandView,

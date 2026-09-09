@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { leopardElevation, leopardPalette, leopardRadius, spacing } from '@leopard/mobile-core';
+import { leopardElevation, leopardPalette, leopardRadius, spacing } from '../theme/tokens';
 import { TruckLoader } from './TruckLoader';
 
 export type ProcessingModalProps = Readonly<{

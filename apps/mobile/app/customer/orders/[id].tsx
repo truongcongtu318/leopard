@@ -2,8 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { parseCustomerOrderId } from '../../../src/features/customer/orders/adapter';
 import { CustomerOrderDetailRuntime } from '../../../src/features/customer/orders/CustomerOrderDetailRuntime';
-import { ScreenScaffold } from '../../../src/ui/ScreenScaffold';
-import { ScreenState } from '../../../src/ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 
 export default function CustomerOrderDetailPage() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();

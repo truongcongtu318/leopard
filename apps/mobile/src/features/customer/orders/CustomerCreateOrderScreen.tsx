@@ -15,28 +15,7 @@ import {
 } from 'react-native';
 
 import { httpClient } from '../../../api/http-client';
-import { colors, layout, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { FormField } from '../../../ui/FormField';
-import {
-  IconCamera,
-  IconLocationPin,
-  IconOrders,
-  IconPaymentConvenient,
-  IconQrPayment,
-  IconRoute,
-  IconSecurityShield,
-  IconSpeedTruck,
-  IconVehicleHeavyTruck,
-  IconVehicleMotorbike,
-  IconVehicleVan,
-  IconWallet,
-  IconWarningShield,
-} from '../../../ui/icons/CoreIcons';
-import { RealInteractiveMap } from '../../../ui/RealInteractiveMap';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
-import { SkeletonBar } from '../../../ui/Skeleton';
+import { colors, layout, leopardPalette, radius, spacing, typography, Button, FormField, IconCamera, IconLocationPin, IconOrders, IconPaymentConvenient, IconQrPayment, IconRoute, IconSecurityShield, IconSpeedTruck, IconVehicleHeavyTruck, IconVehicleMotorbike, IconVehicleVan, IconWallet, IconWarningShield, RealInteractiveMap, ScreenScaffold, ScreenState, SkeletonBar } from '@leopard/mobile-core';
 import { MapAddressPickerModal } from '../../home/components/MapAddressPickerModal';
 import { AddressSearchField } from './AddressSearchField';
 import { VietQRPaymentModal } from './components/VietQRPaymentModal';

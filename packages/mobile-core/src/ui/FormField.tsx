@@ -2,7 +2,7 @@ import { useId } from 'react';
 import type { TextInputProps } from 'react-native';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { colors, control, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
+import { colors, control, leopardPalette, radius, spacing, typography } from '../theme/tokens';
 
 type FormFieldProps = Omit<TextInputProps, 'style'> & {
   label: string;

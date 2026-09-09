@@ -9,22 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing } from '@leopard/mobile-core';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import {
-  IconBell,
-  IconChevronRight,
-  IconClock,
-  IconLocationPin,
-  IconRadarPulse,
-  IconRoute,
-  IconSecurityShield,
-  IconSettings,
-  IconSpeedTruck,
-  IconSupport247,
-  IconTrash,
-  IconWarningShield,
-} from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, ScreenScaffold, IconBell, IconChevronRight, IconClock, IconLocationPin, IconRadarPulse, IconRoute, IconSecurityShield, IconSettings, IconSpeedTruck, IconSupport247, IconTrash, IconWarningShield } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 

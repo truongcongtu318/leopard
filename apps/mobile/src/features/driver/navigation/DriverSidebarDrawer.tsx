@@ -8,22 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import {
-  IconChevronRight,
-  IconClock,
-  IconClose,
-  IconEarnings,
-  IconOrders,
-  IconSecurityShield,
-  IconSettings,
-  IconSpeedTruck,
-  IconStar,
-  IconSupport247,
-  IconUser,
-} from '../../../ui/icons/CoreIcons';
-import { StatusBadge } from '../../../ui/StatusBadge';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconChevronRight, IconClock, IconClose, IconEarnings, IconOrders, IconSecurityShield, IconSettings, IconSpeedTruck, IconStar, IconSupport247, IconUser, StatusBadge } from '@leopard/mobile-core';
 import type { DriverAvailabilityView } from '../orders/model';
 
 export type DriverSidebarDrawerProps = Readonly<{

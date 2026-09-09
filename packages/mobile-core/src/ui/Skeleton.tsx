@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Animated, StyleSheet, View } from 'react-native';
 
-import { colors, radius } from '@leopard/mobile-core';
+import { colors, radius } from '../theme/tokens';
 
 export type SkeletonBarProps = Readonly<{
   height?: number;

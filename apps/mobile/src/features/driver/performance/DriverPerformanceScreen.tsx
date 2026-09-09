@@ -1,9 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { IconTrophy, StarRating } from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, typography, ScreenScaffold, IconTrophy, StarRating } from '@leopard/mobile-core';
 
 type ReviewFeedItem = {
   id: string;

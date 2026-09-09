@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { colors, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { FormField } from '../../../ui/FormField';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { colors, radius, spacing, typography, Button, FormField, ScreenScaffold } from '@leopard/mobile-core';
 
 const issueCategories = [
   { id: 'damaged', label: 'Hàng hóa bị hư hỏng / vỡ móp' },

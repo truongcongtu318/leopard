@@ -11,20 +11,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, leopardPalette, radius, spacing } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import {
-  IconCamera,
-  IconClock,
-  IconIdCard,
-  IconPhone,
-  IconSecurityShield,
-  IconSpeedTruck,
-  IconSupport247,
-  IconUser,
-  IconWarningShield,
-} from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconCamera, IconClock, IconIdCard, IconPhone, IconSecurityShield, IconSpeedTruck, IconSupport247, IconUser, IconWarningShield } from '@leopard/mobile-core';
 
 export type DriverEditProfileScreenProps = Readonly<{
   initialName: string;

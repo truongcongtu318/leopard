@@ -7,7 +7,7 @@ import type {
 } from '@leopard/shared';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@leopard/mobile-core';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 
 export type KycStatus = 'VERIFIED' | 'PENDING' | 'REJECTED' | 'EXPIRED';
 

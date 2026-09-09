@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@leopard/mobile-core';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import { IconLocationPin, IconSpeedTruck } from './icons/CoreIcons';
 
 export type MapCoordinate = {

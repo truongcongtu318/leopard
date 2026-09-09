@@ -2,8 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { colors, layout, radius, spacing, typography, ScreenScaffold } from '@leopard/mobile-core';
 
 export function CustomerSettingsScreen() {
   const router = useRouter();

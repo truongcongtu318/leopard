@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { IconLocationPin, IconTrash } from '../../../ui/icons/CoreIcons';
+import { IconLocationPin, IconTrash } from '@leopard/mobile-core';
 import type { SavedAddress } from '../../customer/addresses/address-store';
 
 export type SavedAddressPickerModalProps = Readonly<{

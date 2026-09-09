@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { colors, radius, spacing, typography } from '@leopard/mobile-core';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { colors, radius, spacing, typography, ScreenScaffold } from '@leopard/mobile-core';
 
 type ChatMessage = {
   id: string;

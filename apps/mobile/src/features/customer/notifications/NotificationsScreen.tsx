@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
-import { IconBell, IconOrders, IconTag, IconTxPayment } from '../../../ui/icons/CoreIcons';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { colors, layout, radius, spacing, typography, IconBell, IconOrders, IconTag, IconTxPayment, ScreenScaffold } from '@leopard/mobile-core';
 import { isOlderThanOneDay } from './adapter';
 import type { NotificationFilter, NotificationItemView, NotificationsContentView } from './model';
 

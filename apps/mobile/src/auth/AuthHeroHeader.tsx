@@ -1,18 +1,22 @@
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, {
+  ClipPath,
   Defs,
   FeDropShadow,
   Filter,
+  Image as SvgImage,
   LinearGradient,
   Path,
   Stop,
 } from 'react-native-svg';
 
-import { BrandLoginLogo, IconChevronLeft, LeopardEmblem } from '../ui/icons/CoreIcons';
+import { BrandLoginLogo, IconChevronLeft, LeopardEmblem } from '@leopard/mobile-core';
 
 const HERO_HEIGHT = 380;
 const VIEW_W = 375;
 const VIEW_H = 380;
+const WAVE_PATH = 'M0 364 C42 308 76 266 124 266 C184 266 234 300 292 300 C335 300 362 270 375 224 V0 H0 Z';
+const truckBackground = require('../../assets/brand/auth-truck-background.jpg');
 
 export interface AuthHeroHeaderProps {
   title: string;
@@ -29,6 +33,10 @@ export interface AuthHeroHeaderProps {
 export function AuthHeroHeader({ title, subtitle, onBack, backTestID }: AuthHeroHeaderProps) {
   const { width, fontScale } = useWindowDimensions();
   const heroHeight = HERO_HEIGHT + Math.max(0, fontScale - 1) * 160;
+  // Keep the 736 × 1104 photo undistorted after the SVG stretches to the header.
+  // Its truck sits at 53% of the source height; align that point above the wave.
+  const photoHeight = Math.min(width, 520) * (1104 / 736) * (VIEW_H / heroHeight);
+  const photoY = 160 - photoHeight * 0.53;
 
   return (
     <View style={[styles.wrap, { height: heroHeight }]}>
@@ -43,6 +51,9 @@ export function AuthHeroHeader({ title, subtitle, onBack, backTestID }: AuthHero
         width="100%"
       >
         <Defs>
+          <ClipPath id="authHeroPhotoClip">
+            <Path d={WAVE_PATH} />
+          </ClipPath>
           <LinearGradient
             gradientUnits="userSpaceOnUse"
             id="authHeroGrad"
@@ -69,9 +80,19 @@ export function AuthHeroHeader({ title, subtitle, onBack, backTestID }: AuthHero
           </Filter>
         </Defs>
         <Path
-          d="M0 364 C42 308 76 266 124 266 C184 266 234 300 292 300 C335 300 362 270 375 224 V0 H0 Z"
+          d={WAVE_PATH}
           fill="url(#authHeroGrad)"
           filter="url(#waveShadow)"
+        />
+        <SvgImage
+          clipPath="url(#authHeroPhotoClip)"
+          height={photoHeight}
+          href={truckBackground}
+          opacity={0.18}
+          preserveAspectRatio="none"
+          width={VIEW_W}
+          x={0}
+          y={photoY}
         />
       </Svg>
 

@@ -9,17 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, layout, leopardElevation, leopardPalette, leopardRadius, radius, spacing, typography } from '@leopard/mobile-core';
-import {
-  IconCameraProof,
-  IconLocationPin,
-  IconMessage,
-  IconPhone,
-  IconQrPayment,
-  IconRoleDriver,
-  IconSpeedTruck,
-} from '../../ui/icons/CoreIcons';
-import { RealInteractiveMap } from '../../ui/RealInteractiveMap';
+import { colors, layout, leopardElevation, leopardPalette, leopardRadius, radius, spacing, typography, IconCameraProof, IconLocationPin, IconMessage, IconPhone, IconQrPayment, IconRoleDriver, IconSpeedTruck, RealInteractiveMap } from '@leopard/mobile-core';
 
 // ── Types ────────────────────────────────────────────────────────────
 

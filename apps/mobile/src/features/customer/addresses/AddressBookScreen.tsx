@@ -11,23 +11,7 @@ import {
 
 import { httpClient } from '../../../api/http-client';
 import { addressStore } from './address-store';
-import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { FormField } from '../../../ui/FormField';
-import {
-  IconHome,
-  IconLocationPin,
-  IconOffice,
-  IconPhone,
-  IconPlus,
-  IconSearch,
-  IconStar,
-  IconTrash,
-  IconUser,
-  IconWarehouse,
-} from '../../../ui/icons/CoreIcons';
-import { RealInteractiveMap, resolveLocationCoords } from '../../../ui/RealInteractiveMap';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { colors, layout, radius, spacing, typography, Button, FormField, IconHome, IconLocationPin, IconOffice, IconPhone, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
 import {
   POPULAR_MAP_SUGGESTIONS,
   reverseGeocodeCoords,

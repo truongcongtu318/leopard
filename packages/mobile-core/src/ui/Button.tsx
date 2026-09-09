@@ -1,7 +1,7 @@
 import type { PressableProps } from 'react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, control, radius, spacing, typography } from '@leopard/mobile-core';
+import { colors, control, radius, spacing, typography } from '../theme/tokens';
 
 type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 type ButtonSize = 'default' | 'driver-primary';

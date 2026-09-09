@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@leopard/mobile-core';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
 import { TruckLoader } from './TruckLoader';
 

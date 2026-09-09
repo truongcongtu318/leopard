@@ -3,8 +3,7 @@ import { Linking, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import { sessionStore } from '../../../auth/session-store';
-import { Button } from '../../../ui/Button';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { Button, ScreenScaffold } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';

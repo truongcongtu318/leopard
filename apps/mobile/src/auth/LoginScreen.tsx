@@ -12,8 +12,7 @@ import {
 import type { Role } from '@leopard/shared';
 
 import { httpClient } from '../api/http-client';
-import { colors, leopardPalette, spacing } from '@leopard/mobile-core';
-import { Button } from '../ui/Button';
+import { colors, leopardPalette, spacing, Button, IconRoleAdmin, IconRoleCustomer, IconRoleDriver, IconRoleFleet, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader } from '@leopard/mobile-core';
 import { sessionStore } from './session-store';
 import { isFirebaseConfigured } from './firebase';
 import {
@@ -23,15 +22,6 @@ import {
   type OtpChallenge,
 } from './firebase-auth';
 import { isLikelyVnPhone, toE164Vn } from './phone';
-import {
-  IconRoleAdmin,
-  IconRoleCustomer,
-  IconRoleDriver,
-  IconRoleFleet,
-  OtpPhoneHeroIcon,
-  VietnamFlagIcon,
-} from '../ui/icons/CoreIcons';
-import { TruckLoader } from '../ui/TruckLoader';
 import { AuthHeroHeader } from './AuthHeroHeader';
 import { OtpSixCellInput } from './OtpSixCellInput';
 

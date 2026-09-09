@@ -2,24 +2,7 @@ import { useRouter } from 'expo-router';
 import { type ReactNode, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing } from '@leopard/mobile-core';
-import {
-  IconCreditCard,
-  IconCrown,
-  IconEye,
-  IconEyeOff,
-  IconFileText,
-  IconLocationPin,
-  IconLogOut,
-  IconOrders,
-  IconSecurityShield,
-  IconSettings,
-  IconSupport247,
-  IconTag,
-  IconWallet,
-} from '../../../ui/icons/CoreIcons';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
+import { colors, layout, radius, spacing, IconCreditCard, IconCrown, IconEye, IconEyeOff, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { CustomerProfileView } from './model';
 
 export type CustomerProfileScreenProps = Readonly<{

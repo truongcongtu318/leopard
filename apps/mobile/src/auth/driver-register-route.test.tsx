@@ -23,7 +23,7 @@ jest.mock('./session-store', () => ({
 }));
 
 jest.mock('@leopard/mobile-core', () => ({
-  ...jest.requireActual('@leopard/mobile-core'),
+  ...jest.requireActual<typeof import('@leopard/mobile-core')>('@leopard/mobile-core'),
   pickDeviceImage: jest.fn(),
 }));
 

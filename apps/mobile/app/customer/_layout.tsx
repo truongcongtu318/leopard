@@ -4,9 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useNotificationsBootstrap } from '../../src/features/customer/notifications/useNotificationsBootstrap';
 import { useProtectedLayout } from '../../src/navigation/role-router';
-import { spacing, typography } from '@leopard/mobile-core';
-import { FloatingNavBar, type TabKey } from '../../src/ui/FloatingNavBar';
-import { TruckLoader } from '../../src/ui/TruckLoader';
+import { spacing, typography, FloatingNavBar, type TabKey, TruckLoader } from '@leopard/mobile-core';
 
 export default function CustomerLayout() {
   const decision = useProtectedLayout('customer');

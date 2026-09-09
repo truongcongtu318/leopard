@@ -4,8 +4,6 @@ import {
   Animated,
   Dimensions,
   Easing,
-  Image,
-  ImageBackground,
   Platform,
   Pressable,
   ScrollView,
@@ -16,27 +14,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../ui/Button';
-import { FloatingNavBar, type TabKey } from '../../ui/FloatingNavBar';
-import {
-  IconBell,
-  IconLocationPin,
-  IconMessage,
-  IconOrders,
-  IconQrPayment,
-  IconRoleDriver,
-  IconSecurityShield,
-  IconSpeedTruck,
-  IconVehicle3Wheel,
-  IconVehicleHeavyTruck,
-  IconVehicleLightTruck,
-  IconWallet,
-} from '../../ui/icons/CoreIcons';
-import { OrderSummary } from '../../ui/OrderSummary';
-import { RouteSpine } from '../../ui/RouteSpine';
-import { StatusBadge } from '../../ui/StatusBadge';
-import type { VehicleCategory } from '../../ui/VehicleSelectCard';
+import { colors, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, Button, FloatingNavBar, type TabKey, BrandLoginLogo, IconBell, IconLocationPin, IconMessage, IconOrders, IconQrPayment, IconRoleDriver, IconSecurityShield, IconSpeedTruck, IconVehicle3Wheel, IconVehicleHeavyTruck, IconVehicleLightTruck, IconWallet, OrderSummary, RouteSpine, StatusBadge } from '@leopard/mobile-core';
+import type { VehicleCategory } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
 import { httpClient } from '../../api/http-client';
 import { sessionStore } from '../../auth/session-store';
@@ -46,17 +25,7 @@ import {
   SavedAddressPickerModal,
 } from './components';
 
-const customerHeroBgSource = require('../../../assets/brand/customer-hero-bg.jpg');
-const bannerPromo1Source = require('../../../assets/brand/banner-promo-1.png');
-const bannerPromo2Source = require('../../../assets/brand/banner-promo-2.png');
-const bannerPromo3Source = require('../../../assets/brand/banner-promo-3.png');
-const service3WheelSource = require('../../../assets/brand/service-3wheel.png');
-const serviceLightTruckSource = require('../../../assets/brand/service-light-truck.png');
-const serviceHeavyTruckSource = require('../../../assets/brand/service-heavy-truck.png');
-const serviceExpressSource = require('../../../assets/brand/service-express.png');
-const serviceLoadingSource = require('../../../assets/brand/service-loading.png');
-const serviceCodSource = require('../../../assets/brand/service-cod.png');
-const activeTruck3dSource = require('../../../assets/brand/active-truck-3d.png');
+import { HomePromoArtwork, type HomePromoSlide } from './HomePromoArtwork';
 
 function formatVietnamesePhone(phone?: string | null): string {
   if (!phone) return '';
@@ -336,32 +305,10 @@ export function AnimatedGreetingIcon({
   );
 }
 
-type PromoSlide = Readonly<{
-  id: string;
-  source: any;
-  title: string;
-  subtitle: string;
-}>;
-
-const PROMO_SLIDES: readonly PromoSlide[] = [
-  {
-    id: 'promo-1',
-    source: bannerPromo1Source,
-    title: 'Giảm 50.000₫ chuyến đầu tiên',
-    subtitle: 'Nhập mã LEOPARD50 khi tạo đơn giao hàng mới',
-  },
-  {
-    id: 'promo-2',
-    source: bannerPromo2Source,
-    title: 'Cam kết có xe trong 15 phút',
-    subtitle: 'Mạng lưới xe ba gác & tải nhẹ phủ sóng toàn thành phố',
-  },
-  {
-    id: 'promo-3',
-    source: bannerPromo3Source,
-    title: 'Bảo hiểm 100% giá trị hàng',
-    subtitle: 'An tâm tuyệt đối cho vật liệu công trình & đồ dọn nhà',
-  },
+const PROMO_SLIDES: readonly HomePromoSlide[] = [
+  { id: 'promo-1', kind: 'vehicle', eyebrow: 'XE CHO MỖI NHU CẦU', title: 'Đặt xe phù hợp với hàng', subtitle: 'Chọn phương tiện theo loại hàng và tải trọng.', action: 'Chọn xe' },
+  { id: 'promo-2', kind: 'address', eyebrow: 'ĐẶT HÀNG THUẬN TIỆN', title: 'Lên đơn từ địa chỉ đã lưu', subtitle: 'Dùng lại điểm lấy và giao quen thuộc khi tạo đơn.', action: 'Tạo đơn mới' },
+  { id: 'promo-3', kind: 'tracking', eyebrow: 'CHỦ ĐỘNG THEO DÕI', title: 'Theo dõi từng chặng giao', subtitle: 'Xem trạng thái và ETA dự kiến trong hành trình.', action: 'Bắt đầu gửi hàng' },
 ];
 
 type QuickService = Readonly<{
@@ -370,7 +317,6 @@ type QuickService = Readonly<{
   name: string;
   label: string;
   tag: string;
-  imageSource: any;
   iconType: '3wheel' | 'light' | 'heavy' | 'express' | 'loading' | 'cod';
 }>;
 
@@ -381,7 +327,6 @@ const quickServices: readonly QuickService[] = [
     label: 'Xe Ba Gác',
     name: 'Ba gác',
     tag: '< 500kg',
-    imageSource: service3WheelSource,
     iconType: '3wheel',
   },
   {
@@ -390,7 +335,6 @@ const quickServices: readonly QuickService[] = [
     label: 'Xe Tải Nhẹ',
     name: 'Tải nhẹ',
     tag: '≤ 1.5 tấn',
-    imageSource: serviceLightTruckSource,
     iconType: 'light',
   },
   {
@@ -399,15 +343,13 @@ const quickServices: readonly QuickService[] = [
     label: 'Xe Tải Nặng',
     name: 'Tải nặng',
     tag: '5–10 tấn',
-    imageSource: serviceHeavyTruckSource,
     iconType: 'heavy',
   },
   {
     id: 'EXPRESS',
     label: 'Giao Hỏa Tốc',
     name: 'Hỏa tốc',
-    tag: 'Dưới 1h',
-    imageSource: serviceExpressSource,
+    tag: 'Giao ưu tiên',
     iconType: 'express',
   },
   {
@@ -415,15 +357,13 @@ const quickServices: readonly QuickService[] = [
     label: 'Dịch Vụ Bốc Xếp',
     name: 'Bốc xếp',
     tag: 'Kèm phụ xe',
-    imageSource: serviceLoadingSource,
     iconType: 'loading',
   },
   {
     id: 'COD',
     label: 'Thu Hộ COD',
     name: 'Thu COD',
-    tag: 'Đối soát 24h',
-    imageSource: serviceCodSource,
+    tag: 'Thu hộ tiền hàng',
     iconType: 'cod',
   },
 ];
@@ -463,19 +403,19 @@ const DEFAULT_RECENT_ORDERS: readonly RecentOrder[] = [
 function renderServiceIcon(type: QuickService['iconType']) {
   switch (type) {
     case '3wheel':
-      return <IconVehicle3Wheel color="#0B1E42" size={24} />;
+      return <IconVehicle3Wheel color="#0B1E42" size={44} />;
     case 'light':
-      return <IconVehicleLightTruck color="#0B1E42" size={24} />;
+      return <IconVehicleLightTruck color="#0B1E42" size={44} />;
     case 'heavy':
-      return <IconVehicleHeavyTruck color="#0B1E42" size={24} />;
+      return <IconVehicleHeavyTruck color="#0B1E42" size={44} />;
     case 'express':
-      return <IconSpeedTruck color="#0B1E42" secondaryColor="#F0F4F9" size={24} strokeWidth={1.75} />;
+      return <IconSpeedTruck color="#0B1E42" secondaryColor="#F0F4F9" size={44} strokeWidth={1.75} />;
     case 'loading':
-      return <IconOrders color="#0B1E42" size={24} strokeWidth={1.75} />;
+      return <IconOrders color="#0B1E42" size={44} strokeWidth={1.75} />;
     case 'cod':
-      return <IconSecurityShield color="#0B1E42" secondaryColor="#F0F4F9" size={24} strokeWidth={1.75} />;
+      return <IconSecurityShield color="#0B1E42" secondaryColor="#F0F4F9" size={44} strokeWidth={1.75} />;
     default:
-      return <IconSpeedTruck color="#0B1E42" size={24} />;
+      return <IconSpeedTruck color="#0B1E42" size={44} />;
   }
 }
 
@@ -662,8 +602,6 @@ export function HomeDashboardScreen({
     }
   }, [focusedField]);
 
-  // Scroll animation for sticky header
-  const scrollY = React.useRef(new Animated.Value(0)).current;
   const [isAutoNavigating, setIsAutoNavigating] = useState(false);
   const navigationTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasNavigatedRef = React.useRef(false);
@@ -793,47 +731,11 @@ export function HomeDashboardScreen({
   const greeting = useMemo(() => getTimeOfDayGreeting(), []);
   const currentSlide = PROMO_SLIDES[activeBannerIdx];
 
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const headerTranslateY = scrollY.interpolate({
-    inputRange: [0, 120],
-    outputRange: [-80, 0],
-    extrapolate: 'clamp',
-  });
-
-  const heroActionsOpacity = scrollY.interpolate({
-    inputRange: [0, 35],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Animated Sticky Header: Translucent white, slides down on scroll, hidden at top 0 */}
-        <Animated.View
-          style={[
-            styles.stickyHeader,
-            {
-              opacity: headerOpacity,
-              transform: [{ translateY: headerTranslateY }],
-            },
-          ]}
-        >
-          <View style={styles.greetingPill}>
-            <AnimatedGreetingIcon size={20} timeOfDay={timeOfDay} />
-            <Text numberOfLines={1} style={styles.greetingTitleText}>
-              {greeting}
-              {userName ? (
-                <Text style={styles.greetingNameText}>, {userName}</Text>
-              ) : null}
-            </Text>
-          </View>
-
+        <View style={styles.topBar}>
+          <BrandLoginLogo height={24} />
           <View style={styles.headerActions}>
             <Pressable
               accessibilityLabel={
@@ -869,27 +771,18 @@ export function HomeDashboardScreen({
               </Pressable>
             ) : null}
           </View>
-        </Animated.View>
+        </View>
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
-          onScroll={(e) => {
-            scrollY.setValue(e.nativeEvent.contentOffset.y);
-          }}
-          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          {/* 1. Hero Artwork Background */}
-          <ImageBackground
-            accessibilityLabel="Hình ảnh thương hiệu LEOPARD"
-            imageStyle={styles.heroBackgroundImage}
-            resizeMode="cover"
-            source={customerHeroBgSource}
-            style={styles.heroBackground}
-          />
+          <View style={styles.homeIntro}>
+            <Text style={styles.homeGreeting}>{greeting}{userName ? ', ' + userName : ''}</Text>
+            <Text accessibilityRole="header" style={styles.homeTitle}>Bạn muốn giao hàng đi đâu?</Text>
+          </View>
 
-          {/* Main Content: Thân trang xếp lớp phủ nhẹ lên chân ảnh hero */}
           <View style={styles.mainSheet}>
             {/* Thẻ ẩn dữ liệu danh tính người dùng phục vụ accessibility và test suite */}
             <View pointerEvents="none" style={styles.srOnly}>
@@ -897,7 +790,7 @@ export function HomeDashboardScreen({
             </View>
 
             {/* 2. Quick Route Booking Card (Phần vị trí: Dispatch Dock) */}
-            <View style={styles.routeBookingCard}>
+            <View style={styles.routeBookingCard} testID="home-booking">
               <View style={styles.routeBookingHeader}>
                 <View style={styles.routeBadgeRow}>
                   <View style={styles.liveIndicatorDot} />
@@ -1128,8 +1021,107 @@ export function HomeDashboardScreen({
               ) : null}
             </View>
 
-          {/* 4. Grid: Services & Fleet Illustrated Tiles (6 items) */}
-          <View style={styles.section}>
+          {/* 7. Live Tracking Activity Capsule (Active Shipment / Quick Tracking) */}
+          <View style={styles.section} testID="home-active-shipments">
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionTitleWithBadge}>
+                {activeShipment ? <View style={styles.liveIndicatorDotActive} /> : null}
+                <Text style={styles.sectionLabel}>ĐANG VẬN CHUYỂN</Text>
+              </View>
+              {activeShipment ? (
+                <View style={styles.liveTagBadge}>
+                  <Text style={styles.liveTagText}>Trực tiếp</Text>
+                </View>
+              ) : null}
+            </View>
+
+            {activeShipment ? (
+              <Pressable
+                accessibilityHint="Mở theo dõi lộ trình"
+                accessibilityLabel={`Chuyến đang vận chuyển từ ${activeShipment.origin} đến ${activeShipment.destination}`}
+                accessibilityRole="button"
+                onPress={() => onOpenActiveOrder?.(activeShipment.orderId)}
+                style={({ pressed }) => [styles.activeCard, pressed ? styles.pressed : null]}
+              >
+                <View style={styles.activeTop}>
+                  <StatusBadge domain="order" status={activeShipment.status} />
+                  {activeShipment.etaMinutes !== undefined ? (
+                    <View style={styles.etaPill}>
+                      <Text style={styles.etaText}>ETA dự kiến {activeShipment.etaMinutes} phút</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <View style={styles.activeRouteContainer}>
+                  <View style={styles.activeRouteWell}>
+                    <RouteSpine
+                      destination={{ id: 'active-dest', label: activeShipment.destination }}
+                      origin={{ id: 'active-origin', label: activeShipment.origin }}
+                      stops={[]}
+                    />
+                  </View>
+
+                </View>
+
+                <View style={styles.activeMeta}>
+                  <View style={styles.activeDriverBox}>
+                    <View style={styles.activeDriverIconBox}>
+                      <IconRoleDriver color="#0B1E42" secondaryColor="#F0F4F9" size={18} />
+                    </View>
+                    <Text numberOfLines={1} style={styles.driverText}>
+                      {activeShipment.cargoNote ? `${activeShipment.cargoNote} · ` : ''}
+                      {activeShipment.driverName ?? 'Chưa có tài xế'}
+                      {activeShipment.plate ? (
+                        <Text style={styles.plateText}> · {activeShipment.plate}</Text>
+                      ) : null}
+                    </Text>
+                  </View>
+                  <View style={styles.activeTrackPill}>
+                    <Text style={styles.trackText}>Theo dõi →</Text>
+                  </View>
+                </View>
+              </Pressable>
+            ) : (
+              <View style={styles.emptyActivityBox}>
+                <Text style={styles.emptyTitle}>Chưa có chuyến nào đang chạy</Text>
+                <Text style={styles.emptyBody}>
+                  Tạo đơn vận chuyển để bắt đầu theo dõi lộ trình theo thời gian thực.
+                </Text>
+                {/* Thanh tra cứu nhanh mã vận đơn */}
+                <View style={styles.quickTrackingBar}>
+                  <View style={styles.trackingInputWrap}>
+                    <IconLocationPin color="#0B1E42" size={16} />
+                    <TextInput
+                      accessibilityLabel="Tra cứu mã vận đơn"
+                      autoCapitalize="characters"
+                      onChangeText={setQuickTrackCode}
+                      placeholder="Tra cứu nhanh mã vận đơn..."
+                      placeholderTextColor="#94A3B8"
+                      style={styles.trackingInput}
+                      value={quickTrackCode}
+                    />
+                  </View>
+                  <Pressable
+                    accessibilityLabel="Tra cứu đơn hàng"
+                    accessibilityRole="button"
+                    onPress={() => {
+                      if (quickTrackCode.trim()) {
+                        onOpenOrder?.(quickTrackCode.trim());
+                      } else {
+                        onViewAllOrders?.();
+                      }
+                    }}
+                    style={styles.trackingSearchBtn}
+                  >
+                    <Text style={styles.trackingSearchBtnText}>Tra cứu</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Six service shortcuts: two columns, three rows. */}
+          <View style={styles.section} testID="home-services">
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionLabel}>DỊCH VỤ VẬN TẢI & ĐỘI XE</Text>
             </View>
@@ -1152,13 +1144,8 @@ export function HomeDashboardScreen({
                     pressed ? styles.serviceCardPressed : null,
                   ]}
                 >
-                  <View style={styles.serviceImageContainer}>
-                    <Image
-                      accessibilityLabel={service.label}
-                      resizeMode="cover"
-                      source={service.imageSource}
-                      style={styles.serviceImage}
-                    />
+                  <View accessible={false} style={styles.serviceImageContainer}>
+                    {renderServiceIcon(service.iconType)}
                   </View>
                   <Text numberOfLines={1} style={styles.serviceName}>
                     {service.name}
@@ -1223,16 +1210,7 @@ export function HomeDashboardScreen({
                     onPress={() => onCreateOrder?.()}
                     style={[styles.promoSlideItem, { width: bannerWidth }]}
                   >
-                    <Image
-                      accessibilityLabel={slide.title}
-                      resizeMode="cover"
-                      source={slide.source}
-                      style={styles.promoBannerImage}
-                    />
-                    <View style={styles.srOnly}>
-                      <Text>{slide.title}</Text>
-                      <Text>{slide.subtitle}</Text>
-                    </View>
+                    <HomePromoArtwork slide={slide} />
                   </Pressable>
                 ))}
 
@@ -1245,11 +1223,7 @@ export function HomeDashboardScreen({
                   onPress={() => onCreateOrder?.()}
                   style={[styles.promoSlideItem, { width: bannerWidth }]}
                 >
-                  <Image
-                    resizeMode="cover"
-                    source={PROMO_SLIDES[0].source}
-                    style={styles.promoBannerImage}
-                  />
+                  <HomePromoArtwork slide={PROMO_SLIDES[0]} />
                 </Pressable>
               </Animated.View>
             </View>
@@ -1270,112 +1244,6 @@ export function HomeDashboardScreen({
                 />
               ))}
             </View>
-          </View>
-
-          {/* 7. Live Tracking Activity Capsule (Active Shipment / Quick Tracking) */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.sectionTitleWithBadge}>
-                {activeShipment ? <View style={styles.liveIndicatorDotActive} /> : null}
-                <Text style={styles.sectionLabel}>ĐANG VẬN CHUYỂN</Text>
-              </View>
-              {activeShipment ? (
-                <View style={styles.liveTagBadge}>
-                  <Text style={styles.liveTagText}>Trực tiếp</Text>
-                </View>
-              ) : null}
-            </View>
-
-            {activeShipment ? (
-              <Pressable
-                accessibilityHint="Mở theo dõi lộ trình"
-                accessibilityLabel={`Chuyến đang vận chuyển từ ${activeShipment.origin} đến ${activeShipment.destination}`}
-                accessibilityRole="button"
-                onPress={() => onOpenActiveOrder?.(activeShipment.orderId)}
-                style={({ pressed }) => [styles.activeCard, pressed ? styles.pressed : null]}
-              >
-                <View style={styles.activeTop}>
-                  <StatusBadge domain="order" status={activeShipment.status} />
-                  {activeShipment.etaMinutes !== undefined ? (
-                    <View style={styles.etaPill}>
-                      <Text style={styles.etaText}>ETA dự kiến {activeShipment.etaMinutes} phút</Text>
-                    </View>
-                  ) : null}
-                </View>
-
-                <View style={styles.activeRouteContainer}>
-                  <View style={styles.activeRouteWell}>
-                    <RouteSpine
-                      destination={{ id: 'active-dest', label: activeShipment.destination }}
-                      origin={{ id: 'active-origin', label: activeShipment.origin }}
-                      stops={[]}
-                    />
-                  </View>
-                  <View pointerEvents="none" style={styles.activeTruckPopWrap}>
-                    <Image
-                      accessibilityIgnoresInvertColors
-                      resizeMode="contain"
-                      source={activeTruck3dSource}
-                      style={styles.activeTruckImage}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.activeMeta}>
-                  <View style={styles.activeDriverBox}>
-                    <View style={styles.activeDriverIconBox}>
-                      <IconRoleDriver color="#0B1E42" secondaryColor="#F0F4F9" size={18} />
-                    </View>
-                    <Text numberOfLines={1} style={styles.driverText}>
-                      {activeShipment.cargoNote ? `${activeShipment.cargoNote} · ` : ''}
-                      {activeShipment.driverName ?? 'Chưa có tài xế'}
-                      {activeShipment.plate ? (
-                        <Text style={styles.plateText}> · {activeShipment.plate}</Text>
-                      ) : null}
-                    </Text>
-                  </View>
-                  <View style={styles.activeTrackPill}>
-                    <Text style={styles.trackText}>Theo dõi →</Text>
-                  </View>
-                </View>
-              </Pressable>
-            ) : (
-              <View style={styles.emptyActivityBox}>
-                <Text style={styles.emptyTitle}>Chưa có chuyến nào đang chạy</Text>
-                <Text style={styles.emptyBody}>
-                  Tạo đơn vận chuyển để bắt đầu theo dõi lộ trình theo thời gian thực.
-                </Text>
-                {/* Thanh tra cứu nhanh mã vận đơn */}
-                <View style={styles.quickTrackingBar}>
-                  <View style={styles.trackingInputWrap}>
-                    <IconLocationPin color="#0B1E42" size={16} />
-                    <TextInput
-                      accessibilityLabel="Tra cứu mã vận đơn"
-                      autoCapitalize="characters"
-                      onChangeText={setQuickTrackCode}
-                      placeholder="Tra cứu nhanh mã vận đơn..."
-                      placeholderTextColor="#94A3B8"
-                      style={styles.trackingInput}
-                      value={quickTrackCode}
-                    />
-                  </View>
-                  <Pressable
-                    accessibilityLabel="Tra cứu đơn hàng"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      if (quickTrackCode.trim()) {
-                        onOpenOrder?.(quickTrackCode.trim());
-                      } else {
-                        onViewAllOrders?.();
-                      }
-                    }}
-                    style={styles.trackingSearchBtn}
-                  >
-                    <Text style={styles.trackingSearchBtnText}>Tra cứu</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
           </View>
 
           {/* 8. Recent Orders Ledger with 1-Tap Reorder */}
@@ -1517,9 +1385,13 @@ export function HomeDashboardScreen({
 }
 
 const styles = StyleSheet.create({
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#FFFFFF' },
+  homeIntro: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20, gap: 6 },
+  homeGreeting: { fontSize: 13, color: '#526176' },
+  homeTitle: { fontSize: 23, lineHeight: 30, fontWeight: '800', color: '#0B1E42', letterSpacing: -0.5 },
   safeArea: {
     flex: 1,
-    backgroundColor: '#38BDF8',
+    backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
@@ -1622,8 +1494,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerIconBtn: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     borderRadius: 19,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
@@ -1660,7 +1532,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   mainSheet: {
-    marginTop: -42,
+    marginTop: 0,
     paddingHorizontal: spacing.md,
     gap: spacing.md,
   },
@@ -2017,7 +1889,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   serviceCard: {
-    width: '31.3%',
+    width: '48%',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingTop: 8,
@@ -2038,17 +1910,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   serviceImageContainer: {
-    width: '100%',
-    aspectRatio: 1.25,
-    maxHeight: 70,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
+    width: '100%', height: 64, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#F1F5FA', borderRadius: 10, marginBottom: 10,
   },
   serviceImage: {
     width: '100%',
@@ -2144,8 +2007,7 @@ const styles = StyleSheet.create({
   },
   promoTrackWindow: {
     width: '100%',
-    aspectRatio: 16 / 9,
-    maxHeight: 200,
+    height: 220,
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#F1F5F9',
@@ -2217,7 +2079,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     ...typography.caption,
-    color: leopardPalette.textSubtle,
+    color: '#526176',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.6,
@@ -2255,7 +2117,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    paddingRight: 88,
+    paddingRight: 12,
   },
   activeTruckPopWrap: {
     position: 'absolute',

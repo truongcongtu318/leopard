@@ -12,21 +12,13 @@ import {
 import { useRouter } from 'expo-router';
 
 import { httpClient } from '../../src/api/http-client';
-import { leopardPalette } from '@leopard/mobile-core';
+import { leopardPalette, IconPhone, IconSecurityShield, IconUser, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader } from '@leopard/mobile-core';
 import { ApiError } from '../../src/api/api-error';
 import { AuthHeroHeader } from '../../src/auth/AuthHeroHeader';
 import { sessionStore } from '../../src/auth/session-store';
 import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '../../src/auth/firebase-auth';
 import { isLikelyVnPhone, toE164Vn } from '../../src/auth/phone';
-import {
-  IconPhone,
-  IconSecurityShield,
-  IconUser,
-  OtpPhoneHeroIcon,
-  VietnamFlagIcon,
-} from '../../src/ui/icons/CoreIcons';
 import { OtpSixCellInput } from '../../src/auth/OtpSixCellInput';
-import { TruckLoader } from '../../src/ui/TruckLoader';
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-register';
 

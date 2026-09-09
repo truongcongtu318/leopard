@@ -2,21 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import {
-  IconBank,
-  IconClock,
-  IconClose,
-  IconEarnings,
-  IconOrders,
-  IconSecurityShield,
-  IconSpeedTruck,
-  IconStar,
-  IconTrophy,
-  IconWallet,
-} from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, IconBank, IconClock, IconClose, IconEarnings, IconOrders, IconSecurityShield, IconSpeedTruck, IconStar, IconTrophy, IconWallet } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 

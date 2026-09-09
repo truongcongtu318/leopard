@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { IconMenu } from '../../../ui/icons/CoreIcons';
+import { IconMenu } from '@leopard/mobile-core';
 
 export type DriverMenuButtonProps = Readonly<{
   color?: string;

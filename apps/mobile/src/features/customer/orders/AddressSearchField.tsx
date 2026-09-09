@@ -9,8 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { IconLocationPin } from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, typography, IconLocationPin } from '@leopard/mobile-core';
 import type { AddressCandidate } from './model';
 
 const DEBOUNCE_MS = 300;

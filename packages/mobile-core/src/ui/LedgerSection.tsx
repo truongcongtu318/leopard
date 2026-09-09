@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, leopardRadius, spacing, typography } from '@leopard/mobile-core';
+import { colors, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
 
 export type LedgerSectionProps = PropsWithChildren<
   Readonly<{

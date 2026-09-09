@@ -2,17 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { StatusBadge } from '../../../ui/StatusBadge';
-import {
-  IconCameraProof,
-  IconClock,
-  IconOrders,
-  IconSecurityShield,
-  IconSpeedTruck,
-  IconTrophy,
-} from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, typography, ScreenScaffold, StatusBadge, IconCameraProof, IconClock, IconOrders, IconSecurityShield, IconSpeedTruck, IconTrophy } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 

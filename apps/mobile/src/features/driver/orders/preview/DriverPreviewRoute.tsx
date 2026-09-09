@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { MobilePreviewComposition, createMobilePreviewSelection } from '../../../../preview';
 import type { MobilePreviewSelection } from '../../../../preview/scenario';
-import { ScreenScaffold } from '../../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../../ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { DriverOrderDetailRuntime } from '../DriverOrderDetailRuntime';
 import { DriverOrdersListRuntime } from '../DriverOrdersListRuntime';
 import { DriverOrderDetailScreen } from '../DriverOrderDetailScreen';

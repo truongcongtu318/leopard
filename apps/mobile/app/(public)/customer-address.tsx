@@ -25,7 +25,7 @@ import {
   IconWarehouse,
   LeopardEmblem,
   LeopardMobileLogo,
-} from '../../src/ui/icons/CoreIcons';
+} from '@leopard/mobile-core';
 import {
   POPULAR_MAP_SUGGESTIONS,
   reverseGeocodeCoords,

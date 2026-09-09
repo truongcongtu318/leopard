@@ -8,17 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import {
-  IconClock,
-  IconLocationPin,
-  IconOrders,
-  IconRadarPulse,
-  IconRoute,
-  IconSpeedTruck,
-} from '../../../ui/icons/CoreIcons';
-import { RealInteractiveMap } from '../../../ui/RealInteractiveMap';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconClock, IconLocationPin, IconOrders, IconRadarPulse, IconRoute, IconSpeedTruck, RealInteractiveMap } from '@leopard/mobile-core';
 
 export type IncomingDispatchOffer = Readonly<{
   id: string;

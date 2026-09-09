@@ -13,8 +13,10 @@
     "expo": "*",
     "expo-image-picker": "*",
     "expo-location": "*",
+    "expo-router": "*",
     "expo-secure-store": "*",
     "firebase": "*",
+    "react-native-qrcode-svg": "*",
     "react": "*",
     "react-native": "*",
     "react-native-svg": "*",
@@ -22,6 +24,7 @@
     "socket.io-client": "*"
   },
   "devDependencies": {
-    "@leopard/config": "workspace:*"
+    "@leopard/config": "workspace:*",
+    "@types/react": "19.2.7"
   }
 }

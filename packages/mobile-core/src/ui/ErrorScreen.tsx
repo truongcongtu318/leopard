@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, leopardRadius, spacing, typography } from '@leopard/mobile-core';
+import { colors, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
 import { IconSearch, IconSecurityShield } from './icons/CoreIcons';
 import { ScreenScaffold } from './ScreenScaffold';

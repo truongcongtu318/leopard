@@ -2,15 +2,7 @@ import { usePathname, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '@leopard/mobile-core';
-import {
-  IconBell,
-  IconClock,
-  IconEarnings,
-  IconOrders,
-  IconUser,
-  IconWallet,
-} from '../ui/icons/CoreIcons';
+import { colors, radius, spacing, IconBell, IconClock, IconEarnings, IconOrders, IconUser, IconWallet } from '@leopard/mobile-core';
 
 export type TabBarItem = Readonly<{
   badgeCount?: number;

@@ -2,10 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { FormField } from '../../../ui/FormField';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
+import { colors, layout, radius, spacing, typography, Button, FormField, ScreenScaffold } from '@leopard/mobile-core';
 
 export type PromotionItem = Readonly<{
   code: string;

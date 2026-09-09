@@ -2,8 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { parseDriverOrderId } from '../../../src/features/driver/orders/adapter';
 import { DriverOrderDetailRuntime } from '../../../src/features/driver/orders/DriverOrderDetailRuntime';
-import { ScreenScaffold } from '../../../src/ui/ScreenScaffold';
-import { ScreenState } from '../../../src/ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 
 export default function DriverOrderDetailPage() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();

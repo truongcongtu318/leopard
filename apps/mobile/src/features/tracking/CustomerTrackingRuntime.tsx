@@ -2,8 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 
 import { createSocketFactory } from '../../api/socket-client';
-import { ScreenScaffold } from '../../ui/ScreenScaffold';
-import { ScreenState } from '../../ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from '../customer/orders/adapter';
 import type { CustomerOrderDetailDataView, CustomerTrackingView, LatLng } from '../customer/orders/model';
 import { createCustomerTrackingSocket } from '../customer/orders/tracking-socket';

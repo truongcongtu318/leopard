@@ -5,7 +5,7 @@ import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 
 const orderBoxes3dSource = require('../../assets/brand/order-boxes-3d.png');
 
-import { colors, control, radius, spacing, typography } from '@leopard/mobile-core';
+import { colors, control, radius, spacing, typography } from '../theme/tokens';
 import { IconSpeedTruck } from './icons/CoreIcons';
 import type { RoutePoint } from './RouteSpine';
 import { StatusBadge } from './StatusBadge';

@@ -2,8 +2,7 @@ import { useQueryClient, useInfiniteQuery, useMutation, useQuery } from '@tansta
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerNotificationsHttpAdapter } from './adapter';
 import type { NotificationItemView, NotificationsListPage, NotificationsView } from './model';
 import { NotificationsScreen } from './NotificationsScreen';

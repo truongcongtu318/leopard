@@ -1,27 +1,8 @@
 import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { colors, layout, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { EtaIndicator } from '../../../ui/EtaIndicator';
-import {
-  IconCheck,
-  IconClock,
-  IconCopy,
-  IconExternalLink,
-  IconLocationPin,
-  IconMessage,
-  IconPhone,
-  IconShieldAlert,
-} from '../../../ui/icons/CoreIcons';
-import { MapPanel } from '../../../ui/MapPanel';
-import { RouteSpine } from '../../../ui/RouteSpine';
-import { RouteMapSchematic } from '../../../ui/RouteMapSchematic';
+import { colors, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
 import { MediaImage } from '../../../ui/MediaImage';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
-import { StatusBadge } from '../../../ui/StatusBadge';
-import { StatusTimeline } from '../../../ui/StatusTimeline';
 import type {
   CustomerDetailContentView,
   CustomerDetailView,

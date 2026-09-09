@@ -9,7 +9,7 @@ import {
   type ActiveShipment,
   type RecentOrder,
 } from '../../../src/features/home/HomeDashboardScreen';
-import type { VehicleCategory } from '../../../src/ui/VehicleSelectCard';
+import type { VehicleCategory } from '@leopard/mobile-core';
 
 const ACTIVE_ORDER_STATUSES = [
   'REQUESTED',

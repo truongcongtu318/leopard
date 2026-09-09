@@ -5,9 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Linking } from 'react-native';
 
 import { createSocketFactory } from '../../../api/socket-client';
-import { pickDeviceImage } from '@leopard/mobile-core';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
+import { pickDeviceImage, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createDriverHttpAdapter, createDriverProofAdapter } from './adapter';
 import { DriverOrderDetailScreen } from './DriverOrderDetailScreen';
 import type { DriverDetailView, DriverTrackingView } from './model';

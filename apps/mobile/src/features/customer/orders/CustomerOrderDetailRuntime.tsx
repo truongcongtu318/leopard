@@ -3,8 +3,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 
 import { createSocketFactory } from '../../../api/socket-client';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 import { createCustomerMediaPickerAdapter } from './media-picker-adapter';
 import { CustomerOrderDetailScreen } from './CustomerOrderDetailScreen';

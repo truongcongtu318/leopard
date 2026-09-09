@@ -5,8 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { DriverDrawerProvider } from '../../src/features/driver/navigation/DriverDrawerContext';
 import { useDriverIdlePing } from '../../src/features/driver/orders/useDriverIdlePing';
 import { useProtectedLayout } from '../../src/navigation/role-router';
-import { spacing, typography } from '@leopard/mobile-core';
-import { TruckLoader } from '../../src/ui/TruckLoader';
+import { spacing, typography, TruckLoader } from '@leopard/mobile-core';
 
 export default function DriverLayout() {
   const decision = useProtectedLayout('driver');

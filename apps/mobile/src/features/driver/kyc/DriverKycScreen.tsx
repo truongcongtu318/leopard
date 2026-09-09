@@ -1,15 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing } from '@leopard/mobile-core';
-import { Button } from '../../../ui/Button';
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import {
-  IconIdCard,
-  IconInsuranceDoc,
-  IconLicense,
-  IconSecurityShield,
-  IconSpeedTruck,
-} from '../../../ui/icons/CoreIcons';
+import { colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconIdCard, IconInsuranceDoc, IconLicense, IconSecurityShield, IconSpeedTruck } from '@leopard/mobile-core';
 
 export type DriverKycScreenProps = Readonly<{
   documents: readonly { id: string; title: string; url: string; createdAt: string }[];
