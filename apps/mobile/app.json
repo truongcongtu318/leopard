@@ -38,6 +38,12 @@
         {
           "photosPermission": "LEOPARD cần quyền truy cập thư viện ảnh để chọn ảnh hàng hóa hoặc ảnh xác nhận giao hàng."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "LEOPARD cần vị trí của bạn để tìm và phân công đơn hàng gần bạn khi bạn đang sẵn sàng nhận đơn."
+        }
       ]
     ]
   }

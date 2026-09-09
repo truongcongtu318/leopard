@@ -19,7 +19,7 @@ describe('DriverWalletScreen', () => {
     expect(screen.getByText('Số dư khả dụng để rút')).toBeTruthy();
     expect(screen.getByText('MB Bank')).toBeTruthy();
     expect(screen.getByText('0987 **** **68 · NGUYEN VAN A')).toBeTruthy();
-    expect(screen.getAllByText('Rút tiền về MB Bank').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Rút tiền về MB Bank/).length).toBeGreaterThan(0);
 
     await screen.unmount();
   });

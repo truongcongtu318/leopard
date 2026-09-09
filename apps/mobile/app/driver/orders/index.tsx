@@ -7,6 +7,7 @@ export default function DriverOrdersPage() {
 
   return (
     <DriverOrdersListRuntime
+      onNavigate={(route) => router.push(route)}
       onOpenOrder={(orderId) => router.push(`/driver/orders/${orderId}`)}
     />
   );

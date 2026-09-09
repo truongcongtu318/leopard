@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
 import { Button } from '../../../ui/Button';
@@ -30,33 +30,40 @@ const mockTransactions: readonly WalletTransaction[] = [
   {
     id: 'tx-001',
     type: 'PAYMENT',
-    title: 'Thanh toán cước vận chuyển',
-    amount: -150000,
-    createdAtLabel: 'Hôm nay, 14:32',
-    orderReference: 'LP-D-260815-001',
+    title: 'Thanh toán cước đơn VLXD Minh Khang',
+    amount: -480000,
+    createdAtLabel: 'Hôm nay, 14:30',
+    orderReference: 'LP-260905-001',
   },
   {
     id: 'tx-002',
     type: 'TOPUP',
-    title: 'Nạp tiền qua VietQR',
-    amount: 500000,
-    createdAtLabel: 'Hôm qua, 09:15',
+    title: 'Nạp tiền ví VietQR qua MB Bank',
+    amount: 2000000,
+    createdAtLabel: 'Hôm nay, 09:15',
   },
   {
     id: 'tx-003',
     type: 'PAYMENT',
-    title: 'Thanh toán cước xe tải',
-    amount: -320000,
-    createdAtLabel: '20/08/2026',
-    orderReference: 'LP-D-260812-004',
+    title: 'Thanh toán cước xe tải chuyển đồ',
+    amount: -420000,
+    createdAtLabel: 'Hôm qua, 16:45',
+    orderReference: 'LP-260904-009',
   },
   {
     id: 'tx-004',
     type: 'REFUND',
-    title: 'Hoàn tiền chênh lệch quãng đường',
-    amount: 35000,
-    createdAtLabel: '18/08/2026',
-    orderReference: 'LP-D-260810-002',
+    title: 'Hoàn tiền cước đơn hủy lịch xuất kho',
+    amount: 350000,
+    createdAtLabel: 'Hôm qua, 11:20',
+    orderReference: 'LP-260904-004',
+  },
+  {
+    id: 'tx-005',
+    type: 'TOPUP',
+    title: 'Nạp tiền ví qua VietinBank',
+    amount: 1000000,
+    createdAtLabel: '02/09/2026',
   },
 ];
 
@@ -112,15 +119,20 @@ export function CustomerWalletScreen() {
 
   return (
     <ScreenScaffold
-      eyebrow="CUSTOMER · WALLET & PAYMENT"
-      subtitle="Quản lý số dư, phương thức thanh toán và lịch sử giao dịch."
+      hasFloatingNavBar
       title="Ví & Thanh toán"
     >
-      <View style={styles.container}>
-        {/* 💳 1. Thẻ Số Dư Cao Cấp (Premium Dark Wallet Card) */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollWrap}
+      >
+        {/* 💳 1. Thẻ Số Dư Cao Cấp (Luxury Fintech Virtual Card) */}
         <View style={styles.balanceCard}>
           <View style={styles.cardTopRow}>
             <View style={styles.brandPill}>
+              <View style={styles.pulseDot} />
               <IconWallet color="#38BDF8" size={16} />
               <Text style={styles.brandPillText}>Ví VietQR LEOPARD</Text>
             </View>
@@ -151,51 +163,64 @@ export function CustomerWalletScreen() {
             </View>
           </View>
 
-          {/* 3 Nút Hành Động Trực Quan */}
-          <View style={styles.actionRow}>
-            <Pressable
-              accessibilityLabel="+ Nạp tiền"
-              accessibilityRole="button"
-              onPress={() => {
-                setShowTopupModal(!showTopupModal);
-                setShowQR(false);
-              }}
-              style={({ pressed }) => [
-                styles.actionBtnPrimary,
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <IconTxTopup color="#FFFFFF" size={18} />
-              <Text style={styles.actionBtnPrimaryText}>+ Nạp tiền</Text>
-            </Pressable>
-
-            <Pressable
-              accessibilityLabel="Quét VietQR"
-              accessibilityRole="button"
-              onPress={() => {
-                setShowTopupModal(true);
-                setShowQR(true);
-              }}
-              style={({ pressed }) => [
-                styles.actionBtnSecondary,
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <IconQrPayment color="#38BDF8" size={18} />
-              <Text style={styles.actionBtnSecondaryText}>Quét QR</Text>
-            </Pressable>
-
-            <Pressable
-              accessibilityLabel="Rút tiền"
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.actionBtnSecondary,
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <Text style={styles.actionBtnMutedText}>Rút tiền</Text>
-            </Pressable>
+          {/* Card Meta Footer */}
+          <View style={styles.cardFooter}>
+            <Text style={styles.cardFooterNapas}>NAPAS 24/7 · VietQR</Text>
+            <Text style={styles.cardFooterNumber}>•••• 8839</Text>
           </View>
+        </View>
+
+        {/* ⚡ 2. Quick Action Dock (3 Nút Độc Lập Chuẩn Ngón Tay Cái) */}
+        <View style={styles.actionDock}>
+          <Pressable
+            accessibilityLabel="+ Nạp tiền"
+            accessibilityRole="button"
+            onPress={() => {
+              setShowTopupModal(!showTopupModal);
+              setShowQR(false);
+            }}
+            style={({ pressed }) => [
+              styles.dockBtnPrimary,
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <View style={styles.dockIconBoxPrimary}>
+              <IconTxTopup color="#FFFFFF" size={20} />
+            </View>
+            <Text style={styles.dockBtnPrimaryText}>+ Nạp tiền</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Quét VietQR"
+            accessibilityRole="button"
+            onPress={() => {
+              setShowTopupModal(true);
+              setShowQR(true);
+            }}
+            style={({ pressed }) => [
+              styles.dockBtnSecondary,
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <View style={styles.dockIconBoxSecondary}>
+              <IconQrPayment color="#0B1E42" size={20} />
+            </View>
+            <Text style={styles.dockBtnSecondaryText}>Quét QR</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Rút tiền"
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.dockBtnSecondary,
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <View style={styles.dockIconBoxMuted}>
+              <IconTxPayment color="#64748B" size={20} />
+            </View>
+            <Text style={styles.dockBtnMutedText}>Rút tiền</Text>
+          </Pressable>
         </View>
 
         {/* ⚡ 2. Khối Chọn Mức Nạp Nhanh (Smart Topup Presets) */}
@@ -304,7 +329,7 @@ export function CustomerWalletScreen() {
                     onPress={() => handleCopy('account', '0900000001')}
                     style={styles.copyBtn}
                   >
-                    <IconCopy color="#0284C7" size={14} />
+                    <IconCopy color="#0B1E42" size={14} />
                     <Text style={styles.copyBtnText}>
                       {copiedField === 'account' ? 'Đã chép ✓' : 'Sao chép'}
                     </Text>
@@ -322,7 +347,7 @@ export function CustomerWalletScreen() {
                     onPress={() => handleCopy('memo', 'LEOPARD TOPUP 0900000001')}
                     style={styles.copyBtn}
                   >
-                    <IconCopy color="#0284C7" size={14} />
+                    <IconCopy color="#0B1E42" size={14} />
                     <Text style={styles.copyBtnText}>
                       {copiedField === 'memo' ? 'Đã chép ✓' : 'Sao chép'}
                     </Text>
@@ -356,20 +381,26 @@ export function CustomerWalletScreen() {
 
         {/* 🏦 4. Phương Thức Liên Kết */}
         <View style={styles.methodsCard}>
-          <Text style={styles.sectionLabel}>PHƯƠNG THỨC LIÊN KẾT</Text>
+          <View style={styles.methodHeaderRow}>
+            <Text style={styles.sectionLabel}>PHƯƠNG THỨC LIÊN KẾT</Text>
+            <Text style={styles.manageLinkText}>Quản lý</Text>
+          </View>
           <View style={styles.methodItem}>
             <View style={styles.methodLeft}>
               <View style={styles.methodIconBox}>
-                <IconBank color="#0284C7" size={20} />
+                <IconBank color="#0B1E42" size={20} />
               </View>
               <View style={styles.methodTextCol}>
-                <Text style={styles.methodName}>VietQR / Chuyển khoản ngân hàng</Text>
-                <Text style={styles.methodSub}>Miễn phí giao dịch nạp & thanh toán tức thì</Text>
+                <View style={styles.methodNameRow}>
+                  <Text style={styles.methodName}>VietQR / Chuyển khoản tức thì</Text>
+                  <View style={styles.defaultBadge}>
+                    <Text style={styles.defaultBadgeText}>Mặc định</Text>
+                  </View>
+                </View>
+                <Text style={styles.methodSub}>Miễn phí nạp & rút tiền 24/7</Text>
               </View>
             </View>
-            <View style={styles.defaultBadge}>
-              <Text style={styles.defaultBadgeText}>Mặc định</Text>
-            </View>
+            <Text style={styles.methodChevron}>›</Text>
           </View>
         </View>
 
@@ -408,16 +439,13 @@ export function CustomerWalletScreen() {
             })}
           </View>
 
-          <FlatList
-            contentContainerStyle={styles.historyList}
-            data={filteredTransactions}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => {
+          <View style={styles.historyList}>
+            {filteredTransactions.map((item) => {
               const isPositive = item.amount > 0;
               const isRefund = item.type === 'REFUND';
 
               return (
-                <View style={styles.txRow}>
+                <View key={item.id} style={styles.txRow}>
                   <View style={styles.txLeft}>
                     <View
                       style={[
@@ -466,36 +494,48 @@ export function CustomerWalletScreen() {
                   </Text>
                 </View>
               );
-            }}
-          />
+            })}
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollWrap: {
     flex: 1,
+    minHeight: 0,
+  },
+  scrollContent: {
     gap: spacing.md,
+    paddingBottom: layout.bottomNavClearance + 32,
   },
   balanceCard: {
     backgroundColor: '#0F172A',
     borderColor: '#1E293B',
-    borderRadius: 18,
+    borderRadius: 22,
     borderWidth: 1,
     gap: spacing.md,
     padding: spacing.lg,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 14,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
+    elevation: 6,
+    position: 'relative',
+    overflow: 'hidden',
   },
   cardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#38BDF8',
   },
   brandPill: {
     flexDirection: 'row',
@@ -505,6 +545,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.2)',
   },
   brandPillText: {
     color: '#38BDF8',
@@ -538,53 +580,109 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '800',
     letterSpacing: 0.5,
+    fontVariant: ['tabular-nums'],
   },
   eyeToggleBtn: {
     padding: 6,
   },
-  actionRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    paddingTop: 4,
-  },
-  actionBtnPrimary: {
-    flex: 1.2,
+  cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#0284C7',
-    borderRadius: radius.control,
-    paddingVertical: 11,
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingTop: 12,
   },
-  actionBtnPrimaryText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  actionBtnSecondary: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#1E293B',
-    borderColor: '#334155',
-    borderWidth: 1,
-    borderRadius: radius.control,
-    paddingVertical: 11,
-  },
-  actionBtnSecondaryText: {
-    color: '#38BDF8',
-    fontSize: 13.5,
-    fontWeight: '700',
-  },
-  actionBtnMutedText: {
+  cardFooterNapas: {
     color: '#94A3B8',
-    fontSize: 13.5,
+    fontSize: 11.5,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+  },
+  cardFooterNumber: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+
+  /* ⚡ Quick Action Dock */
+  actionDock: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dockBtnPrimary: {
+    flex: 1.15,
+    backgroundColor: '#0B1E42',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  dockIconBoxPrimary: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dockBtnPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  dockBtnSecondary: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  dockIconBoxSecondary: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0F4F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dockBtnSecondaryText: {
+    color: '#0F172A',
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  dockIconBoxMuted: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dockBtnMutedText: {
+    color: '#64748B',
+    fontSize: 12.5,
     fontWeight: '600',
   },
   topupCard: {
@@ -627,8 +725,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   presetItemSelected: {
-    backgroundColor: '#F0F9FF',
-    borderColor: '#0284C7',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#0B1E42',
   },
   presetBadge: {
     position: 'absolute',
@@ -650,7 +748,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   presetTextSelected: {
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   qrCard: {
     backgroundColor: '#FFFFFF',
@@ -679,7 +777,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   napasBadge: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -740,7 +838,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   bankFieldValueCode: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 12.5,
     fontWeight: '700',
   },
@@ -753,13 +851,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   copyBtnText: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -791,6 +889,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
+  methodHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  manageLinkText: {
+    color: '#0B1E42',
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
   methodItem: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -804,7 +912,7 @@ const styles = StyleSheet.create({
   },
   methodIconBox: {
     alignItems: 'center',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
     borderRadius: 10,
     height: 40,
     justifyContent: 'center',
@@ -812,6 +920,13 @@ const styles = StyleSheet.create({
   },
   methodTextCol: {
     flex: 1,
+    gap: 2,
+  },
+  methodNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   methodName: {
     color: '#0F172A',
@@ -821,16 +936,21 @@ const styles = StyleSheet.create({
   methodSub: {
     color: '#64748B',
     fontSize: 12,
-    marginTop: 2,
+  },
+  methodChevron: {
+    color: '#CBD5E1',
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   defaultBadge: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
     borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   defaultBadgeText: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -869,7 +989,6 @@ const styles = StyleSheet.create({
   },
   historyList: {
     gap: 8,
-    paddingBottom: layout.bottomNavClearance,
   },
   txRow: {
     alignItems: 'center',

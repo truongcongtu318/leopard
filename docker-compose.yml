@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: leopard-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-leopard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leopard_local}
+      POSTGRES_DB: ${POSTGRES_DB:-leopard}
+    volumes:
+      - leopard-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-leopard} -d ${POSTGRES_DB:-leopard}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  leopard-postgres-data:
+    name: leopard-postgres-data

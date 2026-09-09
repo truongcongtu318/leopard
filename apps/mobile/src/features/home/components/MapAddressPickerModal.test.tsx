@@ -115,4 +115,78 @@ describe('MapAddressPickerModal', () => {
 
     await screen.unmount();
   }, 30000);
+
+  it('pre-fills customer profile for pickup and allows custom editing or typing', async () => {
+    const onConfirm = jest.fn();
+    const screen = await render(
+      <MapAddressPickerModal
+        defaultFallbackAddress="Kho Tân Bình, TP. Hồ Chí Minh"
+        initialAddress="100 Cộng Hòa, Tân Bình"
+        loggedInCustomer={{ name: 'Trần Thị Mai', phone: '0912345678' }}
+        onClose={jest.fn()}
+        onConfirm={onConfirm}
+        target="pickup"
+        visible={true}
+      />,
+    );
+
+    // Initial values should take customer profile
+    expect(screen.getByDisplayValue('Trần Thị Mai')).toBeTruthy();
+    expect(screen.getByDisplayValue('0912345678')).toBeTruthy();
+
+    // User can customize or type whatever they want if desired
+    const nameInput = screen.getByLabelText('Tên người gửi');
+    const phoneInput = screen.getByLabelText('Số điện thoại');
+    await fireEvent.changeText(nameInput, 'Kho Tân Phú - Anh Minh');
+    await fireEvent.changeText(phoneInput, '0977889900');
+
+    await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
+    expect(onConfirm).toHaveBeenCalledWith(
+      '100 Cộng Hòa, Tân Bình',
+      expect.objectContaining({
+        senderName: 'Kho Tân Phú - Anh Minh',
+        senderPhone: '0977889900',
+      }),
+    );
+
+    await screen.unmount();
+  }, 30000);
+
+  it('supports receiver modal with custom typing or quick fill from customer profile', async () => {
+    const onConfirm = jest.fn();
+    const screen = await render(
+      <MapAddressPickerModal
+        defaultFallbackAddress="Kho Tân Bình, TP. Hồ Chí Minh"
+        initialAddress="500 Lê Trọng Tấn, Tây Thạnh"
+        loggedInCustomer={{ name: 'Trần Thị Mai', phone: '0912345678' }}
+        onClose={jest.fn()}
+        onConfirm={onConfirm}
+        target="dropoff"
+        visible={true}
+      />,
+    );
+
+    expect(screen.getByText('Thông tin người nhận')).toBeTruthy();
+    expect(screen.getByLabelText('Tên người nhận')).toBeTruthy();
+
+    // Click "Tôi là người nhận" to quick fill
+    await fireEvent.press(screen.getByLabelText('Tôi là người nhận'));
+    expect(screen.getByDisplayValue('Trần Thị Mai')).toBeTruthy();
+    expect(screen.getByDisplayValue('0912345678')).toBeTruthy();
+
+    // Or custom type recipient info
+    const nameInput = screen.getByLabelText('Tên người nhận');
+    await fireEvent.changeText(nameInput, 'Chị Lan Nhận Hàng');
+
+    await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
+    expect(onConfirm).toHaveBeenCalledWith(
+      '500 Lê Trọng Tấn, Tây Thạnh',
+      expect.objectContaining({
+        senderName: 'Chị Lan Nhận Hàng',
+        senderPhone: '0912345678',
+      }),
+    );
+
+    await screen.unmount();
+  }, 30000);
 });

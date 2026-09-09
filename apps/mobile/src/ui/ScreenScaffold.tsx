@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { IconChevronLeft } from './icons/CoreIcons';
 
 // The app root applies all SafeAreaView edges. Children only own in-safe spacing.
 export const SCREEN_SCAFFOLD_SAFE_AREA_OWNER = 'root' as const;
@@ -44,22 +45,52 @@ export function ScreenScaffold({
         style={[styles.pageHeader, inverse ? styles.pageHeaderInk : styles.pageHeaderPlain]}
         testID="screen-scaffold-masthead"
       >
-        {onBack ? (
-          <Pressable
-            accessibilityLabel="Quay lại"
-            accessibilityRole="button"
-            onPress={onBack}
-            style={({ pressed }) => [
-              styles.backButton,
-              pressed ? styles.pressed : null,
-            ]}
-          >
-            <Text style={[styles.backArrow, inverse ? styles.backArrowInk : null]}>‹</Text>
-            <Text style={[styles.backText, inverse ? styles.backTextInk : null]}>Quay lại</Text>
-          </Pressable>
-        ) : headerLeading ? (
-          headerLeading
-        ) : null}
+        <View style={styles.topBar}>
+          <View style={styles.topBarLeading}>
+            {onBack ? (
+              <Pressable
+                accessibilityLabel="Quay lại"
+                accessibilityRole="button"
+                onPress={onBack}
+                style={({ pressed }) => [
+                  styles.backButton,
+                  pressed ? styles.pressed : null,
+                ]}
+              >
+                <IconChevronLeft
+                  color={inverse ? colors.operational.inkMuted : colors.brand.background}
+                  size={20}
+                />
+                <Text style={[styles.backText, inverse ? styles.backTextInk : null]}>Quay lại</Text>
+              </Pressable>
+            ) : headerLeading ? (
+              headerLeading
+            ) : (
+              <View style={styles.topBarSpacer} />
+            )}
+          </View>
+
+          <View style={styles.topBarCenter}>
+            <Text
+              accessibilityRole="header"
+              numberOfLines={1}
+              style={[
+                styles.pageTitle,
+                inverse ? styles.pageTitleInk : styles.pageTitlePlain,
+              ]}
+            >
+              {title}
+            </Text>
+          </View>
+
+          <View style={styles.topBarTrailing}>
+            {headerRight ? (
+              headerRight
+            ) : (
+              <View style={styles.topBarSpacer} />
+            )}
+          </View>
+        </View>
 
         {eyebrow ? (
           <View
@@ -75,17 +106,6 @@ export function ScreenScaffold({
             </Text>
           </View>
         ) : null}
-
-        <View style={styles.titleRow}>
-          <Text
-            accessibilityRole="header"
-            numberOfLines={2}
-            style={[styles.pageTitle, inverse ? styles.pageTitleInk : styles.pageTitlePlain]}
-          >
-            {title}
-          </Text>
-          {headerRight ? <View style={styles.headerRightWrap}>{headerRight}</View> : null}
-        </View>
 
         {subtitle ? (
           <Text style={[styles.subtitle, inverse ? styles.subtitleInk : styles.subtitlePlain]}>
@@ -161,6 +181,34 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     paddingTop: spacing.lg,
   },
+  topBar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 44,
+    gap: spacing.xs,
+    width: '100%',
+  },
+  topBarLeading: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    minWidth: 44,
+  },
+  topBarCenter: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+  topBarTrailing: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 44,
+  },
+  topBarSpacer: {
+    height: 32,
+    width: 44,
+  },
   titleRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -177,15 +225,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxs,
     alignSelf: 'flex-start',
   },
-  backArrow: {
-    fontSize: 22,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: colors.brand.background,
-  },
-  backArrowInk: {
-    color: colors.operational.inkMuted,
-  },
   backText: {
     ...typography.label,
     color: colors.brand.background,
@@ -195,7 +234,7 @@ const styles = StyleSheet.create({
     color: colors.operational.inkMuted,
   },
   eyebrowBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
     borderRadius: radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -219,7 +258,7 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     ...typography.pageTitle,
-    flex: 1,
+    textAlign: 'center',
   },
   pageTitlePlain: {
     color: colors.neutral.titleText,

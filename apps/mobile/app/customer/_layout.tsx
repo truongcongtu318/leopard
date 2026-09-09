@@ -80,6 +80,7 @@ export default function CustomerLayout() {
     pathname.includes('/customer/chat') ||
     pathname.includes('/customer/report') ||
     pathname.includes('/customer/review') ||
+    pathname.includes('/customer/tracking') ||
     pathname.includes('/customer/invoice-preview');
 
   return (

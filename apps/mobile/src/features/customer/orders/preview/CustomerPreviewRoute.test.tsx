@@ -57,9 +57,9 @@ describe('CustomerPreviewRoute', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Đơn LP-260815-001')).toBeTruthy();
+      expect(screen.getByText('Đơn LP-260905-001')).toBeTruthy();
     });
-    expect(screen.getByLabelText('Bản xem trước giao diện — dữ liệu mô phỏng')).toBeTruthy();
+    expect(screen.getByLabelText('LEOPARD Logistics · Phiên bản Thử nghiệm Pilot')).toBeTruthy();
     expect(loadCatalogue).toHaveBeenCalledTimes(1);
     await screen.unmount();
     screen.client.clear();
@@ -80,8 +80,8 @@ describe('CustomerPreviewRoute', () => {
     await waitFor(() => {
       expect(screen.getByText('Không thể mở scenario')).toBeTruthy();
     });
-    expect(screen.getByText(/Bản xem trước giao diện/)).toBeTruthy();
-    expect(screen.queryByText('Kho mô phỏng Quận 7, Thành phố Hồ Chí Minh')).toBeNull();
+    expect(screen.getByText(/LEOPARD Logistics · Phiên bản Thử nghiệm Pilot/)).toBeTruthy();
+    expect(screen.queryByText('Kho VLXD Minh Khang, 88 Thoại Ngọc Hầu, P. Phú Thạnh, Tân Phú')).toBeNull();
     await screen.unmount();
     screen.client.clear();
   });

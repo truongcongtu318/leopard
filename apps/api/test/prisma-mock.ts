@@ -13,8 +13,11 @@ import type {
   AuditLog,
   Notification,
   DeviceToken,
+  Invoice,
+  InvoiceSequence,
 } from '@prisma/client';
 import { createNotificationMock, createDeviceTokenMock } from './prisma-mock-notifications';
+import { createInvoiceMock, createInvoiceSequenceMock } from './prisma-mock-invoices';
 
 export class InMemoryPrismaService {
   public users = new Map<string, User>();
@@ -30,6 +33,8 @@ export class InMemoryPrismaService {
   public auditLogs = new Map<string, AuditLog>();
   public notifications = new Map<string, Notification>();
   public deviceTokens = new Map<string, DeviceToken>();
+  public invoices = new Map<string, Invoice>();
+  public invoiceSequences = new Map<number, InvoiceSequence>();
 
   async $transaction<T>(fn: (tx: InMemoryPrismaService) => Promise<T>): Promise<T> {
     return fn(this);
@@ -708,8 +713,14 @@ export class InMemoryPrismaService {
       if (where?.status?.in) list = list.filter((p) => where.status.in.includes(p.status));
       return list[0] ?? null;
     }),
-    findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
-      return this.paymentIntents.get(where.id) ?? null;
+    findUnique: jest.fn(async ({ where }: { where: { id?: string; payosOrderCode?: bigint } }) => {
+      if (where.id) return this.paymentIntents.get(where.id) ?? null;
+      if (where.payosOrderCode !== undefined) {
+        return Array.from(this.paymentIntents.values()).find(
+          (p) => p.payosOrderCode === where.payosOrderCode,
+        ) ?? null;
+      }
+      return null;
     }),
     create: jest.fn(async ({ data }: { data: any }) => {
       const id = data.id ?? `payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -721,6 +732,7 @@ export class InMemoryPrismaService {
         amountVnd: data.amountVnd,
         clientRequestId: data.clientRequestId ?? null,
         providerReference: data.providerReference ?? null,
+        payosOrderCode: data.payosOrderCode ?? null,
         qrPayload: data.qrPayload ?? null,
         providerSnapshot: data.providerSnapshot ?? null,
         expiresAt: data.expiresAt ?? null,
@@ -780,4 +792,8 @@ export class InMemoryPrismaService {
   notification = createNotificationMock(this.notifications);
 
   deviceToken = createDeviceTokenMock(this.deviceTokens);
+
+  invoice = createInvoiceMock(this.invoices);
+
+  invoiceSequence = createInvoiceSequenceMock(this.invoiceSequences);
 }

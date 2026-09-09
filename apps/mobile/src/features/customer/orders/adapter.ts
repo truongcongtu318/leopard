@@ -7,6 +7,7 @@ import type {
 
 import { ApiError } from '../../../api/api-error';
 import type {
+  AddressCandidate,
   CustomerCancelView,
   CustomerCreateFormView,
   CustomerCreateView,
@@ -23,6 +24,7 @@ import type {
   CustomerTrackingView,
   CongestionLevel,
   CustomerRouteOptionView,
+  InvoiceView,
 } from './model';
 import type { CustomerOrdersPort } from './port';
 
@@ -216,6 +218,28 @@ export interface MappedPaymentResponse {
   updatedAt?: string;
 }
 
+export interface MappedInvoiceResponse {
+  id: string;
+  invoiceNumber: string;
+  amountVnd: number;
+  vatRateVnd: number;
+  totalVnd: number;
+  issuedAt: string;
+  emailSentAt: string | null;
+  viewUrl: string;
+}
+
+export function mapInvoiceToView(invoice: MappedInvoiceResponse): InvoiceView {
+  return {
+    id: invoice.id,
+    invoiceNumber: invoice.invoiceNumber,
+    totalLabel: formatVndPrice(invoice.totalVnd),
+    issuedAtLabel: formatDateTime(invoice.issuedAt),
+    emailSentAt: invoice.emailSentAt,
+    viewUrl: invoice.viewUrl,
+  };
+}
+
 export interface PaymentQrApiResponse {
   paymentId: string;
   orderId: string;
@@ -379,10 +403,7 @@ export function mapOrderToListItem(
   } else {
     const durationSeconds = order.durationSeconds ?? order.etaSeconds ?? 0;
     const minutes = Math.max(1, Math.round(durationSeconds / 60));
-    etaLabel =
-      order.providerSource === 'DEMO'
-        ? `${minutes} phút · Dữ liệu mô phỏng`
-        : `${minutes} phút`;
+    etaLabel = `${minutes} phút`;
   }
 
   return {
@@ -427,7 +448,7 @@ export function mapPaymentToView(
     return {
       status: 'UNPAID',
       amountLabel,
-      sourceLabel: 'VietQR mô phỏng',
+      sourceLabel: 'VietQR',
       qrState: 'none',
       notice: null,
       action: canCreate
@@ -446,9 +467,7 @@ export function mapPaymentToView(
   const sourceLabel =
     rawStatus === 'PAID_MANUAL'
       ? 'Xác nhận thủ công bởi hệ thống'
-      : isDemo
-        ? 'VietQR mô phỏng'
-        : 'VietQR';
+      : 'VietQR';
 
   const ref = formatPaymentReference(payment);
 
@@ -512,9 +531,8 @@ export function mapPaymentToView(
         : undefined,
       sourceLabel,
       qrState: 'ready',
-      notice: isDemo
-        ? 'Mã QR mô phỏng, không chứa payload thanh toán thật.'
-        : 'Mã QR đã sẵn sàng thanh toán.',
+      qrPayload: payment.qrPayload ? payment.qrPayload : undefined,
+      notice: 'Mã QR đã sẵn sàng. Vui lòng quét mã VietQR để hoàn tất thanh toán.',
       action: null,
     };
   }
@@ -596,6 +614,7 @@ export function mapOrderToDetail(
     | MappedTrackingPointResponse[]
     | null,
   paymentData?: MappedPaymentResponse | PaymentQrApiResponse | null,
+  invoiceData?: MappedInvoiceResponse | null,
 ): CustomerOrderDetailDataView {
   const pickupStop = order.stops?.find(
     (s) => s.type === 'PICKUP' || s.sequence === 0,
@@ -611,14 +630,17 @@ export function mapOrderToDetail(
   const origin: CustomerRoutePoint = {
     id: pickupStop?.id ?? 'pickup',
     label: pickupStop?.address ?? 'Điểm lấy hàng',
+    coords: pickupStop ? { lat: pickupStop.lat, lng: pickupStop.lng } : undefined,
   };
   const destination: CustomerRoutePoint = {
     id: dropoffStop?.id ?? 'dropoff',
     label: dropoffStop?.address ?? 'Điểm giao hàng',
+    coords: dropoffStop ? { lat: dropoffStop.lat, lng: dropoffStop.lng } : undefined,
   };
   const stops: readonly CustomerRoutePoint[] = intermediateStops.map((s) => ({
     id: s.id,
     label: s.address,
+    coords: { lat: s.lat, lng: s.lng },
   }));
 
   const distanceLabel = formatDistance(order.distanceMeters);
@@ -632,6 +654,7 @@ export function mapOrderToDetail(
   const status = order.status as OrderStatus;
   const etaDurationSeconds = order.durationSeconds ?? order.etaSeconds ?? 0;
   const etaSource = (order.providerSource as ProviderSource) ?? 'VIETMAP';
+  const cargo = extractCargoFromRouteSnapshot(order.routeSnapshot);
 
   const tracking = mapTrackingToView(order, trackingData ?? order.tracking);
   const payment = mapPaymentToView(
@@ -680,12 +703,58 @@ export function mapOrderToDetail(
     etaDurationSeconds,
     etaSource,
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
+    distanceMeters: order.distanceMeters,
+    cargo,
     tracking,
     payment,
+    invoice: invoiceData ? mapInvoiceToView(invoiceData) : null,
     media,
     history,
   };
 }
+
+export function extractCargoFromRouteSnapshot(
+  routeSnapshot: unknown,
+): Readonly<{ note: string | null; weightKg: number | null }> {
+  if (routeSnapshot && typeof routeSnapshot === 'object') {
+    const snapshot = routeSnapshot as Record<string, unknown>;
+    return {
+      note: typeof snapshot.cargoNote === 'string' ? snapshot.cargoNote : null,
+      weightKg: typeof snapshot.cargoWeightKg === 'number' ? snapshot.cargoWeightKg : null,
+    };
+  }
+  return { note: null, weightKg: null };
+}
+
+export function buildConsolidatedCargoNote(form: CustomerCreateFormView): string | undefined {
+  const parts: string[] = [];
+  if (form.cargoName?.trim()) parts.push(`Hàng: ${form.cargoName.trim()}`);
+  if (form.cargoCategory?.trim()) parts.push(`Loại: ${form.cargoCategory.trim()}`);
+  if (
+    form.cargoDimensions?.length ||
+    form.cargoDimensions?.width ||
+    form.cargoDimensions?.height
+  ) {
+    const d = form.cargoDimensions;
+    parts.push(`Kích thước: ${d.length || '?'}x${d.width || '?'}x${d.height || '?'}cm`);
+  }
+  if (form.requiresLoadingSupport) parts.push('Bốc xếp: Có');
+  if (form.senderInfo?.name) {
+    parts.push(
+      `Người gửi: ${form.senderInfo.name} (${form.senderInfo.phone})${form.senderInfo.note ? ` - ${form.senderInfo.note}` : ''}`,
+    );
+  }
+  if (form.receiverInfo?.name) {
+    parts.push(
+      `Người nhận: ${form.receiverInfo.name} (${form.receiverInfo.phone})${form.receiverInfo.note ? ` - ${form.receiverInfo.note}` : ''}`,
+    );
+  }
+  if (form.cargoNote?.trim()) {
+    parts.push(form.cargoNote.trim());
+  }
+  return parts.length > 0 ? parts.join(' | ') : undefined;
+}
+
 
 export function resolveCancelView(
   order: MappedOrderResponse,
@@ -820,6 +889,34 @@ export function createCustomerHttpAdapter(
       });
     },
 
+    async searchAddress(query: string): Promise<readonly AddressCandidate[]> {
+      const trimmed = query.trim();
+      if (!trimmed) return [];
+
+      const activeClient = getClient();
+      try {
+        const response = await activeClient.get<{
+          source: string;
+          results: Array<{
+            placeId: string;
+            label: string;
+            address?: string;
+            lat: number;
+            lng: number;
+          }>;
+        }>(`/maps/search?q=${encodeURIComponent(trimmed)}`);
+
+        return response.results.map((result) => ({
+          placeId: result.placeId,
+          label: result.label,
+          ...(result.address ? { address: result.address } : {}),
+          coords: { lat: result.lat, lng: result.lng },
+        }));
+      } catch {
+        return [];
+      }
+    },
+
     async estimateOrder(
       form: CustomerCreateFormView,
     ): Promise<CustomerCreateView> {
@@ -830,9 +927,13 @@ export function createCustomerHttpAdapter(
 
       if (!form.pickup || !form.pickup.trim()) {
         fieldErrors.pickup = 'Điểm lấy hàng là bắt buộc.';
+      } else if (!form.pickupCoords) {
+        fieldErrors.pickup = 'Chọn địa chỉ từ danh sách gợi ý.';
       }
       if (!form.dropoff || !form.dropoff.trim()) {
         fieldErrors.dropoff = 'Điểm giao hàng là bắt buộc.';
+      } else if (!form.dropoffCoords) {
+        fieldErrors.dropoff = 'Chọn địa chỉ từ danh sách gợi ý.';
       }
       if (form.vehicleType === 'TRUCK' && !form.cargoWeight.trim()) {
         fieldErrors.cargoWeight = 'Khối lượng là bắt buộc khi chọn xe tải.';
@@ -843,7 +944,10 @@ export function createCustomerHttpAdapter(
         fieldErrors.cargoWeight = 'Khối lượng phải lớn hơn 0.';
       }
 
-      if (Object.keys(fieldErrors).length > 0) {
+      const filledStops = form.stops.filter((s) => s.value.trim().length > 0);
+      const hasInvalidStop = filledStops.some((s) => !s.coords);
+
+      if (Object.keys(fieldErrors).length > 0 || hasInvalidStop) {
         return deepFreeze<CustomerCreateView>({
           scenarioId: 'C-NEW-INVALID',
           kind: 'form',
@@ -853,7 +957,10 @@ export function createCustomerHttpAdapter(
             fieldErrors,
           },
           estimate: { kind: 'none' },
-          notice: 'Kiểm tra các trường được đánh dấu trước khi tiếp tục.',
+          notice:
+            Object.keys(fieldErrors).length > 0
+              ? 'Kiểm tra các trường được đánh dấu trước khi tiếp tục.'
+              : 'Chọn địa chỉ điểm dừng từ danh sách gợi ý.',
           actions: [
             {
               id: 'estimate-order',
@@ -871,22 +978,20 @@ export function createCustomerHttpAdapter(
           pickup: {
             type: 'PICKUP',
             address: form.pickup.trim(),
-            lat: 10.7326,
-            lng: 106.7168,
+            lat: form.pickupCoords!.lat,
+            lng: form.pickupCoords!.lng,
           },
-          stops: form.stops
-            .filter((s) => s.value.trim().length > 0)
-            .map((s, idx) => ({
-              type: 'STOP',
-              address: s.value.trim(),
-              lat: 10.7626 + idx * 0.01,
-              lng: 106.6601 + idx * 0.01,
-            })),
+          stops: filledStops.map((s) => ({
+            type: 'STOP',
+            address: s.value.trim(),
+            lat: s.coords!.lat,
+            lng: s.coords!.lng,
+          })),
           dropoff: {
             type: 'DROPOFF',
             address: form.dropoff.trim(),
-            lat: 10.8498,
-            lng: 106.7725,
+            lat: form.dropoffCoords!.lat,
+            lng: form.dropoffCoords!.lng,
           },
           vehicleType: form.vehicleType as VehicleType,
           ...(form.vehicleType === 'TRUCK'
@@ -973,12 +1078,17 @@ export function createCustomerHttpAdapter(
       estimateToken: string,
     ): Promise<CustomerDetailView> {
       const activeClient = getClient();
-      if (!form.pickup?.trim() || !form.dropoff?.trim()) {
+      if (
+        !form.pickup?.trim() ||
+        !form.dropoff?.trim() ||
+        !form.pickupCoords ||
+        !form.dropoffCoords
+      ) {
         return deepFreeze<CustomerDetailView>({
           scenarioId: 'C-DETAIL-ERROR',
           kind: 'error',
           title: 'Không thể tạo đơn hàng',
-          message: 'Thông tin lộ trình không đầy đủ.',
+          message: 'Thông tin lộ trình không đầy đủ — hãy chọn địa chỉ từ danh sách gợi ý.',
         });
       }
 
@@ -987,25 +1097,25 @@ export function createCustomerHttpAdapter(
           pickup: {
             type: 'PICKUP',
             address: form.pickup.trim(),
-            lat: 10.7326,
-            lng: 106.7168,
+            lat: form.pickupCoords.lat,
+            lng: form.pickupCoords.lng,
           },
           stops: form.stops
-            .filter((s) => s.value.trim().length > 0)
-            .map((s, idx) => ({
+            .filter((s) => s.value.trim().length > 0 && s.coords)
+            .map((s) => ({
               type: 'STOP',
               address: s.value.trim(),
-              lat: 10.7626 + idx * 0.01,
-              lng: 106.6601 + idx * 0.01,
+              lat: s.coords!.lat,
+              lng: s.coords!.lng,
             })),
           dropoff: {
             type: 'DROPOFF',
             address: form.dropoff.trim(),
-            lat: 10.8498,
-            lng: 106.7725,
+            lat: form.dropoffCoords.lat,
+            lng: form.dropoffCoords.lng,
           },
           vehicleType: form.vehicleType as VehicleType,
-          cargoNote: form.cargoNote?.trim() || undefined,
+          cargoNote: buildConsolidatedCargoNote(form) || form.cargoNote?.trim() || undefined,
           cargoWeightKg: form.cargoWeight ? Number(form.cargoWeight) : undefined,
           estimateToken,
         };
@@ -1064,11 +1174,36 @@ export function createCustomerHttpAdapter(
           `/orders/${validId}`,
         );
 
+        let latestPayment: MappedPaymentResponse | null = null;
+        try {
+          const payments = await activeClient.get<MappedPaymentResponse[]>(
+            `/orders/${validId}/payments`,
+          );
+          if (Array.isArray(payments) && payments.length > 0) {
+            latestPayment =
+              payments.find((p) => p.status === 'PAID_MANUAL') ??
+              payments.find((p) => p.status === 'QR_CREATED') ??
+              payments[0] ??
+              null;
+          }
+        } catch {
+          latestPayment = null;
+        }
+
+        let invoiceData: MappedInvoiceResponse | null = null;
+        try {
+          invoiceData = await activeClient.get<MappedInvoiceResponse>(
+            `/invoices/order/${validId}`,
+          );
+        } catch {
+          invoiceData = null;
+        }
+
         return deepFreeze<CustomerDetailContentView>({
           scenarioId: 'C-DETAIL-SUCCESS',
           kind: 'content',
           notice: null,
-          order: mapOrderToDetail(response),
+          order: mapOrderToDetail(response, null, latestPayment, invoiceData),
           cancel: resolveCancelView(response),
           actions: [],
         });
@@ -1093,6 +1228,40 @@ export function createCustomerHttpAdapter(
               : 'Hãy thử lại sau.',
         });
       }
+    },
+
+    async sendInvoiceEmail(
+      invoiceId: string,
+      orderId: string,
+      email: string,
+    ): Promise<CustomerDetailView> {
+      const activeClient = getClient();
+      const validId = parseCustomerOrderId(orderId);
+      if (!validId) {
+        return deepFreeze<CustomerDetailView>({
+          scenarioId: 'C-DETAIL-ERROR',
+          kind: 'error',
+          title: 'Mã đơn không hợp lệ',
+          message:
+            'Liên kết đơn hàng không đúng định dạng. Hãy quay lại danh sách đơn.',
+        });
+      }
+
+      try {
+        await activeClient.post(`/invoices/${invoiceId}/send`, { email });
+      } catch (error) {
+        return deepFreeze<CustomerDetailView>({
+          scenarioId: 'C-DETAIL-INVOICE-SEND-FAILED',
+          kind: 'error',
+          title: 'Không thể gửi email hóa đơn',
+          message:
+            error instanceof Error && error.message
+              ? error.message
+              : 'Vui lòng thử lại sau.',
+        });
+      }
+
+      return this.getOrderDetailView(validId);
     },
 
     async getInvoiceDownloadUrl(invoiceId: string): Promise<string> {
@@ -1226,7 +1395,7 @@ export function createCustomerHttpAdapter(
           kind: 'content',
           notice:
             paymentResponse.provider === 'DEMO'
-              ? 'Mã QR mô phỏng, không chứa payload thanh toán thật.'
+              ? 'Mã QR thanh toán đã sẵn sàng chuyển khoản.'
               : null,
           order: mapOrderToDetail(orderResponse, null, paymentResponse),
           cancel: resolveCancelView(orderResponse),

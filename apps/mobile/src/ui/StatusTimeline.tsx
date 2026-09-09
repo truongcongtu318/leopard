@@ -4,7 +4,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { colors, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
 import { SectionHeading } from './ScreenScaffold';
-import { StatusBadge } from './StatusBadge';
+import { getOrderStatusPresentation } from './StatusBadge';
 
 export type StatusTimelineEntry = Readonly<{
   description?: string;
@@ -35,33 +35,46 @@ function TimelineSeparator() {
 function renderTimelineEntry({ item }: ListRenderItemInfo<StatusTimelineEntry>) {
   const isCompleted = item.isCompleted ?? false;
   const isActive = item.isActive ?? false;
-
-  let dotColor: string = leopardPalette.textSubtle;
-  let lineColor: string = leopardPalette.cardBorder;
-  let textColor: string = leopardPalette.textMutedSlate;
-
-  if (isCompleted) {
-    dotColor = colors.success.border;
-    lineColor = colors.success.border;
-    textColor = leopardPalette.textSlateDark;
-  } else if (isActive) {
-    dotColor = colors.brand.background;
-    lineColor = leopardPalette.cardBorder;
-    textColor = leopardPalette.textSlateDark;
-  }
+  const presentation = getOrderStatusPresentation(item.status);
 
   return (
     <View style={styles.entryContainer}>
       <View style={styles.timelineGraphic}>
-        <View style={[styles.dot, { backgroundColor: dotColor }, isActive && styles.dotActive]} />
-        <View style={[styles.line, { backgroundColor: lineColor }]} />
+        <View
+          style={[
+            styles.dot,
+            isCompleted && styles.dotCompleted,
+            isActive && styles.dotActive,
+          ]}
+        >
+          {isActive ? <View style={styles.dotActiveCore} /> : null}
+        </View>
+        <View
+          style={[
+            styles.line,
+            isCompleted && styles.lineCompleted,
+            isActive && styles.lineActive,
+          ]}
+        />
       </View>
       <View style={styles.entryContent}>
         <View style={styles.entryHeader}>
-          <StatusBadge domain="order" status={item.status} />
-          {item.timestampLabel ? <Text style={styles.timestamp}>{item.timestampLabel}</Text> : null}
+          <Text
+            style={[
+              styles.statusText,
+              isActive && styles.statusTextActive,
+              isCompleted && styles.statusTextCompleted,
+            ]}
+          >
+            {presentation.label}
+          </Text>
+          {item.timestampLabel ? (
+            <Text style={styles.timestamp}>{item.timestampLabel}</Text>
+          ) : null}
         </View>
-        {item.description ? <Text style={[styles.description, { color: textColor }]}>{item.description}</Text> : null}
+        {item.description ? (
+          <Text style={styles.description}>{item.description}</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -92,7 +105,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
+    borderColor: '#E2E8F0',
     borderWidth: 1,
     borderRadius: leopardRadius.md,
     padding: spacing.md,
@@ -109,16 +122,29 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
+    backgroundColor: '#CBD5E1',
     marginTop: 4,
-    zIndex: 1,
+    zIndex: 2,
+  },
+  dotCompleted: {
+    backgroundColor: '#94A3B8',
   },
   dotActive: {
+    backgroundColor: '#F0F4F9',
     borderWidth: 2,
-    borderColor: colors.brand.softBackground,
+    borderColor: '#0B1E42',
     width: 14,
     height: 14,
     borderRadius: 7,
     marginTop: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotActiveCore: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#0B1E42',
   },
   line: {
     width: 2,
@@ -126,12 +152,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 14,
     bottom: -14,
-    zIndex: 0,
+    backgroundColor: '#E2E8F0',
+    zIndex: 1,
+  },
+  lineCompleted: {
+    backgroundColor: '#CBD5E1',
+  },
+  lineActive: {
+    backgroundColor: '#CBD5E1',
   },
   entryContent: {
     flex: 1,
     paddingBottom: spacing.md,
-    gap: spacing.xs,
+    gap: 4,
   },
   entryHeader: {
     alignItems: 'center',
@@ -140,15 +173,29 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     justifyContent: 'space-between',
   },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  statusTextActive: {
+    color: '#0F172A',
+    fontWeight: '700',
+  },
+  statusTextCompleted: {
+    color: '#475569',
+  },
   timestamp: {
     ...typography.caption,
-    color: leopardPalette.textMutedSlate,
-    flexShrink: 1,
+    fontFamily: 'monospace',
+    color: '#94A3B8',
+    fontSize: 11.5,
   },
   description: {
     ...typography.body,
-    fontSize: 14,
-    flexShrink: 1,
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
   },
   separator: {
     height: 0,
@@ -162,3 +209,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

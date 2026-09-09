@@ -7,6 +7,7 @@ import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { OrdersRepository } from '../orders/orders.repository.js';
 import { AuditService } from '../audit/audit.service.js';
 import { NotificationTriggers } from '../notifications/notification-triggers.service.js';
+import { InvoiceIssuancePort } from '../invoices/invoice-issuance.port.js';
 import type { PaymentIntent } from '@prisma/client';
 import type { PaymentQr } from './payment.provider.js';
 
@@ -19,6 +20,7 @@ export class PaymentsService {
     private readonly ordersRepo: OrdersRepository,
     private readonly auditService: AuditService,
     private readonly notificationTriggers: NotificationTriggers,
+    private readonly invoiceIssuancePort: InvoiceIssuancePort,
   ) {}
 
   async createPaymentIntent(actor: AuthenticatedActor, orderId: string, clientRequestId: string): Promise<PaymentIntent> {
@@ -72,6 +74,9 @@ export class PaymentsService {
           providerReference: qrResult.providerReference,
           qrPayload: qrResult.qrPayload,
           expiresAt: qrResult.expiresAt,
+          ...(qrResult.payosOrderCode !== undefined
+            ? { payosOrderCode: qrResult.payosOrderCode }
+            : {}),
         }, tx);
       });
       return finalizedIntent;
@@ -98,6 +103,7 @@ export class PaymentsService {
 
     const existingIdempotency = await this.paymentsRepo.findByConfirmationRequestId(clientRequestId);
     if (existingIdempotency) {
+      await this.dispatchInvoiceIssuance(existingIdempotency);
       return existingIdempotency;
     }
 
@@ -107,6 +113,11 @@ export class PaymentsService {
     }
 
     if (intent.status === 'PAID_MANUAL') {
+      // Retry-on-replay (Phase 0's chosen recovery model): a prior issuance
+      // attempt may have failed after this payment already committed, so
+      // every replay of an already-PAID_MANUAL confirmation re-checks
+      // whether the invoice exists rather than silently no-opping forever.
+      await this.dispatchInvoiceIssuance(intent);
       return intent;
     }
 
@@ -140,8 +151,34 @@ export class PaymentsService {
     // mean a replayed confirmation never reaches this line, so it never
     // creates a second PAYMENT notification.
     await this.dispatchPaymentConfirmedNotification(updated);
+    await this.dispatchInvoiceIssuance(updated);
 
     return updated;
+  }
+
+  /**
+   * Post-commit, best-effort invoice issuance (Phase 0's chosen recovery
+   * model: synchronous retry-on-replay, not a durable outbox). Never throws
+   * — a failure here must never fail or undo a payment confirmation that
+   * already committed. Notifies the customer only when the invoice was
+   * issued but has no email on file yet; a send failure is not surfaced
+   * here as the invoice endpoints already expose a retry action.
+   */
+  private async dispatchInvoiceIssuance(intent: PaymentIntent): Promise<void> {
+    try {
+      const result = await this.invoiceIssuancePort.ensureInvoiceForPayment(intent.orderId, intent.id);
+      if (result?.needsEmailPrompt) {
+        const order = await this.ordersRepo.findById(intent.orderId);
+        if (order) {
+          await this.notificationTriggers.notifyInvoiceEmailMissing({
+            customerId: order.customerId,
+            orderId: intent.orderId,
+          });
+        }
+      }
+    } catch {
+      // Swallowed: invoice issuance must never fail a payment confirmation.
+    }
   }
 
   private async dispatchPaymentConfirmedNotification(intent: PaymentIntent): Promise<void> {

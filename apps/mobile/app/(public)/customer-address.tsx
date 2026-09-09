@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { httpClient } from '../../src/api/http-client';
 import { addressStore, type SavedAddress } from '../../src/features/customer/addresses/address-store';
 import {
+  BrandLoginLogo,
   IconHome,
   IconLocationPin,
   IconOffice,
@@ -424,7 +425,7 @@ export default function CustomerAddAddressScreen() {
           {/* Centered Brand Pill */}
           <View style={styles.brandRow}>
             <LeopardEmblem testID="address-brand-emblem" width={56} />
-            <LeopardMobileLogo height={30} testID="address-brand-logo" width={140} />
+            <BrandLoginLogo height={34} testID="address-brand-logo" />
           </View>
 
           {/* Invisible 44px spacer balancing back button */}
@@ -795,12 +796,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 4,
     backgroundColor: '#FFFFFF',
-    paddingLeft: 10,
-    paddingRight: 16,
-    paddingVertical: 5,
-    height: 48,
+    paddingLeft: 8,
+    paddingRight: 10,
+    paddingVertical: 2,
+    height: 42,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -889,9 +890,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
     borderWidth: 1.5,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     borderRadius: 14,
     padding: 12,
   },
@@ -909,7 +910,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
   },
   gpsTextCol: {
     flex: 1,
@@ -918,7 +919,7 @@ const styles = StyleSheet.create({
   gpsBtnTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   gpsBtnDesc: {
     fontSize: 12,
@@ -926,7 +927,7 @@ const styles = StyleSheet.create({
   },
   gpsArrow: {
     fontSize: 22,
-    color: '#0284C7',
+    color: '#0B1E42',
     fontWeight: '700',
     marginLeft: 8,
   },

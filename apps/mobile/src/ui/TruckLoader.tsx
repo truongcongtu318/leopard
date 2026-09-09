@@ -756,7 +756,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
   },
   stripeOrange: {
     position: 'absolute',
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
   cargoBrandText: {
     fontSize: 6.5,
     fontWeight: '900',
-    color: '#0284C7',
+    color: '#0B1E42',
     letterSpacing: 0.4,
   },
   cabinBox: {
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
     width: '68%',
     height: '46%',
     backgroundColor: '#38BDF8',
-    borderColor: '#0284C7',
+    borderColor: '#0B1E42',
     borderWidth: 1,
     borderTopRightRadius: 6,
     borderBottomRightRadius: 1,
@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
   },
 
   truckShadow: {
@@ -987,7 +987,7 @@ const styles = StyleSheet.create({
 
   windStreak: {
     position: 'absolute',
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
     borderRadius: radius.pill,
     shadowColor: '#38BDF8',
     shadowOffset: { width: 0, height: 0 },
@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: radius.pill,
     borderWidth: 1.5,
-    borderColor: '#0284C7',
+    borderColor: '#0B1E42',
     backgroundColor: 'rgba(56, 189, 248, 0.25)',
     zIndex: 8,
   },

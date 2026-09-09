@@ -1,6 +1,7 @@
 import type { PaymentStatus } from '@leopard/shared';
 import type { PressableProps } from 'react-native';
 import { StyleSheet, Text, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 
 import { colors, leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
@@ -20,6 +21,7 @@ export type PaymentSummaryProps = Readonly<{
   amountLabel?: string;
   expiresAtLabel?: string;
   notice?: string | null;
+  qrPayload?: string;
   referenceLabel?: string;
   sourceLabel?: string;
   status: PaymentStatus;
@@ -45,6 +47,7 @@ export function PaymentSummary({
   amountLabel,
   expiresAtLabel,
   notice,
+  qrPayload,
   referenceLabel,
   sourceLabel,
   status,
@@ -56,6 +59,11 @@ export function PaymentSummary({
         <View style={styles.cardHeader}>
           <StatusBadge domain="payment" status={status} />
         </View>
+        {qrPayload ? (
+          <View accessibilityLabel="Mã QR thanh toán" style={styles.qrWrap}>
+            <QRCode size={200} value={qrPayload} />
+          </View>
+        ) : null}
         <View style={styles.fields}>
           {amountLabel ? <PaymentField isAmount label="Số tiền" value={amountLabel} /> : null}
           {referenceLabel ? <PaymentField label="Mã tham chiếu" value={referenceLabel} /> : null}
@@ -100,6 +108,13 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     alignItems: 'flex-start',
+  },
+  qrWrap: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: leopardRadius.md,
+    padding: spacing.md,
   },
   fields: {
     gap: spacing.sm,

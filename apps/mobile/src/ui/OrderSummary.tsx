@@ -1,7 +1,9 @@
 import React from 'react';
 import type { OrderStatus } from '@leopard/shared';
 import type { PressableProps } from 'react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+
+const orderBoxes3dSource = require('../../assets/brand/order-boxes-3d.png');
 
 import { colors, control, radius, spacing, typography } from '../theme/tokens';
 import { IconSpeedTruck } from './icons/CoreIcons';
@@ -86,42 +88,53 @@ function OrderSummaryContent({
           </View>
         </View>
       ) : (
-        <View style={styles.verticalRoute}>
-          <View style={styles.verticalRouteRow}>
-            <View style={styles.markerCol}>
-              <View style={[styles.originMarker, { backgroundColor: colors.brand.background }]} />
-              <View style={styles.connectorLineVertical} />
-            </View>
-            <View style={styles.addressCol}>
-              <Text style={styles.routeSubLabel}>ĐIỂM LẤY HÀNG</Text>
-              <Text numberOfLines={2} style={styles.routeAddressVertical}>
-                {origin.label}
-              </Text>
-            </View>
-          </View>
-
-          {stops && stops.length > 0 ? (
+        <View style={styles.verticalRouteContainer}>
+          <View style={styles.verticalRoute}>
             <View style={styles.verticalRouteRow}>
               <View style={styles.markerCol}>
-                <View style={styles.stopMarker} />
+                <View style={[styles.originMarker, { backgroundColor: colors.brand.background }]} />
                 <View style={styles.connectorLineVertical} />
               </View>
               <View style={styles.addressCol}>
-                <Text style={styles.stopsBadge}>{`+ ${stops.length} điểm dừng`}</Text>
+                <Text style={styles.routeSubLabel}>ĐIỂM LẤY HÀNG</Text>
+                <Text numberOfLines={2} style={styles.routeAddressVertical}>
+                  {origin.label}
+                </Text>
               </View>
             </View>
-          ) : null}
 
-          <View style={styles.verticalRouteRow}>
-            <View style={styles.markerCol}>
-              <View style={[styles.destMarker, { backgroundColor: colors.warning.border }]} />
+            {stops && stops.length > 0 ? (
+              <View style={styles.verticalRouteRow}>
+                <View style={styles.markerCol}>
+                  <View style={styles.stopMarker} />
+                  <View style={styles.connectorLineVertical} />
+                </View>
+                <View style={styles.addressCol}>
+                  <Text style={styles.stopsBadge}>{`+ ${stops.length} điểm dừng`}</Text>
+                </View>
+              </View>
+            ) : null}
+
+            <View style={styles.verticalRouteRow}>
+              <View style={styles.markerCol}>
+                <View style={[styles.destMarker, { backgroundColor: colors.warning.border }]} />
+              </View>
+              <View style={styles.addressCol}>
+                <Text style={styles.routeSubLabel}>ĐIỂM GIAO HÀNG</Text>
+                <Text numberOfLines={2} style={styles.routeAddressVertical}>
+                  {destination.label}
+                </Text>
+              </View>
             </View>
-            <View style={styles.addressCol}>
-              <Text style={styles.routeSubLabel}>ĐIỂM GIAO HÀNG</Text>
-              <Text numberOfLines={2} style={styles.routeAddressVertical}>
-                {destination.label}
-              </Text>
-            </View>
+          </View>
+
+          <View pointerEvents="none" style={styles.boxesIllustrationWrap}>
+            <Image
+              accessibilityIgnoresInvertColors
+              resizeMode="contain"
+              source={orderBoxes3dSource}
+              style={styles.boxesIllustrationImage}
+            />
           </View>
         </View>
       )}
@@ -138,7 +151,18 @@ function OrderSummaryContent({
               <Text style={styles.etaText}>{etaItem.value}</Text>
             </View>
           ) : null}
-          {actionButton ? actionButton : <Text style={styles.chevron}>›</Text>}
+          {actionButton ? (
+            <View
+              onStartShouldSetResponder={() => true}
+              {...(Platform.OS === 'web'
+                ? ({ onClick: (e: any) => e.stopPropagation() } as any)
+                : {})}
+            >
+              {actionButton}
+            </View>
+          ) : (
+            <Text style={styles.chevron}>›</Text>
+          )}
         </View>
       </View>
     </>
@@ -177,7 +201,7 @@ function OrderSummaryComponent(props: OrderSummaryProps) {
     <Pressable
       accessibilityHint={props.accessibilityHint ?? 'Mở chi tiết đơn'}
       accessibilityLabel={props.accessibilityLabel}
-      accessibilityRole="button"
+      accessibilityRole={props.actionButton ? undefined : 'button'}
       onPress={props.onPress}
       style={({ pressed }) => [containerStyle, pressed ? styles.pressed : null]}
       testID={`order-summary-${props.orderReference}`}
@@ -298,6 +322,10 @@ const styles = StyleSheet.create({
     height: 12,
     width: 1,
   },
+  verticalRouteContainer: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
   verticalRoute: {
     backgroundColor: '#F8FAFC',
     borderColor: '#E2E8F0',
@@ -306,6 +334,36 @@ const styles = StyleSheet.create({
     gap: 2,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    paddingRight: 84,
+  },
+  boxesIllustrationWrap: {
+    position: 'absolute',
+    right: -8,
+    top: '50%',
+    marginTop: -42,
+    width: 84,
+    height: 84,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    transform: [{ scale: 1.05 }],
+    ...Platform.select({
+      web: {
+        filter:
+          'drop-shadow(0px 12px 18px rgba(180, 83, 9, 0.35)) drop-shadow(0px 4px 6px rgba(15, 23, 42, 0.12))',
+      } as any,
+      default: {
+        shadowColor: '#78350F',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.32,
+        shadowRadius: 12,
+        elevation: 8,
+      },
+    }),
+  },
+  boxesIllustrationImage: {
+    width: '100%',
+    height: '100%',
   },
   verticalRouteRow: {
     flexDirection: 'row',

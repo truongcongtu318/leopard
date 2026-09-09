@@ -697,6 +697,90 @@ paths:
           $ref: "#/components/responses/ApiError"
         "409":
           $ref: "#/components/responses/ApiError"
+  # ── Invoices ──────────────────────────────────────────────────────────
+  /invoices/order/{orderId}:
+    get:
+      operationId: invoices.getForOrder
+      summary: Invoice metadata for an order
+      tags: [Invoices]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Order ID
+      responses:
+        "200":
+          description: Invoice metadata and a short-lived view URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceView"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /invoices/{id}/download:
+    get:
+      operationId: invoices.download
+      summary: Redirect to the signed invoice PDF URL
+      tags: [Invoices]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Invoice ID
+      responses:
+        "302":
+          description: Redirect to a short-lived, signed PDF URL
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+  /invoices/{id}/send:
+    post:
+      operationId: invoices.send
+      summary: (Re)send the invoice link by email
+      tags: [Invoices]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Invoice ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendInvoiceRequest"
+      responses:
+        "201":
+          description: Email sent, emailSentAt updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceView"
+        "401":
+          $ref: "#/components/responses/ApiError"
+        "404":
+          $ref: "#/components/responses/ApiError"
+        "422":
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorEnvelope"
+        "502":
+          description: MAIL_PROVIDER_FAILED — invoice remains valid, retry allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorEnvelope"
   # ── Admin ─────────────────────────────────────────────────────────────
   /admin/dashboard:
     get:
@@ -1678,6 +1762,46 @@ components:
         clientRequestId:
           type: string
           format: uuid
+
+    # ══ Invoices ══
+    InvoiceView:
+      type: object
+      additionalProperties: false
+      required: [id, invoiceNumber, amountVnd, vatRateVnd, totalVnd, issuedAt, emailSentAt, viewUrl]
+      properties:
+        id:
+          type: string
+        invoiceNumber:
+          type: string
+          description: 'Internal sequential number, format LP/YYYY/NNNNNN'
+        amountVnd:
+          type: integer
+          minimum: 0
+        vatRateVnd:
+          type: integer
+          minimum: 0
+        totalVnd:
+          type: integer
+          minimum: 0
+        issuedAt:
+          type: string
+          format: date-time
+        emailSentAt:
+          type: string
+          format: date-time
+          nullable: true
+        viewUrl:
+          type: string
+          description: Short-lived, signed URL to view/download the PDF — never a raw storage key
+
+    SendInvoiceRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
 
     # ══ Admin ══
     AdminDashboard:

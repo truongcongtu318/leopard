@@ -222,7 +222,7 @@ function ActiveOrderCard({
         <View style={styles.activeCardMeta}>
           {order.etaLabel ? (
             <Text numberOfLines={1} style={styles.activeEtaText}>
-              ETA dự kiến: {order.etaLabel}
+              Thời gian dự kiến: {order.etaLabel}
             </Text>
           ) : null}
           {order.priceLabel ? (
@@ -232,7 +232,7 @@ function ActiveOrderCard({
           ) : null}
         </View>
         <View style={styles.activeTrackPill}>
-          <IconSpeedTruck color="#0284C7" size={14} />
+          <IconSpeedTruck color="#0B1E42" size={14} />
           <Text style={styles.activeTrackText}>Theo dõi</Text>
         </View>
       </View>
@@ -278,7 +278,6 @@ export function CustomerOrdersScreen({
   if (view.kind === 'loading') {
     return (
       <ScreenScaffold
-        eyebrow="CUSTOMER · SỔ HÀNH TRÌNH"
         subtitle="Bố cục danh sách được giữ ổn định trong khi chờ dữ liệu."
         title="Đơn hàng của tôi"
       >
@@ -300,7 +299,7 @@ export function CustomerOrdersScreen({
           : { label: 'Thử lại', handler: onRetry };
 
     return (
-      <ScreenScaffold eyebrow="CUSTOMER · SỔ HÀNH TRÌNH" title="Đơn hàng của tôi">
+      <ScreenScaffold title="Đơn hàng của tôi">
         <ScreenState
           actionLabel={action.label}
           message={view.message}
@@ -319,7 +318,7 @@ export function CustomerOrdersScreen({
     <OrderSummary
       destination={item.route.destination}
       metadata={[
-        { id: 'eta', label: 'ETA dự kiến', value: item.etaLabel },
+        { id: 'eta', label: 'Thời gian dự kiến', value: item.etaLabel },
         { id: 'price', label: 'Giá cước', value: item.priceLabel },
         { id: 'updated', label: 'Cập nhật', value: item.updatedAtLabel },
       ]}
@@ -333,7 +332,6 @@ export function CustomerOrdersScreen({
 
   return (
     <ScreenScaffold
-      eyebrow="CUSTOMER · SỔ HÀNH TRÌNH"
       hasFloatingNavBar
       stickyFooter={
         onCreate ? (
@@ -474,7 +472,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   segmentBadge: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
     borderRadius: radius.pill,
     minWidth: 18,
     height: 18,
@@ -524,13 +522,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     padding: spacing.md,
     gap: spacing.sm,
   },
   activeCardPressed: {
     opacity: 0.88,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
   },
   activeCardHeader: {
     flexDirection: 'row',
@@ -556,7 +554,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
   },
   routeConnector: {
     flex: 1,
@@ -596,7 +594,7 @@ const styles = StyleSheet.create({
   activeEtaText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   activePriceText: {
     fontSize: 12,
@@ -607,17 +605,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
   activeTrackText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
 
   // Empty Active State
@@ -637,7 +635,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   emptyActiveTitle: {
-    ...typography.heading,
+    ...typography.sectionTitle,
     fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',

@@ -315,7 +315,7 @@ describe('useRootSessionRouter', () => {
     globalThis.fetch = originalFetch;
   });
 
-  it('resolves unauthenticated session to /(public)/onboarding', async () => {
+  it('resolves unauthenticated session to /(public)/login', async () => {
     mockGetItemAsync.mockResolvedValue(null);
     const { useRootSessionRouter } = require('./role-router');
     const { result } = await renderHook(() => useRootSessionRouter());
@@ -323,7 +323,7 @@ describe('useRootSessionRouter', () => {
     await waitFor(() => {
       expect(result.current).toEqual({
         isHydrated: true,
-        redirectTo: '/(public)/onboarding',
+        redirectTo: '/(public)/login',
       });
     });
   });

@@ -15,6 +15,7 @@ export type DriverKycScreenProps = Readonly<{
   documents: readonly { id: string; title: string; url: string; createdAt: string }[];
   isLoading: boolean;
   isError?: boolean;
+  onBack?: () => void;
 }>;
 
 function getDocIcon(title: string) {
@@ -33,12 +34,11 @@ function getDocIcon(title: string) {
   return <IconSecurityShield color={colors.brand.softText} size={18} />;
 }
 
-export function DriverKycScreen({ documents, isLoading, isError }: DriverKycScreenProps) {
+export function DriverKycScreen({ documents, isLoading, isError, onBack }: DriverKycScreenProps) {
   return (
     <ScreenScaffold
-      eyebrow="DRIVER · IDENTITY & KYC"
-      headerTone="ink"
-      subtitle="Hồ sơ pháp lý, giấy phép hành nghề và thông tin xe đăng ký."
+      headerTone="plain"
+      onBack={onBack}
       title="Hồ sơ KYC"
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>

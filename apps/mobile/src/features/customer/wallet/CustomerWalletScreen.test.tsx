@@ -113,31 +113,31 @@ describe('CustomerWalletScreen', () => {
     const screen = await render(<CustomerWalletScreen />);
 
     // All transactions initially shown
-    expect(screen.getByText('Thanh toán cước vận chuyển')).toBeTruthy();
-    expect(screen.getByText('Nạp tiền qua VietQR')).toBeTruthy();
-    expect(screen.getByText('Hoàn tiền chênh lệch quãng đường')).toBeTruthy();
+    expect(screen.getByText('Thanh toán cước đơn VLXD Minh Khang')).toBeTruthy();
+    expect(screen.getByText('Nạp tiền ví VietQR qua MB Bank')).toBeTruthy();
+    expect(screen.getByText('Hoàn tiền cước đơn hủy lịch xuất kho')).toBeTruthy();
 
     // Filter by Nạp tiền
     await fireEvent.press(screen.getByLabelText('Nạp tiền'));
-    expect(screen.getByText('Nạp tiền qua VietQR')).toBeTruthy();
-    expect(screen.queryByText('Thanh toán cước vận chuyển')).toBeNull();
-    expect(screen.queryByText('Hoàn tiền chênh lệch quãng đường')).toBeNull();
+    expect(screen.getByText('Nạp tiền ví VietQR qua MB Bank')).toBeTruthy();
+    expect(screen.queryByText('Thanh toán cước đơn VLXD Minh Khang')).toBeNull();
+    expect(screen.queryByText('Hoàn tiền cước đơn hủy lịch xuất kho')).toBeNull();
 
     // Filter by Hoàn tiền
     await fireEvent.press(screen.getByLabelText('Hoàn tiền'));
-    expect(screen.getByText('Hoàn tiền chênh lệch quãng đường')).toBeTruthy();
-    expect(screen.queryByText('Nạp tiền qua VietQR')).toBeNull();
-    expect(screen.queryByText('Thanh toán cước vận chuyển')).toBeNull();
+    expect(screen.getByText('Hoàn tiền cước đơn hủy lịch xuất kho')).toBeTruthy();
+    expect(screen.queryByText('Nạp tiền ví VietQR qua MB Bank')).toBeNull();
+    expect(screen.queryByText('Thanh toán cước đơn VLXD Minh Khang')).toBeNull();
 
     // Filter by Thanh toán
     await fireEvent.press(screen.getByLabelText('Thanh toán'));
-    expect(screen.getByText('Thanh toán cước vận chuyển')).toBeTruthy();
-    expect(screen.queryByText('Nạp tiền qua VietQR')).toBeNull();
+    expect(screen.getByText('Thanh toán cước đơn VLXD Minh Khang')).toBeTruthy();
+    expect(screen.queryByText('Nạp tiền ví VietQR qua MB Bank')).toBeNull();
 
     // Filter back to Tất cả
     await fireEvent.press(screen.getByLabelText('Tất cả'));
-    expect(screen.getByText('Thanh toán cước vận chuyển')).toBeTruthy();
-    expect(screen.getByText('Nạp tiền qua VietQR')).toBeTruthy();
+    expect(screen.getByText('Thanh toán cước đơn VLXD Minh Khang')).toBeTruthy();
+    expect(screen.getByText('Nạp tiền ví VietQR qua MB Bank')).toBeTruthy();
 
     await screen.unmount();
   });

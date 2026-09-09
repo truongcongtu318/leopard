@@ -30,6 +30,13 @@ export class PaymentsRepository {
     });
   }
 
+  async findByPayosOrderCode(payosOrderCode: bigint, tx?: Prisma.TransactionClient): Promise<PaymentIntent | null> {
+    const client = tx || this.prisma;
+    return client.paymentIntent.findUnique({
+      where: { payosOrderCode },
+    });
+  }
+
   async create(data: Prisma.PaymentIntentUncheckedCreateInput, tx?: Prisma.TransactionClient): Promise<PaymentIntent> {
     const client = tx || this.prisma;
     return client.paymentIntent.create({ data });

@@ -302,12 +302,47 @@ export function MapAddressPickerModal({
   onClose,
   onConfirm,
 }: MapAddressPickerModalProps) {
+  const [activeCustomer, setActiveCustomer] = useState<{ name?: string; phone?: string } | null>(
+    loggedInCustomer ?? null,
+  );
+
+  useEffect(() => {
+    if (loggedInCustomer) {
+      setActiveCustomer(loggedInCustomer);
+      return;
+    }
+    let isMounted = true;
+    async function loadCustomer() {
+      try {
+        const user = await httpClient.get<{ id: string; phone?: string | null; name?: string | null }>('/me');
+        if (isMounted && user) {
+          setActiveCustomer({
+            name: user.name || undefined,
+            phone: user.phone || undefined,
+          });
+        }
+      } catch {
+        // Silently ignore if not authenticated
+      }
+    }
+    void loadCustomer();
+    return () => {
+      isMounted = false;
+    };
+  }, [loggedInCustomer]);
+
+  const effectiveCustomer = loggedInCustomer || activeCustomer;
+
   const [modalAddress, setModalAddress] = useState(initialAddress);
   const [customPinCoords, setCustomPinCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocatingGps, setIsLocatingGps] = useState(false);
   const [mapAddressNote, setMapAddressNote] = useState('');
-  const [senderName, setSenderName] = useState(userName || 'Anh Hoàng');
-  const [senderPhone, setSenderPhone] = useState(userPhone || '0901234567');
+  const [senderName, setSenderName] = useState(
+    userName || (target === 'pickup' ? effectiveCustomer?.name || '' : ''),
+  );
+  const [senderPhone, setSenderPhone] = useState(
+    userPhone || (target === 'pickup' ? effectiveCustomer?.phone || '' : ''),
+  );
   const [focusedModalInput, setFocusedModalInput] = useState<'address' | 'note' | 'name' | 'phone' | null>(null);
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -324,17 +359,24 @@ export function MapAddressPickerModal({
       setModalAddress(starting);
       setCustomPinCoords(null);
       setMapAddressNote('');
-      setSenderName(loggedInCustomer?.name || userName || 'Anh Hoàng');
-      setSenderPhone(
-        formatVietnamesePhone(loggedInCustomer?.phone || userPhone) ||
-          userPhone ||
-          '0901234567',
-      );
+
+      if (target === 'pickup') {
+        const resolvedName = userName || effectiveCustomer?.name || '';
+        const rawPhone = userPhone || effectiveCustomer?.phone || '';
+        setSenderName(resolvedName);
+        setSenderPhone(formatVietnamesePhone(rawPhone) || rawPhone);
+      } else {
+        const resolvedName = userName || '';
+        const rawPhone = userPhone || '';
+        setSenderName(resolvedName);
+        setSenderPhone(formatVietnamesePhone(rawPhone) || rawPhone);
+      }
+
       setFocusedModalInput(null);
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  }, [visible, initialAddress, defaultFallbackAddress, target, userName, userPhone, loggedInCustomer]);
+  }, [visible, initialAddress, defaultFallbackAddress, target, userName, userPhone, effectiveCustomer]);
 
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
   const reverseGeocodeTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -518,9 +560,9 @@ export function MapAddressPickerModal({
   };
 
   const handleFillMySenderInfo = () => {
-    const resolvedName = loggedInCustomer?.name || userName || 'Anh Hoàng';
-    const rawPhone = loggedInCustomer?.phone || userPhone;
-    const resolvedPhone = formatVietnamesePhone(rawPhone) || rawPhone || '0901234567';
+    const resolvedName = effectiveCustomer?.name || userName || '';
+    const rawPhone = effectiveCustomer?.phone || userPhone || '';
+    const resolvedPhone = formatVietnamesePhone(rawPhone) || rawPhone;
     setSenderName(resolvedName);
     setSenderPhone(resolvedPhone);
   };
@@ -631,7 +673,7 @@ export function MapAddressPickerModal({
               >
                 <View style={styles.mapInputLeadingIcon}>
                   <IconLocationPin
-                    color={target === 'pickup' ? '#16A34A' : '#0284C7'}
+                    color={target === 'pickup' ? '#16A34A' : '#0B1E42'}
                     size={20}
                   />
                 </View>
@@ -733,7 +775,7 @@ export function MapAddressPickerModal({
                             ]}
                           >
                             <IconLocationPin
-                              color={isGpsItem ? '#16A34A' : '#0284C7'}
+                              color={isGpsItem ? '#16A34A' : '#0B1E42'}
                               size={16}
                             />
                           </View>
@@ -1041,9 +1083,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
   },
   mapChangeAddrBtn: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 8,
@@ -1051,7 +1093,7 @@ const styles = StyleSheet.create({
   mapChangeAddrBtnText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   mapAddressInputWrapper: {
     borderColor: '#94A3B8',
@@ -1087,9 +1129,9 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   mapInputWrapperFocused: {
-    borderColor: '#0284C7',
+    borderColor: '#0B1E42',
     backgroundColor: '#FFFFFF',
-    shadowColor: '#0284C7',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 8,
@@ -1112,11 +1154,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     marginTop: -4,
     marginBottom: 4,
     overflow: 'hidden',
-    shadowColor: '#0284C7',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 10,
@@ -1128,25 +1170,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0F2FE',
+    borderBottomColor: '#F0F4F9',
   },
   suggestionsHeaderTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#0369A1',
+    color: '#061226',
     letterSpacing: 0.3,
   },
   suggestionsCloseBtn: {
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 4,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
   },
   suggestionsCloseBtnText: {
     fontSize: 11,
-    color: '#0369A1',
+    color: '#061226',
     fontWeight: '700',
   },
   suggestionsListScroll: {
@@ -1162,13 +1204,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   suggestionItemPressed: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
   },
   suggestionIconSquircle: {
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1188,7 +1230,7 @@ const styles = StyleSheet.create({
   suggestionActionApply: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   suggestionItemGps: {
     backgroundColor: '#F0FDF4',
@@ -1267,7 +1309,7 @@ const styles = StyleSheet.create({
   mapSenderMeBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   mapModalBottomBar: {
     flexDirection: 'row',
@@ -1298,17 +1340,17 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     borderRadius: 14,
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0284C7',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.28,
     shadowRadius: 8,
     elevation: 3,
   },
   mapSaveBtnPressed: {
-    backgroundColor: '#0369A1',
+    backgroundColor: '#061226',
     transform: [{ scale: 0.98 }],
   },
   mapSaveBtnText: {

@@ -101,12 +101,10 @@ describe('Driver route and string adapter helpers', () => {
     ).toBe('LP-D-260815-001');
   });
 
-  it('formats ETA label with DEMO tagging when appropriate', () => {
-    expect(formatDriverEtaLabel(1080, 'DEMO')).toBe(
-      'ETA dự kiến · 18 phút · Dữ liệu mô phỏng',
-    );
-    expect(formatDriverEtaLabel(840, 'VIETMAP')).toBe('ETA dự kiến · 14 phút');
-    expect(formatDriverEtaLabel(null, null)).toBe('ETA dự kiến · 1 phút');
+  it('formats ETA label when appropriate', () => {
+    expect(formatDriverEtaLabel(1080, 'DEMO')).toBe('Thời gian dự kiến · 18 phút');
+    expect(formatDriverEtaLabel(840, 'VIETMAP')).toBe('Thời gian dự kiến · 14 phút');
+    expect(formatDriverEtaLabel(null, null)).toBe('Thời gian dự kiến · 1 phút');
   });
 
   it('formats vehicle label for all vehicle types', () => {
@@ -205,7 +203,7 @@ describe('Driver mappers', () => {
     expect(publicOrder.publicRouteLabel).toBe('Khu vực Kho Quận 7 → Thủ Đức');
     expect(publicOrder.vehicleLabel).toBe('Xe van');
     expect(publicOrder.cargoSummary).toBe('Hàng đóng thùng · khoảng 120 kg');
-    expect(publicOrder.etaLabel).toContain('18 phút · Dữ liệu mô phỏng');
+    expect(publicOrder.etaLabel).toBe('Thời gian dự kiến · 18 phút');
   });
 
   it('maps order to active trip view with proof requirement indicator', () => {

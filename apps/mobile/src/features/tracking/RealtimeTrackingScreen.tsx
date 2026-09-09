@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import {
+  Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,15 +15,18 @@ import {
   leopardElevation,
   leopardPalette,
   leopardRadius,
+  radius,
   spacing,
   typography,
 } from '../../theme/tokens';
 import {
   IconCameraProof,
+  IconLocationPin,
   IconMessage,
   IconPhone,
   IconQrPayment,
   IconRoleDriver,
+  IconSpeedTruck,
 } from '../../ui/icons/CoreIcons';
 import { RealInteractiveMap } from '../../ui/RealInteractiveMap';
 
@@ -36,18 +41,21 @@ export type TrackingPoint = Readonly<{
 export type DriverInfo = Readonly<{
   name: string;
   avatar?: string;
-  rating: number;
-  totalTrips: number;
-  phone: string;
-  vehiclePlate: string;
-  vehicleType: string;
-  vehicleCapacity: string;
+  rating?: number;
+  totalTrips?: number;
+  phone?: string;
+  vehiclePlate?: string;
+  vehicleType?: string;
+  vehicleCapacity?: string;
 }>;
 
 export type TripBookingDetails = Readonly<{
   bookingCode: string;
   origin: string;
+  originCoords?: { lat: number; lng: number };
   destination: string;
+  destinationCoords?: { lat: number; lng: number };
+  stops?: readonly { id: string; label: string; coords?: { lat: number; lng: number } }[];
   cargoLabel: string;
   weightKg: number;
   priceVnd: string;
@@ -80,10 +88,30 @@ type TrackingStatusPresentation = Readonly<{
 }>;
 
 const TRACKING_STATUS: Record<TripBookingDetails['status'], TrackingStatusPresentation> = {
-  LOADING: { label: 'Đang bốc hàng', bg: colors.warning.background, text: colors.warning.text, dot: colors.warning.border },
-  IN_TRANSIT: { label: 'Đang vận chuyển', bg: colors.info.background, text: colors.info.text, dot: colors.brand.background },
-  ARRIVED: { label: 'Đã đến nơi', bg: colors.success.background, text: colors.success.text, dot: colors.success.border },
-  DELIVERED: { label: 'Hoàn thành giao', bg: colors.success.background, text: colors.success.text, dot: colors.success.border },
+  LOADING: {
+    label: 'Đang bốc hàng',
+    bg: colors.warning.background,
+    text: colors.warning.text,
+    dot: colors.warning.border,
+  },
+  IN_TRANSIT: {
+    label: 'Đang vận chuyển',
+    bg: colors.info.background,
+    text: colors.info.text,
+    dot: colors.brand.background,
+  },
+  ARRIVED: {
+    label: 'Đã đến nơi',
+    bg: colors.success.background,
+    text: colors.success.text,
+    dot: colors.success.border,
+  },
+  DELIVERED: {
+    label: 'Hoàn thành giao',
+    bg: colors.success.background,
+    text: colors.success.text,
+    dot: colors.success.border,
+  },
 };
 
 // ── Component ────────────────────────────────────────────────────────
@@ -105,6 +133,25 @@ export function RealtimeTrackingScreen({
     Math.min(100, ((trip.distanceTotalKm - trip.distanceRemainingKm) / trip.distanceTotalKm) * 100),
   );
 
+  const handleCall = () => {
+    if (onCallDriver) {
+      onCallDriver();
+      return;
+    }
+    const phone = driver.phone || '0901234567';
+    void Linking.openURL(`tel:${phone}`).catch(() => {
+      Alert.alert('Gọi tài xế', `Số điện thoại tài xế: ${phone}`);
+    });
+  };
+
+  const handleChat = () => {
+    if (onChatDriver) {
+      onChatDriver();
+      return;
+    }
+    Alert.alert('Nhắn tin', `Nhắn tin trao đổi với tài xế ${driver.name}`);
+  };
+
   return (
     <View style={styles.container}>
       {/* ── Top Half: Map Area ─────────────────────────────── */}
@@ -112,10 +159,12 @@ export function RealtimeTrackingScreen({
         {/* Real Interactive Leaflet/GPS Map */}
         <View style={styles.mapCanvas}>
           <RealInteractiveMap
-            destination={{ label: trip.destination }}
+            destination={{ label: trip.destination, coords: trip.destinationCoords }}
             height="100%"
             mode="tracking"
-            origin={{ label: trip.origin }}
+            origin={{ label: trip.origin, coords: trip.originCoords }}
+            stops={trip.stops}
+            truckEtaLabel={trip.etaLabel}
             truckEtaMinutes={trip.etaMinutes}
             truckLocation={
               truckLocation ? { lat: truckLocation.lat, lng: truckLocation.lng } : undefined
@@ -134,13 +183,17 @@ export function RealtimeTrackingScreen({
             >
               <Text style={styles.backIcon}>←</Text>
             </Pressable>
-          ) : null}
+          ) : (
+            <View style={styles.backBtnPlaceholder} />
+          )}
+
           <View style={[styles.statusTagOverlay, { backgroundColor: statusPres.bg }]}>
             <View style={[styles.statusDotOverlay, { backgroundColor: statusPres.dot }]} />
             <Text style={[styles.statusTextOverlay, { color: statusPres.text }]}>
               {statusPres.label}
             </Text>
           </View>
+
           <View style={styles.liveTag}>
             <View style={styles.liveDot} />
             <Text style={styles.liveText}>LIVE</Text>
@@ -149,7 +202,7 @@ export function RealtimeTrackingScreen({
       </View>
 
       {/* ── Bottom Sheet ──────────────────────────────────── */}
-      <View style={styles.bottomSheet}>
+      <View style={[styles.bottomSheet, sheetExpanded && styles.bottomSheetExpanded]}>
         {/* Drag handle */}
         <Pressable
           accessibilityLabel={sheetExpanded ? 'Thu gọn' : 'Mở rộng'}
@@ -164,44 +217,59 @@ export function RealtimeTrackingScreen({
           contentContainerStyle={styles.sheetContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* ─ Section 1: Driver Info ────────────────────── */}
+          {/* ─ Section 1: Driver VIP Card ────────────────── */}
           <View style={styles.driverSection}>
             <View style={styles.driverInfoRow}>
               <View style={styles.driverAvatarBox}>
-                <IconRoleDriver color={leopardPalette.primary} size={24} />
+                <IconRoleDriver color="#0B1E42" size={24} />
+                <View style={styles.driverVerifiedDot}>
+                  <Text style={styles.driverVerifiedCheck}>✓</Text>
+                </View>
               </View>
+
               <View style={styles.driverTextCol}>
                 <Text style={styles.driverName}>{driver.name}</Text>
                 <View style={styles.driverMetaRow}>
-                  <Text style={styles.ratingText}>⭐ {driver.rating.toFixed(1)}</Text>
-                  <Text style={styles.tripsText}>{driver.totalTrips} chuyến</Text>
+                  {typeof driver.rating === 'number' ? (
+                    <View style={styles.ratingBadge}>
+                      <Text style={styles.ratingText}>⭐ {driver.rating.toFixed(1)}</Text>
+                    </View>
+                  ) : null}
+                  {typeof driver.totalTrips === 'number' ? (
+                    <Text style={styles.tripsText}>{driver.totalTrips} chuyến</Text>
+                  ) : null}
                 </View>
               </View>
             </View>
 
             <View style={styles.driverActions}>
-              {onCallDriver ? (
-                <Pressable
-                  accessibilityLabel="Gọi điện tài xế"
-                  accessibilityRole="button"
-                  onPress={onCallDriver}
-                  style={({ pressed }) => [styles.actionBtn, styles.callBtn, pressed ? styles.pressed : null]}
-                >
-                  <IconPhone color={leopardPalette.primary} size={16} />
-                  <Text style={styles.callBtnText}>Gọi điện</Text>
-                </Pressable>
-              ) : null}
-              {onChatDriver ? (
-                <Pressable
-                  accessibilityLabel="Nhắn tin tài xế"
-                  accessibilityRole="button"
-                  onPress={onChatDriver}
-                  style={({ pressed }) => [styles.actionBtn, styles.chatBtn, pressed ? styles.pressed : null]}
-                >
-                  <IconMessage color={leopardPalette.textSlateDark} size={16} />
-                  <Text style={styles.chatBtnText}>Nhắn tin</Text>
-                </Pressable>
-              ) : null}
+              <Pressable
+                accessibilityLabel="Gọi điện tài xế"
+                accessibilityRole="button"
+                onPress={handleCall}
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  styles.callBtn,
+                  pressed ? styles.pressed : null,
+                ]}
+              >
+                <IconPhone color="#FFFFFF" size={16} />
+                <Text style={styles.callBtnText}>Gọi điện</Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityLabel="Nhắn tin tài xế"
+                accessibilityRole="button"
+                onPress={handleChat}
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  styles.chatBtn,
+                  pressed ? styles.pressed : null,
+                ]}
+              >
+                <IconMessage color="#1E293B" size={16} />
+                <Text style={styles.chatBtnText}>Nhắn tin</Text>
+              </Pressable>
             </View>
           </View>
 
@@ -211,9 +279,11 @@ export function RealtimeTrackingScreen({
           <View style={styles.progressSection}>
             <View style={styles.progressHeaderRow}>
               <Text style={styles.sectionTitle}>Tiến trình giao hàng</Text>
-              <Text style={styles.etaBadgeText}>
-                ETA dự kiến: {trip.etaLabel}
-              </Text>
+              <View style={styles.etaHeaderBadge}>
+                <Text style={styles.etaBadgeText}>
+                  Thời gian dự kiến: {trip.etaLabel}
+                </Text>
+              </View>
             </View>
 
             <View style={styles.progressBarContainer}>
@@ -223,21 +293,31 @@ export function RealtimeTrackingScreen({
             </View>
 
             <View style={styles.progressLabelsRow}>
-              <Text style={styles.progressLabelLeft}>
-                {(trip.distanceTotalKm - trip.distanceRemainingKm).toFixed(1)} km đã đi
-              </Text>
-              <Text style={styles.progressLabelRight}>
-                {trip.distanceRemainingKm.toFixed(1)} km còn lại
-              </Text>
+              <View style={styles.progressStatCol}>
+                <Text style={styles.progressStatSub}>ĐÃ DI CHUYỂN</Text>
+                <Text style={styles.progressLabelLeft}>
+                  {(trip.distanceTotalKm - trip.distanceRemainingKm).toFixed(1)} km đã đi
+                </Text>
+              </View>
+              <View style={[styles.progressStatCol, { alignItems: 'flex-end' }]}>
+                <Text style={styles.progressStatSub}>CÒN LẠI</Text>
+                <Text style={styles.progressLabelRight}>
+                  {trip.distanceRemainingKm.toFixed(1)} km còn lại
+                </Text>
+              </View>
             </View>
 
-            {/* Route summary */}
-            <View style={styles.routeCompactRow}>
-              <View style={styles.routeCompactDot} />
-              <Text numberOfLines={1} style={styles.routeCompactText}>{trip.origin}</Text>
-              <Text style={styles.routeArrow}>→</Text>
-              <View style={[styles.routeCompactDot, styles.routeCompactDotGreen]} />
-              <Text numberOfLines={1} style={styles.routeCompactText}>{trip.destination}</Text>
+            {/* Route summary box */}
+            <View style={styles.routeCompactCard}>
+              <View style={styles.routeCompactRow}>
+                <View style={[styles.routeCompactDot, styles.routeDotOrigin]} />
+                <Text numberOfLines={1} style={styles.routeCompactText}>{trip.origin}</Text>
+              </View>
+              <View style={styles.routeConnectorLine} />
+              <View style={styles.routeCompactRow}>
+                <View style={[styles.routeCompactDot, styles.routeDotDest]} />
+                <Text numberOfLines={1} style={styles.routeCompactText}>{trip.destination}</Text>
+              </View>
             </View>
           </View>
 
@@ -252,16 +332,21 @@ export function RealtimeTrackingScreen({
                 <Text style={styles.detailLabel}>Mã đơn</Text>
                 <Text style={styles.detailValue}>{trip.bookingCode}</Text>
               </View>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Biển số xe</Text>
-                <Text style={styles.detailValue}>{driver.vehiclePlate}</Text>
-              </View>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Loại xe</Text>
-                <Text style={styles.detailValue}>
-                  {driver.vehicleType} ({driver.vehicleCapacity})
-                </Text>
-              </View>
+              {driver.vehiclePlate ? (
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Biển số xe</Text>
+                  <Text style={styles.detailValue}>{driver.vehiclePlate}</Text>
+                </View>
+              ) : null}
+              {driver.vehicleType ? (
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Loại xe</Text>
+                  <Text style={styles.detailValue}>
+                    {driver.vehicleType}
+                    {driver.vehicleCapacity ? ` (${driver.vehicleCapacity})` : ''}
+                  </Text>
+                </View>
+              ) : null}
               <View style={styles.detailItem}>
                 <Text style={styles.detailLabel}>Hàng hóa</Text>
                 <Text style={styles.detailValue}>
@@ -294,20 +379,31 @@ export function RealtimeTrackingScreen({
             <>
               <View style={styles.divider} />
               <View style={styles.proofSection}>
-                <Text style={styles.sectionTitle}>Ảnh xác nhận giao hàng</Text>
+                <View style={styles.sectionHeaderBetween}>
+                  <Text style={styles.sectionTitle}>Ảnh xác nhận giao hàng</Text>
+                  <View style={styles.proofVerifiedBadge}>
+                    <Text style={styles.proofVerifiedText}>✓ Đã xác nhận</Text>
+                  </View>
+                </View>
                 <Pressable
                   accessibilityLabel="Xem ảnh xác nhận giao hàng"
                   accessibilityRole="button"
                   onPress={onViewDeliveryProof}
-                  style={({ pressed }) => [styles.proofThumbnailWrap, pressed ? styles.pressed : null]}
+                  style={({ pressed }) => [
+                    styles.proofThumbnailWrap,
+                    pressed ? styles.pressed : null,
+                  ]}
                 >
                   <View style={styles.proofThumbnail}>
-                    <IconCameraProof color={leopardPalette.primary} size={20} />
-                    <Text style={styles.proofLabel}>Xem ảnh xác nhận</Text>
+                    <View style={styles.proofIconBox}>
+                      <IconCameraProof color="#0B1E42" size={20} />
+                    </View>
+                    <View style={styles.proofTextWrap}>
+                      <Text style={styles.proofLabel}>Xem ảnh xác nhận giao hàng</Text>
+                      <Text style={styles.proofSubLabel}>Minh chứng đã ký nhận thực tế</Text>
+                    </View>
                   </View>
-                  <View style={styles.proofVerifiedBadge}>
-                    <Text style={styles.proofVerifiedText}>✓ Đã xác nhận</Text>
-                  </View>
+                  <Text style={styles.proofArrow}>➔</Text>
                 </Pressable>
               </View>
             </>
@@ -323,10 +419,10 @@ export function RealtimeTrackingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: leopardPalette.bgMuted,
+    backgroundColor: '#F8FAFC',
   },
 
-  // ── Map ──────────────────────────────────────────
+  // ── Map Area ─────────────────────────────────────
   mapArea: {
     flex: 1,
     minHeight: 280,
@@ -338,7 +434,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.operational.mapLand,
+    backgroundColor: '#F1F5F9',
     overflow: 'hidden',
   },
   mapTopBar: {
@@ -349,347 +445,532 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    zIndex: 10,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: leopardRadius.md,
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderColor: '#E2E8F0',
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    ...leopardElevation.subtle,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  backBtnPlaceholder: {
+    width: 38,
+    height: 38,
   },
   backIcon: {
     fontSize: 18,
-    color: leopardPalette.textSlateDark,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   statusTagOverlay: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: leopardRadius.pill,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: leopardPalette.cardBorder,
-    ...leopardElevation.subtle,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   statusDotOverlay: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   statusTextOverlay: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
   liveTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.danger.background,
-    borderColor: colors.danger.border,
-    borderWidth: 1,
-    borderRadius: leopardRadius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 5,
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.danger.text,
+    backgroundColor: '#FFFFFF',
   },
   liveText: {
-    color: colors.danger.text,
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  floatingEtaCard: {
+    position: 'absolute',
+    left: spacing.md,
+    bottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  floatingEtaIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingEtaTextWrap: {
+    gap: 1,
+  },
+  floatingEtaSub: {
+    color: '#64748B',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
+  },
+  floatingEtaVal: {
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '800',
   },
 
   // ── Bottom Sheet ──────────────────────────────────
   bottomSheet: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderTopLeftRadius: leopardRadius.xl,
-    borderTopRightRadius: leopardRadius.xl,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderWidth: 1,
-    borderColor: leopardPalette.cardBorder,
+    borderColor: '#E2E8F0',
+    marginTop: -18,
+    zIndex: 5,
     maxHeight: '58%',
-    ...leopardElevation.modal,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  bottomSheetExpanded: {
+    maxHeight: '82%',
   },
   handleWrap: {
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'center',
+    paddingVertical: 10,
   },
   dragHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: leopardPalette.cardBorder,
+    width: 44,
+    height: 4.5,
+    borderRadius: 3,
+    backgroundColor: '#CBD5E1',
   },
   sheetContent: {
     paddingHorizontal: spacing.md,
-    paddingBottom: layout.bottomNavClearance,
-    gap: spacing.md,
+    paddingBottom: 40,
+    gap: 14,
   },
+
+  // ── Driver Section ────────────────────────────────
   driverSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+    gap: 12,
   },
   driverInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    flex: 1,
+    gap: 12,
   },
   driverAvatarBox: {
-    width: 40,
-    height: 40,
-    borderRadius: leopardRadius.md,
-    backgroundColor: leopardPalette.primaryBg,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: leopardPalette.primaryBorder,
+    position: 'relative',
+  },
+  driverVerifiedDot: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#10B981',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  driverVerifiedCheck: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+    lineHeight: 11,
   },
   driverTextCol: {
     flex: 1,
-    gap: 1,
+    gap: 3,
   },
   driverName: {
-    ...typography.label,
-    color: leopardPalette.textSlateDark,
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '700',
   },
   driverMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+  },
+  ratingBadge: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
   },
   ratingText: {
-    ...typography.caption,
-    color: colors.warning.text,
-    fontWeight: '600',
+    color: '#B45309',
+    fontSize: 11,
+    fontWeight: '700',
   },
   tripsText: {
-    ...typography.caption,
-    color: leopardPalette.textMutedSlate,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  plateBadgeMini: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  plateTextMini: {
+    color: '#0F172A',
+    fontSize: 11,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   driverActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+    gap: 10,
   },
   actionBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: leopardRadius.md,
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
     borderWidth: 1,
   },
   callBtn: {
-    backgroundColor: leopardPalette.primaryBg,
-    borderColor: leopardPalette.primaryBorder,
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   callBtnText: {
-    color: leopardPalette.primary,
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   chatBtn: {
-    backgroundColor: leopardPalette.bgMuted,
-    borderColor: leopardPalette.cardBorder,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
   },
   chatBtnText: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '700',
   },
-  divider: {
-    height: 1,
-    backgroundColor: leopardPalette.subtleDivider,
-  },
+
+  // ── Progress Section ──────────────────────────────
   progressSection: {
-    gap: spacing.xs,
+    gap: 10,
   },
   progressHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 6,
   },
   sectionTitle: {
-    ...typography.sectionTitle,
-    color: leopardPalette.textSlateDark,
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  sectionHeaderBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  etaHeaderBadge: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   etaBadgeText: {
-    ...typography.caption,
-    color: leopardPalette.primary,
-    fontWeight: '600',
+    color: '#0B1E42',
+    fontSize: 11.5,
+    fontWeight: '700',
   },
   progressBarContainer: {
-    paddingVertical: 4,
+    marginTop: 2,
   },
   progressBarBg: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: leopardPalette.bgMuted,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: leopardPalette.primary,
-    borderRadius: 3,
+    borderRadius: 4,
+    backgroundColor: '#0B1E42',
   },
   progressLabelsRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
+  progressStatCol: {
+    gap: 1,
+  },
+  progressStatSub: {
+    color: '#94A3B8',
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
   progressLabelLeft: {
-    ...typography.caption,
-    color: leopardPalette.textMutedSlate,
-    fontSize: 11,
+    color: '#0F172A',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   progressLabelRight: {
-    ...typography.caption,
-    color: leopardPalette.textMutedSlate,
-    fontSize: 11,
+    color: '#0B1E42',
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  routeCompactCard: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#F1F5F9',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
+    gap: 6,
   },
   routeCompactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
-    backgroundColor: leopardPalette.bgMuted,
-    padding: spacing.xs,
-    borderRadius: leopardRadius.sm,
+    gap: 8,
   },
   routeCompactDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: leopardPalette.primary,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  routeCompactDotGreen: {
-    backgroundColor: colors.success.border,
+  routeDotOrigin: {
+    backgroundColor: '#10B981',
+  },
+  routeDotDest: {
+    backgroundColor: '#EF4444',
+  },
+  routeConnectorLine: {
+    width: 1.5,
+    height: 8,
+    backgroundColor: '#CBD5E1',
+    marginLeft: 3.25,
   },
   routeCompactText: {
+    color: '#334155',
+    fontSize: 12.5,
+    fontWeight: '500',
     flex: 1,
-    ...typography.caption,
-    color: leopardPalette.textSlateDark,
-    fontSize: 11.5,
   },
-  routeArrow: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 12,
-  },
+
+  // ── Booking Section ───────────────────────────────
   bookingSection: {
-    gap: spacing.xs,
+    gap: 10,
+  },
+  bookingCodeBadge: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  bookingCodeText: {
+    color: '#0F172A',
+    fontSize: 11.5,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   detailGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    gap: 8,
   },
   detailItem: {
-    width: '48%',
-    backgroundColor: leopardPalette.bgMuted,
-    padding: spacing.xs,
-    borderRadius: leopardRadius.sm,
-    gap: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   detailLabel: {
-    ...typography.caption,
-    color: leopardPalette.textMutedSlate,
-    fontSize: 10.5,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '500',
   },
   detailValue: {
-    ...typography.label,
-    color: leopardPalette.textSlateDark,
+    color: '#0F172A',
     fontSize: 12.5,
-    fontWeight: '600',
+    fontWeight: '700',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   pricingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: leopardPalette.subtleDivider,
+    paddingTop: 4,
   },
   pricingCol: {
     gap: 1,
   },
   pricingLabel: {
-    ...typography.caption,
-    color: leopardPalette.textMutedSlate,
+    color: '#64748B',
     fontSize: 11,
+    fontWeight: '500',
   },
   pricingValue: {
-    color: leopardPalette.primary,
-    fontSize: 16,
-    fontWeight: '700',
+    color: '#0B1E42',
+    fontSize: 18,
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   vietQrBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: '#0B1E42',
+    borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: leopardRadius.md,
+    paddingVertical: 8,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   vietQrBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
+
+  // ── Delivery Proof ────────────────────────────────
   proofSection: {
-    gap: spacing.xs,
+    gap: 10,
   },
   proofThumbnailWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: leopardPalette.bgMuted,
-    borderRadius: leopardRadius.md,
-    padding: spacing.sm,
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
     borderWidth: 1,
-    borderColor: leopardPalette.cardBorder,
+    borderRadius: 12,
+    padding: 12,
   },
   proofThumbnail: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 10,
+  },
+  proofIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  proofTextWrap: {
+    gap: 2,
   },
   proofLabel: {
-    ...typography.body,
+    color: '#15803D',
     fontSize: 13,
-    color: leopardPalette.textSlateDark,
-    fontWeight: '500',
+    fontWeight: '700',
+  },
+  proofSubLabel: {
+    color: '#16A34A',
+    fontSize: 11,
   },
   proofVerifiedBadge: {
-    backgroundColor: colors.success.background,
-    borderColor: colors.success.border,
+    backgroundColor: '#DCFCE7',
+    borderColor: '#86EFAC',
     borderWidth: 1,
-    borderRadius: leopardRadius.pill,
+    borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   proofVerifiedText: {
-    ...typography.caption,
-    color: colors.success.text,
+    color: '#15803D',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  proofArrow: {
+    color: '#15803D',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  // ── Utilities ─────────────────────────────────────
+  divider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
   },
   pressed: {
     opacity: 0.85,

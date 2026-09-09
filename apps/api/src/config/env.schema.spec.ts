@@ -30,6 +30,11 @@ const validProductionEnv: NodeJS.ProcessEnv = {
   PAYOS_CLIENT_ID: '1234567890',
   PAYOS_API_KEY: '1234567890',
   PAYOS_CHECKSUM_KEY: '1234567890',
+  MAIL_PROVIDER: 'smtp',
+  SMTP_HOST: 'smtp.leopard.vn',
+  SMTP_USER: 'invoices@leopard.vn',
+  SMTP_PASS: 'a'.repeat(16),
+  MAIL_FROM: 'invoices@leopard.vn',
 };
 
 describe('production environment schema', () => {
@@ -53,6 +58,10 @@ describe('production environment schema', () => {
     'SOCKET_PROVIDER',
     'STORAGE_PROVIDER',
     'PAYMENT_PROVIDER',
+    'SMTP_HOST',
+    'SMTP_USER',
+    'SMTP_PASS',
+    'MAIL_FROM',
   ])('fails fast when %s is missing', (name) => {
     expect(() => parseEnv({ ...validProductionEnv, [name]: undefined })).toThrow();
   });
@@ -96,6 +105,54 @@ describe('production environment schema', () => {
         FIREBASE_PROJECT_ID: undefined,
       }),
     ).toThrow();
+  });
+
+  it('requires explicit opt-in when MAIL_PROVIDER is left unset (defaults to console)', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        MAIL_PROVIDER: undefined,
+        SMTP_HOST: undefined,
+        SMTP_USER: undefined,
+        SMTP_PASS: undefined,
+        MAIL_FROM: undefined,
+        ALLOW_CONSOLE_MAIL_PROVIDER: undefined,
+      }),
+    ).toThrow();
+  });
+
+  it('requires explicit opt-in when MAIL_PROVIDER=console', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        MAIL_PROVIDER: 'console',
+        SMTP_HOST: undefined,
+        SMTP_USER: undefined,
+        SMTP_PASS: undefined,
+        MAIL_FROM: undefined,
+        ALLOW_CONSOLE_MAIL_PROVIDER: 'false',
+      }),
+    ).toThrow();
+  });
+
+  it('accepts MAIL_PROVIDER=console with explicit ALLOW_CONSOLE_MAIL_PROVIDER=true', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        MAIL_PROVIDER: 'console',
+        SMTP_HOST: undefined,
+        SMTP_USER: undefined,
+        SMTP_PASS: undefined,
+        MAIL_FROM: undefined,
+        ALLOW_CONSOLE_MAIL_PROVIDER: 'true',
+      }),
+    ).toMatchObject({ MAIL_PROVIDER: 'console', ALLOW_CONSOLE_MAIL_PROVIDER: true });
+  });
+
+  it('parses INVOICE_PROVIDER=einvoice at the env layer (the runtime rejection lives in EInvoiceProvider)', () => {
+    expect(
+      parseEnv({ ...validProductionEnv, INVOICE_PROVIDER: 'einvoice' }),
+    ).toMatchObject({ INVOICE_PROVIDER: 'einvoice' });
   });
 });
 

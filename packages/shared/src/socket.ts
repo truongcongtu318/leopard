@@ -1,7 +1,28 @@
 import type { OrderStatus, ProviderSource } from './enums.js';
+import type { VehicleType } from './domain/vehicle/vehicle-type.js';
 import type { TrackingPoint } from './tracking.js';
 
 export const TRACKING_NAMESPACE = '/tracking';
+export const DISPATCH_NAMESPACE = '/dispatch';
+
+export const DispatchSocketEvent = {
+  offer: 'dispatch:offer',
+} as const;
+export type DispatchSocketEvent = (typeof DispatchSocketEvent)[keyof typeof DispatchSocketEvent];
+
+export interface DispatchOfferEvent {
+  readonly orderId: string;
+  readonly pickup: { readonly lat: number; readonly lng: number };
+  readonly pickupAddress: string;
+  readonly dropoffAddress: string;
+  readonly vehicleType: VehicleType;
+  readonly priceVnd: number | null;
+  readonly distanceMeters: number | null;
+  readonly durationSeconds: number | null;
+  readonly cargoNote: string | null;
+  readonly driverDistanceM: number;
+  readonly timeoutSeconds: number;
+}
 
 export const TrackingSocketEvent = {
   joinOrder: 'tracking:join-order',
@@ -121,3 +142,4 @@ export interface NotificationCreatedEvent {
   readonly createdAt: string;
   readonly orderId?: string;
 }
+

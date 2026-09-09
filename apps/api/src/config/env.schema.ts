@@ -90,6 +90,15 @@ const envSchema = z
     PAYOS_CLIENT_ID: optionalProviderValue(10),
     PAYOS_API_KEY: optionalProviderValue(10),
     PAYOS_CHECKSUM_KEY: optionalProviderValue(10),
+    INVOICE_PROVIDER: z.enum(['self', 'einvoice']).optional(),
+    MAIL_PROVIDER: z.enum(['console', 'smtp']).optional(),
+    ALLOW_CONSOLE_MAIL_PROVIDER: booleanFlagSchema.optional(),
+    SMTP_HOST: optionalProviderValue(),
+    SMTP_PORT: nonNegativeIntegerSchema.optional(),
+    SMTP_USER: optionalProviderValue(),
+    SMTP_PASS: optionalProviderValue(),
+    SMTP_SECURE: booleanFlagSchema.optional(),
+    MAIL_FROM: optionalProviderValue(),
   })
   .superRefine((env, context) => {
     if (env.STORAGE_PROVIDER === 's3') {
@@ -106,6 +115,15 @@ const envSchema = z
         env,
         ['PAYOS_CLIENT_ID', 'PAYOS_API_KEY', 'PAYOS_CHECKSUM_KEY'],
         'when PAYMENT_PROVIDER=payos',
+        context,
+      );
+    }
+
+    if (env.MAIL_PROVIDER === 'smtp') {
+      requireConfiguration(
+        env,
+        ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM'],
+        'when MAIL_PROVIDER=smtp',
         context,
       );
     }
@@ -193,6 +211,18 @@ const envSchema = z
         path: ['ALLOW_DEMO_PAYMENT_PROVIDER'],
         message:
           'ALLOW_DEMO_PAYMENT_PROVIDER=true is required when PAYMENT_PROVIDER=demo',
+      });
+    }
+
+    if (
+      (env.MAIL_PROVIDER ?? 'console') === 'console' &&
+      env.ALLOW_CONSOLE_MAIL_PROVIDER !== true
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['ALLOW_CONSOLE_MAIL_PROVIDER'],
+        message:
+          'ALLOW_CONSOLE_MAIL_PROVIDER=true is required when MAIL_PROVIDER=console (or unset) in production',
       });
     }
   });
@@ -291,5 +321,14 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     PAYOS_CLIENT_ID: source.PAYOS_CLIENT_ID,
     PAYOS_API_KEY: source.PAYOS_API_KEY,
     PAYOS_CHECKSUM_KEY: source.PAYOS_CHECKSUM_KEY,
+    INVOICE_PROVIDER: source.INVOICE_PROVIDER,
+    MAIL_PROVIDER: source.MAIL_PROVIDER,
+    ALLOW_CONSOLE_MAIL_PROVIDER: source.ALLOW_CONSOLE_MAIL_PROVIDER,
+    SMTP_HOST: source.SMTP_HOST,
+    SMTP_PORT: source.SMTP_PORT,
+    SMTP_USER: source.SMTP_USER,
+    SMTP_PASS: source.SMTP_PASS,
+    SMTP_SECURE: source.SMTP_SECURE,
+    MAIL_FROM: source.MAIL_FROM,
   });
 }

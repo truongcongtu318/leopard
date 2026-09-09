@@ -2,11 +2,13 @@ import React from 'react';
 import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
 
 const leopardWordmarkSource = require('../../../assets/brand/leopard-wordmark.png');
+const brandLoginSource = require('../../../assets/brand/brand_login.png');
 const leopardEmblemSource = require('../../../assets/brand/leopard-emblem.png');
 
 // Intrinsic pixel ratios of the brand PNGs (keep aspect when sizing).
-const WORDMARK_RATIO = 1464 / 241;
-const EMBLEM_RATIO = 1099 / 591;
+const WORDMARK_RATIO = 911 / 205;
+const BRAND_LOGIN_RATIO = 2233 / 704;
+const EMBLEM_RATIO = 678 / 324;
 
 export type VectorIconProps = Readonly<{
   size?: number;
@@ -20,8 +22,8 @@ export type VectorIconProps = Readonly<{
  * 📍 Vector Icon: Định vị / Ghim điểm lấy / giao hàng (Location Pin)
  */
 export function IconLocationPin({
-  color = '#0284C7',
-  secondaryColor = '#E0F2FE',
+  color = '#0B1E42',
+  secondaryColor = '#F0F4F9',
   size = 24,
   strokeWidth = 1.75,
   testID = 'icon-location-pin',
@@ -71,8 +73,8 @@ export function IconLocationPin({
  * 🚚 Vector Icon: Vận chuyển nhanh / Điều phối (Speed Truck)
  */
 export function IconSpeedTruck({
-  color = '#0284C7',
-  secondaryColor = '#E0F2FE',
+  color = '#0B1E42',
+  secondaryColor = '#F0F4F9',
   size = 24,
   strokeWidth = 1.75,
   testID = 'icon-speed-truck',
@@ -162,10 +164,60 @@ export function IconSecurityShield({
 }
 
 /**
+ * 📷 Vector Icon: Chụp ảnh / Camera hàng hóa (Cargo Photo Camera)
+ */
+export function IconCamera({
+  color = '#0B1E42',
+  secondaryColor = '#F0F4F9',
+  size = 24,
+  strokeWidth = 1.75,
+  testID = 'icon-camera',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <circle cx="12" cy="13" fill={secondaryColor} r="4" stroke={color} strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View
+        style={[
+          styles.nativeRect,
+          {
+            width: size * 0.75,
+            height: size * 0.55,
+            borderColor: color,
+            borderWidth: strokeWidth,
+            backgroundColor: secondaryColor,
+          },
+        ]}
+      />
+    </View>
+  );
+}
+
+/**
  * 🎧 Vector Icon: Hỗ trợ 24/7 / Điều phối viên (Support Headset)
  */
 export function IconSupport247({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 24,
   strokeWidth = 1.75,
   testID = 'icon-support-247',
@@ -209,7 +261,7 @@ export function IconSupport247({
  * 💳 Vector Icon: Thanh toán / Thẻ ngân hàng (Payment Card)
  */
 export function IconPaymentConvenient({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 24,
   strokeWidth = 1.75,
   testID = 'icon-payment-convenient',
@@ -284,7 +336,7 @@ export function IconQrPayment({
  * 🏦 Vector Icon: Ngân hàng / Tổ chức tín dụng (Bank Building)
  */
 export function IconBank({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 22,
   strokeWidth = 1.75,
   testID = 'icon-bank',
@@ -379,7 +431,7 @@ export function IconTxRefund({
  * 📋 Vector Icon: Sao chép (Copy to Clipboard)
  */
 export function IconCopy({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 18,
   strokeWidth = 1.75,
   testID = 'icon-copy',
@@ -647,7 +699,7 @@ export function IconCameraProof({
  * 📞 Vector Icon: Gọi điện (Phone)
  */
 export function IconPhone({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 20,
   strokeWidth = 1.75,
   testID = 'icon-phone',
@@ -670,7 +722,7 @@ export function IconPhone({
  * 💬 Vector Icon: Tin nhắn (Message)
  */
 export function IconMessage({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 20,
   strokeWidth = 1.75,
   testID = 'icon-message',
@@ -693,7 +745,7 @@ export function IconMessage({
  * 🛵 Vector Icon Phương Tiện: Xe Máy (Motorbike / Scooter)
  */
 export function IconVehicleMotorbike({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 28,
   strokeWidth = 1.75,
   testID = 'icon-vehicle-motorbike',
@@ -720,7 +772,7 @@ export function IconVehicleMotorbike({
  * 🚐 Vector Icon Phương Tiện: Xe Van (Delivery Van)
  */
 export function IconVehicleVan({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 28,
   strokeWidth = 1.75,
   testID = 'icon-vehicle-van',
@@ -800,7 +852,7 @@ export function IconVehicle3Wheel({
  * 🚐 Vector Icon Phương Tiện: Xe Tải Nhẹ (Light Truck)
  */
 export function IconVehicleLightTruck({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 28,
   strokeWidth = 1.75,
   testID = 'icon-vehicle-light-truck',
@@ -854,7 +906,7 @@ export function IconVehicleHeavyTruck({
 /**
  * 📦 Vector Icon Vai trò: Khách hàng (Customer)
  */
-export function IconRoleCustomer({ color = '#0284C7', secondaryColor = '#E0F2FE', size = 24 }: VectorIconProps) {
+export function IconRoleCustomer({ color = '#0B1E42', secondaryColor = '#F0F4F9', size = 24 }: VectorIconProps) {
   if (Platform.OS === 'web') {
     return (
       <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
@@ -888,7 +940,7 @@ export function IconRoleDriver({ color = '#1D4ED8', secondaryColor = '#DBEAFE', 
 /**
  * 🏢 Vector Icon Vai trò: Đội xe (Fleet Owner)
  */
-export function IconRoleFleet({ color = '#0F172A', secondaryColor = '#E0F2FE', size = 24 }: VectorIconProps) {
+export function IconRoleFleet({ color = '#0F172A', secondaryColor = '#F0F4F9', size = 24 }: VectorIconProps) {
   if (Platform.OS === 'web') {
     return (
       <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
@@ -967,8 +1019,30 @@ export function LeopardEmblem({
 }
 
 /**
- * Alias tương thích ngược: các màn cũ vẫn gọi <LeopardMobileLogo />.
- * Nhận `width`/`height` như trước nhưng render ảnh wordmark thật, giữ tỉ lệ.
+ * 🐆 Chữ nhận diện thương hiệu LEOPARD đăng nhập / đăng ký (ảnh brand_login.png sắc nét, chất lượng cao).
+ * Giữ đúng tỉ lệ gốc 2233x704 theo chiều cao truyền vào.
+ */
+export function BrandLoginLogo({
+  height = 42,
+  testID = 'brand-login-logo',
+}: {
+  height?: number;
+  testID?: string;
+}) {
+  return (
+    <Image
+      accessibilityLabel="LEOPARD"
+      accessibilityRole="image"
+      resizeMode="contain"
+      source={brandLoginSource}
+      style={{ height, width: Math.round(height * BRAND_LOGIN_RATIO) }}
+      testID={testID}
+    />
+  );
+}
+
+/**
+ * Alias tương thích: các màn gọi <LeopardMobileLogo /> sẽ dùng ảnh brand_login.png mới nhất, chuẩn tỷ lệ.
  */
 export function LeopardMobileLogo({
   height = 40,
@@ -979,7 +1053,7 @@ export function LeopardMobileLogo({
   height?: number;
   testID?: string;
 }) {
-  return <LeopardWordmark height={height} testID={testID} />;
+  return <BrandLoginLogo height={height} testID={testID} />;
 }
 
 /**
@@ -1484,7 +1558,7 @@ export function IconTrophy({
  * 🪪 Vector Icon: Thẻ căn cước / CCCD (ID Card)
  */
 export function IconIdCard({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 24,
   strokeWidth = 1.75,
   testID = 'icon-id-card',
@@ -1511,7 +1585,7 @@ export function IconIdCard({
  * 📄 Vector Icon: Giấy phép lái xe / GPLX (Driver License)
  */
 export function IconLicense({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 24,
   strokeWidth = 1.75,
   testID = 'icon-license',
@@ -1538,7 +1612,7 @@ export function IconLicense({
  * 📋 Vector Icon: Giấy tờ bảo hiểm (Insurance Document)
  */
 export function IconInsuranceDoc({
-  color = '#0284C7',
+  color = '#0B1E42',
   size = 24,
   strokeWidth = 1.75,
   testID = 'icon-insurance-doc',
@@ -1608,6 +1682,55 @@ export function IconEarnings({
 }
 
 /**
+ * ⬅️ Vector Icon: Mũi tên quay lại (Chevron Left / Back)
+ */
+export function IconChevronLeft({
+  color = '#0B1E42',
+  size = 20,
+  strokeWidth = 2.25,
+  testID = 'icon-chevron-left',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M15 18L9 12L15 6"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View
+        style={[
+          styles.nativeChevron,
+          {
+            width: size * 0.5,
+            height: size * 0.5,
+            borderTopWidth: strokeWidth,
+            borderLeftWidth: strokeWidth,
+            borderTopColor: color,
+            borderLeftColor: color,
+          },
+        ]}
+      />
+    </View>
+  );
+}
+
+/**
  * ⭐ Star Rating Component: Hiển thị đánh giá sao SVG (không dùng text/emoji)
  */
 export function StarRating({
@@ -1645,6 +1768,403 @@ export function StarRating({
   );
 }
 
+/**
+ * ☰ Vector Icon: Menu điều hướng (Hamburger Menu)
+ */
+export function IconMenu({
+  color = '#FFFFFF',
+  size = 24,
+  strokeWidth = 2,
+  testID = 'icon-menu',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M4 6H20M4 12H20M4 18H20"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={{ width: size * 0.7, height: strokeWidth, backgroundColor: color, marginVertical: 2, borderRadius: 1 }} />
+      <View style={{ width: size * 0.7, height: strokeWidth, backgroundColor: color, marginVertical: 2, borderRadius: 1 }} />
+      <View style={{ width: size * 0.7, height: strokeWidth, backgroundColor: color, marginVertical: 2, borderRadius: 1 }} />
+    </View>
+  );
+}
+
+/**
+ * ✕ Vector Icon: Đóng / Tắt (Close / Dismiss)
+ */
+export function IconClose({
+  color = '#FFFFFF',
+  size = 24,
+  strokeWidth = 2,
+  testID = 'icon-close',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6L6 18M6 6L18 18"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <Text style={{ color, fontSize: size * 0.8, fontWeight: '700', lineHeight: size }}>✕</Text>
+    </View>
+  );
+}
+
+/**
+ * ➡ Vector Icon: Mũi tên tiến / Chọn tiếp (Chevron Right)
+ */
+export function IconChevronRight({
+  color = '#94A3B8',
+  size = 20,
+  strokeWidth = 2,
+  testID = 'icon-chevron-right',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        data-testid={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M9 18L15 12L9 6"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View
+        style={[
+          styles.nativeChevron,
+          {
+            width: size * 0.45,
+            height: size * 0.45,
+            borderTopWidth: strokeWidth,
+            borderRightWidth: strokeWidth,
+            borderTopColor: color,
+            borderRightColor: color,
+            transform: [{ rotate: '45deg' }],
+          },
+        ]}
+      />
+    </View>
+  );
+}
+
+/**
+ * ⛽ Vector Icon: Cây xăng / Trạm cấp dầu Diesel 0.05S (Fuel Pump)
+ */
+export function IconFuelPump({
+  color = '#0B1E42',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-fuel-pump',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 21H13V5C13 3.89543 12.1046 3 11 3H5C3.89543 3 3 3.89543 3 5V21Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M6 7H10V10H6V7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M13 9H16C17.1046 9 18 9.89543 18 11V16C18 17.1046 18.8954 18 20 18C21.1046 18 22 17.1046 22 16V9L19.5 6.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M2 21H14" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.55, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * ⚖️ Vector Icon: Trạm cân tải trọng xe tải (Scale Weight)
+ */
+export function IconScaleWeight({
+  color = '#0B1E42',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-scale-weight',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3V21M6 21H18M3 7L12 5L21 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M6 7L3 13H9L6 7ZM18 7L15 13H21L18 7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.75, height: size * 0.45, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * ☕ Vector Icon: Trạm dừng nghỉ / Nghỉ ngơi tài xế (Coffee Rest)
+ */
+export function IconCoffeeRest({
+  color = '#0B1E42',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-coffee-rest',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 8H4V16C4 18.2091 5.79086 20 8 20H13C15.2091 20 17 18.2091 17 16V8ZM17 9H19C20.1046 9 21 9.89543 21 11C21 12.1046 20.1046 13 19 13H17" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <path d="M7 2V5M11 2V5M15 2V5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.65, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 📡 Vector Icon: Sóng radar quét điều phối đơn hàng (Radar Pulse)
+ */
+export function IconRadarPulse({
+  color = '#0B1E42',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-radar-pulse',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" fill={color} r="2.5" />
+        <path d="M16.24 7.76C18.58 10.1 18.58 13.9 16.24 16.24M7.76 7.76C5.42 10.1 5.42 13.9 7.76 16.24" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M19.07 4.93C22.98 8.84 22.98 15.16 19.07 19.07M4.93 4.93C1.02 8.84 1.02 15.16 4.93 19.07" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativePinOuter, { width: size * 0.65, height: size * 0.65, borderRadius: (size * 0.65) / 2, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 👑 Vector Icon: Vương miện / Hạng thành viên (Crown)
+ */
+export function IconCrown({
+  color = '#F59E0B',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-crown',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 19H22M5 19L2 7L8 11L12 3L16 11L22 7L19 19H5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <Text style={{ color, fontSize: size * 0.75, fontWeight: '700' }}>👑</Text>
+    </View>
+  );
+}
+
+/**
+ * ✓ Vector Icon: Hoàn tất / Đã sao chép (Check)
+ */
+export function IconCheck({
+  color = '#10B981',
+  size = 18,
+  strokeWidth = 2,
+  testID = 'icon-check',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <polyline points="20 6 9 17 4 12" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <Text style={{ color, fontSize: size * 0.8, fontWeight: '800' }}>✓</Text>
+    </View>
+  );
+}
+
+/**
+ * ↗ Vector Icon: Mở liên kết ngoài / Xem GPS (External Link)
+ */
+export function IconExternalLink({
+  color = '#0B1E42',
+  size = 16,
+  strokeWidth = 1.75,
+  testID = 'icon-external-link',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <polyline points="15 3 21 3 21 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="10" x2="21" y1="14" y2="3" />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <Text style={{ color, fontSize: size * 0.75 }}>↗</Text>
+    </View>
+  );
+}
+
+/**
+ * 📄 Vector Icon: Hóa đơn VAT / Chứng từ điện tử (File Text)
+ */
+export function IconFileText({
+  color = '#D97706',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-file-text',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <polyline points="14 2 14 8 20 8" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="16" x2="8" y1="13" y2="13" />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="16" x2="8" y1="17" y2="17" />
+        <polyline points="10 9 9 9 8 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.75, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 💳 Vector Icon: Thẻ ngân hàng / Visa / Mastercard (Credit Card)
+ */
+export function IconCreditCard({
+  color = '#059669',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-credit-card',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <rect height="16" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} width="22" x="1" y="4" />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="1" x2="23" y1="10" y2="10" />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * ⚠️ Vector Icon: Cảnh báo chưa thanh toán (Shield Alert)
+ */
+export function IconShieldAlert({
+  color = '#D97706',
+  size = 20,
+  strokeWidth = 1.75,
+  testID = 'icon-shield-alert',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 22S4 18 4 12V5L12 2L20 5V12C20 18 12 22 12 22Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="12" x2="12" y1="8" y2="12" />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="12" x2="12.01" y1="16" y2="16" />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <View style={[styles.nativeShield, { width: size * 0.7, height: size * 0.8, borderColor: color, borderWidth: strokeWidth }]} />
+    </View>
+  );
+}
+
+/**
+ * 🚪 Vector Icon: Đăng xuất (Log Out)
+ */
+export function IconLogOut({
+  color = '#DC2626',
+  size = 18,
+  strokeWidth = 1.75,
+  testID = 'icon-log-out',
+}: VectorIconProps) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <polyline points="16 17 21 12 16 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="21" x2="9" y1="12" y2="12" />
+      </svg>
+    );
+  }
+  return (
+    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
+      <Text style={{ color, fontSize: size * 0.75 }}>🚪</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   centerBox: {
     alignItems: 'center',
@@ -1662,6 +2182,9 @@ const styles = StyleSheet.create({
   },
   nativeShield: {
     borderRadius: 6,
+  },
+  nativeChevron: {
+    transform: [{ rotate: '-45deg' }],
   },
   nativeBrandBox: {
     flexDirection: 'row',
@@ -1737,7 +2260,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
     paddingHorizontal: 5,
     paddingVertical: 3,
     borderRadius: 4,

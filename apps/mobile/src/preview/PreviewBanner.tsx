@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
-export const MOBILE_PREVIEW_BANNER_TEXT = 'Bản xem trước giao diện — dữ liệu mô phỏng';
+export const MOBILE_PREVIEW_BANNER_TEXT = 'LEOPARD Logistics · Phiên bản Thử nghiệm Pilot';
 
 export function PreviewBanner() {
   return (

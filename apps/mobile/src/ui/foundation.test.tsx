@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { colors, layout, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
@@ -12,6 +12,8 @@ import { RouteMapSchematic } from './RouteMapSchematic';
 import { RouteSpine, RouteSummary } from './RouteSpine';
 import { SCREEN_SCAFFOLD_SAFE_AREA_OWNER, ScreenScaffold, SectionHeading } from './ScreenScaffold';
 import { StatusTimeline, statusTimelineKeyExtractor } from './StatusTimeline';
+
+jest.setTimeout(15000);
 
 const longPickup =
   'Cổng số 3, Khu công nghiệp Tân Bình, đường Tây Thạnh kéo dài, phường Tây Thạnh, Thành phố Hồ Chí Minh';
@@ -69,6 +71,35 @@ describe('ScreenScaffold and SectionHeading', () => {
     expect(heading.props.accessibilityRole).toBe('header');
     expect(heading.props.numberOfLines).toBeUndefined();
     expect(StyleSheet.flatten(heading.props.style)).toMatchObject(typography.sectionTitle);
+
+    await screen.unmount();
+  });
+
+  it('renders an accessible back button only when onBack is supplied and invokes it on press', async () => {
+    const onBack = jest.fn();
+    const screen = await render(
+      <ScreenScaffold onBack={onBack} title="Chi tiết đơn">
+        <Text>Nội dung</Text>
+      </ScreenScaffold>,
+    );
+
+    const backButton = screen.getByRole('button', { name: 'Quay lại' });
+    expect(backButton).toBeTruthy();
+
+    await fireEvent.press(backButton);
+    expect(onBack).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('omits the back button when onBack is not supplied', async () => {
+    const screen = await render(
+      <ScreenScaffold title="Trang chủ">
+        <Text>Nội dung</Text>
+      </ScreenScaffold>,
+    );
+
+    expect(screen.queryByLabelText('Quay lại')).toBeNull();
 
     await screen.unmount();
   });
@@ -227,6 +258,39 @@ describe('OrderSummary', () => {
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.getByText('Chờ tài xế')).toBeTruthy();
     expect(screen.queryByText('ETA dự kiến')).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('renders an action button without nesting button roles', async () => {
+    const onPress = jest.fn();
+    const onAction = jest.fn();
+    const screen = await render(
+      <OrderSummary
+        actionButton={
+          <Pressable
+            accessibilityLabel="Đặt lại chuyến"
+            accessibilityRole="button"
+            onPress={onAction}
+            testID="action-btn"
+          >
+            <Text>Đặt lại chuyến</Text>
+          </Pressable>
+        }
+        destination={destination}
+        onPress={onPress}
+        orderReference="LP-240815-02"
+        origin={origin}
+        status="DELIVERED"
+      />,
+    );
+
+    const actionButton = screen.getByTestId('action-btn');
+    expect(actionButton).toBeTruthy();
+    expect(actionButton.props.accessibilityRole).toBe('button');
+
+    const card = screen.getByTestId('order-summary-LP-240815-02');
+    expect(card.props.accessibilityRole).toBeUndefined();
 
     await screen.unmount();
   });

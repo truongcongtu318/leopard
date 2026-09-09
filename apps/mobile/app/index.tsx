@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BrandSplashScreen } from '../src/features/splash/BrandSplashScreen';
 import { useRootSessionRouter } from '../src/navigation/role-router';
-import { colors } from '../src/theme/tokens';
+import { colors, leopardPalette } from '../src/theme/tokens';
 
 export default function IndexRoute() {
   const { isHydrated, redirectTo } = useRootSessionRouter();
@@ -31,6 +31,6 @@ export default function IndexRoute() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.neutral.canvas,
+    backgroundColor: leopardPalette.primary,
   },
 });

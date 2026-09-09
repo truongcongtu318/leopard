@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  FlatList,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -39,43 +39,43 @@ export type DriverTransaction = Readonly<{
 const mockDriverTransactions: readonly DriverTransaction[] = [
   {
     id: 'dtx-001',
-    type: 'WITHDRAWAL',
-    title: 'Rút tiền về MB Bank',
-    amount: -1000000,
-    createdAtLabel: 'Hôm nay, 10:15',
-    statusLabel: 'Thành công',
+    type: 'EARNING',
+    title: 'Cước chuyến LP-260905-001 (VLXD Minh Khang)',
+    amount: 408000,
+    createdAtLabel: 'Hôm nay, 15:10',
+    orderReference: 'LP-260905-001',
+    statusLabel: 'Đã cộng ví',
   },
   {
     id: 'dtx-002',
-    type: 'EARNING',
-    title: 'Cước chuyến LP-D-260815-001',
-    amount: 170000,
-    createdAtLabel: 'Hôm nay, 14:32',
-    orderReference: 'LP-D-260815-001',
-    statusLabel: 'Đã cộng',
+    type: 'WITHDRAWAL',
+    title: 'Rút tiền về MB Bank (0987654321)',
+    amount: -2000000,
+    createdAtLabel: 'Hôm nay, 08:30',
+    statusLabel: 'Thành công',
   },
   {
     id: 'dtx-003',
     type: 'BONUS',
-    title: 'Thưởng tuần hoàn thành 30 chuyến',
-    amount: 300000,
-    createdAtLabel: 'Hôm qua, 20:00',
+    title: 'Thưởng tuần hoàn thành 25 chuyến giao nhanh',
+    amount: 500000,
+    createdAtLabel: 'Hôm qua, 21:00',
     statusLabel: 'Đã nhận',
   },
   {
     id: 'dtx-004',
     type: 'EARNING',
-    title: 'Cước chuyến LP-D-260815-002',
-    amount: 250000,
-    createdAtLabel: 'Hôm qua, 16:45',
-    orderReference: 'LP-D-260815-002',
-    statusLabel: 'Đã cộng',
+    title: 'Cước chuyến LP-260904-009 (Chuyển phòng trọ)',
+    amount: 357000,
+    createdAtLabel: 'Hôm qua, 17:30',
+    orderReference: 'LP-260904-009',
+    statusLabel: 'Đã cộng ví',
   },
   {
     id: 'dtx-005',
     type: 'WITHDRAWAL',
-    title: 'Rút tiền về MB Bank',
-    amount: -2500000,
+    title: 'Rút tiền về MB Bank (0987654321)',
+    amount: -1500000,
     createdAtLabel: '28/08/2026, 09:20',
     statusLabel: 'Thành công',
   },
@@ -94,7 +94,7 @@ const withdrawalPresets = [500000, 1000000, 2000000];
 
 export function DriverWalletScreen() {
   const router = useRouter();
-  const [balance, setBalance] = useState(2450000);
+  const [balance, setBalance] = useState(3450000);
   const [showBalance, setShowBalance] = useState(true);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<string>('1000000');
@@ -135,12 +135,15 @@ export function DriverWalletScreen() {
   return (
     <ScreenScaffold
       eyebrow="DRIVER · WALLET & PAYOUT"
-      headerTone="ink"
+      headerTone="plain"
       onBack={() => router.back()}
-      subtitle="Quản lý số dư, rút tiền về tài khoản ngân hàng và lịch sử thu nhập."
       title="Ví tài xế"
     >
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollWrap}
+      >
         {/* Card Số Dư Khả Dụng */}
         <View style={styles.balanceCard}>
           <View style={styles.balanceHeader}>
@@ -236,14 +239,11 @@ export function DriverWalletScreen() {
             })}
           </View>
 
-          <FlatList
-            contentContainerStyle={styles.txList}
-            data={filteredTransactions}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => {
+          <View style={styles.txList}>
+            {filteredTransactions.map((item) => {
               const isPositive = item.amount > 0;
               return (
-                <View style={styles.txCard}>
+                <View key={item.id} style={styles.txCard}>
                   <View style={styles.txLeft}>
                     <View
                       style={[
@@ -271,11 +271,10 @@ export function DriverWalletScreen() {
                   </View>
                 </View>
               );
-            }}
-            scrollEnabled={false}
-          />
+            })}
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Modal Rút Tiền */}
       <Modal
@@ -358,6 +357,14 @@ export function DriverWalletScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollWrap: {
+    flex: 1,
+    minHeight: 0,
+  },
+  scrollContent: {
+    gap: spacing.md,
+    paddingBottom: spacing.xl + 20,
+  },
   container: {
     flex: 1,
     gap: spacing.md,

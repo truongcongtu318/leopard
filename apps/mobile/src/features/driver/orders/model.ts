@@ -43,6 +43,12 @@ export type DriverPublicOrderView = Readonly<{
   cargoSummary: string;
   etaLabel: string;
   updatedAtLabel: string;
+  priceVnd?: number | null;
+  priceLabel?: string;
+  distanceLabel?: string;
+  pickupLocationLabel?: string;
+  dropoffLocationLabel?: string;
+  pickupDistanceLabel?: string;
 }>;
 
 export type DriverActiveTripView = Readonly<{

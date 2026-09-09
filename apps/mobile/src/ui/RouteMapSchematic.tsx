@@ -30,16 +30,23 @@ export function RouteMapSchematic({
         />
       </View>
       <View style={styles.routeLedger}>
-        <View style={styles.location}>
-          <Text style={styles.locationLabel}>ĐIỂM LẤY</Text>
-          <Text style={styles.locationValue}>{originLabel}</Text>
+        <View style={styles.routeLedgerRow}>
+          <View style={styles.pointDotA}>
+            <Text style={styles.pointDotText}>A</Text>
+          </View>
+          <View style={styles.locationTextWrap}>
+            <Text style={styles.locationLabel}>ĐIỂM LẤY HÀNG (A)</Text>
+            <Text numberOfLines={2} style={styles.locationValue}>{originLabel}</Text>
+          </View>
         </View>
-        <Text accessibilityElementsHidden style={styles.arrow}>
-          →
-        </Text>
-        <View style={[styles.location, styles.destinationLocation]}>
-          <Text style={styles.locationLabel}>ĐIỂM GIAO</Text>
-          <Text style={styles.locationValue}>{destinationLabel}</Text>
+        <View style={styles.routeLedgerRow}>
+          <View style={styles.pointDotB}>
+            <Text style={styles.pointDotText}>B</Text>
+          </View>
+          <View style={styles.locationTextWrap}>
+            <Text style={styles.locationLabel}>ĐIỂM GIAO HÀNG (B)</Text>
+            <Text numberOfLines={2} style={styles.locationValue}>{destinationLabel}</Text>
+          </View>
         </View>
       </View>
       {markerLabel ? (
@@ -66,30 +73,54 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   routeLedger: {
-    alignItems: 'flex-start',
     borderTopColor: colors.neutral.subtleBorder,
     borderTopWidth: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: spacing.xs,
     padding: spacing.sm,
   },
-  location: { flex: 1, gap: spacing.xxs, minWidth: 0 },
-  destinationLocation: { alignItems: 'flex-end' },
+  routeLedgerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs + 2,
+  },
+  pointDotA: {
+    alignItems: 'center',
+    backgroundColor: '#16A34A',
+    borderRadius: 10,
+    height: 20,
+    justifyContent: 'center',
+    width: 20,
+  },
+  pointDotB: {
+    alignItems: 'center',
+    backgroundColor: '#EA580C',
+    borderRadius: 10,
+    height: 20,
+    justifyContent: 'center',
+    width: 20,
+  },
+  pointDotText: {
+    color: '#FFFFFF',
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  locationTextWrap: {
+    flex: 1,
+    gap: 1,
+  },
   locationLabel: {
     ...typography.caption,
     color: colors.neutral.mutedText,
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
     letterSpacing: 0.6,
   },
   locationValue: {
     ...typography.label,
     color: colors.neutral.text,
-    flexShrink: 1,
-  },
-  arrow: {
-    ...typography.sectionTitle,
-    color: colors.brand.background,
+    fontSize: 13,
+    fontWeight: '600',
   },
   markerLedger: {
     alignItems: 'center',

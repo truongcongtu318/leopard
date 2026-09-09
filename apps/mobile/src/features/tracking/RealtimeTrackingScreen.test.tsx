@@ -81,7 +81,7 @@ describe('RealtimeTrackingScreen', () => {
     );
 
     expect(screen.getByText('Tiến trình giao hàng')).toBeTruthy();
-    expect(screen.getByText('ETA dự kiến: 10 phút')).toBeTruthy();
+    expect(screen.getByText('Thời gian dự kiến: 10 phút')).toBeTruthy();
     expect(screen.getByText('11.0 km đã đi')).toBeTruthy();
     expect(screen.getByText('1.5 km còn lại')).toBeTruthy();
 

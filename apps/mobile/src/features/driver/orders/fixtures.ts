@@ -65,18 +65,18 @@ function deepFreeze<T>(value: T): T {
 
 function assignedRoute() {
   return {
-    origin: { id: 'driver-pickup', label: 'Kho riêng tư mô phỏng tại Quận 7' },
+    origin: { id: 'driver-pickup', label: 'Kho VLXD Minh Khang — Tân Phú' },
     stops: [
-      { id: 'driver-stop-1', label: 'Điểm dừng mô phỏng tại Quận 4' },
-      { id: 'driver-stop-2', label: 'Điểm dừng mô phỏng tại Quận 3' },
-      { id: 'driver-stop-3', label: 'Điểm dừng mô phỏng tại Quận 1' },
+      { id: 'driver-stop-1', label: 'Trạm trung chuyển Quận 10' },
+      { id: 'driver-stop-2', label: 'Điểm giao 1 — 128 Lê Văn Sỹ, Q.3' },
+      { id: 'driver-stop-3', label: 'Điểm giao 2 — 45 Nam Kỳ Khởi Nghĩa, Q.1' },
     ],
     destination: {
       id: 'driver-dropoff',
-      label: 'Điểm giao riêng tư mô phỏng tại Thành phố Thủ Đức',
+      label: 'Công trình Chung cư An Phú — TP. Thủ Đức',
     },
     distanceLabel: '18,4 km',
-    etaDurationSeconds: 1080,
+    etaDurationSeconds: 1680,
     etaSource: 'DEMO' as const,
   };
 }
@@ -87,21 +87,33 @@ function requestedOrders(): DriverPublicOrderView[] {
       id: '22222222-2222-4222-8222-222222222101',
       reference: 'LP-D-260815-101',
       status: 'REQUESTED',
-      publicRouteLabel: 'Khu vực Quận 7 → Thành phố Thủ Đức',
-      vehicleLabel: 'Xe van',
-      cargoSummary: 'Hàng đóng thùng · khoảng 120 kg',
-      etaLabel: 'ETA dự kiến · 18 phút · Dữ liệu mô phỏng',
+      publicRouteLabel: 'Khu vực Tân Phú → TP. Thủ Đức',
+      vehicleLabel: 'Xe tải 2.5T',
+      cargoSummary: '40 bao xi măng INSEE · khoảng 2.000 kg',
+      etaLabel: 'Thời gian dự kiến · 28 phút',
       updatedAtLabel: '14:30 · 15/08/2026',
+      priceVnd: 285000,
+      priceLabel: '285.000 ₫',
+      distanceLabel: '18,4 km',
+      pickupLocationLabel: 'Khu vực Tân Phú',
+      dropoffLocationLabel: 'TP. Thủ Đức',
+      pickupDistanceLabel: 'Cách bạn 1.2 km',
     },
     {
       id: '22222222-2222-4222-8222-222222222102',
       reference: 'LP-D-260815-102',
       status: 'REQUESTED',
       publicRouteLabel: 'Khu vực Bình Thạnh → Quận 3',
-      vehicleLabel: 'Xe máy',
-      cargoSummary: 'Bưu kiện nhỏ · khoảng 8 kg',
-      etaLabel: 'ETA dự kiến · 14 phút',
+      vehicleLabel: 'Xe tải 1.5T',
+      cargoSummary: 'Nội thất gỗ xưởng Hoàng Gia · khoảng 850 kg',
+      etaLabel: 'Thời gian dự kiến · 18 phút',
       updatedAtLabel: '14:28 · 15/08/2026',
+      priceVnd: 195000,
+      priceLabel: '195.000 ₫',
+      distanceLabel: '8,2 km',
+      pickupLocationLabel: 'Khu vực Bình Thạnh',
+      dropoffLocationLabel: 'Quận 3',
+      pickupDistanceLabel: 'Cách bạn 2.5 km',
     },
   ];
 }
@@ -165,7 +177,7 @@ export function createDriverListFixture(scenarioId: DriverListScenarioId): Drive
       scenarioId,
       kind: 'error',
       title: 'Không thể tải danh sách đơn',
-      message: 'Hãy thử lại. Mã yêu cầu mô phỏng: REQ-D-LIST-01.',
+      message: 'Hãy thử lại. Mã yêu cầu: REQ-D-LIST-01.',
     });
   }
   if (scenarioId === 'D-LIST-PERMISSION') {
@@ -289,31 +301,31 @@ function proofFor(scenarioId: DriverDetailScenarioId): DriverProofView {
       kind: 'selected-local',
       label: 'Ảnh đã chọn · chưa tải lên',
       message: 'Ảnh chỉ nằm trên thiết bị cho đến khi port xác nhận upload.',
-      fileLabel: 'xac-nhan-demo.jpg',
+      fileLabel: 'bien-nhan-giao-hang.jpg',
     },
     'D-DETAIL-PROOF-UPLOADING': {
       kind: 'uploading',
       label: 'Đang tải ảnh xác nhận',
       message: 'Không gửi upload trùng trong khi chờ phản hồi.',
-      fileLabel: 'xac-nhan-demo.jpg',
+      fileLabel: 'bien-nhan-giao-hang.jpg',
     },
     'D-DETAIL-PROOF-RETRY': {
       kind: 'upload-retry',
       label: 'Chưa tải được ảnh',
       message: 'Ảnh đã chọn vẫn được giữ; hãy thử lại.',
-      fileLabel: 'xac-nhan-demo.jpg',
+      fileLabel: 'bien-nhan-giao-hang.jpg',
     },
     'D-DETAIL-READY-DELIVER': {
       kind: 'persisted',
       label: 'Ảnh xác nhận đã tải lên',
       message: 'Proof đã có trong snapshot phản hồi từ hệ thống.',
-      fileLabel: 'proof-demo-001.jpg',
+      fileLabel: 'bien-nhan-giao-hang-001.jpg',
     },
     'D-DETAIL-TERMINAL-DELIVERED': {
       kind: 'persisted',
       label: 'Ảnh xác nhận đã tải lên',
       message: 'Proof read-only từ snapshot đã hoàn tất.',
-      fileLabel: 'proof-demo-001.jpg',
+      fileLabel: 'bien-nhan-giao-hang-001.jpg',
     },
   };
   return (
@@ -446,27 +458,27 @@ function assignedDetail(scenarioId: DriverDetailScenarioId): DriverAssignedDetai
       reference: 'LP-D-260815-001',
       status: statusFor(scenarioId),
       route: assignedRoute(),
-      vehicleLabel: 'Xe van',
-      cargoSummary: 'Hàng đóng thùng dễ vỡ · khoảng 120 kg',
-      customerContact: 'Số điện thoại khách hàng mô phỏng · chỉ hiện sau phân công',
+      vehicleLabel: 'Xe tải 2.5T',
+      cargoSummary: '40 bao xi măng INSEE & 15 hộp gạch Catalan · 2.100 kg',
+      customerContact: 'Khách hàng: Anh Minh Khang · 0912 345 678',
       updatedAtLabel: '14:32 · 15/08/2026',
       history: [
         {
           id: 'driver-history-requested',
           status: 'REQUESTED',
-          timestampLabel: '13:58',
+          timestampLabel: '13:45',
           description: 'Đơn đã được ghi nhận.',
         },
         {
           id: 'driver-history-accepted',
           status: 'ACCEPTED',
-          timestampLabel: '14:05',
+          timestampLabel: '13:52',
           description: 'Bạn đã nhận chuyến.',
         },
         {
           id: 'driver-history-transit',
           status: 'IN_TRANSIT',
-          timestampLabel: '14:24',
+          timestampLabel: '14:15',
           description: 'Hàng đang được vận chuyển.',
         },
       ],
@@ -527,7 +539,7 @@ export function createDriverDetailFixture(scenarioId: DriverDetailScenarioId): D
       scenarioId,
       kind: 'error',
       title: 'Không thể tải chi tiết đơn',
-      message: 'Hãy thử lại. Mã yêu cầu mô phỏng: REQ-D-DETAIL-01.',
+      message: 'Hãy thử lại. Mã yêu cầu: REQ-D-DETAIL-01.',
     });
   }
   if (scenarioId === 'D-DETAIL-PERMISSION') {

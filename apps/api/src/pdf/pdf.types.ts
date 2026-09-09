@@ -30,3 +30,22 @@ export interface ContractPdfInput {
   /** Omitted for the unsigned template PDF (e.g. GET /driver/contract). */
   readonly signature?: PdfSignature;
 }
+
+export interface InvoicePdfLineItem {
+  readonly label: string;
+  readonly amountVnd: number;
+}
+
+export interface InvoicePdfInput {
+  readonly invoiceNumber: string;
+  readonly issuedAt: Date;
+  readonly customerName: string;
+  readonly customerEmail?: string;
+  readonly customerTaxCode?: string;
+  readonly customerAddress?: string;
+  readonly orderReference: string;
+  readonly lineItems: readonly InvoicePdfLineItem[];
+  readonly amountVnd: number;
+  readonly vatRateVnd: number;
+  readonly totalVnd: number;
+}

@@ -87,6 +87,11 @@ enum NotificationType {
   SYSTEM
 }
 
+enum InvoiceStatus {
+  ISSUED
+  VOIDED
+}
+
 model User {
   id                String               @id @default(uuid()) @db.Uuid
   firebaseUid       String?              @unique @db.VarChar(128)
@@ -247,6 +252,7 @@ model Order {
   trackingPoints  TrackingPoint[]
   mediaObjects    MediaObject[]
   paymentIntents  PaymentIntent[]
+  invoice         Invoice?
 
   @@unique([customerId, clientRequestId])
   @@index([customerId, createdAt(sort: Desc)])
@@ -323,6 +329,7 @@ model PaymentIntent {
   amountVnd             Int
   clientRequestId       String?
   providerReference     String?
+  payosOrderCode        BigInt?
   qrPayload             String?
   providerSnapshot      Json?
   expiresAt             DateTime?       @db.Timestamptz(3)
@@ -334,8 +341,40 @@ model PaymentIntent {
   updatedAt             DateTime        @default(now()) @updatedAt @db.Timestamptz(3)
   order                 Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
   confirmedBy           User?           @relation("PaymentConfirmer", fields: [confirmedById], references: [id], onDelete: Restrict)
+  invoice               Invoice?
 
+  @@unique([payosOrderCode])
   @@index([orderId, createdAt(sort: Desc)])
+}
+
+model InvoiceSequence {
+  year      Int      @id
+  lastValue Int      @default(0)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+}
+
+model Invoice {
+  id              String        @id @default(uuid()) @db.Uuid
+  orderId         String        @unique @db.Uuid
+  paymentIntentId String        @unique @db.Uuid
+  invoiceNumber   String        @unique
+  customerName    String        @db.VarChar(120)
+  customerEmail   String?       @db.VarChar(255)
+  customerTaxCode String?       @db.VarChar(20)
+  customerAddress String?       @db.VarChar(255)
+  amountVnd       Int
+  vatRateVnd      Int
+  totalVnd        Int
+  pdfStorageKey   String        @unique
+  status          InvoiceStatus @default(ISSUED)
+  emailSentAt     DateTime?     @db.Timestamptz(3)
+  issuedAt        DateTime      @default(now()) @db.Timestamptz(3)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime      @default(now()) @updatedAt @db.Timestamptz(3)
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentIntent   PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
 }
 
 model AuditLog {

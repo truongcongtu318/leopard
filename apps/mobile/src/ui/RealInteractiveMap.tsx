@@ -88,9 +88,12 @@ export const VIETNAM_LOCATION_DICT: Record<string, MapCoordinate> = {
 /**
  * Deterministically resolves an address or location name to coordinates in Vietnam.
  */
-export function resolveLocationCoords(nameOrAddress?: string): MapCoordinate {
+export function resolveLocationCoords(
+  nameOrAddress?: string,
+  referenceCoords?: MapCoordinate,
+): MapCoordinate {
   if (!nameOrAddress || !nameOrAddress.trim()) {
-    return { lat: 10.7769, lng: 106.7009 }; // Central HCMC
+    return referenceCoords || { lat: 10.7769, lng: 106.7009 }; // Central HCMC
   }
 
   const query = nameOrAddress.toLowerCase().trim();
@@ -100,17 +103,20 @@ export function resolveLocationCoords(nameOrAddress?: string): MapCoordinate {
     }
   }
 
-  // Deterministic fallback spread across Greater HCMC
+  // Anchor fallback around reference coordinate (e.g. Origin / Destination) if available
+  const baseLat = referenceCoords ? referenceCoords.lat : 10.78;
+  const baseLng = referenceCoords ? referenceCoords.lng : 106.68;
+
   let hash = 0;
   for (let i = 0; i < query.length; i++) {
     hash = (hash << 5) - hash + query.charCodeAt(i);
     hash |= 0;
   }
-  const latOffset = ((Math.abs(hash) % 100) / 100) * 0.12 - 0.06;
-  const lngOffset = ((Math.abs(hash >> 3) % 100) / 100) * 0.14 - 0.07;
+  const latOffset = ((Math.abs(hash) % 100) / 100) * 0.03 - 0.015;
+  const lngOffset = ((Math.abs(hash >> 3) % 100) / 100) * 0.03 - 0.015;
   return {
-    lat: Number((10.78 + latOffset).toFixed(5)),
-    lng: Number((106.68 + lngOffset).toFixed(5)),
+    lat: Number((baseLat + latOffset).toFixed(5)),
+    lng: Number((baseLng + lngOffset).toFixed(5)),
   };
 }
 
@@ -153,6 +159,7 @@ function buildLeafletHtml({
     pin: pinCoords,
     interactive,
     mapInstanceId,
+    vietmapApiKey: vietmapApiKey || '',
   });
 
   return `<!DOCTYPE html>
@@ -170,16 +177,16 @@ function buildLeafletHtml({
     /* Pin Marker Styles */
     .pin-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
     .pin-pulse { position: absolute; width: 40px; height: 40px; border-radius: 50%; background: rgba(2, 132, 199, 0.28); animation: pinPulse 1.8s ease-out infinite; }
-    .pin-core { position: relative; width: 28px; height: 28px; border-radius: 50%; background: #0284C7; border: 3px solid #FFFFFF; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.45); display: flex; align-items: center; justify-content: center; z-index: 2; }
+    .pin-core { position: relative; width: 28px; height: 28px; border-radius: 50%; background: #0B1E42; border: 3px solid #FFFFFF; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.45); display: flex; align-items: center; justify-content: center; z-index: 2; }
     .pin-core.origin { background: #16A34A; }
-    .pin-core.dest { background: #0284C7; }
+    .pin-core.dest { background: #0B1E42; }
     .pin-core.stop { background: #D97706; }
     .pin-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFFFFF; }
 
     /* Truck Marker Styles */
     .truck-wrap { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .truck-pulse { position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(2, 132, 199, 0.35); animation: pinPulse 2s ease-out infinite; }
-    .truck-badge { position: relative; width: 34px; height: 34px; border-radius: 50%; background: #0284C7; border: 3px solid #FFFFFF; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.45); display: flex; align-items: center; justify-content: center; z-index: 3; color: #FFFFFF; font-size: 16px; font-weight: bold; }
+    .truck-badge { position: relative; width: 34px; height: 34px; border-radius: 50%; background: #0B1E42; border: 3px solid #FFFFFF; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.45); display: flex; align-items: center; justify-content: center; z-index: 3; color: #FFFFFF; font-size: 16px; font-weight: bold; }
     .truck-eta { margin-top: 4px; background: #0F172A; color: #FFFFFF; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 12px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
 
     /* Map Controls */
@@ -206,7 +213,7 @@ function buildLeafletHtml({
       touchZoom: ${interactive ? 'true' : 'false'},
       scrollWheelZoom: false
     });
-    if (${interactive ? 'true' : 'false'}) {
+    if (${interactive && mode === 'pin' ? 'true' : 'false'}) {
       L.control.zoom({ position: 'topright' }).addTo(map);
     }
 
@@ -234,10 +241,11 @@ function buildLeafletHtml({
     var bounds = [];
 
     // Icon Factories
-    function createPulseIcon(type) {
+    function createPulseIcon(type, numberText) {
+      var inner = numberText ? '<span style="font-size:11px;font-weight:800;color:#FFFFFF;line-height:1;">' + numberText + '</span>' : '<div class="pin-dot"></div>';
       return L.divIcon({
         className: 'custom-pin-icon',
-        html: '<div class="pin-wrap"><div class="pin-pulse"></div><div class="pin-core ' + type + '"><div class="pin-dot"></div></div></div>',
+        html: '<div class="pin-wrap"><div class="pin-pulse"></div><div class="pin-core ' + type + '">' + inner + '</div></div>',
         iconSize: [44, 44],
         iconAnchor: [22, 22]
       });
@@ -310,13 +318,15 @@ function buildLeafletHtml({
 
       // Intermediate stops
       if (config.stops && config.stops.length > 0) {
-        config.stops.forEach(function(s) {
-          latlngs.push([s.coords.lat, s.coords.lng]);
-          bounds.push([s.coords.lat, s.coords.lng]);
-          var sm = L.marker([s.coords.lat, s.coords.lng], {
-            icon: createPulseIcon('stop')
-          }).addTo(map);
-          if (s.label) sm.bindPopup('<b>Điểm dừng:</b> ' + s.label);
+        config.stops.forEach(function(s, idx) {
+          if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
+            latlngs.push([s.coords.lat, s.coords.lng]);
+            bounds.push([s.coords.lat, s.coords.lng]);
+            var sm = L.marker([s.coords.lat, s.coords.lng], {
+              icon: createPulseIcon('stop', (idx + 1).toString())
+            }).addTo(map);
+            if (s.label) sm.bindPopup('<b>Điểm dừng ' + (idx + 1) + ':</b> ' + s.label);
+          }
         });
       }
 
@@ -329,24 +339,131 @@ function buildLeafletHtml({
       }).addTo(map);
       if (config.destination.label) destMarker.bindPopup('<b>Điểm giao:</b> ' + config.destination.label);
 
-      // Route Polyline with subtle glow effect
-      L.polyline(latlngs, {
-        color: '#0284C7',
-        weight: 5,
-        opacity: 0.85,
+      // Dual-layer Route Polyline with subtle glow effect
+      var routeLayerGlow = L.polyline(latlngs, {
+        color: '#0B1E42',
+        weight: 8,
+        opacity: 0.28,
         lineJoin: 'round',
         lineCap: 'round'
       }).addTo(map);
 
+      var routeLayer = L.polyline(latlngs, {
+        color: '#0B1E42',
+        weight: 4.5,
+        opacity: 0.95,
+        lineJoin: 'round',
+        lineCap: 'round'
+      }).addTo(map);
+
+      function applyRouteCoords(coords) {
+        routeLayerGlow.setLatLngs(coords);
+        routeLayer.setLatLngs(coords);
+        try {
+          map.fitBounds(routeLayer.getBounds(), { padding: [36, 36], maxZoom: 16 });
+        } catch(e) {}
+      }
+
+      // Real street routing: Vietmap Route v4 with timeout -> OSRM driving engine -> straight line
+      function fetchRealRoute() {
+        var waypoints = [[o.lng, o.lat]];
+        if (config.stops && config.stops.length > 0) {
+          config.stops.forEach(function(s) {
+            if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
+              waypoints.push([s.coords.lng, s.coords.lat]);
+            }
+          });
+        }
+        waypoints.push([d.lng, d.lat]);
+
+        if (config.vietmapApiKey) {
+          var pts = 'point=' + o.lat + ',' + o.lng;
+          if (config.stops && config.stops.length > 0) {
+            config.stops.forEach(function(s) {
+              if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
+                pts += '&point=' + s.coords.lat + ',' + s.coords.lng;
+              }
+            });
+          }
+          pts += '&point=' + d.lat + ',' + d.lng;
+          var vmUrl = 'https://maps.vietmap.vn/api/route/v4?apikey=' + config.vietmapApiKey + '&' + pts + '&vehicle=car&points_encoded=false';
+
+          var abortCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+          var timeoutTimer = setTimeout(function() {
+            if (abortCtrl) abortCtrl.abort();
+          }, 4000);
+
+          fetch(vmUrl, abortCtrl ? { signal: abortCtrl.signal } : {})
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              clearTimeout(timeoutTimer);
+              if (data && data.paths && data.paths[0] && data.paths[0].points && data.paths[0].points.coordinates) {
+                var coords = data.paths[0].points.coordinates.map(function(c) { return [c[1], c[0]]; });
+                applyRouteCoords(coords);
+                return;
+              }
+              fetchOsrmRoute(waypoints);
+            })
+            .catch(function() {
+              clearTimeout(timeoutTimer);
+              fetchOsrmRoute(waypoints);
+            });
+        } else {
+          fetchOsrmRoute(waypoints);
+        }
+      }
+
+      function fetchOsrmRoute(waypoints) {
+        var coordsStr = waypoints.map(function(w) { return w[0] + ',' + w[1]; }).join(';');
+        var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson';
+        fetch(osrmUrl)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && data.routes && data.routes[0] && data.routes[0].geometry && data.routes[0].geometry.coordinates) {
+              var coords = data.routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+              applyRouteCoords(coords);
+            }
+          })
+          .catch(function() {
+            // Keep straight line fallback
+          });
+      }
+
+      try {
+        fetchRealRoute();
+      } catch (e) {}
+
       // Tracking truck
+      var truckMarker = null;
       if (config.mode === 'tracking' && config.truck && config.truck.coords) {
         var t = config.truck.coords;
         bounds.push([t.lat, t.lng]);
-        var truckMarker = L.marker([t.lat, t.lng], {
+        truckMarker = L.marker([t.lat, t.lng], {
           icon: createTruckIcon(config.truck.eta || '')
         }).addTo(map);
         truckMarker.bindPopup('<b>Tài xế đang vận chuyển</b><br>ETA: ' + (config.truck.eta || 'Đang cập nhật'));
       }
+
+      // Smooth real-time truck position updates via message
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'LEOPARD_UPDATE_TRUCK_LOCATION') {
+          var nLat = event.data.lat;
+          var nLng = event.data.lng;
+          var nEta = event.data.eta;
+          if (typeof nLat === 'number' && typeof nLng === 'number') {
+            if (truckMarker) {
+              truckMarker.setLatLng([nLat, nLng]);
+              if (nEta) {
+                truckMarker.setPopupContent('<b>Tài xế đang vận chuyển</b><br>ETA: ' + nEta);
+              }
+            } else {
+              truckMarker = L.marker([nLat, nLng], {
+                icon: createTruckIcon(nEta || '')
+              }).addTo(map);
+            }
+          }
+        }
+      });
 
       if (bounds.length > 0) {
         map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
@@ -396,11 +513,13 @@ export function RealInteractiveMap({
 
   const stopsCoords = useMemo(
     () =>
-      stops.map((s) => ({
-        label: s.label,
-        coords: s.coords || resolveLocationCoords(s.label),
-      })),
-    [stops],
+      stops
+        .filter((s) => s.label && s.label.trim().length > 0 && s.label !== 'Chưa chọn')
+        .map((s) => ({
+          label: s.label,
+          coords: s.coords || resolveLocationCoords(s.label, originCoords),
+        })),
+    [stops, originCoords],
   );
 
   const pinCoords = useMemo(
@@ -446,6 +565,27 @@ export function RealInteractiveMap({
     return () => window.removeEventListener('message', handleMessage);
   }, [mapInstanceId, onLocationChange]);
 
+  // Real-time truck position message emitter without iframe reloading
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined' || !truckLocation) return;
+    try {
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach((iframe) => {
+        iframe.contentWindow?.postMessage(
+          {
+            type: 'LEOPARD_UPDATE_TRUCK_LOCATION',
+            lat: truckLocation.lat,
+            lng: truckLocation.lng,
+            eta: displayEta,
+          },
+          '*',
+        );
+      });
+    } catch {
+      // Ignore postMessage communication errors on unmounted iframe
+    }
+  }, [truckLocation?.lat, truckLocation?.lng, displayEta]);
+
   const mapHtml = useMemo(() => {
     const resolvedVietmapKey =
       vietmapApiKey || process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
@@ -478,9 +618,10 @@ export function RealInteractiveMap({
     vietmapApiKey,
   ]);
 
+  const isFullScreen = height === '100%';
   const containerStyle: StyleProp<ViewStyle> = [
     styles.container,
-    { height: typeof height === 'number' ? height : 240 },
+    isFullScreen ? { height: '100%', borderRadius: 0 } : { height: (height as any) ?? 240 },
     style,
   ];
 
@@ -494,7 +635,7 @@ export function RealInteractiveMap({
             width: '100%',
             height: '100%',
             border: 'none',
-            borderRadius: 14,
+            borderRadius: isFullScreen ? 0 : 14,
           },
           title: 'Bản đồ thực tế tương tác',
         })

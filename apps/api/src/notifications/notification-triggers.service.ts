@@ -129,6 +129,28 @@ export class NotificationTriggers {
     }
   }
 
+  /**
+   * Invoices call this directly once issuance has succeeded but found no
+   * email on file — same direct-call shape as `notifyPaymentConfirmed`
+   * (invoices have no event bus either). Best-effort: swallowed on failure.
+   */
+  async notifyInvoiceEmailMissing(params: {
+    readonly customerId: string;
+    readonly orderId: string;
+  }): Promise<void> {
+    try {
+      await this.notificationsService.create({
+        userId: params.customerId,
+        type: 'SYSTEM',
+        title: 'Hóa đơn đã sẵn sàng',
+        body: 'Hóa đơn của bạn đã được phát hành. Thêm email để nhận liên kết xem/tải hóa đơn.',
+        data: { orderId: params.orderId },
+      });
+    } catch (error) {
+      this.logFailure('invoice email missing', params.orderId, error);
+    }
+  }
+
   private logFailure(kind: string, id: string, error: unknown): void {
     this.logger.warn(
       `Notification trigger failed (${kind}, ${id}): ${

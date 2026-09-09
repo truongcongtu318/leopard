@@ -1,16 +1,16 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { ScreenScaffold } from '../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../ui/ScreenState';
 import { createDriverHttpAdapter } from './adapter';
 import { DriverOrdersScreen } from './DriverOrdersScreen';
+import { useDispatchOffer } from './useDispatchOffer';
 
 export type DriverOrdersListRuntimeProps = Readonly<{
   onOpenOrder: (orderId: string) => void;
+  onNavigate?: (route: string) => void;
 }>;
 
-export function DriverOrdersListRuntime({ onOpenOrder }: DriverOrdersListRuntimeProps) {
+export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrdersListRuntimeProps) {
   const port = useMemo(() => createDriverHttpAdapter(), []);
   const queryClient = useQueryClient();
   const queryKey = ['driver', 'orders'];
@@ -20,19 +20,37 @@ export function DriverOrdersListRuntime({ onOpenOrder }: DriverOrdersListRuntime
     queryFn: () => port.getOrdersView(),
   });
 
+  const { offer, declineOffer } = useDispatchOffer();
+
   if (query.isPending) {
     return (
-      <ScreenScaffold eyebrow="DRIVER · FIELD COCKPIT" headerTone="ink" title="Đơn của tài xế">
-        <ScreenState state="loading" />
-      </ScreenScaffold>
+      <DriverOrdersScreen
+        onNavigate={onNavigate}
+        onOpenOrder={onOpenOrder}
+        onRetry={() => query.refetch()}
+        view={{
+          kind: 'loading',
+          message: '',
+          scenarioId: 'D-LIST-LOADING',
+          title: '',
+        }}
+      />
     );
   }
 
   if (query.isError || !query.data) {
     return (
-      <ScreenScaffold eyebrow="DRIVER · FIELD COCKPIT" headerTone="ink" title="Đơn của tài xế">
-        <ScreenState actionLabel="Thử lại" onAction={() => query.refetch()} state="error" />
-      </ScreenScaffold>
+      <DriverOrdersScreen
+        onNavigate={onNavigate}
+        onOpenOrder={onOpenOrder}
+        onRetry={() => query.refetch()}
+        view={{
+          kind: 'error',
+          message: query.error?.message || 'Đã có lỗi xảy ra trong quá trình tải dữ liệu.',
+          scenarioId: 'D-LIST-ERROR',
+          title: 'Không thể tải danh sách đơn',
+        }}
+      />
     );
   }
 
@@ -41,8 +59,18 @@ export function DriverOrdersListRuntime({ onOpenOrder }: DriverOrdersListRuntime
     void queryClient.invalidateQueries({ queryKey });
   }
 
+  async function handleAcceptOffer(orderId: string) {
+    declineOffer();
+    await port.acceptOrder(orderId);
+    void queryClient.invalidateQueries({ queryKey });
+  }
+
   return (
     <DriverOrdersScreen
+      incomingOffer={offer}
+      onAcceptIncomingOffer={(orderId) => void handleAcceptOffer(orderId)}
+      onDeclineIncomingOffer={() => declineOffer()}
+      onNavigate={onNavigate}
       onOpenOrder={onOpenOrder}
       onRetry={() => query.refetch()}
       onSetAvailability={(commandId) => void handleSetAvailability(commandId)}

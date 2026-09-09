@@ -19,6 +19,17 @@ export function isFirebaseConfigured(): boolean {
   return Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 }
 
+/**
+ * Exposes the (public, client-safe) Firebase Web config so feature code
+ * that needs it outside of `firebase/app` — e.g. passing it to a static
+ * `public/firebase-messaging-sw.js` service worker via URL query params,
+ * since that file is not processed by Metro's env inlining — doesn't have
+ * to duplicate the `process.env.EXPO_PUBLIC_FIREBASE_*` reads.
+ */
+export function getFirebaseWebConfig(): Readonly<typeof firebaseConfig> {
+  return firebaseConfig;
+}
+
 export function getFirebaseApp(): FirebaseApp {
   return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 }

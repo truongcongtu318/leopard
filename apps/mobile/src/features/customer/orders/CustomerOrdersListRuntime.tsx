@@ -23,7 +23,7 @@ export function CustomerOrdersListRuntime({ onCreate, onOpenOrder }: CustomerOrd
 
   if (query.isPending) {
     return (
-      <ScreenScaffold eyebrow="CUSTOMER · JOURNEY SHEET" title="Đơn hàng của tôi">
+      <ScreenScaffold title="Đơn hàng của tôi">
         <ScreenState state="loading" />
       </ScreenScaffold>
     );
@@ -31,7 +31,7 @@ export function CustomerOrdersListRuntime({ onCreate, onOpenOrder }: CustomerOrd
 
   if (query.isError || !query.data) {
     return (
-      <ScreenScaffold eyebrow="CUSTOMER · JOURNEY SHEET" title="Đơn hàng của tôi">
+      <ScreenScaffold title="Đơn hàng của tôi">
         <ScreenState
           actionLabel="Thử lại"
           onAction={() => query.refetch()}

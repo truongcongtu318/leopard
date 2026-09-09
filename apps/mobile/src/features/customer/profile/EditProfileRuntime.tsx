@@ -49,6 +49,7 @@ export function CustomerEditProfileRuntime() {
       initialEmail={initialEmail}
       initialName={initialName}
       isSaving={saveMutation.isPending}
+      onBack={() => router.back()}
       onPickAvatar={(file) => avatarMutation.mutate(file)}
       onSave={(input) => {
         setErrorMessage(undefined);

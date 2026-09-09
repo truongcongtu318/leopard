@@ -80,7 +80,7 @@ const mockAddresses: readonly SavedAddress[] = [
 type FilterCategory = 'ALL' | AddressCategory;
 
 const categoryOptions = [
-  { id: 'WAREHOUSE' as const, label: 'Kho hàng', color: '#0284C7', bg: '#E0F2FE' },
+  { id: 'WAREHOUSE' as const, label: 'Kho hàng', color: '#0B1E42', bg: '#F0F4F9' },
   { id: 'OFFICE' as const, label: 'Văn phòng', color: '#6366F1', bg: '#EEF2FF' },
   { id: 'HOME' as const, label: 'Nhà riêng', color: '#0D9488', bg: '#CCFBF1' },
   { id: 'OTHER' as const, label: 'Khác', color: '#64748B', bg: '#F1F5F9' },
@@ -88,9 +88,10 @@ const categoryOptions = [
 
 export type AddressBookScreenProps = Readonly<{
   onOpenAddAddress?: () => void;
+  onBack?: () => void;
 }>;
 
-export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps = {}) {
+export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScreenProps = {}) {
   const [addresses, setAddresses] = useState<readonly SavedAddress[]>(() => {
     const stored = addressStore.getAddresses();
     if (stored && stored.length > 0) {
@@ -357,9 +358,9 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
       case 'WAREHOUSE':
         return {
           label: 'Kho hàng',
-          icon: <IconWarehouse color="#0284C7" size={20} />,
-          color: '#0284C7',
-          bg: '#E0F2FE',
+          icon: <IconWarehouse color="#0B1E42" size={20} />,
+          color: '#0B1E42',
+          bg: '#F0F4F9',
         };
       case 'OFFICE':
         return {
@@ -404,8 +405,8 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
 
   return (
     <ScreenScaffold
-      eyebrow="CUSTOMER · ADDRESS BOOK"
       headerRight={headerRight}
+      onBack={onBack}
       subtitle="Lưu sẵn địa chỉ thường dùng để tạo đơn và giao hàng nhanh chóng."
       title="Sổ địa chỉ"
     >
@@ -500,7 +501,7 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
             <View style={styles.addCardHeader}>
               <View style={styles.addTitleGroup}>
                 <View style={styles.addIconCircle}>
-                  <IconLocationPin color="#0284C7" size={20} />
+                  <IconLocationPin color="#0B1E42" size={20} />
                 </View>
                 <View>
                   <Text style={styles.formTitle}>Thêm địa chỉ mới</Text>
@@ -606,7 +607,7 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
                             ]}
                           >
                             <IconLocationPin
-                              color={isGpsItem ? '#16A34A' : '#0284C7'}
+                              color={isGpsItem ? '#16A34A' : '#0B1E42'}
                               size={16}
                             />
                           </View>
@@ -633,7 +634,7 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
             <View style={styles.mapPinSection}>
               <View style={styles.mapPinHeader}>
                 <View style={styles.mapPinTitleRow}>
-                  <IconLocationPin color="#0284C7" size={15} />
+                  <IconLocationPin color="#0B1E42" size={15} />
                   <Text style={styles.mapPinTitle}>Định vị trên bản đồ</Text>
                 </View>
                 <Text style={styles.mapPinHint}>Chạm hoặc kéo ghim để chỉnh</Text>
@@ -773,8 +774,8 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
                         {item.isDefault ? (
                           <View style={styles.defaultBadge}>
                             <IconStar
-                              color="#0284C7"
-                              fill="#0284C7"
+                              color="#0B1E42"
+                              fill="#0B1E42"
                               size={12}
                               strokeWidth={2}
                             />
@@ -798,7 +799,7 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
                         </View>
                         <Text style={styles.contactDivider}>•</Text>
                         <View style={styles.contactItem}>
-                          <IconPhone color="#0284C7" size={13} />
+                          <IconPhone color="#0B1E42" size={13} />
                           <Text style={styles.contactPhoneText}>{item.contactPhone}</Text>
                         </View>
                       </View>
@@ -830,7 +831,7 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
                             pressed ? styles.pressed : null,
                           ]}
                         >
-                          <IconStar color="#0284C7" size={14} strokeWidth={2} />
+                          <IconStar color="#0B1E42" size={14} strokeWidth={2} />
                           <Text style={styles.setDefaultText}>Đặt làm mặc định</Text>
                         </Pressable>
                       ) : (
@@ -852,7 +853,7 @@ export function AddressBookScreen({ onOpenAddAddress }: AddressBookScreenProps =
                           pressed ? styles.pressed : null,
                         ]}
                       >
-                        <IconLocationPin color="#0284C7" size={13} />
+                        <IconLocationPin color="#0B1E42" size={13} />
                         <Text style={styles.toggleMapText}>
                           {expandedMapId === item.id ? 'Ẩn bản đồ' : 'Bản đồ'}
                         </Text>
@@ -893,7 +894,7 @@ const styles = StyleSheet.create({
   // Header Action
   addHeaderBtn: {
     alignItems: 'center',
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
     borderRadius: 999,
     flexDirection: 'row',
     gap: 4,
@@ -1006,7 +1007,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1049,8 +1050,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   catOptionSelected: {
-    backgroundColor: '#E0F2FE',
-    borderColor: '#0284C7',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#0B1E42',
   },
   catOptionText: {
     color: '#475569',
@@ -1058,7 +1059,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   catOptionTextSelected: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontWeight: '700',
   },
   contactFieldsRow: {
@@ -1084,8 +1085,8 @@ const styles = StyleSheet.create({
     width: 18,
   },
   checkboxChecked: {
-    backgroundColor: '#0284C7',
-    borderColor: '#0284C7',
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   checkmark: {
     color: '#FFFFFF',
@@ -1120,7 +1121,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   addressCardDefault: {
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     backgroundColor: '#FAFCFF',
     borderWidth: 1.5,
   },
@@ -1153,7 +1154,7 @@ const styles = StyleSheet.create({
   },
   defaultBadge: {
     alignItems: 'center',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
     borderRadius: 999,
     flexDirection: 'row',
     gap: 3,
@@ -1161,7 +1162,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   defaultBadgeText: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 10.5,
     fontWeight: '700',
   },
@@ -1205,7 +1206,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   contactPhoneText: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 11.5,
     fontWeight: '600',
   },
@@ -1232,7 +1233,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   toggleMapText: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1283,7 +1284,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   setDefaultText: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1355,7 +1356,7 @@ const styles = StyleSheet.create({
   },
   firstAddBtn: {
     marginTop: 8,
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
@@ -1401,7 +1402,7 @@ const styles = StyleSheet.create({
   },
   suggestionsCloseText: {
     fontSize: 11,
-    color: '#0284C7',
+    color: '#0B1E42',
     fontWeight: '600',
   },
   suggestionsListScroll: {
@@ -1417,13 +1418,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   suggestionItemPressed: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
   },
   suggestionIconBox: {
     width: 28,
     height: 28,
     borderRadius: 6,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1446,7 +1447,7 @@ const styles = StyleSheet.create({
   suggestionActionText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   pinnedNotice: {
     marginTop: 8,

@@ -12,7 +12,9 @@ import {
 import { useRouter } from 'expo-router';
 
 import { httpClient } from '../../src/api/http-client';
+import { leopardPalette } from '../../src/theme/tokens';
 import { ApiError } from '../../src/api/api-error';
+import { AuthHeroHeader } from '../../src/auth/AuthHeroHeader';
 import { sessionStore } from '../../src/auth/session-store';
 import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '../../src/auth/firebase-auth';
 import { isLikelyVnPhone, toE164Vn } from '../../src/auth/phone';
@@ -20,8 +22,6 @@ import {
   IconPhone,
   IconSecurityShield,
   IconUser,
-  LeopardEmblem,
-  LeopardMobileLogo,
   OtpPhoneHeroIcon,
   VietnamFlagIcon,
 } from '../../src/ui/icons/CoreIcons';
@@ -29,6 +29,12 @@ import { OtpSixCellInput } from '../../src/auth/OtpSixCellInput';
 import { TruckLoader } from '../../src/ui/TruckLoader';
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-register';
+
+/** Warm orange accent matching the curved hero header used across auth screens. */
+const orange = {
+  primary: '#F59E0B',
+  primaryDark: '#B45309',
+} as const;
 
 interface MeResponse {
   phone: string | null;
@@ -311,30 +317,15 @@ export default function CustomerRegisterScreen() {
         keyboardShouldPersistTaps="handled"
         style={styles.container}
       >
+        <AuthHeroHeader
+          backTestID="cr-back-btn"
+          onBack={handleBack}
+          subtitle="Đăng ký để đặt xe và theo dõi hành trình dễ dàng."
+          title="Tạo tài khoản mới"
+        />
+
+        <View style={styles.bodyWrap}>
         <View style={styles.innerWrapper}>
-          {/* ================= TOP NAVIGATION BAR ================= */}
-          <View style={styles.topNavBar}>
-            <Pressable
-              accessibilityLabel="Quay lại"
-              accessibilityRole="button"
-              hitSlop={10}
-              onPress={handleBack}
-              style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
-              testID="cr-back-btn"
-            >
-              <Text style={styles.backChevron}>‹</Text>
-            </Pressable>
-
-            {/* Centered Brand Pill (Enlarged to match Login screen) */}
-            <View style={styles.brandRow}>
-              <LeopardEmblem testID="register-brand-emblem" width={56} />
-              <LeopardMobileLogo height={30} testID="register-brand-logo" width={140} />
-            </View>
-
-            {/* Invisible spacer balancing the 44px back button */}
-            <View style={styles.navSpacer} />
-          </View>
-
           {/* ================= ERROR BANNER ================= */}
           {errorMsg && !showOtpModal ? (
             <View style={styles.errorBox} testID="cr-error">
@@ -347,17 +338,6 @@ export default function CustomerRegisterScreen() {
 
           {/* ================= MAIN APPLICATION CARD ================= */}
           <View style={styles.card}>
-            {/* Card Integrated Masthead */}
-            <View style={styles.cardMasthead}>
-              <Text style={styles.headline}>Đăng ký tài khoản</Text>
-              <Text style={styles.subline}>
-                Trở thành khách hàng của LEOPARD để trải nghiệm đặt xe, theo dõi hành trình và quản
-                lý chuyến hàng dễ dàng.
-              </Text>
-            </View>
-
-            <View style={styles.sectionDivider} />
-
             {/* Subsection: Số điện thoại */}
             <View style={styles.sectionGroup}>
               <View style={styles.sectionHeader}>
@@ -609,7 +589,8 @@ export default function CustomerRegisterScreen() {
             <Text style={styles.driverLinkText}>Đăng ký làm tài xế đối tác →</Text>
           </Pressable>
         </View>
-      </View>
+        </View>
+        </View>
     </ScrollView>
 
     {/* ================= FLOATING CENTERED OTP MODAL (MATCHING LOGIN SCREEN) ================= */}
@@ -769,7 +750,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   scrollContent: {
-    paddingVertical: 16,
+    flexGrow: 1,
+    paddingBottom: 24,
+  },
+  bodyWrap: {
+    marginTop: -20,
     paddingHorizontal: 16,
     alignItems: 'center',
   },
@@ -777,64 +762,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 520,
     gap: 16,
-  },
-
-  /* Top Navigation Bar */
-  topNavBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  backBtnPressed: {
-    backgroundColor: '#F1F5F9',
-    transform: [{ scale: 0.94 }],
-  },
-  backChevron: {
-    fontSize: 26,
-    lineHeight: 28,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginLeft: -2,
-    marginTop: -2,
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#FFFFFF',
-    paddingLeft: 10,
-    paddingRight: 16,
-    paddingVertical: 5,
-    height: 48,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  navSpacer: {
-    width: 44,
-    height: 44,
   },
 
   /* Error Banner */
@@ -871,23 +798,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 1,
-  },
-
-  /* Card Masthead (integrated) */
-  cardMasthead: {
-    gap: 6,
-    paddingBottom: 4,
-  },
-  headline: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.4,
-  },
-  subline: {
-    fontSize: 14,
-    color: '#475569',
-    lineHeight: 20,
   },
 
   /* Dividers & Section Groups */
@@ -1031,7 +941,7 @@ const styles = StyleSheet.create({
     }),
   },
   sendOtpBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: orange.primary,
     borderRadius: 10,
     paddingHorizontal: 14,
     height: 38,
@@ -1039,7 +949,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendOtpBtnDisabled: {
-    backgroundColor: '#93C5FD',
+    backgroundColor: '#F3C989',
   },
   sendOtpBtnText: {
     color: '#FFFFFF',
@@ -1112,7 +1022,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   otpBackBtnText: {
-    color: '#2563EB',
+    color: orange.primary,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1131,7 +1041,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0284C7',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 10,
@@ -1173,20 +1083,20 @@ const styles = StyleSheet.create({
   },
   modalSubmitBtn: {
     width: '100%',
-    backgroundColor: '#2563EB',
+    backgroundColor: orange.primary,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
-    shadowColor: '#2563EB',
+    shadowColor: orange.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 3,
   },
   modalSubmitBtnDisabled: {
-    backgroundColor: '#93C5FD',
+    backgroundColor: '#F3C989',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -1259,7 +1169,7 @@ const styles = StyleSheet.create({
   resendActionLink: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#2563EB',
+    color: orange.primary,
     textDecorationLine: 'underline',
   },
 
@@ -1300,9 +1210,9 @@ const styles = StyleSheet.create({
     }),
   },
   inputFocused: {
-    borderColor: '#2563EB',
+    borderColor: orange.primary,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#2563EB',
+    shadowColor: orange.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.22,
     shadowRadius: 8,
@@ -1337,8 +1247,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   checkboxOn: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: orange.primary,
+    borderColor: orange.primary,
   },
   checkboxTick: {
     color: '#FFFFFF',
@@ -1361,19 +1271,19 @@ const styles = StyleSheet.create({
 
   /* Primary Button */
   primaryBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: orange.primary,
     borderRadius: 16,
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: orange.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.28,
     shadowRadius: 8,
     elevation: 3,
   },
   primaryBtnDisabled: {
-    backgroundColor: '#93C5FD',
+    backgroundColor: '#F3C989',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -1408,7 +1318,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   driverLinkText: {
-    color: '#2563EB',
+    color: orange.primary,
     fontSize: 14,
     fontWeight: '700',
   },

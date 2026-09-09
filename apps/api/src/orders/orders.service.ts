@@ -3,6 +3,7 @@ import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
 import { EstimateTokenError, EstimateMismatchError, EstimateTokenService } from '../maps/domain/estimate-token.service.js';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
+import { OrderEventsPublisher } from './order-events.publisher.js';
 import { mapOrderResponse, type MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersRepository } from './orders.repository.js';
 
@@ -11,6 +12,7 @@ export class OrdersService {
   constructor(
     private readonly ordersRepository: OrdersRepository,
     private readonly estimateTokenService: EstimateTokenService,
+    private readonly eventsPublisher: OrderEventsPublisher,
   ) {}
 
   async createOrder(
@@ -133,6 +135,19 @@ export class OrdersService {
       },
       stops: stopsToCreate,
     });
+
+      this.eventsPublisher.publishRequested({
+        orderId: order.id,
+        pickup: { lat: pickupLat, lng: pickupLng },
+        pickupAddress: dto.pickup.address,
+        dropoffAddress: dto.dropoff.address,
+        vehicleType: dto.vehicleType,
+        priceVnd: verifiedEstimate.estimatedPriceVnd,
+        distanceMeters: verifiedEstimate.distanceM,
+        durationSeconds: verifiedEstimate.durationS,
+        cargoNote: dto.cargoNote ?? null,
+        occurredAt: new Date().toISOString(),
+      });
 
     return mapOrderResponse(order);
   } catch (error: any) {

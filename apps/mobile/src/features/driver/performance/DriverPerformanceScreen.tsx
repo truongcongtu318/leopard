@@ -1,4 +1,5 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
@@ -37,14 +38,19 @@ const mockReviews: ReviewFeedItem[] = [
 ];
 
 export function DriverPerformanceScreen() {
+  const router = useRouter();
+
   return (
     <ScreenScaffold
-      eyebrow="DRIVER · QUALITY & RATING"
-      headerTone="ink"
-      subtitle="Chỉ số vận hành, tỷ lệ nhận đơn và phản hồi từ khách hàng."
+      headerTone="plain"
+      onBack={() => router.back()}
       title="Điểm hiệu suất"
     >
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollWrap}
+      >
         <View style={styles.overviewCard}>
           <View style={styles.ratingBox}>
             <Text style={styles.ratingNumber}>4.8</Text>
@@ -104,12 +110,9 @@ export function DriverPerformanceScreen() {
         </View>
 
         <Text style={styles.sectionLabel}>Đánh giá gần đây</Text>
-        <FlatList
-          contentContainerStyle={styles.reviewList}
-          data={mockReviews}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.reviewCard}>
+        <View style={styles.reviewList}>
+          {mockReviews.map((item) => (
+            <View key={item.id} style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
                 <StarRating rating={item.rating} size={12} />
                 <Text style={styles.reviewTime}>{item.createdAtLabel}</Text>
@@ -123,14 +126,21 @@ export function DriverPerformanceScreen() {
               </View>
               <Text style={styles.reviewComment}>{item.comment}</Text>
             </View>
-          )}
-        />
-      </View>
+          ))}
+        </View>
+      </ScrollView>
     </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollWrap: {
+    flex: 1,
+  },
+  scrollContent: {
+    gap: spacing.sm,
+    paddingBottom: spacing.xl + 20,
+  },
   container: {
     flex: 1,
     gap: spacing.sm,

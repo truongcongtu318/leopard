@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
@@ -5,6 +6,7 @@ import { colors, layout, radius, spacing, typography } from '../../../theme/toke
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 
 export function CustomerSettingsScreen() {
+  const router = useRouter();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [smsEnabled, setSmsEnabled] = useState(true);
   const [promoEnabled, setPromoEnabled] = useState(false);
@@ -12,7 +14,7 @@ export function CustomerSettingsScreen() {
 
   return (
     <ScreenScaffold
-      eyebrow="CUSTOMER · SETTINGS"
+      onBack={() => router.back()}
       subtitle="Tùy chỉnh thông báo, ngôn ngữ và bảo mật ứng dụng."
       title="Cài đặt"
     >

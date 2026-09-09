@@ -113,6 +113,22 @@ Tạo QR intent nhận duy nhất `{"clientRequestId":"uuid"}`; amount luôn l�
 
 Trừ năm endpoint public `/auth/login/demo`, `/auth/firebase`, `/auth/refresh`, `/health/live`, `/health/ready`, mọi endpoint kế thừa `bearerAuth` từ OpenAPI global security. `/auth/refresh` xác thực bằng refresh token trong request body, không yêu cầu access token còn hiệu lực.
 
+## Invoices
+
+| Method | Path | Role | Mô tả |
+| --- | --- | --- | --- |
+| GET | `/invoices/order/:orderId` | Owner/Admin | Metadata hóa đơn + URL xem tạm thời |
+| GET | `/invoices/:id/download` | Owner/Admin | Redirect 302 tới URL PDF đã ký |
+| POST | `/invoices/:id/send` | Owner/Admin | `{"email": string}` → gửi lại liên kết hóa đơn |
+
+Hóa đơn là **hóa đơn giá trị gia tăng tự phát hành nội bộ** (self-generated), không phải hóa đơn điện tử được Tổng cục Thuế cấp mã — mọi PDF đều ghi rõ dòng chú thích này. Không có `POST /invoices` — hóa đơn chỉ được phát hành tự động, nội bộ (`InvoicesService.ensureInvoice`), gọi ngay sau khi `PaymentsService.confirmPayment` commit transaction chuyển trạng thái `PAID_MANUAL`.
+
+`GET /invoices/order/:orderId` không tồn tại hóa đơn sẽ tự thử phát hành lại (retry-on-read) nếu tìm thấy một `PaymentIntent` `PAID_MANUAL` cho đơn đó nhưng chưa có hóa đơn — cùng cơ chế phục hồi "đồng bộ, thử lại khi replay" được chọn ở Phase 0 của kế hoạch (không dùng outbox/worker riêng). Không tìm thấy đơn/hóa đơn, hoặc không phải chủ đơn/Admin, đều trả `404 RESOURCE_NOT_FOUND` không phân biệt lý do.
+
+`GET /invoices/:id/download` không trả URL trực tiếp trong body — redirect 302 tới URL ký tạm thời (1 giờ) từ `StorageProvider`, tránh lộ storage key.
+
+`POST /invoices/:id/send` validate `email` bằng `class-validator @IsEmail`, gửi qua `MailProvider` hiện hành (`console` log link ở dev, hoặc `smtp` qua `nodemailer`), rồi set `emailSentAt`. Gửi thất bại (SMTP lỗi) trả `502 MAIL_PROVIDER_FAILED` nhưng **không** làm mất hóa đơn đã phát hành — khách hàng có thể gọi lại endpoint để thử gửi lại. Nếu `User.email` đang `null`, gửi thành công còn điền email đó vào hồ sơ khách hàng (không ghi đè email đã có).
+
 ## Notifications
 
 | Method | Path | Role | Mô tả |

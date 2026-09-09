@@ -15,19 +15,44 @@ describe('DriverOrdersScreen', () => {
       />,
     );
 
-    expect(screen.getByRole('header', { name: 'Đơn của tài xế' })).toBeTruthy();
-    expect(screen.getByText('DRIVER · FIELD COCKPIT')).toBeTruthy();
+    expect(screen.getByText('Nguyễn Văn Tuấn')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Đơn có thể nhận' })).toBeTruthy();
     expect(screen.getByTestId('driver-active-trip-slab')).toBeTruthy();
     expect(screen.getByText('Trạng thái nhận đơn')).toBeTruthy();
     expect(screen.getByText('Chuyến đang thực hiện')).toBeTruthy();
     expect(screen.getByText('Đơn có thể nhận')).toBeTruthy();
-    expect(screen.getByText('Khu vực Quận 7 → Thành phố Thủ Đức')).toBeTruthy();
-    expect(screen.queryByText('Số điện thoại khách hàng mô phỏng')).toBeNull();
+    expect(screen.getByText('Khu vực Tân Phú → TP. Thủ Đức')).toBeTruthy();
+    expect(screen.queryByText('Thông tin liên hệ khách hàng · chỉ hiện sau phân công')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: /Mở chuyến LP-D-260815-001/ }));
     expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222001');
     await screen.unmount();
   }, 15000);
+
+  it('navigates to order details when pressing public order card body or accept action', async () => {
+    const onOpenOrder = jest.fn();
+    const screen = await render(
+      <DriverOrdersScreen
+        onOpenOrder={onOpenOrder}
+        view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
+      />,
+    );
+
+    const cardButton = screen.getByRole('button', {
+      name: /Xem chi tiết đơn LP-D-260815-101/,
+    });
+    await fireEvent.press(cardButton);
+    expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222101');
+
+    const acceptButton = screen.getByRole('button', {
+      name: 'Nhận đơn LP-D-260815-101',
+    });
+    await fireEvent.press(acceptButton);
+    expect(onOpenOrder).toHaveBeenCalledTimes(2);
+    expect(onOpenOrder).toHaveBeenLastCalledWith('22222222-2222-4222-8222-222222222101');
+
+    await screen.unmount();
+  });
 
   it('blocks repeated availability updates while pending', async () => {
     const onSetAvailability = jest.fn();
@@ -50,7 +75,39 @@ describe('DriverOrdersScreen', () => {
       <DriverOrdersScreen view={createDriverListFixture('D-LIST-PERMISSION')} />,
     );
     expect(screen.getByText('Bạn không có quyền xem khu vực tài xế')).toBeTruthy();
-    expect(screen.queryByText('Khu vực Quận 7 → Thành phố Thủ Đức')).toBeNull();
+    expect(screen.queryByText('Khu vực Tân Phú → TP. Thủ Đức')).toBeNull();
+    await screen.unmount();
+  });
+
+  it('triggers and displays incoming dispatch modal when simulating offer', async () => {
+    const onOpenOrder = jest.fn();
+    const screen = await render(
+      <DriverOrdersScreen
+        onOpenOrder={onOpenOrder}
+        view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
+      />,
+    );
+
+    // Initial state: modal should not be visible
+    expect(screen.queryByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeNull();
+
+    // Trigger simulation
+    const simButton = screen.getByRole('button', { name: 'Mô phỏng nổ đơn' });
+    await fireEvent.press(simButton);
+
+    // Modal appears with prominent fare, route, and actions
+    expect(screen.getByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeTruthy();
+    expect(screen.getByText('Thu nhập ròng')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'NHẬN ĐƠN NGAY' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Bỏ qua' })).toBeTruthy();
+
+    // Accept action forwards to onOpenOrder
+    await fireEvent.press(screen.getByRole('button', { name: 'NHẬN ĐƠN NGAY' }));
+    expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222101');
+
+    // Modal closes after acceptance
+    expect(screen.queryByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeNull();
+
     await screen.unmount();
   });
 });
@@ -65,9 +122,9 @@ describe('DriverOrderDetailScreen', () => {
       />,
     );
 
-    expect(screen.getByText('Khu vực Quận 7 → Thành phố Thủ Đức')).toBeTruthy();
+    expect(screen.getByText('Khu vực Tân Phú → TP. Thủ Đức')).toBeTruthy();
     expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
-    expect(screen.queryByText('Số điện thoại khách hàng mô phỏng')).toBeNull();
+    expect(screen.queryByText('Thông tin liên hệ khách hàng · chỉ hiện sau phân công')).toBeNull();
     const accept = screen.getByRole('button', { name: 'Nhận đơn' });
     await fireEvent.press(accept);
     expect(onExecuteTask).toHaveBeenCalledWith('cmd-accept-demo');

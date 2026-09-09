@@ -28,6 +28,7 @@ import type {
   DriverTrackingPort,
 } from './port';
 import { pickDeviceImage } from '../../../media/device-image-picker';
+import { appendFileToFormData } from '../../../media/form-data';
 
 function getDefaultHttpClient(): DriverHttpClient {
   const { httpClient } = require('../../../api/http-client');
@@ -123,14 +124,11 @@ export function formatOrderReference(order: {
 
 export function formatDriverEtaLabel(
   seconds: number | null | undefined,
-  source?: ProviderSource | string | null,
+  _source?: ProviderSource | string | null,
 ): string {
   const durationSeconds = seconds ?? 0;
   const minutes = Math.max(1, Math.round(durationSeconds / 60));
-  if (source === 'DEMO') {
-    return `ETA dự kiến · ${minutes} phút · Dữ liệu mô phỏng`;
-  }
-  return `ETA dự kiến · ${minutes} phút`;
+  return `Thời gian dự kiến · ${minutes} phút`;
 }
 
 export function formatVehicleLabel(
@@ -269,6 +267,7 @@ export interface DriverAvailableOrdersApiResponse {
 
 export interface DriverActiveOrderApiResponse {
   order: MappedDriverOrderResponse | null;
+  availability?: DriverAvailability;
 }
 
 export interface DriverAvailabilityApiResponse {
@@ -369,6 +368,22 @@ export function mapOrderToRouteView(
 export function mapOrderToPublicOrderView(
   order: MappedDriverOrderResponse,
 ): DriverPublicOrderView {
+  const pickupStop =
+    order.stops?.find((s) => s.type === 'PICKUP' || s.sequence === 0) ?? order.stops?.[0];
+  const dropoffStop =
+    order.stops?.find((s) => s.type === 'DROPOFF') ??
+    order.stops?.[(order.stops?.length ?? 1) - 1];
+
+  const pickupLocationLabel = pickupStop?.address
+    ? pickupStop.address.startsWith('Khu vực ')
+      ? pickupStop.address
+      : `Khu vực ${pickupStop.address}`
+    : 'Khu vực lấy hàng';
+  const dropoffLocationLabel = dropoffStop?.address ?? 'Khu vực giao hàng';
+
+  const priceVnd = order.priceVnd ?? 285000;
+  const distanceLabel = order.distanceMeters ? formatDistance(order.distanceMeters) : '18,4 km';
+
   return {
     id: order.id,
     reference: formatOrderReference(order),
@@ -381,6 +396,12 @@ export function mapOrderToPublicOrderView(
       order.providerSource,
     ),
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
+    priceVnd,
+    priceLabel: formatVndPrice(priceVnd),
+    distanceLabel,
+    pickupLocationLabel,
+    dropoffLocationLabel,
+    pickupDistanceLabel: 'Cách bạn 1.2 km',
   };
 }
 
@@ -617,7 +638,7 @@ export function mapOrderToDriverDetailView(
     cargoSummary: formatCargoSummary(order),
     customerContact:
       order.customerContact ??
-      'Số điện thoại khách hàng mô phỏng · chỉ hiện sau phân công',
+      'Thông tin liên hệ khách hàng · chỉ hiện sau phân công',
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
     history,
   };
@@ -656,6 +677,17 @@ export function createDriverHttpAdapter(
             | MappedDriverOrderResponse[]
           >('/driver/orders/available'),
         ]);
+
+        if (
+          activeRes &&
+          typeof activeRes === 'object' &&
+          'availability' in activeRes &&
+          (activeRes.availability === 'AVAILABLE' ||
+            activeRes.availability === 'OFFLINE' ||
+            activeRes.availability === 'BUSY')
+        ) {
+          currentAvailability = activeRes.availability;
+        }
 
         const rawActiveOrder =
           activeRes && 'order' in activeRes
@@ -924,14 +956,26 @@ export function createDriverHttpAdapter(
             error.code === 'DRIVER_BUSY' ||
             error.code === 'DRIVER_HAS_ACTIVE_ORDER'
           ) {
+            if (lastActiveTripReference) {
+              return deepFreeze<DriverConflictView>({
+                scenarioId: 'D-DETAIL-ACTIVE-ORDER-CONFLICT',
+                kind: 'conflict',
+                title: 'Bạn đã có một chuyến hoạt động',
+                message:
+                  'Không thể nhận thêm đơn khi chuyến hiện tại chưa kết thúc.',
+                recoveryLabel: 'Mở chuyến đang thực hiện',
+                activeOrderReference: lastActiveTripReference,
+              });
+            }
+
+            currentAvailability = 'OFFLINE';
             return deepFreeze<DriverConflictView>({
               scenarioId: 'D-DETAIL-ACTIVE-ORDER-CONFLICT',
               kind: 'conflict',
-              title: 'Bạn đã có một chuyến hoạt động',
+              title: 'Chưa sẵn sàng nhận đơn',
               message:
-                'Không thể nhận thêm đơn khi chuyến hiện tại chưa kết thúc.',
-              recoveryLabel: 'Mở chuyến đang thực hiện',
-              activeOrderReference: lastActiveTripReference,
+                'Bạn đang ở trạng thái ngoại tuyến hoặc chưa sẵn sàng nhận đơn. Vui lòng bật trạng thái nhận đơn để tiếp tục.',
+              recoveryLabel: 'Xem danh sách đơn',
             });
           }
           if (
@@ -1054,7 +1098,7 @@ export function createDriverHttpAdapter(
                 },
                 vehicleLabel: 'Xe van',
                 cargoSummary: 'Hàng hóa tiêu chuẩn',
-                customerContact: 'Số điện thoại khách hàng mô phỏng · chỉ hiện sau phân công',
+                customerContact: 'Thông tin liên hệ khách hàng · chỉ hiện sau phân công',
                 updatedAtLabel: formatDateTime(new Date()),
                 history: [],
               },
@@ -1134,6 +1178,7 @@ export interface ProofFileMetadata {
   size: number;
   uri?: string;
   data?: unknown;
+  file?: File | Blob;
 }
 
 export interface ProofValidationResult {
@@ -1227,11 +1272,12 @@ export async function uploadDeliveryProof(
 
   try {
     const form = new FormData();
-    form.append('file', {
+    await appendFileToFormData(form, 'file', {
       uri: file.uri ?? '',
       name: file.name,
-      type: file.mimeType,
-    } as unknown as Blob);
+      mimeType: file.mimeType,
+      file: file.file,
+    });
     form.append(
       'clientRequestId',
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -1292,6 +1338,7 @@ export function createDriverProofAdapter(
         mimeType: picked.mimeType,
         size: picked.size,
         uri: picked.uri,
+        file: picked.file,
       };
       locallySelectedFile = file;
       return file;

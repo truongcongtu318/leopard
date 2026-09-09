@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
   Easing,
   Image,
+  PanResponder,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,12 +12,17 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
-import { leopardPalette, radius, spacing, typography } from '../../theme/tokens';
-import { LeopardEmblem, LeopardMobileLogo } from '../../ui/icons/CoreIcons';
+import { spacing } from '../../theme/tokens';
+import { LeopardEmblem } from '../../ui/icons/CoreIcons';
 
+const onboarding1 = require('../../../assets/brand/onboarding-1.jpg');
+const onboarding2 = require('../../../assets/brand/onboarding-2.jpg');
+const onboarding3 = require('../../../assets/brand/onboarding-3.jpg');
 
-const truckSource = require('../../../assets/brand/truck.png');
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
+const SLIDE_DURATION_MS = 5000;
 
 export type OnboardingScreenProps = Readonly<{
   onGetStarted: () => void;
@@ -24,94 +30,145 @@ export type OnboardingScreenProps = Readonly<{
   onExploreGuest?: () => void;
 }>;
 
-/** Professional 3D elevated highway palette. */
-const scene = {
-  canvas: '#EEF3F9',
-  mapGround: '#E2EAF4',
-  block: '#D5E1F0',
-  blockBorder: '#CAD9EB',
+export type OnboardingSlideData = Readonly<{
+  badge: string;
+  title: string;
+  desc: string;
+  image: any;
+}>;
 
-  // 3D Elevated Highway layers
-  roadCastShadow: 'rgba(15, 23, 42, 0.15)', // ambient ground shadow
-  roadOverpassWall: '#627387', // 3D vertical concrete bridge thickness
-  roadShoulder: '#8C9CAA', // curb / guardrail
-  roadHighlight: 'rgba(255, 255, 255, 0.7)', // top 3D edge highlight
-  roadFill: '#B8C5D3', // asphalt surface
-  roadLine: '#FFFFFF', // crisp reflective dashed lines
+export const ONBOARDING_SLIDES: readonly OnboardingSlideData[] = [
+  {
+    badge: 'Vận chuyển hỏa tốc',
+    title: 'Giao hàng đường dài & Đa dạng loại xe',
+    desc: 'Điều phối tức thì các dòng xe tải từ 500kg đến 15 tấn, tối ưu lộ trình và phục vụ vận chuyển hàng hóa an toàn, đúng giờ.',
+    image: onboarding1,
+  },
+  {
+    badge: 'Bốc dỡ tận tâm',
+    title: 'Đội ngũ chuyên nghiệp & Hỗ trợ bốc xếp',
+    desc: 'Tài xế và phụ xe được xác minh, hỗ trợ bốc xếp hai đầu cẩn thận, dỡ hàng tận cửa và ký nhận biên bản điện tử POD an toàn.',
+    image: onboarding2,
+  },
+  {
+    badge: 'Toàn quốc 63 tỉnh thành',
+    title: 'Vận tải liên tỉnh & Bảo hiểm 100%',
+    desc: 'Kết nối mạng lưới chuỗi cung ứng toàn quốc với công nghệ ghép chuyến thông minh, tối ưu chi phí và cam kết bảo hiểm hàng hóa trọn gói.',
+    image: onboarding3,
+  },
+];
 
-  // Aerodynamic wind streaks (Pure crisp white)
-  windPrimary: '#FFFFFF',
-  windSecondary: 'rgba(255, 255, 255, 0.9)',
-  windGlow: 'rgba(255, 255, 255, 0.65)',
-
-  // Wheel dust clouds
-  dustCloud: 'rgba(203, 213, 225, 0.85)',
-  dustCloudBorder: '#94A3B8',
-
-  shadow: 'rgba(15, 23, 42, 0.24)',
-  ink: '#0B1F3A',
-  muted: '#5B6B80',
-  ctaTop: '#2E6FD6',
-  ctaBottom: '#1E5BB8',
-  pinDrop: '#16A34A',
-} as const;
-
-const TRUCK_RATIO = 600 / 450;
-const ROAD_SAMPLES = 48;
-const TRAVEL_MS = 8400; // drive duration at a smooth, relaxed cruising pace
-
-// Native driver is unsupported on react-native-web; gate it to avoid warnings.
-const USE_NATIVE_DRIVER = Platform.OS !== 'web';
-
-type Point = Readonly<{ x: number; y: number }>;
-type Segment = Readonly<{ x: number; y: number; length: number; angle: number; t: number }>;
-type StageSize = Readonly<{ width: number; height: number }>;
-
-/**
- * 3D Winding Highway that extends beyond stage boundaries:
- * Starts outside top-left, curves gracefully across center, and sweeps outside bottom-right.
- */
-function sampleRoad({ width: w, height: h }: StageSize): Point[] {
-  if (w === 0 || h === 0) return [];
-  const p0 = { x: -w * 0.10, y: -h * 0.04 }; // starts outside top-left
-  const p1 = { x: w * 0.50, y: h * 0.22 };  // sweeps into top-right quadrant
-  const p2 = { x: w * 0.20, y: h * 0.68 };  // curves deeply into bottom-left quadrant
-  const p3 = { x: w * 1.14, y: h * 1.04 };  // sweeps outside bottom-right
-  const points: Point[] = [];
-  for (let i = 0; i < ROAD_SAMPLES; i++) {
-    const t = i / (ROAD_SAMPLES - 1);
-    const mt = 1 - t;
-    const x =
-      mt * mt * mt * p0.x + 3 * mt * mt * t * p1.x + 3 * mt * t * t * p2.x + t * t * t * p3.x;
-    const y =
-      mt * mt * mt * p0.y + 3 * mt * mt * t * p1.y + 3 * mt * t * t * p2.y + t * t * t * p3.y;
-    points.push({ x, y });
+function ArrowRightIcon({ size = 24, color = '#081A3C' }: { size?: number; color?: string }) {
+  if (Platform.OS === 'web') {
+    return (
+      <svg
+        fill="none"
+        height={size}
+        stroke={color}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.5"
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <path d="M5 12h14M12 5l7 7-7 7" />
+      </svg>
+    );
   }
-  return points;
+  return (
+    <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
+      <Path
+        d="M5 12h14M12 5l7 7-7 7"
+        stroke={color}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.5"
+      />
+    </Svg>
+  );
 }
 
-function toSegments(points: readonly Point[]): Segment[] {
-  const segments: Segment[] = [];
-  for (let i = 0; i < points.length - 1; i++) {
-    const a = points[i];
-    const b = points[i + 1];
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    segments.push({
-      x: (a.x + b.x) / 2,
-      y: (a.y + b.y) / 2,
-      length: Math.hypot(dx, dy) + 10,
-      angle: (Math.atan2(dy, dx) * 180) / Math.PI,
-      t: i / (points.length - 2),
-    });
-  }
-  return segments;
+function FullscreenLightTint() {
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          backgroundColor: 'rgba(8, 26, 60, 0.35)',
+          zIndex: 1,
+        },
+      ]}
+    />
+  );
 }
 
-// Road narrows in distance (top-left) and widens near viewer (bottom-right).
-const roadWidthAt = (t: number): number => 46 + t * 54;
+function NavyGradientOverlay() {
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        pointerEvents="none"
+        style={[
+          styles.navyGradientWrap,
+          {
+            backgroundImage:
+              'linear-gradient(to top, #081A3C 0%, rgba(8, 26, 60, 0.98) 45%, rgba(8, 26, 60, 0.85) 65%, rgba(8, 26, 60, 0.40) 85%, transparent 100%)',
+          } as any,
+        ]}
+      />
+    );
+  }
 
-/** Reflects the OS "reduce motion" preference so we can serve a static frame. */
+  return (
+    <View pointerEvents="none" style={styles.navyGradientWrap}>
+      <Svg height="100%" width="100%">
+        <Defs>
+          <LinearGradient id="bottomNavyGrad" x1="0" x2="0" y1="0" y2="1">
+            <Stop offset="0" stopColor="#081A3C" stopOpacity="0" />
+            <Stop offset="0.25" stopColor="#081A3C" stopOpacity="0.55" />
+            <Stop offset="0.55" stopColor="#081A3C" stopOpacity="0.88" />
+            <Stop offset="0.85" stopColor="#081A3C" stopOpacity="0.98" />
+            <Stop offset="1" stopColor="#081A3C" stopOpacity="1" />
+          </LinearGradient>
+        </Defs>
+        <Rect fill="url(#bottomNavyGrad)" height="100%" width="100%" x="0" y="0" />
+      </Svg>
+    </View>
+  );
+}
+
+function TopVignetteOverlay() {
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        pointerEvents="none"
+        style={[
+          styles.topVignetteWrap,
+          {
+            backgroundImage:
+              'linear-gradient(to bottom, rgba(8, 26, 60, 0.70) 0%, rgba(8, 26, 60, 0.30) 60%, transparent 100%)',
+          } as any,
+        ]}
+      />
+    );
+  }
+
+  return (
+    <View pointerEvents="none" style={styles.topVignetteWrap}>
+      <Svg height="100%" width="100%">
+        <Defs>
+          <LinearGradient id="topVignetteGrad" x1="0" x2="0" y1="0" y2="1">
+            <Stop offset="0" stopColor="#081A3C" stopOpacity="0.70" />
+            <Stop offset="0.60" stopColor="#081A3C" stopOpacity="0.30" />
+            <Stop offset="1" stopColor="#081A3C" stopOpacity="0" />
+          </LinearGradient>
+        </Defs>
+        <Rect fill="url(#topVignetteGrad)" height="100%" width="100%" x="0" y="0" />
+      </Svg>
+    </View>
+  );
+}
+
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
@@ -139,904 +196,492 @@ export function OnboardingScreen({
   onGetStarted,
 }: OnboardingScreenProps) {
   const reduceMotion = useReducedMotion();
-  const [stage, setStage] = useState<StageSize>({ width: 0, height: 0 });
+  const [slide, setSlide] = useState(0);
 
-  const travel = useRef(new Animated.Value(0)).current; // truck along road 0→1
-  const topBarIn = useRef(new Animated.Value(0)).current; // top bar reveal
-  const roadIn = useRef(new Animated.Value(0)).current; // road reveal
-  const windAnim = useRef(new Animated.Value(0)).current; // aerodynamic wind pulse
-  const dustAnim = useRef(new Animated.Value(0)).current; // wheel dust loop
-  const contentIn = useRef(new Animated.Value(0)).current; // bottom slide-up
-  const exit = useRef(new Animated.Value(0)).current; // drive-off + fade
+  // Animated values for background cross-fade and zoom
+  const opacities = useRef(ONBOARDING_SLIDES.map((_, i) => new Animated.Value(i === 0 ? 1 : 0))).current;
+  const scales = useRef(ONBOARDING_SLIDES.map((_, i) => new Animated.Value(i === 0 ? 1 : 1.04))).current;
+  const textAnim = useRef(new Animated.Value(1)).current;
 
-  const isExiting = useRef(false);
-  const autoAdvance = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loops = useRef<Animated.CompositeAnimation[]>([]);
   const onGetStartedRef = useRef(onGetStarted);
   onGetStartedRef.current = onGetStarted;
 
-  const points = useMemo(() => sampleRoad(stage), [stage]);
-  const segments = useMemo(() => toSegments(points), [points]);
-  const ready = stage.width > 0 && stage.height > 0;
+  const finish = useCallback(() => {
+    onGetStartedRef.current();
+  }, []);
 
-  const truckWidth = Math.max(120, Math.min(168, stage.width * 0.42));
-  const truckHeight = truckWidth / TRUCK_RATIO;
+  const handleNext = useCallback(() => {
+    if (slide < ONBOARDING_SLIDES.length - 1) {
+      setSlide((prev) => prev + 1);
+    } else {
+      finish();
+    }
+  }, [slide, finish]);
 
-  const finish = useMemo(() => {
-    return () => {
-      if (isExiting.current) return;
-      isExiting.current = true;
-      if (autoAdvance.current) clearTimeout(autoAdvance.current);
-      loops.current.forEach((l) => l.stop());
-      if (reduceMotion) {
-        onGetStartedRef.current();
-        return;
-      }
-      Animated.timing(exit, {
-        toValue: 1,
-        duration: 540,
-        easing: Easing.bezier(0.2, 0.8, 0.3, 1),
-        useNativeDriver: USE_NATIVE_DRIVER,
-      }).start(({ finished }) => {
-        if (finished) onGetStartedRef.current();
-      });
-    };
-  }, [exit, reduceMotion]);
+  const handlePrev = useCallback(() => {
+    if (slide > 0) {
+      setSlide((prev) => prev - 1);
+    }
+  }, [slide]);
 
+  // Horizontal swipe gesture handler
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dx) > 25 && Math.abs(gestureState.dy) < 35,
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dx < -50) {
+            handleNext();
+          } else if (gestureState.dx > 50) {
+            handlePrev();
+          }
+        },
+      }),
+    [handleNext, handlePrev],
+  );
+
+  // Auto-advance every 5 seconds (loops back or stays on last)
   useEffect(() => {
-    if (!ready) return;
+    if (reduceMotion) return;
+    const timer = setInterval(() => {
+      setSlide((prev) => (prev + 1) % ONBOARDING_SLIDES.length);
+    }, SLIDE_DURATION_MS);
+    return () => clearInterval(timer);
+  }, [slide, reduceMotion]);
 
+  // Transition animations when active slide changes
+  useEffect(() => {
     if (reduceMotion) {
-      travel.setValue(1);
-      topBarIn.setValue(1);
-      roadIn.setValue(1);
-      contentIn.setValue(1);
+      opacities.forEach((anim, i) => anim.setValue(i === slide ? 1 : 0));
+      scales.forEach((anim, i) => anim.setValue(1));
+      textAnim.setValue(1);
       return;
     }
 
-    travel.setValue(0);
-    topBarIn.setValue(0);
-    roadIn.setValue(0);
-    contentIn.setValue(0);
-    exit.setValue(0);
-    windAnim.setValue(0);
-    dustAnim.setValue(0);
-
-    // Dynamic wind pulse loop
-    const windLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(windAnim, {
-          toValue: 1,
-          duration: 380,
-          easing: Easing.out(Easing.quad),
+    const anims: Animated.CompositeAnimation[] = [];
+    opacities.forEach((anim, i) => {
+      anims.push(
+        Animated.timing(anim, {
+          toValue: i === slide ? 1 : 0,
+          duration: 650,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: USE_NATIVE_DRIVER,
         }),
-        Animated.timing(windAnim, {
-          toValue: 0,
-          duration: 380,
-          easing: Easing.in(Easing.quad),
+      );
+    });
+
+    scales.forEach((anim, i) => {
+      anims.push(
+        Animated.timing(anim, {
+          toValue: i === slide ? 1 : 1.04,
+          duration: 750,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: USE_NATIVE_DRIVER,
         }),
-      ]),
+      );
+    });
+
+    // Content fade & subtle slide-up
+    textAnim.setValue(0);
+    anims.push(
+      Animated.timing(textAnim, {
+        toValue: 1,
+        duration: 450,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }),
     );
 
-    // Dynamic wheel dust expansion loop
-    const dustLoop = Animated.loop(
-      Animated.timing(dustAnim, {
-        toValue: 1,
-        duration: 650,
-        easing: Easing.linear,
-        useNativeDriver: USE_NATIVE_DRIVER,
-      }),
-    );
+    Animated.parallel(anims).start();
+  }, [slide, reduceMotion, opacities, scales, textAnim]);
 
-    loops.current = [windLoop, dustLoop];
+  const activeSlide = ONBOARDING_SLIDES[slide];
+  const isLastSlide = slide === ONBOARDING_SLIDES.length - 1;
 
-    const intro = Animated.parallel([
-      Animated.timing(topBarIn, {
-        toValue: 1,
-        duration: 520,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: USE_NATIVE_DRIVER,
-      }),
-      Animated.timing(roadIn, {
-        toValue: 1,
-        duration: 700,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: USE_NATIVE_DRIVER,
-      }),
-      Animated.timing(contentIn, {
-        toValue: 1,
-        duration: 620,
-        delay: 260,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: USE_NATIVE_DRIVER,
-      }),
-    ]);
-
-    const drive = Animated.timing(travel, {
-      toValue: 1,
-      duration: TRAVEL_MS,
-      delay: 350,
-      easing: Easing.inOut(Easing.cubic),
-      useNativeDriver: USE_NATIVE_DRIVER,
-    });
-
-    intro.start();
-    windLoop.start();
-    dustLoop.start();
-    drive.start();
-
-    autoAdvance.current = setTimeout(finish, TRAVEL_MS + 1000);
-
-    return () => {
-      intro.stop();
-      drive.stop();
-      windLoop.stop();
-      dustLoop.stop();
-      if (autoAdvance.current) clearTimeout(autoAdvance.current);
-    };
-  }, [ready, reduceMotion, travel, roadIn, contentIn, exit, windAnim, dustAnim, finish]);
-
-  // Truck rides along the road centreline; wheels sit ~80% down the sprite.
-  const truckStyle = useMemo(() => {
-    if (points.length === 0) return null;
-    const inputRange = points.map((_, i) => i / (points.length - 1));
-    const tx = travel.interpolate({
-      inputRange,
-      outputRange: points.map((p) => p.x - truckWidth / 2),
-    });
-    const ty = travel.interpolate({
-      inputRange,
-      outputRange: points.map((p) => p.y - truckHeight * 0.8),
-    });
-    const exitX = exit.interpolate({ inputRange: [0, 1], outputRange: [0, stage.width * 0.35] });
-    const exitY = exit.interpolate({ inputRange: [0, 1], outputRange: [0, stage.height * 0.35] });
-    const travelScale = travel.interpolate({ inputRange: [0, 1], outputRange: [0.76, 1.10] });
-    const exitScale = exit.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] });
-    return {
-      opacity: Animated.multiply(
-        travel.interpolate({ inputRange: [0, 0.03, 1], outputRange: [0, 1, 1] }),
-        exit.interpolate({ inputRange: [0, 0.85, 1], outputRange: [1, 0.8, 0] }),
-      ),
-      transform: [
-        { translateX: Animated.add(tx, exitX) },
-        { translateY: Animated.add(ty, exitY) },
-        { scale: Animated.multiply(travelScale, exitScale) },
-      ],
-    };
-  }, [travel, exit, points, truckWidth, truckHeight, stage.width, stage.height]);
-
-  // Isometric angled shadow following the truck orientation (slanted down-right along the truck chassis)
-  const shadowStyle = useMemo(() => {
-    if (points.length === 0) return null;
-    const inputRange = points.map((_, i) => i / (points.length - 1));
-    const shadowW = truckWidth * 0.76;
-    const shadowH = 20;
-    const sx = travel.interpolate({
-      inputRange,
-      outputRange: points.map((p) => p.x - shadowW / 2 + truckWidth * 0.02),
-    });
-    const sy = travel.interpolate({
-      inputRange,
-      outputRange: points.map((p) => p.y - shadowH / 2 - truckHeight * 0.04),
-    });
-    const exitX = exit.interpolate({ inputRange: [0, 1], outputRange: [0, stage.width * 0.35] });
-    const exitY = exit.interpolate({ inputRange: [0, 1], outputRange: [0, stage.height * 0.35] });
-    const travelScale = travel.interpolate({ inputRange: [0, 1], outputRange: [0.76, 1.10] });
-    const exitScale = exit.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] });
-
-    return {
-      opacity: Animated.multiply(
-        travel.interpolate({ inputRange: [0, 0.04, 1], outputRange: [0, 0.95, 0.95] }),
-        exit.interpolate({ inputRange: [0, 0.85, 1], outputRange: [1, 0.8, 0] }),
-      ),
-      transform: [
-        { translateX: Animated.add(sx, exitX) },
-        { translateY: Animated.add(sy, exitY) },
-        { rotate: '27deg' },
-        { scale: Animated.multiply(travelScale, exitScale) },
-      ],
-    };
-  }, [travel, exit, points, truckWidth, truckHeight, stage.width, stage.height]);
-
-
-  // Overall active opacity for dust/wind trails when truck is driving
-  const trailActiveOpacity = travel.interpolate({
-    inputRange: [0, 0.04, 0.94, 1],
-    outputRange: [0, 1, 1, 0],
-  });
-
-  // Wind speed streak 1 (tucked closely behind top rear roof)
-  const windStreak1Style = {
-    opacity: Animated.multiply(
-      trailActiveOpacity,
-      windAnim.interpolate({ inputRange: [0, 1], outputRange: [0.65, 1.0] }),
-    ),
+  const textStyle = {
+    opacity: textAnim,
     transform: [
       {
-        translateX: windAnim.interpolate({
+        translateY: textAnim.interpolate({
           inputRange: [0, 1],
-          outputRange: [2, -10],
+          outputRange: [12, 0],
         }),
-      },
-      {
-        scaleX: windAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.85, 1.25],
-        }),
-      },
-      { rotate: '-24deg' },
-    ],
-  };
-
-  // Wind speed streak 2 (tucked closely behind mid container)
-  const windStreak2Style = {
-    opacity: Animated.multiply(
-      trailActiveOpacity,
-      windAnim.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0.95] }),
-    ),
-    transform: [
-      {
-        translateX: windAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, -12],
-        }),
-      },
-      {
-        scaleX: windAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.9, 1.3],
-        }),
-      },
-      { rotate: '-22deg' },
-    ],
-  };
-
-  // Wind speed streak 3 (tucked closely behind lower container edge)
-  const windStreak3Style = {
-    opacity: Animated.multiply(
-      trailActiveOpacity,
-      windAnim.interpolate({ inputRange: [0, 1], outputRange: [0.45, 0.85] }),
-    ),
-    transform: [
-      {
-        translateX: windAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -8],
-        }),
-      },
-      { rotate: '-20deg' },
-    ],
-  };
-
-  // Wheel dust puff 1 (tucked closely behind rear wheels)
-  const dustPuff1Style = {
-    opacity: Animated.multiply(
-      trailActiveOpacity,
-      dustAnim.interpolate({
-        inputRange: [0, 0.2, 0.8, 1],
-        outputRange: [0.2, 0.95, 0.6, 0],
-      }),
-    ),
-    transform: [
-      {
-        translateX: dustAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, -14],
-        }),
-      },
-      {
-        translateY: dustAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -5],
-        }),
-      },
-      {
-        scale: dustAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.5, 1.4],
-        }),
-      },
-    ],
-  };
-
-  // Wheel dust puff 2 (secondary offset cloud)
-  const dustPuff2Style = {
-    opacity: Animated.multiply(
-      trailActiveOpacity,
-      dustAnim.interpolate({
-        inputRange: [0, 0.4, 0.85, 1],
-        outputRange: [0.6, 0.9, 0.3, 0],
-      }),
-    ),
-    transform: [
-      {
-        translateX: dustAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -11],
-        }),
-      },
-      {
-        translateY: dustAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, -3],
-        }),
-      },
-      {
-        scale: dustAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.6, 1.2],
-        }),
-      },
-    ],
-  };
-
-  // Wheel dust puff 3 (small ground drift)
-  const dustPuff3Style = {
-    opacity: Animated.multiply(
-      trailActiveOpacity,
-      dustAnim.interpolate({
-        inputRange: [0, 0.3, 0.7, 1],
-        outputRange: [0.3, 0.85, 0.4, 0],
-      }),
-    ),
-    transform: [
-      {
-        translateX: dustAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [2, -8],
-        }),
-      },
-      {
-        scale: dustAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.4, 1.1],
-        }),
-      },
-    ],
-  };
-
-  const topBarStyle = {
-    opacity: Animated.multiply(
-      topBarIn,
-      exit.interpolate({ inputRange: [0, 0.65, 1], outputRange: [1, 0.3, 0] }),
-    ),
-    transform: [
-      {
-        translateY: Animated.add(
-          topBarIn.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-8, 0],
-          }),
-          exit.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, -10],
-          }),
-        ),
-      },
-    ],
-  };
-
-  const stageStyle = {
-    opacity: exit.interpolate({ inputRange: [0, 0.85, 1], outputRange: [1, 0.35, 0] }),
-    transform: [
-      { scale: exit.interpolate({ inputRange: [0, 1], outputRange: [1, 0.96] }) },
-    ],
-  };
-
-  const contentStyle = {
-    opacity: Animated.multiply(
-      contentIn,
-      exit.interpolate({ inputRange: [0, 0.75, 1], outputRange: [1, 0.25, 0] }),
-    ),
-    transform: [
-      {
-        translateY: Animated.add(
-          contentIn.interpolate({ inputRange: [0, 1], outputRange: [26, 0] }),
-          exit.interpolate({ inputRange: [0, 1], outputRange: [0, 36] }),
-        ),
       },
     ],
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Top brand bar */}
-        <Animated.View style={[styles.topBar, topBarStyle]}>
-          <View style={styles.brandLogoWrap}>
-            <LeopardEmblem testID="onboarding-brand-emblem" width={74} />
-            <View style={styles.wordmarkWrap}>
-              <LeopardMobileLogo height={30} testID="onboarding-brand-logo" width={150} />
+    <View style={styles.container} {...panResponder.panHandlers}>
+      {/* ─── LAYER 0: ALL BACKGROUNDS & OVERLAYS (zIndex: 0) ─── */}
+      <View pointerEvents="none" style={styles.backgroundLayer}>
+        {/* 1. Full-Bleed Background Images Stack with Cross-Fade */}
+        <View style={StyleSheet.absoluteFill}>
+          {ONBOARDING_SLIDES.map((item, idx) => (
+            <Animated.View
+              key={idx}
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  opacity: opacities[idx],
+                  transform: [{ scale: scales[idx] }],
+                },
+              ]}
+            >
+              <Image
+                accessibilityRole="image"
+                resizeMode="cover"
+                source={item.image}
+                style={styles.fullBleedImage}
+              />
+            </Animated.View>
+          ))}
+        </View>
+
+        {/* 2. Full-bleed Light Navy Tint across ENTIRE image */}
+        <FullscreenLightTint />
+
+        {/* 3. Top Dark Vignette Overlay for Header Contrast */}
+        <TopVignetteOverlay />
+
+        {/* 4. Deep Navy Gradient Overlay at Base (darker at bottom for text contrast) */}
+        <NavyGradientOverlay />
+        <View style={styles.solidBottomFill} />
+      </View>
+
+      {/* ─── LAYER 1: FOREGROUND CONTENT (TOPMOST zIndex: 50) ─── */}
+      <SafeAreaView style={styles.safeArea}>
+        {/* Top Header Bar */}
+        <View style={styles.topBar}>
+          <View style={styles.brandRow}>
+            <View style={styles.brandIconBox}>
+              <LeopardEmblem testID="onboarding-brand-emblem" width={24} />
             </View>
-            <View style={styles.brandNameHiddenAccessible}>
-              <Text style={styles.brandGlyph}>Leo</Text>
-              <Text style={styles.brandGlyph}>pard</Text>
-            </View>
+            <Text style={styles.brandTitleText}>LEOPARD</Text>
           </View>
 
-
-
           <Pressable
+            accessibilityHint="Chuyển thẳng tới màn hình đăng nhập"
             accessibilityLabel="Bỏ qua"
             accessibilityRole="button"
             hitSlop={8}
             onPress={finish}
-            style={({ pressed, hovered }: any) => [
-              styles.skipBtn,
-              hovered && styles.skipBtnHovered,
-              pressed && styles.skipBtnPressed,
-            ]}
+            style={({ pressed }) => [styles.skipBtn, pressed && styles.skipBtnPressed]}
           >
-            {({ hovered, pressed }: any) => (
-              <Text style={[styles.skipText, (hovered || pressed) && styles.skipTextHovered]}>
-                Bỏ qua
-              </Text>
-            )}
+            <Text style={styles.skipBtnText}>Bỏ qua</Text>
           </Pressable>
-        </Animated.View>
+        </View>
 
+        {/* Bottom Area: Badge, Title, Description, Navigation */}
+        <View style={styles.bottomSection}>
+          <Animated.View style={textStyle}>
+            {/* Category Badge */}
+            <View style={styles.badgeContainer}>
+              <View style={styles.badgeDot} />
+              <Text style={styles.badgeText}>{activeSlide.badge}</Text>
+            </View>
 
+            {/* Title */}
+            <Text style={styles.titleText}>{activeSlide.title}</Text>
 
-
-        {/* Road stage with 3D Elevated Highway */}
-        <Animated.View
-          onLayout={(e) =>
-            setStage({
-              width: e.nativeEvent.layout.width,
-              height: e.nativeEvent.layout.height,
-            })
-          }
-          style={[styles.stage, stageStyle]}
-        >
-          {/* Decorative City Blocks */}
-          <View style={[styles.block, styles.blockA]} />
-          <View style={[styles.block, styles.blockB]} />
-          <View style={[styles.block, styles.blockC]} />
-          <View style={[styles.block, styles.blockD]} />
-
-          {ready && (
-            <Animated.View style={[StyleSheet.absoluteFill, { opacity: roadIn }]}>
-              {/* Layer 1: Ambient Drop Shadow beneath the elevated overpass */}
-              {segments.map((s, i) => {
-                const wdt = roadWidthAt(s.t) + 12;
-                return (
-                  <View
-                    key={`shd-${i}`}
-                    style={{
-                      position: 'absolute',
-                      left: s.x - s.length / 2,
-                      top: s.y - wdt / 2 + 10,
-                      width: s.length,
-                      height: wdt,
-                      borderRadius: 10,
-                      backgroundColor: scene.roadCastShadow,
-                      transform: [{ rotate: `${s.angle}deg` }],
-                    }}
-                  />
-                );
-              })}
-
-              {/* Layer 2: 3D Concrete Bridge Side Thickness (Overpass Wall) */}
-              {segments.map((s, i) => {
-                const wdt = roadWidthAt(s.t) + 8;
-                return (
-                  <View
-                    key={`wall-${i}`}
-                    style={{
-                      position: 'absolute',
-                      left: s.x - s.length / 2,
-                      top: s.y - wdt / 2 + 5,
-                      width: s.length,
-                      height: wdt,
-                      borderRadius: 8,
-                      backgroundColor: scene.roadOverpassWall,
-                      transform: [{ rotate: `${s.angle}deg` }],
-                    }}
-                  />
-                );
-              })}
-
-              {/* Layer 3: Road Shoulder / Curb */}
-              {segments.map((s, i) => {
-                const wdt = roadWidthAt(s.t) + 8;
-                return (
-                  <View
-                    key={`sh-${i}`}
-                    style={{
-                      position: 'absolute',
-                      left: s.x - s.length / 2,
-                      top: s.y - wdt / 2,
-                      width: s.length,
-                      height: wdt,
-                      borderRadius: 8,
-                      backgroundColor: scene.roadShoulder,
-                      transform: [{ rotate: `${s.angle}deg` }],
-                    }}
-                  />
-                );
-              })}
-
-              {/* Layer 4: 3D Upper Light Reflection on Edge */}
-              {segments.map((s, i) => {
-                const wdt = roadWidthAt(s.t) + 8;
-                return (
-                  <View
-                    key={`hgl-${i}`}
-                    style={{
-                      position: 'absolute',
-                      left: s.x - s.length / 2,
-                      top: s.y - wdt / 2 - 1,
-                      width: s.length,
-                      height: 2,
-                      borderRadius: 1,
-                      backgroundColor: scene.roadHighlight,
-                      transform: [{ rotate: `${s.angle}deg` }],
-                    }}
-                  />
-                );
-              })}
-
-              {/* Layer 5: Main Asphalt Surface */}
-              {segments.map((s, i) => {
-                const wdt = roadWidthAt(s.t);
-                return (
-                  <View
-                    key={`rd-${i}`}
-                    style={{
-                      position: 'absolute',
-                      left: s.x - s.length / 2,
-                      top: s.y - wdt / 2,
-                      width: s.length,
-                      height: wdt,
-                      borderRadius: 6,
-                      backgroundColor: scene.roadFill,
-                      transform: [{ rotate: `${s.angle}deg` }],
-                    }}
-                  />
-                );
-              })}
-
-              {/* Layer 6: Reflective Dashed Centre Line */}
-              {segments.map((s, i) =>
-                i % 2 === 0 ? (
-                  <View
-                    key={`ln-${i}`}
-                    style={{
-                      position: 'absolute',
-                      left: s.x - Math.min(16, s.length * 0.55) / 2,
-                      top: s.y - 2,
-                      width: Math.min(16, s.length * 0.55),
-                      height: 4,
-                      borderRadius: 2,
-                      backgroundColor: scene.roadLine,
-                      opacity: 0.95,
-                      transform: [{ rotate: `${s.angle}deg` }],
-                    }}
-                  />
-                ) : null,
-              )}
-            </Animated.View>
-          )}
-
-          {ready && truckStyle && shadowStyle && (
-            <>
-              {/* Contact shadow under the truck (tilted to match isometric chassis angle) */}
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  styles.truckShadow,
-                  shadowStyle,
-                  { width: truckWidth * 0.76, height: 22 },
-                ]}
-              />
-
-              {/* Truck + Multi-layer Wind & Dust Trails */}
-              <Animated.View
-                pointerEvents="none"
-                style={[styles.truckWrap, truckStyle, { width: truckWidth }]}
-              >
-                {/* 1. Aerodynamic Wind Speed Streaks in pure white */}
-                <Animated.View style={[styles.windStreak, styles.windStreak1, windStreak1Style]} />
-                <Animated.View style={[styles.windStreak, styles.windStreak2, windStreak2Style]} />
-                <Animated.View style={[styles.windStreak, styles.windStreak3, windStreak3Style]} />
-
-                {/* 2. Wheel Dust Cloud Puffs behind rear wheels */}
-                <Animated.View style={[styles.dustPuff, styles.dustPuff1, dustPuff1Style]} />
-                <Animated.View style={[styles.dustPuff, styles.dustPuff2, dustPuff2Style]} />
-                <Animated.View style={[styles.dustPuff, styles.dustPuff3, dustPuff3Style]} />
-
-                {/* Truck Sprite */}
-                <Image
-                  resizeMode="contain"
-                  source={truckSource}
-                  style={{ width: truckWidth, height: truckHeight }}
-                />
-              </Animated.View>
-            </>
-          )}
-
-          <Animated.View style={[styles.routeChip, { opacity: roadIn }]}>
-            <View style={styles.routeDot} />
-            <Text style={styles.routeChipText}>Đang giao hàng · GPS Realtime</Text>
+            {/* Description */}
+            <Text style={styles.descText}>{activeSlide.desc}</Text>
           </Animated.View>
-        </Animated.View>
 
-        {/* Bottom content */}
-        <Animated.View style={[styles.bottomArea, contentStyle]}>
-          <View style={styles.textGroup}>
-            <Text style={styles.title}>
-              Vận chuyển hàng hóa & vật liệu thông minh
-            </Text>
-            <Text style={styles.subtitle}>
-              Điều phối tức thì · Định vị GPS realtime · Tối ưu chi phí cho SME & Công trình
-            </Text>
+          {/* Navigation Bar: Pagination Dots on Left, Circular Action CTA on Right */}
+          <View style={styles.navRow}>
+            {/* Pagination Dots */}
+            <View style={styles.dotsContainer}>
+              {ONBOARDING_SLIDES.map((_, idx) => (
+                <Pressable
+                  key={idx}
+                  accessibilityLabel={`Chuyển tới trang ${idx + 1}`}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => setSlide(idx)}
+                  style={[
+                    styles.dotBase,
+                    idx === slide ? styles.dotActive : styles.dotInactive,
+                  ]}
+                />
+              ))}
+            </View>
+
+            {/* Circular Action Button */}
+            <Pressable
+              accessibilityHint={
+                isLastSlide
+                  ? 'Hoàn thành giới thiệu và vào ứng dụng'
+                  : 'Xem tiếp trang tiếp theo'
+              }
+              accessibilityLabel={isLastSlide ? 'Bắt đầu ngay' : 'Trang tiếp theo'}
+              accessibilityRole="button"
+              onPress={handleNext}
+              style={({ pressed }) => [
+                styles.actionBtn,
+                isLastSlide && styles.actionBtnLast,
+                pressed && styles.actionBtnPressed,
+              ]}
+            >
+              <ArrowRightIcon
+                color={isLastSlide ? '#081A3C' : '#081A3C'}
+                size={24}
+              />
+            </Pressable>
           </View>
 
-          <Pressable
-            accessibilityLabel="Bắt đầu ngay"
-            accessibilityRole="button"
-            onPress={finish}
-            style={({ pressed }) => [styles.primaryCtaBtn, pressed && styles.pressed]}
-          >
-            <View style={styles.ctaHighlight} pointerEvents="none" />
-            <Text style={styles.primaryCtaText}>Bắt đầu ngay</Text>
-          </Pressable>
-
+          {/* Optional Driver Partner Link */}
           {onDriverRegister && (
-            <View style={styles.subLinksRow}>
+            <View style={styles.driverSection}>
               <Pressable
+                accessibilityHint="Mở trang đăng ký tài xế"
                 accessibilityLabel="Đăng ký đối tác tài xế"
                 accessibilityRole="button"
+                hitSlop={8}
                 onPress={onDriverRegister}
-                style={styles.linkTouch}
+                style={styles.driverTouch}
               >
-                <Text style={styles.driverLinkText}>Đăng ký đối tác tài xế</Text>
+                <Text style={styles.driverText}>
+                  Bạn muốn hợp tác?{' '}
+                  <Text style={styles.driverHighlight}>Đăng ký đối tác tài xế</Text>
+                </Text>
               </Pressable>
             </View>
           )}
-        </Animated.View>
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: scene.canvas },
   container: {
     flex: 1,
+    backgroundColor: '#081A3C',
+  },
+  backgroundLayer: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 0,
+    elevation: 0,
+  },
+  safeArea: {
+    flex: 1,
+    justifyContent: 'space-between',
+    zIndex: 50,
+    elevation: 50,
+    position: 'relative',
+  },
+  fullBleedImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  // Overlays
+  topVignetteWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: 150,
+    zIndex: 1,
+  },
+  navyGradientWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '72%',
+    zIndex: 2,
+  },
+  solidBottomFill: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 64,
+    backgroundColor: '#081A3C',
+    zIndex: 2,
+  },
+
+  // Top Bar
+  topBar: {
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.md,
+    paddingTop: spacing.sm,
   },
-  topBar: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 0,
-    minHeight: 50,
+    gap: 8,
   },
-
-  brandLogoWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 0,
-    flexShrink: 1,
-  },
-  wordmarkWrap: {
-    paddingTop: 5,
-  },
-
-
-
-  brandNameHiddenAccessible: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute',
-    opacity: 0.01,
-    pointerEvents: 'none',
-  },
-  brandGlyph: { fontSize: 1, color: leopardPalette.primaryDark },
-  skipBtn: {
-    flexShrink: 0,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+  brandIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.40)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  skipBtnHovered: {
-    transform: [{ translateY: -1 }],
+  brandTitleText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
+    fontStyle: 'italic',
+    letterSpacing: 1.2,
+  },
+  skipBtn: {
+    paddingHorizontal: 15,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.30)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   skipBtnPressed: {
-    opacity: 0.65,
+    opacity: 0.7,
     transform: [{ scale: 0.96 }],
   },
-  skipText: {
-    fontSize: 13.5,
-    color: '#64748B',
-    fontWeight: '600',
-    letterSpacing: 0.2,
-  },
-  skipTextHovered: {
-    color: scene.ink,
+  skipBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
 
-
-
-  stage: {
-    flex: 1,
-    borderRadius: radius.cardXl,
-    backgroundColor: scene.mapGround,
-    overflow: 'hidden',
-    marginVertical: spacing.sm,
+  // Bottom Section
+  bottomSection: {
+    zIndex: 60,
+    elevation: 60,
+    position: 'relative',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(245, 158, 11, 0.22)',
     borderWidth: 1,
-    borderColor: '#D4E2F0',
+    borderColor: 'rgba(245, 158, 11, 0.45)',
+    marginBottom: 12,
   },
-  block: {
-    position: 'absolute',
-    backgroundColor: scene.block,
-    borderColor: scene.blockBorder,
-    borderWidth: 1,
-    borderRadius: 8,
-    transform: [{ rotate: '-18deg' }],
+  badgeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#F59E0B',
+    marginRight: 8,
   },
-  blockA: { width: 78, height: 78, right: '4%', top: '10%' },
-  blockB: { width: 62, height: 62, left: '4%', top: '34%' },
-  blockC: { width: 68, height: 68, left: '8%', bottom: '12%' },
-  blockD: { width: 52, height: 52, right: '4%', top: '68%' },
-
-  // Angled isometric shadow under truck chassis
-  truckShadow: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    borderRadius: 999,
-    backgroundColor: scene.shadow,
+  badgeText: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  titleText: {
+    fontSize: 27,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    lineHeight: 35,
+    marginBottom: 12,
+    letterSpacing: -0.3,
+    textShadowColor: 'rgba(0, 0, 0, 0.70)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  descText: {
+    fontSize: 15,
+    fontWeight: '400',
+    color: '#E2E8F0',
+    lineHeight: 23,
+    marginBottom: 28,
+    textShadowColor: 'rgba(0, 0, 0, 0.50)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
-  truckWrap: { position: 'absolute', left: 0, top: 0, alignItems: 'center' },
-
-  // Pure White Aerodynamic Wind Streaks (Tucked closely behind truck body)
-  windStreak: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
+  // Navigation Row
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 4,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dotBase: {
+    height: 8,
+    borderRadius: 4,
+  },
+  dotActive: {
+    width: 28,
+    backgroundColor: '#F59E0B',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
     shadowRadius: 4,
     elevation: 3,
   },
-  windStreak1: {
-    width: 32,
-    height: 3.5,
-    left: '6%',
-    top: '18%',
-    opacity: 0.95,
-  },
-  windStreak2: {
-    width: 26,
-    height: 3,
-    left: '12%',
-    top: '28%',
-    opacity: 0.85,
-  },
-  windStreak3: {
-    width: 20,
-    height: 2.5,
-    left: '16%',
-    top: '38%',
-    opacity: 0.75,
+  dotInactive: {
+    width: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
   },
 
-  // Wheel Dust Cloud Puffs (Tucked closely behind rear wheels)
-  dustPuff: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: 'rgba(203, 213, 225, 0.85)',
-    borderColor: '#94A3B8',
-    borderWidth: 1,
-  },
-  dustPuff1: {
-    width: 16,
-    height: 16,
-    left: '8%',
-    top: '64%',
-  },
-  dustPuff2: {
-    width: 12,
-    height: 12,
-    left: '14%',
-    top: '68%',
-  },
-  dustPuff3: {
-    width: 9,
-    height: 9,
-    left: '20%',
-    top: '74%',
-  },
-
-  routeChip: {
-    position: 'absolute',
-    left: 14,
-    bottom: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    backgroundColor: 'rgba(255,255,255,0.94)',
-    borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#DBE6F2',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  routeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: scene.pinDrop },
-  routeChipText: { fontSize: 12, fontWeight: '600', color: scene.ink },
-
-  bottomArea: { gap: spacing.md, paddingBottom: spacing.xs },
-  textGroup: {
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  title: {
-    ...typography.pageTitle,
-    fontSize: 21,
-    lineHeight: 28,
-    fontWeight: '700',
-    color: scene.ink,
-    textAlign: 'center',
-    maxWidth: 340,
-    alignSelf: 'center',
-  },
-  subtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: scene.muted,
-    textAlign: 'center',
-    maxWidth: 320,
-    fontWeight: '500',
-    alignSelf: 'center',
-  },
-  primaryCtaBtn: {
-    backgroundColor: scene.ctaBottom,
-    height: 52,
-    borderRadius: radius.pill,
+  // Circular Action CTA Button
+  actionBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    shadowColor: scene.ctaBottom,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.32,
-    shadowRadius: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     elevation: 6,
   },
-  ctaHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    backgroundColor: scene.ctaTop,
-    opacity: 0.55,
+  actionBtnLast: {
+    backgroundColor: '#F59E0B',
+    shadowColor: '#F59E0B',
+    shadowOpacity: 0.5,
   },
-  primaryCtaText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  pressed: { opacity: 0.9 },
-  subLinksRow: {
-    flexDirection: 'row',
+  actionBtnPressed: {
+    transform: [{ scale: 0.94 }],
+    opacity: 0.9,
+  },
+
+  // Driver Register Sublink
+  driverSection: {
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 18,
   },
-  linkTouch: { paddingVertical: 6, paddingHorizontal: 12 },
-  driverLinkText: { color: leopardPalette.primary, fontSize: 13.5, fontWeight: '600' },
+  driverTouch: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  driverText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.70)',
+    fontWeight: '500',
+  },
+  driverHighlight: {
+    color: '#FDE68A',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
 });
-
-

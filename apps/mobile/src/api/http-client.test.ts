@@ -13,16 +13,18 @@ jest.mock('../auth/session-store', () => {
   const getRefreshToken = jest.fn();
   const setSession = jest.fn();
   const clearSession = jest.fn();
+  const getRole = jest.fn().mockReturnValue('CUSTOMER');
 
   (globalThis as Record<string, unknown>).__sessionMocks = {
     getAccessToken,
     getRefreshToken,
     setSession,
     clearSession,
+    getRole,
   };
 
   return {
-    sessionStore: { getAccessToken, getRefreshToken, setSession, clearSession },
+    sessionStore: { getAccessToken, getRefreshToken, setSession, clearSession, getRole },
   };
 });
 
@@ -261,7 +263,7 @@ describe('http-client', () => {
     const refreshCall = fetchMock().mock.calls[1] as [string, RequestInit | undefined];
     expect(refreshCall[0]).toContain('/auth/refresh');
     expect(refreshCall[1]?.body).toBe(JSON.stringify({ refreshToken: 'refresh-token-1' }));
-    expect(mocks().setSession).toHaveBeenCalledWith('new-access-token', 'new-refresh-token');
+    expect(mocks().setSession).toHaveBeenCalledWith('new-access-token', 'new-refresh-token', 'CUSTOMER');
   });
 
   it('throws error with ApiError shape when refresh fails', async () => {
@@ -326,7 +328,7 @@ describe('http-client', () => {
     expect(fetchMock()).toHaveBeenCalledTimes(7);
     expect(fetchMock().mock.calls.filter(([url]) => String(url).includes('/auth/refresh'))).toHaveLength(1);
     expect(mocks().setSession).toHaveBeenCalledTimes(1);
-    expect(mocks().setSession).toHaveBeenCalledWith('new-token', 'new-refresh');
+    expect(mocks().setSession).toHaveBeenCalledWith('new-token', 'new-refresh', 'CUSTOMER');
   });
 
   // ---- error parsing ----

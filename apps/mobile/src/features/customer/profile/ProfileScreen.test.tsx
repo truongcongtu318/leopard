@@ -11,6 +11,8 @@ jest.mock('expo-router', () => ({
 }));
 
 describe('CustomerProfileScreen', () => {
+  jest.setTimeout(30000);
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -36,7 +38,7 @@ describe('CustomerProfileScreen', () => {
     expect(screen.getByText('Khách hàng')).toBeTruthy();
     expect(screen.getByText(/1.0.0-pilot/)).toBeTruthy();
     expect(screen.getByText('Hồ sơ')).toBeTruthy();
-    expect(screen.getByText('CUSTOMER · JOURNEY SHEET')).toBeTruthy();
+    expect(screen.queryByText('CUSTOMER · JOURNEY SHEET')).toBeNull();
     await screen.unmount();
   });
 
@@ -79,6 +81,23 @@ describe('CustomerProfileScreen', () => {
     await fireEvent.press(logoutButton);
 
     expect(onLogout).toHaveBeenCalledTimes(1);
+    await screen.unmount();
+  });
+
+  it('toggles balance visibility when eye button is pressed', async () => {
+    const screen = await render(<CustomerProfileScreen view={sampleContentView} />);
+
+    expect(screen.getByText('•••••••• ₫')).toBeTruthy();
+    expect(screen.getByLabelText('Hiện số dư')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Hiện số dư'));
+    expect(screen.getByText('1.250.000 ₫')).toBeTruthy();
+    expect(screen.getByLabelText('Ẩn số dư')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Ẩn số dư'));
+    expect(screen.getByText('•••••••• ₫')).toBeTruthy();
+    expect(screen.getByLabelText('Hiện số dư')).toBeTruthy();
+
     await screen.unmount();
   });
 

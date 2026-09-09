@@ -89,22 +89,25 @@ export const colors = {
   },
   operational: {
     ink: '#0F172A',
-    inkMuted: '#BAE6FD',
-    inkPillBg: 'rgba(2, 132, 199, 0.08)',
+    inkMuted: '#CBD5E1',
+    inkPillBg: 'rgba(11, 30, 66, 0.08)',
     road: '#CBD5E1',
     mapLand: '#F8FAFC',
   },
   brand: {
-    background: '#0284C7',
+    background: '#0B1E42',
     text: '#FFFFFF',
-    softBackground: '#F0F9FF',
-    softText: '#0369A1',
-    border: '#0284C7',
+    softBackground: '#F0F4F9',
+    softText: '#0B1E42',
+    border: '#0B1E42',
+    accent: '#F59E0B',
+    accentSoft: '#FFFBEB',
+    accentText: '#92400E',
   },
   info: {
-    background: '#F0F9FF',
-    text: '#0369A1',
-    border: '#BAE6FD',
+    background: '#F0F4F9',
+    text: '#0B1E42',
+    border: '#CBD5E1',
   },
   warning: {
     background: '#FFFBEB',
@@ -112,9 +115,9 @@ export const colors = {
     border: '#FDE68A',
   },
   active: {
-    background: '#F0F9FF',
-    text: '#0369A1',
-    border: '#0284C7',
+    background: '#F0F4F9',
+    text: '#0B1E42',
+    border: '#0B1E42',
   },
   success: {
     background: '#F0FDF4',
@@ -136,8 +139,8 @@ export const pastelTheme = {
   yellowCard: {
     bg: '#FFFFFF',
     border: '#FDE68A',
-    accent: '#D97706',
-    text: '#78350F',
+    accent: '#F59E0B',
+    text: '#92400E',
   },
   greenCard: {
     bg: '#FFFFFF',
@@ -147,9 +150,9 @@ export const pastelTheme = {
   },
   blueCard: {
     bg: '#FFFFFF',
-    border: '#BAE6FD',
-    accent: '#0284C7',
-    text: '#0C4A6E',
+    border: '#CBD5E1',
+    accent: '#0B1E42',
+    text: '#0B1E42',
   },
   slateCard: {
     bg: '#FFFFFF',
@@ -160,15 +163,16 @@ export const pastelTheme = {
 } as const;
 
 export const leopardPalette = {
-  // Brand — Modern Blue
-  primary: '#0284C7',
-  primaryDark: '#0369A1',
-  primarySoft: '#38BDF8',
-  primaryBg: '#F0F9FF',
-  primaryBorder: '#BAE6FD',
+  // Brand — Midnight Navy Blue
+  primary: '#0B1E42',
+  primaryDark: '#061226',
+  primarySoft: '#2563EB',
+  primaryBg: '#F0F4F9',
+  primaryBorder: '#CBD5E1',
 
-  // Accent — Subtle Gold/Amber
-  accentYellow: '#D97706',
+  // Accent — Leopard Amber Gold
+  accentYellow: '#F59E0B',
+  accentYellowDark: '#D97706',
   accentYellowSoft: '#FDE68A',
   accentYellowBg: '#FFFBEB',
   accentYellowBorder: '#FDE68A',
@@ -194,7 +198,7 @@ export const leopardPalette = {
   subtleDivider: '#F1F5F9',
 
   // Tab bar
-  tabActive: '#0284C7',
+  tabActive: '#0B1E42',
   tabInactive: '#64748B',
   tabBarBg: '#FFFFFF',
   tabBarBorder: '#E2E8F0',
@@ -202,22 +206,22 @@ export const leopardPalette = {
   // Input fields
   inputBg: '#FFFFFF',
   inputBorder: '#CBD5E1',
-  inputFocusBorder: '#0284C7',
-  inputFocusRing: 'rgba(2, 132, 199, 0.08)',
+  inputFocusBorder: '#0B1E42',
+  inputFocusRing: 'rgba(11, 30, 66, 0.08)',
   inputPlaceholder: '#94A3B8',
 
   // Vehicle card accents
-  vehicleBaGac: '#D97706',
-  vehicleTruck500: '#0284C7',
-  vehicleTruck1T: '#2563EB',
-  vehicleTruck2T: '#6D28D9',
+  vehicleBaGac: '#F59E0B',
+  vehicleTruck500: '#0B1E42',
+  vehicleTruck1T: '#1D4ED8',
+  vehicleTruck2T: '#4338CA',
 
   // Status online/offline indicator
   onlineGreen: '#16A34A',
   offlineGray: '#94A3B8',
 
   // Legacy — kept for backward compatibility
-  darkHeroBg: '#0F172A',
+  darkHeroBg: '#0B1E42',
 } as const;
 
 export const leopardRadius = {

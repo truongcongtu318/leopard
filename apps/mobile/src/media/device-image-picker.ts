@@ -5,6 +5,7 @@ export type DeviceImageAsset = Readonly<{
   name: string;
   mimeType: string;
   size: number;
+  file?: File | Blob;
 }>;
 
 function deriveFileName(uri: string): string {
@@ -33,5 +34,6 @@ export async function pickDeviceImage(): Promise<DeviceImageAsset | null> {
     name: asset.fileName ?? deriveFileName(asset.uri),
     mimeType: asset.mimeType ?? 'image/jpeg',
     size: asset.fileSize ?? 0,
+    file: (asset as { file?: File | Blob }).file,
   };
 }

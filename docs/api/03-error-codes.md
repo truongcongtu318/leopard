@@ -37,6 +37,7 @@
 | 409 | `PAYMENT_REQUEST_CONFLICT` | Payment request ID đã dùng cho request không tương đương |
 | 409 | `PAYMENT_CONFIRMATION_CONFLICT` | Confirmation request ID đã dùng cho confirmation không tương đương |
 | 422 | `VALIDATION_FAILED` | Dữ liệu nghiệp vụ không hợp lệ |
+| 502 | `MAIL_PROVIDER_FAILED` | Gửi email hóa đơn thất bại; hóa đơn vẫn còn hiệu lực, có thể thử gửi lại |
 | 429 | `RATE_LIMITED` | Vượt giới hạn |
 | 502 | `PROVIDER_UNAVAILABLE` | Provider ngoài lỗi và không fallback |
 | 503 | `SERVICE_NOT_READY` | Readiness thất bại |

@@ -342,13 +342,12 @@ describe('ScreenState', () => {
 });
 
 describe('EtaIndicator', () => {
-  it('shows loading without displaying a zero-minute ETA and keeps the DEMO label visible', async () => {
+  it('shows loading without displaying a zero-minute ETA and keeps the indicator visible', async () => {
     const screen = await render(<EtaIndicator durationSeconds={0} isLoading source="DEMO" />);
 
-    expect(screen.getByText('ETA dự kiến')).toBeTruthy();
-    expect(screen.getByText('Đang tính ETA dự kiến.')).toBeTruthy();
+    expect(screen.getByText('Thời gian giao dự kiến')).toBeTruthy();
+    expect(screen.getByText('Đang tính thời gian giao dự kiến...')).toBeTruthy();
     expect(screen.queryByText('0 phút')).toBeNull();
-    expect(screen.getByText('Dữ liệu mô phỏng')).toBeTruthy();
 
     await screen.unmount();
   });
@@ -358,13 +357,13 @@ describe('EtaIndicator', () => {
     const screen = await render(
       <EtaIndicator
         durationSeconds={null}
-        error="Chưa thể tính ETA dự kiến."
+        error="Chưa thể tính thời gian giao dự kiến."
         onRetry={onRetry}
         source="VIETMAP"
       />,
     );
 
-    expect(screen.getByRole('alert').props.children).toBe('Chưa thể tính ETA dự kiến.');
+    expect(screen.getByRole('alert').props.children).toBe('Chưa thể tính thời gian giao dự kiến.');
     await fireEvent.press(screen.getByRole('button'));
     expect(onRetry).toHaveBeenCalledTimes(1);
 
@@ -374,7 +373,7 @@ describe('EtaIndicator', () => {
   it('renders a rounded-up ETA value with the required label', async () => {
     const screen = await render(<EtaIndicator durationSeconds={901} source="VIETMAP" />);
 
-    expect(screen.getByText('ETA dự kiến')).toBeTruthy();
+    expect(screen.getByText('Thời gian giao dự kiến')).toBeTruthy();
     expect(screen.getByText('16 phút')).toBeTruthy();
 
     await screen.unmount();

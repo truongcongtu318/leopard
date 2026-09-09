@@ -264,6 +264,16 @@ const colorRoleDotStyles = StyleSheet.create({
   danger: { backgroundColor: colors.danger.text },
 });
 
+export function getOrderStatusPresentation(status: OrderStatus) {
+  return (
+    statusPresentations.order[status] ?? {
+      accessibilityPrefix: 'Trạng thái đơn',
+      colorRole: 'neutral' as const,
+      label: status,
+    }
+  );
+}
+
 export function StatusBadge(props: StatusBadgeProps) {
   const presentation = resolvePresentation(props);
   const accessibilityLabel =

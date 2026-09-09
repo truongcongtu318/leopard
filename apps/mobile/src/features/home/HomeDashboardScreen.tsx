@@ -64,6 +64,7 @@ const serviceHeavyTruckSource = require('../../../assets/brand/service-heavy-tru
 const serviceExpressSource = require('../../../assets/brand/service-express.png');
 const serviceLoadingSource = require('../../../assets/brand/service-loading.png');
 const serviceCodSource = require('../../../assets/brand/service-cod.png');
+const activeTruck3dSource = require('../../../assets/brand/active-truck-3d.png');
 
 function formatVietnamesePhone(phone?: string | null): string {
   if (!phone) return '';
@@ -120,7 +121,11 @@ export type HomeDashboardScreenProps = Readonly<{
   onOpenProfile?: () => void;
   onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
   onRegisterDriver?: () => void;
-  onQuickBook?: (origin?: string, destination?: string) => void;
+  onQuickBook?: (
+    origin?: string,
+    destination?: string,
+    dropoffCoords?: { lat: number; lng: number },
+  ) => void;
   onOpenSavedAddresses?: () => void;
   onNavigateTab?: (tab: TabKey) => void;
   onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
@@ -280,8 +285,8 @@ export function AnimatedGreetingIcon({
             <circle cx="12" cy="8.5" fill="#F59E0B" r="4.5" />
             <path
               d="M6.5 17.5a4 4 0 0 1 7.8-1.2A3 3 0 0 1 19 18.5H6.5z"
-              fill="#E0F2FE"
-              stroke="#0284C7"
+              fill="#F0F4F9"
+              stroke="#0B1E42"
               strokeLinejoin="round"
               strokeWidth="1.5"
             />
@@ -315,8 +320,8 @@ export function AnimatedGreetingIcon({
         <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
           <path
             d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-            fill="#0284C7"
-            stroke="#0369A1"
+            fill="#0B1E42"
+            stroke="#061226"
             strokeLinejoin="round"
             strokeWidth="1.5"
           />
@@ -331,7 +336,7 @@ export function AnimatedGreetingIcon({
             width: size * 0.7,
             height: size * 0.7,
             borderRadius: (size * 0.7) / 2,
-            backgroundColor: '#0284C7',
+            backgroundColor: '#0B1E42',
           }}
         />
       )}
@@ -455,7 +460,7 @@ const DEFAULT_RECENT_ORDERS: readonly RecentOrder[] = [
   {
     id: 'demo-3',
     reference: 'LP-240831',
-    status: 'REQUESTED',
+    status: 'DELIVERED',
     origin: 'Bình Tân',
     destination: 'Long An',
     price: '650.000 ₫',
@@ -466,19 +471,19 @@ const DEFAULT_RECENT_ORDERS: readonly RecentOrder[] = [
 function renderServiceIcon(type: QuickService['iconType']) {
   switch (type) {
     case '3wheel':
-      return <IconVehicle3Wheel color="#0284C7" size={24} />;
+      return <IconVehicle3Wheel color="#0B1E42" size={24} />;
     case 'light':
-      return <IconVehicleLightTruck color="#0284C7" size={24} />;
+      return <IconVehicleLightTruck color="#0B1E42" size={24} />;
     case 'heavy':
-      return <IconVehicleHeavyTruck color="#0284C7" size={24} />;
+      return <IconVehicleHeavyTruck color="#0B1E42" size={24} />;
     case 'express':
-      return <IconSpeedTruck color="#0284C7" secondaryColor="#E0F2FE" size={24} strokeWidth={1.75} />;
+      return <IconSpeedTruck color="#0B1E42" secondaryColor="#F0F4F9" size={24} strokeWidth={1.75} />;
     case 'loading':
-      return <IconOrders color="#0284C7" size={24} strokeWidth={1.75} />;
+      return <IconOrders color="#0B1E42" size={24} strokeWidth={1.75} />;
     case 'cod':
-      return <IconSecurityShield color="#0284C7" secondaryColor="#E0F2FE" size={24} strokeWidth={1.75} />;
+      return <IconSecurityShield color="#0B1E42" secondaryColor="#F0F4F9" size={24} strokeWidth={1.75} />;
     default:
-      return <IconSpeedTruck color="#0284C7" size={24} />;
+      return <IconSpeedTruck color="#0B1E42" size={24} />;
   }
 }
 
@@ -513,6 +518,11 @@ export function HomeDashboardScreen({
 }: HomeDashboardScreenProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [activeBannerIdx, setActiveBannerIdx] = useState(0);
+
+  const deliveredRecentOrders = useMemo(
+    () => recentOrders.filter((order) => order.status === 'DELIVERED'),
+    [recentOrders],
+  );
 
   // Address initialization: prioritize prop -> addressStore.getDefaultAddress() -> fallback
   const initialSaved = addressStore.getDefaultAddress();
@@ -561,7 +571,10 @@ export function HomeDashboardScreen({
     setShowMapPickerModal(true);
   };
 
-  const handleConfirmMapLocation = (finalAddress: string) => {
+  const handleConfirmMapLocation = (
+    finalAddress: string,
+    extra?: { coords?: { lat: number; lng: number } },
+  ) => {
     if (mapTarget === 'pickup') {
       setPickupText(finalAddress);
       setPickupLabel(null);
@@ -571,7 +584,7 @@ export function HomeDashboardScreen({
     } else {
       setDropoffText(finalAddress);
       if (pickupText.trim().length >= 3) {
-        triggerNavigation(pickupText, finalAddress);
+        triggerNavigation(pickupText, finalAddress, extra?.coords);
       }
     }
     setShowMapPickerModal(false);
@@ -664,7 +677,11 @@ export function HomeDashboardScreen({
   const hasNavigatedRef = React.useRef(false);
   const [quickTrackCode, setQuickTrackCode] = useState('');
 
-  const triggerNavigation = (pickup: string, dropoff: string) => {
+  const triggerNavigation = (
+    pickup: string,
+    dropoff: string,
+    dropoffCoords?: { lat: number; lng: number },
+  ) => {
     if (hasNavigatedRef.current) return;
     if (!pickup.trim() || !dropoff.trim()) return;
     hasNavigatedRef.current = true;
@@ -672,7 +689,11 @@ export function HomeDashboardScreen({
     if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
     navigationTimeoutRef.current = setTimeout(() => {
       if (onQuickBook) {
-        onQuickBook(pickup, dropoff);
+        if (dropoffCoords) {
+          onQuickBook(pickup, dropoff, dropoffCoords);
+        } else {
+          onQuickBook(pickup, dropoff);
+        }
       } else {
         onCreateOrder?.();
       }
@@ -957,7 +978,7 @@ export function HomeDashboardScreen({
                       onPress={() => handleOpenMapPicker('pickup')}
                       style={styles.inputMapPinBtn}
                     >
-                      <IconLocationPin color="#0284C7" size={16} />
+                      <IconLocationPin color="#0B1E42" size={16} />
                     </Pressable>
                   </View>
 
@@ -1059,7 +1080,7 @@ export function HomeDashboardScreen({
                     ]}
                   >
                     <View style={styles.dropdownMapIconBg}>
-                      <IconLocationPin color="#0284C7" size={16} />
+                      <IconLocationPin color="#0B1E42" size={16} />
                     </View>
                     <View style={styles.dropdownActionContent}>
                       <Text style={styles.dropdownActionTitle}>
@@ -1089,7 +1110,7 @@ export function HomeDashboardScreen({
                     ]}
                   >
                     <View style={styles.dropdownSavedIconBg}>
-                      <IconLocationPin color="#0284C7" size={16} />
+                      <IconLocationPin color="#0B1E42" size={16} />
                     </View>
                     <View style={styles.dropdownActionContent}>
                       <Text style={styles.dropdownActionTitle}>
@@ -1290,18 +1311,28 @@ export function HomeDashboardScreen({
                   ) : null}
                 </View>
 
-                <View style={styles.activeRouteWell}>
-                  <RouteSpine
-                    destination={{ id: 'active-dest', label: activeShipment.destination }}
-                    origin={{ id: 'active-origin', label: activeShipment.origin }}
-                    stops={[]}
-                  />
+                <View style={styles.activeRouteContainer}>
+                  <View style={styles.activeRouteWell}>
+                    <RouteSpine
+                      destination={{ id: 'active-dest', label: activeShipment.destination }}
+                      origin={{ id: 'active-origin', label: activeShipment.origin }}
+                      stops={[]}
+                    />
+                  </View>
+                  <View pointerEvents="none" style={styles.activeTruckPopWrap}>
+                    <Image
+                      accessibilityIgnoresInvertColors
+                      resizeMode="contain"
+                      source={activeTruck3dSource}
+                      style={styles.activeTruckImage}
+                    />
+                  </View>
                 </View>
 
                 <View style={styles.activeMeta}>
                   <View style={styles.activeDriverBox}>
                     <View style={styles.activeDriverIconBox}>
-                      <IconRoleDriver color="#0284C7" secondaryColor="#E0F2FE" size={18} />
+                      <IconRoleDriver color="#0B1E42" secondaryColor="#F0F4F9" size={18} />
                     </View>
                     <Text numberOfLines={1} style={styles.driverText}>
                       {activeShipment.cargoNote ? `${activeShipment.cargoNote} · ` : ''}
@@ -1325,7 +1356,7 @@ export function HomeDashboardScreen({
                 {/* Thanh tra cứu nhanh mã vận đơn */}
                 <View style={styles.quickTrackingBar}>
                   <View style={styles.trackingInputWrap}>
-                    <IconLocationPin color="#0284C7" size={16} />
+                    <IconLocationPin color="#0B1E42" size={16} />
                     <TextInput
                       accessibilityLabel="Tra cứu mã vận đơn"
                       autoCapitalize="characters"
@@ -1368,9 +1399,9 @@ export function HomeDashboardScreen({
               </Pressable>
             </View>
 
-            {recentOrders.length > 0 ? (
+            {deliveredRecentOrders.length > 0 ? (
               <View style={styles.orderList}>
-                {recentOrders.map((order) => (
+                {deliveredRecentOrders.map((order) => (
                   <View key={order.id} style={styles.recentOrderItemWrap}>
                     <OrderSummary
                       accessibilityLabel={`Đơn ${order.reference}, từ ${order.origin} đến ${order.destination}`}
@@ -1414,7 +1445,7 @@ export function HomeDashboardScreen({
               <View style={styles.emptyBox}>
                 <Text style={styles.emptyTitle}>Bạn chưa có đơn hàng nào.</Text>
                 <Text style={styles.emptyBody}>
-                  Đơn bạn tạo sẽ hiển thị tại đây để theo dõi nhanh.
+                  Đơn đã giao thành công sẽ hiển thị tại đây để bạn có thể đặt lại nhanh chóng.
                 </Text>
               </View>
             )}
@@ -1459,7 +1490,11 @@ export function HomeDashboardScreen({
           } else {
             setDropoffText(addr.address);
             if (pickupText.trim().length >= 3) {
-              triggerNavigation(pickupText, addr.address);
+              const coords =
+                typeof addr.latitude === 'number' && typeof addr.longitude === 'number'
+                  ? { lat: addr.latitude, lng: addr.longitude }
+                  : undefined;
+              triggerNavigation(pickupText, addr.address, coords);
             }
           }
           onSelectSavedAddress?.(addr);
@@ -1510,6 +1545,7 @@ const styles = StyleSheet.create({
   },
   heroBackgroundImage: {
     resizeMode: 'cover',
+    transform: [{ translateY: -28 }, { scale: 1.08 }],
   },
   stickyHeader: {
     position: 'absolute',
@@ -1586,7 +1622,7 @@ const styles = StyleSheet.create({
   },
   greetingNameText: {
     fontWeight: '800',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   headerActions: {
     flexDirection: 'row',
@@ -1828,9 +1864,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 6,
@@ -1884,12 +1920,12 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 2,
     backgroundColor: '#FFFFFF',
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     borderWidth: 1.5,
     borderRadius: 16,
     padding: 8,
     marginTop: 8,
-    shadowColor: '#0284C7',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 14,
@@ -1908,7 +1944,7 @@ const styles = StyleSheet.create({
   dropdownHeaderTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#0284C7',
+    color: '#0B1E42',
     letterSpacing: 0.5,
   },
   dropdownCloseBtn: {
@@ -1932,17 +1968,17 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   dropdownActionItemPressed: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
   },
   dropdownMapIconBg: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
   },
   dropdownSavedIconBg: {
     width: 36,
@@ -1969,7 +2005,7 @@ const styles = StyleSheet.create({
   },
   dropdownChevron: {
     fontSize: 18,
-    color: '#0284C7',
+    color: '#0B1E42',
     fontWeight: '600',
   },
   dropdownDivider: {
@@ -2034,8 +2070,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
   serviceTagBadge: {
-    backgroundColor: '#F0F9FF',
-    borderColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#F0F4F9',
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 5,
@@ -2043,7 +2079,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   serviceTagText: {
-    color: '#0284C7',
+    color: '#0B1E42',
     fontSize: 10,
     fontWeight: '700',
     textAlign: 'center',
@@ -2205,7 +2241,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
     borderLeftWidth: 4,
-    borderLeftColor: '#0284C7',
+    borderLeftColor: '#0B1E42',
     borderWidth: 1,
     borderRadius: 18,
     padding: spacing.md,
@@ -2216,6 +2252,10 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 4,
   },
+  activeRouteContainer: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
   activeRouteWell: {
     backgroundColor: '#F8FAFC',
     borderColor: '#F1F5F9',
@@ -2223,6 +2263,33 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    paddingRight: 88,
+  },
+  activeTruckPopWrap: {
+    position: 'absolute',
+    right: -4,
+    top: -16,
+    width: 90,
+    height: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    ...Platform.select({
+      web: {
+        filter: 'drop-shadow(0px 8px 12px rgba(15, 23, 42, 0.16))',
+      } as any,
+      default: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.18,
+        shadowRadius: 10,
+        elevation: 6,
+      },
+    }),
+  },
+  activeTruckImage: {
+    width: '100%',
+    height: '100%',
   },
   activeTop: {
     flexDirection: 'row',
@@ -2231,15 +2298,15 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   etaPill: {
-    backgroundColor: '#F0F9FF',
-    borderColor: '#BAE6FD',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#CBD5E1',
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   etaText: {
-    color: '#0369A1',
+    color: '#061226',
     fontSize: 12,
     fontWeight: '700',
   },

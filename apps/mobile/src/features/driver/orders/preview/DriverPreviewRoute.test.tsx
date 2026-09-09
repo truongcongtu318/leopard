@@ -33,7 +33,7 @@ describe('DriverPreviewRoute', () => {
         screen="list"
       />,
     );
-    await waitFor(() => expect(screen.getByText('Đơn của tài xế')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Tài xế LEOPARD')).toBeTruthy());
     expect(loadCatalogue).not.toHaveBeenCalled();
     expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
     await screen.unmount();
@@ -54,7 +54,7 @@ describe('DriverPreviewRoute', () => {
     await waitFor(() => {
       expect(screen.getByText('Cần ảnh xác nhận trước khi hoàn tất')).toBeTruthy();
     });
-    expect(screen.getByLabelText('Bản xem trước giao diện — dữ liệu mô phỏng')).toBeTruthy();
+    expect(screen.getByLabelText('LEOPARD Logistics · Phiên bản Thử nghiệm Pilot')).toBeTruthy();
     expect(loadCatalogue).toHaveBeenCalledTimes(1);
     await screen.unmount();
     screen.client.clear();
@@ -72,7 +72,7 @@ describe('DriverPreviewRoute', () => {
       />,
     );
     await waitFor(() => expect(screen.getByText('Không thể mở scenario')).toBeTruthy());
-    expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
+    expect(screen.queryByText('Kho VLXD Minh Khang — Tân Phú')).toBeNull();
     await screen.unmount();
     screen.client.clear();
   });

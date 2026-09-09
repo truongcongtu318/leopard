@@ -2,6 +2,7 @@ import type { Role } from '@leopard/shared';
 
 import type { CustomerProfileView } from './model';
 import type { CustomerProfilePort } from './port';
+import { appendFileToFormData } from '../../../media/form-data';
 
 const FILES_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1').replace(/\/api\/v1\/?$/, '');
 
@@ -96,10 +97,10 @@ export function createCustomerProfileHttpAdapter(
     },
 
     async uploadAvatar(
-      file: { uri: string; name: string; type: string },
+      file: { uri: string; name: string; type: string; file?: File | Blob },
     ): Promise<{ avatarStorageKey: string }> {
       const form = new FormData();
-      form.append('file', file as unknown as Blob);
+      await appendFileToFormData(form, 'file', file);
       return getClient().postForm('/users/me/avatar', form);
     },
   };

@@ -83,58 +83,59 @@ export function SavedAddressPickerModal({
               addressList.map((addr) => {
                 const isSelected = currentAddress === addr.address;
                 return (
-                  <Pressable
-                    accessibilityLabel={`Chọn ${addr.label}: ${addr.address}`}
-                    accessibilityRole="button"
+                  <View
                     key={addr.id}
-                    onPress={() => onSelectAddress(addr)}
-                    style={({ pressed }) => [
+                    style={[
                       styles.savedAddressItemRow,
                       isSelected ? styles.savedAddressItemRowActive : null,
-                      pressed ? styles.pressed : null,
                     ]}
-                    testID={`pickup-chip-${addr.id}`}
                   >
-                    <View
-                      style={[
-                        styles.savedAddrIconSquircle,
-                        isSelected ? styles.savedAddrIconSquircleActive : null,
+                    <Pressable
+                      accessibilityLabel={`Chọn ${addr.label}: ${addr.address}`}
+                      accessibilityRole="button"
+                      onPress={() => onSelectAddress(addr)}
+                      style={({ pressed }) => [
+                        styles.savedAddressSelectArea,
+                        pressed ? styles.pressed : null,
                       ]}
+                      testID={`pickup-chip-${addr.id}`}
                     >
-                      <IconLocationPin
-                        color={isSelected ? '#2563EB' : '#64748B'}
-                        size={18}
-                      />
-                    </View>
-                    <View style={styles.savedAddrTextCol}>
-                      <View style={styles.savedAddrLabelRow}>
-                        <Text style={styles.savedAddrLabelTitle}>{addr.label}</Text>
-                        {addr.isDefault ? (
-                          <View style={styles.defaultBadge}>
-                            <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                          </View>
-                        ) : null}
+                      <View
+                        style={[
+                          styles.savedAddrIconSquircle,
+                          isSelected ? styles.savedAddrIconSquircleActive : null,
+                        ]}
+                      >
+                        <IconLocationPin
+                          color={isSelected ? '#2563EB' : '#64748B'}
+                          size={18}
+                        />
                       </View>
-                      <Text numberOfLines={2} style={styles.savedAddrFullText}>
-                        {addr.address}
-                      </Text>
-                    </View>
-                    {isSelected ? (
-                      <View style={styles.checkCircle}>
-                        <Text style={styles.checkCircleText}>✓</Text>
+                      <View style={styles.savedAddrTextCol}>
+                        <View style={styles.savedAddrLabelRow}>
+                          <Text style={styles.savedAddrLabelTitle}>{addr.label}</Text>
+                          {addr.isDefault ? (
+                            <View style={styles.defaultBadge}>
+                              <Text style={styles.defaultBadgeText}>Mặc định</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        <Text numberOfLines={2} style={styles.savedAddrFullText}>
+                          {addr.address}
+                        </Text>
                       </View>
-                    ) : null}
+                      {isSelected ? (
+                        <View style={styles.checkCircle}>
+                          <Text style={styles.checkCircleText}>✓</Text>
+                        </View>
+                      ) : null}
+                    </Pressable>
                     {onDeleteAddress ? (
                       <Pressable
                         accessibilityLabel={`Xóa ${addr.label}`}
                         accessibilityRole="button"
                         hitSlop={8}
-                        onPress={(e) => {
-                          if (typeof (e as any)?.stopPropagation === 'function') {
-                            (e as any).stopPropagation();
-                          }
-                          onDeleteAddress(addr.id);
-                        }}
+                        onPress={() => onDeleteAddress(addr.id)}
                         style={({ pressed }) => [
                           styles.deleteBtn,
                           pressed && styles.deleteBtnPressed,
@@ -144,7 +145,7 @@ export function SavedAddressPickerModal({
                         <IconTrash color="#94A3B8" size={15} />
                       </Pressable>
                     ) : null}
-                  </Pressable>
+                  </View>
                 );
               })
             )}
@@ -266,11 +267,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    gap: 12,
+    gap: 8,
   },
   savedAddressItemRowActive: {
     backgroundColor: '#EFF6FF',
     borderColor: '#93C5FD',
+  },
+  savedAddressSelectArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   savedAddrIconSquircle: {
     width: 38,
@@ -344,16 +351,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: '#CBD5E1',
     borderRadius: 12,
     height: 44,
   },
   bottomSheetMapBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0284C7',
+    color: '#0B1E42',
   },
   bottomSheetManageBtn: {
     paddingHorizontal: 14,

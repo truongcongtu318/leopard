@@ -181,7 +181,8 @@ export function useRootSessionRouter(): {
   }
 
   if (!sessionStore.isAuthenticated()) {
-    return { isHydrated: true, redirectTo: '/(public)/onboarding' };
+    // Onboarding route disabled: splash goes straight to login.
+    return { isHydrated: true, redirectTo: '/(public)/login' };
   }
 
   const role = sessionStore.getRole();

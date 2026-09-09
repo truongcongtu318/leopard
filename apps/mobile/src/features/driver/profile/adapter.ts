@@ -2,6 +2,7 @@ import type { Role } from '@leopard/shared';
 
 import type { DriverProfileView } from './model';
 import type { DriverProfilePort } from './port';
+import { appendFileToFormData } from '../../../media/form-data';
 
 const FILES_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1').replace(/\/api\/v1\/?$/, '');
 
@@ -82,6 +83,7 @@ export function createDriverProfileHttpAdapter(client?: ProfileHttpClient): Driv
           kind: 'content',
           phone: user.phone,
           name: user.name,
+          email: user.email,
           avatarUrl: avatarUrl(user.avatarStorageKey),
           vehicleLabel: vehicleLabel(application),
           roleLabel: roleLabel(user.role),
@@ -119,10 +121,10 @@ export function createDriverProfileHttpAdapter(client?: ProfileHttpClient): Driv
     },
 
     async uploadAvatar(
-      file: { uri: string; name: string; type: string },
+      file: { uri: string; name: string; type: string; file?: File | Blob },
     ): Promise<{ avatarStorageKey: string }> {
       const form = new FormData();
-      form.append('file', file as unknown as Blob);
+      await appendFileToFormData(form, 'file', file);
       return getClient().postForm('/users/me/avatar', form);
     },
   };

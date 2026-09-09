@@ -72,7 +72,7 @@ async function performRefresh(): Promise<boolean> {
 
     if (body.accessToken && body.refreshToken) {
       const tokenRole = decodeRoleFromToken(body.accessToken);
-      const roleToPreserve = tokenRole ?? sessionStore.getRole();
+      const roleToPreserve = tokenRole ?? (sessionStore.getRole ? sessionStore.getRole() : 'CUSTOMER');
       await sessionStore.setSession(
         body.accessToken,
         body.refreshToken,

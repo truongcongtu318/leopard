@@ -111,7 +111,7 @@ export class TrackingGateway implements OnGatewayConnection {
   }
 }
 
-function readToken(client: TrackingSocket): string | undefined {
+export function readToken(client: { handshake?: Socket['handshake'] }): string | undefined {
   const auth = client.handshake?.auth as { token?: unknown } | undefined;
   if (typeof auth?.token === 'string' && auth.token.trim()) return auth.token.trim();
   const header = client.handshake?.headers?.authorization;

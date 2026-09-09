@@ -22,8 +22,9 @@ import {
   pickDeviceImage,
   type DeviceImageAsset,
 } from '../../src/media/device-image-picker';
+import { appendFileToFormData } from '../../src/media/form-data';
 import { radius, spacing } from '../../src/theme/tokens';
-import { LeopardEmblem, LeopardMobileLogo } from '../../src/ui/icons/CoreIcons';
+import { BrandLoginLogo, LeopardEmblem, LeopardMobileLogo } from '../../src/ui/icons/CoreIcons';
 
 /** Palette synchronized with the login screen. */
 const scene = {
@@ -242,11 +243,12 @@ export default function RegisterScreen() {
         const asset = docs[slot.type];
         if (!asset) continue;
         const form = new FormData();
-        form.append('file', {
+        await appendFileToFormData(form, 'file', {
           uri: asset.uri,
           name: asset.name,
-          type: asset.mimeType,
-        } as unknown as Blob);
+          mimeType: asset.mimeType,
+          file: asset.file,
+        });
         form.append('type', slot.type);
         form.append('clientRequestId', newRequestId());
         await httpClient.postForm('/driver/documents', form);
@@ -273,7 +275,7 @@ export default function RegisterScreen() {
           </Pressable>
           <View style={styles.brandRow}>
             <LeopardEmblem width={32} />
-            <LeopardMobileLogo height={24} width={110} />
+            <BrandLoginLogo height={28} />
           </View>
         </View>
         <Text accessibilityRole="header" style={styles.headline}>

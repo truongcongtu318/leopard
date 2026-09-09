@@ -60,7 +60,7 @@ const SCENARIO_COPY: Readonly<Record<UiScenarioName, UiScenarioCopy>> = Object.f
   }),
   success: Object.freeze({
     title: 'Dữ liệu đã sẵn sàng',
-    message: 'Nội dung mô phỏng đang được hiển thị.',
+    message: 'Nội dung xem trước đang được hiển thị.',
   }),
   'permission-denied': Object.freeze({
     title: 'Bạn không có quyền truy cập',

@@ -5,6 +5,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { mapOrderResponse, type MappedOrderResponse } from '../orders/order-response.mapper.js';
 import { DriversRepository } from './drivers.repository.js';
 import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
+import type { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
 
 @Injectable()
 export class DriversService {
@@ -62,6 +63,13 @@ export class DriversService {
     return { availability: updated.availability };
   }
 
+  async getAvailability(
+    actor: AuthenticatedActor,
+  ): Promise<{ availability: string }> {
+    const profile = await this.driversRepository.findDriverProfileByUserId(actor.userId);
+    return { availability: profile?.availability ?? 'OFFLINE' };
+  }
+
   async getAvailableOrders(
     _actor: AuthenticatedActor,
     page = 1,
@@ -78,13 +86,25 @@ export class DriversService {
     };
   }
 
+  async updateLocation(
+    actor: AuthenticatedActor,
+    dto: UpdateDriverLocationDto,
+  ): Promise<{ ok: true }> {
+    await this.driversRepository.updateLocation(actor.userId, dto.lat, dto.lng);
+    return { ok: true };
+  }
+
   async getActiveOrder(
     actor: AuthenticatedActor,
-  ): Promise<{ order: MappedOrderResponse | null }> {
-    const order = await this.driversRepository.findActiveOrderByDriverId(actor.userId);
+  ): Promise<{ order: MappedOrderResponse | null; availability: string }> {
+    const [order, profile] = await Promise.all([
+      this.driversRepository.findActiveOrderByDriverId(actor.userId),
+      this.driversRepository.findDriverProfileByUserId(actor.userId),
+    ]);
 
     return {
       order: order ? mapOrderResponse(order) : null,
+      availability: profile?.availability ?? 'OFFLINE',
     };
   }
 }

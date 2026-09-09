@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -36,6 +37,7 @@ const faqs: FaqItem[] = [
 ];
 
 export function SupportSosScreen() {
+  const router = useRouter();
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
@@ -52,7 +54,7 @@ export function SupportSosScreen() {
 
   return (
     <ScreenScaffold
-      eyebrow="CUSTOMER · SUPPORT & SOS"
+      onBack={() => router.back()}
       subtitle="Tổng đài hỗ trợ vận hành, trợ giúp khẩn cấp và giải đáp thắc mắc."
       title="Trợ giúp & SOS"
     >

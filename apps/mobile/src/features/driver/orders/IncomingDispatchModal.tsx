@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -13,9 +14,11 @@ import {
   IconClock,
   IconLocationPin,
   IconOrders,
+  IconRadarPulse,
   IconRoute,
   IconSpeedTruck,
 } from '../../../ui/icons/CoreIcons';
+import { RealInteractiveMap } from '../../../ui/RealInteractiveMap';
 
 export type IncomingDispatchOffer = Readonly<{
   id: string;
@@ -85,16 +88,23 @@ export function IncomingDispatchModal({
     >
       <View style={styles.scrimOverlay}>
         <View style={styles.sheetContainer}>
-          {/* Header Bar with Radar Pulse and Title */}
+          {/* 1. Header Bar with Radar Pulse and Title */}
           <View style={styles.modalHeader}>
             <View style={styles.radarPulseContainer}>
-              <View style={styles.radarPulseOuter}>
-                <View style={styles.radarPulseCore} />
+              <View style={[styles.radarPulseOuter, isUrgent ? styles.radarPulseOuterUrgent : null]}>
+                <View style={[styles.radarPulseCore, isUrgent ? styles.radarPulseCoreUrgent : null]} />
               </View>
-              <Text style={styles.modalBadgeText}>ĐƠN HÀNG MỚI TRONG KHU VỰC</Text>
+              <Text style={[styles.modalBadgeText, isUrgent ? styles.modalBadgeTextUrgent : null]}>
+                ĐƠN HÀNG MỚI TRONG KHU VỰC
+              </Text>
             </View>
-            <View style={styles.timerBadge}>
-              <IconClock color={isUrgent ? '#EF4444' : '#F59E0B'} size={13} />
+            <View
+              style={[
+                styles.timerBadge,
+                isUrgent ? styles.timerBadgeUrgent : isWarning ? styles.timerBadgeWarning : null,
+              ]}
+            >
+              <IconClock color={isUrgent ? '#DC2626' : isWarning ? '#D97706' : '#0B1E42'} size={14} />
               <Text
                 style={[
                   styles.timerText,
@@ -106,7 +116,7 @@ export function IncomingDispatchModal({
             </View>
           </View>
 
-          {/* Countdown Progress Bar */}
+          {/* 2. Countdown Progress Bar */}
           <View style={styles.progressTrack}>
             <View
               style={[
@@ -121,19 +131,44 @@ export function IncomingDispatchModal({
             />
           </View>
 
-          {/* Fare Card - High Prominence */}
-          <View style={styles.fareContainer}>
-            <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
+          {/* 3. Hero Mini Route Map */}
+          <View style={styles.modalMapCanvas} testID="dispatch-modal-map">
+            <RealInteractiveMap
+              destination={{ label: offer.dropoffAddress }}
+              height="100%"
+              mode="route"
+              origin={{ label: offer.pickupAddress }}
+            />
+            <View style={styles.mapFloatingDistancePill}>
+              <IconLocationPin color="#0B1E42" size={12} />
+              <Text style={styles.mapFloatingDistanceText}>
+                Điểm đón · {offer.pickupDistanceLabel}
+              </Text>
+            </View>
+          </View>
+
+          {/* 4. Fare Card - High Prominence (Mega Price) */}
+          <View style={[styles.fareContainer, isUrgent ? styles.fareContainerUrgent : null]}>
+            <View style={styles.fareHeaderRow}>
+              <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
+              <View style={styles.fareNetPill}>
+                <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
+              </View>
+            </View>
             <Text style={styles.fareAmount}>{offer.priceLabel}</Text>
             <Text style={styles.fareSub}>Đã khấu trừ phí nền tảng · Nhận vào ví ngay khi hoàn tất</Text>
           </View>
 
-          {/* Route Spine: Pickup -> Dropoff */}
+          {/* 5. Route Spine: Pickup -> Dropoff */}
           <View style={styles.routeContainer}>
             <View style={styles.routeSpineColumn}>
-              <View style={styles.spineOriginCircle} />
+              <View style={styles.spineOriginCircle}>
+                <Text style={styles.spinePointTextA}>A</Text>
+              </View>
               <View style={styles.spineTrackDotted} />
-              <View style={styles.spineDestSquare} />
+              <View style={styles.spineDestSquare}>
+                <Text style={styles.spinePointTextB}>B</Text>
+              </View>
             </View>
 
             <View style={styles.routeAddressesColumn}>
@@ -142,8 +177,12 @@ export function IncomingDispatchModal({
                 <View style={styles.addressTitleRow}>
                   <Text style={styles.addressTypeLabel}>ĐIỂM LẤY HÀNG</Text>
                   <View style={styles.pickupDistBadge}>
-                    <IconLocationPin color="#0284C7" size={11} />
-                    <Text style={styles.pickupDistText}>Cách bạn {offer.pickupDistanceLabel}</Text>
+                    <IconLocationPin color="#0B1E42" size={12} />
+                    <Text style={styles.pickupDistText}>
+                      {offer.pickupDistanceLabel.startsWith('Cách bạn')
+                        ? offer.pickupDistanceLabel
+                        : `Cách bạn ${offer.pickupDistanceLabel}`}
+                    </Text>
                   </View>
                 </View>
                 <Text numberOfLines={2} style={styles.addressNameText}>
@@ -153,7 +192,7 @@ export function IncomingDispatchModal({
 
               {/* Transit Indicator */}
               <View style={styles.transitMetaRow}>
-                <IconRoute color="#64748B" size={12} />
+                <IconRoute color="#64748B" size={13} />
                 <Text style={styles.transitMetaText}>
                   Lộ trình {offer.tripDistanceLabel} · Khoảng {offer.etaLabel}
                 </Text>
@@ -169,15 +208,15 @@ export function IncomingDispatchModal({
             </View>
           </View>
 
-          {/* Vehicle & Cargo Chips */}
+          {/* 6. Vehicle & Cargo Chips */}
           <View style={styles.chipsRow}>
             <View style={styles.specChip}>
-              <IconSpeedTruck color="#0284C7" size={14} />
+              <IconSpeedTruck color="#0B1E42" size={15} />
               <Text style={styles.specChipText}>{offer.vehicleLabel}</Text>
             </View>
             <View style={styles.specChip}>
-              <IconOrders color="#475569" size={14} />
-              <Text style={styles.specChipText}>{offer.cargoSummary}</Text>
+              <IconOrders color="#475569" size={15} />
+              <Text numberOfLines={1} style={styles.specChipText}>{offer.cargoSummary}</Text>
             </View>
           </View>
 
@@ -187,7 +226,7 @@ export function IncomingDispatchModal({
             </View>
           ) : null}
 
-          {/* Action Buttons: Decline (Bỏ qua) + Accept (Nhận ngay) */}
+          {/* 7. Action Buttons: Decline (Bỏ qua) + Accept (Nhận ngay) */}
           <View style={styles.actionsRow}>
             <View style={styles.declineButtonWrap}>
               <Button
@@ -216,7 +255,7 @@ export function IncomingDispatchModal({
 
 const styles = StyleSheet.create({
   scrimOverlay: {
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
     flex: 1,
     justifyContent: 'flex-end',
   },
@@ -225,20 +264,20 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingTop: spacing.md + 2,
+    paddingBottom: spacing.xl + 8,
     gap: spacing.sm,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 16,
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 24,
   },
   modalHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 2,
+    paddingBottom: 4,
   },
   radarPulseContainer: {
     alignItems: 'center',
@@ -248,38 +287,55 @@ const styles = StyleSheet.create({
   radarPulseOuter: {
     alignItems: 'center',
     backgroundColor: 'rgba(2, 132, 199, 0.2)',
-    borderRadius: 9,
-    height: 18,
+    borderRadius: 11,
+    height: 22,
     justifyContent: 'center',
-    width: 18,
+    width: 22,
+  },
+  radarPulseOuterUrgent: {
+    backgroundColor: 'rgba(220, 38, 38, 0.2)',
   },
   radarPulseCore: {
     backgroundColor: leopardPalette.primary,
-    borderRadius: 4,
-    height: 8,
-    width: 8,
+    borderRadius: 5,
+    height: 10,
+    width: 10,
+  },
+  radarPulseCoreUrgent: {
+    backgroundColor: '#DC2626',
   },
   modalBadgeText: {
     color: leopardPalette.primaryDark,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
+  modalBadgeTextUrgent: {
+    color: '#DC2626',
+  },
   timerBadge: {
     alignItems: 'center',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#CBD5E1',
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  timerBadgeWarning: {
     backgroundColor: '#FFFBEB',
     borderColor: '#FDE68A',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  },
+  timerBadgeUrgent: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
   },
   timerText: {
-    color: '#92400E',
-    fontSize: 12,
-    fontWeight: '800',
+    color: '#061226',
+    fontSize: 14,
+    fontWeight: '900',
     fontVariant: ['tabular-nums'],
   },
   timerWarning: {
@@ -290,13 +346,14 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     backgroundColor: '#E2E8F0',
-    borderRadius: 2,
-    height: 4,
+    borderRadius: 3,
+    height: 6,
     overflow: 'hidden',
     width: '100%',
   },
   progressBar: {
     height: '100%',
+    borderRadius: 3,
   },
   progressBarNormal: {
     backgroundColor: leopardPalette.primary,
@@ -305,34 +362,87 @@ const styles = StyleSheet.create({
     backgroundColor: '#F59E0B',
   },
   progressBarUrgent: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#DC2626',
+  },
+  modalMapCanvas: {
+    backgroundColor: '#0F172A',
+    borderRadius: 14,
+    height: 160,
+    overflow: 'hidden',
+    position: 'relative',
+    width: '100%',
+  },
+  mapFloatingDistancePill: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    bottom: 8,
+    elevation: 3,
+    flexDirection: 'row',
+    gap: 4,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    position: 'absolute',
+    zIndex: 10,
+  },
+  mapFloatingDistanceText: {
+    color: '#061226',
+    fontSize: 11,
+    fontWeight: '800',
   },
   fareContainer: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingVertical: spacing.sm,
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+    borderRadius: 18,
+    borderWidth: 1.5,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.md,
     gap: 2,
   },
-  fareCaption: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 10.5,
+  fareContainerUrgent: {
+    borderColor: '#FCA5A5',
+    backgroundColor: '#FFF1F2',
+  },
+  fareHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  fareNetPill: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#86EFAC',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 1.5,
+  },
+  fareNetPillText: {
+    color: '#166534',
+    fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.6,
+  },
+  fareCaption: {
+    color: '#15803D',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   fareAmount: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 26,
+    color: '#166534',
+    fontSize: 34,
     fontWeight: '900',
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
     fontVariant: ['tabular-nums'],
   },
   fareSub: {
-    color: leopardPalette.textSubtle,
-    fontSize: 11,
+    color: '#4B5563',
+    fontSize: 11.5,
+    fontWeight: '500',
     textAlign: 'center',
   },
   routeContainer: {
@@ -341,19 +451,27 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
-    padding: spacing.sm,
-    gap: 10,
+    padding: spacing.sm + 2,
+    gap: 12,
   },
   routeSpineColumn: {
     alignItems: 'center',
     paddingTop: 4,
-    width: 14,
+    width: 16,
   },
   spineOriginCircle: {
+    alignItems: 'center',
     backgroundColor: '#16A34A',
-    borderRadius: 5,
-    height: 10,
-    width: 10,
+    borderRadius: 8,
+    height: 16,
+    justifyContent: 'center',
+    width: 16,
+  },
+  spinePointTextA: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '900',
+    textAlign: 'center',
   },
   spineTrackDotted: {
     backgroundColor: '#CBD5E1',
@@ -363,14 +481,22 @@ const styles = StyleSheet.create({
     width: 2,
   },
   spineDestSquare: {
+    alignItems: 'center',
     backgroundColor: '#EF4444',
-    borderRadius: 2,
-    height: 10,
-    width: 10,
+    borderRadius: 3,
+    height: 16,
+    justifyContent: 'center',
+    width: 16,
+  },
+  spinePointTextB: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '900',
+    textAlign: 'center',
   },
   routeAddressesColumn: {
     flex: 1,
-    gap: 6,
+    gap: 8,
   },
   addressBlock: {
     gap: 2,
@@ -379,6 +505,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 4,
   },
   addressTypeLabel: {
     color: '#16A34A',
@@ -394,34 +522,36 @@ const styles = StyleSheet.create({
   },
   pickupDistBadge: {
     alignItems: 'center',
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#CBD5E1',
     borderRadius: radius.pill,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: 2,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   pickupDistText: {
-    color: '#0369A1',
-    fontSize: 10.5,
-    fontWeight: '700',
+    color: '#061226',
+    fontSize: 11,
+    fontWeight: '800',
   },
   addressNameText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 13.5,
-    fontWeight: '600',
-    lineHeight: 18,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 19,
   },
   transitMetaRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
+    gap: 6,
     paddingVertical: 2,
   },
   transitMetaText: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
   },
   chipsRow: {
     flexDirection: 'row',
@@ -429,36 +559,39 @@ const styles = StyleSheet.create({
   },
   specChip: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    borderWidth: 1,
     flex: 1,
     flexDirection: 'row',
     gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   specChipText: {
     color: '#334155',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   notesBox: {
     backgroundColor: '#FFFBEB',
     borderColor: '#FDE68A',
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   notesText: {
     color: '#92400E',
-    fontSize: 11.5,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     marginTop: spacing.xs,
+    paddingTop: 4,
   },
   declineButtonWrap: {
     flex: 1,

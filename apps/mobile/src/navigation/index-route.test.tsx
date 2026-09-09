@@ -40,15 +40,15 @@ describe('Root IndexRoute', () => {
     await screen.unmount();
   });
 
-  it('redirects unauthenticated users to /(public)/login or onboarding when splash finishes', async () => {
-    mockSessionRouterResult = { isHydrated: true, redirectTo: '/(public)/onboarding' };
+  it('redirects unauthenticated users to /(public)/login when splash finishes', async () => {
+    mockSessionRouterResult = { isHydrated: true, redirectTo: '/(public)/login' };
     const screen = await render(<IndexRoute />);
 
     // Simulate splash screen tap/completion
     fireEvent.press(screen.getByHintText('Nhấn để bỏ qua màn hình chào'));
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/(public)/onboarding');
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
     });
     await screen.unmount();
   });

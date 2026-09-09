@@ -4,6 +4,7 @@ import {
   Animated,
   Easing,
   Image,
+  ImageBackground,
   Platform,
   Pressable,
   StyleSheet,
@@ -16,10 +17,11 @@ import { colors, spacing } from '../../theme/tokens';
 
 const leopardEmblemSource = require('../../../assets/brand/leopard-emblem.png');
 const leopardWordmarkSource = require('../../../assets/brand/leopard-wordmark.png');
+const splashBgSource = require('../../../assets/brand/splash-bg.png');
 
 // Intrinsic pixel ratios of the brand PNGs
-const EMBLEM_RATIO = 1099 / 591;
-const WORDMARK_RATIO = 1464 / 241;
+const EMBLEM_RATIO = 678 / 324;
+const WORDMARK_RATIO = 911 / 205;
 
 // Native driver is unsupported on react-native-web; gate it to avoid warnings.
 const USE_NATIVE_DRIVER = Platform.OS !== 'web';
@@ -75,17 +77,18 @@ export function BrandSplashScreen({
 
   const containerOpacity = useRef(new Animated.Value(1)).current;
   const containerScale = useRef(new Animated.Value(1)).current;
+  const containerTranslateY = useRef(new Animated.Value(0)).current;
 
-  // Responsive sizing for large center presence
+  // Responsive sizing for prominent center presence
   const isSmallScreen = screenWidth < 380;
-  const emblemWidth = isSmallScreen ? 128 : 156;
+  const emblemWidth = isSmallScreen ? 156 : 194;
   const emblemHeight = Math.round(emblemWidth / EMBLEM_RATIO);
 
-  const wordmarkHeight = isSmallScreen ? 28 : 34;
+  const wordmarkHeight = isSmallScreen ? 62 : 76;
   const wordmarkWidth = Math.round(wordmarkHeight * WORDMARK_RATIO);
 
   // Optical upward offset to ensure the combined logo+name stays perfectly balanced vertically
-  const targetEmblemOffsetY = isSmallScreen ? -16 : -20;
+  const targetEmblemOffsetY = isSmallScreen ? -20 : -26;
 
   const handleFinish = useMemo(() => {
     return () => {
@@ -185,47 +188,25 @@ export function BrandSplashScreen({
       // --- Phase 4: Generous Brand Hold (1400ms) ---
       Animated.delay(1400),
 
-      // --- Phase 5: Contraction ("Thu lại") & Smooth Dissolve into Onboarding ---
+      // --- Phase 5: "Dock to Header" — Smooth Upward Glide & Scale to Top Header (Chậm rãi, uyển chuyển) ---
       Animated.parallel([
-        // Wordmark smoothly folds down and fades
-        Animated.timing(wordmarkOpacity, {
-          toValue: 0,
-          duration: 480,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-        Animated.timing(wordmarkTranslateY, {
-          toValue: 14,
-          duration: 500,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-        Animated.timing(wordmarkScale, {
-          toValue: 0.94,
-          duration: 480,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-        // Emblem descends back smoothly to center
-        Animated.timing(emblemTranslateY, {
-          toValue: 0,
-          duration: 580,
-          easing: Easing.bezier(0.25, 1, 0.5, 1),
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-        // Container fades out and zooms gently for seamless transition
-        Animated.timing(containerOpacity, {
-          toValue: 0,
-          duration: 620,
-          delay: 150,
-          easing: Easing.inOut(Easing.cubic),
+        Animated.timing(containerTranslateY, {
+          toValue: -120,
+          duration: 900,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
           useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(containerScale, {
-          toValue: 1.04,
-          duration: 620,
-          delay: 150,
-          easing: Easing.out(Easing.quad),
+          toValue: 0.74,
+          duration: 900,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: USE_NATIVE_DRIVER,
+        }),
+        Animated.timing(containerOpacity, {
+          toValue: 0,
+          duration: 800,
+          delay: 100,
+          easing: Easing.inOut(Easing.quad),
           useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]),
@@ -254,96 +235,107 @@ export function BrandSplashScreen({
     haloOpacity,
     containerOpacity,
     containerScale,
+    containerTranslateY,
   ]);
 
   return (
-    <SafeAreaView style={styles.safeArea} testID={testID}>
-      <Pressable
-        accessibilityHint="Nhấn để bỏ qua màn hình chào"
-        accessibilityLabel="Màn hình chào LEOPARD"
-        accessibilityRole="button"
-        onPress={handleFinish}
-        style={styles.pressableContainer}
-      >
-        <Animated.View
-          style={[
-            styles.contentContainer,
-            {
-              opacity: containerOpacity,
-              transform: [{ scale: containerScale }],
-            },
-          ]}
+    <ImageBackground
+      source={splashBgSource}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+      testID={`${testID}-bg`}
+    >
+      {/* Navy overlay */}
+      <View style={styles.navyOverlay} />
+
+      <SafeAreaView style={styles.safeArea} testID={testID}>
+        <Pressable
+          accessibilityHint="Nhấn để bỏ qua màn hình chào"
+          accessibilityLabel="Màn hình chào LEOPARD"
+          accessibilityRole="button"
+          onPress={handleFinish}
+          style={styles.pressableContainer}
         >
-          {/* Ambient Glow Aura */}
           <Animated.View
-            pointerEvents="none"
             style={[
-              styles.ambientHalo,
+              styles.contentContainer,
               {
-                opacity: haloOpacity,
-                transform: [{ scale: haloScale }],
+                opacity: containerOpacity,
+                transform: [
+                  { translateY: containerTranslateY },
+                  { scale: containerScale },
+                ],
               },
             ]}
-          />
+          >
+            {/* Central Vertical Stack: Logo on top, Wordmark close below, perfectly centered */}
+            <View style={styles.centerStack}>
+              {/* Emblem (Starts large in dead center, floats up smoothly) */}
+              <Animated.View
+                style={[
+                  styles.emblemWrapper,
+                  {
+                    opacity: emblemOpacity,
+                    transform: [
+                      { translateY: emblemTranslateY },
+                      { scale: emblemScale },
+                    ],
+                  },
+                ]}
+              >
+                <Image
+                  accessibilityLabel="LEOPARD Emblem"
+                  accessibilityRole="image"
+                  resizeMode="contain"
+                  source={leopardEmblemSource}
+                  style={{ width: emblemWidth, height: emblemHeight }}
+                  testID="splash-leopard-emblem"
+                />
+              </Animated.View>
 
-          {/* Central Vertical Stack: Logo on top, Wordmark close below, perfectly centered */}
-          <View style={styles.centerStack}>
-            {/* Emblem (Starts large in dead center, floats up smoothly) */}
-            <Animated.View
-              style={[
-                styles.emblemWrapper,
-                {
-                  opacity: emblemOpacity,
-                  transform: [
-                    { translateY: emblemTranslateY },
-                    { scale: emblemScale },
-                  ],
-                },
-              ]}
-            >
-              <Image
-                accessibilityLabel="LEOPARD Emblem"
-                accessibilityRole="image"
-                resizeMode="contain"
-                source={leopardEmblemSource}
-                style={{ width: emblemWidth, height: emblemHeight }}
-                testID="splash-leopard-emblem"
-              />
-            </Animated.View>
-
-            {/* Wordmark (Reveals smoothly and closely directly underneath the emblem) */}
-            <Animated.View
-              style={[
-                styles.wordmarkWrapper,
-                {
-                  opacity: wordmarkOpacity,
-                  transform: [
-                    { translateY: wordmarkTranslateY },
-                    { scale: wordmarkScale },
-                  ],
-                },
-              ]}
-            >
-              <Image
-                accessibilityLabel="LEOPARD Wordmark"
-                accessibilityRole="image"
-                resizeMode="contain"
-                source={leopardWordmarkSource}
-                style={{ width: wordmarkWidth, height: wordmarkHeight }}
-                testID="splash-leopard-wordmark"
-              />
-            </Animated.View>
-          </View>
-        </Animated.View>
-      </Pressable>
-    </SafeAreaView>
+              {/* Wordmark (Reveals smoothly and closely directly underneath the emblem) */}
+              <Animated.View
+                style={[
+                  styles.wordmarkWrapper,
+                  {
+                    opacity: wordmarkOpacity,
+                    transform: [
+                      { translateY: wordmarkTranslateY },
+                      { scale: wordmarkScale },
+                    ],
+                  },
+                ]}
+              >
+                <Image
+                  accessibilityLabel="LEOPARD Wordmark"
+                  accessibilityRole="image"
+                  resizeMode="contain"
+                  source={leopardWordmarkSource}
+                  style={{ width: wordmarkWidth, height: wordmarkHeight }}
+                  testID="splash-leopard-wordmark"
+                />
+              </Animated.View>
+            </View>
+          </Animated.View>
+        </Pressable>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  navyOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(11, 30, 66, 0.45)',
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: colors.neutral.canvas,
+    backgroundColor: 'transparent',
   },
   pressableContainer: {
     flex: 1,
@@ -354,19 +346,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },
-  ambientHalo: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(2, 132, 199, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.16)',
-  },
   centerStack: {
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+    transform: [{ translateY: -60 }],
   },
   emblemWrapper: {
     alignItems: 'center',
@@ -375,6 +359,6 @@ const styles = StyleSheet.create({
   wordmarkWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4, // Khoảng cách sát lại gần logo hơn theo yêu cầu
+    marginTop: -24,
   },
 });

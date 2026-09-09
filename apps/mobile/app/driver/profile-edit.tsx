@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 
-import { EditProfileScreen } from '../../src/features/customer/profile/EditProfileScreen';
 import { createDriverProfileHttpAdapter } from '../../src/features/driver/profile/adapter';
+import { DriverEditProfileScreen } from '../../src/features/driver/profile/DriverEditProfileScreen';
 
 export default function DriverProfileEditRoute() {
   const port = useMemo(() => createDriverProfileHttpAdapter(), []);
@@ -29,22 +29,30 @@ export default function DriverProfileEditRoute() {
   });
 
   const view = query.data;
-  const initialName = view && view.kind === 'content' ? (view.name ?? '') : '';
-  const avatarUrl = view && view.kind === 'content' ? view.avatarUrl : null;
+  const isContent = view && view.kind === 'content';
+  const initialName = isContent ? (view.name ?? '') : '';
+  const initialEmail = isContent ? (view.email ?? '') : '';
+  const avatarUrl = isContent ? view.avatarUrl : null;
+  const phone = isContent ? view.phone : undefined;
+  const vehicleLabel = isContent ? view.vehicleLabel : undefined;
 
   return (
-    <EditProfileScreen
+    <DriverEditProfileScreen
       avatarUrl={avatarUrl}
-      eyebrow="DRIVER · HỒ SƠ"
+      driverCode="DRV-88924"
       errorMessage={errorMessage}
-      initialEmail=""
+      fleetLabel="Fleet Tân Bình (Pilot)"
+      initialEmail={initialEmail}
       initialName={initialName}
       isSaving={saveMutation.isPending}
+      onBack={() => router.back()}
       onPickAvatar={(file) => avatarMutation.mutate(file)}
       onSave={(input) => {
         setErrorMessage(undefined);
         saveMutation.mutate(input);
       }}
+      phone={phone}
+      vehicleLabel={vehicleLabel}
     />
   );
 }

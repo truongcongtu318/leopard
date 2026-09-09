@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { AuditRepository } from './audit.repository.js';
 
 export interface AuditInput {
-  actorId: string;
+  actorId: string | null;
   action: string;
   resourceType: string;
   resourceId?: string;

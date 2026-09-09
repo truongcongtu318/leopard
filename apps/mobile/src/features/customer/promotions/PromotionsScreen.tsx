@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -43,6 +44,7 @@ const mockPromotions: readonly PromotionItem[] = [
 ];
 
 export function PromotionsScreen() {
+  const router = useRouter();
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
 
@@ -53,7 +55,7 @@ export function PromotionsScreen() {
 
   return (
     <ScreenScaffold
-      eyebrow="CUSTOMER · PROMOTIONS"
+      onBack={() => router.back()}
       subtitle="Mã giảm giá và ưu đãi cước vận chuyển khả dụng."
       title="Khuyến mãi"
     >

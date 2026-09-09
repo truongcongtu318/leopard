@@ -25,17 +25,16 @@ export function EtaIndicator({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>ETA dự kiến</Text>
-      {isLoading ? <Text style={styles.value}>Đang tính ETA dự kiến.</Text> : null}
+      <Text style={styles.label}>Thời gian giao dự kiến</Text>
+      {isLoading ? <Text style={styles.value}>Đang tính thời gian giao dự kiến...</Text> : null}
       {isUnavailable ? (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error ?? 'Chưa thể tính ETA dự kiến.'}
+          {error ?? 'Chưa thể tính thời gian giao dự kiến.'}
         </Text>
       ) : null}
       {!isLoading && !isUnavailable && durationMinutes !== null ? (
         <Text style={styles.value}>{durationMinutes} phút</Text>
       ) : null}
-      {source === 'DEMO' ? <Text style={styles.demoLabel}>Dữ liệu mô phỏng</Text> : null}
       {isUnavailable && onRetry ? (
         <Button label="Thử lại" onPress={onRetry} variant="secondary" />
       ) : null}

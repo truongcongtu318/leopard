@@ -1,4 +1,5 @@
 import { pickDeviceImage, type DeviceImageAsset } from '../../../media/device-image-picker';
+import { appendFileToFormData } from '../../../media/form-data';
 import { getDefaultHttpClient, parseCustomerOrderId } from './adapter';
 import type { CustomerHttpClient } from './adapter';
 import type { CustomerOrderDetailDataView } from './model';
@@ -36,11 +37,12 @@ export function createCustomerMediaPickerAdapter(
       }
 
       const form = new FormData();
-      form.append('file', {
+      await appendFileToFormData(form, 'file', {
         uri: selectedFile.uri,
         name: selectedFile.name,
-        type: selectedFile.mimeType,
-      } as unknown as Blob);
+        mimeType: selectedFile.mimeType,
+        file: selectedFile.file,
+      });
       form.append('clientRequestId', generateClientRequestId());
 
       try {

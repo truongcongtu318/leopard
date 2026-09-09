@@ -169,6 +169,32 @@ describe('NotificationTriggers', () => {
       ).resolves.toBeUndefined();
     });
   });
+
+  describe('notifyInvoiceEmailMissing', () => {
+    test('creates exactly one SYSTEM notification for the customer with the order id', async () => {
+      const triggers = createTriggers();
+
+      await triggers.notifyInvoiceEmailMissing({ customerId: 'customer-1', orderId: 'order-1' });
+
+      expect(notificationsService.create).toHaveBeenCalledTimes(1);
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'customer-1',
+          type: 'SYSTEM',
+          data: { orderId: 'order-1' },
+        }),
+      );
+    });
+
+    test('never rejects even when persistence fails', async () => {
+      notificationsService.create.mockRejectedValue(new Error('db down'));
+      const triggers = createTriggers();
+
+      await expect(
+        triggers.notifyInvoiceEmailMissing({ customerId: 'customer-1', orderId: 'order-1' }),
+      ).resolves.toBeUndefined();
+    });
+  });
 });
 
 async function flushMicrotasks(): Promise<void> {

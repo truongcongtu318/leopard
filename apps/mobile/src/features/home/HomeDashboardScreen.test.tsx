@@ -421,4 +421,48 @@ describe('HomeDashboardScreen', () => {
 
     await screen.unmount();
   });
+
+  it('only displays delivered orders in recent orders section and excludes other statuses', async () => {
+    const screen = await render(
+      <HomeDashboardScreen
+        recentOrders={[
+          {
+            id: 'ord-deliv',
+            reference: 'LP-DELIVERED',
+            status: 'DELIVERED',
+            origin: 'Điểm lấy A',
+            destination: 'Điểm giao A',
+          },
+          {
+            id: 'ord-transit',
+            reference: 'LP-TRANSIT',
+            status: 'IN_TRANSIT',
+            origin: 'Điểm lấy B',
+            destination: 'Điểm giao B',
+          },
+          {
+            id: 'ord-req',
+            reference: 'LP-REQUESTED',
+            status: 'REQUESTED',
+            origin: 'Điểm lấy C',
+            destination: 'Điểm giao C',
+          },
+          {
+            id: 'ord-canc',
+            reference: 'LP-CANCELLED',
+            status: 'CANCELLED',
+            origin: 'Điểm lấy D',
+            destination: 'Điểm giao D',
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText('Đơn LP-DELIVERED')).toBeTruthy();
+    expect(screen.queryByText('Đơn LP-TRANSIT')).toBeNull();
+    expect(screen.queryByText('Đơn LP-REQUESTED')).toBeNull();
+    expect(screen.queryByText('Đơn LP-CANCELLED')).toBeNull();
+
+    await screen.unmount();
+  });
 });

@@ -201,8 +201,8 @@ describe('PreviewBanner', () => {
     const screen = await render(<PreviewBanner />);
     const banner = screen.getByRole('summary');
 
-    expect(screen.getByText('Bản xem trước giao diện — dữ liệu mô phỏng')).toBeTruthy();
-    expect(MOBILE_PREVIEW_BANNER_TEXT).toBe('Bản xem trước giao diện — dữ liệu mô phỏng');
+    expect(screen.getByText('LEOPARD Logistics · Phiên bản Thử nghiệm Pilot')).toBeTruthy();
+    expect(MOBILE_PREVIEW_BANNER_TEXT).toBe('LEOPARD Logistics · Phiên bản Thử nghiệm Pilot');
     expect(banner.props.accessibilityLabel).toBe(MOBILE_PREVIEW_BANNER_TEXT);
 
     await screen.unmount();

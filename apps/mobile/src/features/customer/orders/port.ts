@@ -1,4 +1,5 @@
 import type {
+  AddressCandidate,
   CustomerCreateFormView,
   CustomerCreateView,
   CustomerDetailView,
@@ -13,6 +14,7 @@ export type CustomerOrdersPort = Readonly<{
   getOrdersView: (filter: CustomerOrderFilter) => Promise<CustomerListView>;
   getCreateView: () => Promise<CustomerCreateView>;
   getOrderDetailView: (orderId: string) => Promise<CustomerDetailView>;
+  searchAddress: (query: string) => Promise<readonly AddressCandidate[]>;
   estimateOrder: (form: CustomerCreateFormView) => Promise<CustomerCreateView>;
   createOrder: (form: CustomerCreateFormView, estimateToken: string) => Promise<CustomerDetailView>;
   executeIntent: (intent: CustomerOrderIntent) => Promise<CustomerDetailView>;
@@ -24,6 +26,7 @@ export type CustomerOrdersPort = Readonly<{
     orderId: string,
     currentView?: CustomerDetailView,
   ) => Promise<CustomerDetailView>;
+  sendInvoiceEmail?: (invoiceId: string, orderId: string, email: string) => Promise<CustomerDetailView>;
   getInvoiceDownloadUrl?: (invoiceId: string) => Promise<string>;
 }>;
 

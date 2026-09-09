@@ -290,6 +290,8 @@ describe('OpenAPI 3.1 Contract', () => {
       'MediaRecord',
       'HealthStatus',
       'AdminDashboard',
+      'InvoiceView',
+      'SendInvoiceRequest',
     ];
 
     for (const schemaName of requiredSchemas) {
@@ -535,6 +537,49 @@ describe('OpenAPI 3.1 Contract', () => {
       );
       expect(projection.properties?.storageKey).toBeUndefined();
       expect(projection.properties?.checksumSha256).toBeUndefined();
+    });
+  });
+
+  describe('Invoices contract', () => {
+    it('should never expose the raw storage key, only a signed viewUrl', () => {
+      const projection = doc.components.schemas.InvoiceView as OpenApiSchema;
+      expect(projection.additionalProperties).toBe(false);
+      expect(Object.keys(projection.properties ?? {}).sort()).toEqual(
+        ['id', 'invoiceNumber', 'amountVnd', 'vatRateVnd', 'totalVnd', 'issuedAt', 'emailSentAt', 'viewUrl'].sort(),
+      );
+      expect(projection.properties?.pdfStorageKey).toBeUndefined();
+      expect(projection.properties?.customerEmail).toBeUndefined();
+    });
+
+    it('GET /invoices/order/{orderId} should return InvoiceView', () => {
+      const item = operation(doc, '/invoices/order/{orderId}', 'get');
+      expect(responseSchema(item, '200')).toEqual({
+        $ref: '#/components/schemas/InvoiceView',
+      });
+    });
+
+    it('GET /invoices/{id}/download should redirect (302) without a body schema', () => {
+      const item = operation(doc, '/invoices/{id}/download', 'get');
+      const responses = item.responses as Record<string, { content?: unknown }>;
+      expect(responses['302']).toBeDefined();
+      expect(responses['302'].content).toBeUndefined();
+    });
+
+    it('POST /invoices/{id}/send should require an email and return InvoiceView', () => {
+      const item = operation(doc, '/invoices/{id}/send', 'post');
+      expect(requestSchema(item, 'application/json')).toEqual({
+        $ref: '#/components/schemas/SendInvoiceRequest',
+      });
+      expect(responseSchema(item, '201')).toEqual({
+        $ref: '#/components/schemas/InvoiceView',
+      });
+
+      const request = doc.components.schemas.SendInvoiceRequest as OpenApiSchema;
+      expect(request.required).toEqual(['email']);
+      expect(request.properties?.email).toMatchObject({
+        type: 'string',
+        format: 'email',
+      });
     });
   });
 

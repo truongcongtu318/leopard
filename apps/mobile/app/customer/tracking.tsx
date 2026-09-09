@@ -1,51 +1,14 @@
-import { useRouter } from 'expo-router';
-import { Linking } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
-import { RealtimeTrackingScreen } from '../../src/features/tracking/RealtimeTrackingScreen';
+import { CustomerTrackingRuntime } from '../../src/features/tracking/CustomerTrackingRuntime';
 
-// Demo data for the Realtime Tracking screen
-const demoDriver = {
-  name: 'Nguyễn Văn Hùng',
-  rating: 4.8,
-  totalTrips: 342,
-  phone: '0901234567',
-  vehiclePlate: '59C-882.14',
-  vehicleType: 'Xe Tải Nặng',
-  vehicleCapacity: '5 Tấn',
-};
-
-const demoTrip = {
-  bookingCode: '#LP-00201',
-  origin: 'Kho VLXD Tân Bình',
-  destination: 'KCN Tân Tạo, Bình Tân',
-  cargoLabel: 'Xi Măng Hà Tiên',
-  weightKg: 3000,
-  priceVnd: '850.000 ₫',
-  distanceTotalKm: 12.5,
-  distanceRemainingKm: 1.5,
-  etaMinutes: 10,
-  etaLabel: '10 phút',
-  status: 'IN_TRANSIT' as const,
-  hasDeliveryProof: false,
-};
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default function CustomerTrackingPage() {
-  const router = useRouter();
+  const { orderId } = useLocalSearchParams<{ orderId?: string }>();
+  const validOrderId =
+    typeof orderId === 'string' && UUID_PATTERN.test(orderId) ? orderId : undefined;
 
-  return (
-    <RealtimeTrackingScreen
-      driver={demoDriver}
-      onBack={() => router.back()}
-      onCallDriver={() => {
-        void Linking.openURL(`tel:${demoDriver.phone}`);
-      }}
-      onChatDriver={() => {
-        router.push('/customer/chat');
-      }}
-      onShowVietQR={() => {
-        router.push('/customer/wallet');
-      }}
-      trip={demoTrip}
-    />
-  );
+  return <CustomerTrackingRuntime initialOrderId={validOrderId} />;
 }

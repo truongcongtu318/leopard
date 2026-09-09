@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { afterEach, describe, expect, it, jest } from '@jest/globals';
 
 import { ApiError } from '../../../api/api-error';
 import {
@@ -11,12 +11,14 @@ import {
   formatStatusFilterLabel,
   formatTimeOnly,
   formatVndPrice,
+  mapInvoiceToView,
   mapPaymentToView,
   mapTrackingToView,
   normalizeRouteParam,
   parseCustomerOrderId,
   resolveCancelView,
   type CustomerHttpClient,
+  type MappedInvoiceResponse,
   type MappedOrderResponse,
   type MappedPaymentResponse,
   type MappedTrackingHistoryResponse,
@@ -126,8 +128,8 @@ describe('Customer route adapter helpers', () => {
       expect(view.status).toBe('QR_CREATED');
       expect(view.qrState).toBe('ready');
       expect(view.referenceLabel).toBe('LPRD-DEMO-260815-001');
-      expect(view.sourceLabel).toBe('VietQR mô phỏng');
-      expect(view.notice).toContain('Mã QR mô phỏng');
+      expect(view.sourceLabel).toBe('VietQR');
+      expect(view.notice).toContain('Mã QR đã sẵn sàng');
     });
 
     it('maps expired QR payment to expired state with refresh action', () => {
@@ -156,6 +158,36 @@ describe('Customer route adapter helpers', () => {
       const view = mapPaymentToView(payment, 286000);
       expect(view.status).toBe('FAILED');
       expect(view.action?.id).toBe('retry-payment');
+    });
+  });
+
+  describe('mapInvoiceToView', () => {
+    const mockInvoice: MappedInvoiceResponse = {
+      id: 'invoice-1',
+      invoiceNumber: 'LP/2026/000001',
+      amountVnd: 480000,
+      vatRateVnd: 48000,
+      totalVnd: 528000,
+      issuedAt: '2026-09-08T00:00:00.000Z',
+      emailSentAt: null,
+      viewUrl: 'https://signed.example/invoices/invoice-1.pdf',
+    };
+
+    it('formats totalVnd and issuedAt, and passes other fields through unchanged', () => {
+      const view = mapInvoiceToView(mockInvoice);
+
+      expect(view.id).toBe('invoice-1');
+      expect(view.invoiceNumber).toBe('LP/2026/000001');
+      expect(view.totalLabel).toBe(formatVndPrice(528000));
+      expect(view.issuedAtLabel).toBe(formatDateTime('2026-09-08T00:00:00.000Z'));
+      expect(view.emailSentAt).toBeNull();
+      expect(view.viewUrl).toBe(mockInvoice.viewUrl);
+    });
+
+    it('passes a non-null emailSentAt through unchanged', () => {
+      const view = mapInvoiceToView({ ...mockInvoice, emailSentAt: '2026-09-08T01:00:00.000Z' });
+
+      expect(view.emailSentAt).toBe('2026-09-08T01:00:00.000Z');
     });
   });
 
@@ -375,7 +407,7 @@ describe('createCustomerHttpAdapter', () => {
         expect(view.orders).toHaveLength(1);
         expect(view.orders[0].reference).toBe('LP-260815-001');
         expect(view.orders[0].priceLabel).toBe('286.000 ₫');
-        expect(view.orders[0].etaLabel).toContain('phút · Dữ liệu mô phỏng');
+        expect(view.orders[0].etaLabel).toBe('18 phút');
       }
       expect(client.get).toHaveBeenCalledWith('/orders');
     });
@@ -466,11 +498,58 @@ describe('createCustomerHttpAdapter', () => {
     });
   });
 
+  describe('searchAddress', () => {
+    it('returns an empty list without calling the API for a blank query', async () => {
+      const client = createMockClient();
+      const adapter = createCustomerHttpAdapter(client);
+
+      const results = await adapter.searchAddress('   ');
+
+      expect(results).toEqual([]);
+      expect(client.get).not.toHaveBeenCalled();
+    });
+
+    it('calls GET /maps/search and maps results to address candidates with coords', async () => {
+      const client = createMockClient();
+      client.get.mockResolvedValueOnce({
+        source: 'VIETMAP',
+        results: [
+          { placeId: 'p1', label: 'Kho Sao Mai', address: 'Quận 7, TP.HCM', lat: 10.73, lng: 106.7 },
+        ],
+      });
+
+      const adapter = createCustomerHttpAdapter(client);
+      const results = await adapter.searchAddress('Kho Sao Mai');
+
+      expect(client.get).toHaveBeenCalledWith('/maps/search?q=Kho%20Sao%20Mai');
+      expect(results).toEqual([
+        {
+          placeId: 'p1',
+          label: 'Kho Sao Mai',
+          address: 'Quận 7, TP.HCM',
+          coords: { lat: 10.73, lng: 106.7 },
+        },
+      ]);
+    });
+
+    it('returns an empty list when the search request fails', async () => {
+      const client = createMockClient();
+      client.get.mockRejectedValueOnce(new Error('Network offline'));
+
+      const adapter = createCustomerHttpAdapter(client);
+      const results = await adapter.searchAddress('Kho Sao Mai');
+
+      expect(results).toEqual([]);
+    });
+  });
+
   describe('estimateOrder', () => {
     const validForm: CustomerCreateFormView = {
       pickup: 'Kho Quận 7',
-      stops: [{ id: 'stop-1', value: 'Quận 4' }],
+      pickupCoords: { lat: 10.7326, lng: 106.7168 },
+      stops: [{ id: 'stop-1', value: 'Quận 4', coords: { lat: 10.758, lng: 106.702 } }],
       dropoff: 'Thủ Đức',
+      dropoffCoords: { lat: 10.8498, lng: 106.7725 },
       vehicleType: 'VAN',
       cargoNote: 'Hàng dễ vỡ',
       cargoWeight: '120',
@@ -527,11 +606,52 @@ describe('createCustomerHttpAdapter', () => {
       expect(client.post).toHaveBeenCalledWith(
         '/orders/estimate',
         expect.objectContaining({
-          pickup: expect.objectContaining({ address: 'Kho Quận 7' }),
-          dropoff: expect.objectContaining({ address: 'Thủ Đức' }),
+          pickup: expect.objectContaining({ address: 'Kho Quận 7', lat: 10.7326, lng: 106.7168 }),
+          stops: [expect.objectContaining({ address: 'Quận 4', lat: 10.758, lng: 106.702 })],
+          dropoff: expect.objectContaining({ address: 'Thủ Đức', lat: 10.8498, lng: 106.7725 }),
           vehicleType: 'VAN',
         }),
       );
+    });
+
+    it('rejects pickup/dropoff typed but not selected from a suggestion (no coords)', async () => {
+      const client = createMockClient();
+      const adapter = createCustomerHttpAdapter(client);
+
+      const formWithoutCoords: CustomerCreateFormView = {
+        ...validForm,
+        pickupCoords: undefined,
+        dropoffCoords: undefined,
+      };
+
+      const view = await adapter.estimateOrder(formWithoutCoords);
+
+      expect(view.kind).toBe('form');
+      if (view.kind === 'form') {
+        expect(view.scenarioId).toBe('C-NEW-INVALID');
+        expect(view.form.fieldErrors.pickup).toBe('Chọn địa chỉ từ danh sách gợi ý.');
+        expect(view.form.fieldErrors.dropoff).toBe('Chọn địa chỉ từ danh sách gợi ý.');
+      }
+      expect(client.post).not.toHaveBeenCalled();
+    });
+
+    it('rejects a filled stop that has no selected coords', async () => {
+      const client = createMockClient();
+      const adapter = createCustomerHttpAdapter(client);
+
+      const formWithBadStop: CustomerCreateFormView = {
+        ...validForm,
+        stops: [{ id: 'stop-1', value: 'Quận 4', coords: undefined }],
+      };
+
+      const view = await adapter.estimateOrder(formWithBadStop);
+
+      expect(view.kind).toBe('form');
+      if (view.kind === 'form') {
+        expect(view.scenarioId).toBe('C-NEW-INVALID');
+        expect(view.notice).toBe('Chọn địa chỉ điểm dừng từ danh sách gợi ý.');
+      }
+      expect(client.post).not.toHaveBeenCalled();
     });
 
     it('requires cargoWeight when vehicleType is TRUCK', async () => {
@@ -609,8 +729,10 @@ describe('createCustomerHttpAdapter', () => {
   describe('createOrder', () => {
     const validForm: CustomerCreateFormView = {
       pickup: 'Kho Quận 7',
+      pickupCoords: { lat: 10.7326, lng: 106.7168 },
       stops: [],
       dropoff: 'Thủ Đức',
+      dropoffCoords: { lat: 10.8498, lng: 106.7725 },
       vehicleType: 'VAN',
       cargoNote: 'Thùng carton',
       cargoWeight: '50',
@@ -639,6 +761,8 @@ describe('createCustomerHttpAdapter', () => {
           vehicleType: 'VAN',
           cargoNote: 'Thùng carton',
           cargoWeightKg: 50,
+          pickup: expect.objectContaining({ lat: 10.7326, lng: 106.7168 }),
+          dropoff: expect.objectContaining({ lat: 10.8498, lng: 106.7725 }),
         }),
       );
     });
@@ -652,6 +776,21 @@ describe('createCustomerHttpAdapter', () => {
       if (view.kind === 'error') {
         expect(view.scenarioId).toBe('C-DETAIL-ERROR');
         expect(view.message).toContain('lộ trình không đầy đủ');
+      }
+      expect(client.post).not.toHaveBeenCalled();
+    });
+
+    it('returns error boundary view when coordinates were never selected from a suggestion', async () => {
+      const client = createMockClient();
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.createOrder(
+        { ...validForm, pickupCoords: undefined },
+        'token-xyz-123',
+      );
+
+      expect(view.kind).toBe('error');
+      if (view.kind === 'error') {
+        expect(view.scenarioId).toBe('C-DETAIL-ERROR');
       }
       expect(client.post).not.toHaveBeenCalled();
     });
@@ -715,6 +854,169 @@ describe('createCustomerHttpAdapter', () => {
         expect(view.scenarioId).toBe('C-DETAIL-PERMISSION');
       }
     });
+
+    it('fetches payments and maps active QR payment to detail view', async () => {
+      const client = createMockClient();
+      client.get.mockImplementation((async (path: string) => {
+        if (path.endsWith('/payments')) {
+          return [
+            {
+              id: 'pmt-payos-1',
+              orderId: mockOrderResponse.id,
+              status: 'QR_CREATED',
+              provider: 'PAYOS',
+              amountVnd: 286000,
+              qrPayload: '00020101021238540010A000000727012600069704220112...',
+              expiresAt: new Date(Date.now() + 900000).toISOString(),
+            },
+          ];
+        }
+        return mockOrderResponse;
+      }) as any);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.getOrderDetailView(mockOrderResponse.id);
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.order.payment.status).toBe('QR_CREATED');
+        expect(view.order.payment.qrState).toBe('ready');
+        expect(view.order.payment.qrPayload).toBe(
+          '00020101021238540010A000000727012600069704220112...',
+        );
+      }
+    });
+
+    it('fetches payments and maps confirmed PAID_MANUAL payment to detail view', async () => {
+      const client = createMockClient();
+      client.get.mockImplementation((async (path: string) => {
+        if (path.endsWith('/payments')) {
+          return [
+            {
+              id: 'pmt-payos-1',
+              orderId: mockOrderResponse.id,
+              status: 'PAID_MANUAL',
+              provider: 'PAYOS',
+              amountVnd: 286000,
+            },
+          ];
+        }
+        return mockOrderResponse;
+      }) as any);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.getOrderDetailView(mockOrderResponse.id);
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.order.payment.status).toBe('PAID_MANUAL');
+        expect(view.order.payment.notice).toBe(
+          'Thanh toán đã được xác nhận trong snapshot phản hồi.',
+        );
+        expect(view.order.payment.action).toBeNull();
+      }
+    });
+
+    it('fetches the invoice and includes it in the detail view when one exists', async () => {
+      const client = createMockClient();
+      const mockInvoice: MappedInvoiceResponse = {
+        id: 'invoice-1',
+        invoiceNumber: 'LP/2026/000001',
+        amountVnd: 480000,
+        vatRateVnd: 48000,
+        totalVnd: 528000,
+        issuedAt: '2026-09-08T00:00:00.000Z',
+        emailSentAt: null,
+        viewUrl: 'https://signed.example/invoices/invoice-1.pdf',
+      };
+      client.get.mockImplementation((async (path: string) => {
+        if (path.startsWith('/invoices/order/')) return mockInvoice;
+        if (path.endsWith('/payments')) return [];
+        return mockOrderResponse;
+      }) as any);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.getOrderDetailView(mockOrderResponse.id);
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.order.invoice).not.toBeNull();
+        expect(view.order.invoice?.invoiceNumber).toBe('LP/2026/000001');
+      }
+      expect(client.get).toHaveBeenCalledWith(`/invoices/order/${mockOrderResponse.id}`);
+    });
+
+    it('leaves invoice null (without failing the whole view) when no invoice exists yet', async () => {
+      const client = createMockClient();
+      client.get.mockImplementation((async (path: string) => {
+        if (path.startsWith('/invoices/order/')) {
+          throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'Không tìm thấy hóa đơn');
+        }
+        if (path.endsWith('/payments')) return [];
+        return mockOrderResponse;
+      }) as any);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.getOrderDetailView(mockOrderResponse.id);
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.order.invoice).toBeNull();
+      }
+    });
+  });
+
+  describe('sendInvoiceEmail', () => {
+    it('returns an error boundary view for an invalid order id without calling the API', async () => {
+      const client = createMockClient();
+      const adapter = createCustomerHttpAdapter(client);
+
+      const view = await adapter.sendInvoiceEmail!('invoice-1', 'invalid-id', 'a@example.com');
+
+      expect(view.kind).toBe('error');
+      expect(client.post).not.toHaveBeenCalled();
+    });
+
+    it('posts the email then re-fetches the order detail view on success', async () => {
+      const client = createMockClient();
+      client.post.mockResolvedValueOnce(undefined);
+      client.get.mockImplementation((async (path: string) => {
+        if (path.startsWith('/invoices/order/')) {
+          return {
+            id: 'invoice-1',
+            invoiceNumber: 'LP/2026/000001',
+            amountVnd: 480000,
+            vatRateVnd: 48000,
+            totalVnd: 528000,
+            issuedAt: '2026-09-08T00:00:00.000Z',
+            emailSentAt: '2026-09-08T01:00:00.000Z',
+            viewUrl: 'https://signed.example/invoices/invoice-1.pdf',
+          };
+        }
+        if (path.endsWith('/payments')) return [];
+        return mockOrderResponse;
+      }) as any);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.sendInvoiceEmail!('invoice-1', mockOrderResponse.id, 'a@example.com');
+
+      expect(client.post).toHaveBeenCalledWith('/invoices/invoice-1/send', { email: 'a@example.com' });
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.order.invoice?.emailSentAt).toBe('2026-09-08T01:00:00.000Z');
+      }
+    });
+
+    it('returns an error view without throwing when the send request fails', async () => {
+      const client = createMockClient();
+      client.post.mockRejectedValueOnce(new Error('Mail provider failed'));
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.sendInvoiceEmail!('invoice-1', mockOrderResponse.id, 'a@example.com');
+
+      expect(view.kind).toBe('error');
+      expect(client.get).not.toHaveBeenCalled();
+    });
   });
 
   describe('Payment endpoints and status', () => {
@@ -742,7 +1044,7 @@ describe('createCustomerHttpAdapter', () => {
         expect(view.order.payment.status).toBe('QR_CREATED');
         expect(view.order.payment.qrState).toBe('ready');
         expect(view.order.payment.referenceLabel).toBe('LPRD-DEMO-260815-001');
-        expect(view.order.payment.sourceLabel).toBe('VietQR mô phỏng');
+        expect(view.order.payment.sourceLabel).toBe('VietQR');
       }
       expect(client.post).toHaveBeenCalledWith(
         `/orders/${mockOrderResponse.id}/payments`,
