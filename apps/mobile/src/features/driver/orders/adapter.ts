@@ -27,8 +27,7 @@ import type {
   DriverProofPort,
   DriverTrackingPort,
 } from './port';
-import { pickDeviceImage } from '../../../media/device-image-picker';
-import { appendFileToFormData } from '../../../media/form-data';
+import { pickDeviceImage, appendFileToFormData } from '@leopard/mobile-core';
 
 function getDefaultHttpClient(): DriverHttpClient {
   const { httpClient } = require('../../../api/http-client');

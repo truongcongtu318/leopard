@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
 import { IconBell, IconOrders, IconTag, IconTxPayment } from '../../../ui/icons/CoreIcons';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { isOlderThanOneDay } from './adapter';

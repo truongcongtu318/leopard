@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useNotificationsBootstrap } from '../../src/features/customer/notifications/useNotificationsBootstrap';
 import { useProtectedLayout } from '../../src/navigation/role-router';
-import { spacing, typography } from '../../src/theme/tokens';
+import { spacing, typography } from '@leopard/mobile-core';
 import { FloatingNavBar, type TabKey } from '../../src/ui/FloatingNavBar';
 import { TruckLoader } from '../../src/ui/TruckLoader';
 

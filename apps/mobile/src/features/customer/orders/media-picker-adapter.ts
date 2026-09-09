@@ -1,5 +1,4 @@
-import { pickDeviceImage, type DeviceImageAsset } from '../../../media/device-image-picker';
-import { appendFileToFormData } from '../../../media/form-data';
+import { pickDeviceImage, type DeviceImageAsset, appendFileToFormData } from '@leopard/mobile-core';
 import { getDefaultHttpClient, parseCustomerOrderId } from './adapter';
 import type { CustomerHttpClient } from './adapter';
 import type { CustomerOrderDetailDataView } from './model';

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing, typography } from '../theme/tokens';
+import { colors, spacing, typography } from '@leopard/mobile-core';
 
 export type RoutePoint = Readonly<{
   id: string;

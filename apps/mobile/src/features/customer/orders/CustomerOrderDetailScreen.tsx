@@ -1,14 +1,7 @@
 import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import {
-  colors,
-  layout,
-  leopardPalette,
-  radius,
-  spacing,
-  typography,
-} from '../../../theme/tokens';
+import { colors, layout, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from '../../../ui/Button';
 import { EtaIndicator } from '../../../ui/EtaIndicator';
 import {

@@ -3,7 +3,7 @@ import type { PressableProps } from 'react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
-import { colors, leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
+import { colors, leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from './Button';
 import { SectionHeading } from './ScreenScaffold';
 import { StatusBadge } from './StatusBadge';

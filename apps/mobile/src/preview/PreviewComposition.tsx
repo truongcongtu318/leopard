@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { spacing } from '../theme/tokens';
+import { spacing } from '@leopard/mobile-core';
 import { PreviewBanner } from './PreviewBanner';
 import type { MobilePreviewFixture, MobilePreviewSelection } from './scenario';
 

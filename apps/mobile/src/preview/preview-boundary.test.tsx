@@ -9,7 +9,7 @@ import {
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '@leopard/mobile-core';
 import * as previewBoundary from '.';
 import {
   MOBILE_PREVIEW_BANNER_TEXT,

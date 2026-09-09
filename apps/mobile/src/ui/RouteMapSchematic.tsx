@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '@leopard/mobile-core';
 import { RealInteractiveMap } from './RealInteractiveMap';
 
 export type RouteMapSchematicProps = Readonly<{

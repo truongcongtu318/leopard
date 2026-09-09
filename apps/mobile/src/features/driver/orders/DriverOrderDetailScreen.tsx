@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from '../../../ui/Button';
 import {
   IconCameraProof,

@@ -2,7 +2,7 @@ import { usePathname, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '../theme/tokens';
+import { colors, radius, spacing } from '@leopard/mobile-core';
 import {
   IconBell,
   IconClock,

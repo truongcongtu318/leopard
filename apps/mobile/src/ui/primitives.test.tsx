@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
 
-import { colors, control, motion, radius, spacing, typography } from '../theme/tokens';
+import { colors, control, motion, radius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from './Button';
 import { EtaIndicator } from './EtaIndicator';
 import { FormField } from './FormField';

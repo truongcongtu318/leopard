@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { colors, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, radius, spacing, typography } from '@leopard/mobile-core';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 
 type ChatMessage = {

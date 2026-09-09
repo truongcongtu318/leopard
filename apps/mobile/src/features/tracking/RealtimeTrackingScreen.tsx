@@ -9,16 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import {
-  colors,
-  layout,
-  leopardElevation,
-  leopardPalette,
-  leopardRadius,
-  radius,
-  spacing,
-  typography,
-} from '../../theme/tokens';
+import { colors, layout, leopardElevation, leopardPalette, leopardRadius, radius, spacing, typography } from '@leopard/mobile-core';
 import {
   IconCameraProof,
   IconLocationPin,

@@ -12,7 +12,7 @@ import {
 import type { Role } from '@leopard/shared';
 
 import { httpClient } from '../api/http-client';
-import { colors, leopardPalette, spacing } from '../theme/tokens';
+import { colors, leopardPalette, spacing } from '@leopard/mobile-core';
 import { Button } from '../ui/Button';
 import { sessionStore } from './session-store';
 import { isFirebaseConfigured } from './firebase';

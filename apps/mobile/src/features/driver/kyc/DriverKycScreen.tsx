@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing } from '@leopard/mobile-core';
 import { Button } from '../../../ui/Button';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import {

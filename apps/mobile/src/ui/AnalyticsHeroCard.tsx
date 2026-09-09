@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardElevation, leopardPalette, leopardRadius, spacing } from '../theme/tokens';
+import { colors, leopardElevation, leopardPalette, leopardRadius, spacing } from '@leopard/mobile-core';
 import { IconPaymentConvenient } from './icons/CoreIcons';
 
 export type AnalyticsHeroCardProps = Readonly<{

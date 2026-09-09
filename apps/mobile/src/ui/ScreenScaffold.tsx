@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
 import { IconChevronLeft } from './icons/CoreIcons';
 
 // The app root applies all SafeAreaView edges. Children only own in-safe spacing.

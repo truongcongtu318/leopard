@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, leopardPalette, radius, spacing } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing } from '@leopard/mobile-core';
 import { Button } from '../../../ui/Button';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import {

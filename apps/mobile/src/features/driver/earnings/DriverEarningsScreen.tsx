@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from '../../../ui/Button';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import {

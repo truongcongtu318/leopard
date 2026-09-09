@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '@leopard/mobile-core';
 
 export const MOBILE_PREVIEW_BANNER_TEXT = 'LEOPARD Logistics · Phiên bản Thử nghiệm Pilot';
 

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
-import { colors, radius, spacing, typography } from '../../../../theme/tokens';
+import { colors, radius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from '../../../../ui/Button';
 import { IconCopy, IconQrPayment, IconSecurityShield } from '../../../../ui/icons/CoreIcons';
 

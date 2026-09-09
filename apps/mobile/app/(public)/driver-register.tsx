@@ -18,12 +18,7 @@ import {
   type DriverContractPreview,
 } from '../../src/features/driver/contract/DriverContractSection';
 import { openDriverContractPdf } from '../../src/features/driver/contract/contract-pdf';
-import {
-  pickDeviceImage,
-  type DeviceImageAsset,
-} from '../../src/media/device-image-picker';
-import { appendFileToFormData } from '../../src/media/form-data';
-import { radius, spacing } from '../../src/theme/tokens';
+import { pickDeviceImage, type DeviceImageAsset, appendFileToFormData, radius, spacing } from '@leopard/mobile-core';
 import { BrandLoginLogo, LeopardEmblem, LeopardMobileLogo } from '../../src/ui/icons/CoreIcons';
 
 /** Palette synchronized with the login screen. */

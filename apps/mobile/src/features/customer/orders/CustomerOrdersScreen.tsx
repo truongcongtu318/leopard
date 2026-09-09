@@ -3,7 +3,7 @@ import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { OrderStatus } from '@leopard/shared';
-import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from '../../../ui/Button';
 import { IconSpeedTruck } from '../../../ui/icons/CoreIcons';
 import { OrderSummary } from '../../../ui/OrderSummary';

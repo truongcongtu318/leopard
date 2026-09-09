@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BrandSplashScreen } from '../src/features/splash/BrandSplashScreen';
 import { useRootSessionRouter } from '../src/navigation/role-router';
-import { colors, leopardPalette } from '../src/theme/tokens';
+import { colors, leopardPalette } from '@leopard/mobile-core';
 
 export default function IndexRoute() {
   const { isHydrated, redirectTo } = useRootSessionRouter();

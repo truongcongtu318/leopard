@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { radius, spacing } from '../../../theme/tokens';
+import { radius, spacing } from '@leopard/mobile-core';
 
 /** Palette mirrored from `app/(public)/driver-register.tsx` for visual continuity. */
 const scene = {

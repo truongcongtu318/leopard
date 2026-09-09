@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 
 import { httpClient } from '../../src/api/http-client';
-import { leopardPalette } from '../../src/theme/tokens';
+import { leopardPalette } from '@leopard/mobile-core';
 import { ApiError } from '../../src/api/api-error';
 import { AuthHeroHeader } from '../../src/auth/AuthHeroHeader';
 import { sessionStore } from '../../src/auth/session-store';

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing } from '../../theme/tokens';
+import { colors, spacing } from '@leopard/mobile-core';
 
 const leopardEmblemSource = require('../../../assets/brand/leopard-emblem.png');
 const leopardWordmarkSource = require('../../../assets/brand/leopard-wordmark.png');

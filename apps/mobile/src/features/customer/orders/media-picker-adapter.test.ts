@@ -1,10 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
-jest.mock('../../../media/device-image-picker', () => ({
+jest.mock('@leopard/mobile-core', () => ({
+  ...jest.requireActual('@leopard/mobile-core'),
   pickDeviceImage: jest.fn(),
 }));
 
-import { pickDeviceImage } from '../../../media/device-image-picker';
+import { pickDeviceImage } from '@leopard/mobile-core';
 import { createCustomerMediaPickerAdapter } from './media-picker-adapter';
 import type { CustomerHttpClient } from './adapter';
 

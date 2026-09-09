@@ -6,6 +6,9 @@
     "paths": {
       "@leopard/shared": [
         "../../packages/shared/src/index.ts"
+      ],
+      "@leopard/mobile-core": [
+        "../../packages/mobile-core/src/index.ts"
       ]
     }
   },

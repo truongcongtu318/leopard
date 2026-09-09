@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing } from '../../../theme/tokens';
+import { colors, leopardPalette, radius, spacing } from '@leopard/mobile-core';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import {
   IconBell,

@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, layout, spacing, typography } from '../theme/tokens';
+import { colors, layout, spacing, typography } from '@leopard/mobile-core';
 import { Button } from './Button';
 import { LedgerSection } from './LedgerSection';
 import { MapPanel } from './MapPanel';

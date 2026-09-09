@@ -6,7 +6,7 @@ import RegisterScreen from '../../app/(public)/driver-register';
 import { httpClient } from '../api/http-client';
 import { openDriverContractPdf } from '../features/driver/contract/contract-pdf';
 import { sessionStore } from './session-store';
-import { pickDeviceImage } from '../media/device-image-picker';
+import { pickDeviceImage } from '@leopard/mobile-core';
 
 const mockReplace = jest.fn();
 
@@ -22,7 +22,8 @@ jest.mock('./session-store', () => ({
   sessionStore: { getAccessToken: jest.fn() },
 }));
 
-jest.mock('../media/device-image-picker', () => ({
+jest.mock('@leopard/mobile-core', () => ({
+  ...jest.requireActual('@leopard/mobile-core'),
   pickDeviceImage: jest.fn(),
 }));
 

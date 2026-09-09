@@ -9,7 +9,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { leopardPalette, radius, spacing, typography } from '../theme/tokens';
+import { leopardPalette, radius, spacing, typography } from '@leopard/mobile-core';
 
 const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 

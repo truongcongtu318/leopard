@@ -2,7 +2,7 @@ import type { Role } from '@leopard/shared';
 
 import type { DriverProfileView } from './model';
 import type { DriverProfilePort } from './port';
-import { appendFileToFormData } from '../../../media/form-data';
+import { appendFileToFormData } from '@leopard/mobile-core';
 
 const FILES_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1').replace(/\/api\/v1\/?$/, '');
 

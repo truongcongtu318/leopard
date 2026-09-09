@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 
 export function CustomerSettingsScreen() {

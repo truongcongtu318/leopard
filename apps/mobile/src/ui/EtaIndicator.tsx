@@ -1,7 +1,7 @@
 import type { ProviderSource } from '@leopard/shared';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from './Button';
 
 type EtaIndicatorProps = {

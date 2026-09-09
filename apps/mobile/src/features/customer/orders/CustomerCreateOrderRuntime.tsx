@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { pickDeviceImage } from '../../../media/device-image-picker';
+import { pickDeviceImage } from '@leopard/mobile-core';
 import { resolveLocationCoords } from '../../../ui/RealInteractiveMap';
 import { ScreenScaffold } from '../../../ui/ScreenScaffold';
 import { ScreenState } from '../../../ui/ScreenState';

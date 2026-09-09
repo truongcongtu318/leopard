@@ -9,14 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import {
-  layout,
-  leopardElevation,
-  leopardPalette,
-  leopardRadius,
-  spacing,
-  typography,
-} from '../../theme/tokens';
+import { layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '@leopard/mobile-core';
 import {
   IconOrders,
   IconSearch,

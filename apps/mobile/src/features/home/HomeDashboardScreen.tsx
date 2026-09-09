@@ -16,15 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  colors,
-  layout,
-  leopardElevation,
-  leopardPalette,
-  leopardRadius,
-  spacing,
-  typography,
-} from '../../theme/tokens';
+import { colors, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from '../../ui/Button';
 import { FloatingNavBar, type TabKey } from '../../ui/FloatingNavBar';
 import {

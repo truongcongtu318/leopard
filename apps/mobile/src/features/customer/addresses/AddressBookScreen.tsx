@@ -11,7 +11,7 @@ import {
 
 import { httpClient } from '../../../api/http-client';
 import { addressStore } from './address-store';
-import { colors, layout, radius, spacing, typography } from '../../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '@leopard/mobile-core';
 import { Button } from '../../../ui/Button';
 import { FormField } from '../../../ui/FormField';
 import {

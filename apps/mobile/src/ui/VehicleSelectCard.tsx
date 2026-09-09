@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
+import { leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '@leopard/mobile-core';
 import { IconVehicle3Wheel, IconVehicleHeavyTruck, IconVehicleLightTruck } from './icons/CoreIcons';
 
 export type VehicleCategory = '3_WHEEL_BIKE' | 'LIGHT_TRUCK' | 'HEAVY_TRUCK';
