@@ -31,15 +31,6 @@ export class LocalStorageProvider extends StorageProvider {
     return resolvedPath;
   }
 
-  private resolveSafePath(key: string): string {
-    const root = path.resolve(this.uploadDir);
-    const resolved = path.resolve(root, key);
-    if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
-      throw new Error('Invalid storage key path');
-    }
-    return resolved;
-  }
-
   async put(key: string, fileBuffer: Buffer, contentType: string): Promise<void> {
     const filePath = this.resolveSafePath(key);
     const dir = path.dirname(filePath);
