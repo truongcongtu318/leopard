@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Role } from '@leopard/shared';
 
+import { IconChevron } from '@leopard/mobile-core';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { toE164Vn } from '@leopard/mobile-core/src/auth/phone';
@@ -155,7 +156,7 @@ export default function VerifyOtpRoute() {
             style={styles.backBtn}
             testID="btn-back"
           >
-            <Text style={styles.backBtnText}>←</Text>
+            <IconChevron color="#0B1E42" direction="left" size={20} />
           </Pressable>
           <Text accessibilityRole="header" style={styles.headerTitle}>
             Xác nhận mã OTP
@@ -351,11 +352,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backBtnText: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0B1E42',
   },
   headerTitle: {
     fontSize: 17,

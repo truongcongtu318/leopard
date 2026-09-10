@@ -16,7 +16,7 @@ import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { leopardPalette, radius } from '@leopard/mobile-core/src/theme/tokens';
 import { IconClock, IconShield, IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
-import { IconPhone } from '@leopard/mobile-core';
+import { IconChevron, IconPhone } from '@leopard/mobile-core';
 
 interface ApplicationStatusResponse {
   status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';
@@ -99,7 +99,7 @@ export default function KycPendingRoute() {
           style={styles.backBtn}
           testID="btn-back"
         >
-          <Text style={styles.backBtnText}>←</Text>
+          <IconChevron color="#0B1E42" direction="left" size={20} />
         </Pressable>
         <Text accessibilityRole="header" style={styles.headerTitle}>
           Trạng thái hồ sơ
@@ -229,11 +229,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backBtnText: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0B1E42',
   },
   headerTitle: {
     fontSize: 17,

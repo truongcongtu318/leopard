@@ -70,6 +70,7 @@ export function CustomerSecurityScreen() {
   async function handleConfirmDeleteAccount() {
     setIsDeleting(true);
     try {
+      // ponytail: Client-only session clear ceiling. Server-side account deletion endpoint (DELETE /users/me or /auth/account) to be called when backend account purging is deployed. Upgrade path: call DELETE /users/me via httpClient, verify status, then sessionStore.clearSession() and redirect to login.
       await sessionStore.clearSession();
       setDeleteModalVisible(false);
       router.replace('/(public)/login');

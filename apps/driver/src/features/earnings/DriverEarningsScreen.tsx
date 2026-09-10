@@ -380,6 +380,7 @@ export function DriverEarningsScreen() {
                 <Pressable
                   accessibilityLabel="Đóng cửa sổ rút tiền"
                   accessibilityRole="button"
+                  hitSlop={8}
                   onPress={() => setShowWithdrawModal(false)}
                   style={styles.modalCloseBtn}
                 >
@@ -919,9 +920,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   modalCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    minWidth: 44,
+    minHeight: 44,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',

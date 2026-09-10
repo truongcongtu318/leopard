@@ -418,6 +418,7 @@ export default function CustomerRegisterScreen() {
                           void sendOtp();
                         }
                       }}
+                      hitSlop={{ top: 4, bottom: 4 }}
                       style={({ pressed }) => [
                         styles.sendOtpBtn,
                         !canSendOtp && styles.sendOtpBtnDisabled,

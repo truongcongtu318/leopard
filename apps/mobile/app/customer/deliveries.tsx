@@ -143,6 +143,7 @@ export default function CustomerDeliveriesScreen() {
             <Pressable
               accessibilityLabel="Xóa tìm kiếm"
               accessibilityRole="button"
+              hitSlop={8}
               onPress={() => setSearchQuery('')}
               style={styles.clearSearchBtn}
             >
@@ -331,8 +332,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   clearSearchBtn: {
-    width: 32,
-    height: 32,
+    minWidth: 44,
+    minHeight: 44,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

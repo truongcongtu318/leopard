@@ -18,7 +18,6 @@ import {
   radius,
   spacing,
   IconCamera,
-  IconChevronLeft,
   IconChevronRight,
   IconPhone,
   IconRoleDriver,

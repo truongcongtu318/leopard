@@ -290,6 +290,7 @@ function ReceivingSettingsModal({
             <Pressable
               accessibilityLabel="Đóng thiết lập"
               accessibilityRole="button"
+              hitSlop={8}
               onPress={onClose}
               style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressed : null]}
             >
@@ -568,6 +569,7 @@ export function DriverOrdersScreen({
                   <Pressable
                     accessibilityLabel="Mở menu điều hướng tài xế"
                     accessibilityRole="button"
+                    hitSlop={8}
                     onPress={handleOpenMenu}
                     style={({ pressed }) => [styles.heroMenuButton, pressed ? styles.pressed : null]}
                     testID="driver-menu-button"
@@ -638,6 +640,7 @@ export function DriverOrdersScreen({
                     accessibilityHint="Mở menu thanh bên trái để xem hồ sơ và các tiện ích"
                     accessibilityLabel="Mở menu điều hướng tài xế"
                     accessibilityRole="button"
+                    hitSlop={8}
                     onPress={handleOpenMenu}
                     style={({ pressed }) => [styles.heroMenuButton, pressed ? styles.pressed : null]}
                     testID="driver-menu-button"
@@ -682,6 +685,7 @@ export function DriverOrdersScreen({
                 <Pressable
                   accessibilityLabel="Thông báo mới"
                   accessibilityRole="button"
+                  hitSlop={8}
                   style={({ pressed }) => [styles.heroBellBtn, pressed ? styles.pressed : null]}
                 >
                   <IconBell color="#F59E0B" size={18} />
