@@ -11,6 +11,7 @@ import {
   StatusTimeline,
 } from '@leopard/ui';
 
+import { BentoMapCard } from '../../components/bento';
 import { LiveOrderRefresher } from '../../components/live/LiveOrderRefresher';
 import { AdminCommandLauncher } from './AdminCommandLauncher';
 import {
@@ -117,20 +118,69 @@ export function AdminOrderDetailScreen({
             textAlternative={order.tracking.mapAlternative}
             title="Giám sát hành trình & Vị trí thực tế"
           >
-            <RouteMapSchematic
-              destinationLabel={order.route.destination.label}
-              markerLabel={`${order.driverLabel} · marker mô phỏng trong phạm vi cho phép`}
-              originLabel={order.route.origin.label}
-            />
+            <div className="flex flex-col min-h-[400px] h-full">
+              <BentoMapCard
+                title="Giám sát hành trình & Vị trí thực tế"
+                activeOrderCode={order.reference}
+                markers={[
+                  ...(order.route.origin.lat ? [{
+                    id: order.id + '-origin',
+                    orderRef: order.reference,
+                    customer: order.route.origin.label,
+                    routeLabel: '',
+                    x: 0, y: 0,
+                    ...(order.route.origin.lat !== undefined ? { lat: order.route.origin.lat } : {}),
+                    ...(order.route.origin.lng !== undefined ? { lng: order.route.origin.lng } : {}),
+                    status: 'ORIGIN'
+                  }] : []),
+                  ...order.route.stops.filter(s => s.lat).map((s, i) => ({
+                    id: order.id + '-stop-' + i,
+                    orderRef: order.reference,
+                    customer: s.label,
+                    routeLabel: '',
+                    x: 0, y: 0,
+                    ...(s.lat !== undefined ? { lat: s.lat } : {}),
+                    ...(s.lng !== undefined ? { lng: s.lng } : {}),
+                    status: 'STOP'
+                  })),
+                  ...(order.route.destination.lat ? [{
+                    id: order.id + '-dest',
+                    orderRef: order.reference,
+                    customer: order.route.destination.label,
+                    routeLabel: '',
+                    x: 0, y: 0,
+                    ...(order.route.destination.lat !== undefined ? { lat: order.route.destination.lat } : {}),
+                    ...(order.route.destination.lng !== undefined ? { lng: order.route.destination.lng } : {}),
+                    status: 'DESTINATION'
+                  }] : [])
+                ]}
+                routePath={[
+                  ...(order.route.origin.lat ? [[order.route.origin.lat, order.route.origin.lng] as [number, number]] : []),
+                  ...order.route.stops.filter(s => s.lat).map(s => [s.lat, s.lng] as [number, number]),
+                  ...(order.route.destination.lat ? [[order.route.destination.lat, order.route.destination.lng] as [number, number]] : [])
+                ]}
+                selectedOrderId={order.id}
+              />
+            </div>
           </MapPanel>
 
           <AdminSurface title="Thao tác điều phối khả dụng">
-            <AdminCommandLauncher
-              commands={view.availableCommands}
-              dialogPreview={view.dialogPreview}
-              runtime={commandRuntime === true}
-            />
+            {view.availableCommands.length > 0 ? (
+              <AdminCommandLauncher
+                commands={view.availableCommands}
+                dialogPreview={view.dialogPreview}
+                runtime={commandRuntime === true}
+              />
+            ) : (
+              <p className="text-sm text-slate-500 italic py-2">
+                Không có thao tác nào khả dụng cho đơn hàng ở trạng thái này.
+              </p>
+            )}
           </AdminSurface>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-lg lg:col-span-4">
+          <AdminAuditRail audit={view.audit} />
 
           <AdminSurface title="Lịch sử trạng thái">
             <StatusTimeline
@@ -156,7 +206,7 @@ export function AdminOrderDetailScreen({
                 Chưa có hình ảnh xác nhận được phép hiển thị.
               </p>
             ) : (
-              <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
+              <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-1">
                 {order.media.items.map((item, index) => (
                   <li
                     key={item.id}
@@ -200,10 +250,6 @@ export function AdminOrderDetailScreen({
               ]}
             />
           </AdminSurface>
-        </div>
-
-        <div className="min-w-0 lg:col-span-4">
-          <AdminAuditRail audit={view.audit} />
         </div>
       </div>
     </div>

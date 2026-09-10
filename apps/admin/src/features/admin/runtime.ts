@@ -104,6 +104,8 @@ interface MappedStopDto {
   readonly type: string;
   readonly sequence: number;
   readonly address: string;
+  readonly lat?: number | null;
+  readonly lng?: number | null;
 }
 
 interface MappedHistoryDto {
@@ -821,16 +823,22 @@ function routePoints(stops: readonly MappedStopDto[]): {
       id: pickup?.id ?? 'origin-missing',
       label: pickup?.address ?? fallback?.address ?? 'Điểm lấy hàng chưa rõ',
       metadata: 'Điểm lấy hàng',
+      ...(pickup?.lat !== undefined && pickup?.lat !== null ? { lat: pickup.lat } : {}),
+      ...(pickup?.lng !== undefined && pickup?.lng !== null ? { lng: pickup.lng } : {}),
     },
     intermediate: intermediate.map((stop) => ({
       id: stop.id,
       label: stop.address,
       metadata: `Điểm dừng ${stop.sequence}`,
+      ...(stop.lat !== undefined && stop.lat !== null ? { lat: stop.lat } : {}),
+      ...(stop.lng !== undefined && stop.lng !== null ? { lng: stop.lng } : {}),
     })),
     destination: {
       id: dropoff?.id ?? 'destination-missing',
       label: dropoff?.address ?? fallback?.address ?? 'Điểm giao hàng chưa rõ',
       metadata: 'Điểm giao hàng',
+      ...(dropoff?.lat !== undefined && dropoff?.lat !== null ? { lat: dropoff.lat } : {}),
+      ...(dropoff?.lng !== undefined && dropoff?.lng !== null ? { lng: dropoff.lng } : {}),
     },
   };
 }
