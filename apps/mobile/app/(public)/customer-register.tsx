@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { httpClient, ApiError, AuthHeroHeader, sessionStore, isLikelyVnPhone, toE164Vn, OtpSixCellInput, leopardPalette, IconPhone, IconSecurityShield, IconUser, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader } from '@leopard/mobile-core';
+import { httpClient, ApiError, AuthHeroHeader, sessionStore, isLikelyVnPhone, toE164Vn, OtpSixCellInput, leopardPalette, IconPhone, IconSecurityShield, IconUser, IconOffice, IconInsuranceDoc, IconFileText, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader } from '@leopard/mobile-core';
 import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '@leopard/mobile-core/src/auth/firebase-auth';
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-register';
@@ -109,7 +109,10 @@ export default function CustomerRegisterScreen() {
   const challengeRef = useRef<OtpChallenge | null>(null);
 
   const [name, setName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [taxCode, setTaxCode] = useState('');
   const [email, setEmail] = useState('');
+  const [consentInsurance, setConsentInsurance] = useState(false);
   const [consentTerms, setConsentTerms] = useState(false);
   const [consentService, setConsentService] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
@@ -439,22 +442,22 @@ export default function CustomerRegisterScreen() {
 
           <View style={styles.sectionDivider} />
 
-          {/* Subsection: Thông tin cá nhân */}
+          {/* Subsection: Thông tin doanh nghiệp & khách hàng */}
           <View style={styles.sectionGroup}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleWrap}>
-                <IconUser color="#475569" size={16} strokeWidth={2} />
-                <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
+                <IconOffice color="#0B1E42" size={16} strokeWidth={2} />
+                <Text style={styles.sectionTitle}>Thông tin doanh nghiệp & cá nhân</Text>
               </View>
             </View>
 
             <View style={styles.fieldItem}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.label}>Họ và tên</Text>
+                <Text style={styles.label}>Họ và tên người gửi</Text>
                 <Text style={styles.requiredStar}>*</Text>
               </View>
               <TextInput
-                accessibilityLabel="Họ và tên"
+                accessibilityLabel="Họ và tên người gửi"
                 autoCapitalize="words"
                 autoCorrect={false}
                 editable={!isSubmitting}
@@ -474,11 +477,60 @@ export default function CustomerRegisterScreen() {
 
             <View style={styles.fieldItem}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.label}>Email</Text>
+                <Text style={styles.label}>Tên công ty / Doanh nghiệp</Text>
+              </View>
+              <TextInput
+                accessibilityLabel="Tên công ty / Doanh nghiệp"
+                autoCapitalize="words"
+                autoCorrect={false}
+                editable={!isSubmitting}
+                onBlur={() => setFocusedField(null)}
+                onChangeText={setCompanyName}
+                onFocus={() => setFocusedField('companyName')}
+                placeholder="VD: Công ty TNHH Logistics Vận Tải An Phát"
+                placeholderTextColor="#94A3B8"
+                style={[
+                  styles.input,
+                  focusedField === 'companyName' && styles.inputFocused,
+                ]}
+                testID="cr-company-name"
+                value={companyName}
+              />
+            </View>
+
+            <View style={styles.fieldItem}>
+              <View style={styles.fieldLabelRow}>
+                <Text style={styles.label}>MÃ SỐ THUẾ (MST)</Text>
+              </View>
+              <TextInput
+                accessibilityLabel="MÃ SỐ THUẾ (MST)"
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={!isSubmitting}
+                keyboardType="numbers-and-punctuation"
+                maxLength={14}
+                onBlur={() => setFocusedField(null)}
+                onChangeText={setTaxCode}
+                onFocus={() => setFocusedField('taxCode')}
+                placeholder="VD: 0312345678 hoặc 0312345678-001"
+                placeholderTextColor="#94A3B8"
+                style={[
+                  styles.input,
+                  styles.monoInput,
+                  focusedField === 'taxCode' && styles.inputFocused,
+                ]}
+                testID="cr-tax-code"
+                value={taxCode}
+              />
+            </View>
+
+            <View style={styles.fieldItem}>
+              <View style={styles.fieldLabelRow}>
+                <Text style={styles.label}>EMAIL NHẬN HÓA ĐƠN VAT</Text>
                 <Text style={styles.requiredStar}>*</Text>
               </View>
               <TextInput
-                accessibilityLabel="Email"
+                accessibilityLabel="EMAIL NHẬN HÓA ĐƠN VAT"
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isSubmitting}
@@ -486,7 +538,7 @@ export default function CustomerRegisterScreen() {
                 onBlur={() => setFocusedField(null)}
                 onChangeText={setEmail}
                 onFocus={() => setFocusedField('email')}
-                placeholder="VD: an@example.com"
+                placeholder="VD: ketoan@anphatlogistics.vn"
                 placeholderTextColor="#94A3B8"
                 style={[
                   styles.input,
@@ -523,6 +575,13 @@ export default function CustomerRegisterScreen() {
               onToggle={() => setConsentService((v) => !v)}
               required
               testID="cr-consent-service"
+            />
+            <View style={styles.consentDivider} />
+            <Consent
+              checked={consentInsurance}
+              label="Cam kết bảo hiểm hàng hóa theo quy chuẩn vận tải LEOPARD."
+              onToggle={() => setConsentInsurance((v) => !v)}
+              testID="cr-consent-insurance"
             />
             <View style={styles.consentDivider} />
             <Consent
@@ -1194,6 +1253,11 @@ const styles = StyleSheet.create({
         outlineWidth: 0,
       } as any,
     }),
+  },
+  monoInput: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    letterSpacing: 1.2,
+    fontWeight: '600',
   },
   inputFocused: {
     borderColor: orange.primary,

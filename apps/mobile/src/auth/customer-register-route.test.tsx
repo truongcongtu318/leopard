@@ -54,6 +54,16 @@ describe('CustomerRegisterScreen', () => {
     (httpClient.post as any).mockResolvedValue({ phone: '+84900000001' });
   });
 
+  it('validates tax code and corporate email before completing registration', async () => {
+    const screen = await render(<CustomerRegisterScreen />);
+    expect(screen.getByText('MÃ SỐ THUẾ (MST)')).toBeTruthy();
+    expect(screen.getByText('EMAIL NHẬN HÓA ĐƠN VAT')).toBeTruthy();
+    expect(screen.getByTestId('cr-company-name')).toBeTruthy();
+    expect(screen.getByTestId('cr-tax-code')).toBeTruthy();
+    expect(screen.getByTestId('cr-consent-insurance')).toBeTruthy();
+    await screen.unmount();
+  });
+
   it('keeps submit disabled until name, email and required consents are provided', async () => {
     const screen = await render(<CustomerRegisterScreen />);
     await waitFor(() => expect(screen.getByText('+84900000001')).toBeTruthy());
