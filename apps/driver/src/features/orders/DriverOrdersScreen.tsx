@@ -22,7 +22,7 @@ import type {
   DriverPublicOrderView,
 } from './model';
 
-const driverHeroBgSource = require('../../../../assets/brand/driver-hero-bg.jpg');
+const driverHeroBgSource = require('../../../assets/brand/driver-hero-bg.jpg');
 
 export type DriverOrdersScreenProps = Readonly<{
   view: DriverListView;

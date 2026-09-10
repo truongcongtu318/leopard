@@ -5,6 +5,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { queryClient } from '@leopard/mobile-core';
+import { DriverDrawerProvider } from '../src/navigation/DriverDrawerContext';
+import { useDriverIdlePing } from '../src/features/orders/useDriverIdlePing';
 
 type RootErrorBoundaryState = {
   hasError: boolean;
@@ -34,10 +36,20 @@ class RootErrorBoundary extends Component<PropsWithChildren, RootErrorBoundarySt
   }
 }
 
+function DriverIdlePingListener() {
+  useDriverIdlePing(true);
+  return null;
+}
+
 function RootProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>{children}</SafeAreaProvider>
+      <SafeAreaProvider>
+        <DriverDrawerProvider>
+          <DriverIdlePingListener />
+          {children}
+        </DriverDrawerProvider>
+      </SafeAreaProvider>
     </QueryClientProvider>
   );
 }

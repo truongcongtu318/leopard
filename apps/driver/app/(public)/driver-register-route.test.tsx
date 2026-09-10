@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-import RegisterScreen from '../../app/(public)/driver-register';
+import RegisterScreen from './driver-register';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { openDriverContractPdf } from '../features/driver/contract/contract-pdf';
+import { openDriverContractPdf } from '../../src/features/contract/contract-pdf';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { pickDeviceImage } from '@leopard/mobile-core';
 
@@ -27,7 +27,7 @@ jest.mock('@leopard/mobile-core', () => ({
   pickDeviceImage: jest.fn(),
 }));
 
-jest.mock('../features/driver/contract/contract-pdf', () => ({
+jest.mock('../../src/features/contract/contract-pdf', () => ({
   openDriverContractPdf: jest.fn(),
 }));
 

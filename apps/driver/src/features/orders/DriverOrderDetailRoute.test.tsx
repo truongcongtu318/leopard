@@ -12,7 +12,7 @@ jest.mock('./DriverOrderDetailRuntime', () => ({
   DriverOrderDetailRuntime: (props: unknown) => mockDriverOrderDetailRuntime(props),
 }));
 
-import DriverOrderDetailPage from '../../../../app/driver/orders/[id]';
+import DriverOrderDetailPage from '../../../app/orders/[id]';
 
 describe('Driver order detail route', () => {
   beforeEach(() => {
