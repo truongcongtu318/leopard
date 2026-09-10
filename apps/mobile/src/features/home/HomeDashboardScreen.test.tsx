@@ -512,4 +512,23 @@ describe('HomeDashboardScreen', () => {
 
     await screen.unmount();
   });
+
+  it('displays vehicle dimensions (L x W x H) and cargo capacity in fleet matrix', async () => {
+    const onSelectVehicleAndBook = jest.fn();
+    const screen = await render(
+      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} />,
+    );
+    expect(screen.getByText('3.2 x 1.6 x 1.7m')).toBeTruthy(); // Tải 1.25T
+    expect(screen.getByText('2.1 x 1.3 x 1.2m')).toBeTruthy(); // Van 500kg
+    expect(screen.getByText('4.3 x 1.8 x 1.9m')).toBeTruthy(); // Tải 2.5T
+    expect(screen.getByText('1.8 x 1.1m')).toBeTruthy(); // Ba gác
+    expect(screen.getByTestId('home-interactive-map')).toBeTruthy();
+    expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
+
+    // Tap CTA
+    await fireEvent.press(screen.getByLabelText(/Đặt xe ngay/));
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
+
+    await screen.unmount();
+  });
 });
