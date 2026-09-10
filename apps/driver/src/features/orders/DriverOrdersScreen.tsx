@@ -1360,6 +1360,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     flexDirection: 'row',
     gap: 5,
+    justifyContent: 'center',
+    minHeight: 44,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },

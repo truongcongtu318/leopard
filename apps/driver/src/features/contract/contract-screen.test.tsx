@@ -4,6 +4,7 @@ import React from 'react';
 
 const mockReplace = jest.fn();
 const mockBack = jest.fn();
+const mockOpenDriverContractPdf = jest.fn<(...args: unknown[]) => Promise<void>>();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({
@@ -12,6 +13,11 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
+jest.mock('./contract-pdf', () => ({
+  openDriverContractPdf: (...args: unknown[]) => mockOpenDriverContractPdf(...args),
+}));
+
+import { sessionStore } from '@leopard/mobile-core';
 import { DriverContractScreen } from './DriverContractScreen';
 
 describe('DriverContractScreen', () => {
@@ -105,6 +111,22 @@ describe('DriverContractScreen', () => {
     await fireEvent.press(downloadBtn);
 
     expect(onDownloadPdf).toHaveBeenCalledTimes(1);
+    expect(mockOpenDriverContractPdf).not.toHaveBeenCalled();
+    await screen.unmount();
+  });
+
+  it('calls openDriverContractPdf with sessionStore token when downloading without custom handler', async () => {
+    jest.spyOn(sessionStore, 'getAccessToken').mockReturnValue('mock-jwt-token');
+    mockOpenDriverContractPdf.mockResolvedValue(undefined);
+
+    const screen = await render(<DriverContractScreen />);
+    const downloadBtn = screen.getByTestId('btn-download-contract-pdf');
+    await fireEvent.press(downloadBtn);
+
+    expect(mockOpenDriverContractPdf).toHaveBeenCalledWith(
+      '/driver/contract/pdf?version=v1',
+      'mock-jwt-token',
+    );
     await screen.unmount();
   });
 });

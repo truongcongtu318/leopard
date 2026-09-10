@@ -1741,6 +1741,7 @@ const styles = StyleSheet.create({
   watermarkText: {
     color: '#FFFFFF',
     fontSize: 10.5,
+    fontVariant: ['tabular-nums'],
     fontWeight: '700',
     letterSpacing: 0.2,
   },
@@ -2157,6 +2158,7 @@ const styles = StyleSheet.create({
   fareAmountText: {
     color: '#14532D',
     fontSize: 28,
+    fontVariant: ['tabular-nums'],
     fontWeight: '900',
     letterSpacing: 0.3,
   },

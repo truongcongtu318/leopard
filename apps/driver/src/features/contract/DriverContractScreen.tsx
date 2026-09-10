@@ -21,6 +21,7 @@ import {
   leopardPalette,
   radius,
   ScreenScaffold,
+  sessionStore,
   spacing,
 } from '@leopard/mobile-core';
 import { openDriverContractPdf } from './contract-pdf';
@@ -59,7 +60,10 @@ export function DriverContractScreen({
     }
     setIsDownloading(true);
     try {
-      await openDriverContractPdf('/driver/contract/pdf?version=v1', null);
+      await openDriverContractPdf(
+        '/driver/contract/pdf?version=v1',
+        sessionStore.getAccessToken(),
+      );
       setDownloadSuccess(true);
     } catch {
       // Gracefully notify or fallback for simulator/testing
