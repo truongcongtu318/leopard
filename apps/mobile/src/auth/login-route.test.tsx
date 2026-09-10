@@ -89,6 +89,17 @@ describe('LoginRoute (Mobile)', () => {
     await screen.unmount();
   });
 
+  it('navigates to verify-otp when valid phone is entered and Tiếp tục is pressed', async () => {
+    const screen = await render(<LoginRoute />);
+    await fireEvent.changeText(screen.getByLabelText('Số điện thoại'), '0900000001');
+    await fireEvent.press(screen.getByRole('button', { name: 'Tiếp tục' }));
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(public)/verify-otp',
+      params: { phone: '0900000001' },
+    });
+    await screen.unmount();
+  });
+
   it('redirects CUSTOMER to /customer/home after login', async () => {
     const screen = await loginWithGoogleAs('CUSTOMER');
     await waitFor(() => {

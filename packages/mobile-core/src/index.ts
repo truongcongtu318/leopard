@@ -46,6 +46,7 @@ export * from './ui/MediaImage';
 export * from './ui/GestureBottomSheet';
 export * from './icons/svg-icons';
 export {
+  IconAlertTriangle,
   IconClock,
   IconClose,
   IconOffice,

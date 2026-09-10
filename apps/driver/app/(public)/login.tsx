@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Role } from '@leopard/shared';
-import { sessionStore } from '@leopard/mobile-core';
+import { sessionStore, IconAlertTriangle } from '@leopard/mobile-core';
 import { resolveDriverLogin } from '../../src/navigation/driver-session';
 import { DriverLoginScreen } from '../../src/auth/DriverLoginScreen';
 
@@ -30,7 +30,7 @@ export default function DriverLoginRoute() {
     return (
       <View style={styles.container}>
         <View style={styles.card} testID="not-a-driver-card">
-          <Text style={styles.icon}>⚠️</Text>
+          <IconAlertTriangle color="#D97706" size={44} />
           <Text accessibilityRole="header" style={styles.title}>
             Tài khoản này chưa phải tài xế
           </Text>
@@ -59,6 +59,9 @@ export default function DriverLoginRoute() {
   return (
     <DriverLoginScreen
       onLoginSuccess={handleLoginSuccess}
+      onNavigateOtp={(phone) =>
+        router.push({ pathname: '/(public)/verify-otp', params: { phone } })
+      }
       onNavigateRegister={() => router.push('/(public)/driver-register')}
       sessionExpired={isExpired}
     />

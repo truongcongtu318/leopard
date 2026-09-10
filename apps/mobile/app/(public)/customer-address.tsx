@@ -675,9 +675,9 @@ export default function CustomerAddAddressScreen() {
             <View style={styles.categoryChipsRow}>
               {(
                 [
-                  { key: 'WAREHOUSE', label: '🏢 Kho chính', Icon: IconWarehouse, testID: 'ca-chip-warehouse' },
-                  { key: 'OFFICE', label: '🏬 Văn phòng', Icon: IconOffice, testID: 'ca-chip-office' },
-                  { key: 'HOME', label: '🏠 Kho phụ', Icon: IconHome, testID: 'ca-chip-home' },
+                  { key: 'WAREHOUSE', label: 'Kho chính', Icon: IconWarehouse, testID: 'ca-chip-warehouse' },
+                  { key: 'OFFICE', label: 'Văn phòng', Icon: IconOffice, testID: 'ca-chip-office' },
+                  { key: 'HOME', label: 'Kho phụ', Icon: IconHome, testID: 'ca-chip-home' },
                   { key: 'OTHER', label: 'Khác', Icon: IconTag, testID: 'ca-chip-other' },
                 ] as const
               ).map((chip) => {

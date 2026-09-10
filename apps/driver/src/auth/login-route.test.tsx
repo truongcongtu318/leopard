@@ -100,4 +100,15 @@ describe('DriverLoginRoute', () => {
     expect(mockPush).toHaveBeenCalledWith('/(public)/driver-register');
     await screen.unmount();
   });
+
+  it('điều hướng sang verify-otp khi nhập SĐT hợp lệ và bấm Gửi mã OTP', async () => {
+    const screen = await render(<DriverLoginRoute />);
+    await fireEvent.changeText(screen.getByLabelText('Số điện thoại'), '0900000002');
+    await fireEvent.press(screen.getByLabelText('Gửi mã OTP'));
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(public)/verify-otp',
+      params: { phone: '0900000002' },
+    });
+    await screen.unmount();
+  });
 });

@@ -13,6 +13,7 @@ import {
   IconChevron,
   IconSearch,
   IconClock,
+  IconAlertTriangle,
   resolveIconSize,
 } from './svg-icons';
 
@@ -48,6 +49,7 @@ describe('SVG Icons System', () => {
       { name: 'IconClose', Component: IconClose, defaultTestID: 'icon-close' },
       { name: 'IconSearch', Component: IconSearch, defaultTestID: 'icon-search' },
       { name: 'IconClock', Component: IconClock, defaultTestID: 'icon-clock' },
+      { name: 'IconAlertTriangle', Component: IconAlertTriangle, defaultTestID: 'icon-alert-triangle' },
     ];
 
     icons.forEach(({ name, Component, defaultTestID }) => {
