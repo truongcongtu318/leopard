@@ -11,7 +11,7 @@ import {
 
 import { httpClient } from '@leopard/mobile-core';
 import { addressStore } from './address-store';
-import { colors, layout, radius, spacing, typography, Button, FormField, IconHome, IconLocationPin, IconOffice, IconPhone, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, typography, Button, FormField, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
 import {
   POPULAR_MAP_SUGGESTIONS,
   reverseGeocodeCoords,
@@ -363,7 +363,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       default:
         return {
           label: 'Khác',
-          icon: <IconLocationPin color="#64748B" size={20} />,
+          icon: <IconPin color="#64748B" size={20} />,
           color: '#64748B',
           bg: '#F1F5F9',
         };
@@ -395,7 +395,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       title="Sổ địa chỉ"
     >
       <View style={styles.container}>
-        {/* 🔍 1. Thanh Tìm Kiếm Nhanh (Realtime Search Bar) */}
+        {/* 1. Thanh Tìm Kiếm Nhanh (Realtime Search Bar) */}
         {!isAdding ? (
           <View style={styles.searchWrap}>
             <View style={styles.searchBar}>
@@ -415,14 +415,14 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   onPress={() => setSearchQuery('')}
                   style={styles.clearSearchBtn}
                 >
-                  <Text style={styles.clearSearchText}>✕</Text>
+                  <IconClose color="#94A3B8" size="sm" />
                 </Pressable>
               ) : null}
             </View>
           </View>
         ) : null}
 
-        {/* 🏷️ 2. Thanh Chip Phân Loại (Category Filter Strip) */}
+        {/* 2. Thanh Chip Phân Loại (Category Filter Strip) */}
         {!isAdding ? (
           <ScrollView
             accessibilityLabel="Thanh lọc phân loại địa chỉ"
@@ -479,28 +479,29 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
           </ScrollView>
         ) : null}
 
-        {/* 📝 3. Thẻ Tạo Địa Chỉ Mới (Add Address Card / Sheet) */}
+        {/* 3. Thẻ Tạo Địa Chỉ Mới (Add Address Card / Sheet) */}
         {isAdding ? (
-          <View style={styles.addCard}>
-            <View style={styles.addCardHeader}>
-              <View style={styles.addTitleGroup}>
-                <View style={styles.addIconCircle}>
-                  <IconLocationPin color="#0B1E42" size={20} />
+          <View style={styles.cardBezelOuter}>
+            <View style={styles.addCardInner}>
+              <View style={styles.addCardHeader}>
+                <View style={styles.addTitleGroup}>
+                  <View style={styles.addIconCircle}>
+                    <IconLocationPin color="#0B1E42" size={20} />
+                  </View>
+                  <View>
+                    <Text style={styles.formTitle}>Thêm địa chỉ mới</Text>
+                    <Text style={styles.formSubtitle}>Lưu địa điểm thường xuyên gửi/nhận hàng</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={styles.formTitle}>Thêm địa chỉ mới</Text>
-                  <Text style={styles.formSubtitle}>Lưu địa điểm thường xuyên gửi/nhận hàng</Text>
-                </View>
+                <Pressable
+                  accessibilityLabel="Đóng biểu mẫu"
+                  accessibilityRole="button"
+                  onPress={() => setIsAdding(false)}
+                  style={styles.closeBtn}
+                >
+                  <IconClose color="#475569" size="md" />
+                </Pressable>
               </View>
-              <Pressable
-                accessibilityLabel="Đóng biểu mẫu"
-                accessibilityRole="button"
-                onPress={() => setIsAdding(false)}
-                style={styles.closeBtn}
-              >
-                <Text style={styles.closeBtnText}>✕</Text>
-              </Pressable>
-            </View>
 
             {/* Chọn Loại Địa Điểm */}
             <View style={styles.categoryPickerSection}>
@@ -565,7 +566,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       hitSlop={8}
                       onPress={() => setShowAddressSuggestions(false)}
                     >
-                      <Text style={styles.suggestionsCloseText}>✕ Đóng</Text>
+                      <Text style={styles.suggestionsCloseText}>Đóng</Text>
                     </Pressable>
                   </View>
                   <ScrollView
@@ -686,9 +687,10 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
               />
             </View>
           </View>
+        </View>
         ) : null}
 
-        {/* 📋 4. Danh Sách Thẻ Địa Chỉ (Address Cards List) */}
+        {/* 4. Danh Sách Thẻ Địa Chỉ (Address Cards List) */}
         {!isAdding ? (
           <FlatList
             contentContainerStyle={styles.listContent}
@@ -737,13 +739,14 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
               const meta = getCategoryMeta(item.category);
 
               return (
-                <View
-                  style={[
-                    styles.addressCard,
-                    item.isDefault ? styles.addressCardDefault : null,
-                  ]}
-                >
-                  <View style={styles.cardMainRow}>
+                <View style={styles.cardBezelOuter}>
+                  <View
+                    style={[
+                      styles.addressCard,
+                      item.isDefault ? styles.addressCardDefault : null,
+                    ]}
+                  >
+                    <View style={styles.cardMainRow}>
                     {/* Hộp icon phân loại */}
                     <View style={[styles.categoryIconBox, { backgroundColor: meta.bg }]}>
                       {meta.icon}
@@ -858,6 +861,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                     </Pressable>
                   </View>
                 </View>
+              </View>
               );
             }}
           />
@@ -961,6 +965,26 @@ const styles = StyleSheet.create({
   },
 
   // 3. Add Card
+  cardBezelOuter: {
+    backgroundColor: 'rgba(11, 30, 66, 0.04)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 6,
+  },
+  addCardInner: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
   addCard: {
     backgroundColor: '#FFFFFF',
     borderColor: '#CBD5E1',
@@ -1094,7 +1118,7 @@ const styles = StyleSheet.create({
   addressCard: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,

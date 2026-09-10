@@ -57,23 +57,25 @@ export function PromotionsScreen() {
       title="Khuyến mãi"
     >
       <View style={styles.container}>
-        <View style={styles.inputCard}>
-          <View style={styles.inputRow}>
-            <View style={styles.inputWrap}>
-              <FormField
-                autoCapitalize="characters"
-                label="Nhập mã khuyến mãi"
-                onChangeText={setPromoCodeInput}
-                placeholder="VD: LEOPARD20"
-                value={promoCodeInput}
-              />
+        <View style={styles.doubleBezelOuter}>
+          <View style={styles.inputCardInner}>
+            <View style={styles.inputRow}>
+              <View style={styles.inputWrap}>
+                <FormField
+                  autoCapitalize="characters"
+                  label="Nhập mã khuyến mãi"
+                  onChangeText={setPromoCodeInput}
+                  placeholder="VD: LEOPARD20"
+                  value={promoCodeInput}
+                />
+              </View>
             </View>
+            <Button
+              disabled={!promoCodeInput.trim()}
+              label={appliedCode === promoCodeInput.trim().toUpperCase() ? 'Đã áp dụng' : 'Áp dụng mã'}
+              onPress={() => handleApply(promoCodeInput.trim().toUpperCase())}
+            />
           </View>
-          <Button
-            disabled={!promoCodeInput.trim()}
-            label={appliedCode === promoCodeInput.trim().toUpperCase() ? '✓ Đã áp dụng' : 'Áp dụng mã'}
-            onPress={() => handleApply(promoCodeInput.trim().toUpperCase())}
-          />
         </View>
 
         <Text style={styles.sectionLabel}>MÃ KHUYẾN MÃI CÓ SẴN</Text>
@@ -85,24 +87,28 @@ export function PromotionsScreen() {
           renderItem={({ item }) => {
             const isApplied = appliedCode === item.code;
             return (
-              <View style={[styles.promoCard, isApplied ? styles.promoCardApplied : null]}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.codeTag}>
-                    <Text style={styles.codeText}>{item.code}</Text>
+              <View style={styles.doubleBezelOuter}>
+                <View style={[styles.promoCardInner, isApplied ? styles.promoCardApplied : null]}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.codeTag}>
+                      <Text style={styles.codeText}>{item.code}</Text>
+                    </View>
+                    <Text style={styles.discountText}>{item.discount}</Text>
                   </View>
-                  <Text style={styles.discountText}>{item.discount}</Text>
-                </View>
-                <Text style={styles.promoTitle}>{item.title}</Text>
-                <Text style={styles.promoDesc}>{item.description}</Text>
-                <View style={styles.cardFooter}>
-                  <Text style={styles.expiryText}>HSD: {item.expiresAt}</Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => handleApply(item.code)}
-                    style={styles.applyBtn}
-                  >
-                    <Text style={styles.applyBtnText}>{isApplied ? 'Đang dùng' : 'Sử dụng'}</Text>
-                  </Pressable>
+                  <Text style={styles.promoTitle}>{item.title}</Text>
+                  <Text style={styles.promoDesc}>{item.description}</Text>
+                  <View style={styles.cardFooter}>
+                    <Text style={styles.expiryText}>HSD: {item.expiresAt}</Text>
+                    <Pressable
+                      accessibilityLabel={isApplied ? 'Đang dùng mã' : `Sử dụng mã ${item.code}`}
+                      accessibilityRole="button"
+                      hitSlop={8}
+                      onPress={() => handleApply(item.code)}
+                      style={styles.applyBtn}
+                    >
+                      <Text style={styles.applyBtnText}>{isApplied ? 'Đang dùng' : 'Sử dụng'}</Text>
+                    </Pressable>
+                  </View>
                 </View>
               </View>
             );
@@ -117,6 +123,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     gap: spacing.sm,
+  },
+  doubleBezelOuter: {
+    backgroundColor: 'rgba(11, 30, 66, 0.04)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 6,
+  },
+  inputCardInner: {
+    backgroundColor: colors.neutral.background,
+    borderRadius: 18,
+    gap: spacing.sm,
+    padding: spacing.md,
   },
   inputCard: {
     backgroundColor: colors.neutral.background,
@@ -142,6 +161,12 @@ const styles = StyleSheet.create({
   listContent: {
     gap: spacing.sm,
     paddingBottom: layout.bottomNavClearance,
+  },
+  promoCardInner: {
+    backgroundColor: colors.neutral.background,
+    borderRadius: 18,
+    gap: spacing.xs,
+    padding: spacing.md,
   },
   promoCard: {
     backgroundColor: colors.neutral.background,
@@ -170,12 +195,14 @@ const styles = StyleSheet.create({
   codeText: {
     color: colors.brand.background,
     fontSize: 13,
+    fontVariant: ['tabular-nums'],
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   discountText: {
     color: colors.brand.background,
     fontSize: 14,
+    fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
   promoTitle: {
@@ -199,10 +226,15 @@ const styles = StyleSheet.create({
   expiryText: {
     color: colors.neutral.subtleText,
     fontSize: 11.5,
+    fontVariant: ['tabular-nums'],
   },
   applyBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    alignItems: 'center',
+    height: 44,
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 70,
+    paddingHorizontal: 12,
   },
   applyBtnText: {
     color: colors.brand.background,
