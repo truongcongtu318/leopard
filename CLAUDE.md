@@ -32,7 +32,8 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 - **Authorization**: API enforces role, ownership, assignment, and fleet membership. Fleet Owners access fleet data via valid `FleetMember` records (read-only for most fleet entities) and do not inherit Admin privileges.
 - **Transactions**: Database transactions are mandatory for accepting orders, recording status transition history, and manual payment confirmations.
 - **ETA & Labels**: ETA must always be labeled as "ETA dự kiến"; simulated/demo data must explicitly display "Dữ liệu mô phỏng".
-- **Out of Scope**: Multi-tenancy, multi-tier fleets, automated dispatch algorithms, multi-order routing optimization, AI XGBoost ETA, and automated bank reconciliation are explicitly excluded from the pilot.
+- **Dispatch**: Includes automated single-order dispatch (nearest available driver).
+- **Out of Scope**: Multi-tenancy, multi-tier fleets, multi-order routing optimization, AI XGBoost ETA, and automated bank reconciliation are explicitly excluded.
 
 ---
 

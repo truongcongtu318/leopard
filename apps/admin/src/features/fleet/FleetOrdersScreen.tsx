@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   MapPanel,
   OperationsPageHeader,
@@ -328,6 +329,33 @@ function OrderResults({
 
   return (
     <div className="flex flex-col gap-md">
+      <div className="flex items-center gap-1 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+        {[
+          { id: 'ALL', label: 'Tất cả' },
+          { id: 'REQUESTED', label: 'Chờ tài xế' },
+          { id: 'ACCEPTED', label: 'Đã nhận đơn' },
+          { id: 'PICKING_UP', label: 'Đang lấy hàng' },
+          { id: 'IN_TRANSIT', label: 'Đang vận chuyển' },
+          { id: 'DELIVERED', label: 'Đã giao' },
+          { id: 'CANCELLED', label: 'Đã hủy' }
+        ].map((f) => {
+          const isActive = view.filters.status === f.id;
+          const href = `/fleet/orders?${serializeFleetOrderFilters({ ...view.filters, status: f.id as any, page: 1 }, previewContext)}`;
+          return (
+            <Link
+              key={f.id}
+              href={href}
+              className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                isActive
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              {f.label}
+            </Link>
+          );
+        })}
+      </div>
       <p aria-live="polite" className="text-body-compact text-neutral-muted">
         {view.result.filterSummary} · Dữ liệu lúc {view.result.asOfLabel}
       </p>

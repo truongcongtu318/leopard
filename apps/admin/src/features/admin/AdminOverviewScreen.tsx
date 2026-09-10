@@ -149,7 +149,7 @@ export function AdminOverviewScreen({
   ];
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex flex-1 min-w-0 flex-col gap-4">
       {/* Screen Title (Screen Reader Only to maximize vertical dispatch map canvas) */}
       <h1 className="sr-only">Tổng quan vận hành</h1>
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
@@ -168,7 +168,7 @@ export function AdminOverviewScreen({
       </div>
 
       {/* NexaFleet Dispatch Console: 5 widgets fill viewport height */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:h-[calc(100vh-248px)] xl:min-h-[560px]">
+      <div className="flex-1 grid grid-cols-1 gap-4 xl:grid-cols-12 xl:min-h-[560px]">
         {/* Left Column (~62% width): Map (3/5 height) + Orders Table (2/5 height) */}
         <div className="xl:col-span-8 flex flex-col gap-4 min-h-0">
           <div className="flex-[3] flex flex-col min-h-0">

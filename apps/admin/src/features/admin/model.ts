@@ -230,6 +230,8 @@ export type AdminRoutePointView = Readonly<{
   id: string;
   label: string;
   metadata: string;
+  lat?: number;
+  lng?: number;
 }>;
 
 export type AdminAuditEntryView = Readonly<{
