@@ -43,3 +43,12 @@ export * from './ui/TruckLoader';
 export * from './ui/VehicleSelectCard';
 export * from './ui/icons/CoreIcons';
 export * from './ui/MediaImage';
+export * from './ui/GestureBottomSheet';
+export * from './icons/svg-icons';
+export {
+  IconClock,
+  IconClose,
+  IconOffice,
+  IconSearch,
+  IconWarehouse,
+} from './icons/svg-icons';
