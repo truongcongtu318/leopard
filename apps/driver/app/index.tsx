@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { sessionStore, TruckLoader } from '@leopard/mobile-core';
+import { resolveDriverLogin } from '../src/navigation/driver-session';
 
 export default function DriverIndex() {
   const router = useRouter();
@@ -11,9 +12,10 @@ export default function DriverIndex() {
     void (async () => {
       await sessionStore.hydrate();
       if (!active) return;
-      const token = sessionStore.getAccessToken();
+      const isAuthenticated = Boolean(sessionStore.getAccessToken());
       const role = sessionStore.getRole();
-      if (token && role === 'DRIVER') {
+      const outcome = resolveDriverLogin({ isAuthenticated, role });
+      if (outcome.kind === 'enter') {
         router.replace('/orders');
       } else {
         router.replace('/(public)/login');
