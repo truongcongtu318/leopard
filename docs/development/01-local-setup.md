@@ -1,6 +1,6 @@
 # Local setup
 
-Foundation workspace đã sẵn sàng cho shared packages. Runtime apps và local infrastructure sẽ được scaffold ở phase sau.
+Foundation workspace đã sẵn sàng cho shared packages và các ứng dụng runtime trong monorepo.
 
 ## Yêu cầu
 
@@ -36,7 +36,7 @@ packages/config      # Shared configs (ESLint, TS, Prettier)
 
 ## Chạy các ứng dụng cục bộ
 
-### 1. Khởi động Backend API
+### 1. Khởi động Backend API (Port 3000)
 
 ```bash
 # Thiết lập biến môi trường từ .env.example
@@ -47,29 +47,33 @@ cp .env.example .env
 pnpm --filter api start:dev
 ```
 
-### 2. Khởi động Operations Web (Admin & Fleet Owner)
+Truy cập REST API tại `http://localhost:3000/api/v1`.
+
+### 2. Khởi động Operations Web (Port 3002)
 
 ```bash
 pnpm --filter admin dev
 ```
 
-Truy cập tại `http://localhost:3002`.
+Truy cập Admin & Fleet Owner Dashboard tại `http://localhost:3002`.
 
-### 3. Khởi động Customer Mobile App
+### 3. Khởi động Customer Mobile App (Port 8081)
+
+Mặc định chạy trên Metro port **`8081`**:
 
 ```bash
 pnpm --filter mobile start
-# Hoặc chạy trên web browser để preview
+# Hoặc chạy trên web browser để preview (http://localhost:8081)
 pnpm --filter mobile web
 ```
 
-### 4. Khởi động Standalone Driver Mobile App
+### 4. Khởi động Standalone Driver Mobile App (Port 8082)
 
-Ứng dụng độc lập dành riêng cho tài xế (bundle `com.leopard.driver`, deep link scheme `leoparddriver://`):
+Ứng dụng độc lập dành riêng cho tài xế (bundle `com.leopard.driver`, deep link scheme `leoparddriver://`), mặc định chạy trên Metro port **`8082`** (đã cấu hình sẵn CORS trong `.env.example`):
 
 ```bash
 pnpm --filter driver start
-# Hoặc chạy trên web browser để preview
+# Hoặc chạy trên web browser để preview (http://localhost:8082)
 pnpm --filter driver web
 ```
 
