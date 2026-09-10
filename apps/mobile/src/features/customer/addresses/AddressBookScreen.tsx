@@ -11,7 +11,7 @@ import {
 
 import { httpClient } from '@leopard/mobile-core';
 import { addressStore } from './address-store';
-import { colors, layout, radius, spacing, typography, Button, FormField, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, typography, Button, FormField, IconCheck, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
 import {
   POPULAR_MAP_SUGGESTIONS,
   reverseGeocodeCoords,
@@ -412,6 +412,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                 <Pressable
                   accessibilityLabel="Xóa tìm kiếm"
                   accessibilityRole="button"
+                  hitSlop={14}
                   onPress={() => setSearchQuery('')}
                   style={styles.clearSearchBtn}
                 >
@@ -496,6 +497,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                 <Pressable
                   accessibilityLabel="Đóng biểu mẫu"
                   accessibilityRole="button"
+                  hitSlop={12}
                   onPress={() => setIsAdding(false)}
                   style={styles.closeBtn}
                 >
@@ -672,7 +674,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
               style={styles.checkboxRow}
             >
               <View style={[styles.checkboxBox, newIsDefault ? styles.checkboxChecked : null]}>
-                {newIsDefault ? <Text style={styles.checkmark}>✓</Text> : null}
+                {newIsDefault ? <IconCheck color="#FFFFFF" size={11} strokeWidth={2.5} /> : null}
               </View>
               <Text style={styles.checkboxLabel}>Đặt làm địa chỉ mặc định khi tạo đơn</Text>
             </Pressable>
@@ -823,8 +825,9 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         </Pressable>
                       ) : (
                         <View style={styles.defaultActiveNote}>
+                          <IconCheck color="#059669" size={12} strokeWidth={2.5} />
                           <Text style={styles.defaultActiveNoteText}>
-                            ✓ Đang áp dụng cho đơn mới
+                            Đang áp dụng cho đơn mới
                           </Text>
                         </View>
                       )}
@@ -928,6 +931,10 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   clearSearchBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
     padding: 2,
   },
   clearSearchText: {
@@ -1029,6 +1036,10 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
   },
   closeBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
     padding: 4,
   },
   closeBtnText: {
@@ -1297,6 +1308,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   defaultActiveNote: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
     paddingVertical: 2,
   },
   defaultActiveNoteText: {

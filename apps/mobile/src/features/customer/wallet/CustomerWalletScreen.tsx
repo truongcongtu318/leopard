@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography, Button, IconBank, IconChevron, IconCopy, IconCreditCard, IconEye, IconEyeOff, IconQrPayment, IconSecurityShield, IconTxPayment, IconTxRefund, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, typography, Button, IconBank, IconCheck, IconChevron, IconCopy, IconCreditCard, IconEye, IconEyeOff, IconQrPayment, IconSecurityShield, IconTxPayment, IconTxRefund, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
 
 export type WalletTransaction = Readonly<{
   id: string;
@@ -315,10 +315,17 @@ export function CustomerWalletScreen() {
                     onPress={() => handleCopy('account', '0900000001')}
                     style={styles.copyBtn}
                   >
-                    <IconCopy color="#0B1E42" size={14} />
-                    <Text style={styles.copyBtnText}>
-                      {copiedField === 'account' ? 'Đã chép ✓' : 'Sao chép'}
-                    </Text>
+                    {copiedField === 'account' ? (
+                      <>
+                        <IconCheck color="#059669" size={13} strokeWidth={2.5} />
+                        <Text style={[styles.copyBtnText, styles.copyBtnTextSuccess]}>Đã chép</Text>
+                      </>
+                    ) : (
+                      <>
+                        <IconCopy color="#0B1E42" size={14} />
+                        <Text style={styles.copyBtnText}>Sao chép</Text>
+                      </>
+                    )}
                   </Pressable>
                 </View>
               </View>
@@ -333,10 +340,17 @@ export function CustomerWalletScreen() {
                     onPress={() => handleCopy('memo', 'LEOPARD TOPUP 0900000001')}
                     style={styles.copyBtn}
                   >
-                    <IconCopy color="#0B1E42" size={14} />
-                    <Text style={styles.copyBtnText}>
-                      {copiedField === 'memo' ? 'Đã chép ✓' : 'Sao chép'}
-                    </Text>
+                    {copiedField === 'memo' ? (
+                      <>
+                        <IconCheck color="#059669" size={13} strokeWidth={2.5} />
+                        <Text style={[styles.copyBtnText, styles.copyBtnTextSuccess]}>Đã chép</Text>
+                      </>
+                    ) : (
+                      <>
+                        <IconCopy color="#0B1E42" size={14} />
+                        <Text style={styles.copyBtnText}>Sao chép</Text>
+                      </>
+                    )}
                   </Pressable>
                 </View>
               </View>
@@ -893,6 +907,9 @@ const styles = StyleSheet.create({
     color: '#0B1E42',
     fontSize: 11,
     fontWeight: '700',
+  },
+  copyBtnTextSuccess: {
+    color: '#059669',
   },
   qrInstructions: {
     color: '#64748B',

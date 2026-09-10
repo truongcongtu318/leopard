@@ -535,9 +535,12 @@ const styles = StyleSheet.create({
   },
   modalCloseBtn: {
     alignItems: 'center',
-    height: 36,
+    borderRadius: 22,
+    height: 44,
     justifyContent: 'center',
-    width: 36,
+    minHeight: 44,
+    minWidth: 44,
+    width: 44,
   },
   modalScrollBody: {
     maxHeight: 300,
