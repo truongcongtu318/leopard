@@ -15,6 +15,7 @@
     "export": "expo export --platform web"
   },
   "dependencies": {
+    "@leopard/mobile-core": "workspace:*",
     "@tanstack/react-query": "5.101.2",
     "expo": "57.0.4",
     "expo-image-picker": "~57.0.12",
@@ -35,6 +36,7 @@
     "socket.io-client": "4.8.3"
   },
   "devDependencies": {
+    "@expo/metro-runtime": "~57.0.6",
     "@jest/globals": "29.7.0",
     "@leopard/config": "workspace:*",
     "@testing-library/react-native": "14.0.1",

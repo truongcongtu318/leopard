@@ -217,6 +217,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@leopard/mobile-core':
+        specifier: workspace:*
+        version: link:../../packages/mobile-core
       '@tanstack/react-query':
         specifier: 5.101.2
         version: 5.101.2(react@19.2.7)
@@ -272,6 +275,9 @@ importers:
         specifier: 4.8.3
         version: 4.8.3
     devDependencies:
+      '@expo/metro-runtime':
+        specifier: ~57.0.6
+        version: 57.0.6(@expo/log-box@57.0.1)(expo@57.0.4)(react-dom@19.2.7(react@19.2.7))(react-native@0.86.0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.0(@babel/core@7.29.7)(react@19.2.7))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.7)(react@19.2.7))(react@19.2.7)
       '@jest/globals':
         specifier: 29.7.0
         version: 29.7.0
