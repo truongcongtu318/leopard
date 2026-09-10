@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "LEOPARD Driver",
+    "slug": "leopard-driver",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "scheme": "leoparddriver",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#EEF3F9",
+    "icon": "./assets/brand/leopard-emblem.png",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.leopard.driver",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.leopard.driver"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/brand/leopard-emblem.png",
+      "name": "LEOPARD Driver",
+      "shortName": "LEOPARD Driver",
+      "lang": "vi",
+      "themeColor": "#1E5BB8",
+      "backgroundColor": "#EEF3F9",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/",
+      "scope": "/"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LEOPARD Driver cần quyền truy cập thư viện ảnh để tải ảnh xác nhận giao hàng và giấy tờ."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "LEOPARD Driver cần vị trí của bạn để nhận đơn gần bạn và cập nhật tracking khi đang giao hàng."
+        }
+      ]
+    ]
+  }
+}

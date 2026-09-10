@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "LEOPARD Pilot",
+    "slug": "leopard-pilot",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "scheme": "leopard",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#EEF3F9",
+    "icon": "./assets/brand/leopard-emblem.png",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.leopard.pilot",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.leopard.pilot"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/brand/leopard-emblem.png",
+      "name": "LEOPARD Pilot",
+      "shortName": "LEOPARD",
+      "lang": "vi",
+      "themeColor": "#1E5BB8",
+      "backgroundColor": "#EEF3F9",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/",
+      "scope": "/",
+      "description": "Kết nối vận tải hàng hóa trọng tải lớn"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LEOPARD cần quyền truy cập thư viện ảnh để chọn ảnh hàng hóa hoặc ảnh xác nhận giao hàng."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "LEOPARD cần vị trí của bạn để tìm và phân công đơn hàng gần bạn khi bạn đang sẵn sàng nhận đơn."
+        }
+      ]
+    ]
+  }
+}

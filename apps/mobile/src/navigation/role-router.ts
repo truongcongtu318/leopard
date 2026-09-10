@@ -1,0 +1,191 @@
+import type { Role } from '@leopard/shared';
+import { useEffect, useState } from 'react';
+
+import { refreshSession, sessionStore } from '@leopard/mobile-core';
+
+export type MobileHome =
+  | '/customer/home'
+  | '/(public)/login'
+  | '/(public)/onboarding';
+
+export type MobileProtectedRouteGroup = 'customer';
+
+export type MobileRouteDecision =
+  | {
+      canRenderProtectedContent: false;
+      kind: 'loading';
+    }
+  | {
+      canRenderProtectedContent: false;
+      kind: 'denied';
+      reason: 'role-mismatch' | 'unauthenticated' | 'unsupported-mobile-role';
+      redirectTo: MobileHome;
+    }
+  | {
+      canRenderProtectedContent: true;
+      kind: 'authorized';
+    };
+
+type MobileRouteContext = {
+  isHydrated: boolean;
+  role: Role | null;
+  routeGroup: MobileProtectedRouteGroup;
+};
+
+export function getMobileHome(role: Role): MobileHome {
+  switch (role) {
+    case 'CUSTOMER':
+      return '/customer/home';
+    case 'DRIVER':
+    case 'FLEET_OWNER':
+    case 'ADMIN':
+      return '/(public)/login';
+  }
+}
+
+export function getMobileRouteDecision({
+  isHydrated,
+  role,
+  routeGroup,
+}: MobileRouteContext): MobileRouteDecision {
+  if (!isHydrated) {
+    return {
+      canRenderProtectedContent: false,
+      kind: 'loading',
+    };
+  }
+
+  if (!role) {
+    return {
+      canRenderProtectedContent: false,
+      kind: 'denied',
+      reason: 'unauthenticated',
+      redirectTo: '/(public)/login',
+    };
+  }
+
+  if (role === 'FLEET_OWNER' || role === 'ADMIN' || role === 'DRIVER') {
+    return {
+      canRenderProtectedContent: false,
+      kind: 'denied',
+      reason: 'unsupported-mobile-role',
+      redirectTo: '/(public)/login',
+    };
+  }
+
+  const expectedRole: Role = 'CUSTOMER';
+
+  if (role !== expectedRole) {
+    return {
+      canRenderProtectedContent: false,
+      kind: 'denied',
+      reason: 'role-mismatch',
+      redirectTo: getMobileHome(role),
+    };
+  }
+
+  return {
+    canRenderProtectedContent: true,
+    kind: 'authorized',
+  };
+}
+
+/**
+ * Hook for protected layouts that performs session hydration and returns
+ * the route decision. Uses a `finally` block to guarantee isHydrated is
+ * set to true even when hydration throws, preventing infinite loading.
+ */
+export function useProtectedLayout(
+  routeGroup: MobileProtectedRouteGroup,
+): MobileRouteDecision {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initSession() {
+      try {
+        await sessionStore.hydrate();
+        const hasRefreshToken = (await sessionStore.getRefreshToken()) !== null;
+        if (hasRefreshToken && !sessionStore.getAccessToken()) {
+          const refreshed = await refreshSession();
+          if (!refreshed) {
+            await sessionStore.clearSession();
+          }
+        }
+      } catch {
+        await sessionStore.clearSession();
+      } finally {
+        if (!cancelled) {
+          setIsHydrated(true);
+        }
+      }
+    }
+
+    void initSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const role = sessionStore.isAuthenticated() ? sessionStore.getRole() : null;
+
+  return getMobileRouteDecision({ isHydrated, role, routeGroup });
+}
+
+/**
+ * Hook for the root index route to hydrate the session and determine the
+ * target redirect path based on authentication state and user role.
+ */
+export function useRootSessionRouter(): {
+  isHydrated: boolean;
+  redirectTo: MobileHome | null;
+} {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initSession() {
+      try {
+        await sessionStore.hydrate();
+        const hasRefreshToken = (await sessionStore.getRefreshToken()) !== null;
+        if (hasRefreshToken && !sessionStore.getAccessToken()) {
+          const refreshed = await refreshSession();
+          if (!refreshed) {
+            await sessionStore.clearSession();
+          }
+        }
+      } catch {
+        await sessionStore.clearSession();
+      } finally {
+        if (!cancelled) {
+          setIsHydrated(true);
+        }
+      }
+    }
+
+    void initSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!isHydrated) {
+    return { isHydrated: false, redirectTo: null };
+  }
+
+  if (!sessionStore.isAuthenticated()) {
+    // Onboarding route disabled: splash goes straight to login.
+    return { isHydrated: true, redirectTo: '/(public)/login' };
+  }
+
+  const role = sessionStore.getRole();
+  if (role === 'CUSTOMER') {
+    return { isHydrated: true, redirectTo: '/customer/home' };
+  }
+
+  return { isHydrated: true, redirectTo: '/(public)/login' };
+}

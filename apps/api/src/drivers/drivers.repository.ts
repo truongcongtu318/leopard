@@ -1,0 +1,175 @@
+import { Injectable } from '@nestjs/common';
+import type { DriverAvailability, DriverProfile, OrderStatus } from '@prisma/client';
+import { PrismaService } from '../database/prisma.service.js';
+import type { OrderWithRelations } from '../orders/orders.repository.js';
+import type { Prisma } from '@prisma/client';
+
+@Injectable()
+export class DriversRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findDriverProfileByUserId(
+    userId: string,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<DriverProfile | null> {
+    return tx.driverProfile.findUnique({
+      where: { userId },
+    });
+  }
+
+  async updateAvailability(
+    userId: string,
+    availability: DriverAvailability,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<DriverProfile> {
+    const existing = await this.findDriverProfileByUserId(userId, tx);
+
+    if (!existing) {
+      return tx.driverProfile.create({
+        data: {
+          userId,
+          availability,
+          vehicleType: 'MOTORBIKE',
+        },
+      });
+    }
+
+    return tx.driverProfile.update({
+      where: { userId },
+      data: { availability },
+    });
+  }
+
+  async findAvailableOrders(
+    page = 1,
+    pageSize = 20,
+  ): Promise<{ items: OrderWithRelations[]; total: number; page: number; pageSize: number; totalPages: number }> {
+    const skip = (page - 1) * pageSize;
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { status: 'REQUESTED' },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+        include: {
+          statusHistory: { orderBy: { createdAt: 'desc' } },
+        },
+      }),
+      this.prisma.order.count({ where: { status: 'REQUESTED' } }),
+    ]);
+
+    const items: OrderWithRelations[] = await Promise.all(
+      orders.map(async (order) => {
+        const stops = await this.prisma.$queryRaw<Array<any>>`
+          SELECT
+            id,
+            "orderId",
+            type,
+            sequence,
+            address,
+            ST_Y(location::geometry) as lat,
+            ST_X(location::geometry) as lng,
+            "createdAt",
+            "updatedAt"
+          FROM "OrderStop"
+          WHERE "orderId" = ${order.id}::uuid
+          ORDER BY sequence ASC
+        `;
+
+        return {
+          ...order,
+          stops: stops ?? [],
+          statusHistory: order.statusHistory ?? [],
+        };
+      }),
+    );
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize) || 0,
+    };
+  }
+
+  async updateLocation(
+    userId: string,
+    lat: number,
+    lng: number,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<void> {
+    await tx.$queryRaw`
+      UPDATE "DriverProfile"
+      SET
+        "lastKnownLocation" = ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
+        "lastKnownAt" = NOW()
+      WHERE "userId" = ${userId}::uuid
+    `;
+  }
+
+  async findNearbyAvailableDrivers(
+    lat: number,
+    lng: number,
+    radiusM: number,
+    limit = 50,
+  ): Promise<Array<{ userId: string; distanceM: number }>> {
+    const rows = await this.prisma.$queryRaw<Array<{ userId: string; distance_m: number }>>`
+      SELECT
+        "userId",
+        ST_Distance("lastKnownLocation", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography) AS distance_m
+      FROM "DriverProfile"
+      WHERE availability = 'AVAILABLE'
+        AND "lastKnownAt" > NOW() - INTERVAL '90 seconds'
+        AND ST_DWithin("lastKnownLocation", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusM})
+      ORDER BY distance_m ASC
+      LIMIT ${limit}
+    `;
+
+    return rows.map((row) => ({ userId: row.userId, distanceM: row.distance_m }));
+  }
+
+  async findActiveOrderByDriverId(driverId: string): Promise<OrderWithRelations | null> {
+    const activeStatuses: OrderStatus[] = ['ACCEPTED', 'PICKING_UP', 'IN_TRANSIT'];
+
+    const order = await this.prisma.order.findMany({
+      where: {
+        driverId,
+        status: { in: activeStatuses },
+      },
+      take: 1,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        statusHistory: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+
+    const first = order[0];
+    if (!first) {
+      return null;
+    }
+
+    const stops = await this.prisma.$queryRaw<Array<any>>`
+      SELECT
+        id,
+        "orderId",
+        type,
+        sequence,
+        address,
+        ST_Y(location::geometry) as lat,
+        ST_X(location::geometry) as lng,
+        "createdAt",
+        "updatedAt"
+      FROM "OrderStop"
+      WHERE "orderId" = ${first.id}::uuid
+      ORDER BY sequence ASC
+    `;
+
+    return {
+      ...first,
+      stops: stops ?? [],
+      statusHistory: first.statusHistory ?? [],
+    };
+  }
+}

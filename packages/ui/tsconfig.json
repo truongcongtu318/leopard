@@ -1,0 +1,8 @@
+{
+  "extends": "@leopard/config/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.*"]
+}

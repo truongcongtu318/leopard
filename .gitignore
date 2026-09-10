@@ -37,6 +37,13 @@ lerna-debug.log*
 *.crt
 *.p12
 *.pfx
+*.p8
+
+# Firebase / Google auth secrets (see docs/development/07-firebase-auth-setup.md)
+apps/api/secrets/
+**/firebase-service-account*.json
+apps/mobile/google-services.json
+apps/mobile/GoogleService-Info.plist
 
 # Local uploads and generated media
 uploads/
@@ -74,10 +81,14 @@ Desktop.ini
 *.swp
 *.swo
 
+# ECC hooks local override
+.ecc-hooks-disable
+
 # Codex local state and temporary logs
 .codex-log/
 .codex/tmp/
 .codex/cache/
+.worktrees/
 
 # Test artifacts
 playwright-report/
@@ -96,4 +107,8 @@ cypress/videos/
 *.zip
 *.tar
 *.tar.gz
-
+.expo/
+.agent/
+.agents/
+apps/admin/CLAUDE.md
+apps/admin/AGENTS.md

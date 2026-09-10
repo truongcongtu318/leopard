@@ -1,0 +1,27 @@
+{
+  "name": "leopard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.11.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "test:contract": "turbo run test:contract",
+    "db:migrate:test": "pnpm --filter api prisma:migrate:test",
+    "format:check": "turbo run format:check"
+  },
+  "devDependencies": {
+    "eslint": "9.39.5",
+    "prettier": "3.6.2",
+    "turbo": "2.10.4",
+    "typescript": "7.0.2"
+  }
+}

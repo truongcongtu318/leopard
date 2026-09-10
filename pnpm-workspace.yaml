@@ -1,0 +1,17 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  "@firebase/util": false
+  "@prisma/engines": true
+  '@scarf/scarf': true
+  "@swc/core": true
+  argon2: true
+  prisma: true
+  protobufjs: false
+  sharp: true
+  unrs-resolver: true
+
+overrides:
+  "@nestjs/swagger>js-yaml": 5.2.2
