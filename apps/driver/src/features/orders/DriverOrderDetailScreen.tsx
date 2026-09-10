@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconCameraProof, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconSpeedTruck, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconCamera, IconCameraProof, IconCheck, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconSpeedTruck, IconTrash, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import { createDriverDetailFixture } from './fixtures';
 import type {
   DriverAssignedDetailView,
   DriverCommandView,
@@ -20,7 +21,8 @@ import type {
 } from './model';
 
 export type DriverOrderDetailScreenProps = Readonly<{
-  view: DriverDetailView;
+  view?: DriverDetailView;
+  orderId?: string;
   onExecuteTask?: (commandId: string) => void;
   onSelectProof?: () => void;
   onRetryProof?: (commandId: string) => void;
@@ -85,6 +87,307 @@ function TaskButton({
   return <CommandButton command={task.command} onPress={onExecuteTask} />;
 }
 
+type EpodPanelProps = Readonly<{
+  proof: DriverProofView;
+  status: string;
+  orderId?: string;
+  onSelectProof?: () => void;
+  onRetryProof?: (commandId: string) => void;
+  onExecuteTask?: (commandId: string) => void;
+}>;
+
+function EpodPanel({
+  proof,
+  status,
+  orderId,
+  onSelectProof,
+  onRetryProof,
+  onExecuteTask,
+}: EpodPanelProps) {
+  const [cargoPhotoUri, setCargoPhotoUri] = useState<string | null>(
+    proof.kind === 'persisted' || proof.kind === 'selected-local'
+      ? proof.fileLabel || 'cargo-proof-watermarked.jpg'
+      : null,
+  );
+  const [photoWatermark, setPhotoWatermark] = useState<{
+    timestamp: string;
+    coords: string;
+  } | null>(
+    proof.kind === 'persisted'
+      ? {
+          timestamp: '14:30:15 15/08/2026',
+          coords: '10.7769° N, 106.7009° E (GPS lock ±5m)',
+        }
+      : null,
+  );
+  const [signatureCaptured, setSignatureCaptured] = useState<boolean>(
+    proof.kind === 'persisted',
+  );
+  const [receiverName, setReceiverName] = useState<string>('Thủ kho Nguyễn Văn A');
+  const [signPoints, setSignPoints] = useState<number>(proof.kind === 'persisted' ? 12 : 0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const isError =
+    proof.kind === 'invalid-type' || proof.kind === 'too-large' || proof.kind === 'upload-retry';
+
+  const handleSimulateCameraCapture = () => {
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} 15/08/2026`;
+    const coordsStr = '10.7769° N, 106.7009° E (GPS lock ±3m)';
+    setCargoPhotoUri('epod-cargo-photo-watermarked.jpg');
+    setPhotoWatermark({
+      timestamp: timeStr,
+      coords: coordsStr,
+    });
+    setErrorMsg(null);
+    if (onSelectProof) {
+      onSelectProof();
+    }
+  };
+
+  const handleSignTouch = () => {
+    setSignPoints((prev) => prev + 1);
+    setSignatureCaptured(true);
+    setErrorMsg(null);
+  };
+
+  const handleClearSignature = () => {
+    setSignPoints(0);
+    setSignatureCaptured(false);
+  };
+
+  const isCompleteReady = Boolean(cargoPhotoUri && signatureCaptured);
+
+  const handleConfirmDelivery = () => {
+    if (!cargoPhotoUri) {
+      setErrorMsg('Vui lòng chụp ảnh kiện hàng có gắn watermark định vị GPS & thời gian');
+      return;
+    }
+    if (!signatureCaptured) {
+      setErrorMsg('Vui lòng yêu cầu thủ kho / người nhận ký xác nhận bàn giao (e-POD)');
+      return;
+    }
+    setErrorMsg(null);
+    if (onExecuteTask) {
+      onExecuteTask(orderId ? `cmd-deliver-${orderId}` : 'cmd-deliver-demo');
+    }
+  };
+
+  return (
+    <View style={styles.epodDoubleBezelOuter} testID="epod-verification-container">
+      <View style={styles.epodDoubleBezelInner}>
+        {/* Header with Emerald Accent */}
+        <View style={styles.epodHeaderRow}>
+          <View style={styles.epodIconBadge}>
+            <IconCameraProof color="#10B981" size={20} />
+          </View>
+          <View style={styles.epodHeaderTextCol}>
+            <Text style={styles.epodSectionTitle}>XÁC THỰC BÀN GIAO (POD)</Text>
+            <Text style={styles.epodSectionSubtitle}>
+              Bằng chứng giao hàng điện tử B2B bắt buộc theo quy định
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.epodStatusPill,
+              isCompleteReady ? styles.epodStatusPillReady : styles.epodStatusPillPending,
+            ]}
+          >
+            <Text
+              style={[
+                styles.epodStatusPillText,
+                isCompleteReady ? styles.epodStatusPillTextReady : styles.epodStatusPillTextPending,
+              ]}
+            >
+              {isCompleteReady ? 'ĐỦ ĐIỀU KIỆN' : 'CHƯA ĐỦ ĐIỀU KIỆN'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Existing Proof notice if any */}
+        {proof.kind !== 'empty' && (
+          <View style={[styles.proofNoticeBox, isError ? styles.proofError : null]}>
+            <Text style={styles.proofNoticeTitle}>{proof.label}</Text>
+            <Text style={styles.proofNoticeMessage}>{proof.message}</Text>
+            {proof.fileLabel ? (
+              <Text style={styles.proofHelper}>Đính kèm hệ thống: {proof.fileLabel}</Text>
+            ) : null}
+          </View>
+        )}
+
+        {/* Error banner if validation fails */}
+        {errorMsg ? (
+          <View style={styles.epodValidationAlert} testID="epod-validation-error">
+            <Text accessibilityRole="alert" style={styles.epodValidationAlertText}>
+              ⚠️ {errorMsg}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Part 1: Cargo Delivery Photo with Watermark */}
+        <View style={styles.epodCardSection}>
+          <View style={styles.epodSubHeaderRow}>
+            <Text style={styles.epodSubTitle}>1. ẢNH CHỤP KIỆN HÀNG BÀN GIAO</Text>
+            {cargoPhotoUri ? (
+              <View style={styles.badgeSuccess}>
+                <IconCheck color="#10B981" size={13} strokeWidth={2.5} />
+                <Text style={styles.badgeSuccessText}>Đã chụp</Text>
+              </View>
+            ) : (
+              <View style={styles.badgeRequired}>
+                <Text style={styles.badgeRequiredText}>Bắt buộc</Text>
+              </View>
+            )}
+          </View>
+
+          {cargoPhotoUri ? (
+            <View style={styles.cargoPhotoCard}>
+              <View style={styles.cargoPhotoPlaceholder}>
+                <IconOrders color="#0B1E42" size={32} />
+                <Text style={styles.cargoPhotoFileName}>{cargoPhotoUri}</Text>
+              </View>
+
+              {/* Camera Watermark Overlay (GPS coordinates + timestamp) */}
+              <View style={styles.watermarkOverlay} testID="camera-watermark-overlay">
+                <View style={styles.watermarkRow}>
+                  <IconLocationPin color="#F59E0B" size={12} strokeWidth={2} />
+                  <Text style={styles.watermarkText}>
+                    {photoWatermark?.coords || '10.7769° N, 106.7009° E (GPS lock)'}
+                  </Text>
+                </View>
+                <View style={styles.watermarkRow}>
+                  <IconClock color="#FFFFFF" size={12} />
+                  <Text style={styles.watermarkText}>
+                    {photoWatermark?.timestamp || '14:30:15 15/08/2026'} · LEOPARD e-POD
+                  </Text>
+                </View>
+              </View>
+
+              <Pressable
+                accessibilityLabel="Chụp lại ảnh kiện hàng"
+                accessibilityRole="button"
+                onPress={handleSimulateCameraCapture}
+                style={({ pressed }) => [styles.retakeBtn, pressed ? styles.pressed : null]}
+              >
+                <IconCamera color="#0B1E42" size={13} />
+                <Text style={styles.retakeBtnText}>Chụp lại ảnh</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityHint="Bấm để mở máy ảnh chụp kiện hàng thực tế"
+              accessibilityLabel="Chụp ảnh kiện hàng với watermark GPS"
+              accessibilityRole="button"
+              onPress={handleSimulateCameraCapture}
+              style={({ pressed }) => [styles.captureBtn, pressed ? styles.pressed : null]}
+              testID="btn-capture-cargo-photo"
+            >
+              <View style={styles.captureBtnIconCircle}>
+                <IconCamera color="#FFFFFF" size={20} />
+              </View>
+              <View style={styles.captureBtnTextCol}>
+                <Text style={styles.captureBtnTitle}>Chụp ảnh kiện hàng giao thực tế</Text>
+                <Text style={styles.captureBtnDesc}>
+                  Tự động gắn watermark tọa độ GPS và thời gian thực
+                </Text>
+              </View>
+            </Pressable>
+          )}
+        </View>
+
+        {/* Part 2: Warehouse Receiver Digital Signature Pad */}
+        <View style={styles.epodCardSection}>
+          <View style={styles.epodSubHeaderRow}>
+            <Text style={styles.epodSubTitle}>2. CHỮ KÝ SỐ THỦ KHO / NGƯỜI NHẬN</Text>
+            {signatureCaptured ? (
+              <View style={styles.badgeSuccess}>
+                <IconCheck color="#10B981" size={13} strokeWidth={2.5} />
+                <Text style={styles.badgeSuccessText}>Đã ký</Text>
+              </View>
+            ) : (
+              <View style={styles.badgeRequired}>
+                <Text style={styles.badgeRequiredText}>Bắt buộc</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.signatureReceiverBox}>
+            <Text style={styles.signatureReceiverLabel}>Đại diện nhận hàng:</Text>
+            <Text style={styles.signatureReceiverValue}>{receiverName}</Text>
+          </View>
+
+          {/* Interactive Signature Pad Canvas */}
+          <Pressable
+            accessibilityHint="Chạm hoặc vẽ bằng tay vào khu vực này để ký chữ ký điện tử"
+            accessibilityLabel="Bảng ký tên điện tử"
+            accessibilityRole="button"
+            onPress={handleSignTouch}
+            style={({ pressed }) => [
+              styles.signaturePadArea,
+              signatureCaptured ? styles.signaturePadActive : null,
+              pressed ? styles.pressed : null,
+            ]}
+            testID="epod-signature-pad"
+          >
+            {signatureCaptured ? (
+              <View style={styles.signatureContentPreview}>
+                {/* Visual signature stroke representation */}
+                <View style={styles.signatureStrokeWrap}>
+                  <Text style={styles.signatureHandwritten}>Nguyễn Văn A</Text>
+                  <View style={styles.signatureBaseline} />
+                </View>
+                <View style={styles.signatureMetadataRow}>
+                  <Text style={styles.signatureMetaText}>
+                    ✓ Chữ ký điện tử đã được xác thực · {signPoints} nét chạm
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.signaturePromptCol}>
+                <IconOrders color="#64748B" size={24} />
+                <Text style={styles.signaturePromptTitle}>KÝ TÊN XÁC NHẬN VÀO ĐÂY</Text>
+                <Text style={styles.signaturePromptDesc}>
+                  Thủ kho / Người nhận dùng ngón tay ký trực tiếp vào khung
+                </Text>
+              </View>
+            )}
+          </Pressable>
+
+          {signatureCaptured ? (
+            <View style={styles.signatureActionsRow}>
+              <Pressable
+                accessibilityLabel="Ký lại chữ ký"
+                accessibilityRole="button"
+                onPress={handleClearSignature}
+                style={({ pressed }) => [styles.clearSignBtn, pressed ? styles.pressed : null]}
+              >
+                <IconTrash color="#DC2626" size={13} />
+                <Text style={styles.clearSignBtnText}>Ký lại</Text>
+              </Pressable>
+              <Text style={styles.signatureSecurityNotice}>
+                Bảo chứng e-POD an toàn theo chuẩn LEOPARD B2B
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        {/* Step 4 Completion / Confirmation Trigger if inside e-POD section */}
+        {status === 'IN_TRANSIT' && (
+          <View style={styles.epodCompleteSection} testID="btn-epod-complete-delivery">
+            <Button
+              disabled={!isCompleteReady}
+              disabledLabel="Hoàn tất e-POD (Yêu cầu đủ Ảnh + Chữ ký)"
+              label="Xác nhận hoàn tất giao hàng (DELIVERED)"
+              onPress={handleConfirmDelivery}
+              size="driver-primary"
+            />
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
 function ProofPanel({ proof }: Readonly<{ proof: DriverProofView }>) {
   if (proof.kind === 'empty') return null;
   const isError =
@@ -121,10 +424,10 @@ function MissionStepper({ status }: Readonly<{ status: string }>) {
   }
 
   const steps = [
-    { label: 'Đến kho', index: 0 },
-    { label: 'Bốc hàng', index: 1 },
-    { label: 'Vận chuyển', index: 2 },
-    { label: 'Giao hàng', index: 3 },
+    { label: 'Nhận đơn (ACCEPTED)', index: 0 },
+    { label: 'Lấy hàng (PICKING_UP)', index: 1 },
+    { label: 'Vận chuyển (IN_TRANSIT)', index: 2 },
+    { label: 'Giao hàng (DELIVERED)', index: 3 },
   ];
 
   return (
@@ -723,8 +1026,15 @@ function AssignedDetail({
             vehicleLabel={view.order.vehicleLabel}
           />
 
-          {/* 5. Proof of Delivery Panel */}
-          <ProofPanel proof={view.proof} />
+          {/* 5. Proof of Delivery / e-POD Panel */}
+          <EpodPanel
+            onExecuteTask={onExecuteTask}
+            onRetryProof={onRetryProof}
+            onSelectProof={onSelectProof}
+            orderId={view.order.id}
+            proof={view.proof}
+            status={view.order.status}
+          />
 
           {/* 6. Permission Denied Recovery Block */}
           {view.tracking.kind === 'permission-denied' ? (
@@ -773,7 +1083,22 @@ function AssignedDetail({
 }
 
 export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
-  const { view, onBack } = props;
+  const { view: directView, orderId, onBack } = props;
+  const view: DriverDetailView | undefined = directView ?? (orderId ? (() => {
+    const fixture = createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED');
+    if (fixture.kind === 'content' && fixture.accessScope === 'ASSIGNED_FULL') {
+      const assigned: DriverAssignedDetailView = {
+        ...fixture,
+        order: {
+          ...fixture.order,
+          id: orderId,
+        },
+      };
+      return assigned;
+    }
+    return fixture;
+  })() : undefined);
+  if (!view) return null;
   if (view.kind === 'conflict') {
     return (
       <ScreenScaffold
@@ -1239,7 +1564,355 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* ── 6. Proof Panel ── */
+  /* ── 6. Proof Panel & e-POD ── */
+  epodDoubleBezelOuter: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#CBD5E1',
+    borderRadius: radius.bezelOuter,
+    borderWidth: 1.5,
+    padding: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  epodDoubleBezelInner: {
+    backgroundColor: '#FAFCFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.bezelInner,
+    borderWidth: 1,
+    gap: 12,
+    padding: 12,
+  },
+  epodHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  epodIconBadge: {
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    borderColor: '#BBF7D0',
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  epodHeaderTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  epodSectionTitle: {
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  epodSectionSubtitle: {
+    color: '#64748B',
+    fontSize: 10.5,
+    lineHeight: 14,
+  },
+  epodStatusPill: {
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  epodStatusPillPending: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+  },
+  epodStatusPillReady: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#BBF7D0',
+    borderWidth: 1,
+  },
+  epodStatusPillText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  epodStatusPillTextPending: {
+    color: '#D97706',
+  },
+  epodStatusPillTextReady: {
+    color: '#059669',
+  },
+  proofNoticeBox: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 8,
+  },
+  proofNoticeTitle: {
+    color: leopardPalette.textSlateDark,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  proofNoticeMessage: {
+    color: '#475569',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  epodValidationAlert: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  epodValidationAlertText: {
+    color: '#B91C1C',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  epodCardSection: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+    padding: 10,
+  },
+  epodSubHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  epodSubTitle: {
+    color: '#0B1E42',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  badgeSuccess: {
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  badgeSuccessText: {
+    color: '#059669',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  badgeRequired: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  badgeRequiredText: {
+    color: '#D97706',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  cargoPhotoCard: {
+    borderRadius: 10,
+    gap: 8,
+    overflow: 'hidden',
+  },
+  cargoPhotoPlaceholder: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 6,
+    height: 120,
+    justifyContent: 'center',
+  },
+  cargoPhotoFileName: {
+    color: '#0B1E42',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  watermarkOverlay: {
+    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    borderRadius: 8,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  watermarkRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  watermarkText: {
+    color: '#FFFFFF',
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  retakeBtn: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#F1F5F9',
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  retakeBtnText: {
+    color: '#0B1E42',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  captureBtn: {
+    alignItems: 'center',
+    backgroundColor: '#0B1E42',
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 12,
+    padding: 12,
+  },
+  captureBtnIconCircle: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: radius.pill,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  captureBtnTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  captureBtnTitle: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '800',
+  },
+  captureBtnDesc: {
+    color: '#94A3B8',
+    fontSize: 10.5,
+  },
+  signatureReceiverBox: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 6,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  signatureReceiverLabel: {
+    color: '#64748B',
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
+  signatureReceiverValue: {
+    color: '#0B1E42',
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  signaturePadArea: {
+    alignItems: 'center',
+    backgroundColor: '#FAFCFF',
+    borderColor: '#94A3B8',
+    borderRadius: 10,
+    borderStyle: 'dashed',
+    borderWidth: 1.5,
+    height: 110,
+    justifyContent: 'center',
+    padding: 8,
+  },
+  signaturePadActive: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#10B981',
+    borderStyle: 'solid',
+  },
+  signaturePromptCol: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  signaturePromptTitle: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  signaturePromptDesc: {
+    color: '#94A3B8',
+    fontSize: 10,
+  },
+  signatureContentPreview: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  signatureStrokeWrap: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  signatureHandwritten: {
+    color: '#0B1E42',
+    fontSize: 22,
+    fontStyle: 'italic',
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  signatureBaseline: {
+    backgroundColor: '#CBD5E1',
+    height: 1,
+    marginTop: 4,
+    width: 140,
+  },
+  signatureMetadataRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  signatureMetaText: {
+    color: '#059669',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  signatureActionsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  clearSignBtn: {
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: 6,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  clearSignBtnText: {
+    color: '#DC2626',
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  signatureSecurityNotice: {
+    color: '#94A3B8',
+    fontSize: 9.5,
+  },
+  epodCompleteSection: {
+    marginTop: 4,
+  },
   proofPanel: {
     backgroundColor: '#F0FDF4',
     borderColor: '#BBF7D0',
