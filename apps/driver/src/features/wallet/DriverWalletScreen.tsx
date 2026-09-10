@@ -78,11 +78,29 @@ const filterTabs: readonly Readonly<{ id: FilterType; label: string }>[] = [
 
 const withdrawalPresets = [500000, 1000000, 2000000];
 
+const linkedBankAccounts = [
+  {
+    id: 'bank-mb',
+    bankName: 'MB Bank',
+    accountNumber: '0987 **** **68',
+    holderName: 'NGUYEN VAN A',
+    isDefault: true,
+  },
+  {
+    id: 'bank-vcb',
+    bankName: 'Vietcombank',
+    accountNumber: '1012 **** **89',
+    holderName: 'NGUYEN VAN A',
+    isDefault: false,
+  },
+];
+
 export function DriverWalletScreen() {
   const router = useRouter();
   const [balance, setBalance] = useState(3450000);
   const [showBalance, setShowBalance] = useState(true);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [selectedBankId, setSelectedBankId] = useState('bank-mb');
   const [withdrawAmount, setWithdrawAmount] = useState<string>('1000000');
   const [activeFilter, setActiveFilter] = useState<FilterType>('ALL');
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
@@ -130,73 +148,96 @@ export function DriverWalletScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* Card Số Dư Khả Dụng */}
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceHeader}>
-            <View style={styles.balanceHeaderLeft}>
-              <View style={styles.walletIconChip}>
-                <IconWallet color={colors.brand.background} size={18} />
+        {/* Card Số Dư Khả Dụng - Double Bezel Styling */}
+        <View style={styles.doubleBezelOuter}>
+          <View style={styles.doubleBezelInner}>
+            <View style={styles.balanceHeader}>
+              <View style={styles.balanceHeaderLeft}>
+                <View style={styles.walletIconChip}>
+                  <IconWallet color="#10B981" size={18} />
+                </View>
+                <View>
+                  <Text style={styles.balanceLabel}>Số dư khả dụng để rút</Text>
+                  <View style={styles.instantBadge}>
+                    <Text style={styles.instantBadgeText}>Rút tiền tức thì 24/7</Text>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.balanceLabel}>Số dư khả dụng để rút</Text>
+              <Pressable
+                accessibilityLabel={showBalance ? 'Ẩn số dư' : 'Hiện số dư'}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => setShowBalance(!showBalance)}
+              >
+                {showBalance ? (
+                  <IconEyeOff color={colors.neutral.subtleText} size={18} />
+                ) : (
+                  <IconEye color={colors.neutral.subtleText} size={18} />
+                )}
+              </Pressable>
             </View>
-            <Pressable
-              accessibilityLabel={showBalance ? 'Ẩn số dư' : 'Hiện số dư'}
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => setShowBalance(!showBalance)}
-            >
-              {showBalance ? (
-                <IconEyeOff color={colors.neutral.subtleText} size={18} />
-              ) : (
-                <IconEye color={colors.neutral.subtleText} size={18} />
-              )}
-            </Pressable>
+
+            <Text style={styles.balanceAmount}>
+              {showBalance ? formatCurrency(balance) : '•••••••• ₫'}
+            </Text>
+
+            <View style={styles.balanceFooter}>
+              <View style={styles.balanceStat}>
+                <Text style={styles.balanceStatLabel}>Đang chờ tất toán</Text>
+                <Text style={styles.balanceStatValue}>{formatCurrency(350000)}</Text>
+              </View>
+              <View style={styles.balanceStatDivider} />
+              <View style={styles.balanceStat}>
+                <Text style={styles.balanceStatLabel}>Hạn mức rút 24/7</Text>
+                <Text style={styles.balanceStatValue}>50.000.000 ₫/ngày</Text>
+              </View>
+            </View>
+
+            <Button
+              label="Rút tiền về tài khoản ngân hàng"
+              onPress={() => setShowWithdrawModal(true)}
+              size="driver-primary"
+              variant="primary"
+            />
           </View>
-
-          <Text style={styles.balanceAmount}>
-            {showBalance ? formatCurrency(balance) : '•••••••• ₫'}
-          </Text>
-
-          <View style={styles.balanceFooter}>
-            <View style={styles.balanceStat}>
-              <Text style={styles.balanceStatLabel}>Đang chờ tất toán</Text>
-              <Text style={styles.balanceStatValue}>{formatCurrency(350000)}</Text>
-            </View>
-            <View style={styles.balanceStatDivider} />
-            <View style={styles.balanceStat}>
-              <Text style={styles.balanceStatLabel}>Hạn mức rút</Text>
-              <Text style={styles.balanceStatValue}>50.000.000 ₫/ngày</Text>
-            </View>
-          </View>
-
-          <Button
-            label="Rút tiền về ngân hàng"
-            onPress={() => setShowWithdrawModal(true)}
-            size="driver-primary"
-            variant="primary"
-          />
         </View>
 
         {/* Card Tài Khoản Ngân Hàng Liên Kết */}
-        <View style={styles.bankCard}>
-          <View style={styles.bankHeader}>
-            <View style={styles.bankIconChip}>
-              <IconBank color={colors.brand.background} size={20} />
-            </View>
-            <View style={styles.bankInfo}>
-              <View style={styles.bankNameRow}>
-                <Text style={styles.bankName}>MB Bank</Text>
-                <View style={styles.defaultPill}>
-                  <Text style={styles.defaultPillText}>Mặc định</Text>
+        <View style={styles.bankSection}>
+          <View style={styles.bankSectionHeader}>
+            <Text style={styles.sectionLabel}>Tài khoản ngân hàng liên kết (24/7)</Text>
+          </View>
+          {linkedBankAccounts.map((account) => {
+            const isSelected = selectedBankId === account.id;
+            return (
+              <Pressable
+                key={account.id}
+                onPress={() => setSelectedBankId(account.id)}
+                style={[styles.bankCard, isSelected ? styles.bankCardSelected : null]}
+              >
+                <View style={styles.bankHeader}>
+                  <View style={[styles.bankIconChip, isSelected ? styles.bankIconChipSelected : null]}>
+                    <IconBank color={isSelected ? '#10B981' : '#0B1E42'} size={20} />
+                  </View>
+                  <View style={styles.bankInfo}>
+                    <View style={styles.bankNameRow}>
+                      <Text style={styles.bankName}>{account.bankName}</Text>
+                      {account.isDefault ? (
+                        <View style={styles.defaultPill}>
+                          <Text style={styles.defaultPillText}>Mặc định</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <Text style={styles.bankAccount}>{account.accountNumber} · {account.holderName}</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={styles.bankAccount}>0987 **** **68 · NGUYEN VAN A</Text>
-            </View>
-          </View>
-          <View style={styles.bankSecurityRow}>
-            <IconSecurityShield color={colors.success.text} size={14} />
-            <Text style={styles.bankSecurityText}>Đã xác thực danh tính liên kết ví tài xế</Text>
-          </View>
+                <View style={styles.bankSecurityRow}>
+                  <IconSecurityShield color="#10B981" size={14} />
+                  <Text style={styles.bankSecurityText}>Liên kết Napas247 - Rút tiền tức thì</Text>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* Lịch Sử Giao Dịch */}
@@ -356,10 +397,21 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.xl,
   },
-  balanceCard: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderRadius: radius.card,
+  /* Double-bezel Balance Card */
+  doubleBezelOuter: {
+    backgroundColor: '#0B1E42', // Midnight Navy outer
+    borderRadius: radius.bezelOuter,
+    padding: 3,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  doubleBezelInner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.bezelInner,
+    borderColor: '#E2E8F0',
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
@@ -376,20 +428,37 @@ const styles = StyleSheet.create({
   },
   walletIconChip: {
     alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
     borderRadius: radius.card,
-    height: 32,
+    height: 34,
     justifyContent: 'center',
-    width: 32,
+    width: 34,
   },
   balanceLabel: {
-    color: leopardPalette.textMutedSlate,
+    color: '#0B1E42',
     fontSize: 12.5,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  instantBadge: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+  },
+  instantBadgeText: {
+    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '700',
   },
   balanceAmount: {
-    color: colors.neutral.titleText,
-    fontSize: 30,
+    color: '#0B1E42',
+    fontSize: 32,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     marginVertical: 2,
@@ -417,10 +486,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   balanceStatValue: {
-    color: colors.neutral.titleText,
+    color: '#0F172A',
     fontSize: 12.5,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+  },
+  bankSection: {
+    gap: spacing.xs,
+  },
+  bankSectionHeader: {
+    marginVertical: 2,
   },
   bankCard: {
     backgroundColor: colors.neutral.background,
@@ -430,6 +505,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     padding: spacing.md,
   },
+  bankCardSelected: {
+    borderColor: '#10B981',
+    backgroundColor: '#F0FDF4',
+  },
   bankHeader: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -437,11 +516,14 @@ const styles = StyleSheet.create({
   },
   bankIconChip: {
     alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
+    backgroundColor: '#F1F5F9',
     borderRadius: radius.card,
     height: 40,
     justifyContent: 'center',
     width: 40,
+  },
+  bankIconChipSelected: {
+    backgroundColor: '#DCFCE7',
   },
   bankInfo: {
     flex: 1,
@@ -453,18 +535,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   bankName: {
-    color: colors.neutral.titleText,
+    color: '#0B1E42',
     fontSize: 14.5,
     fontWeight: '700',
   },
   defaultPill: {
-    backgroundColor: colors.brand.softBackground,
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   defaultPillText: {
-    color: colors.brand.background,
+    color: '#10B981',
     fontSize: 10.5,
     fontWeight: '700',
   },
