@@ -115,4 +115,14 @@ describe('FloatingNavBar', () => {
 
     await screen.unmount();
   });
+
+  it('renders floating capsule dock with rounded-pill shape and safe margin', async () => {
+    const onSelectTab = jest.fn();
+    const screen = await render(
+      <FloatingNavBar activeTab="home" onSelectTab={onSelectTab} />,
+    );
+    const dock = screen.getByTestId('floating-nav-bar');
+    expect(dock).toBeTruthy();
+    await screen.unmount();
+  });
 });

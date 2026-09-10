@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardElevation, leopardPalette, leopardRadius, spacing } from '../theme/tokens';
+import { colors, leopardRadius, radius, spacing } from '../theme/tokens';
 import { IconClock, IconEarnings, IconHome, IconOrders, IconSpeedTruck, IconUser, IconWallet } from './icons/CoreIcons';
 
 export type TabKey = 'home' | 'orders' | 'wallet' | 'account';
@@ -15,11 +15,12 @@ export type NavItem = Readonly<{
 
 export type FloatingNavBarProps = Readonly<{
   activeTab: string;
-  onTabChange: ((key: TabKey) => void) | ((key: string) => void);
+  onTabChange?: ((key: TabKey) => void) | ((key: string) => void);
+  onSelectTab?: ((key: TabKey) => void) | ((key: string) => void);
   items?: readonly NavItem[];
-  /** Override active-state icon/label colour. Default: leopardPalette.primary (navy). */
+  /** Override active-state icon/label colour. Default: colors.brand.primary. */
   accentColor?: string;
-  /** Override active-state tab background. Default: leopardPalette.primaryBg. */
+  /** Override active-state tab background. Default: rgba(11, 30, 66, 0.08). */
   accentBg?: string;
 }>;
 
@@ -31,7 +32,7 @@ const defaultNavItems: readonly NavItem[] = [
 ];
 
 function renderDefaultNavIcon(key: string, isActive: boolean, accentColor: string) {
-  const color = isActive ? accentColor : leopardPalette.textMutedSlate;
+  const color = isActive ? accentColor : '#64748B';
   switch (key) {
     case 'home':
       return <IconHome color={color} size={22} />;
@@ -46,46 +47,52 @@ function renderDefaultNavIcon(key: string, isActive: boolean, accentColor: strin
   }
 }
 
-function FloatingNavBarComponent({ activeTab, onTabChange, items, accentColor, accentBg }: FloatingNavBarProps) {
+function FloatingNavBarComponent({
+  activeTab,
+  onTabChange,
+  onSelectTab,
+  items,
+  accentColor,
+  accentBg,
+}: FloatingNavBarProps) {
   const navItems = items ?? defaultNavItems;
-  const resolvedAccentColor = accentColor ?? leopardPalette.primary;
-  const resolvedAccentBg = accentBg ?? leopardPalette.primaryBg;
+  const handleSelect = onSelectTab ?? onTabChange;
+  const resolvedAccentColor = accentColor ?? colors.brand.primary;
+  const resolvedAccentBg = accentBg ?? 'rgba(11, 30, 66, 0.08)';
 
   return (
-    <View style={styles.container}>
-      <View style={styles.dock}>
-        {navItems.map((item) => {
-          const isActive = activeTab === item.key;
-          return (
-            <Pressable
-              accessibilityLabel={item.label}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: isActive }}
-              key={item.key}
-              onPress={() => (onTabChange as (k: any) => void)(item.key)}
-              style={({ pressed }) => [
-                styles.tabItem,
-                isActive ? { backgroundColor: resolvedAccentBg } : null,
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <View style={styles.iconWrap}>
-                {item.icon
-                  ? item.icon(isActive)
-                  : renderDefaultNavIcon(item.key, isActive, resolvedAccentColor)}
-                {item.badge ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{item.badge}</Text>
-                  </View>
-                ) : null}
-              </View>
-              <Text style={[styles.label, isActive ? { color: resolvedAccentColor, fontWeight: '600' } : null]}>
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+    <View testID="floating-nav-bar" style={styles.floatingContainer}>
+      {navItems.map((item) => {
+        const isActive = activeTab === item.key;
+        return (
+          <Pressable
+            accessibilityLabel={item.label}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
+            key={item.key}
+            onPress={() => (handleSelect as ((k: any) => void) | undefined)?.(item.key)}
+            style={({ pressed }) => [
+              styles.tabItem,
+              isActive ? { backgroundColor: resolvedAccentBg } : null,
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <View style={styles.iconWrap}>
+              {item.icon
+                ? item.icon(isActive)
+                : renderDefaultNavIcon(item.key, isActive, resolvedAccentColor)}
+              {item.badge ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{item.badge}</Text>
+                </View>
+              ) : null}
+            </View>
+            <Text style={[styles.label, isActive ? { color: resolvedAccentColor, fontWeight: '600' } : null]}>
+              {item.label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -93,27 +100,26 @@ function FloatingNavBarComponent({ activeTab, onTabChange, items, accentColor, a
 export const FloatingNavBar = React.memo(FloatingNavBarComponent);
 
 const styles = StyleSheet.create({
-  container: {
+  floatingContainer: {
     position: 'absolute',
-    bottom: spacing.md,
     left: spacing.md,
     right: spacing.md,
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  dock: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderRadius: leopardRadius.xl,
+    bottom: Platform.OS === 'ios' ? 24 : spacing.md,
+    height: 62,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 28,
+    elevation: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingVertical: 8,
-    paddingHorizontal: spacing.sm,
-    width: '100%',
-    maxWidth: 440,
-    borderColor: leopardPalette.cardBorder,
-    borderWidth: 1,
-    ...leopardElevation.modal,
+    paddingHorizontal: spacing.xs,
+    zIndex: 100,
   },
   tabItem: {
     alignItems: 'center',
@@ -124,9 +130,6 @@ const styles = StyleSheet.create({
     borderRadius: leopardRadius.md,
     minHeight: 44,
     minWidth: 44,
-  },
-  tabItemActive: {
-    backgroundColor: leopardPalette.primaryBg,
   },
   iconWrap: {
     position: 'relative',
@@ -139,7 +142,7 @@ const styles = StyleSheet.create({
     top: -4,
     right: -10,
     backgroundColor: colors.danger.border,
-    borderRadius: leopardRadius.pill,
+    borderRadius: radius.pill,
     minWidth: 16,
     height: 16,
     paddingHorizontal: 3,
@@ -152,13 +155,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   label: {
-    color: leopardPalette.textMutedSlate,
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '500',
-  },
-  labelActive: {
-    color: leopardPalette.tabActive,
-    fontWeight: '600',
   },
   pressed: {
     opacity: 0.8,
