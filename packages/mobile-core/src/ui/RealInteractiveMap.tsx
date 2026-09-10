@@ -571,15 +571,24 @@ export function RealInteractiveMap({
     try {
       const iframes = document.querySelectorAll('iframe');
       iframes.forEach((iframe) => {
-        iframe.contentWindow?.postMessage(
-          {
-            type: 'LEOPARD_UPDATE_TRUCK_LOCATION',
-            lat: truckLocation.lat,
-            lng: truckLocation.lng,
-            eta: displayEta,
-          },
-          '*',
-        );
+        if (!iframe.contentWindow || !iframe.src) return;
+        try {
+          const targetUrl = new URL(iframe.src, window.location.href);
+          const isHttpOrigin = targetUrl.protocol === 'http:' || targetUrl.protocol === 'https:';
+          if (!isHttpOrigin) return;
+
+          iframe.contentWindow.postMessage(
+            {
+              type: 'LEOPARD_UPDATE_TRUCK_LOCATION',
+              lat: truckLocation.lat,
+              lng: truckLocation.lng,
+              eta: displayEta,
+            },
+            targetUrl.origin,
+          );
+        } catch {
+          // Ignore invalid iframe URLs
+        }
       });
     } catch {
       // Ignore postMessage communication errors on unmounted iframe
