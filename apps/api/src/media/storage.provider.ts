@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as path from 'path';
 import * as fsPromises from 'fs/promises';
+import { DomainError } from '../common/domain-error.js';
 
 export abstract class StorageProvider {
   abstract put(key: string, fileBuffer: Buffer, contentType: string): Promise<void>;
@@ -14,11 +15,24 @@ export class LocalStorageProvider extends StorageProvider {
 
   constructor() {
     super();
-    this.uploadDir = path.join(process.cwd(), 'uploads');
+    this.uploadDir = path.resolve(process.cwd(), 'uploads');
+  }
+
+  private resolveSafePath(key: string): string {
+    const resolvedPath = path.resolve(this.uploadDir, key);
+    const uploadRootWithSep = this.uploadDir.endsWith(path.sep)
+      ? this.uploadDir
+      : `${this.uploadDir}${path.sep}`;
+
+    if (resolvedPath !== this.uploadDir && !resolvedPath.startsWith(uploadRootWithSep)) {
+      throw new DomainError('VALIDATION_ERROR', 422, 'Đường dẫn tệp không hợp lệ');
+    }
+
+    return resolvedPath;
   }
 
   async put(key: string, fileBuffer: Buffer, contentType: string): Promise<void> {
-    const filePath = path.join(this.uploadDir, key);
+    const filePath = this.resolveSafePath(key);
     const dir = path.dirname(filePath);
     await fsPromises.mkdir(dir, { recursive: true });
 
@@ -36,7 +50,7 @@ export class LocalStorageProvider extends StorageProvider {
   }
 
   async delete(key: string): Promise<void> {
-    const filePath = path.join(this.uploadDir, key);
+    const filePath = this.resolveSafePath(key);
     try {
       await fsPromises.unlink(filePath);
     } catch (error: unknown) {
