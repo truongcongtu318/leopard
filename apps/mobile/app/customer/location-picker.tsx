@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   colors,
   IconChevron,
+  IconClose,
   IconPin,
   IconSearch,
   RealInteractiveMap,
@@ -23,11 +24,42 @@ import {
   type MapCoordinate,
 } from '@leopard/mobile-core';
 
+import { addressStore } from '../../src/features/customer/addresses/address-store';
+
 function toTitleCase(str: string): string {
   return str
     .split(' ')
     .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
     .join(' ');
+}
+
+function formatSuggestionLabel(key: string): string {
+  const formatted = toTitleCase(key);
+  const k = key.toLowerCase();
+  if (k.includes('hà nội') || k.includes('hoàn kiếm')) {
+    return `${formatted}, TP. Hà Nội`;
+  }
+  if (
+    k.includes('đà nẵng') ||
+    k.includes('ngũ hành sơn') ||
+    k.includes('hải châu') ||
+    k.includes('sơn trà') ||
+    k.includes('thanh khê') ||
+    k.includes('cẩm lệ') ||
+    k.includes('hoàng công chất')
+  ) {
+    return `${formatted}, TP. Đà Nẵng`;
+  }
+  if (k.includes('bình dương') || k.includes('sóng thần') || k.includes('dĩ an')) {
+    return `${formatted}, Tỉnh Bình Dương`;
+  }
+  if (k.includes('long an') || k.includes('bến lức')) {
+    return `${formatted}, Tỉnh Long An`;
+  }
+  if (k.includes('đồng nai') || k.includes('biên hòa')) {
+    return `${formatted}, Tỉnh Đồng Nai`;
+  }
+  return `${formatted}, TP. Hồ Chí Minh`;
 }
 
 export interface LocationPickerProps {
@@ -80,7 +112,7 @@ export default function LocationPickerScreen({
         const formatted = toTitleCase(key);
         results.push({
           key,
-          label: `${formatted}, TP. Hồ Chí Minh`,
+          label: formatSuggestionLabel(key),
           coords: hubCoords,
         });
         if (results.length >= 5) break;
@@ -112,13 +144,42 @@ export default function LocationPickerScreen({
   }, [onBack, router]);
 
   const handleConfirm = useCallback(() => {
+    try {
+      if (addressStore && typeof addressStore.saveAddress === 'function') {
+        addressStore.saveAddress({
+          label: address,
+          address,
+          latitude: coords.lat,
+          longitude: coords.lng,
+          isDefault: false,
+          category: 'OTHER',
+        });
+      }
+    } catch {
+      // safe fallback if storage unavailable
+    }
+
     if (onConfirm) {
       onConfirm({ lat: coords.lat, lng: coords.lng, address });
       return;
     }
+
+    if (params.returnTo) {
+      router.replace({
+        pathname: params.returnTo as any,
+        params: {
+          address,
+          lat: coords.lat.toString(),
+          lng: coords.lng.toString(),
+          target: params.target || 'pickup',
+        },
+      });
+      return;
+    }
+
     // Default navigation back
     router.back();
-  }, [coords, address, onConfirm, router]);
+  }, [coords, address, onConfirm, params.returnTo, params.target, router]);
 
   return (
     <View style={styles.container}>
@@ -179,8 +240,9 @@ export default function LocationPickerScreen({
                   setIsSearching(false);
                 }}
                 style={styles.clearSearchBtn}
+                testID="btn-clear-search"
               >
-                <Text style={styles.clearSearchText}>✕</Text>
+                <IconClose color="#64748B" size={16} />
               </Pressable>
             ) : null}
           </View>

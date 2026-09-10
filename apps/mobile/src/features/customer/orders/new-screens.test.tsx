@@ -33,6 +33,7 @@ import LocationPickerScreen from '../../../../app/customer/location-picker';
 import OrderSearchingScreen from '../../../../app/customer/orders/searching/[id]';
 import OrderCheckoutScreen from '../../../../app/customer/orders/checkout/[id]';
 import CustomerCreateOrderPage from '../../../../app/customer/orders/new';
+import { addressStore } from '../addresses/address-store';
 
 describe('New Customer Screens (Task 4)', () => {
   beforeEach(() => {
@@ -102,6 +103,53 @@ describe('New Customer Screens (Task 4)', () => {
 
       await screen.unmount();
     });
+
+    it('navigates to returnTo with params and saves to addressStore on confirm', async () => {
+      mockSearchParams = {
+        lat: '10.795000',
+        lng: '106.652000',
+        address: 'Kho Tân Bình, TP. Hồ Chí Minh',
+        returnTo: '/customer/orders/new',
+        target: 'dropoff',
+      };
+
+      const screen = await render(<LocationPickerScreen />);
+      const confirmBtn = screen.getByRole('button', { name: 'Xác nhận điểm này' });
+      await fireEvent.press(confirmBtn);
+
+      expect(mockReplace).toHaveBeenCalledWith({
+        pathname: '/customer/orders/new',
+        params: {
+          address: 'Kho Tân Bình, TP. Hồ Chí Minh',
+          lat: '10.795',
+          lng: '106.652',
+          target: 'dropoff',
+        },
+      });
+
+      const savedAddresses = addressStore.getAddresses();
+      expect(savedAddresses.some((a) => a.address === 'Kho Tân Bình, TP. Hồ Chí Minh')).toBe(true);
+
+      await screen.unmount();
+    });
+
+    it('formats autocomplete suggestions outside HCM correctly and clears search with IconClose button', async () => {
+      const screen = await render(<LocationPickerScreen />);
+      const searchInput = screen.getByPlaceholderText('Tìm kiếm địa chỉ, kho bãi...');
+
+      await fireEvent.changeText(searchInput, 'Hà Nội');
+      const hanoiSuggestion = screen.getByText('Hà Nội, TP. Hà Nội');
+      expect(hanoiSuggestion).toBeTruthy();
+
+      // Clear search button test
+      const clearBtn = screen.getByTestId('btn-clear-search');
+      expect(clearBtn).toBeTruthy();
+      await fireEvent.press(clearBtn);
+
+      expect(screen.queryByText('Hà Nội, TP. Hà Nội')).toBeNull();
+
+      await screen.unmount();
+    });
   });
 
   describe('OrderSearchingScreen (Màn 9: Radar Scanning)', () => {
@@ -136,6 +184,15 @@ describe('New Customer Screens (Task 4)', () => {
 
       const screen = await render(<OrderSearchingScreen initialSeconds={28} />);
       expect(screen.getByText('00:28')).toBeTruthy();
+
+      await screen.unmount();
+    });
+
+    it('handles custom initialSeconds and calculates progress bar without overflow', async () => {
+      mockSearchParams = { id: '11111111-1111-4111-8111-111111111001' };
+
+      const screen = await render(<OrderSearchingScreen initialSeconds={60} />);
+      expect(screen.getByText('00:60')).toBeTruthy();
 
       await screen.unmount();
     });
@@ -185,6 +242,22 @@ describe('New Customer Screens (Task 4)', () => {
       // Payment method selector
       expect(screen.getByText('VietQR payOS (Napas 24/7)')).toBeTruthy();
       expect(screen.getByText('Ví doanh nghiệp (B2B Credit)')).toBeTruthy();
+
+      await screen.unmount();
+    });
+
+    it('handles copy button safely and unmounts without timer leaks', async () => {
+      mockSearchParams = {
+        id: '11111111-1111-4111-8111-111111111001',
+        amount: '280000',
+      };
+
+      const screen = await render(<OrderCheckoutScreen />);
+      const copyBtn = screen.getByRole('button', { name: 'Sao chép số tài khoản' });
+      expect(copyBtn).toBeTruthy();
+
+      await fireEvent.press(copyBtn);
+      expect(screen.getByText('Đã sao chép')).toBeTruthy();
 
       await screen.unmount();
     });

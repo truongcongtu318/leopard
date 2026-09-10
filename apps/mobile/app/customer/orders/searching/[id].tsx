@@ -191,7 +191,12 @@ export default function OrderSearchingScreen({
             <View
               style={[
                 styles.timerProgressBarFill,
-                { width: `${(secondsLeft / 30) * 100}%` },
+                {
+                  width: `${Math.min(
+                    100,
+                    Math.max(0, (secondsLeft / Math.max(initialSeconds, 1)) * 100),
+                  )}%`,
+                },
               ]}
             />
           </View>
