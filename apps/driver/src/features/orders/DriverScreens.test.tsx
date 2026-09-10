@@ -98,11 +98,11 @@ describe('DriverOrdersScreen', () => {
     // Modal appears with prominent fare, route, and actions
     expect(screen.getByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeTruthy();
     expect(screen.getByText('Thu nhập ròng')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'NHẬN ĐƠN NGAY' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'NHẬN CUỐC NGAY' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Bỏ qua' })).toBeTruthy();
 
     // Accept action forwards to onOpenOrder
-    await fireEvent.press(screen.getByRole('button', { name: 'NHẬN ĐƠN NGAY' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'NHẬN CUỐC NGAY' }));
     expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222101');
 
     // Modal closes after acceptance

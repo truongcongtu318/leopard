@@ -103,7 +103,7 @@ describe('DriverOrdersListRuntime', () => {
       expect(screen.getByText('68.000 ₫')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('NHẬN ĐƠN NGAY'));
+    fireEvent.press(screen.getByText('NHẬN CUỐC NGAY'));
 
     await waitFor(() => {
       expect(acceptOrder).toHaveBeenCalledWith(SAMPLE_OFFER.id);

@@ -510,10 +510,21 @@ export function DriverOrdersScreen({
                   <View style={styles.bellDot} />
                 </View>
 
-                <View style={styles.heroSwitchWrapper}>
-                  <Text style={styles.heroSwitchLabel}>Trạng thái nhận đơn</Text>
-                  <View style={[styles.iosSwitchTrack, styles.iosSwitchTrackOffline]}>
-                    <View style={[styles.iosSwitchThumb, styles.iosSwitchThumbOffline]} />
+                <View style={styles.heroDutyContainer}>
+                  <Text style={styles.heroDutyLabel}>Trạng thái nhận đơn</Text>
+                  <View style={[styles.heroDutySwitch, styles.heroDutySwitchOffline]}>
+                    <View style={styles.heroDutyTab}>
+                      <View style={styles.heroDutyDot} />
+                      <Text style={[styles.heroDutyTabText, styles.heroDutyTabTextInactive]}>
+                        TRỰC TUYẾN
+                      </Text>
+                    </View>
+                    <View style={[styles.heroDutyTab, styles.heroDutyTabActiveOffline]}>
+                      <View style={[styles.heroDutyDot, styles.heroDutyDotActiveOffline]} />
+                      <Text style={[styles.heroDutyTabText, styles.heroDutyTabTextActive]}>
+                        NGOẠI TUYẾN
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -664,7 +675,7 @@ export function DriverOrdersScreen({
                 </View>
               </View>
 
-              {/* Row 2: Left (Bell icon) | Right (Online/Offline Toggle) */}
+              {/* Row 2: Left (Bell icon) | Right (Hero Online/Offline Duty Control) */}
               <View style={styles.cockpitBottomRow}>
                 <Pressable
                   accessibilityLabel="Thông báo mới"
@@ -675,8 +686,8 @@ export function DriverOrdersScreen({
                   <View style={styles.bellDot} />
                 </Pressable>
 
-                <View style={styles.heroSwitchWrapper}>
-                  <Text style={styles.heroSwitchLabel}>Trạng thái nhận đơn</Text>
+                <View style={styles.heroDutyContainer}>
+                  <Text style={styles.heroDutyLabel}>Trạng thái nhận đơn</Text>
                   <Pressable
                     accessibilityLabel={
                       isPending
@@ -694,18 +705,44 @@ export function DriverOrdersScreen({
                         : undefined
                     }
                     style={({ pressed }) => [
-                      styles.iosSwitchTrack,
-                      isOnline ? styles.iosSwitchTrackOnline : styles.iosSwitchTrackOffline,
+                      styles.heroDutySwitch,
+                      isOnline ? styles.heroDutySwitchOnline : styles.heroDutySwitchOffline,
                       pressed ? styles.pressed : null,
                     ]}
                     testID="driver-availability-toggle"
                   >
                     <View
                       style={[
-                        styles.iosSwitchThumb,
-                        isOnline ? styles.iosSwitchThumbOnline : styles.iosSwitchThumbOffline,
+                        styles.heroDutyTab,
+                        isOnline ? styles.heroDutyTabActiveOnline : null,
                       ]}
-                    />
+                    >
+                      <View style={[styles.heroDutyDot, isOnline ? styles.heroDutyDotActive : null]} />
+                      <Text
+                        style={[
+                          styles.heroDutyTabText,
+                          isOnline ? styles.heroDutyTabTextActive : styles.heroDutyTabTextInactive,
+                        ]}
+                      >
+                        TRỰC TUYẾN
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.heroDutyTab,
+                        !isOnline ? styles.heroDutyTabActiveOffline : null,
+                      ]}
+                    >
+                      <View style={[styles.heroDutyDot, !isOnline ? styles.heroDutyDotActiveOffline : null]} />
+                      <Text
+                        style={[
+                          styles.heroDutyTabText,
+                          !isOnline ? styles.heroDutyTabTextActive : styles.heroDutyTabTextInactive,
+                        ]}
+                      >
+                        NGOẠI TUYẾN
+                      </Text>
+                    </View>
                   </Pressable>
                 </View>
               </View>
@@ -717,6 +754,29 @@ export function DriverOrdersScreen({
         <View style={styles.contentContainer}>
           {/* Notice Alert if any */}
           <DriverNotice onNoticeAction={onNoticeAction} view={view} />
+
+          {/* In-day operational stats: Completed trips, today's income, online hours */}
+          <View style={styles.statsDoubleBezelOuter}>
+            <View style={styles.statsDoubleBezelInner}>
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Chuyến xong</Text>
+                <Text style={styles.statValue}>4</Text>
+                <Text style={styles.statSub}>Hôm nay</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Thu nhập hôm nay</Text>
+                <Text style={styles.statValueHighlight}>620.000 ₫</Text>
+                <Text style={styles.statSub}>Đã khấu trừ phí</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Giờ online</Text>
+                <Text style={styles.statValue}>5.5h</Text>
+                <Text style={styles.statSub}>98% chấp nhận</Text>
+              </View>
+            </View>
+          </View>
 
           {/* Active Trip (if in progress) */}
           {view.activeTrip ? (
@@ -1058,48 +1118,128 @@ const styles = StyleSheet.create({
     top: 6,
     width: 6,
   },
-  heroSwitchWrapper: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
+  heroDutyContainer: {
+    alignItems: 'flex-end',
+    gap: 4,
   },
-  heroSwitchLabel: {
+  heroDutyLabel: {
     color: '#CBD5E1',
-    fontSize: 11.5,
+    fontSize: 10.5,
     fontWeight: '700',
     textShadowColor: 'rgba(0, 0, 0, 0.85)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  iosSwitchTrack: {
-    borderRadius: 14,
-    height: 26,
+  heroDutySwitch: {
+    backgroundColor: '#0B1E42',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: radius.bezelOuter,
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    height: 38,
+    padding: 3,
+  },
+  heroDutySwitchOnline: {
+    borderColor: '#10B981',
+  },
+  heroDutySwitchOffline: {
+    borderColor: '#64748B',
+  },
+  heroDutyTab: {
+    alignItems: 'center',
+    borderRadius: radius.bezelInner,
+    flexDirection: 'row',
+    gap: 5,
     justifyContent: 'center',
-    paddingHorizontal: 2.5,
-    width: 46,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  iosSwitchTrackOnline: {
-    backgroundColor: '#4ADE80',
+  heroDutyTabActiveOnline: {
+    backgroundColor: '#10B981',
   },
-  iosSwitchTrackOffline: {
+  heroDutyTabActiveOffline: {
+    backgroundColor: '#334155',
+  },
+  heroDutyDot: {
     backgroundColor: '#64748B',
+    borderRadius: 3.5,
+    height: 7,
+    width: 7,
   },
-  iosSwitchThumb: {
+  heroDutyDotActive: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10.5,
-    elevation: 3,
-    height: 21,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.25,
-    shadowRadius: 2,
-    width: 21,
   },
-  iosSwitchThumbOnline: {
-    alignSelf: 'flex-end',
+  heroDutyDotActiveOffline: {
+    backgroundColor: '#F59E0B',
   },
-  iosSwitchThumbOffline: {
-    alignSelf: 'flex-start',
+  heroDutyTabText: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.4,
+  },
+  heroDutyTabTextActive: {
+    color: '#FFFFFF',
+  },
+  heroDutyTabTextInactive: {
+    color: '#94A3B8',
+  },
+
+  /* ── Double-bezel Operational Stats ── */
+  statsDoubleBezelOuter: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#CBD5E1',
+    borderRadius: radius.bezelOuter,
+    borderWidth: 1.5,
+    padding: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  statsDoubleBezelInner: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.bezelInner,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  statBox: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 2,
+  },
+  statLabel: {
+    color: '#64748B',
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  statValue: {
+    color: '#0B1E42',
+    fontSize: 16,
+    fontWeight: '900',
+    fontVariant: ['tabular-nums'],
+  },
+  statValueHighlight: {
+    color: '#10B981',
+    fontSize: 16,
+    fontWeight: '900',
+    fontVariant: ['tabular-nums'],
+  },
+  statSub: {
+    color: '#94A3B8',
+    fontSize: 9.5,
+    fontWeight: '600',
+  },
+  statDivider: {
+    backgroundColor: '#E2E8F0',
+    height: 28,
+    width: 1,
   },
   skeletonTextLineLg: {
     backgroundColor: 'rgba(255, 255, 255, 0.3)',

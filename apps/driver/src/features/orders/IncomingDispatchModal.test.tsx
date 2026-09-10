@@ -44,7 +44,7 @@ describe('IncomingDispatchModal', () => {
     expect(screen.getByText('120 kg linh kiện điện tử')).toBeTruthy();
     expect(screen.getByText('Hàng dễ vỡ, bốc xếp nhẹ tay')).toBeTruthy();
 
-    const acceptBtn = screen.getByRole('button', { name: 'NHẬN ĐƠN NGAY' });
+    const acceptBtn = screen.getByRole('button', { name: 'NHẬN CUỐC NGAY' });
     await fireEvent.press(acceptBtn);
     expect(onAccept).toHaveBeenCalledWith('ord-incoming-101');
 
