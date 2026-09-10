@@ -847,6 +847,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     justifyContent: 'center',
+    minHeight: 44,
     paddingVertical: 6,
   },
   radiusBtnActive: {

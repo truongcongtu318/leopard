@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconBank, IconClock, IconEye, IconEyeOff, IconOrders, IconSecurityShield, IconTrophy, IconTxPayment, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconBank, IconChevron, IconClock, IconEye, IconEyeOff, IconOrders, IconSecurityShield, IconTrophy, IconTxPayment, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
 
 export type DriverTransaction = Readonly<{
   id: string;
@@ -214,7 +214,8 @@ export function DriverWalletScreen() {
               onPress={() => router.push('/wallet/bank-accounts')}
               style={styles.manageBankLink}
             >
-              <Text style={styles.manageBankLinkText}>Quản lý ›</Text>
+              <Text style={styles.manageBankLinkText}>Quản lý</Text>
+              <IconChevron color={colors.brand.background} direction="right" size={14} strokeWidth={2.5} />
             </Pressable>
           </View>
           {linkedBankAccounts.map((account) => {
@@ -518,8 +519,11 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   manageBankLink: {
-    minHeight: 44,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
     justifyContent: 'center',
+    minHeight: 44,
     paddingHorizontal: 8,
   },
   manageBankLinkText: {

@@ -588,10 +588,10 @@ const styles = StyleSheet.create({
   modalCloseBtn: {
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    borderRadius: 16,
-    height: 32,
+    borderRadius: 22,
     justifyContent: 'center',
-    width: 32,
+    minHeight: 44,
+    minWidth: 44,
   },
   modalFormContent: {
     gap: spacing.sm,

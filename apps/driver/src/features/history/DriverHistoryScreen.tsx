@@ -351,7 +351,8 @@ export function DriverHistoryScreen() {
                     <Text style={styles.signatureTitle}>Chữ ký xác nhận nhận hàng</Text>
                   </View>
                   <View style={styles.signatureCanvasPreview}>
-                    <Text style={styles.signaturePathPreview}>✓ Đã ký điện tử xác thực</Text>
+                    <IconCheck color="#059669" size={14} strokeWidth={2.5} />
+                    <Text style={styles.signaturePathPreview}>Đã ký điện tử xác thực</Text>
                   </View>
                   <Text style={styles.signerNameText}>
                     Người ký nhận: {selectedEpodTrip.signerName ?? 'Thủ kho nhận hàng'}
@@ -705,10 +706,10 @@ const styles = StyleSheet.create({
   modalCloseBtn: {
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    borderRadius: 16,
-    height: 32,
+    borderRadius: 22,
     justifyContent: 'center',
-    width: 32,
+    minHeight: 44,
+    minWidth: 44,
   },
   epodContent: {
     gap: spacing.md,
@@ -767,6 +768,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderStyle: 'dashed',
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
     height: 48,
     justifyContent: 'center',
   },
