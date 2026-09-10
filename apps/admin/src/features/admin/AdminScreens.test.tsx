@@ -7,19 +7,38 @@ import { AdminOverviewScreen } from './AdminOverviewScreen';
 import { createAdminPreviewView } from './fixtures';
 
 describe('Admin static operations screens', () => {
-  it('renders readiness, zero-safe metrics, exceptions and recent orders on overview', () => {
+  it('renders readiness, zero-safe metrics and recent orders on overview', () => {
     render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
 
-    expect(screen.getByRole('heading', { name: 'Tổng quan vận hành' })).toBeTruthy();
-    expect(screen.getByText('Liveness')).toBeTruthy();
-    expect(screen.getByText('Readiness')).toBeTruthy();
-    expect(screen.getByText('0')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Tổng quan vận hành', hidden: true })).toBeTruthy();
     expect(screen.getAllByText('LP-A-260815-101').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText('Bàn điều phối hiện tại').className).toContain('bg-neutral-text');
-    expect(screen.getByText('Tracking cần kiểm tra').closest('li')?.className).toContain(
-      'border-l-4',
-    );
+  });
+
+  it('renders KPI strip with BE numbers and formatted revenue', () => {
+    render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
+
+    const strip = screen.getByLabelText('Chỉ số tổng quan');
+    expect(strip).toBeTruthy();
+    expect(strip.textContent).toContain('Người dùng');
+    expect(strip.textContent).toContain('Đơn đang chạy');
+    expect(strip.textContent).toContain('Đội xe');
+    expect(strip.textContent).toContain('Doanh thu');
+  });
+
+  it('renders Bento map, orders table, status, OTD and revenue cards', () => {
+    render(<AdminOverviewScreen view={createAdminPreviewView('overview', 'ADM-OV-READY')} />);
+
+    // Bento Map Card
+    expect(screen.getByLabelText('Bản đồ điều phối thời gian thực')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Tìm kiếm đơn hàng, tài xế...')).toBeTruthy();
+    expect(screen.getByLabelText('Phóng to bản đồ')).toBeTruthy();
+    expect(screen.getByLabelText('Thu nhỏ bản đồ')).toBeTruthy();
+
+    // Bento Orders Table + right column widgets
+    expect(screen.getByText('Sổ điều phối đơn hàng')).toBeTruthy();
+    expect(screen.getByText('Cơ cấu trạng thái đơn')).toBeTruthy();
+    expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)')).toBeTruthy();
+    expect(screen.getByText('Doanh thu cước vận chuyển')).toBeTruthy();
   });
 
   it('keeps operational context for readiness and offline overview scenarios', () => {
@@ -31,7 +50,6 @@ describe('Admin static operations screens', () => {
         <AdminOverviewScreen view={createAdminPreviewView('overview', scenario)} />,
       );
       expect(screen.getByText(copy)).toBeTruthy();
-      expect(screen.getByRole('heading', { name: 'Ngoại lệ cần điều tra' })).toBeTruthy();
       rendered.unmount();
     }
   });
@@ -40,7 +58,7 @@ describe('Admin static operations screens', () => {
     render(<AdminOrderDetailScreen view={createAdminPreviewView('order-detail', 'ADM-DENIED')} />);
     expect(screen.getByText('Bạn không có quyền xem dữ liệu này')).toBeTruthy();
     expect(screen.queryByText(/LP-A-/)).toBeNull();
-    expect(screen.queryByText('Audit Rail')).toBeNull();
+    expect(screen.queryByText('Nhật ký kiểm toán')).toBeNull();
   });
 
   it('renders all canonical Order states in table and responsive rows', () => {
@@ -141,15 +159,15 @@ describe('Admin static operations screens', () => {
     expect(screen.getByRole('heading', { name: 'Đơn LP-A-260815-101' })).toBeTruthy();
     expect(screen.getByText(/ETA dự kiến/)).toBeTruthy();
     expect(screen.getByText(/Dữ liệu mô phỏng/)).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Tracking và vị trí gần nhất' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Media evidence' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Audit Rail' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Giám sát hành trình & Vị trí thực tế' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Hình ảnh xác nhận giao nhận' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Nhật ký kiểm toán' })).toBeTruthy();
     expect(screen.getByText('req-admin-demo-001')).toBeTruthy();
     expect(screen.queryByText(/https?:\/\//)).toBeNull();
     expect(screen.getByLabelText('Ngữ cảnh điều phối hiện tại').className).toContain(
-      'bg-neutral-text',
+      'shadow-sm',
     );
-    expect(screen.getByLabelText('Audit Rail — thao tác đặc quyền').className).toContain(
+    expect(screen.getByLabelText('Nhật ký kiểm toán — thao tác đặc quyền').className).toContain(
       'border-l-4',
     );
   });
@@ -158,7 +176,7 @@ describe('Admin static operations screens', () => {
     render(<AdminOrderDetailScreen view={createAdminPreviewView('order-detail', 'ADM-TRK-STALE')} />);
     expect(screen.getByText('Tracking cần làm mới')).toBeTruthy();
     expect(screen.getByText('Dữ liệu bản đồ có thể đã cũ')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Audit Rail' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Nhật ký kiểm toán' })).toBeTruthy();
   });
 
   it('shows persisted command success and its matching audit receipt', () => {

@@ -3,6 +3,7 @@ import {
   ScreenState,
   type OperationalAlertTone,
 } from '@leopard/ui';
+import { LayoutGrid } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import type {
@@ -28,7 +29,7 @@ export function AdminNotice({ notice }: Readonly<{ notice: AdminNoticeView }>) {
     >
       <p>{notice.message}</p>
       {notice.requestId ? (
-        <p className="mt-xxs font-mono text-xs break-all">Request ID: {notice.requestId}</p>
+        <p className="mt-xxs font-mono text-xs break-all">Mã yêu cầu: {notice.requestId}</p>
       ) : null}
     </OperationalAlert>
   );
@@ -51,34 +52,35 @@ export function AdminBreadcrumbs({
   previewContext?: AdminPreviewContext | undefined;
 }>) {
   return (
-    <nav aria-label="Đường dẫn" className="text-body-compact text-neutral-muted">
-      <ol className="m-0 flex flex-wrap items-center gap-xs p-0">
+    <nav aria-label="Đường dẫn" className="text-xs text-neutral-muted">
+      <ol className="m-0 flex flex-wrap items-center gap-1.5 p-0">
         <li className="list-none">
           <a
-            className="rounded-control underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-slate-600 hover:text-brand hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand font-medium motion-reduce:transition-none"
             href={createAdminPreviewHref('/admin', 'overview', previewContext)}
           >
+            <LayoutGrid className="w-3 h-3" strokeWidth={2} aria-hidden="true" />
             Tổng quan
           </a>
         </li>
-        <li aria-hidden="true" className="list-none">/</li>
+        <li aria-hidden="true" className="list-none text-slate-300">/</li>
         {screen === 'order-detail' ? (
           <>
             <li className="list-none">
               <a
-                className="rounded-control underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="inline-flex items-center rounded-lg px-2.5 py-1 text-slate-600 hover:text-brand hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand font-medium motion-reduce:transition-none"
                 href={createAdminPreviewHref('/admin/orders', 'orders', previewContext)}
               >
                 Đơn hàng
               </a>
             </li>
-            <li aria-hidden="true" className="list-none">/</li>
-            <li aria-current="page" className="list-none font-medium text-neutral-text break-all">
+            <li aria-hidden="true" className="list-none text-slate-300">/</li>
+            <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 break-all bg-white/70 rounded-lg shadow-2xs border border-white/60">
               {orderReference}
             </li>
           </>
         ) : (
-          <li aria-current="page" className="list-none font-medium text-neutral-text">
+          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
             {listLabel[screen]}
           </li>
         )}
@@ -94,6 +96,7 @@ export function AdminSurface({
   className = '',
   ariaLabel,
   variant = 'section',
+  icon,
 }: Readonly<{
   title: string;
   description?: string;
@@ -101,23 +104,31 @@ export function AdminSurface({
   className?: string;
   ariaLabel?: string;
   variant?: 'section' | 'panel' | 'signal';
+  icon?: ReactNode;
 }>) {
   const variantClass =
-    variant === 'panel'
-      ? 'rounded-card border border-neutral-border bg-neutral p-md'
-      : variant === 'signal'
-        ? 'border-l-4 border-brand bg-neutral-surface py-md pl-md pr-sm'
-        : 'border-t border-neutral-border pt-md';
+    variant === 'signal'
+      ? 'rounded-3xl border border-amber-200/80 bg-amber-50/70 p-5 sm:p-6 shadow-sm'
+      : 'rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm';
   return (
     <section
       aria-label={ariaLabel}
       className={`min-w-0 text-neutral-text ${variantClass} ${className}`}
     >
-      <header className="mb-sm">
-        <h2 className="text-section-title font-semibold break-words">{title}</h2>
-        {description ? (
-          <p className="mt-xxs text-body-compact text-neutral-muted break-words">{description}</p>
-        ) : null}
+      <header className="mb-5 flex items-start justify-between gap-3">
+        <div className="flex gap-3 min-w-0 flex-1">
+          {icon ? (
+            <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+              {icon}
+            </div>
+          ) : null}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 break-words leading-tight">{title}</h2>
+            {description ? (
+              <p className="mt-1 text-xs leading-relaxed text-slate-400 break-words">{description}</p>
+            ) : null}
+          </div>
+        </div>
       </header>
       {children}
     </section>
@@ -136,10 +147,19 @@ export function AdminDispatchSlab({
   return (
     <section
       aria-label={ariaLabel}
-      className="min-w-0 border-l-4 border-brand bg-neutral-text p-md text-brand-text"
+      className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 text-slate-800 shadow-sm"
     >
-      <p className="text-xs font-semibold tracking-wide text-brand-soft">{eyebrow}</p>
-      <div className="mt-sm min-w-0">{children}</div>
+      <div className="flex items-center gap-2.5 mb-4">
+        <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20 animate-pulse" />
+        <p className="text-xs font-bold tracking-[0.12em] text-brand uppercase">
+          {eyebrow}
+        </p>
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Trực tiếp
+        </span>
+      </div>
+      <div className="min-w-0">{children}</div>
     </section>
   );
 }
@@ -170,19 +190,19 @@ export function AdminPaginationLinks({
 }>) {
   if (totalPages <= 1) return null;
   return (
-    <nav aria-label={`Phân trang ${label}`} className="flex flex-wrap items-center justify-between gap-sm">
+    <nav aria-label={`Phân trang ${label}`} className="flex flex-wrap items-center justify-between gap-sm pt-3">
       {page > 1 ? (
         <a
-          className="inline-flex min-h-11 items-center rounded-control border border-neutral-border px-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="inline-flex min-h-10 items-center rounded-xl border border-slate-200/80 bg-white/90 px-4 text-xs font-semibold text-neutral-text shadow-2xs hover:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           href={hrefForPage(page - 1)}
         >
           Trang trước
         </a>
       ) : <span />}
-      <span className="text-body-compact text-neutral-muted">Trang {page} / {totalPages}</span>
+      <span className="text-xs font-medium text-neutral-muted">Trang {page} / {totalPages}</span>
       {page < totalPages ? (
         <a
-          className="inline-flex min-h-11 items-center rounded-control border border-neutral-border px-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="inline-flex min-h-10 items-center rounded-xl border border-slate-200/80 bg-white/90 px-4 text-xs font-semibold text-neutral-text shadow-2xs hover:bg-neutral-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           href={hrefForPage(page + 1)}
         >
           Trang sau
@@ -195,42 +215,66 @@ export function AdminPaginationLinks({
 export function AdminAuditRail({ audit }: Readonly<{ audit: AdminAuditRailView }>) {
   return (
     <aside
-      aria-label="Audit Rail — thao tác đặc quyền"
-      className="min-w-0 border-l-4 border-brand bg-neutral-surface p-md text-neutral-text"
+      aria-label="Nhật ký kiểm toán — thao tác đặc quyền"
+      className="min-w-0 rounded-[22px] sm:rounded-[26px] border-l-4 border-l-brand border border-white/80 bg-white/90 backdrop-blur-sm p-5 sm:p-6 shadow-xs text-neutral-text"
     >
-      <header className="mb-md border-b border-neutral-border pb-sm">
-        <h2 className="text-section-title font-semibold">Audit Rail</h2>
-        <p className="mt-xxs text-xs text-neutral-muted">Thao tác đặc quyền · Mới nhất trước</p>
+      <header className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-neutral-text">Nhật ký kiểm toán</h2>
+          <p className="mt-0.5 text-xs text-neutral-muted uppercase tracking-wider font-semibold">Thao tác đặc quyền · Mới nhất trước</p>
+        </div>
+        <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">ĐÃ KIỂM TOÁN</span>
       </header>
       {audit.state === 'error' ? (
         <ScreenState
           state="error"
-          title="Không thể tải audit"
-          message={audit.message ?? 'Không thể tải Audit Rail trong lần kiểm tra này.'}
+          title="Không thể tải nhật ký"
+          message={audit.message ?? 'Không thể tải nhật ký kiểm toán trong lần kiểm tra này.'}
         />
       ) : audit.state === 'empty' ? (
-        <p className="text-body-compact text-neutral-muted">Chưa có thao tác đặc quyền được ghi nhận.</p>
+        <p className="text-xs text-neutral-muted italic py-2">Chưa có thao tác đặc quyền được ghi nhận.</p>
       ) : audit.state === 'delayed' ? (
         <OperationalAlert title="Nhật ký đang đồng bộ" tone="info">
-          <p>{audit.message ?? 'Command đã persist nhưng audit entry chưa được trả về.'}</p>
+          <p>{audit.message ?? 'Thao tác đã lưu nhưng mục kiểm toán chưa được trả về.'}</p>
         </OperationalAlert>
       ) : (
-        <ol className="m-0 grid list-none gap-md p-0">
+        <ol className="m-0 grid list-none gap-3 p-0">
           {audit.entries.map((entry) => (
-            <li key={entry.id} className="min-w-0 border-l-2 border-brand pl-sm">
-              <div className="flex flex-wrap items-center gap-xs">
-                <span className="rounded-pill border border-success-border bg-success px-xs py-1 text-xs font-medium text-success-text">
+            <li key={entry.id} className="min-w-0 rounded-xl border border-slate-200/80 bg-[#f8fbff] p-3.5 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                <span className="rounded-full bg-success px-2 py-0.5 text-[11px] font-bold text-success-text border border-success-border">
                   {entry.outcomeLabel}
                 </span>
-                <h3 className="font-semibold break-words">{entry.actionLabel}</h3>
+                <time className="text-xs font-medium text-neutral-muted tabular-nums" dateTime={entry.dateTime}>
+                  {entry.timestampLabel}
+                </time>
               </div>
-              <dl className="mt-sm grid gap-xs text-body-compact">
-                <div><dt className="text-xs font-semibold text-neutral-muted">Actor</dt><dd className="mt-xxs break-words">{entry.actorLabel}</dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Target</dt><dd className="mt-xxs break-words">{entry.targetLabel}</dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Lý do đã sanitize</dt><dd className="mt-xxs whitespace-pre-wrap break-words">{entry.reason}</dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Thời gian</dt><dd className="mt-xxs"><time dateTime={entry.dateTime}>{entry.timestampLabel}</time></dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Request ID</dt><dd className="mt-xxs font-mono text-xs break-all">{entry.requestId}</dd></div>
-                <div><dt className="text-xs font-semibold text-neutral-muted">Audit ID</dt><dd className="mt-xxs font-mono text-xs break-all">{entry.auditId}</dd></div>
+              <h3 className="text-xs font-bold text-neutral-text break-words mb-2">{entry.actionLabel}</h3>
+              <dl className="grid gap-1.5 text-xs text-neutral-muted">
+                <div className="flex justify-between gap-2 border-t border-slate-200/60 pt-1.5">
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Người thực hiện</dt>
+                  <dd className="font-medium text-neutral-text text-right">{entry.actorLabel}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Đối tượng</dt>
+                  <dd className="font-medium text-neutral-text text-right">{entry.targetLabel}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Lý do đã kiểm duyệt</dt>
+                  <dd className="mt-0.5 rounded-xl bg-white p-2 text-xs text-neutral-text whitespace-pre-wrap break-words border border-slate-200/80 shadow-2xs">{entry.reason}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Thời gian</dt>
+                  <dd className="mt-xxs"><time dateTime={entry.dateTime}>{entry.timestampLabel}</time></dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Mã yêu cầu</dt>
+                  <dd className="font-mono text-xs text-neutral-text break-all">{entry.requestId}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-xs font-semibold text-neutral-muted uppercase">Mã kiểm toán</dt>
+                  <dd className="font-mono text-xs text-neutral-text break-all">{entry.auditId}</dd>
+                </div>
               </dl>
             </li>
           ))}

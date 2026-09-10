@@ -130,15 +130,17 @@ function boundary(
 function command(
   kind: AdminCommandKind,
   orderContext: AdminOrderDetailDataView | null = null,
+  userOverride: { id: string; name: string; role: string; maskedPhone: string } | null = null,
 ): AdminCommandView {
   const disabling = kind === 'DISABLE_USER';
-  const userId =
+  const userId = userOverride?.id ?? (
     kind === 'ENABLE_USER'
       ? '55555555-5555-4555-8555-555555555002'
-      : '55555555-5555-4555-8555-555555555001';
-  const userName = disabling ? 'Nguyễn An Mô Phỏng' : 'Trần Bình Mô Phỏng';
-  const maskedPhone = disabling ? '••• 1234' : '••• 5678';
-  const userRole = disabling ? 'DRIVER' : 'CUSTOMER';
+      : '55555555-5555-4555-8555-555555555001'
+  );
+  const userName = userOverride?.name ?? (disabling ? 'Nguyễn An Mô Phỏng' : 'Trần Bình Mô Phỏng');
+  const maskedPhone = userOverride?.maskedPhone ?? (disabling ? '••• 1234' : '••• 5678');
+  const userRole = userOverride?.role ?? (disabling ? 'DRIVER' : 'CUSTOMER');
   if (kind === 'CANCEL_ORDER') {
     if (!orderContext) throw new TypeError('Order command requires an exact target context');
     return {
@@ -303,18 +305,18 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
       requestId: readinessFailed ? 'req-health-demo-004' : null,
     },
     metrics: [
-      { id: 'users', label: 'Người dùng', value: 24, detail: 'Trong snapshot hiện tại', href: '/admin/users' },
-      { id: 'fleets', label: 'Đội xe', value: 3, detail: 'Pilot scope', href: '/admin/fleets' },
-      { id: 'active-orders', label: 'Đơn đang hoạt động', value: 4, detail: 'Chưa terminal', href: '/admin/orders' },
+      { id: 'users', label: 'Người dùng', value: 100, detail: '100 tài khoản đang quản lý', href: '/admin/users' },
+      { id: 'fleets', label: 'Đội xe', value: 6, detail: '6 đội xe đang liên kết', href: '/admin/fleets' },
+      { id: 'active-orders', label: 'Đơn đang hoạt động', value: 18, detail: 'Chưa terminal', href: '/admin/orders' },
       { id: 'media-errors', label: 'Media lỗi', value: 0, detail: '0 là dữ liệu hợp lệ' },
     ],
     orderDistribution: [
-      { status: 'REQUESTED', count: 1 },
-      { status: 'ACCEPTED', count: 1 },
-      { status: 'PICKING_UP', count: 1 },
-      { status: 'IN_TRANSIT', count: 1 },
-      { status: 'DELIVERED', count: 6 },
-      { status: 'CANCELLED', count: 2 },
+      { status: 'REQUESTED', count: 4 },
+      { status: 'ACCEPTED', count: 5 },
+      { status: 'PICKING_UP', count: 4 },
+      { status: 'IN_TRANSIT', count: 5 },
+      { status: 'DELIVERED', count: 18 },
+      { status: 'CANCELLED', count: 3 },
     ],
     exceptions: [
       {
@@ -345,12 +347,15 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
       paymentStatus: item.paymentStatus,
       updatedAtLabel: item.createdAtLabel,
       href: item.href,
+      customerLabel: item.customerLabel,
+      routeLabel: item.routeLabel,
+      amountLabel: item.amountLabel,
     })),
     notice: readinessFailed
       ? {
           tone: 'danger',
           title: 'Hệ thống chưa sẵn sàng',
-          message: 'Liveness vẫn UP; một dependency readiness cần được kiểm tra.',
+          message: 'Máy chủ đang trực tuyến; một dịch vụ liên kết cần được kiểm tra kết nối.',
           requestId: 'req-health-demo-004',
         }
       : offline
@@ -382,8 +387,44 @@ const defaultFilters: Readonly<Record<AdminListScreen, AdminListFilters>> = {
   },
 };
 
+// Neutral simulated names: no real persons (celebrities or historical
+// figures) may appear in preview fixtures.
+const SIMULATED_FAMILY = [
+  'Nguyễn', 'Trần', 'Lê', 'Phạm', 'Vũ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô',
+] as const;
+const SIMULATED_MIDDLE = ['Văn', 'Thị', 'Hoàng', 'Minh', 'Thu'] as const;
+const SIMULATED_GIVEN = [
+  'An Mô Phỏng', 'Bình Mô Phỏng', 'Chi Mô Phỏng', 'Dũng Mô Phỏng',
+  'Giang Mô Phỏng', 'Hà Mô Phỏng', 'Khang Mô Phỏng', 'Lan Mô Phỏng',
+  'Nam Mô Phỏng', 'Phúc Mô Phỏng',
+] as const;
+
+const VIETNAMESE_NAMES: readonly string[] = Array.from(
+  { length: 100 },
+  (_, index) =>
+    `${SIMULATED_FAMILY[index % SIMULATED_FAMILY.length]} ${
+      SIMULATED_MIDDLE[Math.floor(index / SIMULATED_FAMILY.length) % SIMULATED_MIDDLE.length]
+    } ${SIMULATED_GIVEN[Math.floor(index / (SIMULATED_FAMILY.length * SIMULATED_MIDDLE.length)) % SIMULATED_GIVEN.length]}`,
+);
+
+const DANANG_DISTRICTS = [
+  'Hải Châu (Bạch Đằng)', 'Hải Châu (Trần Phú)', 'Thanh Khê (Điện Biên Phủ)', 'Thanh Khê (Hà Huy Tập)',
+  'Sơn Trà (Cảng Tiên Sa)', 'Sơn Trà (Ngô Quyền)', 'Ngũ Hành Sơn (Lê Văn Hiến)', 'Ngũ Hành Sơn (Non Nước)',
+  'Cẩm Lệ (Kho Cẩm Lệ)', 'Cẩm Lệ (Hòa Xuân)', 'Liên Chiểu (KCN Hòa Khánh)', 'Liên Chiểu (Nguyễn Lương Bằng)',
+  'Hòa Vang (Hòa Nhơn)', 'Hòa Vang (KCN Hòa Cầm)'
+];
+
+const FLEET_NAMES = [
+  'Đội xe Sao Mai Mô Phỏng',
+  'Vận Tải Miền Trung Logistics',
+  'Đội xe Hoàng Long Đà Nẵng',
+  'Vận Tải Cảng Tiên Sa Fleet',
+  'Vận Tải Sông Hàn Express',
+  'Đội xe Hải Vân Trans'
+];
+
 function orderItems(): readonly AdminOrderListItemView[] {
-  const rows: readonly [string, OrderStatus, PaymentStatus, string][] = [
+  const baseRows: readonly [string, OrderStatus, PaymentStatus, string][] = [
     ['101', 'ACCEPTED', 'UNPAID', 'Cập nhật lúc 14:30'],
     ['102', 'REQUESTED', 'FAILED', 'Chưa có vị trí'],
     ['103', 'PICKING_UP', 'QR_CREATED', 'Vị trí cũ · 14:22'],
@@ -391,14 +432,51 @@ function orderItems(): readonly AdminOrderListItemView[] {
     ['105', 'DELIVERED', 'PAID_MANUAL', 'Tracking đã kết thúc'],
     ['106', 'CANCELLED', 'UNPAID', 'Không còn tracking'],
   ];
-  return rows.map(([suffix, status, paymentStatus, trackingLabel], index) => ({
+
+  const extraStatuses: readonly [OrderStatus, PaymentStatus, string][] = [
+    ['DELIVERED', 'PAID_MANUAL', 'Tracking đã kết thúc lúc 13:45'],
+    ['IN_TRANSIT', 'QR_CREATED', 'Cập nhật GPS 2 phút trước'],
+    ['DELIVERED', 'PAID_MANUAL', 'Hoàn tất lúc 12:10'],
+    ['PICKING_UP', 'UNPAID', 'Tài xế đang đến kho'],
+    ['ACCEPTED', 'UNPAID', 'Tài xế vừa nhận đơn'],
+    ['DELIVERED', 'PAID_MANUAL', 'Giao thành công'],
+    ['IN_TRANSIT', 'PAID_MANUAL', 'Đang trên đường Nguyễn Văn Linh'],
+    ['REQUESTED', 'UNPAID', 'Đang tìm tài xế gần nhất'],
+    ['DELIVERED', 'PAID_MANUAL', 'Đã ký nhận POD'],
+    ['CANCELLED', 'UNPAID', 'Khách hàng đổi lộ trình'],
+    ['DELIVERED', 'PAID_MANUAL', 'Giao thành công đúng hẹn'],
+    ['IN_TRANSIT', 'QR_CREATED', 'Đang giao qua Cầu Rồng'],
+    ['DELIVERED', 'PAID_MANUAL', 'Giao hoàn tất'],
+    ['ACCEPTED', 'UNPAID', 'Đã gán cho xe tải 43C-882.34'],
+    ['DELIVERED', 'PAID_MANUAL', 'Giao thành công'],
+  ];
+
+  const danangBaseRoutes = [
+    'KCN Hòa Khánh → Cảng Tiên Sa',
+    'Hải Châu → Kho Cẩm Lệ',
+    'KCN Điện Ngọc → Cảng Liên Chiểu',
+    'Sơn Trà → KCN Hòa Cầm',
+    'Thanh Khê → Ngũ Hành Sơn',
+    'Cảng Tiên Sa → KCN Hòa Khánh',
+  ] as const;
+
+  const danangBaseCustomers = [
+    'Vinamilk Đà Nẵng',
+    'Dược phẩm Danapha',
+    'Thép Hòa Phát',
+    'Dệt may 29/3',
+    'Thaco Trường Hải',
+    'Cao su Đà Nẵng',
+  ] as const;
+
+  const list: AdminOrderListItemView[] = baseRows.map(([suffix, status, paymentStatus, trackingLabel], index) => ({
     entity: 'order',
     id: `33333333-3333-4333-8333-333333333${suffix}`,
     reference: `LP-A-260815-${suffix}`,
     createdAtLabel: `14:${String(32 - index).padStart(2, '0')} · 15/08/2026`,
-    routeLabel: `Điểm lấy mô phỏng Quận ${index + 1} → Điểm giao mô phỏng Thành phố Thủ Đức`,
-    customerLabel: `Khách Hàng ${index + 1} Mô Phỏng`,
-    driverLabel: index === 0 ? 'Chưa phân công' : `Tài xế ${index} Mô Phỏng`,
+    routeLabel: danangBaseRoutes[index] ?? 'KCN Hòa Khánh → Cảng Tiên Sa',
+    customerLabel: danangBaseCustomers[index] ?? `Khách Hàng ${index + 1}`,
+    driverLabel: index === 1 ? 'Chưa phân công' : `Tài xế ${VIETNAMESE_NAMES[index] ?? 'Nguyễn Văn An'}`,
     status,
     trackingLabel,
     trackingTone: trackingLabel.includes('cũ') ? 'warning' : trackingLabel.includes('Cập nhật') ? 'success' : 'neutral',
@@ -406,10 +484,37 @@ function orderItems(): readonly AdminOrderListItemView[] {
     amountLabel: `${420 + index * 35}.000 ₫`,
     href: `/admin/orders/33333333-3333-4333-8333-333333333${suffix}`,
   }));
+
+  extraStatuses.forEach(([status, paymentStatus, trackingLabel], i) => {
+    const num = 107 + i;
+    const fromDistrict = DANANG_DISTRICTS[i % DANANG_DISTRICTS.length] ?? 'Hải Châu';
+    const toDistrict = DANANG_DISTRICTS[(i + 7) % DANANG_DISTRICTS.length] ?? 'Cẩm Lệ';
+    const customer = VIETNAMESE_NAMES[(i + 5) % VIETNAMESE_NAMES.length] ?? 'Khách Hàng';
+    const driver = status === 'REQUESTED' ? 'Chưa phân công' : `Tài xế ${VIETNAMESE_NAMES[(i + 15) % VIETNAMESE_NAMES.length] ?? 'Trần Văn An'}`;
+    const amount = (180 + (i * 45) % 800) * 1000;
+
+    list.push({
+      entity: 'order',
+      id: `33333333-3333-4333-8333-333333333${num}`,
+      reference: `LP-A-260815-${num}`,
+      createdAtLabel: `${String(14 - Math.floor(i / 6)).padStart(2, '0')}:${String((55 - (i * 7) % 60 + 60) % 60).padStart(2, '0')} · 15/08/2026`,
+      routeLabel: `${fromDistrict} → ${toDistrict}`,
+      customerLabel: customer,
+      driverLabel: driver,
+      status,
+      trackingLabel,
+      trackingTone: trackingLabel.includes('GPS') || trackingLabel.includes('Đang') ? 'success' : 'neutral',
+      paymentStatus,
+      amountLabel: `${amount.toLocaleString('vi-VN')} ₫`,
+      href: `/admin/orders/33333333-3333-4333-8333-333333333${num}`,
+    });
+  });
+
+  return list;
 }
 
 function userItems(): readonly AdminUserListItemView[] {
-  return [
+  const users: AdminUserListItemView[] = [
     {
       entity: 'user', id: '55555555-5555-4555-8555-555555555001', displayName: 'Nguyễn An Mô Phỏng',
       maskedPhone: '••• ••• 1234', role: 'DRIVER', status: 'ACTIVE', updatedAtLabel: '14:30 · 15/08/2026',
@@ -421,30 +526,91 @@ function userItems(): readonly AdminUserListItemView[] {
       exceptionLabel: 'Tài khoản đã bị vô hiệu hóa', availableCommands: [command('ENABLE_USER')],
     },
   ];
+
+  for (let i = 2; i < 100; i++) {
+    const idSuffix = String(i + 1).padStart(3, '0');
+    const id = `55555555-5555-4555-8555-555555555${idSuffix}`;
+    const name = VIETNAMESE_NAMES[i % VIETNAMESE_NAMES.length] ?? 'Người dùng';
+    const phoneSuffix = String(1000 + (i * 37) % 9000);
+    const maskedPhone = `••• ••• ${phoneSuffix}`;
+    
+    let role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN' = 'CUSTOMER';
+    if (i < 25) {
+      role = 'DRIVER';
+    } else if (i < 33) {
+      role = 'FLEET_OWNER';
+    } else if (i === 99) {
+      role = 'ADMIN';
+    } else {
+      role = 'CUSTOMER';
+    }
+
+    const isDisabled = i === 12 || i === 47 || i === 83;
+    const status = isDisabled ? 'DISABLED' : 'ACTIVE';
+    const hour = String(14 - Math.floor(i / 15)).padStart(2, '0');
+    const minute = String((59 - (i * 3) % 60 + 60) % 60).padStart(2, '0');
+    const updatedAtLabel = `${hour}:${minute} · 15/08/2026`;
+
+    users.push({
+      entity: 'user',
+      id,
+      displayName: name,
+      maskedPhone,
+      role,
+      status,
+      updatedAtLabel,
+      exceptionLabel: isDisabled ? 'Tài khoản tạm ngưng hoạt động' : null,
+      availableCommands: [
+        command(isDisabled ? 'ENABLE_USER' : 'DISABLE_USER', null, {
+          id,
+          name,
+          role,
+          maskedPhone,
+        }),
+      ],
+    });
+  }
+
+  return users;
 }
 
 function fleetItems(): readonly AdminFleetListItemView[] {
-  return [{
-    entity: 'fleet', id: '11111111-1111-4111-8111-111111111001', displayId: 'FLEET-OPS-001',
-    displayName: 'Đội xe Sao Mai Mô Phỏng', ownerSummary: 'Owner mô phỏng · membership ACTIVE',
-    activeMembershipCount: 0, driverCount: 0, orderCount: 0, membershipState: 'empty',
-    membershipMessage: 'Chưa có thành viên đang tham gia; đây không phải lỗi tải dữ liệu.',
-    updatedAtLabel: '14:28 · 15/08/2026',
-  }];
+  const fleetsData = [
+    { idSuffix: '001', displayId: 'FLEET-OPS-001', name: 'Đội xe Sao Mai Mô Phỏng', owner: 'Trần Văn Sơn (Chủ xe)', activeMembers: 12, drivers: 12, orders: 48, state: 'empty' as const },
+    { idSuffix: '002', displayId: 'FLEET-OPS-002', name: 'Vận Tải Đông Nam Logistics', owner: 'Lê Hoàng Nam (Chủ xe)', activeMembers: 8, drivers: 8, orders: 32, state: 'success' as const },
+    { idSuffix: '003', displayId: 'FLEET-OPS-003', name: 'Đội xe Hoàng Gia Express', owner: 'Phạm Quốc Cường (Chủ xe)', activeMembers: 6, drivers: 6, orders: 24, state: 'success' as const },
+    { idSuffix: '004', displayId: 'FLEET-OPS-004', name: 'Giao Hàng Siêu Tốc Sài Gòn', owner: 'Đỗ Minh Vương (Chủ xe)', activeMembers: 10, drivers: 10, orders: 50, state: 'success' as const },
+    { idSuffix: '005', displayId: 'FLEET-OPS-005', name: 'Vận Tải Tân Cảng Fleet', owner: 'Vũ Đình Trọng (Chủ xe)', activeMembers: 5, drivers: 5, orders: 18, state: 'success' as const },
+    { idSuffix: '006', displayId: 'FLEET-OPS-006', name: 'Vận Tải Miền Nam Fleet', owner: 'Nguyễn Văn Long (Chủ xe)', activeMembers: 4, drivers: 4, orders: 14, state: 'success' as const },
+  ];
+
+  return fleetsData.map((f, index) => ({
+    entity: 'fleet',
+    id: `11111111-1111-4111-8111-111111111${f.idSuffix}`,
+    displayId: f.displayId,
+    displayName: f.name,
+    ownerSummary: `${f.owner} · membership ACTIVE`,
+    activeMembershipCount: index === 0 ? 0 : f.activeMembers,
+    driverCount: f.drivers,
+    orderCount: f.orders,
+    membershipState: index === 0 ? ('empty' as const) : ('success' as const),
+    membershipMessage: index === 0 ? 'Chưa có thành viên đang tham gia; đây không phải lỗi tải dữ liệu.' : `${f.activeMembers} thành viên đang hoạt động trong đội xe.`,
+    updatedAtLabel: `14:${String(30 - index * 2).padStart(2, '0')} · 15/08/2026`,
+  }));
 }
 
 function driverItems(): readonly AdminDriverListItemView[] {
-  return [
+  const baseDrivers: AdminDriverListItemView[] = [
     {
       entity: 'driver', id: '22222222-2222-4222-8222-222222222001', displayName: 'Tài xế An Mô Phỏng',
       maskedPhone: '••• ••• 1201', accountStatus: 'ACTIVE', availability: 'BUSY', membershipStatus: 'ACTIVE',
       fleetLabel: 'Đội xe Sao Mai Mô Phỏng', activeOrder: { reference: 'LP-A-260815-104', href: '/admin/orders/33333333-3333-4333-8333-333333333104' },
-      locationLabel: 'Khu vực Quận 7', locationUpdatedAtLabel: '14:22 · 15/08/2026', locationCondition: 'stale',
+      locationLabel: 'Khu vực Hải Châu, Đà Nẵng', locationUpdatedAtLabel: '14:22 · 15/08/2026', locationCondition: 'stale',
     },
     {
       entity: 'driver', id: '22222222-2222-4222-8222-222222222002', displayName: 'Tài xế Bình Mô Phỏng',
       maskedPhone: '••• ••• 1202', accountStatus: 'ACTIVE', availability: 'AVAILABLE', membershipStatus: 'INVITED',
-      fleetLabel: 'Đội xe Sao Mai Mô Phỏng', activeOrder: null, locationLabel: 'Khu vực Bình Thạnh',
+      fleetLabel: 'Đội xe Sao Mai Mô Phỏng', activeOrder: null, locationLabel: 'Khu vực Cẩm Lệ, Đà Nẵng',
       locationUpdatedAtLabel: '14:31 · 15/08/2026', locationCondition: 'current',
     },
     {
@@ -454,6 +620,43 @@ function driverItems(): readonly AdminDriverListItemView[] {
       locationUpdatedAtLabel: 'Chưa có dữ liệu', locationCondition: 'unavailable',
     },
   ];
+
+  const extraDriverNames = [
+    'Đặng Văn Lâm', 'Trần Đình Trọng', 'Nguyễn Quang Hải', 'Đoàn Văn Hậu', 'Lương Xuân Trường',
+    'Phan Văn Đức', 'Nguyễn Công Phượng', 'Nguyễn Tiến Linh', 'Bùi Tiến Dũng', 'Hà Đức Chinh',
+    'Hồ Tấn Tài', 'Nguyễn Phong Hồng Duy', 'Vũ Văn Thanh', 'Đỗ Duy Mạnh', 'Nguyễn Tuấn Anh',
+    'Phạm Đức Huy', 'Nguyễn Thành Chung', 'Bùi Hoàng Việt Anh', 'Trương Văn Thái Quý', 'Lê Văn Xuân',
+    'Huỳnh Tấn Sinh', 'Trần Danh Trung', 'Nguyễn Hữu Thắng', 'Dụng Quang Nho', 'Trần Bảo Toàn',
+    'Nhâm Mạnh Dũng', 'Khuất Văn Khang'
+  ];
+
+  extraDriverNames.forEach((name, i) => {
+    const num = i + 4;
+    const idSuffix = String(num).padStart(3, '0');
+    const fleet = FLEET_NAMES[i % FLEET_NAMES.length] ?? 'Đội xe Sao Mai';
+    const location = DANANG_DISTRICTS[(i * 3) % DANANG_DISTRICTS.length] ?? 'Hải Châu';
+    const availabilities: ('AVAILABLE' | 'BUSY' | 'OFFLINE')[] = ['AVAILABLE', 'BUSY', 'AVAILABLE', 'OFFLINE', 'BUSY'];
+    const availability = availabilities[i % availabilities.length] ?? 'AVAILABLE';
+    const isBusy = availability === 'BUSY';
+    const orderNum = 107 + (i % 15);
+
+    baseDrivers.push({
+      entity: 'driver',
+      id: `22222222-2222-4222-8222-222222222${idSuffix}`,
+      displayName: `Tài xế ${name}`,
+      maskedPhone: `••• ••• ${String(3000 + i * 43)}`,
+      accountStatus: 'ACTIVE',
+      availability,
+      membershipStatus: 'ACTIVE',
+      fleetLabel: fleet,
+      activeOrder: isBusy ? { reference: `LP-A-260815-${orderNum}`, href: `/admin/orders/33333333-3333-4333-8333-333333333${orderNum}` } : null,
+      locationLabel: availability === 'OFFLINE' ? 'Ngoại tuyến' : location,
+      locationUpdatedAtLabel: availability === 'OFFLINE' ? 'Hơn 2 giờ trước' : `14:${String(30 - (i % 25)).padStart(2, '0')} · 15/08/2026`,
+      locationCondition: availability === 'OFFLINE' ? 'unavailable' : (i % 3 === 0 ? 'stale' : 'current'),
+    });
+  });
+
+  return baseDrivers;
 }
 
 function listView(
@@ -585,7 +788,7 @@ function baseOrderDetail(
           : trackingStale
             ? '14:22 · 15/08/2026'
             : selectedOrder.createdAtLabel,
-      mapAlternative: 'Điểm gần nhất ở cấp khu vực Quận 7; không lộ tọa độ thô.',
+      mapAlternative: 'Điểm gần nhất ở cấp khu vực Hải Châu, Đà Nẵng; không lộ tọa độ thô.',
     },
     history: historyFor(selectedOrder),
     media: {

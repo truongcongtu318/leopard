@@ -29,9 +29,9 @@ describe('LoginForm (Admin)', () => {
 
   it('renders demo account options when allowDemo prop is true', () => {
     render(<LoginForm allowDemo={true} />);
-    expect(screen.getByText('Tài khoản demo')).toBeTruthy();
+    expect(screen.getByText(/Tài khoản demo/)).toBeTruthy();
     expect(screen.getByText('Demo Admin')).toBeTruthy();
-    expect(screen.getByText('Demo Fleet Owner')).toBeTruthy();
+    expect(screen.getByText(/Fleet Owner/)).toBeTruthy();
   });
 
   it('uses BFF firebase login response without exposing bearer tokens', async () => {

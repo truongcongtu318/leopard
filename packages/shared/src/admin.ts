@@ -26,6 +26,7 @@ export interface AdminFleetSummaryDto {
   name: string;
   createdAt: string;
   driversCount: number;
+  activeOrdersCount: number;
 }
 
 export interface AdminFleetQuery extends PageQuery {

@@ -11,7 +11,8 @@ import type {
   FleetOrderSummaryDto,
   FleetOrderQuery,
 } from '@leopard/shared';
-import type { Prisma, User, Fleet, DriverProfile, Order } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import type { User, Fleet, DriverProfile, Order } from '@prisma/client';
 import type { Role, UserStatus, OrderStatus, FleetMemberStatus } from '@prisma/client';
 
 @Injectable()
@@ -59,7 +60,7 @@ export class AdminQueryService {
 
     const items: AdminUserSummaryDto[] = users.map((u: User) => ({
       id: u.id,
-      phone: u.phone ?? '',
+      phone: u.phone,
       role: u.role,
       status: u.status,
       createdAt: u.createdAt.toISOString(),
@@ -88,11 +89,47 @@ export class AdminQueryService {
     ]);
 
     type FleetWithCount = Fleet & { _count: { memberships: number } };
+    const fleetIds = fleets.map((f) => f.id);
+    const activeMemberships =
+      fleetIds.length > 0
+        ? await this.prisma.fleetMember.findMany({
+            where: { fleetId: { in: fleetIds }, role: 'DRIVER', status: 'ACTIVE' },
+            select: { fleetId: true, userId: true },
+          })
+        : [];
+    const driverIdsByFleet = new Map<string, string[]>();
+    for (const membership of activeMemberships) {
+      const list = driverIdsByFleet.get(membership.fleetId) ?? [];
+      list.push(membership.userId);
+      driverIdsByFleet.set(membership.fleetId, list);
+    }
+    const allDriverIds = [...new Set(activeMemberships.map((m) => m.userId))];
+    const activeOrderGroups =
+      allDriverIds.length > 0
+        ? await this.prisma.order.groupBy({
+            by: ['driverId'],
+            _count: { _all: true },
+            where: {
+              driverId: { in: allDriverIds },
+              status: { notIn: ['DELIVERED', 'CANCELLED'] },
+            },
+          })
+        : [];
+    const activeOrdersByDriver = new Map(
+      activeOrderGroups
+        .filter((g): g is typeof g & { driverId: string } => g.driverId !== null)
+        .map((g) => [g.driverId, g._count._all]),
+    );
+
     const items: AdminFleetSummaryDto[] = fleets.map((f: FleetWithCount) => ({
       id: f.id,
       name: f.name,
       createdAt: f.createdAt.toISOString(),
       driversCount: f._count.memberships,
+      activeOrdersCount: (driverIdsByFleet.get(f.id) ?? []).reduce(
+        (sum, driverId) => sum + (activeOrdersByDriver.get(driverId) ?? 0),
+        0,
+      ),
     }));
 
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
@@ -113,20 +150,32 @@ export class AdminQueryService {
         where,
         skip,
         take: pageSize,
-        include: { driverProfile: true },
+        include: {
+          driverProfile: true,
+          fleetMemberships: {
+            where: { role: 'DRIVER', status: { in: ['INVITED', 'ACTIVE'] } },
+            include: { fleet: { select: { name: true } } },
+            take: 1,
+          },
+        },
         orderBy: { createdAt: 'desc' },
       }),
     ]);
 
-    type UserWithProfile = User & { driverProfile: DriverProfile | null };
-    const items: FleetDriverSummaryDto[] = users.map((u: UserWithProfile) => ({
+    type DriverWithRelations = User & {
+      driverProfile: DriverProfile | null;
+      fleetMemberships: Array<{ status: string; fleet: { name: string } }>;
+    };
+    const items: FleetDriverSummaryDto[] = users.map((u: DriverWithRelations) => ({
       id: u.id,
-      name: u.phone ?? '',
-      phone: u.phone ?? '',
+      name: u.phone,
+      phone: u.phone,
       status: u.status,
       availability: u.driverProfile?.availability ?? 'OFFLINE',
       vehicleType: u.driverProfile?.vehicleType ?? 'MOTORBIKE',
       lastKnownAt: u.driverProfile?.lastKnownAt?.toISOString() ?? null,
+      membershipStatus: u.fleetMemberships[0]?.status ?? null,
+      fleetName: u.fleetMemberships[0]?.fleet.name ?? null,
     }));
 
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
@@ -153,22 +202,67 @@ export class AdminQueryService {
         where,
         skip,
         take: pageSize,
-        include: { driver: true },
+        include: {
+          driver: true,
+          customer: { select: { phone: true } },
+          stops: { orderBy: { sequence: 'asc' } },
+          paymentIntents: { orderBy: { createdAt: 'desc' }, take: 1 },
+        },
         orderBy: { createdAt: 'desc' },
       }),
     ]);
 
-    type OrderWithDriver = Order & { driver: User | null };
-    const items: FleetOrderSummaryDto[] = orders.map((o: OrderWithDriver) => ({
-       id: o.id,
-       code: o.id.split('-')[0]?.toUpperCase() ?? '',
+    type OrderWithRelations = Order & {
+      driver: User | null;
+      customer: { phone: string };
+      stops: Array<{ id: string; type: string; sequence: number; address: string }>;
+      paymentIntents: Array<{ status: string }>;
+    };
+    // ponytail: one raw query for all stop coords (N+1 findMany per order if upgraded naively)
+    const orderIds = orders.map((o) => o.id);
+    const stopCoords: Array<{ orderId: string; type: string; lat: number | null; lng: number | null }> =
+      orderIds.length > 0
+        ? await this.prisma.$queryRaw`
+            SELECT "orderId", type,
+              ST_Y(location::geometry) as lat,
+              ST_X(location::geometry) as lng
+            FROM "OrderStop"
+            WHERE "orderId" IN (${Prisma.join(orderIds.map((id) => Prisma.sql`${id}::uuid`))})
+          `
+        : [];
+    const coordsByOrder = new Map<string, typeof stopCoords>();
+    for (const row of stopCoords) {
+      const list = coordsByOrder.get(row.orderId) ?? [];
+      list.push(row);
+      coordsByOrder.set(row.orderId, list);
+    }
+    const items: FleetOrderSummaryDto[] = orders.map((o: OrderWithRelations) => {
+      const rawId = o.id.replace(/-/g, '');
+      const suffix = rawId.slice(-4).toUpperCase();
+      const pickup = o.stops.find((s) => s.type === 'PICKUP');
+      const dropoff = [...o.stops].reverse().find((s) => s.type === 'DROPOFF');
+      const pickupCoord = coordsByOrder.get(o.id)?.find((c) => c.type === 'PICKUP');
+      const dropoffCoord = coordsByOrder.get(o.id)?.find((c) => c.type === 'DROPOFF');
+      return {
+        id: o.id,
+        code: `LP-${suffix}`,
        status: o.status,
        driverId: o.driverId ?? undefined,
-       driverName: o.driver?.phone ?? undefined,
+       driverName: o.driver?.phone,
+       customerPhone: o.customer.phone,
+       pickupLabel: pickup?.address ?? '',
+       pickupLat: pickupCoord?.lat ?? null,
+       pickupLng: pickupCoord?.lng ?? null,
+       dropoffLabel: dropoff?.address ?? '',
+       dropoffLat: dropoffCoord?.lat ?? null,
+       dropoffLng: dropoffCoord?.lng ?? null,
+       paymentStatus: o.paymentIntents[0]?.status ?? 'UNPAID',
        priceVnd: o.priceVnd ?? 0,
        createdAt: o.createdAt.toISOString(),
+       updatedAt: o.updatedAt.toISOString(),
        distanceMeters: o.distanceMeters ?? 0,
-    }));
+     };
+    });
 
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }

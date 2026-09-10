@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Building2, LayoutGrid, Package, ShieldCheck, Users } from 'lucide-react';
 
 export interface NavItem {
   label: string;
@@ -12,6 +13,7 @@ export interface RoleNavigationProps {
   currentPath: string;
   ariaLabel?: string;
   tone?: 'light' | 'dark';
+  orientation?: 'vertical' | 'horizontal';
 }
 
 function findCurrentHref(items: readonly NavItem[], currentPath: string) {
@@ -28,17 +30,55 @@ function findCurrentHref(items: readonly NavItem[], currentPath: string) {
   }, undefined);
 }
 
+const iconClass = 'h-5 w-5 shrink-0';
+
+function getNavIcon(href: string) {
+  if (href.endsWith('/orders')) return <Package className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/users')) return <Users className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/fleets')) return <Building2 className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/drivers')) return <ShieldCheck className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  return <LayoutGrid className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+}
+
 export function RoleNavigation({
   items,
   currentPath,
   ariaLabel = 'Điều hướng theo vai trò',
   tone = 'light',
+  orientation = 'vertical',
 }: RoleNavigationProps) {
   const currentHref = findCurrentHref(items, currentPath);
 
+  if (orientation === 'horizontal') {
+    return (
+      <nav aria-label={ariaLabel} className="hidden md:flex items-center">
+        <ul className="m-0 list-none flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100/70 rounded-full text-xs font-medium text-slate-600">
+          {items.map((item) => {
+            const isActive = currentHref === item.href;
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex min-h-8 items-center px-3.5 py-1.5 rounded-full transition-all motion-reduce:transition-none ${
+                    isActive
+                      ? 'bg-slate-900 text-white font-semibold shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    );
+  }
+
   return (
-    <nav aria-label={ariaLabel}>
-      <ul className="m-0 list-none space-y-xs p-0">
+    <nav aria-label={ariaLabel} className="space-y-1 py-1">
+      <ul className="m-0 list-none space-y-1 p-0">
         {items.map((item) => {
           const isActive = currentHref === item.href;
 
@@ -47,17 +87,16 @@ export function RoleNavigation({
               <Link
                 href={item.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex min-h-11 items-center rounded-control px-md py-xs text-body-compact transition-colors motion-reduce:transition-none ${
+                className={`flex min-h-11 items-center gap-3 rounded-xl border-l-4 px-3.5 py-2.5 text-xs font-semibold transition-colors motion-reduce:transition-none ${
                   isActive
-                    ? tone === 'dark'
-                      ? 'border-l-4 border-brand-soft bg-brand font-semibold text-brand-text'
-                      : 'bg-active font-semibold text-active-text'
-                    : tone === 'dark'
-                      ? 'text-brand-soft hover:bg-brand/30 hover:text-brand-text'
-                      : 'text-neutral-muted hover:bg-neutral-surface hover:text-neutral-text'
+                    ? 'border-brand bg-slate-900 text-white shadow-xs'
+                    : 'border-transparent text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
                 }`}
               >
-                {item.label}
+                <span aria-hidden="true" className={isActive ? 'text-brand-soft' : undefined}>
+                  {getNavIcon(item.href)}
+                </span>
+                <span className="flex-1">{item.label}</span>
               </Link>
             </li>
           );

@@ -37,26 +37,25 @@ Operational clarity có nghĩa là:
   Driver ưu tiên current state và đúng một next action.
 - UI chỉ phản ánh permission, lifecycle, giá, ETA và payment state do backend trả về.
 
-### 1.1 Visual language — Dispatch Control / Road Ledger
+### 1.1 Visual language — NexaFleet Modern Bento Dispatch Console
 
 `Operational clarity` phải nhìn thấy được trong composition, không chỉ tồn tại trong
-component API. Visual language của LEOPARD được gọi là **Dispatch Control / Road
-Ledger**: giao diện giống một sổ điều phối hiện đại, nơi tuyến đường, trạng thái hiện
-tại và ngoại lệ tạo thành cấu trúc chính.
+component API. Visual language của LEOPARD trên nền tảng web điều hành (Admin và Fleet)
+được nâng cấp toàn diện theo chuẩn **NexaFleet Modern Bento Dispatch Console**: giao diện bàn điều phối
+logistics thông minh, tinh tế với hệ thống thẻ bento trắng nổi khối trên nền xám sáng thanh lịch,
+kết hợp bản đồ Dark Mode thời gian thực và các khối telemetry giàu tính trực quan.
 
 | Layer            | Cách thể hiện                                                                                | Không được làm                                      |
 | ---------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Work canvas      | Nền neutral dịu; surface trắng chỉ dùng cho vùng cần tách khỏi canvas                        | Phủ toàn màn hình bằng các card viền giống nhau     |
-| Dispatch slab    | Một vùng ink/brand tương phản cao cho active trip, current task hoặc context quan trọng nhất | Dùng slab như hero marketing hoặc lặp ở mọi section |
-| Signal rail      | Rail `3–4 px` ở cạnh trái cho scope, exception hoặc freshness state                          | Dùng màu không kèm label/copy                       |
-| Route instrument | Route Spine/schematic là motif chức năng xuyên list, form và detail                          | Để map fallback thành hình chữ nhật trống           |
-| Data strip       | Giá, ETA, timestamp, count dùng tabular numerals và baseline thẳng hàng                      | Rải metadata thành nhiều pill/card nhỏ              |
+| Modern Canvas    | Nền xám sáng tối giản hiện đại (`#F4F5F7` / `#F8FAFC`), tạo độ tương phản cao cho thẻ bento | Dùng màu nền quá sặc sỡ hoặc hiệu ứng tối mù mịt    |
+| Elevated Cards   | Thẻ trắng tinh khôi (`bg-white`), bo góc `rounded-3xl` (24–28px), viền mỏng `border-slate-100`, shadow êm (`shadow-xs` / `shadow-sm`)| Dùng viền hộp thô cứng hoặc bóng mờ quá đà che nội dung |
+| Topbar & Dock    | Header nổi bo góc với logo LEOPARD, cụm pill navigation trung tâm với tab active đen tuyền (`bg-slate-900 text-white rounded-full`), chuông tròn và user capsule | Che khuất tầm nhìn bản đồ hoặc lạm dụng menu đa cấp |
+| Real-time Map    | Bản đồ Dark Mode vector trực quan hóa mạng lưới logistics Đà Nẵng, thanh search kính mờ, zoom controls và marker bưu kiện 3D / selected pill xanh lục | Để map fallback thành hình chữ nhật trống           |
+| Bento Widgets    | Bộ 5 widget bento chuẩn: Map tối, Bảng đơn hàng có pill filter, Status Overview (thanh phân đoạn 4 màu), Fulfillment (cột xanh lục), và Revenue (gradient hoàng hôn + sóng trắng) | Dùng biểu đồ giả không gắn với nghiệp vụ vận hành   |
 
-Tỷ lệ thị giác mặc định là **neutral canvas chiếm đa số, ink tạo khung, brand dẫn
-đường và amber chỉ báo ngoại lệ**. Màu semantic hiện có vẫn là source of truth; role
-không tạo palette riêng. Typography dùng ba nhịp rõ: eyebrow/micro-label, heading có
-trọng lượng và value/tabular numerals. Divider và whitespace phân nhóm trước khi dùng
-border; shadow chỉ dành cho layer nổi thật.
+Tỷ lệ thị giác mặc định là **canvas xám sáng tối giản làm nền, thẻ trắng tinh khôi bo góc lớn tạo không gian làm việc,
+tab và filter active dùng pill đen tuyền tương phản cao, emerald chỉ báo vận chuyển và hiệu suất, magenta chỉ báo đã giao,
+amber/coral cho xếp/dỡ hàng, và gradient hoàng hôn cho doanh thu**.
 
 Silhouette theo role:
 
@@ -65,12 +64,13 @@ Silhouette theo role:
 - **Driver — Field Cockpit:** active trip/current task nằm trên dispatch slab tương
   phản cao; next action ở vùng ngón cái; tracking/proof là signal module nhìn một lần
   biết có đang chặn hoàn tất hay không.
-- **Fleet — Scope Ledger:** fleet scope rail luôn xuất hiện trước dữ liệu riêng tư;
-  exception và availability quan trọng hơn KPI trang trí; route/list/map có selection
-  và hierarchy chung.
-- **Admin — Investigation Console:** filter/result là workbench, detail dùng split
-  investigation + Audit Rail; command nằm trong vùng capability rõ, không trộn với
-  metadata đọc-only.
+- **Fleet — Bento Scope Ledger:** Bố cục Bento Dispatch Console chuẩn NexaFleet với
+  `FleetScopeRail` bảo toàn phạm vi đội xe; bản đồ, bảng đơn hàng, chỉ số trạng thái và doanh thu
+  được giới hạn chuẩn xác theo các phương tiện và đơn hàng thuộc đội xe.
+- **Admin — NexaFleet Bento Dispatch Console:** Bố cục điều phối 2 cột thông minh:
+  Cột trái gồm Bản đồ Dark Mode real-time & Thẻ bảng đơn hàng tích hợp bộ lọc pill;
+  Cột phải gồm Thẻ Status Overview (thanh phân đoạn 4 màu liên hoàn), Thẻ Fulfillment Performance
+  (cột đứng xanh lục) và Thẻ Doanh thu vận hành (gradient hoàng hôn ấm áp kèm đường sóng trắng mềm mại).
 
 Responsive không chỉ là “không overflow”. Tại `768–1023 px`, table không được giữ
 `5–6` cột semantic rồi ép badge/text; chỉ giữ `3–4` cột quyết định hoặc chuyển sang
@@ -132,6 +132,12 @@ Spine là hai biểu diễn bổ trợ: bản đồ cho không gian, spine cho t
 
 ### 4.1 Semantic colors
 
+> **Wave 5 palette change:** `brand.*` chuyển từ sky (`#075985`) sang teal
+> (`#0F766E`, soft `#CCFBF1`/`#134E4A`). WCAG AA đã kiểm chứng cho cả hai cặp
+> foreground/background (5,47:1 và >7:1). Áp dụng web admin trước; mobile đồng
+> bộ theo change request riêng. `info.*` giữ nguyên hue sky vì là semantic
+> riêng biệt.
+
 Các giá trị dưới đây là baseline đã có trên mobile và package web. Component chỉ
 consume semantic role; không chọn màu theo cảm tính hoặc theo tên hue.
 
@@ -142,10 +148,10 @@ consume semantic role; không chọn màu theo cảm tính hoặc theo tên hue.
 | `neutral.text`         | `#17202A`                     | Nội dung chính                                 |
 | `neutral.mutedText`    | `#4B5563`                     | Metadata và helper text                        |
 | `neutral.border`       | `#6B7280`                     | Border có thể nhận biết trên nền sáng          |
-| `brand.background`     | `#075985`                     | Primary action và active focus identity        |
+| `brand.background`     | `#0F766E`                     | Primary action và active focus identity        |
 | `brand.text`           | `#FFFFFF`                     | Text/icon trên brand background                |
-| `brand.softBackground` | `#E0F2FE`                     | Selection hoặc branded emphasis nhẹ            |
-| `brand.softText`       | `#0C4A6E`                     | Text trên brand soft background                |
+| `brand.softBackground` | `#CCFBF1`                     | Selection hoặc branded emphasis nhẹ            |
+| `brand.softText`       | `#134E4A`                     | Text trên brand soft background                |
 | `info.*`               | `#E0F2FE / #075985 / #0369A1` | Thông tin, `REQUESTED`, QR/ETA metadata        |
 | `warning.*`            | `#FEF3C7 / #78350F / #B45309` | Cần chú ý, `PICKING_UP`, `UNPAID`              |
 | `active.*`             | `#DBEAFE / #1E3A8A / #1D4ED8` | Active trip/tracking, `ACCEPTED`, `IN_TRANSIT` |
@@ -227,12 +233,14 @@ Scale duy nhất: `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`, `xl=32` px.
 
 ### 4.5 Radius, border và elevation
 
-- `radius.control=6`, `radius.card=6`; `radius.pill=999` chỉ dùng cho status badge,
-  compact filter chip hoặc presence indicator.
-- Border trung tính 1 px là cách phân tách mặc định. Không bo tròn mọi container.
-- Page section không có shadow. Shadow chỉ dùng cho popover, drawer và modal cần tách
-  khỏi mặt phẳng nội dung.
-- Không dùng glass blur, translucent card hoặc shadow nhiều lớp.
+- **Radius tiêu chuẩn:**
+  - `radius.card`: Với các thẻ container và widget trên bàn điều phối (**Modern Dispatch Dashboard**), sử dụng `20–26px` (`rounded-2xl` / `rounded-3xl`) tạo khối nổi êm ái, thân thiện và hiện đại. Đối với table row hoặc form con, dùng `6–8px`.
+  - `radius.control`: `10–14px` cho các button công cụ, và `radius.pill=999` cho status badge, thanh tìm kiếm search pill, filter chips và floating vehicle toggle buttons.
+- **Border & Phân tách:**
+  - Border trung tính siêu mảnh (`border-slate-100` hoặc `border-white/80` trên nền canvas) kết hợp đổ bóng nhẹ để tạo sự tách biệt tự nhiên mà không gây gắt mắt.
+- **Elevation & Shadow:**
+  - Các thẻ chính trên bàn điều phối sử dụng shadow êm nhẹ (`box-shadow: 0 10px 25px -5px rgba(15, 60, 110, 0.05)`) tạo độ nổi tự nhiên trên nền canvas ambient. Popover, dialog và drawer dùng elevation cao hơn để phân lớp tương tác.
+  - Không lạm dụng hiệu ứng neon sặc sỡ hoặc shadow đen đậm làm tối giao diện.
 
 ### 4.6 Focus
 
@@ -341,20 +349,11 @@ Gate chi tiết và mẫu evidence nằm tại `docs/ui/11-ui-quality-scorecard.
 
 Các pattern sau bị chặn ở static gate:
 
-- Gradient tím/xanh mặc định, glassmorphism, decorative blob hoặc atmospheric stock
-  image không phục vụ tác vụ.
-- Oversized hero, marketing card hoặc câu mô tả tính năng che workflow thật ở first
-  viewport.
-- Card lồng card, mọi vùng đều bo tròn, shadow nhiều lớp hoặc pill dùng cho control
-  thông thường.
-- KPI/chart không gắn với acceptance criteria, dữ liệu giả không có preview banner
-  hoặc số ngẫu nhiên tạo cảm giác “dashboard”.
-- Một hue chiếm toàn bộ UI, status chỉ dựa vào màu hoặc icon/emoji không có label.
-- Animation scroll/reveal, marker nhấp nháy hoặc transition kéo dài không truyền đạt
-  state.
-- Generic English copy, lorem ipsum, vague empty state hoặc action label như “Submit”,
-  “Manage”, “Learn more” khi có thể nói rõ nghiệp vụ bằng tiếng Việt.
-- Tạo dependency, font, icon set hoặc component duplicate chỉ để thêm flourish.
+- Hiệu ứng tối mù mịt (dark purple neon gradient), decorative hero che khuất tác vụ điều phối, hoặc hình ảnh stock trang trí không phục vụ nghiệp vụ.
+- Thẻ marketing giả mạo tính năng (ví dụ tự nhận có AI XGBoost hay báo cáo ESG xanh khi backend chưa hỗ trợ).
+- Một hue chiếm toàn bộ UI, status chỉ dựa vào màu sắc mà không có nhãn văn bản tiếng Việt rõ ràng.
+- Animation cuộn trang gây xao nhãng, marker nhấp nháy liên tục làm phân tán sự tập trung của điều phối viên.
+- *Lưu ý phân biệt:* Tông nền canvas xám sáng thanh lịch (`#F4F5F7` / `#F8FAFC`), thẻ nổi bo tròn mềm mại `rounded-3xl` (24–28px), topbar pill đen, bản đồ real-time Dark Mode và các biểu đồ đo lường vận hành (thanh phân đoạn 4 màu, cột đứng xanh lục, thẻ gradient hoàng hôn kèm wave sparkline) trên bàn điều phối **NexaFleet Modern Bento Dispatch Console** là **thiết kế chuẩn được phê duyệt**, không bị xếp vào anti-pattern.
 
 ## 10. Dark mode
 

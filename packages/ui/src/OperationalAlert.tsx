@@ -37,13 +37,17 @@ export function OperationalAlert({
       aria-live={live === 'off' ? undefined : live}
       aria-atomic={live === 'off' ? undefined : 'true'}
       aria-labelledby={titleId}
-      className={cn('border-l-4 px-md py-sm text-body-compact', toneClasses[tone], className)}
+      className={cn(
+        'rounded-2xl border border-l-4 p-4 text-xs shadow-2xs transition-all',
+        toneClasses[tone],
+        className,
+      )}
     >
-      <p id={titleId} className="font-semibold break-words">
+      <p id={titleId} className="font-bold text-sm tracking-tight break-words">
         {title}
       </p>
-      <div className="mt-xxs break-words">{children}</div>
-      {actions ? <div className="mt-sm flex flex-wrap gap-xs">{actions}</div> : null}
+      <div className="mt-1 leading-relaxed break-words">{children}</div>
+      {actions ? <div className="mt-3 flex flex-wrap gap-2">{actions}</div> : null}
     </section>
   );
 }

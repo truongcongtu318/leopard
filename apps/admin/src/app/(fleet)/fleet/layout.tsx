@@ -4,9 +4,9 @@ import { getVerifiedOperationsUser } from '../../../lib/auth/server-session';
 import { redirect } from 'next/navigation';
 
 const fleetNavItems = [
-  { label: 'Dashboard', href: '/fleet' },
-  { label: 'Drivers', href: '/fleet/drivers' },
-  { label: 'Orders', href: '/fleet/orders' },
+  { label: 'Tổng quan', href: '/fleet' },
+  { label: 'Tài xế', href: '/fleet/drivers' },
+  { label: 'Đơn hàng', href: '/fleet/orders' },
 ];
 
 export default async function FleetLayout({ children }: { children: React.ReactNode }) {

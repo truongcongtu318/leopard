@@ -5,8 +5,9 @@ export function PreviewBanner() {
   return (
     <aside
       aria-label="Chế độ xem trước giao diện"
-      className="rounded-control border border-warning-border bg-warning px-md py-sm text-sm text-warning-text"
+      className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-full border border-amber-200/90 bg-white/95 backdrop-blur-md px-3.5 py-1.5 text-xs text-amber-800 shadow-md transition-all hover:shadow-lg"
     >
+      <span aria-hidden="true" className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
       <p
         aria-atomic="true"
         aria-live="polite"

@@ -40,12 +40,12 @@ diễn. Một số lớn chỉ xuất hiện khi trả lời được câu hỏi
 ràng. Không có chart, doanh thu, commission, dispatch, fleet hierarchy hoặc tính năng
 ngoài pilot.
 
-#### Visual composition — Scope Ledger
+#### Visual composition — NexaFleet Bento Scope Ledger
 
 | Screen         | Silhouette và hierarchy bắt buộc                                                                                                   |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Shell          | Ink navigation rail ở desktop, compact utility header ở mobile; work canvas neutral, không phải một trang trắng với các border box |
-| Dashboard      | Fleet Scope Rail → exception queue chiếm ưu tiên → compact metrics/data strip → recent operational rows                            |
+| Shell          | Topbar nổi bo góc với logo LEOPARD bên trái, cụm menu trung tâm với tab active dạng pill đen tuyền (`bg-slate-900 text-white rounded-full`), ô search, chuông và user capsule; canvas xám sáng `#F4F5F7` |
+| Dashboard      | Fleet Scope Rail xác nhận đội xe → Bố cục Bento 2 cột chuẩn NexaFleet: Cột trái gồm Bản đồ Dark Mode đội xe & Bảng đơn hàng đội xe; Cột phải gồm Status Overview, Fulfillment Performance & Doanh thu vận hành đội xe |
 | Drivers/orders | Scope rail → filter workbench → result ledger; desktop table, tablet chỉ `3–4` priority columns, mobile row-detail                 |
 | Order detail   | Read-only status mast → route/tracking split → history/payment/media; không render command dock                                    |
 

@@ -72,8 +72,7 @@ export function MapPanel({
       )}
     >
       <div className="border-b border-neutral-border border-l-4 border-l-brand bg-neutral-text px-md py-sm text-brand-text">
-        <p className="text-[0.625rem] font-bold tracking-widest text-brand-soft">ROUTE FIELD</p>
-        <h2 id={titleId} className="mt-xxs text-section-title font-semibold break-words">
+        <h2 id={titleId} className="text-section-title font-semibold break-words">
           {title}
         </h2>
       </div>

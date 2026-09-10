@@ -39,9 +39,9 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
 }
 
 const controlClasses = cn(
-  'inline-flex min-h-11 min-w-11 items-center justify-center rounded-control text-sm font-medium transition-colors',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
-  'motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-40',
+  'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-xs font-semibold transition-all border shadow-2xs',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1',
+  'motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-40 disabled:border-slate-200 disabled:bg-slate-50',
 );
 
 export function Pagination({
@@ -60,7 +60,7 @@ export function Pagination({
     totalItems === undefined ? pageSummary : `${pageSummary} · ${totalItems} kết quả`;
 
   return (
-    <nav aria-label={ariaLabel} className={cn('flex flex-wrap items-center gap-xs', className)}>
+    <nav aria-label={ariaLabel} className={cn('flex flex-wrap items-center gap-1.5', className)}>
       <button
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
@@ -68,8 +68,8 @@ export function Pagination({
         aria-label="Về trang trước"
         className={cn(
           controlClasses,
-          'hover:bg-neutral-surface',
-          currentPage <= 1 ? 'text-neutral-muted' : 'text-neutral-text',
+          'border-slate-200/80 bg-white hover:bg-slate-50',
+          currentPage <= 1 ? 'text-slate-300' : 'text-slate-700',
         )}
       >
         <span aria-hidden="true">&lsaquo;</span>
@@ -79,7 +79,7 @@ export function Pagination({
         item === 'ellipsis' ? (
           <span
             key={`ellipsis-${index}`}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm text-neutral-muted"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center text-xs font-semibold text-slate-400"
             aria-hidden="true"
           >
             …
@@ -96,8 +96,8 @@ export function Pagination({
             className={cn(
               controlClasses,
               item === currentPage
-                ? 'bg-brand text-brand-text'
-                : 'text-neutral-text hover:bg-neutral-surface',
+                ? 'bg-brand text-white border-brand shadow-xs font-bold'
+                : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300',
             )}
           >
             {item}
@@ -112,8 +112,8 @@ export function Pagination({
         aria-label="Đến trang sau"
         className={cn(
           controlClasses,
-          'hover:bg-neutral-surface',
-          currentPage >= safeTotalPages ? 'text-neutral-muted' : 'text-neutral-text',
+          'border-slate-200/80 bg-white hover:bg-slate-50',
+          currentPage >= safeTotalPages ? 'text-slate-300' : 'text-slate-700',
         )}
       >
         <span aria-hidden="true">&rsaquo;</span>

@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-
+import Link from 'next/link';
+import * as Dialog from '@radix-ui/react-dialog';
+import { Bell, LogOut, Menu, ShieldCheck, X } from 'lucide-react';
+import { LiveRefreshBridge } from '../live/LiveOrderRefresher';
 import { RoleNavigation, type NavItem } from './RoleNavigation';
 
 export interface OperationsShellProps {
@@ -13,6 +16,7 @@ export interface OperationsShellProps {
 
 interface RoleContext {
   contextLabel: string;
+  roleLabel: string;
   navigationLabel: string;
   drawerLabel: string;
 }
@@ -20,11 +24,13 @@ interface RoleContext {
 const ROLE_CONTEXT: Readonly<Record<string, RoleContext>> = {
   admin: {
     contextLabel: 'Quản trị vận hành',
+    roleLabel: 'Quản trị viên',
     navigationLabel: 'Điều hướng quản trị',
     drawerLabel: 'Điều hướng quản trị vận hành',
   },
   fleet_owner: {
     contextLabel: 'Quản lý đội xe',
+    roleLabel: 'Chủ đội xe',
     navigationLabel: 'Điều hướng đội xe',
     drawerLabel: 'Điều hướng quản lý đội xe',
   },
@@ -32,6 +38,7 @@ const ROLE_CONTEXT: Readonly<Record<string, RoleContext>> = {
 
 const FALLBACK_CONTEXT: RoleContext = {
   contextLabel: 'Khu vực vận hành',
+  roleLabel: 'Người vận hành',
   navigationLabel: 'Điều hướng vận hành',
   drawerLabel: 'Điều hướng khu vực vận hành',
 };
@@ -77,138 +84,178 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
     triggerRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    if (!drawerOpen) return;
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeDrawer();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
 
     const drawer = drawerRef.current;
     if (!drawer) return;
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeDrawer();
-        return;
-      }
+    const focusable = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    if (focusable.length === 0) return;
 
-      if (event.key !== 'Tab') return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
 
-      const focusable = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-      const first = focusable.at(0);
-      const last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  };
 
-      if (!first || !last) return;
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    drawer.addEventListener('keydown', handleKeyDown);
-    closeButtonRef.current?.focus();
-
-    return () => drawer.removeEventListener('keydown', handleKeyDown);
-  }, [closeDrawer, drawerOpen]);
+  const prevDrawerOpen = useRef(drawerOpen);
+  useEffect(() => {
+    if (prevDrawerOpen.current && !drawerOpen) {
+      triggerRef.current?.focus();
+    }
+    prevDrawerOpen.current = drawerOpen;
+  }, [drawerOpen]);
 
   useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
+    if (!drawerOpen) return;
+    closeButtonRef.current?.focus();
+  }, [drawerOpen]);
 
-  const navigation = (
-    <div className="p-md">
-      <div className="mb-xl flex items-center gap-sm px-md">
-        <span className="grid h-10 w-10 place-items-center bg-brand text-section-title font-black text-brand-text">
-          L
-        </span>
-        <div>
-          <p className="font-bold tracking-wide text-brand-text">LEOPARD</p>
-          <p className="text-[0.625rem] font-semibold tracking-widest text-brand-soft">
-            CONTROL LEDGER
-          </p>
-        </div>
-      </div>
-      <p className="mb-xs px-md text-body-compact font-semibold uppercase text-brand-soft">
-        {roleContext.contextLabel}
-      </p>
-      <RoleNavigation
-        items={localizedItems}
-        currentPath={pathname}
-        ariaLabel={roleContext.navigationLabel}
-        tone="dark"
-      />
-    </div>
-  );
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore network errors during logout
+    }
+    window.location.href = '/login';
+  };
 
   return (
-    <div className="min-h-screen bg-neutral text-neutral-text">
-      <a
-        href="#noi-dung-chinh"
-        className="fixed left-md top-md z-50 -translate-y-24 rounded-control bg-brand px-md py-sm font-semibold text-brand-text transition-transform focus:translate-y-0 motion-reduce:transition-none"
-      >
-        Bỏ qua đến nội dung chính
-      </a>
+    <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
+      <div className="min-h-screen bg-[#F4F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
+        <LiveRefreshBridge />
+        <a
+          href="#noi-dung-chinh"
+          className="fixed left-md top-md z-50 -translate-y-24 rounded-control bg-brand px-md py-sm font-semibold text-brand-text transition-transform focus:translate-y-0 motion-reduce:transition-none"
+        >
+          Bỏ qua đến nội dung chính
+        </a>
 
-      <aside className="fixed inset-y-0 left-0 hidden w-72 overflow-y-auto border-r-4 border-brand bg-neutral-text text-brand-text lg:block">
-        {navigation}
-      </aside>
-
-      <div className="flex min-h-screen flex-col lg:ml-72">
-        <header className="sticky top-0 z-20 flex min-h-14 items-center gap-sm border-b-4 border-brand bg-neutral-text px-md text-brand-text lg:hidden">
-          <button
-            ref={triggerRef}
-            type="button"
-            onClick={() => setDrawerOpen((open) => !open)}
-            aria-label="Mở điều hướng"
-            aria-expanded={drawerOpen}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-brand-soft bg-neutral-text text-brand-text transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-soft motion-reduce:transition-none"
+      {/* Top Application Header Bar */}
+      <header className="bg-white rounded-2xl sm:rounded-3xl px-4 sm:px-6 py-3 mb-3 flex items-center justify-between shadow-xs border border-slate-100/90 shrink-0">
+        {/* Left: Brand Logo & Horizontal Tabs */}
+        <div className="flex items-center gap-6 lg:gap-8">
+          <Link
+            href={role === 'admin' ? '/admin' : '/fleet'}
+            className="flex items-center gap-2.5 transition-opacity motion-reduce:transition-none"
           >
-            <svg
-              aria-hidden="true"
-              focusable="false"
-              className="h-6 w-6"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </button>
-          <span className="font-semibold">LEOPARD</span>
-          <span className="text-body-compact text-brand-soft">{roleContext.contextLabel}</span>
-        </header>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white shadow-2xs">
+              <ShieldCheck className="w-[18px] h-[18px]" strokeWidth={2.2} aria-hidden="true" />
+            </div>
+            <div>
+              <span className="font-extrabold text-base tracking-tight text-slate-900">LEOPARD</span>
+              <p className="text-[10px] font-semibold text-slate-400 leading-none">{roleContext.contextLabel}</p>
+            </div>
+          </Link>
 
+          {/* Horizontal Navigation Menu */}
+          <RoleNavigation
+            items={localizedItems}
+            currentPath={pathname}
+            ariaLabel={roleContext.navigationLabel}
+            orientation="horizontal"
+          />
+        </div>
+
+        {/* Right: Notifications, Profile & Mobile Trigger */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Notification Bell */}
+          <button
+            type="button"
+            aria-label="Thông báo hệ thống"
+            className="relative p-2 rounded-full border border-slate-200/70 hover:bg-slate-50 text-slate-600 transition-colors motion-reduce:transition-none"
+          >
+            <Bell className="w-4 h-4" aria-hidden="true" />
+          </button>
+
+          {/* User Profile Capsule */}
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-700 ring-1 ring-slate-300">
+              {role === 'admin' ? 'QTV' : 'CĐX'}
+            </span>
+            <div className="hidden text-left sm:block">
+              <p className="text-xs font-bold text-slate-800 leading-tight">
+                {role === 'admin' ? 'Nguyễn Hoài Nam' : 'Trần Quốc Tuấn'}
+              </p>
+              <p className="text-[10px] font-medium text-slate-400 leading-none">
+                {role === 'admin' ? 'Quản trị viên điều phối' : 'Chủ đội xe Sao Mai'}
+              </p>
+            </div>
+          </div>
+
+          {/* Logout Action Button */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label="Đăng xuất khỏi phiên làm việc"
+            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors motion-reduce:transition-none cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" aria-hidden="true" />
+          </button>
+
+          {/* Mobile Drawer Trigger */}
+          <Dialog.Trigger asChild>
+            <button
+              ref={triggerRef}
+              type="button"
+              aria-label="Mở điều hướng"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 motion-reduce:transition-none md:hidden"
+            >
+              <Menu className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </Dialog.Trigger>
+        </div>
+      </header>
+
+      {/* Main Workspace Layout */}
+      <div className="flex flex-1 items-stretch min-w-0">
+        {/* Main Central Content */}
         <main
           id="noi-dung-chinh"
           tabIndex={-1}
-          className="mx-auto w-full max-w-operations flex-1 bg-neutral p-lg text-neutral-text"
+          className="flex-1 flex flex-col gap-3 min-w-0 text-neutral-text max-w-operations w-full focus:outline-none"
         >
           {children}
         </main>
       </div>
 
-      {drawerOpen ? (
+      {/* Mobile Drawer (Responsive Menu) */}
+      <Dialog.Portal>
         <div className="fixed inset-0 z-40">
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-hidden="true"
-            onClick={closeDrawer}
-            className="absolute inset-0 bg-neutral-text/40"
-          />
-          <div
+          <Dialog.Overlay className="fixed inset-0 bg-neutral-text/60" />
+          <Dialog.Content
             ref={drawerRef}
-            role="dialog"
             aria-modal="true"
-            aria-labelledby="operations-drawer-title"
-            className="relative z-10 h-full w-72 max-w-full overflow-y-auto border-r-4 border-brand bg-neutral-text text-brand-text"
+            aria-label={roleContext.drawerLabel}
+            onKeyDown={handleKeyDown}
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              closeButtonRef.current?.focus();
+            }}
+            onCloseAutoFocus={(e) => {
+              e.preventDefault();
+              triggerRef.current?.focus();
+            }}
+            className="relative z-10 h-full w-72 max-w-full overflow-y-auto border-r border-neutral-border bg-neutral p-4 focus:outline-none"
           >
-            <div className="flex min-h-14 items-center justify-between border-b border-brand px-md">
-              <h2 id="operations-drawer-title" className="font-semibold">
+            <Dialog.Title className="sr-only">
+              {roleContext.drawerLabel}
+            </Dialog.Title>
+            <div className="flex min-h-16 items-center justify-between border-b border-neutral-border pb-3 mb-4">
+              <h2 className="font-bold text-neutral-text text-sm" aria-hidden="true">
                 {roleContext.drawerLabel}
               </h2>
               <button
@@ -216,27 +263,22 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
                 type="button"
                 onClick={closeDrawer}
                 aria-label="Đóng điều hướng"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-brand-soft bg-neutral-text text-brand-text transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-soft motion-reduce:transition-none"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-neutral-border text-neutral-text motion-reduce:transition-none"
               >
-                <svg
-                  aria-hidden="true"
-                  focusable="false"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-            {navigation}
-          </div>
+
+            <RoleNavigation
+              items={localizedItems}
+              currentPath={pathname}
+              ariaLabel={roleContext.navigationLabel}
+              orientation="vertical"
+            />
+          </Dialog.Content>
         </div>
-      ) : null}
+      </Dialog.Portal>
     </div>
+  </Dialog.Root>
   );
 }

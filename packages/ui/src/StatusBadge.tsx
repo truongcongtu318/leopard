@@ -98,17 +98,11 @@ const unknownStatus: CanonicalStatus = {
 };
 
 type CanonicalStatusSelection =
-  | Readonly<{ domain: 'orderStatus'; status: OrderStatus }>
-  | Readonly<{ domain: 'paymentStatus'; status: PaymentStatus }>
-  | Readonly<{
-      domain: 'driverAvailability';
-      status: DriverAvailability;
-    }>
-  | Readonly<{
-      domain: 'fleetMemberStatus';
-      status: FleetMemberStatus;
-    }>
-  | Readonly<{ domain: 'userStatus'; status: UserStatus }>;
+  | { domain: 'orderStatus'; status: OrderStatus }
+  | { domain: 'paymentStatus'; status: PaymentStatus }
+  | { domain: 'driverAvailability'; status: DriverAvailability }
+  | { domain: 'fleetMemberStatus'; status: FleetMemberStatus }
+  | { domain: 'userStatus'; status: UserStatus };
 
 export type StatusBadgeProps = CanonicalStatusSelection & Readonly<{ className?: string }>;
 
@@ -150,15 +144,14 @@ function StatusBadgeView({
   return (
     <span
       className={cn(
-        'inline-flex max-w-full items-center rounded-pill border px-xs py-1 text-xs font-medium break-words',
+        'inline-flex max-w-full items-center rounded-pill border px-2.5 py-0.5 text-xs font-bold tracking-tight break-words shadow-2xs transition-all',
         toneClasses[canonicalStatus.tone],
         className,
       )}
     >
       <span
         className={cn(
-          'mr-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0',
-          canonicalStatus.tone === 'active' ? 'animate-pulse' : '',
+          'mr-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0 ring-1 ring-white/50',
           dotClasses[canonicalStatus.tone],
         )}
         aria-hidden="true"

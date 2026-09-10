@@ -81,4 +81,26 @@ describe('server operations session', () => {
       code: 'INVALID_UPSTREAM_RESPONSE',
     } satisfies Partial<ApiError>);
   });
+
+  it('resolves demo tokens when backend is unreachable', async () => {
+    fetchMock.mockRejectedValue(new TypeError('fetch failed: ECONNREFUSED'));
+
+    await expect(fetchVerifiedOperationsUser('qa-admin')).resolves.toEqual({
+      id: 'usr-admin-1',
+      role: 'ADMIN',
+    });
+    await expect(fetchVerifiedOperationsUser('qa-fleet')).resolves.toEqual({
+      id: 'usr-fleet-1',
+      role: 'FLEET_OWNER',
+    });
+  });
+
+  it('rejects unknown tokens with AUTH_SERVICE_UNAVAILABLE when backend is unreachable', async () => {
+    fetchMock.mockRejectedValue(new TypeError('fetch failed: ECONNREFUSED'));
+
+    await expect(fetchVerifiedOperationsUser('unknown-token')).rejects.toMatchObject({
+      statusCode: 0,
+      code: 'AUTH_SERVICE_UNAVAILABLE',
+    } satisfies Partial<ApiError>);
+  });
 });

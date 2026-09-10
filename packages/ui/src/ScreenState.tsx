@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { AlertTriangle, Inbox, Loader2 } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from './cn';
 
@@ -176,79 +177,17 @@ const toneClasses: Readonly<Record<ScreenStateTone, string>> = {
   danger: 'border-danger-border bg-danger text-danger-text',
 };
 
-function Spinner() {
-  return (
-    <svg
-      className="h-xl w-xl shrink-0 animate-spin text-current motion-reduce:animate-none"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
-}
-
-function EmptyIcon() {
-  return (
-    <svg
-      className="h-xl w-xl shrink-0 text-current"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1}
-      stroke="currentColor"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-      />
-    </svg>
-  );
-}
-
-function AlertIcon() {
-  return (
-    <svg
-      className="h-xl w-xl shrink-0 text-current"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1}
-      stroke="currentColor"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-      />
-    </svg>
-  );
-}
-
 function StateIndicator({ indicator }: Pick<ScreenStateConfig, 'indicator'>) {
   if (indicator === 'spinner') {
-    return <Spinner />;
+    return <Loader2 className="h-xl w-xl shrink-0 animate-spin text-current motion-reduce:animate-none" aria-hidden="true" />;
   }
 
   if (indicator === 'empty') {
-    return <EmptyIcon />;
+    return <Inbox className="h-xl w-xl shrink-0 text-current" strokeWidth={1} aria-hidden="true" />;
   }
 
   if (indicator === 'alert') {
-    return <AlertIcon />;
+    return <AlertTriangle className="h-xl w-xl shrink-0 text-current" strokeWidth={1} aria-hidden="true" />;
   }
 
   return null;
@@ -301,25 +240,27 @@ export function ScreenState({
         aria-atomic="true"
         aria-busy={config.isBusy === true ? 'true' : undefined}
         className={cn(
-          'flex flex-col items-center justify-center gap-xs rounded-card border p-md text-center',
+          'flex flex-col items-center justify-center gap-2.5 rounded-card rounded-[24px] border p-8 sm:p-10 text-center shadow-xs transition-all',
           toneClasses[config.tone],
         )}
       >
-        <StateIndicator indicator={config.indicator} />
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 shadow-2xs border border-white/60 mb-1">
+          <StateIndicator indicator={config.indicator} />
+        </div>
         <h2
           ref={headingRef}
           tabIndex={focusesHeading ? -1 : undefined}
-          className="text-xl font-semibold"
+          className="text-lg font-bold tracking-tight text-slate-900"
         >
           {title ?? copy.title}
         </h2>
-        <p className="text-sm">{message ?? copy.message}</p>
+        <p className="max-w-md text-xs leading-relaxed text-slate-600">{message ?? copy.message}</p>
       </div>
 
       {config.preservesContext ? children : null}
 
       {action ? (
-        <Button variant="secondary" onPress={action.handler} className="self-center">
+        <Button variant="secondary" onPress={action.handler} className="self-center shadow-2xs">
           {action.label}
         </Button>
       ) : null}

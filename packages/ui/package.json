@@ -15,12 +15,14 @@
     "react-dom": ">=19.0.0"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.23",
     "clsx": "2.1.1",
+    "lucide-react": "^1.40.0",
     "tailwind-merge": "3.4.0"
   },
   "devDependencies": {
-    "@leopard/config": "workspace:*",
     "@jest/globals": "29.7.0",
+    "@leopard/config": "workspace:*",
     "@swc/core": "^1.15.46",
     "@swc/jest": "^0.2.39",
     "@testing-library/jest-dom": "6.9.1",

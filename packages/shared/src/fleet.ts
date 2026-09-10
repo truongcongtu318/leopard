@@ -17,6 +17,8 @@ export interface FleetDriverSummaryDto {
   availability: string;
   vehicleType: string;
   lastKnownAt?: string | null;
+  membershipStatus: string | null;
+  fleetName: string | null;
 }
 
 export interface FleetDriverQuery extends PageQuery {
@@ -30,8 +32,17 @@ export interface FleetOrderSummaryDto {
   status: string;
   driverId?: string | undefined;
   driverName?: string | undefined;
+  customerPhone: string | null;
+  pickupLabel: string;
+  pickupLat?: number | null;
+  pickupLng?: number | null;
+  dropoffLabel: string;
+  dropoffLat?: number | null;
+  dropoffLng?: number | null;
+  paymentStatus: string;
   priceVnd: number;
   createdAt: string;
+  updatedAt: string;
   distanceMeters: number;
 }
 

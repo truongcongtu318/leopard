@@ -12,23 +12,17 @@ function LoginContent() {
   const [activeRole, setActiveRole] = useState<"CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN">("CUSTOMER");
 
   const handleSuccess = (role: string) => {
-    switch (role) {
-      case "ADMIN":
-        router.push("/admin");
-        break;
-      case "FLEET_OWNER":
-        router.push("/fleet");
-        break;
-      case "CUSTOMER":
-        router.push("/customer/orders");
-        break;
-      case "DRIVER":
-        router.push("/driver/orders");
-        break;
-      default:
-        router.push("/admin");
-        break;
-    }
+    const target =
+      role === "ADMIN"
+        ? "/admin"
+        : role === "FLEET_OWNER"
+          ? "/fleet"
+          : role === "CUSTOMER"
+            ? "/customer/orders"
+            : role === "DRIVER"
+              ? "/driver/orders"
+              : "/admin";
+    router.push(target);
   };
 
   return (

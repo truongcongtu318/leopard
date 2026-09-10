@@ -1,8 +1,10 @@
 import React from 'react';
+import { AlertCircle, Clock } from 'lucide-react';
 import { cn } from './cn';
 
 export type OperationsPageHeaderProps = Readonly<{
   title: string;
+  /** Short uppercase micro-label rendered above the title. Keep it functional, not decorative. */
   eyebrow?: React.ReactNode;
   context?: React.ReactNode;
   updatedAt?: React.ReactNode;
@@ -13,7 +15,7 @@ export type OperationsPageHeaderProps = Readonly<{
 
 export function OperationsPageHeader({
   title,
-  eyebrow = 'OPERATIONS LEDGER',
+  eyebrow,
   context,
   updatedAt,
   isStale = false,
@@ -23,31 +25,43 @@ export function OperationsPageHeader({
   return (
     <header
       className={cn(
-        'flex flex-col gap-sm border-b border-neutral-border pb-md text-neutral-text sm:flex-row sm:items-start sm:justify-between',
+        'flex flex-col gap-4 rounded-[22px] sm:rounded-[26px] border border-white/80 bg-white/95 backdrop-blur-md p-5 sm:p-6 shadow-xs text-neutral-text sm:flex-row sm:items-start sm:justify-between',
         className,
       )}
     >
-      <div className="min-w-0 border-l-4 border-brand pl-md">
-        {eyebrow ? (
-          <div className="mb-xxs text-[0.625rem] font-bold tracking-widest text-brand break-words">
-            {eyebrow}
+      <div className="min-w-0 flex-1">
+        {eyebrow || isStale ? (
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            {eyebrow ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-brand uppercase">
+                {eyebrow}
+              </span>
+            ) : null}
+            {isStale ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                <AlertCircle className="w-3 h-3 text-amber-800" strokeWidth={2} aria-hidden="true" />
+                Dữ liệu có thể đã cũ
+              </span>
+            ) : null}
           </div>
         ) : null}
-        <h1 className="text-page-title font-bold tracking-tight break-words">{title}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight break-words">{title}</h1>
+        </div>
         {context ? (
-          <div className="mt-xxs text-body-compact text-neutral-muted break-words">{context}</div>
+          <div className="mt-1.5 max-w-3xl text-xs sm:text-sm text-slate-500 font-medium leading-relaxed break-words">
+            {context}
+          </div>
         ) : null}
-        {updatedAt || isStale ? (
-          <div className="mt-xs flex flex-wrap items-center gap-xs text-xs text-neutral-muted">
-            {isStale ? (
-              <span className="font-semibold text-warning-text">Dữ liệu có thể đã cũ</span>
-            ) : null}
-            {updatedAt ? <span>Cập nhật: {updatedAt}</span> : null}
+        {updatedAt ? (
+          <div className="mt-3 inline-flex items-center gap-1.5 text-xs text-slate-400 tabular-nums font-medium">
+            <Clock className="w-3 h-3 text-slate-400" strokeWidth={2} aria-hidden="true" />
+            Cập nhật: {updatedAt}
           </div>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-xs">{actions}</div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
       ) : null}
     </header>
   );

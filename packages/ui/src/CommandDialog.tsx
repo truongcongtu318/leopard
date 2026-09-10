@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 import { Button, type ButtonVariant } from './Button';
 import { cn } from './cn';
 import { ReadOnlyDetailList, type ReadOnlyDetailItem } from './ReadOnlyDetailList';
@@ -217,36 +218,49 @@ export function CommandDialog({
   if (isPrivacyBoundary) {
     const copy = privacyCopy[state];
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-text/40 p-md">
-        <div
-          ref={dialogRef}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={titleId}
-          onKeyDown={handleKeyDown}
-          className={cn(
-            'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card border border-danger-border bg-neutral p-lg text-neutral-text shadow-xl',
-            className,
-          )}
-        >
-          <h2
-            ref={feedbackRef as React.RefObject<HTMLHeadingElement>}
-            id={titleId}
-            tabIndex={-1}
-            className="text-section-title font-semibold break-words"
+      <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open && isDismissible) onClose(); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6">
+          <Dialog.Content
+            ref={dialogRef}
+            aria-modal="true"
+            aria-labelledby={titleId}
+            onKeyDown={handleKeyDown}
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              feedbackRef.current?.focus();
+            }}
+            onEscapeKeyDown={(e) => {
+              if (!isDismissible) e.preventDefault();
+            }}
+            onPointerDownOutside={(e) => {
+              if (!isDismissible) e.preventDefault();
+            }}
+            className={cn(
+              'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card rounded-[24px] border border-danger-border/40 bg-white p-6 sm:p-7 text-neutral-text shadow-2xl transition-all focus:outline-none',
+              className,
+            )}
           >
-            {copy.title}
-          </h2>
-          <p role="alert" className="mt-sm text-body-compact text-danger-text">
-            {copy.message}
-          </p>
-          <div className="mt-lg flex justify-end">
-            <Button variant="secondary" onPress={onClose}>
-              Đóng
-            </Button>
-          </div>
+            <Dialog.Title asChild>
+              <h2
+                ref={feedbackRef as React.RefObject<HTMLHeadingElement>}
+                id={titleId}
+                tabIndex={-1}
+                className="text-lg font-bold tracking-tight text-slate-900 break-words"
+              >
+                {copy.title}
+              </h2>
+            </Dialog.Title>
+            <p role="alert" className="mt-2 text-xs leading-relaxed text-danger-text">
+              {copy.message}
+            </p>
+            <div className="mt-6 flex justify-end">
+              <Button variant="secondary" onPress={onClose} className="shadow-2xs">
+                Đóng
+              </Button>
+            </div>
+          </Dialog.Content>
         </div>
-      </div>
+      </Dialog.Root>
     );
   }
 
@@ -266,140 +280,159 @@ export function CommandDialog({
     .join(' ');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-text/40 p-md">
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={describedBy}
-        onKeyDown={handleKeyDown}
-        className={cn(
-          'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card border border-neutral-border bg-neutral p-lg text-neutral-text shadow-xl',
-          className,
-        )}
-      >
-        <h2
-          ref={
-            state === 'success' || state === 'conflict'
-              ? (feedbackRef as React.RefObject<HTMLHeadingElement>)
-              : headingRef
-          }
-          id={titleId}
-          tabIndex={-1}
-          className="text-section-title font-semibold break-words"
+    <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open && isDismissible) onClose(); }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6">
+        <Dialog.Content
+          ref={dialogRef}
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={describedBy}
+          onKeyDown={handleKeyDown}
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            if (state === 'invalid') {
+              textareaRef.current?.focus();
+            } else if (state === 'error' || state === 'conflict' || state === 'success') {
+              feedbackRef.current?.focus();
+            } else {
+              headingRef.current?.focus();
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            if (!isDismissible) e.preventDefault();
+          }}
+          onPointerDownOutside={(e) => {
+            if (!isDismissible) e.preventDefault();
+          }}
+          className={cn(
+            'max-h-full w-full max-w-[36rem] overflow-y-auto rounded-card rounded-[24px] border border-slate-200/80 bg-white/95 backdrop-blur-md p-6 sm:p-7 text-neutral-text shadow-2xl transition-all focus:outline-none',
+            className,
+          )}
         >
-          {renderedTitle}
-        </h2>
+            <Dialog.Title asChild>
+              <h2
+                ref={
+                  state === 'success' || state === 'conflict'
+                    ? (feedbackRef as React.RefObject<HTMLHeadingElement>)
+                    : headingRef
+                }
+                id={titleId}
+                tabIndex={-1}
+                className="text-lg font-bold tracking-tight text-slate-900 break-words"
+              >
+                {renderedTitle}
+              </h2>
+            </Dialog.Title>
 
-        {state === 'success' ? (
-          <>
-            <p role="status" aria-live="polite" className="mt-md break-words">
-              {message ?? 'Thao tác đã được ghi nhận từ phản hồi hệ thống.'}
-            </p>
-            <div className="mt-lg flex justify-end">
-              <Button variant="secondary" onPress={onClose}>
-                Đóng
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p id={consequenceId} className="mt-sm text-body-compact break-words">
-              {consequence}
-            </p>
-            <ReadOnlyDetailList
-              ariaLabel="Ngữ cảnh thao tác"
-              items={targetItems}
-              className="mt-md border-y border-neutral-border py-sm"
-            />
-
-            {state === 'conflict' ? (
-              <div className="mt-md">
-                <p className="text-warning-text break-words">
-                  {message ?? 'Dữ liệu đã thay đổi trong khi bạn thao tác.'}
+            {state === 'success' ? (
+              <>
+                <p role="status" aria-live="polite" className="mt-3 text-xs leading-relaxed text-slate-600 break-words">
+                  {message ?? 'Thao tác đã được ghi nhận từ phản hồi hệ thống.'}
                 </p>
-                {onResolveConflict ? (
-                  <Button variant="secondary" onPress={onResolveConflict} className="mt-md">
-                    Tải dữ liệu mới nhất
-                  </Button>
-                ) : null}
-              </div>
-            ) : (
-              <form noValidate onSubmit={handleSubmit} className="mt-md">
-                {state === 'error' ? (
-                  <div
-                    ref={feedbackRef as React.RefObject<HTMLDivElement>}
-                    role="alert"
-                    tabIndex={-1}
-                    className="mb-md border-l-4 border-danger-border bg-danger px-sm py-xs text-danger-text break-words"
-                  >
-                    {message ?? 'Không thể hoàn tất thao tác. Vui lòng thử lại.'}
-                  </div>
-                ) : null}
-
-                <label htmlFor={reasonId} className="block text-sm font-semibold">
-                  {reasonLabel}
-                  {reasonPolicy.required ? (
-                    <span className="ml-xxs text-danger-text">
-                      <span aria-hidden="true">*</span>
-                      <span className="sr-only"> (bắt buộc)</span>
-                    </span>
-                  ) : null}
-                </label>
-                {reasonPolicy.hint ? (
-                  <p id={reasonHintId} className="mt-xxs text-xs text-neutral-muted">
-                    {reasonPolicy.hint}
-                  </p>
-                ) : null}
-                <textarea
-                  ref={textareaRef}
-                  id={reasonId}
-                  rows={5}
-                  value={reasonValue}
-                  required={reasonPolicy.required}
-                  maxLength={reasonPolicy.maxLength}
-                  aria-required={reasonPolicy.required ? 'true' : undefined}
-                  aria-invalid={effectiveReasonError ? 'true' : 'false'}
-                  aria-describedby={reasonDescribedBy || undefined}
-                  onChange={handleReasonChange}
-                  disabled={state === 'pending'}
-                  className="mt-xs w-full resize-y rounded-control border border-neutral-border bg-neutral px-sm py-xs text-neutral-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-neutral-surface"
-                />
-                {reasonPolicy.maxLength !== undefined ? (
-                  <p id={reasonCountId} className="mt-xxs text-xs text-neutral-muted">
-                    {reasonValue.length}/{reasonPolicy.maxLength} ký tự
-                  </p>
-                ) : null}
-                {effectiveReasonError ? (
-                  <p
-                    id={reasonErrorId}
-                    role="alert"
-                    className="mt-xs text-sm font-semibold text-danger-text"
-                  >
-                    {effectiveReasonError}
-                  </p>
-                ) : null}
-
-                {state === 'pending' ? (
-                  <p role="status" aria-live="polite" className="mt-sm text-sm">
-                    Đang xử lý yêu cầu…
-                  </p>
-                ) : null}
-
-                <div className="mt-lg flex flex-wrap justify-end gap-xs">
-                  <Button variant="secondary" onPress={onClose} isDisabled={state === 'pending'}>
-                    Hủy thao tác
-                  </Button>
-                  <Button type="submit" variant={commandVariant} isLoading={state === 'pending'}>
-                    {state === 'pending' ? 'Đang xử lý…' : commandLabel}
+                <div className="mt-6 flex justify-end">
+                  <Button variant="secondary" onPress={onClose} className="shadow-2xs">
+                    Đóng
                   </Button>
                 </div>
-              </form>
+              </>
+            ) : (
+              <>
+                <p id={consequenceId} className="mt-2 text-xs leading-relaxed text-slate-600 break-words">
+                  {consequence}
+                </p>
+                <ReadOnlyDetailList
+                  ariaLabel="Ngữ cảnh thao tác"
+                  items={targetItems}
+                  className="mt-4 border-y border-slate-100 py-3"
+                />
+
+                {state === 'conflict' ? (
+                  <div className="mt-4 rounded-xl border border-warning-border/40 bg-warning/30 p-3.5">
+                    <p className="text-xs font-semibold text-warning-text break-words">
+                      {message ?? 'Dữ liệu đã thay đổi trong khi bạn thao tác.'}
+                    </p>
+                    {onResolveConflict ? (
+                      <Button variant="secondary" onPress={onResolveConflict} className="mt-3 shadow-2xs">
+                        Tải dữ liệu mới nhất
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <form noValidate onSubmit={handleSubmit} className="mt-4">
+                    {state === 'error' ? (
+                      <div
+                        ref={feedbackRef as React.RefObject<HTMLDivElement>}
+                        role="alert"
+                        tabIndex={-1}
+                        className="mb-4 rounded-xl border-l-4 border-danger-border bg-danger p-3 text-xs font-semibold text-danger-text break-words shadow-2xs"
+                      >
+                        {message ?? 'Không thể hoàn tất thao tác. Vui lòng thử lại.'}
+                      </div>
+                    ) : null}
+
+                    <label htmlFor={reasonId} className="block text-xs font-bold text-slate-700">
+                      {reasonLabel}
+                      {reasonPolicy.required ? (
+                        <span className="ml-1 text-danger-text">
+                          <span aria-hidden="true">*</span>
+                          <span className="sr-only"> (bắt buộc)</span>
+                        </span>
+                      ) : null}
+                    </label>
+                    {reasonPolicy.hint ? (
+                      <p id={reasonHintId} className="mt-1 text-[11px] text-slate-500">
+                        {reasonPolicy.hint}
+                      </p>
+                    ) : null}
+                    <textarea
+                      ref={textareaRef}
+                      id={reasonId}
+                      rows={4}
+                      value={reasonValue}
+                      required={reasonPolicy.required}
+                      maxLength={reasonPolicy.maxLength}
+                      aria-required={reasonPolicy.required ? 'true' : undefined}
+                      aria-invalid={effectiveReasonError ? 'true' : 'false'}
+                      aria-describedby={reasonDescribedBy || undefined}
+                      onChange={handleReasonChange}
+                      disabled={state === 'pending'}
+                      className="mt-1.5 w-full resize-y rounded-xl border border-slate-200/90 bg-slate-50/70 p-3 text-xs text-slate-800 shadow-2xs transition-all focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    />
+                    {reasonPolicy.maxLength !== undefined ? (
+                      <p id={reasonCountId} className="mt-1 text-[11px] text-slate-400">
+                        {reasonValue.length}/{reasonPolicy.maxLength} ký tự
+                      </p>
+                    ) : null}
+                    {effectiveReasonError ? (
+                      <p
+                        id={reasonErrorId}
+                        role="alert"
+                        className="mt-1.5 text-xs font-semibold text-danger-text"
+                      >
+                        {effectiveReasonError}
+                      </p>
+                    ) : null}
+
+                    {state === 'pending' ? (
+                      <p role="status" aria-live="polite" className="mt-3 text-xs font-medium text-slate-600">
+                        Đang xử lý yêu cầu…
+                      </p>
+                    ) : null}
+
+                    <div className="mt-6 flex flex-wrap justify-end gap-2.5">
+                      <Button variant="secondary" onPress={onClose} isDisabled={state === 'pending'} className="shadow-2xs">
+                        Hủy thao tác
+                      </Button>
+                      <Button type="submit" variant={commandVariant} isLoading={state === 'pending'} className="shadow-2xs">
+                        {state === 'pending' ? 'Đang xử lý…' : commandLabel}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
-    </div>
+          </Dialog.Content>
+        </div>
+    </Dialog.Root>
   );
 }

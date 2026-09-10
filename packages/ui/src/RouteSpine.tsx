@@ -49,7 +49,7 @@ export function RouteSpine({
       {isStale ? (
         <p
           role="status"
-          className="mb-sm border-l-2 border-warning-border bg-warning px-sm py-xs text-body-compact text-warning-text"
+          className="mb-3 rounded-xl border border-warning-border border-l-4 bg-warning px-3.5 py-2 text-xs font-semibold text-warning-text shadow-2xs"
         >
           Dữ liệu tuyến có thể đã cũ
         </p>
@@ -58,7 +58,7 @@ export function RouteSpine({
         aria-label={ariaLabel}
         className={cn(
           'm-0 list-none p-0',
-          variant === 'compact' ? 'text-body-compact' : 'text-base',
+          variant === 'compact' ? 'text-body-compact text-xs' : 'text-sm',
         )}
       >
         {routeNodes.map((node, index) => {
@@ -70,33 +70,42 @@ export function RouteSpine({
                 ? 'Điểm giao'
                 : `Điểm dừng ${node.sequence}`;
 
+          const dotColor =
+            node.kind === 'origin'
+              ? 'border-emerald-500 ring-emerald-500/15'
+              : node.kind === 'destination'
+                ? 'border-sky-600 ring-sky-600/15'
+                : 'border-amber-500 ring-amber-500/15';
+
           return (
-            <li key={node.id} className="flex gap-sm">
-              <div className="flex w-lg shrink-0 flex-col items-center" aria-hidden="true">
+            <li key={node.id} className="flex gap-3">
+              <div className="flex w-6 shrink-0 flex-col items-center pt-0.5" aria-hidden="true">
                 <span
                   className={cn(
-                    'mt-xxs h-sm w-sm shrink-0 rounded-pill border-2',
+                    'h-3.5 w-3.5 shrink-0 rounded-full border-2 bg-white ring-4 transition-all',
                     isCurrent
-                      ? 'border-active-border bg-active'
-                      : 'border-neutral-border bg-neutral',
+                      ? 'border-brand bg-brand ring-brand/20 shadow-xs'
+                      : dotColor,
                   )}
                 />
                 {index < routeNodes.length - 1 ? (
-                  <span className="min-h-lg flex-1 border-l-2 border-neutral-border" />
+                  <span className="min-h-7 flex-1 border-l-2 border-slate-200/90 my-1" />
                 ) : null}
               </div>
-              <div className="min-w-0 flex-1 pb-md">
-                <div className="flex flex-wrap items-center gap-xs">
-                  <span className="text-xs font-semibold text-neutral-muted">{nodeLabel}</span>
+              <div className="min-w-0 flex-1 pb-4">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    {nodeLabel}
+                  </span>
                   {isCurrent ? (
-                    <span className="rounded-pill border border-active-border bg-active px-xs py-xxs text-xs font-semibold text-active-text">
+                    <span className="rounded-pill border border-active-border bg-active px-2 py-0.5 text-[10px] font-bold text-active-text shadow-2xs">
                       Chặng hiện tại
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-xxs font-medium break-words">{node.label}</p>
+                <p className="mt-0.5 font-semibold text-slate-900 break-words">{node.label}</p>
                 {node.metadata ? (
-                  <div className="mt-xxs text-xs text-neutral-muted break-words">
+                  <div className="mt-0.5 text-xs text-slate-500 break-words">
                     {node.metadata}
                   </div>
                 ) : null}

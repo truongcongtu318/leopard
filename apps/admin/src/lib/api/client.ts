@@ -1,6 +1,5 @@
 import { ApiError } from './api-error';
 import { browserClient } from './browser-client';
-import { serverClient } from './server-client';
 
 export type ApiClient = {
   get<T = unknown>(path: string): Promise<T>;
@@ -11,4 +10,5 @@ export type ApiClient = {
   setHeader?(key: string, value: string): void;
 };
 
-export { browserClient, serverClient, ApiError };
+export { browserClient, ApiError };
+

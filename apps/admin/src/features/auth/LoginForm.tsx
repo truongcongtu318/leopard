@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { AlertTriangle, ArrowRight, Loader2, Phone, XCircle } from 'lucide-react';
 import { browserClient } from "../../lib/api/browser-client";
 import { setSession } from "../../lib/auth/session";
 import { ApiError } from "../../lib/api/api-error";
-import { TruckTransitOverlay } from "@leopard/ui";
 
 export interface LoginFormProps {
   allowDemo?: boolean;
   sessionExpired?: boolean;
   onSuccess?: (role: string) => void;
-  onRoleChange?: (role: "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN") => void;
 }
 
 interface AuthResponse {
@@ -25,43 +24,29 @@ interface AuthResponse {
   };
 }
 
+const DEMO_ACCOUNT_MAP: Record<string, string> = {
+  admin: "admin",
+  "fleet-owner": "fleet-owner",
+  driver: "driver",
+  customer: "customer",
+  "+840000000004": "admin",
+  "+840000000003": "fleet-owner",
+  "+840000000002": "driver",
+  "+840000000001": "customer",
+  "0900000004": "admin",
+  "0900000003": "fleet-owner",
+  "0900000002": "driver",
+  "0900000001": "customer",
+};
+
 export function LoginForm({
-  allowDemo = process.env.NEXT_PUBLIC_ALLOW_DEMO_AUTH === "true",
+  allowDemo = process.env.NEXT_PUBLIC_ALLOW_DEMO_AUTH !== "false",
   sessionExpired = false,
   onSuccess,
-  onRoleChange,
 }: LoginFormProps) {
-  const [authMode, setAuthMode] = useState<"LOGIN" | "REGISTER">("LOGIN");
-  const [selectedRole, setSelectedRole] = useState<"CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN">("CUSTOMER");
   const [tokenInput, setTokenInput] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [vehicleType, setVehicleType] = useState("TRUCK_15T");
-  const [licensePlate, setLicensePlate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isTransitActive, setIsTransitActive] = useState(false);
-
-  const triggerTransit = (callback?: () => void) => {
-    setIsTransitActive(true);
-    callback?.();
-    setTimeout(() => {
-      setIsTransitActive(false);
-    }, 900);
-  };
-
-  const handleRoleSelect = (role: "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN") => {
-    setSelectedRole(role);
-    onRoleChange?.(role);
-  };
-
-  const handleModeSwitch = (mode: "LOGIN" | "REGISTER") => {
-    if (authMode === mode) return;
-    setAuthMode(mode);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    triggerTransit();
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,24 +54,14 @@ export function LoginForm({
 
     setIsSubmitting(true);
     setErrorMessage(null);
-    setSuccessMessage(null);
 
-    if (authMode === "REGISTER") {
-      triggerTransit(() => {
-        setIsSubmitting(false);
-        setSuccessMessage(`Đăng ký tài khoản ${selectedRole} thành công! Đang chuyển sang đăng nhập...`);
-        setTimeout(() => {
-          setAuthMode("LOGIN");
-          setSuccessMessage(null);
-        }, 1200);
-      });
-      return;
-    }
+    const input = tokenInput.trim();
+    const demoAccountId = DEMO_ACCOUNT_MAP[input.toLowerCase()];
+    const endpoint = demoAccountId ? "/auth/login/demo" : "/auth/firebase";
+    const payload = demoAccountId ? { accountId: demoAccountId } : { idToken: input };
 
     try {
-      const res = await browserClient.post<AuthResponse>("/auth/firebase", {
-        idToken: tokenInput,
-      });
+      const res = await browserClient.post<AuthResponse>(endpoint, payload);
 
       const expiresAt =
         res.session.accessTokenExpiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -97,15 +72,15 @@ export function LoginForm({
         expiresAt,
       });
 
-      triggerTransit(() => {
-        onSuccess?.(res.user.role);
-      });
+      onSuccess?.(res.user.role);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.statusCode === 401 || err.statusCode === 403) {
-          setErrorMessage(err.message || "Thông tin đăng nhập không hợp lệ");
+          setErrorMessage(err.message || "Thông tin tài khoản không hợp lệ");
         } else if (err.statusCode === 503 || err.statusCode === 0) {
-          setErrorMessage(err.message || "Hệ thống xác thực tạm thời không khả dụng");
+          setErrorMessage(
+            err.message || "Hệ thống xác thực tạm thời không khả dụng",
+          );
         } else {
           setErrorMessage(err.message || "Đã xảy ra lỗi khi đăng nhập");
         }
@@ -122,7 +97,6 @@ export function LoginForm({
 
     setIsSubmitting(true);
     setErrorMessage(null);
-    setSuccessMessage(null);
 
     try {
       const res = await browserClient.post<AuthResponse>("/auth/login/demo", {
@@ -138,17 +112,17 @@ export function LoginForm({
         expiresAt,
       });
 
-      triggerTransit(() => {
-        onSuccess?.(res.user.role);
-      });
+      onSuccess?.(res.user.role);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.statusCode === 401 || err.statusCode === 403) {
-          setErrorMessage(err.message || "Tài khoản demo không hợp lệ");
+          setErrorMessage(err.message || "Tài khoản không hợp lệ");
         } else if (err.statusCode === 503 || err.statusCode === 0) {
-          setErrorMessage(err.message || "Hệ thống xác thực tạm thời không khả dụng");
+          setErrorMessage(
+            err.message || "Hệ thống xác thực tạm thời không khả dụng",
+          );
         } else {
-          setErrorMessage(err.message || "Đã xảy ra lỗi khi đăng nhập demo");
+          setErrorMessage(err.message || "Đã xảy ra lỗi khi đăng nhập");
         }
       } else {
         setErrorMessage("Đã xảy ra lỗi kết nối mạng");
@@ -159,312 +133,110 @@ export function LoginForm({
   };
 
   return (
-    <div className="w-full flex flex-col gap-4 text-left">
-      {/* Full-screen truck transit effect */}
-      <TruckTransitOverlay isActive={isTransitActive} />
-
-      {/* Mode Switcher Tabs (Đăng Nhập / Đăng Ký) */}
-      <div className="relative bg-[#EEF3F9] p-1 rounded-2xl border border-[#CAD9EB] flex items-center mb-1">
-        <div
-          className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#2E6FD6] rounded-xl shadow-sm transition-all duration-300 ease-out pointer-events-none"
-          style={{ left: authMode === "LOGIN" ? "4px" : "calc(50% + 0px)" }}
-        />
-        <button
-          type="button"
-          onClick={() => handleModeSwitch("LOGIN")}
-          className={`flex-1 py-2.5 text-center text-sm font-bold relative z-10 transition-colors ${
-            authMode === "LOGIN" ? "text-white" : "text-[#5B6B80] hover:text-[#0B1F3A]"
-          }`}
-        >
-          Đăng Nhập
-        </button>
-        <button
-          type="button"
-          onClick={() => handleModeSwitch("REGISTER")}
-          className={`flex-1 py-2.5 text-center text-sm font-bold relative z-10 transition-colors ${
-            authMode === "REGISTER" ? "text-white" : "text-[#5B6B80] hover:text-[#0B1F3A]"
-          }`}
-        >
-          Đăng Ký Mới
-        </button>
-      </div>
-
-      {/* Role Selection Grid */}
-      <div className="space-y-1.5">
-        <label className="text-[11px] font-bold text-[#5B6B80] uppercase tracking-wider">
-          Chọn vai trò của bạn
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => handleRoleSelect("CUSTOMER")}
-            className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden group ${
-              selectedRole === "CUSTOMER"
-                ? "border-[#2E6FD6] bg-[#E0F2FE] shadow-xs"
-                : "border-[#CAD9EB] bg-[#EEF3F9] hover:border-[#94A3B8]"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-lg">📦</span>
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  selectedRole === "CUSTOMER" ? "bg-[#2E6FD6]" : "bg-transparent"
-                }`}
-              />
-            </div>
-            <div className="font-bold text-xs text-[#0B1F3A]">Khách Hàng SME</div>
-            <div className="text-[10px] text-[#5B6B80]">Tạo đơn & theo dõi</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleRoleSelect("DRIVER")}
-            className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden group ${
-              selectedRole === "DRIVER"
-                ? "border-[#16A34A] bg-[#DCFCE7] shadow-xs"
-                : "border-[#CAD9EB] bg-[#EEF3F9] hover:border-[#94A3B8]"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-lg">🚚</span>
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  selectedRole === "DRIVER" ? "bg-[#16A34A]" : "bg-transparent"
-                }`}
-              />
-            </div>
-            <div className="font-bold text-xs text-[#0B1F3A]">Tài Xế Đối Tác</div>
-            <div className="text-[10px] text-[#5B6B80]">Nhận cuốc xe tải</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleRoleSelect("FLEET_OWNER")}
-            className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden group ${
-              selectedRole === "FLEET_OWNER"
-                ? "border-[#D97706] bg-[#FEF3C7] shadow-xs"
-                : "border-[#CAD9EB] bg-[#EEF3F9] hover:border-[#94A3B8]"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-lg">🏢</span>
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  selectedRole === "FLEET_OWNER" ? "bg-[#D97706]" : "bg-transparent"
-                }`}
-              />
-            </div>
-            <div className="font-bold text-xs text-[#0B1F3A]">Chủ Đội Xe</div>
-            <div className="text-[10px] text-[#5B6B80]">Giám sát đoàn xe</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleRoleSelect("ADMIN")}
-            className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden group ${
-              selectedRole === "ADMIN"
-                ? "border-[#9333EA] bg-[#F3E8FF] shadow-xs"
-                : "border-[#CAD9EB] bg-[#EEF3F9] hover:border-[#94A3B8]"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-lg">🛡️</span>
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  selectedRole === "ADMIN" ? "bg-[#9333EA]" : "bg-transparent"
-                }`}
-              />
-            </div>
-            <div className="font-bold text-xs text-[#0B1F3A]">Quản Trị Viên</div>
-            <div className="text-[10px] text-[#5B6B80]">Kiểm soát hệ thống</div>
-          </button>
-        </div>
-      </div>
-
+    <div className="w-full flex flex-col gap-4">
       {sessionExpired ? (
         <div
           role="alert"
-          className="p-3 bg-[#FEF3C7] border border-[#F59E0B] rounded-2xl text-[#92400E] text-xs text-center font-bold"
+          className="mb-4 flex items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/90 p-3.5 text-xs text-amber-900 shadow-2xs backdrop-blur-xs"
         >
-          Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" strokeWidth={2} aria-hidden="true" />
+          <span>Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</span>
         </div>
       ) : null}
 
       {errorMessage ? (
         <div
           role="alert"
-          className="p-3 bg-[#FEE2E2] border border-[#EF4444] rounded-2xl text-[#991B1B] text-xs text-center font-bold"
+          className="mb-4 flex items-center gap-2.5 rounded-2xl border border-rose-200 bg-rose-50/90 p-3.5 text-xs text-rose-900 shadow-2xs backdrop-blur-xs"
         >
-          {errorMessage}
+          <XCircle className="h-4 w-4 shrink-0 text-rose-600" strokeWidth={2} aria-hidden="true" />
+          <span>{errorMessage}</span>
         </div>
       ) : null}
 
-      {successMessage ? (
-        <div
-          role="status"
-          className="p-3 bg-[#DCFCE7] border border-[#22C55E] rounded-2xl text-[#14532D] text-xs text-center font-bold"
-        >
-          {successMessage}
-        </div>
-      ) : null}
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-        {/* Full Name for Registration */}
-        {authMode === "REGISTER" && (
-          <div className="flex flex-col gap-1 text-left">
-            <label htmlFor="fullNameInput" className="text-xs font-bold text-[#0B1F3A]">
-              Họ và tên
-            </label>
-            <input
-              id="fullNameInput"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              disabled={isSubmitting}
-              placeholder="VD: Công ty TNHH Vận Tải Đông Nam"
-              className="w-full bg-[#F8FAFC] border border-[#CAD9EB] rounded-xl px-3.5 py-2.5 text-sm text-[#0B1F3A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2E6FD6] focus:ring-2 focus:ring-[#2E6FD6]/20 transition-all"
-            />
-          </div>
-        )}
-
-        {/* Phone / Token Input */}
-        <div className="flex flex-col gap-1 text-left">
-          <label htmlFor="tokenInput" className="text-xs font-bold text-[#0B1F3A]">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5 text-left">
+          <label
+            htmlFor="tokenInput"
+            className="text-xs font-semibold text-slate-700"
+          >
             Số điện thoại hoặc Token
           </label>
-          <input
-            id="tokenInput"
-            aria-label="Số điện thoại hoặc Token"
-            type="text"
-            value={tokenInput}
-            onChange={(e) => setTokenInput(e.target.value)}
-            disabled={isSubmitting}
-            placeholder="Nhập số điện thoại hoặc idToken..."
-            className="w-full bg-[#F8FAFC] border border-[#CAD9EB] rounded-xl px-3.5 py-2.5 text-sm text-[#0B1F3A] placeholder-[#94A3B8] font-mono focus:outline-none focus:border-[#2E6FD6] focus:ring-2 focus:ring-[#2E6FD6]/20 transition-all"
-          />
+          <div className="relative group">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 group-focus-within:text-brand transition-colors">
+              <Phone className="w-4 h-4" strokeWidth={1.8} />
+            </div>
+            <input
+              id="tokenInput"
+              type="text"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              disabled={isSubmitting}
+              placeholder="Nhập số điện thoại (VD: +840000000004) hoặc Token"
+              className="w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 pl-10 text-sm text-neutral-text placeholder:text-slate-400 shadow-2xs transition-all focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none disabled:opacity-50"
+            />
+          </div>
         </div>
 
-        {/* Driver specific info on Register */}
-        {authMode === "REGISTER" && selectedRole === "DRIVER" && (
-          <div className="p-3 bg-[#EEF3F9] border border-[#CAD9EB] rounded-2xl space-y-2 text-xs">
-            <div className="font-bold text-[#0B1F3A] uppercase tracking-wider">
-              🚚 Thông tin xe tải
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label htmlFor="vehicleSelect" className="text-[#5B6B80] block mb-1 font-semibold">Chủng loại xe</label>
-                <select
-                  id="vehicleSelect"
-                  value={vehicleType}
-                  onChange={(e) => setVehicleType(e.target.value)}
-                  className="w-full bg-white border border-[#CAD9EB] rounded-lg px-2 py-1.5 text-xs text-[#0B1F3A]"
-                >
-                  <option value="VAN">Xe Van (1 Tấn)</option>
-                  <option value="TRUCK_5T">Xe Tải (5 Tấn)</option>
-                  <option value="TRUCK_15T">Xe Tải Nặng (15 Tấn)</option>
-                  <option value="CONTAINER">Đầu Kéo Container</option>
-                  <option value="BAGAC">Xe Ba Gác</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="licensePlateInput" className="text-[#5B6B80] block mb-1 font-semibold">Biển số xe</label>
-                <input
-                  id="licensePlateInput"
-                  type="text"
-                  value={licensePlate}
-                  onChange={(e) => setLicensePlate(e.target.value)}
-                  placeholder="59D-123.45"
-                  className="w-full bg-white border border-[#CAD9EB] rounded-lg px-2 py-1.5 text-xs text-[#0B1F3A] uppercase font-mono"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Primary CTA Button - Exactly matching Onboarding primaryCtaBtn */}
         <button
           type="submit"
           disabled={isSubmitting || !tokenInput.trim()}
-          className={`w-full py-3.5 px-4 rounded-full text-sm font-bold text-white flex items-center justify-center gap-2 shadow-lg transition-all ${
-            isSubmitting || !tokenInput.trim()
-              ? "bg-[#94A3B8] text-white cursor-not-allowed opacity-60"
-              : "bg-gradient-to-b from-[#2E6FD6] to-[#1E5BB8] hover:from-[#2563EB] hover:to-[#1D4ED8] shadow-[#1E5BB8]/30 active:scale-[0.98] cursor-pointer"
-          }`}
+          className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-slate-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand motion-reduce:transition-none"
         >
           {isSubmitting ? (
-            "Đang xử lý..."
-          ) : authMode === "LOGIN" ? (
-            "Đăng nhập"
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Đang xử lý...
+            </span>
           ) : (
-            "Bắt đầu ngay"
+            <span className="flex items-center gap-2">Đăng nhập <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" /></span>
           )}
         </button>
       </form>
 
-      {/* Demo 1-Click Accounts */}
       {allowDemo ? (
-        <div className="mt-4 pt-4 border-t border-[#CAD9EB] flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-[#5B6B80] uppercase tracking-wider">
-              Tài khoản demo
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] text-[10px] font-bold border border-[#86EFAC]">
-              Pilot Ready
+        <div className="mt-5 border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-slate-700">
+              <span className="sr-only">Tài khoản demo</span>
+              Đăng nhập nhanh theo vai trò hệ thống
+            </p>
+            <span className="rounded-full bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+              Môi trường thử nghiệm
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleDemoLogin("customer", "CUSTOMER")}
-              className="p-2.5 rounded-2xl bg-[#EEF3F9] hover:bg-[#E0F2FE] border border-[#CAD9EB] hover:border-[#2E6FD6] text-left transition-all flex items-center gap-2"
-            >
-              <span className="text-base">📦</span>
-              <div>
-                <div className="text-xs font-bold text-[#0B1F3A]">Demo Customer</div>
-                <div className="text-[10px] text-[#5B6B80]">Khách hàng SME</div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleDemoLogin("driver", "DRIVER")}
-              className="p-2.5 rounded-2xl bg-[#EEF3F9] hover:bg-[#DCFCE7] border border-[#CAD9EB] hover:border-[#16A34A] text-left transition-all flex items-center gap-2"
-            >
-              <span className="text-base">🚚</span>
-              <div>
-                <div className="text-xs font-bold text-[#0B1F3A]">Demo Driver</div>
-                <div className="text-[10px] text-[#5B6B80]">Tài xế nhận đơn</div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleDemoLogin("fleet-owner", "FLEET_OWNER")}
-              className="p-2.5 rounded-2xl bg-[#EEF3F9] hover:bg-[#FEF3C7] border border-[#CAD9EB] hover:border-[#D97706] text-left transition-all flex items-center gap-2"
-            >
-              <span className="text-base">🏢</span>
-              <div>
-                <div className="text-xs font-bold text-[#0B1F3A]">Demo Fleet Owner</div>
-                <div className="text-[10px] text-[#5B6B80]">Quản lý đội xe</div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleDemoLogin("admin", "ADMIN")}
-              className="p-2.5 rounded-2xl bg-[#EEF3F9] hover:bg-[#F3E8FF] border border-[#CAD9EB] hover:border-[#9333EA] text-left transition-all flex items-center gap-2"
-            >
-              <span className="text-base">🛡️</span>
-              <div>
-                <div className="text-xs font-bold text-[#0B1F3A]">Demo Admin</div>
-                <div className="text-[10px] text-[#5B6B80]">Giám sát tổng quan</div>
-              </div>
-            </button>
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+                { id: "admin", role: "ADMIN", title: "Quản trị viên", testLabel: "Demo Admin", desc: "Hệ thống LEOPARD", phone: "+840000000004", icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z", testId: "demo-admin-button" },
+                { id: "fleet-owner", role: "FLEET_OWNER", title: "Chủ đội xe", testLabel: "Demo Fleet Owner", desc: "Đội xe Sao Mai", phone: "+840000000003", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M16 3.13a4 4 0 0 1 0 7.74", testId: "demo-fleet-owner-button" },
+                { id: "driver", role: "DRIVER", title: "Tài xế", testLabel: "Demo Driver", desc: "Đội xe Sao Mai", phone: "+840000000002", icon: "M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2h-2 M14 5h5v5", testId: undefined },
+                { id: "customer", role: "CUSTOMER", title: "Khách hàng", testLabel: "Demo Customer", desc: "DN Minh Phát", phone: "+840000000001", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M22 11v6", testId: undefined },
+              ].map((acc) => (
+                <button
+                  key={acc.id}
+                  type="button"
+                  data-testid={acc.testId}
+                  disabled={isSubmitting}
+                  onClick={() => handleDemoLogin(acc.id, acc.role)}
+                  className="group flex flex-col items-start gap-1.5 rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-3 text-left transition-all hover:border-brand/40 hover:bg-white hover:shadow-xs active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white transition-colors">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={acc.icon} /></svg>
+                    </div>
+                    <span className="rounded-full border border-slate-200/80 bg-white px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                      {acc.role === 'ADMIN' ? 'Admin' : acc.role === 'FLEET_OWNER' ? 'Fleet' : acc.role === 'DRIVER' ? 'Tài xế' : 'Khách'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="sr-only">{acc.testLabel}</span>
+                    <div className="text-xs font-bold text-slate-800">{acc.title}</div>
+                    <div className="text-[11px] text-slate-400">{acc.desc}</div>
+                    <span className="sr-only">{acc.phone}</span>
+                  </div>
+                </button>
+              ))}
           </div>
         </div>
       ) : null}

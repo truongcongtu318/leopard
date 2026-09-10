@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from './cn';
 
 export type CompactMetricSummaryItem = Readonly<{
@@ -27,32 +28,40 @@ export function CompactMetricSummary({
     <section
       aria-label={ariaLabel}
       aria-busy={isLoading ? 'true' : undefined}
-      className={cn('border-l-4 border-brand bg-neutral-text py-md text-brand-text', className)}
+      className={cn(
+        'overflow-hidden rounded-card rounded-[22px] border border-white/80 bg-white/95 backdrop-blur-md shadow-xs transition-all',
+        className,
+      )}
     >
-      <dl className="grid gap-sm sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100/90">
         {items.map((item) => (
-          <div key={item.id} className="min-w-0 px-sm">
-            <dt className="text-xs font-semibold text-brand-soft break-words">{item.label}</dt>
-            <dd className="mt-xxs min-h-lg text-section-title font-semibold tabular-nums break-words">
+          <div key={item.id} className="min-w-0 p-5 sm:p-5.5 hover:bg-sky-50/20 transition-colors">
+            <dt className="text-[11px] font-extrabold tracking-wider text-slate-500 uppercase break-words">
+              {item.label}
+            </dt>
+            <dd className="mt-2 min-h-7 text-2xl font-black tracking-tight tabular-nums break-words text-slate-900">
               {isLoading ? (
                 <span
-                  className="block h-lg w-full animate-pulse rounded-control bg-brand/50 motion-reduce:animate-none"
+                  className="block h-7 w-20 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none"
                   aria-hidden="true"
                 />
               ) : item.href ? (
                 <a
                   href={item.href}
                   aria-label={item.accessibleLabel}
-                  className="inline-flex min-h-11 items-center text-brand-soft underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-text"
+                  className="inline-flex items-center gap-1.5 text-slate-900 hover:text-brand transition-colors focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   {item.value}
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-brand" aria-hidden="true" />
                 </a>
               ) : (
                 item.value
               )}
             </dd>
             {!isLoading && item.detail ? (
-              <dd className="mt-xxs text-xs text-brand-soft break-words">{item.detail}</dd>
+              <dd className="mt-1 text-xs font-medium leading-relaxed text-slate-500 break-words">
+                {item.detail}
+              </dd>
             ) : null}
           </div>
         ))}

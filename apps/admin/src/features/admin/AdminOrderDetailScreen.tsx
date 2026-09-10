@@ -11,6 +11,7 @@ import {
   StatusTimeline,
 } from '@leopard/ui';
 
+import { LiveOrderRefresher } from '../../components/live/LiveOrderRefresher';
 import { AdminCommandLauncher } from './AdminCommandLauncher';
 import {
   AdminAuditRail,
@@ -23,12 +24,17 @@ import {
 import type { AdminOrderDetailRouteView } from './model';
 import type { AdminPreviewContext } from './model';
 
+const TERMINAL_ORDER_STATUSES: ReadonlySet<string> = new Set(['DELIVERED', 'CANCELLED']);
+
 export function AdminOrderDetailScreen({
+  commandRuntime,
   view,
   previewContext,
 }: Readonly<{
   view: AdminOrderDetailRouteView;
   previewContext?: AdminPreviewContext;
+  /** Live API command execution (runtime data path); absent in preview renders. */
+  commandRuntime?: boolean | undefined;
 }>) {
   if (view.kind !== 'order-detail') {
     return (
@@ -48,21 +54,23 @@ export function AdminOrderDetailScreen({
         screen="order-detail"
       />
       <OperationsPageHeader
-        context="Investigation workspace · lifecycle history tách biệt với privileged audit"
         isStale={order.tracking.state === 'stale'}
         title={`Đơn ${order.reference}`}
         updatedAt={order.updatedAtLabel}
       />
+      <LiveOrderRefresher
+        enabled={!TERMINAL_ORDER_STATUSES.has(order.status)}
+        orderId={order.id}
+      />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
       <AdminDispatchSlab
         ariaLabel="Ngữ cảnh điều phối hiện tại"
-        eyebrow="INVESTIGATION CONTEXT · LIVE SNAPSHOT"
+        eyebrow="THÔNG TIN ĐIỀU PHỐI TRỰC TIẾP"
       >
         <div className="grid min-w-0 gap-md md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-brand-soft">TARGET ORDER</p>
-            <p className="mt-xxs text-section-title font-bold break-words">{order.reference}</p>
-            <p className="mt-xs text-body-compact text-brand-soft break-words">
+            <p className="text-xl sm:text-2xl font-black text-slate-800 break-words">{order.reference}</p>
+            <p className="mt-xs text-xs sm:text-sm text-slate-600 break-words font-medium">
               {order.driverLabel} · {order.tracking.statusLabel}
             </p>
           </div>
@@ -77,11 +85,11 @@ export function AdminOrderDetailScreen({
         <div className="flex min-w-0 flex-col gap-lg lg:col-span-8">
           <AdminSurface title="Ngữ cảnh đơn và phân công">
             <ReadOnlyDetailList
-              ariaLabel="Ngữ cảnh đơn, Customer và Driver"
+              ariaLabel="Ngữ cảnh đơn, Khách hàng và Tài xế"
               items={[
-                { id: 'reference', label: 'Order ID', value: order.reference },
-                { id: 'customer', label: 'Customer', value: order.customerLabel },
-                { id: 'driver', label: 'Driver được phân công', value: order.driverLabel },
+                { id: 'reference', label: 'Mã đơn hàng', value: order.reference },
+                { id: 'customer', label: 'Khách hàng', value: order.customerLabel },
+                { id: 'driver', label: 'Tài xế tiếp nhận', value: order.driverLabel },
                 { id: 'cargo', label: 'Hàng hóa', value: order.cargoSummary },
                 { id: 'updated', label: 'Cập nhật', value: order.updatedAtLabel },
               ]}
@@ -102,11 +110,12 @@ export function AdminOrderDetailScreen({
           </AdminSurface>
 
           <MapPanel
+            className="rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
             height="large"
             lastUpdated={order.tracking.lastUpdatedLabel}
             state={order.tracking.state}
             textAlternative={order.tracking.mapAlternative}
-            title="Tracking và vị trí gần nhất"
+            title="Giám sát hành trình & Vị trí thực tế"
           >
             <RouteMapSchematic
               destinationLabel={order.route.destination.label}
@@ -115,13 +124,11 @@ export function AdminOrderDetailScreen({
             />
           </MapPanel>
 
-          <AdminSurface
-            description="Command chỉ xuất hiện từ availableCommands; UI không tự suy lifecycle hoặc payment capability."
-            title="Command được phép"
-          >
+          <AdminSurface title="Thao tác điều phối khả dụng">
             <AdminCommandLauncher
               commands={view.availableCommands}
               dialogPreview={view.dialogPreview}
+              runtime={commandRuntime === true}
             />
           </AdminSurface>
 
@@ -139,28 +146,33 @@ export function AdminOrderDetailScreen({
             />
           </AdminSurface>
 
-          <AdminSurface
-            description="Metadata-first; không render signed URL hoặc storage key."
-            title="Media evidence"
-          >
+          <AdminSurface title="Hình ảnh xác nhận giao nhận">
             {order.media.state === 'error' ? (
               <OperationalAlert title="Không thể tải ảnh" tone="danger">
                 <p>{order.media.message}</p>
               </OperationalAlert>
             ) : order.media.items.length === 0 ? (
               <p className="text-body-compact text-neutral-muted">
-                Chưa có media được phép hiển thị.
+                Chưa có hình ảnh xác nhận được phép hiển thị.
               </p>
             ) : (
-              <ul className="m-0 grid list-none gap-sm p-0 sm:grid-cols-2">
-                {order.media.items.map((item) => (
+              <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
+                {order.media.items.map((item, index) => (
                   <li
                     key={item.id}
-                    className="rounded-control border border-neutral-border bg-neutral-surface p-sm"
+                    className="rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-4 shadow-2xs hover:shadow-xs transition-shadow"
                   >
-                    <p className="font-semibold break-words">{item.label}</p>
-                    <p className="mt-xxs text-body-compact text-neutral-muted">
-                      {item.mediaType} · {item.capturedAtLabel}
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-xs font-bold text-brand uppercase tracking-wider" aria-hidden="true">
+                        Tệp #{String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className="rounded-full bg-slate-200/70 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                        {item.mediaType}
+                      </span>
+                    </div>
+                    <p className="font-bold text-slate-800 break-words text-sm">{item.label}</p>
+                    <p className="mt-1 text-xs text-neutral-muted tabular-nums">
+                      {item.capturedAtLabel}
                     </p>
                   </li>
                 ))}
@@ -178,7 +190,7 @@ export function AdminOrderDetailScreen({
                   value: <StatusBadge domain="paymentStatus" status={order.payment.status} />,
                 },
                 { id: 'amount', label: 'Số tiền', value: order.payment.amountLabel },
-                { id: 'reference', label: 'Reference', value: order.payment.referenceLabel },
+                { id: 'reference', label: 'Mã tham chiếu', value: order.payment.referenceLabel },
                 { id: 'source', label: 'Nguồn', value: order.payment.sourceLabel },
                 {
                   id: 'expiry',

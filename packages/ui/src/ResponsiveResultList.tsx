@@ -24,26 +24,26 @@ export function ResponsiveResultList({
   className,
 }: ResponsiveResultListProps) {
   return (
-    <ul aria-label={ariaLabel} className={cn('m-0 grid list-none gap-md p-0 md:hidden', className)}>
+    <ul aria-label={ariaLabel} className={cn('m-0 grid list-none gap-3.5 p-0 md:hidden', className)}>
       {items.length === 0 ? (
-        <li className="border-y border-neutral-border py-lg text-center text-neutral-muted">
+        <li className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-8 text-center text-xs font-medium text-slate-500 shadow-2xs">
           {emptyMessage}
         </li>
       ) : (
         items.map((item) => (
           <li key={item.id}>
-            <article className="border-l-4 border-brand bg-neutral px-md py-md text-neutral-text">
-              <header className="flex flex-wrap items-start justify-between gap-xs">
-                <h3 className="min-w-0 font-semibold break-words">{item.heading}</h3>
+            <article className="rounded-2xl border border-slate-200/80 bg-white p-4 text-neutral-text shadow-xs border-l-4 border-l-brand hover:border-slate-300 transition-all">
+              <header className="flex flex-wrap items-start justify-between gap-2">
+                <h3 className="min-w-0 text-sm font-bold text-slate-900 break-words">{item.heading}</h3>
                 {item.status}
               </header>
               <ReadOnlyDetailList
                 ariaLabel={`Chi tiết ${item.id}`}
                 items={item.details}
-                className="mt-sm"
+                className="mt-3"
               />
               {item.actions ? (
-                <div className="mt-sm flex flex-wrap gap-xs">{item.actions}</div>
+                <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t border-slate-100">{item.actions}</div>
               ) : null}
             </article>
           </li>

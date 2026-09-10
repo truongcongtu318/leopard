@@ -45,6 +45,7 @@ export type FleetActiveOrderSummaryView = Readonly<{
   reference: string;
   status: OrderStatus;
   routeLabel: string;
+  customerLabel?: string;
   driverLabel: string;
   trackingLabel: string;
   href: string;

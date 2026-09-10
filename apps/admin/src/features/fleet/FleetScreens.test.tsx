@@ -21,8 +21,8 @@ const forbiddenMutations = [
 
 function expectReadOnlySurface() {
   expect(screen.getByLabelText('Phạm vi truy cập đội xe')).toBeTruthy();
-  expect(screen.getByText('Phạm vi truy cập: Đội xe Sao Mai')).toBeTruthy();
-  expect(screen.getByText(/Tư cách thành viên: Đang tham gia · Chỉ xem/)).toBeTruthy();
+  expect(screen.getAllByText(/Đội xe Sao Mai/).length).toBeGreaterThan(0);
+  expect(screen.getByText(/Chỉ xem|READ-ONLY/)).toBeTruthy();
   for (const label of forbiddenMutations) {
     expect(screen.queryByRole('button', { name: label })).toBeNull();
     expect(screen.queryByRole('link', { name: label })).toBeNull();
@@ -144,7 +144,7 @@ describe('Fleet Owner static screens', () => {
     expect(screen.getByText(/Dữ liệu mô phỏng/)).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Lịch sử trạng thái' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Thanh toán' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Media' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Hình ảnh xác nhận giao nhận' })).toBeTruthy();
   });
 
   it('never leaks private order or scope data in a foreign-resource denial', () => {

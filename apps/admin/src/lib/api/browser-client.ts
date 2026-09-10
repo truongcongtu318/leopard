@@ -1,4 +1,4 @@
-import { ApiError } from "./api-error";
+import { ApiError, safeParseJson } from "./api-error";
 import { clearSession, updateSessionExpiry } from "../auth/session";
 
 /**
@@ -13,16 +13,7 @@ import { clearSession, updateSessionExpiry } from "../auth/session";
 const BASE_URL = "/api/v1";
 
 function generateRequestId(): string {
-  try {
-    return crypto.randomUUID();
-  } catch {
-    // Fallback for environments without crypto.randomUUID()
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      const v = c === "x" ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
+  return crypto.randomUUID();
 }
 
 let refreshPromise: Promise<boolean> | null = null;
@@ -34,15 +25,6 @@ function buildHeaders(): Record<string, string> {
   };
 
   return headers;
-}
-
-async function safeParseJson(response: Response): Promise<unknown> {
-  const text = await response.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
 }
 
 async function request<T>(

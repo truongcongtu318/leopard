@@ -70,14 +70,18 @@ Nếu thiếu thông tin làm thay đổi đáng kể solution, đọc tài li�
 
 ## UI Rules
 
-LEOPARD là operational logistics UI, không phải landing page.
+LEOPARD là hệ thống vận hành logistics thông minh, kết hợp tính chính xác trong điều phối với giao diện người dùng hiện đại, tinh tế và trực quan:
 
-- Customer và Driver mobile-first; Fleet Owner/Admin cô đọng và dễ quét.
-- Tuân thủ `docs/ui/04-design-system.md` và responsive rules.
-- Mọi màn hình chính có loading, empty, error, success và permission-denied state.
-- ETA dùng nhãn “ETA dự kiến”; source demo phải hiện “Dữ liệu mô phỏng”.
-- Không dùng gradient tím, glassmorphism, decorative hero hoặc fake marketing card.
-- Kiểm tra text overflow, overlap, keyboard focus và contrast trước khi hoàn tất.
+- Customer và Driver theo định dạng mobile-first; Fleet Owner/Admin sử dụng giao diện **NexaFleet Modern Bento Dispatch Console**:
+  - Tông nền canvas xám sáng thanh lịch (`#F4F5F7` / `#F8FAFC`), tạo độ tương phản cao và tôn vinh các thẻ bento trắng tinh khôi.
+  - Hệ thống thẻ nổi màu trắng tinh tế (`bg-white`), bo góc mềm mại `rounded-3xl` (24px–28px), viền mỏng kín đáo `border-slate-100` với đổ bóng êm ái (`shadow-xs` / `shadow-sm`).
+  - Topbar nổi bo góc với logo thương hiệu bên trái, cụm điều hướng trung tâm với tab active dạng pill đen tuyền (`bg-slate-900 text-white rounded-full`), chuông thông báo tròn và capsule hồ sơ người dùng bên phải.
+  - Bản đồ theo dõi thời gian thực Dark Mode (Real-time tracking map) tích hợp thanh tìm kiếm kính mờ, nút phóng to, zoom `+ / -` và marker bưu kiện 3D / selected pill xanh lục.
+  - Bố cục Bento 2 cột trực quan: Cột trái gồm Bản đồ tối & Bảng danh sách đơn hàng có pill filter; Cột phải gồm Tổng quan trạng thái (thanh phân đoạn 4 màu), Hiệu suất thực hiện (cột đứng xanh lục) và Doanh thu vận hành (thẻ gradient hoàng hôn kèm biểu đồ sóng trắng mềm mại).
+- Mọi màn hình chính có đầy đủ loading, empty, error, success và permission-denied state.
+- ETA luôn dùng nhãn “ETA dự kiến”; dữ liệu demo/mô phỏng phải hiển thị rõ “Dữ liệu mô phỏng”.
+- Dữ liệu hiển thị phải phản ánh đúng phạm vi pilot (không đưa các giả định AI XGBoost hay báo cáo ESG ngoài scope vào nghiệp vụ thực).
+- Kiểm tra text overflow, overlap, keyboard focus và tương phản màu sắc (WCAG AA) trước khi hoàn tất.
 
 ## Verification
 
