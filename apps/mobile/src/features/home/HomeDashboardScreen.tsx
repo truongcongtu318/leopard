@@ -885,7 +885,7 @@ const styles = StyleSheet.create({
   layer1TopBar: {
     position: 'absolute', left: 16, right: 16, zIndex: 20,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.90)', borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', borderRadius: 20,
     paddingHorizontal: 14, paddingVertical: 10,
     borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
     shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
@@ -897,9 +897,9 @@ const styles = StyleSheet.create({
   topBarGreeting: { fontSize: 12, fontWeight: '700', color: '#0B1E42' },
   topBarSmeName: { fontSize: 11, fontWeight: '500', color: '#64748B', marginTop: 1 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  roleSwitchBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6, gap: 4 },
+  roleSwitchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44, backgroundColor: '#F1F5F9', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6, gap: 4 },
   roleSwitchText: { fontSize: 12, fontWeight: '700', color: '#0B1E42' },
-  iconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  iconBtn: { width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 22, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', position: 'relative' },
   badgePill: { position: 'absolute', top: -2, right: -2, backgroundColor: '#EF4444', minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   badgePillText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800' },
 
@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3,
   },
   bigCtaBtnPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
-  bigCtaBtnText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4 },
+  bigCtaBtnText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4, fontVariant: ['tabular-nums'] },
 
   /* Section Containers */
   section: { marginBottom: 16 },
@@ -1025,7 +1025,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingHorizontal: 10, height: 40, borderWidth: 1, borderColor: '#E2E8F0', gap: 6,
   },
   trackingInput: { flex: 1, fontSize: 12, fontWeight: '600', color: '#0F172A', padding: 0 },
-  trackingSearchBtn: { backgroundColor: '#0B1E42', borderRadius: 12, paddingHorizontal: 14, height: 40, alignItems: 'center', justifyContent: 'center' },
+  trackingSearchBtn: { backgroundColor: '#0B1E42', borderRadius: 12, paddingHorizontal: 14, height: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   trackingSearchBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
 
   /* Service Shortcuts Grid */
@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
   driverPartnerTextWrap: { flex: 1 },
   driverPartnerTitle: { fontSize: 13, fontWeight: '800', color: '#1E3A8A' },
   driverPartnerSubtitle: { fontSize: 11, color: '#3B82F6', marginTop: 1 },
-  driverRegisterBtn: { backgroundColor: '#1D4ED8', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  driverRegisterBtn: { backgroundColor: '#1D4ED8', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, minHeight: 44, justifyContent: 'center' },
   driverRegisterText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
 
   /* Promo Banner Carousel */
