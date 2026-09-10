@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { httpClient } from '../../../api/http-client';
+import { httpClient } from '@leopard/mobile-core';
 import { IconLocationPin, RealInteractiveMap, resolveLocationCoords, VIETNAM_LOCATION_DICT, type MapCoordinate } from '@leopard/mobile-core';
 
 function formatVietnamesePhone(phone?: string | null): string {

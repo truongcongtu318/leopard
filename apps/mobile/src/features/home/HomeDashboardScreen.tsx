@@ -17,8 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, Button, FloatingNavBar, type TabKey, BrandLoginLogo, IconBell, IconLocationPin, IconMessage, IconOrders, IconQrPayment, IconRoleDriver, IconSecurityShield, IconSpeedTruck, IconVehicle3Wheel, IconVehicleHeavyTruck, IconVehicleLightTruck, IconWallet, OrderSummary, RouteSpine, StatusBadge } from '@leopard/mobile-core';
 import type { VehicleCategory } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
-import { httpClient } from '../../api/http-client';
-import { sessionStore } from '../../auth/session-store';
+import { httpClient, sessionStore } from '@leopard/mobile-core';
 import {
   MapAddressPickerModal,
   reverseGeocodeCoords,
@@ -26,6 +25,7 @@ import {
 } from './components';
 
 import { HomePromoArtwork, type HomePromoSlide } from './HomePromoArtwork';
+import { HomeServiceIllustration } from './HomeServiceIllustrations';
 
 function formatVietnamesePhone(phone?: string | null): string {
   if (!phone) return '';
@@ -318,6 +318,10 @@ type QuickService = Readonly<{
   label: string;
   tag: string;
   iconType: '3wheel' | 'light' | 'heavy' | 'express' | 'loading' | 'cod';
+  accentColor: string;
+  borderColor: string;
+  surfaceColor: string;
+  tagSurfaceColor: string;
 }>;
 
 const quickServices: readonly QuickService[] = [
@@ -328,6 +332,10 @@ const quickServices: readonly QuickService[] = [
     name: 'Ba gác',
     tag: '< 500kg',
     iconType: '3wheel',
+    accentColor: '#1D4ED8',
+    borderColor: '#B9D5FF',
+    surfaceColor: '#EAF3FF',
+    tagSurfaceColor: '#DCEBFF',
   },
   {
     id: 'LIGHT_TRUCK',
@@ -336,6 +344,10 @@ const quickServices: readonly QuickService[] = [
     name: 'Tải nhẹ',
     tag: '≤ 1.5 tấn',
     iconType: 'light',
+    accentColor: '#047D95',
+    borderColor: '#A8DFEA',
+    surfaceColor: '#E8FAFD',
+    tagSurfaceColor: '#D4F3F8',
   },
   {
     id: 'HEAVY_TRUCK',
@@ -344,6 +356,10 @@ const quickServices: readonly QuickService[] = [
     name: 'Tải nặng',
     tag: '5–10 tấn',
     iconType: 'heavy',
+    accentColor: '#334155',
+    borderColor: '#C3CDDB',
+    surfaceColor: '#EEF2F7',
+    tagSurfaceColor: '#E1E8F0',
   },
   {
     id: 'EXPRESS',
@@ -351,6 +367,10 @@ const quickServices: readonly QuickService[] = [
     name: 'Hỏa tốc',
     tag: 'Giao ưu tiên',
     iconType: 'express',
+    accentColor: '#D97706',
+    borderColor: '#F6C76D',
+    surfaceColor: '#FFF5D8',
+    tagSurfaceColor: '#FFE7A3',
   },
   {
     id: 'LOADING',
@@ -358,6 +378,10 @@ const quickServices: readonly QuickService[] = [
     name: 'Bốc xếp',
     tag: 'Kèm phụ xe',
     iconType: 'loading',
+    accentColor: '#C2410C',
+    borderColor: '#FDBA8C',
+    surfaceColor: '#FFF0E6',
+    tagSurfaceColor: '#FED7BA',
   },
   {
     id: 'COD',
@@ -365,6 +389,10 @@ const quickServices: readonly QuickService[] = [
     name: 'Thu COD',
     tag: 'Thu hộ tiền hàng',
     iconType: 'cod',
+    accentColor: '#13855F',
+    borderColor: '#A7DCC8',
+    surfaceColor: '#EAF8F1',
+    tagSurfaceColor: '#D2F2E2',
   },
 ];
 
@@ -735,7 +763,7 @@ export function HomeDashboardScreen({
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.topBar}>
-          <BrandLoginLogo height={24} />
+          <View style={styles.brandPlate}><BrandLoginLogo height={28} /></View>
           <View style={styles.headerActions}>
             <Pressable
               accessibilityLabel={
@@ -747,7 +775,7 @@ export function HomeDashboardScreen({
               onPress={onOpenChat}
               style={styles.headerIconBtn}
             >
-              <IconMessage color="#0F172A" size={18} />
+              <IconMessage color="#FFFFFF" size={18} />
               {unreadMessages > 0 ? (
                 <View style={styles.badgePill}>
                   <Text style={styles.badgePillText}>{unreadMessages}</Text>
@@ -762,7 +790,7 @@ export function HomeDashboardScreen({
                 onPress={onOpenNotifications}
                 style={styles.headerIconBtn}
               >
-                <IconBell color="#0F172A" size={18} />
+                <IconBell color="#FFFFFF" size={18} />
                 {unreadNotifications > 0 ? (
                   <View style={styles.badgePill}>
                     <Text style={styles.badgePillText}>{unreadNotifications}</Text>
@@ -779,6 +807,8 @@ export function HomeDashboardScreen({
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.homeIntro}>
+            <View pointerEvents="none" style={styles.homeIntroGlow} />
+            <View pointerEvents="none" style={styles.homeIntroAccent} />
             <Text style={styles.homeGreeting}>{greeting}{userName ? ', ' + userName : ''}</Text>
             <Text accessibilityRole="header" style={styles.homeTitle}>Bạn muốn giao hàng đi đâu?</Text>
           </View>
@@ -1141,17 +1171,24 @@ export function HomeDashboardScreen({
                   }}
                   style={({ pressed }) => [
                     styles.serviceCard,
+                    { borderColor: service.borderColor },
                     pressed ? styles.serviceCardPressed : null,
                   ]}
                 >
-                  <View accessible={false} style={styles.serviceImageContainer}>
-                    {renderServiceIcon(service.iconType)}
+                  <View
+                    accessible={false}
+                    style={[
+                      styles.serviceImageContainer,
+                      { backgroundColor: service.surfaceColor, borderColor: service.borderColor },
+                    ]}
+                  >
+                    <HomeServiceIllustration kind={service.iconType} />
                   </View>
                   <Text numberOfLines={1} style={styles.serviceName}>
                     {service.name}
                   </Text>
-                  <View style={styles.serviceTagBadge}>
-                    <Text numberOfLines={1} style={styles.serviceTagText}>
+                  <View style={[styles.serviceTagBadge, { backgroundColor: service.tagSurfaceColor, borderColor: service.borderColor }]}>
+                    <Text numberOfLines={1} style={[styles.serviceTagText, { color: service.accentColor }]}>
                       {service.tag}
                     </Text>
                   </View>
@@ -1187,6 +1224,8 @@ export function HomeDashboardScreen({
             onLayout={(e) => {
               const w = Math.round(e.nativeEvent.layout.width);
               if (w > 0 && Math.abs(w - bannerWidth) > 2) {
+                slideAnim.stopAnimation();
+                slideAnim.setValue(-currentSlideIdxRef.current * w);
                 setBannerWidth(w);
               }
             }}
@@ -1385,16 +1424,22 @@ export function HomeDashboardScreen({
 }
 
 const styles = StyleSheet.create({
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#FFFFFF' },
-  homeIntro: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20, gap: 6 },
-  homeGreeting: { fontSize: 13, color: '#526176' },
-  homeTitle: { fontSize: 23, lineHeight: 30, fontWeight: '800', color: '#0B1E42', letterSpacing: -0.5 },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#0B2347' },
+  brandPlate: { backgroundColor: '#FFFFFF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  homeIntro: { paddingHorizontal: 22, paddingTop: 10, paddingBottom: 38, gap: 8, backgroundColor: '#0B2347', borderBottomLeftRadius: 28, borderBottomRightRadius: 28, position: 'relative', overflow: 'hidden' },
+  homeIntroGlow: { position: 'absolute', top: -30, right: -20, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(245, 158, 11, 0.12)' },
+  homeIntroAccent: { position: 'absolute', bottom: 0, left: 24, right: 24, height: 2, backgroundColor: 'rgba(245, 158, 11, 0.25)', borderRadius: 1 },
+  homeGreeting: { fontSize: 13, fontWeight: '600', color: '#FFD18A' },
+  homeTitle: { fontSize: 25, lineHeight: 32, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5, maxWidth: 360 },
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
     backgroundColor: leopardPalette.canvas,
   },
 
@@ -1497,12 +1542,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#19385F',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.95)',
+    borderColor: '#345075',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
@@ -1532,7 +1577,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   mainSheet: {
-    marginTop: 0,
+    marginTop: -18,
     paddingHorizontal: spacing.md,
     gap: spacing.md,
   },
@@ -1886,7 +1931,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 12,
   },
   serviceCard: {
     width: '48%',
@@ -1894,11 +1939,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingTop: 8,
     paddingBottom: 10,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#DFE7F0',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -1910,8 +1955,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   serviceImageContainer: {
-    width: '100%', height: 64, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#F1F5FA', borderRadius: 10, marginBottom: 10,
+    width: '100%', height: 90, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 10, overflow: 'hidden', marginBottom: 10,
   },
   serviceImage: {
     width: '100%',
@@ -1919,7 +1964,7 @@ const styles = StyleSheet.create({
   },
   serviceName: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
     letterSpacing: -0.1,
@@ -2095,7 +2140,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
     borderLeftWidth: 4,
-    borderLeftColor: '#0B1E42',
+    borderLeftColor: '#F59E0B',
     borderWidth: 1,
     borderRadius: 18,
     padding: spacing.md,

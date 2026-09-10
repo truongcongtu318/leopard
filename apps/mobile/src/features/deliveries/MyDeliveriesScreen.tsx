@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
+import { customerPalette, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -90,9 +90,9 @@ type StatusPresentation = Readonly<{
 
 const STATUS_PRESENTATION: Record<DeliveryStatus, StatusPresentation> = {
   REQUESTED: { label: 'Chờ xác nhận', bg: '#FFF7ED', text: '#9A3412', dot: '#F97316' },
-  ACCEPTED: { label: 'Đã nhận', bg: leopardPalette.primaryBg, text: '#1E40AF', dot: leopardPalette.primary },
+  ACCEPTED: { label: 'Đã nhận', bg: customerPalette.primaryBg, text: '#1E40AF', dot: customerPalette.primary },
   LOADING: { label: 'Đang bốc hàng', bg: leopardPalette.accentYellowBg, text: '#854D0E', dot: leopardPalette.accentYellow },
-  IN_TRANSIT: { label: 'Đang vận chuyển', bg: leopardPalette.primaryBg, text: '#1D4ED8', dot: leopardPalette.primary },
+  IN_TRANSIT: { label: 'Đang vận chuyển', bg: customerPalette.primaryBg, text: '#1D4ED8', dot: customerPalette.primary },
   ARRIVED: { label: 'Đã đến', bg: leopardPalette.ecoGreenBg, text: '#166534', dot: leopardPalette.ecoGreen },
   DELIVERED: { label: 'Hoàn thành', bg: leopardPalette.ecoGreenBg, text: '#166534', dot: leopardPalette.ecoGreen },
   CANCELLED: { label: 'Đã hủy', bg: '#FEE2E2', text: '#991B1B', dot: '#EF4444' },
@@ -393,7 +393,7 @@ export function MyDeliveriesScreen({
       {filtered.length === 0 ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconCircle}>
-            <IconSpeedTruck color={leopardPalette.primary} size={36} />
+            <IconSpeedTruck color={customerPalette.primary} size={36} />
           </View>
           <Text style={styles.emptyTitle}>Chưa có chuyến đang giao</Text>
           <Text style={styles.emptySubtext}>
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   newOrderBtn: {
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: customerPalette.primary,
     borderRadius: leopardRadius.pill,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -510,8 +510,8 @@ const styles = StyleSheet.create({
     borderColor: leopardPalette.cardBorder,
   },
   chipActive: {
-    backgroundColor: leopardPalette.primaryBg,
-    borderColor: leopardPalette.primary,
+    backgroundColor: customerPalette.primaryBg,
+    borderColor: customerPalette.primary,
   },
   chipLabel: {
     color: leopardPalette.textMutedSlate,
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chipLabelActive: {
-    color: leopardPalette.primary,
+    color: customerPalette.primary,
     fontWeight: '700',
   },
   chipBadge: {
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   chipBadgeActive: {
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: customerPalette.primary,
   },
   chipBadgeText: {
     color: leopardPalette.textMutedSlate,
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: customerPalette.primary,
   },
   routeDotDestination: {
     backgroundColor: leopardPalette.ecoGreen,
@@ -706,8 +706,8 @@ const styles = StyleSheet.create({
     borderColor: leopardPalette.ecoGreen,
   },
   stepDotActive: {
-    backgroundColor: leopardPalette.primaryBg,
-    borderColor: leopardPalette.primary,
+    backgroundColor: customerPalette.primaryBg,
+    borderColor: customerPalette.primary,
   },
   stepCheck: {
     color: leopardPalette.ecoGreen,
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: leopardPalette.primaryBg,
+    backgroundColor: customerPalette.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xs,
@@ -768,13 +768,13 @@ const styles = StyleSheet.create({
   historyBtn: {
     marginTop: spacing.sm,
     borderWidth: 1,
-    borderColor: leopardPalette.primary,
+    borderColor: customerPalette.primary,
     borderRadius: leopardRadius.pill,
     paddingHorizontal: 18,
     paddingVertical: 9,
   },
   historyBtnText: {
-    color: leopardPalette.primary,
+    color: customerPalette.primary,
     fontSize: 13,
     fontWeight: '700',
   },

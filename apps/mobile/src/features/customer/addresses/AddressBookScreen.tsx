@@ -878,7 +878,7 @@ const styles = StyleSheet.create({
   // Header Action
   addHeaderBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
     borderRadius: 999,
     flexDirection: 'row',
     gap: 4,
@@ -1034,8 +1034,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   catOptionSelected: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
   },
   catOptionText: {
     color: '#475569',
@@ -1043,7 +1043,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   catOptionTextSelected: {
-    color: '#0B1E42',
+    color: '#92400E',
     fontWeight: '700',
   },
   contactFieldsRow: {
@@ -1069,8 +1069,8 @@ const styles = StyleSheet.create({
     width: 18,
   },
   checkboxChecked: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
+    borderColor: '#F59E0B',
   },
   checkmark: {
     color: '#FFFFFF',
@@ -1340,7 +1340,7 @@ const styles = StyleSheet.create({
   },
   firstAddBtn: {
     marginTop: 8,
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,

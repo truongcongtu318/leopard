@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
   },
   unreadDot: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
     borderRadius: 4,
     height: 8,
     width: 8,

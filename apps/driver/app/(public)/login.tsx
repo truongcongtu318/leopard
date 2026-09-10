@@ -2,9 +2,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Role } from '@leopard/shared';
-import { LoginScreen } from '@leopard/mobile-core/src/auth/LoginScreen';
 import { sessionStore } from '@leopard/mobile-core';
 import { resolveDriverLogin } from '../../src/navigation/driver-session';
+import { DriverLoginScreen } from '../../src/auth/DriverLoginScreen';
 
 export default function DriverLoginRoute() {
   const router = useRouter();
@@ -57,7 +57,7 @@ export default function DriverLoginRoute() {
   }
 
   return (
-    <LoginScreen
+    <DriverLoginScreen
       onLoginSuccess={handleLoginSuccess}
       onNavigateRegister={() => router.push('/(public)/driver-register')}
       sessionExpired={isExpired}

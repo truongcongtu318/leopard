@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { sessionStore, TruckLoader } from '@leopard/mobile-core';
+import { sessionStore } from '@leopard/mobile-core';
 import { resolveDriverLogin } from '../src/navigation/driver-session';
+import { DriverSplashScreen } from '../src/auth/DriverSplashScreen';
 
 export default function DriverIndex() {
   const router = useRouter();
@@ -27,18 +27,6 @@ export default function DriverIndex() {
     };
   }, [router]);
 
-  return (
-    <View style={styles.container}>
-      <TruckLoader size="md" />
-    </View>
-  );
+  return <DriverSplashScreen />;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EEF3F9',
-  },
-});

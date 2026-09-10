@@ -3,7 +3,7 @@ import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { OrderStatus } from '@leopard/shared';
-import { colors, layout, radius, spacing, typography, Button, IconSpeedTruck, OrderSummary, ScreenScaffold, SectionHeading, ScreenState, SkeletonCard, StatusBadge } from '@leopard/mobile-core';
+import { colors, customerPalette, layout, radius, spacing, typography, Button, IconSpeedTruck, OrderSummary, ScreenScaffold, SectionHeading, ScreenState, SkeletonCard, StatusBadge } from '@leopard/mobile-core';
 import type {
   CustomerListContentView,
   CustomerListView,
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   segmentBadge: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderRadius: radius.pill,
     minWidth: 18,
     height: 18,
@@ -497,8 +497,8 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   filterSelected: {
-    backgroundColor: colors.brand.softBackground,
-    borderColor: colors.brand.background,
+    backgroundColor: customerPalette.primaryBg,
+    borderColor: customerPalette.primary,
   },
   filterLabel: {
     color: colors.neutral.mutedText,
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterLabelSelected: {
-    color: colors.brand.softText,
+    color: customerPalette.primaryText,
     fontWeight: '700',
   },
 
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   routeConnector: {
     flex: 1,

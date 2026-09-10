@@ -224,6 +224,46 @@ export const leopardPalette = {
   darkHeroBg: '#0B1E42',
 } as const;
 
+/**
+ * Customer-role colour palette.
+ * Amber Gold (#F59E0B) is the primary action colour; Midnight Navy (#0B1E42) is secondary/supporting.
+ * Use this in every customer-specific screen instead of leopardPalette.
+ */
+export const customerPalette = {
+  // Primary — Amber Gold (cam vàng LEOPARD)
+  primary: '#F59E0B',
+  primaryDark: '#D97706',
+  primaryBg: '#FFFBEB',
+  primaryBorder: '#FDE68A',
+  primaryText: '#92400E',   // readable text on amber bg
+
+  // Secondary — Midnight Navy
+  secondary: '#0B1E42',
+  secondaryBg: '#F0F4F9',
+  secondaryBorder: '#CBD5E1',
+
+  // Tab / nav
+  tabActive: '#F59E0B',
+  tabActiveBg: '#FFFBEB',
+  tabInactive: '#64748B',
+
+  // Input focus
+  inputFocusBorder: '#F59E0B',
+  inputFocusRing: 'rgba(245, 158, 11, 0.12)',
+
+  // Shared neutrals — mirrors leopardPalette
+  textSlateDark: '#0F172A',
+  textMutedSlate: '#475569',
+  textSubtle: '#94A3B8',
+  cardBorder: '#E2E8F0',
+  subtleDivider: '#F1F5F9',
+  surfaceWhite: '#FFFFFF',
+  bgMuted: '#F8FAFC',
+  canvas: '#F8FAFC',
+  onlineGreen: '#16A34A',
+  offlineGray: '#94A3B8',
+} as const;
+
 export const leopardRadius = {
   sm: 4,
   md: 6,

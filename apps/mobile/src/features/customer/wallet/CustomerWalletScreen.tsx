@@ -602,14 +602,14 @@ const styles = StyleSheet.create({
   },
   dockBtnPrimary: {
     flex: 1.15,
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
     borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    shadowColor: '#0B1E42',
+    shadowColor: '#F59E0B',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.22,
     shadowRadius: 8,
@@ -711,8 +711,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   presetItemSelected: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
   },
   presetBadge: {
     position: 'absolute',
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   presetTextSelected: {
-    color: '#0B1E42',
+    color: '#92400E',
   },
   qrCard: {
     backgroundColor: '#FFFFFF',

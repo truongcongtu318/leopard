@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useNotificationsBootstrap } from '../../src/features/customer/notifications/useNotificationsBootstrap';
 import { useProtectedLayout } from '../../src/navigation/role-router';
-import { spacing, typography, FloatingNavBar, type TabKey, TruckLoader } from '@leopard/mobile-core';
+import { spacing, typography, customerPalette, FloatingNavBar, type TabKey, TruckLoader } from '@leopard/mobile-core';
 
 export default function CustomerLayout() {
   const decision = useProtectedLayout('customer');
@@ -87,7 +87,12 @@ export default function CustomerLayout() {
         <Slot />
       </View>
       {!isSubScreenWithoutNav ? (
-        <FloatingNavBar activeTab={getActiveTab()} onTabChange={handleTabChange} />
+        <FloatingNavBar
+          accentBg={customerPalette.tabActiveBg}
+          accentColor={customerPalette.tabActive}
+          activeTab={getActiveTab()}
+          onTabChange={handleTabChange}
+        />
       ) : null}
     </View>
   );

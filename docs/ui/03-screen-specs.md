@@ -6,8 +6,11 @@ Phone/Firebase flow hoặc demo account selector khi được bật. Có trạng
 
 Header login dùng gradient cam đỏ `#E64A19` xuống vàng cam `#FFB74D`, với mép sóng chữ S bất đối xứng: mép trái đi chéo lên, đỉnh tại khoảng 33% và đáy tại khoảng 78% chiều rộng. Bóng xám dưới sóng gồm lớp mềm offset Y 10 px, opacity 28%, độ lệch chuẩn blur 6 px và lớp sát mép offset Y 4 px, opacity 18%, blur 2 px. Logo và lời chào nằm giữa vùng cam; form đặt trực tiếp trên nền trắng, cách header 12 px và không có card bao ngoài. Header giới hạn rộng 520 px trên tablet/desktop để giữ tỷ lệ đường cong. SVG trang trí được ẩn khỏi cây accessibility bằng thuộc tính phù hợp từng nền tảng.
 
+Ảnh nền header dùng `apps/mobile/assets/brand/auth-truck-background.jpg`, opacity 18%, căn vùng xe tải ở giữa phần cam và cắt theo cùng đường sóng. Giữ tỷ lệ ảnh khi thay đổi chiều rộng, logo/chữ nằm phía trên ảnh.
+
 ## Customer
 
+- `/customer/home`: header gọn bằng logo + actions, không dùng ảnh AI/hero minh họa lớn. Khung đặt xe nhanh giữ vị trí chính ngay đầu nội dung; section "Đang vận chuyển" nằm trực tiếp bên dưới khung đặt xe ở cả trạng thái có chuyến và empty lookup. Lưới dịch vụ vận tải hiển thị 6 lựa chọn theo 2 cột x 3 hàng với icon/vector đồng bộ thương hiệu. Carousel ưu đãi dùng artwork native/text rõ nghĩa thay cho ảnh quảng cáo raster, mỗi slide vẫn dẫn về luồng tạo đơn.
 - `/customer/orders`: status tabs/filter, order rows, pagination/infinite load có kiểm soát và create action.
 - `/customer/orders/new`: pickup, stops, dropoff, vehicle, cargo, route estimate, price và ETA dự kiến. Submit chỉ bật khi estimate token còn hiệu lực.
 - `/customer/orders/:id`: status timeline, route/map, Driver/tracking khi được nhận, media, payment, hóa đơn (khi đã phát hành) và cancel khi hợp lệ. Section hóa đơn chỉ hiện khi order đã có `invoice` (fetch riêng từ `GET /invoices/order/:orderId`, không phải một phần response order): hiện số hóa đơn, tổng tiền, ngày phát hành và nút "Xem hóa đơn" mở link xem/tải qua trình duyệt hệ thống. Khi `emailSentAt` là `null`, hiện thêm ô nhập email + nút "Gửi email hóa đơn" (validate client-side bằng cùng regex email của form đăng ký, nhưng vẫn dựa vào validate phía server); gửi thất bại (SMTP lỗi) vẫn giữ nút gửi lại, không mất hóa đơn đã có.

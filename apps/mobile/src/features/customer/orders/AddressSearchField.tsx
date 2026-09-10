@@ -292,9 +292,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   routeInputWrapperFocused: {
-    borderColor: '#0B1E42',
+    borderColor: '#F59E0B',
     backgroundColor: '#FFFFFF',
-    shadowColor: '#0B1E42',
+    shadowColor: '#F59E0B',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 8,

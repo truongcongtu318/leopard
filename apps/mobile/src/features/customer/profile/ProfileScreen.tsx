@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   },
   verifiedDot: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
     borderColor: '#090D16',
     borderRadius: 10,
     borderWidth: 2,

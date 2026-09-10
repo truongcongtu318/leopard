@@ -17,6 +17,10 @@ export type FloatingNavBarProps = Readonly<{
   activeTab: string;
   onTabChange: ((key: TabKey) => void) | ((key: string) => void);
   items?: readonly NavItem[];
+  /** Override active-state icon/label colour. Default: leopardPalette.primary (navy). */
+  accentColor?: string;
+  /** Override active-state tab background. Default: leopardPalette.primaryBg. */
+  accentBg?: string;
 }>;
 
 const defaultNavItems: readonly NavItem[] = [
@@ -26,8 +30,8 @@ const defaultNavItems: readonly NavItem[] = [
   { key: 'account', label: 'Tài khoản' },
 ];
 
-function renderDefaultNavIcon(key: string, isActive: boolean) {
-  const color = isActive ? leopardPalette.primary : leopardPalette.textMutedSlate;
+function renderDefaultNavIcon(key: string, isActive: boolean, accentColor: string) {
+  const color = isActive ? accentColor : leopardPalette.textMutedSlate;
   switch (key) {
     case 'home':
       return <IconHome color={color} size={22} />;
@@ -42,8 +46,10 @@ function renderDefaultNavIcon(key: string, isActive: boolean) {
   }
 }
 
-function FloatingNavBarComponent({ activeTab, onTabChange, items }: FloatingNavBarProps) {
+function FloatingNavBarComponent({ activeTab, onTabChange, items, accentColor, accentBg }: FloatingNavBarProps) {
   const navItems = items ?? defaultNavItems;
+  const resolvedAccentColor = accentColor ?? leopardPalette.primary;
+  const resolvedAccentBg = accentBg ?? leopardPalette.primaryBg;
 
   return (
     <View style={styles.container}>
@@ -59,21 +65,21 @@ function FloatingNavBarComponent({ activeTab, onTabChange, items }: FloatingNavB
               onPress={() => (onTabChange as (k: any) => void)(item.key)}
               style={({ pressed }) => [
                 styles.tabItem,
-                isActive ? styles.tabItemActive : null,
+                isActive ? { backgroundColor: resolvedAccentBg } : null,
                 pressed ? styles.pressed : null,
               ]}
             >
               <View style={styles.iconWrap}>
                 {item.icon
                   ? item.icon(isActive)
-                  : renderDefaultNavIcon(item.key, isActive)}
+                  : renderDefaultNavIcon(item.key, isActive, resolvedAccentColor)}
                 {item.badge ? (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{item.badge}</Text>
                   </View>
                 ) : null}
               </View>
-              <Text style={[styles.label, isActive ? styles.labelActive : null]}>
+              <Text style={[styles.label, isActive ? { color: resolvedAccentColor, fontWeight: '600' } : null]}>
                 {item.label}
               </Text>
             </Pressable>
