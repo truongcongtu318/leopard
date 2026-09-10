@@ -228,6 +228,7 @@ describe('RegisterScreen (Driver registration)', () => {
         '/driver/documents',
         expect.any(FormData),
       );
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/kyc-pending');
       expect(screen.getByTestId('register-success')).toBeTruthy();
     });
 

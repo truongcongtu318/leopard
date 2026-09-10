@@ -105,7 +105,9 @@ export default function DriverVerifyOtpRoute() {
       const refreshToken = res.session?.refreshToken ?? '';
       await sessionStore.setSession(accessToken, refreshToken, res.user.role);
 
-      if (res.user.role === 'DRIVER') {
+      if (res.user.status === 'PENDING_APPROVAL') {
+        router.replace('/(public)/kyc-pending');
+      } else if (res.user.role === 'DRIVER') {
         if (res.user.profileComplete) {
           router.replace('/orders');
         } else {

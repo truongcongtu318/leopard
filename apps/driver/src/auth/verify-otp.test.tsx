@@ -131,6 +131,28 @@ describe('VerifyOtpRoute (Driver)', () => {
     await screen.unmount();
   });
 
+  it('navigates to /(public)/kyc-pending if user status is PENDING_APPROVAL', async () => {
+    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce({
+      ...authResponse('DRIVER', true),
+      user: {
+        ...authResponse('DRIVER', true).user,
+        status: 'PENDING_APPROVAL',
+      },
+    });
+
+    const screen = await render(<VerifyOtpRoute />);
+
+    for (const digit of ['1', '2', '3', '4', '5', '6']) {
+      await fireEvent.press(screen.getByTestId(`numpad-${digit}`));
+    }
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/kyc-pending');
+    });
+
+    await screen.unmount();
+  });
+
   it('shows error banner on verification failure', async () => {
     (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockRejectedValueOnce({
       statusCode: 401,

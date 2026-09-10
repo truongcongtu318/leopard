@@ -44,10 +44,12 @@ describe('KycPendingRoute (Driver)', () => {
     const screen = await render(<KycPendingRoute />);
 
     expect(screen.getByTestId('kyc-status-card')).toBeTruthy();
+    expect(screen.getByTestId('kyc-status-card')).toHaveStyle({ borderRadius: 24 });
     expect(screen.getByText('Hồ sơ đang chờ phê duyệt')).toBeTruthy();
     expect(screen.getByText(/2–4 giờ làm việc/)).toBeTruthy();
 
     expect(screen.getByTestId('vehicle-summary-card')).toBeTruthy();
+    expect(screen.getByTestId('vehicle-summary-card')).toHaveStyle({ borderRadius: 18 });
     expect(screen.getByText('59D-123.45')).toBeTruthy();
     expect(screen.getByText('Xe tải 1.25T')).toBeTruthy();
 

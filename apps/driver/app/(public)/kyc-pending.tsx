@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
-import { leopardPalette } from '@leopard/mobile-core/src/theme/tokens';
+import { leopardPalette, radius } from '@leopard/mobile-core/src/theme/tokens';
 import { IconClock, IconShield, IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
 import { IconPhone } from '@leopard/mobile-core';
 
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   heroCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: radius.bezelOuter,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     padding: 24,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   summaryCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: radius.bezelInner,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     padding: 18,
