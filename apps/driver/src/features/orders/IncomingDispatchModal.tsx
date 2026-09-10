@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconClock, IconLocationPin, IconOrders, IconRadarPulse, IconRoute, IconSpeedTruck, RealInteractiveMap } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconClock, IconClose, IconLocationPin, IconOrders, IconRadarPulse, IconRoute, IconSpeedTruck, RealInteractiveMap } from '@leopard/mobile-core';
 
 export type IncomingDispatchOffer = Readonly<{
   id: string;
@@ -40,7 +40,7 @@ export function IncomingDispatchModal({
   onDecline,
   visible,
 }: IncomingDispatchModalProps) {
-  const initialSeconds = offer?.timeoutSeconds ?? 25;
+  const initialSeconds = offer?.timeoutSeconds ?? 15;
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
 
   useEffect(() => {
@@ -88,21 +88,33 @@ export function IncomingDispatchModal({
                 ĐƠN HÀNG MỚI TRONG KHU VỰC
               </Text>
             </View>
-            <View
-              style={[
-                styles.timerBadge,
-                isUrgent ? styles.timerBadgeUrgent : isWarning ? styles.timerBadgeWarning : null,
-              ]}
-            >
-              <IconClock color={isUrgent ? '#DC2626' : isWarning ? '#D97706' : '#0B1E42'} size={14} />
-              <Text
+            <View style={styles.modalHeaderRight}>
+              <View
                 style={[
-                  styles.timerText,
-                  isUrgent ? styles.timerUrgent : isWarning ? styles.timerWarning : null,
+                  styles.timerBadge,
+                  isUrgent ? styles.timerBadgeUrgent : isWarning ? styles.timerBadgeWarning : null,
                 ]}
               >
-                {secondsLeft}s
-              </Text>
+                <IconClock color={isUrgent ? '#DC2626' : isWarning ? '#D97706' : '#0B1E42'} size={14} />
+                <Text
+                  style={[
+                    styles.timerText,
+                    isUrgent ? styles.timerUrgent : isWarning ? styles.timerWarning : null,
+                  ]}
+                >
+                  {secondsLeft}s
+                </Text>
+              </View>
+              <Pressable
+                accessibilityHint="Bỏ qua đơn hàng này"
+                accessibilityLabel="Đóng modal đơn hàng"
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => onDecline(offer.id)}
+                style={styles.modalCloseBtn}
+              >
+                <IconClose color="#64748B" size={16} />
+              </Pressable>
             </View>
           </View>
 
@@ -223,6 +235,7 @@ export function IncomingDispatchModal({
                 disabled={isAccepting}
                 label="Bỏ qua"
                 onPress={() => onDecline(offer.id)}
+                size="driver-primary"
                 variant="secondary"
               />
             </View>
@@ -269,6 +282,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingBottom: 4,
+  },
+  modalHeaderRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  modalCloseBtn: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: radius.pill,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
   },
   radarPulseContainer: {
     alignItems: 'center',

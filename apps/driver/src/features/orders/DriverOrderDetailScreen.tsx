@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconCamera, IconCameraProof, IconCheck, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconSpeedTruck, IconTrash, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconCamera, IconCameraProof, IconCheck, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconShieldAlert, IconSpeedTruck, IconTrash, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
 import { createDriverDetailFixture } from './fixtures';
 import type {
   DriverAssignedDetailView,
@@ -218,8 +218,9 @@ function EpodPanel({
         {/* Error banner if validation fails */}
         {errorMsg ? (
           <View style={styles.epodValidationAlert} testID="epod-validation-error">
+            <IconShieldAlert color="#B91C1C" size={15} />
             <Text accessibilityRole="alert" style={styles.epodValidationAlertText}>
-              ⚠️ {errorMsg}
+              {errorMsg}
             </Text>
           </View>
         ) : null}
@@ -337,8 +338,9 @@ function EpodPanel({
                   <View style={styles.signatureBaseline} />
                 </View>
                 <View style={styles.signatureMetadataRow}>
+                  <IconCheck color="#10B981" size={13} strokeWidth={2.5} />
                   <Text style={styles.signatureMetaText}>
-                    ✓ Chữ ký điện tử đã được xác thực · {signPoints} nét chạm
+                    Chữ ký điện tử đã được xác thực · {signPoints} nét chạm
                   </Text>
                 </View>
               </View>
@@ -388,32 +390,6 @@ function EpodPanel({
   );
 }
 
-function ProofPanel({ proof }: Readonly<{ proof: DriverProofView }>) {
-  if (proof.kind === 'empty') return null;
-  const isError =
-    proof.kind === 'invalid-type' || proof.kind === 'too-large' || proof.kind === 'upload-retry';
-  return (
-    <View style={[styles.proofPanel, isError ? styles.proofError : null]}>
-      <View style={styles.proofHeaderRow}>
-        <View style={[styles.proofIconChip, isError ? styles.proofIconChipError : null]}>
-          <IconCameraProof
-            color={isError ? '#DC2626' : '#0B1E42'}
-            size={18}
-          />
-        </View>
-        <View style={styles.proofHeaderText}>
-          <Text accessibilityRole={isError ? 'alert' : undefined} style={styles.proofTitle}>
-            {proof.label}
-          </Text>
-          <Text style={styles.proofMessage}>{proof.message}</Text>
-        </View>
-      </View>
-      {proof.fileLabel ? (
-        <Text style={styles.proofHelper}>Ảnh đính kèm: {proof.fileLabel}</Text>
-      ) : null}
-    </View>
-  );
-}
 
 function MissionStepper({ status }: Readonly<{ status: string }>) {
   let activeIndex = 0;
@@ -448,16 +424,20 @@ function MissionStepper({ status }: Readonly<{ status: string }>) {
                       : styles.stepDotFuture,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.stepDotNumber,
-                    isCurrent || isPast
-                      ? styles.stepDotNumberActive
-                      : styles.stepDotNumberFuture,
-                  ]}
-                >
-                  {isPast ? '✓' : idx + 1}
-                </Text>
+                {isPast ? (
+                  <IconCheck color="#FFFFFF" size={12} strokeWidth={2.5} />
+                ) : (
+                  <Text
+                    style={[
+                      styles.stepDotNumber,
+                      isCurrent || isPast
+                        ? styles.stepDotNumberActive
+                        : styles.stepDotNumberFuture,
+                    ]}
+                  >
+                    {idx + 1}
+                  </Text>
+                )}
               </View>
               <Text
                 style={[
@@ -509,7 +489,7 @@ function VerticalRouteStepper({
       {isPassedPickup ? (
         <View style={styles.routeNodeACollapsed}>
           <View style={styles.checkBadge}>
-            <Text style={styles.checkBadgeText}>✓</Text>
+            <IconCheck color="#15803D" size={13} strokeWidth={2.5} />
           </View>
           <View style={styles.routeTextCol}>
             <Text style={styles.routeNodeSubA}>ĐÃ BỐC HÀNG TẠI</Text>
@@ -781,9 +761,12 @@ function PublicDetail({
             <View style={styles.fareAmountRow}>
               <Text style={styles.fareAmountText}>{view.order.priceLabel || '285.000 ₫'}</Text>
             </View>
-            <Text style={styles.fareTermsText}>
-              ✓ Đã khấu trừ phí nền tảng · Khách thanh toán bảo đảm qua VietQR Napas247
-            </Text>
+            <View style={styles.fareTermsRow}>
+              <IconCheck color="#16A34A" size={13} strokeWidth={2.5} />
+              <Text style={styles.fareTermsText}>
+                Đã khấu trừ phí nền tảng · Khách thanh toán bảo đảm qua VietQR Napas247
+              </Text>
+            </View>
           </View>
 
           {/* 4. Vertical Route Spine (Public Scope) */}
@@ -957,7 +940,8 @@ function AssignedDetail({
               />
             ) : (
               <View style={styles.completedTripBadge}>
-                <Text style={styles.completedTripText}>Đã hoàn thành chuyến ✓</Text>
+                <IconCheck color="#15803D" size={14} strokeWidth={2.5} />
+                <Text style={styles.completedTripText}>Đã hoàn thành chuyến</Text>
               </View>
             )}
           </View>
@@ -1310,6 +1294,7 @@ const styles = StyleSheet.create({
   stepDotNumber: {
     fontSize: 10,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   stepDotNumberActive: {
     color: '#FFFFFF',
@@ -1658,10 +1643,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   epodValidationAlert: {
+    alignItems: 'center',
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
     borderRadius: 8,
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
@@ -1765,8 +1753,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   retakeBtnText: {
     color: '#0B1E42',
@@ -1879,6 +1868,7 @@ const styles = StyleSheet.create({
   signatureMetadataRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 4,
   },
   signatureMetaText: {
     color: '#059669',
@@ -1894,12 +1884,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   clearSignBtnText: {
     color: '#DC2626',
@@ -1913,46 +1904,9 @@ const styles = StyleSheet.create({
   epodCompleteSection: {
     marginTop: 4,
   },
-  proofPanel: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 4,
-    padding: spacing.sm + 2,
-  },
   proofError: {
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
-  },
-  proofHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  proofIconChip: {
-    alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderRadius: 8,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  proofIconChipError: {
-    backgroundColor: '#FEE2E2',
-  },
-  proofHeaderText: {
-    flex: 1,
-    gap: 1,
-  },
-  proofTitle: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 12.5,
-    fontWeight: '800',
-  },
-  proofMessage: {
-    color: '#475569',
-    fontSize: 11,
   },
   proofHelper: {
     color: '#64748B',
@@ -2047,6 +2001,8 @@ const styles = StyleSheet.create({
     borderColor: '#86EFAC',
     borderRadius: 12,
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
     height: 48,
     justifyContent: 'center',
   },
@@ -2203,6 +2159,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '900',
     letterSpacing: 0.3,
+  },
+  fareTermsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   fareTermsText: {
     color: '#166534',

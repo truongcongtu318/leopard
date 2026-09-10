@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconBell, IconClock, IconClose, IconLocationPin, IconMenu, IconOrders, IconRadarPulse, IconRoute, IconSettings, IconSpeedTruck, SectionHeading, ScreenState, SkeletonCard, StatusBadge } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconBell, IconClock, IconClose, IconLocationPin, IconMenu, IconOrders, IconRadarPulse, IconRoute, IconSettings, IconShieldAlert, IconSpeedTruck, SectionHeading, ScreenState, SkeletonCard, StatusBadge } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverSidebarDrawer } from '../navigation/DriverSidebarDrawer';
 import { IncomingDispatchModal } from './IncomingDispatchModal';
@@ -102,7 +102,7 @@ function ActiveTripRail({
       {/* 3. Proof Warning Banner */}
       {trip.proofLabel ? (
         <View style={styles.proofWarningBanner}>
-          <Text style={styles.proofWarningIcon}>⚠</Text>
+          <IconShieldAlert color="#D97706" size={14} />
           <Text style={styles.proofWarningText}>{trip.proofLabel}</Text>
         </View>
       ) : null}
@@ -132,101 +132,103 @@ function PublicOrderCard({
   onOpenOrder,
 }: Readonly<{ item: DriverPublicOrderView; onOpenOrder?: (orderId: string) => void }>) {
   return (
-    <View style={styles.orderCard}>
-      <Pressable
-        accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
-        accessibilityRole="button"
-        onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-        style={({ pressed }) => [styles.cardBody, pressed ? styles.pressed : null]}
-      >
-        {/* Top Meta: Ref, Proximity, and Status */}
-        <View style={styles.cardHeader}>
-          <View style={styles.cardHeaderLeft}>
-            <Text style={styles.cardOrderRef}>{item.reference}</Text>
-            <View style={styles.proximityDot} />
-            <Text style={styles.proximityText}>{item.pickupDistanceLabel || 'Cách bạn 1.2 km'}</Text>
-          </View>
-          <StatusBadge domain="order" status={item.status} />
-        </View>
-
-        {/* Fare & Route Distance Strip: High prominence earnings */}
-        <View style={styles.cardFareBanner}>
-          <View style={styles.cardFareLeft}>
-            <Text style={styles.cardFareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
-            <Text style={styles.cardFareAmount}>{item.priceLabel || '285.000 ₫'}</Text>
-          </View>
-          <View style={styles.cardDistanceBadge}>
-            <IconRoute color="#0B1E42" size={13} />
-            <Text style={styles.cardDistanceText}>
-              {item.distanceLabel ? `${item.distanceLabel} · ` : ''}{item.etaLabel}
-            </Text>
-          </View>
-        </View>
-
-        {/* Route Spine: Point A -> Point B */}
-        <View style={styles.cardRouteBlock}>
-          <View style={styles.cardRouteSpineMini}>
-            <View style={styles.spinePointDotA} />
-            <View style={styles.spineDottedTrackMini} />
-            <View style={styles.spinePointDotB} />
-          </View>
-          <View style={styles.cardRouteAddresses}>
-            <Text numberOfLines={1} style={styles.cardPickupAddr}>
-              {item.pickupLocationLabel || item.publicRouteLabel.split('→')[0]?.trim() || 'Điểm lấy hàng'}
-            </Text>
-            <Text numberOfLines={1} style={styles.cardDropoffAddr}>
-              {item.dropoffLocationLabel || item.publicRouteLabel.split('→')[1]?.trim() || 'Điểm giao hàng'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Public route full label for screen readers & tests */}
-        <Text numberOfLines={1} style={styles.cardPublicRouteSub}>
-          {item.publicRouteLabel}
-        </Text>
-
-        {/* Vehicle & Cargo Tags */}
-        <View style={styles.tagsContainer}>
-          <View style={styles.vehicleTag}>
-            <IconSpeedTruck color="#475569" size={13} />
-            <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
-          </View>
-          <View style={styles.cargoTag}>
-            <Text numberOfLines={1} style={styles.cargoTagText}>
-              {item.cargoSummary}
-            </Text>
-          </View>
-        </View>
-
-        {/* Price & ETA */}
-        <View style={styles.cardFooter}>
-          <View style={styles.priceEtaRow}>
-            <IconClock color={colors.brand.background} size={13} />
-            <Text style={styles.priceText}>{item.etaLabel}</Text>
-          </View>
-          <Text style={styles.updatedText}>{item.updatedAtLabel}</Text>
-        </View>
-      </Pressable>
-
-      {/* Action Buttons Row: [ Bỏ qua ] & [ NHẬN ĐƠN ] */}
-      <View style={styles.cardActionRow}>
+    <View style={styles.orderCardOuter}>
+      <View style={styles.orderCardInner}>
         <Pressable
+          accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
           accessibilityRole="button"
-          accessibilityLabel="Bỏ qua đơn này"
-          style={({ pressed }) => [styles.cardDeclineBtn, pressed ? styles.pressed : null]}
-        >
-          <Text style={styles.cardDeclineText}>Bỏ qua</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Nhận đơn ${item.reference}`}
           onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-          style={({ pressed }) => [styles.cardAcceptBtn, pressed ? styles.pressed : null]}
+          style={({ pressed }) => [styles.cardBody, pressed ? styles.pressed : null]}
         >
-          <Text style={styles.cardAcceptText}>
-            NHẬN ĐƠN · {item.priceLabel || '285.000 ₫'}
+          {/* Top Meta: Ref, Proximity, and Status */}
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderLeft}>
+              <Text style={styles.cardOrderRef}>{item.reference}</Text>
+              <View style={styles.proximityDot} />
+              <Text style={styles.proximityText}>{item.pickupDistanceLabel || 'Cách bạn 1.2 km'}</Text>
+            </View>
+            <StatusBadge domain="order" status={item.status} />
+          </View>
+
+          {/* Fare & Route Distance Strip: High prominence earnings */}
+          <View style={styles.cardFareBanner}>
+            <View style={styles.cardFareLeft}>
+              <Text style={styles.cardFareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
+              <Text style={styles.cardFareAmount}>{item.priceLabel || '285.000 ₫'}</Text>
+            </View>
+            <View style={styles.cardDistanceBadge}>
+              <IconRoute color="#0B1E42" size={13} />
+              <Text style={styles.cardDistanceText}>
+                {item.distanceLabel ? `${item.distanceLabel} · ` : ''}{item.etaLabel}
+              </Text>
+            </View>
+          </View>
+
+          {/* Route Spine: Point A -> Point B */}
+          <View style={styles.cardRouteBlock}>
+            <View style={styles.cardRouteSpineMini}>
+              <View style={styles.spinePointDotA} />
+              <View style={styles.spineDottedTrackMini} />
+              <View style={styles.spinePointDotB} />
+            </View>
+            <View style={styles.cardRouteAddresses}>
+              <Text numberOfLines={1} style={styles.cardPickupAddr}>
+                {item.pickupLocationLabel || item.publicRouteLabel.split('→')[0]?.trim() || 'Điểm lấy hàng'}
+              </Text>
+              <Text numberOfLines={1} style={styles.cardDropoffAddr}>
+                {item.dropoffLocationLabel || item.publicRouteLabel.split('→')[1]?.trim() || 'Điểm giao hàng'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Public route full label for screen readers & tests */}
+          <Text numberOfLines={1} style={styles.cardPublicRouteSub}>
+            {item.publicRouteLabel}
           </Text>
+
+          {/* Vehicle & Cargo Tags */}
+          <View style={styles.tagsContainer}>
+            <View style={styles.vehicleTag}>
+              <IconSpeedTruck color="#475569" size={13} />
+              <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
+            </View>
+            <View style={styles.cargoTag}>
+              <Text numberOfLines={1} style={styles.cargoTagText}>
+                {item.cargoSummary}
+              </Text>
+            </View>
+          </View>
+
+          {/* Price & ETA */}
+          <View style={styles.cardFooter}>
+            <View style={styles.priceEtaRow}>
+              <IconClock color={colors.brand.background} size={13} />
+              <Text style={styles.priceText}>{item.etaLabel}</Text>
+            </View>
+            <Text style={styles.updatedText}>{item.updatedAtLabel}</Text>
+          </View>
         </Pressable>
+
+        {/* Action Buttons Row: [ Bỏ qua ] & [ NHẬN ĐƠN ] */}
+        <View style={styles.cardActionRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Bỏ qua đơn này"
+            style={({ pressed }) => [styles.cardDeclineBtn, pressed ? styles.pressed : null]}
+          >
+            <Text style={styles.cardDeclineText}>Bỏ qua</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Nhận đơn ${item.reference}`}
+            onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+            style={({ pressed }) => [styles.cardAcceptBtn, pressed ? styles.pressed : null]}
+          >
+            <Text style={styles.cardAcceptText}>
+              NHẬN ĐƠN · {item.priceLabel || '285.000 ₫'}
+            </Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -813,7 +815,8 @@ export function DriverOrdersScreen({
               onPress={handleSimulateIncomingOffer}
               style={({ pressed }) => [styles.radarSimulateBtn, pressed ? styles.pressed : null]}
             >
-              <Text style={styles.radarSimulateBtnText}>⚡ Thử nổ đơn</Text>
+              <IconRadarPulse color="#0B1E42" size={13} />
+              <Text style={styles.radarSimulateBtnText}>Thử nổ đơn</Text>
             </Pressable>
           </View>
 
@@ -1132,12 +1135,13 @@ const styles = StyleSheet.create({
   },
   heroDutySwitch: {
     backgroundColor: '#0B1E42',
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
     borderRadius: radius.bezelOuter,
     borderWidth: 1.5,
     flexDirection: 'row',
-    height: 38,
-    padding: 3,
+    height: 48,
+    minHeight: 48,
+    padding: 4,
   },
   heroDutySwitchOnline: {
     borderColor: '#10B981',
@@ -1149,22 +1153,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: radius.bezelInner,
     flexDirection: 'row',
-    gap: 5,
+    gap: 6,
     justifyContent: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    minHeight: 38,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   heroDutyTabActiveOnline: {
     backgroundColor: '#10B981',
   },
   heroDutyTabActiveOffline: {
-    backgroundColor: '#334155',
+    backgroundColor: '#1E293B',
   },
   heroDutyDot: {
     backgroundColor: '#64748B',
-    borderRadius: 3.5,
-    height: 7,
-    width: 7,
+    borderRadius: 4,
+    height: 8,
+    width: 8,
   },
   heroDutyDotActive: {
     backgroundColor: '#FFFFFF',
@@ -1173,7 +1178,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F59E0B',
   },
   heroDutyTabText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '900',
     letterSpacing: 0.4,
   },
@@ -1353,8 +1358,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#0B1E42',
     borderRadius: radius.pill,
-    paddingHorizontal: 9,
-    paddingVertical: 4.5,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   radarSimulateBtnText: {
     color: '#FFFFFF',
@@ -1430,22 +1437,29 @@ const styles = StyleSheet.create({
     width: 32,
   },
 
-  /* ── Orders Feed & Cards ── */
+  /* ── Orders Feed & Cards (Double-Bezel 24px/18px) ── */
   ordersFeed: {
     gap: spacing.sm,
   },
-  orderCard: {
+  orderCardOuter: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: radius.bezelOuter,
     borderWidth: 1.5,
-    gap: spacing.xs + 2,
-    padding: spacing.md,
-    shadowColor: '#000',
+    padding: 4,
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 2,
+  },
+  orderCardInner: {
+    backgroundColor: '#FAFCFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.bezelInner,
+    borderWidth: 1,
+    gap: spacing.xs + 2,
+    padding: spacing.md,
   },
   cardBody: {
     gap: spacing.xs + 2,
@@ -1511,6 +1525,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: 0.2,
+    fontVariant: ['tabular-nums'],
   },
   cardDistanceBadge: {
     alignItems: 'center',
@@ -1620,6 +1635,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 11.5,
     fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
   cardFooter: {
     alignItems: 'center',
@@ -1657,6 +1673,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     justifyContent: 'center',
+    minHeight: 48,
     paddingVertical: 10,
   },
   cardDeclineText: {
@@ -1670,6 +1687,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flex: 2,
     justifyContent: 'center',
+    minHeight: 48,
     paddingVertical: 10,
   },
   cardAcceptText: {
@@ -1677,6 +1695,7 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: '900',
     letterSpacing: 0.3,
+    fontVariant: ['tabular-nums'],
   },
 
   /* ── Empty State ── */
