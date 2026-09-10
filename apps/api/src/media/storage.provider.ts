@@ -31,6 +31,15 @@ export class LocalStorageProvider extends StorageProvider {
     return resolvedPath;
   }
 
+  private resolveSafePath(key: string): string {
+    const root = path.resolve(this.uploadDir);
+    const resolved = path.resolve(root, key);
+    if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+      throw new Error('Invalid storage key path');
+    }
+    return resolved;
+  }
+
   async put(key: string, fileBuffer: Buffer, contentType: string): Promise<void> {
     const filePath = this.resolveSafePath(key);
     const dir = path.dirname(filePath);
@@ -46,7 +55,8 @@ export class LocalStorageProvider extends StorageProvider {
     // PUBLIC_FILES_BASE_URL (e.g. http://localhost:3000) makes the URL absolute
     // so browsers on a different origin (admin web) can load dev images.
     const base = (process.env.PUBLIC_FILES_BASE_URL ?? '').replace(/\/$/, '');
-    return `${base}/files/${key}`;
+    const encodedKey = key.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+    return `${base}/files/${encodedKey}`;
   }
 
   async delete(key: string): Promise<void> {
