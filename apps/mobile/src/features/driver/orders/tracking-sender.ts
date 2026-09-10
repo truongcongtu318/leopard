@@ -10,7 +10,7 @@ import type { DriverTrackingPort } from './port';
 
 function getDefaultToken(): string | null {
   try {
-    const { sessionStore } = require('../../../auth/session-store');
+    const { sessionStore } = require('@leopard/mobile-core');
     return sessionStore.getAccessToken();
   } catch {
     return null;
@@ -19,7 +19,7 @@ function getDefaultToken(): string | null {
 
 async function getDefaultRefreshToken(): Promise<boolean> {
   try {
-    const { refreshSession } = require('../../../api/http-client');
+    const { refreshSession } = require('@leopard/mobile-core');
     return refreshSession();
   } catch {
     return false;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { colors, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
-import { MediaImage } from '../../../ui/MediaImage';
+import { MediaImage } from '@leopard/mobile-core';
 import type {
   CustomerDetailContentView,
   CustomerDetailView,
@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
     borderLeftWidth: 4,
-    borderLeftColor: '#0B1E42',
+    borderLeftColor: '#F59E0B',
     borderRadius: 16,
     borderWidth: 1,
     padding: spacing.md,

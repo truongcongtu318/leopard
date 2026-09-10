@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Linking } from 'react-native';
 
-import { createSocketFactory } from '../../../api/socket-client';
+import { createSocketFactory } from '@leopard/mobile-core';
 import { pickDeviceImage, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createDriverHttpAdapter, createDriverProofAdapter } from './adapter';
 import { DriverOrderDetailScreen } from './DriverOrderDetailScreen';

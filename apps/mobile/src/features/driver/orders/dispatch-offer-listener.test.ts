@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { DispatchOfferEvent } from '@leopard/shared';
 
-import type { SocketFactory, SocketLike } from '../../../api/socket-client';
+import type { SocketFactory, SocketLike } from '@leopard/mobile-core';
 import {
   DispatchOfferListener,
   mapDispatchOfferEvent,

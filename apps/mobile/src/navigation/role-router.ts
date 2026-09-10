@@ -1,8 +1,7 @@
 import type { Role } from '@leopard/shared';
 import { useEffect, useState } from 'react';
 
-import { refreshSession } from '../api/http-client';
-import { sessionStore } from '../auth/session-store';
+import { refreshSession, sessionStore } from '@leopard/mobile-core';
 
 export type MobileHome =
   | '/customer/home'

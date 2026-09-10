@@ -2,22 +2,22 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 
 import CustomerRegisterScreen from '../../app/(public)/customer-register';
-import { httpClient } from '../api/http-client';
-import { ApiError } from '../api/api-error';
-import { sendPhoneOtp, resetRecaptcha } from './firebase-auth';
-import { sessionStore } from './session-store';
+import { httpClient } from '@leopard/mobile-core/src/api/http-client';
+import { ApiError } from '@leopard/mobile-core';
+import { sendPhoneOtp, resetRecaptcha } from '@leopard/mobile-core/src/auth/firebase-auth';
+import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 
-jest.mock('../api/http-client', () => ({
+jest.mock('@leopard/mobile-core/src/api/http-client', () => ({
   httpClient: { get: jest.fn(), patch: jest.fn(), post: jest.fn() },
 }));
 
-jest.mock('./firebase-auth', () => ({
+jest.mock('@leopard/mobile-core/src/auth/firebase-auth', () => ({
   sendPhoneOtp: jest.fn(),
   resetRecaptcha: jest.fn(),
 }));
 
 // Mock the session store so setSession does not touch expo-secure-store in tests.
-jest.mock('./session-store', () => ({
+jest.mock('@leopard/mobile-core/src/auth/session-store', () => ({
   sessionStore: {
     setSession: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
     getAccessToken: jest.fn(() => 'acc'),

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { httpClient } from '../api/http-client';
-import { colors, radius, spacing, typography } from '@leopard/mobile-core';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type MediaImageState =
   | Readonly<{ kind: 'loading' }>

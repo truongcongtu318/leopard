@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { getFirebaseApp, getFirebaseWebConfig, isFirebaseConfigured } from '../../../auth/firebase';
+import { getFirebaseApp, getFirebaseWebConfig, isFirebaseConfigured } from '@leopard/mobile-core/src/auth/firebase';
 import type { NotificationsPort } from './port';
 
 export type PushPermissionState = 'granted' | 'denied' | 'unsupported';

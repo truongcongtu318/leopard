@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 
-import { sessionStore } from '../../../auth/session-store';
+import { sessionStore } from '@leopard/mobile-core';
 import { createCustomerProfileHttpAdapter } from './adapter';
 import type { CustomerProfileView } from './model';
 import { CustomerProfileScreen } from './ProfileScreen';

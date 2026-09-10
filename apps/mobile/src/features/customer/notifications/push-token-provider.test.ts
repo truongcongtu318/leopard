@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { Platform } from 'react-native';
 
-jest.mock('../../../auth/firebase', () => ({
+jest.mock('@leopard/mobile-core/src/auth/firebase', () => ({
   isFirebaseConfigured: jest.fn(() => true),
   getFirebaseApp: jest.fn(() => ({ name: 'fake-app' })),
   getFirebaseWebConfig: jest.fn(() => ({
@@ -26,7 +26,7 @@ jest.mock('firebase/messaging', () => ({
   getToken: (...args: unknown[]) => mockGetToken(...args),
 }));
 
-import * as firebaseAuth from '../../../auth/firebase';
+import * as firebaseAuth from '@leopard/mobile-core/src/auth/firebase';
 import {
   clearCachedPushToken,
   getCachedPushToken,

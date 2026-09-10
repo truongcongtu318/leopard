@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 
-import { sessionStore } from '../../../auth/session-store';
+import { sessionStore } from '@leopard/mobile-core';
 import { createDriverProfileHttpAdapter } from './adapter';
 import type { DriverProfileView } from './model';
 import { DriverProfileScreen } from './ProfileScreen';

@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 
-import { httpClient } from '../../../api/http-client';
+import { httpClient } from '@leopard/mobile-core';
 
 const PING_INTERVAL_MS = 12_000;
 const MIN_MOVE_METERS = 25;

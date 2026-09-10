@@ -360,6 +360,9 @@ importers:
       '@testing-library/react-native':
         specifier: 14.0.1
         version: 14.0.1(jest@29.7.0(@types/node@24.10.1))(react-native@0.86.0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.0(@babel/core@7.29.7)(react@19.2.7))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.7)(react@19.2.7))(react@19.2.7)(test-renderer@1.2.0(@types/react@19.2.7)(react@19.2.7))
+      '@types/node':
+        specifier: 24.10.1
+        version: 24.10.1
       '@types/react':
         specifier: 19.2.7
         version: 19.2.7

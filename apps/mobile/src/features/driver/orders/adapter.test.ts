@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
-import { ApiError } from '../../../api/api-error';
+import { ApiError } from '@leopard/mobile-core';
 import {
   ALLOWED_PROOF_MIME_TYPES,
   MAX_PROOF_FILE_SIZE_BYTES,

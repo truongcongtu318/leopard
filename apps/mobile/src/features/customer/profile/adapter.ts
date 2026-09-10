@@ -26,7 +26,7 @@ interface AuthUserResponse {
 const APP_VERSION = '0.0.0';
 
 function getDefaultHttpClient(): ProfileHttpClient {
-  const { httpClient } = require('../../../api/http-client');
+  const { httpClient } = require('@leopard/mobile-core');
   return httpClient as ProfileHttpClient;
 }
 

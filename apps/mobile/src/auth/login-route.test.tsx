@@ -3,7 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 import LoginRoute from '../../app/(public)/login';
-import { httpClient } from '../api/http-client';
+import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
@@ -15,23 +15,23 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
-jest.mock('../api/http-client', () => ({
+jest.mock('@leopard/mobile-core/src/api/http-client', () => ({
   httpClient: { post: jest.fn() },
 }));
 
-jest.mock('./session-store', () => ({
+jest.mock('@leopard/mobile-core/src/auth/session-store', () => ({
   sessionStore: {
     setSession: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
   },
 }));
 
-jest.mock('./firebase', () => ({
+jest.mock('@leopard/mobile-core/src/auth/firebase', () => ({
   isFirebaseConfigured: () => true,
   getFirebaseApp: () => ({}),
   getFirebaseAuth: () => ({}),
 }));
 
-jest.mock('./firebase-auth', () => ({
+jest.mock('@leopard/mobile-core/src/auth/firebase-auth', () => ({
   sendPhoneOtp: jest.fn(),
   signInWithGoogle: (...args: unknown[]) => mockSignInWithGoogle(...args),
   resetRecaptcha: jest.fn(),

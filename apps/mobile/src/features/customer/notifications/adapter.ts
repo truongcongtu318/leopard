@@ -7,7 +7,7 @@ import type {
 import type { NotificationsPort } from './port';
 
 export function getDefaultHttpClient(): NotificationsHttpClient {
-  const { httpClient } = require('../../../api/http-client');
+  const { httpClient } = require('@leopard/mobile-core');
   return httpClient as NotificationsHttpClient;
 }
 

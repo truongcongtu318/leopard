@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
-import { sessionStore } from '../../../src/auth/session-store';
+import { sessionStore } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../../src/features/customer/addresses/address-store';
 import { createCustomerHttpAdapter } from '../../../src/features/customer/orders/adapter';
 import {
@@ -117,7 +117,7 @@ export default function CustomerHomePage() {
     async function loadCustomerUser() {
       try {
         if (sessionStore.isAuthenticated()) {
-          const { httpClient } = require('../../../src/api/http-client');
+          const { httpClient } = require('@leopard/mobile-core');
           const user = await httpClient.get('/me');
           if (mounted && user) {
             setCustomerUser({

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 
-import { ApiError } from '../../../api/api-error';
+import { ApiError } from '@leopard/mobile-core';
 import {
   createCustomerHttpAdapter,
   describeStatus,

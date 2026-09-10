@@ -5,7 +5,7 @@ import type {
   VehicleType,
 } from '@leopard/shared';
 
-import { ApiError } from '../../../api/api-error';
+import { ApiError } from '@leopard/mobile-core';
 import type {
   DriverActiveTripView,
   DriverAssignedDetailView,
@@ -30,7 +30,7 @@ import type {
 import { pickDeviceImage, appendFileToFormData } from '@leopard/mobile-core';
 
 function getDefaultHttpClient(): DriverHttpClient {
-  const { httpClient } = require('../../../api/http-client');
+  const { httpClient } = require('@leopard/mobile-core');
   return httpClient as DriverHttpClient;
 }
 

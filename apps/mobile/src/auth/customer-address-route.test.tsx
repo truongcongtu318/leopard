@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import CustomerAddAddressScreen from '../../app/(public)/customer-address';
-import { httpClient } from '../api/http-client';
+import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { addressStore } from '../features/customer/addresses/address-store';
 
 const mockReplace = jest.fn();
@@ -18,7 +18,7 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
-jest.mock('../api/http-client', () => ({
+jest.mock('@leopard/mobile-core/src/api/http-client', () => ({
   httpClient: {
     get: jest.fn(),
   },

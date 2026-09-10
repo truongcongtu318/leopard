@@ -38,7 +38,7 @@ const VEHICLE_TYPE_LABEL: Record<string, string> = {
 };
 
 function getDefaultHttpClient(): ProfileHttpClient {
-  const { httpClient } = require('../../../api/http-client');
+  const { httpClient } = require('@leopard/mobile-core');
   return httpClient as ProfileHttpClient;
 }
 

@@ -1,7 +1,6 @@
 import type { DispatchOfferEvent } from '@leopard/shared';
 
-import { createSocketFactory, type SocketFactory, type SocketLike } from '../../../api/socket-client';
-import { sessionStore } from '../../../auth/session-store';
+import { createSocketFactory, type SocketFactory, type SocketLike, sessionStore } from '@leopard/mobile-core';
 import type { IncomingDispatchOffer } from './IncomingDispatchModal';
 import {
   formatCargoSummary,

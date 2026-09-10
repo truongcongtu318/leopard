@@ -3,9 +3,9 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 import RegisterScreen from '../../app/(public)/driver-register';
-import { httpClient } from '../api/http-client';
+import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { openDriverContractPdf } from '../features/driver/contract/contract-pdf';
-import { sessionStore } from './session-store';
+import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { pickDeviceImage } from '@leopard/mobile-core';
 
 const mockReplace = jest.fn();
@@ -14,11 +14,11 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, back: jest.fn() }),
 }));
 
-jest.mock('../api/http-client', () => ({
+jest.mock('@leopard/mobile-core/src/api/http-client', () => ({
   httpClient: { post: jest.fn(), postForm: jest.fn(), get: jest.fn() },
 }));
 
-jest.mock('./session-store', () => ({
+jest.mock('@leopard/mobile-core/src/auth/session-store', () => ({
   sessionStore: { getAccessToken: jest.fn() },
 }));
 

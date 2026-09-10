@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 
-import { httpClient } from '../../../api/http-client';
+import { httpClient } from '@leopard/mobile-core';
 import { colors, layout, leopardPalette, radius, spacing, typography, Button, FormField, IconCamera, IconLocationPin, IconOrders, IconPaymentConvenient, IconQrPayment, IconRoute, IconSecurityShield, IconSpeedTruck, IconVehicleHeavyTruck, IconVehicleMotorbike, IconVehicleVan, IconWallet, IconWarningShield, RealInteractiveMap, ScreenScaffold, ScreenState, SkeletonBar } from '@leopard/mobile-core';
 import { MapAddressPickerModal } from '../../home/components/MapAddressPickerModal';
 import { AddressSearchField } from './AddressSearchField';
@@ -2549,8 +2549,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   stepCircleActive: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
+    borderColor: '#F59E0B',
   },
   stepCircleCompleted: {
     backgroundColor: '#16A34A',
@@ -2607,7 +2607,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
     borderRadius: 2,
   },
   stepProgressRow: {
@@ -2629,8 +2629,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   stepBarActive: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
     borderWidth: 1.5,
   },
   stepBarCompleted: {
@@ -2641,7 +2641,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
   },
   stepDotCompleted: {
     width: 6,
@@ -3004,8 +3004,8 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   categoryChipSelected: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
   },
   categoryChipText: {
     color: '#475569',
@@ -3075,8 +3075,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   dimPresetChipActive: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
   },
   dimPresetChipTitle: {
     color: '#334155',
@@ -3228,8 +3228,8 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   vehicleCardSelected: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
   },
   vehicleIconBox: {
     alignItems: 'center',
@@ -3282,10 +3282,10 @@ const styles = StyleSheet.create({
     width: 20,
   },
   radioIndicatorSelected: {
-    borderColor: '#0B1E42',
+    borderColor: '#F59E0B',
   },
   radioDot: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
     borderRadius: 5,
     height: 10,
     width: 10,
@@ -3326,8 +3326,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   routeCardSelected: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
   },
   routeCardHeader: {
     flexDirection: 'row',
@@ -4038,8 +4038,8 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   paymentOptionSelected: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
   },
   paymentRadioDotWrap: {
     width: 20,
@@ -4188,7 +4188,7 @@ const styles = StyleSheet.create({
     borderRadius: 65,
     backgroundColor: '#CBD5E1',
     borderWidth: 2,
-    borderColor: '#0B1E42',
+    borderColor: '#F59E0B',
   },
   radarOuterRing: {
     width: 100,
@@ -4214,7 +4214,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#F59E0B',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0B1E42',

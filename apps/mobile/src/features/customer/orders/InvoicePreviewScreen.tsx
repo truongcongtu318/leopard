@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { sessionStore } from '../../../auth/session-store';
+import { sessionStore } from '@leopard/mobile-core';
 import { Button, ScreenScaffold } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 

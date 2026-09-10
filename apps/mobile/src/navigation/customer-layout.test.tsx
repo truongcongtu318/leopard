@@ -18,7 +18,7 @@ jest.mock('./role-router', () => ({
 // untransformable under Jest's default config. Mock it the same way
 // `src/auth/login-route.test.tsx` does, since this test isn't exercising the
 // notifications/firebase flow at all.
-jest.mock('../auth/firebase', () => ({
+jest.mock('@leopard/mobile-core/src/auth/firebase', () => ({
   isFirebaseConfigured: () => false,
   getFirebaseApp: () => ({}),
   getFirebaseAuth: () => ({}),

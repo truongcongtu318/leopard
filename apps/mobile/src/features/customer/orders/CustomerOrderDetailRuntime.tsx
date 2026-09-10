@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 
-import { createSocketFactory } from '../../../api/socket-client';
+import { createSocketFactory } from '@leopard/mobile-core';
 import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 import { createCustomerMediaPickerAdapter } from './media-picker-adapter';

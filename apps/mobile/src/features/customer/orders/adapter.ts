@@ -5,7 +5,7 @@ import type {
   VehicleType,
 } from '@leopard/shared';
 
-import { ApiError } from '../../../api/api-error';
+import { ApiError } from '@leopard/mobile-core';
 import type {
   AddressCandidate,
   CustomerCancelView,
@@ -29,7 +29,7 @@ import type {
 import type { CustomerOrdersPort } from './port';
 
 export function getDefaultHttpClient(): CustomerHttpClient {
-  const { httpClient } = require('../../../api/http-client');
+  const { httpClient } = require('@leopard/mobile-core');
   return httpClient as CustomerHttpClient;
 }
 
@@ -1265,7 +1265,7 @@ export function createCustomerHttpAdapter(
     },
 
     async getInvoiceDownloadUrl(invoiceId: string): Promise<string> {
-      const { sessionStore } = require('../../../auth/session-store');
+      const { sessionStore } = require('@leopard/mobile-core');
       const base = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
       const token = sessionStore.getAccessToken();
       const response = await fetch(`${base}/invoices/${invoiceId}/download`, {

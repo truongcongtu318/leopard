@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { httpClient } from '../../src/api/http-client';
+import { httpClient } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../src/features/customer/addresses/address-store';
 import {
   BrandLoginLogo,

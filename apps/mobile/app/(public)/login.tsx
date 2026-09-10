@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Role } from '@leopard/shared';
-import { LoginScreen } from '../../src/auth/LoginScreen';
+import { LoginScreen } from '@leopard/mobile-core/src/auth/LoginScreen';
 
 export default function LoginRoute() {
   const router = useRouter();

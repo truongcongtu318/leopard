@@ -6,7 +6,7 @@ const mockGetItemAsync = jest.fn<(key: string) => Promise<string | null>>();
 const mockDeleteItemAsync = jest.fn<(key: string) => Promise<void>>();
 const mockIsAvailableAsync = jest.fn<() => Promise<boolean>>();
 
-jest.mock('../auth/secure-session-storage', () => ({
+jest.mock('@leopard/mobile-core/src/auth/secure-session-storage', () => ({
   secureSessionStorage: {
     setRefreshToken: (value: string) => mockSetItemAsync('leopard.refresh', value),
     getRefreshToken: () => mockGetItemAsync('leopard.refresh'),
@@ -17,7 +17,7 @@ jest.mock('../auth/secure-session-storage', () => ({
   },
 }));
 
-import { sessionStore } from '../auth/session-store';
+import { sessionStore } from '@leopard/mobile-core';
 import { getMobileHome, getMobileRouteDecision, useProtectedLayout } from './role-router';
 
 type FetchMock = jest.Mock<(...args: unknown[]) => Promise<Response>>;

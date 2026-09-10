@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { httpClient } from '../../../api/http-client';
+import { httpClient } from '@leopard/mobile-core';
 import { addressStore } from './address-store';
 import { colors, layout, radius, spacing, typography, Button, FormField, IconHome, IconLocationPin, IconOffice, IconPhone, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
 import {

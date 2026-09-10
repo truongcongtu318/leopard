@@ -10,7 +10,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 
-import { BrandLoginLogo, IconChevronLeft, LeopardEmblem } from '@leopard/mobile-core';
+import { BrandLoginLogo, IconChevronLeft, LeopardEmblem } from '../ui/icons/CoreIcons';
 
 const HERO_HEIGHT = 380;
 const VIEW_W = 375;
