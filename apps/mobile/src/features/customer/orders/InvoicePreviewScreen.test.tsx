@@ -39,4 +39,27 @@ describe('InvoicePreviewScreen', () => {
 
     expect(onBack).toHaveBeenCalled();
   });
+
+  it('renders VAT 8% invoice compliance layout with QR check and download PDF button', async () => {
+    const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const resolveUrl = jest.fn(async () => 'https://signed.example/invoice-1.pdf');
+
+    await render(
+      <InvoicePreviewScreen
+        invoiceId="invoice-1"
+        onBack={jest.fn()}
+        resolveDownloadUrl={resolveUrl}
+      />,
+    );
+
+    expect(screen.getByText('Hóa đơn điện tử VAT (Thuế suất 8%)')).toBeTruthy();
+    expect(screen.getByText('Cục Thuế TP. Hồ Chí Minh · Tra cứu mã QR')).toBeTruthy();
+    expect(screen.getByLabelText('Tra cứu mã QR hóa đơn')).toBeTruthy();
+
+    const downloadBtn = screen.getByLabelText('Tải hóa đơn VAT PDF');
+    fireEvent.press(downloadBtn);
+
+    await waitFor(() => expect(openURLSpy).toHaveBeenCalledWith('https://signed.example/invoice-1.pdf'));
+    openURLSpy.mockRestore();
+  });
 });

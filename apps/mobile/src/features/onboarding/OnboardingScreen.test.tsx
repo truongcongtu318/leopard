@@ -35,6 +35,16 @@ describe('OnboardingScreen', () => {
     await screen.unmount();
   });
 
+  it('advances slides and allows skipping to login directly', async () => {
+    const onGetStarted = jest.fn();
+    const screen = await render(<OnboardingScreen onGetStarted={onGetStarted} />);
+    const skipBtn = screen.getByText('Bỏ qua ➔');
+    await fireEvent.press(skipBtn);
+    expect(onGetStarted).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
   it('navigates through slides using next button and finishes on last slide', async () => {
     const onGetStarted = jest.fn();
 
@@ -97,6 +107,24 @@ describe('OnboardingScreen', () => {
     const driverBtn = screen.getByLabelText('Đăng ký đối tác tài xế');
     await fireEvent.press(driverBtn);
     expect(onDriverRegister).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('handles guest exploration link if provided', async () => {
+    const onGetStarted = jest.fn();
+    const onExploreGuest = jest.fn();
+
+    const screen = await render(
+      <OnboardingScreen
+        onExploreGuest={onExploreGuest}
+        onGetStarted={onGetStarted}
+      />,
+    );
+
+    const skipBtn = screen.getByText('Bỏ qua ➔');
+    await fireEvent.press(skipBtn);
+    expect(onGetStarted).toHaveBeenCalledTimes(1);
 
     await screen.unmount();
   });

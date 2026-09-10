@@ -68,6 +68,9 @@ const mockTrips: EarningsTrip[] = [
 const PERIOD_METRICS = {
   today: {
     total: 620000,
+    grossFare: 611111,
+    platformFee: 61111, // 10% platform fee
+    netFare: 550000,
     fare: 550000,
     tip: 40000,
     bonus: 30000,
@@ -75,9 +78,13 @@ const PERIOD_METRICS = {
     hours: '5.5h',
     growth: '+18% so với hôm qua',
     hourlyRate: '112.700 ₫/h',
+    otdRate: '99.4%',
   },
   week: {
     total: 3850000,
+    grossFare: 3722222,
+    platformFee: 372222,
+    netFare: 3350000,
     fare: 3350000,
     tip: 280000,
     bonus: 220000,
@@ -85,9 +92,13 @@ const PERIOD_METRICS = {
     hours: '34.0h',
     growth: '+12% so với tuần trước',
     hourlyRate: '113.200 ₫/h',
+    otdRate: '99.2%',
   },
   month: {
     total: 16420000,
+    grossFare: 15766666,
+    platformFee: 1576666,
+    netFare: 14190000,
     fare: 14190000,
     tip: 1250000,
     bonus: 980000,
@@ -95,6 +106,7 @@ const PERIOD_METRICS = {
     hours: '145.0h',
     growth: '+24% so với tháng trước',
     hourlyRate: '113.240 ₫/h',
+    otdRate: '99.5%',
   },
 };
 
@@ -181,66 +193,86 @@ export function DriverEarningsScreen() {
           </Pressable>
         </View>
 
-        {/* 2. Executive Financial & Wallet Card (Centerpiece) */}
-        <View style={styles.executiveFinancialCard}>
-          <View style={styles.financialTopRow}>
-            <Text style={styles.financialEyebrow}>
-              THỰC NHẬN ({period === 'today' ? 'HÔM NAY' : period === 'week' ? 'TUẦN NÀY' : 'THÁNG NÀY'})
-            </Text>
-            <View style={styles.growthBadge}>
-              <Text style={styles.growthBadgeText}>▲ {metrics.growth}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.mainEarningsAmount}>{formatCurrency(metrics.total)}</Text>
-
-          {/* Revenue Component Stacked Track */}
-          <View style={styles.revenueStackTrack}>
-            <View style={[styles.stackSegmentFare, { flex: metrics.fare }]} />
-            <View style={[styles.stackSegmentTip, { flex: metrics.tip || 1 }]} />
-            <View style={[styles.stackSegmentBonus, { flex: metrics.bonus || 1 }]} />
-          </View>
-
-          {/* Revenue 3-Part Legend */}
-          <View style={styles.revenueLegendRow}>
-            <View style={styles.legendItem}>
-              <View style={styles.legendDotFare} />
-              <Text style={styles.legendLabel}>Cước: </Text>
-              <Text style={styles.legendValue}>{formatCurrency(metrics.fare)}</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendDotTip} />
-              <Text style={styles.legendLabel}>Tip: </Text>
-              <Text style={styles.legendValue}>+{formatCurrency(metrics.tip)}</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendDotBonus} />
-              <Text style={styles.legendLabel}>Thưởng: </Text>
-              <Text style={styles.legendValue}>+{formatCurrency(metrics.bonus)}</Text>
-            </View>
-          </View>
-
-          {/* Instant Cash-out & Wallet Action Box */}
-          <View style={styles.walletQuickActionBox}>
-            <View style={styles.walletBalanceLeft}>
-              <View style={styles.walletIconCircle}>
-                <IconWallet color={leopardPalette.primary} size={16} />
-              </View>
-              <View>
-                <Text style={styles.walletAvailLabel}>Ví tài xế khả dụng</Text>
-                <Text style={styles.walletAvailAmount}>{formatCurrency(availableBalance)}</Text>
+        {/* 2. Executive Financial & Wallet Card (Double-bezel Centerpiece) */}
+        <View style={styles.doubleBezelOuter}>
+          <View style={styles.doubleBezelInner}>
+            <View style={styles.financialTopRow}>
+              <Text style={styles.financialEyebrow}>
+                THỰC NHẬN ({period === 'today' ? 'HÔM NAY' : period === 'week' ? 'TUẦN NÀY' : 'THÁNG NÀY'})
+              </Text>
+              <View style={styles.growthBadge}>
+                <Text style={styles.growthBadgeText}>▲ {metrics.growth}</Text>
               </View>
             </View>
 
-            <Pressable
-              accessibilityLabel="Rút tiền nhanh về tài khoản ngân hàng"
-              accessibilityRole="button"
-              onPress={() => setShowWithdrawModal(true)}
-              style={({ pressed }) => [styles.withdrawActionBtn, pressed ? styles.pressed : null]}
-            >
-              <IconBank color="#FFFFFF" size={14} />
-              <Text style={styles.withdrawActionBtnText}>Rút tiền</Text>
-            </Pressable>
+            <Text style={styles.mainEarningsAmount}>{formatCurrency(metrics.total)}</Text>
+
+            {/* Platform Fee & Net Breakdown */}
+            <View style={styles.feeBreakdownRow}>
+              <View style={styles.feeBreakdownItem}>
+                <Text style={styles.feeBreakdownLabel}>Tổng cước phát sinh</Text>
+                <Text style={styles.feeBreakdownValue}>{formatCurrency(metrics.grossFare)}</Text>
+              </View>
+              <View style={styles.feeBreakdownDivider} />
+              <View style={styles.feeBreakdownItem}>
+                <Text style={styles.feeBreakdownLabel}>Chiết khấu nền tảng 10%</Text>
+                <Text style={styles.feeBreakdownDeduct}>-{formatCurrency(metrics.platformFee)}</Text>
+              </View>
+              <View style={styles.feeBreakdownDivider} />
+              <View style={styles.feeBreakdownItem}>
+                <Text style={styles.feeBreakdownLabel}>Cước thực nhận</Text>
+                <Text style={styles.feeBreakdownNet}>{formatCurrency(metrics.netFare)}</Text>
+              </View>
+            </View>
+
+            {/* Revenue Component Stacked Track */}
+            <View style={styles.revenueStackTrack}>
+              <View style={[styles.stackSegmentFare, { flex: metrics.fare }]} />
+              <View style={[styles.stackSegmentTip, { flex: metrics.tip || 1 }]} />
+              <View style={[styles.stackSegmentBonus, { flex: metrics.bonus || 1 }]} />
+            </View>
+
+            {/* Revenue 3-Part Legend */}
+            <View style={styles.revenueLegendRow}>
+              <View style={styles.legendItem}>
+                <View style={styles.legendDotFare} />
+                <Text style={styles.legendLabel}>Cước ròng: </Text>
+                <Text style={styles.legendValue}>{formatCurrency(metrics.fare)}</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={styles.legendDotTip} />
+                <Text style={styles.legendLabel}>Tip: </Text>
+                <Text style={styles.legendValue}>+{formatCurrency(metrics.tip)}</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={styles.legendDotBonus} />
+                <Text style={styles.legendLabel}>Thưởng: </Text>
+                <Text style={styles.legendValue}>+{formatCurrency(metrics.bonus)}</Text>
+              </View>
+            </View>
+
+            {/* Instant Cash-out & Wallet Action Box */}
+            <View style={styles.walletQuickActionBox}>
+              <View style={styles.walletBalanceLeft}>
+                <View style={styles.walletIconCircle}>
+                  <IconWallet color="#10B981" size={16} />
+                </View>
+                <View>
+                  <Text style={styles.walletAvailLabel}>Ví khả dụng rút 24/7</Text>
+                  <Text style={styles.walletAvailAmount}>{formatCurrency(availableBalance)}</Text>
+                </View>
+              </View>
+
+              <Pressable
+                accessibilityLabel="Rút tiền 24/7 về tài khoản ngân hàng"
+                accessibilityRole="button"
+                onPress={() => setShowWithdrawModal(true)}
+                style={({ pressed }) => [styles.withdrawActionBtn, pressed ? styles.pressed : null]}
+              >
+                <IconBank color="#FFFFFF" size={14} />
+                <Text style={styles.withdrawActionBtnText}>Rút tiền 24/7</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -248,7 +280,7 @@ export function DriverEarningsScreen() {
         <View style={styles.kpiGrid}>
           <View style={styles.kpiBox}>
             <View style={styles.kpiIconWrap}>
-              <IconSpeedTruck color={leopardPalette.primary} size={15} />
+              <IconSpeedTruck color="#10B981" size={15} />
             </View>
             <Text style={styles.kpiBoxValue}>{metrics.trips} cuốc</Text>
             <Text style={styles.kpiBoxLabel}>Hoàn thành</Text>
@@ -264,18 +296,18 @@ export function DriverEarningsScreen() {
 
           <View style={styles.kpiBox}>
             <View style={styles.kpiIconWrap}>
-              <IconStar color="#F59E0B" fill="#F59E0B" size={14} />
+              <IconSecurityShield color="#10B981" size={15} />
             </View>
-            <Text style={styles.kpiBoxValue}>5.0 ★</Text>
-            <Text style={styles.kpiBoxLabel}>Đánh giá</Text>
+            <Text style={styles.kpiBoxValue}>{metrics.otdRate}</Text>
+            <Text style={styles.kpiBoxLabel}>Đúng giờ (OTD)</Text>
           </View>
 
           <View style={styles.kpiBox}>
             <View style={styles.kpiIconWrap}>
-              <IconTrophy color="#16A34A" size={15} />
+              <IconStar color="#F59E0B" fill="#F59E0B" size={14} />
             </View>
-            <Text style={styles.kpiBoxValue}>{metrics.hourlyRate.replace(' ₫/h', 'k')}</Text>
-            <Text style={styles.kpiBoxLabel}>Hiệu suất/h</Text>
+            <Text style={styles.kpiBoxValue}>5.0 ★</Text>
+            <Text style={styles.kpiBoxLabel}>Đánh giá</Text>
           </View>
         </View>
 
@@ -470,19 +502,24 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* Executive Financial Card */
-  executiveFinancialCard: {
+  /* Double-Bezel Financial Card */
+  doubleBezelOuter: {
+    backgroundColor: '#0B1E42', // Midnight Navy outer bezel
+    borderRadius: radius.bezelOuter,
+    padding: 3,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  doubleBezelInner: {
     backgroundColor: '#FFFFFF',
+    borderRadius: radius.bezelInner,
     borderColor: '#E2E8F0',
     borderWidth: 1,
-    borderRadius: 16,
     padding: spacing.md,
     gap: spacing.xs + 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
   },
   financialTopRow: {
     flexDirection: 'row',
@@ -490,30 +527,76 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   financialEyebrow: {
-    color: '#64748B',
+    color: '#0B1E42',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   growthBadge: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
     borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   growthBadgeText: {
-    color: '#16A34A',
+    color: '#10B981', // Emerald 500
     fontSize: 10.5,
     fontWeight: '700',
   },
   mainEarningsAmount: {
-    color: '#0F172A',
+    color: '#0B1E42', // Midnight Navy
     fontSize: 32,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.5,
+  },
+
+  /* Fee & Net Breakdown */
+  feeBreakdownRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    marginVertical: 4,
+  },
+  feeBreakdownItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  feeBreakdownDivider: {
+    width: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 2,
+  },
+  feeBreakdownLabel: {
+    color: '#64748B',
+    fontSize: 9.5,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  feeBreakdownValue: {
+    color: '#0F172A',
+    fontSize: 11.5,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  feeBreakdownDeduct: {
+    color: '#EF4444',
+    fontSize: 11.5,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  feeBreakdownNet: {
+    color: '#10B981', // Emerald net
+    fontSize: 12,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
 
   /* Stacked Revenue Track */
@@ -526,13 +609,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   stackSegmentFare: {
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: '#10B981', // Emerald for fare
   },
   stackSegmentTip: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#0B1E42', // Midnight Navy for tip
   },
   stackSegmentBonus: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F59E0B', // Leopard Amber for bonus
   },
 
   /* Revenue Legend */
@@ -551,13 +634,13 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: '#10B981',
   },
   legendDotTip: {
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#16A34A',
+    backgroundColor: '#0B1E42',
   },
   legendDotBonus: {
     width: 7,
@@ -582,8 +665,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,
@@ -599,17 +682,17 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#DCFCE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
   walletAvailLabel: {
-    color: '#64748B',
+    color: '#065F46',
     fontSize: 10.5,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   walletAvailAmount: {
-    color: '#0F172A',
+    color: '#064E3B',
     fontSize: 14,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
@@ -618,7 +701,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: '#10B981',
     borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 8,

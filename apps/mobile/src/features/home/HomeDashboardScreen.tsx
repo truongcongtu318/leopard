@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, Button, FloatingNavBar, type TabKey, BrandLoginLogo, IconBell, IconLocationPin, IconMessage, IconOrders, IconQrPayment, IconRoleDriver, IconSecurityShield, IconSpeedTruck, IconVehicle3Wheel, IconVehicleHeavyTruck, IconVehicleLightTruck, IconWallet, OrderSummary, RouteSpine, StatusBadge } from '@leopard/mobile-core';
+import { colors, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, Button, FloatingNavBar, type TabKey, BrandLoginLogo, IconBell, IconLocationPin, IconMessage, IconOrders, IconQrPayment, IconRoleDriver, IconSecurityShield, IconSpeedTruck, IconVehicle3Wheel, IconVehicleHeavyTruck, IconVehicleLightTruck, IconVehicleMotorbike, IconVehicleVan, IconWallet, OrderSummary, RealInteractiveMap, RouteSpine, StatusBadge, VIETNAM_LOCATION_DICT } from '@leopard/mobile-core';
 import type { VehicleCategory } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
 import { httpClient, sessionStore } from '@leopard/mobile-core';
@@ -396,6 +396,72 @@ const quickServices: readonly QuickService[] = [
   },
 ];
 
+export type FleetVehicleCategory = 'VAN_500KG' | 'TRUCK_125T' | 'TRUCK_25T' | 'BIKE_3W';
+
+export type FleetVehicleItem = Readonly<{
+  id: FleetVehicleCategory;
+  name: string;
+  subName: string;
+  weightCapacity: string;
+  dimensions: string;
+  dimensionLabel: string;
+  estimatedPrice: string;
+  vehicleCategory: VehicleCategory;
+  accentColor: string;
+  badge?: string;
+}>;
+
+export const FLEET_VEHICLES: readonly FleetVehicleItem[] = [
+  {
+    id: 'VAN_500KG',
+    name: 'Van 500kg',
+    subName: 'Chở hàng phố cấm',
+    weightCapacity: '500 kg',
+    dimensions: '2.1 x 1.3 x 1.2m',
+    dimensionLabel: '2.1 x 1.3 x 1.2m',
+    estimatedPrice: '160.000 ₫',
+    vehicleCategory: 'LIGHT_TRUCK',
+    accentColor: '#0284C7',
+    badge: 'Đô thị',
+  },
+  {
+    id: 'TRUCK_125T',
+    name: 'Xe Tải 1.25T',
+    subName: 'Chuyển nhà & xưởng',
+    weightCapacity: '1.250 kg',
+    dimensions: '3.2 x 1.6 x 1.7m',
+    dimensionLabel: '3.2 x 1.6 x 1.7m',
+    estimatedPrice: '280.000 ₫',
+    vehicleCategory: 'LIGHT_TRUCK',
+    accentColor: '#0B1E42',
+    badge: 'Phổ biến',
+  },
+  {
+    id: 'TRUCK_25T',
+    name: 'Xe Tải 2.5T',
+    subName: 'Hàng nặng liên tỉnh',
+    weightCapacity: '2.500 kg',
+    dimensions: '4.3 x 1.8 x 1.9m',
+    dimensionLabel: '4.3 x 1.8 x 1.9m',
+    estimatedPrice: '450.000 ₫',
+    vehicleCategory: 'HEAVY_TRUCK',
+    accentColor: '#0B1E42',
+    badge: 'Tải lớn',
+  },
+  {
+    id: 'BIKE_3W',
+    name: 'Xe Ba Gác',
+    subName: 'Ngõ nhỏ linh hoạt',
+    weightCapacity: '400 kg',
+    dimensions: '1.8 x 1.1m',
+    dimensionLabel: '1.8 x 1.1m',
+    estimatedPrice: '120.000 ₫',
+    vehicleCategory: '3_WHEEL_BIKE',
+    accentColor: '#F59E0B',
+    badge: 'Tiết kiệm',
+  },
+];
+
 const DEFAULT_ACTIVE_SHIPMENT: ActiveShipment = {
   orderId: 'active-demo-1',
   status: 'IN_TRANSIT',
@@ -495,6 +561,7 @@ export function HomeDashboardScreen({
   const [pickupText, setPickupText] = useState(initialAddress);
   const [pickupLabel, setPickupLabel] = useState<string | null>(initialLabel);
   const [dropoffText, setDropoffText] = useState('');
+  const [selectedFleetId, setSelectedFleetId] = useState<FleetVehicleCategory>('TRUCK_125T');
   const [focusedField, setFocusedField] = useState<'pickup' | 'dropoff' | null>(null);
   const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
   const [savedAddressModalTarget, setSavedAddressModalTarget] = useState<'pickup' | 'dropoff'>('pickup');
@@ -759,6 +826,30 @@ export function HomeDashboardScreen({
   const greeting = useMemo(() => getTimeOfDayGreeting(), []);
   const currentSlide = PROMO_SLIDES[activeBannerIdx];
 
+  const currentFleetVehicle = useMemo(
+    () => FLEET_VEHICLES.find((v) => v.id === selectedFleetId) || FLEET_VEHICLES[1],
+    [selectedFleetId],
+  );
+
+  const handleFleetSelectAndBook = (vehicle: FleetVehicleItem) => {
+    setSelectedFleetId(vehicle.id);
+    if (onSelectVehicleAndBook) {
+      onSelectVehicleAndBook(vehicle.vehicleCategory);
+    } else {
+      onCreateOrder?.();
+    }
+  };
+
+  const handleMainCtaBook = () => {
+    if (dropoffText.trim().length >= 3) {
+      triggerNavigation(pickupText, dropoffText);
+    } else if (onSelectVehicleAndBook) {
+      onSelectVehicleAndBook(currentFleetVehicle.vehicleCategory);
+    } else {
+      onCreateOrder?.();
+    }
+  };
+
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
@@ -799,6 +890,18 @@ export function HomeDashboardScreen({
               </Pressable>
             ) : null}
           </View>
+        </View>
+
+        {/* Full-screen interactive map background (Lalamove Style) */}
+        <View pointerEvents="box-none" style={styles.mapBackgroundLayer}>
+          <RealInteractiveMap
+            destination={dropoffText ? { label: dropoffText } : undefined}
+            height="100%"
+            interactive
+            mode={activeShipment ? 'tracking' : dropoffText ? 'route' : 'preview'}
+            origin={pickupText ? { label: pickupText } : undefined}
+            testID="home-interactive-map"
+          />
         </View>
 
         <ScrollView
@@ -1049,6 +1152,160 @@ export function HomeDashboardScreen({
                   </Text>
                 </View>
               ) : null}
+
+              {/* 3. Lalamove-style Fleet Carousel Matrix */}
+              <View style={styles.fleetMatrixSection}>
+                <View style={styles.fleetMatrixHeader}>
+                  <Text style={styles.fleetMatrixTitle}>CHỌN LOẠI XE PHÙ HỢP</Text>
+                  <Text style={styles.fleetMatrixSubtitle}>Kích thước thùng chuẩn xác</Text>
+                </View>
+
+                <ScrollView
+                  contentContainerStyle={styles.fleetScrollContent}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                >
+                  {FLEET_VEHICLES.map((vehicle) => {
+                    const isSelected = vehicle.id === selectedFleetId;
+                    return (
+                      <Pressable
+                        accessibilityLabel={`Chọn xe ${vehicle.name}, kích thước ${vehicle.dimensions}, giá dự kiến ${vehicle.estimatedPrice}`}
+                        accessibilityRole="button"
+                        key={vehicle.id}
+                        onPress={() => handleFleetSelectAndBook(vehicle)}
+                        style={[
+                          styles.fleetCard,
+                          isSelected && styles.fleetCardSelected,
+                        ]}
+                      >
+                        {vehicle.badge ? (
+                          <View
+                            style={[
+                              styles.fleetBadge,
+                              isSelected && styles.fleetBadgeSelected,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.fleetBadgeText,
+                                isSelected && styles.fleetBadgeTextSelected,
+                              ]}
+                            >
+                              {vehicle.badge}
+                            </Text>
+                          </View>
+                        ) : null}
+
+                        <View style={styles.fleetIconContainer}>
+                          {vehicle.id === 'BIKE_3W' && (
+                            <IconVehicle3Wheel
+                              color={isSelected ? '#0B1E42' : '#64748B'}
+                              size={36}
+                            />
+                          )}
+                          {vehicle.id === 'VAN_500KG' && (
+                            <IconVehicleVan
+                              color={isSelected ? '#0284C7' : '#64748B'}
+                              size={38}
+                            />
+                          )}
+                          {vehicle.id === 'TRUCK_125T' && (
+                            <IconVehicleLightTruck
+                              color={isSelected ? '#0B1E42' : '#64748B'}
+                              size={38}
+                            />
+                          )}
+                          {vehicle.id === 'TRUCK_25T' && (
+                            <IconVehicleHeavyTruck
+                              color={isSelected ? '#0B1E42' : '#64748B'}
+                              size={40}
+                            />
+                          )}
+                        </View>
+
+                        <Text
+                          numberOfLines={1}
+                          style={[
+                            styles.fleetVehicleName,
+                            isSelected && styles.fleetVehicleNameSelected,
+                          ]}
+                        >
+                          {vehicle.name}
+                        </Text>
+
+                        {/* Thùng xe D x R x C Badge */}
+                        <View
+                          style={[
+                            styles.dimensionBadge,
+                            isSelected && styles.dimensionBadgeSelected,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.dimensionText,
+                              isSelected && styles.dimensionTextSelected,
+                            ]}
+                          >
+                            {vehicle.dimensions}
+                          </Text>
+                        </View>
+
+                        <Text style={styles.fleetCapacityText}>
+                          Tải trọng: {vehicle.weightCapacity}
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.fleetPriceText,
+                            isSelected && styles.fleetPriceTextSelected,
+                          ]}
+                        >
+                          {vehicle.estimatedPrice}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+
+                {/* 4. Total Fare Estimation Badge + Big Prominent CTA */}
+                <View style={styles.fareCtaCard}>
+                  <View style={styles.fareInfoRow}>
+                    <View style={styles.fareLeftCol}>
+                      <Text style={styles.fareLabel}>ƯỚC TÍNH CƯỚC CHUYẾN</Text>
+                      <View style={styles.fareVehicleTypeRow}>
+                        <Text style={styles.fareVehicleName}>
+                          {currentFleetVehicle.name}
+                        </Text>
+                        <View style={styles.fareDimensionChip}>
+                          <Text style={styles.fareDimensionChipText}>
+                            Thùng: {currentFleetVehicle.dimensionLabel}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={styles.fareRightCol}>
+                      <Text style={styles.fareAmount}>
+                        {currentFleetVehicle.estimatedPrice}
+                      </Text>
+                      <Text style={styles.fareNote}>Giá mở cửa chuẩn</Text>
+                    </View>
+                  </View>
+
+                  <Pressable
+                    accessibilityLabel={`Đặt xe ngay ${currentFleetVehicle.name}, giá ${currentFleetVehicle.estimatedPrice}`}
+                    accessibilityRole="button"
+                    onPress={handleMainCtaBook}
+                    style={({ pressed }) => [
+                      styles.bigCtaBtn,
+                      pressed && styles.bigCtaBtnPressed,
+                    ]}
+                  >
+                    <Text style={styles.bigCtaBtnText}>
+                      ĐẶT XE NGAY · {currentFleetVehicle.estimatedPrice}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
             </View>
 
           {/* 7. Live Tracking Activity Capsule (Active Shipment / Quick Tracking) */}
@@ -1441,6 +1698,15 @@ const styles = StyleSheet.create({
     maxWidth: 640,
     alignSelf: 'center',
     backgroundColor: leopardPalette.canvas,
+    position: 'relative',
+  },
+  mapBackgroundLayer: {
+    position: 'absolute',
+    top: 58,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
   },
 
   /* 1. Hero Artwork Background & Header */
@@ -2359,6 +2625,221 @@ const styles = StyleSheet.create({
     color: '#2563EB',
     fontSize: 11.5,
     fontWeight: '700',
+  },
+
+  /* 3 & 4. Lalamove Fleet Matrix & Fare CTA */
+  fleetMatrixSection: {
+    marginTop: 14,
+    gap: 12,
+  },
+  fleetMatrixHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  fleetMatrixTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0B1E42',
+    letterSpacing: 0.6,
+  },
+  fleetMatrixSubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  fleetScrollContent: {
+    gap: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  fleetCard: {
+    width: 140,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    padding: 10,
+    alignItems: 'center',
+    position: 'relative',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  fleetCardSelected: {
+    borderColor: '#0B1E42',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 2,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  fleetBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  fleetBadgeSelected: {
+    backgroundColor: '#0B1E42',
+  },
+  fleetBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  fleetBadgeTextSelected: {
+    color: '#FFFFFF',
+  },
+  fleetIconContainer: {
+    width: 60,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  fleetVehicleName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+    textAlign: 'center',
+  },
+  fleetVehicleNameSelected: {
+    color: '#0B1E42',
+    fontWeight: '800',
+  },
+  dimensionBadge: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginVertical: 4,
+  },
+  dimensionBadgeSelected: {
+    backgroundColor: '#DBEAFE',
+    borderColor: '#93C5FD',
+  },
+  dimensionText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#1D4ED8',
+    fontVariant: ['tabular-nums'],
+  },
+  dimensionTextSelected: {
+    color: '#1E40AF',
+    fontWeight: '800',
+  },
+  fleetCapacityText: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#64748B',
+    marginBottom: 4,
+  },
+  fleetPriceText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    fontVariant: ['tabular-nums'],
+  },
+  fleetPriceTextSelected: {
+    color: '#0B1E42',
+    fontWeight: '800',
+  },
+
+  /* Fare Estimation Badge & Big CTA */
+  fareCtaCard: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 12,
+    gap: 10,
+    marginTop: 4,
+  },
+  fareInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  fareLeftCol: {
+    gap: 2,
+  },
+  fareLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.5,
+  },
+  fareVehicleTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  fareVehicleName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0B1E42',
+  },
+  fareDimensionChip: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  fareDimensionChipText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#1D4ED8',
+  },
+  fareRightCol: {
+    alignItems: 'flex-end',
+  },
+  fareAmount: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0B1E42',
+    fontVariant: ['tabular-nums'],
+  },
+  fareNote: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#64748B',
+  },
+  bigCtaBtn: {
+    backgroundColor: '#0B1E42',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  bigCtaBtnPressed: {
+    backgroundColor: '#061226',
+    transform: [{ scale: 0.99 }],
+  },
+  bigCtaBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14.5,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
 
   bottomSpacer: {

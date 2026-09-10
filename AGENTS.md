@@ -11,7 +11,8 @@ LEOPARD là hệ thống kết nối logistics ở mức mini-production pilot v
 
 Approved stack:
 
-- Mobile: Expo/React Native hoặc Mobile PWA, TypeScript.
+- Mobile: Expo/React Native hoặc Mobile PWA, TypeScript (`apps/mobile` cho Customer, `apps/driver` cho Driver).
+- Mobile Core: `@leopard/mobile-core` (thư viện dùng chung foundation, brand theme tokens, 2026 Liquid Glass floating dock, UI primitives).
 - Operations Web: Next.js, React, TypeScript, Tailwind CSS.
 - Backend: NestJS, Prisma, TypeScript.
 - Database: PostgreSQL + PostGIS.
@@ -101,6 +102,16 @@ Frontend:
 pnpm --filter web test
 pnpm --filter web typecheck
 pnpm --filter web lint
+```
+
+Mobile (`apps/mobile`, `apps/driver`, `packages/mobile-core`):
+
+```bash
+pnpm --filter mobile test
+pnpm --filter mobile typecheck
+pnpm --filter driver test
+pnpm --filter driver typecheck
+pnpm --filter @leopard/mobile-core test
 ```
 
 Trước release:

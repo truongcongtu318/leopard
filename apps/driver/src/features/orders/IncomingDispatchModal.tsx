@@ -230,9 +230,10 @@ export function IncomingDispatchModal({
               <Button
                 disabled={isAccepting}
                 isLoading={isAccepting}
-                label="NHẬN ĐƠN NGAY"
+                label="NHẬN CUỐC NGAY"
                 loadingLabel="Đang phân công..."
                 onPress={() => onAccept(offer.id)}
+                size="driver-primary"
                 variant="primary"
               />
             </View>

@@ -8,14 +8,16 @@ export const spacing = {
 } as const;
 
 export const radius = {
-  control: 6,
-  card: 6,
-  cardSm: 6,
-  cardLg: 8,
-  cardXl: 12,
-  tabBar: 12,
-  modal: 12,
-  pill: 999,
+  control: 12,
+  card: 20,
+  cardSm: 14,
+  cardLg: 24,
+  cardXl: 28,
+  bezelOuter: 24,
+  bezelInner: 18,
+  tabBar: 9999,
+  modal: 26,
+  pill: 9999,
 } as const;
 
 export const control = {
@@ -95,12 +97,15 @@ export const colors = {
     mapLand: '#F8FAFC',
   },
   brand: {
+    primary: '#0B1E42',
+    accent: '#F59E0B',
+    blue: '#0284C7',
+    green: '#16A34A',
     background: '#0B1E42',
     text: '#FFFFFF',
     softBackground: '#F0F4F9',
     softText: '#0B1E42',
     border: '#0B1E42',
-    accent: '#F59E0B',
     accentSoft: '#FFFBEB',
     accentText: '#92400E',
   },
@@ -166,7 +171,7 @@ export const leopardPalette = {
   // Brand — Midnight Navy Blue
   primary: '#0B1E42',
   primaryDark: '#061226',
-  primarySoft: '#2563EB',
+  primarySoft: '#0284C7',
   primaryBg: '#F0F4F9',
   primaryBorder: '#CBD5E1',
 

@@ -192,6 +192,7 @@ function useReducedMotion(): boolean {
 
 export function OnboardingScreen({
   onDriverRegister,
+  onExploreGuest,
   onGetStarted,
 }: OnboardingScreenProps) {
   const reduceMotion = useReducedMotion();
@@ -367,7 +368,7 @@ export function OnboardingScreen({
             onPress={finish}
             style={({ pressed }) => [styles.skipBtn, pressed && styles.skipBtnPressed]}
           >
-            <Text style={styles.skipBtnText}>Bỏ qua</Text>
+            <Text style={styles.skipBtnText}>Bỏ qua ➔</Text>
           </Pressable>
         </View>
 
@@ -423,7 +424,7 @@ export function OnboardingScreen({
               ]}
             >
               <ArrowRightIcon
-                color={isLastSlide ? '#081A3C' : '#081A3C'}
+                color={isLastSlide ? '#0B1E42' : '#FFFFFF'}
                 size={24}
               />
             </Pressable>
@@ -456,7 +457,7 @@ export function OnboardingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#081A3C',
+    backgroundColor: '#0B1E42',
   },
   backgroundLayer: {
     ...StyleSheet.absoluteFill,
@@ -568,20 +569,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(245, 158, 11, 0.22)',
+    backgroundColor: 'rgba(2, 132, 199, 0.20)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.45)',
+    borderColor: 'rgba(2, 132, 199, 0.45)',
     marginBottom: 12,
   },
   badgeDot: {
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#0284C7',
     marginRight: 8,
   },
   badgeText: {
-    color: '#FDE68A',
+    color: '#BAE6FD',
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.8,
@@ -644,7 +645,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0B1E42',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',

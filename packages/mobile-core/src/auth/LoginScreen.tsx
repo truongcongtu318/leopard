@@ -65,7 +65,7 @@ interface AuthResponse {
 }
 
 export function LoginScreen({
-  allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true',
+  allowDemo = false,
   onLoginSuccess,
   onNavigateRegister,
   sessionExpired = false,
@@ -364,7 +364,7 @@ export function LoginScreen({
             </View>
 
             <Pressable
-              accessibilityLabel="Gửi mã OTP"
+              accessibilityLabel="Tiếp tục"
               accessibilityRole="button"
               accessibilityState={{
                 busy: isSubmitting,
@@ -382,7 +382,7 @@ export function LoginScreen({
               {isSubmitting ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.primaryCtaText}>Gửi mã OTP</Text>
+                <Text style={styles.primaryCtaText}>Tiếp tục</Text>
               )}
             </Pressable>
 

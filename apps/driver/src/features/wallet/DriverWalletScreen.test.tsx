@@ -27,12 +27,21 @@ describe('DriverWalletScreen', () => {
   it('can open withdrawal modal and see preset options', async () => {
     const screen = await render(<DriverWalletScreen />);
 
-    const withdrawBtn = screen.getByRole('button', { name: 'Rút tiền về ngân hàng' });
+    const withdrawBtn = screen.getByRole('button', { name: 'Rút tiền về tài khoản ngân hàng' });
     await fireEvent.press(withdrawBtn);
 
-    expect(screen.getByText('Rút tiền về tài khoản ngân hàng')).toBeTruthy();
+    expect(screen.getAllByText('Rút tiền về tài khoản ngân hàng').length).toBeGreaterThan(0);
     expect(screen.getByText('Xác nhận rút tiền')).toBeTruthy();
 
+    await screen.unmount();
+  });
+
+  it('displays today earnings and instant payout action button', async () => {
+    const screen = await render(<DriverWalletScreen />);
+    expect(screen.getByText(/Rút tiền về tài khoản ngân hàng/)).toBeTruthy();
+    expect(screen.getByText('Rút tiền tức thì 24/7')).toBeTruthy();
+    expect(screen.getByText('MB Bank')).toBeTruthy();
+    expect(screen.getByText('Vietcombank')).toBeTruthy();
     await screen.unmount();
   });
 });
