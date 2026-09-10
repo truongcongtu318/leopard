@@ -29,7 +29,7 @@ const mockTrip: TripBookingDetails = {
 };
 
 describe('RealtimeTrackingScreen', () => {
-  it('renders map area with status and live badge', async () => {
+  it('renders map area with status, live badge, and fixed ETA status bar', async () => {
     const screen = await render(
       <RealtimeTrackingScreen
         driver={mockDriver}
@@ -40,11 +40,13 @@ describe('RealtimeTrackingScreen', () => {
     expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
     expect(screen.getByText('LIVE')).toBeTruthy();
     expect(screen.getByText('10 phút')).toBeTruthy();
+    // Fixed status bar strictly labeled "ETA dự kiến" with tabular distance
+    expect(screen.getByText('ETA dự kiến: 10 phút · Còn 1.5 km')).toBeTruthy();
 
     await screen.unmount();
   });
 
-  it('renders driver info with name, rating, and action buttons', async () => {
+  it('renders driver info with name, rating without emoji, and action buttons', async () => {
     const onCallDriver = jest.fn();
     const onChatDriver = jest.fn();
 
@@ -58,8 +60,9 @@ describe('RealtimeTrackingScreen', () => {
     );
 
     expect(screen.getByText('Nguyễn Văn Hùng')).toBeTruthy();
-    expect(screen.getByText('⭐ 4.8')).toBeTruthy();
+    expect(screen.getByText('4.8')).toBeTruthy();
     expect(screen.getByText('342 chuyến')).toBeTruthy();
+    expect(screen.getAllByText('59C-882.14').length).toBeGreaterThanOrEqual(1);
 
     const callBtn = screen.getByLabelText('Gọi điện tài xế');
     await fireEvent.press(callBtn);
@@ -100,7 +103,7 @@ describe('RealtimeTrackingScreen', () => {
     );
 
     expect(screen.getByText('#LP-00201')).toBeTruthy();
-    expect(screen.getByText('59C-882.14')).toBeTruthy();
+    expect(screen.getAllByText('59C-882.14').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('850.000 ₫')).toBeTruthy();
 
     const vietQRBtn = screen.getByLabelText('Hiện VietQR thanh toán');
@@ -131,7 +134,7 @@ describe('RealtimeTrackingScreen', () => {
     );
 
     expect(screen.getByText('Ảnh xác nhận giao hàng')).toBeTruthy();
-    expect(screen.getByText('✓ Đã xác nhận')).toBeTruthy();
+    expect(screen.getByText('Đã xác nhận')).toBeTruthy();
 
     const proofBtn = screen.getByLabelText('Xem ảnh xác nhận giao hàng');
     await fireEvent.press(proofBtn);
@@ -163,7 +166,7 @@ describe('RealtimeTrackingScreen', () => {
       />,
     );
 
-    expect(screen.getByText(/ETA dự kiến/)).toBeTruthy();
+    expect(screen.getAllByText(/ETA dự kiến/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Hóa đơn điện tử VAT 8%')).toBeTruthy();
 
     const invoiceBtn = screen.getByLabelText('Tải hóa đơn VAT');
@@ -173,7 +176,7 @@ describe('RealtimeTrackingScreen', () => {
     await screen.unmount();
   });
 
-  it('renders driver card with 4.98★ rating and masked phone action', async () => {
+  it('renders driver card with 4.98★ rating without emoji and masked phone action', async () => {
     const driverVip: DriverInfo = {
       ...mockDriver,
       rating: 4.98,
@@ -187,7 +190,7 @@ describe('RealtimeTrackingScreen', () => {
       />,
     );
 
-    expect(screen.getByText('⭐ 4.98')).toBeTruthy();
+    expect(screen.getByText('4.98')).toBeTruthy();
     expect(screen.getByText('0901 *** 567')).toBeTruthy();
 
     await screen.unmount();

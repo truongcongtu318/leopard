@@ -2,23 +2,31 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { colors, radius, spacing, typography, Button, FormField, ScreenScaffold } from '@leopard/mobile-core';
+import {
+  colors,
+  spacing,
+  Button,
+  FormField,
+  IconCheck,
+  IconRoleDriver,
+  IconStar,
+  ScreenScaffold,
+} from '@leopard/mobile-core';
 
 const feedbackTags = [
   'Đúng giờ',
-  'Giao hàng cẩn thận',
-  'Tài xế thân thiện',
-  'Hỗ trợ nhiệt tình',
-  'Xe sạch sẽ, bảo quản tốt',
+  'Cẩn thận',
+  'Thân thiện',
+  'Lái xe an toàn',
 ];
 
-const tipOptions = [10000, 20000, 50000, 100000];
+const tipOptions = [10000, 20000, 50000];
 
 export function OrderReviewScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [rating, setRating] = useState<number>(5);
-  const [selectedTags, setSelectedTags] = useState<string[]>(['Đúng giờ', 'Giao hàng cẩn thận']);
+  const [selectedTags, setSelectedTags] = useState<string[]>(['Đúng giờ', 'Cẩn thận']);
   const [selectedTip, setSelectedTip] = useState<number | null>(20000);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -36,65 +44,92 @@ export function OrderReviewScreen() {
     }, 1500);
   };
 
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+  const formatCurrency = (val: number) => {
+    return `${val.toLocaleString('vi-VN')} đ`;
+  };
 
   return (
     <ScreenScaffold
-      eyebrow={`ORDER · ${id ?? 'LP-D-260815-001'}`}
+      eyebrow={`ORDER · ${id ?? 'LP-260815-001'}`}
       onBack={() => router.back()}
       subtitle="Chia sẻ trải nghiệm dịch vụ để giúp chúng tôi nâng cao chất lượng."
       title="Đánh giá chuyến đi"
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {submitted ? (
-          <View style={styles.successCard}>
-            <Text style={styles.successIcon}>🎉</Text>
-            <Text style={styles.successTitle}>Cảm ơn bạn đã đánh giá!</Text>
-            <Text style={styles.successMessage}>
-              Phản hồi của bạn đã được gửi đến tài xế và hệ thống. Đang quay lại chi tiết đơn hàng...
-            </Text>
+          <View style={styles.successOuter}>
+            <View style={styles.successInner}>
+              <View style={styles.successIconBox}>
+                <IconCheck color="#16A34A" size={32} strokeWidth={2.5} />
+              </View>
+              <Text style={styles.successTitle}>Cảm ơn bạn đã đánh giá!</Text>
+              <Text style={styles.successMessage}>
+                Phản hồi của bạn đã được gửi đến tài xế và hệ thống điều phối LEOPARD. Đang quay lại chi tiết đơn hàng...
+              </Text>
+            </View>
           </View>
         ) : (
           <>
-            <View style={styles.driverCard}>
-              <View style={styles.avatarBox}>
-                <Text style={styles.avatarText}>D</Text>
-              </View>
-              <Text style={styles.driverName}>Nguyễn Văn Tài</Text>
-              <Text style={styles.vehicleInfo}>Xe van · 59D-123.45</Text>
+            {/* ── Driver VIP Card (Double-Bezel: 24px outer, 18px inner) ── */}
+            <View style={styles.driverCardOuter}>
+              <View style={styles.driverCardInner}>
+                <View style={styles.avatarBox}>
+                  <IconRoleDriver color="#0B1E42" size={26} />
+                </View>
+                <Text style={styles.driverName}>Nguyễn Văn Hùng</Text>
+                <View style={styles.plateBadge}>
+                  <Text style={styles.plateText}>Xe tải 2.5T · 59C-882.14</Text>
+                </View>
 
-              <View style={styles.starsRow}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Pressable key={star} onPress={() => setRating(star)}>
-                    <Text style={[styles.starText, star <= rating ? styles.starActive : null]}>
-                      ★
-                    </Text>
-                  </Pressable>
-                ))}
+                {/* 1-5 Star SVG Rating (Touch targets >= 44x44px, Zero Emoji) */}
+                <View style={styles.starsRow}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Pressable
+                      accessibilityLabel={`Đánh giá ${star} sao`}
+                      accessibilityRole="button"
+                      key={star}
+                      onPress={() => setRating(star)}
+                      style={styles.starTouchTarget}
+                    >
+                      <IconStar
+                        color={star <= rating ? '#F59E0B' : '#CBD5E1'}
+                        fill={star <= rating ? '#F59E0B' : 'none'}
+                        size={32}
+                        strokeWidth={1.8}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={styles.ratingLabel}>
+                  {rating === 5
+                    ? 'Tuyệt vời!'
+                    : rating === 4
+                      ? 'Rất tốt'
+                      : rating === 3
+                        ? 'Bình thường'
+                        : rating === 2
+                          ? 'Chưa hài lòng'
+                          : 'Rất tệ'}
+                </Text>
               </View>
-              <Text style={styles.ratingLabel}>
-                {rating === 5
-                  ? 'Tuyệt vời!'
-                  : rating === 4
-                    ? 'Rất tốt'
-                    : rating === 3
-                      ? 'Bình thường'
-                      : rating === 2
-                        ? 'Chưa hài lòng'
-                        : 'Rất tệ'}
-              </Text>
             </View>
 
+            {/* ── Quick Tags (Touch targets >= 44px) ───────────── */}
             <Text style={styles.sectionLabel}>ĐIỂM NỔI BẬT</Text>
             <View style={styles.tagGrid}>
               {feedbackTags.map((tag) => {
                 const isSelected = selectedTags.includes(tag);
                 return (
                   <Pressable
+                    accessibilityLabel={`Tiêu chí: ${tag}`}
+                    accessibilityRole="button"
                     key={tag}
                     onPress={() => toggleTag(tag)}
-                    style={[styles.tagChip, isSelected ? styles.tagChipSelected : null]}
+                    style={({ pressed }) => [
+                      styles.tagChip,
+                      isSelected ? styles.tagChipSelected : null,
+                      pressed ? styles.pressed : null,
+                    ]}
                   >
                     <Text style={[styles.tagText, isSelected ? styles.tagTextSelected : null]}>
                       {tag}
@@ -104,15 +139,22 @@ export function OrderReviewScreen() {
               })}
             </View>
 
+            {/* ── Tip Options (Touch targets >= 44px, Tabular Nums) ── */}
             <Text style={styles.sectionLabel}>TIP CHO TÀI XẾ (TÙY CHỌN)</Text>
             <View style={styles.tipGrid}>
               {tipOptions.map((tip) => {
                 const isSelected = selectedTip === tip;
                 return (
                   <Pressable
+                    accessibilityLabel={`Tip ${formatCurrency(tip)}`}
+                    accessibilityRole="button"
                     key={tip}
                     onPress={() => setSelectedTip(isSelected ? null : tip)}
-                    style={[styles.tipChip, isSelected ? styles.tipChipSelected : null]}
+                    style={({ pressed }) => [
+                      styles.tipChip,
+                      isSelected ? styles.tipChipSelected : null,
+                      pressed ? styles.pressed : null,
+                    ]}
                   >
                     <Text style={[styles.tipText, isSelected ? styles.tipTextSelected : null]}>
                       +{formatCurrency(tip)}
@@ -122,6 +164,7 @@ export function OrderReviewScreen() {
               })}
             </View>
 
+            {/* ── Comment Note ─────────────────────────────────── */}
             <FormField
               label="Ý kiến đóng góp thêm"
               multiline
@@ -130,6 +173,7 @@ export function OrderReviewScreen() {
               value={comment}
             />
 
+            {/* ── Submit Review Button (>= 48px) ───────────────── */}
             <Button
               label={
                 selectedTip
@@ -150,130 +194,186 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.xl,
   },
-  driverCard: {
-    alignItems: 'center',
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderRadius: radius.card,
+
+  // ── Driver Card (Double-Bezel: 24px outer, 18px inner) ──
+  driverCardOuter: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     borderWidth: 1,
-    gap: 4,
-    padding: spacing.lg,
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    padding: 10,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  driverCardInner: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: spacing.md,
+    gap: 6,
   },
   avatarBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
-    backgroundColor: colors.active.background,
-    borderRadius: radius.control,
-    height: 56,
     justifyContent: 'center',
-    width: 56,
-  },
-  avatarText: {
-    color: colors.active.text,
-    fontSize: 22,
-    fontWeight: '800',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
   },
   driverName: {
-    color: colors.neutral.titleText,
+    color: '#0F172A',
     fontSize: 16,
     fontWeight: '700',
-    marginTop: 4,
   },
-  vehicleInfo: {
-    color: colors.neutral.subtleText,
-    fontSize: 12.5,
+  plateBadge: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  plateText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   starsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 6,
   },
-  starText: {
-    color: colors.neutral.border,
-    fontSize: 36,
-  },
-  starActive: {
-    color: '#F59E0B',
+  starTouchTarget: {
+    width: 44,
+    height: 44,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ratingLabel: {
-    color: colors.neutral.titleText,
-    fontSize: 13.5,
+    color: '#0B1E42',
+    fontSize: 14,
     fontWeight: '700',
     marginTop: 2,
   },
+
+  // ── Section Label ─────────────────────────────────
   sectionLabel: {
-    color: colors.brand.background,
+    color: '#0B1E42',
     fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
+
+  // ── Tags Grid (>= 44px) ───────────────────────────
   tagGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: 8,
   },
   tagChip: {
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 22,
+    borderWidth: 1,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   tagChipSelected: {
-    backgroundColor: colors.brand.softBackground,
-    borderColor: colors.brand.background,
-    borderWidth: 1,
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   tagText: {
-    color: colors.neutral.mutedText,
+    color: '#334155',
     fontSize: 12.5,
     fontWeight: '600',
   },
   tagTextSelected: {
-    color: colors.brand.background,
+    color: '#FFFFFF',
   },
+
+  // ── Tip Grid (>= 44px, Tabular Nums) ──────────────
   tipGrid: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: 10,
   },
   tipChip: {
-    alignItems: 'center',
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: radius.control,
     flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    borderWidth: 1,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
     paddingVertical: 10,
   },
   tipChipSelected: {
-    backgroundColor: colors.brand.background,
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   tipText: {
-    color: colors.neutral.text,
-    fontSize: 12.5,
+    color: '#0B1E42',
+    fontSize: 13,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   tipTextSelected: {
-    color: colors.neutral.background,
+    color: '#FFFFFF',
   },
-  successCard: {
-    alignItems: 'center',
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderRadius: radius.card,
+
+  // ── Success Card (Double-Bezel) ───────────────────
+  successOuter: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.xl,
-    textAlign: 'center',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    padding: 10,
   },
-  successIcon: {
-    fontSize: 48,
+  successInner: {
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    padding: spacing.xl,
+    gap: spacing.sm,
+  },
+  successIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   successTitle: {
-    color: colors.neutral.titleText,
-    fontSize: 18,
+    color: '#15803D',
+    fontSize: 16,
     fontWeight: '800',
   },
   successMessage: {
-    color: colors.neutral.mutedText,
+    color: '#166534',
     fontSize: 13,
-    lineHeight: 18,
     textAlign: 'center',
+    lineHeight: 18,
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });
