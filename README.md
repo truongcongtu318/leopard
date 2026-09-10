@@ -57,13 +57,15 @@ Structure khuyến nghị cho LEOPARD là monorepo tách theo runtime. Backend g
 ```text
 apps/
   api/                  # NestJS REST API, Socket.IO gateway, Prisma access
-  mobile/               # Customer + Driver mobile app hoặc mobile-first PWA
+  mobile/               # Customer mobile app (mobile-first)
+  driver/               # Standalone Driver mobile app (bundle com.leopard.driver)
   admin/                # Fleet Owner + Admin operations dashboard
   web/                  # Optional customer web/PWA nếu cần tách khỏi mobile
 
 packages/
   shared/               # enums, DTO types, API contracts, constants
   validators/           # shared validation schemas nếu dùng chung client/server
+  mobile-core/          # shared UI primitives, theme, auth session, API client cho mobile & driver
   ui/                   # shared web UI primitives cho admin/web
   config/               # eslint, tsconfig, prettier, tailwind preset
 
@@ -86,11 +88,32 @@ docs/
 ### Structure rules
 
 - `apps/api` là nơi sở hữu pricing, ETA, order lifecycle, payment state, authorization và provider orchestration.
-- `apps/mobile` ưu tiên Customer và Driver vì hai flow này cần mobile-first, tracking và thao tác nhanh.
+- `apps/mobile` dành riêng cho Customer theo mobile-first (đặt đơn, tracking realtime, quản lý đơn giao).
+- `apps/driver` là ứng dụng Expo độc lập cho Driver (bundle ID `com.leopard.driver`, scheme `leoparddriver://`), kết nối cùng backend NestJS và cơ chế xác thực session độc lập với vai trò `DRIVER`.
+- `packages/mobile-core` đóng gói các thành phần dùng chung giữa `apps/mobile` và `apps/driver`: theme tokens, UI components (`ScreenScaffold`, `TruckLoader`, `ToastNotification`, `MediaImage`), auth session store, HTTP client và push notification bootstrap.
 - `apps/admin` chứa cả Fleet Owner và Admin dashboard; phân quyền quyết định bằng backend, không chỉ ẩn menu ở UI.
 - `packages/shared` chỉ chứa code không phụ thuộc framework như enum `Role`, `OrderStatus`, `PaymentStatus`, error code và DTO type.
 - `packages/ui` không chứa business rules; component phải nhận dữ liệu đã authorize từ API.
 - `infra` không chứa secret thật; credential thật dùng environment variables hoặc secret manager.
+
+### Chạy các ứng dụng cục bộ
+
+```bash
+# Cài đặt dependencies
+pnpm install
+
+# Customer Mobile App (Expo)
+pnpm --filter mobile start
+
+# Driver Mobile App độc lập (Expo)
+pnpm --filter driver start
+
+# Operations Admin & Fleet Dashboard (Next.js)
+pnpm --filter admin dev
+
+# Backend API & Realtime Gateway (NestJS)
+pnpm --filter api start:dev
+```
 
 ## Trạng thái
 
