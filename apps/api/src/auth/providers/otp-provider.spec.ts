@@ -51,6 +51,57 @@ describe('OTP provider boundary', () => {
     expect(verifyIdToken).toHaveBeenCalledWith('raw-id-token-secret');
   });
 
+  it('maps Firebase Google tokens (email, no phone) to an email identity', async () => {
+    const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
+    verifyIdToken.mockResolvedValue({
+      uid: 'google-user-1',
+      email: 'sme@leopard.vn',
+    });
+
+    const provider = new FirebaseOtpProvider(verifyIdToken);
+
+    await expect(provider.verify('google-id-token')).resolves.toEqual({
+      providerUserId: 'google-user-1',
+      email: 'sme@leopard.vn',
+    });
+  });
+
+  it('captures the display name from a Google identity token', async () => {
+    const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
+    const provider = new FirebaseOtpProvider(async () => ({
+      uid: 'g-123',
+      email: 'an@example.com',
+      name: 'Nguyễn Văn An',
+    }));
+
+    const identity = await provider.verify('tok');
+
+    expect(identity.name).toBe('Nguyễn Văn An');
+  });
+
+  it('omits name when the phone token has none', async () => {
+    const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
+    const provider = new FirebaseOtpProvider(async () => ({
+      uid: 'p-1',
+      phone_number: '+84900000001',
+    }));
+
+    const identity = await provider.verify('tok');
+
+    expect(identity.name).toBeUndefined();
+  });
+
+  it('rejects a Firebase token that has neither phone nor email', async () => {
+    const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
+    verifyIdToken.mockResolvedValue({ uid: 'ghost-user' });
+
+    const provider = new FirebaseOtpProvider(verifyIdToken);
+
+    await expect(provider.verify('empty-token')).rejects.toMatchObject({
+      code: 'OTP_PROVIDER_REJECTED',
+    });
+  });
+
   it('redacts provider errors instead of echoing idToken values', async () => {
     const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
     verifyIdToken.mockRejectedValue(

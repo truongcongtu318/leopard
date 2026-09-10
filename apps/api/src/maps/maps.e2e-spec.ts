@@ -160,17 +160,92 @@ describe('Maps REST API', () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        estimateToken: expect.any(String) as string,
-        polyline: expect.any(String) as string,
-        distanceM: 0,
-        durationS: 0,
-        estimatedArrivalAt: expect.any(String) as string,
-        estimatedPriceVnd: 10_000,
-        source: 'DEMO',
-        isEstimate: true,
-        calculatedAt: expect.any(String) as string,
+        routes: [
+          {
+            routeId: 'route-0',
+            estimateToken: expect.any(String) as string,
+            isRecommended: true,
+            polyline: expect.any(String) as string,
+            distanceM: 0,
+            durationS: 0,
+            estimatedArrivalAt: expect.any(String) as string,
+            estimatedPriceVnd: 10_000,
+            source: 'DEMO',
+            isEstimate: true,
+            calculatedAt: expect.any(String) as string,
+            congestionLevel: 'unknown',
+          },
+        ],
       });
-      expect(response.body.estimateToken).toContain('.');
+      expect(response.body.routes[0].estimateToken).toContain('.');
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('rejects truck route estimates missing cargoWeightKg', async () => {
+    const app = await createApp();
+    const session = await loginDemo(app);
+    const point = { latitude: 10.762622, longitude: 106.660172 };
+
+    try {
+      const response = await request(app.getHttpServer())
+        .post('/orders/estimate')
+        .set('Authorization', bearer(session))
+        .send({
+          pickup: { type: 'PICKUP', address: 'A', lat: point.latitude, lng: point.longitude },
+          dropoff: { type: 'DROPOFF', address: 'B', lat: point.latitude, lng: point.longitude },
+          vehicleType: 'TRUCK',
+        })
+        .expect(400);
+
+      expect(response.body).toMatchObject({ statusCode: 400, code: 'BAD_REQUEST' });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('rejects truck route estimates whose cargoWeightKg exceeds the vehicle max', async () => {
+    const app = await createApp();
+    const session = await loginDemo(app);
+    const point = { latitude: 10.762622, longitude: 106.660172 };
+
+    try {
+      const response = await request(app.getHttpServer())
+        .post('/orders/estimate')
+        .set('Authorization', bearer(session))
+        .send({
+          pickup: { type: 'PICKUP', address: 'A', lat: point.latitude, lng: point.longitude },
+          dropoff: { type: 'DROPOFF', address: 'B', lat: point.latitude, lng: point.longitude },
+          vehicleType: 'TRUCK',
+          cargoWeightKg: 999_999,
+        })
+        .expect(400);
+
+      expect(response.body).toMatchObject({ statusCode: 400, code: 'BAD_REQUEST' });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('accepts a truck route estimate with a valid cargoWeightKg', async () => {
+    const app = await createApp();
+    const session = await loginDemo(app);
+    const point = { latitude: 10.762622, longitude: 106.660172 };
+
+    try {
+      const response = await request(app.getHttpServer())
+        .post('/orders/estimate')
+        .set('Authorization', bearer(session))
+        .send({
+          pickup: { type: 'PICKUP', address: 'A', lat: point.latitude, lng: point.longitude },
+          dropoff: { type: 'DROPOFF', address: 'B', lat: point.latitude, lng: point.longitude },
+          vehicleType: 'TRUCK',
+          cargoWeightKg: 2_500,
+        })
+        .expect(200);
+
+      expect(response.body.routes[0]).toMatchObject({ isRecommended: true });
     } finally {
       await app.close();
     }
@@ -445,7 +520,7 @@ describe('Maps REST API', () => {
       expect(response.body).toMatchObject({
         statusCode: 429,
         code: 'RATE_LIMITED',
-        message: 'Rate limit exceeded',
+        message: 'Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau',
       });
     } finally {
       await app.close();
@@ -472,7 +547,7 @@ describe('Maps REST API', () => {
       expect(response.body).toMatchObject({
         statusCode: 503,
         code: 'MAP_PROVIDER_UNAVAILABLE',
-        message: 'Map provider unavailable',
+        message: 'Dịch vụ bản đồ tạm thời không khả dụng',
       });
       expect(JSON.stringify(response.body)).not.toContain('test-vietmap-key');
     } finally {

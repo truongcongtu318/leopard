@@ -16,6 +16,9 @@ enum Role {
 enum UserStatus {
   ACTIVE
   DISABLED
+  PENDING_APPROVAL
+  REJECTED
+  SUSPENDED
 }
 
 enum FleetMemberRole {
@@ -77,9 +80,34 @@ enum ProviderSource {
   S3
 }
 
+enum NotificationType {
+  ORDER
+  PAYMENT
+  PROMO
+  SYSTEM
+}
+
+enum InvoiceStatus {
+  ISSUED
+  VOIDED
+}
+
 model User {
   id                String               @id @default(uuid()) @db.Uuid
-  phone             String               @unique @db.VarChar(32)
+  firebaseUid       String?              @unique @db.VarChar(128)
+  phone             String?              @unique @db.VarChar(32)
+  email             String?              @unique @db.VarChar(255)
+  name              String?              @db.VarChar(120)
+  phoneVerifiedAt   DateTime?            @db.Timestamptz(3)
+  emailVerifiedAt   DateTime?            @db.Timestamptz(3)
+  onboardedAt       DateTime?            @db.Timestamptz(3)
+  consentTermsAt    DateTime?            @db.Timestamptz(3)
+  consentServiceAt  DateTime?            @db.Timestamptz(3)
+  consentMarketing  Boolean              @default(false)
+  consentThirdParty Boolean              @default(false)
+  avatarMediaId     String?              @db.Uuid
+  avatarStorageKey  String?              @db.VarChar(500)
+  avatarContentType String?              @db.VarChar(100)
   role              Role
   status            UserStatus           @default(ACTIVE)
   createdAt         DateTime             @default(now()) @db.Timestamptz(3)
@@ -94,6 +122,8 @@ model User {
   mediaObjects      MediaObject[]        @relation("MediaUploader")
   confirmedPayments PaymentIntent[]      @relation("PaymentConfirmer")
   auditLogs         AuditLog[]           @relation("AuditActor")
+  notifications     Notification[]
+  deviceTokens      DeviceToken[]
 }
 
 model RefreshSession {
@@ -140,11 +170,60 @@ model DriverProfile {
   userId            String                                @unique @db.Uuid
   availability      DriverAvailability                    @default(OFFLINE)
   vehicleType       VehicleType
+  licensePlate      String?                               @db.VarChar(32)
+  licenseNumber     String?                               @db.VarChar(64)
+  submittedAt       DateTime?                             @db.Timestamptz(3)
+  reviewedAt        DateTime?                             @db.Timestamptz(3)
+  reviewedById      String?                               @db.Uuid
+  rejectionReason   String?
+  contractVersion   String?                               @db.VarChar(32)
+  contractSignedAt  DateTime?                             @db.Timestamptz(3)
   lastKnownLocation Unsupported("geography(Point,4326)")?
   lastKnownAt       DateTime?                             @db.Timestamptz(3)
   createdAt         DateTime                              @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                              @default(now()) @updatedAt @db.Timestamptz(3)
   user              User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  documents         DriverDocument[]
+  contracts         DriverContract[]
+}
+
+enum DriverDocumentType {
+  LICENSE
+  VEHICLE_REGISTRATION
+  ID_CARD
+  VEHICLE_PHOTO
+}
+
+model DriverDocument {
+  id              String             @id @default(uuid()) @db.Uuid
+  driverProfileId String             @db.Uuid
+  type            DriverDocumentType
+  provider        ProviderSource
+  storageKey      String             @unique
+  contentType     String
+  sizeBytes       Int
+  checksumSha256  String
+  clientRequestId String?
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+  driverProfile   DriverProfile      @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+
+  @@index([driverProfileId, type])
+}
+
+model DriverContract {
+  id                  String        @id @default(uuid()) @db.Uuid
+  driverProfileId     String        @db.Uuid
+  version             String        @db.VarChar(32)
+  pdfStorageKey       String        @unique
+  signatureStorageKey String?       @unique
+  signedByName        String        @db.VarChar(120)
+  signedAt            DateTime      @db.Timestamptz(3)
+  ipAddress           String?       @db.VarChar(64)
+  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
+  driverProfile       DriverProfile @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([driverProfileId, version])
+  @@index([driverProfileId])
 }
 
 model Order {
@@ -173,6 +252,7 @@ model Order {
   trackingPoints  TrackingPoint[]
   mediaObjects    MediaObject[]
   paymentIntents  PaymentIntent[]
+  invoice         Invoice?
 
   @@unique([customerId, clientRequestId])
   @@index([customerId, createdAt(sort: Desc)])
@@ -249,6 +329,7 @@ model PaymentIntent {
   amountVnd             Int
   clientRequestId       String?
   providerReference     String?
+  payosOrderCode        BigInt?
   qrPayload             String?
   providerSnapshot      Json?
   expiresAt             DateTime?       @db.Timestamptz(3)
@@ -260,8 +341,40 @@ model PaymentIntent {
   updatedAt             DateTime        @default(now()) @updatedAt @db.Timestamptz(3)
   order                 Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
   confirmedBy           User?           @relation("PaymentConfirmer", fields: [confirmedById], references: [id], onDelete: Restrict)
+  invoice               Invoice?
 
+  @@unique([payosOrderCode])
   @@index([orderId, createdAt(sort: Desc)])
+}
+
+model InvoiceSequence {
+  year      Int      @id
+  lastValue Int      @default(0)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+}
+
+model Invoice {
+  id              String        @id @default(uuid()) @db.Uuid
+  orderId         String        @unique @db.Uuid
+  paymentIntentId String        @unique @db.Uuid
+  invoiceNumber   String        @unique
+  customerName    String        @db.VarChar(120)
+  customerEmail   String?       @db.VarChar(255)
+  customerTaxCode String?       @db.VarChar(20)
+  customerAddress String?       @db.VarChar(255)
+  amountVnd       Int
+  vatRateVnd      Int
+  totalVnd        Int
+  pdfStorageKey   String        @unique
+  status          InvoiceStatus @default(ISSUED)
+  emailSentAt     DateTime?     @db.Timestamptz(3)
+  issuedAt        DateTime      @default(now()) @db.Timestamptz(3)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime      @default(now()) @updatedAt @db.Timestamptz(3)
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentIntent   PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
 }
 
 model AuditLog {
@@ -278,4 +391,32 @@ model AuditLog {
 
   @@index([actorId, createdAt(sort: Desc)])
   @@index([resourceType, resourceId, createdAt(sort: Desc)])
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?        @db.Timestamptz(3)
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model DeviceToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  token      String   @unique
+  platform   String   @db.VarChar(16)
+  lastUsedAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lastUsedAt(sort: Desc)])
 }

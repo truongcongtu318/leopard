@@ -1,7 +1,10 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot } from 'expo-router';
 import { Component, type PropsWithChildren } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
+import { queryClient } from '@leopard/mobile-core';
 
 type RootErrorBoundaryState = {
   hasError: boolean;
@@ -32,7 +35,11 @@ class RootErrorBoundary extends Component<PropsWithChildren, RootErrorBoundarySt
 }
 
 function RootProviders({ children }: PropsWithChildren) {
-  return <SafeAreaProvider>{children}</SafeAreaProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>{children}</SafeAreaProvider>
+    </QueryClientProvider>
+  );
 }
 
 export default function RootLayout() {

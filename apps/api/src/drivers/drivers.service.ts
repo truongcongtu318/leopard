@@ -5,6 +5,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import { mapOrderResponse, type MappedOrderResponse } from '../orders/order-response.mapper.js';
 import { DriversRepository } from './drivers.repository.js';
 import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
+import type { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
 
 @Injectable()
 export class DriversService {
@@ -35,6 +36,15 @@ export class DriversService {
 
     const updated = await this.prisma.$transaction(async (tx) => {
       if (dto.availability === 'AVAILABLE') {
+        const driver = await tx.user.findUnique({ where: { id: actor.userId } });
+        if (!driver || driver.status !== 'ACTIVE') {
+          throw new DomainError(
+            'DRIVER_NOT_APPROVED',
+            403,
+            'Tài khoản tài xế chưa được duyệt',
+          );
+        }
+
         const activeOrdersCount = await tx.order.count({
           where: {
             driverId: actor.userId,
@@ -43,7 +53,7 @@ export class DriversService {
         });
 
         if (activeOrdersCount > 0) {
-          throw new DomainError('DRIVER_HAS_ACTIVE_ORDER', 409, 'Driver has an active order');
+          throw new DomainError('DRIVER_HAS_ACTIVE_ORDER', 409, 'Tài xế đang có đơn hàng hoạt động');
         }
       }
 
@@ -51,6 +61,13 @@ export class DriversService {
     });
 
     return { availability: updated.availability };
+  }
+
+  async getAvailability(
+    actor: AuthenticatedActor,
+  ): Promise<{ availability: string }> {
+    const profile = await this.driversRepository.findDriverProfileByUserId(actor.userId);
+    return { availability: profile?.availability ?? 'OFFLINE' };
   }
 
   async getAvailableOrders(
@@ -69,13 +86,25 @@ export class DriversService {
     };
   }
 
+  async updateLocation(
+    actor: AuthenticatedActor,
+    dto: UpdateDriverLocationDto,
+  ): Promise<{ ok: true }> {
+    await this.driversRepository.updateLocation(actor.userId, dto.lat, dto.lng);
+    return { ok: true };
+  }
+
   async getActiveOrder(
     actor: AuthenticatedActor,
-  ): Promise<{ order: MappedOrderResponse | null }> {
-    const order = await this.driversRepository.findActiveOrderByDriverId(actor.userId);
+  ): Promise<{ order: MappedOrderResponse | null; availability: string }> {
+    const [order, profile] = await Promise.all([
+      this.driversRepository.findActiveOrderByDriverId(actor.userId),
+      this.driversRepository.findDriverProfileByUserId(actor.userId),
+    ]);
 
     return {
       order: order ? mapOrderResponse(order) : null,
+      availability: profile?.availability ?? 'OFFLINE',
     };
   }
 }

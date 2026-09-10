@@ -95,8 +95,8 @@ export class FleetOwnerService {
     type MemberWithProfile = FleetMember & { user: User & { driverProfile: DriverProfile | null } };
     const items = members.map((m: MemberWithProfile) => ({
       id: m.userId,
-      name: m.user.phone,
-      phone: m.user.phone,
+      name: (m.user.name ?? m.user.phone) ?? '',
+      phone: m.user.phone ?? '',
       status: m.status,
       availability: m.user.driverProfile?.availability ?? 'OFFLINE',
       vehicleType: m.user.driverProfile?.vehicleType ?? 'MOTORBIKE',
@@ -151,7 +151,7 @@ export class FleetOwnerService {
 
     type OrderWithRelations = Order & {
       driver: User | null;
-      customer: { phone: string };
+      customer: { phone: string | null };
       stops: Array<{ type: string; sequence: number; address: string }>;
       paymentIntents: Array<{ status: string }>;
     };
@@ -160,8 +160,8 @@ export class FleetOwnerService {
        code: o.id.split('-')[0]?.toUpperCase() ?? '',
        status: o.status,
        driverId: o.driverId ?? undefined,
-       driverName: o.driver?.phone,
-       customerPhone: o.customer.phone,
+       driverName: (o.driver?.name ?? o.driver?.phone) ?? undefined,
+       customerPhone: o.customer.phone ?? null,
        pickupLabel: o.stops.find((s) => s.type === 'PICKUP')?.address ?? '',
        dropoffLabel:
          [...o.stops].reverse().find((s) => s.type === 'DROPOFF')?.address ?? '',

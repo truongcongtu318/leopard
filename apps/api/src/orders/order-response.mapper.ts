@@ -1,4 +1,4 @@
-import type { Order, OrderStop, OrderStatusHistory } from '@prisma/client';
+import type { Order, OrderStop, OrderStatusHistory, MediaObject } from '@prisma/client';
 
 export interface MappedOrderStopResponse {
   id: string;
@@ -36,18 +36,16 @@ export interface MappedOrderResponse {
   cancelledAt: string | null;
   createdAt: string;
   updatedAt: string;
-  customerPhone?: string | undefined;
-  driverPhone?: string | null;
   stops?: MappedOrderStopResponse[];
   statusHistory?: MappedOrderStatusHistoryResponse[];
+  media?: Array<{ id: string; type: string; createdAt: string }>;
 }
 
 export function mapOrderResponse(
   order: Order & {
     stops?: Array<OrderStop & { lat?: number; lng?: number }>;
     statusHistory?: OrderStatusHistory[];
-    customerPhone?: string;
-    driverPhone?: string | null;
+    mediaObjects?: MediaObject[];
   },
 ): MappedOrderResponse {
   return {
@@ -68,8 +66,6 @@ export function mapOrderResponse(
     cancelledAt: order.cancelledAt ? order.cancelledAt.toISOString() : null,
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
-    customerPhone: order.customerPhone,
-    driverPhone: order.driverPhone ?? null,
     ...(order.stops
       ? {
           stops: order.stops
@@ -93,6 +89,15 @@ export function mapOrderResponse(
             actorId: history.actorId,
             reason: history.reason,
             createdAt: history.createdAt.toISOString(),
+          })),
+        }
+      : {}),
+    ...(order.mediaObjects
+      ? {
+          media: order.mediaObjects.map((m) => ({
+            id: m.id,
+            type: m.type,
+            createdAt: m.createdAt.toISOString(),
           })),
         }
       : {}),

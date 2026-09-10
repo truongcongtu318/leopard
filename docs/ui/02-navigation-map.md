@@ -8,7 +8,9 @@ flowchart TD
   Login --> A[/admin/]
   C --> CN[/customer/orders/new/]
   C --> CD[/customer/orders/:id/]
+  C --> CP[/customer/profile/]
   D --> DD[/driver/orders/:id/]
+  D --> DP[/driver/profile/]
   F --> FD[/fleet/drivers/]
   F --> FO[/fleet/orders/]
   FO --> FOD[/fleet/orders/:id/]
@@ -21,8 +23,8 @@ flowchart TD
 
 ## Navigation theo role
 
-- Customer: Orders, Create Order, Profile.
-- Driver: Available Orders, Active Order, Profile/Availability.
+- Customer: bottom tab Đơn hàng (Orders, Create Order action) và Hồ sơ (Profile).
+- Driver: bottom tab Đơn hàng (Available Orders, Active Order) và Hồ sơ (Profile).
 - Fleet Owner: Overview, Drivers, Fleet Orders.
 - Admin: Overview, Orders, Users, Fleets, Drivers.
 

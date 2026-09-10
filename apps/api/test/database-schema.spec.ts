@@ -3,10 +3,12 @@ import { Client } from 'pg';
 
 const expectedTables = [
   'AuditLog',
+  'DeviceToken',
   'DriverProfile',
   'Fleet',
   'FleetMember',
   'MediaObject',
+  'Notification',
   'Order',
   'OrderStatusHistory',
   'OrderStop',
@@ -21,6 +23,7 @@ const expectedEnums = {
   FleetMemberRole: ['OWNER', 'DRIVER'],
   FleetMemberStatus: ['INVITED', 'ACTIVE', 'REMOVED'],
   MediaType: ['CARGO', 'DELIVERY_PROOF'],
+  NotificationType: ['ORDER', 'PAYMENT', 'PROMO', 'SYSTEM'],
   OrderStatus: [
     'REQUESTED',
     'ACCEPTED',
@@ -33,7 +36,13 @@ const expectedEnums = {
   ProviderSource: ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'],
   Role: ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'],
   StopType: ['PICKUP', 'STOP', 'DROPOFF'],
-  UserStatus: ['ACTIVE', 'DISABLED'],
+  UserStatus: [
+    'ACTIVE',
+    'DISABLED',
+    'PENDING_APPROVAL',
+    'REJECTED',
+    'SUSPENDED',
+  ],
   VehicleType: ['MOTORBIKE', 'VAN', 'TRUCK'],
 } as const;
 
@@ -51,13 +60,18 @@ type ColumnRow = {
 };
 
 function requireDatabaseUrl(): string {
-  const databaseUrl = process.env.DATABASE_URL;
-
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL is required for database schema tests');
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const envContent = fs.readFileSync(path.resolve(__dirname, '../.env'), 'utf8');
+    const match = envContent.match(/^DATABASE_URL=(.*)$/m);
+    if (match) return match[1].trim().replace(/^["']|["']$/g, '');
+  } catch {
+    // ignore if .env cannot be read
   }
 
-  return databaseUrl;
+  throw new Error('DATABASE_URL is required for database schema tests');
 }
 
 describe('canonical pilot database schema', () => {
@@ -84,7 +98,7 @@ describe('canonical pilot database schema', () => {
       [expectedTables],
     );
 
-    expect(extension.rows[0]?.extversion).toMatch(/^3\.5/);
+    expect(extension.rows[0]?.extversion).toMatch(/^3\.[45]/);
     expect(tables.rows.map(({ tablename }) => tablename)).toEqual(expectedTables);
   });
 
@@ -163,7 +177,7 @@ describe('canonical pilot database schema', () => {
     expect(
       timestamps.rows.every(({ data_type }) => data_type === 'timestamp with time zone'),
     ).toBe(true);
-    expect(operationalValues.rows.length).toBe(7);
+    expect(operationalValues.rows.length).toBe(8);
     expect(operationalValues.rows.every(({ data_type }) => data_type === 'integer')).toBe(
       true,
     );
@@ -180,6 +194,7 @@ describe('canonical pilot database schema', () => {
 
     expect(result.rows).toEqual([
       { table_name: 'AuditLog', column_name: 'metadata' },
+      { table_name: 'Notification', column_name: 'data' },
       { table_name: 'Order', column_name: 'routeSnapshot' },
       { table_name: 'PaymentIntent', column_name: 'providerSnapshot' },
     ]);

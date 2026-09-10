@@ -2,7 +2,9 @@ export const OTP_PROVIDER = Symbol('OTP_PROVIDER');
 
 export interface OtpIdentity {
   readonly providerUserId: string;
-  readonly phoneNumber: string;
+  readonly phoneNumber?: string;
+  readonly email?: string;
+  readonly name?: string;
 }
 
 export interface OtpProvider {

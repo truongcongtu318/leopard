@@ -7,6 +7,7 @@ import type {
   RouteEstimate,
   RouteInput,
   VerifiedOrderEstimate,
+  CongestionLevel,
 } from '../providers/map-provider.js';
 
 const DEFAULT_TOKEN_TTL_MS = 10 * 60 * 1_000;
@@ -17,6 +18,7 @@ export interface IssueEstimateTokenInput {
   routeInput: RouteInput;
   estimate: RouteEstimate;
   quote: PricingQuote;
+  routeId: string;
 }
 
 export interface EstimateTokenServiceOptions {
@@ -30,6 +32,7 @@ interface EstimateTokenPayload {
   routeInput: RouteInput;
   estimate: RouteEstimate;
   quote: PricingQuote;
+  routeId: string;
   expiresAt: string;
 }
 
@@ -64,6 +67,7 @@ export class EstimateTokenService {
         estimatedPriceVnd: validateQuote(input.quote).amountVnd,
       },
       quote: validateQuote(input.quote),
+      routeId: validateRouteId(input.routeId),
       expiresAt,
     };
     const encodedPayload = encodePayload(payload);
@@ -86,7 +90,8 @@ export class EstimateTokenService {
         isEqualPoint(normalizedRequested.pickup, payload.routeInput.pickup) &&
         isEqualPoint(normalizedRequested.dropoff, payload.routeInput.dropoff) &&
         normalizedRequested.stops.length === payload.routeInput.stops.length &&
-        normalizedRequested.stops.every((stop, i) => isEqualPoint(stop, payload.routeInput.stops[i]!));
+        normalizedRequested.stops.every((stop, i) => isEqualPoint(stop, payload.routeInput.stops[i]!)) &&
+        normalizedRequested.cargoWeightKg === payload.routeInput.cargoWeightKg;
 
       if (!isMatch) {
         throw new EstimateMismatchError('Estimate parameters mismatch');
@@ -96,6 +101,7 @@ export class EstimateTokenService {
     return {
       ...payload.estimate,
       estimatedPriceVnd: payload.quote.amountVnd,
+      routeId: payload.routeId,
       normalizedInput: payload.routeInput,
       expiresAt: payload.expiresAt,
     };
@@ -178,7 +184,14 @@ function validatePayload(payload: unknown): EstimateTokenPayload {
   const estimate = routeEstimateOrNull(payload.estimate);
   const quote = quoteOrNull(payload.quote);
 
-  if (routeInput === null || estimate === null || quote === null || typeof payload.expiresAt !== 'string') {
+  if (
+    routeInput === null ||
+    estimate === null ||
+    quote === null ||
+    typeof payload.routeId !== 'string' ||
+    payload.routeId.length === 0 ||
+    typeof payload.expiresAt !== 'string'
+  ) {
     throw new EstimateTokenError('Estimate token is malformed');
   }
 
@@ -187,6 +200,7 @@ function validatePayload(payload: unknown): EstimateTokenPayload {
     routeInput,
     estimate,
     quote,
+    routeId: payload.routeId,
     expiresAt: payload.expiresAt,
   };
 }
@@ -197,6 +211,14 @@ function validateSecret(secret: string): string {
   }
 
   return secret;
+}
+
+function validateRouteId(routeId: string): string {
+  if (routeId.trim().length === 0) {
+    throw new EstimateTokenError('Estimate token routeId is invalid');
+  }
+
+  return routeId;
 }
 
 function validateQuote(quote: PricingQuote): PricingQuote {
@@ -213,6 +235,7 @@ function normalizeRouteInput(input: RouteInput): RouteInput {
     stops: input.stops.map((stop) => normalizePoint(stop)),
     dropoff: normalizePoint(input.dropoff),
     vehicleType: input.vehicleType.trim().toUpperCase(),
+    ...(input.cargoWeightKg === undefined ? {} : { cargoWeightKg: Math.round(input.cargoWeightKg) }),
   };
 }
 
@@ -246,11 +269,16 @@ function routeInputOrNull(value: unknown): RouteInput | null {
     return null;
   }
 
+  if (value.cargoWeightKg !== undefined && !isSafePositiveInteger(value.cargoWeightKg)) {
+    return null;
+  }
+
   return {
     pickup,
     stops: stops as GeoPoint[],
     dropoff,
     vehicleType: value.vehicleType,
+    ...(value.cargoWeightKg === undefined ? {} : { cargoWeightKg: value.cargoWeightKg }),
   };
 }
 
@@ -267,7 +295,8 @@ function routeEstimateOrNull(value: unknown): RouteEstimate | null {
     !isSafePositiveInteger(value.estimatedPriceVnd) ||
     (value.source !== 'VIETMAP' && value.source !== 'DEMO') ||
     typeof value.calculatedAt !== 'string' ||
-    typeof value.isEstimate !== 'boolean'
+    typeof value.isEstimate !== 'boolean' ||
+    !isCongestionLevel(value.congestionLevel)
   ) {
     return null;
   }
@@ -281,7 +310,18 @@ function routeEstimateOrNull(value: unknown): RouteEstimate | null {
     source: value.source,
     calculatedAt: value.calculatedAt,
     isEstimate: value.isEstimate,
+    congestionLevel: value.congestionLevel,
   };
+}
+
+function isCongestionLevel(value: unknown): value is CongestionLevel {
+  return (
+    value === 'low' ||
+    value === 'moderate' ||
+    value === 'heavy' ||
+    value === 'severe' ||
+    value === 'unknown'
+  );
 }
 
 function quoteOrNull(value: unknown): PricingQuote | null {

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 
 import { MobilePreviewComposition, createMobilePreviewSelection } from '../../../../preview';
 import type { MobilePreviewSelection } from '../../../../preview/scenario';
-import { ScreenScaffold } from '../../../../ui/ScreenScaffold';
-import { ScreenState } from '../../../../ui/ScreenState';
+import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { CustomerCreateOrderScreen } from '../CustomerCreateOrderScreen';
 import { CustomerOrderDetailScreen } from '../CustomerOrderDetailScreen';
 import { CustomerOrdersScreen } from '../CustomerOrdersScreen';
+import { CustomerCreateOrderRuntime } from '../CustomerCreateOrderRuntime';
+import { CustomerOrderDetailRuntime } from '../CustomerOrderDetailRuntime';
+import { CustomerOrdersListRuntime } from '../CustomerOrdersListRuntime';
 import type { CustomerCreateView, CustomerDetailView, CustomerListView } from '../model';
 import type { CustomerPreviewScreen, CustomerPreviewView } from './catalogue';
 
@@ -38,18 +40,36 @@ export type CustomerPreviewCatalogueLoader = () => Promise<CustomerPreviewCatalo
 
 const loadCustomerPreviewCatalogue: CustomerPreviewCatalogueLoader = () => import('./catalogue');
 
-function RuntimeBoundary({ screen }: Readonly<{ screen: CustomerPreviewScreen }>) {
-  const title =
-    screen === 'list' ? 'Đơn hàng của tôi' : screen === 'create' ? 'Tạo đơn' : 'Chi tiết đơn';
-  return (
-    <ScreenScaffold title={title}>
-      <ScreenState
-        message="Lớp trình bày Wave 4 đã sẵn sàng; nguồn dữ liệu runtime sẽ được nối sau handoff Wave 3."
-        state="empty"
-        title="Chưa kết nối nguồn dữ liệu"
+function RuntimeScreen({
+  screen,
+  orderId,
+  onCreate,
+  onOpenOrder,
+}: Readonly<{
+  screen: CustomerPreviewScreen;
+  orderId: string | null;
+  onCreate?: () => void;
+  onOpenOrder?: (orderId: string) => void;
+}>) {
+  if (screen === 'list') {
+    return (
+      <CustomerOrdersListRuntime
+        onCreate={onCreate ?? (() => {})}
+        onOpenOrder={onOpenOrder ?? (() => {})}
       />
-    </ScreenScaffold>
-  );
+    );
+  }
+  if (screen === 'create') {
+    return <CustomerCreateOrderRuntime onCreated={onOpenOrder ?? (() => {})} />;
+  }
+  if (!orderId) {
+    return (
+      <ScreenScaffold title="Chi tiết đơn">
+        <ScreenState message="Thiếu mã đơn hàng." state="error" title="Không thể mở đơn" />
+      </ScreenScaffold>
+    );
+  }
+  return <CustomerOrderDetailRuntime orderId={orderId} />;
 }
 
 function PreviewScreen({
@@ -157,7 +177,14 @@ export function CustomerPreviewRoute({
           </ScreenScaffold>
         )
       }
-      renderRuntime={() => <RuntimeBoundary screen={screen} />}
+      renderRuntime={() => (
+        <RuntimeScreen
+          onCreate={onCreate}
+          onOpenOrder={onOpenOrder}
+          orderId={orderId}
+          screen={screen}
+        />
+      )}
     />
   );
 }

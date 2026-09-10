@@ -7,6 +7,8 @@
 > **Review inputs applied:** `14-ui-ux-standalone-changes.md` + architecture corrections agreed during review  
 > **Execution style:** task-by-task, TDD-first, small commits, no silent scope expansion
 
+> **⚠️ ERRATA (2026-09-04):** Brand color trong tài liệu này (`#0F766E` — "Nhiệt Đới Xanh") **đã bị supersede** và không phản ánh code thật. `packages/ui/src/tokens.css` (`--color-brand`) và `apps/mobile/src/theme/tokens.ts` (`leopardPalette`) đang chạy một hệ màu khác — **xanh biển/vàng/xanh lá pastel** (`#0284C7` / `#D97706` / `#16A34A`) — đúng theo brief khách hàng gốc (`LEOPARD - KẾT NỐI VẬN TẢI HÀNG HÓA TRỌNG TẢI LỚN.md`, mục 4). Mọi giá trị `#0F766E` trong các RED snippet bên dưới (UI-01-T01, UI-01-T02) là **lịch sử của một hướng đã bị thay thế**, không phải giá trị cần khớp. Xem `packages/ui/src/tokens.css` và `apps/mobile/src/theme/tokens.ts` (`leopardPalette`) làm nguồn chân lý cho brand color. Chi tiết: `docs/superpowers/research/2026-09-04-driver-ux-market-research.md` §Phụ lục.
+
 ---
 
 ## 0. Goal
@@ -225,6 +227,8 @@ ESTIMATE_TOKEN_TTL_MS
 - 35% Modern SaaS
 - 25% Văn hóa Việt Nam / Đông Sơn
 
+**Brand color (đã cập nhật — xem ERRATA đầu tài liệu):** xanh biển làm accent chính (`#0284C7`/`primary`, `#0369A1`/`primaryDark`), vàng làm điểm nhấn (`#D97706`/`accentYellow`), xanh lá pastel cho tín hiệu tích cực/eco (`#16A34A`/`ecoGreen`), nền trắng/slate nhạt (`#F8FAFC`/`canvas`). Nguồn: `apps/mobile/src/theme/tokens.ts` (`leopardPalette`, `pastelTheme`) và `packages/ui/src/tokens.css`.
+
 ## 3.2 Visual principles
 
 1. Mobile-first cho Customer và Driver.
@@ -414,7 +418,7 @@ Không đưa implementation giả quá chi tiết vào plan.
 - Test: `packages/ui/src/tokens.test.ts`
 
 **Changes**
-- Brand `#0F766E`
+- Brand `#0284C7` (đã chạy thật trong `packages/ui/src/tokens.css`; xem ERRATA đầu tài liệu)
 - Brand soft
 - Neutral border
 - Semantic colors
@@ -428,7 +432,7 @@ Không đưa implementation giả quá chi tiết vào plan.
 ### RED
 
 ```ts
-expect(tokens['--color-brand']).toBe('#0F766E')
+expect(tokens['--color-brand']).toBe('#0284C7')
 expect(tokens['--spacing-3xl']).toBe('3rem')
 expect(tokens['--spacing-4xl']).toBe('4rem')
 expect(tokens['--radius-pill']).toBe('9999px')
@@ -459,7 +463,7 @@ pnpm typecheck
 ### RED
 
 ```ts
-expect(tokens.colors.brand).toBe('#0F766E')
+expect(tokens.colors.brand).toBe('#0284C7')
 expect(tokens.spacing).toContain(48)
 expect(tokens.spacing).toContain(64)
 expect(tokens.motion).toBeDefined()

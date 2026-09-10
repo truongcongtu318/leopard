@@ -1,53 +1,35 @@
 @theme {
-  /* === LEOPARD — Dispatch Control / Road Ledger tokens (docs/ui/04-design-system.md) === */
-  /* Neutral canvas dominates, ink frames, brand leads, amber signals exceptions. */
-
-  /* Brand — teal (Wave 5: #0F766E, WCAG AA 5.47:1) */
-  --color-brand: #0f766e;
-  --color-brand-hover: #115e59;
-  --color-brand-active: #134e4a;
-  --color-brand-soft: #ccfbf1;
-  --color-brand-soft-hover: #99f6e4;
+  /* Semantic colors matching mobile design system */
+  --color-brand: #0284c7;
+  --color-brand-soft: #e0f2fe;
   --color-brand-text: #ffffff;
-  --color-brand-soft-text: #134e4a;
+  --color-brand-soft-text: #0c4a6e;
 
   --color-info: #e0f2fe;
-  --color-info-text: #075985;
-  --color-info-border: #0369a1;
+  --color-info-text: #0369a1;
+  --color-info-border: #38bdf8;
 
   --color-warning: #fef3c7;
   --color-warning-text: #78350f;
-  --color-warning-border: #b45309;
+  --color-warning-border: #f59e0b;
 
-  --color-active: #dbeafe;
-  --color-active-text: #1e3a8a;
-  --color-active-border: #1d4ed8;
+  --color-active: #e0f2fe;
+  --color-active-text: #0369a1;
+  --color-active-border: #0284c7;
 
   --color-success: #dcfce7;
   --color-success-text: #14532d;
-  --color-success-border: #15803d;
+  --color-success-border: #22c55e;
 
   --color-danger: #fee2e2;
-  --color-danger-text: #7f1d1d;
+  --color-danger-text: #b91c1c;
   --color-danger-border: #b91c1c;
 
   --color-neutral: #ffffff;
-  --color-neutral-surface: #f4f5f7;
-  --color-canvas: #f4f5f7;
+  --color-neutral-surface: #f8fafc;
   --color-neutral-text: #0f172a;
-  --color-neutral-muted: #64748b;
+  --color-neutral-muted: #475569;
   --color-neutral-border: #e2e8f0;
-
-  /* NexaFleet Modern Bento Colors */
-  --color-dispatch-active: #0f172a;
-  --color-transit: #10b981;
-  --color-transit-soft: #d1fae5;
-  --color-delivered: #ec4899;
-  --color-delivered-soft: #fce7f3;
-  --color-loading: #f59e0b;
-  --color-loading-soft: #fef3c7;
-  --color-unloading: #f87171;
-  --color-unloading-soft: #fee2e2;
 
   /* Spacing: only 4/8/12/16/24/32 steps */
   --spacing-xxs: 0.25rem;
@@ -60,43 +42,13 @@
   --spacing-map-standard: 25rem;
   --spacing-map-large: 37.5rem;
 
-  /* Named operations layout constraints and container scales */
-  --container-xs: 20rem;
-  --container-sm: 24rem;
-  --container-md: 28rem;
-  --container-lg: 32rem;
-  --container-xl: 36rem;
-  --container-2xl: 42rem;
-  --container-operations: 100%;
+  /* Named operations layout constraint */
+  --container-operations: 90rem;
 
-  /* Max-width scale for max-w-* utilities */
-  --max-width-xs: 20rem;
-  --max-width-sm: 24rem;
-  --max-width-md: 28rem;
-  --max-width-lg: 32rem;
-  --max-width-xl: 36rem;
-  --max-width-2xl: 42rem;
-  --max-width-3xl: 48rem;
-  --max-width-4xl: 56rem;
-  --max-width-5xl: 64rem;
-  --max-width-6xl: 72rem;
-  --max-width-7xl: 80rem;
-  --max-width-operations: 100%;
-  --max-width-map-min: 17.5rem;
-  --max-width-map-standard: 25rem;
-  --max-width-map-large: 37.5rem;
-
-  /* Radius — control/card 6px baseline; card-large 26px for Modern Dispatch Console */
+  /* Radius */
   --radius-control: 6px;
   --radius-card: 6px;
-  --radius-card-large: 26px;
-  --radius-card-inner: 18px;
   --radius-pill: 999px;
-
-  /* Shadow — overlay for modal/dialog; card for Modern Dispatch Console floating cards */
-  --shadow-overlay: 0 8px 24px -4px rgb(0 0 0 / 0.18), 0 4px 16px -4px rgb(0 0 0 / 0.1);
-  --shadow-card: 0 10px 25px -5px rgba(15, 60, 110, 0.05), 0 4px 10px -3px rgba(0, 0, 0, 0.02);
-  --shadow-card-hover: 0 15px 30px -5px rgba(15, 60, 110, 0.08), 0 6px 12px -3px rgba(0, 0, 0, 0.03);
 
   /* Font */
   --font-sans:
@@ -107,4 +59,109 @@
   --text-section-title--line-height: 1.75rem;
   --text-page-title: 1.5rem;
   --text-page-title--line-height: 2rem;
+
+  /* LEOPARD Pastel Palette — mirrors mobile leopardPalette */
+  --leopard-primary: #4A90E2;
+  --leopard-primary-dark: #0284c7;
+  --leopard-primary-soft: #6BA4E8;
+  --leopard-primary-bg: #F0F7FF;
+  --leopard-primary-border: #BAE6FD;
+
+  --leopard-yellow: #F6C358;
+  --leopard-yellow-soft: #FFE699;
+  --leopard-yellow-bg: #FFFBF0;
+  --leopard-yellow-border: #FDE68A;
+
+  --leopard-green: #52C41A;
+  --leopard-green-soft: #8CE196;
+  --leopard-green-bg: #F2FCF0;
+  --leopard-green-border: #BBF7D0;
+
+  --leopard-canvas: #F8FAFC;
+  --leopard-surface: #FFFFFF;
+  --leopard-bg-muted: #F4F7FA;
+  --leopard-text-dark: #1E293B;
+  --leopard-text-muted: #64748B;
+  --leopard-text-subtle: #94A3B8;
+  --leopard-card-border: #E2E8F0;
+  --leopard-divider: #F1F5F9;
+
+  /* Pastel card theme tokens */
+  --pastel-yellow-bg: #FFFDF0;
+  --pastel-yellow-border: #FEF3C7;
+  --pastel-green-bg: #F0FDF4;
+  --pastel-green-border: #DCFCE7;
+  --pastel-blue-bg: #F0F9FF;
+  --pastel-blue-border: #E0F2FE;
 }
+
+@keyframes roadMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-160px); }
+}
+
+@keyframes wheelSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes truckBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+
+@keyframes headlightPulse {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 0.95; }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.anim-road-stripes {
+  animation: roadMove 0.8s linear infinite;
+}
+
+.anim-road-stripes-fast {
+  animation: roadMove 0.35s linear infinite;
+}
+
+.anim-wheel-rotate {
+  animation: wheelSpin 0.7s linear infinite;
+}
+
+.anim-wheel-rotate-fast {
+  animation: wheelSpin 0.3s linear infinite;
+}
+
+.anim-truck-bounce {
+  animation: truckBounce 1.2s ease-in-out infinite;
+}
+
+.anim-headlight-pulse {
+  animation: headlightPulse 2.4s ease-in-out infinite;
+}
+
+.anim-float-slow {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.anim-float-slow-delay {
+  animation: floatSlow 4.5s ease-in-out 1s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-road-stripes,
+  .anim-road-stripes-fast,
+  .anim-wheel-rotate,
+  .anim-wheel-rotate-fast,
+  .anim-truck-bounce,
+  .anim-headlight-pulse,
+  .anim-float-slow,
+  .anim-float-slow-delay {
+    animation: none !important;
+  }
+}
+

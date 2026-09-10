@@ -52,7 +52,7 @@ describe('Customer preview catalogue', () => {
       'order' in cancelView
     ) {
       expect(paymentView.order.id).toBe(routeOrderId);
-      expect(paymentView.order.reference).toBe('LP-260815-002');
+      expect(paymentView.order.reference).toBe('LP-260905-002');
       expect(paymentView.order.payment.action).toMatchObject({ orderId: routeOrderId });
       expect(cancelView.order.id).toBe(routeOrderId);
       expect(cancelView.cancel).toMatchObject({

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { OrderEventsPublisher, type OrderStatusChangedEvent } from './order-events.publisher.js';
 import { mapOrderResponse, type MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersRepository } from './orders.repository.js';
 
@@ -10,6 +11,7 @@ export class AcceptOrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ordersRepository: OrdersRepository,
+    private readonly eventsPublisher: OrderEventsPublisher,
   ) {}
 
   async acceptOrder(
@@ -18,6 +20,17 @@ export class AcceptOrderService {
   ): Promise<MappedOrderResponse> {
     if (actor.role !== 'DRIVER') {
       throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế mới có thể nhận đơn hàng');
+    }
+
+    const driver = await this.prisma.user.findUnique({
+      where: { id: actor.userId },
+    });
+    if (!driver || driver.status !== 'ACTIVE') {
+      throw new DomainError(
+        'DRIVER_NOT_APPROVED',
+        403,
+        'Tài khoản tài xế chưa được duyệt',
+      );
     }
 
     const existingOrder = await this.prisma.order.findUnique({
@@ -77,7 +90,7 @@ export class AcceptOrderService {
         );
       }
 
-      await tx.orderStatusHistory.create({
+      const history = await tx.orderStatusHistory.create({
         data: {
           orderId,
           fromStatus: 'REQUESTED',
@@ -86,13 +99,28 @@ export class AcceptOrderService {
         },
       });
 
-      return this.ordersRepository.findById(orderId, tx);
+      return {
+        order: await this.ordersRepository.findById(orderId, tx),
+        event: {
+          orderId,
+          previousStatus: 'REQUESTED',
+          currentStatus: 'ACCEPTED',
+          eventId: history.id,
+          occurredAt: history.createdAt.toISOString(),
+        } satisfies OrderStatusChangedEvent,
+      };
     });
 
-    if (!result) {
+    if (!result.order) {
       throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
     }
 
-    return mapOrderResponse(result);
+    // Post-commit, best-effort: publishes on the SAME channel
+    // UpdateOrderStatusService uses for every other transition, so this
+    // accept transition is notified exactly once (see NotificationTriggers
+    // for the dedup rationale).
+    this.eventsPublisher.publishStatusChanged(result.event);
+
+    return mapOrderResponse(result.order);
   }
 }

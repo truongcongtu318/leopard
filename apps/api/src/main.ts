@@ -3,6 +3,8 @@ import 'reflect-metadata';
 import { ValidationPipe } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { AppModule } from './app.module.js';
@@ -11,10 +13,25 @@ import { parseEnv } from './config/env.schema.js';
 import type { AppEnv } from './config/env.schema.js';
 
 export async function createApplication(env: AppEnv): Promise<INestApplication> {
-  const app = await NestFactory.create(AppModule, { rawBody: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: false,
+    // Disabled globally: JSON body-size limits are scoped per route instead
+    // (AppModule.configure() applies a small, Express-default-sized cap to
+    // every route; DriversModule.configure() applies a larger one scoped
+    // only to POST /driver/apply, which carries a base64 signature image).
+    // Registering Nest's own default parser here would apply a single limit
+    // to every route with no way to scope an exception to just one of them.
+    bodyParser: false,
+  });
 
   app.enableShutdownHooks();
   app.setGlobalPrefix('api/v1');
+
+  // Serve locally-stored uploads (KYC docs, cargo/proof media) at /files when
+  // not using S3. In production with S3, signed absolute URLs are used instead.
+  if ((env.STORAGE_PROVIDER ?? 'local').toLowerCase() !== 's3') {
+    app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/files' });
+  }
   app.useGlobalPipes(
     new ValidationPipe({
       forbidNonWhitelisted: true,
@@ -32,8 +49,25 @@ export async function createApplication(env: AppEnv): Promise<INestApplication> 
         return;
       }
 
-      callback(new Error('Origin is not allowed by CORS'), false);
+      if (env.NODE_ENV === 'development') {
+        try {
+          const url = new URL(origin);
+          if (
+            url.hostname === 'localhost' ||
+            url.hostname === '127.0.0.1' ||
+            url.hostname === '[::1]'
+          ) {
+            callback(null, true);
+            return;
+          }
+        } catch {
+          // ignore invalid url
+        }
+      }
+
+      callback(null, false);
     },
+    credentials: true,
   });
 
   DocsModule.setupSwagger(app);

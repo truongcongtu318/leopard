@@ -94,6 +94,42 @@ export class DriversRepository {
     };
   }
 
+  async updateLocation(
+    userId: string,
+    lat: number,
+    lng: number,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<void> {
+    await tx.$queryRaw`
+      UPDATE "DriverProfile"
+      SET
+        "lastKnownLocation" = ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
+        "lastKnownAt" = NOW()
+      WHERE "userId" = ${userId}::uuid
+    `;
+  }
+
+  async findNearbyAvailableDrivers(
+    lat: number,
+    lng: number,
+    radiusM: number,
+    limit = 50,
+  ): Promise<Array<{ userId: string; distanceM: number }>> {
+    const rows = await this.prisma.$queryRaw<Array<{ userId: string; distance_m: number }>>`
+      SELECT
+        "userId",
+        ST_Distance("lastKnownLocation", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography) AS distance_m
+      FROM "DriverProfile"
+      WHERE availability = 'AVAILABLE'
+        AND "lastKnownAt" > NOW() - INTERVAL '90 seconds'
+        AND ST_DWithin("lastKnownLocation", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusM})
+      ORDER BY distance_m ASC
+      LIMIT ${limit}
+    `;
+
+    return rows.map((row) => ({ userId: row.userId, distanceM: row.distance_m }));
+  }
+
   async findActiveOrderByDriverId(driverId: string): Promise<OrderWithRelations | null> {
     const activeStatuses: OrderStatus[] = ['ACCEPTED', 'PICKING_UP', 'IN_TRANSIT'];
 

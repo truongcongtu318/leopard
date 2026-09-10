@@ -33,6 +33,7 @@ import type {
   PlaceCandidate,
   RouteInput,
 } from './providers/map-provider.js';
+import { VEHICLE_OPTIONS } from '@leopard/shared';
 
 type VehicleType = 'MOTORBIKE' | 'VAN' | 'TRUCK';
 type StopType = 'PICKUP' | 'STOP' | 'DROPOFF';
@@ -49,6 +50,7 @@ interface EstimateRequestDto {
   stops: EstimateStop[];
   dropoff: EstimateStop;
   vehicleType: VehicleType;
+  cargoWeightKg?: number;
 }
 
 interface SearchResponse {
@@ -111,7 +113,7 @@ export class MapsRateLimitGuard implements CanActivate {
 
     if (activeHistory.length >= rateLimit.maxRequests) {
       this.requestTimestampsByCaller.set(callerKey, activeHistory);
-      throw new DomainError('RATE_LIMITED', 429, 'Rate limit exceeded');
+      throw new DomainError('RATE_LIMITED', 429, 'Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau');
     }
 
     activeHistory.push(now);
@@ -146,7 +148,7 @@ export class MapsRateLimitGuard implements CanActivate {
     const ip = request.ip?.trim() || 'unknown';
 
     if (!actor) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     return `actor:${actor.userId}:${ip}`;
@@ -221,6 +223,7 @@ function toRouteInput(request: EstimateRequestDto): RouteInput {
     stops: request.stops.map(toGeoPoint),
     dropoff: toGeoPoint(request.dropoff),
     vehicleType: request.vehicleType,
+    ...(request.cargoWeightKg === undefined ? {} : { cargoWeightKg: request.cargoWeightKg }),
   };
 }
 
@@ -271,6 +274,7 @@ function validateEstimateRequest(rawBody: unknown): EstimateRequestDto {
   const stops = validateStops(body.stops, issues);
   const dropoff = validateEstimateStop(body.dropoff, 'dropoff', issues);
   const vehicleType = validateVehicleType(body.vehicleType, issues);
+  const cargoWeightKg = validateCargoWeightKg(body.cargoWeightKg, vehicleType, issues);
 
   if (issues.length > 0 || pickup === null || dropoff === null || vehicleType === null) {
     validationError(issues);
@@ -281,7 +285,35 @@ function validateEstimateRequest(rawBody: unknown): EstimateRequestDto {
     stops,
     dropoff,
     vehicleType,
+    ...(cargoWeightKg === undefined ? {} : { cargoWeightKg }),
   };
+}
+
+function validateCargoWeightKg(
+  rawValue: unknown,
+  vehicleType: VehicleType | null,
+  issues: ValidationIssue[],
+): number | undefined {
+  if (vehicleType !== 'TRUCK') {
+    return undefined;
+  }
+
+  if (typeof rawValue !== 'number' || !Number.isSafeInteger(rawValue) || rawValue <= 0) {
+    issues.push({
+      field: 'cargoWeightKg',
+      messages: ['is required and must be a positive integer when vehicleType is TRUCK'],
+    });
+    return undefined;
+  }
+
+  const maxWeightKg = VEHICLE_OPTIONS.find((option) => option.type === 'TRUCK')?.maxWeightKg ?? 0;
+
+  if (rawValue > maxWeightKg) {
+    issues.push({ field: 'cargoWeightKg', messages: [`must not exceed ${maxWeightKg}`] });
+    return undefined;
+  }
+
+  return rawValue;
 }
 
 function validateStops(rawStops: unknown, issues: ValidationIssue[]): EstimateStop[] {
@@ -408,7 +440,7 @@ function validateCoordinate(
 }
 
 function validationError(issues: ValidationIssue[]): never {
-  throw new DomainError('BAD_REQUEST', 400, 'Validation failed', issues);
+  throw new DomainError('BAD_REQUEST', 400, 'Dữ liệu không hợp lệ', issues);
 }
 
 function recordOrNull(value: unknown): Record<string, unknown> | null {

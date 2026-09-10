@@ -7,6 +7,8 @@ import {
 export interface FirebaseDecodedIdToken {
   readonly uid?: unknown;
   readonly phone_number?: unknown;
+  readonly email?: unknown;
+  readonly name?: unknown;
 }
 
 export type FirebaseIdTokenVerifier = (
@@ -61,12 +63,15 @@ export class FirebaseOtpProvider implements OtpProvider {
   }
 
   private mapDecodedToken(decoded: FirebaseDecodedIdToken): OtpIdentity {
-    if (
-      typeof decoded.uid !== 'string' ||
-      decoded.uid.length === 0 ||
-      typeof decoded.phone_number !== 'string' ||
-      decoded.phone_number.length === 0
-    ) {
+    const uid = typeof decoded.uid === 'string' ? decoded.uid : '';
+    const phoneNumber =
+      typeof decoded.phone_number === 'string' ? decoded.phone_number : '';
+    const email = typeof decoded.email === 'string' ? decoded.email : '';
+    const name = typeof decoded.name === 'string' ? decoded.name.trim() : '';
+
+    // A valid identity needs a stable provider uid plus at least one verifiable
+    // contact channel: phone (Phone Auth) or email (Google/Apple).
+    if (uid.length === 0 || (phoneNumber.length === 0 && email.length === 0)) {
       throw new OtpProviderError(
         'OTP_PROVIDER_REJECTED',
         'Firebase OTP verification failed',
@@ -74,8 +79,10 @@ export class FirebaseOtpProvider implements OtpProvider {
     }
 
     return {
-      providerUserId: decoded.uid,
-      phoneNumber: decoded.phone_number,
+      providerUserId: uid,
+      ...(phoneNumber.length > 0 ? { phoneNumber } : {}),
+      ...(email.length > 0 ? { email } : {}),
+      ...(name.length > 0 ? { name } : {}),
     };
   }
 }

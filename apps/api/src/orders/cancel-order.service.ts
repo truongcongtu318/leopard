@@ -25,7 +25,7 @@ export class CancelOrderService {
       throw new DomainError(
         'VALIDATION_ERROR',
         422,
-        'Validation failed',
+        'Dữ liệu không hợp lệ',
         [{ field: 'reason', messages: ['must not be empty for Admin cancellation'] }],
       );
     }

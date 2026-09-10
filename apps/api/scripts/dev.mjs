@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, URL } from 'node:url';
+import { copyPdfAssets } from './copy-pdf-assets.mjs';
 
 const apiRoot = fileURLToPath(new URL('../', import.meta.url));
 const distMain = fileURLToPath(new URL('../dist/main.js', import.meta.url));
@@ -191,13 +192,15 @@ async function main() {
     process.exit(initialResult.code ?? 1);
   }
 
+  await copyPdfAssets();
+
   const compilerWatch = spawnNode([
     typescriptCli,
     ...compileArguments,
     '--watch',
     '--preserveWatchOutput',
   ]);
-  const nodeWatch = spawnNode(['--env-file=.env', '--watch', distMain]);
+  const nodeWatch = spawnNode(['--watch', '--watch-path=dist', '--env-file=.env', distMain]);
 
   console.log(
     `[api:dev] runner pid=${process.pid} compiler-watch pid=${compilerWatch.pid} node-watch pid=${nodeWatch.pid}`,

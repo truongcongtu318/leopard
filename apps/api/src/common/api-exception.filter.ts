@@ -1,5 +1,6 @@
 import {
   Catch,
+  Logger,
   type ArgumentsHost,
   type ExceptionFilter,
   HttpException,
@@ -7,6 +8,7 @@ import {
 } from '@nestjs/common';
 
 import { DomainError } from './domain-error.js';
+import { VI_HTTP_MESSAGE, isGenericHttpMessage } from './http-status-vi.js';
 import { requestContextStore } from './logger.service.js';
 
 // ---------------------------------------------------------------------------
@@ -34,11 +36,24 @@ interface HttpServerResponse {
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(ApiExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<HttpServerResponse>();
 
     const envelope = this.toEnvelope(exception);
+
+    // Server-side faults (500/502/503) must never be swallowed silently:
+    // log the original exception + stack so the failure is diagnosable.
+    // Client errors (4xx) are expected control flow and stay quiet.
+    if (envelope.statusCode >= 500) {
+      this.logger.error(
+        `${envelope.statusCode} ${envelope.code} on request ${envelope.requestId}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      );
+    }
+
     response.status(envelope.statusCode).json(envelope);
   }
 
@@ -75,7 +90,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
           return {
             statusCode: 422,
             code: 'VALIDATION_ERROR',
-            message: 'Validation failed',
+            message: 'Dữ liệu không hợp lệ',
             requestId,
             timestamp,
             details,
@@ -84,12 +99,19 @@ export class ApiExceptionFilter implements ExceptionFilter {
       }
 
       const code = this.statusCodeToCode(status);
-      const message = this.extractMessage(responseBody);
+      // Framework-thrown HttpExceptions (unknown route, throttler, malformed
+      // body…) carry English default text — swap those for the Vietnamese
+      // message. A custom message (e.g. ForbiddenException('No access')) is
+      // preserved as-is.
+      const extracted = this.extractMessage(responseBody);
+      const message = isGenericHttpMessage(extracted)
+        ? VI_HTTP_MESSAGE[status] ?? extracted ?? exception.message
+        : extracted ?? exception.message;
 
       return {
         statusCode: status,
         code,
-        message: message ?? exception.message,
+        message,
         requestId,
         timestamp,
       };
@@ -99,7 +121,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     return {
       statusCode: 500,
       code: 'INTERNAL_ERROR',
-      message: 'Internal server error',
+      message: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau',
       requestId,
       timestamp,
     };

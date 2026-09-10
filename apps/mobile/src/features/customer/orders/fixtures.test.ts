@@ -35,7 +35,7 @@ describe('Customer Wave 4 fixtures', () => {
     expect(Object.isFrozen(first)).toBe(true);
     if (first.kind === 'content') {
       expect(Object.isFrozen(first.order.route.stops)).toBe(true);
-      expect(first.order.updatedAtLabel).toBe('14:32 · 15/08/2026');
+      expect(first.order.updatedAtLabel).toBe('14:32 · 05/09/2026');
     }
   });
 

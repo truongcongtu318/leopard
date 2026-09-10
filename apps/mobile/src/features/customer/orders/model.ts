@@ -3,6 +3,7 @@ import type { OrderStatus, PaymentStatus, ProviderSource } from '@leopard/shared
 export type CustomerRoutePoint = Readonly<{
   id: string;
   label: string;
+  coords?: LatLng;
 }>;
 
 export type CustomerRouteView = Readonly<{
@@ -56,14 +57,68 @@ export type CustomerListContentView = Readonly<{
 
 export type CustomerListView = CustomerListBoundaryView | CustomerListContentView;
 
+export type LatLng = Readonly<{ lat: number; lng: number }>;
+
+export type AddressCandidate = Readonly<{
+  placeId: string;
+  label: string;
+  address?: string;
+  coords: LatLng;
+}>;
+
+export type ContactInfo = Readonly<{
+  name: string;
+  phone: string;
+  note?: string;
+}>;
+
+export type CargoDimensions = Readonly<{
+  length?: string;
+  width?: string;
+  height?: string;
+}>;
+
+export type PriceBreakdown = Readonly<{
+  baseFareVnd: number;
+  distanceFareVnd: number;
+  stopSurchargeVnd: number;
+  loadingFeeVnd: number;
+  totalVnd: number;
+}>;
+
 export type CustomerCreateFormView = Readonly<{
   pickup: string;
-  stops: readonly Readonly<{ id: string; value: string }>[];
+  pickupCoords?: LatLng;
+  senderInfo?: ContactInfo;
+  stops: readonly Readonly<{ id: string; value: string; coords?: LatLng }>[];
   dropoff: string;
+  dropoffCoords?: LatLng;
+  receiverInfo?: ContactInfo;
   vehicleType: 'MOTORBIKE' | 'VAN' | 'TRUCK';
+  cargoName?: string;
+  cargoCategory?: string;
   cargoNote: string;
   cargoWeight: string;
+  cargoDimensions?: CargoDimensions;
+  cargoImageUri?: string | null;
+  requiresLoadingSupport?: boolean;
+  paymentMethod?: 'VIETQR' | 'CASH';
+  createdOrderReference?: string;
+  priceBreakdown?: PriceBreakdown;
   fieldErrors: Readonly<Partial<Record<'pickup' | 'dropoff' | 'cargoWeight', string>>>;
+}>;
+
+export type CongestionLevel = 'low' | 'moderate' | 'heavy' | 'severe' | 'unknown';
+
+export type CustomerRouteOptionView = Readonly<{
+  routeId: string;
+  estimateToken: string;
+  isRecommended: boolean;
+  durationSeconds: number;
+  distanceLabel: string;
+  priceLabel: string;
+  congestionLevel: CongestionLevel;
+  congestionLabel: string;
 }>;
 
 export type CustomerEstimateView =
@@ -73,9 +128,8 @@ export type CustomerEstimateView =
   | Readonly<{
       kind: 'ready';
       source: ProviderSource;
-      durationSeconds: number;
-      distanceLabel: string;
-      priceLabel: string;
+      routes: readonly CustomerRouteOptionView[];
+      selectedRouteId: string;
       calculatedAtLabel: string;
     }>;
 
@@ -142,8 +196,18 @@ export type CustomerPaymentView = Readonly<{
   expiresAtLabel?: string;
   sourceLabel: string;
   qrState: 'none' | 'ready' | 'expired';
+  qrPayload?: string;
   notice: string | null;
   action: CustomerActionView | null;
+}>;
+
+export type InvoiceView = Readonly<{
+  id: string;
+  invoiceNumber: string;
+  totalLabel: string;
+  issuedAtLabel: string;
+  emailSentAt: string | null;
+  viewUrl: string;
 }>;
 
 export type CustomerCancelView =
@@ -164,12 +228,16 @@ export type CustomerOrderDetailDataView = Readonly<{
   etaDurationSeconds: number;
   etaSource: ProviderSource;
   updatedAtLabel: string;
+  distanceMeters: number | null;
+  cargo: Readonly<{ note: string | null; weightKg: number | null }>;
   tracking: CustomerTrackingView;
   payment: CustomerPaymentView;
+  invoice: InvoiceView | null;
   media: Readonly<{
     kind: 'available' | 'empty' | 'error';
     label: string;
     description: string;
+    mediaId?: string | null;
   }>;
   history: readonly Readonly<{
     id: string;

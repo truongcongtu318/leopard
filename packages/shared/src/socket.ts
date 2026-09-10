@@ -1,7 +1,28 @@
 import type { OrderStatus, ProviderSource } from './enums.js';
+import type { VehicleType } from './domain/vehicle/vehicle-type.js';
 import type { TrackingPoint } from './tracking.js';
 
 export const TRACKING_NAMESPACE = '/tracking';
+export const DISPATCH_NAMESPACE = '/dispatch';
+
+export const DispatchSocketEvent = {
+  offer: 'dispatch:offer',
+} as const;
+export type DispatchSocketEvent = (typeof DispatchSocketEvent)[keyof typeof DispatchSocketEvent];
+
+export interface DispatchOfferEvent {
+  readonly orderId: string;
+  readonly pickup: { readonly lat: number; readonly lng: number };
+  readonly pickupAddress: string;
+  readonly dropoffAddress: string;
+  readonly vehicleType: VehicleType;
+  readonly priceVnd: number | null;
+  readonly distanceMeters: number | null;
+  readonly durationSeconds: number | null;
+  readonly cargoNote: string | null;
+  readonly driverDistanceM: number;
+  readonly timeoutSeconds: number;
+}
 
 export const TrackingSocketEvent = {
   joinOrder: 'tracking:join-order',
@@ -96,5 +117,29 @@ export interface EtaUpdatedEvent {
 export interface SessionErrorEvent {
   code: string;
   message: string;
+}
+
+export const NOTIFICATIONS_NAMESPACE = '/notifications';
+
+export const NotificationSocketEvent = {
+  created: 'notification:new',
+  sessionError: 'session:error',
+} as const;
+export type NotificationSocketEvent =
+  (typeof NotificationSocketEvent)[keyof typeof NotificationSocketEvent];
+
+/**
+ * Realtime payload for `notification:new`. Deliberately narrower than the
+ * `Notification` Prisma model: no `userId` (the socket room already scopes
+ * delivery to the owning user), no raw `data` JSON (may carry fields not
+ * meant for the client), and `orderId` is only included when present.
+ */
+export interface NotificationCreatedEvent {
+  readonly id: string;
+  readonly type: string;
+  readonly title: string;
+  readonly body: string;
+  readonly createdAt: string;
+  readonly orderId?: string;
 }
 

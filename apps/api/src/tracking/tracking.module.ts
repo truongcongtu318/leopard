@@ -20,6 +20,6 @@ import { SocketAuthAdapter } from './socket-auth.adapter.js';
     TrackingGateway,
     SocketAuthAdapter,
   ],
-  exports: [TrackingService],
+  exports: [TrackingService, SocketAuthAdapter],
 })
 export class TrackingModule {}

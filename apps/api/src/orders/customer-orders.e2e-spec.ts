@@ -84,6 +84,7 @@ describe('Customer Orders REST API (E2E)', () => {
     const dropoff = { latitude: 10.772622, longitude: 106.670172 };
 
     const token = estimateTokenService.issue({
+      routeId: 'route-0',
       routeInput: {
         pickup,
         stops: [],
@@ -99,6 +100,7 @@ describe('Customer Orders REST API (E2E)', () => {
         source: 'DEMO',
         calculatedAt: new Date().toISOString(),
         isEstimate: true,
+        congestionLevel: 'unknown',
       },
       quote: {
         amountVnd: 15_000,
@@ -177,8 +179,9 @@ describe('Customer Orders REST API (E2E)', () => {
     const dropoff = { latitude: 10.772622, longitude: 106.670172 };
 
     const token = estimateTokenService.issue({
+      routeId: 'route-0',
       routeInput: { pickup, stops: [], dropoff, vehicleType: 'MOTORBIKE' },
-      estimate: { polyline: 'encoded_polyline', distanceM: 2500, durationS: 600, estimatedArrivalAt: new Date(Date.now() + 600_000).toISOString(), estimatedPriceVnd: 15_000, source: 'DEMO', calculatedAt: new Date().toISOString(), isEstimate: true },
+      estimate: { polyline: 'encoded_polyline', distanceM: 2500, durationS: 600, estimatedArrivalAt: new Date(Date.now() + 600_000).toISOString(), estimatedPriceVnd: 15_000, source: 'DEMO', calculatedAt: new Date().toISOString(), isEstimate: true, congestionLevel: 'unknown' },
       quote: { amountVnd: 15_000, currency: 'VND' },
     });
 
@@ -216,6 +219,7 @@ describe('Customer Orders REST API (E2E)', () => {
     const pickup = { latitude: 10.762622, longitude: 106.660172 };
     const dropoff = { latitude: 10.772622, longitude: 106.670172 };
     const token = estimateTokenService.issue({
+      routeId: 'route-0',
       routeInput: { pickup, stops: [], dropoff, vehicleType: 'MOTORBIKE' },
       estimate: {
         polyline: 'encoded_polyline',
@@ -226,6 +230,7 @@ describe('Customer Orders REST API (E2E)', () => {
         source: 'DEMO',
         calculatedAt: new Date().toISOString(),
         isEstimate: true,
+        congestionLevel: 'unknown',
       },
       quote: { amountVnd: 15_000, currency: 'VND' },
     });
@@ -284,6 +289,7 @@ describe('Customer Orders REST API (E2E)', () => {
     })],
   ] as const)('returns 422 for %s without persisting partial state', async (_name, mutate) => {
     const token = estimateTokenService.issue({
+      routeId: 'route-0',
       routeInput: {
         pickup: { latitude: 10.76, longitude: 106.66 },
         stops: [],
@@ -299,6 +305,7 @@ describe('Customer Orders REST API (E2E)', () => {
         source: 'DEMO',
         calculatedAt: new Date().toISOString(),
         isEstimate: true,
+        congestionLevel: 'unknown',
       },
       quote: { amountVnd: 12_000, currency: 'VND' },
     });
@@ -337,6 +344,7 @@ describe('Customer Orders REST API (E2E)', () => {
     const maliciousDropoff = { latitude: 21.028511, longitude: 105.804817 }; // Hanoi
 
     const token = estimateTokenService.issue({
+      routeId: 'route-0',
       routeInput: {
         pickup,
         stops: [],
@@ -352,6 +360,7 @@ describe('Customer Orders REST API (E2E)', () => {
         source: 'DEMO',
         calculatedAt: new Date().toISOString(),
         isEstimate: true,
+        congestionLevel: 'unknown',
       },
       quote: {
         amountVnd: 15_000,

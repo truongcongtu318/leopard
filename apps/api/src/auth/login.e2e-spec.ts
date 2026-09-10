@@ -12,7 +12,11 @@ import { PrismaService } from '../database/prisma.service.js';
 
 interface StoredUser {
   readonly id: string;
-  readonly phone: string;
+  firebaseUid: string | null;
+  phone: string | null;
+  email: string | null;
+  phoneVerifiedAt: Date | null;
+  emailVerifiedAt: Date | null;
   readonly role: Role;
   status: UserStatus;
   readonly createdAt: Date;
@@ -41,47 +45,82 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
   >;
 }
 
+interface UserWhere {
+  readonly id?: string;
+  readonly phone?: string;
+  readonly email?: string;
+  readonly firebaseUid?: string;
+}
+
+interface UserWriteData {
+  readonly firebaseUid?: string | null;
+  readonly phone?: string | null;
+  readonly email?: string | null;
+  readonly phoneVerifiedAt?: Date | null;
+  readonly emailVerifiedAt?: Date | null;
+  readonly role?: Role;
+  readonly status?: UserStatus;
+}
+
 function createPrismaDouble() {
   const users = new Map<string, StoredUser>();
-  const usersByPhone = new Map<string, string>();
   const refreshSessions = new Map<string, StoredRefreshSession>();
+
+  const findByWhere = (where: UserWhere): StoredUser | null => {
+    if (where.id) {
+      return users.get(where.id) ?? null;
+    }
+    for (const user of users.values()) {
+      if (where.phone && user.phone === where.phone) return user;
+      if (where.email && user.email === where.email) return user;
+      if (where.firebaseUid && user.firebaseUid === where.firebaseUid)
+        return user;
+    }
+    return null;
+  };
 
   return {
     users,
     refreshSessions,
     prisma: {
       user: {
-        findUnique: jest.fn(({ where }: { where: { id?: string; phone?: string } }) => {
-          if (where.id) {
-            return Promise.resolve(users.get(where.id) ?? null);
-          }
-
-          if (where.phone) {
-            const id = usersByPhone.get(where.phone);
-            return Promise.resolve(id ? users.get(id) ?? null : null);
-          }
-
-          return Promise.resolve(null);
-        }),
-        create: jest.fn(
-          ({
-            data,
-          }: {
-            data: { phone: string; role: Role; status?: UserStatus };
-          }) => {
-            const user: StoredUser = {
-              id: `user-${users.size + 1}`,
-              phone: data.phone,
-              role: data.role,
-              status: data.status ?? 'ACTIVE',
-              createdAt: new Date('2026-08-01T00:00:00.000Z'),
-              updatedAt: new Date('2026-08-01T00:00:00.000Z'),
-            };
-            users.set(user.id, user);
-            usersByPhone.set(user.phone, user.id);
-            return Promise.resolve(user);
+        findUnique: jest.fn(({ where }: { where: UserWhere }) =>
+          Promise.resolve(findByWhere(where)),
+        ),
+        update: jest.fn(
+          ({ where, data }: { where: UserWhere; data: UserWriteData }) => {
+            const existing = findByWhere(where);
+            if (!existing) {
+              return Promise.reject(new Error('User not found'));
+            }
+            if (data.firebaseUid !== undefined)
+              existing.firebaseUid = data.firebaseUid;
+            if (data.phone !== undefined) existing.phone = data.phone;
+            if (data.email !== undefined) existing.email = data.email;
+            if (data.phoneVerifiedAt !== undefined)
+              existing.phoneVerifiedAt = data.phoneVerifiedAt;
+            if (data.emailVerifiedAt !== undefined)
+              existing.emailVerifiedAt = data.emailVerifiedAt;
+            if (data.status !== undefined) existing.status = data.status;
+            return Promise.resolve(existing);
           },
         ),
+        create: jest.fn(({ data }: { data: UserWriteData }) => {
+          const user: StoredUser = {
+            id: `user-${users.size + 1}`,
+            firebaseUid: data.firebaseUid ?? null,
+            phone: data.phone ?? null,
+            email: data.email ?? null,
+            phoneVerifiedAt: data.phoneVerifiedAt ?? null,
+            emailVerifiedAt: data.emailVerifiedAt ?? null,
+            role: data.role ?? 'CUSTOMER',
+            status: data.status ?? 'ACTIVE',
+            createdAt: new Date('2026-08-01T00:00:00.000Z'),
+            updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+          };
+          users.set(user.id, user);
+          return Promise.resolve(user);
+        }),
       },
       refreshSession: {
         create: jest.fn(
@@ -222,7 +261,7 @@ describe('PH-05-T02 login and access tokens', () => {
       .expect(({ body }) => {
         expect(body).toMatchObject({
           code: 'ACCOUNT_DISABLED',
-          message: 'Account is disabled',
+          message: 'Tài khoản đã bị vô hiệu hóa',
         });
       });
   });
@@ -259,6 +298,92 @@ describe('PH-05-T02 login and access tokens', () => {
     });
   });
 
+  it('creates a CUSTOMER account from a Google identity without a phone', async () => {
+    verifyOtp.mockResolvedValue({
+      providerUserId: 'google-user-1',
+      email: 'sme@leopard.vn',
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/auth/firebase')
+      .send({ idToken: 'google-id-token' })
+      .expect(201);
+
+    expect(response.body.user).toMatchObject({
+      id: 'user-1',
+      phone: null,
+      role: 'CUSTOMER',
+      status: 'ACTIVE',
+    });
+
+    const stored = prismaState.users.get('user-1');
+    expect(stored).toMatchObject({
+      firebaseUid: 'google-user-1',
+      email: 'sme@leopard.vn',
+      phone: null,
+    });
+    expect(stored?.emailVerifiedAt).toBeInstanceOf(Date);
+    expect(stored?.phoneVerifiedAt).toBeNull();
+  });
+
+  it('links a Firebase phone identity to an existing account by phone number', async () => {
+    verifyOtp.mockResolvedValueOnce({
+      providerUserId: 'firebase-user-A',
+      phoneNumber: '+84909111222',
+    });
+    const first = await request(app.getHttpServer())
+      .post('/api/v1/auth/firebase')
+      .send({ idToken: 'token-A' })
+      .expect(201);
+    expect(first.body.user.id).toBe('user-1');
+
+    // A different Firebase uid but the same verified phone resolves to the same account.
+    verifyOtp.mockResolvedValueOnce({
+      providerUserId: 'firebase-user-B',
+      phoneNumber: '+84909111222',
+    });
+    const second = await request(app.getHttpServer())
+      .post('/api/v1/auth/firebase')
+      .send({ idToken: 'token-B' })
+      .expect(201);
+
+    expect(second.body.user.id).toBe('user-1');
+    expect(prismaState.users.size).toBe(1);
+  });
+
+  it('links a verified phone to a Google-only account via /auth/phone/link', async () => {
+    verifyOtp.mockResolvedValueOnce({
+      providerUserId: 'google-user-2',
+      email: 'owner@leopard.vn',
+    });
+    const login = await request(app.getHttpServer())
+      .post('/api/v1/auth/firebase')
+      .send({ idToken: 'google-token' })
+      .expect(201);
+    const accessToken = login.body.session.accessToken as string;
+    expect(login.body.user.phone).toBeNull();
+
+    verifyOtp.mockResolvedValueOnce({
+      providerUserId: 'google-user-2',
+      phoneNumber: '+84909333444',
+    });
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/phone/link')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ idToken: 'phone-token' })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toMatchObject({
+          id: 'user-1',
+          phone: '+84909333444',
+          role: 'CUSTOMER',
+          status: 'ACTIVE',
+        });
+      });
+
+    expect(prismaState.users.get('user-1')?.phoneVerifiedAt).toBeInstanceOf(Date);
+  });
+
   it('maps invalid provider tokens to 401 without echoing the token', async () => {
     verifyOtp.mockRejectedValue(
       new OtpProviderError(
@@ -274,7 +399,7 @@ describe('PH-05-T02 login and access tokens', () => {
       .expect(({ body }) => {
         expect(body).toMatchObject({
           code: 'INVALID_PROVIDER_TOKEN',
-          message: 'Provider token is invalid',
+          message: 'Thông tin xác thực không hợp lệ',
         });
         expect(JSON.stringify(body)).not.toContain('secret-id-token');
       });
@@ -294,7 +419,7 @@ describe('PH-05-T02 login and access tokens', () => {
         .expect(({ body }) => {
           expect(body).toMatchObject({
             code: 'OTP_PROVIDER_UNAVAILABLE',
-            message: 'OTP provider is unavailable',
+            message: 'Hệ thống xác thực tạm thời không khả dụng',
           });
           expect(JSON.stringify(body)).not.toContain('secret-id-token');
         });

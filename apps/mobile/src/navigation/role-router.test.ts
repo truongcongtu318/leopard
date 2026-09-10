@@ -6,7 +6,7 @@ const mockGetItemAsync = jest.fn<(key: string) => Promise<string | null>>();
 const mockDeleteItemAsync = jest.fn<(key: string) => Promise<void>>();
 const mockIsAvailableAsync = jest.fn<() => Promise<boolean>>();
 
-jest.mock('../auth/secure-session-storage', () => ({
+jest.mock('@leopard/mobile-core/src/auth/secure-session-storage', () => ({
   secureSessionStorage: {
     setRefreshToken: (value: string) => mockSetItemAsync('leopard.refresh', value),
     getRefreshToken: () => mockGetItemAsync('leopard.refresh'),
@@ -17,7 +17,7 @@ jest.mock('../auth/secure-session-storage', () => ({
   },
 }));
 
-import { sessionStore } from '../auth/session-store';
+import { sessionStore } from '@leopard/mobile-core';
 import { getMobileHome, getMobileRouteDecision, useProtectedLayout } from './role-router';
 
 type FetchMock = jest.Mock<(...args: unknown[]) => Promise<Response>>;
@@ -49,8 +49,8 @@ function createMockResponse(status: number, body: unknown): Response {
 
 describe('getMobileHome', () => {
   const cases = [
-    ['CUSTOMER', '/customer/orders'],
-    ['DRIVER', '/driver/orders'],
+    ['CUSTOMER', '/customer/home'],
+    ['DRIVER', '/(public)/login'],
     ['FLEET_OWNER', '/(public)/login'],
     ['ADMIN', '/(public)/login'],
   ] as const;
@@ -70,7 +70,7 @@ describe('getMobileRouteDecision', () => {
         getMobileRouteDecision({
           isHydrated: false,
           role,
-          routeGroup: role === 'DRIVER' ? 'driver' : 'customer',
+          routeGroup: 'customer',
         }),
       ).toEqual({
         canRenderProtectedContent: false,
@@ -94,7 +94,7 @@ describe('getMobileRouteDecision', () => {
     });
   });
 
-  it.each(['FLEET_OWNER', 'ADMIN'] as const)(
+  it.each(['FLEET_OWNER', 'ADMIN', 'DRIVER'] as const)(
     'denies unsupported mobile role %s explicitly',
     (role) => {
       expect(
@@ -112,47 +112,18 @@ describe('getMobileRouteDecision', () => {
     },
   );
 
-  const authorizedCases = [
-    ['CUSTOMER', 'customer'],
-    ['DRIVER', 'driver'],
-  ] as const;
-
-  for (const [role, routeGroup] of authorizedCases) {
-    it(`allows hydrated ${role} content in the matching ${routeGroup} group`, () => {
-      expect(
-        getMobileRouteDecision({
-          isHydrated: true,
-          role,
-          routeGroup,
-        }),
-      ).toEqual({
-        canRenderProtectedContent: true,
-        kind: 'authorized',
-      });
+  it('allows hydrated CUSTOMER content in customer group', () => {
+    expect(
+      getMobileRouteDecision({
+        isHydrated: true,
+        role: 'CUSTOMER',
+        routeGroup: 'customer',
+      }),
+    ).toEqual({
+      canRenderProtectedContent: true,
+      kind: 'authorized',
     });
-  }
-
-  const mismatchedCases = [
-    ['CUSTOMER', 'driver', '/customer/orders'],
-    ['DRIVER', 'customer', '/driver/orders'],
-  ] as const;
-
-  for (const [role, routeGroup, home] of mismatchedCases) {
-    it(`denies hydrated ${role} content in the mismatched ${routeGroup} group`, () => {
-      expect(
-        getMobileRouteDecision({
-          isHydrated: true,
-          role,
-          routeGroup,
-        }),
-      ).toEqual({
-        canRenderProtectedContent: false,
-        kind: 'denied',
-        reason: 'role-mismatch',
-        redirectTo: home,
-      });
-    });
-  }
+  });
 });
 
 describe('useProtectedLayout', () => {
@@ -178,7 +149,6 @@ describe('useProtectedLayout', () => {
   });
 
   it('returns loading decision when isHydrated is false', () => {
-    // This validates the pure function underlying the hook - pre-hydration always loading
     const decision = getMobileRouteDecision({
       isHydrated: false,
       role: null,
@@ -200,7 +170,6 @@ describe('useProtectedLayout', () => {
       expect(result.current.kind).not.toBe('loading');
     });
 
-    // After hydration with no stored session, should be denied (unauthenticated)
     expect(result.current.canRenderProtectedContent).toBe(false);
     expect(result.current.kind).toBe('denied');
   });
@@ -233,10 +202,10 @@ describe('useProtectedLayout', () => {
     expect(mockSetItemAsync).toHaveBeenCalledWith('leopard.refresh', 'rotated-refresh');
   });
 
-  it('denies a persisted role that does not match the protected route group', async () => {
+  it('denies a persisted DRIVER role on customer protected route group', async () => {
     mockGetItemAsync
       .mockResolvedValueOnce('stored-refresh')
-      .mockResolvedValueOnce('CUSTOMER');
+      .mockResolvedValueOnce('DRIVER');
     fetchMock().mockResolvedValueOnce(createMockResponse(200, {
       accessToken: 'fresh-access',
       accessTokenExpiresAt: '2026-08-06T02:15:00.000Z',
@@ -245,15 +214,15 @@ describe('useProtectedLayout', () => {
     }));
 
     const { result } = await renderHook(() =>
-      useProtectedLayout('driver'),
+      useProtectedLayout('customer'),
     );
 
     await waitFor(() => {
       expect(result.current).toEqual({
         canRenderProtectedContent: false,
         kind: 'denied',
-        reason: 'role-mismatch',
-        redirectTo: '/customer/orders',
+        reason: 'unsupported-mobile-role',
+        redirectTo: '/(public)/login',
       });
     });
   });
@@ -261,14 +230,14 @@ describe('useProtectedLayout', () => {
   it('clears the persisted session and denies content when hydrate refresh fails', async () => {
     mockGetItemAsync
       .mockResolvedValueOnce('stored-refresh')
-      .mockResolvedValueOnce('DRIVER');
+      .mockResolvedValueOnce('CUSTOMER');
     fetchMock().mockResolvedValueOnce(createMockResponse(401, {
       code: 'UNAUTHORIZED',
       message: 'Refresh token expired',
     }));
 
     const { result } = await renderHook(() =>
-      useProtectedLayout('driver'),
+      useProtectedLayout('customer'),
     );
 
     await waitFor(() => {
@@ -295,7 +264,85 @@ describe('useProtectedLayout', () => {
       expect(result.current.kind).not.toBe('loading');
     });
 
-    // After hydration failure, should still resolve (not stay loading forever)
     expect(result.current.canRenderProtectedContent).toBe(false);
+  });
+});
+
+describe('useRootSessionRouter', () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    originalFetch = globalThis.fetch;
+    globalThis.fetch = jest.fn() as unknown as typeof globalThis.fetch;
+    mockIsAvailableAsync.mockResolvedValue(true);
+    await sessionStore.clearSession();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('resolves unauthenticated session to /(public)/login', async () => {
+    mockGetItemAsync.mockResolvedValue(null);
+    const { useRootSessionRouter } = require('./role-router');
+    const { result } = await renderHook(() => useRootSessionRouter());
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isHydrated: true,
+        redirectTo: '/(public)/login',
+      });
+    });
+  });
+
+  it('resolves CUSTOMER session to /customer/home', async () => {
+    mockGetItemAsync.mockImplementation((key) => {
+      if (key === 'leopard.refresh') return Promise.resolve('refresh-tok');
+      if (key === 'leopard.role') return Promise.resolve('CUSTOMER');
+      return Promise.resolve(null);
+    });
+
+    fetchMock().mockResolvedValue(
+      createMockResponse(200, {
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      }),
+    );
+
+    const { useRootSessionRouter } = require('./role-router');
+    const { result } = await renderHook(() => useRootSessionRouter());
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isHydrated: true,
+        redirectTo: '/customer/home',
+      });
+    });
+  });
+
+  it('resolves DRIVER session to /(public)/login (driver app is standalone)', async () => {
+    mockGetItemAsync.mockImplementation((key) => {
+      if (key === 'leopard.refresh') return Promise.resolve('refresh-tok');
+      if (key === 'leopard.role') return Promise.resolve('DRIVER');
+      return Promise.resolve(null);
+    });
+
+    fetchMock().mockResolvedValue(
+      createMockResponse(200, {
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      }),
+    );
+
+    const { useRootSessionRouter } = require('./role-router');
+    const { result } = await renderHook(() => useRootSessionRouter());
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isHydrated: true,
+        redirectTo: '/(public)/login',
+      });
+    });
   });
 });

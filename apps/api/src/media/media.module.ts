@@ -38,6 +38,6 @@ import { PrismaService } from '../database/prisma.service.js';
       inject: [StorageProvider, MediaRepository, PrismaService],
     },
   ],
-  exports: [MediaRepository, MediaService],
+  exports: [MediaRepository, MediaService, StorageProvider],
 })
 export class MediaModule {}

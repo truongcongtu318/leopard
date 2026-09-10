@@ -81,6 +81,7 @@ const envSchema = z
     ALLOW_DEMO_PAYMENT_PROVIDER: booleanFlagSchema.optional(),
     VIETMAP_API_KEY: z.string().trim().min(10).optional(),
     FIREBASE_PROJECT_ID: z.string().trim().min(1).optional(),
+    FCM_ENABLED: booleanFlagSchema.optional(),
     S3_ACCESS_KEY_ID: optionalProviderValue(10),
     S3_SECRET_ACCESS_KEY: optionalProviderValue(10),
     S3_BUCKET: optionalProviderValue(),
@@ -89,6 +90,15 @@ const envSchema = z
     PAYOS_CLIENT_ID: optionalProviderValue(10),
     PAYOS_API_KEY: optionalProviderValue(10),
     PAYOS_CHECKSUM_KEY: optionalProviderValue(10),
+    INVOICE_PROVIDER: z.enum(['self', 'einvoice']).optional(),
+    MAIL_PROVIDER: z.enum(['console', 'smtp']).optional(),
+    ALLOW_CONSOLE_MAIL_PROVIDER: booleanFlagSchema.optional(),
+    SMTP_HOST: optionalProviderValue(),
+    SMTP_PORT: nonNegativeIntegerSchema.optional(),
+    SMTP_USER: optionalProviderValue(),
+    SMTP_PASS: optionalProviderValue(),
+    SMTP_SECURE: booleanFlagSchema.optional(),
+    MAIL_FROM: optionalProviderValue(),
   })
   .superRefine((env, context) => {
     if (env.STORAGE_PROVIDER === 's3') {
@@ -107,6 +117,25 @@ const envSchema = z
         'when PAYMENT_PROVIDER=payos',
         context,
       );
+    }
+
+    if (env.MAIL_PROVIDER === 'smtp') {
+      requireConfiguration(
+        env,
+        ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM'],
+        'when MAIL_PROVIDER=smtp',
+        context,
+      );
+    }
+
+    // Unlike ALLOW_*, FCM_ENABLED is not a demo/insecure-provider bypass — it
+    // turns on the real push provider. Without FIREBASE_PROJECT_ID the
+    // service would otherwise start up and silently no-op on every send, so
+    // this is a plain conditional-requirement check (like the S3/PAYOS ones
+    // above) applied in every environment, not an ALLOW_*-style
+    // production-only acknowledgment gate.
+    if (env.FCM_ENABLED === true) {
+      requireConfiguration(env, ['FIREBASE_PROJECT_ID'], 'when FCM_ENABLED=true', context);
     }
 
     if (env.NODE_ENV !== 'production') {
@@ -182,6 +211,18 @@ const envSchema = z
         path: ['ALLOW_DEMO_PAYMENT_PROVIDER'],
         message:
           'ALLOW_DEMO_PAYMENT_PROVIDER=true is required when PAYMENT_PROVIDER=demo',
+      });
+    }
+
+    if (
+      (env.MAIL_PROVIDER ?? 'console') === 'console' &&
+      env.ALLOW_CONSOLE_MAIL_PROVIDER !== true
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['ALLOW_CONSOLE_MAIL_PROVIDER'],
+        message:
+          'ALLOW_CONSOLE_MAIL_PROVIDER=true is required when MAIL_PROVIDER=console (or unset) in production',
       });
     }
   });
@@ -271,6 +312,7 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     ALLOW_DEMO_PAYMENT_PROVIDER: source.ALLOW_DEMO_PAYMENT_PROVIDER,
     VIETMAP_API_KEY: source.VIETMAP_API_KEY,
     FIREBASE_PROJECT_ID: source.FIREBASE_PROJECT_ID,
+    FCM_ENABLED: source.FCM_ENABLED,
     S3_ACCESS_KEY_ID: source.S3_ACCESS_KEY_ID,
     S3_SECRET_ACCESS_KEY: source.S3_SECRET_ACCESS_KEY,
     S3_BUCKET: source.S3_BUCKET,
@@ -279,5 +321,14 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     PAYOS_CLIENT_ID: source.PAYOS_CLIENT_ID,
     PAYOS_API_KEY: source.PAYOS_API_KEY,
     PAYOS_CHECKSUM_KEY: source.PAYOS_CHECKSUM_KEY,
+    INVOICE_PROVIDER: source.INVOICE_PROVIDER,
+    MAIL_PROVIDER: source.MAIL_PROVIDER,
+    ALLOW_CONSOLE_MAIL_PROVIDER: source.ALLOW_CONSOLE_MAIL_PROVIDER,
+    SMTP_HOST: source.SMTP_HOST,
+    SMTP_PORT: source.SMTP_PORT,
+    SMTP_USER: source.SMTP_USER,
+    SMTP_PASS: source.SMTP_PASS,
+    SMTP_SECURE: source.SMTP_SECURE,
+    MAIL_FROM: source.MAIL_FROM,
   });
 }

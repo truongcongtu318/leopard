@@ -22,6 +22,7 @@ import {
   type AuthenticatedActor,
 } from '../decorators/current-user.js';
 import { RequireRoles } from '../decorators/require-roles.js';
+import { AllowUserStatuses } from '../decorators/allow-user-statuses.js';
 import { AccessTokenGuard } from './access-token.guard.js';
 import { RoleGuard } from './role.guard.js';
 import {
@@ -123,6 +124,15 @@ class GuardTestController {
   @RequireRoles('ADMIN')
   @UseGuards(AccessTokenGuard, RoleGuard)
   public admin(
+    @CurrentUser() actor: AuthenticatedActor,
+  ): { userId: string; role: Role } {
+    return { userId: actor.userId, role: actor.role };
+  }
+
+  @Get('onboarding')
+  @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
+  @UseGuards(AccessTokenGuard)
+  public onboarding(
     @CurrentUser() actor: AuthenticatedActor,
   ): { userId: string; role: Role } {
     return { userId: actor.userId, role: actor.role };
@@ -723,7 +733,115 @@ describe('PH-05-T04 guards and resource policy', () => {
         allowedRoles: ['ADMIN'],
       }),
     ).rejects.toEqual(
-      new DomainError('FORBIDDEN', 403, 'You do not have access to this resource'),
+      new DomainError('FORBIDDEN', 403, 'Bạn không có quyền truy cập tài nguyên này'),
     );
+  });
+
+  it('allows access to endpoints with AllowUserStatuses for PENDING_APPROVAL and REJECTED, but blocks DISABLED', async () => {
+    const pendingUser: StoredUser = {
+      id: 'user-pending-status',
+      phone: '+840000000099',
+      role: 'DRIVER',
+      status: 'PENDING_APPROVAL',
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    const session: StoredRefreshSession = {
+      id: 'session-pending-status',
+      userId: pendingUser.id,
+      tokenHash: 'hash',
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    prismaState.users.set(pendingUser.id, pendingUser);
+    prismaState.refreshSessions.set(session.id, session);
+
+    const token = createAccessToken(
+      tokenService,
+      { userId: pendingUser.id, role: pendingUser.role, sessionId: session.id },
+      session.expiresAt,
+    );
+
+    // Profile requires default ACTIVE -> 401
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(401);
+
+    // Onboarding allows PENDING_APPROVAL -> 200
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/onboarding')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.userId).toBe(pendingUser.id);
+        expect(body.role).toBe('DRIVER');
+      });
+
+    // When a rejected driver accesses onboarding -> still allowed
+    const rejectedUser: StoredUser = {
+      id: 'user-rejected-status',
+      phone: '+840000000098',
+      role: 'DRIVER',
+      status: 'REJECTED',
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    const rejectedSession: StoredRefreshSession = {
+      id: 'session-rejected-status',
+      userId: rejectedUser.id,
+      tokenHash: 'hash-rejected',
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    prismaState.users.set(rejectedUser.id, rejectedUser);
+    prismaState.refreshSessions.set(rejectedSession.id, rejectedSession);
+
+    const rejectedToken = createAccessToken(
+      tokenService,
+      { userId: rejectedUser.id, role: rejectedUser.role, sessionId: rejectedSession.id },
+      rejectedSession.expiresAt,
+    );
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/onboarding')
+      .set('Authorization', `Bearer ${rejectedToken}`)
+      .expect(200);
+
+    // When a disabled user accesses onboarding -> rejected with 401
+    const disabledUser: StoredUser = {
+      id: 'user-disabled-status',
+      phone: '+840000000097',
+      role: 'DRIVER',
+      status: 'DISABLED',
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    const disabledSession: StoredRefreshSession = {
+      id: 'session-disabled-status',
+      userId: disabledUser.id,
+      tokenHash: 'hash-disabled',
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+    };
+    prismaState.users.set(disabledUser.id, disabledUser);
+    prismaState.refreshSessions.set(disabledSession.id, disabledSession);
+
+    const disabledToken = createAccessToken(
+      tokenService,
+      { userId: disabledUser.id, role: disabledUser.role, sessionId: disabledSession.id },
+      disabledSession.expiresAt,
+    );
+
+    await request(app.getHttpServer())
+      .get('/api/v1/authz-test/onboarding')
+      .set('Authorization', `Bearer ${disabledToken}`)
+      .expect(401);
   });
 });

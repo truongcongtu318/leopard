@@ -151,7 +151,7 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
           .expect(400);
 
         expect(res.body.code).toBe('BAD_REQUEST');
-        expect(res.body.message).toContain('Validation failed');
+        expect(res.body.message).toContain('Dữ liệu không hợp lệ');
       }
     });
 
@@ -204,11 +204,14 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
           pickup: { type: 'PICKUP', address: 'South Pole', lat: -90, lng: -180 },
           dropoff: { type: 'DROPOFF', address: 'North Pole', lat: 90, lng: 180 },
           vehicleType: 'TRUCK',
+          cargoWeightKg: 2000,
         })
         .expect(200);
 
-      expect(res.body).toHaveProperty('estimatedPriceVnd');
-      expect(res.body).toHaveProperty('estimateToken');
+      expect(res.body.routes).toBeInstanceOf(Array);
+      expect(res.body.routes.length).toBeGreaterThan(0);
+      expect(res.body.routes[0]).toHaveProperty('estimatedPriceVnd');
+      expect(res.body.routes[0]).toHaveProperty('estimateToken');
     });
 
     it('rejects more than 3 intermediate stops (> 3 stops) with 400 Bad Request', async () => {
@@ -272,7 +275,7 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
         .expect(500); // Caught and cleanly converted
 
       expect(res.body.code).toBe('INTERNAL_ERROR');
-      expect(res.body.message).toBe('Internal server error');
+      expect(res.body.message).toBe('Đã xảy ra lỗi hệ thống, vui lòng thử lại sau');
     });
 
     it('rejects pageSize exceeding 100 on Fleet endpoints', async () => {
@@ -415,7 +418,7 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
       expect(res.body).toMatchObject({
         statusCode: 500,
         code: 'INTERNAL_ERROR',
-        message: 'Internal server error',
+        message: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau',
       });
 
       // Strict validation: response must NOT contain sensitive leakage

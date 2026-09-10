@@ -293,7 +293,7 @@ describe('ApiExceptionFilter', () => {
     expect(res.status).toBe(500);
     expect(res.body.statusCode).toBe(500);
     expect(res.body.code).toBe('INTERNAL_ERROR');
-    expect(res.body.message).toBe('Internal server error');
+    expect(res.body.message).toBe('Đã xảy ra lỗi hệ thống, vui lòng thử lại sau');
     expect(res.body.stack).toBeUndefined();
     // Also ensure stack trace is NOT leaked in message
     expect(JSON.stringify(res.body)).not.toContain('at ');

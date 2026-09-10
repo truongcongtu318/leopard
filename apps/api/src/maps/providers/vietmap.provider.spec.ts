@@ -61,6 +61,44 @@ describe('VietmapProvider', () => {
     expect(requestedUrl.searchParams.get('display_type')).toBe('5');
   });
 
+  it('resolves coordinates via Place v4 when autocomplete payload omits lat and lng', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(200, [
+          {
+            ref_id: 'auto:ben-thanh',
+            display: 'Chợ Bến Thành',
+            name: 'Chợ Bến Thành',
+            address: 'Phường Bến Thành, Quận 1',
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          display: 'Chợ Bến Thành, Phường Bến Thành, Quận 1',
+          lat: 10.772517,
+          lng: 106.698021,
+        }),
+      );
+    const provider = vietmapProvider(fetchMock);
+
+    const results = await provider.search('Chợ Bến Thành');
+
+    expect(results).toEqual([
+      {
+        placeId: 'auto:ben-thanh',
+        label: 'Chợ Bến Thành, Phường Bến Thành, Quận 1',
+        address: 'Phường Bến Thành, Quận 1',
+        point: {
+          latitude: 10.772517,
+          longitude: 106.698021,
+        },
+        source: 'VIETMAP',
+      },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('maps Place v4 payloads to shared coordinates', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(200, {
@@ -98,7 +136,7 @@ describe('VietmapProvider', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('maps Route v4 payloads to shared route estimates without leaking SDK types', async () => {
+  it('requests alternatives and congestion annotations, mapping every returned path', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(200, {
         code: 'OK',
@@ -107,33 +145,118 @@ describe('VietmapProvider', () => {
             distance: 2_194.4,
             time: 351_400,
             points: '}s{`Ac_hjSjAkCFQRu@',
-            toll_cost: 59_000,
+            annotations: {
+              congestion: [
+                { value: 'low', first: 0, last: 5 },
+                { value: 'moderate', first: 5, last: 12 },
+              ],
+            },
+          },
+          {
+            distance: 2_600.1,
+            time: 300_000,
+            points: 'abcDefgHijkL',
+            annotations: { congestion: [{ value: 'severe', first: 0, last: 3 }] },
           },
         ],
       }),
     );
     const provider = vietmapProvider(fetchMock);
 
-    await expect(provider.route(routeInput())).resolves.toEqual({
-      polyline: '}s{`Ac_hjSjAkCFQRu@',
-      distanceM: 2_194,
-      durationS: 351,
-      estimatedArrivalAt: '2026-08-01T03:05:51.000Z',
-      estimatedPriceVnd: 0,
-      source: 'VIETMAP',
-      calculatedAt: '2026-08-01T03:00:00.000Z',
-      isEstimate: true,
-    });
+    await expect(provider.route(routeInput())).resolves.toEqual([
+      {
+        polyline: '}s{`Ac_hjSjAkCFQRu@',
+        distanceM: 2_194,
+        durationS: 351,
+        estimatedArrivalAt: '2026-08-01T03:05:51.000Z',
+        estimatedPriceVnd: 0,
+        source: 'VIETMAP',
+        calculatedAt: '2026-08-01T03:00:00.000Z',
+        isEstimate: true,
+        congestionLevel: 'moderate',
+      },
+      {
+        polyline: 'abcDefgHijkL',
+        distanceM: 2_600,
+        durationS: 300,
+        estimatedArrivalAt: '2026-08-01T03:05:00.000Z',
+        estimatedPriceVnd: 0,
+        source: 'VIETMAP',
+        calculatedAt: '2026-08-01T03:00:00.000Z',
+        isEstimate: true,
+        congestionLevel: 'severe',
+      },
+    ]);
 
     const requestedUrl = getRequestedUrl(fetchMock);
     expect(requestedUrl.pathname).toBe('/api/route/v4');
-    expect(requestedUrl.searchParams.getAll('point')).toEqual([
-      '10.796284,106.705923',
-      '10.799,106.706',
-      '10.801891,106.70661',
-    ]);
+    expect(requestedUrl.searchParams.get('alternative')).toBe('true');
+    expect(requestedUrl.searchParams.get('annotations')).toBe('congestion');
     expect(requestedUrl.searchParams.get('vehicle')).toBe('motorcycle');
     expect(requestedUrl.searchParams.get('points_encoded')).toBe('true');
+  });
+
+  it('falls back to unknown congestion when a path has no annotations', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        code: 'OK',
+        paths: [{ distance: 1_000, time: 60_000, points: 'poly' }],
+      }),
+    );
+    const provider = vietmapProvider(fetchMock);
+
+    const [route] = await provider.route(routeInput());
+    expect(route?.congestionLevel).toBe('unknown');
+  });
+
+  it('skips invalid paths but keeps the valid alternatives', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        code: 'OK',
+        paths: [
+          { distance: 1_000, time: 60_000, points: 'valid-poly' },
+          { distance: 'not-a-number', time: 60_000, points: 'broken' },
+        ],
+      }),
+    );
+    const provider = vietmapProvider(fetchMock);
+
+    await expect(provider.route(routeInput())).resolves.toHaveLength(1);
+  });
+
+  it('fails when every returned path is invalid', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        code: 'OK',
+        paths: [{ distance: 'not-a-number', time: 60_000, points: 'broken' }],
+      }),
+    );
+    const provider = vietmapProvider(fetchMock);
+
+    const error = await catchError(provider.route(routeInput()));
+    expect(error.message).toBe('Vietmap route failed: no valid route path in response');
+  });
+
+  it('sends truck capacity from cargoWeightKg and rejects trucks missing it', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        code: 'OK',
+        paths: [{ distance: 5_000, time: 900_000, points: 'truck-poly' }],
+      }),
+    );
+    const provider = vietmapProvider(fetchMock);
+
+    await provider.route({ ...routeInput(), vehicleType: 'TRUCK', cargoWeightKg: 1_250 });
+
+    const requestedUrl = getRequestedUrl(fetchMock);
+    expect(requestedUrl.searchParams.get('vehicle')).toBe('truck');
+    expect(requestedUrl.searchParams.get('capacity')).toBe('1250');
+
+    const error = await catchError(
+      provider.route({ ...routeInput(), vehicleType: 'TRUCK' }),
+    );
+    expect(error.message).toBe('Vietmap route failed: cargoWeightKg is required for truck routing');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('aborts provider requests after 5 seconds', async () => {
@@ -236,10 +359,9 @@ describe('ResilientMapProvider', () => {
       new DemoMapProvider(),
     );
 
-    await expect(provider.route(routeInput())).resolves.toMatchObject({
-      source: 'DEMO',
-      isEstimate: true,
-    });
+    const result = await provider.route(routeInput());
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ source: 'DEMO', isEstimate: true });
   });
 
   it('does not use demo fallback when ALLOW_DEMO_PROVIDER is not true', async () => {

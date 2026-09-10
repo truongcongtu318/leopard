@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus } from '@prisma/client';
+import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus, MediaObject } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 
 type OrdersPrismaClient = PrismaService | Prisma.TransactionClient;
@@ -24,8 +24,7 @@ export interface CreateOrderParams {
 export interface OrderWithRelations extends Order {
   stops: Array<OrderStop & { lat: number; lng: number }>;
   statusHistory: OrderStatusHistory[];
-  customerPhone?: string;
-  driverPhone?: string | null;
+  mediaObjects?: MediaObject[];
 }
 
 @Injectable()
@@ -162,22 +161,13 @@ export class OrdersRepository {
       where: { id },
       include: {
         statusHistory: { orderBy: { createdAt: 'desc' } },
-        customer: { select: { phone: true } },
-        driver: { select: { phone: true } },
+        mediaObjects: true,
       },
     });
 
     if (!order) {
       return null;
     }
-
-    const { customer, driver, ...orderFields } = order;
-    const mapped: OrderWithRelations = {
-      ...orderFields,
-      stops: [],
-      customerPhone: customer.phone,
-      driverPhone: driver?.phone ?? null,
-    };
 
     const stops = await db.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
       SELECT
@@ -196,9 +186,10 @@ export class OrdersRepository {
     `;
 
     return {
-      ...mapped,
+      ...order,
       stops,
       statusHistory: order.statusHistory,
+      mediaObjects: order.mediaObjects,
     };
   }
 

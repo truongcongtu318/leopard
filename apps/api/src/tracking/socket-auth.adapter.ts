@@ -58,5 +58,5 @@ export class SocketAuthAdapter {
 }
 
 function unauthorized(): DomainError {
-  return new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+  return new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
 }

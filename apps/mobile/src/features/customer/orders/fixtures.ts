@@ -93,17 +93,17 @@ function deepFreeze<T>(value: T): T {
 
 function route() {
   return {
-    origin: { id: 'pickup-demo', label: 'Kho mô phỏng Quận 7, Thành phố Hồ Chí Minh' },
+    origin: { id: 'pickup-vlxd', label: 'Kho Tổng VLXD Minh Khang, Tân Phú' },
     stops: [
-      { id: 'stop-demo-1', label: 'Điểm dừng mô phỏng Quận 4' },
-      { id: 'stop-demo-2', label: 'Điểm dừng mô phỏng Quận 3' },
-      { id: 'stop-demo-3', label: 'Điểm dừng mô phỏng Quận 1' },
+      { id: 'stop-cm-1', label: 'Công trình Nhà phố 45, Quận 3' },
+      { id: 'stop-cm-2', label: 'Đại lý phân phối gạch Catalan, Quận 10' },
+      { id: 'stop-cm-3', label: 'Cửa hàng vật tư điện nước, Quận 4' },
     ],
     destination: {
-      id: 'dropoff-demo',
-      label: 'Trung tâm nhận hàng mô phỏng, Thành phố Thủ Đức',
+      id: 'dropoff-nhabe',
+      label: 'Công trình Biệt thự Kim Long, Nhà Bè',
     },
-    distanceLabel: '18,4 km',
+    distanceLabel: '14,8 km',
   } as const;
 }
 
@@ -111,30 +111,30 @@ function listOrders(): CustomerOrderListItemView[] {
   return [
     {
       id: '11111111-1111-4111-8111-111111111001',
-      reference: 'LP-260815-001',
+      reference: 'LP-260905-001',
       status: 'IN_TRANSIT',
       route: route(),
-      etaLabel: '18 phút · Dữ liệu mô phỏng',
-      priceLabel: '286.000 ₫',
-      updatedAtLabel: '14:32 · 15/08/2026',
+      etaLabel: '18 phút',
+      priceLabel: '480.000 ₫',
+      updatedAtLabel: '14:32 · 05/09/2026',
     },
     {
       id: '11111111-1111-4111-8111-111111111002',
-      reference: 'LP-260815-002',
+      reference: 'LP-260905-002',
       status: 'REQUESTED',
       route: { ...route(), stops: [] },
-      etaLabel: '24 phút',
-      priceLabel: '198.000 ₫',
-      updatedAtLabel: '13:05 · 15/08/2026',
+      etaLabel: '25 phút',
+      priceLabel: '350.000 ₫',
+      updatedAtLabel: '13:05 · 05/09/2026',
     },
     {
       id: '11111111-1111-4111-8111-111111111003',
-      reference: 'LP-260814-007',
+      reference: 'LP-260904-009',
       status: 'DELIVERED',
       route: { ...route(), stops: route().stops.slice(0, 1) },
       etaLabel: 'Đã hoàn tất',
-      priceLabel: '242.000 ₫',
-      updatedAtLabel: '17:48 · 14/08/2026',
+      priceLabel: '420.000 ₫',
+      updatedAtLabel: '17:48 · 04/09/2026',
     },
   ];
 }
@@ -159,7 +159,7 @@ export function createCustomerListFixture(scenarioId: CustomerListScenarioId): C
     'C-LIST-ERROR': {
       kind: 'error',
       title: 'Không thể tải đơn hàng',
-      message: 'Hãy thử lại. Mã yêu cầu mô phỏng: REQ-C-LIST-01.',
+      message: 'Hãy thử lại. Mã yêu cầu: REQ-C-LIST-01.',
     },
     'C-LIST-PERMISSION': {
       kind: 'permission-denied',
@@ -193,7 +193,7 @@ export function createCustomerListFixture(scenarioId: CustomerListScenarioId): C
     notice: content.notice,
     orders: listOrders(),
     selectedFilter: 'ALL',
-    resultLabel: '3 đơn hàng mô phỏng',
+    resultLabel: '3 đơn hàng',
     canLoadMore: true,
     isLoadingMore: scenarioId === 'C-LIST-REFRESHING',
   };
@@ -204,15 +204,15 @@ function createForm(scenarioId: CustomerCreateScenarioId) {
   const empty = scenarioId === 'C-NEW-READY';
   const invalid = scenarioId === 'C-NEW-INVALID';
   return {
-    pickup: empty ? '' : 'Kho mô phỏng Quận 7, Thành phố Hồ Chí Minh',
+    pickup: empty ? '' : 'Kho Tổng VLXD Minh Khang - 182 Lê Trọng Tấn, Tân Phú',
     stops: [
-      { id: 'draft-stop-1', value: 'Điểm dừng mô phỏng Quận 4' },
-      { id: 'draft-stop-2', value: 'Điểm dừng mô phỏng Quận 3' },
-      { id: 'draft-stop-3', value: 'Điểm dừng mô phỏng Quận 1' },
+      { id: 'draft-stop-1', value: 'Công trình Nhà phố 45 - 280 CMT8, Quận 3' },
+      { id: 'draft-stop-2', value: 'Đại lý phân phối gạch Catalan, Quận 10' },
+      { id: 'draft-stop-3', value: 'Cửa hàng vật tư điện nước, Quận 4' },
     ],
-    dropoff: empty ? '' : 'Trung tâm nhận hàng mô phỏng, Thành phố Thủ Đức',
+    dropoff: empty ? '' : 'Công trình Biệt thự Kim Long - Nguyễn Hữu Thọ, Nhà Bè',
     vehicleType: 'VAN' as const,
-    cargoNote: 'Thùng mẫu dễ vỡ; liên hệ tại cổng bảo vệ mô phỏng.',
+    cargoNote: '40 bao xi măng INSEE và 15 thùng gạch men Catalan; tài xế hỗ trợ bốc xếp.',
     cargoWeight: invalid ? '-2' : '120',
     fieldErrors: invalid
       ? {
@@ -226,7 +226,7 @@ function createForm(scenarioId: CustomerCreateScenarioId) {
 function estimateFor(scenarioId: CustomerCreateScenarioId): CustomerEstimateView {
   if (scenarioId === 'C-NEW-ESTIMATE-LOADING') return { kind: 'loading', source: 'VIETMAP' };
   if (scenarioId === 'C-NEW-ESTIMATE-ERROR') {
-    return { kind: 'error', source: 'VIETMAP', message: 'Chưa thể tính giá và ETA dự kiến.' };
+    return { kind: 'error', source: 'VIETMAP', message: 'Chưa thể tính giá và thời gian giao dự kiến.' };
   }
   if (scenarioId === 'C-NEW-ESTIMATE-OUTDATED') return { kind: 'outdated' };
   if (scenarioId === 'C-NEW-ESTIMATE-EXPIRED') return { kind: 'expired' };
@@ -242,9 +242,19 @@ function estimateFor(scenarioId: CustomerCreateScenarioId): CustomerEstimateView
     return {
       kind: 'ready',
       source: scenarioId === 'C-NEW-ESTIMATE-DEMO' ? 'DEMO' : 'VIETMAP',
-      durationSeconds: 1080,
-      distanceLabel: '18,4 km',
-      priceLabel: '286.000 ₫',
+      routes: [
+        {
+          routeId: 'route-0',
+          estimateToken: 'demo-estimate-token',
+          isRecommended: true,
+          durationSeconds: 1080,
+          distanceLabel: '18,4 km',
+          priceLabel: '286.000 ₫',
+          congestionLevel: 'unknown',
+          congestionLabel: 'Chưa rõ giao thông',
+        },
+      ],
+      selectedRouteId: 'route-0',
       calculatedAtLabel: '14:30 · 15/08/2026',
     };
   }
@@ -256,18 +266,18 @@ const createNotice: Readonly<Partial<Record<CustomerCreateScenarioId, string>>> 
   'C-NEW-ADDRESS-LOADING': 'Đang tìm địa điểm phù hợp.',
   'C-NEW-ADDRESS-NO-RESULTS': 'Không tìm thấy địa điểm phù hợp; nội dung đã nhập được giữ lại.',
   'C-NEW-ADDRESS-ERROR': 'Dịch vụ địa điểm chưa khả dụng; hãy thử tìm lại.',
-  'C-NEW-ESTIMATE-LOADING': 'Đang tính giá và ETA dự kiến.',
+  'C-NEW-ESTIMATE-LOADING': 'Đang tính giá và thời gian dự kiến.',
   'C-NEW-ESTIMATE-ERROR': 'Không thể tính estimate; dữ liệu form vẫn được giữ.',
   'C-NEW-ESTIMATE-OUTDATED': 'Lộ trình đã thay đổi; estimate cũ không còn dùng để tạo đơn.',
   'C-NEW-ESTIMATE-EXPIRED': 'Estimate đã hết hiệu lực theo phản hồi hệ thống.',
   'C-NEW-MEDIA-INVALID': 'Chỉ nhận JPEG, PNG hoặc WebP tối đa 10 MB.',
-  'C-NEW-MEDIA-RETRY': 'Chưa tải được ảnh; lựa chọn mô phỏng vẫn được giữ để thử lại.',
+  'C-NEW-MEDIA-RETRY': 'Chưa tải được ảnh; tệp đã chọn vẫn được giữ để thử lại.',
   'C-NEW-SUBMIT-PENDING': 'Yêu cầu tạo đơn đang chờ phản hồi; không gửi lại.',
   'C-NEW-SUBMIT-ERROR': 'Chưa thể tạo đơn; bản nháp không nhạy cảm vẫn được giữ.',
   'C-NEW-SUBMIT-CONFLICT': 'Estimate đã thay đổi trên hệ thống; hãy tính lại trước khi tạo đơn.',
   'C-NEW-CREATED-MEDIA-ERROR':
     'Đơn đã được phản hồi nhưng ảnh hàng hóa chưa tải lên; không tạo lại đơn.',
-  'C-NEW-SUCCESS': 'Đã nhận phản hồi tạo đơn trong kịch bản mô phỏng.',
+  'C-NEW-SUCCESS': 'Đơn hàng đã được tạo thành công trên hệ thống.',
   'C-NEW-OFFLINE': 'Đang ngoại tuyến; chưa thể tính estimate hoặc tạo đơn.',
 };
 
@@ -320,13 +330,13 @@ function createPrimaryAction(
   if (scenarioId === 'C-NEW-SUBMIT-CONFLICT') {
     return {
       id: 'refresh-estimate',
-      label: 'Tính lại giá và ETA dự kiến',
+      label: 'Tính lại cước phí và thời gian giao',
       emphasis: 'primary',
     };
   }
   const submitting = scenarioId === 'C-NEW-SUBMIT-PENDING';
   const canCreate = estimate.kind === 'ready';
-  const label = canCreate ? 'Tạo đơn' : 'Tính giá và ETA dự kiến';
+  const label = canCreate ? 'Tạo đơn' : 'Tính cước phí và thời gian giao';
   const disabled = scenarioId === 'C-NEW-READY' || scenarioId === 'C-NEW-OFFLINE';
   return {
     id: canCreate ? 'create-order' : 'estimate-order',
@@ -370,8 +380,8 @@ export function createCustomerCreateFixture(
 function defaultTracking(): CustomerTrackingView {
   return {
     kind: 'fresh',
-    driverLabel: 'Tài xế Nguyễn Minh An',
-    lastUpdatedLabel: '14:32 · 15/08/2026',
+    driverLabel: 'Tài xế Trần Đình Trọng',
+    lastUpdatedLabel: '14:32 · 05/09/2026',
     summary: 'Bản đồ lộ trình; vị trí tài xế cập nhật lúc 14:32.',
   };
 }
@@ -388,38 +398,38 @@ function trackingFor(scenarioId: CustomerDetailScenarioId): CustomerTrackingView
     case 'C-DETAIL-NO-LOCATION':
       return {
         kind: 'no-location',
-        driverLabel: 'Tài xế Nguyễn Minh An',
+        driverLabel: 'Tài xế Trần Đình Trọng',
         message: 'Chưa có vị trí tài xế.',
       };
     case 'C-DETAIL-TRACKING-STALE':
       return {
         kind: 'stale',
-        driverLabel: 'Tài xế Nguyễn Minh An',
-        lastUpdatedLabel: '14:12 · 15/08/2026',
+        driverLabel: 'Tài xế Trần Đình Trọng',
+        lastUpdatedLabel: '14:12 · 05/09/2026',
         message: 'Vị trí chưa cập nhật; đang hiển thị điểm gần nhất.',
         summary: 'Bản đồ lộ trình với vị trí gần nhất lúc 14:12.',
       };
     case 'C-DETAIL-TRACKING-RECONNECT':
       return {
         kind: 'reconnecting',
-        driverLabel: 'Tài xế Nguyễn Minh An',
-        lastUpdatedLabel: '14:27 · 15/08/2026',
-        message: 'Đang kết nối lại; vị trí hiện tại chưa được gọi là trực tiếp.',
+        driverLabel: 'Tài xế Trần Đình Trọng',
+        lastUpdatedLabel: '14:27 · 05/09/2026',
+        message: 'Đang kết nối lại với thiết bị tài xế.',
         summary: 'Bản đồ lộ trình đang kết nối lại.',
       };
     case 'C-DETAIL-TRACKING-DISCONNECTED':
     case 'C-DETAIL-OFFLINE':
       return {
         kind: 'disconnected',
-        driverLabel: 'Tài xế Nguyễn Minh An',
-        lastUpdatedLabel: '14:20 · 15/08/2026',
+        driverLabel: 'Tài xế Trần Đình Trọng',
+        lastUpdatedLabel: '14:20 · 05/09/2026',
         message: 'Mất kết nối; vị trí mới chưa được nhận.',
         summary: 'Bản đồ lộ trình dùng vị trí gần nhất lúc 14:20.',
       };
     case 'C-DETAIL-MAP-ERROR':
       return {
         kind: 'map-error',
-        driverLabel: 'Tài xế Nguyễn Minh An',
+        driverLabel: 'Tài xế Trần Đình Trọng',
         message: 'Bản đồ chưa khả dụng; lộ trình dạng danh sách vẫn dùng được.',
       };
     default:
@@ -430,8 +440,8 @@ function trackingFor(scenarioId: CustomerDetailScenarioId): CustomerTrackingView
 function paymentFor(scenarioId: CustomerDetailScenarioId): CustomerPaymentView {
   const base = {
     status: 'UNPAID' as const,
-    amountLabel: '286.000 ₫',
-    sourceLabel: 'VietQR mô phỏng',
+    amountLabel: '480.000 ₫',
+    sourceLabel: 'Chuyển khoản VietQR',
     qrState: 'none' as const,
     notice: null,
     action: null,
@@ -458,43 +468,45 @@ function paymentFor(scenarioId: CustomerDetailScenarioId): CustomerPaymentView {
       return {
         ...base,
         status: 'QR_CREATED',
-        referenceLabel: 'LPRD-DEMO-260815-001',
-        expiresAtLabel: '15:00 · 15/08/2026',
+        referenceLabel: 'LP260905001',
+        expiresAtLabel: '15:00 · 05/09/2026',
         qrState: 'ready',
-        notice: 'Mã QR mô phỏng, không chứa payload thanh toán thật.',
+        qrPayload: '00020101021238540010A00000072701260006970422011209876543210208QRIBFTTA52045999530370454064800005802VN62150811LP2609050016304E8A2',
+        notice: 'Vui lòng quét mã VietQR bằng ứng dụng ngân hàng để hoàn tất thanh toán.',
       };
     case 'C-DETAIL-QR-EXPIRED':
       return {
         ...base,
         status: 'QR_CREATED',
-        referenceLabel: 'LPRD-DEMO-EXPIRED',
+        referenceLabel: 'LP260905001-EXP',
         expiresAtLabel: 'Đã hết hạn theo phản hồi hệ thống',
         qrState: 'expired',
-        notice: 'Mã QR đã hết hạn',
+        notice: 'Mã QR đã hết hạn. Vui lòng tạo mã QR mới để thanh toán.',
         action: { id: 'refresh-payment', label: 'Tạo mã QR mới', emphasis: 'secondary' },
       };
     case 'C-DETAIL-PAYMENT-PAID':
       return {
         ...base,
         status: 'PAID_MANUAL',
-        sourceLabel: 'Xác nhận thủ công bởi hệ thống',
-        notice: 'Thanh toán đã được xác nhận trong snapshot phản hồi.',
+        sourceLabel: 'MB Bank · Chuyển khoản VietQR',
+        notice: 'Thanh toán thành công. Đã xuất hóa đơn điện tử cho đơn hàng.',
       };
     case 'C-DETAIL-PAYMENT-FAILED':
       return {
         ...base,
         status: 'FAILED',
-        notice: 'Chưa thể tạo thanh toán; không hiển thị chi tiết provider.',
+        notice: 'Giao dịch chưa thành công hoặc quá hạn. Vui lòng thử tạo lại mã QR.',
         action: { id: 'retry-payment', label: 'Thử tạo lại mã QR', emphasis: 'secondary' },
       };
     case 'C-DETAIL-PAYMENT-CONFLICT':
       return {
         ...base,
         status: 'QR_CREATED',
-        referenceLabel: 'LPRD-DEMO-ACTIVE',
-        expiresAtLabel: '15:10 · 15/08/2026',
+        referenceLabel: 'LP260905001',
+        expiresAtLabel: '15:10 · 05/09/2026',
         qrState: 'ready',
-        notice: 'Hệ thống đã có một mã QR đang hoạt động; dữ liệu đã được làm mới.',
+        qrPayload: '00020101021238540010A00000072701260006970422011209876543210208QRIBFTTA52045999530370454064800005802VN62150811LP2609050016304E8A2',
+        notice: 'Đang có một mã QR thanh toán còn hiệu lực cho đơn hàng này.',
       };
     default:
       return base;
@@ -553,7 +565,7 @@ function detailOrder(scenarioId: CustomerDetailScenarioId): CustomerOrderDetailD
         : 'available';
   return {
     id: '11111111-1111-4111-8111-111111111001',
-    reference: 'LP-260815-001',
+    reference: 'LP-260905-001',
     status:
       scenarioId === 'C-DETAIL-CANCEL-SUCCESS'
         ? 'CANCELLED'
@@ -565,12 +577,15 @@ function detailOrder(scenarioId: CustomerDetailScenarioId): CustomerOrderDetailD
             ? 'ACCEPTED'
             : 'IN_TRANSIT',
     route: route(),
-    priceLabel: '286.000 ₫',
-    etaDurationSeconds: 1080,
+    priceLabel: '480.000 ₫',
+    etaDurationSeconds: 1620,
     etaSource: 'DEMO',
-    updatedAtLabel: '14:32 · 15/08/2026',
+    updatedAtLabel: '14:32 · 05/09/2026',
+    distanceMeters: 14800,
+    cargo: { note: '40 bao xi măng INSEE & 15 hộp gạch Catalan', weightKg: 2100 },
     tracking: trackingFor(scenarioId),
     payment: paymentFor(scenarioId),
+    invoice: null,
     media: {
       kind: mediaKind,
       label: 'Ảnh hàng hóa',
@@ -578,27 +593,27 @@ function detailOrder(scenarioId: CustomerDetailScenarioId): CustomerOrderDetailD
         mediaKind === 'empty'
           ? 'Chưa có ảnh hàng hóa.'
           : mediaKind === 'error'
-            ? 'Chưa tải được ảnh; metadata mô phỏng vẫn được giữ.'
-            : '2 ảnh mô phỏng · JPEG · không phải dữ liệu thật.',
+            ? 'Chưa tải được ảnh; vui lòng kiểm tra kết nối mạng.'
+            : '2 ảnh chụp biên nhận lúc nhận hàng · JPEG.',
     },
     history: [
       {
         id: 'history-requested',
         status: 'REQUESTED',
-        timestampLabel: '13:58',
-        description: 'Đơn đã được ghi nhận.',
+        timestampLabel: '13:45',
+        description: 'Đơn đã tạo và sẵn sàng điều phối.',
       },
       {
         id: 'history-accepted',
         status: 'ACCEPTED',
-        timestampLabel: '14:05',
-        description: 'Tài xế đã nhận đơn.',
+        timestampLabel: '13:52',
+        description: 'Tài xế Nguyễn Văn Hùng (59C-882.14) đã nhận đơn.',
       },
       {
         id: 'history-transit',
         status: 'IN_TRANSIT',
-        timestampLabel: '14:24',
-        description: 'Hàng đang được vận chuyển.',
+        timestampLabel: '14:15',
+        description: 'Tài xế đã nhận hàng và đang trên đường giao.',
       },
     ],
   };
@@ -631,7 +646,7 @@ export function createCustomerDetailFixture(
       scenarioId,
       kind: 'error',
       title: 'Không thể tải chi tiết đơn',
-      message: 'Hãy thử lại. Mã yêu cầu mô phỏng: REQ-C-DETAIL-01.',
+      message: 'Hãy thử lại. Mã yêu cầu: REQ-C-DETAIL-01.',
     });
   }
   if (scenarioId === 'C-DETAIL-PERMISSION') {

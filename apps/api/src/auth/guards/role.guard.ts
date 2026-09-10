@@ -25,13 +25,13 @@ export class RoleGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Record<string, unknown>>();
     const actor = getAuthenticatedActor(request);
     if (!actor) {
-      throw new DomainError('UNAUTHORIZED', 401, 'Authentication required');
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
     if (requiredRoles.includes(actor.role)) {
       return true;
     }
 
-    throw new DomainError('FORBIDDEN', 403, 'Forbidden');
+    throw new DomainError('FORBIDDEN', 403, 'Bạn không có quyền thực hiện thao tác này');
   }
 }

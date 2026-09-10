@@ -63,16 +63,13 @@ export type { CommandDialogProps, CommandDialogState, CommandReasonPolicy } from
 export { ResponsiveResultList } from './ResponsiveResultList';
 export type { ResponsiveResultItem, ResponsiveResultListProps } from './ResponsiveResultList';
 
+export { TruckDrivebyScene } from './TruckDrivebyScene';
+export type { TruckDrivebySceneProps, VehicleCategory } from './TruckDrivebyScene';
 
-
-
-
-
-
-
-
-
+export { TruckTransitOverlay } from './TruckTransitOverlay';
+export type { TruckTransitOverlayProps } from './TruckTransitOverlay';
 
 export { cn } from './cn';
 
+export * from './icons';
 

@@ -1,15 +1,14 @@
 import type { Role } from '@leopard/shared';
 import { useEffect, useState } from 'react';
 
-import { refreshSession } from '../api/http-client';
-import { sessionStore } from '../auth/session-store';
+import { refreshSession, sessionStore } from '@leopard/mobile-core';
 
 export type MobileHome =
-  | '/customer/orders'
-  | '/driver/orders'
-  | '/(public)/login';
+  | '/customer/home'
+  | '/(public)/login'
+  | '/(public)/onboarding';
 
-export type MobileProtectedRouteGroup = 'customer' | 'driver';
+export type MobileProtectedRouteGroup = 'customer';
 
 export type MobileRouteDecision =
   | {
@@ -36,9 +35,8 @@ type MobileRouteContext = {
 export function getMobileHome(role: Role): MobileHome {
   switch (role) {
     case 'CUSTOMER':
-      return '/customer/orders';
+      return '/customer/home';
     case 'DRIVER':
-      return '/driver/orders';
     case 'FLEET_OWNER':
     case 'ADMIN':
       return '/(public)/login';
@@ -66,7 +64,7 @@ export function getMobileRouteDecision({
     };
   }
 
-  if (role === 'FLEET_OWNER' || role === 'ADMIN') {
+  if (role === 'FLEET_OWNER' || role === 'ADMIN' || role === 'DRIVER') {
     return {
       canRenderProtectedContent: false,
       kind: 'denied',
@@ -75,7 +73,7 @@ export function getMobileRouteDecision({
     };
   }
 
-  const expectedRole: Role = routeGroup === 'customer' ? 'CUSTOMER' : 'DRIVER';
+  const expectedRole: Role = 'CUSTOMER';
 
   if (role !== expectedRole) {
     return {
@@ -134,4 +132,60 @@ export function useProtectedLayout(
   const role = sessionStore.isAuthenticated() ? sessionStore.getRole() : null;
 
   return getMobileRouteDecision({ isHydrated, role, routeGroup });
+}
+
+/**
+ * Hook for the root index route to hydrate the session and determine the
+ * target redirect path based on authentication state and user role.
+ */
+export function useRootSessionRouter(): {
+  isHydrated: boolean;
+  redirectTo: MobileHome | null;
+} {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initSession() {
+      try {
+        await sessionStore.hydrate();
+        const hasRefreshToken = (await sessionStore.getRefreshToken()) !== null;
+        if (hasRefreshToken && !sessionStore.getAccessToken()) {
+          const refreshed = await refreshSession();
+          if (!refreshed) {
+            await sessionStore.clearSession();
+          }
+        }
+      } catch {
+        await sessionStore.clearSession();
+      } finally {
+        if (!cancelled) {
+          setIsHydrated(true);
+        }
+      }
+    }
+
+    void initSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!isHydrated) {
+    return { isHydrated: false, redirectTo: null };
+  }
+
+  if (!sessionStore.isAuthenticated()) {
+    // Onboarding route disabled: splash goes straight to login.
+    return { isHydrated: true, redirectTo: '/(public)/login' };
+  }
+
+  const role = sessionStore.getRole();
+  if (role === 'CUSTOMER') {
+    return { isHydrated: true, redirectTo: '/customer/home' };
+  }
+
+  return { isHydrated: true, redirectTo: '/(public)/login' };
 }

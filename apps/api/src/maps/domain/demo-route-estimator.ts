@@ -14,7 +14,7 @@ const SECONDS_PER_MINUTE = 60;
 export class DemoRouteEstimator implements RouteEstimator {
   constructor(private readonly now: () => Date = () => new Date()) {}
 
-  async estimate(input: RouteInput): Promise<RouteEstimate> {
+  async estimate(input: RouteInput): Promise<RouteEstimate[]> {
     const calculatedAt = this.now();
     const routePoints = [input.pickup, ...input.stops, input.dropoff];
     const distanceM = Math.round(sumHaversineLegsMeters(routePoints) * ROAD_FACTOR);
@@ -23,16 +23,19 @@ export class DemoRouteEstimator implements RouteEstimator {
     );
     const estimatedArrivalAt = new Date(calculatedAt.getTime() + durationS * 1_000);
 
-    return {
-      polyline: encodePolyline(routePoints),
-      distanceM,
-      durationS,
-      estimatedArrivalAt: estimatedArrivalAt.toISOString(),
-      estimatedPriceVnd: 0,
-      source: 'DEMO',
-      isEstimate: true,
-      calculatedAt: calculatedAt.toISOString(),
-    };
+    return [
+      {
+        polyline: encodePolyline(routePoints),
+        distanceM,
+        durationS,
+        estimatedArrivalAt: estimatedArrivalAt.toISOString(),
+        estimatedPriceVnd: 0,
+        source: 'DEMO',
+        isEstimate: true,
+        calculatedAt: calculatedAt.toISOString(),
+        congestionLevel: 'unknown',
+      },
+    ];
   }
 }
 
