@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
@@ -7,16 +7,16 @@ const mockReplace = jest.fn();
 const mockUseProtectedLayout = jest.fn();
 
 jest.mock('expo-router', () => ({
-  Slot: () => null,
-  usePathname: () => '/customer/orders',
   useRouter: () => ({ replace: mockReplace }),
+  usePathname: () => '/customer/home',
+  Slot: () => null,
 }));
 
 jest.mock('./role-router', () => ({
   useProtectedLayout: (...args: unknown[]) => mockUseProtectedLayout(...args),
 }));
 
-// CustomerLayout mounts `useNotificationsBootstrap`, which transitively
+// CustomerLayout renders NotificationsRuntime, which unconditionally
 // imports the real `firebase/app` ESM package via `src/auth/firebase.ts` —
 // untransformable under Jest's default config. Mock it the same way
 // `src/auth/login-route.test.tsx` does; this suite only exercises the
@@ -29,7 +29,6 @@ jest.mock('@leopard/mobile-core/src/auth/firebase', () => ({
 }));
 
 import CustomerLayout from '../../app/customer/_layout';
-import DriverLayout from '../../app/driver/_layout';
 
 function renderWithQueryClient(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -57,18 +56,18 @@ describe('mobile protected layouts', () => {
     expect(screen.queryByText('Đang kiểm tra phiên và quyền truy cập.')).toBeNull();
   });
 
-  it('redirects a role-mismatched driver session to its role home', async () => {
+  it('redirects an unsupported role session to login', async () => {
     mockUseProtectedLayout.mockReturnValue({
       canRenderProtectedContent: false,
       kind: 'denied',
-      reason: 'role-mismatch',
-      redirectTo: '/customer/home',
+      reason: 'unsupported-mobile-role',
+      redirectTo: '/(public)/login',
     });
 
-    await renderWithQueryClient(<DriverLayout />);
+    await renderWithQueryClient(<CustomerLayout />);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/customer/home');
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
     });
   });
 });

@@ -89,13 +89,10 @@ describe('LoginRoute (Mobile)', () => {
     await screen.unmount();
   });
 
-  it.each([
-    { destination: '/customer/home', role: 'CUSTOMER' },
-    { destination: '/driver/orders', role: 'DRIVER' },
-  ] as const)('redirects $role to $destination after login', async ({ destination, role }) => {
-    const screen = await loginWithGoogleAs(role);
+  it('redirects CUSTOMER to /customer/home after login', async () => {
+    const screen = await loginWithGoogleAs('CUSTOMER');
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith(destination);
+      expect(mockReplace).toHaveBeenCalledWith('/customer/home');
     });
     await screen.unmount();
   });
@@ -108,15 +105,7 @@ describe('LoginRoute (Mobile)', () => {
     await screen.unmount();
   });
 
-  it('routes a driver to /driver/orders even when profileComplete is false', async () => {
-    const screen = await loginWithGoogleAs('DRIVER', false);
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/driver/orders');
-    });
-    await screen.unmount();
-  });
-
-  it.each([{ role: 'FLEET_OWNER' }, { role: 'ADMIN' }] as const)(
+  it.each([{ role: 'DRIVER' }, { role: 'FLEET_OWNER' }, { role: 'ADMIN' }] as const)(
     'returns unsupported $role sessions to the mobile login route',
     async ({ role }) => {
       const screen = await loginWithGoogleAs(role);

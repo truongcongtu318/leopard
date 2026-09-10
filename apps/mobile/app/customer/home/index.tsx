@@ -162,7 +162,7 @@ export default function CustomerHomePage() {
   const handleSwitchRole = async (targetRole: 'CUSTOMER' | 'DRIVER') => {
     await sessionStore.setSession('preview-acc-token', 'preview-ref-token', targetRole);
     if (targetRole === 'DRIVER') {
-      router.replace('/driver/orders');
+      router.replace('/(public)/login');
     } else {
       router.replace('/customer/home');
     }

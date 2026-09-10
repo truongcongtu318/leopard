@@ -65,14 +65,14 @@ describe('Root IndexRoute', () => {
     await screen.unmount();
   });
 
-  it('redirects DRIVER users to /driver/orders when splash finishes', async () => {
-    mockSessionRouterResult = { isHydrated: true, redirectTo: '/driver/orders' };
+  it('redirects DRIVER users to /(public)/login when splash finishes', async () => {
+    mockSessionRouterResult = { isHydrated: true, redirectTo: '/(public)/login' };
     const screen = await render(<IndexRoute />);
 
     fireEvent.press(screen.getByHintText('Nhấn để bỏ qua màn hình chào'));
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/driver/orders');
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
     });
     await screen.unmount();
   });

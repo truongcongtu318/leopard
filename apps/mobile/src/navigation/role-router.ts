@@ -5,11 +5,10 @@ import { refreshSession, sessionStore } from '@leopard/mobile-core';
 
 export type MobileHome =
   | '/customer/home'
-  | '/driver/orders'
   | '/(public)/login'
   | '/(public)/onboarding';
 
-export type MobileProtectedRouteGroup = 'customer' | 'driver';
+export type MobileProtectedRouteGroup = 'customer';
 
 export type MobileRouteDecision =
   | {
@@ -38,7 +37,6 @@ export function getMobileHome(role: Role): MobileHome {
     case 'CUSTOMER':
       return '/customer/home';
     case 'DRIVER':
-      return '/driver/orders';
     case 'FLEET_OWNER':
     case 'ADMIN':
       return '/(public)/login';
@@ -66,7 +64,7 @@ export function getMobileRouteDecision({
     };
   }
 
-  if (role === 'FLEET_OWNER' || role === 'ADMIN') {
+  if (role === 'FLEET_OWNER' || role === 'ADMIN' || role === 'DRIVER') {
     return {
       canRenderProtectedContent: false,
       kind: 'denied',
@@ -75,7 +73,7 @@ export function getMobileRouteDecision({
     };
   }
 
-  const expectedRole: Role = routeGroup === 'customer' ? 'CUSTOMER' : 'DRIVER';
+  const expectedRole: Role = 'CUSTOMER';
 
   if (role !== expectedRole) {
     return {
@@ -188,10 +186,6 @@ export function useRootSessionRouter(): {
   if (role === 'CUSTOMER') {
     return { isHydrated: true, redirectTo: '/customer/home' };
   }
-  if (role === 'DRIVER') {
-    return { isHydrated: true, redirectTo: '/driver/orders' };
-  }
 
   return { isHydrated: true, redirectTo: '/(public)/login' };
 }
-
