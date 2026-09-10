@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>LEOPARD Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --navy: #0B1E42;
+      --navy-dark: #061226;
+      --blue: #0284C7;
+      --blue-soft: #E0F2FE;
+      --amber: #F59E0B;
+      --green: #16A34A;
+      --bg: #FFFFFF;
+      --surface: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .app-screen {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .nav-bar {
+      padding-top: max(env(safe-area-inset-top, 14px), 14px);
+      padding-bottom: 8px;
+      padding-left: 20px;
+      padding-right: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #FFFFFF;
+      flex-shrink: 0;
+    }
+
+    .nav-back-btn {
+      background: none;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .nav-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .screen-body {
+      flex: 1;
+      padding: 10px 20px max(env(safe-area-inset-bottom, 16px), 16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .screen-body::-webkit-scrollbar { display: none; }
+
+    /* Segmented Switcher for Login / Register */
+    .auth-tab-capsule {
+      display: flex;
+      background: #F1F5F9;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 3px;
+      margin-top: 14px;
+      margin-bottom: 16px;
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 9px 0;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-muted);
+      border-radius: 11px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .auth-tab-btn.active {
+      background: #FFFFFF;
+      color: var(--navy);
+      box-shadow: 0 2px 8px rgba(11, 30, 66, 0.08);
+    }
+
+    .btn-primary {
+      height: 52px;
+      background: var(--navy);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 4px 14px rgba(11, 30, 66, 0.2);
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+      background: var(--navy-dark);
+    }
+
+    .btn-google {
+      height: 48px;
+      background: #FFFFFF;
+      color: #1E293B;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.15s ease;
+    }
+
+    .btn-google:active {
+      background: #F8FAFC;
+    }
+
+    .btn-amber {
+      height: 52px;
+      background: var(--amber);
+      color: #061226;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: 0.04em;
+    }
+
+    /* Unified Single-Line Phone Input */
+    .phone-input-row {
+      background: #F8FAFC;
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .phone-input-row:focus-within {
+      border-color: var(--blue);
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    }
+
+    .country-code-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .vn-flag-svg {
+      width: 20px;
+      height: 14px;
+      border-radius: 2px;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+
+    .code-text {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+
+    .input-divider {
+      width: 1px;
+      height: 20px;
+      background: #CBD5E1;
+      flex-shrink: 0;
+    }
+
+    .phone-native-input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      flex: 1;
+      height: 100%;
+      font-family: inherit;
+    }
+
+    /* Input box generic */
+    .input-box {
+      background: #F8FAFC;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .input-box:focus-within {
+      border-color: var(--blue);
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    }
+
+    .input-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      width: 100%;
+      font-family: inherit;
+    }
+
+    /* Virtual Keypad for High-Fidelity Mobile Feel */
+    .numpad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #F1F5F9;
+    }
+
+    .num-key {
+      height: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #F8FAFC;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0F172A;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .num-key:active {
+      background: #E2E8F0;
+    }
+
+    .num-sub {
+      font-size: 9px;
+      font-weight: 700;
+      color: #94A3B8;
+      letter-spacing: 0.1em;
+      margin-top: -2px;
+    }
+
+    .otp-cell {
+      flex: 1;
+      height: 50px;
+      border-radius: 14px;
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #0B1E42;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .otp-cell.filled {
+      border-color: #0284C7;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.14);
+    }
+
+    .chip-item {
+      flex: 1;
+      padding: 10px 6px;
+      text-align: center;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: #FFFFFF;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .chip-item.active {
+      border-color: var(--navy);
+      background: #F0F4F9;
+      color: var(--navy);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-screen" id="app-root"></div>
+
+  <script>
+    let currentRoute = 'login';
+    let authMode = 'login'; // 'login' | 'register'
+    let authStep = 'form';  // 'form' | 'otp'
+    let currentSlide = 0;
+
+    const onboardingSlides = [
+      {
+        badge: 'VẬN CHUYỂN HỎA TỐC',
+        img: './onboarding-1.jpg',
+        title: 'Giao Hàng Đường Dài &amp;<br>Đa Dạng Loại Xe Tải',
+        desc: 'Điều phối tức thì các dòng xe tải từ 500kg đến 15 tấn, tối ưu lộ trình và phục vụ vận chuyển hàng hóa an toàn, đúng giờ.'
+      },
+      {
+        badge: 'BỐC DỠ TẬN TÂM',
+        img: './onboarding-2.jpg',
+        title: 'Đội Ngũ Chuyên Nghiệp &amp;<br>Hỗ Trợ Bốc Xếp 2 Đầu',
+        desc: 'Tài xế và phụ xe được xác minh, hỗ trợ bốc xếp cẩn thận, dỡ hàng tận cửa và ký nhận biên bản điện tử POD an toàn.'
+      },
+      {
+        badge: 'TOÀN QUỐC 63 TỈNH THÀNH',
+        img: './onboarding-3.jpg',
+        title: 'Vận Tải Liên Tỉnh &amp;<br>Bảo Hiểm Hàng Hóa 100%',
+        desc: 'Kết nối chuỗi cung ứng toàn quốc với công nghệ ghép chuyến thông minh, tối ưu chi phí và cam kết bảo hiểm trọn gói.'
+      }
+    ];
+
+    function navigate(route) {
+      currentRoute = route;
+      render();
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      authStep = 'form';
+      render();
+    }
+
+    function nextSlide() {
+      if (currentSlide < 2) {
+        currentSlide++;
+        render();
+      } else {
+        navigate('login');
+      }
+    }
+
+    function render() {
+      const root = document.getElementById('app-root');
+
+      if (currentRoute === 'onboarding') {
+        const s = onboardingSlides[currentSlide];
+        root.innerHTML = `
+          <div class="screen-body" style="padding-top: max(env(safe-area-inset-top, 20px), 20px);">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 800; color: #0284C7; background: #E0F2FE; padding: 4px 12px; border-radius: 9999px;">
+                  ${s.badge}
+                </span>
+                <span style="font-size: 13px; font-weight: 700; color: #94A3B8; cursor: pointer;" onclick="navigate('login')">
+                  Bỏ qua ➔
+                </span>
+              </div>
+
+              <div style="margin-top: 16px; text-align: center;">
+                <div style="width: 100%; height: 260px; border-radius: 24px; overflow: hidden; background: #F8FAFC; border: 1px solid #E2E8F0;">
+                  <img src="${s.img}" alt="Vận tải" style="width: 100%; height: 100%; object-fit: cover;" />
+                </div>
+
+                <h1 style="font-size: 21px; font-weight: 800; color: #0B1E42; line-height: 1.3; margin-top: 18px; letter-spacing: -0.02em;">
+                  ${s.title}
+                </h1>
+                <p style="font-size: 13px; color: #475569; line-height: 1.5; margin-top: 8px; padding: 0 6px;">
+                  ${s.desc}
+                </p>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 18px;">
+                <span onclick="currentSlide=0; render()" style="cursor:pointer; width: ${currentSlide === 0 ? '24px' : '6px'}; height: 6px; border-radius: 9999px; background: ${currentSlide === 0 ? '#F59E0B' : '#CBD5E1'};"></span>
+                <span onclick="currentSlide=1; render()" style="cursor:pointer; width: ${currentSlide === 1 ? '24px' : '6px'}; height: 6px; border-radius: 9999px; background: ${currentSlide === 1 ? '#F59E0B' : '#CBD5E1'};"></span>
+                <span onclick="currentSlide=2; render()" style="cursor:pointer; width: ${currentSlide === 2 ? '24px' : '6px'}; height: 6px; border-radius: 9999px; background: ${currentSlide === 2 ? '#F59E0B' : '#CBD5E1'};"></span>
+              </div>
+
+              <button class="btn-primary" onclick="nextSlide()">
+                <span>${currentSlide === 2 ? 'Bắt đầu ngay' : 'Tiếp tục'}</span>
+                <span>➔</span>
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (currentRoute === 'login') {
+        if (authStep === 'otp') {
+          // BƯỚC NHẬP OTP (CHUNG CHO CẢ LOGIN & REGISTER)
+          root.innerHTML = `
+            <div class="nav-bar">
+              <button class="nav-back-btn" onclick="authStep='form'; render();">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="nav-title">${authMode === 'login' ? 'Xác Minh Đăng Nhập' : 'Xác Minh Đăng Ký'}</span>
+              <div style="width: 20px;"></div>
+            </div>
+
+            <div class="screen-body">
+              <div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #0B1E42; letter-spacing: -0.02em;">Nhập mã xác thực</h2>
+                <p style="font-size: 13px; color: #64748B; margin-top: 4px;">
+                  Mã 6 chữ số vừa gửi tới <strong>0908 123 456</strong>
+                  <span style="color: #0284C7; font-weight: 700; cursor: pointer; margin-left: 4px;" onclick="authStep='form'; render();">Đổi số</span>
+                </p>
+
+                <div style="display: flex; gap: 8px; margin-top: 20px;">
+                  <div class="otp-cell filled">8</div>
+                  <div class="otp-cell filled">8</div>
+                  <div class="otp-cell filled">4</div>
+                  <div class="otp-cell filled">2</div>
+                  <div class="otp-cell filled">0</div>
+                  <div class="otp-cell filled">1</div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 12px;">
+                  <span style="color: #64748B;">Chưa nhận được mã?</span>
+                  <span style="color: #0284C7; font-weight: 700; cursor: pointer;">Gửi lại qua SMS (38s)</span>
+                </div>
+              </div>
+
+              <div>
+                <button class="btn-primary" onclick="navigate('address')">
+                  <span>${authMode === 'login' ? 'Xác nhận đăng nhập' : 'Hoàn tất đăng ký & Thiết lập kho'}</span>
+                  <span>➔</span>
+                </button>
+
+                <div class="numpad-grid">
+                  <div class="num-key" onclick="void(0)">1<span class="num-sub">&nbsp;</span></div>
+                  <div class="num-key" onclick="void(0)">2<span class="num-sub">ABC</span></div>
+                  <div class="num-key" onclick="void(0)">3<span class="num-sub">DEF</span></div>
+                  <div class="num-key" onclick="void(0)">4<span class="num-sub">GHI</span></div>
+                  <div class="num-key" onclick="void(0)">5<span class="num-sub">JKL</span></div>
+                  <div class="num-key" onclick="void(0)">6<span class="num-sub">MNO</span></div>
+                  <div class="num-key" onclick="void(0)">7<span class="num-sub">PQRS</span></div>
+                  <div class="num-key" onclick="void(0)">8<span class="num-sub">TUV</span></div>
+                  <div class="num-key" onclick="void(0)">9<span class="num-sub">WXYZ</span></div>
+                  <div class="num-key" style="background:transparent;"></div>
+                  <div class="num-key" onclick="void(0)">0<span class="num-sub">+</span></div>
+                  <div class="num-key" style="background:transparent; font-size:16px;">⌫</div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (authMode === 'login') {
+          // BẢNG ĐĂNG NHẬP
+          root.innerHTML = `
+            <div class="nav-bar">
+              <button class="nav-back-btn" onclick="navigate('onboarding')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="nav-title">Tài Khoản</span>
+              <div style="width: 20px;"></div>
+            </div>
+
+            <div class="screen-body">
+              <div>
+                <div style="text-align: center; margin: 4px 0 10px;">
+                  <img src="./brand_login.png" alt="LEOPARD" style="width: 185px; height: auto;" />
+                </div>
+
+                <!-- Tabs Switcher: Đăng nhập vs Đăng ký -->
+                <div class="auth-tab-capsule">
+                  <button class="auth-tab-btn active" onclick="setAuthMode('login')">Đăng Nhập</button>
+                  <button class="auth-tab-btn" onclick="setAuthMode('register')">Đăng Ký Mới</button>
+                </div>
+
+                <h2 style="font-size: 19px; font-weight: 800; color: #0B1E42; letter-spacing: -0.02em;">Chào mừng trở lại</h2>
+                <p style="font-size: 13px; color: #64748B; margin-top: 3px;">Nhập số điện thoại để tiếp tục tạo cuốc xe</p>
+
+                <div class="field-group" style="margin-top: 18px;">
+                  <label class="field-label">SỐ ĐIỆN THOẠI DOANH NGHIỆP</label>
+                  <div class="phone-input-row">
+                    <div class="country-code-pill">
+                      <svg class="vn-flag-svg" viewBox="0 0 30 20">
+                        <rect width="30" height="20" fill="#DA251D"/>
+                        <polygon points="15,4 16.5,8.8 21.6,8.8 17.5,11.8 19,16.6 15,13.6 11,16.6 12.5,11.8 8.4,8.8 13.5,8.8" fill="#FFFF00"/>
+                      </svg>
+                      <span class="code-text">+84</span>
+                    </div>
+                    <div class="input-divider"></div>
+                    <input type="tel" value="0908 123 456" class="phone-native-input" />
+                  </div>
+                </div>
+
+                <button class="btn-primary" style="margin-top: 14px;" onclick="authStep='otp'; render();">
+                  <span>Tiếp tục nhận mã OTP</span>
+                  <span>➔</span>
+                </button>
+
+                <div style="display: flex; align-items: center; gap: 12px; margin: 18px 0;">
+                  <div style="flex: 1; height: 1px; background: #E2E8F0;"></div>
+                  <span style="font-size: 11px; font-weight: 700; color: #94A3B8;">HOẶC TIẾP TỤC VỚI</span>
+                  <div style="flex: 1; height: 1px; background: #E2E8F0;"></div>
+                </div>
+
+                <button class="btn-google" onclick="authStep='otp'; render();">
+                  <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                  <span>Google Workspace</span>
+                </button>
+              </div>
+
+              <div style="text-align: center; font-size: 12px; color: #64748B; margin-top: 14px;">
+                Chưa có tài khoản? <strong style="color: #0284C7; cursor: pointer;" onclick="setAuthMode('register')">Đăng ký tài khoản mới</strong>
+              </div>
+            </div>
+          `;
+        } else {
+          // BẢNG ĐĂNG KÝ MỚI
+          root.innerHTML = `
+            <div class="nav-bar">
+              <button class="nav-back-btn" onclick="setAuthMode('login')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="nav-title">Đăng Ký Tài Khoản</span>
+              <div style="width: 20px;"></div>
+            </div>
+
+            <div class="screen-body">
+              <div>
+                <!-- Tabs Switcher -->
+                <div class="auth-tab-capsule">
+                  <button class="auth-tab-btn" onclick="setAuthMode('login')">Đăng Nhập</button>
+                  <button class="auth-tab-btn active" onclick="setAuthMode('register')">Đăng Ký Mới</button>
+                </div>
+
+                <h2 style="font-size: 19px; font-weight: 800; color: #0B1E42; letter-spacing: -0.02em;">Đăng Ký Chủ Hàng</h2>
+                <p style="font-size: 13px; color: #64748B; margin-top: 3px; margin-bottom: 14px;">Tạo tài khoản để vận chuyển và xuất hóa đơn VAT</p>
+
+                <div class="field-group">
+                  <label class="field-label">SỐ ĐIỆN THOẠI ĐĂNG KÝ</label>
+                  <div class="phone-input-row">
+                    <div class="country-code-pill">
+                      <svg class="vn-flag-svg" viewBox="0 0 30 20">
+                        <rect width="30" height="20" fill="#DA251D"/>
+                        <polygon points="15,4 16.5,8.8 21.6,8.8 17.5,11.8 19,16.6 15,13.6 11,16.6 12.5,11.8 8.4,8.8 13.5,8.8" fill="#FFFF00"/>
+                      </svg>
+                      <span class="code-text">+84</span>
+                    </div>
+                    <div class="input-divider"></div>
+                    <input type="tel" value="0938 888 999" class="phone-native-input" />
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label class="field-label">HỌ VÀ TÊN NGƯỜI ĐẠI DIỆN</label>
+                  <div class="input-box">
+                    <input type="text" value="Trương Công Tú" />
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label class="field-label">TÊN DOANH NGHIỆP / CỬA HÀNG</label>
+                  <div class="input-box">
+                    <input type="text" value="Công ty TNHH Vận Tải Á Châu" />
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label class="field-label">MÃ SỐ THUẾ (MST - ĐỂ XUẤT VAT)</label>
+                  <div class="input-box">
+                    <input type="text" value="0312345678" style="font-family: var(--mono);" />
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label class="field-label">EMAIL KẾ TOÁN NHẬN HÓA ĐƠN</label>
+                  <div class="input-box">
+                    <input type="email" value="ketoan@achau-logistics.vn" />
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; align-items: flex-start; margin-top: 4px;">
+                  <div style="width: 16px; height: 16px; border-radius: 4px; background: #0B1E42; color: #FFF; font-size: 10px; display: flex; align-items: center; justify-content: center; margin-top: 2px; flex-shrink: 0;">✓</div>
+                  <span style="font-size: 11px; color: #475569; line-height: 1.4;">
+                    Tôi đồng ý với <strong style="color: #0284C7;">Điều khoản dịch vụ</strong> và chính sách bảo hiểm 100% của LEOPARD.
+                  </span>
+                </div>
+              </div>
+
+              <div style="margin-top: 16px;">
+                <button class="btn-primary" onclick="authStep='otp'; render();">
+                  <span>Tiếp tục xác thực OTP</span>
+                  <span>➔</span>
+                </button>
+                <div style="text-align: center; font-size: 12px; color: #64748B; margin-top: 10px;">
+                  Đã có tài khoản? <strong style="color: #0284C7; cursor: pointer;" onclick="setAuthMode('login')">Đăng nhập ngay</strong>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      } else if (currentRoute === 'address') {
+        // MÀN THIẾT LẬP KHO BÃI
+        root.innerHTML = `
+          <div class="nav-bar">
+            <button class="nav-back-btn" onclick="navigate('login')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="nav-title">Kho Hàng Mặc Định</span>
+            <div style="width: 20px;"></div>
+          </div>
+
+          <div class="screen-body">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 800; color: #0B1E42;">Địa chỉ bốc hàng</h2>
+              <p style="font-size: 13px; color: #475569; margin-top: 3px; margin-bottom: 14px;">Lưu vị trí thường xuyên để gọi xe nhanh 1 chạm</p>
+
+              <div class="input-box" style="border-color: #0284C7; margin-bottom: 12px;">
+                <span style="font-size: 15px;">🔍</span>
+                <input type="text" value="120 Trường Chinh, P.12, Q. Tân Bình" />
+              </div>
+
+              <!-- Map Pin Preview -->
+              <div style="height: 150px; border-radius: 16px; background: #E2E8F0; border: 1px solid #CBD5E1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                <div style="position: absolute; top: 60px; left: 0; right: 0; height: 18px; background: #FFF; transform: rotate(-10deg);"></div>
+                <div style="position: absolute; top: 0; bottom: 0; left: 180px; width: 20px; background: #FFF; transform: rotate(15deg);"></div>
+                <div style="z-index: 10; text-align: center;">
+                  <div style="background: #0B1E42; color: #FFF; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 6px; margin-bottom: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">KHO TÂN BÌNH</div>
+                  <div style="width: 16px; height: 16px; border-radius: 50%; background: #0284C7; border: 3px solid #FFF; margin: 0 auto;"></div>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">LOẠI ĐỊA ĐIỂM</label>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                  <div class="chip-item active">🏢 Kho chính</div>
+                  <div class="chip-item">🏬 Văn phòng</div>
+                  <div class="chip-item">🏠 Kho phụ</div>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">THỦ KHO GIAO NHẬN HÀNG</label>
+                <div class="input-box" style="margin-top: 4px;">
+                  <input type="text" value="Nguyễn Văn Hải • 0912 345 678" />
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-amber" style="margin-top: 16px;" onclick="alert('Đã lưu kho bãi thành công! Tài khoản sẵn sàng gọi xe.'); currentSlide=0; setAuthMode('login'); navigate('onboarding');">
+              <span>Lưu kho &amp; Bắt đầu đặt xe</span>
+              <span>✓</span>
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
