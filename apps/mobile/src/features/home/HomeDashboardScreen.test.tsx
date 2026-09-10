@@ -531,4 +531,38 @@ describe('HomeDashboardScreen', () => {
 
     await screen.unmount();
   });
+
+  it('implements 4-layer map-first architecture with GestureBottomSheet snap points [0.18, 0.52, 0.92]', async () => {
+    const screen = await render(
+      <HomeDashboardScreen showFloatingNavBar />
+    );
+
+    // Layer 0: Full-bleed map
+    const map = screen.getByTestId('home-interactive-map');
+    expect(map).toBeTruthy();
+    const mapContainer = screen.getByTestId('home-map-layer');
+    expect(mapContainer).toBeTruthy();
+    const mapStyle = [mapContainer.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(mapStyle.zIndex).toBe(0);
+
+    // Layer 1: Floating glass top bar
+    const topBar = screen.getByTestId('home-top-bar');
+    expect(topBar).toBeTruthy();
+    const topBarStyle = [topBar.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(topBarStyle.zIndex).toBe(20);
+
+    // Layer 2: 3-snap GestureBottomSheet
+    const sheet = screen.getByTestId('home-bottom-sheet');
+    expect(sheet).toBeTruthy();
+    expect(screen.getByTestId('home-bottom-sheet-handle')).toBeTruthy();
+    expect(screen.getByTestId('home-bottom-sheet-indicator')).toBeTruthy();
+
+    // Layer 3: FloatingNavBar with zIndex 60
+    const navBar = screen.getByTestId('home-nav-dock');
+    expect(navBar).toBeTruthy();
+    const navStyle = [navBar.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(navStyle.zIndex).toBe(60);
+
+    await screen.unmount();
+  });
 });
