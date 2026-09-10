@@ -20,6 +20,25 @@ function isBrowser(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 }
 
+function secureRandomIdSuffix(length = 8): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = new Uint8Array(length);
+
+  if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < length; i += 1) {
+      bytes[i] = (Date.now() + i) & 0xff;
+    }
+  }
+
+  let out = '';
+  for (let i = 0; i < length; i += 1) {
+    out += alphabet[bytes[i] % alphabet.length];
+  }
+  return out;
+}
+
 export const addressStore = {
   getAddresses(): SavedAddress[] {
     if (isBrowser()) {
@@ -58,7 +77,7 @@ export const addressStore = {
 
   saveAddress(addr: Omit<SavedAddress, 'id'> & { id?: string }): SavedAddress {
     const list = this.getAddresses();
-    const id = addr.id || `addr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const id = addr.id || `addr_${Date.now()}_${secureRandomIdSuffix(8)}`;
     const newAddress: SavedAddress = {
       ...addr,
       id,
