@@ -17,11 +17,16 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
   - Follows the NexaFleet Modern Bento layout with real-time tracking map and operational statistics.
   - *Note:* Refer to Next.js guides in `node_modules/next/dist/docs/` for breaking conventions in this version.
 - **`apps/mobile` (package: `mobile`)**:
-  - Expo (v57) / React Native (v0.86) app with Expo Router for Customer and Driver flows.
+  - Expo (v57) / React Native (v0.86) app with Expo Router for Customer flows.
+  - Map-first Lalamove-style booking, Fleet Matrix (Van 500kg, Truck 1.25T, 2.5T, Ba gác), Route Spine, VietQR payOS, and VAT e-invoicing.
   - TanStack React Query for caching, React Hook Form for input handling.
+- **`apps/driver` (package: `driver`)**:
+  - Expo (v57) / React Native (v0.86) standalone app with Expo Router for Driver flows.
+  - Field Cockpit, hero duty control switch, 15s push dispatch offers, 4-stage lifecycle (`ACCEPTED ➔ PICKING_UP ➔ IN_TRANSIT ➔ DELIVERED`), electronic POD with signature capture.
 
 ### Shared Packages (`packages/`)
 
+- **`packages/mobile-core` (`@leopard/mobile-core`)**: Shared mobile foundation, brand theme tokens, 2026 Liquid Glass floating dock, and UI primitives for Customer and Driver apps.
 - **`packages/shared` (`@leopard/shared`)**: Pure TypeScript contracts, enums (`Role`, `OrderStatus`, `PaymentStatus`), and DTO interfaces (no framework dependencies).
 - **`packages/validators` (`@leopard/validators`)**: Shared Zod schemas for request validation.
 - **`packages/ui` (`@leopard/ui`)**: Shared web UI primitives for Admin/Web (Tailwind CSS based, presentation only, no business logic).
@@ -86,8 +91,19 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 - Run a single test: `pnpm --filter mobile test -- src/smoke.test.tsx`
 - Run E2E tests (Maestro): `pnpm --filter mobile test:e2e`
 
+### Driver App (`apps/driver`, filter: `driver`)
+
+- Start Expo dev server: `pnpm --filter driver start`
+- Typecheck: `pnpm --filter driver typecheck`
+- Lint: `pnpm --filter driver lint`
+- Run all tests: `pnpm --filter driver test`
+
 ### Shared Packages
 
+- `@leopard/mobile-core`:
+  - Test (Jest): `pnpm --filter @leopard/mobile-core test`
+  - Typecheck: `pnpm --filter @leopard/mobile-core typecheck`
+  - Lint: `pnpm --filter @leopard/mobile-core lint`
 - `@leopard/shared`:
   - Test (Vitest): `pnpm --filter @leopard/shared test`
   - Single test: `pnpm --filter @leopard/shared test -- src/index.test.ts`
