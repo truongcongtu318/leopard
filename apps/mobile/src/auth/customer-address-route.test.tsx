@@ -8,13 +8,14 @@ import { addressStore } from '../features/customer/addresses/address-store';
 const mockReplace = jest.fn();
 const mockPush = jest.fn();
 const mockBack = jest.fn();
+const mockCanGoBack = jest.fn();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     replace: mockReplace,
     push: mockPush,
     back: mockBack,
-    canGoBack: () => true,
+    canGoBack: () => mockCanGoBack(),
   }),
 }));
 
@@ -27,6 +28,7 @@ jest.mock('@leopard/mobile-core/src/api/http-client', () => ({
 describe('CustomerAddAddressScreen (customer-address route)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCanGoBack.mockReturnValue(true);
     addressStore.clearAll();
     (httpClient.get as any).mockResolvedValue({ results: [] });
   });
@@ -49,6 +51,16 @@ describe('CustomerAddAddressScreen (customer-address route)', () => {
     expect(screen.getByTestId('ca-default-checkbox')).toBeTruthy();
     expect(screen.getByTestId('ca-submit-btn')).toBeTruthy();
 
+    await screen.unmount();
+  });
+
+  it('renders warehouse category chips and contact person fields', async () => {
+    const screen = await render(<CustomerAddAddressScreen />);
+    expect(screen.getByText('🏢 Kho chính')).toBeTruthy();
+    expect(screen.getByText('🏬 Văn phòng')).toBeTruthy();
+    expect(screen.getByText('🏠 Kho phụ')).toBeTruthy();
+    expect(screen.getByText('THỦ KHO GIAO NHẬN')).toBeTruthy();
+    expect(screen.getByText('Lưu kho & Vào trang chủ')).toBeTruthy();
     await screen.unmount();
   });
 
@@ -112,6 +124,17 @@ describe('CustomerAddAddressScreen (customer-address route)', () => {
     await fireEvent.press(screen.getByTestId('ca-back-btn'));
 
     expect(mockBack).toHaveBeenCalled();
+    await screen.unmount();
+  });
+
+  it('navigates to /customer/home on save when canGoBack is false', async () => {
+    mockCanGoBack.mockReturnValue(false);
+    const screen = await render(<CustomerAddAddressScreen />);
+
+    await fireEvent.changeText(screen.getByTestId('ca-label-input'), 'Kho Tân Bình');
+    await fireEvent.press(screen.getByTestId('ca-submit-btn'));
+
+    expect(mockReplace).toHaveBeenCalledWith('/customer/home');
     await screen.unmount();
   });
 });

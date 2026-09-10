@@ -262,8 +262,8 @@ export default function CustomerAddAddressScreen() {
       : selectedAddress;
 
     const labelMap: Record<AddressCategory, string> = {
-      WAREHOUSE: 'Kho hàng',
-      HOME: 'Nhà riêng',
+      WAREHOUSE: 'Kho chính',
+      HOME: 'Kho phụ',
       OFFICE: 'Văn phòng',
       OTHER: 'Địa chỉ đã lưu',
     };
@@ -465,9 +465,9 @@ export default function CustomerAddAddressScreen() {
             />
           </View>
 
-          {/* 2. Người liên hệ & Số điện thoại (tùy chọn) */}
+          {/* 2. Người liên hệ & Số điện thoại */}
           <View style={styles.sectionGroup}>
-            <Text style={styles.sectionTitle}>Thông tin liên hệ tại địa chỉ này (tùy chọn)</Text>
+            <Text style={styles.sectionTitle}>THỦ KHO GIAO NHẬN</Text>
             <View style={styles.contactRow}>
               <View style={styles.contactCol}>
                 <View style={styles.contactInputWrap}>
@@ -675,9 +675,9 @@ export default function CustomerAddAddressScreen() {
             <View style={styles.categoryChipsRow}>
               {(
                 [
-                  { key: 'WAREHOUSE', label: 'Kho hàng', Icon: IconWarehouse, testID: 'ca-chip-warehouse' },
-                  { key: 'HOME', label: 'Nhà riêng', Icon: IconHome, testID: 'ca-chip-home' },
-                  { key: 'OFFICE', label: 'Văn phòng', Icon: IconOffice, testID: 'ca-chip-office' },
+                  { key: 'WAREHOUSE', label: '🏢 Kho chính', Icon: IconWarehouse, testID: 'ca-chip-warehouse' },
+                  { key: 'OFFICE', label: '🏬 Văn phòng', Icon: IconOffice, testID: 'ca-chip-office' },
+                  { key: 'HOME', label: '🏠 Kho phụ', Icon: IconHome, testID: 'ca-chip-home' },
                   { key: 'OTHER', label: 'Khác', Icon: IconTag, testID: 'ca-chip-other' },
                 ] as const
               ).map((chip) => {
@@ -695,7 +695,7 @@ export default function CustomerAddAddressScreen() {
                     testID={chip.testID}
                   >
                     <IconComp
-                      color={active ? '#2563EB' : '#64748B'}
+                      color={active ? '#D97706' : '#64748B'}
                       size={15}
                       strokeWidth={2}
                     />
@@ -727,13 +727,13 @@ export default function CustomerAddAddressScreen() {
 
         {/* ================= PRIMARY ACTION ================= */}
         <Pressable
-          accessibilityLabel="Lưu vào sổ địa chỉ"
+          accessibilityLabel="Lưu kho & Vào trang chủ"
           accessibilityRole="button"
           onPress={handleSaveAddress}
           style={({ pressed }) => [styles.primaryBtn, pressed && styles.pressed]}
           testID="ca-submit-btn"
         >
-          <Text style={styles.primaryBtnText}>Lưu vào sổ địa chỉ</Text>
+          <Text style={styles.primaryBtnText}>Lưu kho & Vào trang chủ</Text>
         </Pressable>
       </View>
     </ScrollView>
@@ -1200,8 +1200,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   chipActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#2563EB',
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
   },
   chipText: {
     fontSize: 13,
@@ -1209,7 +1209,7 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   chipTextActive: {
-    color: '#2563EB',
+    color: '#B45309',
     fontWeight: '700',
   },
 
@@ -1231,8 +1231,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   checkboxOn: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: '#F59E0B',
+    borderColor: '#F59E0B',
   },
   checkboxTick: {
     color: '#FFFFFF',
@@ -1248,12 +1248,12 @@ const styles = StyleSheet.create({
 
   /* Action Buttons */
   primaryBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#F59E0B',
     borderRadius: 16,
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: '#F59E0B',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.28,
     shadowRadius: 8,
