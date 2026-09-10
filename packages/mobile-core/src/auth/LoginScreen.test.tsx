@@ -56,7 +56,7 @@ describe('LoginScreen (Mobile web auth)', () => {
     const screen = await render(<LoginScreen />);
     expect(screen.getByRole('header', { name: 'Đăng nhập' })).toBeTruthy();
     expect(screen.getByLabelText('Số điện thoại')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Gửi mã OTP' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeTruthy();
     expect(screen.getByLabelText('Đăng nhập với Google')).toBeTruthy();
     await screen.unmount();
   });
@@ -66,6 +66,28 @@ describe('LoginScreen (Mobile web auth)', () => {
     expect(screen.getByRole('alert').props.children).toContain(
       'Phiên làm việc đã hết hạn',
     );
+    await screen.unmount();
+  });
+
+  it('renders single-line phone input and transitions to OTP upon submission', async () => {
+    const screen = await render(<LoginScreen />);
+    expect(screen.getByText('+84')).toBeTruthy();
+    expect(screen.queryByLabelText('Mã OTP')).toBeNull();
+
+    await fireEvent.changeText(screen.getByLabelText('Số điện thoại'), '0900000001');
+    await fireEvent.press(screen.getByRole('button', { name: 'Tiếp tục' }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Mã OTP')).toBeTruthy();
+      expect(screen.getByText(/00:60/)).toBeTruthy();
+    });
+    await screen.unmount();
+  });
+
+  it('does not render demo account buttons by default in production UI', async () => {
+    const screen = await render(<LoginScreen />);
+    expect(screen.queryByText('Tài khoản demo')).toBeNull();
+    expect(screen.queryByText('Demo Customer')).toBeNull();
     await screen.unmount();
   });
 
@@ -105,7 +127,7 @@ describe('LoginScreen (Mobile web auth)', () => {
     const screen = await render(<LoginScreen onLoginSuccess={onLoginSuccess} />);
 
     await fireEvent.changeText(screen.getByLabelText('Số điện thoại'), '0900000001');
-    await fireEvent.press(screen.getByRole('button', { name: 'Gửi mã OTP' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Tiếp tục' }));
 
     await waitFor(() => {
       expect(mockSendPhoneOtp).toHaveBeenCalledWith(
@@ -128,10 +150,10 @@ describe('LoginScreen (Mobile web auth)', () => {
     await screen.unmount();
   });
 
-  it('disables the send OTP button for invalid phone numbers before calling Firebase', async () => {
+  it('disables the continue button for invalid phone numbers before calling Firebase', async () => {
     const screen = await render(<LoginScreen />);
     await fireEvent.changeText(screen.getByLabelText('Số điện thoại'), '123');
-    const sendButton = screen.getByRole('button', { name: 'Gửi mã OTP' });
+    const sendButton = screen.getByRole('button', { name: 'Tiếp tục' });
     expect(sendButton.props.accessibilityState?.disabled).toBe(true);
     expect(mockSendPhoneOtp).not.toHaveBeenCalled();
     await screen.unmount();
