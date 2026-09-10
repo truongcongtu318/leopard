@@ -256,7 +256,6 @@ export function DriverApplicationsScreen() {
                               {DOCUMENT_LABELS[doc.type] ?? doc.type}
                             </span>
                             <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 alt={DOCUMENT_LABELS[doc.type] ?? doc.type}
                                 src={doc.url}

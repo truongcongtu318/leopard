@@ -60,7 +60,7 @@ export class AdminQueryService {
 
     const items: AdminUserSummaryDto[] = users.map((u: User) => ({
       id: u.id,
-      phone: u.phone,
+      phone: u.phone ?? '',
       role: u.role,
       status: u.status,
       createdAt: u.createdAt.toISOString(),
@@ -168,8 +168,8 @@ export class AdminQueryService {
     };
     const items: FleetDriverSummaryDto[] = users.map((u: DriverWithRelations) => ({
       id: u.id,
-      name: u.phone,
-      phone: u.phone,
+      name: u.name ?? u.phone ?? '',
+      phone: u.phone ?? '',
       status: u.status,
       availability: u.driverProfile?.availability ?? 'OFFLINE',
       vehicleType: u.driverProfile?.vehicleType ?? 'MOTORBIKE',
@@ -214,7 +214,7 @@ export class AdminQueryService {
 
     type OrderWithRelations = Order & {
       driver: User | null;
-      customer: { phone: string };
+      customer: { phone: string | null };
       stops: Array<{ id: string; type: string; sequence: number; address: string }>;
       paymentIntents: Array<{ status: string }>;
     };
@@ -246,11 +246,11 @@ export class AdminQueryService {
       return {
         id: o.id,
         code: `LP-${suffix}`,
-       status: o.status,
-       driverId: o.driverId ?? undefined,
-       driverName: o.driver?.phone,
-       customerPhone: o.customer.phone,
-       pickupLabel: pickup?.address ?? '',
+        status: o.status,
+        driverId: o.driverId ?? undefined,
+        driverName: (o.driver?.name ?? o.driver?.phone) ?? undefined,
+        customerPhone: o.customer.phone ?? null,
+        pickupLabel: pickup?.address ?? '',
        pickupLat: pickupCoord?.lat ?? null,
        pickupLng: pickupCoord?.lng ?? null,
        dropoffLabel: dropoff?.address ?? '',

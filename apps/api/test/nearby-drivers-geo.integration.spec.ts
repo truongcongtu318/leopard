@@ -160,7 +160,6 @@ describeRealDb(
         );
         const durationMs = Date.now() - startedAt;
 
-        // eslint-disable-next-line no-console
         console.log(
           `[nearby-drivers benchmark] ST_DWithin over ${SEED_COUNT} drivers took ${durationMs}ms, returned ${results.length} rows`,
         );

@@ -17,10 +17,12 @@ export default [
     },
   },
   {
-    files: ['babel.config.js'],
+    files: ['babel.config.js', 'metro.config.js'],
     languageOptions: {
       globals: {
         module: 'readonly',
+        require: 'readonly',
+        __dirname: 'readonly',
       },
       sourceType: 'commonjs',
     },

@@ -10,6 +10,7 @@ export interface LoginFormProps {
   allowDemo?: boolean;
   sessionExpired?: boolean;
   onSuccess?: (role: string) => void;
+  onRoleChange?: (role: "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN") => void;
 }
 
 interface AuthResponse {
@@ -43,6 +44,7 @@ export function LoginForm({
   allowDemo = process.env.NEXT_PUBLIC_ALLOW_DEMO_AUTH !== "false",
   sessionExpired = false,
   onSuccess,
+  onRoleChange,
 }: LoginFormProps) {
   const [tokenInput, setTokenInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,6 +97,7 @@ export function LoginForm({
   const handleDemoLogin = async (accountId: string, defaultRole: string) => {
     if (isSubmitting) return;
 
+    onRoleChange?.(defaultRole as "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN");
     setIsSubmitting(true);
     setErrorMessage(null);
 
@@ -219,6 +222,8 @@ export function LoginForm({
                   data-testid={acc.testId}
                   disabled={isSubmitting}
                   onClick={() => handleDemoLogin(acc.id, acc.role)}
+                  onMouseEnter={() => onRoleChange?.(acc.role as "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN")}
+                  onFocus={() => onRoleChange?.(acc.role as "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN")}
                   className="group flex flex-col items-start gap-1.5 rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-3 text-left transition-all hover:border-brand/40 hover:bg-white hover:shadow-xs active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
                 >
                   <div className="flex w-full items-center justify-between">
