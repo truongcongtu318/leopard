@@ -198,30 +198,19 @@ export const GestureBottomSheet = forwardRef<
         },
         onPanResponderRelease: (_, gestureState) => {
           const currentY = currentTranslateY.current + gestureState.dy;
-          let targetIndex = activeIndexRef.current;
+          const projectedY = currentY + (gestureState.vy || 0) * 50;
 
-          // Quick swipe gesture detection
-          if (gestureState.vy < -0.5) {
-            // Swiped up -> snap to higher snap point (index + 1)
-            targetIndex = Math.min(
-              safeSnapPoints.length - 1,
-              activeIndexRef.current + 1
-            );
-          } else if (gestureState.vy > 0.5) {
-            // Swiped down -> snap to lower snap point (index - 1)
-            targetIndex = Math.max(0, activeIndexRef.current - 1);
-          } else {
-            // Nearest snap point based on distance
-            let closestDist = Infinity;
-            safeSnapPoints.forEach((snap, idx) => {
-              const snapY = getTranslateYForSnap(snap);
-              const dist = Math.abs(currentY - snapY);
-              if (dist < closestDist) {
-                closestDist = dist;
-                targetIndex = idx;
-              }
-            });
-          }
+          let targetIndex = 0;
+          let closestDist = Infinity;
+
+          safeSnapPoints.forEach((snap, idx) => {
+            const snapY = getTranslateYForSnap(snap);
+            const dist = Math.abs(projectedY - snapY);
+            if (dist < closestDist) {
+              closestDist = dist;
+              targetIndex = idx;
+            }
+          });
 
           animateToSnap(targetIndex);
         },
@@ -280,10 +269,11 @@ const styles = StyleSheet.create({
   },
   handleArea: {
     width: '100%',
+    minHeight: 44,
+    justifyContent: 'center',
     paddingTop: 10,
     paddingBottom: 14,
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   handleIndicator: {

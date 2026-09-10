@@ -1,5 +1,5 @@
 import React, { createRef } from 'react';
-import { Text } from 'react-native';
+import { PanResponder, Text } from 'react-native';
 import { render, act } from '@testing-library/react-native';
 import { GestureBottomSheet, GestureBottomSheetRef } from './GestureBottomSheet';
 
@@ -48,6 +48,20 @@ describe('GestureBottomSheet', () => {
     expect(flatStyle.backgroundColor).toBe('#CBD5E1');
   });
 
+  it('satisfies 44px minimum touch target height on handleArea', async () => {
+    const screen = await render(
+      <GestureBottomSheet testID="sheet">
+        <Text>Content</Text>
+      </GestureBottomSheet>
+    );
+
+    const handle = screen.getByTestId('sheet-handle');
+    const flatStyle = [handle.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+
+    expect(flatStyle.minHeight).toBe(44);
+    expect(flatStyle.justifyContent).toBe('center');
+  });
+
   it('supports initialSnapIndex and attaches PanResponder handlers', async () => {
     const onSnapChange = jest.fn();
     const screen = await render(
@@ -69,6 +83,44 @@ describe('GestureBottomSheet', () => {
     expect(handle.props.onResponderGrant).toBeDefined();
     expect(handle.props.onResponderMove).toBeDefined();
     expect(handle.props.onResponderRelease).toBeDefined();
+  });
+
+  it('projects destination with velocity and snaps to nearest snap point on gesture release', async () => {
+    jest.useFakeTimers();
+    const panSpy = jest.spyOn(PanResponder, 'create');
+    const onSnapChange = jest.fn();
+
+    await render(
+      <GestureBottomSheet
+        testID="sheet"
+        containerHeight={800}
+        snapPoints={[0.18, 0.52, 0.92]}
+        initialSnapIndex={1}
+        onSnapChange={onSnapChange}
+      >
+        <Text>Content</Text>
+      </GestureBottomSheet>
+    );
+
+    const panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
+    expect(panConfig.onPanResponderRelease).toBeDefined();
+
+    // Fast swipe up from 0.52 (384px) with negative dy and vy -> projected to 0.92 (64px)
+    await act(async () => {
+      panConfig.onPanResponderRelease({}, { dy: -150, vy: -2.0 });
+      jest.runAllTimers();
+    });
+    expect(onSnapChange).toHaveBeenCalledWith(2, 0.92);
+
+    // Fast swipe down from 0.92 (64px) with positive dy and vy -> projected to lowest snap 0.18 (656px)
+    await act(async () => {
+      panConfig.onPanResponderRelease({}, { dy: 350, vy: 3.0 });
+      jest.runAllTimers();
+    });
+    expect(onSnapChange).toHaveBeenCalledWith(0, 0.18);
+
+    panSpy.mockRestore();
+    jest.useRealTimers();
   });
 
   it('provides imperative ref methods snapToIndex, expand, and collapse', async () => {
