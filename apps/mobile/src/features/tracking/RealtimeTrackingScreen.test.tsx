@@ -81,7 +81,7 @@ describe('RealtimeTrackingScreen', () => {
     );
 
     expect(screen.getByText('Tiến trình giao hàng')).toBeTruthy();
-    expect(screen.getByText('Thời gian dự kiến: 10 phút')).toBeTruthy();
+    expect(screen.getByText('ETA dự kiến: 10 phút')).toBeTruthy();
     expect(screen.getByText('11.0 km đã đi')).toBeTruthy();
     expect(screen.getByText('1.5 km còn lại')).toBeTruthy();
 
@@ -149,6 +149,46 @@ describe('RealtimeTrackingScreen', () => {
     );
 
     expect(screen.queryByText('Ảnh xác nhận giao hàng')).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('renders live telemetry tracking and vat invoice action button', async () => {
+    const onViewInvoice = jest.fn();
+    const screen = await render(
+      <RealtimeTrackingScreen
+        driver={mockDriver}
+        onViewInvoice={onViewInvoice}
+        trip={mockTrip}
+      />,
+    );
+
+    expect(screen.getByText(/ETA dự kiến/)).toBeTruthy();
+    expect(screen.getByText('Hóa đơn điện tử VAT 8%')).toBeTruthy();
+
+    const invoiceBtn = screen.getByLabelText('Tải hóa đơn VAT');
+    await fireEvent.press(invoiceBtn);
+    expect(onViewInvoice).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('renders driver card with 4.98★ rating and masked phone action', async () => {
+    const driverVip: DriverInfo = {
+      ...mockDriver,
+      rating: 4.98,
+      phone: '0901234567',
+    };
+
+    const screen = await render(
+      <RealtimeTrackingScreen
+        driver={driverVip}
+        trip={mockTrip}
+      />,
+    );
+
+    expect(screen.getByText('⭐ 4.98')).toBeTruthy();
+    expect(screen.getByText('0901 *** 567')).toBeTruthy();
 
     await screen.unmount();
   });

@@ -9,7 +9,8 @@ import {
   View,
 } from 'react-native';
 
-import { colors, layout, leopardElevation, leopardPalette, leopardRadius, radius, spacing, typography, IconCameraProof, IconLocationPin, IconMessage, IconPhone, IconQrPayment, IconRoleDriver, IconSpeedTruck, RealInteractiveMap } from '@leopard/mobile-core';
+import { colors, layout, leopardElevation, leopardPalette, leopardRadius, radius, spacing, typography, IconCameraProof, IconFileText, IconLocationPin, IconMessage, IconPhone, IconQrPayment, IconRoleDriver, IconSpeedTruck, RealInteractiveMap } from '@leopard/mobile-core';
+import { VietQRPaymentModal } from '../customer/orders/components/VietQRPaymentModal';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -56,6 +57,7 @@ export type RealtimeTrackingScreenProps = Readonly<{
   onChatDriver?: () => void;
   onShowVietQR?: () => void;
   onViewDeliveryProof?: () => void;
+  onViewInvoice?: () => void;
   onBack?: () => void;
 }>;
 
@@ -104,24 +106,31 @@ export function RealtimeTrackingScreen({
   onChatDriver,
   onShowVietQR,
   onViewDeliveryProof,
+  onViewInvoice,
   trip,
   truckLocation,
 }: RealtimeTrackingScreenProps) {
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [internalQrModalVisible, setInternalQrModalVisible] = useState(false);
   const statusPres = TRACKING_STATUS[trip.status];
   const progressPct = Math.max(
     0,
     Math.min(100, ((trip.distanceTotalKm - trip.distanceRemainingKm) / trip.distanceTotalKm) * 100),
   );
 
+  const rawPhone = driver.phone || '0901234567';
+  const maskedPhone =
+    rawPhone.length >= 7
+      ? `${rawPhone.slice(0, 4)} *** ${rawPhone.slice(-3)}`
+      : rawPhone;
+
   const handleCall = () => {
     if (onCallDriver) {
       onCallDriver();
       return;
     }
-    const phone = driver.phone || '0901234567';
-    void Linking.openURL(`tel:${phone}`).catch(() => {
-      Alert.alert('Gọi tài xế', `Số điện thoại tài xế: ${phone}`);
+    void Linking.openURL(`tel:${rawPhone}`).catch(() => {
+      Alert.alert('Gọi tài xế', `Số điện thoại tài xế: ${maskedPhone}`);
     });
   };
 
@@ -131,6 +140,14 @@ export function RealtimeTrackingScreen({
       return;
     }
     Alert.alert('Nhắn tin', `Nhắn tin trao đổi với tài xế ${driver.name}`);
+  };
+
+  const handleOpenVietQR = () => {
+    if (onShowVietQR) {
+      onShowVietQR();
+    } else {
+      setInternalQrModalVisible(true);
+    }
   };
 
   return (
@@ -213,12 +230,15 @@ export function RealtimeTrackingScreen({
                 <View style={styles.driverMetaRow}>
                   {typeof driver.rating === 'number' ? (
                     <View style={styles.ratingBadge}>
-                      <Text style={styles.ratingText}>⭐ {driver.rating.toFixed(1)}</Text>
+                      <Text style={styles.ratingText}>
+                        ⭐ {Number.isInteger(driver.rating * 10) ? driver.rating.toFixed(1) : driver.rating.toFixed(2)}
+                      </Text>
                     </View>
                   ) : null}
                   {typeof driver.totalTrips === 'number' ? (
                     <Text style={styles.tripsText}>{driver.totalTrips} chuyến</Text>
                   ) : null}
+                  <Text style={styles.driverPhoneMasked}>{maskedPhone}</Text>
                 </View>
               </View>
             </View>
@@ -262,7 +282,7 @@ export function RealtimeTrackingScreen({
               <Text style={styles.sectionTitle}>Tiến trình giao hàng</Text>
               <View style={styles.etaHeaderBadge}>
                 <Text style={styles.etaBadgeText}>
-                  Thời gian dự kiến: {trip.etaLabel}
+                  ETA dự kiến: {trip.etaLabel}
                 </Text>
               </View>
             </View>
@@ -345,7 +365,7 @@ export function RealtimeTrackingScreen({
                 <Pressable
                   accessibilityLabel="Hiện VietQR thanh toán"
                   accessibilityRole="button"
-                  onPress={onShowVietQR}
+                  onPress={handleOpenVietQR}
                   style={({ pressed }) => [styles.vietQrBtn, pressed ? styles.pressed : null]}
                 >
                   <IconQrPayment color="#FFFFFF" size={16} />
@@ -355,7 +375,45 @@ export function RealtimeTrackingScreen({
             </View>
           </View>
 
-          {/* ─ Section 4: Delivery Proof ─────────────────── */}
+          {/* ─ Section 4: Electronic VAT Invoice ──────────── */}
+          <View style={styles.divider} />
+          <View style={styles.invoiceSection}>
+            <View style={styles.invoiceHeaderRow}>
+              <View style={styles.invoiceTitleWrap}>
+                <IconFileText color="#D97706" size={18} />
+                <View>
+                  <Text style={styles.sectionTitle}>Hóa đơn điện tử VAT 8%</Text>
+                  <Text style={styles.invoiceSubTitle}>Tuân thủ Nghị định 123 & Thông tư 78</Text>
+                </View>
+              </View>
+              <View style={styles.vatRatePill}>
+                <Text style={styles.vatRatePillText}>VAT 8%</Text>
+              </View>
+            </View>
+
+            <Pressable
+              accessibilityLabel="Tải hóa đơn VAT"
+              accessibilityRole="button"
+              onPress={onViewInvoice}
+              style={({ pressed }) => [
+                styles.invoiceDownloadBtn,
+                pressed ? styles.pressed : null,
+              ]}
+            >
+              <View style={styles.invoiceDownloadLeft}>
+                <View style={styles.invoicePdfIconBox}>
+                  <Text style={styles.invoicePdfIconText}>PDF</Text>
+                </View>
+                <View style={styles.invoiceDownloadTextWrap}>
+                  <Text style={styles.invoiceDownloadLabel}>Tải hóa đơn VAT</Text>
+                  <Text style={styles.invoiceDownloadSubLabel}>Xem và lưu trữ chứng từ hợp lệ</Text>
+                </View>
+              </View>
+              <Text style={styles.invoiceDownloadArrow}>➔</Text>
+            </Pressable>
+          </View>
+
+          {/* ─ Section 5: Delivery Proof ─────────────────── */}
           {trip.hasDeliveryProof ? (
             <>
               <View style={styles.divider} />
@@ -391,6 +449,21 @@ export function RealtimeTrackingScreen({
           ) : null}
         </ScrollView>
       </View>
+
+      {/* Dynamic VietQR Payment Modal for immediate reconciliation */}
+      <VietQRPaymentModal
+        amount={
+          parseInt(trip.priceVnd.replace(/[^0-9]/g, ''), 10) || 850000
+        }
+        amountLabel={trip.priceVnd}
+        onClose={() => setInternalQrModalVisible(false)}
+        onPaymentSuccess={() => {
+          setInternalQrModalVisible(false);
+          Alert.alert('Thanh toán thành công', 'Hệ thống đã tự động gạch nợ thành công qua payOS.');
+        }}
+        orderReference={trip.bookingCode}
+        visible={internalQrModalVisible}
+      />
     </View>
   );
 }
@@ -651,6 +724,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  driverPhoneMasked: {
+    color: '#0284C7',
+    fontSize: 11.5,
+    fontWeight: '600',
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
   plateBadgeMini: {
     backgroundColor: '#F1F5F9',
     borderColor: '#CBD5E1',
@@ -887,6 +969,84 @@ const styles = StyleSheet.create({
   vietQrBtnText: {
     color: '#FFFFFF',
     fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // ── Invoice Section ──────────────────────────────
+  invoiceSection: {
+    gap: 10,
+  },
+  invoiceHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  invoiceTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  invoiceSubTitle: {
+    color: '#64748B',
+    fontSize: 11,
+    marginTop: 1,
+  },
+  vatRatePill: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  vatRatePillText: {
+    color: '#B45309',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  invoiceDownloadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+  },
+  invoiceDownloadLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  invoicePdfIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  invoicePdfIconText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  invoiceDownloadTextWrap: {
+    gap: 2,
+  },
+  invoiceDownloadLabel: {
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  invoiceDownloadSubLabel: {
+    color: '#64748B',
+    fontSize: 11,
+  },
+  invoiceDownloadArrow: {
+    color: '#0B1E42',
+    fontSize: 14,
     fontWeight: '700',
   },
 
