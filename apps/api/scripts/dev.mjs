@@ -197,7 +197,7 @@ async function main() {
     '--watch',
     '--preserveWatchOutput',
   ]);
-  const nodeWatch = spawnNode(['--watch', distMain]);
+  const nodeWatch = spawnNode(['--env-file=.env', '--watch', distMain]);
 
   console.log(
     `[api:dev] runner pid=${process.pid} compiler-watch pid=${compilerWatch.pid} node-watch pid=${nodeWatch.pid}`,

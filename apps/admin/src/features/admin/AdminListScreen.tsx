@@ -11,6 +11,7 @@ import {
   type ResponsiveResultItem,
 } from '@leopard/ui';
 import React, { useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 import { createAdminPreviewHref, serializeAdminListFilters } from './adapter';
@@ -642,6 +643,61 @@ export function AdminListScreen({
             <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hoặc từ khóa tìm kiếm hiện tại; dùng Xóa bộ lọc để phục hồi." />
           ) : (
             <div className="flex min-w-0 flex-col gap-md">
+              {screen === 'orders' ? (
+                <div className="flex items-center gap-1 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+                  {[
+                    { id: 'ALL', label: 'Tất cả' },
+                    { id: 'REQUESTED', label: 'Chờ tài xế' },
+                    { id: 'ACCEPTED', label: 'Đã nhận đơn' },
+                    { id: 'PICKING_UP', label: 'Đang lấy hàng' },
+                    { id: 'IN_TRANSIT', label: 'Đang vận chuyển' },
+                    { id: 'DELIVERED', label: 'Đã giao' },
+                    { id: 'CANCELLED', label: 'Đã hủy' }
+                  ].map((f) => {
+                    const isActive = view.filters.status === f.id;
+                    const href = `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, status: f.id as any, page: 1 }, previewContext)}`;
+                    return (
+                      <Link
+                        key={f.id}
+                        href={href}
+                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                          isActive
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        {f.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : screen === 'users' ? (
+                <div className="flex items-center gap-1 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+                  {[
+                    { id: 'ALL', label: 'Tất cả' },
+                    { id: 'CUSTOMER', label: 'Khách hàng' },
+                    { id: 'DRIVER', label: 'Tài xế' },
+                    { id: 'FLEET_OWNER', label: 'Chủ đội xe' },
+                    { id: 'ADMIN', label: 'Quản trị viên' }
+                  ].map((f) => {
+                    const isActive = view.filters.role === f.id;
+                    const href = `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, role: f.id as any, page: 1 }, previewContext)}`;
+                    return (
+                      <Link
+                        key={f.id}
+                        href={href}
+                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                          isActive
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        {f.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : null}
               <div className="hidden min-w-0 overflow-x-auto md:block">
                 <DataTable
                   caption={`${titleByScreen[screen]} trong phạm vi Admin và bộ lọc hiện tại`}

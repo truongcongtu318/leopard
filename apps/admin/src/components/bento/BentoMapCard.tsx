@@ -16,6 +16,7 @@ export interface MapPackageMarker {
 }
 
 export interface BentoMapCardProps {
+  routePath?: Array<[number, number]> | undefined;
   title?: string | undefined;
   activeOrderCode?: string | undefined;
   searchPlaceholder?: string | undefined;
@@ -30,6 +31,7 @@ export function BentoMapCard({
   activeOrderCode = 'Chưa có chuyến xe nào đang hoạt động',
   searchPlaceholder = 'Tìm kiếm đơn hàng, phương tiện, tài xế...',
   markers = [],
+  routePath,
   selectedOrderId,
   onSelectOrder,
   onSearch,
@@ -127,22 +129,43 @@ export function BentoMapCard({
           ).addTo(map);
 
           // Add Custom Markers (BE coords only, no estimated fallback)
+          if (routePath && routePath.length > 0) {
+            L.polyline(routePath, { color: '#10b981', weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(map);
+            const bounds = L.latLngBounds(routePath);
+            map.fitBounds(bounds, { padding: [40, 40] });
+          }
+
           markers.forEach((marker) => {
             if (marker.lat === undefined || marker.lng === undefined) return;
             const lat = marker.lat;
             const lng = marker.lng;
             const isSelected = marker.id === selectedMarkerId;
 
+                                    let markerBg = 'bg-slate-900';
+            let markerBorder = 'border-slate-700';
+            let markerColor = '#10b981';
+            let markerInner = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
+            let selectedBg = 'bg-[#10b981]';
+            let selectedIcon = '✓';
+
+            if (marker.status === 'ORIGIN') {
+              markerBg = 'bg-blue-900'; markerBorder = 'border-blue-400'; markerColor = '#60a5fa'; markerInner = 'A'; 
+              selectedBg = 'bg-blue-600'; selectedIcon = 'A';
+            } else if (marker.status === 'DESTINATION') {
+              markerBg = 'bg-red-900'; markerBorder = 'border-red-400'; markerColor = '#f87171'; markerInner = 'B'; 
+              selectedBg = 'bg-red-600'; selectedIcon = 'B';
+            }
+
             const iconHtml = isSelected
-              ? `<div class="relative flex items-center gap-2 rounded-2xl bg-[#10b981] px-3 py-1.5 text-white shadow-2xl ring-2 ring-white cursor-pointer -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
-                   <span class="flex h-5 w-5 items-center justify-center rounded-md bg-white text-slate-900 font-bold text-[10px]">✓</span>
+              ? `<div class="relative flex items-center gap-2 rounded-2xl ${selectedBg} px-3 py-1.5 text-white shadow-xl ring-2 ring-white/20 cursor-pointer -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
+                   <span class="flex h-5 w-5 items-center justify-center rounded-md bg-white text-slate-900 font-bold text-[11px]">${selectedIcon}</span>
                    <div class="flex flex-col text-left">
                      <span class="text-xs font-bold leading-none">${marker.orderRef}</span>
-                     <span class="text-[10px] text-emerald-100 font-medium leading-tight">${marker.customer}</span>
+                     <span class="text-[10px] text-white/90 font-medium leading-tight">${marker.customer}</span>
                    </div>
                  </div>`
-              : `<div class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 border border-slate-700 text-white shadow-lg hover:scale-110 hover:border-emerald-400 transition-all cursor-pointer -translate-x-1/2 -translate-y-1/2">
-                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+              : `<div class="flex h-8 w-8 items-center justify-center rounded-xl ${markerBg} border ${markerBorder} text-white shadow-lg hover:scale-110 transition-all cursor-pointer -translate-x-1/2 -translate-y-1/2" style="color: ${markerColor}; font-weight: bold; font-size: 14px;">
+                   ${markerInner}
                  </div>`;
 
             const icon = L.divIcon({
