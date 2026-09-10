@@ -107,7 +107,7 @@ describe('CustomerRegisterScreen', () => {
         }),
       ),
     );
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/customer/home'));
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(public)/customer-address'));
     await screen.unmount();
   });
 
@@ -234,7 +234,7 @@ describe('CustomerRegisterScreen', () => {
           consentService: true,
         }),
       );
-      expect(mockReplace).toHaveBeenCalledWith('/customer/home');
+      expect(mockReplace).toHaveBeenCalledWith('/(public)/customer-address');
     });
 
     await screen.unmount();

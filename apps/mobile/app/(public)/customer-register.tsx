@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { httpClient, ApiError, AuthHeroHeader, sessionStore, isLikelyVnPhone, toE164Vn, OtpSixCellInput, leopardPalette, IconPhone, IconSecurityShield, IconUser, IconOffice, IconInsuranceDoc, IconFileText, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader } from '@leopard/mobile-core';
+import { httpClient, ApiError, AuthHeroHeader, sessionStore, isLikelyVnPhone, toE164Vn, OtpSixCellInput, leopardPalette, IconPhone, IconSecurityShield, IconUser, IconOffice, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader } from '@leopard/mobile-core';
 import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '@leopard/mobile-core/src/auth/firebase-auth';
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-register';
@@ -254,7 +254,7 @@ export default function CustomerRegisterScreen() {
         (await sessionStore.getRefreshToken()) ?? '',
         (res.role as never) ?? 'CUSTOMER',
       );
-      router.replace('/customer/home');
+      router.replace('/(public)/customer-address');
     } catch (err) {
       const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
       const message = (err as { message?: string })?.message;
