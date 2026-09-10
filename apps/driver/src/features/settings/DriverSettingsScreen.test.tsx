@@ -1,4 +1,4 @@
-﻿import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { DriverSettingsScreen } from './DriverSettingsScreen';
@@ -74,6 +74,20 @@ describe('DriverSettingsScreen', () => {
 
     const resetBtn = screen.getByRole('button', { name: 'Khôi phục cài đặt gốc' });
     await fireEvent.press(resetBtn);
+
+    await screen.unmount();
+  });
+
+  it('allows adjusting dispatch alert ringtone volume and displays emergency SOS button', async () => {
+    const screen = await render(<DriverSettingsScreen />);
+
+    expect(screen.getByText('Mức âm lượng chuông điều phối:')).toBeTruthy();
+    const vol75Btn = screen.getByRole('button', { name: 'Âm lượng 75%' });
+    await fireEvent.press(vol75Btn);
+
+    const sosBtn = screen.getByRole('button', { name: 'Nút gọi khẩn cấp SOS' });
+    expect(sosBtn).toBeTruthy();
+    expect(screen.getByText('GỌI CỨU HỘ KHẨN CẤP SOS (24/7)')).toBeTruthy();
 
     await screen.unmount();
   });

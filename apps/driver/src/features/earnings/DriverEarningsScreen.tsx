@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, IconBank, IconClock, IconClose, IconEarnings, IconOrders, IconSecurityShield, IconSpeedTruck, IconStar, IconTrophy, IconWallet } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, IconBank, IconChevron, IconClock, IconClose, IconEarnings, IconOrders, IconSecurityShield, IconSpeedTruck, IconStar, IconTrophy, IconWallet } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 
@@ -201,7 +201,8 @@ export function DriverEarningsScreen() {
                 THỰC NHẬN ({period === 'today' ? 'HÔM NAY' : period === 'week' ? 'TUẦN NÀY' : 'THÁNG NÀY'})
               </Text>
               <View style={styles.growthBadge}>
-                <Text style={styles.growthBadgeText}>▲ {metrics.growth}</Text>
+                <IconChevron color="#10B981" direction="up" size={11} strokeWidth={2.5} />
+                <Text style={styles.growthBadgeText}>{metrics.growth}</Text>
               </View>
             </View>
 
@@ -306,7 +307,7 @@ export function DriverEarningsScreen() {
             <View style={styles.kpiIconWrap}>
               <IconStar color="#F59E0B" fill="#F59E0B" size={14} />
             </View>
-            <Text style={styles.kpiBoxValue}>5.0 ★</Text>
+            <Text style={styles.kpiBoxValue}>5.0</Text>
             <Text style={styles.kpiBoxLabel}>Đánh giá</Text>
           </View>
         </View>
@@ -537,6 +538,9 @@ const styles = StyleSheet.create({
     borderColor: '#A7F3D0',
     borderWidth: 1,
     borderRadius: radius.pill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
@@ -544,6 +548,7 @@ const styles = StyleSheet.create({
     color: '#10B981', // Emerald 500
     fontSize: 10.5,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   mainEarningsAmount: {
     color: '#0B1E42', // Midnight Navy
@@ -811,6 +816,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 11,
     fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
   tripPayoutText: {
     color: '#16A34A',
@@ -848,6 +854,7 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontSize: 10.5,
     fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   tripTipChip: {
     backgroundColor: '#F0FDF4',
@@ -859,6 +866,7 @@ const styles = StyleSheet.create({
     color: '#16A34A',
     fontSize: 10.5,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   tripBonusChip: {
     backgroundColor: '#FEF3C7',
@@ -870,6 +878,7 @@ const styles = StyleSheet.create({
     color: '#B45309',
     fontSize: 10.5,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   paymentMethodTag: {
     color: '#64748B',

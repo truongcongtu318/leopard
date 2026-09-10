@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, ScreenScaffold, IconBell, IconChevronRight, IconClock, IconLocationPin, IconRadarPulse, IconRoute, IconSecurityShield, IconSettings, IconSpeedTruck, IconSupport247, IconTrash, IconWarningShield } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, ScreenScaffold, IconBell, IconCheck, IconChevronRight, IconClock, IconLocationPin, IconRadarPulse, IconRoute, IconSecurityShield, IconSettings, IconSpeedTruck, IconSupport247, IconTrash, IconWarningShield } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 
@@ -18,6 +18,7 @@ export function DriverSettingsScreen() {
 
   // 1. Alerts & Dispatch offers state
   const [highAlertSound, setHighAlertSound] = useState(true);
+  const [ringtoneVolume, setRingtoneVolume] = useState<50 | 75 | 100>(100);
   const [vibrateOnOffer, setVibrateOnOffer] = useState(true);
   const [voiceAnnouncement, setVoiceAnnouncement] = useState(true);
   const [autoAccept, setAutoAccept] = useState(false);
@@ -97,6 +98,7 @@ export function DriverSettingsScreen() {
           text: 'Khôi phục',
           onPress: () => {
             setHighAlertSound(true);
+            setRingtoneVolume(100);
             setVibrateOnOffer(true);
             setVoiceAnnouncement(true);
             setAutoAccept(false);
@@ -214,6 +216,35 @@ export function DriverSettingsScreen() {
                 trackColor={{ false: '#CBD5E1', true: colors.brand.softBackground }}
                 value={highAlertSound}
               />
+            </View>
+
+            {/* Âm lượng chuông báo */}
+            <View style={styles.subConfigBox}>
+              <Text style={styles.subConfigLabel}>Mức âm lượng chuông điều phối:</Text>
+              <View style={styles.radiusButtonGroup}>
+                {([50, 75, 100] as const).map((vol) => (
+                  <Pressable
+                    accessibilityLabel={`Âm lượng ${vol}%`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: ringtoneVolume === vol }}
+                    key={vol}
+                    onPress={() => setRingtoneVolume(vol)}
+                    style={[
+                      styles.radiusBtn,
+                      ringtoneVolume === vol ? styles.radiusBtnActive : null,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.radiusBtnText,
+                        ringtoneVolume === vol ? styles.radiusBtnTextActive : null,
+                      ]}
+                    >
+                      {vol}% {vol === 100 ? '(Tối đa)' : ''}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
 
             {/* Rung cường độ cao */}
@@ -469,7 +500,8 @@ export function DriverSettingsScreen() {
                 </Text>
               </View>
               <View style={styles.okBadge}>
-                <Text style={styles.okBadgeText}>✓ Đã cấp</Text>
+                <IconCheck color="#059669" size={11} strokeWidth={2.5} />
+                <Text style={styles.okBadgeText}>Đã cấp</Text>
               </View>
             </View>
 
@@ -485,7 +517,8 @@ export function DriverSettingsScreen() {
                 </Text>
               </View>
               <View style={styles.okBadge}>
-                <Text style={styles.okBadgeText}>✓ Đã cấp</Text>
+                <IconCheck color="#059669" size={11} strokeWidth={2.5} />
+                <Text style={styles.okBadgeText}>Đã cấp</Text>
               </View>
             </View>
 
@@ -576,6 +609,25 @@ export function DriverSettingsScreen() {
               <Text style={styles.versionBadgeText}>v1.0.0 (Build 2608)</Text>
             </View>
           </View>
+        </View>
+
+        {/* 7. Nút gọi khẩn cấp SOS */}
+        <View style={styles.sosSectionBlock}>
+          <Pressable
+            accessibilityLabel="Nút gọi khẩn cấp SOS"
+            accessibilityRole="button"
+            onPress={() =>
+              Alert.alert(
+                'Cuộc gọi khẩn cấp SOS',
+                'Đang kết nối đến Đội cứu hộ khẩn cấp LEOPARD 24/7 (1900-LEOPARD - Nhánh 1). Tọa độ GPS của bạn sẽ được chuyển tiếp tức thì.',
+                [{ text: 'Hủy', style: 'cancel' }, { text: 'Gọi ngay', style: 'destructive' }],
+              )
+            }
+            style={({ pressed }) => [styles.sosBtn, pressed ? styles.pressed : null]}
+          >
+            <IconWarningShield color="#FFFFFF" size={20} />
+            <Text style={styles.sosBtnText}>GỌI CỨU HỘ KHẨN CẤP SOS (24/7)</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </ScreenScaffold>
@@ -838,10 +890,13 @@ const styles = StyleSheet.create({
 
   // Badges & Action Buttons
   okBadge: {
+    alignItems: 'center',
     backgroundColor: '#ECFDF5',
     borderColor: '#A7F3D0',
     borderRadius: 6,
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
@@ -875,5 +930,31 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
+  },
+  sosSectionBlock: {
+    marginTop: spacing.xs,
+    paddingBottom: spacing.sm,
+  },
+  sosBtn: {
+    alignItems: 'center',
+    backgroundColor: '#DC2626',
+    borderRadius: radius.card,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 50,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  sosBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
 });

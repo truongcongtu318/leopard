@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Image,
@@ -44,6 +44,7 @@ export function DriverEditProfileScreen({
 }: DriverEditProfileScreenProps) {
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
+  const [emergencyPhone, setEmergencyPhone] = useState('0909 113 115');
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
 
@@ -261,6 +262,29 @@ export function DriverEditProfileScreen({
               </View>
             </View>
             {emailError && <Text style={styles.errorTextRow}>{emailError}</Text>}
+
+            <View style={styles.rowDivider} />
+
+            {/* Field: Emergency Phone */}
+            <View style={styles.fieldRow}>
+              <View style={styles.fieldIconWrap}>
+                <IconPhone color={colors.brand.background} size={18} />
+              </View>
+              <View style={styles.fieldInputCol}>
+                <Text style={styles.fieldLabel}>Số điện thoại liên hệ khẩn cấp</Text>
+                <TextInput
+                  accessibilityLabel="Nhập số điện thoại liên hệ khẩn cấp"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="phone-pad"
+                  onChangeText={setEmergencyPhone}
+                  placeholder="09xx xxx xxx (Người thân)"
+                  placeholderTextColor={leopardPalette.textSubtle}
+                  style={styles.textInput}
+                  value={emergencyPhone}
+                />
+              </View>
+            </View>
           </View>
 
           {errorMessage ? (
@@ -324,6 +348,19 @@ export function DriverEditProfileScreen({
               <View style={styles.readonlyTextCol}>
                 <Text style={styles.readonlyLabel}>Đội xe chủ quản</Text>
                 <Text style={styles.readonlyValue}>{fleetLabel}</Text>
+              </View>
+            </View>
+
+            <View style={styles.rowDivider} />
+
+            {/* Fleet Owner Support Contact */}
+            <View style={styles.readonlyRow}>
+              <View style={styles.fieldIconWrap}>
+                <IconSupport247 color="#64748B" size={18} />
+              </View>
+              <View style={styles.readonlyTextCol}>
+                <Text style={styles.readonlyLabel}>Hotline hỗ trợ đội xe (Fleet Owner)</Text>
+                <Text style={styles.readonlyValue}>0912 345 678 (Chủ xe Tân Bình)</Text>
               </View>
             </View>
 
@@ -439,7 +476,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     justifyContent: 'center',
-    paddingVertical: 9,
+    minHeight: 44,
+    paddingVertical: 10,
   },
   avatarActionBtnText: {
     color: colors.brand.background,
