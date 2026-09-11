@@ -103,7 +103,9 @@ describe('DriverOrdersListRuntime', () => {
       expect(screen.getByText('68.000 ₫')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('NHẬN CUỐC NGAY'));
+    await fireEvent(screen.getByTestId('dispatch-slide-action'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
 
     await waitFor(() => {
       expect(acceptOrder).toHaveBeenCalledWith(SAMPLE_OFFER.id);

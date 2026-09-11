@@ -129,9 +129,35 @@ describe('IncomingDispatchModal', () => {
 
     const panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
     const mockEvent = {} as any;
-    panConfig.onPanResponderGrant?.(mockEvent, { dx: 0, dy: 0 } as any);
-    panConfig.onPanResponderMove?.(mockEvent, { dx: 240, dy: 0 } as any);
-    panConfig.onPanResponderRelease?.(mockEvent, { dx: 240, dy: 0 } as any);
+    await act(async () => {
+      panConfig.onPanResponderGrant?.(mockEvent, { dx: 0, dy: 0 } as any);
+      panConfig.onPanResponderMove?.(mockEvent, { dx: 240, dy: 0 } as any);
+      panConfig.onPanResponderRelease?.(mockEvent, { dx: 240, dy: 0 } as any);
+    });
+
+    expect(onAccept).toHaveBeenCalledWith('ord-incoming-101');
+    await screen.unmount();
+  });
+
+  it('triggers onAccept via native accessibilityAction activate on SlideToAction', async () => {
+    const onAccept = jest.fn();
+    const onDecline = jest.fn();
+
+    const screen = await render(
+      <IncomingDispatchModal
+        offer={sampleOffer}
+        onAccept={onAccept}
+        onDecline={onDecline}
+        visible={true}
+      />,
+    );
+
+    const slider = screen.getByTestId('dispatch-slide-action');
+    expect(slider).toBeTruthy();
+
+    await fireEvent(slider, 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
 
     expect(onAccept).toHaveBeenCalledWith('ord-incoming-101');
     await screen.unmount();

@@ -126,7 +126,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('renders 15s push offer modal with NHẬN CUỐC NGAY button', async () => {
+  it('renders 15s push offer modal with SlideToAction acceptance', async () => {
     const onAccept = jest.fn();
     const onDecline = jest.fn();
 
@@ -155,9 +155,11 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
 
     expect(screen.getByText('15s')).toBeTruthy();
     expect(screen.getByText('485.000 ₫')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'NHẬN CUỐC NGAY' })).toBeTruthy();
+    expect(screen.getByTestId('dispatch-slide-action')).toBeTruthy();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'NHẬN CUỐC NGAY' }));
+    await fireEvent(screen.getByTestId('dispatch-slide-action'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
     expect(onAccept).toHaveBeenCalledWith('offer-15s-1');
 
     await screen.unmount();
@@ -211,7 +213,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     const callBtn = screen.getByTestId('driver-call-btn');
     const chatBtn = screen.getByTestId('driver-chat-btn');
 
-    expect(() => fireEvent.press(callBtn)).not.toThrow();
+    await fireEvent.press(callBtn);
 
     await fireEvent.press(chatBtn);
     expect(onNavigate).toHaveBeenCalledWith('/chat');

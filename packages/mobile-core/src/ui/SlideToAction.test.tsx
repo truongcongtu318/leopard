@@ -105,7 +105,7 @@ describe('SlideToAction', () => {
 
     expect(springSpy).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ toValue: 244 })
+      expect.objectContaining({ toValue: 244, useNativeDriver: true })
     );
     expect(onActionComplete).toHaveBeenCalledTimes(1);
   });
@@ -144,7 +144,7 @@ describe('SlideToAction', () => {
     expect(onActionComplete).not.toHaveBeenCalled();
     expect(springSpy).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ toValue: 0 })
+      expect.objectContaining({ toValue: 0, useNativeDriver: true })
     );
   });
 
@@ -172,11 +172,12 @@ describe('SlideToAction', () => {
     expect(canMove).toBe(false);
   });
 
-  it('exposes accessibility attributes on container and thumb', async () => {
+  it('exposes accessibility attributes on container and thumb and activates via accessibilityAction', async () => {
+    const onActionComplete = jest.fn();
     const screen = await render(
       <SlideToAction
         label="Trượt để xác nhận"
-        onActionComplete={jest.fn()}
+        onActionComplete={onActionComplete}
         disabled={false}
         testID="slider"
       />
@@ -186,11 +187,36 @@ describe('SlideToAction', () => {
     expect(container.props.accessibilityRole).toBe('adjustable');
     expect(container.props.accessibilityLabel).toBe('Trượt để xác nhận');
     expect(container.props.accessibilityState).toEqual({ disabled: false });
+    expect(container.props.accessibilityActions).toEqual([
+      { name: 'activate', label: 'Trượt để xác nhận' },
+    ]);
+
+    fireEvent(container, 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+    expect(onActionComplete).toHaveBeenCalledTimes(1);
 
     const thumb = screen.getByTestId('slider-thumb');
     expect(thumb.props.accessibilityRole).toBe('adjustable');
     expect(thumb.props.accessibilityLabel).toBe('Trượt để xác nhận');
     expect(thumb.props.accessibilityState).toEqual({ disabled: false });
+  });
+
+  it('does not trigger onActionComplete on accessibility action when disabled', async () => {
+    const onActionComplete = jest.fn();
+    const screen = await render(
+      <SlideToAction
+        label="Trượt để xác nhận"
+        onActionComplete={onActionComplete}
+        disabled={true}
+        testID="slider"
+      />
+    );
+
+    fireEvent(screen.getByTestId('slider'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+    expect(onActionComplete).not.toHaveBeenCalled();
   });
 
   it('resets position and completed state when resetKey changes', async () => {
@@ -231,7 +257,7 @@ describe('SlideToAction', () => {
 
     expect(springSpy).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ toValue: 0 })
+      expect.objectContaining({ toValue: 0, useNativeDriver: true })
     );
   });
 

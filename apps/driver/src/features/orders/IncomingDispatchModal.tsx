@@ -246,22 +246,14 @@ export function IncomingDispatchModal({
           {/* 7. Action Controls: SlideToAction (Vuốt nhận cuốc) + Decline Button (Bỏ qua) */}
           <View style={styles.actionsContainer}>
             <SlideToAction
+              key={offer.id}
+              resetKey={offer.id}
               colorVariant="brand"
               disabled={isAccepting}
               label="Vuốt để nhận cuốc ➔"
               onActionComplete={() => onAccept(offer.id)}
               testID="dispatch-slide-action"
             />
-            {/* Screen reader / accessibility fallback to accept without swipe */}
-            <Pressable
-              accessibilityLabel="NHẬN CUỐC NGAY"
-              accessibilityRole="button"
-              disabled={isAccepting}
-              onPress={() => onAccept(offer.id)}
-              style={styles.accessibilityAcceptBtn}
-            >
-              <Text style={styles.accessibilityAcceptText}>NHẬN CUỐC NGAY</Text>
-            </Pressable>
             <Pressable
               accessibilityHint="Bỏ qua đơn hàng này"
               accessibilityLabel="Bỏ qua"
@@ -648,16 +640,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: spacing.xs,
     paddingTop: 4,
-  },
-  accessibilityAcceptBtn: {
-    height: 1,
-    opacity: 0,
-    position: 'absolute',
-    width: 1,
-  },
-  accessibilityAcceptText: {
-    fontSize: 1,
-    opacity: 0,
   },
   declineButton: {
     alignItems: 'center',

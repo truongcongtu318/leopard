@@ -84,11 +84,10 @@ describe('Driver order detail route', () => {
     // Now both photo & signature are captured -> status pill ready
     expect(screen.getByText('ĐỦ ĐIỀU KIỆN')).toBeTruthy();
 
-    // Final confirmation can be completed
-    const completeBtn = screen.getByRole('button', {
-      name: 'Xác nhận hoàn tất giao hàng (DELIVERED)',
+    // Final confirmation can be completed via SlideToAction accessibility action
+    await fireEvent(screen.getByTestId('btn-epod-complete-delivery'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
     });
-    await fireEvent.press(completeBtn);
     expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-order-1');
 
     await screen.unmount();

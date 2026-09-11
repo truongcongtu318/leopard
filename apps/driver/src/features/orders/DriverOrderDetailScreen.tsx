@@ -106,17 +106,6 @@ function TaskButton({
           }}
           testID="btn-advance-leg-slide"
         />
-        {/* 1x1 opacity 0 accessibility/test helper pattern for screen readers and automation */}
-        <Pressable
-          accessibilityLabel={task.command.label}
-          accessibilityRole="button"
-          accessibilityState={{ busy: task.command.isPending, disabled }}
-          disabled={disabled}
-          onPress={onExecuteTask && !disabled ? () => onExecuteTask(task.command.id) : undefined}
-          style={styles.accessibleActionTrigger}
-        >
-          <Text style={styles.accessibleActionTriggerText}>{task.command.label}</Text>
-        </Pressable>
       </View>
     );
   }
@@ -426,19 +415,6 @@ function EpodPanel({
               resetKey={`${orderId}-${signatureCaptured ? 'signed' : 'unsigned'}`}
               testID="btn-epod-complete-delivery"
             />
-            {/* 1x1 opacity 0 accessibility/test helper pattern for screen readers and automation */}
-            <Pressable
-              accessibilityLabel="Xác nhận hoàn tất giao hàng (DELIVERED)"
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !isCompleteReady }}
-              disabled={!isCompleteReady}
-              onPress={handleConfirmDelivery}
-              style={styles.accessibleActionTrigger}
-            >
-              <Text style={styles.accessibleActionTriggerText}>
-                Xác nhận hoàn tất giao hàng (DELIVERED)
-              </Text>
-            </Pressable>
           </View>
         )}
       </View>
@@ -1966,17 +1942,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     position: 'relative',
-  },
-  // 1x1 opacity 0 accessibility/test helper pattern for screen readers and automation
-  accessibleActionTrigger: {
-    height: 1,
-    opacity: 0,
-    position: 'absolute',
-    width: 1,
-  },
-  accessibleActionTriggerText: {
-    fontSize: 1,
-    opacity: 0,
   },
   proofError: {
     backgroundColor: '#FEF2F2',

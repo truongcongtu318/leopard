@@ -71,7 +71,7 @@ export function SlideToAction({
     if (prevResetKeyRef.current !== resetKey) {
       prevResetKeyRef.current = resetKey;
       isCompletedRef.current = false;
-      Animated.spring(panX, { toValue: 0, useNativeDriver: false }).start();
+      Animated.spring(panX, { toValue: 0, useNativeDriver: true }).start();
     }
   }, [resetKey, panX]);
 
@@ -104,7 +104,7 @@ export function SlideToAction({
             isCompletedRef.current = true;
             Animated.spring(panX, {
               toValue: maxDrag,
-              useNativeDriver: false,
+              useNativeDriver: true,
             }).start(() => {
               try {
                 Vibration.vibrate(10);
@@ -116,7 +116,7 @@ export function SlideToAction({
           } else {
             Animated.spring(panX, {
               toValue: 0,
-              useNativeDriver: false,
+              useNativeDriver: true,
             }).start();
           }
         },
@@ -142,6 +142,12 @@ export function SlideToAction({
       accessibilityRole="adjustable"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
+      accessibilityActions={[{ name: 'activate', label }]}
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === 'activate' && !disabled) {
+          onActionComplete();
+        }
+      }}
       onLayout={handleLayout}
       style={[
         styles.track,

@@ -453,7 +453,7 @@ export function DriverOrdersScreen({
   const [vehiclePref, setVehiclePref] = useState('Xe tải 2.5T');
   const [selectedVehicleFilter, setSelectedVehicleFilter] = useState('Tất cả');
   const [dismissedOrderIds, setDismissedOrderIds] = useState<readonly string[]>([]);
-  const [currentAddress, setCurrentAddress] = useState<string>('Depot Tân Bình, TP.HCM');
+  const [truckCoords, setTruckCoords] = useState(DEPOT_TAN_BINH_COORDS);
   const { openDrawer } = useDriverDrawer();
 
   useEffect(() => {
@@ -467,22 +467,11 @@ export function DriverOrdersScreen({
           accuracy: Location.Accuracy.Balanced,
         });
 
-        const geocoded = await Location.reverseGeocodeAsync({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-
-        if (isMounted && geocoded && geocoded.length > 0) {
-          const place = geocoded[0];
-          const district = place.district || place.subregion || '';
-          const city = place.city || place.region || '';
-          const streetOrName = place.street || place.name || '';
-
-          const parts = [district, city].filter(Boolean);
-          const display = parts.length > 0 ? parts.join(', ') : (streetOrName || 'TP. Hồ Chí Minh');
-          if (display) {
-            setCurrentAddress(display);
-          }
+        if (isMounted && position?.coords) {
+          setTruckCoords({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
         }
       } catch {
         // Fallback gracefully in testing / simulator
@@ -551,11 +540,11 @@ export function DriverOrdersScreen({
         <View style={styles.mapLayerContainer} testID="driver-map-canvas">
           <RealInteractiveMap
             height="100%"
-            initialPinCoords={DEPOT_TAN_BINH_COORDS}
+            initialPinCoords={truckCoords}
             interactive={false}
             mode="preview"
             style={StyleSheet.absoluteFill}
-            truckLocation={DEPOT_TAN_BINH_COORDS}
+            truckLocation={truckCoords}
           />
         </View>
 
@@ -624,11 +613,11 @@ export function DriverOrdersScreen({
         <View style={styles.mapLayerContainer} testID="driver-map-canvas">
           <RealInteractiveMap
             height="100%"
-            initialPinCoords={DEPOT_TAN_BINH_COORDS}
+            initialPinCoords={truckCoords}
             interactive={false}
             mode="preview"
             style={StyleSheet.absoluteFill}
-            truckLocation={DEPOT_TAN_BINH_COORDS}
+            truckLocation={truckCoords}
           />
         </View>
 
@@ -707,7 +696,7 @@ export function DriverOrdersScreen({
               : undefined
           }
           height="100%"
-          initialPinCoords={DEPOT_TAN_BINH_COORDS}
+          initialPinCoords={truckCoords}
           interactive={true}
           mode={activeTrip ? 'route' : 'tracking'}
           origin={
@@ -729,7 +718,7 @@ export function DriverOrdersScreen({
           }
           style={StyleSheet.absoluteFill}
           truckEtaLabel={activeTrip ? activeTrip.route.distanceLabel : undefined}
-          truckLocation={DEPOT_TAN_BINH_COORDS}
+          truckLocation={truckCoords}
         />
       </View>
 
