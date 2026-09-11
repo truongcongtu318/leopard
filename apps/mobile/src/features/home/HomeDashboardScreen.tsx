@@ -1,5 +1,5 @@
 import type { OrderStatus } from '@leopard/shared';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -12,32 +12,42 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
-import { colors, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, Button, FloatingNavBar, type TabKey, BrandLoginLogo, IconBell, IconLocationPin, IconMessage, IconOrders, IconQrPayment, IconRoleDriver, IconSecurityShield, IconSpeedTruck, IconVehicle3Wheel, IconVehicleHeavyTruck, IconVehicleLightTruck, IconVehicleMotorbike, IconVehicleVan, IconWallet, OrderSummary, RealInteractiveMap, RouteSpine, StatusBadge, VIETNAM_LOCATION_DICT } from '@leopard/mobile-core';
-import type { VehicleCategory } from '@leopard/mobile-core';
+import {
+  BrandLoginLogo,
+  FloatingNavBar,
+  GestureBottomSheet,
+  IconBell,
+  IconBike,
+  IconChevron,
+  IconClock,
+  IconClose,
+  IconMessage,
+  IconPin,
+  IconRoleDriver,
+  IconSearch,
+  IconTruck,
+  IconVan,
+  IconWarehouse,
+  OrderSummary,
+  RealInteractiveMap,
+  RouteSpine,
+  StatusBadge,
+  httpClient,
+  sessionStore,
+  type TabKey,
+  type VehicleCategory,
+} from '@leopard/mobile-core';
+
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
-import { httpClient, sessionStore } from '@leopard/mobile-core';
 import {
   MapAddressPickerModal,
   reverseGeocodeCoords,
   SavedAddressPickerModal,
 } from './components';
-
 import { HomePromoArtwork, type HomePromoSlide } from './HomePromoArtwork';
-import { HomeServiceIllustration } from './HomeServiceIllustrations';
-
-function formatVietnamesePhone(phone?: string | null): string {
-  if (!phone) return '';
-  const trimmed = phone.trim();
-  if (trimmed.startsWith('+84')) {
-    return '0' + trimmed.slice(3);
-  }
-  if (trimmed.startsWith('84') && trimmed.length > 9) {
-    return '0' + trimmed.slice(2);
-  }
-  return trimmed;
-}
+import { HomeServiceIllustration, type HomeServiceKind } from './HomeServiceIllustrations';
 
 export type ActiveShipment = Readonly<{
   orderId: string;
@@ -60,342 +70,6 @@ export type RecentOrder = Readonly<{
   updated?: string;
 }>;
 
-export type HomeDashboardScreenProps = Readonly<{
-  userName?: string;
-  userPhone?: string;
-  smeName?: string;
-  walletBalance?: string;
-  unreadNotifications?: number;
-  unreadMessages?: number;
-  activeShipment?: ActiveShipment | null;
-  recentOrders?: readonly RecentOrder[];
-  defaultPickupLocation?: string;
-  defaultPickupLabel?: string;
-  savedAddresses?: readonly SavedAddress[];
-  onSelectSavedAddress?: (address: SavedAddress) => void;
-  onCreateOrder?: () => void;
-  onOpenActiveOrder?: (orderId: string) => void;
-  onOpenOrder?: (orderId: string) => void;
-  onViewAllOrders?: () => void;
-  onOpenNotifications?: () => void;
-  onOpenChat?: () => void;
-  onOpenProfile?: () => void;
-  onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
-  onRegisterDriver?: () => void;
-  onQuickBook?: (
-    origin?: string,
-    destination?: string,
-    dropoffCoords?: { lat: number; lng: number },
-  ) => void;
-  onOpenSavedAddresses?: () => void;
-  onNavigateTab?: (tab: TabKey) => void;
-  onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
-  onTopUpWallet?: () => void;
-  onOpenQrScan?: () => void;
-  showFloatingNavBar?: boolean;
-}>;
-
-/**
- * Resolves time-of-day classification based on local hour.
- */
-export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
-
-export function getTimeOfDay(date: Date = new Date()): TimeOfDay {
-  const hours = date.getHours();
-  if (hours >= 5 && hours < 12) {
-    return 'morning';
-  }
-  if (hours >= 12 && hours < 18) {
-    return 'afternoon';
-  }
-  return 'evening';
-}
-
-/**
- * Clean textual greeting based on time of day (no emojis).
- */
-export function getTimeOfDayGreeting(date: Date = new Date()): string {
-  const time = getTimeOfDay(date);
-  if (time === 'morning') {
-    return 'Chào buổi sáng';
-  }
-  if (time === 'afternoon') {
-    return 'Chào buổi chiều';
-  }
-  return 'Chào buổi tối';
-}
-
-/**
- * Animated vector weather icon with rotating rays and breathing glow.
- */
-export function AnimatedGreetingIcon({
-  size = 20,
-  timeOfDay,
-}: {
-  timeOfDay: TimeOfDay;
-  size?: number;
-}) {
-  const spinAnim = React.useRef(new Animated.Value(0)).current;
-  const pulseAnim = React.useRef(new Animated.Value(1)).current;
-
-  React.useEffect(() => {
-    const spin = Animated.loop(
-      Animated.timing(spinAnim, {
-        duration: 14000,
-        easing: Easing.linear,
-        toValue: 1,
-        useNativeDriver: Platform.OS !== 'web',
-      }),
-    );
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          duration: 1800,
-          easing: Easing.inOut(Easing.ease),
-          toValue: 1.15,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(pulseAnim, {
-          duration: 1800,
-          easing: Easing.inOut(Easing.ease),
-          toValue: 1.0,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]),
-    );
-
-    spin.start();
-    pulse.start();
-
-    return () => {
-      spin.stop();
-      pulse.stop();
-    };
-  }, [spinAnim, pulseAnim]);
-
-  const spinInterpolate = spinAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  if (timeOfDay === 'morning') {
-    return (
-      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-        {/* Rotating sun rays */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            width: size,
-            height: size,
-            alignItems: 'center',
-            justifyContent: 'center',
-            transform: [{ rotate: spinInterpolate }],
-          }}
-        >
-          {Platform.OS === 'web' ? (
-            <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-              <path
-                d="M12 2v2.5M12 19.5v2.5M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12h2.5M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"
-                stroke="#F59E0B"
-                strokeLinecap="round"
-                strokeWidth="2.2"
-              />
-            </svg>
-          ) : (
-            <View
-              style={{
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                borderWidth: 1.5,
-                borderColor: '#FDE68A',
-                borderStyle: 'dashed',
-              }}
-            />
-          )}
-        </Animated.View>
-        {/* Breathing Center Sun with warm amber core */}
-        <Animated.View
-          style={{
-            transform: [{ scale: pulseAnim }],
-            width: size * 0.52,
-            height: size * 0.52,
-            borderRadius: (size * 0.52) / 2,
-            backgroundColor: '#F59E0B',
-            borderWidth: 1.5,
-            borderColor: '#FEF3C7',
-          }}
-        />
-      </View>
-    );
-  }
-
-  if (timeOfDay === 'afternoon') {
-    return (
-      <Animated.View
-        style={{
-          width: size,
-          height: size,
-          alignItems: 'center',
-          justifyContent: 'center',
-          transform: [{ scale: pulseAnim }],
-        }}
-      >
-        {Platform.OS === 'web' ? (
-          <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-            <circle cx="12" cy="8.5" fill="#F59E0B" r="4.5" />
-            <path
-              d="M6.5 17.5a4 4 0 0 1 7.8-1.2A3 3 0 0 1 19 18.5H6.5z"
-              fill="#F0F4F9"
-              stroke="#0B1E42"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-            />
-          </svg>
-        ) : (
-          <View
-            style={{
-              width: size * 0.7,
-              height: size * 0.7,
-              borderRadius: (size * 0.7) / 2,
-              backgroundColor: '#F59E0B',
-            }}
-          />
-        )}
-      </Animated.View>
-    );
-  }
-
-  // Evening / Night
-  return (
-    <Animated.View
-      style={{
-        width: size,
-        height: size,
-        alignItems: 'center',
-        justifyContent: 'center',
-        transform: [{ scale: pulseAnim }],
-      }}
-    >
-      {Platform.OS === 'web' ? (
-        <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-          <path
-            d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-            fill="#0B1E42"
-            stroke="#061226"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M16.5 4l.6 1.2 1.3.2-1 .9.3 1.3-1.2-.6-1.2.6.3-1.3-1-.9 1.3-.2L16.5 4z"
-            fill="#FBBF24"
-          />
-        </svg>
-      ) : (
-        <View
-          style={{
-            width: size * 0.7,
-            height: size * 0.7,
-            borderRadius: (size * 0.7) / 2,
-            backgroundColor: '#0B1E42',
-          }}
-        />
-      )}
-    </Animated.View>
-  );
-}
-
-const PROMO_SLIDES: readonly HomePromoSlide[] = [
-  { id: 'promo-1', kind: 'vehicle', eyebrow: 'XE CHO MỖI NHU CẦU', title: 'Đặt xe phù hợp với hàng', subtitle: 'Chọn phương tiện theo loại hàng và tải trọng.', action: 'Chọn xe' },
-  { id: 'promo-2', kind: 'address', eyebrow: 'ĐẶT HÀNG THUẬN TIỆN', title: 'Lên đơn từ địa chỉ đã lưu', subtitle: 'Dùng lại điểm lấy và giao quen thuộc khi tạo đơn.', action: 'Tạo đơn mới' },
-  { id: 'promo-3', kind: 'tracking', eyebrow: 'CHỦ ĐỘNG THEO DÕI', title: 'Theo dõi từng chặng giao', subtitle: 'Xem trạng thái và ETA dự kiến trong hành trình.', action: 'Bắt đầu gửi hàng' },
-];
-
-type QuickService = Readonly<{
-  id: string;
-  vehicleId?: VehicleCategory;
-  name: string;
-  label: string;
-  tag: string;
-  iconType: '3wheel' | 'light' | 'heavy' | 'express' | 'loading' | 'cod';
-  accentColor: string;
-  borderColor: string;
-  surfaceColor: string;
-  tagSurfaceColor: string;
-}>;
-
-const quickServices: readonly QuickService[] = [
-  {
-    id: '3_WHEEL_BIKE',
-    vehicleId: '3_WHEEL_BIKE',
-    label: 'Xe Ba Gác',
-    name: 'Ba gác',
-    tag: '< 500kg',
-    iconType: '3wheel',
-    accentColor: '#1D4ED8',
-    borderColor: '#B9D5FF',
-    surfaceColor: '#EAF3FF',
-    tagSurfaceColor: '#DCEBFF',
-  },
-  {
-    id: 'LIGHT_TRUCK',
-    vehicleId: 'LIGHT_TRUCK',
-    label: 'Xe Tải Nhẹ',
-    name: 'Tải nhẹ',
-    tag: '≤ 1.5 tấn',
-    iconType: 'light',
-    accentColor: '#047D95',
-    borderColor: '#A8DFEA',
-    surfaceColor: '#E8FAFD',
-    tagSurfaceColor: '#D4F3F8',
-  },
-  {
-    id: 'HEAVY_TRUCK',
-    vehicleId: 'HEAVY_TRUCK',
-    label: 'Xe Tải Nặng',
-    name: 'Tải nặng',
-    tag: '5–10 tấn',
-    iconType: 'heavy',
-    accentColor: '#334155',
-    borderColor: '#C3CDDB',
-    surfaceColor: '#EEF2F7',
-    tagSurfaceColor: '#E1E8F0',
-  },
-  {
-    id: 'EXPRESS',
-    label: 'Giao Hỏa Tốc',
-    name: 'Hỏa tốc',
-    tag: 'Giao ưu tiên',
-    iconType: 'express',
-    accentColor: '#D97706',
-    borderColor: '#F6C76D',
-    surfaceColor: '#FFF5D8',
-    tagSurfaceColor: '#FFE7A3',
-  },
-  {
-    id: 'LOADING',
-    label: 'Dịch Vụ Bốc Xếp',
-    name: 'Bốc xếp',
-    tag: 'Kèm phụ xe',
-    iconType: 'loading',
-    accentColor: '#C2410C',
-    borderColor: '#FDBA8C',
-    surfaceColor: '#FFF0E6',
-    tagSurfaceColor: '#FED7BA',
-  },
-  {
-    id: 'COD',
-    label: 'Thu Hộ COD',
-    name: 'Thu COD',
-    tag: 'Thu hộ tiền hàng',
-    iconType: 'cod',
-    accentColor: '#13855F',
-    borderColor: '#A7DCC8',
-    surfaceColor: '#EAF8F1',
-    tagSurfaceColor: '#D2F2E2',
-  },
-];
-
 export type FleetVehicleCategory = 'VAN_500KG' | 'TRUCK_125T' | 'TRUCK_25T' | 'BIKE_3W';
 
 export type FleetVehicleItem = Readonly<{
@@ -413,135 +87,121 @@ export type FleetVehicleItem = Readonly<{
 
 export const FLEET_VEHICLES: readonly FleetVehicleItem[] = [
   {
-    id: 'VAN_500KG',
-    name: 'Van 500kg',
-    subName: 'Chở hàng phố cấm',
-    weightCapacity: '500 kg',
-    dimensions: '2.1 x 1.3 x 1.2m',
-    dimensionLabel: '2.1 x 1.3 x 1.2m',
-    estimatedPrice: '160.000 ₫',
-    vehicleCategory: 'LIGHT_TRUCK',
-    accentColor: '#0284C7',
-    badge: 'Đô thị',
+    id: 'VAN_500KG', name: 'Van 500kg', subName: 'Chở hàng phố cấm',
+    weightCapacity: '500 kg', dimensions: '2.1 x 1.3 x 1.2m', dimensionLabel: '2.1 x 1.3 x 1.2m',
+    estimatedPrice: '160.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0284C7', badge: 'Đô thị',
   },
   {
-    id: 'TRUCK_125T',
-    name: 'Xe Tải 1.25T',
-    subName: 'Chuyển nhà & xưởng',
-    weightCapacity: '1.250 kg',
-    dimensions: '3.2 x 1.6 x 1.7m',
-    dimensionLabel: '3.2 x 1.6 x 1.7m',
-    estimatedPrice: '280.000 ₫',
-    vehicleCategory: 'LIGHT_TRUCK',
-    accentColor: '#0B1E42',
-    badge: 'Phổ biến',
+    id: 'TRUCK_125T', name: 'Xe Tải 1.25T', subName: 'Chuyển nhà & xưởng',
+    weightCapacity: '1.250 kg', dimensions: '3.2 x 1.6 x 1.7m', dimensionLabel: '3.2 x 1.6 x 1.7m',
+    estimatedPrice: '280.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0B1E42', badge: 'Phổ biến',
   },
   {
-    id: 'TRUCK_25T',
-    name: 'Xe Tải 2.5T',
-    subName: 'Hàng nặng liên tỉnh',
-    weightCapacity: '2.500 kg',
-    dimensions: '4.3 x 1.8 x 1.9m',
-    dimensionLabel: '4.3 x 1.8 x 1.9m',
-    estimatedPrice: '450.000 ₫',
-    vehicleCategory: 'HEAVY_TRUCK',
-    accentColor: '#0B1E42',
-    badge: 'Tải lớn',
+    id: 'TRUCK_25T', name: 'Xe Tải 2.5T', subName: 'Hàng nặng liên tỉnh',
+    weightCapacity: '2.500 kg', dimensions: '4.3 x 1.8 x 1.9m', dimensionLabel: '4.3 x 1.8 x 1.9m',
+    estimatedPrice: '450.000 ₫', vehicleCategory: 'HEAVY_TRUCK', accentColor: '#0B1E42', badge: 'Tải lớn',
   },
   {
-    id: 'BIKE_3W',
-    name: 'Xe Ba Gác',
-    subName: 'Ngõ nhỏ linh hoạt',
-    weightCapacity: '400 kg',
-    dimensions: '1.8 x 1.1m',
-    dimensionLabel: '1.8 x 1.1m',
-    estimatedPrice: '120.000 ₫',
-    vehicleCategory: '3_WHEEL_BIKE',
-    accentColor: '#F59E0B',
-    badge: 'Tiết kiệm',
+    id: 'BIKE_3W', name: 'Xe Ba Gác', subName: 'Ngõ nhỏ linh hoạt',
+    weightCapacity: '400 kg', dimensions: '1.8 x 1.1m', dimensionLabel: '1.8 x 1.1m',
+    estimatedPrice: '120.000 ₫', vehicleCategory: '3_WHEEL_BIKE', accentColor: '#F59E0B', badge: 'Tiết kiệm',
   },
 ];
 
 const DEFAULT_ACTIVE_SHIPMENT: ActiveShipment = {
-  orderId: 'active-demo-1',
-  status: 'IN_TRANSIT',
-  origin: 'Kho Tân Bình',
-  destination: 'KCN Tân Tạo',
-  cargoNote: '1.2 tấn xi măng',
-  driverName: 'Nguyễn Văn Hùng',
-  plate: '59C-882.14',
-  etaMinutes: 18,
+  orderId: 'active-demo-1', status: 'IN_TRANSIT', origin: 'Kho Tân Bình',
+  destination: 'KCN Tân Tạo', cargoNote: '2.5 tấn thép cây Hòa Phát',
+  driverName: 'Trần Văn Mạnh', plate: '59C-912.45', etaMinutes: 24,
 };
 
 const DEFAULT_RECENT_ORDERS: readonly RecentOrder[] = [
   {
-    id: 'demo-2',
-    reference: 'LP-240902',
-    status: 'DELIVERED',
-    origin: 'Quận 7',
-    destination: 'Thủ Đức',
-    price: '420.000 ₫',
-    updated: 'Hôm qua',
+    id: 'demo-order-1', reference: 'LP-883912', status: 'DELIVERED',
+    origin: 'Kho Tân Bình, Q. Tân Bình', destination: 'Công trình Metro Bến Thành, Q.1',
+    price: '380.000 ₫', updated: 'Hôm nay, 10:45',
   },
   {
-    id: 'demo-3',
-    reference: 'LP-240831',
-    status: 'DELIVERED',
-    origin: 'Bình Tân',
-    destination: 'Long An',
-    price: '650.000 ₫',
-    updated: '31/08',
+    id: 'demo-order-2', reference: 'LP-883804', status: 'DELIVERED',
+    origin: 'Cảng Cát Lái, TP. Thủ Đức', destination: 'KCN Sóng Thần, Dĩ An, Bình Dương',
+    price: '720.000 ₫', updated: 'Hôm qua, 16:20',
   },
 ];
 
-function renderServiceIcon(type: QuickService['iconType']) {
-  switch (type) {
-    case '3wheel':
-      return <IconVehicle3Wheel color="#0B1E42" size={44} />;
-    case 'light':
-      return <IconVehicleLightTruck color="#0B1E42" size={44} />;
-    case 'heavy':
-      return <IconVehicleHeavyTruck color="#0B1E42" size={44} />;
-    case 'express':
-      return <IconSpeedTruck color="#0B1E42" secondaryColor="#F0F4F9" size={44} strokeWidth={1.75} />;
-    case 'loading':
-      return <IconOrders color="#0B1E42" size={44} strokeWidth={1.75} />;
-    case 'cod':
-      return <IconSecurityShield color="#0B1E42" secondaryColor="#F0F4F9" size={44} strokeWidth={1.75} />;
-    default:
-      return <IconSpeedTruck color="#0B1E42" size={44} />;
-  }
+const PROMO_SLIDES: readonly HomePromoSlide[] = [
+  { id: 'promo-1', kind: 'vehicle', eyebrow: 'XE CHO MỖI NHU CẦU', title: 'Đặt xe phù hợp với hàng', subtitle: 'Chọn phương tiện theo loại hàng và tải trọng.', action: 'Chọn xe' },
+  { id: 'promo-2', kind: 'address', eyebrow: 'ĐẶT HÀNG THUẬN TIỆN', title: 'Lên đơn từ địa chỉ đã lưu', subtitle: 'Dùng lại điểm lấy và giao quen thuộc khi tạo đơn.', action: 'Tạo đơn mới' },
+  { id: 'promo-3', kind: 'tracking', eyebrow: 'CHỦ ĐỘNG THEO DÕI', title: 'Theo dõi từng chặng giao', subtitle: 'Xem trạng thái và ETA dự kiến trong hành trình.', action: 'Bắt đầu gửi hàng' },
+];
+
+type QuickService = Readonly<{
+  id: string; vehicleId?: VehicleCategory; name: string; label: string; tag: string;
+  iconType: HomeServiceKind; accentColor: string; borderColor: string; surfaceColor: string; tagSurfaceColor: string;
+}>;
+
+const quickServices: readonly QuickService[] = [
+  { id: '3_WHEEL_BIKE', vehicleId: '3_WHEEL_BIKE', label: 'Xe Ba Gác', name: 'Ba gác', tag: '< 500kg', iconType: '3wheel', accentColor: '#1D4ED8', borderColor: '#B9D5FF', surfaceColor: '#EAF3FF', tagSurfaceColor: '#DCEBFF' },
+  { id: 'LIGHT_TRUCK', vehicleId: 'LIGHT_TRUCK', label: 'Xe Tải Nhẹ', name: 'Tải nhẹ', tag: '≤ 1.5 tấn', iconType: 'light', accentColor: '#047D95', borderColor: '#A8DFEA', surfaceColor: '#E8FAFD', tagSurfaceColor: '#D4F3F8' },
+  { id: 'HEAVY_TRUCK', vehicleId: 'HEAVY_TRUCK', label: 'Xe Tải Nặng', name: 'Tải nặng', tag: '5–10 tấn', iconType: 'heavy', accentColor: '#334155', borderColor: '#C3CDDB', surfaceColor: '#EEF2F7', tagSurfaceColor: '#E1E8F0' },
+  { id: 'EXPRESS', label: 'Giao Hỏa Tốc', name: 'Hỏa tốc', tag: 'Giao ưu tiên', iconType: 'express', accentColor: '#D97706', borderColor: '#F6C76D', surfaceColor: '#FFF5D8', tagSurfaceColor: '#FFE7A3' },
+  { id: 'LOADING', label: 'Dịch Vụ Bốc Xếp', name: 'Bốc xếp', tag: 'Kèm phụ xe', iconType: 'loading', accentColor: '#C2410C', borderColor: '#FDBA8C', surfaceColor: '#FFF0E6', tagSurfaceColor: '#FED7BA' },
+  { id: 'COD', label: 'Thu Hộ COD', name: 'Thu COD', tag: 'Thu hộ tiền hàng', iconType: 'cod', accentColor: '#13855F', borderColor: '#A7DCC8', surfaceColor: '#EAF8F1', tagSurfaceColor: '#D2F2E2' },
+];
+
+export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
+
+export function getTimeOfDay(date: Date = new Date()): TimeOfDay {
+  const hours = date.getHours();
+  if (hours >= 5 && hours < 12) return 'morning';
+  if (hours >= 12 && hours < 18) return 'afternoon';
+  return 'evening';
 }
 
+export function getTimeOfDayGreeting(date: Date = new Date()): string {
+  const time = getTimeOfDay(date);
+  if (time === 'morning') return 'Chào buổi sáng';
+  if (time === 'afternoon') return 'Chào buổi chiều';
+  return 'Chào buổi tối';
+}
+
+export function AnimatedGreetingIcon({ size = 20 }: { timeOfDay?: TimeOfDay; size?: number }) {
+  return <IconClock color="#F59E0B" size={size} />;
+}
+
+export type HomeDashboardScreenProps = Readonly<{
+  userName?: string; userPhone?: string; smeName?: string; walletBalance?: string;
+  unreadNotifications?: number; unreadMessages?: number;
+  activeShipment?: ActiveShipment | null; recentOrders?: readonly RecentOrder[];
+  defaultPickupLocation?: string; defaultPickupLabel?: string;
+  savedAddresses?: readonly SavedAddress[];
+  onSelectSavedAddress?: (address: SavedAddress) => void;
+  onCreateOrder?: () => void;
+  onOpenActiveOrder?: (orderId: string) => void;
+  onOpenOrder?: (orderId: string) => void;
+  onViewAllOrders?: () => void;
+  onOpenNotifications?: () => void;
+  onOpenChat?: () => void;
+  onOpenProfile?: () => void;
+  onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
+  onRegisterDriver?: () => void;
+  onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }) => void;
+  onOpenSavedAddresses?: () => void;
+  onNavigateTab?: (tab: TabKey) => void;
+  onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
+  onTopUpWallet?: () => void;
+  onOpenQrScan?: () => void;
+  showFloatingNavBar?: boolean;
+}>;
+
 export function HomeDashboardScreen({
-  activeShipment = DEFAULT_ACTIVE_SHIPMENT,
-  defaultPickupLabel,
-  defaultPickupLocation,
-  onCreateOrder,
-  onNavigateTab,
-  onOpenActiveOrder,
-  onOpenChat,
-  onOpenNotifications,
-  onOpenOrder,
-  onOpenQrScan,
-  onOpenSavedAddresses,
-  onQuickBook,
-  onRegisterDriver,
-  onSelectSavedAddress,
-  onSelectVehicleAndBook,
-  onSwitchRole,
-  onTopUpWallet,
-  onViewAllOrders,
-  recentOrders = DEFAULT_RECENT_ORDERS,
-  savedAddresses,
-  showFloatingNavBar = false,
-  smeName = 'Cửa hàng VLXD Đại Phát',
-  unreadMessages = 0,
-  unreadNotifications = 3,
-  userName = 'Anh Hoàng',
-  userPhone,
-  walletBalance = '1.850.000 ₫',
+  activeShipment = DEFAULT_ACTIVE_SHIPMENT, defaultPickupLabel, defaultPickupLocation,
+  onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
+  onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
+  onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = DEFAULT_RECENT_ORDERS,
+  savedAddresses, showFloatingNavBar = false, smeName = 'Cửa hàng VLXD Đại Phát',
+  unreadMessages = 0, unreadNotifications = 3, userName = 'Anh Hoàng', userPhone,
 }: HomeDashboardScreenProps) {
+  const insets = React.useContext(SafeAreaInsetsContext);
+  const topInset = insets?.top ?? 0;
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [activeBannerIdx, setActiveBannerIdx] = useState(0);
 
@@ -550,12 +210,8 @@ export function HomeDashboardScreen({
     [recentOrders],
   );
 
-  // Address initialization: prioritize prop -> addressStore.getDefaultAddress() -> fallback
   const initialSaved = addressStore.getDefaultAddress();
-  const initialAddress =
-    defaultPickupLocation ??
-    initialSaved?.address ??
-    'Kho Tân Bình, TP. Hồ Chí Minh';
+  const initialAddress = defaultPickupLocation ?? initialSaved?.address ?? 'Kho Tân Bình, TP. Hồ Chí Minh';
   const initialLabel = defaultPickupLabel ?? initialSaved?.label ?? null;
 
   const [pickupText, setPickupText] = useState(initialAddress);
@@ -568,8 +224,13 @@ export function HomeDashboardScreen({
   const [showMapPickerModal, setShowMapPickerModal] = useState(false);
   const [mapTarget, setMapTarget] = useState<'pickup' | 'dropoff'>('pickup');
   const [loggedInCustomer, setLoggedInCustomer] = useState<{ name?: string; phone?: string } | null>(null);
+  const [addressStoreVersion, setAddressStoreVersion] = useState(0);
+  const [isAutoNavigating, setIsAutoNavigating] = useState(false);
+  const [quickTrackCode, setQuickTrackCode] = useState('');
 
-  // Sync authenticated customer profile from /me
+  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasNavigatedRef = useRef(false);
+
   useEffect(() => {
     let isMounted = true;
     async function loadCurrentCustomer() {
@@ -577,10 +238,7 @@ export function HomeDashboardScreen({
         if (sessionStore.isAuthenticated()) {
           const user = await httpClient.get<{ id: string; phone?: string | null; name?: string | null }>('/me');
           if (isMounted && user) {
-            setLoggedInCustomer({
-              name: user.name || undefined,
-              phone: user.phone || undefined,
-            });
+            setLoggedInCustomer({ name: user.name || undefined, phone: user.phone || undefined });
           }
         }
       } catch {
@@ -588,37 +246,52 @@ export function HomeDashboardScreen({
       }
     }
     void loadCurrentCustomer();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
+
+  const triggerNavigation = useCallback(
+    (pickup: string, dropoff: string, dropoffCoords?: { lat: number; lng: number }) => {
+      if (hasNavigatedRef.current || !pickup.trim() || !dropoff.trim()) return;
+      hasNavigatedRef.current = true;
+      setIsAutoNavigating(true);
+      if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
+      navigationTimeoutRef.current = setTimeout(() => {
+        if (onQuickBook) {
+          dropoffCoords ? onQuickBook(pickup, dropoff, dropoffCoords) : onQuickBook(pickup, dropoff);
+        } else {
+          onCreateOrder?.();
+        }
+        setTimeout(() => { setIsAutoNavigating(false); hasNavigatedRef.current = false; }, 1500);
+      }, 400);
+    },
+    [onQuickBook, onCreateOrder],
+  );
+
+  useEffect(() => {
+    if (focusedField === 'dropoff' && pickupText.trim().length >= 3 && dropoffText.trim().length >= 5 && !hasNavigatedRef.current) {
+      const timer = setTimeout(() => { triggerNavigation(pickupText, dropoffText); }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [dropoffText, pickupText, focusedField, triggerNavigation]);
 
   const handleOpenMapPicker = (target: 'pickup' | 'dropoff') => {
     setMapTarget(target);
     setShowMapPickerModal(true);
   };
 
-  const handleConfirmMapLocation = (
-    finalAddress: string,
-    extra?: { coords?: { lat: number; lng: number } },
-  ) => {
+  const handleConfirmMapLocation = (finalAddress: string, extra?: { coords?: { lat: number; lng: number } }) => {
     if (mapTarget === 'pickup') {
       setPickupText(finalAddress);
       setPickupLabel(null);
-      if (dropoffText.trim().length >= 3) {
-        triggerNavigation(finalAddress, dropoffText);
-      }
+      if (dropoffText.trim().length >= 3) triggerNavigation(finalAddress, dropoffText);
     } else {
       setDropoffText(finalAddress);
-      if (pickupText.trim().length >= 3) {
-        triggerNavigation(pickupText, finalAddress, extra?.coords);
-      }
+      if (pickupText.trim().length >= 3) triggerNavigation(pickupText, finalAddress, extra?.coords);
     }
     setShowMapPickerModal(false);
     setFocusedField(null);
   };
 
-  // Keep pickup location synchronized if prop changes or addressStore updates
   useEffect(() => {
     if (defaultPickupLocation) {
       setPickupText(defaultPickupLocation);
@@ -632,13 +305,9 @@ export function HomeDashboardScreen({
     }
   }, [defaultPickupLocation, defaultPickupLabel]);
 
-  // Auto-detect current GPS location for pickup address if customer has no saved default address
   useEffect(() => {
     const saved = addressStore.getDefaultAddress();
-    if (defaultPickupLocation || saved?.address) {
-      return;
-    }
-
+    if (defaultPickupLocation || saved?.address) return;
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
       navigator.geolocation.getCurrentPosition(
@@ -650,182 +319,54 @@ export function HomeDashboardScreen({
             if (resolved && resolved.trim().length > 0) {
               setPickupText(resolved);
               setPickupLabel('Vị trí hiện tại');
-              addressStore.saveAddress({
-                label: 'Vị trí hiện tại',
-                address: resolved,
-                category: 'OTHER',
-                latitude: lat,
-                longitude: lng,
-                isDefault: true,
-              });
+              addressStore.saveAddress({ label: 'Vị trí hiện tại', address: resolved, category: 'OTHER', latitude: lat, longitude: lng, isDefault: true });
               setAddressStoreVersion((v) => v + 1);
             }
           } catch {
-            // Keep default fallback
+            // Keep default
           }
         },
-        () => {
-          // Permission denied or unavailable - keep fallback
-        },
+        () => {},
         { enableHighAccuracy: true, timeout: 8000 },
       );
     }
   }, [defaultPickupLocation]);
 
-  // Dismiss dropdown when clicking or tapping outside on Web
-  useEffect(() => {
-    if (Platform.OS === 'web' && focusedField) {
-      const handleGlobalClick = (e: MouseEvent) => {
-        const target = e.target as HTMLElement | null;
-        if (!target) return;
-        if (
-          target.closest?.('[data-testid="cr-pickup-input"]') ||
-          target.closest?.('[data-testid="cr-dropoff-input"]') ||
-          target.closest?.('[data-testid="address-dropdown"]')
-        ) {
-          return;
-        }
-        setFocusedField(null);
-      };
-      const timer = setTimeout(() => {
-        window.addEventListener('click', handleGlobalClick);
-      }, 150);
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('click', handleGlobalClick);
-      };
-    }
-  }, [focusedField]);
+  const addressList = useMemo(() => savedAddresses ?? addressStore.getAddresses(), [savedAddresses, addressStoreVersion]);
 
-  const [isAutoNavigating, setIsAutoNavigating] = useState(false);
-  const navigationTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasNavigatedRef = React.useRef(false);
-  const [quickTrackCode, setQuickTrackCode] = useState('');
-
-  const triggerNavigation = (
-    pickup: string,
-    dropoff: string,
-    dropoffCoords?: { lat: number; lng: number },
-  ) => {
-    if (hasNavigatedRef.current) return;
-    if (!pickup.trim() || !dropoff.trim()) return;
-    hasNavigatedRef.current = true;
-    setIsAutoNavigating(true);
-    if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
-    navigationTimeoutRef.current = setTimeout(() => {
-      if (onQuickBook) {
-        if (dropoffCoords) {
-          onQuickBook(pickup, dropoff, dropoffCoords);
-        } else {
-          onQuickBook(pickup, dropoff);
-        }
-      } else {
-        onCreateOrder?.();
-      }
-      setTimeout(() => {
-        setIsAutoNavigating(false);
-        hasNavigatedRef.current = false;
-      }, 1500);
-    }, 400);
-  };
-
-  // Auto-navigate debounce when user types dropoff address
-  useEffect(() => {
-    if (
-      focusedField === 'dropoff' &&
-      pickupText.trim().length >= 3 &&
-      dropoffText.trim().length >= 5 &&
-      !hasNavigatedRef.current
-    ) {
-      const timer = setTimeout(() => {
-        triggerNavigation(pickupText, dropoffText);
-      }, 900);
-      return () => clearTimeout(timer);
-    }
-  }, [dropoffText, pickupText, focusedField]);
-
-  const [addressStoreVersion, setAddressStoreVersion] = useState(0);
-
-  // List of saved addresses for quick switching
-  const addressList = React.useMemo(
-    () => savedAddresses ?? addressStore.getAddresses(),
-    [savedAddresses, addressStoreVersion],
-  );
-
-  const [bannerWidth, setBannerWidth] = useState(() => {
-    const windowWidth = Dimensions.get('window').width;
-    return Math.max(280, windowWidth - 32);
-  });
-  const slideAnim = React.useRef(new Animated.Value(0)).current;
-  const currentSlideIdxRef = React.useRef(activeBannerIdx);
+  const [bannerWidth, setBannerWidth] = useState(() => Math.max(280, Dimensions.get('window').width - 32));
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const currentSlideIdxRef = useRef(activeBannerIdx);
   currentSlideIdxRef.current = activeBannerIdx;
 
-  const goToSlide = React.useCallback(
-    (targetIdx: number) => {
-      const currentIdx = currentSlideIdxRef.current;
-      if (currentIdx === targetIdx) return;
+  const goToSlide = useCallback((targetIdx: number) => {
+    const currentIdx = currentSlideIdxRef.current;
+    if (currentIdx === targetIdx) return;
+    slideAnim.stopAnimation();
+    setActiveBannerIdx(targetIdx);
 
-      slideAnim.stopAnimation();
-      setActiveBannerIdx(targetIdx);
+    if (currentIdx === PROMO_SLIDES.length - 1 && targetIdx === 0) {
+      Animated.timing(slideAnim, {
+        duration: 750, easing: Easing.out(Easing.cubic),
+        toValue: -PROMO_SLIDES.length * bannerWidth, useNativeDriver: Platform.OS !== 'web',
+      }).start(({ finished }) => { if (finished) slideAnim.setValue(0); });
+    } else {
+      Animated.timing(slideAnim, {
+        duration: 750, easing: Easing.out(Easing.cubic),
+        toValue: -targetIdx * bannerWidth, useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    }
+  }, [bannerWidth, slideAnim]);
 
-      // Khi lướt vòng tròn từ slide cuối sang slide đầu, trượt tiếp về phía trước qua clone rồi âm thầm reset về 0
-      if (currentIdx === PROMO_SLIDES.length - 1 && targetIdx === 0) {
-        Animated.timing(slideAnim, {
-          duration: 750,
-          easing: Easing.out(Easing.cubic),
-          toValue: -PROMO_SLIDES.length * bannerWidth,
-          useNativeDriver: Platform.OS !== 'web',
-        }).start(({ finished }) => {
-          if (finished) {
-            slideAnim.setValue(0);
-          }
-        });
-      } else {
-        Animated.timing(slideAnim, {
-          duration: 750,
-          easing: Easing.out(Easing.cubic),
-          toValue: -targetIdx * bannerWidth,
-          useNativeDriver: Platform.OS !== 'web',
-        }).start();
-      }
-    },
-    [bannerWidth, slideAnim],
-  );
-
-  // Auto-advance banner every 5 seconds forward in a loop (không lướt ngược lại)
   useEffect(() => {
-    const timer = setInterval(() => {
-      const next = (currentSlideIdxRef.current + 1) % PROMO_SLIDES.length;
-      goToSlide(next);
-    }, 5000);
+    const timer = setInterval(() => { goToSlide((currentSlideIdxRef.current + 1) % PROMO_SLIDES.length); }, 5000);
     return () => clearInterval(timer);
   }, [goToSlide]);
 
-  const handleTabChange = (key: TabKey) => {
-    setActiveTab(key);
-    onNavigateTab?.(key);
-  };
+  const handleTabChange = (key: TabKey) => { setActiveTab(key); onNavigateTab?.(key); };
+  const handleDriverButtonPress = () => { onRegisterDriver ? onRegisterDriver() : onSwitchRole?.('DRIVER'); };
 
-  const handleDriverButtonPress = () => {
-    if (onRegisterDriver) {
-      onRegisterDriver();
-    } else if (onSwitchRole) {
-      onSwitchRole('DRIVER');
-    }
-  };
-
-  const handleBookPress = () => {
-    if (onQuickBook) {
-      onQuickBook(pickupText, dropoffText);
-    } else {
-      onCreateOrder?.();
-    }
-  };
-
-  const timeOfDay = useMemo(() => getTimeOfDay(), []);
   const greeting = useMemo(() => getTimeOfDayGreeting(), []);
-  const currentSlide = PROMO_SLIDES[activeBannerIdx];
-
   const currentFleetVehicle = useMemo(
     () => FLEET_VEHICLES.find((v) => v.id === selectedFleetId) || FLEET_VEHICLES[1],
     [selectedFleetId],
@@ -833,11 +374,7 @@ export function HomeDashboardScreen({
 
   const handleFleetSelectAndBook = (vehicle: FleetVehicleItem) => {
     setSelectedFleetId(vehicle.id);
-    if (onSelectVehicleAndBook) {
-      onSelectVehicleAndBook(vehicle.vehicleCategory);
-    } else {
-      onCreateOrder?.();
-    }
+    onSelectVehicleAndBook ? onSelectVehicleAndBook(vehicle.vehicleCategory) : onCreateOrder?.();
   };
 
   const handleMainCtaBook = () => {
@@ -851,464 +388,254 @@ export function HomeDashboardScreen({
   };
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.topBar}>
-          <View style={styles.brandPlate}><BrandLoginLogo height={28} /></View>
-          <View style={styles.headerActions}>
+    <View style={styles.root}>
+      {/* ================= LAYER 0 (z-index 0): 100% FULL-BLEED MAP ================= */}
+      <View pointerEvents="box-none" style={styles.layer0Map} testID="home-map-layer">
+        <RealInteractiveMap
+          destination={dropoffText ? { label: dropoffText } : undefined}
+          height="100%" interactive
+          mode={activeShipment ? 'tracking' : dropoffText ? 'route' : 'preview'}
+          origin={pickupText ? { label: pickupText } : undefined}
+          testID="home-interactive-map"
+        />
+      </View>
+
+      {/* ================= LAYER 1 (z-index 20): FLOATING GLASS TOPBAR ================= */}
+      <View style={[styles.layer1TopBar, { top: Math.max(topInset, 12) }]} testID="home-top-bar">
+        <View style={styles.topBarIdentity}>
+          <View style={styles.topBarLogoPill}><BrandLoginLogo height={20} /></View>
+          <View style={styles.topBarTextWrap}>
+            <Text numberOfLines={1} style={styles.topBarGreeting}>{greeting}{userName ? `, ${userName}` : ''}</Text>
+            {smeName ? <Text numberOfLines={1} style={styles.topBarSmeName}>{smeName}</Text> : null}
+          </View>
+        </View>
+
+        <View style={styles.topBarActions}>
+          <Pressable
+            accessibilityLabel="Chuyển vai trò" accessibilityRole="button"
+            onPress={() => { onSwitchRole ? onSwitchRole('DRIVER') : onRegisterDriver?.(); }}
+            style={styles.roleSwitchBtn}
+          >
+            <IconRoleDriver color="#0B1E42" size={16} />
+            <Text style={styles.roleSwitchText}>Tài xế</Text>
+          </Pressable>
+
+          {onOpenNotifications ? (
             <Pressable
-              accessibilityLabel={
-                unreadMessages > 0
-                  ? `Tin nhắn (${unreadMessages} chưa đọc)`
-                  : 'Tin nhắn'
-              }
-              accessibilityRole="button"
-              onPress={onOpenChat}
-              style={styles.headerIconBtn}
+              accessibilityLabel={`Thông báo (${unreadNotifications} chưa đọc)`} accessibilityRole="button"
+              onPress={onOpenNotifications} style={styles.iconBtn}
             >
-              <IconMessage color="#FFFFFF" size={18} />
-              {unreadMessages > 0 ? (
-                <View style={styles.badgePill}>
-                  <Text style={styles.badgePillText}>{unreadMessages}</Text>
-                </View>
+              <IconBell color="#0B1E42" size={18} />
+              {unreadNotifications > 0 ? (
+                <View style={styles.badgePill}><Text style={styles.badgePillText}>{unreadNotifications}</Text></View>
               ) : null}
             </Pressable>
+          ) : null}
 
-            {onOpenNotifications ? (
-              <Pressable
-                accessibilityLabel={`Thông báo (${unreadNotifications} chưa đọc)`}
-                accessibilityRole="button"
-                onPress={onOpenNotifications}
-                style={styles.headerIconBtn}
-              >
-                <IconBell color="#FFFFFF" size={18} />
-                {unreadNotifications > 0 ? (
-                  <View style={styles.badgePill}>
-                    <Text style={styles.badgePillText}>{unreadNotifications}</Text>
+          {onOpenChat ? (
+            <Pressable
+              accessibilityLabel={unreadMessages > 0 ? `Tin nhắn (${unreadMessages} chưa đọc)` : 'Tin nhắn'} accessibilityRole="button"
+              onPress={onOpenChat} style={styles.iconBtn}
+            >
+              <IconMessage color="#0B1E42" size={18} />
+              {unreadMessages > 0 ? (
+                <View style={styles.badgePill}><Text style={styles.badgePillText}>{unreadMessages}</Text></View>
+              ) : null}
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
+      {/* ================= LAYER 2 (z-index 40): 3-SNAP GESTURE BOTTOM SHEET ================= */}
+      <GestureBottomSheet
+        initialSnapIndex={1}
+        snapPoints={[0.18, 0.52, 0.92]}
+        style={styles.layer2BottomSheet}
+        testID="home-bottom-sheet"
+      >
+        <ScrollView contentContainerStyle={styles.sheetScrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {/* 1. Route Booking Card (testID="home-booking") */}
+          <View style={styles.routeBookingCard} testID="home-booking">
+            <View style={styles.routeBox}>
+              <View style={styles.spineColumn}>
+                <View style={styles.pickupPinCircle}><View style={styles.pickupPinInner} /></View>
+                <View style={styles.spineLine} />
+                <View style={styles.dropoffPinSquare} />
+              </View>
+
+              <View style={styles.inputsColumn}>
+                {/* Điểm lấy hàng */}
+                <View style={styles.routeInputRow}>
+                  <View style={styles.inputInnerWrap}>
+                    <View style={styles.locationHeaderRow}>
+                      <Text style={styles.inputMicroLabel}>ĐIỂM LẤY HÀNG</Text>
+                      {pickupLabel ? (
+                        <View style={styles.pickupLabelBadge}>
+                          <IconWarehouse color="#0284C7" size={12} />
+                          <Text style={styles.pickupLabelBadgeText}>{pickupLabel}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <TextInput
+                      accessibilityLabel="Địa điểm lấy hàng" autoCapitalize="none" autoCorrect={false}
+                      onChangeText={(t) => { setPickupText(t); if (pickupLabel) setPickupLabel(null); }}
+                      onFocus={() => setFocusedField('pickup')} placeholder="Nhập địa chỉ lấy hàng..."
+                      placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID="cr-pickup-input" value={pickupText}
+                    />
                   </View>
-                ) : null}
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
+                  {pickupText.length > 0 ? (
+                    <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); }} style={styles.inputActionBtn}>
+                      <IconClose color="#94A3B8" size={14} />
+                    </Pressable>
+                  ) : null}
+                  <Pressable accessibilityLabel="Mở bản đồ chọn điểm lấy" accessibilityRole="button" hitSlop={8} onPress={() => handleOpenMapPicker('pickup')} style={styles.inputActionBtn}>
+                    <IconPin color="#0B1E42" size={16} />
+                  </Pressable>
+                </View>
 
-        {/* Full-screen interactive map background (Lalamove Style) */}
-        <View pointerEvents="box-none" style={styles.mapBackgroundLayer}>
-          <RealInteractiveMap
-            destination={dropoffText ? { label: dropoffText } : undefined}
-            height="100%"
-            interactive
-            mode={activeShipment ? 'tracking' : dropoffText ? 'route' : 'preview'}
-            origin={pickupText ? { label: pickupText } : undefined}
-            testID="home-interactive-map"
-          />
-        </View>
+                <View style={styles.inputDivider} />
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.homeIntro}>
-            <View pointerEvents="none" style={styles.homeIntroGlow} />
-            <View pointerEvents="none" style={styles.homeIntroAccent} />
-            <Text style={styles.homeGreeting}>{greeting}{userName ? ', ' + userName : ''}</Text>
-            <Text accessibilityRole="header" style={styles.homeTitle}>Bạn muốn giao hàng đi đâu?</Text>
-          </View>
-
-          <View style={styles.mainSheet}>
-            {/* Thẻ ẩn dữ liệu danh tính người dùng phục vụ accessibility và test suite */}
-            <View pointerEvents="none" style={styles.srOnly}>
-              {smeName ? <Text>{smeName}</Text> : null}
+                {/* Điểm giao hàng */}
+                <View style={styles.routeInputRow}>
+                  <View style={styles.inputInnerWrap}>
+                    <Text style={styles.inputMicroLabel}>ĐIỂM GIAO HÀNG</Text>
+                    <TextInput
+                      accessibilityLabel="Địa điểm giao hàng" autoCapitalize="none" autoCorrect={false}
+                      onChangeText={setDropoffText} onFocus={() => setFocusedField('dropoff')}
+                      onSubmitEditing={() => { if (pickupText.trim().length >= 3 && dropoffText.trim().length >= 3) triggerNavigation(pickupText, dropoffText); }}
+                      placeholder="Bạn muốn giao hàng đến đâu?..." placeholderTextColor="#94A3B8"
+                      style={styles.locationTextInput} testID="cr-dropoff-input" value={dropoffText}
+                    />
+                  </View>
+                  {dropoffText.length > 0 ? (
+                    <Pressable accessibilityLabel="Xóa điểm giao hàng" accessibilityRole="button" hitSlop={8} onPress={() => setDropoffText('')} style={styles.inputActionBtn}>
+                      <IconClose color="#94A3B8" size={14} />
+                    </Pressable>
+                  ) : null}
+                  {pickupText.trim().length >= 3 && dropoffText.trim().length >= 3 ? (
+                    <Pressable accessibilityLabel="Chuyển sang tạo đơn ngay" accessibilityRole="button" hitSlop={8} onPress={() => triggerNavigation(pickupText, dropoffText)} style={styles.fastForwardBtn} testID="quick-book-submit-btn">
+                      <IconChevron color="#FFFFFF" direction="right" size={16} />
+                    </Pressable>
+                  ) : null}
+                  <Pressable accessibilityLabel="Mở bản đồ chọn điểm giao" accessibilityRole="button" hitSlop={8} onPress={() => handleOpenMapPicker('dropoff')} style={styles.inputActionBtn}>
+                    <IconPin color="#DC2626" size={16} />
+                  </Pressable>
+                </View>
+              </View>
             </View>
 
-            {/* 2. Quick Route Booking Card (Phần vị trí: Dispatch Dock) */}
-            <View style={styles.routeBookingCard} testID="home-booking">
-              <View style={styles.routeBookingHeader}>
-                <View style={styles.routeBadgeRow}>
-                  <View style={styles.liveIndicatorDot} />
-                  <Text style={styles.routeBookingTitle}>ĐẶT XE GIAO HÀNG NHANH</Text>
-                </View>
-              </View>
-
-              {/* Unified Route Box: Trục hành trình thẳng đứng liền mạch */}
-              <View style={styles.routeBox}>
-                <View style={styles.spineColumn}>
-                  <View style={styles.pickupPinCircle}>
-                    <View style={styles.pickupPinInner} />
-                  </View>
-                  <View style={styles.spineLine} />
-                  <View style={styles.dropoffPinSquare} />
-                </View>
-
-                <View style={styles.inputsColumn}>
-                  {/* Điểm lấy hàng */}
-                  <View
-                    style={[
-                      styles.routeInputWrapper,
-                      focusedField === 'pickup' && styles.routeInputWrapperFocused,
-                    ]}
-                  >
-                    <View style={styles.inputInnerColumn}>
-                      <View style={styles.locationFieldHeader}>
-                        <Text style={styles.locationFieldLabel}>ĐIỂM LẤY HÀNG</Text>
-                        {pickupLabel ? (
-                          <View style={styles.pickupLabelBadge}>
-                            <Text style={styles.pickupLabelBadgeText}>{pickupLabel}</Text>
-                          </View>
-                        ) : null}
-                      </View>
-                      <TextInput
-                        accessibilityLabel="Địa điểm lấy hàng"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        onChangeText={(t) => {
-                          setPickupText(t);
-                          if (pickupLabel) setPickupLabel(null);
-                        }}
-                        onFocus={() => setFocusedField('pickup')}
-                        placeholder="Nhập địa chỉ lấy hàng..."
-                        placeholderTextColor="#94A3B8"
-                        style={styles.locationTextInput}
-                        testID="cr-pickup-input"
-                        value={pickupText}
-                      />
-                    </View>
-                    {pickupText.length > 0 ? (
-                      <Pressable
-                        accessibilityLabel="Xóa điểm lấy hàng"
-                        accessibilityRole="button"
-                        hitSlop={8}
-                        onPress={() => {
-                          setPickupText('');
-                          setPickupLabel(null);
-                        }}
-                        style={styles.clearBtn}
-                      >
-                        <Text style={styles.clearBtnText}>✕</Text>
-                      </Pressable>
-                    ) : null}
-
-                    <Pressable
-                      accessibilityLabel="Mở bản đồ chọn điểm lấy"
-                      accessibilityRole="button"
-                      hitSlop={8}
-                      onPress={() => handleOpenMapPicker('pickup')}
-                      style={styles.inputMapPinBtn}
-                    >
-                      <IconLocationPin color="#0B1E42" size={16} />
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.inputDivider} />
-
-                  {/* Điểm giao hàng */}
-                  <View
-                    style={[
-                      styles.routeInputWrapper,
-                      focusedField === 'dropoff' && styles.routeInputWrapperFocused,
-                    ]}
-                  >
-                    <View style={styles.inputInnerColumn}>
-                      <Text style={styles.locationFieldLabel}>ĐIỂM GIAO HÀNG</Text>
-                      <TextInput
-                        accessibilityLabel="Địa điểm giao hàng"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        onChangeText={setDropoffText}
-                        onFocus={() => setFocusedField('dropoff')}
-                        onSubmitEditing={() => {
-                          if (pickupText.trim().length >= 3 && dropoffText.trim().length >= 3) {
-                            triggerNavigation(pickupText, dropoffText);
-                          }
-                        }}
-                        placeholder="Bạn muốn giao hàng đến đâu?..."
-                        placeholderTextColor="#94A3B8"
-                        style={styles.locationTextInput}
-                        testID="cr-dropoff-input"
-                        value={dropoffText}
-                      />
-                    </View>
-                    {dropoffText.length > 0 ? (
-                      <Pressable
-                        accessibilityLabel="Xóa điểm giao hàng"
-                        accessibilityRole="button"
-                        hitSlop={8}
-                        onPress={() => setDropoffText('')}
-                        style={styles.clearBtn}
-                      >
-                        <Text style={styles.clearBtnText}>✕</Text>
-                      </Pressable>
-                    ) : null}
-
-                    {pickupText.trim().length >= 3 && dropoffText.trim().length >= 3 ? (
-                      <Pressable
-                        accessibilityLabel="Chuyển sang tạo đơn ngay"
-                        accessibilityRole="button"
-                        hitSlop={8}
-                        onPress={() => triggerNavigation(pickupText, dropoffText)}
-                        style={styles.fastForwardBtn}
-                        testID="quick-book-submit-btn"
-                      >
-                        <Text style={styles.fastForwardBtnText}>→</Text>
-                      </Pressable>
-                    ) : null}
-
-                    <Pressable
-                      accessibilityLabel="Mở bản đồ chọn điểm giao"
-                      accessibilityRole="button"
-                      hitSlop={8}
-                      onPress={() => handleOpenMapPicker('dropoff')}
-                      style={styles.inputMapPinBtn}
-                    >
-                      <IconLocationPin color="#DC2626" size={16} />
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-
-              {/* Dropdown Gợi ý & Xác nhận vị trí khi đang focus vào ô nhập */}
-              {focusedField ? (
-                <View style={styles.addressDropdownWrap} testID="address-dropdown">
-                  <View style={styles.dropdownHeaderRow}>
-                    <Text style={styles.dropdownHeaderTitle}>
-                      {focusedField === 'pickup' ? 'ĐIỂM LẤY HÀNG' : 'ĐIỂM GIAO HÀNG'} · GỢI Ý
-                    </Text>
-                    <Pressable
-                      accessibilityLabel="Đóng gợi ý"
-                      hitSlop={8}
-                      onPress={() => setFocusedField(null)}
-                      style={styles.dropdownCloseBtn}
-                    >
-                      <Text style={styles.dropdownCloseBtnText}>✕</Text>
-                    </Pressable>
-                  </View>
-
-                  <Pressable
-                    accessibilityLabel="Xác nhận vị trí trên bản đồ"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      const target = focusedField || 'pickup';
-                      setFocusedField(null);
-                      handleOpenMapPicker(target);
-                    }}
-                    style={({ pressed }) => [
-                      styles.dropdownActionItem,
-                      pressed && styles.dropdownActionItemPressed,
-                    ]}
-                  >
-                    <View style={styles.dropdownMapIconBg}>
-                      <IconLocationPin color="#0B1E42" size={16} />
-                    </View>
-                    <View style={styles.dropdownActionContent}>
-                      <Text style={styles.dropdownActionTitle}>
-                        Xác nhận vị trí trên bản đồ
-                      </Text>
-                      <Text style={styles.dropdownActionDesc}>
-                        Ghim vị trí chính xác trực quan trên bản đồ
-                      </Text>
-                    </View>
-                    <Text style={styles.dropdownChevron}>›</Text>
-                  </Pressable>
-
-                  <View style={styles.dropdownDivider} />
-
-                  <Pressable
-                    accessibilityLabel="Chọn từ sổ địa chỉ"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      const target = focusedField || 'pickup';
-                      setSavedAddressModalTarget(target);
-                      setFocusedField(null);
-                      setShowSavedAddressModal(true);
-                    }}
-                    style={({ pressed }) => [
-                      styles.dropdownActionItem,
-                      pressed && styles.dropdownActionItemPressed,
-                    ]}
-                  >
-                    <View style={styles.dropdownSavedIconBg}>
-                      <IconLocationPin color="#0B1E42" size={16} />
-                    </View>
-                    <View style={styles.dropdownActionContent}>
-                      <Text style={styles.dropdownActionTitle}>
-                        Chọn từ sổ địa chỉ
-                      </Text>
-                      <Text style={styles.dropdownActionDesc}>
-                        Kho hàng, nhà riêng & điểm giao đã lưu
-                      </Text>
-                    </View>
-                    <Text style={styles.dropdownChevron}>›</Text>
+            {/* Dropdown Gợi ý & Xác nhận vị trí khi focus */}
+            {focusedField ? (
+              <View style={styles.addressDropdown} testID="address-dropdown">
+                <View style={styles.dropdownHeaderRow}>
+                  <Text style={styles.dropdownHeaderTitle}>{focusedField === 'pickup' ? 'ĐIỂM LẤY HÀNG' : 'ĐIỂM GIAO HÀNG'} · GỢI Ý</Text>
+                  <Pressable accessibilityLabel="Đóng gợi ý" hitSlop={8} onPress={() => setFocusedField(null)} style={styles.dropdownCloseBtn}>
+                    <IconClose color="#64748B" size={14} />
                   </Pressable>
                 </View>
-              ) : null}
-
-              {/* Status banner when auto-navigating */}
-              {isAutoNavigating ? (
-                <View style={styles.autoNavigatingBanner}>
-                  <View style={styles.liveIndicatorDotActive} />
-                  <Text style={styles.autoNavigatingText}>
-                    Đã xác định lộ trình · Đang chuyển tiếp...
-                  </Text>
-                </View>
-              ) : null}
-
-              {/* 3. Lalamove-style Fleet Carousel Matrix */}
-              <View style={styles.fleetMatrixSection}>
-                <View style={styles.fleetMatrixHeader}>
-                  <Text style={styles.fleetMatrixTitle}>CHỌN LOẠI XE PHÙ HỢP</Text>
-                  <Text style={styles.fleetMatrixSubtitle}>Kích thước thùng chuẩn xác</Text>
-                </View>
-
-                <ScrollView
-                  contentContainerStyle={styles.fleetScrollContent}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
+                <Pressable
+                  accessibilityLabel="Xác nhận vị trí trên bản đồ" accessibilityRole="button"
+                  onPress={() => { const t = focusedField || 'pickup'; setFocusedField(null); handleOpenMapPicker(t); }}
+                  style={({ pressed }) => [styles.dropdownItem, pressed && styles.dropdownItemPressed]}
                 >
-                  {FLEET_VEHICLES.map((vehicle) => {
-                    const isSelected = vehicle.id === selectedFleetId;
-                    return (
-                      <Pressable
-                        accessibilityLabel={`Chọn xe ${vehicle.name}, kích thước ${vehicle.dimensions}, giá dự kiến ${vehicle.estimatedPrice}`}
-                        accessibilityRole="button"
-                        key={vehicle.id}
-                        onPress={() => handleFleetSelectAndBook(vehicle)}
-                        style={[
-                          styles.fleetCard,
-                          isSelected && styles.fleetCardSelected,
-                        ]}
-                      >
-                        {vehicle.badge ? (
-                          <View
-                            style={[
-                              styles.fleetBadge,
-                              isSelected && styles.fleetBadgeSelected,
-                            ]}
-                          >
-                            <Text
-                              style={[
-                                styles.fleetBadgeText,
-                                isSelected && styles.fleetBadgeTextSelected,
-                              ]}
-                            >
-                              {vehicle.badge}
-                            </Text>
-                          </View>
-                        ) : null}
+                  <View style={styles.dropdownIconCircle}><IconPin color="#0B1E42" size={16} /></View>
+                  <View style={styles.dropdownItemTextWrap}>
+                    <Text style={styles.dropdownItemTitle}>Xác nhận vị trí trên bản đồ</Text>
+                    <Text style={styles.dropdownItemSub}>Ghim vị trí chính xác trực quan trên bản đồ</Text>
+                  </View>
+                  <IconChevron color="#94A3B8" direction="right" size={16} />
+                </Pressable>
+                <View style={styles.dropdownDivider} />
+                <Pressable
+                  accessibilityLabel="Chọn từ sổ địa chỉ" accessibilityRole="button"
+                  onPress={() => { const t = focusedField || 'pickup'; setSavedAddressModalTarget(t); setFocusedField(null); setShowSavedAddressModal(true); }}
+                  style={({ pressed }) => [styles.dropdownItem, pressed && styles.dropdownItemPressed]}
+                >
+                  <View style={styles.dropdownIconCircle}><IconWarehouse color="#0B1E42" size={16} /></View>
+                  <View style={styles.dropdownItemTextWrap}>
+                    <Text style={styles.dropdownItemTitle}>Chọn từ sổ địa chỉ</Text>
+                    <Text style={styles.dropdownItemSub}>Kho hàng, nhà riêng & điểm giao đã lưu</Text>
+                  </View>
+                  <IconChevron color="#94A3B8" direction="right" size={16} />
+                </Pressable>
+              </View>
+            ) : null}
 
-                        <View style={styles.fleetIconContainer}>
-                          {vehicle.id === 'BIKE_3W' && (
-                            <IconVehicle3Wheel
-                              color={isSelected ? '#0B1E42' : '#64748B'}
-                              size={36}
-                            />
-                          )}
-                          {vehicle.id === 'VAN_500KG' && (
-                            <IconVehicleVan
-                              color={isSelected ? '#0284C7' : '#64748B'}
-                              size={38}
-                            />
-                          )}
-                          {vehicle.id === 'TRUCK_125T' && (
-                            <IconVehicleLightTruck
-                              color={isSelected ? '#0B1E42' : '#64748B'}
-                              size={38}
-                            />
-                          )}
-                          {vehicle.id === 'TRUCK_25T' && (
-                            <IconVehicleHeavyTruck
-                              color={isSelected ? '#0B1E42' : '#64748B'}
-                              size={40}
-                            />
-                          )}
+            {isAutoNavigating ? (
+              <View style={styles.autoNavigatingBanner}>
+                <View style={styles.liveIndicatorDotActive} />
+                <Text style={styles.autoNavigatingText}>Đã xác định lộ trình · Đang chuyển tiếp...</Text>
+              </View>
+            ) : null}
+
+            {/* Fleet Matrix Carousel */}
+            <View style={styles.fleetMatrixSection}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionLabel}>CHỌN LOẠI XE PHÙ HỢP</Text>
+                <Text style={styles.sectionSubLabel}>Kích thước thùng chuẩn xác</Text>
+              </View>
+
+              <ScrollView contentContainerStyle={styles.fleetScrollContent} horizontal showsHorizontalScrollIndicator={false}>
+                {FLEET_VEHICLES.map((vehicle) => {
+                  const isSelected = vehicle.id === selectedFleetId;
+                  return (
+                    <Pressable
+                      accessibilityLabel={`Chọn xe ${vehicle.name}, kích thước ${vehicle.dimensions}, giá dự kiến ${vehicle.estimatedPrice}`}
+                      accessibilityRole="button" key={vehicle.id} onPress={() => handleFleetSelectAndBook(vehicle)}
+                      style={[styles.fleetCard, isSelected && styles.fleetCardSelected]}
+                    >
+                      {vehicle.badge ? (
+                        <View style={[styles.fleetBadge, isSelected && styles.fleetBadgeSelected]}>
+                          <Text style={[styles.fleetBadgeText, isSelected && styles.fleetBadgeTextSelected]}>{vehicle.badge}</Text>
                         </View>
+                      ) : null}
+                      <View style={styles.fleetIconContainer}>
+                        {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? '#F59E0B' : '#64748B'} size={32} />}
+                        {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? '#0284C7' : '#64748B'} size={34} />}
+                        {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={34} />}
+                        {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={36} />}
+                      </View>
+                      <Text numberOfLines={1} style={[styles.fleetVehicleName, isSelected && styles.fleetVehicleNameSelected]}>{vehicle.name}</Text>
+                      <View style={[styles.dimensionBadge, isSelected && styles.dimensionBadgeSelected]}>
+                        <Text style={[styles.dimensionText, isSelected && styles.dimensionTextSelected]}>{vehicle.dimensions}</Text>
+                      </View>
+                      <Text style={styles.fleetCapacityText}>Tải trọng: {vehicle.weightCapacity}</Text>
+                      <Text style={[styles.fleetPriceText, isSelected && styles.fleetPriceTextSelected]}>{vehicle.estimatedPrice}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
 
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            styles.fleetVehicleName,
-                            isSelected && styles.fleetVehicleNameSelected,
-                          ]}
-                        >
-                          {vehicle.name}
-                        </Text>
-
-                        {/* Thùng xe D x R x C Badge */}
-                        <View
-                          style={[
-                            styles.dimensionBadge,
-                            isSelected && styles.dimensionBadgeSelected,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.dimensionText,
-                              isSelected && styles.dimensionTextSelected,
-                            ]}
-                          >
-                            {vehicle.dimensions}
-                          </Text>
-                        </View>
-
-                        <Text style={styles.fleetCapacityText}>
-                          Tải trọng: {vehicle.weightCapacity}
-                        </Text>
-
-                        <Text
-                          style={[
-                            styles.fleetPriceText,
-                            isSelected && styles.fleetPriceTextSelected,
-                          ]}
-                        >
-                          {vehicle.estimatedPrice}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-
-                {/* 4. Total Fare Estimation Badge + Big Prominent CTA */}
-                <View style={styles.fareCtaCard}>
-                  <View style={styles.fareInfoRow}>
-                    <View style={styles.fareLeftCol}>
-                      <Text style={styles.fareLabel}>ƯỚC TÍNH CƯỚC CHUYẾN</Text>
-                      <View style={styles.fareVehicleTypeRow}>
-                        <Text style={styles.fareVehicleName}>
-                          {currentFleetVehicle.name}
-                        </Text>
-                        <View style={styles.fareDimensionChip}>
-                          <Text style={styles.fareDimensionChipText}>
-                            Thùng: {currentFleetVehicle.dimensionLabel}
-                          </Text>
-                        </View>
+              {/* Fare Estimation & Big Sticky Bottom CTA */}
+              <View style={styles.fareCtaCard}>
+                <View style={styles.fareInfoRow}>
+                  <View style={styles.fareLeftCol}>
+                    <Text style={styles.fareLabel}>ƯỚC TÍNH CƯỚC CHUYẾN</Text>
+                    <View style={styles.fareVehicleTypeRow}>
+                      <Text style={styles.fareVehicleName}>{currentFleetVehicle.name}</Text>
+                      <View style={styles.fareDimensionChip}>
+                        <Text style={styles.fareDimensionChipText}>Thùng: {currentFleetVehicle.dimensionLabel}</Text>
                       </View>
                     </View>
-                    <View style={styles.fareRightCol}>
-                      <Text style={styles.fareAmount}>
-                        {currentFleetVehicle.estimatedPrice}
-                      </Text>
-                      <Text style={styles.fareNote}>Giá mở cửa chuẩn</Text>
-                    </View>
                   </View>
-
-                  <Pressable
-                    accessibilityLabel={`Đặt xe ngay ${currentFleetVehicle.name}, giá ${currentFleetVehicle.estimatedPrice}`}
-                    accessibilityRole="button"
-                    onPress={handleMainCtaBook}
-                    style={({ pressed }) => [
-                      styles.bigCtaBtn,
-                      pressed && styles.bigCtaBtnPressed,
-                    ]}
-                  >
-                    <Text style={styles.bigCtaBtnText}>
-                      ĐẶT XE NGAY · {currentFleetVehicle.estimatedPrice}
-                    </Text>
-                  </Pressable>
+                  <View style={styles.fareRightCol}>
+                    <Text style={styles.fareAmount}>{currentFleetVehicle.estimatedPrice}</Text>
+                    <Text style={styles.fareNote}>Giá mở cửa chuẩn</Text>
+                  </View>
                 </View>
+
+                <Pressable
+                  accessibilityLabel={`Đặt xe ngay ${currentFleetVehicle.name}, giá ${currentFleetVehicle.estimatedPrice}`}
+                  accessibilityRole="button" onPress={handleMainCtaBook}
+                  style={({ pressed }) => [styles.bigCtaBtn, pressed && styles.bigCtaBtnPressed]}
+                >
+                  <Text style={styles.bigCtaBtnText}>ĐẶT XE NGAY · {currentFleetVehicle.estimatedPrice}</Text>
+                </Pressable>
               </View>
             </View>
+          </View>
 
-          {/* 7. Live Tracking Activity Capsule (Active Shipment / Quick Tracking) */}
+          {/* 2. Active Shipment / Tracking Capsule (testID="home-active-shipments") */}
           <View style={styles.section} testID="home-active-shipments">
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionTitleWithBadge}>
@@ -1316,9 +643,7 @@ export function HomeDashboardScreen({
                 <Text style={styles.sectionLabel}>ĐANG VẬN CHUYỂN</Text>
               </View>
               {activeShipment ? (
-                <View style={styles.liveTagBadge}>
-                  <Text style={styles.liveTagText}>Trực tiếp</Text>
-                </View>
+                <View style={styles.liveTagBadge}><Text style={styles.liveTagText}>Trực tiếp</Text></View>
               ) : null}
             </View>
 
@@ -1326,78 +651,52 @@ export function HomeDashboardScreen({
               <Pressable
                 accessibilityHint="Mở theo dõi lộ trình"
                 accessibilityLabel={`Chuyến đang vận chuyển từ ${activeShipment.origin} đến ${activeShipment.destination}`}
-                accessibilityRole="button"
-                onPress={() => onOpenActiveOrder?.(activeShipment.orderId)}
-                style={({ pressed }) => [styles.activeCard, pressed ? styles.pressed : null]}
+                accessibilityRole="button" onPress={() => onOpenActiveOrder?.(activeShipment.orderId)}
+                style={({ pressed }) => [styles.activeCard, pressed && styles.activeCardPressed]}
               >
                 <View style={styles.activeTop}>
                   <StatusBadge domain="order" status={activeShipment.status} />
                   {activeShipment.etaMinutes !== undefined ? (
                     <View style={styles.etaPill}>
+                      <IconClock color="#0284C7" size={14} />
                       <Text style={styles.etaText}>ETA dự kiến {activeShipment.etaMinutes} phút</Text>
                     </View>
                   ) : null}
                 </View>
-
                 <View style={styles.activeRouteContainer}>
-                  <View style={styles.activeRouteWell}>
-                    <RouteSpine
-                      destination={{ id: 'active-dest', label: activeShipment.destination }}
-                      origin={{ id: 'active-origin', label: activeShipment.origin }}
-                      stops={[]}
-                    />
-                  </View>
-
+                  <RouteSpine
+                    destination={{ id: 'active-dest', label: activeShipment.destination }}
+                    origin={{ id: 'active-origin', label: activeShipment.origin }} stops={[]}
+                  />
                 </View>
-
                 <View style={styles.activeMeta}>
                   <View style={styles.activeDriverBox}>
-                    <View style={styles.activeDriverIconBox}>
-                      <IconRoleDriver color="#0B1E42" secondaryColor="#F0F4F9" size={18} />
-                    </View>
+                    <IconRoleDriver color="#0B1E42" size={16} />
                     <Text numberOfLines={1} style={styles.driverText}>
                       {activeShipment.cargoNote ? `${activeShipment.cargoNote} · ` : ''}
                       {activeShipment.driverName ?? 'Chưa có tài xế'}
-                      {activeShipment.plate ? (
-                        <Text style={styles.plateText}> · {activeShipment.plate}</Text>
-                      ) : null}
+                      {activeShipment.plate ? <Text style={styles.plateText}> · {activeShipment.plate}</Text> : null}
                     </Text>
                   </View>
-                  <View style={styles.activeTrackPill}>
-                    <Text style={styles.trackText}>Theo dõi →</Text>
-                  </View>
+                  <View style={styles.activeTrackPill}><Text style={styles.trackText}>Theo dõi →</Text></View>
                 </View>
               </Pressable>
             ) : (
               <View style={styles.emptyActivityBox}>
                 <Text style={styles.emptyTitle}>Chưa có chuyến nào đang chạy</Text>
-                <Text style={styles.emptyBody}>
-                  Tạo đơn vận chuyển để bắt đầu theo dõi lộ trình theo thời gian thực.
-                </Text>
-                {/* Thanh tra cứu nhanh mã vận đơn */}
+                <Text style={styles.emptyBody}>Tạo đơn vận chuyển để bắt đầu theo dõi lộ trình theo thời gian thực.</Text>
                 <View style={styles.quickTrackingBar}>
                   <View style={styles.trackingInputWrap}>
-                    <IconLocationPin color="#0B1E42" size={16} />
+                    <IconSearch color="#0B1E42" size={16} />
                     <TextInput
-                      accessibilityLabel="Tra cứu mã vận đơn"
-                      autoCapitalize="characters"
-                      onChangeText={setQuickTrackCode}
-                      placeholder="Tra cứu nhanh mã vận đơn..."
-                      placeholderTextColor="#94A3B8"
-                      style={styles.trackingInput}
-                      value={quickTrackCode}
+                      accessibilityLabel="Tra cứu mã vận đơn" autoCapitalize="characters"
+                      onChangeText={setQuickTrackCode} placeholder="Tra cứu nhanh mã vận đơn..."
+                      placeholderTextColor="#94A3B8" style={styles.trackingInput} value={quickTrackCode}
                     />
                   </View>
                   <Pressable
-                    accessibilityLabel="Tra cứu đơn hàng"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      if (quickTrackCode.trim()) {
-                        onOpenOrder?.(quickTrackCode.trim());
-                      } else {
-                        onViewAllOrders?.();
-                      }
-                    }}
+                    accessibilityLabel="Tra cứu đơn hàng" accessibilityRole="button"
+                    onPress={() => { quickTrackCode.trim() ? onOpenOrder?.(quickTrackCode.trim()) : onViewAllOrders?.(); }}
                     style={styles.trackingSearchBtn}
                   >
                     <Text style={styles.trackingSearchBtnText}>Tra cứu</Text>
@@ -1407,76 +706,47 @@ export function HomeDashboardScreen({
             )}
           </View>
 
-          {/* Six service shortcuts: two columns, three rows. */}
+          {/* 3. Transport Services & Fleet (testID="home-services") */}
           <View style={styles.section} testID="home-services">
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionLabel}>DỊCH VỤ VẬN TẢI & ĐỘI XE</Text>
-            </View>
+            <View style={styles.sectionHeaderRow}><Text style={styles.sectionLabel}>DỊCH VỤ VẬN TẢI & ĐỘI XE</Text></View>
             <View style={styles.serviceGrid}>
               {quickServices.map((service) => (
                 <Pressable
                   accessibilityHint="Mở màn hình tạo đơn với dịch vụ đã chọn"
-                  accessibilityLabel={`Đặt nhanh ${service.label}`}
-                  accessibilityRole="button"
-                  key={service.id}
-                  onPress={() => {
-                    if (service.vehicleId && onSelectVehicleAndBook) {
-                      onSelectVehicleAndBook(service.vehicleId);
-                    } else {
-                      onCreateOrder?.();
-                    }
-                  }}
-                  style={({ pressed }) => [
-                    styles.serviceCard,
-                    { borderColor: service.borderColor },
-                    pressed ? styles.serviceCardPressed : null,
-                  ]}
+                  accessibilityLabel={`Đặt nhanh ${service.label}`} accessibilityRole="button" key={service.id}
+                  onPress={() => { service.vehicleId && onSelectVehicleAndBook ? onSelectVehicleAndBook(service.vehicleId) : onCreateOrder?.(); }}
+                  style={({ pressed }) => [styles.serviceCard, { borderColor: service.borderColor }, pressed && styles.serviceCardPressed]}
                 >
-                  <View
-                    accessible={false}
-                    style={[
-                      styles.serviceImageContainer,
-                      { backgroundColor: service.surfaceColor, borderColor: service.borderColor },
-                    ]}
-                  >
+                  <View accessible={false} style={[styles.serviceImageContainer, { backgroundColor: service.surfaceColor, borderColor: service.borderColor }]}>
                     <HomeServiceIllustration kind={service.iconType} />
                   </View>
-                  <Text numberOfLines={1} style={styles.serviceName}>
-                    {service.name}
-                  </Text>
+                  <Text numberOfLines={1} style={styles.serviceName}>{service.name}</Text>
                   <View style={[styles.serviceTagBadge, { backgroundColor: service.tagSurfaceColor, borderColor: service.borderColor }]}>
-                    <Text numberOfLines={1} style={[styles.serviceTagText, { color: service.accentColor }]}>
-                      {service.tag}
-                    </Text>
+                    <Text numberOfLines={1} style={[styles.serviceTagText, { color: service.accentColor }]}>{service.tag}</Text>
                   </View>
                 </Pressable>
               ))}
             </View>
           </View>
 
-          {/* 5. Driver Partner Partnership Card */}
+          {/* 4. Driver Partner Partnership Card */}
           <View style={styles.driverPartnerCard}>
             <View style={styles.driverPartnerLeft}>
-              <View style={styles.driverPartnerIconBox}>
-                <IconRoleDriver color="#1D4ED8" secondaryColor="#DBEAFE" size={22} />
-              </View>
+              <View style={styles.driverPartnerIconBox}><IconRoleDriver color="#1D4ED8" size={20} /></View>
               <View style={styles.driverPartnerTextWrap}>
                 <Text style={styles.driverPartnerTitle}>Gia nhập tài xế LEOPARD</Text>
                 <Text style={styles.driverPartnerSubtitle}>Tăng thu nhập với các cuốc xe linh hoạt</Text>
               </View>
             </View>
             <Pressable
-              accessibilityLabel="Chuyển vai trò"
-              accessibilityRole="button"
-              onPress={handleDriverButtonPress}
-              style={styles.driverRegisterBtn}
-              testID="home-driver-btn"
+              accessibilityLabel="Đăng ký tài xế" accessibilityRole="button"
+              onPress={handleDriverButtonPress} style={styles.driverRegisterBtn} testID="home-driver-btn"
             >
               <Text style={styles.driverRegisterText}>Đăng ký tài xế</Text>
             </Pressable>
           </View>
 
-          {/* 6. Operational Signal Banner Carousel (Hình ảnh banner thực tế) */}
+          {/* 5. Operational Signal Promo Carousel */}
           <View
             onLayout={(e) => {
               const w = Math.round(e.nativeEvent.layout.width);
@@ -1489,68 +759,33 @@ export function HomeDashboardScreen({
             style={styles.promoContainer}
           >
             <View style={styles.promoTrackWindow}>
-              <Animated.View
-                style={[
-                  styles.promoTrack,
-                  {
-                    width: bannerWidth * (PROMO_SLIDES.length + 1),
-                    transform: [{ translateX: slideAnim }],
-                  },
-                ]}
-              >
+              <Animated.View style={[styles.promoTrack, { width: bannerWidth * (PROMO_SLIDES.length + 1), transform: [{ translateX: slideAnim }] }]}>
                 {PROMO_SLIDES.map((slide) => (
-                  <Pressable
-                    accessibilityLabel={`Ưu đãi: ${slide.title}`}
-                    accessibilityRole="button"
-                    key={slide.id}
-                    onPress={() => onCreateOrder?.()}
-                    style={[styles.promoSlideItem, { width: bannerWidth }]}
-                  >
+                  <Pressable accessibilityLabel={`Ưu đãi: ${slide.title}`} accessibilityRole="button" key={slide.id} onPress={() => onCreateOrder?.()} style={[styles.promoSlideItem, { width: bannerWidth }]}>
                     <HomePromoArtwork slide={slide} />
                   </Pressable>
                 ))}
-
-                {/* Clone của slide đầu tiên để trượt vòng tròn mượt mà, không bao giờ lướt ngược lại */}
-                <Pressable
-                  accessibilityElementsHidden
-                  accessibilityRole="button"
-                  importantForAccessibility="no"
-                  key="promo-slide-clone"
-                  onPress={() => onCreateOrder?.()}
-                  style={[styles.promoSlideItem, { width: bannerWidth }]}
-                >
+                <Pressable accessibilityElementsHidden accessibilityRole="button" importantForAccessibility="no" key="promo-slide-clone" onPress={() => onCreateOrder?.()} style={[styles.promoSlideItem, { width: bannerWidth }]}>
                   <HomePromoArtwork slide={PROMO_SLIDES[0]} />
                 </Pressable>
               </Animated.View>
             </View>
-
-            {/* Carousel Dots */}
             <View style={styles.dotsRow}>
               {PROMO_SLIDES.map((slide, idx) => (
                 <Pressable
-                  accessibilityLabel={`Chuyển đến ưu đãi ${idx + 1}`}
-                  accessibilityRole="button"
-                  hitSlop={6}
-                  key={slide.id}
-                  onPress={() => goToSlide(idx)}
-                  style={[
-                    styles.dot,
-                    activeBannerIdx === idx ? styles.dotActive : styles.dotInactive,
-                  ]}
+                  accessibilityLabel={`Chuyển đến ưu đãi ${idx + 1}`} accessibilityRole="button" hitSlop={6}
+                  key={slide.id} onPress={() => goToSlide(idx)}
+                  style={[styles.dot, activeBannerIdx === idx ? styles.dotActive : styles.dotInactive]}
                 />
               ))}
             </View>
           </View>
 
-          {/* 8. Recent Orders Ledger with 1-Tap Reorder */}
+          {/* 6. Recent Delivered Orders Ledger */}
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionLabel}>ĐƠN GẦN ĐÂY</Text>
-              <Pressable
-                accessibilityLabel="Xem tất cả đơn hàng"
-                accessibilityRole="button"
-                onPress={onViewAllOrders}
-              >
+              <Pressable accessibilityLabel="Xem tất cả đơn hàng" accessibilityRole="button" onPress={onViewAllOrders}>
                 <Text style={styles.linkText}>Xem tất cả</Text>
               </Pressable>
             </View>
@@ -1563,21 +798,14 @@ export function HomeDashboardScreen({
                       accessibilityLabel={`Đơn ${order.reference}, từ ${order.origin} đến ${order.destination}`}
                       actionButton={
                         <Pressable
-                          accessibilityLabel={`Đặt lại chuyến ${order.reference}`}
-                          accessibilityRole="button"
-                          hitSlop={6}
+                          accessibilityLabel={`Đặt lại chuyến ${order.reference}`} accessibilityRole="button" hitSlop={6}
                           onPress={(e) => {
-                            if (Platform.OS === 'web') {
-                              (e as any).stopPropagation?.();
-                            }
+                            if (Platform.OS === 'web') (e as any).stopPropagation?.();
                             setPickupText(order.origin);
                             setDropoffText(order.destination);
                             triggerNavigation(order.origin, order.destination);
                           }}
-                          style={({ pressed }) => [
-                            styles.reorderInlineBtn,
-                            pressed && styles.reorderInlineBtnPressed,
-                          ]}
+                          style={({ pressed }) => [styles.reorderInlineBtn, pressed && styles.reorderInlineBtnPressed]}
                         >
                           <Text style={styles.reorderInlineBtnText}>Đặt lại chuyến này →</Text>
                         </Pressable>
@@ -1585,9 +813,7 @@ export function HomeDashboardScreen({
                       destination={{ id: `${order.id}-dest`, label: order.destination }}
                       metadata={[
                         ...(order.price ? [{ id: 'price', label: 'Giá', value: order.price }] : []),
-                        ...(order.updated
-                          ? [{ id: 'updated', label: 'Cập nhật', value: order.updated }]
-                          : []),
+                        ...(order.updated ? [{ id: 'updated', label: 'Cập nhật', value: order.updated }] : []),
                       ]}
                       onPress={() => onOpenOrder?.(order.id)}
                       orderReference={order.reference}
@@ -1600,1255 +826,249 @@ export function HomeDashboardScreen({
             ) : (
               <View style={styles.emptyBox}>
                 <Text style={styles.emptyTitle}>Bạn chưa có đơn hàng nào.</Text>
-                <Text style={styles.emptyBody}>
-                  Đơn đã giao thành công sẽ hiển thị tại đây để bạn có thể đặt lại nhanh chóng.
-                </Text>
+                <Text style={styles.emptyBody}>Đơn đã giao thành công sẽ hiển thị tại đây để bạn có thể đặt lại nhanh chóng.</Text>
               </View>
             )}
           </View>
-        </View>
 
-        <View style={showFloatingNavBar ? styles.bottomSpacerFloating : styles.bottomSpacer} />
-      </ScrollView>
+          <View style={{ height: showFloatingNavBar ? 100 : 40 }} />
+        </ScrollView>
+      </GestureBottomSheet>
 
-        {showFloatingNavBar ? (
+      {/* ================= LAYER 3 (z-index 60): 2026 LIQUID GLASS FLOATING DOCK ================= */}
+      {showFloatingNavBar ? (
+        <View pointerEvents="box-none" style={styles.layer3FloatingNav} testID="home-nav-dock">
           <FloatingNavBar activeTab={activeTab} onTabChange={handleTabChange} />
-        ) : null}
-      </View>
+        </View>
+      ) : null}
 
-      {/* ================= MODAL SỔ ĐỊA CHỈ (SLIDE UP BOTTOM SHEET) ================= */}
+      {/* ================= MODAL SỔ ĐỊA CHỈ ================= */}
       <SavedAddressPickerModal
-        addressList={addressList}
-        currentAddress={
-          savedAddressModalTarget === 'pickup' ? pickupText : dropoffText
-        }
+        addressList={addressList} currentAddress={savedAddressModalTarget === 'pickup' ? pickupText : dropoffText}
         onClose={() => setShowSavedAddressModal(false)}
-        onOpenMapPicker={(target) => {
-          setShowSavedAddressModal(false);
-          handleOpenMapPicker(target);
-        }}
-        onOpenSavedAddresses={
-          onOpenSavedAddresses
-            ? () => {
-                setShowSavedAddressModal(false);
-                onOpenSavedAddresses();
-              }
-            : undefined
-        }
+        onDeleteAddress={(id) => { addressStore.deleteAddress(id); setAddressStoreVersion((v) => v + 1); }}
+        onOpenMapPicker={(target) => { setShowSavedAddressModal(false); handleOpenMapPicker(target); }}
+        onOpenSavedAddresses={onOpenSavedAddresses ? () => { setShowSavedAddressModal(false); onOpenSavedAddresses(); } : undefined}
         onSelectAddress={(addr) => {
           if (savedAddressModalTarget === 'pickup') {
-            setPickupText(addr.address);
-            setPickupLabel(addr.label);
-            addressStore.setDefaultAddress(addr.id);
-            if (dropoffText.trim().length >= 3) {
-              triggerNavigation(addr.address, dropoffText);
-            }
+            setPickupText(addr.address); setPickupLabel(addr.label); addressStore.setDefaultAddress(addr.id);
+            if (dropoffText.trim().length >= 3) triggerNavigation(addr.address, dropoffText);
           } else {
             setDropoffText(addr.address);
             if (pickupText.trim().length >= 3) {
-              const coords =
-                typeof addr.latitude === 'number' && typeof addr.longitude === 'number'
-                  ? { lat: addr.latitude, lng: addr.longitude }
-                  : undefined;
+              const coords = typeof addr.latitude === 'number' && typeof addr.longitude === 'number' ? { lat: addr.latitude, lng: addr.longitude } : undefined;
               triggerNavigation(pickupText, addr.address, coords);
             }
           }
-          onSelectSavedAddress?.(addr);
-          setShowSavedAddressModal(false);
+          onSelectSavedAddress?.(addr); setShowSavedAddressModal(false);
         }}
-        onDeleteAddress={(id) => {
-          addressStore.deleteAddress(id);
-          setAddressStoreVersion((v) => v + 1);
-        }}
-        target={savedAddressModalTarget}
-        visible={showSavedAddressModal}
+        target={savedAddressModalTarget} visible={showSavedAddressModal}
       />
 
-      {/* ================= MODAL XÁC NHẬN BẢN ĐỒ & THÔNG TIN NGƯỜI GỬI ================= */}
+      {/* ================= MODAL XÁC NHẬN BẢN ĐỒ ================= */}
       <MapAddressPickerModal
-        defaultFallbackAddress={initialAddress}
-        initialAddress={mapTarget === 'pickup' ? pickupText : dropoffText}
-        loggedInCustomer={loggedInCustomer}
-        onClose={() => setShowMapPickerModal(false)}
-        onConfirm={handleConfirmMapLocation}
-        target={mapTarget}
-        userName={userName}
-        userPhone={userPhone}
-        visible={showMapPickerModal}
+        defaultFallbackAddress={initialAddress} initialAddress={mapTarget === 'pickup' ? pickupText : dropoffText}
+        loggedInCustomer={loggedInCustomer} onClose={() => setShowMapPickerModal(false)}
+        onConfirm={handleConfirmMapLocation} target={mapTarget} userName={userName} userPhone={userPhone} visible={showMapPickerModal}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#0B2347' },
-  brandPlate: { backgroundColor: '#FFFFFF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
-  homeIntro: { paddingHorizontal: 22, paddingTop: 10, paddingBottom: 38, gap: 8, backgroundColor: '#0B2347', borderBottomLeftRadius: 28, borderBottomRightRadius: 28, position: 'relative', overflow: 'hidden' },
-  homeIntroGlow: { position: 'absolute', top: -30, right: -20, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(245, 158, 11, 0.12)' },
-  homeIntroAccent: { position: 'absolute', bottom: 0, left: 24, right: 24, height: 2, backgroundColor: 'rgba(245, 158, 11, 0.25)', borderRadius: 1 },
-  homeGreeting: { fontSize: 13, fontWeight: '600', color: '#FFD18A' },
-  homeTitle: { fontSize: 25, lineHeight: 32, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5, maxWidth: 360 },
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  container: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
-    backgroundColor: leopardPalette.canvas,
-    position: 'relative',
-  },
-  mapBackgroundLayer: {
-    position: 'absolute',
-    top: 58,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0,
-  },
+  root: { flex: 1, backgroundColor: '#F8FAFC', position: 'relative', overflow: 'hidden' },
 
-  /* 1. Hero Artwork Background & Header */
-  heroBackground: {
-    width: '100%',
-    height: 250,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    overflow: 'hidden',
-    justifyContent: 'flex-start',
-  },
-  heroBackgroundImage: {
-    resizeMode: 'cover',
-    transform: [{ translateY: -28 }, { scale: 1.08 }],
-  },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226, 232, 240, 0.85)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 5,
-    ...Platform.select({
-      web: {
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-      } as any,
-    }),
-  },
-  heroActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 8,
-    paddingHorizontal: spacing.md,
-    paddingTop: 10,
-  },
-  heroIconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(15, 23, 42, 0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  greetingPill: {
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.95)',
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    elevation: 6,
-    maxWidth: '72%',
-  },
-  greetingTitleText: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#0C4A6E',
-    letterSpacing: -0.2,
-  },
-  greetingNameText: {
-    fontWeight: '800',
-    color: '#0B1E42',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerIconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 19,
-    backgroundColor: '#19385F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: '#345075',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  badgePill: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: colors.danger.border,
-    borderRadius: leopardRadius.pill,
-    minWidth: 16,
-    height: 16,
-    paddingHorizontal: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgePillText: {
-    color: '#FFFFFF',
-    fontSize: 9.5,
-    fontWeight: '700',
-  },
+  /* Layer 0: Full-bleed Map */
+  layer0Map: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 },
 
-  /* Scroll Content & Main Sheet */
-  scrollContent: {
-    paddingBottom: spacing.lg,
+  /* Layer 1: Floating Glass TopBar */
+  layer1TopBar: {
+    position: 'absolute', left: 16, right: 16, zIndex: 20,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
+    shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
+    ...Platform.select({ web: { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any }),
   },
-  mainSheet: {
-    marginTop: -18,
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
-  },
-  srOnly: {
-    position: 'absolute',
-    opacity: 0,
-    width: 0,
-    height: 0,
-    overflow: 'hidden',
-  },
+  topBarIdentity: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 },
+  topBarLogoPill: { paddingRight: 10, borderRightWidth: 1, borderRightColor: 'rgba(11, 30, 66, 0.08)', marginRight: 10 },
+  topBarTextWrap: { flex: 1 },
+  topBarGreeting: { fontSize: 12, fontWeight: '700', color: '#0B1E42' },
+  topBarSmeName: { fontSize: 11, fontWeight: '500', color: '#64748B', marginTop: 1 },
+  topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  roleSwitchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44, backgroundColor: '#F1F5F9', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6, gap: 4 },
+  roleSwitchText: { fontSize: 12, fontWeight: '700', color: '#0B1E42' },
+  iconBtn: { width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 22, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  badgePill: { position: 'absolute', top: -2, right: -2, backgroundColor: '#EF4444', minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  badgePillText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800' },
 
-  /* 2. Quick Route Booking Card (Phần vị trí: Dispatch Dock) */
+  /* Layer 2: Gesture Bottom Sheet & Scroll Content */
+  layer2BottomSheet: { zIndex: 40 },
+  sheetScrollContent: { paddingHorizontal: 16, paddingBottom: 24 },
+
+  /* Route Booking Card */
   routeBookingCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
-    padding: spacing.md,
-    gap: spacing.sm,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 4,
+    backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16,
+    borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
+    shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2, marginBottom: 16,
   },
-  routeBookingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  routeBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  liveIndicatorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#16A34A',
-  },
-  routeBookingTitle: {
-    ...typography.caption,
-    color: '#334155',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  savedAddressesLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  savedAddressesText: {
-    color: '#2563EB',
-    fontSize: 11,
-    fontWeight: '700',
-  },
+  routeBox: { flexDirection: 'row', backgroundColor: '#F8FAFC', borderRadius: 18, padding: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+  spineColumn: { width: 24, alignItems: 'center', paddingVertical: 10 },
+  pickupPinCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(2, 132, 199, 0.2)', alignItems: 'center', justifyContent: 'center' },
+  pickupPinInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#0284C7' },
+  spineLine: { flex: 1, width: 2, backgroundColor: '#CBD5E1', marginVertical: 4 },
+  dropoffPinSquare: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#DC2626' },
+  inputsColumn: { flex: 1, marginLeft: 10 },
+  routeInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48 },
+  inputInnerWrap: { flex: 1 },
+  locationHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  inputMicroLabel: { fontSize: 9, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
+  pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0F2FE', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
+  pickupLabelBadgeText: { fontSize: 10, fontWeight: '700', color: '#0284C7' },
+  locationTextInput: { fontSize: 14, fontWeight: '600', color: '#0F172A', padding: 0, minHeight: 22 },
+  inputDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 6 },
+  inputActionBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
+  fastForwardBtn: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#0B1E42', alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
 
-  /* Unified Route Box: Trục hành trình liền mạch */
-  routeBox: {
-    flexDirection: 'row',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 10,
-    gap: 10,
+  /* Dropdown Suggestions */
+  addressDropdown: {
+    backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 12, marginTop: 10,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
   },
-  spineColumn: {
-    width: 14,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-  },
-  pickupPinCircle: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: '#16A34A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  pickupPinInner: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: '#16A34A',
-  },
-  spineLine: {
-    flex: 1,
-    width: 2,
-    backgroundColor: '#CBD5E1',
-    marginVertical: 4,
-  },
-  dropoffPinSquare: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-    backgroundColor: '#DC2626',
-  },
-  inputsColumn: {
-    flex: 1,
-    gap: 8,
-  },
-  routeInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderWidth: 1.5,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    minHeight: 52,
-  },
-  routeInputWrapperFocused: {
-    borderColor: '#2563EB',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  inputInnerColumn: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  inputDivider: {
-    display: 'none',
-  },
-  locationFieldHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 4,
-  },
-  locationFieldLabel: {
-    color: '#64748B',
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  pickupLabelBadge: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#BBF7D0',
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
-  pickupLabelBadgeText: {
-    color: '#15803D',
-    fontSize: 9.5,
-    fontWeight: '700',
-  },
-  locationTextInput: {
-    color: '#0F172A',
-    fontSize: 13.5,
-    fontWeight: '600',
-    padding: 0,
-    marginTop: 2,
-    ...Platform.select({
-      web: {
-        outlineStyle: 'none',
-        outlineWidth: 0,
-      } as any,
-    }),
-  },
-  clearBtn: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 6,
-  },
-  clearBtnText: {
-    fontSize: 11,
-    color: '#64748B',
-    fontWeight: '700',
-    lineHeight: 13,
-  },
-  inputMapPinBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#F0F4F9',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 6,
-  },
-  fastForwardBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#16A34A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 6,
-    shadowColor: '#16A34A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  fastForwardBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-    lineHeight: 18,
-  },
-  autoNavigatingBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    borderColor: '#86EFAC',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
-    marginTop: 6,
-  },
-  autoNavigatingText: {
-    color: '#15803D',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  liveIndicatorDotActive: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#16A34A',
-  },
+  dropdownHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  dropdownHeaderTitle: { fontSize: 11, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
+  dropdownCloseBtn: { padding: 4 },
+  dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
+  dropdownItemPressed: { opacity: 0.7 },
+  dropdownIconCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  dropdownItemTextWrap: { flex: 1 },
+  dropdownItemTitle: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
+  dropdownItemSub: { fontSize: 11, color: '#64748B', marginTop: 1 },
+  dropdownDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 4 },
+  autoNavigatingBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', borderRadius: 10, padding: 8, marginTop: 8, gap: 8 },
+  autoNavigatingText: { fontSize: 12, fontWeight: '700', color: '#059669' },
 
-  /* Dropdown Gợi ý & Xác nhận vị trí khi đang focus */
-  addressDropdownWrap: {
-    position: 'relative',
-    zIndex: 2,
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderWidth: 1.5,
-    borderRadius: 16,
-    padding: 8,
-    marginTop: 8,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    elevation: 5,
-  },
-  dropdownHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  dropdownHeaderTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#0B1E42',
-    letterSpacing: 0.5,
-  },
-  dropdownCloseBtn: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dropdownCloseBtnText: {
-    fontSize: 11,
-    color: '#64748B',
-    fontWeight: '700',
-  },
-  dropdownActionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 12,
-    gap: 12,
-  },
-  dropdownActionItemPressed: {
-    backgroundColor: '#F0F4F9',
-  },
-  dropdownMapIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#F0F4F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-  },
-  dropdownSavedIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
-  },
-  dropdownActionContent: {
-    flex: 1,
-  },
-  dropdownActionTitle: {
-    color: '#0F172A',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  dropdownActionDesc: {
-    color: '#64748B',
-    fontSize: 11,
-    marginTop: 1,
-  },
-  dropdownChevron: {
-    fontSize: 18,
-    color: '#0B1E42',
-    fontWeight: '600',
-  },
-  dropdownDivider: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: 2,
-  },
-  bookingActionWrap: {
-    marginTop: spacing.xxs,
-  },
+  /* Fleet Matrix Section */
+  fleetMatrixSection: { marginTop: 16 },
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  sectionLabel: { fontSize: 12, fontWeight: '800', color: '#0B1E42', letterSpacing: 0.5 },
+  sectionSubLabel: { fontSize: 11, fontWeight: '600', color: '#64748B' },
+  fleetScrollContent: { paddingVertical: 4 },
+  fleetCard: { width: 144, backgroundColor: '#FFFFFF', borderRadius: 18, padding: 12, marginRight: 10, borderWidth: 1.5, borderColor: '#E2E8F0', position: 'relative' },
+  fleetCardSelected: { borderColor: '#0B1E42', backgroundColor: '#F8FAFC' },
+  fleetBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  fleetBadgeSelected: { backgroundColor: '#0B1E42' },
+  fleetBadgeText: { fontSize: 9, fontWeight: '800', color: '#64748B' },
+  fleetBadgeTextSelected: { color: '#FFFFFF' },
+  fleetIconContainer: { height: 44, justifyContent: 'center', marginBottom: 4 },
+  fleetVehicleName: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
+  fleetVehicleNameSelected: { color: '#0B1E42' },
+  dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginVertical: 4 },
+  dimensionBadgeSelected: { backgroundColor: '#E2E8F0' },
+  dimensionText: { fontSize: 11, fontWeight: '700', color: '#334155', fontVariant: ['tabular-nums'] },
+  dimensionTextSelected: { color: '#0B1E42' },
+  fleetCapacityText: { fontSize: 10, color: '#64748B', marginBottom: 4 },
+  fleetPriceText: { fontSize: 13, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'] },
+  fleetPriceTextSelected: { color: '#0B1E42' },
 
-  /* 4. Services Grid: Modern Illustrated Tiles */
-  serviceGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  serviceCard: {
-    width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingTop: 8,
-    paddingBottom: 10,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#DFE7F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  serviceCardPressed: {
-    transform: [{ scale: 0.96 }],
-    backgroundColor: '#F8FAFC',
-  },
-  serviceImageContainer: {
-    width: '100%', height: 90, alignItems: 'center', justifyContent: 'center',
-    borderRadius: 10, overflow: 'hidden', marginBottom: 10,
-  },
-  serviceImage: {
-    width: '100%',
-    height: '100%',
-  },
-  serviceName: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: -0.1,
-  },
-  serviceTagBadge: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#F0F4F9',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    marginTop: 3,
-  },
-  serviceTagText: {
-    color: '#0B1E42',
-    fontSize: 10,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-
-  /* 5. Driver Partner Card */
-  driverPartnerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  driverPartnerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  driverPartnerIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-  },
-  driverPartnerTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  driverPartnerTitle: {
-    color: '#0F172A',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  driverPartnerSubtitle: {
-    color: '#64748B',
-    fontSize: 10.5,
-  },
-  driverRegisterBtn: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: leopardRadius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-  },
-  driverRegisterText: {
-    color: '#1D4ED8',
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
-
-  /* 6. Operational Signal Banner Carousel (Hình ảnh) */
-  promoContainer: {
-    gap: 8,
-  },
-  promoTrackWindow: {
-    width: '100%',
-    height: 220,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  promoTrack: {
-    flexDirection: 'row',
-    height: '100%',
-  },
-  promoSlideItem: {
-    height: '100%',
-    overflow: 'hidden',
-  },
-  promoBannerImage: {
-    width: '100%',
-    height: '100%',
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-  },
-  dot: {
-    height: 5,
-    borderRadius: 3,
-  },
-  dotActive: {
-    width: 18,
-    backgroundColor: '#2563EB',
-  },
-  dotInactive: {
-    width: 6,
-    backgroundColor: '#CBD5E1',
-  },
-
-  /* Sections Common */
-  section: {
-    gap: spacing.xs,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitleWithBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  liveTagBadge: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#BBF7D0',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  liveTagText: {
-    color: '#15803D',
-    fontSize: 10.5,
-    fontWeight: '700',
-  },
-  sectionLabel: {
-    ...typography.caption,
-    color: '#526176',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-  },
-  linkText: {
-    color: leopardPalette.primary,
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-
-  /* 7. Active Shipment Card */
-  activeCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: spacing.md,
-    gap: 12,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 4,
-  },
-  activeRouteContainer: {
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  activeRouteWell: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#F1F5F9',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    paddingRight: 12,
-  },
-  activeTruckPopWrap: {
-    position: 'absolute',
-    right: -4,
-    top: -16,
-    width: 90,
-    height: 90,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-    ...Platform.select({
-      web: {
-        filter: 'drop-shadow(0px 8px 12px rgba(15, 23, 42, 0.16))',
-      } as any,
-      default: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.18,
-        shadowRadius: 10,
-        elevation: 6,
-      },
-    }),
-  },
-  activeTruckImage: {
-    width: '100%',
-    height: '100%',
-  },
-  activeTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
-  },
-  etaPill: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  etaText: {
-    color: '#061226',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  activeMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-  },
-  activeDriverBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 0,
-  },
-  activeDriverIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  driverText: {
-    flex: 1,
-    color: '#334155',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  plateText: {
-    color: '#0F172A',
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  activeTrackPill: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  trackText: {
-    color: '#2563EB',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  orderList: {
-    gap: spacing.sm,
-  },
-  emptyBox: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: leopardRadius.lg,
-    padding: spacing.md,
-    gap: spacing.xxs,
-  },
-  emptyActivityBox: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: leopardRadius.lg,
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  emptyTitle: {
-    ...typography.label,
-    color: leopardPalette.textSlateDark,
-    fontSize: 14,
-  },
-  emptyBody: {
-    ...typography.caption,
-    color: leopardPalette.textMutedSlate,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-
-  /* Quick Tracking Bar */
-  quickTrackingBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 6,
-  },
-  trackingInputWrap: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 6,
-  },
-  trackingInput: {
-    flex: 1,
-    color: '#0F172A',
-    fontSize: 12.5,
-    fontWeight: '600',
-    padding: 0,
-    ...Platform.select({
-      web: {
-        outlineStyle: 'none',
-        outlineWidth: 0,
-      } as any,
-    }),
-  },
-  trackingSearchBtn: {
-    backgroundColor: leopardPalette.primary,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trackingSearchBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-
-  /* 8. Recent Orders & 1-Tap Reorder */
-  recentOrderItemWrap: {
-    gap: 4,
-  },
-  reorderInlineBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  reorderInlineBtnPressed: {
-    backgroundColor: '#DBEAFE',
-  },
-  reorderInlineBtnText: {
-    color: '#2563EB',
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
-
-  /* 3 & 4. Lalamove Fleet Matrix & Fare CTA */
-  fleetMatrixSection: {
-    marginTop: 14,
-    gap: 12,
-  },
-  fleetMatrixHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    paddingHorizontal: 2,
-  },
-  fleetMatrixTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#0B1E42',
-    letterSpacing: 0.6,
-  },
-  fleetMatrixSubtitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  fleetScrollContent: {
-    gap: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-  },
-  fleetCard: {
-    width: 140,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    padding: 10,
-    alignItems: 'center',
-    position: 'relative',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  fleetCardSelected: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 2,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  fleetBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  fleetBadgeSelected: {
-    backgroundColor: '#0B1E42',
-  },
-  fleetBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  fleetBadgeTextSelected: {
-    color: '#FFFFFF',
-  },
-  fleetIconContainer: {
-    width: 60,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-    marginBottom: 4,
-  },
-  fleetVehicleName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1E293B',
-    textAlign: 'center',
-  },
-  fleetVehicleNameSelected: {
-    color: '#0B1E42',
-    fontWeight: '800',
-  },
-  dimensionBadge: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginVertical: 4,
-  },
-  dimensionBadgeSelected: {
-    backgroundColor: '#DBEAFE',
-    borderColor: '#93C5FD',
-  },
-  dimensionText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#1D4ED8',
-    fontVariant: ['tabular-nums'],
-  },
-  dimensionTextSelected: {
-    color: '#1E40AF',
-    fontWeight: '800',
-  },
-  fleetCapacityText: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#64748B',
-    marginBottom: 4,
-  },
-  fleetPriceText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A',
-    fontVariant: ['tabular-nums'],
-  },
-  fleetPriceTextSelected: {
-    color: '#0B1E42',
-    fontWeight: '800',
-  },
-
-  /* Fare Estimation Badge & Big CTA */
-  fareCtaCard: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 12,
-    gap: 10,
-    marginTop: 4,
-  },
-  fareInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  fareLeftCol: {
-    gap: 2,
-  },
-  fareLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#64748B',
-    letterSpacing: 0.5,
-  },
-  fareVehicleTypeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  fareVehicleName: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0B1E42',
-  },
-  fareDimensionChip: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-  },
-  fareDimensionChipText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: '#1D4ED8',
-  },
-  fareRightCol: {
-    alignItems: 'flex-end',
-  },
-  fareAmount: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0B1E42',
-    fontVariant: ['tabular-nums'],
-  },
-  fareNote: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#64748B',
-  },
+  /* Fare Estimation Card & Big CTA Button */
+  fareCtaCard: { backgroundColor: '#F8FAFC', borderRadius: 18, padding: 14, marginTop: 14, borderWidth: 1, borderColor: '#E2E8F0' },
+  fareInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  fareLeftCol: { flex: 1 },
+  fareLabel: { fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
+  fareVehicleTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  fareVehicleName: { fontSize: 14, fontWeight: '800', color: '#0F172A' },
+  fareDimensionChip: { backgroundColor: '#E2E8F0', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 },
+  fareDimensionChipText: { fontSize: 10, fontWeight: '600', color: '#334155' },
+  fareRightCol: { alignItems: 'flex-end' },
+  fareAmount: { fontSize: 16, fontWeight: '800', color: '#0B1E42', fontVariant: ['tabular-nums'] },
+  fareNote: { fontSize: 10, color: '#64748B' },
   bigCtaBtn: {
-    backgroundColor: '#0B1E42',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    minHeight: 48, height: 52, borderRadius: 16, backgroundColor: '#0B1E42',
+    alignItems: 'center', justifyContent: 'center', shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3,
   },
-  bigCtaBtnPressed: {
-    backgroundColor: '#061226',
-    transform: [{ scale: 0.99 }],
-  },
-  bigCtaBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14.5,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
+  bigCtaBtnPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
+  bigCtaBtnText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4, fontVariant: ['tabular-nums'] },
 
-  bottomSpacer: {
-    height: layout.bottomNavClearance,
+  /* Section Containers */
+  section: { marginBottom: 16 },
+  sectionTitleWithBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  liveIndicatorDotActive: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' },
+  liveTagBadge: { backgroundColor: '#ECFDF5', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  liveTagText: { fontSize: 10, fontWeight: '800', color: '#059669' },
+
+  /* Active Shipment Card */
+  activeCard: {
+    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
+    shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
   },
-  bottomSpacerFloating: {
-    height: layout.bottomNavClearance,
+  activeCardPressed: { opacity: 0.85 },
+  activeTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  etaPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0F2FE', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
+  etaText: { fontSize: 11, fontWeight: '700', color: '#0284C7', fontVariant: ['tabular-nums'] },
+  activeRouteContainer: { marginVertical: 4 },
+  activeMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  activeDriverBox: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, gap: 6 },
+  driverText: { fontSize: 12, fontWeight: '600', color: '#334155', flex: 1 },
+  plateText: { fontWeight: '700', color: '#0B1E42', fontVariant: ['tabular-nums'] },
+  activeTrackPill: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  trackText: { fontSize: 11, fontWeight: '700', color: '#0B1E42' },
+
+  /* Empty Activity Box & Quick Tracking */
+  emptyActivityBox: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  emptyTitle: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
+  emptyBody: { fontSize: 11, color: '#64748B', marginTop: 2, marginBottom: 10 },
+  quickTrackingBar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  trackingInputWrap: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
+    borderRadius: 12, paddingHorizontal: 10, height: 40, borderWidth: 1, borderColor: '#E2E8F0', gap: 6,
   },
-  pressed: {
-    opacity: 0.85,
+  trackingInput: { flex: 1, fontSize: 12, fontWeight: '600', color: '#0F172A', padding: 0 },
+  trackingSearchBtn: { backgroundColor: '#0B1E42', borderRadius: 12, paddingHorizontal: 14, height: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  trackingSearchBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
+
+  /* Service Shortcuts Grid */
+  serviceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  serviceCard: { width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: 18, padding: 12, borderWidth: 1 },
+  serviceCardPressed: { opacity: 0.85 },
+  serviceImageContainer: { height: 80, borderRadius: 12, borderWidth: 1, overflow: 'hidden', marginBottom: 8, alignItems: 'center', justifyContent: 'center' },
+  serviceName: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
+  serviceTagBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginTop: 4, borderWidth: 1 },
+  serviceTagText: { fontSize: 10, fontWeight: '700' },
+
+  /* Driver Partner Card */
+  driverPartnerCard: {
+    backgroundColor: '#EFF6FF', borderRadius: 20, padding: 14, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', borderWidth: 1, borderColor: '#BFDBFE', marginBottom: 16,
   },
+  driverPartnerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, gap: 10 },
+  driverPartnerIconBox: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  driverPartnerTextWrap: { flex: 1 },
+  driverPartnerTitle: { fontSize: 13, fontWeight: '800', color: '#1E3A8A' },
+  driverPartnerSubtitle: { fontSize: 11, color: '#3B82F6', marginTop: 1 },
+  driverRegisterBtn: { backgroundColor: '#1D4ED8', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, minHeight: 44, justifyContent: 'center' },
+  driverRegisterText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
+
+  /* Promo Banner Carousel */
+  promoContainer: { marginBottom: 16 },
+  promoTrackWindow: { overflow: 'hidden', borderRadius: 20 },
+  promoTrack: { flexDirection: 'row' },
+  promoSlideItem: { borderRadius: 20, overflow: 'hidden' },
+  dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 8 },
+  dot: { height: 5, borderRadius: 2.5 },
+  dotActive: { width: 20, backgroundColor: '#0B1E42' },
+  dotInactive: { width: 6, backgroundColor: '#CBD5E1' },
+
+  /* Recent Orders Ledger */
+  linkText: { fontSize: 12, fontWeight: '700', color: '#0284C7' },
+  orderList: { gap: 10 },
+  recentOrderItemWrap: { backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
+  reorderInlineBtn: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  reorderInlineBtnPressed: { opacity: 0.7 },
+  reorderInlineBtnText: { fontSize: 11, fontWeight: '700', color: '#0B1E42' },
+  emptyBox: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+
+  /* Layer 3: Floating Navigation Dock */
+  layer3FloatingNav: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 60 },
 });

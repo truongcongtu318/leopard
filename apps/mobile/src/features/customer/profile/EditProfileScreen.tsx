@@ -120,94 +120,98 @@ export function EditProfileScreen({
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* Avatar Studio */}
-        <View style={styles.avatarCard}>
-          <View style={styles.avatarWrapper}>
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitial}>
-                  {(name || 'K').charAt(0).toUpperCase()}
-                </Text>
+        {/* Avatar Studio (Double-Bezel) */}
+        <View style={styles.doubleBezelOuter}>
+          <View style={styles.avatarCardInner}>
+            <View style={styles.avatarWrapper}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarInitial}>
+                    {(name || 'K').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.cameraIconPill}>
+                <IconCamera color="#FFFFFF" size={15} />
               </View>
-            )}
-            <View style={styles.cameraIconPill}>
-              <IconCamera color="#FFFFFF" size={15} />
             </View>
-          </View>
 
-          <View style={styles.avatarBtnRow}>
-            <Pressable
-              accessibilityLabel="Chụp ảnh đại diện"
-              accessibilityRole="button"
-              onPress={handleTakePhoto}
-              style={({ pressed }) => [styles.avatarActionBtn, pressed ? styles.pressed : null]}
-            >
-              <IconCamera color={colors.brand.background} size={15} />
-              <Text style={styles.avatarActionBtnText}>Chụp ảnh</Text>
-            </Pressable>
+            <View style={styles.avatarBtnRow}>
+              <Pressable
+                accessibilityLabel="Chụp ảnh đại diện"
+                accessibilityRole="button"
+                onPress={handleTakePhoto}
+                style={({ pressed }) => [styles.avatarActionBtn, pressed ? styles.pressed : null]}
+              >
+                <IconCamera color={colors.brand.background} size={15} />
+                <Text style={styles.avatarActionBtnText}>Chụp ảnh</Text>
+              </Pressable>
 
-            <Pressable
-              accessibilityLabel="Đổi ảnh đại diện"
-              accessibilityRole="button"
-              onPress={handlePickImage}
-              style={({ pressed }) => [styles.avatarActionBtn, pressed ? styles.pressed : null]}
-            >
-              <IconIdCard color={colors.brand.background} size={15} />
-              <Text style={styles.avatarActionBtnText}>Đổi ảnh đại diện</Text>
-            </Pressable>
+              <Pressable
+                accessibilityLabel="Đổi ảnh đại diện"
+                accessibilityRole="button"
+                onPress={handlePickImage}
+                style={({ pressed }) => [styles.avatarActionBtn, pressed ? styles.pressed : null]}
+              >
+                <IconIdCard color={colors.brand.background} size={15} />
+                <Text style={styles.avatarActionBtnText}>Đổi ảnh đại diện</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
 
-        {/* Information Form Card */}
+        {/* Information Form Card (Double-Bezel) */}
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>THÔNG TIN CÁ NHÂN</Text>
-          <View style={styles.card}>
-            {/* Name Field */}
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconUser color={colors.brand.background} size={18} />
+          <View style={styles.doubleBezelOuter}>
+            <View style={styles.cardInner}>
+              {/* Name Field */}
+              <View style={styles.fieldRow}>
+                <View style={styles.fieldIconWrap}>
+                  <IconUser color={colors.brand.background} size={18} />
+                </View>
+                <View style={styles.fieldInputCol}>
+                  <Text style={styles.fieldLabel}>Họ và tên</Text>
+                  <TextInput
+                    accessibilityLabel="Họ và tên"
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    onChangeText={(val) => {
+                      setName(val);
+                      if (nameError) setNameError(null);
+                    }}
+                    placeholder="Nhập họ và tên"
+                    placeholderTextColor={leopardPalette.textSubtle}
+                    style={styles.textInput}
+                    value={name}
+                  />
+                </View>
               </View>
-              <View style={styles.fieldInputCol}>
-                <Text style={styles.fieldLabel}>Họ và tên</Text>
-                <TextInput
-                  accessibilityLabel="Họ và tên"
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  onChangeText={(val) => {
-                    setName(val);
-                    if (nameError) setNameError(null);
-                  }}
-                  placeholder="Nhập họ và tên"
-                  placeholderTextColor={leopardPalette.textSubtle}
-                  style={styles.textInput}
-                  value={name}
-                />
-              </View>
-            </View>
-            {nameError && <Text style={styles.errorTextRow}>{nameError}</Text>}
+              {nameError && <Text style={styles.errorTextRow}>{nameError}</Text>}
 
-            <View style={styles.rowDivider} />
+              <View style={styles.rowDivider} />
 
-            {/* Email Field */}
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconSupport247 color={colors.brand.background} size={18} />
-              </View>
-              <View style={styles.fieldInputCol}>
-                <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
-                <TextInput
-                  accessibilityLabel="Email"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="email-address"
-                  onChangeText={setEmail}
-                  placeholder="Nhập email nhận hóa đơn"
-                  placeholderTextColor={leopardPalette.textSubtle}
-                  style={styles.textInput}
-                  value={email}
-                />
+              {/* Email Field */}
+              <View style={styles.fieldRow}>
+                <View style={styles.fieldIconWrap}>
+                  <IconSupport247 color={colors.brand.background} size={18} />
+                </View>
+                <View style={styles.fieldInputCol}>
+                  <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
+                  <TextInput
+                    accessibilityLabel="Email"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                    onChangeText={setEmail}
+                    placeholder="Nhập email nhận hóa đơn"
+                    placeholderTextColor={leopardPalette.textSubtle}
+                    style={styles.textInput}
+                    value={email}
+                  />
+                </View>
               </View>
             </View>
           </View>
@@ -248,14 +252,23 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
 
-  // Avatar Card
-  avatarCard: {
+  doubleBezelOuter: {
+    backgroundColor: 'rgba(11, 30, 66, 0.04)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 6,
+  },
+  avatarCardInner: {
     alignItems: 'center',
     backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderRadius: radius.card,
-    borderWidth: 1,
+    borderRadius: 18,
     padding: spacing.md,
+  },
+  cardInner: {
+    backgroundColor: leopardPalette.surfaceWhite,
+    borderRadius: 18,
+    overflow: 'hidden',
   },
   avatarWrapper: {
     marginBottom: 12,
@@ -305,12 +318,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.brand.softBackground,
     borderColor: colors.brand.border,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
     flex: 1,
     flexDirection: 'row',
     gap: 6,
+    height: 44,
     justifyContent: 'center',
+    minHeight: 44,
     paddingVertical: 9,
   },
   avatarActionBtnText: {

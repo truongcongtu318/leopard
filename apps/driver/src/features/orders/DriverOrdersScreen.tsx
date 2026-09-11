@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ImageBackground,
+  Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,7 +11,32 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconBell, IconClock, IconClose, IconLocationPin, IconMenu, IconOrders, IconRadarPulse, IconRoute, IconSettings, IconSpeedTruck, SectionHeading, ScreenState, SkeletonCard, StatusBadge } from '@leopard/mobile-core';
+import {
+  colors,
+  leopardPalette,
+  radius,
+  spacing,
+  typography,
+  Button,
+  GestureBottomSheet,
+  IconBell,
+  IconClock,
+  IconClose,
+  IconLocationPin,
+  IconMenu,
+  IconMessage,
+  IconPhone,
+  IconRadarPulse,
+  IconRoute,
+  IconSettings,
+  IconShieldAlert,
+  IconSpeedTruck,
+  RealInteractiveMap,
+  resolveLocationCoords,
+  ScreenState,
+  SkeletonCard,
+  StatusBadge,
+} from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverSidebarDrawer } from '../navigation/DriverSidebarDrawer';
 import { IncomingDispatchModal } from './IncomingDispatchModal';
@@ -22,7 +48,7 @@ import type {
   DriverPublicOrderView,
 } from './model';
 
-const driverHeroBgSource = require('../../../assets/brand/driver-hero-bg.jpg');
+const DEPOT_TAN_BINH_COORDS = { lat: 10.7981, lng: 106.6625 };
 
 export type DriverOrdersScreenProps = Readonly<{
   view: DriverListView;
@@ -37,196 +63,246 @@ export type DriverOrdersScreenProps = Readonly<{
 }>;
 
 function ActiveTripRail({
+  onNavigate,
   onOpenOrder,
   trip,
 }: Readonly<{
   trip: DriverActiveTripView;
   onOpenOrder?: (orderId: string) => void;
+  onNavigate?: (route: string) => void;
 }>) {
   return (
-    <Pressable
-      accessibilityHint="Mở chi tiết chuyến đang thực hiện"
-      accessibilityLabel={`Mở chuyến ${trip.reference}, trạng thái ${trip.status}`}
-      accessibilityRole="button"
-      onPress={onOpenOrder ? () => onOpenOrder(trip.id) : undefined}
-      style={({ pressed }) => [styles.activeRail, pressed ? styles.pressed : null]}
-      testID="driver-active-trip-slab"
-    >
-      {/* 1. Header: Mã chuyến + Trạng thái */}
-      <View style={styles.activeTopRow}>
-        <View style={styles.activeTopRowLeft}>
-          <View style={styles.tripIconChip}>
-            <IconSpeedTruck color="#0B1E42" size={16} />
-          </View>
-          <Text accessibilityRole="header" style={styles.activeReference}>
-            {trip.reference}
-          </Text>
-        </View>
-        <StatusBadge domain="order" status={trip.status} />
-      </View>
-
-      {/* 2. Route Spine: A (Điểm lấy) -> Trục nối ETA -> B (Điểm giao) */}
-      <View style={styles.activeRouteSpineBox}>
-        <View style={styles.routeSpineColumn}>
-          <View style={styles.spinePointA}>
-            <Text style={styles.spinePointTextA}>A</Text>
-          </View>
-          <View style={styles.spineDashedLine} />
-          <View style={styles.spinePointB}>
-            <Text style={styles.spinePointTextB}>B</Text>
-          </View>
-        </View>
-
-        <View style={styles.routeSpineLabels}>
-          <View style={styles.routeLocationGroup}>
-            <Text style={styles.routePointTypeA}>ĐIỂM LẤY HÀNG (A)</Text>
-            <Text style={styles.activeOriginText}>
-              {trip.route.origin.label}
+    <View style={styles.activeTripBezelOuter} testID="driver-active-trip-slab">
+      <View style={styles.activeTripBezelInner}>
+        {/* 1. Header: Mã chuyến + Trạng thái */}
+        <View style={styles.activeTopRow}>
+          <View style={styles.activeTopRowLeft}>
+            <View style={styles.tripIconChip}>
+              <IconSpeedTruck color="#0B1E42" size={16} />
+            </View>
+            <Text accessibilityRole="header" style={styles.activeReference}>
+              {trip.reference}
             </Text>
           </View>
+          <StatusBadge domain="order" status={trip.status} />
+        </View>
 
-          <View style={styles.spineEtaRow}>
-            <IconClock color="#0B1E42" size={12} />
-            <Text style={styles.spineEtaText}>Lộ trình · ETA {trip.route.distanceLabel}</Text>
+        {/* 2. Route Spine: A (Điểm lấy) -> Trục nối ETA -> B (Điểm giao) */}
+        <View style={styles.activeRouteSpineBox}>
+          <View style={styles.routeSpineColumn}>
+            <View style={styles.spinePointA}>
+              <Text style={styles.spinePointTextA}>A</Text>
+            </View>
+            <View style={styles.spineDashedLine} />
+            <View style={styles.spinePointB}>
+              <Text style={styles.spinePointTextB}>B</Text>
+            </View>
           </View>
 
-          <View style={styles.routeLocationGroup}>
-            <Text style={styles.routePointTypeB}>ĐIỂM GIAO HÀNG (B)</Text>
-            <Text style={styles.activeDestText}>
-              {trip.route.destination.label}
+          <View style={styles.routeSpineLabels}>
+            <View style={styles.routeLocationGroup}>
+              <Text style={styles.routePointTypeA}>ĐIỂM LẤY HÀNG (A)</Text>
+              <Text style={styles.activeOriginText}>{trip.route.origin.label}</Text>
+            </View>
+
+            <View style={styles.spineEtaRow}>
+              <IconClock color="#0B1E42" size={12} />
+              <Text style={styles.spineEtaText}>Lộ trình · ETA {trip.route.distanceLabel}</Text>
+            </View>
+
+            <View style={styles.routeLocationGroup}>
+              <Text style={styles.routePointTypeB}>ĐIỂM GIAO HÀNG (B)</Text>
+              <Text style={styles.activeDestText}>{trip.route.destination.label}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 3. Proof Warning Banner */}
+        {trip.proofLabel ? (
+          <View style={styles.proofWarningBanner}>
+            <IconShieldAlert color="#D97706" size={14} />
+            <Text style={styles.proofWarningText}>{trip.proofLabel}</Text>
+          </View>
+        ) : null}
+
+        {/* 4. Live Tracking Status */}
+        <View style={styles.activeSignalRow}>
+          <View style={styles.liveTrackingIndicator}>
+            <View style={styles.livePulseDot} />
+            <Text numberOfLines={1} style={styles.trackingText}>
+              {trip.trackingLabel}
             </Text>
           </View>
         </View>
-      </View>
 
-      {/* 3. Proof Warning Banner */}
-      {trip.proofLabel ? (
-        <View style={styles.proofWarningBanner}>
-          <Text style={styles.proofWarningIcon}>⚠</Text>
-          <Text style={styles.proofWarningText}>{trip.proofLabel}</Text>
+        {/* 5. Customer Contact Bar (Call & Chat buttons) */}
+        <View style={styles.activeContactBar}>
+          <View style={styles.activeContactInfo}>
+            <Text style={styles.activeContactTitle}>Khách hàng người nhận</Text>
+            <Text style={styles.activeContactPhone}>0988 ••• 128 (Bảo mật)</Text>
+          </View>
+          <View style={styles.activeContactButtons}>
+            <Pressable
+              accessibilityLabel="Gọi cho khách hàng"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => {
+                try {
+                  const res = Linking.openURL('tel:0988123128');
+                  if (res && typeof res.catch === 'function') {
+                    res.catch(() => {});
+                  }
+                } catch {
+                  // Safe no-op
+                }
+              }}
+              style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.pressed : null]}
+              testID="driver-call-btn"
+            >
+              <IconPhone color="#16A34A" size={18} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Nhắn tin trong ứng dụng"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => {
+                if (onNavigate) {
+                  onNavigate('/chat');
+                } else if (onOpenOrder) {
+                  onOpenOrder(trip.id);
+                }
+              }}
+              style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.pressed : null]}
+              testID="driver-chat-btn"
+            >
+              <IconMessage color="#1D4ED8" size={18} />
+            </Pressable>
+          </View>
         </View>
-      ) : null}
 
-      {/* 4. Live Tracking Status */}
-      <View style={styles.activeSignalRow}>
-        <View style={styles.liveTrackingIndicator}>
-          <View style={styles.livePulseDot} />
-          <Text numberOfLines={1} style={styles.trackingText}>
-            {trip.trackingLabel}
-          </Text>
-        </View>
+        {/* 6. In-Card Big Action Button */}
+        <Pressable
+          accessibilityHint="Mở chi tiết chuyến đang thực hiện"
+          accessibilityLabel={`Mở chuyến ${trip.reference}, trạng thái ${trip.status}`}
+          accessibilityRole="button"
+          onPress={onOpenOrder ? () => onOpenOrder(trip.id) : undefined}
+          style={({ pressed }) => [styles.activeActionBtn, pressed ? styles.pressed : null]}
+        >
+          <Text style={styles.activeActionHint}>MỞ BUỒNG LÁI ĐIỀU PHỐI CHUYẾN →</Text>
+        </Pressable>
       </View>
-
-      {/* 5. In-Card Big Action Button */}
-      <View style={styles.activeCardFooter}>
-        <View style={styles.activeActionBtn}>
-          <Text style={styles.activeActionHint}>Mở buồng lái điều phối chuyến →</Text>
-        </View>
-      </View>
-    </Pressable>
+    </View>
   );
 }
 
 function PublicOrderCard({
   item,
+  onDecline,
   onOpenOrder,
-}: Readonly<{ item: DriverPublicOrderView; onOpenOrder?: (orderId: string) => void }>) {
+}: Readonly<{
+  item: DriverPublicOrderView;
+  onOpenOrder?: (orderId: string) => void;
+  onDecline?: (orderId: string) => void;
+}>) {
   return (
-    <View style={styles.orderCard}>
-      <Pressable
-        accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
-        accessibilityRole="button"
-        onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-        style={({ pressed }) => [styles.cardBody, pressed ? styles.pressed : null]}
-      >
-        {/* Top Meta: Ref, Proximity, and Status */}
-        <View style={styles.cardHeader}>
-          <View style={styles.cardHeaderLeft}>
-            <Text style={styles.cardOrderRef}>{item.reference}</Text>
-            <View style={styles.proximityDot} />
-            <Text style={styles.proximityText}>{item.pickupDistanceLabel || 'Cách bạn 1.2 km'}</Text>
-          </View>
-          <StatusBadge domain="order" status={item.status} />
-        </View>
-
-        {/* Fare & Route Distance Strip: High prominence earnings */}
-        <View style={styles.cardFareBanner}>
-          <View style={styles.cardFareLeft}>
-            <Text style={styles.cardFareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
-            <Text style={styles.cardFareAmount}>{item.priceLabel || '285.000 ₫'}</Text>
-          </View>
-          <View style={styles.cardDistanceBadge}>
-            <IconRoute color="#0B1E42" size={13} />
-            <Text style={styles.cardDistanceText}>
-              {item.distanceLabel ? `${item.distanceLabel} · ` : ''}{item.etaLabel}
-            </Text>
-          </View>
-        </View>
-
-        {/* Route Spine: Point A -> Point B */}
-        <View style={styles.cardRouteBlock}>
-          <View style={styles.cardRouteSpineMini}>
-            <View style={styles.spinePointDotA} />
-            <View style={styles.spineDottedTrackMini} />
-            <View style={styles.spinePointDotB} />
-          </View>
-          <View style={styles.cardRouteAddresses}>
-            <Text numberOfLines={1} style={styles.cardPickupAddr}>
-              {item.pickupLocationLabel || item.publicRouteLabel.split('→')[0]?.trim() || 'Điểm lấy hàng'}
-            </Text>
-            <Text numberOfLines={1} style={styles.cardDropoffAddr}>
-              {item.dropoffLocationLabel || item.publicRouteLabel.split('→')[1]?.trim() || 'Điểm giao hàng'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Public route full label for screen readers & tests */}
-        <Text numberOfLines={1} style={styles.cardPublicRouteSub}>
-          {item.publicRouteLabel}
-        </Text>
-
-        {/* Vehicle & Cargo Tags */}
-        <View style={styles.tagsContainer}>
-          <View style={styles.vehicleTag}>
-            <IconSpeedTruck color="#475569" size={13} />
-            <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
-          </View>
-          <View style={styles.cargoTag}>
-            <Text numberOfLines={1} style={styles.cargoTagText}>
-              {item.cargoSummary}
-            </Text>
-          </View>
-        </View>
-
-        {/* Price & ETA */}
-        <View style={styles.cardFooter}>
-          <View style={styles.priceEtaRow}>
-            <IconClock color={colors.brand.background} size={13} />
-            <Text style={styles.priceText}>{item.etaLabel}</Text>
-          </View>
-          <Text style={styles.updatedText}>{item.updatedAtLabel}</Text>
-        </View>
-      </Pressable>
-
-      {/* Action Buttons Row: [ Bỏ qua ] & [ NHẬN ĐƠN ] */}
-      <View style={styles.cardActionRow}>
+    <View style={styles.orderCardOuter}>
+      <View style={styles.orderCardInner}>
         <Pressable
+          accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
           accessibilityRole="button"
-          accessibilityLabel="Bỏ qua đơn này"
-          style={({ pressed }) => [styles.cardDeclineBtn, pressed ? styles.pressed : null]}
-        >
-          <Text style={styles.cardDeclineText}>Bỏ qua</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Nhận đơn ${item.reference}`}
           onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-          style={({ pressed }) => [styles.cardAcceptBtn, pressed ? styles.pressed : null]}
+          style={({ pressed }) => [styles.cardBody, pressed ? styles.pressed : null]}
         >
-          <Text style={styles.cardAcceptText}>
-            NHẬN ĐƠN · {item.priceLabel || '285.000 ₫'}
+          {/* Top Meta: Ref, Proximity, and Status */}
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderLeft}>
+              <Text style={styles.cardOrderRef}>{item.reference}</Text>
+              <View style={styles.proximityDot} />
+              <Text style={styles.proximityText}>{item.pickupDistanceLabel || 'Cách bạn 1.2 km'}</Text>
+            </View>
+            <StatusBadge domain="order" status={item.status} />
+          </View>
+
+          {/* Fare & Route Distance Strip */}
+          <View style={styles.cardFareBanner}>
+            <View style={styles.cardFareLeft}>
+              <Text style={styles.cardFareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
+              <Text style={styles.cardFareAmount}>{item.priceLabel || '285.000 ₫'}</Text>
+            </View>
+            <View style={styles.cardDistanceBadge}>
+              <IconRoute color="#0B1E42" size={13} />
+              <Text style={styles.cardDistanceText}>
+                {item.distanceLabel ? `${item.distanceLabel} · ` : ''}{item.etaLabel}
+              </Text>
+            </View>
+          </View>
+
+          {/* Route Spine: Point A -> Point B */}
+          <View style={styles.cardRouteBlock}>
+            <View style={styles.cardRouteSpineMini}>
+              <View style={styles.spinePointDotA} />
+              <View style={styles.spineDottedTrackMini} />
+              <View style={styles.spinePointDotB} />
+            </View>
+            <View style={styles.cardRouteAddresses}>
+              <Text numberOfLines={1} style={styles.cardPickupAddr}>
+                {item.pickupLocationLabel || item.publicRouteLabel.split('→')[0]?.trim() || 'Điểm lấy hàng'}
+              </Text>
+              <Text numberOfLines={1} style={styles.cardDropoffAddr}>
+                {item.dropoffLocationLabel || item.publicRouteLabel.split('→')[1]?.trim() || 'Điểm giao hàng'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Public route full label */}
+          <Text numberOfLines={1} style={styles.cardPublicRouteSub}>
+            {item.publicRouteLabel}
           </Text>
+
+          {/* Vehicle & Cargo Tags */}
+          <View style={styles.tagsContainer}>
+            <View style={styles.vehicleTag}>
+              <IconSpeedTruck color="#475569" size={13} />
+              <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
+            </View>
+            <View style={styles.cargoTag}>
+              <Text numberOfLines={1} style={styles.cargoTagText}>
+                {item.cargoSummary}
+              </Text>
+            </View>
+          </View>
+
+          {/* Price & ETA */}
+          <View style={styles.cardFooter}>
+            <View style={styles.priceEtaRow}>
+              <IconClock color={colors.brand.background} size={13} />
+              <Text style={styles.priceText}>{item.etaLabel}</Text>
+            </View>
+            <Text style={styles.updatedText}>{item.updatedAtLabel}</Text>
+          </View>
         </Pressable>
+
+        {/* Action Buttons Row: [ Bỏ qua ] & [ NHẬN ĐƠN ] */}
+        <View style={styles.cardActionRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Bỏ qua đơn này"
+            onPress={onDecline ? () => onDecline(item.id) : undefined}
+            style={({ pressed }) => [styles.cardDeclineBtn, pressed ? styles.pressed : null]}
+          >
+            <Text style={styles.cardDeclineText}>Bỏ qua</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Nhận đơn ${item.reference}`}
+            onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+            style={({ pressed }) => [styles.cardAcceptBtn, pressed ? styles.pressed : null]}
+          >
+            <Text style={styles.cardAcceptText}>
+              NHẬN ĐƠN · {item.priceLabel || '285.000 ₫'}
+            </Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -288,6 +364,7 @@ function ReceivingSettingsModal({
             <Pressable
               accessibilityLabel="Đóng thiết lập"
               accessibilityRole="button"
+              hitSlop={8}
               onPress={onClose}
               style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressed : null]}
             >
@@ -295,61 +372,61 @@ function ReceivingSettingsModal({
             </Pressable>
           </View>
 
-          <Text style={styles.filterSectionLabel}>Khoảng cách điểm lấy hàng</Text>
-          <View style={styles.optionsRow}>
-            {radiusOptions.map((r) => (
-              <Pressable
-                key={r}
-                onPress={() => setSelectedRadius(r)}
-                style={[
-                  styles.optionPill,
-                  selectedRadius === r ? styles.optionPillActive : null,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.optionPillText,
-                    selectedRadius === r ? styles.optionPillTextActive : null,
-                  ]}
+          <View style={styles.settingsBody}>
+            <Text style={styles.filterSectionLabel}>BÁN KÍNH QUÉT ĐƠN (KM)</Text>
+            <View style={styles.optionsRow}>
+              {radiusOptions.map((r) => (
+                <Pressable
+                  key={r}
+                  onPress={() => setSelectedRadius(r)}
+                  style={[styles.optionPill, selectedRadius === r ? styles.optionPillActive : null]}
                 >
-                  {r} km
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+                  <Text
+                    style={[
+                      styles.optionPillText,
+                      selectedRadius === r ? styles.optionPillTextActive : null,
+                    ]}
+                  >
+                    {r} km
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
 
-          <Text style={styles.filterSectionLabel}>Loại xe tiếp nhận</Text>
-          <View style={styles.optionsRow}>
-            {vehicleOptions.map((v) => (
-              <Pressable
-                key={v}
-                onPress={() => setSelectedVehicle(v)}
-                style={[
-                  styles.optionPill,
-                  selectedVehicle === v ? styles.optionPillActive : null,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.optionPillText,
-                    selectedVehicle === v ? styles.optionPillTextActive : null,
-                  ]}
+            <Text style={[styles.filterSectionLabel, { marginTop: spacing.md }]}>
+              LOẠI PHƯƠNG TIỆN ƯU TIÊN
+            </Text>
+            <View style={styles.vehicleOptionsCol}>
+              {vehicleOptions.map((v) => (
+                <Pressable
+                  key={v}
+                  onPress={() => setSelectedVehicle(v)}
+                  style={[styles.vehicleOptionItem, selectedVehicle === v ? styles.vehicleOptionActive : null]}
                 >
-                  {v}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+                  <IconSpeedTruck color={selectedVehicle === v ? '#0B1E42' : '#64748B'} size={18} />
+                  <Text
+                    style={[
+                      styles.vehicleOptionText,
+                      selectedVehicle === v ? styles.vehicleOptionTextActive : null,
+                    ]}
+                  >
+                    {v}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
 
-          <View style={styles.saveSettingsWrap}>
-            <Button
-              label="Lưu thiết lập"
+            <Pressable
+              accessibilityLabel="Lưu cấu hình"
+              accessibilityRole="button"
               onPress={() => {
                 onSave(selectedRadius, selectedVehicle);
                 onClose();
               }}
-              variant="primary"
-            />
+              style={({ pressed }) => [styles.saveSettingsBtn, pressed ? styles.pressed : null]}
+            >
+              <Text style={styles.saveSettingsBtnText}>ÁP DỤNG CẤU HÌNH</Text>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -374,7 +451,9 @@ export function DriverOrdersScreen({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [radiusKm, setRadiusKm] = useState('5');
   const [vehiclePref, setVehiclePref] = useState('Xe tải 2.5T');
-  const [currentAddress, setCurrentAddress] = useState<string>('Depot Tân Bình, TP.HCM');
+  const [selectedVehicleFilter, setSelectedVehicleFilter] = useState('Tất cả');
+  const [dismissedOrderIds, setDismissedOrderIds] = useState<readonly string[]>([]);
+  const [truckCoords, setTruckCoords] = useState(DEPOT_TAN_BINH_COORDS);
   const { openDrawer } = useDriverDrawer();
 
   useEffect(() => {
@@ -388,22 +467,11 @@ export function DriverOrdersScreen({
           accuracy: Location.Accuracy.Balanced,
         });
 
-        const geocoded = await Location.reverseGeocodeAsync({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-
-        if (isMounted && geocoded && geocoded.length > 0) {
-          const place = geocoded[0];
-          const district = place.district || place.subregion || '';
-          const city = place.city || place.region || '';
-          const streetOrName = place.street || place.name || '';
-
-          const parts = [district, city].filter(Boolean);
-          const display = parts.length > 0 ? parts.join(', ') : (streetOrName || 'TP. Hồ Chí Minh');
-          if (display) {
-            setCurrentAddress(display);
-          }
+        if (isMounted && position?.coords) {
+          setTruckCoords({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
         }
       } catch {
         // Fallback gracefully in testing / simulator
@@ -433,7 +501,7 @@ export function DriverOrdersScreen({
         dropoffAddress: first.dropoffLocationLabel ?? 'KCN Sóng Thần 1, Dĩ An, Bình Dương',
         tripDistanceLabel: first.distanceLabel ?? '24.5 km',
         etaLabel: first.etaLabel ?? '45 phút (ước tính)',
-        priceLabel: first.priceLabel ?? '485.000 đ',
+        priceLabel: first.priceLabel ?? '485.000 ₫',
         vehicleLabel: first.vehicleLabel ?? 'Xe tải 2.5T mui bạt',
         cargoSummary: first.cargoSummary ?? 'Thiết bị phụ tùng công nghiệp (1.800 kg)',
         notes: 'Bốc dỡ nhanh tại cổng số 2 kho tổng',
@@ -448,7 +516,7 @@ export function DriverOrdersScreen({
         dropoffAddress: 'KCN Sóng Thần 1, Dĩ An, Bình Dương',
         tripDistanceLabel: '24.5 km',
         etaLabel: '45 phút (ước tính)',
-        priceLabel: '485.000 đ',
+        priceLabel: '485.000 ₫',
         vehicleLabel: 'Xe tải 2.5T mui bạt',
         cargoSummary: 'Kiện pallet linh kiện điện tử (1.8 tấn)',
         notes: 'Giao trong giờ hành chính, có xe nâng hạ hàng',
@@ -464,131 +532,120 @@ export function DriverOrdersScreen({
         ? simulatedOffer
         : null;
 
-  // ── Loading State: Modern Skeleton on Hero Background (matching reference mockup) ──
+  // ── Loading State ──────────────────────────────────────────────────────────
   if (view.kind === 'loading') {
     return (
       <View style={styles.screenRoot}>
-        <View style={styles.heroSection}>
-          <ImageBackground
-            accessibilityLabel="Hình ảnh xe tải vận tải LEOPARD trên cung đường đèo núi"
-            imageStyle={styles.heroBackgroundImage}
-            resizeMode="cover"
-            source={driverHeroBgSource}
-            style={styles.heroBackground}
-          >
-            <View style={styles.heroOverlay}>
-              {/* Row 1: Left (Menu + Skeleton Name + Stacked Badges) | Right (Location Pin) */}
-              <View style={styles.cockpitTopRow}>
-                <View style={styles.cockpitDriverLeft}>
-                  <View style={styles.heroMenuButton}>
-                    <IconMenu color="#FFFFFF" size={18} />
-                  </View>
-                  <View style={styles.cockpitNameCol}>
-                    <View style={styles.skeletonTextLineLg} />
-                    <View style={styles.heroBadgesStack}>
-                      <View style={styles.skeletonBadge} />
-                      <View style={styles.skeletonBadge} />
-                    </View>
-                  </View>
-                </View>
+        {/* Layer 0: Map Canvas */}
+        <View style={styles.mapLayerContainer} testID="driver-map-canvas">
+          <RealInteractiveMap
+            height="100%"
+            initialPinCoords={truckCoords}
+            interactive={false}
+            mode="preview"
+            style={StyleSheet.absoluteFill}
+            truckLocation={truckCoords}
+          />
+        </View>
 
-                <View style={styles.heroLocationBlock}>
-                  <View style={styles.heroLocationTextGroup}>
-                    <View style={styles.skeletonTextLineSm} />
-                    <View style={[styles.skeletonTextLineSm, styles.skeletonLocationSub]} />
-                  </View>
-                  <View style={styles.heroLocationPinCircle}>
-                    <IconLocationPin color="#FFFFFF" size={14} strokeWidth={2} />
-                  </View>
+        {/* Layer 1: Top HUD */}
+        <View style={styles.topHudContainer}>
+          <View style={styles.topHudGlass}>
+            <View style={styles.hudMainRow}>
+              <View style={styles.hudDriverGroup}>
+                <View style={styles.hudMenuBtn}>
+                  <IconMenu color="#0B1E42" size={20} />
+                </View>
+                <View style={styles.hudDriverMeta}>
+                  <View style={styles.skeletonTextLineLg} />
+                  <View style={styles.skeletonTextLineSm} />
                 </View>
               </View>
-
-              {/* Row 2: Left (Bell Skeleton) | Right (Switch Skeleton) */}
-              <View style={styles.cockpitBottomRow}>
-                <View style={styles.heroBellBtn}>
-                  <IconBell color="#F59E0B" size={18} />
-                  <View style={styles.bellDot} />
-                </View>
-
-                <View style={styles.heroDutyContainer}>
-                  <Text style={styles.heroDutyLabel}>Trạng thái nhận đơn</Text>
-                  <View style={[styles.heroDutySwitch, styles.heroDutySwitchOffline]}>
-                    <View style={styles.heroDutyTab}>
-                      <View style={styles.heroDutyDot} />
-                      <Text style={[styles.heroDutyTabText, styles.heroDutyTabTextInactive]}>
-                        TRỰC TUYẾN
-                      </Text>
-                    </View>
-                    <View style={[styles.heroDutyTab, styles.heroDutyTabActiveOffline]}>
-                      <View style={[styles.heroDutyDot, styles.heroDutyDotActiveOffline]} />
-                      <Text style={[styles.heroDutyTabText, styles.heroDutyTabTextActive]}>
-                        NGOẠI TUYẾN
-                      </Text>
-                    </View>
+              <View style={styles.hudDutyWrap}>
+                <Text style={styles.hudDutyLabel}>Trạng thái nhận đơn</Text>
+                <View style={[styles.heroDutySwitch, styles.heroDutySwitchOffline]}>
+                  <View style={styles.heroDutyTab}>
+                    <View style={styles.heroDutyDot} />
+                    <Text style={[styles.heroDutyTabText, styles.heroDutyTabTextInactive]}>
+                      TRỰC TUYẾN
+                    </Text>
+                  </View>
+                  <View style={[styles.heroDutyTab, styles.heroDutyTabActiveOffline]}>
+                    <View style={[styles.heroDutyDot, styles.heroDutyDotActiveOffline]} />
+                    <Text style={[styles.heroDutyTabText, styles.heroDutyTabTextActive]}>
+                      NGOẠI TUYẾN
+                    </Text>
                   </View>
                 </View>
               </View>
             </View>
-          </ImageBackground>
+          </View>
         </View>
 
-        <View style={styles.contentContainer}>
-          <View style={styles.ordersSectionHeader}>
-            <Text accessibilityRole="header" style={styles.ordersHeadingTitle}>
-              Đơn có thể nhận
-            </Text>
-            <Text style={styles.ordersHeadingSub}>Đang tải dữ liệu đơn hàng...</Text>
+        {/* Layer 2: GestureBottomSheet with Skeletons */}
+        <GestureBottomSheet
+          initialSnapIndex={1}
+          snapPoints={[0.18, 0.54, 0.92]}
+          testID="driver-load-board-sheet"
+        >
+          <View style={styles.sheetScrollContent}>
+            <View style={styles.ordersSectionHeader}>
+              <Text accessibilityRole="header" style={styles.loadBoardTitle}>
+                Đơn có thể nhận
+              </Text>
+              <Text style={styles.loadBoardSubtitle}>Đang tải dữ liệu đơn hàng...</Text>
+            </View>
+            <View style={styles.skeletonList}>
+              <SkeletonCard />
+              <SkeletonCard />
+            </View>
           </View>
-          <View style={styles.skeletonList}>
-            <SkeletonCard />
-            <SkeletonCard />
-          </View>
-        </View>
+        </GestureBottomSheet>
       </View>
     );
   }
 
-  // ── Error / Permission Denied State ──
+  // ── Error / Permission Denied State ───────────────────────────────────────
   if (view.kind !== 'content') {
     return (
       <View style={styles.screenRoot}>
-        <View style={styles.heroSection}>
-          <ImageBackground
-            accessibilityLabel="Hình ảnh xe tải vận tải LEOPARD trên cung đường đèo núi"
-            imageStyle={styles.heroBackgroundImage}
-            resizeMode="cover"
-            source={driverHeroBgSource}
-            style={styles.heroBackground}
-          >
-            <View style={styles.heroOverlay}>
-              <View style={styles.cockpitTopRow}>
-                <View style={styles.cockpitDriverLeft}>
-                  <Pressable
-                    accessibilityLabel="Mở menu điều hướng tài xế"
-                    accessibilityRole="button"
-                    onPress={handleOpenMenu}
-                    style={({ pressed }) => [styles.heroMenuButton, pressed ? styles.pressed : null]}
-                    testID="driver-menu-button"
-                  >
-                    <IconMenu color="#FFFFFF" size={18} />
-                  </Pressable>
+        {/* Layer 0: Map Canvas */}
+        <View style={styles.mapLayerContainer} testID="driver-map-canvas">
+          <RealInteractiveMap
+            height="100%"
+            initialPinCoords={truckCoords}
+            interactive={false}
+            mode="preview"
+            style={StyleSheet.absoluteFill}
+            truckLocation={truckCoords}
+          />
+        </View>
 
-                  <View style={styles.cockpitNameCol}>
-                    <Text style={styles.heroDriverName}>Tài xế LEOPARD</Text>
-                  </View>
-                </View>
-
-                <View style={styles.heroLocationBlock}>
-                  <View style={styles.heroLocationPinCircle}>
-                    <IconLocationPin color="#FFFFFF" size={14} strokeWidth={2} />
-                  </View>
+        {/* Layer 1: Top HUD */}
+        <View style={styles.topHudContainer}>
+          <View style={styles.topHudGlass}>
+            <View style={styles.hudMainRow}>
+              <View style={styles.hudDriverGroup}>
+                <Pressable
+                  accessibilityLabel="Mở menu điều hướng tài xế"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={handleOpenMenu}
+                  style={({ pressed }) => [styles.hudMenuBtn, pressed ? styles.pressed : null]}
+                  testID="driver-menu-button"
+                >
+                  <IconMenu color="#0B1E42" size={20} />
+                </Pressable>
+                <View style={styles.hudDriverMeta}>
+                  <Text style={styles.hudDriverName}>Tài xế LEOPARD</Text>
                 </View>
               </View>
             </View>
-          </ImageBackground>
+          </View>
         </View>
 
-        <View style={styles.contentContainer}>
+        {/* Layer 2: Boundary Card */}
+        <View style={styles.boundaryContainer}>
           <ScreenState
             actionLabel={view.kind === 'error' ? 'Thử tải lại danh sách' : undefined}
             message={view.message}
@@ -601,6 +658,7 @@ export function DriverOrdersScreen({
     );
   }
 
+  // ── Content State ──────────────────────────────────────────────────────────
   const activeTrip = view.activeTrip;
   const waitingCount = view.requestedOrders.length;
   const isOnline = view.availability.status === 'AVAILABLE';
@@ -608,178 +666,186 @@ export function DriverOrdersScreen({
   const isPending = availabilityAction?.isPending === true;
   const isAvailabilityDisabled = availabilityAction?.disabled === true || isPending;
 
+  const filteredOrders = view.requestedOrders
+    .filter((item) => !dismissedOrderIds.includes(item.id))
+    .filter((item) => {
+    if (selectedVehicleFilter === 'Tất cả') return true;
+    if (selectedVehicleFilter === 'Xe van') {
+      return item.vehicleLabel.toLowerCase().includes('van');
+    }
+    if (selectedVehicleFilter === '1.25T') {
+      return item.vehicleLabel.includes('1.25') || item.vehicleLabel.includes('1.5');
+    }
+    if (selectedVehicleFilter === '2.5T') {
+      return item.vehicleLabel.includes('2.5');
+    }
+    return true;
+  });
+
   return (
     <View style={styles.screenRoot}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          activeTrip ? styles.scrollContentWithSticky : null,
-        ]}
-        showsVerticalScrollIndicator={false}
-        style={styles.screenContainer}
-        testID="driver-orders-screen-scroll"
-      >
-        {/* 1. Cockpit Header (~185px) retaining brand image */}
-        <View style={styles.heroSection}>
-          <ImageBackground
-            accessibilityLabel="Hình ảnh xe tải vận tải LEOPARD trên cung đường đèo núi"
-            imageStyle={styles.heroBackgroundImage}
-            resizeMode="cover"
-            source={driverHeroBgSource}
-            style={styles.heroBackground}
-          >
-            <View style={styles.heroOverlay}>
-              {/* Row 1: Left (Menu + Name + Stacked Badges) | Right (Location) */}
-              <View style={styles.cockpitTopRow}>
-                <View style={styles.cockpitDriverLeft}>
-                  <Pressable
-                    accessibilityHint="Mở menu thanh bên trái để xem hồ sơ và các tiện ích"
-                    accessibilityLabel="Mở menu điều hướng tài xế"
-                    accessibilityRole="button"
-                    onPress={handleOpenMenu}
-                    style={({ pressed }) => [styles.heroMenuButton, pressed ? styles.pressed : null]}
-                    testID="driver-menu-button"
-                  >
-                    <IconMenu color="#FFFFFF" size={18} />
-                  </Pressable>
+      {/* ── Layer 0: RealInteractiveMap running 100% full-bleed viewport ── */}
+      <View style={styles.mapLayerContainer} testID="driver-map-canvas">
+        <RealInteractiveMap
+          destination={
+            activeTrip
+              ? {
+                  coords: resolveLocationCoords(activeTrip.route.destination.label),
+                  label: activeTrip.route.destination.label,
+                }
+              : undefined
+          }
+          height="100%"
+          initialPinCoords={truckCoords}
+          interactive={true}
+          mode={activeTrip ? 'route' : 'tracking'}
+          origin={
+            activeTrip
+              ? {
+                  coords: resolveLocationCoords(activeTrip.route.origin.label),
+                  label: activeTrip.route.origin.label,
+                }
+              : undefined
+          }
+          stops={
+            activeTrip
+              ? activeTrip.route.stops.map((stop) => ({
+                  id: stop.id,
+                  label: stop.label,
+                  coords: resolveLocationCoords(stop.label),
+                }))
+              : undefined
+          }
+          style={StyleSheet.absoluteFill}
+          truckEtaLabel={activeTrip ? activeTrip.route.distanceLabel : undefined}
+          truckLocation={truckCoords}
+        />
+      </View>
 
-                  <View style={styles.cockpitNameCol}>
-                    <Text style={styles.heroDriverName}>Nguyễn Văn Tuấn</Text>
-                    <View style={styles.heroBadgesStack}>
-                      <View style={styles.heroBadge}>
-                        <Text style={styles.heroBadgeText}>
-                          <Text style={styles.heroMetaDim}>ID: </Text>
-                          <Text style={styles.heroMetaBold}>DRV-88924</Text>
-                        </Text>
-                      </View>
-                      <View style={styles.heroBadge}>
-                        <Text style={styles.heroBadgeText}>
-                          <Text style={styles.heroMetaDim}>Xe: </Text>
-                          <Text style={styles.heroMetaBold}>51C-889.24 (2.5T)</Text>
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
+      {/* ── Layer 1: Floating Glass Top HUD ── */}
+      <View style={styles.topHudContainer}>
+        <View style={styles.topHudGlass}>
+          {/* Main Cockpit Row: Menu Drawer + Driver Plate + Hero Duty Switch */}
+          <View style={styles.hudMainRow}>
+            <View style={styles.hudDriverGroup}>
+              <Pressable
+                accessibilityHint="Mở menu thanh bên trái để xem hồ sơ và các tiện ích"
+                accessibilityLabel="Mở menu điều hướng tài xế"
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={handleOpenMenu}
+                style={({ pressed }) => [styles.hudMenuBtn, pressed ? styles.pressed : null]}
+                testID="driver-menu-button"
+              >
+                <IconMenu color="#0B1E42" size={20} />
+              </Pressable>
 
-                <View style={styles.heroLocationBlock}>
-                  <View style={styles.heroLocationTextGroup}>
-                    <Text style={styles.heroLocationHeader}>VỊ TRÍ HIỆN TẠI</Text>
-                    <Text numberOfLines={2} style={styles.heroLocationValue}>
-                      {currentAddress}
-                    </Text>
-                  </View>
-                  <View style={styles.heroLocationPinCircle}>
-                    <IconLocationPin color="#FFFFFF" size={14} strokeWidth={2} />
-                  </View>
-                </View>
-              </View>
-
-              {/* Row 2: Left (Bell icon) | Right (Hero Online/Offline Duty Control) */}
-              <View style={styles.cockpitBottomRow}>
-                <Pressable
-                  accessibilityLabel="Thông báo mới"
-                  accessibilityRole="button"
-                  style={({ pressed }) => [styles.heroBellBtn, pressed ? styles.pressed : null]}
-                >
-                  <IconBell color="#F59E0B" size={18} />
-                  <View style={styles.bellDot} />
-                </Pressable>
-
-                <View style={styles.heroDutyContainer}>
-                  <Text style={styles.heroDutyLabel}>Trạng thái nhận đơn</Text>
-                  <Pressable
-                    accessibilityLabel={
-                      isPending
-                        ? 'Đang cập nhật trạng thái nhận đơn'
-                        : isOnline
-                          ? 'Tắt sẵn sàng'
-                          : 'Bật sẵn sàng'
-                    }
-                    accessibilityRole="button"
-                    accessibilityState={{ busy: isPending, disabled: isAvailabilityDisabled }}
-                    disabled={isAvailabilityDisabled}
-                    onPress={
-                      availabilityAction && !isAvailabilityDisabled && onSetAvailability
-                        ? () => onSetAvailability(availabilityAction.id)
-                        : undefined
-                    }
-                    style={({ pressed }) => [
-                      styles.heroDutySwitch,
-                      isOnline ? styles.heroDutySwitchOnline : styles.heroDutySwitchOffline,
-                      pressed ? styles.pressed : null,
-                    ]}
-                    testID="driver-availability-toggle"
-                  >
-                    <View
-                      style={[
-                        styles.heroDutyTab,
-                        isOnline ? styles.heroDutyTabActiveOnline : null,
-                      ]}
-                    >
-                      <View style={[styles.heroDutyDot, isOnline ? styles.heroDutyDotActive : null]} />
-                      <Text
-                        style={[
-                          styles.heroDutyTabText,
-                          isOnline ? styles.heroDutyTabTextActive : styles.heroDutyTabTextInactive,
-                        ]}
-                      >
-                        TRỰC TUYẾN
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.heroDutyTab,
-                        !isOnline ? styles.heroDutyTabActiveOffline : null,
-                      ]}
-                    >
-                      <View style={[styles.heroDutyDot, !isOnline ? styles.heroDutyDotActiveOffline : null]} />
-                      <Text
-                        style={[
-                          styles.heroDutyTabText,
-                          !isOnline ? styles.heroDutyTabTextActive : styles.heroDutyTabTextInactive,
-                        ]}
-                      >
-                        NGOẠI TUYẾN
-                      </Text>
-                    </View>
-                  </Pressable>
-                </View>
+              <View style={styles.hudDriverMeta}>
+                <Text numberOfLines={1} style={styles.hudDriverName}>
+                  Nguyễn Văn Tuấn
+                </Text>
+                <Text style={styles.hudDriverPlate}>51C-889.24 (2.5T)</Text>
               </View>
             </View>
-          </ImageBackground>
-        </View>
 
-        {/* 2. Main Dashboard Content Area */}
-        <View style={styles.contentContainer}>
-          {/* Notice Alert if any */}
-          <DriverNotice onNoticeAction={onNoticeAction} view={view} />
-
-          {/* In-day operational stats: Completed trips, today's income, online hours */}
-          <View style={styles.statsDoubleBezelOuter}>
-            <View style={styles.statsDoubleBezelInner}>
-              <View style={styles.statBox}>
-                <Text style={styles.statLabel}>Chuyến xong</Text>
-                <Text style={styles.statValue}>4</Text>
-                <Text style={styles.statSub}>Hôm nay</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={styles.statLabel}>Thu nhập hôm nay</Text>
-                <Text style={styles.statValueHighlight}>620.000 ₫</Text>
-                <Text style={styles.statSub}>Đã khấu trừ phí</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={styles.statLabel}>Giờ online</Text>
-                <Text style={styles.statValue}>5.5h</Text>
-                <Text style={styles.statSub}>98% chấp nhận</Text>
-              </View>
+            {/* Hero Duty Switch (48px, high contrast, active green indicator) */}
+            <View style={styles.hudDutyWrap}>
+              <Text style={styles.hudDutyLabel}>Trạng thái nhận đơn</Text>
+              <Pressable
+                accessibilityLabel={
+                  isPending
+                    ? 'Đang cập nhật trạng thái nhận đơn'
+                    : isOnline
+                      ? 'Tắt sẵn sàng'
+                      : 'Bật sẵn sàng'
+                }
+                accessibilityRole="button"
+                accessibilityState={{ busy: isPending, disabled: isAvailabilityDisabled }}
+                disabled={isAvailabilityDisabled}
+                onPress={
+                  availabilityAction && !isAvailabilityDisabled && onSetAvailability
+                    ? () => onSetAvailability(availabilityAction.id)
+                    : undefined
+                }
+                style={({ pressed }) => [
+                  styles.heroDutySwitch,
+                  isOnline ? styles.heroDutySwitchOnline : styles.heroDutySwitchOffline,
+                  pressed ? styles.pressed : null,
+                ]}
+                testID="driver-availability-toggle"
+              >
+                <View
+                  style={[
+                    styles.heroDutyTab,
+                    isOnline ? styles.heroDutyTabActiveOnline : null,
+                  ]}
+                >
+                  <View style={[styles.heroDutyDot, isOnline ? styles.heroDutyDotActive : null]} />
+                  <Text
+                    style={[
+                      styles.heroDutyTabText,
+                      isOnline ? styles.heroDutyTabTextActive : styles.heroDutyTabTextInactive,
+                    ]}
+                  >
+                    TRỰC TUYẾN
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.heroDutyTab,
+                    !isOnline ? styles.heroDutyTabActiveOffline : null,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.heroDutyDot,
+                      !isOnline ? styles.heroDutyDotActiveOffline : null,
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.heroDutyTabText,
+                      !isOnline ? styles.heroDutyTabTextActive : styles.heroDutyTabTextInactive,
+                    ]}
+                  >
+                    NGOẠI TUYẾN
+                  </Text>
+                </View>
+              </Pressable>
             </View>
           </View>
 
-          {/* Active Trip (if in progress) */}
-          {view.activeTrip ? (
+          {/* Sub-bar: Mini KPI stats row */}
+          <View style={styles.hudKpiRow}>
+            <Text style={styles.hudKpiSummary}>4 chuyến · 620.000 ₫ · 5.5h</Text>
+            <View style={styles.hudKpiChips}>
+              <View style={styles.hudKpiChip}>
+                <Text style={styles.hudKpiChipLabel}>Chuyến xong</Text>
+              </View>
+              <View style={styles.hudKpiChip}>
+                <Text style={styles.hudKpiChipLabel}>Thu nhập hôm nay</Text>
+              </View>
+              <View style={styles.hudKpiChip}>
+                <Text style={styles.hudKpiChipLabel}>Giờ online</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* ── Layer 2: GestureBottomSheet 3 Snap Points ── */}
+      <GestureBottomSheet
+        initialSnapIndex={1}
+        snapPoints={[0.18, 0.54, 0.92]}
+        testID="driver-load-board-sheet"
+      >
+        <ScrollView
+          contentContainerStyle={styles.sheetScrollContent}
+          nestedScrollEnabled={true}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Active Trip Rail when driver is on a trip */}
+          {activeTrip ? (
             <View style={styles.activeSectionBlock}>
               <View style={styles.activeSectionHeader}>
                 <Text accessibilityRole="header" style={styles.activeSectionTitle}>
@@ -790,148 +856,148 @@ export function DriverOrdersScreen({
                   <Text style={styles.activeLivePillText}>ĐANG CHẠY</Text>
                 </View>
               </View>
-              <ActiveTripRail onOpenOrder={onOpenOrder} trip={view.activeTrip} />
+              <ActiveTripRail
+                onNavigate={onNavigate}
+                onOpenOrder={onOpenOrder}
+                trip={activeTrip}
+              />
             </View>
           ) : null}
 
-          {/* 3. Live Radar Scan Bar (Tín hiệu quét đơn theo thời gian thực) */}
-          <View style={styles.radarLiveStrip}>
-            <View style={styles.radarLeftGroup}>
-              <View style={styles.radarIconOuter}>
-                <IconRadarPulse color="#0B1E42" size={15} />
+          {/* Snap 1 Radar Scan Strip (hidden during active trip) */}
+          {!activeTrip ? (
+            <View style={styles.radarLiveStrip}>
+              <View style={styles.radarLeftGroup}>
+                <View style={styles.radarIconOuter}>
+                  <IconRadarPulse color="#0B1E42" size={15} />
+                </View>
+                <Text style={styles.radarLiveText}>
+                  Radar đang quét bán kính{' '}
+                  <Text style={styles.radarLiveHighlight}>{radiusKm} km</Text> ·{' '}
+                  <Text style={styles.radarLiveHighlight}>{waitingCount} đơn phù hợp</Text>
+                </Text>
               </View>
-              <Text style={styles.radarLiveText}>
-                Radar đang quét bán kính{' '}
-                <Text style={styles.radarLiveHighlight}>{radiusKm} km</Text> ·{' '}
-                <Text style={styles.radarLiveHighlight}>{waitingCount} đơn phù hợp</Text>
+              <Pressable
+                accessibilityHint="Mở modal đơn nổ để thử nghiệm giao diện tiếp nhận"
+                accessibilityLabel="Mô phỏng nổ đơn"
+                accessibilityRole="button"
+                onPress={handleSimulateIncomingOffer}
+                style={({ pressed }) => [styles.radarSimulateBtn, pressed ? styles.pressed : null]}
+              >
+                <IconRadarPulse color="#0B1E42" size={13} />
+                <Text style={styles.radarSimulateBtnText}>Thử nổ đơn</Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          {/* Snap 2: Load-Board Section Header */}
+          <View style={styles.loadBoardHeaderRow}>
+            <View>
+              <Text accessibilityRole="header" style={styles.loadBoardTitle}>
+                Đơn có thể nhận
+              </Text>
+              <Text style={styles.loadBoardSubtitle}>
+                {filteredOrders.length > 0
+                  ? `${filteredOrders.length} đơn phù hợp gần bạn`
+                  : 'Chưa có đơn phù hợp'}
               </Text>
             </View>
             <Pressable
-              accessibilityHint="Mở modal đơn nổ để thử nghiệm giao diện tiếp nhận"
-              accessibilityLabel="Mô phỏng nổ đơn"
+              accessibilityLabel="Mở bộ lọc nhận đơn"
               accessibilityRole="button"
-              onPress={handleSimulateIncomingOffer}
-              style={({ pressed }) => [styles.radarSimulateBtn, pressed ? styles.pressed : null]}
+              onPress={() => setIsSettingsOpen(true)}
+              style={({ pressed }) => [styles.filterSettingBtn, pressed ? styles.pressed : null]}
             >
-              <Text style={styles.radarSimulateBtnText}>⚡ Thử nổ đơn</Text>
+              <IconSettings color="#0B1E42" size={14} />
+              <Text style={styles.filterSettingBtnText}>Thiết lập</Text>
             </Pressable>
           </View>
 
-          {/* 4. HERO SECTION: "Đơn có thể nhận" (Available Orders) */}
-          <View style={styles.sectionBlock}>
-            <View style={styles.ordersSectionHeader}>
-              <View>
-                <Text accessibilityRole="header" style={styles.ordersHeadingTitle}>
-                  Đơn có thể nhận
-                </Text>
-                <Text style={styles.ordersHeadingSub}>
-                  {waitingCount > 0
-                    ? `${waitingCount} đơn phù hợp gần bạn`
-                    : 'Chưa có đơn phù hợp'}
-                </Text>
-              </View>
-
-              <Pressable
-                accessibilityLabel="Mở bộ lọc nhận đơn"
-                accessibilityRole="button"
-                onPress={() => setIsSettingsOpen(true)}
-                style={({ pressed }) => [styles.filterBtn, pressed ? styles.pressed : null]}
-              >
-                <IconSettings color="#0B1E42" size={14} />
-                <Text style={styles.filterBtnText}>Thiết lập</Text>
-              </Pressable>
-            </View>
-
-            {/* Compact Filter Control Row (prompt.md Section 2) */}
-            <View style={styles.compactFilterRow}>
-              <Pressable
-                accessibilityLabel="Đổi bán kính nhận đơn"
-                onPress={() => setIsSettingsOpen(true)}
-                style={styles.quickFilterChip}
-              >
-                <IconLocationPin color="#0B1E42" size={12} />
-                <Text style={styles.quickFilterChipText}>Bán kính: {radiusKm} km ⌵</Text>
-              </Pressable>
-
-              <Pressable
-                accessibilityLabel="Đổi loại xe tiếp nhận"
-                onPress={() => setIsSettingsOpen(true)}
-                style={styles.quickFilterChip}
-              >
-                <IconSpeedTruck color="#0B1E42" size={12} />
-                <Text style={styles.quickFilterChipText}>{vehiclePref} ⌵</Text>
-              </Pressable>
-            </View>
-
-            {/* Orders Feed or Empty State */}
-            {view.requestedOrders.length === 0 ? (
-              <View style={styles.emptyBox}>
-                <View style={styles.emptyIconCircle}>
-                  <IconLocationPin color="#0B1E42" size={28} />
-                </View>
-                <Text style={styles.emptyTitle}>Chưa có đơn phù hợp</Text>
-                <Text style={styles.emptyMessage}>
-                  LEOPARD sẽ thông báo khi có đơn phù hợp với phạm vi nhận của bạn.
-                </Text>
+          {/* B2B Vehicle Filter Chips */}
+          <View style={styles.filterChipsRow}>
+            {['Tất cả', 'Xe van', '1.25T', '2.5T'].map((chip) => {
+              const isSelected = selectedVehicleFilter === chip;
+              return (
                 <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Mở rộng phạm vi nhận đơn"
-                  onPress={() => setIsSettingsOpen(true)}
-                  style={({ pressed }) => [styles.expandRadiusBtn, pressed ? styles.pressed : null]}
+                  key={chip}
+                  onPress={() => setSelectedVehicleFilter(chip)}
+                  style={[styles.filterChip, isSelected ? styles.filterChipActive : null]}
                 >
-                  <Text style={styles.expandRadiusText}>Mở rộng phạm vi nhận đơn</Text>
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      isSelected ? styles.filterChipTextActive : null,
+                    ]}
+                  >
+                    {chip}
+                  </Text>
                 </Pressable>
-              </View>
-            ) : (
-              <View style={styles.ordersFeed}>
-                {view.requestedOrders.map((item) => (
-                  <PublicOrderCard item={item} key={item.id} onOpenOrder={onOpenOrder} />
-                ))}
-              </View>
-            )}
+              );
+            })}
           </View>
-        </View>
 
-        {/* 5. Redesigned Incoming Dispatch Modal (Đơn nổ) */}
-        <IncomingDispatchModal
-          offer={activeIncomingOffer}
-          onAccept={(orderId) => {
-            setSimulatedOffer(null);
-            if (onAcceptIncomingOffer) {
-              onAcceptIncomingOffer(orderId);
-            } else if (onOpenOrder) {
-              onOpenOrder(orderId);
-            }
-          }}
-          onDecline={(orderId) => {
-            setDismissedOfferId(orderId);
-            setSimulatedOffer(null);
-            if (onDeclineIncomingOffer) {
-              onDeclineIncomingOffer(orderId);
-            }
-          }}
-          visible={activeIncomingOffer !== null}
-        />
-      </ScrollView>
+          {/* Notice Alert if any */}
+          <DriverNotice onNoticeAction={onNoticeAction} view={view} />
 
-      {/* 6. Sticky Bottom Action Bar when on an active trip (Thumb Zone for one-handed operation) */}
-      {activeTrip ? (
-        <View style={styles.stickyActionContainer}>
-          <Pressable
-            accessibilityHint="Mở buồng lái điều phối chuyến"
-            accessibilityLabel="Vào buồng lái điều phối"
-            accessibilityRole="button"
-            onPress={onOpenOrder ? () => onOpenOrder(activeTrip.id) : undefined}
-            style={({ pressed }) => [styles.stickyActionBtn, pressed ? styles.pressed : null]}
-          >
-            <Text style={styles.stickyActionBtnText}>
-              MỞ BUỒNG LÁI ĐIỀU PHỐI CHUYẾN →
-            </Text>
-          </Pressable>
-        </View>
-      ) : null}
+          {/* Orders Feed or Empty State */}
+          {filteredOrders.length === 0 ? (
+            <View style={styles.emptyBox}>
+              <View style={styles.emptyIconCircle}>
+                <IconLocationPin color="#0B1E42" size={28} />
+              </View>
+              <Text style={styles.emptyTitle}>Chưa có đơn phù hợp</Text>
+              <Text style={styles.emptyMessage}>
+                LEOPARD sẽ thông báo khi có đơn phù hợp với phạm vi nhận của bạn.
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Mở rộng phạm vi nhận đơn"
+                onPress={() => setIsSettingsOpen(true)}
+                style={({ pressed }) => [styles.expandRadiusBtn, pressed ? styles.pressed : null]}
+              >
+                <Text style={styles.expandRadiusText}>Mở rộng phạm vi nhận đơn</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.ordersFeed}>
+              {filteredOrders.map((item) => (
+                <PublicOrderCard
+                  item={item}
+                  key={item.id}
+                  onDecline={(orderId) => {
+                    setDismissedOrderIds((prev) =>
+                      prev.includes(orderId) ? prev : [...prev, orderId],
+                    );
+                  }}
+                  onOpenOrder={onOpenOrder}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </GestureBottomSheet>
 
-      {/* 7. Collapsible Left Sidebar Drawer */}
+      {/* ── Layer 3: Modals & Drawer ── */}
+      <IncomingDispatchModal
+        offer={activeIncomingOffer}
+        onAccept={(orderId) => {
+          setSimulatedOffer(null);
+          if (onAcceptIncomingOffer) {
+            onAcceptIncomingOffer(orderId);
+          } else if (onOpenOrder) {
+            onOpenOrder(orderId);
+          }
+        }}
+        onDecline={(orderId) => {
+          setDismissedOfferId(orderId);
+          setSimulatedOffer(null);
+          if (onDeclineIncomingOffer) {
+            onDeclineIncomingOffer(orderId);
+          }
+        }}
+        visible={activeIncomingOffer !== null}
+      />
+
       <DriverSidebarDrawer
         activeRoute="/driver/orders"
         availability={view.availability}
@@ -941,7 +1007,6 @@ export function DriverOrdersScreen({
         onSetAvailability={onSetAvailability}
       />
 
-      {/* 7. Receiving Settings Bottom Sheet Modal */}
       <ReceivingSettingsModal
         onClose={() => setIsSettingsOpen(false)}
         onSave={(r, v) => {
@@ -958,224 +1023,134 @@ export function DriverOrdersScreen({
 
 const styles = StyleSheet.create({
   screenRoot: {
-    backgroundColor: leopardPalette.canvas,
+    backgroundColor: '#0B1E42',
     flex: 1,
+    position: 'relative',
   },
-  screenContainer: {
-    backgroundColor: leopardPalette.canvas,
-    flex: 1,
-  },
-  scrollContent: {
-    backgroundColor: leopardPalette.canvas,
-    flexGrow: 1,
-    paddingBottom: spacing.xl + 20,
-  },
-  scrollContentWithSticky: {
-    paddingBottom: 95,
+  mapLayerContainer: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 0,
   },
 
-  /* ── Cockpit Header (~185px) ── */
-  heroSection: {
-    backgroundColor: '#0F172A',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    height: 185,
-    overflow: 'hidden',
-    width: '100%',
+  // ── Layer 1: Floating Glass Top HUD ──────────────────────────────────────
+  topHudContainer: {
+    left: 12,
+    position: 'absolute',
+    right: 12,
+    top: Platform.OS === 'ios' ? 52 : 36,
+    zIndex: 20,
   },
-  heroBackground: {
-    height: '100%',
-    width: '100%',
+  topHudGlass: {
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 20,
+    borderWidth: 1,
+    elevation: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
   },
-  heroBackgroundImage: {
-    opacity: 0.88,
-    transform: [{ translateY: 0 }, { scale: 1.05 }],
-  },
-  heroOverlay: {
-    backgroundColor: 'rgba(15, 23, 42, 0.52)',
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingBottom: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-  },
-  cockpitTopRow: {
-    alignItems: 'flex-start',
+  hudMainRow: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  cockpitDriverLeft: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    gap: 10,
+  hudDriverGroup: {
+    alignItems: 'center',
     flex: 1,
-  },
-  cockpitNameCol: {
-    flexShrink: 1,
-    gap: 4,
-  },
-  heroDriverName: {
-    color: '#FFFFFF',
-    fontSize: 16.5,
-    fontWeight: '800',
-    letterSpacing: -0.2,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  heroBadgesStack: {
-    alignItems: 'flex-start',
-    flexDirection: 'column',
-    gap: 4,
-  },
-  heroBadge: {
-    backgroundColor: 'rgba(15, 23, 42, 0.7)',
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 5,
-    borderWidth: 1,
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-  },
-  heroBadgeText: {
-    fontSize: 10.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.85)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  heroMetaDim: {
-    color: 'rgba(255, 255, 255, 0.75)',
-    fontWeight: '500',
-  },
-  heroMetaBold: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  heroMenuButton: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 18,
-    borderWidth: 1,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  heroLocationBlock: {
-    alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
-    maxWidth: 155,
+    marginRight: 10,
   },
-  heroLocationTextGroup: {
-    alignItems: 'flex-end',
-    flexShrink: 1,
-  },
-  heroLocationHeader: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  heroLocationValue: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'right',
-  },
-  heroLocationPinCircle: {
+  hudMenuBtn: {
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
     borderRadius: 14,
     borderWidth: 1,
-    height: 28,
+    height: 44,
     justifyContent: 'center',
-    width: 28,
+    marginRight: 10,
+    width: 44,
   },
-  cockpitBottomRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 2,
+  hudDriverMeta: {
+    flex: 1,
   },
-  heroBellBtn: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 16,
-    borderWidth: 1,
-    height: 32,
-    justifyContent: 'center',
-    position: 'relative',
-    width: 32,
-  },
-  bellDot: {
-    backgroundColor: '#F59E0B',
-    borderRadius: 3,
-    height: 6,
-    position: 'absolute',
-    right: 6,
-    top: 6,
-    width: 6,
-  },
-  heroDutyContainer: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  heroDutyLabel: {
-    color: '#CBD5E1',
-    fontSize: 10.5,
+  hudDriverName: {
+    color: '#0B1E42',
+    fontSize: 15,
     fontWeight: '700',
-    textShadowColor: 'rgba(0, 0, 0, 0.85)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+  },
+  hudDriverPlate: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 1,
+    fontVariant: ['tabular-nums'],
+  },
+
+  // Hero Duty Switch (height 48px, high contrast)
+  hudDutyWrap: {
+    alignItems: 'flex-end',
+  },
+  hudDutyLabel: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 4,
+    textTransform: 'uppercase',
   },
   heroDutySwitch: {
-    backgroundColor: '#0B1E42',
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: radius.bezelOuter,
-    borderWidth: 1.5,
+    alignItems: 'center',
+    borderRadius: 24,
+    borderWidth: 2,
     flexDirection: 'row',
-    height: 38,
+    height: 48,
     padding: 3,
+    width: 176,
   },
   heroDutySwitchOnline: {
-    borderColor: '#10B981',
+    backgroundColor: '#F0FDF4',
+    borderColor: '#22C55E',
   },
   heroDutySwitchOffline: {
-    borderColor: '#64748B',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
   },
   heroDutyTab: {
     alignItems: 'center',
-    borderRadius: radius.bezelInner,
+    borderRadius: 20,
+    flex: 1,
     flexDirection: 'row',
-    gap: 5,
+    height: 38,
     justifyContent: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
   },
   heroDutyTabActiveOnline: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#16A34A',
   },
   heroDutyTabActiveOffline: {
-    backgroundColor: '#334155',
+    backgroundColor: '#64748B',
   },
   heroDutyDot: {
-    backgroundColor: '#64748B',
-    borderRadius: 3.5,
-    height: 7,
-    width: 7,
+    backgroundColor: '#CBD5E1',
+    borderRadius: 4,
+    height: 8,
+    marginRight: 5,
+    width: 8,
   },
   heroDutyDotActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#86EFAC',
   },
   heroDutyDotActiveOffline: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#FFFFFF',
   },
   heroDutyTabText: {
     fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.4,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   heroDutyTabTextActive: {
     color: '#FFFFFF',
@@ -1184,359 +1159,277 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
 
-  /* ── Double-bezel Operational Stats ── */
-  statsDoubleBezelOuter: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderRadius: radius.bezelOuter,
-    borderWidth: 1.5,
-    padding: 4,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+  // Mini KPI stats row
+  hudKpiRow: {
+    borderTopColor: 'rgba(226, 232, 240, 0.8)',
+    borderTopWidth: 1,
+    marginTop: 10,
+    paddingTop: 8,
   },
-  statsDoubleBezelInner: {
+  hudKpiSummary: {
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.3,
+  },
+  hudKpiChips: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  hudKpiChip: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  hudKpiChipLabel: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+
+  // ── Layer 2: GestureBottomSheet & Content ────────────────────────────────
+  sheetScrollContent: {
+    paddingBottom: 48,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+  },
+
+  // Radar Live Strip
+  radarLiveStrip: {
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
     borderColor: '#E2E8F0',
-    borderRadius: radius.bezelInner,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
-  },
-  statBox: {
-    alignItems: 'center',
-    flex: 1,
-    gap: 2,
-  },
-  statLabel: {
-    color: '#64748B',
-    fontSize: 10.5,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  statValue: {
-    color: '#0B1E42',
-    fontSize: 16,
-    fontWeight: '900',
-    fontVariant: ['tabular-nums'],
-  },
-  statValueHighlight: {
-    color: '#10B981',
-    fontSize: 16,
-    fontWeight: '900',
-    fontVariant: ['tabular-nums'],
-  },
-  statSub: {
-    color: '#94A3B8',
-    fontSize: 9.5,
-    fontWeight: '600',
-  },
-  statDivider: {
-    backgroundColor: '#E2E8F0',
-    height: 28,
-    width: 1,
-  },
-  skeletonTextLineLg: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 4,
-    height: 16,
-    width: 120,
-  },
-  skeletonTextLineSm: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 4,
-    height: 10,
-    width: 60,
-  },
-  skeletonLocationSub: {
-    marginTop: 4,
-    width: 80,
-  },
-  skeletonBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 5,
-    height: 18,
-    width: 68,
-  },
-
-  /* ── Content Container ── */
-  contentContainer: {
-    gap: spacing.md,
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingTop: 0,
-  },
-  activeSectionBlock: {
-    gap: spacing.xs + 2,
-  },
-  activeSectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 2,
-  },
-  activeSectionTitle: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.2,
-  },
-  activeLivePill: {
-    alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderColor: '#86EFAC',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  activeLivePillDot: {
-    backgroundColor: '#16A34A',
-    borderRadius: 3,
-    height: 6,
-    width: 6,
-  },
-  activeLivePillText: {
-    color: '#15803D',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  sectionBlock: {
-    gap: spacing.sm,
-  },
-
-  /* ── Radar Live Strip ── */
-  radarLiveStrip: {
-    alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
   radarLeftGroup: {
     alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    gap: 8,
+    marginRight: 8,
   },
   radarIconOuter: {
     alignItems: 'center',
-    backgroundColor: 'rgba(2, 132, 199, 0.15)',
-    borderRadius: 10,
-    height: 20,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 12,
+    height: 24,
     justifyContent: 'center',
-    width: 20,
+    marginRight: 8,
+    width: 24,
   },
   radarLiveText: {
-    color: '#061226',
+    color: '#334155',
     flex: 1,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   radarLiveHighlight: {
-    color: '#075985',
-    fontWeight: '800',
+    color: '#0B1E42',
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   radarSimulateBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
-    borderRadius: radius.pill,
-    paddingHorizontal: 9,
-    paddingVertical: 4.5,
+    backgroundColor: '#E0E7FF',
+    borderColor: '#C7D2FE',
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    minHeight: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   radarSimulateBtnText: {
-    color: '#FFFFFF',
+    color: '#1E40AF',
     fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.2,
+    fontWeight: '700',
+    marginLeft: 4,
   },
 
-  /* ── Orders Section Header ── */
-  ordersSectionHeader: {
+  // Load Board Header & Filters
+  loadBoardHeaderRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 10,
   },
-  ordersHeadingTitle: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.3,
+  loadBoardTitle: {
+    color: '#0B1E42',
+    fontSize: 17,
+    fontWeight: '800',
   },
-  ordersHeadingSub: {
-    color: leopardPalette.textMutedSlate,
+  loadBoardSubtitle: {
+    color: '#64748B',
     fontSize: 12,
-    fontWeight: '500',
-    marginTop: 2,
+    marginTop: 1,
   },
-  filterBtn: {
+  filterSettingBtn: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderRadius: radius.pill,
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  filterBtnText: {
+  filterSettingBtnText: {
     color: '#0B1E42',
     fontSize: 12,
     fontWeight: '700',
+    marginLeft: 5,
   },
 
-  /* ── Compact Filter Control Row ── */
-  compactFilterRow: {
+  // Vehicle filter chips
+  filterChipsRow: {
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 14,
   },
-  quickFilterChip: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  quickFilterChipText: {
-    color: '#334155',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  quickFilterChipIcon: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-
-  /* ── Orders Feed & Cards ── */
-  ordersFeed: {
-    gap: spacing.sm,
-  },
-  orderCard: {
+  filterChip: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
     borderRadius: 16,
-    borderWidth: 1.5,
-    gap: spacing.xs + 2,
-    padding: spacing.md,
-    shadowColor: '#000',
+    borderWidth: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  filterChipActive: {
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
+  },
+  filterChipText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+  // ── Double-Bezel Order Card ──────────────────────────────────────────────
+  orderCardOuter: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 24,
+    borderWidth: 1,
+    elevation: 3,
+    marginBottom: 14,
+    padding: 6,
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+  },
+  orderCardInner: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#F1F5F9',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 12,
   },
   cardBody: {
-    gap: spacing.xs + 2,
+    marginBottom: 10,
   },
   cardHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 10,
   },
   cardHeaderLeft: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 5,
   },
   cardOrderRef: {
-    color: '#0F172A',
+    color: '#0B1E42',
     fontSize: 13,
     fontWeight: '800',
-    marginRight: 4,
+    fontVariant: ['tabular-nums'],
   },
   proximityDot: {
-    backgroundColor: '#16A34A',
-    borderRadius: 4,
-    height: 8,
-    width: 8,
+    backgroundColor: '#CBD5E1',
+    borderRadius: 2,
+    height: 4,
+    marginHorizontal: 6,
+    width: 4,
   },
   proximityText: {
-    color: '#15803D',
+    color: '#64748B',
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
-  matchDivider: {
-    color: '#94A3B8',
-    fontSize: 12,
-  },
-  matchText: {
-    color: '#061226',
-    fontSize: 12,
-    fontWeight: '700',
-  },
+
+  // Fare Banner
   cardFareBanner: {
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    borderColor: '#DCFCE7',
-    borderRadius: 8,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#DBEAFE',
+    borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   cardFareLeft: {
-    gap: 1,
+    flex: 1,
   },
   cardFareCaption: {
-    color: '#15803D',
+    color: '#3B82F6',
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   cardFareAmount: {
-    color: '#166534',
+    color: '#1D4ED8',
     fontSize: 18,
     fontWeight: '900',
-    letterSpacing: 0.2,
+    fontVariant: ['tabular-nums'],
+    marginTop: 1,
   },
   cardDistanceBadge: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderRadius: 6,
-    borderWidth: 0.5,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#BFDBFE',
+    borderRadius: 8,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 5,
   },
   cardDistanceText: {
-    color: '#061226',
+    color: '#0B1E42',
     fontSize: 11,
     fontWeight: '700',
+    marginLeft: 4,
+    fontVariant: ['tabular-nums'],
   },
+
+  // Route Spine Mini
   cardRouteBlock: {
     flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 4,
+    marginBottom: 10,
   },
   cardRouteSpineMini: {
     alignItems: 'center',
+    marginRight: 10,
     paddingTop: 3,
-    width: 12,
+    width: 14,
   },
   spinePointDotA: {
     backgroundColor: '#16A34A',
@@ -1546,118 +1439,112 @@ const styles = StyleSheet.create({
   },
   spineDottedTrackMini: {
     backgroundColor: '#CBD5E1',
-    height: 18,
+    height: 20,
     marginVertical: 2,
-    width: 1.5,
+    width: 2,
   },
   spinePointDotB: {
-    backgroundColor: '#EA580C',
-    borderRadius: 2,
+    backgroundColor: '#DC2626',
+    borderRadius: 4,
     height: 8,
     width: 8,
   },
   cardRouteAddresses: {
     flex: 1,
-    gap: 4,
+    justifyContent: 'space-between',
   },
   cardPickupAddr: {
-    color: '#0F172A',
-    fontSize: 13.5,
-    fontWeight: '800',
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '700',
   },
   cardDropoffAddr: {
-    color: '#0F172A',
-    fontSize: 13.5,
-    fontWeight: '800',
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '700',
   },
   cardPublicRouteSub: {
     color: '#64748B',
     fontSize: 11,
-    marginTop: -2,
-    paddingLeft: 20,
+    marginBottom: 10,
   },
-  routeRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  routeText: {
-    color: leopardPalette.textSlateDark,
-    flex: 1,
-    fontSize: 14.5,
-    fontWeight: '800',
-    lineHeight: 20,
-  },
+
+  // Vehicle and Cargo Tags
   tagsContainer: {
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 10,
   },
   vehicleTag: {
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    borderRadius: 6,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
   },
   vehicleTagText: {
     color: '#475569',
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '600',
+    marginLeft: 4,
   },
   cargoTag: {
     backgroundColor: '#F8FAFC',
     borderColor: '#E2E8F0',
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
   },
   cargoTagText: {
-    color: '#64748B',
-    fontSize: 11.5,
-    fontWeight: '500',
+    color: '#475569',
+    fontSize: 11,
   },
+
+  // Card Footer
   cardFooter: {
     alignItems: 'center',
-    borderTopColor: '#F1F5F9',
+    borderTopColor: '#E2E8F0',
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: spacing.xs,
+    paddingTop: 8,
   },
   priceEtaRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
   },
   priceText: {
-    color: colors.brand.background,
-    fontSize: 12.5,
-    fontWeight: '700',
+    color: '#475569',
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
+    marginLeft: 4,
   },
   updatedText: {
-    color: leopardPalette.textMutedSlate,
+    color: '#94A3B8',
     fontSize: 11,
-    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
+
+  // Card Actions
   cardActionRow: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 4,
   },
   cardDeclineBtn: {
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
     borderWidth: 1,
-    flex: 1,
     justifyContent: 'center',
-    paddingVertical: 10,
+    minHeight: 44,
+    paddingHorizontal: 14,
   },
   cardDeclineText: {
     color: '#64748B',
@@ -1666,321 +1553,403 @@ const styles = StyleSheet.create({
   },
   cardAcceptBtn: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.primary,
-    borderRadius: 10,
-    flex: 2,
+    backgroundColor: '#16A34A',
+    borderRadius: 12,
+    flex: 1,
     justifyContent: 'center',
-    paddingVertical: 10,
+    minHeight: 44,
+    paddingHorizontal: 16,
   },
   cardAcceptText: {
     color: '#FFFFFF',
-    fontSize: 13.5,
-    fontWeight: '900',
+    fontSize: 13,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
     letterSpacing: 0.3,
   },
 
-  /* ── Empty State ── */
-  emptyBox: {
+  // ── Active Trip Rail Card ────────────────────────────────────────────────
+  activeSectionBlock: {
+    marginBottom: 16,
+  },
+  activeSectionHeader: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xl,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  emptyIconCircle: {
-    alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderRadius: 28,
-    height: 56,
-    justifyContent: 'center',
-    width: 56,
-  },
-  emptyTitle: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  emptyMessage: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  expandRadiusBtn: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-  },
-  expandRadiusText: {
+  activeSectionTitle: {
     color: '#0B1E42',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '800',
   },
-
-  /* ── Active Trip Rail ── */
-  activeRail: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderLeftColor: '#0B1E42',
-    borderLeftWidth: 5,
-    borderRadius: 16,
+  activeLivePill: {
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    borderColor: '#86EFAC',
+    borderRadius: 12,
     borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    flexDirection: 'row',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  activeLivePillDot: {
+    backgroundColor: '#16A34A',
+    borderRadius: 3,
+    height: 6,
+    marginRight: 5,
+    width: 6,
+  },
+  activeLivePillText: {
+    color: '#15803D',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  activeTripBezelOuter: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#93C5FD',
+    borderRadius: 24,
+    borderWidth: 1.5,
+    elevation: 4,
+    padding: 6,
+    shadowColor: '#1D4ED8',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
     shadowRadius: 10,
-    elevation: 3,
+  },
+  activeTripBezelInner: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#EFF6FF',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
   },
   activeTopRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
   activeTopRowLeft: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
   },
   tripIconChip: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderRadius: 8,
-    height: 32,
+    backgroundColor: '#DBEAFE',
+    borderRadius: 10,
+    height: 28,
     justifyContent: 'center',
-    width: 32,
+    marginRight: 8,
+    width: 28,
   },
   activeReference: {
-    color: '#0F172A',
-    fontSize: 16,
+    color: '#0B1E42',
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 0.2,
+    fontVariant: ['tabular-nums'],
   },
+
+  // Route Spine
   activeRouteSpineBox: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 2,
+    marginBottom: 12,
+    padding: 12,
   },
   routeSpineColumn: {
     alignItems: 'center',
+    marginRight: 10,
     paddingTop: 2,
     width: 20,
   },
   spinePointA: {
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderColor: '#16A34A',
+    backgroundColor: '#16A34A',
     borderRadius: 10,
-    borderWidth: 1.5,
     height: 20,
     justifyContent: 'center',
     width: 20,
   },
   spinePointTextA: {
-    color: '#15803D',
+    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '900',
+    fontWeight: '800',
+  },
+  spineDashedLine: {
+    backgroundColor: '#94A3B8',
+    height: 28,
+    marginVertical: 3,
+    width: 2,
   },
   spinePointB: {
     alignItems: 'center',
-    backgroundColor: '#FFEDD5',
-    borderColor: '#EA580C',
+    backgroundColor: '#DC2626',
     borderRadius: 10,
-    borderWidth: 1.5,
     height: 20,
     justifyContent: 'center',
     width: 20,
   },
   spinePointTextB: {
-    color: '#C2410C',
+    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '900',
-  },
-  spineDashedLine: {
-    backgroundColor: '#CBD5E1',
-    flex: 1,
-    marginVertical: 4,
-    minHeight: 28,
-    width: 2,
+    fontWeight: '800',
   },
   routeSpineLabels: {
     flex: 1,
-    gap: 6,
+    justifyContent: 'space-between',
   },
   routeLocationGroup: {
-    gap: 2,
+    marginBottom: 4,
   },
   routePointTypeA: {
-    color: '#15803D',
-    fontSize: 10.5,
+    color: '#16A34A',
+    fontSize: 9,
     fontWeight: '800',
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
   routePointTypeB: {
-    color: '#C2410C',
-    fontSize: 10.5,
+    color: '#DC2626',
+    fontSize: 9,
     fontWeight: '800',
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
   activeOriginText: {
-    color: '#0F172A',
-    fontSize: 13.5,
-    fontWeight: '600',
-    lineHeight: 18,
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '700',
   },
   activeDestText: {
-    color: '#0F172A',
-    fontSize: 14,
+    color: '#0B1E42',
+    fontSize: 13,
     fontWeight: '700',
-    lineHeight: 19,
   },
   spineEtaRow: {
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderRadius: 6,
-    borderWidth: 1,
     flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    marginVertical: 2,
   },
   spineEtaText: {
-    color: '#0B1E42',
-    fontSize: 11.5,
-    fontWeight: '700',
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '600',
+    marginLeft: 4,
+    fontVariant: ['tabular-nums'],
   },
+
+  // Proof warning
   proofWarningBanner: {
     alignItems: 'center',
     backgroundColor: '#FEF3C7',
     borderColor: '#FDE68A',
-    borderLeftColor: '#D97706',
-    borderLeftWidth: 4,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 6,
+    marginBottom: 10,
     paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  proofWarningIcon: {
-    color: '#D97706',
-    fontSize: 13,
+    paddingVertical: 6,
   },
   proofWarningText: {
     color: '#B45309',
-    flex: 1,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
+    marginLeft: 6,
   },
+
+  // Active Signal
   activeSignalRow: {
-    alignItems: 'center',
-    borderTopColor: '#F1F5F9',
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 6,
+    marginBottom: 12,
   },
   liveTrackingIndicator: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
   },
   livePulseDot: {
-    backgroundColor: '#16A34A',
-    borderRadius: 3.5,
-    height: 7,
-    width: 7,
+    backgroundColor: '#22C55E',
+    borderRadius: 4,
+    height: 8,
+    marginRight: 6,
+    width: 8,
   },
   trackingText: {
-    color: '#64748B',
-    fontSize: 11.5,
-    fontWeight: '500',
+    color: '#475569',
+    fontSize: 11,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
-  activeCardFooter: {
-    paddingTop: 2,
+
+  // Customer Contact Bar
+  activeContactBar: {
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#DBEAFE',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
+  activeContactInfo: {
+    flex: 1,
+  },
+  activeContactTitle: {
+    color: '#1E40AF',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  activeContactPhone: {
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    marginTop: 1,
+  },
+  activeContactButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  contactIconBtn: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#BFDBFE',
+    borderRadius: 12,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+
+  // In-Card Big Action
   activeActionBtn: {
     alignItems: 'center',
     backgroundColor: '#0B1E42',
-    borderRadius: 10,
+    borderRadius: 14,
+    height: 48,
     justifyContent: 'center',
-    paddingVertical: 12,
   },
   activeActionHint: {
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '800',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
 
-  /* ── Sticky Bottom Action Bar (Thumb Zone) ── */
-  stickyActionContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopColor: '#E2E8F0',
-    borderTopWidth: 1,
-    bottom: 0,
-    elevation: 12,
-    left: 0,
-    paddingBottom: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs + 3,
-    position: 'absolute',
-    right: 0,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  stickyActionBtn: {
-    alignItems: 'center',
-    backgroundColor: '#0B1E42',
-    borderRadius: 12,
-    height: 52,
-    justifyContent: 'center',
-  },
-  stickyActionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-
-  /* ── Notice Alert ── */
+  // Notice Alert
   notice: {
     borderRadius: 12,
-    borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.sm,
+    marginBottom: 12,
+    padding: 12,
   },
   noticeInfo: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
   },
   noticeWarning: {
     backgroundColor: '#FFFBEB',
     borderColor: '#FDE68A',
+    borderWidth: 1,
   },
   noticeDanger: {
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
+    borderWidth: 1,
   },
   noticeBody: {
-    ...typography.body,
-    fontSize: 12.5,
+    color: '#0B1E42',
+    fontSize: 13,
+    marginBottom: 6,
   },
 
-  /* ── Receiving Settings Modal ── */
+  ordersFeed: {
+    gap: 12,
+    marginTop: 4,
+  },
+
+  // Empty Box
+  emptyBox: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+  },
+  emptyIconCircle: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 28,
+    height: 56,
+    justifyContent: 'center',
+    marginBottom: 12,
+    width: 56,
+  },
+  emptyTitle: {
+    color: '#0B1E42',
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  emptyMessage: {
+    color: '#64748B',
+    fontSize: 12,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  expandRadiusBtn: {
+    alignItems: 'center',
+    backgroundColor: '#0B1E42',
+    borderRadius: 12,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 16,
+  },
+  expandRadiusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // Boundary
+  boundaryContainer: {
+    bottom: 24,
+    left: 16,
+    position: 'absolute',
+    right: 16,
+    zIndex: 30,
+  },
+
+  // Skeletons
+  skeletonTextLineLg: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 4,
+    height: 14,
+    marginBottom: 4,
+    width: 110,
+  },
+  skeletonTextLineSm: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 4,
+    height: 10,
+    width: 70,
+  },
+  skeletonList: {
+    gap: 12,
+    marginTop: 12,
+  },
+  ordersSectionHeader: {
+    marginBottom: 10,
+  },
+
+  // Modal Settings
   modalBackdrop: {
-    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    backgroundColor: 'rgba(11, 30, 66, 0.5)',
     flex: 1,
     justifyContent: 'flex-end',
   },
@@ -1988,72 +1957,108 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl + 10,
+    padding: 20,
   },
   settingsHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 16,
   },
   settingsTitle: {
-    color: leopardPalette.textSlateDark,
+    color: '#0B1E42',
     fontSize: 15,
-    fontWeight: '900',
-    letterSpacing: 0.4,
+    fontWeight: '800',
   },
   closeBtn: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 16,
-    height: 32,
+    height: 44,
     justifyContent: 'center',
-    width: 32,
+    minHeight: 44,
+    minWidth: 44,
+    width: 44,
+  },
+  settingsBody: {
+    paddingBottom: 24,
   },
   filterSectionLabel: {
-    color: '#475569',
-    fontSize: 12.5,
-    fontWeight: '800',
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 10,
+    letterSpacing: 0.3,
   },
   optionsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
   },
   optionPill: {
-    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
     borderColor: '#CBD5E1',
-    borderRadius: 10,
-    borderWidth: 1.5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    flex: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: 10,
   },
   optionPillActive: {
-    backgroundColor: '#F0F4F9',
-    borderColor: leopardPalette.primary,
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   optionPillText: {
     color: '#475569',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   optionPillTextActive: {
-    color: leopardPalette.primaryDark,
-    fontWeight: '900',
+    color: '#FFFFFF',
   },
-  saveSettingsWrap: {
-    marginTop: spacing.xs,
+  vehicleOptionsCol: {
+    gap: 8,
+    marginBottom: 20,
+  },
+  vehicleOptionItem: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    minHeight: 48,
+    paddingHorizontal: 14,
+  },
+  vehicleOptionActive: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#3B82F6',
+  },
+  vehicleOptionText: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 10,
+  },
+  vehicleOptionTextActive: {
+    color: '#1D4ED8',
+    fontWeight: '700',
+  },
+  saveSettingsBtn: {
+    alignItems: 'center',
+    backgroundColor: '#0B1E42',
+    borderRadius: 14,
+    height: 48,
+    justifyContent: 'center',
+  },
+  saveSettingsBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
 
-  /* ── Skeleton ── */
-  skeletonList: {
-    gap: spacing.sm,
-  },
-
-  /* ── Utilities ── */
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
 });

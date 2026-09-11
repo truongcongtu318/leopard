@@ -26,6 +26,8 @@ import {
 import { isLikelyVnPhone, toE164Vn } from '@leopard/mobile-core';
 import { OtpSixCellInput } from '@leopard/mobile-core';
 import { TruckLoader } from '@leopard/mobile-core';
+import { VietnamFlagIcon, IconRoleDriver, OtpPhoneHeroIcon } from '@leopard/mobile-core';
+import { IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
 
 const driverHeroBg = require('../../assets/brand/driver-hero-bg.jpg');
 const leopardEmblem = require('../../assets/brand/leopard-emblem.png');
@@ -35,6 +37,7 @@ const RECAPTCHA_CONTAINER_ID = 'leopard-driver-recaptcha-container';
 export interface DriverLoginScreenProps {
   onLoginSuccess?: (role: Role, profileComplete: boolean) => void;
   onNavigateRegister?: () => void;
+  onNavigateOtp?: (phone: string) => void;
   allowDemo?: boolean;
   sessionExpired?: boolean;
 }
@@ -61,6 +64,7 @@ export function DriverLoginScreen({
   allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true',
   onLoginSuccess,
   onNavigateRegister,
+  onNavigateOtp,
   sessionExpired = false,
 }: DriverLoginScreenProps) {
   const [phone, setPhone] = useState('');
@@ -143,6 +147,11 @@ export function DriverLoginScreen({
     if (isSubmitting) return;
     if (!isLikelyVnPhone(phone)) {
       setErrorMsg('Số điện thoại không hợp lệ');
+      return;
+    }
+
+    if (onNavigateOtp) {
+      onNavigateOtp(phone);
       return;
     }
 
@@ -332,7 +341,7 @@ export function DriverLoginScreen({
                 ]}
               >
                 <View style={styles.countryPill}>
-                  <Text style={styles.flagIcon}>🇻🇳</Text>
+                  <VietnamFlagIcon height={15} width={22} />
                   <Text style={styles.countryCodeText}>+84</Text>
                 </View>
                 <View style={styles.inputDivider} />
@@ -370,13 +379,22 @@ export function DriverLoginScreen({
               accessibilityRole="button"
               accessibilityState={{
                 busy: isSubmitting,
-                disabled: isSubmitting || !isLikelyVnPhone(phone) || !firebaseReady,
+                disabled:
+                  isSubmitting ||
+                  !isLikelyVnPhone(phone) ||
+                  (!firebaseReady && !allowDemo && !onNavigateOtp),
               }}
-              disabled={isSubmitting || !isLikelyVnPhone(phone) || !firebaseReady}
+              disabled={
+                isSubmitting ||
+                !isLikelyVnPhone(phone) ||
+                (!firebaseReady && !allowDemo && !onNavigateOtp)
+              }
               onPress={handleSendOtp}
               style={({ pressed }) => [
                 styles.primaryBtn,
-                (!isLikelyVnPhone(phone) || isSubmitting || !firebaseReady) &&
+                (isSubmitting ||
+                  !isLikelyVnPhone(phone) ||
+                  (!firebaseReady && !allowDemo && !onNavigateOtp)) &&
                   styles.primaryBtnDisabled,
                 pressed && styles.pressed,
               ]}
@@ -436,7 +454,7 @@ export function DriverLoginScreen({
                     onPress={() => handleDemoLogin('driver', 'DRIVER')}
                     style={({ pressed }) => [styles.demoBtnPrimary, pressed && styles.pressed]}
                   >
-                    <Text style={styles.demoBtnPrimaryIcon}>🚚</Text>
+                    <IconTruck color="#FFFFFF" size="sm" />
                     <View>
                       <Text style={styles.demoBtnPrimaryTitle}>Tài xế (Driver)</Text>
                       <Text style={styles.demoBtnPrimarySubtitle}>Nhận chuyến & định vị</Text>
@@ -448,7 +466,7 @@ export function DriverLoginScreen({
                     onPress={() => handleDemoLogin('customer', 'CUSTOMER')}
                     style={({ pressed }) => [styles.demoBtnSecondary, pressed && styles.pressed]}
                   >
-                    <Text style={styles.demoBtnSecIcon}>👤</Text>
+                    <IconRoleDriver color="#2E6FD6" secondaryColor="#EFF6FF" size={20} />
                     <View>
                       <Text style={styles.demoBtnSecTitle}>Khách hàng</Text>
                       <Text style={styles.demoBtnSecSubtitle}>Test cảnh báo vai trò</Text>
@@ -497,7 +515,7 @@ export function DriverLoginScreen({
 
             <View style={styles.otpCenterHero}>
               <View style={[styles.otpBadge, isVerified && styles.otpBadgeSuccess]}>
-                <Text style={styles.otpBadgeIcon}>{isVerified ? '✓' : '📲'}</Text>
+                <OtpPhoneHeroIcon isVerified={isVerified} size={36} />
               </View>
               <Text style={styles.otpModalTitle}>
                 {isVerified ? 'Xác thực thành công!' : 'Nhập mã xác nhận OTP'}

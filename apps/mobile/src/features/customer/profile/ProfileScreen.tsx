@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { type ReactNode, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, IconCreditCard, IconCrown, IconEye, IconEyeOff, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, IconChevron, IconCreditCard, IconCrown, IconEye, IconEyeOff, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { CustomerProfileView } from './model';
 
 export type CustomerProfileScreenProps = Readonly<{
@@ -57,7 +57,7 @@ function MenuRow({
         </View>
         {subtitle ? <Text style={styles.menuSubtitle}>{subtitle}</Text> : null}
       </View>
-      <Text style={styles.menuChevron}>›</Text>
+      <IconChevron color="#94A3B8" direction="right" size="md" />
     </Pressable>
   );
 }
@@ -89,7 +89,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 🌟 1. IMMERSIVE CYBER LOGISTICS HERO HEADER */}
+        {/* 1. IMMERSIVE CYBER LOGISTICS HERO HEADER */}
         <View style={styles.heroCard}>
           {/* Subtle Ambient Decorative Glows */}
           <View pointerEvents="none" style={styles.heroGlowTopRight} />
@@ -107,7 +107,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               onPress={() => router.push('/customer/profile-edit')}
               style={({ pressed }) => [styles.editHeroBtn, pressed ? styles.pressed : null]}
             >
-              <Text style={styles.editHeroBtnText}>Sửa hồ sơ ✎</Text>
+              <Text style={styles.editHeroBtnText}>Sửa hồ sơ</Text>
             </Pressable>
           </View>
 
@@ -170,7 +170,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           </View>
         </View>
 
-        {/* 💳 2. FLOATING BENTO BENEFIT CARD (NẰM ĐÈ LÊN CHÂN HERO) */}
+        {/* 2. FLOATING BENTO BENEFIT CARD (NẰM ĐÈ LÊN CHÂN HERO) */}
         <View style={styles.bentoWalletCard}>
           {/* VietQR Balance Hub */}
           <View style={styles.bentoCol}>
@@ -216,7 +216,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               <Text style={styles.bentoAmountText}>
                 {showBalance ? '1.250.000 ₫' : '•••••••• ₫'}
               </Text>
-              <Text style={styles.bentoSubGreen}>✦ Nạp rút 0đ Napas</Text>
+              <Text style={styles.bentoSubGreen}>Nạp rút 0đ Napas</Text>
             </Pressable>
           </View>
 
@@ -236,7 +236,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                 </View>
                 <Text style={styles.bentoEyebrow}>MÃ ƯU ĐÃI</Text>
               </View>
-              <Text style={styles.bentoChevron}>›</Text>
+              <IconChevron color="#94A3B8" direction="right" size="sm" />
             </View>
 
             <Text style={styles.bentoPromoText}>3 khả dụng</Text>
@@ -244,7 +244,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           </Pressable>
         </View>
 
-        {/* 📦 3. NHÓM VẬN CHUYỂN & ĐƠN HÀNG */}
+        {/* 3. NHÓM VẬN CHUYỂN & ĐƠN HÀNG */}
         <View style={styles.sectionGroup}>
           <SectionHeader title="VẬN CHUYỂN & ĐƠN HÀNG" />
           <View style={styles.insetCard}>
@@ -267,7 +267,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           </View>
         </View>
 
-        {/* 📑 4. NHÓM TÀI CHÍNH & DOANH NGHIỆP (B2B ECOSYSTEM) */}
+        {/* 4. NHÓM TÀI CHÍNH & DOANH NGHIỆP (B2B ECOSYSTEM) */}
         <View style={styles.sectionGroup}>
           <SectionHeader title="TÀI CHÍNH & DOANH NGHIỆP" />
           <View style={styles.insetCard}>
@@ -289,7 +289,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           </View>
         </View>
 
-        {/* ⚙️ 5. NHÓM HỖ TRỢ & HỆ THỐNG */}
+        {/* 5. NHÓM HỖ TRỢ & HỆ THỐNG */}
         <View style={styles.sectionGroup}>
           <SectionHeader title="HỖ TRỢ & HỆ THỐNG" />
           <View style={styles.insetCard}>
@@ -311,7 +311,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           </View>
         </View>
 
-        {/* 🚪 6. NÚT ĐĂNG XUẤT NHẸ NHÀNG (SUBTLE LOGOUT) */}
+        {/* 6. NÚT ĐĂNG XUẤT NHẸ NHÀNG (SUBTLE LOGOUT) */}
         <View style={styles.logoutSection}>
           <Pressable
             accessibilityLabel="Đăng xuất"
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.lg,
   },
-  /* 🌟 HERO CARD STYLES */
+  /* HERO CARD STYLES */
   heroCard: {
     backgroundColor: '#090D16',
     borderColor: '#1E293B',
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* 💳 FLOATING BENTO WALLET */
+  /* FLOATING BENTO WALLET */
   bentoWalletCard: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  /* 📦 GROUPED LISTS */
+  /* GROUPED LISTS */
   sectionGroup: {
     gap: 6,
   },
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
 
-  /* 🚪 LOGOUT SECTION */
+  /* LOGOUT SECTION */
   logoutSection: {
     paddingTop: 4,
   },

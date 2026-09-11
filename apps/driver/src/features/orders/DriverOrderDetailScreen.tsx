@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconCamera, IconCameraProof, IconCheck, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconSpeedTruck, IconTrash, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconCamera, IconCameraProof, IconCheck, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconShieldAlert, IconSpeedTruck, IconTrash, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, SlideToAction, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
 import { createDriverDetailFixture } from './fixtures';
 import type {
   DriverAssignedDetailView,
@@ -84,6 +84,32 @@ function TaskButton({
       />
     );
   }
+
+  if (task.kind === 'advance-lifecycle') {
+    const disabled = task.command.disabled || task.command.isPending;
+    return (
+      <View style={styles.advanceLegContainer}>
+        <SlideToAction
+          key={task.command.id}
+          resetKey={task.command.id}
+          colorVariant={
+            task.command.id.includes('deliver') || task.command.label.includes('DELIVERED')
+              ? 'success'
+              : 'brand'
+          }
+          disabled={disabled}
+          label={`Vuốt: ${task.command.label} ➔`}
+          onActionComplete={() => {
+            if (onExecuteTask && !disabled) {
+              onExecuteTask(task.command.id);
+            }
+          }}
+          testID="btn-advance-leg-slide"
+        />
+      </View>
+    );
+  }
+
   return <CommandButton command={task.command} onPress={onExecuteTask} />;
 }
 
@@ -156,10 +182,15 @@ function EpodPanel({
     setSignatureCaptured(false);
   };
 
-  const isCompleteReady = Boolean(cargoPhotoUri && signatureCaptured);
+  const isCompleteReady = Boolean(
+    cargoPhotoUri &&
+    photoWatermark?.timestamp &&
+    photoWatermark?.coords &&
+    signatureCaptured,
+  );
 
   const handleConfirmDelivery = () => {
-    if (!cargoPhotoUri) {
+    if (!cargoPhotoUri || !photoWatermark?.timestamp || !photoWatermark?.coords) {
       setErrorMsg('Vui lòng chụp ảnh kiện hàng có gắn watermark định vị GPS & thời gian');
       return;
     }
@@ -218,8 +249,9 @@ function EpodPanel({
         {/* Error banner if validation fails */}
         {errorMsg ? (
           <View style={styles.epodValidationAlert} testID="epod-validation-error">
+            <IconShieldAlert color="#B91C1C" size={15} />
             <Text accessibilityRole="alert" style={styles.epodValidationAlertText}>
-              ⚠️ {errorMsg}
+              {errorMsg}
             </Text>
           </View>
         ) : null}
@@ -337,8 +369,9 @@ function EpodPanel({
                   <View style={styles.signatureBaseline} />
                 </View>
                 <View style={styles.signatureMetadataRow}>
+                  <IconCheck color="#10B981" size={13} strokeWidth={2.5} />
                   <Text style={styles.signatureMetaText}>
-                    ✓ Chữ ký điện tử đã được xác thực · {signPoints} nét chạm
+                    Chữ ký điện tử đã được xác thực · {signPoints} nét chạm
                   </Text>
                 </View>
               </View>
@@ -373,13 +406,14 @@ function EpodPanel({
 
         {/* Step 4 Completion / Confirmation Trigger if inside e-POD section */}
         {status === 'IN_TRANSIT' && (
-          <View style={styles.epodCompleteSection} testID="btn-epod-complete-delivery">
-            <Button
+          <View style={styles.epodCompleteSection}>
+            <SlideToAction
+              colorVariant="success"
               disabled={!isCompleteReady}
-              disabledLabel="Hoàn tất e-POD (Yêu cầu đủ Ảnh + Chữ ký)"
-              label="Xác nhận hoàn tất giao hàng (DELIVERED)"
-              onPress={handleConfirmDelivery}
-              size="driver-primary"
+              label="Vuốt: Hoàn tất giao hàng (DELIVERED) ➔"
+              onActionComplete={handleConfirmDelivery}
+              resetKey={`${orderId}-${signatureCaptured ? 'signed' : 'unsigned'}`}
+              testID="btn-epod-complete-delivery"
             />
           </View>
         )}
@@ -388,32 +422,6 @@ function EpodPanel({
   );
 }
 
-function ProofPanel({ proof }: Readonly<{ proof: DriverProofView }>) {
-  if (proof.kind === 'empty') return null;
-  const isError =
-    proof.kind === 'invalid-type' || proof.kind === 'too-large' || proof.kind === 'upload-retry';
-  return (
-    <View style={[styles.proofPanel, isError ? styles.proofError : null]}>
-      <View style={styles.proofHeaderRow}>
-        <View style={[styles.proofIconChip, isError ? styles.proofIconChipError : null]}>
-          <IconCameraProof
-            color={isError ? '#DC2626' : '#0B1E42'}
-            size={18}
-          />
-        </View>
-        <View style={styles.proofHeaderText}>
-          <Text accessibilityRole={isError ? 'alert' : undefined} style={styles.proofTitle}>
-            {proof.label}
-          </Text>
-          <Text style={styles.proofMessage}>{proof.message}</Text>
-        </View>
-      </View>
-      {proof.fileLabel ? (
-        <Text style={styles.proofHelper}>Ảnh đính kèm: {proof.fileLabel}</Text>
-      ) : null}
-    </View>
-  );
-}
 
 function MissionStepper({ status }: Readonly<{ status: string }>) {
   let activeIndex = 0;
@@ -448,16 +456,20 @@ function MissionStepper({ status }: Readonly<{ status: string }>) {
                       : styles.stepDotFuture,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.stepDotNumber,
-                    isCurrent || isPast
-                      ? styles.stepDotNumberActive
-                      : styles.stepDotNumberFuture,
-                  ]}
-                >
-                  {isPast ? '✓' : idx + 1}
-                </Text>
+                {isPast ? (
+                  <IconCheck color="#FFFFFF" size={12} strokeWidth={2.5} />
+                ) : (
+                  <Text
+                    style={[
+                      styles.stepDotNumber,
+                      isCurrent || isPast
+                        ? styles.stepDotNumberActive
+                        : styles.stepDotNumberFuture,
+                    ]}
+                  >
+                    {idx + 1}
+                  </Text>
+                )}
               </View>
               <Text
                 style={[
@@ -509,7 +521,7 @@ function VerticalRouteStepper({
       {isPassedPickup ? (
         <View style={styles.routeNodeACollapsed}>
           <View style={styles.checkBadge}>
-            <Text style={styles.checkBadgeText}>✓</Text>
+            <IconCheck color="#15803D" size={13} strokeWidth={2.5} />
           </View>
           <View style={styles.routeTextCol}>
             <Text style={styles.routeNodeSubA}>ĐÃ BỐC HÀNG TẠI</Text>
@@ -781,9 +793,12 @@ function PublicDetail({
             <View style={styles.fareAmountRow}>
               <Text style={styles.fareAmountText}>{view.order.priceLabel || '285.000 ₫'}</Text>
             </View>
-            <Text style={styles.fareTermsText}>
-              ✓ Đã khấu trừ phí nền tảng · Khách thanh toán bảo đảm qua VietQR Napas247
-            </Text>
+            <View style={styles.fareTermsRow}>
+              <IconCheck color="#16A34A" size={13} strokeWidth={2.5} />
+              <Text style={styles.fareTermsText}>
+                Đã khấu trừ phí nền tảng · Khách thanh toán bảo đảm qua VietQR Napas247
+              </Text>
+            </View>
           </View>
 
           {/* 4. Vertical Route Spine (Public Scope) */}
@@ -957,7 +972,8 @@ function AssignedDetail({
               />
             ) : (
               <View style={styles.completedTripBadge}>
-                <Text style={styles.completedTripText}>Đã hoàn thành chuyến ✓</Text>
+                <IconCheck color="#15803D" size={14} strokeWidth={2.5} />
+                <Text style={styles.completedTripText}>Đã hoàn thành chuyến</Text>
               </View>
             )}
           </View>
@@ -1310,6 +1326,7 @@ const styles = StyleSheet.create({
   stepDotNumber: {
     fontSize: 10,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   stepDotNumberActive: {
     color: '#FFFFFF',
@@ -1658,10 +1675,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   epodValidationAlert: {
+    alignItems: 'center',
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
     borderRadius: 8,
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
@@ -1753,6 +1773,7 @@ const styles = StyleSheet.create({
   watermarkText: {
     color: '#FFFFFF',
     fontSize: 10.5,
+    fontVariant: ['tabular-nums'],
     fontWeight: '700',
     letterSpacing: 0.2,
   },
@@ -1765,8 +1786,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   retakeBtnText: {
     color: '#0B1E42',
@@ -1879,6 +1901,7 @@ const styles = StyleSheet.create({
   signatureMetadataRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 4,
   },
   signatureMetaText: {
     color: '#059669',
@@ -1894,12 +1917,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   clearSignBtnText: {
     color: '#DC2626',
@@ -1912,47 +1936,16 @@ const styles = StyleSheet.create({
   },
   epodCompleteSection: {
     marginTop: 4,
+    position: 'relative',
   },
-  proofPanel: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 4,
-    padding: spacing.sm + 2,
+  advanceLegContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    position: 'relative',
   },
   proofError: {
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
-  },
-  proofHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  proofIconChip: {
-    alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderRadius: 8,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  proofIconChipError: {
-    backgroundColor: '#FEE2E2',
-  },
-  proofHeaderText: {
-    flex: 1,
-    gap: 1,
-  },
-  proofTitle: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 12.5,
-    fontWeight: '800',
-  },
-  proofMessage: {
-    color: '#475569',
-    fontSize: 11,
   },
   proofHelper: {
     color: '#64748B',
@@ -2047,6 +2040,8 @@ const styles = StyleSheet.create({
     borderColor: '#86EFAC',
     borderRadius: 12,
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
     height: 48,
     justifyContent: 'center',
   },
@@ -2201,8 +2196,14 @@ const styles = StyleSheet.create({
   fareAmountText: {
     color: '#14532D',
     fontSize: 28,
+    fontVariant: ['tabular-nums'],
     fontWeight: '900',
     letterSpacing: 0.3,
+  },
+  fareTermsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   fareTermsText: {
     color: '#166534',

@@ -56,9 +56,9 @@ describe('CustomerAddAddressScreen (customer-address route)', () => {
 
   it('renders warehouse category chips and contact person fields', async () => {
     const screen = await render(<CustomerAddAddressScreen />);
-    expect(screen.getByText('🏢 Kho chính')).toBeTruthy();
-    expect(screen.getByText('🏬 Văn phòng')).toBeTruthy();
-    expect(screen.getByText('🏠 Kho phụ')).toBeTruthy();
+    expect(screen.getByText('Kho chính')).toBeTruthy();
+    expect(screen.getByText('Văn phòng')).toBeTruthy();
+    expect(screen.getByText('Kho phụ')).toBeTruthy();
     expect(screen.getByText('THỦ KHO GIAO NHẬN')).toBeTruthy();
     expect(screen.getByText('Lưu kho & Vào trang chủ')).toBeTruthy();
     await screen.unmount();

@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconBank, IconClock, IconEye, IconEyeOff, IconOrders, IconSecurityShield, IconTrophy, IconTxPayment, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconBank, IconChevron, IconClock, IconEye, IconEyeOff, IconOrders, IconSecurityShield, IconTrophy, IconTxPayment, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
 
 export type DriverTransaction = Readonly<{
   id: string;
@@ -160,6 +160,7 @@ export function DriverWalletScreen() {
                   <Text style={styles.balanceLabel}>Số dư khả dụng để rút</Text>
                   <View style={styles.instantBadge}>
                     <Text style={styles.instantBadgeText}>Rút tiền tức thì 24/7</Text>
+                    <Text style={styles.instantBadgeSpeedText}> (về tài khoản trong 60s)</Text>
                   </View>
                 </View>
               </View>
@@ -206,6 +207,16 @@ export function DriverWalletScreen() {
         <View style={styles.bankSection}>
           <View style={styles.bankSectionHeader}>
             <Text style={styles.sectionLabel}>Tài khoản ngân hàng liên kết (24/7)</Text>
+            <Pressable
+              accessibilityLabel="Quản lý tài khoản ngân hàng"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => router.push('/wallet/bank-accounts')}
+              style={styles.manageBankLink}
+            >
+              <Text style={styles.manageBankLinkText}>Quản lý</Text>
+              <IconChevron color={colors.brand.background} direction="right" size={14} strokeWidth={2.5} />
+            </Pressable>
           </View>
           {linkedBankAccounts.map((account) => {
             const isSelected = selectedBankId === account.id;
@@ -446,8 +457,10 @@ const styles = StyleSheet.create({
     borderColor: '#A7F3D0',
     borderWidth: 1,
     borderRadius: radius.pill,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     alignSelf: 'flex-start',
     marginTop: 2,
   },
@@ -455,6 +468,11 @@ const styles = StyleSheet.create({
     color: '#10B981',
     fontSize: 10,
     fontWeight: '700',
+  },
+  instantBadgeSpeedText: {
+    color: '#059669',
+    fontSize: 9.5,
+    fontWeight: '600',
   },
   balanceAmount: {
     color: '#0B1E42',
@@ -495,7 +513,23 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   bankSectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginVertical: 2,
+  },
+  manageBankLink: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 8,
+  },
+  manageBankLinkText: {
+    color: colors.brand.background,
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   bankCard: {
     backgroundColor: colors.neutral.background,
@@ -648,6 +682,7 @@ const styles = StyleSheet.create({
   txTime: {
     color: colors.neutral.subtleText,
     fontSize: 11,
+    fontVariant: ['tabular-nums'],
   },
   txRight: {
     alignItems: 'flex-end',

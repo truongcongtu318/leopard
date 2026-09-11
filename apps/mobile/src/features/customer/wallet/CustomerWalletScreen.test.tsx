@@ -96,7 +96,7 @@ describe('CustomerWalletScreen', () => {
     // Test copy account number
     const copyAccBtn = screen.getByLabelText('Sao chép số tài khoản');
     await fireEvent.press(copyAccBtn);
-    expect(screen.getByText('Đã chép ✓')).toBeTruthy();
+    expect(screen.getByText('Đã chép')).toBeTruthy();
 
     // Test complete top-up: 1,250,000 + 200,000 = 1,450,000
     const completeBtn = screen.getByRole('button', { name: 'Hoàn tất nạp tiền' });

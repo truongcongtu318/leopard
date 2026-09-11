@@ -29,7 +29,11 @@ export default function LoginRoute() {
 
   return (
     <LoginScreen
+      allowDemo={process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true'}
       onLoginSuccess={handleLoginSuccess}
+      onNavigateOtp={(phone) =>
+        router.push({ pathname: '/(public)/verify-otp', params: { phone } })
+      }
       onNavigateRegister={() => router.push('/(public)/customer-register')}
       sessionExpired={isExpired}
     />

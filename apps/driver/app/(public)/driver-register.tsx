@@ -247,6 +247,7 @@ export default function RegisterScreen() {
       }
 
       setSuccess(true);
+      router.replace('/(public)/kyc-pending');
     } catch (err) {
       setErrorMsg(mapApplyError(err));
     } finally {
@@ -336,7 +337,6 @@ export default function RegisterScreen() {
               </>
             ) : (
               <>
-                <Text style={styles.successIcon}>🎉</Text>
                 <Text style={styles.successTitle}>Đã gửi hồ sơ!</Text>
                 <Text style={styles.successText}>
                   Hồ sơ tài xế đang chờ LEOPARD duyệt. Nhấn "Kiểm tra lại" để cập nhật kết quả.

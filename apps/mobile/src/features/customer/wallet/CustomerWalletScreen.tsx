@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography, Button, IconBank, IconCopy, IconEye, IconEyeOff, IconQrPayment, IconSecurityShield, IconTxPayment, IconTxRefund, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, typography, Button, IconBank, IconCheck, IconChevron, IconCopy, IconCreditCard, IconEye, IconEyeOff, IconQrPayment, IconSecurityShield, IconTxPayment, IconTxRefund, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
 
 export type WalletTransaction = Readonly<{
   id: string;
@@ -114,7 +114,7 @@ export function CustomerWalletScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* 💳 1. Thẻ Số Dư Cao Cấp (Luxury Fintech Virtual Card) */}
+        {/* 1. Thẻ Số Dư Cao Cấp (Luxury Fintech Virtual Card) */}
         <View style={styles.balanceCard}>
           <View style={styles.cardTopRow}>
             <View style={styles.brandPill}>
@@ -156,7 +156,7 @@ export function CustomerWalletScreen() {
           </View>
         </View>
 
-        {/* ⚡ 2. Quick Action Dock (3 Nút Độc Lập Chuẩn Ngón Tay Cái) */}
+        {/* 2. Quick Action Dock (3 Nút Độc Lập Chuẩn Ngón Tay Cái) */}
         <View style={styles.actionDock}>
           <Pressable
             accessibilityLabel="+ Nạp tiền"
@@ -209,13 +209,13 @@ export function CustomerWalletScreen() {
           </Pressable>
         </View>
 
-        {/* ⚡ 2. Khối Chọn Mức Nạp Nhanh (Smart Topup Presets) */}
+        {/* 2. Khối Chọn Mức Nạp Nhanh (Smart Topup Presets) */}
         {showTopupModal && !showQR ? (
           <View style={styles.topupCard}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.sectionLabel}>CHỌN SỐ TIỀN NẠP NHANH</Text>
               <Pressable onPress={() => setShowTopupModal(false)}>
-                <Text style={styles.closeLinkText}>Đóng ✕</Text>
+                <Text style={styles.closeLinkText}>Đóng</Text>
               </Pressable>
             </View>
 
@@ -263,7 +263,7 @@ export function CustomerWalletScreen() {
           </View>
         ) : null}
 
-        {/* 📱 3. Khung Mã VietQR Pro (VietQR Pro Card) */}
+        {/* 3. Khung Mã VietQR Pro (VietQR Pro Card) */}
         {showTopupModal && showQR ? (
           <View style={styles.qrCard}>
             <View style={styles.cardHeaderRow}>
@@ -274,7 +274,7 @@ export function CustomerWalletScreen() {
                   setShowTopupModal(false);
                 }}
               >
-                <Text style={styles.closeLinkText}>Đóng ✕</Text>
+                <Text style={styles.closeLinkText}>Đóng</Text>
               </Pressable>
             </View>
 
@@ -315,10 +315,17 @@ export function CustomerWalletScreen() {
                     onPress={() => handleCopy('account', '0900000001')}
                     style={styles.copyBtn}
                   >
-                    <IconCopy color="#0B1E42" size={14} />
-                    <Text style={styles.copyBtnText}>
-                      {copiedField === 'account' ? 'Đã chép ✓' : 'Sao chép'}
-                    </Text>
+                    {copiedField === 'account' ? (
+                      <>
+                        <IconCheck color="#059669" size={13} strokeWidth={2.5} />
+                        <Text style={[styles.copyBtnText, styles.copyBtnTextSuccess]}>Đã chép</Text>
+                      </>
+                    ) : (
+                      <>
+                        <IconCopy color="#0B1E42" size={14} />
+                        <Text style={styles.copyBtnText}>Sao chép</Text>
+                      </>
+                    )}
                   </Pressable>
                 </View>
               </View>
@@ -333,10 +340,17 @@ export function CustomerWalletScreen() {
                     onPress={() => handleCopy('memo', 'LEOPARD TOPUP 0900000001')}
                     style={styles.copyBtn}
                   >
-                    <IconCopy color="#0B1E42" size={14} />
-                    <Text style={styles.copyBtnText}>
-                      {copiedField === 'memo' ? 'Đã chép ✓' : 'Sao chép'}
-                    </Text>
+                    {copiedField === 'memo' ? (
+                      <>
+                        <IconCheck color="#059669" size={13} strokeWidth={2.5} />
+                        <Text style={[styles.copyBtnText, styles.copyBtnTextSuccess]}>Đã chép</Text>
+                      </>
+                    ) : (
+                      <>
+                        <IconCopy color="#0B1E42" size={14} />
+                        <Text style={styles.copyBtnText}>Sao chép</Text>
+                      </>
+                    )}
                   </Pressable>
                 </View>
               </View>
@@ -365,7 +379,7 @@ export function CustomerWalletScreen() {
           </View>
         ) : null}
 
-        {/* 🏦 4. Phương Thức Liên Kết */}
+        {/* 4. Phương Thức Liên Kết */}
         <View style={styles.methodsCard}>
           <View style={styles.methodHeaderRow}>
             <Text style={styles.sectionLabel}>PHƯƠNG THỨC LIÊN KẾT</Text>
@@ -386,11 +400,58 @@ export function CustomerWalletScreen() {
                 <Text style={styles.methodSub}>Miễn phí nạp & rút tiền 24/7</Text>
               </View>
             </View>
-            <Text style={styles.methodChevron}>›</Text>
+            <IconChevron color="#94A3B8" direction="right" size="md" />
           </View>
         </View>
 
-        {/* 📜 5. Lịch Sử Giao Dịch Gần Đây & Bộ Lọc */}
+        {/* HẠN MỨC TÍN DỤNG DOANH NGHIỆP (B2B CREDIT LINE) */}
+        <View style={styles.creditCardOuter}>
+          <View style={styles.creditCardInner}>
+            <View style={styles.creditHeaderRow}>
+              <View style={styles.creditTitleWrap}>
+                <View style={styles.creditIconBadge}>
+                  <IconCreditCard color={colors.brand.primary} size={18} />
+                </View>
+                <View>
+                  <Text style={styles.creditTitle}>Hạn Mức Tín Dụng B2B</Text>
+                  <Text style={styles.creditSubtitle}>Công nợ trả sau kỳ đối soát T+30</Text>
+                </View>
+              </View>
+              <View style={styles.creditStatusBadge}>
+                <Text style={styles.creditStatusText}>Đang kích hoạt</Text>
+              </View>
+            </View>
+
+            <View style={styles.creditMetricsRow}>
+              <View style={styles.creditMetricCol}>
+                <Text style={styles.creditMetricLabel}>HẠN MỨC CẤP</Text>
+                <Text style={styles.creditMetricValBold}>50.000.000 ₫</Text>
+              </View>
+              <View style={styles.creditMetricDivider} />
+              <View style={styles.creditMetricCol}>
+                <Text style={styles.creditMetricLabel}>ĐÃ SỬ DỤNG</Text>
+                <Text style={styles.creditMetricValUsed}>12.450.000 ₫</Text>
+              </View>
+              <View style={styles.creditMetricDivider} />
+              <View style={styles.creditMetricCol}>
+                <Text style={styles.creditMetricLabel}>CÒN LẠI</Text>
+                <Text style={styles.creditMetricValAvailable}>37.550.000 ₫</Text>
+              </View>
+            </View>
+
+            {/* Progress Bar */}
+            <View style={styles.creditProgressBg}>
+              <View style={[styles.creditProgressFill, { width: '24.9%' }]} />
+            </View>
+
+            <View style={styles.creditFooterRow}>
+              <Text style={styles.creditFooterNote}>Kỳ đối soát & thanh toán: Ngày 25 hàng tháng</Text>
+              <Text style={styles.creditFooterRatio}>24.9% đã dùng</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 5. Lịch Sử Giao Dịch Gần Đây & Bộ Lọc */}
         <View style={styles.historySection}>
           <View style={styles.historyHeaderRow}>
             <Text style={styles.sectionLabel}>LỊCH SỬ GIAO DỊCH GẦN ĐÂY</Text>
@@ -595,7 +656,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
 
-  /* ⚡ Quick Action Dock */
+  /* Quick Action Dock */
   actionDock: {
     flexDirection: 'row',
     gap: 10,
@@ -847,6 +908,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
+  copyBtnTextSuccess: {
+    color: '#059669',
+  },
   qrInstructions: {
     color: '#64748B',
     fontSize: 12.5,
@@ -1046,6 +1110,7 @@ const styles = StyleSheet.create({
   },
   txAmount: {
     fontSize: 14,
+    fontVariant: ['tabular-nums'],
     fontWeight: '700',
     marginLeft: 8,
   },
@@ -1057,6 +1122,131 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  creditCardOuter: {
+    backgroundColor: 'rgba(11, 30, 66, 0.04)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 6,
+  },
+  creditCardInner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  creditHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  creditTitleWrap: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  creditIconBadge: {
+    alignItems: 'center',
+    backgroundColor: colors.brand.softBackground,
+    borderRadius: 8,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  creditTitle: {
+    color: colors.neutral.titleText,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  creditSubtitle: {
+    color: colors.neutral.subtleText,
+    fontSize: 11.5,
+    marginTop: 1,
+  },
+  creditStatusBadge: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#6EE7B7',
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  creditStatusText: {
+    color: '#059669',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  creditMetricsRow: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: spacing.sm,
+  },
+  creditMetricCol: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  creditMetricLabel: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  creditMetricValBold: {
+    color: '#0F172A',
+    fontSize: 13.5,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  creditMetricValUsed: {
+    color: '#D97706',
+    fontSize: 13.5,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  creditMetricValAvailable: {
+    color: '#16A34A',
+    fontSize: 13.5,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  creditMetricDivider: {
+    backgroundColor: '#E2E8F0',
+    height: 24,
+    width: 1,
+  },
+  creditProgressBg: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 4,
+    height: 6,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  creditProgressFill: {
+    backgroundColor: '#0B1E42',
+    borderRadius: 4,
+    height: 6,
+  },
+  creditFooterRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  creditFooterNote: {
+    color: '#64748B',
+    fontSize: 11,
+  },
+  creditFooterRatio: {
+    color: '#0B1E42',
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
   },
 });
 

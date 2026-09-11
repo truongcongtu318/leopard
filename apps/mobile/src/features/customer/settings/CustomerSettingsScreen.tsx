@@ -2,7 +2,14 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography, ScreenScaffold } from '@leopard/mobile-core';
+import {
+  colors,
+  layout,
+  radius,
+  spacing,
+  IconChevron,
+  ScreenScaffold,
+} from '@leopard/mobile-core';
 
 export function CustomerSettingsScreen() {
   const router = useRouter();
@@ -19,84 +26,115 @@ export function CustomerSettingsScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.sectionLabel}>THÔNG BÁO</Text>
-        <View style={styles.card}>
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
-              <Text style={styles.settingTitle}>Thông báo đẩy (Push Notification)</Text>
-              <Text style={styles.settingDesc}>Nhận thông báo khi tài xế nhận đơn và di chuyển</Text>
+        <View style={styles.doubleBezelOuter}>
+          <View style={styles.doubleBezelInner}>
+            <View style={styles.settingRow}>
+              <View style={styles.textWrap}>
+                <Text style={styles.settingTitle}>Thông báo đẩy (Push Notification)</Text>
+                <Text style={styles.settingDesc}>Nhận thông báo khi tài xế nhận đơn và di chuyển</Text>
+              </View>
+              <Switch
+                onValueChange={setPushEnabled}
+                thumbColor={pushEnabled ? colors.brand.background : '#F4F3F4'}
+                trackColor={{ false: '#CBD5E1', true: colors.brand.softBackground }}
+                value={pushEnabled}
+              />
             </View>
-            <Switch
-              onValueChange={setPushEnabled}
-              thumbColor={pushEnabled ? colors.brand.background : '#F4F3F4'}
-              trackColor={{ false: '#767577', true: colors.brand.softBackground }}
-              value={pushEnabled}
-            />
-          </View>
 
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
-              <Text style={styles.settingTitle}>Tin nhắn SMS cập nhật</Text>
-              <Text style={styles.settingDesc}>Gửi SMS khi đơn hàng hoàn tất hoặc có sự cố</Text>
+            <View style={styles.settingRow}>
+              <View style={styles.textWrap}>
+                <Text style={styles.settingTitle}>Tin nhắn SMS cập nhật</Text>
+                <Text style={styles.settingDesc}>Gửi SMS khi đơn hàng hoàn tất hoặc có sự cố</Text>
+              </View>
+              <Switch
+                onValueChange={setSmsEnabled}
+                thumbColor={smsEnabled ? colors.brand.background : '#F4F3F4'}
+                trackColor={{ false: '#CBD5E1', true: colors.brand.softBackground }}
+                value={smsEnabled}
+              />
             </View>
-            <Switch
-              onValueChange={setSmsEnabled}
-              thumbColor={smsEnabled ? colors.brand.background : '#F4F3F4'}
-              trackColor={{ false: '#767577', true: colors.brand.softBackground }}
-              value={smsEnabled}
-            />
-          </View>
 
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
-              <Text style={styles.settingTitle}>Âm thanh thông báo</Text>
-              <Text style={styles.settingDesc}>Phát âm thanh khi có cập nhật mới</Text>
+            <View style={styles.settingRow}>
+              <View style={styles.textWrap}>
+                <Text style={styles.settingTitle}>Âm thanh thông báo</Text>
+                <Text style={styles.settingDesc}>Phát âm thanh khi có cập nhật mới</Text>
+              </View>
+              <Switch
+                onValueChange={setSoundEnabled}
+                thumbColor={soundEnabled ? colors.brand.background : '#F4F3F4'}
+                trackColor={{ false: '#CBD5E1', true: colors.brand.softBackground }}
+                value={soundEnabled}
+              />
             </View>
-            <Switch
-              onValueChange={setSoundEnabled}
-              thumbColor={soundEnabled ? colors.brand.background : '#F4F3F4'}
-              trackColor={{ false: '#767577', true: colors.brand.softBackground }}
-              value={soundEnabled}
-            />
-          </View>
 
-          <View style={[styles.settingRow, styles.settingRowLast]}>
-            <View style={styles.textWrap}>
-              <Text style={styles.settingTitle}>Tin tức & Khuyến mãi</Text>
-              <Text style={styles.settingDesc}>Nhận thông tin ưu đãi và giảm giá cước</Text>
+            <View style={[styles.settingRow, styles.settingRowLast]}>
+              <View style={styles.textWrap}>
+                <Text style={styles.settingTitle}>Tin tức & Khuyến mãi</Text>
+                <Text style={styles.settingDesc}>Nhận thông tin ưu đãi và giảm giá cước</Text>
+              </View>
+              <Switch
+                onValueChange={setPromoEnabled}
+                thumbColor={promoEnabled ? colors.brand.background : '#F4F3F4'}
+                trackColor={{ false: '#CBD5E1', true: colors.brand.softBackground }}
+                value={promoEnabled}
+              />
             </View>
-            <Switch
-              onValueChange={setPromoEnabled}
-              thumbColor={promoEnabled ? colors.brand.background : '#F4F3F4'}
-              trackColor={{ false: '#767577', true: colors.brand.softBackground }}
-              value={promoEnabled}
-            />
           </View>
         </View>
 
         <Text style={styles.sectionLabel}>NGÔN NGỮ & KHU VỰC</Text>
-        <View style={styles.card}>
-          <View style={[styles.settingRow, styles.settingRowLast]}>
-            <View style={styles.textWrap}>
-              <Text style={styles.settingTitle}>Ngôn ngữ hiển thị</Text>
-              <Text style={styles.settingDesc}>Tiếng Việt (Mặc định)</Text>
+        <View style={styles.doubleBezelOuter}>
+          <View style={styles.doubleBezelInner}>
+            <View style={[styles.settingRow, styles.settingRowLast]}>
+              <View style={styles.textWrap}>
+                <Text style={styles.settingTitle}>Ngôn ngữ hiển thị</Text>
+                <Text style={styles.settingDesc}>Tiếng Việt (Mặc định)</Text>
+              </View>
+              <IconChevron color={colors.neutral.subtleText} direction="right" size="md" />
             </View>
-            <Text style={styles.chevron}>›</Text>
           </View>
         </View>
 
         <Text style={styles.sectionLabel}>BẢO MẬT & PHÁP LÝ</Text>
-        <View style={styles.card}>
-          <Pressable style={styles.settingRow}>
-            <Text style={styles.settingTitle}>Điều khoản dịch vụ</Text>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
-          <Pressable style={styles.settingRow}>
-            <Text style={styles.settingTitle}>Chính sách bảo mật dữ liệu</Text>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
-          <View style={[styles.settingRow, styles.settingRowLast]}>
-            <Text style={styles.settingTitle}>Phiên bản hệ thống</Text>
-            <Text style={styles.versionText}>1.0.0-pilot (Build 2608)</Text>
+        <View style={styles.doubleBezelOuter}>
+          <View style={styles.doubleBezelInner}>
+            <Pressable
+              accessibilityLabel="Bảo mật tài khoản & PIN"
+              accessibilityRole="button"
+              onPress={() => router.push('/customer/settings/security')}
+              style={styles.settingRow}
+            >
+              <View style={styles.textWrap}>
+                <Text style={styles.settingTitle}>Bảo mật tài khoản & PIN</Text>
+                <Text style={styles.settingDesc}>Đổi mã PIN ví, FaceID và xóa tài khoản vĩnh viễn</Text>
+              </View>
+              <IconChevron color={colors.neutral.subtleText} direction="right" size="md" />
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel="Điều khoản dịch vụ"
+              accessibilityRole="button"
+              onPress={() => router.push('/customer/support')}
+              style={styles.settingRow}
+            >
+              <Text style={styles.settingTitle}>Điều khoản dịch vụ</Text>
+              <IconChevron color={colors.neutral.subtleText} direction="right" size="md" />
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel="Chính sách bảo mật dữ liệu"
+              accessibilityRole="button"
+              onPress={() => router.push('/customer/support')}
+              style={styles.settingRow}
+            >
+              <Text style={styles.settingTitle}>Chính sách bảo mật dữ liệu</Text>
+              <IconChevron color={colors.neutral.subtleText} direction="right" size="md" />
+            </Pressable>
+
+            <View style={[styles.settingRow, styles.settingRowLast]}>
+              <Text style={styles.settingTitle}>Phiên bản hệ thống</Text>
+              <Text style={styles.versionText}>1.0.0-pilot (Build 2608)</Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -116,11 +154,16 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginTop: spacing.xs,
   },
-  card: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderRadius: radius.card,
+  doubleBezelOuter: {
+    backgroundColor: 'rgba(11, 30, 66, 0.04)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 24,
     borderWidth: 1,
+    padding: 6,
+  },
+  doubleBezelInner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     paddingHorizontal: spacing.md,
   },
   settingRow: {
@@ -129,6 +172,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: 48,
     paddingVertical: 14,
   },
   settingRowLast: {
@@ -148,13 +192,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  chevron: {
-    color: colors.neutral.subtleText,
-    fontSize: 18,
-  },
   versionText: {
     color: colors.neutral.subtleText,
     fontSize: 12.5,
+    fontVariant: ['tabular-nums'],
     fontWeight: '600',
   },
 });

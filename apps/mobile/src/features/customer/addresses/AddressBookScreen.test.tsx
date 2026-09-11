@@ -19,7 +19,7 @@ describe('AddressBookScreen', () => {
 
     // Default badge and status
     expect(screen.getByText('Mặc định')).toBeTruthy();
-    expect(screen.getByText('✓ Đang áp dụng cho đơn mới')).toBeTruthy();
+    expect(screen.getByText('Đang áp dụng cho đơn mới')).toBeTruthy();
 
     // Contact details
     expect(screen.getByText('Nguyễn Văn A')).toBeTruthy();
@@ -116,7 +116,7 @@ describe('AddressBookScreen', () => {
     await fireEvent.press(setDefaultBtn);
 
     // 'Văn phòng đại diện' is now default
-    expect(screen.getByText('✓ Đang áp dụng cho đơn mới')).toBeTruthy();
+    expect(screen.getByText('Đang áp dụng cho đơn mới')).toBeTruthy();
     // 'Kho trung tâm Quận 7' now has button to set as default
     expect(screen.getByLabelText('Đặt Kho trung tâm Quận 7 làm mặc định')).toBeTruthy();
 

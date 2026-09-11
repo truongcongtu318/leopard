@@ -84,7 +84,7 @@ describe('DriverOrdersScreen', () => {
     const screen = await render(
       <DriverOrdersScreen
         onOpenOrder={onOpenOrder}
-        view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
+        view={createDriverListFixture('D-LIST-REQUESTED')}
       />,
     );
 
@@ -98,11 +98,13 @@ describe('DriverOrdersScreen', () => {
     // Modal appears with prominent fare, route, and actions
     expect(screen.getByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeTruthy();
     expect(screen.getByText('Thu nhập ròng')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'NHẬN CUỐC NGAY' })).toBeTruthy();
+    expect(screen.getByTestId('dispatch-slide-action')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Bỏ qua' })).toBeTruthy();
 
     // Accept action forwards to onOpenOrder
-    await fireEvent.press(screen.getByRole('button', { name: 'NHẬN CUỐC NGAY' }));
+    await fireEvent(screen.getByTestId('dispatch-slide-action'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
     expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222101');
 
     // Modal closes after acceptance
@@ -192,7 +194,9 @@ describe('DriverOrderDetailScreen', () => {
     expect(screen.getByText('Ảnh xác nhận đã tải lên')).toBeTruthy();
     expect(screen.getByText('DRIVER · ACTIVE MISSION')).toBeTruthy();
     expect(screen.getByTestId('route-map-schematic')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Xác nhận đã giao' }));
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
     expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-demo');
     await screen.unmount();
   });

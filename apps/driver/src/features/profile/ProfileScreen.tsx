@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, ScreenState, StatusBadge, IconClock, IconIdCard, IconInsuranceDoc, IconLicense, IconPhone, IconSecurityShield, IconSpeedTruck, IconSupport247, IconTrophy, IconUser, IconWallet } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, ScreenState, StatusBadge, IconCheck, IconChevron, IconClock, IconIdCard, IconInsuranceDoc, IconLicense, IconPhone, IconSecurityShield, IconSpeedTruck, IconStar, IconSupport247, IconTrophy, IconUser, IconWallet } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 import type { DriverProfileView } from './model';
@@ -71,7 +71,7 @@ function MenuRow({
           {sublabel ? <Text style={styles.menuSublabel}>{sublabel}</Text> : null}
         </View>
       </View>
-      <Text style={styles.menuChevron}>›</Text>
+      <IconChevron color={leopardPalette.textSubtle} direction="right" size={16} />
     </Pressable>
   );
 }
@@ -154,10 +154,12 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
               <Pressable
                 accessibilityLabel="Chỉnh sửa hồ sơ"
                 accessibilityRole="button"
+                hitSlop={8}
                 onPress={() => router.push('/driver/profile-edit')}
                 style={styles.editProfileBtn}
               >
-                <Text style={styles.editProfileText}>Chỉnh sửa hồ sơ ›</Text>
+                <Text style={styles.editProfileText}>Chỉnh sửa hồ sơ</Text>
+                <IconChevron color="#38BDF8" direction="right" size={12} />
               </Pressable>
             </View>
           </View>
@@ -171,7 +173,10 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricItem}>
-              <Text style={[styles.metricVal, styles.metricValGold]}>4.95 ★</Text>
+              <View style={styles.ratingValRow}>
+                <Text style={[styles.metricVal, styles.metricValGold]}>4.95</Text>
+                <IconStar color="#F59E0B" fill="#F59E0B" size={12} />
+              </View>
               <Text style={styles.metricLbl}>Hạng Vàng</Text>
             </View>
             <View style={styles.metricDivider} />
@@ -242,6 +247,11 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
                   value={view.phone}
                 />
                 <InfoRow
+                  icon={<IconPhone color={colors.brand.background} size={16} />}
+                  label="SĐT khẩn cấp"
+                  value="0909 113 115"
+                />
+                <InfoRow
                   icon={<IconUser color={colors.brand.background} size={16} />}
                   label="Vai trò hệ thống"
                   value={view.roleLabel}
@@ -278,6 +288,11 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
                   icon={<IconIdCard color={colors.brand.background} size={16} />}
                   label="Đội xe chủ quản"
                   value="Fleet Tân Bình (Pilot)"
+                />
+                <InfoRow
+                  icon={<IconSupport247 color={colors.brand.background} size={16} />}
+                  label="Hỗ trợ Fleet Owner"
+                  value="0912 345 678"
                 />
                 <InfoRow
                   icon={<IconSecurityShield color={colors.brand.background} size={16} />}
@@ -592,13 +607,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   editProfileBtn: {
+    alignItems: 'center',
     alignSelf: 'flex-start',
-    marginTop: 4,
+    flexDirection: 'row',
+    gap: 4,
+    minHeight: 44,
+    marginTop: 2,
   },
   editProfileText: {
     color: '#38BDF8',
     fontSize: 12,
     fontWeight: '700',
+  },
+  ratingValRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
   },
   heroDivider: {
     backgroundColor: '#334155',
@@ -622,6 +646,7 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 14.5,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   metricValGold: {
     color: '#F59E0B',
@@ -731,6 +756,7 @@ const styles = StyleSheet.create({
     color: leopardPalette.textSlateDark,
     fontSize: 13.5,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   editActionCard: {
     alignItems: 'center',

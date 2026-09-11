@@ -194,41 +194,43 @@ export function NotificationsScreen({
             const meta = getItemMeta(item.type);
 
             return (
-              <Pressable
-                accessibilityLabel={item.title}
-                accessibilityRole="button"
-                onPress={() => onPressItem(item)}
-                style={({ pressed }) => [
-                  styles.card,
-                  !item.isRead ? styles.cardUnread : null,
-                  pressed ? styles.pressed : null,
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <View style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
-                    {meta.icon}
-                  </View>
-
-                  <View style={styles.cardHeaderContent}>
-                    <View style={styles.cardMetaTopRow}>
-                      <View style={[styles.typeBadge, { backgroundColor: meta.bg }]}>
-                        <Text style={[styles.typeBadgeText, { color: meta.badgeColor }]}>
-                          {meta.badgeText}
-                        </Text>
-                      </View>
-                      <Text style={styles.cardTime}>{item.createdAtLabel}</Text>
+              <View style={styles.cardBezelOuter}>
+                <Pressable
+                  accessibilityLabel={item.title}
+                  accessibilityRole="button"
+                  onPress={() => onPressItem(item)}
+                  style={({ pressed }) => [
+                    styles.card,
+                    !item.isRead ? styles.cardUnread : null,
+                    pressed ? styles.pressed : null,
+                  ]}
+                >
+                  <View style={styles.cardHeader}>
+                    <View style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
+                      {meta.icon}
                     </View>
 
-                    <Text numberOfLines={1} style={styles.cardTitle}>
-                      {item.title}
-                    </Text>
+                    <View style={styles.cardHeaderContent}>
+                      <View style={styles.cardMetaTopRow}>
+                        <View style={[styles.typeBadge, { backgroundColor: meta.bg }]}>
+                          <Text style={[styles.typeBadgeText, { color: meta.badgeColor }]}>
+                            {meta.badgeText}
+                          </Text>
+                        </View>
+                        <Text style={styles.cardTime}>{item.createdAtLabel}</Text>
+                      </View>
+
+                      <Text numberOfLines={1} style={styles.cardTitle}>
+                        {item.title}
+                      </Text>
+                    </View>
+
+                    {!item.isRead ? <View style={styles.unreadDot} /> : null}
                   </View>
 
-                  {!item.isRead ? <View style={styles.unreadDot} /> : null}
-                </View>
-
-                <Text style={styles.cardBody}>{item.body}</Text>
-              </Pressable>
+                  <Text style={styles.cardBody}>{item.body}</Text>
+                </Pressable>
+              </View>
             );
           }}
           renderSectionHeader={({ section: { title } }) => (
@@ -326,10 +328,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
+  cardBezelOuter: {
+    backgroundColor: 'rgba(11, 30, 66, 0.04)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 4,
+  },
   card: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,

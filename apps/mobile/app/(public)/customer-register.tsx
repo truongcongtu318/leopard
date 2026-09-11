@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { httpClient, ApiError, AuthHeroHeader, sessionStore, isLikelyVnPhone, toE164Vn, OtpSixCellInput, leopardPalette, IconPhone, IconSecurityShield, IconUser, IconOffice, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader } from '@leopard/mobile-core';
+import { httpClient, ApiError, AuthHeroHeader, sessionStore, isLikelyVnPhone, toE164Vn, OtpSixCellInput, leopardPalette, IconPhone, IconSecurityShield, IconUser, IconOffice, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader, IconAlertTriangle } from '@leopard/mobile-core';
 import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '@leopard/mobile-core/src/auth/firebase-auth';
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-register';
@@ -318,7 +318,7 @@ export default function CustomerRegisterScreen() {
           {/* ================= ERROR BANNER ================= */}
           {errorMsg && !showOtpModal ? (
             <View style={styles.errorBox} testID="cr-error">
-              <Text style={styles.errorIcon}>⚠️</Text>
+              <IconAlertTriangle color="#B91C1C" size={18} />
               <Text accessibilityRole="alert" style={styles.errorText}>
                 {errorMsg}
               </Text>
@@ -418,6 +418,7 @@ export default function CustomerRegisterScreen() {
                           void sendOtp();
                         }
                       }}
+                      hitSlop={{ top: 4, bottom: 4 }}
                       style={({ pressed }) => [
                         styles.sendOtpBtn,
                         !canSendOtp && styles.sendOtpBtnDisabled,
@@ -674,7 +675,7 @@ export default function CustomerRegisterScreen() {
           {/* Title & Subtitle */}
           <View style={styles.otpTitleGroup}>
             <Text style={styles.otpHeadline}>
-              {phoneVerified ? 'Xác thực thành công! 🎉' : 'Xác nhận mã OTP'}
+              {phoneVerified ? 'Xác thực thành công!' : 'Xác nhận mã OTP'}
             </Text>
             <Text style={styles.otpSubline}>
               {phoneVerified
@@ -1256,6 +1257,7 @@ const styles = StyleSheet.create({
   },
   monoInput: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontVariant: ['tabular-nums'],
     letterSpacing: 1.2,
     fontWeight: '600',
   },

@@ -60,7 +60,7 @@ export default function CustomerCreateOrderPage() {
           : undefined
       }
       initialVehicleType={parseVehicleType(vehicleType)}
-      onCreated={(orderId) => router.replace(`/customer/orders/${orderId}`)}
+      onCreated={(orderId) => router.replace(`/customer/orders/checkout/${orderId}`)}
     />
   );
 }

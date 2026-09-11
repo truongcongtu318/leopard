@@ -42,6 +42,7 @@ const orange = {
 export interface LoginScreenProps {
   onLoginSuccess?: (role: Role, profileComplete: boolean) => void;
   onNavigateRegister?: () => void;
+  onNavigateOtp?: (phone: string) => void;
   allowDemo?: boolean;
   sessionExpired?: boolean;
 }
@@ -68,6 +69,7 @@ export function LoginScreen({
   allowDemo = false,
   onLoginSuccess,
   onNavigateRegister,
+  onNavigateOtp,
   sessionExpired = false,
 }: LoginScreenProps) {
   const [phone, setPhone] = useState('');
@@ -152,6 +154,11 @@ export function LoginScreen({
     if (isSubmitting) return;
     if (!isLikelyVnPhone(phone)) {
       setErrorMsg('Số điện thoại không hợp lệ');
+      return;
+    }
+
+    if (onNavigateOtp) {
+      onNavigateOtp(phone);
       return;
     }
 
@@ -281,7 +288,7 @@ export function LoginScreen({
       >
         <AuthHeroHeader
           subtitle="Nhập số điện thoại để đặt xe giao hàng ngay."
-          title="Chào mừng trở lại 👋"
+          title="Chào mừng trở lại"
         />
 
         <View style={styles.bodyWrap}>
@@ -561,7 +568,7 @@ export function LoginScreen({
             {/* Title & Subtitle */}
             <View style={styles.otpTitleGroup}>
               <Text style={styles.otpHeadline}>
-                {isVerified ? 'Xác thực thành công! 🎉' : 'Xác nhận mã OTP'}
+                {isVerified ? 'Xác thực thành công!' : 'Xác nhận mã OTP'}
               </Text>
               <Text style={styles.otpSubline}>
                 {isVerified
