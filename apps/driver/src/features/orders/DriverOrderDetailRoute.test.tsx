@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render } from '@testing-library/react-native';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { act, fireEvent, render } from '@testing-library/react-native';
+import { Animated, PanResponder } from 'react-native';
 
 const mockDriverOrderDetailRuntime = jest.fn<(props: unknown) => null>(() => null);
 let mockSearchParams: Readonly<Record<string, string | readonly string[] | undefined>> = {};
@@ -90,6 +91,110 @@ describe('Driver order detail route', () => {
     await fireEvent.press(completeBtn);
     expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-order-1');
 
+    await screen.unmount();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('completes delivery transition via SlideToAction swipe once e-POD requirements are satisfied', async () => {
+    const panSpy = jest.spyOn(PanResponder, 'create');
+    jest.spyOn(Animated, 'spring').mockImplementation((_, config: any) => ({
+      start: (cb?: (result: { finished: boolean }) => void) => {
+        cb?.({ finished: true });
+        return undefined as any;
+      },
+      stop: jest.fn(),
+      reset: jest.fn(),
+    }));
+
+    const onExecuteTask = jest.fn();
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
+        orderId="order-slide-1"
+      />,
+    );
+
+    // Initial state: incomplete e-POD -> SlideToAction disabled
+    const slider = screen.getByTestId('btn-epod-complete-delivery');
+    expect(slider.props.accessibilityState).toEqual({ disabled: true });
+    expect(screen.getByText('CHƯA ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+
+    // 1. Capture cargo photo with GPS watermark
+    await fireEvent.press(screen.getByTestId('btn-capture-cargo-photo'));
+    expect(screen.getByTestId('camera-watermark-overlay')).toBeTruthy();
+    expect(screen.getByText('CHƯA ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
+      disabled: true,
+    });
+
+    // 2. Sign in digital signature pad
+    await fireEvent.press(screen.getByTestId('epod-signature-pad'));
+    expect(screen.getByText('ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
+      disabled: false,
+    });
+
+    // 3. Clear signature to verify dynamic disabling
+    await fireEvent.press(screen.getByRole('button', { name: 'Ký lại chữ ký' }));
+    expect(screen.getByText('CHƯA ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
+      disabled: true,
+    });
+
+    // Re-sign to make it ready again
+    await fireEvent.press(screen.getByTestId('epod-signature-pad'));
+    expect(screen.getByText('ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
+      disabled: false,
+    });
+
+    // 4. Perform SlideToAction swipe gesture past threshold (>= 75%)
+    const panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
+    const mockEvent = {} as any;
+    await act(async () => {
+      panConfig.onPanResponderGrant?.(mockEvent, { dx: 0, dy: 0 } as any);
+      panConfig.onPanResponderMove?.(mockEvent, { dx: 240, dy: 0 } as any);
+      panConfig.onPanResponderRelease?.(mockEvent, { dx: 240, dy: 0 } as any);
+    });
+
+    expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-order-slide-1');
+    await screen.unmount();
+  });
+
+  it('advances mission leg via SlideToAction in TaskButton', async () => {
+    const panSpy = jest.spyOn(PanResponder, 'create');
+    jest.spyOn(Animated, 'spring').mockImplementation((_, config: any) => ({
+      start: (cb?: (result: { finished: boolean }) => void) => {
+        cb?.({ finished: true });
+        return undefined as any;
+      },
+      stop: jest.fn(),
+      reset: jest.fn(),
+    }));
+
+    const onExecuteTask = jest.fn();
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
+        view={createDriverDetailFixture('D-DETAIL-ACCEPTED')}
+      />,
+    );
+
+    expect(screen.getByTestId('btn-advance-leg-slide')).toBeTruthy();
+    expect(screen.getByText('Vuốt: Bắt đầu đi lấy hàng ➔')).toBeTruthy();
+
+    const panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
+    const mockEvent = {} as any;
+    await act(async () => {
+      panConfig.onPanResponderGrant?.(mockEvent, { dx: 0, dy: 0 } as any);
+      panConfig.onPanResponderMove?.(mockEvent, { dx: 240, dy: 0 } as any);
+      panConfig.onPanResponderRelease?.(mockEvent, { dx: 240, dy: 0 } as any);
+    });
+
+    expect(onExecuteTask).toHaveBeenCalledWith('cmd-pickup-demo');
     await screen.unmount();
   });
 });

@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconCamera, IconCameraProof, IconCheck, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconShieldAlert, IconSpeedTruck, IconTrash, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, IconCamera, IconCameraProof, IconCheck, IconClock, IconLocationPin, IconOrders, IconPhone, IconRadarPulse, IconRoute, IconShieldAlert, IconSpeedTruck, IconTrash, RealInteractiveMap, ScreenScaffold, SectionHeading, ScreenState, SlideToAction, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
 import { createDriverDetailFixture } from './fixtures';
 import type {
   DriverAssignedDetailView,
@@ -84,6 +84,40 @@ function TaskButton({
       />
     );
   }
+
+  if (task.kind === 'advance-lifecycle') {
+    const disabled = task.command.disabled || task.command.isPending;
+    return (
+      <View style={styles.advanceLegContainer}>
+        <SlideToAction
+          colorVariant={
+            task.command.label.includes('giao') || task.command.label.includes('DELIVERED')
+              ? 'success'
+              : 'brand'
+          }
+          disabled={disabled}
+          label={`Vuốt: ${task.command.label} ➔`}
+          onActionComplete={() => {
+            if (onExecuteTask && !disabled) {
+              onExecuteTask(task.command.id);
+            }
+          }}
+          testID="btn-advance-leg-slide"
+        />
+        <Pressable
+          accessibilityLabel={task.command.label}
+          accessibilityRole="button"
+          accessibilityState={{ busy: task.command.isPending, disabled }}
+          disabled={disabled}
+          onPress={onExecuteTask && !disabled ? () => onExecuteTask(task.command.id) : undefined}
+          style={styles.accessibleActionTrigger}
+        >
+          <Text style={styles.accessibleActionTriggerText}>{task.command.label}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   return <CommandButton command={task.command} onPress={onExecuteTask} />;
 }
 
@@ -156,10 +190,15 @@ function EpodPanel({
     setSignatureCaptured(false);
   };
 
-  const isCompleteReady = Boolean(cargoPhotoUri && signatureCaptured);
+  const isCompleteReady = Boolean(
+    cargoPhotoUri &&
+    photoWatermark?.timestamp &&
+    photoWatermark?.coords &&
+    signatureCaptured,
+  );
 
   const handleConfirmDelivery = () => {
-    if (!cargoPhotoUri) {
+    if (!cargoPhotoUri || !photoWatermark?.timestamp || !photoWatermark?.coords) {
       setErrorMsg('Vui lòng chụp ảnh kiện hàng có gắn watermark định vị GPS & thời gian');
       return;
     }
@@ -375,14 +414,26 @@ function EpodPanel({
 
         {/* Step 4 Completion / Confirmation Trigger if inside e-POD section */}
         {status === 'IN_TRANSIT' && (
-          <View style={styles.epodCompleteSection} testID="btn-epod-complete-delivery">
-            <Button
+          <View style={styles.epodCompleteSection}>
+            <SlideToAction
+              colorVariant="success"
               disabled={!isCompleteReady}
-              disabledLabel="Hoàn tất e-POD (Yêu cầu đủ Ảnh + Chữ ký)"
-              label="Xác nhận hoàn tất giao hàng (DELIVERED)"
-              onPress={handleConfirmDelivery}
-              size="driver-primary"
+              label="Vuốt: Hoàn tất giao hàng (DELIVERED) ➔"
+              onActionComplete={handleConfirmDelivery}
+              testID="btn-epod-complete-delivery"
             />
+            <Pressable
+              accessibilityLabel="Xác nhận hoàn tất giao hàng (DELIVERED)"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !isCompleteReady }}
+              disabled={!isCompleteReady}
+              onPress={handleConfirmDelivery}
+              style={styles.accessibleActionTrigger}
+            >
+              <Text style={styles.accessibleActionTriggerText}>
+                Xác nhận hoàn tất giao hàng (DELIVERED)
+              </Text>
+            </Pressable>
           </View>
         )}
       </View>
@@ -1904,6 +1955,22 @@ const styles = StyleSheet.create({
   },
   epodCompleteSection: {
     marginTop: 4,
+    position: 'relative',
+  },
+  advanceLegContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  accessibleActionTrigger: {
+    height: 1,
+    opacity: 0,
+    position: 'absolute',
+    width: 1,
+  },
+  accessibleActionTriggerText: {
+    fontSize: 1,
+    opacity: 0,
   },
   proofError: {
     backgroundColor: '#FEF2F2',
