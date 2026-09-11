@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   LayoutChangeEvent,
@@ -15,6 +15,7 @@ export interface SlideToActionProps {
   onActionComplete: () => void;
   colorVariant?: 'brand' | 'success' | 'warning';
   disabled?: boolean;
+  resetKey?: unknown;
   testID?: string;
   style?: any;
 }
@@ -55,6 +56,7 @@ export function SlideToAction({
   onActionComplete,
   colorVariant = 'brand',
   disabled = false,
+  resetKey,
   testID = 'slide-action',
   style,
 }: SlideToActionProps) {
@@ -63,6 +65,21 @@ export function SlideToAction({
   const isCompletedRef = useRef(false);
   const onActionCompleteRef = useRef(onActionComplete);
   onActionCompleteRef.current = onActionComplete;
+
+  const prevResetKeyRef = useRef(resetKey);
+  useEffect(() => {
+    if (prevResetKeyRef.current !== resetKey) {
+      prevResetKeyRef.current = resetKey;
+      isCompletedRef.current = false;
+      Animated.spring(panX, { toValue: 0, useNativeDriver: false }).start();
+    }
+  }, [resetKey, panX]);
+
+  useEffect(() => {
+    return () => {
+      panX.stopAnimation();
+    };
+  }, [panX]);
 
   const effectiveWidth = trackWidth || DEFAULT_TRACK_WIDTH;
   const maxDrag = Math.max(0, effectiveWidth - THUMB_SIZE - PADDING * 2);
@@ -121,6 +138,10 @@ export function SlideToAction({
   return (
     <View
       testID={testID}
+      accessible={true}
+      accessibilityRole="adjustable"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
       onLayout={handleLayout}
       style={[
         styles.track,
@@ -141,6 +162,10 @@ export function SlideToAction({
       <Animated.View
         {...panResponder.panHandlers}
         testID={`${testID}-thumb`}
+        accessible={true}
+        accessibilityRole="adjustable"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled }}
         style={[
           styles.thumb,
           {

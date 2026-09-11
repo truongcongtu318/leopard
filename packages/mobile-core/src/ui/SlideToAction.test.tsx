@@ -171,4 +171,80 @@ describe('SlideToAction', () => {
     expect(canStart).toBe(false);
     expect(canMove).toBe(false);
   });
+
+  it('exposes accessibility attributes on container and thumb', async () => {
+    const screen = await render(
+      <SlideToAction
+        label="Trượt để xác nhận"
+        onActionComplete={jest.fn()}
+        disabled={false}
+        testID="slider"
+      />
+    );
+
+    const container = screen.getByTestId('slider');
+    expect(container.props.accessibilityRole).toBe('adjustable');
+    expect(container.props.accessibilityLabel).toBe('Trượt để xác nhận');
+    expect(container.props.accessibilityState).toEqual({ disabled: false });
+
+    const thumb = screen.getByTestId('slider-thumb');
+    expect(thumb.props.accessibilityRole).toBe('adjustable');
+    expect(thumb.props.accessibilityLabel).toBe('Trượt để xác nhận');
+    expect(thumb.props.accessibilityState).toEqual({ disabled: false });
+  });
+
+  it('resets position and completed state when resetKey changes', async () => {
+    const springSpy = jest.spyOn(Animated, 'spring');
+    const onActionComplete = jest.fn();
+
+    const screen = await render(
+      <SlideToAction
+        label="Vuốt để nhận cuốc"
+        onActionComplete={onActionComplete}
+        resetKey="initial"
+        testID="slider"
+      />
+    );
+
+    springSpy.mockClear();
+
+    // Rerender with unchanged resetKey -> should not trigger spring
+    await screen.rerender(
+      <SlideToAction
+        label="Vuốt để nhận cuốc"
+        onActionComplete={onActionComplete}
+        resetKey="initial"
+        testID="slider"
+      />
+    );
+    expect(springSpy).not.toHaveBeenCalled();
+
+    // Rerender with changed resetKey -> triggers reset animation to 0
+    await screen.rerender(
+      <SlideToAction
+        label="Vuốt để nhận cuốc"
+        onActionComplete={onActionComplete}
+        resetKey="reset-1"
+        testID="slider"
+      />
+    );
+
+    expect(springSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ toValue: 0 })
+    );
+  });
+
+  it('unmounts cleanly without errors', async () => {
+    const screen = await render(
+      <SlideToAction
+        label="Trượt"
+        onActionComplete={jest.fn()}
+        testID="slider"
+      />
+    );
+
+    await screen.unmount();
+    expect(screen.queryByTestId('slider')).toBeNull();
+  });
 });
