@@ -379,13 +379,22 @@ export function DriverLoginScreen({
               accessibilityRole="button"
               accessibilityState={{
                 busy: isSubmitting,
-                disabled: isSubmitting || !isLikelyVnPhone(phone) || !firebaseReady,
+                disabled:
+                  isSubmitting ||
+                  !isLikelyVnPhone(phone) ||
+                  (!firebaseReady && !allowDemo && !onNavigateOtp),
               }}
-              disabled={isSubmitting || !isLikelyVnPhone(phone) || !firebaseReady}
+              disabled={
+                isSubmitting ||
+                !isLikelyVnPhone(phone) ||
+                (!firebaseReady && !allowDemo && !onNavigateOtp)
+              }
               onPress={handleSendOtp}
               style={({ pressed }) => [
                 styles.primaryBtn,
-                (!isLikelyVnPhone(phone) || isSubmitting || !firebaseReady) &&
+                (isSubmitting ||
+                  !isLikelyVnPhone(phone) ||
+                  (!firebaseReady && !allowDemo && !onNavigateOtp)) &&
                   styles.primaryBtnDisabled,
                 pressed && styles.pressed,
               ]}

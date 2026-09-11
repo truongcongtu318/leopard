@@ -58,6 +58,7 @@ export default function DriverLoginRoute() {
 
   return (
     <DriverLoginScreen
+      allowDemo={process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true'}
       onLoginSuccess={handleLoginSuccess}
       onNavigateOtp={(phone) =>
         router.push({ pathname: '/(public)/verify-otp', params: { phone } })
