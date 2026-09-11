@@ -90,8 +90,10 @@ function TaskButton({
     return (
       <View style={styles.advanceLegContainer}>
         <SlideToAction
+          key={task.command.id}
+          resetKey={task.command.id}
           colorVariant={
-            task.command.label.includes('giao') || task.command.label.includes('DELIVERED')
+            task.command.id.includes('deliver') || task.command.label.includes('DELIVERED')
               ? 'success'
               : 'brand'
           }
@@ -104,6 +106,7 @@ function TaskButton({
           }}
           testID="btn-advance-leg-slide"
         />
+        {/* 1x1 opacity 0 accessibility/test helper pattern for screen readers and automation */}
         <Pressable
           accessibilityLabel={task.command.label}
           accessibilityRole="button"
@@ -420,8 +423,10 @@ function EpodPanel({
               disabled={!isCompleteReady}
               label="Vuốt: Hoàn tất giao hàng (DELIVERED) ➔"
               onActionComplete={handleConfirmDelivery}
+              resetKey={`${orderId}-${signatureCaptured ? 'signed' : 'unsigned'}`}
               testID="btn-epod-complete-delivery"
             />
+            {/* 1x1 opacity 0 accessibility/test helper pattern for screen readers and automation */}
             <Pressable
               accessibilityLabel="Xác nhận hoàn tất giao hàng (DELIVERED)"
               accessibilityRole="button"
@@ -1962,6 +1967,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
+  // 1x1 opacity 0 accessibility/test helper pattern for screen readers and automation
   accessibleActionTrigger: {
     height: 1,
     opacity: 0,

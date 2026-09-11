@@ -197,4 +197,60 @@ describe('Driver order detail route', () => {
     expect(onExecuteTask).toHaveBeenCalledWith('cmd-pickup-demo');
     await screen.unmount();
   });
+
+  it('resets SlideToAction on command change and accepts sequential swipes without freezing', async () => {
+    const panSpy = jest.spyOn(PanResponder, 'create');
+    jest.spyOn(Animated, 'spring').mockImplementation((_, config: any) => ({
+      start: (cb?: (result: { finished: boolean }) => void) => {
+        cb?.({ finished: true });
+        return undefined as any;
+      },
+      stop: jest.fn(),
+      reset: jest.fn(),
+    }));
+
+    const onExecuteTask = jest.fn();
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
+        view={createDriverDetailFixture('D-DETAIL-ACCEPTED')}
+      />,
+    );
+
+    // Initial leg: cmd-pickup-demo
+    expect(screen.getByText('Vuốt: Bắt đầu đi lấy hàng ➔')).toBeTruthy();
+    let panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
+    const mockEvent = {} as any;
+    await act(async () => {
+      panConfig.onPanResponderGrant?.(mockEvent, { dx: 0, dy: 0 } as any);
+      panConfig.onPanResponderMove?.(mockEvent, { dx: 240, dy: 0 } as any);
+      panConfig.onPanResponderRelease?.(mockEvent, { dx: 240, dy: 0 } as any);
+    });
+
+    expect(onExecuteTask).toHaveBeenCalledWith('cmd-pickup-demo');
+    // Completed state locks PanResponder on previous command
+    expect(panConfig.onStartShouldSetPanResponder?.(mockEvent, { dx: 0, dy: 0 } as any)).toBe(false);
+
+    // Sequential transition: re-render with next command (cmd-transit-demo)
+    await screen.rerender(
+      <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
+        view={createDriverDetailFixture('D-DETAIL-PICKING-UP')}
+      />,
+    );
+
+    expect(screen.getByText('Vuốt: Đã lấy hàng — bắt đầu giao ➔')).toBeTruthy();
+
+    // Verify SlideToAction is re-armed with fresh resetKey/key and accepts the next swipe
+    panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
+    expect(panConfig.onStartShouldSetPanResponder?.(mockEvent, { dx: 0, dy: 0 } as any)).toBe(true);
+    await act(async () => {
+      panConfig.onPanResponderGrant?.(mockEvent, { dx: 0, dy: 0 } as any);
+      panConfig.onPanResponderMove?.(mockEvent, { dx: 240, dy: 0 } as any);
+      panConfig.onPanResponderRelease?.(mockEvent, { dx: 240, dy: 0 } as any);
+    });
+
+    expect(onExecuteTask).toHaveBeenCalledWith('cmd-transit-demo');
+    await screen.unmount();
+  });
 });
