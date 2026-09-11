@@ -37,6 +37,7 @@ export * from './ui/RouteSpine';
 export * from './ui/ScreenScaffold';
 export * from './ui/ScreenState';
 export * from './ui/Skeleton';
+export * from './ui/SlideToAction';
 export * from './ui/StatusBadge';
 export * from './ui/StatusTimeline';
 export * from './ui/TruckLoader';

@@ -18,6 +18,7 @@ export * from './RouteSpine';
 export * from './ScreenScaffold';
 export * from './ScreenState';
 export * from './Skeleton';
+export * from './SlideToAction';
 export * from './StatusBadge';
 export * from './StatusTimeline';
 export * from './TruckLoader';
