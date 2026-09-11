@@ -5,23 +5,52 @@ import React from 'react';
 import { DriverOrdersScreen } from './DriverOrdersScreen';
 import { createDriverListFixture } from './fixtures';
 
-describe('DriverOrdersScreen - Hero Duty Control & Dispatch', () => {
-  it('renders large hero online switch and 15s countdown push offer modal', async () => {
+describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
+  it('renders full-bleed RealInteractiveMap Layer 0 without static mountain background image', async () => {
     const screen = await render(
-      <DriverOrdersScreen view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')} />,
+      <DriverOrdersScreen view={createDriverListFixture('D-LIST-REQUESTED')} />,
     );
 
-    // Hero Duty Control: Large prominent switch for TRỰC TUYẾN / NGOẠI TUYẾN
+    // Layer 0: RealInteractiveMap rendered full-bleed
+    expect(screen.getByTestId('driver-map-canvas')).toBeTruthy();
+
+    // Verification: Static mountain background image MUST NOT exist
+    expect(
+      screen.queryByLabelText('Hình ảnh xe tải vận tải LEOPARD trên cung đường đèo núi'),
+    ).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('renders floating glass HUD with hero duty switch, plate, and mini KPI stats', async () => {
+    const onSetAvailability = jest.fn();
+    const screen = await render(
+      <DriverOrdersScreen
+        onSetAvailability={onSetAvailability}
+        view={createDriverListFixture('D-LIST-REQUESTED')}
+      />,
+    );
+
+    // Menu button
+    expect(screen.getByTestId('driver-menu-button')).toBeTruthy();
+
+    // Plate & vehicle type
+    expect(screen.getByText('51C-889.24 (2.5T)')).toBeTruthy();
+
+    // Hero Duty Switch
     expect(screen.getByText('TRỰC TUYẾN')).toBeTruthy();
     expect(screen.getByText('NGOẠI TUYẾN')).toBeTruthy();
 
-    // In-day operational stats: Completed trips, today's income, online hours
+    // Mini KPI stats
+    expect(screen.getByText('4 chuyến · 620.000 ₫ · 5.5h')).toBeTruthy();
     expect(screen.getByText('Chuyến xong')).toBeTruthy();
     expect(screen.getByText('Thu nhập hôm nay')).toBeTruthy();
     expect(screen.getByText('Giờ online')).toBeTruthy();
 
-    // Load-board section header
-    expect(screen.getByRole('header', { name: 'Đơn có thể nhận' })).toBeTruthy();
+    // Toggle duty availability
+    const toggle = screen.getByTestId('driver-availability-toggle');
+    await fireEvent.press(toggle);
+    expect(onSetAvailability).toHaveBeenCalledWith('set-availability-demo');
 
     await screen.unmount();
   });
@@ -33,6 +62,66 @@ describe('DriverOrdersScreen - Hero Duty Control & Dispatch', () => {
 
     expect(screen.getByText('TRỰC TUYẾN')).toBeTruthy();
     expect(screen.getByText('NGOẠI TUYẾN')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('renders GestureBottomSheet with B2B load-board and vehicle filter chips when idle', async () => {
+    const onOpenOrder = jest.fn();
+    const screen = await render(
+      <DriverOrdersScreen
+        onOpenOrder={onOpenOrder}
+        view={createDriverListFixture('D-LIST-REQUESTED')}
+      />,
+    );
+
+    // GestureBottomSheet container
+    expect(screen.getByTestId('driver-load-board-sheet')).toBeTruthy();
+
+    // Radar strip info & simulate button
+    expect(screen.getByText(/Radar đang quét bán kính/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeTruthy();
+
+    // Load-board section header
+    expect(screen.getByRole('header', { name: 'Đơn có thể nhận' })).toBeTruthy();
+
+    // B2B vehicle filter chips
+    expect(screen.getByText('Xe van')).toBeTruthy();
+    expect(screen.getByText('1.25T')).toBeTruthy();
+    expect(screen.getByText('2.5T')).toBeTruthy();
+
+    // Double-Bezel order cards
+    expect(screen.getByText('LP-D-260815-101')).toBeTruthy();
+    expect(screen.getByText('285.000 ₫')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('transitions to active trip card with route spine and customer contact buttons when active', async () => {
+    const onOpenOrder = jest.fn();
+    const screen = await render(
+      <DriverOrdersScreen
+        onOpenOrder={onOpenOrder}
+        view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
+      />,
+    );
+
+    // Active trip slab
+    expect(screen.getByTestId('driver-active-trip-slab')).toBeTruthy();
+    expect(screen.getByText('Chuyến đang thực hiện')).toBeTruthy();
+    expect(screen.getByText('ĐANG CHẠY')).toBeTruthy();
+
+    // Customer contact actions
+    expect(screen.getByTestId('driver-call-btn')).toBeTruthy();
+    expect(screen.getByTestId('driver-chat-btn')).toBeTruthy();
+
+    // Route spine A -> B
+    expect(screen.getByText('Kho VLXD Minh Khang — Tân Phú')).toBeTruthy();
+    expect(screen.getByText('Công trình Chung cư An Phú — TP. Thủ Đức')).toBeTruthy();
+
+    // Open active trip cockpit
+    await fireEvent.press(screen.getByRole('button', { name: /Mở chuyến LP-D-260815-001/ }));
+    expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222001');
 
     await screen.unmount();
   });
