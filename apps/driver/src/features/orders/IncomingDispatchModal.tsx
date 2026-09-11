@@ -2,13 +2,24 @@ import React, { useEffect, useState } from 'react';
 import {
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconClock, IconClose, IconLocationPin, IconOrders, IconRadarPulse, IconRoute, IconSpeedTruck, RealInteractiveMap } from '@leopard/mobile-core';
+import {
+  leopardPalette,
+  radius,
+  spacing,
+  IconClock,
+  IconClose,
+  IconLocationPin,
+  IconOrders,
+  IconRoute,
+  IconSpeedTruck,
+  RealInteractiveMap,
+  SlideToAction,
+} from '@leopard/mobile-core';
 
 export type IncomingDispatchOffer = Readonly<{
   id: string;
@@ -149,63 +160,67 @@ export function IncomingDispatchModal({
             </View>
           </View>
 
-          {/* 4. Fare Card - High Prominence (Mega Price) */}
-          <View style={[styles.fareContainer, isUrgent ? styles.fareContainerUrgent : null]}>
-            <View style={styles.fareHeaderRow}>
-              <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
-              <View style={styles.fareNetPill}>
-                <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
+          {/* 4. Fare Card - High Prominence Double-Bezel (Mega Price) */}
+          <View style={[styles.fareBezelOuter, isUrgent ? styles.fareBezelOuterUrgent : null]}>
+            <View style={[styles.fareBezelInner, isUrgent ? styles.fareBezelInnerUrgent : null]}>
+              <View style={styles.fareHeaderRow}>
+                <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
+                <View style={styles.fareNetPill}>
+                  <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
+                </View>
               </View>
+              <Text style={styles.fareAmount}>{offer.priceLabel}</Text>
+              <Text style={styles.fareSub}>Đã khấu trừ phí nền tảng · Nhận vào ví ngay khi hoàn tất</Text>
             </View>
-            <Text style={styles.fareAmount}>{offer.priceLabel}</Text>
-            <Text style={styles.fareSub}>Đã khấu trừ phí nền tảng · Nhận vào ví ngay khi hoàn tất</Text>
           </View>
 
-          {/* 5. Route Spine: Pickup -> Dropoff */}
-          <View style={styles.routeContainer}>
-            <View style={styles.routeSpineColumn}>
-              <View style={styles.spineOriginCircle}>
-                <Text style={styles.spinePointTextA}>A</Text>
-              </View>
-              <View style={styles.spineTrackDotted} />
-              <View style={styles.spineDestSquare}>
-                <Text style={styles.spinePointTextB}>B</Text>
-              </View>
-            </View>
-
-            <View style={styles.routeAddressesColumn}>
-              {/* Pickup Point */}
-              <View style={styles.addressBlock}>
-                <View style={styles.addressTitleRow}>
-                  <Text style={styles.addressTypeLabel}>ĐIỂM LẤY HÀNG</Text>
-                  <View style={styles.pickupDistBadge}>
-                    <IconLocationPin color="#0B1E42" size={12} />
-                    <Text style={styles.pickupDistText}>
-                      {offer.pickupDistanceLabel.startsWith('Cách bạn')
-                        ? offer.pickupDistanceLabel
-                        : `Cách bạn ${offer.pickupDistanceLabel}`}
-                    </Text>
-                  </View>
+          {/* 5. Route Spine: Pickup -> Dropoff Double-Bezel */}
+          <View style={styles.routeBezelOuter}>
+            <View style={styles.routeBezelInner}>
+              <View style={styles.routeSpineColumn}>
+                <View style={styles.spineOriginCircle}>
+                  <Text style={styles.spinePointTextA}>A</Text>
                 </View>
-                <Text numberOfLines={2} style={styles.addressNameText}>
-                  {offer.pickupAddress}
-                </Text>
+                <View style={styles.spineTrackDotted} />
+                <View style={styles.spineDestSquare}>
+                  <Text style={styles.spinePointTextB}>B</Text>
+                </View>
               </View>
 
-              {/* Transit Indicator */}
-              <View style={styles.transitMetaRow}>
-                <IconRoute color="#64748B" size={13} />
-                <Text style={styles.transitMetaText}>
-                  Lộ trình {offer.tripDistanceLabel} · Khoảng {offer.etaLabel}
-                </Text>
-              </View>
+              <View style={styles.routeAddressesColumn}>
+                {/* Pickup Point */}
+                <View style={styles.addressBlock}>
+                  <View style={styles.addressTitleRow}>
+                    <Text style={styles.addressTypeLabel}>ĐIỂM LẤY HÀNG</Text>
+                    <View style={styles.pickupDistBadge}>
+                      <IconLocationPin color="#0B1E42" size={12} />
+                      <Text style={styles.pickupDistText}>
+                        {offer.pickupDistanceLabel.startsWith('Cách bạn')
+                          ? offer.pickupDistanceLabel
+                          : `Cách bạn ${offer.pickupDistanceLabel}`}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text numberOfLines={2} style={styles.addressNameText}>
+                    {offer.pickupAddress}
+                  </Text>
+                </View>
 
-              {/* Dropoff Point */}
-              <View style={styles.addressBlock}>
-                <Text style={styles.addressTypeLabelDropoff}>ĐIỂM GIAO HÀNG</Text>
-                <Text numberOfLines={2} style={styles.addressNameText}>
-                  {offer.dropoffAddress}
-                </Text>
+                {/* Transit Indicator */}
+                <View style={styles.transitMetaRow}>
+                  <IconRoute color="#64748B" size={13} />
+                  <Text style={styles.transitMetaText}>
+                    Lộ trình {offer.tripDistanceLabel} · Khoảng {offer.etaLabel}
+                  </Text>
+                </View>
+
+                {/* Dropoff Point */}
+                <View style={styles.addressBlock}>
+                  <Text style={styles.addressTypeLabelDropoff}>ĐIỂM GIAO HÀNG</Text>
+                  <Text numberOfLines={2} style={styles.addressNameText}>
+                    {offer.dropoffAddress}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -228,28 +243,40 @@ export function IncomingDispatchModal({
             </View>
           ) : null}
 
-          {/* 7. Action Buttons: Decline (Bỏ qua) + Accept (Nhận ngay) */}
-          <View style={styles.actionsRow}>
-            <View style={styles.declineButtonWrap}>
-              <Button
-                disabled={isAccepting}
-                label="Bỏ qua"
-                onPress={() => onDecline(offer.id)}
-                size="driver-primary"
-                variant="secondary"
-              />
-            </View>
-            <View style={styles.acceptButtonWrap}>
-              <Button
-                disabled={isAccepting}
-                isLoading={isAccepting}
-                label="NHẬN CUỐC NGAY"
-                loadingLabel="Đang phân công..."
-                onPress={() => onAccept(offer.id)}
-                size="driver-primary"
-                variant="primary"
-              />
-            </View>
+          {/* 7. Action Controls: SlideToAction (Vuốt nhận cuốc) + Decline Button (Bỏ qua) */}
+          <View style={styles.actionsContainer}>
+            <SlideToAction
+              colorVariant="brand"
+              disabled={isAccepting}
+              label="Vuốt để nhận cuốc ➔"
+              onActionComplete={() => onAccept(offer.id)}
+              testID="dispatch-slide-action"
+            />
+            {/* Screen reader / accessibility fallback to accept without swipe */}
+            <Pressable
+              accessibilityLabel="NHẬN CUỐC NGAY"
+              accessibilityRole="button"
+              disabled={isAccepting}
+              onPress={() => onAccept(offer.id)}
+              style={styles.accessibilityAcceptBtn}
+            >
+              <Text style={styles.accessibilityAcceptText}>NHẬN CUỐC NGAY</Text>
+            </Pressable>
+            <Pressable
+              accessibilityHint="Bỏ qua đơn hàng này"
+              accessibilityLabel="Bỏ qua"
+              accessibilityRole="button"
+              disabled={isAccepting}
+              hitSlop={8}
+              onPress={() => onDecline(offer.id)}
+              style={({ pressed }) => [
+                styles.declineButton,
+                pressed && !isAccepting ? styles.declineButtonPressed : null,
+                isAccepting ? styles.declineButtonDisabled : null,
+              ]}
+            >
+              <Text style={styles.declineButtonText}>Bỏ qua</Text>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -267,15 +294,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    elevation: 24,
+    gap: spacing.sm,
+    paddingBottom: spacing.xl + 8,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md + 2,
-    paddingBottom: spacing.xl + 8,
-    gap: spacing.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
-    elevation: 24,
   },
   modalHeader: {
     alignItems: 'center',
@@ -352,8 +379,8 @@ const styles = StyleSheet.create({
   timerText: {
     color: '#061226',
     fontSize: 14,
-    fontWeight: '900',
     fontVariant: ['tabular-nums'],
+    fontWeight: '900',
   },
   timerWarning: {
     color: '#D97706',
@@ -369,8 +396,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   progressBar: {
-    height: '100%',
     borderRadius: 3,
+    height: '100%',
   },
   progressBarNormal: {
     backgroundColor: leopardPalette.primary,
@@ -410,19 +437,27 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
-  fareContainer: {
+  fareBezelOuter: {
+    backgroundColor: '#86EFAC',
+    borderRadius: radius.bezelOuter,
+    padding: 3,
+  },
+  fareBezelOuterUrgent: {
+    backgroundColor: '#FCA5A5',
+  },
+  fareBezelInner: {
     alignItems: 'center',
     backgroundColor: '#F0FDF4',
     borderColor: '#BBF7D0',
-    borderRadius: 18,
-    borderWidth: 1.5,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.md,
+    borderRadius: radius.bezelInner,
+    borderWidth: 1,
     gap: 2,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
   },
-  fareContainerUrgent: {
-    borderColor: '#FCA5A5',
+  fareBezelInnerUrgent: {
     backgroundColor: '#FFF1F2',
+    borderColor: '#FECACA',
   },
   fareHeaderRow: {
     alignItems: 'center',
@@ -452,9 +487,9 @@ const styles = StyleSheet.create({
   fareAmount: {
     color: '#166534',
     fontSize: 34,
+    fontVariant: ['tabular-nums'],
     fontWeight: '900',
     letterSpacing: -0.8,
-    fontVariant: ['tabular-nums'],
   },
   fareSub: {
     color: '#4B5563',
@@ -462,14 +497,19 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  routeContainer: {
+  routeBezelOuter: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: radius.bezelOuter,
+    padding: 2.5,
+  },
+  routeBezelInner: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
+    borderColor: '#F1F5F9',
+    borderRadius: radius.bezelInner,
     borderWidth: 1,
     flexDirection: 'row',
-    padding: spacing.sm + 2,
     gap: 12,
+    padding: spacing.sm + 2,
   },
   routeSpineColumn: {
     alignItems: 'center',
@@ -521,9 +561,9 @@ const styles = StyleSheet.create({
   addressTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     flexWrap: 'wrap',
     gap: 4,
+    justifyContent: 'space-between',
   },
   addressTypeLabel: {
     color: '#16A34A',
@@ -604,16 +644,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 12,
+  actionsContainer: {
+    gap: 8,
     marginTop: spacing.xs,
     paddingTop: 4,
   },
-  declineButtonWrap: {
-    flex: 1,
+  accessibilityAcceptBtn: {
+    height: 1,
+    opacity: 0,
+    position: 'absolute',
+    width: 1,
   },
-  acceptButtonWrap: {
-    flex: 2,
+  accessibilityAcceptText: {
+    fontSize: 1,
+    opacity: 0,
+  },
+  declineButton: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    height: 48,
+    justifyContent: 'center',
+    minHeight: 48,
+    width: '100%',
+  },
+  declineButtonPressed: {
+    backgroundColor: '#F1F5F9',
+    opacity: 0.8,
+  },
+  declineButtonDisabled: {
+    opacity: 0.5,
+  },
+  declineButtonText: {
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
