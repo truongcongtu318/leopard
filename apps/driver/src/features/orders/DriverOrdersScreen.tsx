@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -62,11 +63,13 @@ export type DriverOrdersScreenProps = Readonly<{
 }>;
 
 function ActiveTripRail({
+  onNavigate,
   onOpenOrder,
   trip,
 }: Readonly<{
   trip: DriverActiveTripView;
   onOpenOrder?: (orderId: string) => void;
+  onNavigate?: (route: string) => void;
 }>) {
   return (
     <View style={styles.activeTripBezelOuter} testID="driver-active-trip-slab">
@@ -143,6 +146,16 @@ function ActiveTripRail({
               accessibilityLabel="Gọi cho khách hàng"
               accessibilityRole="button"
               hitSlop={8}
+              onPress={() => {
+                try {
+                  const res = Linking.openURL('tel:0988123128');
+                  if (res && typeof res.catch === 'function') {
+                    res.catch(() => {});
+                  }
+                } catch {
+                  // Safe no-op
+                }
+              }}
               style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.pressed : null]}
               testID="driver-call-btn"
             >
@@ -152,6 +165,13 @@ function ActiveTripRail({
               accessibilityLabel="Nhắn tin trong ứng dụng"
               accessibilityRole="button"
               hitSlop={8}
+              onPress={() => {
+                if (onNavigate) {
+                  onNavigate('/chat');
+                } else if (onOpenOrder) {
+                  onOpenOrder(trip.id);
+                }
+              }}
               style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.pressed : null]}
               testID="driver-chat-btn"
             >
@@ -177,8 +197,13 @@ function ActiveTripRail({
 
 function PublicOrderCard({
   item,
+  onDecline,
   onOpenOrder,
-}: Readonly<{ item: DriverPublicOrderView; onOpenOrder?: (orderId: string) => void }>) {
+}: Readonly<{
+  item: DriverPublicOrderView;
+  onOpenOrder?: (orderId: string) => void;
+  onDecline?: (orderId: string) => void;
+}>) {
   return (
     <View style={styles.orderCardOuter}>
       <View style={styles.orderCardInner}>
@@ -262,6 +287,7 @@ function PublicOrderCard({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Bỏ qua đơn này"
+            onPress={onDecline ? () => onDecline(item.id) : undefined}
             style={({ pressed }) => [styles.cardDeclineBtn, pressed ? styles.pressed : null]}
           >
             <Text style={styles.cardDeclineText}>Bỏ qua</Text>
@@ -426,6 +452,7 @@ export function DriverOrdersScreen({
   const [radiusKm, setRadiusKm] = useState('5');
   const [vehiclePref, setVehiclePref] = useState('Xe tải 2.5T');
   const [selectedVehicleFilter, setSelectedVehicleFilter] = useState('Tất cả');
+  const [dismissedOrderIds, setDismissedOrderIds] = useState<readonly string[]>([]);
   const [currentAddress, setCurrentAddress] = useState<string>('Depot Tân Bình, TP.HCM');
   const { openDrawer } = useDriverDrawer();
 
@@ -650,7 +677,9 @@ export function DriverOrdersScreen({
   const isPending = availabilityAction?.isPending === true;
   const isAvailabilityDisabled = availabilityAction?.disabled === true || isPending;
 
-  const filteredOrders = view.requestedOrders.filter((item) => {
+  const filteredOrders = view.requestedOrders
+    .filter((item) => !dismissedOrderIds.includes(item.id))
+    .filter((item) => {
     if (selectedVehicleFilter === 'Tất cả') return true;
     if (selectedVehicleFilter === 'Xe van') {
       return item.vehicleLabel.toLowerCase().includes('van');
@@ -838,33 +867,39 @@ export function DriverOrdersScreen({
                   <Text style={styles.activeLivePillText}>ĐANG CHẠY</Text>
                 </View>
               </View>
-              <ActiveTripRail onOpenOrder={onOpenOrder} trip={activeTrip} />
+              <ActiveTripRail
+                onNavigate={onNavigate}
+                onOpenOrder={onOpenOrder}
+                trip={activeTrip}
+              />
             </View>
           ) : null}
 
-          {/* Snap 1 Radar Scan Strip */}
-          <View style={styles.radarLiveStrip}>
-            <View style={styles.radarLeftGroup}>
-              <View style={styles.radarIconOuter}>
-                <IconRadarPulse color="#0B1E42" size={15} />
+          {/* Snap 1 Radar Scan Strip (hidden during active trip) */}
+          {!activeTrip ? (
+            <View style={styles.radarLiveStrip}>
+              <View style={styles.radarLeftGroup}>
+                <View style={styles.radarIconOuter}>
+                  <IconRadarPulse color="#0B1E42" size={15} />
+                </View>
+                <Text style={styles.radarLiveText}>
+                  Radar đang quét bán kính{' '}
+                  <Text style={styles.radarLiveHighlight}>{radiusKm} km</Text> ·{' '}
+                  <Text style={styles.radarLiveHighlight}>{waitingCount} đơn phù hợp</Text>
+                </Text>
               </View>
-              <Text style={styles.radarLiveText}>
-                Radar đang quét bán kính{' '}
-                <Text style={styles.radarLiveHighlight}>{radiusKm} km</Text> ·{' '}
-                <Text style={styles.radarLiveHighlight}>{waitingCount} đơn phù hợp</Text>
-              </Text>
+              <Pressable
+                accessibilityHint="Mở modal đơn nổ để thử nghiệm giao diện tiếp nhận"
+                accessibilityLabel="Mô phỏng nổ đơn"
+                accessibilityRole="button"
+                onPress={handleSimulateIncomingOffer}
+                style={({ pressed }) => [styles.radarSimulateBtn, pressed ? styles.pressed : null]}
+              >
+                <IconRadarPulse color="#0B1E42" size={13} />
+                <Text style={styles.radarSimulateBtnText}>Thử nổ đơn</Text>
+              </Pressable>
             </View>
-            <Pressable
-              accessibilityHint="Mở modal đơn nổ để thử nghiệm giao diện tiếp nhận"
-              accessibilityLabel="Mô phỏng nổ đơn"
-              accessibilityRole="button"
-              onPress={handleSimulateIncomingOffer}
-              style={({ pressed }) => [styles.radarSimulateBtn, pressed ? styles.pressed : null]}
-            >
-              <IconRadarPulse color="#0B1E42" size={13} />
-              <Text style={styles.radarSimulateBtnText}>Thử nổ đơn</Text>
-            </Pressable>
-          </View>
+          ) : null}
 
           {/* Snap 2: Load-Board Section Header */}
           <View style={styles.loadBoardHeaderRow}>
@@ -873,8 +908,8 @@ export function DriverOrdersScreen({
                 Đơn có thể nhận
               </Text>
               <Text style={styles.loadBoardSubtitle}>
-                {waitingCount > 0
-                  ? `${waitingCount} đơn phù hợp gần bạn`
+                {filteredOrders.length > 0
+                  ? `${filteredOrders.length} đơn phù hợp gần bạn`
                   : 'Chưa có đơn phù hợp'}
               </Text>
             </View>
@@ -937,7 +972,16 @@ export function DriverOrdersScreen({
           ) : (
             <View style={styles.ordersFeed}>
               {filteredOrders.map((item) => (
-                <PublicOrderCard item={item} key={item.id} onOpenOrder={onOpenOrder} />
+                <PublicOrderCard
+                  item={item}
+                  key={item.id}
+                  onDecline={(orderId) => {
+                    setDismissedOrderIds((prev) =>
+                      prev.includes(orderId) ? prev : [...prev, orderId],
+                    );
+                  }}
+                  onOpenOrder={onOpenOrder}
+                />
               ))}
             </View>
           )}
@@ -1489,6 +1533,7 @@ const styles = StyleSheet.create({
   priceText: {
     color: '#475569',
     fontSize: 11,
+    fontVariant: ['tabular-nums'],
     marginLeft: 4,
   },
   updatedText: {
@@ -1937,7 +1982,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   closeBtn: {
-    padding: 4,
+    alignItems: 'center',
+    height: 44,
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
+    width: 44,
   },
   settingsBody: {
     paddingBottom: 24,

@@ -84,7 +84,7 @@ describe('DriverOrdersScreen', () => {
     const screen = await render(
       <DriverOrdersScreen
         onOpenOrder={onOpenOrder}
-        view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
+        view={createDriverListFixture('D-LIST-REQUESTED')}
       />,
     );
 

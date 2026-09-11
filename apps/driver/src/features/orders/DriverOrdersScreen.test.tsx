@@ -162,4 +162,60 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
 
     await screen.unmount();
   });
+
+  it('syncs load-board subtitle counter with vehicle filter chips and dismiss action', async () => {
+    const screen = await render(
+      <DriverOrdersScreen view={createDriverListFixture('D-LIST-REQUESTED')} />,
+    );
+
+    // Initial state: 2 orders matching
+    expect(screen.getByText('2 đơn phù hợp gần bạn')).toBeTruthy();
+
+    // Filter to 'Xe van' (0 matching -> shows in subtitle & empty state)
+    await fireEvent.press(screen.getByText('Xe van'));
+    expect(screen.getAllByText('Chưa có đơn phù hợp').length).toBeGreaterThanOrEqual(1);
+
+    // Filter to '2.5T' (1 matching)
+    await fireEvent.press(screen.getByText('2.5T'));
+    expect(screen.getByText('1 đơn phù hợp gần bạn')).toBeTruthy();
+
+    // Back to 'Tất cả' (2 matching)
+    await fireEvent.press(screen.getByText('Tất cả'));
+    expect(screen.getByText('2 đơn phù hợp gần bạn')).toBeTruthy();
+
+    // Press "Bỏ qua" on the first order
+    const declineButtons = screen.getAllByRole('button', { name: 'Bỏ qua đơn này' });
+    expect(declineButtons.length).toBe(2);
+    await fireEvent.press(declineButtons[0]);
+
+    // Counter updates to 1 order
+    expect(screen.getByText('1 đơn phù hợp gần bạn')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('hides radar scan strip and provides safe contact actions when activeTrip is present', async () => {
+    const onNavigate = jest.fn();
+    const screen = await render(
+      <DriverOrdersScreen
+        onNavigate={onNavigate}
+        view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
+      />,
+    );
+
+    // Radar strip MUST NOT be rendered when on active trip
+    expect(screen.queryByText(/Radar đang quét bán kính/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeNull();
+
+    // Contact buttons work safely
+    const callBtn = screen.getByTestId('driver-call-btn');
+    const chatBtn = screen.getByTestId('driver-chat-btn');
+
+    expect(() => fireEvent.press(callBtn)).not.toThrow();
+
+    await fireEvent.press(chatBtn);
+    expect(onNavigate).toHaveBeenCalledWith('/chat');
+
+    await screen.unmount();
+  });
 });
