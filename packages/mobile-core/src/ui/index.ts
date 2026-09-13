@@ -5,6 +5,7 @@ export * from './EtaIndicator';
 export * from './FloatingNavBar';
 export * from './FormField';
 export * from './GestureBottomSheet';
+export * from './haptics';
 export * from './LedgerSection';
 export * from './MapPanel';
 export * from './MediaImage';

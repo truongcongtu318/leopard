@@ -20,6 +20,28 @@ export const radius = {
   pill: 9999,
 } as const;
 
+/**
+ * Apple Human Interface Guidelines: Continuous squircle curve.
+ * iOS CALayer kCACornerCurveContinuous eliminates abrupt tangent changes at corner boundaries.
+ */
+export const iosContinuousCurve = {
+  borderCurve: 'continuous' as const,
+};
+
+/**
+ * Apple iOS Fluid Spring Physics tokens for Animated.spring.
+ */
+export const appleSpring = {
+  /** Snappy response for sliders, toggles, button presses */
+  snappy: { damping: 20, stiffness: 220, mass: 0.8 },
+  /** Smooth floating response for bottom sheets and drawers */
+  sheet: { damping: 24, stiffness: 200, mass: 0.85 },
+  /** Bouncy celebratory spring for badges and success indicators */
+  bouncy: { damping: 14, stiffness: 180, mass: 0.9 },
+  /** Gentle transition for backdrop fades */
+  gentle: { damping: 28, stiffness: 160, mass: 1 },
+} as const;
+
 export const control = {
   minimumTouchHeight: 44,
   stickyPrimaryMinimumHeight: 48,
