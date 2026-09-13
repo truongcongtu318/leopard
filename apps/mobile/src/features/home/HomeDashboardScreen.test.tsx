@@ -299,7 +299,7 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(mapActionBtn);
 
     // Map modal is shown
-    expect(screen.getAllByText('Thông tin người gửi').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Ghim điểm lấy hàng').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Lấy hàng tại')).toBeTruthy();
 
     // Enter real address in modal input
@@ -316,11 +316,6 @@ describe('HomeDashboardScreen', () => {
     // Type final address
     await fireEvent.changeText(screen.getByLabelText('Địa chỉ lấy hàng'), '120 Trường Chinh, Quận Tân Bình');
 
-    // Tap "Tôi là người gửi" shortcut
-    await fireEvent.press(screen.getByLabelText('Tôi là người gửi'));
-    expect(screen.getByDisplayValue('Anh Hoàng')).toBeTruthy();
-    expect(screen.getByDisplayValue('0901234567')).toBeTruthy();
-
     // Tap "Lưu" to confirm
     await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
 
@@ -330,7 +325,7 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   }, 30000);
 
-  it('supports entering destination address and filling receiver info with logged in customer', async () => {
+  it('supports entering destination address via map modal', async () => {
     const screen = await render(
       <HomeDashboardScreen userName="Nguyễn Văn A" userPhone="0987654321" />,
     );
@@ -340,7 +335,7 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(dropoffMapBtn);
 
     // Map modal is shown for dropoff
-    expect(screen.getAllByText('Thông tin người nhận').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Ghim điểm giao hàng').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Giao hàng đến')).toBeTruthy();
 
     // Enter dropoff address directly in modal
@@ -348,11 +343,6 @@ describe('HomeDashboardScreen', () => {
       screen.getByLabelText('Địa chỉ giao hàng'),
       'Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh',
     );
-
-    // Tap "Tôi là người nhận"
-    await fireEvent.press(screen.getByLabelText('Tôi là người nhận'));
-    expect(screen.getByDisplayValue('Nguyễn Văn A')).toBeTruthy();
-    expect(screen.getByDisplayValue('0987654321')).toBeTruthy();
 
     // Save
     await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
@@ -372,7 +362,7 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(directMapBtn);
 
     // Map modal is shown immediately
-    expect(screen.getAllByText('Thông tin người gửi').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Ghim điểm lấy hàng').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Lấy hàng tại')).toBeTruthy();
 
     // Close map modal

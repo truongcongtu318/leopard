@@ -272,6 +272,7 @@ export type MapAddressPickerModalProps = Readonly<{
   userPhone?: string;
   loggedInCustomer?: { name?: string; phone?: string } | null;
   vietmapApiKey?: string;
+  showContactFields?: boolean;
   onClose: () => void;
   onConfirm: (
     confirmedAddress: string,
@@ -293,6 +294,7 @@ export function MapAddressPickerModal({
   userPhone,
   loggedInCustomer,
   vietmapApiKey,
+  showContactFields = true,
   onClose,
   onConfirm,
 }: MapAddressPickerModalProps) {
@@ -595,7 +597,9 @@ export function MapAddressPickerModal({
               <Text style={styles.mapModalCloseBtnText}>✕</Text>
             </Pressable>
             <Text style={styles.mapModalTopBarTitle}>
-              {target === 'pickup' ? 'Thông tin người gửi' : 'Thông tin người nhận'}
+              {showContactFields
+                ? (target === 'pickup' ? 'Thông tin người gửi' : 'Thông tin người nhận')
+                : (target === 'pickup' ? 'Ghim điểm lấy hàng' : 'Ghim điểm giao hàng')}
             </Text>
             <View style={styles.topBarSpacer} />
           </View>
@@ -851,84 +855,88 @@ export function MapAddressPickerModal({
               </View>
             </View>
 
-            <View style={styles.mapSectionSeparator} />
+            {showContactFields ? (
+              <View>
+                <View style={styles.mapSectionSeparator} />
 
-            {/* Sender / Contact Information Section */}
-            <View style={styles.mapSenderSection}>
-              <View style={styles.mapSenderHeaderRow}>
-                <Text style={styles.mapSenderSectionTitle}>
-                  {target === 'pickup' ? 'THÔNG TIN NGƯỜI GỬI' : 'THÔNG TIN NGƯỜI NHẬN'}
-                </Text>
-                <Pressable
-                  accessibilityLabel={target === 'pickup' ? 'Tôi là người gửi' : 'Tôi là người nhận'}
-                  onPress={handleFillMySenderInfo}
-                  style={styles.mapSenderMeBtn}
-                >
-                  <Text style={styles.mapSenderMeBtnText}>
-                    {target === 'pickup' ? 'Tôi là người gửi' : 'Tôi là người nhận'}
-                  </Text>
-                </Pressable>
-              </View>
+                {/* Sender / Contact Information Section */}
+                <View style={styles.mapSenderSection}>
+                  <View style={styles.mapSenderHeaderRow}>
+                    <Text style={styles.mapSenderSectionTitle}>
+                      {target === 'pickup' ? 'THÔNG TIN NGƯỜI GỬI' : 'THÔNG TIN NGƯỜI NHẬN'}
+                    </Text>
+                    <Pressable
+                      accessibilityLabel={target === 'pickup' ? 'Tôi là người gửi' : 'Tôi là người nhận'}
+                      onPress={handleFillMySenderInfo}
+                      style={styles.mapSenderMeBtn}
+                    >
+                      <Text style={styles.mapSenderMeBtnText}>
+                        {target === 'pickup' ? 'Tôi là người gửi' : 'Tôi là người nhận'}
+                      </Text>
+                    </Pressable>
+                  </View>
 
-              {/* Name Input */}
-              <View
-                style={[
-                  styles.mapInputWrapper,
-                  focusedModalInput === 'name' && styles.mapInputWrapperFocused,
-                ]}
-              >
-                <TextInput
-                  accessibilityLabel={target === 'pickup' ? 'Tên người gửi' : 'Tên người nhận'}
-                  onBlur={() => setFocusedModalInput(null)}
-                  onChangeText={setSenderName}
-                  onFocus={() => setFocusedModalInput('name')}
-                  placeholder={target === 'pickup' ? 'Tên người gửi' : 'Tên người nhận'}
-                  placeholderTextColor="#94A3B8"
-                  style={styles.mapTextInput}
-                  value={senderName}
-                />
-                {senderName.length > 0 ? (
-                  <Pressable
-                    accessibilityLabel="Xóa tên người gửi"
-                    hitSlop={8}
-                    onPress={() => setSenderName('')}
-                    style={styles.clearBtn}
+                  {/* Name Input */}
+                  <View
+                    style={[
+                      styles.mapInputWrapper,
+                      focusedModalInput === 'name' && styles.mapInputWrapperFocused,
+                    ]}
                   >
-                    <Text style={styles.clearBtnText}>✕</Text>
-                  </Pressable>
-                ) : null}
-              </View>
+                    <TextInput
+                      accessibilityLabel={target === 'pickup' ? 'Tên người gửi' : 'Tên người nhận'}
+                      onBlur={() => setFocusedModalInput(null)}
+                      onChangeText={setSenderName}
+                      onFocus={() => setFocusedModalInput('name')}
+                      placeholder={target === 'pickup' ? 'Tên người gửi' : 'Tên người nhận'}
+                      placeholderTextColor="#94A3B8"
+                      style={styles.mapTextInput}
+                      value={senderName}
+                    />
+                    {senderName.length > 0 ? (
+                      <Pressable
+                        accessibilityLabel="Xóa tên người gửi"
+                        hitSlop={8}
+                        onPress={() => setSenderName('')}
+                        style={styles.clearBtn}
+                      >
+                        <Text style={styles.clearBtnText}>✕</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
 
-              {/* Phone Input */}
-              <View
-                style={[
-                  styles.mapInputWrapper,
-                  focusedModalInput === 'phone' && styles.mapInputWrapperFocused,
-                ]}
-              >
-                <TextInput
-                  accessibilityLabel="Số điện thoại"
-                  keyboardType="phone-pad"
-                  onBlur={() => setFocusedModalInput(null)}
-                  onChangeText={setSenderPhone}
-                  onFocus={() => setFocusedModalInput('phone')}
-                  placeholder="Số điện thoại liên hệ"
-                  placeholderTextColor="#94A3B8"
-                  style={styles.mapTextInput}
-                  value={senderPhone}
-                />
-                {senderPhone.length > 0 ? (
-                  <Pressable
-                    accessibilityLabel="Xóa số điện thoại"
-                    hitSlop={8}
-                    onPress={() => setSenderPhone('')}
-                    style={styles.clearBtn}
+                  {/* Phone Input */}
+                  <View
+                    style={[
+                      styles.mapInputWrapper,
+                      focusedModalInput === 'phone' && styles.mapInputWrapperFocused,
+                    ]}
                   >
-                    <Text style={styles.clearBtnText}>✕</Text>
-                  </Pressable>
-                ) : null}
+                    <TextInput
+                      accessibilityLabel="Số điện thoại"
+                      keyboardType="phone-pad"
+                      onBlur={() => setFocusedModalInput(null)}
+                      onChangeText={setSenderPhone}
+                      onFocus={() => setFocusedModalInput('phone')}
+                      placeholder="Số điện thoại liên hệ"
+                      placeholderTextColor="#94A3B8"
+                      style={styles.mapTextInput}
+                      value={senderPhone}
+                    />
+                    {senderPhone.length > 0 ? (
+                      <Pressable
+                        accessibilityLabel="Xóa số điện thoại"
+                        hitSlop={8}
+                        onPress={() => setSenderPhone('')}
+                        style={styles.clearBtn}
+                      >
+                        <Text style={styles.clearBtnText}>✕</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
               </View>
-            </View>
+            ) : null}
           </ScrollView>
 
           {/* Bottom Sticky Action Bar (Hủy / Lưu) */}

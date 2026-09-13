@@ -137,6 +137,97 @@ const DEFAULT_RECENT_ORDERS: readonly RecentOrder[] = [
   },
 ];
 
+export interface LocationSuggestionItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  address: string;
+  coords?: { lat: number; lng: number };
+}
+
+export const POPULAR_LOCATION_SUGGESTIONS: readonly LocationSuggestionItem[] = [
+  {
+    id: 'sug-1',
+    title: 'Kho Tân Bình',
+    subtitle: '120 Trường Chinh, P.12, Q. Tân Bình, TP.HCM',
+    address: '120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
+    coords: { lat: 10.795, lng: 106.652 },
+  },
+  {
+    id: 'sug-2',
+    title: 'KCN Tân Tạo',
+    subtitle: 'Lô B5, Đường số 2, Q. Bình Tân, TP.HCM',
+    address: 'KCN Tân Tạo, Lô B5, Đường số 2, Q. Bình Tân, TP. Hồ Chí Minh',
+    coords: { lat: 10.758, lng: 106.574 },
+  },
+  {
+    id: 'sug-3',
+    title: 'Cảng Cát Lái',
+    subtitle: 'Đường Nguyễn Thị Định, P. Cát Lái, TP. Thủ Đức',
+    address: 'Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
+    coords: { lat: 10.764, lng: 106.796 },
+  },
+  {
+    id: 'sug-4',
+    title: 'KCN Sóng Thần',
+    subtitle: 'Đại lộ Độc Lập, Dĩ An, Bình Dương',
+    address: 'KCN Sóng Thần, Dĩ An, Bình Dương',
+    coords: { lat: 10.905, lng: 106.758 },
+  },
+  {
+    id: 'sug-5',
+    title: 'Chợ Bến Thành',
+    subtitle: 'Đường Lê Lợi, Phường Bến Thành, Quận 1, TP.HCM',
+    address: 'Chợ Bến Thành, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
+    coords: { lat: 10.7725, lng: 106.698 },
+  },
+  {
+    id: 'sug-6',
+    title: 'KCX Tân Thuận',
+    subtitle: 'Phường Tân Thuận Đông, Quận 7, TP.HCM',
+    address: 'KCX Tân Thuận, Phường Tân Thuận Đông, Quận 7, TP. Hồ Chí Minh',
+    coords: { lat: 10.756, lng: 106.732 },
+  },
+  {
+    id: 'sug-7',
+    title: 'KCN Vĩnh Lộc',
+    subtitle: 'Đường số 7, KCN Vĩnh Lộc, Bình Chánh, TP.HCM',
+    address: 'KCN Vĩnh Lộc, Bình Chánh, TP. Hồ Chí Minh',
+    coords: { lat: 10.824, lng: 106.574 },
+  },
+  {
+    id: 'sug-8',
+    title: 'KCN Biên Hòa 2',
+    subtitle: 'Xa lộ Hà Nội, Long Bình Tân, TP. Biên Hòa, Đồng Nai',
+    address: 'KCN Biên Hòa 2, TP. Biên Hòa, Đồng Nai',
+    coords: { lat: 10.957, lng: 106.828 },
+  },
+];
+
+export function getAddressSuggestions(query: string): readonly LocationSuggestionItem[] {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return POPULAR_LOCATION_SUGGESTIONS.slice(0, 4);
+  }
+  const filtered = POPULAR_LOCATION_SUGGESTIONS.filter(
+    (item) =>
+      item.title.toLowerCase().includes(q) ||
+      item.subtitle.toLowerCase().includes(q) ||
+      item.address.toLowerCase().includes(q)
+  );
+  return filtered.length > 0
+    ? filtered.slice(0, 5)
+    : [
+        {
+          id: 'custom-query',
+          title: query.trim(),
+          subtitle: 'Vị trí tìm kiếm theo từ khóa',
+          address: query.trim(),
+        },
+        ...POPULAR_LOCATION_SUGGESTIONS.slice(0, 3),
+      ];
+}
+
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
 export function getTimeOfDay(date: Date = new Date()): TimeOfDay {
@@ -327,6 +418,9 @@ export function HomeDashboardScreen({
   );
   const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
 
+  const activeSearchQuery = focusedField === 'pickup' ? pickupText : (focusedField === 'dropoff' ? dropoffText : '');
+  const liveSuggestions = useMemo(() => getAddressSuggestions(activeSearchQuery), [activeSearchQuery]);
+
   const handleFleetSelectAndBook = (vehicle: FleetVehicleItem) => {
     haptic.selection();
     setSelectedFleetId(vehicle.id);
@@ -501,11 +595,45 @@ export function HomeDashboardScreen({
             {focusedField ? (
               <View style={styles.addressDropdown} testID="address-dropdown">
                 <View style={styles.dropdownHeaderRow}>
-                  <Text style={styles.dropdownHeaderTitle}>{focusedField === 'pickup' ? 'ĐIỂM LẤY HÀNG' : 'ĐIỂM GIAO HÀNG'} · GỢI Ý</Text>
+                  <Text style={styles.dropdownHeaderTitle}>{focusedField === 'pickup' ? 'ĐIỂM LẤY HÀNG' : 'ĐIỂM GIAO HÀNG'} · GỢI Ý VỊ TRÍ</Text>
                   <Pressable accessibilityLabel="Đóng gợi ý" hitSlop={8} onPress={() => setFocusedField(null)} style={styles.dropdownCloseBtn}>
                     <IconClose color="#64748B" size={14} />
                   </Pressable>
                 </View>
+
+                {/* Danh sách địa điểm gợi ý theo từ khóa */}
+                <View style={styles.suggestionsList}>
+                  {liveSuggestions.map((item) => (
+                    <Pressable
+                      accessibilityLabel={`Chọn gợi ý ${item.title}`}
+                      accessibilityRole="button"
+                      key={item.id}
+                      onPress={() => {
+                        haptic.selection();
+                        if (focusedField === 'pickup') {
+                          setPickupText(item.address);
+                          setPickupLabel(item.title);
+                        } else {
+                          setDropoffText(item.address);
+                        }
+                        setFocusedField(null);
+                      }}
+                      style={({ pressed }) => [styles.suggestionRowItem, pressed && styles.dropdownItemPressed]}
+                    >
+                      <View style={styles.suggestionIconBox}>
+                        <IconPin color="#0284C7" size={16} />
+                      </View>
+                      <View style={styles.dropdownItemTextWrap}>
+                        <Text numberOfLines={1} style={styles.dropdownItemTitle}>{item.title}</Text>
+                        <Text numberOfLines={1} style={styles.dropdownItemSub}>{item.subtitle}</Text>
+                      </View>
+                      <IconChevron color="#CBD5E1" direction="right" size={14} />
+                    </Pressable>
+                  ))}
+                </View>
+
+                <View style={styles.dropdownDivider} />
+
                 <Pressable
                   accessibilityLabel="Xác nhận vị trí trên bản đồ" accessibilityRole="button"
                   onPress={() => { const t = focusedField || 'pickup'; setFocusedField(null); handleOpenMapPicker(t); }}
@@ -720,6 +848,7 @@ export function HomeDashboardScreen({
         defaultFallbackAddress={initialAddress} initialAddress={mapTarget === 'pickup' ? pickupText : dropoffText}
         loggedInCustomer={loggedInCustomer} onClose={() => setShowMapPickerModal(false)}
         onConfirm={handleConfirmMapLocation} target={mapTarget} userName={userName} userPhone={userPhone} visible={showMapPickerModal}
+        showContactFields={false}
       />
 
       {/* ================= MODAL CHI TIẾT ĐẶT XE ================= */}
@@ -816,6 +945,9 @@ const styles = StyleSheet.create({
   dropdownHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   dropdownHeaderTitle: { fontSize: 11, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
   dropdownCloseBtn: { padding: 4 },
+  suggestionsList: { gap: 2, marginBottom: 4 },
+  suggestionRowItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, paddingHorizontal: 4, borderRadius: 10 },
+  suggestionIconBox: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
   dropdownItemPressed: { opacity: 0.7 },
   dropdownIconCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
