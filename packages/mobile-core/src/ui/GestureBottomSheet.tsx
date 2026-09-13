@@ -14,6 +14,8 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from 'react-native';
+import { appleSpring, iosContinuousCurve } from '../theme/tokens';
+import { haptic } from './haptics';
 
 export interface GestureBottomSheetProps {
   /**
@@ -141,13 +143,12 @@ export const GestureBottomSheet = forwardRef<
 
     Animated.spring(translateYAnim, {
       toValue: targetY,
-      damping: 24,
-      stiffness: 220,
-      mass: 0.8,
+      ...appleSpring.sheet,
       useNativeDriver: false,
     }).start(() => {
       currentTranslateY.current = targetY;
       activeIndexRef.current = clampedIndex;
+      haptic.selection();
       onSnapChange?.(clampedIndex, safeSnapPoints[clampedIndex]);
     });
   };
@@ -256,6 +257,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
+    ...iosContinuousCurve,
     shadowColor: '#0F172A',
     shadowOffset: {
       width: 0,
@@ -280,6 +282,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 9999,
+    ...iosContinuousCurve,
     backgroundColor: '#CBD5E1',
   },
   content: {

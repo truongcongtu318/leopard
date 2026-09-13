@@ -5,10 +5,11 @@ import {
   PanResponder,
   StyleSheet,
   Text,
-  Vibration,
   View,
 } from 'react-native';
+import { appleSpring, iosContinuousCurve } from '../theme/tokens';
 import { IconChevron } from '../icons/svg-icons';
+import { haptic } from './haptics';
 
 export interface SlideToActionProps {
   label: string;
@@ -71,7 +72,11 @@ export function SlideToAction({
     if (prevResetKeyRef.current !== resetKey) {
       prevResetKeyRef.current = resetKey;
       isCompletedRef.current = false;
-      Animated.spring(panX, { toValue: 0, useNativeDriver: true }).start();
+      Animated.spring(panX, {
+        toValue: 0,
+        useNativeDriver: true,
+        ...appleSpring.snappy,
+      }).start();
     }
   }, [resetKey, panX]);
 
@@ -105,18 +110,17 @@ export function SlideToAction({
             Animated.spring(panX, {
               toValue: maxDrag,
               useNativeDriver: true,
+              ...appleSpring.snappy,
             }).start(() => {
-              try {
-                Vibration.vibrate(10);
-              } catch {
-                // Ignore if unavailable in environment
-              }
+              haptic.success();
               onActionCompleteRef.current();
             });
           } else {
+            haptic.light();
             Animated.spring(panX, {
               toValue: 0,
               useNativeDriver: true,
+              ...appleSpring.snappy,
             }).start();
           }
         },
@@ -195,6 +199,7 @@ const styles = StyleSheet.create({
   track: {
     height: 56,
     borderRadius: 9999,
+    ...iosContinuousCurve,
     padding: PADDING,
     justifyContent: 'center',
     position: 'relative',
@@ -219,6 +224,7 @@ const styles = StyleSheet.create({
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: 9999,
+    ...iosContinuousCurve,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
