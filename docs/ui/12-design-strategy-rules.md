@@ -97,6 +97,6 @@ Khớp chuẩn 100% với yêu cầu nhận diện thương hiệu LEOPARD và m
 
 Mọi màn hình thuộc 4 nhóm phân hệ Khách Hàng và Tài Xế bắt buộc phải tuân thủ nghiêm ngặt quy chuẩn này:
 1. **Khởi động & Xác thực B2B**: Onboarding, SĐT + OTP, Đăng ký MST, Kho bãi mặc định.
-2. **Khách hàng Đặt xe & Vận hành**: Bản đồ tràn viền, Bottom sheet chọn xe tải 3D (`D x R x C`), Route Spine đa điểm, Giữ cọc Escrow.
+2. **Khách hàng Đặt xe tại chỗ (Pure In-Place Map Booking)**: Bản đồ tràn viền (65–70%), Tiết lộ tiệm tiến (Progressive Disclosure) hiển thị ma trận xe tải 3D (`D x R x C`) sau khi chọn điểm đến, tìm kiếm địa chỉ Vietmap Places v4 không dấu tức thì, khay chi tiết `BookingDetailsModal` nổ đơn trực tiếp (Radar tìm xe / VietQR payOS), loại bỏ hoàn toàn wizard 4 bước chuyển trang rườm rà.
 3. **Giám sát & Thanh toán**: Live GPS Telemetry, VietQR payOS đối soát 3s, Xuất hóa đơn VAT điện tử PDF.
-4. **Tài xế Điều phối & Nghiệm thu e-POD**: Field Cockpit trực tuyến, đếm ngược 15s, quy trình 4 bước, Chữ ký số thủ kho & Ảnh chụp hạ tải.
+4. **Tài xế Điều phối & Nghiệm thu e-POD**: Field Cockpit trực tuyến, đếm ngược 15s, quy trình 4 bước qua `SlideToAction`, Chữ ký số thủ kho & Ảnh chụp hạ tải.
