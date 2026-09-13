@@ -3,8 +3,10 @@ import type { UserStatus } from '@prisma/client';
 import { AdminQueryService } from './admin-query.service.js';
 import { AdminCommandService } from './admin-command.service.js';
 import { AdminDriverReviewService } from './admin-driver-review.service.js';
+import { AdminWithdrawalReviewService } from './admin-withdrawal-review.service.js';
 import { DriverDocumentService } from '../drivers/driver-document.service.js';
 import { ApproveDriverDto, RejectDriverDto } from './dto/review-driver.dto.js';
+import { ReviewWithdrawalDto } from './dto/review-withdrawal.dto.js';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { CurrentUser } from '../auth/decorators/current-user.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
@@ -28,6 +30,7 @@ export class AdminController {
     private readonly commandService: AdminCommandService,
     private readonly driverReviewService: AdminDriverReviewService,
     private readonly driverDocumentService: DriverDocumentService,
+    private readonly withdrawalReviewService: AdminWithdrawalReviewService,
   ) {}
 
   @Get('dashboard')
@@ -122,6 +125,31 @@ export class AdminController {
     @Body() body: RejectDriverDto,
   ) {
     await this.driverReviewService.reject(actor, id, body.reason, body.clientRequestId);
+    return { success: true };
+  }
+
+  @Get('withdrawals')
+  async getPendingWithdrawals() {
+    return this.withdrawalReviewService.listPending();
+  }
+
+  @Post('withdrawals/:id/approve')
+  async approveWithdrawal(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+    @Body() body: ReviewWithdrawalDto,
+  ) {
+    await this.withdrawalReviewService.approve(actor, id, body.note, body.clientRequestId);
+    return { success: true };
+  }
+
+  @Post('withdrawals/:id/reject')
+  async rejectWithdrawal(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+    @Body() body: ReviewWithdrawalDto,
+  ) {
+    await this.withdrawalReviewService.reject(actor, id, body.note, body.clientRequestId);
     return { success: true };
   }
 }
