@@ -391,7 +391,12 @@ export function HomeDashboardScreen({
         style={styles.layer2BottomSheet}
         testID="home-bottom-sheet"
       >
-        <ScrollView contentContainerStyle={styles.sheetScrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.sheetScrollView}
+          contentContainerStyle={styles.sheetScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {/* 1. Route Booking Card (testID="home-booking") */}
           <View style={styles.routeBookingCard} testID="home-booking">
             <View style={styles.routeBox}>
@@ -694,7 +699,8 @@ const styles = StyleSheet.create({
 
   /* Layer 2: Gesture Bottom Sheet & Scroll Content */
   layer2BottomSheet: { zIndex: 40 },
-  sheetScrollContent: { paddingHorizontal: 16, paddingBottom: 24 },
+  sheetScrollView: { flex: 1, width: '100%' },
+  sheetScrollContent: { paddingHorizontal: 16, paddingBottom: 32 },
 
   /* Route Booking Card */
   routeBookingCard: {
