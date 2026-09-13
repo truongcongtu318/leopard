@@ -4,3 +4,4 @@ export * from './order/order.constants.js';
 export * from './payment/payment-status.js';
 export * from './user/user-role.js';
 export * from './vehicle/vehicle-type.js';
+export * from './withdrawal/withdrawal-status.js';
