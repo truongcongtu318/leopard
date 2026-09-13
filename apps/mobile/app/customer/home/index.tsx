@@ -176,12 +176,13 @@ export default function CustomerHomePage() {
       recentOrders={recentOrders}
       userName={customerUser?.name}
       userPhone={customerUser?.phone}
-      onCreateOrder={() =>
+      onCreateOrder={() => {
+        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
         router.push({
-          pathname: '/customer/orders/new',
-          params: buildPickupParams(),
-        })
-      }
+          pathname: `/customer/orders/checkout/${orderId}`,
+          params: { amount: '280000' },
+        });
+      }}
       onNavigateTab={(tab) => {
         switch (tab) {
           case 'orders':
@@ -208,11 +209,13 @@ export default function CustomerHomePage() {
       onOpenProfile={() => router.push('/customer/profile')}
       onOpenQrScan={() => router.push('/customer/wallet')}
       onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
-      onQuickBook={(pickup, dropoff, dropoffCoords) =>
+      onQuickBook={(pickup, dropoff, dropoffCoords) => {
+        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
         router.push({
-          pathname: '/customer/orders/new',
+          pathname: `/customer/orders/checkout/${orderId}`,
           params: {
-            ...buildPickupParams(pickup),
+            amount: '280000',
+            pickup,
             dropoff,
             ...(dropoffCoords
               ? {
@@ -221,18 +224,22 @@ export default function CustomerHomePage() {
                 }
               : {}),
           },
-        })
-      }
+        });
+      }}
       onRegisterDriver={() => router.push('/(public)/driver-register')}
-      onSelectVehicleAndBook={(vehicleId) =>
+      onSelectVehicleAndBook={(vehicleId) => {
+        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+        const priceMap: Record<string, string> = {
+          '3_WHEEL_BIKE': '120000',
+          'LIGHT_TRUCK': '280000',
+          'HEAVY_TRUCK': '450000',
+        };
+        const amount = priceMap[vehicleId] || '280000';
         router.push({
-          pathname: '/customer/orders/new',
-          params: {
-            ...buildPickupParams(),
-            vehicleType: vehicleCategoryToOrderType(vehicleId),
-          },
-        })
-      }
+          pathname: `/customer/orders/checkout/${orderId}`,
+          params: { amount },
+        });
+      }}
       onSwitchRole={handleSwitchRole}
       onTopUpWallet={() => router.push('/customer/wallet')}
       onViewAllOrders={() => router.push('/customer/orders')}
