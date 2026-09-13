@@ -80,9 +80,9 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(screen.getByLabelText('Chuyển vai trò'));
     expect(onSwitchRole).toHaveBeenCalledWith('DRIVER');
 
-    // Promo banner click jumps into order creation
-    await fireEvent.press(screen.getByLabelText(/Đặt xe phù hợp với hàng/));
-    expect(onCreateOrder).toHaveBeenCalledTimes(1);
+    // Fleet vehicle card jumps into order creation
+    await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Tải 1.25T/));
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
 
     // Active shipment sits at the top: status + route + ETA, opens on press
     expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
@@ -99,9 +99,9 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(screen.getByLabelText('Xem tất cả đơn hàng'));
     expect(onViewAllOrders).toHaveBeenCalledTimes(1);
 
-    // Quick book by vehicle jumps into the create flow
-    await fireEvent.press(screen.getByLabelText('Đặt nhanh Xe Tải Nhẹ'));
-    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
+    // Quick book by Ba Gác jumps into the create flow
+    await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Ba Gác/));
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('3_WHEEL_BIKE');
 
     // Wallet utility strip removed from home dashboard
     expect(screen.queryByText('Ví VietQR')).toBeNull();
@@ -144,17 +144,14 @@ describe('HomeDashboardScreen', () => {
     expect(getTimeOfDayGreeting(new Date(2026, 8, 3, 20, 0))).toBe('Chào buổi tối');
   });
 
-  it('triggers onRegisterDriver when driver registration button is pressed', async () => {
-    const onRegisterDriver = jest.fn();
-    const screen = await render(
-      <HomeDashboardScreen onRegisterDriver={onRegisterDriver} />,
-    );
+  it('excludes bloat driver-partner card, service duplicates and promo banners from home dashboard', async () => {
+    const screen = await render(<HomeDashboardScreen />);
 
-    const driverBtn = screen.getByTestId('home-driver-btn');
-    expect(driverBtn).toBeTruthy();
-    expect(screen.getByText('Đăng ký tài xế')).toBeTruthy();
-    await fireEvent.press(driverBtn);
-    expect(onRegisterDriver).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('home-driver-btn')).toBeNull();
+    expect(screen.queryByTestId('home-services')).toBeNull();
+    expect(screen.queryByText('Đặt xe phù hợp với hàng')).toBeNull();
+    expect(screen.queryByText('Lên đơn từ địa chỉ đã lưu')).toBeNull();
+    expect(screen.queryByText('Gia nhập tài xế LEOPARD')).toBeNull();
 
     await screen.unmount();
   });
@@ -184,30 +181,13 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it('shows all three informational slides and preserves their booking actions', async () => {
-    const onCreateOrder = jest.fn();
-    const screen = await render(<HomeDashboardScreen onCreateOrder={onCreateOrder} />);
-
-    expect(screen.getByText('Đặt xe phù hợp với hàng')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText(/Đặt xe phù hợp với hàng/));
-    await fireEvent.press(screen.getByLabelText('Chuyển đến ưu đãi 2'));
-    expect(screen.getByText('Lên đơn từ địa chỉ đã lưu')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText(/Lên đơn từ địa chỉ đã lưu/));
-    await fireEvent.press(screen.getByLabelText('Chuyển đến ưu đãi 3'));
-    expect(screen.getByText('Theo dõi từng chặng giao')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText(/Theo dõi từng chặng giao/));
-    expect(onCreateOrder).toHaveBeenCalledTimes(3);
-
-    await screen.unmount();
-  });
-
-  it.each([activeShipment, null])('places shipment status directly after booking before services (%p)', async (shipment) => {
+  it.each([activeShipment, null])('places shipment status directly after booking and before recent orders (%p)', async (shipment) => {
     const screen = await render(<HomeDashboardScreen activeShipment={shipment} />);
-    const sectionIds = ['home-booking', 'home-active-shipments', 'home-services'];
+    const sectionIds = ['home-booking', 'home-active-shipments', 'home-recent-orders'];
     sectionIds.forEach((id) => expect(screen.getByTestId(id)).toBeTruthy());
     const renderedTree = JSON.stringify(screen.toJSON());
     expect(renderedTree.indexOf('home-booking')).toBeLessThan(renderedTree.indexOf('home-active-shipments'));
-    expect(renderedTree.indexOf('home-active-shipments')).toBeLessThan(renderedTree.indexOf('home-services'));
+    expect(renderedTree.indexOf('home-active-shipments')).toBeLessThan(renderedTree.indexOf('home-recent-orders'));
     if (shipment === null) {
       expect(screen.getByLabelText('Tra cứu mã vận đơn')).toBeTruthy();
     } else {
@@ -217,26 +197,22 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it('keeps every redesigned service card connected to its booking flow', async () => {
+  it('connects fleet matrix vehicles to booking flow', async () => {
     const onSelectVehicleAndBook = jest.fn();
-    const onCreateOrder = jest.fn();
     const screen = await render(
-      <HomeDashboardScreen onCreateOrder={onCreateOrder} onSelectVehicleAndBook={onSelectVehicleAndBook} />,
+      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} />,
     );
 
-    for (const [label, vehicleId] of [
+    for (const [name, category] of [
+      ['Van 500kg', 'LIGHT_TRUCK'],
+      ['Xe Tải 1.25T', 'LIGHT_TRUCK'],
+      ['Xe Tải 2.5T', 'HEAVY_TRUCK'],
       ['Xe Ba Gác', '3_WHEEL_BIKE'],
-      ['Xe Tải Nhẹ', 'LIGHT_TRUCK'],
-      ['Xe Tải Nặng', 'HEAVY_TRUCK'],
-    ]) {
-      await fireEvent.press(screen.getByLabelText(`Đặt nhanh ${label}`));
-      expect(onSelectVehicleAndBook).toHaveBeenLastCalledWith(vehicleId);
+    ] as const) {
+      await fireEvent.press(screen.getByLabelText(new RegExp(`Chọn xe ${name}`)));
+      expect(onSelectVehicleAndBook).toHaveBeenLastCalledWith(category);
     }
-    expect(onSelectVehicleAndBook).toHaveBeenCalledTimes(3);
-    for (const label of ['Giao Hỏa Tốc', 'Dịch Vụ Bốc Xếp', 'Thu Hộ COD']) {
-      await fireEvent.press(screen.getByLabelText(`Đặt nhanh ${label}`));
-    }
-    expect(onCreateOrder).toHaveBeenCalledTimes(3);
+    expect(onSelectVehicleAndBook).toHaveBeenCalledTimes(4);
 
     await screen.unmount();
   });

@@ -1,9 +1,6 @@
 import type { OrderStatus } from '@leopard/shared';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Animated,
-  Dimensions,
-  Easing,
   Platform,
   Pressable,
   ScrollView,
@@ -47,8 +44,6 @@ import {
   reverseGeocodeCoords,
   SavedAddressPickerModal,
 } from './components';
-import { HomePromoArtwork, type HomePromoSlide } from './HomePromoArtwork';
-import { HomeServiceIllustration, type HomeServiceKind } from './HomeServiceIllustrations';
 
 export type ActiveShipment = Readonly<{
   orderId: string;
@@ -128,26 +123,6 @@ const DEFAULT_RECENT_ORDERS: readonly RecentOrder[] = [
   },
 ];
 
-const PROMO_SLIDES: readonly HomePromoSlide[] = [
-  { id: 'promo-1', kind: 'vehicle', eyebrow: 'XE CHO MỖI NHU CẦU', title: 'Đặt xe phù hợp với hàng', subtitle: 'Chọn phương tiện theo loại hàng và tải trọng.', action: 'Chọn xe' },
-  { id: 'promo-2', kind: 'address', eyebrow: 'ĐẶT HÀNG THUẬN TIỆN', title: 'Lên đơn từ địa chỉ đã lưu', subtitle: 'Dùng lại điểm lấy và giao quen thuộc khi tạo đơn.', action: 'Tạo đơn mới' },
-  { id: 'promo-3', kind: 'tracking', eyebrow: 'CHỦ ĐỘNG THEO DÕI', title: 'Theo dõi từng chặng giao', subtitle: 'Xem trạng thái và ETA dự kiến trong hành trình.', action: 'Bắt đầu gửi hàng' },
-];
-
-type QuickService = Readonly<{
-  id: string; vehicleId?: VehicleCategory; name: string; label: string; tag: string;
-  iconType: HomeServiceKind; accentColor: string; borderColor: string; surfaceColor: string; tagSurfaceColor: string;
-}>;
-
-const quickServices: readonly QuickService[] = [
-  { id: '3_WHEEL_BIKE', vehicleId: '3_WHEEL_BIKE', label: 'Xe Ba Gác', name: 'Ba gác', tag: '< 500kg', iconType: '3wheel', accentColor: '#1D4ED8', borderColor: '#B9D5FF', surfaceColor: '#EAF3FF', tagSurfaceColor: '#DCEBFF' },
-  { id: 'LIGHT_TRUCK', vehicleId: 'LIGHT_TRUCK', label: 'Xe Tải Nhẹ', name: 'Tải nhẹ', tag: '≤ 1.5 tấn', iconType: 'light', accentColor: '#047D95', borderColor: '#A8DFEA', surfaceColor: '#E8FAFD', tagSurfaceColor: '#D4F3F8' },
-  { id: 'HEAVY_TRUCK', vehicleId: 'HEAVY_TRUCK', label: 'Xe Tải Nặng', name: 'Tải nặng', tag: '5–10 tấn', iconType: 'heavy', accentColor: '#334155', borderColor: '#C3CDDB', surfaceColor: '#EEF2F7', tagSurfaceColor: '#E1E8F0' },
-  { id: 'EXPRESS', label: 'Giao Hỏa Tốc', name: 'Hỏa tốc', tag: 'Giao ưu tiên', iconType: 'express', accentColor: '#D97706', borderColor: '#F6C76D', surfaceColor: '#FFF5D8', tagSurfaceColor: '#FFE7A3' },
-  { id: 'LOADING', label: 'Dịch Vụ Bốc Xếp', name: 'Bốc xếp', tag: 'Kèm phụ xe', iconType: 'loading', accentColor: '#C2410C', borderColor: '#FDBA8C', surfaceColor: '#FFF0E6', tagSurfaceColor: '#FED7BA' },
-  { id: 'COD', label: 'Thu Hộ COD', name: 'Thu COD', tag: 'Thu hộ tiền hàng', iconType: 'cod', accentColor: '#13855F', borderColor: '#A7DCC8', surfaceColor: '#EAF8F1', tagSurfaceColor: '#D2F2E2' },
-];
-
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
 export function getTimeOfDay(date: Date = new Date()): TimeOfDay {
@@ -204,7 +179,6 @@ export function HomeDashboardScreen({
   const insets = React.useContext(SafeAreaInsetsContext);
   const topInset = insets?.top ?? 0;
   const [activeTab, setActiveTab] = useState<TabKey>('home');
-  const [activeBannerIdx, setActiveBannerIdx] = useState(0);
 
   const deliveredRecentOrders = useMemo(
     () => recentOrders.filter((order) => order.status === 'DELIVERED'),
@@ -335,37 +309,7 @@ export function HomeDashboardScreen({
 
   const addressList = useMemo(() => savedAddresses ?? addressStore.getAddresses(), [savedAddresses, addressStoreVersion]);
 
-  const [bannerWidth, setBannerWidth] = useState(() => Math.max(280, Dimensions.get('window').width - 32));
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const currentSlideIdxRef = useRef(activeBannerIdx);
-  currentSlideIdxRef.current = activeBannerIdx;
-
-  const goToSlide = useCallback((targetIdx: number) => {
-    const currentIdx = currentSlideIdxRef.current;
-    if (currentIdx === targetIdx) return;
-    slideAnim.stopAnimation();
-    setActiveBannerIdx(targetIdx);
-
-    if (currentIdx === PROMO_SLIDES.length - 1 && targetIdx === 0) {
-      Animated.timing(slideAnim, {
-        duration: 750, easing: Easing.out(Easing.cubic),
-        toValue: -PROMO_SLIDES.length * bannerWidth, useNativeDriver: Platform.OS !== 'web',
-      }).start(({ finished }) => { if (finished) slideAnim.setValue(0); });
-    } else {
-      Animated.timing(slideAnim, {
-        duration: 750, easing: Easing.out(Easing.cubic),
-        toValue: -targetIdx * bannerWidth, useNativeDriver: Platform.OS !== 'web',
-      }).start();
-    }
-  }, [bannerWidth, slideAnim]);
-
-  useEffect(() => {
-    const timer = setInterval(() => { goToSlide((currentSlideIdxRef.current + 1) % PROMO_SLIDES.length); }, 5000);
-    return () => clearInterval(timer);
-  }, [goToSlide]);
-
   const handleTabChange = (key: TabKey) => { setActiveTab(key); onNavigateTab?.(key); };
-  const handleDriverButtonPress = () => { onRegisterDriver ? onRegisterDriver() : onSwitchRole?.('DRIVER'); };
 
   const greeting = useMemo(() => getTimeOfDayGreeting(), []);
   const currentFleetVehicle = useMemo(
@@ -707,83 +651,8 @@ export function HomeDashboardScreen({
             )}
           </View>
 
-          {/* 3. Transport Services & Fleet (testID="home-services") */}
-          <View style={styles.section} testID="home-services">
-            <View style={styles.sectionHeaderRow}><Text style={styles.sectionLabel}>DỊCH VỤ VẬN TẢI & ĐỘI XE</Text></View>
-            <View style={styles.serviceGrid}>
-              {quickServices.map((service) => (
-                <Pressable
-                  accessibilityHint="Mở màn hình tạo đơn với dịch vụ đã chọn"
-                  accessibilityLabel={`Đặt nhanh ${service.label}`} accessibilityRole="button" key={service.id}
-                  onPress={() => { service.vehicleId && onSelectVehicleAndBook ? onSelectVehicleAndBook(service.vehicleId) : onCreateOrder?.(); }}
-                  style={({ pressed }) => [styles.serviceCard, { borderColor: service.borderColor }, pressed && styles.serviceCardPressed]}
-                >
-                  <View accessible={false} style={[styles.serviceImageContainer, { backgroundColor: service.surfaceColor, borderColor: service.borderColor }]}>
-                    <HomeServiceIllustration kind={service.iconType} />
-                  </View>
-                  <Text numberOfLines={1} style={styles.serviceName}>{service.name}</Text>
-                  <View style={[styles.serviceTagBadge, { backgroundColor: service.tagSurfaceColor, borderColor: service.borderColor }]}>
-                    <Text numberOfLines={1} style={[styles.serviceTagText, { color: service.accentColor }]}>{service.tag}</Text>
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          {/* 4. Driver Partner Partnership Card */}
-          <View style={styles.driverPartnerCard}>
-            <View style={styles.driverPartnerLeft}>
-              <View style={styles.driverPartnerIconBox}><IconRoleDriver color="#1D4ED8" size={20} /></View>
-              <View style={styles.driverPartnerTextWrap}>
-                <Text style={styles.driverPartnerTitle}>Gia nhập tài xế LEOPARD</Text>
-                <Text style={styles.driverPartnerSubtitle}>Tăng thu nhập với các cuốc xe linh hoạt</Text>
-              </View>
-            </View>
-            <Pressable
-              accessibilityLabel="Đăng ký tài xế" accessibilityRole="button"
-              onPress={handleDriverButtonPress} style={styles.driverRegisterBtn} testID="home-driver-btn"
-            >
-              <Text style={styles.driverRegisterText}>Đăng ký tài xế</Text>
-            </Pressable>
-          </View>
-
-          {/* 5. Operational Signal Promo Carousel */}
-          <View
-            onLayout={(e) => {
-              const w = Math.round(e.nativeEvent.layout.width);
-              if (w > 0 && Math.abs(w - bannerWidth) > 2) {
-                slideAnim.stopAnimation();
-                slideAnim.setValue(-currentSlideIdxRef.current * w);
-                setBannerWidth(w);
-              }
-            }}
-            style={styles.promoContainer}
-          >
-            <View style={styles.promoTrackWindow}>
-              <Animated.View style={[styles.promoTrack, { width: bannerWidth * (PROMO_SLIDES.length + 1), transform: [{ translateX: slideAnim }] }]}>
-                {PROMO_SLIDES.map((slide) => (
-                  <Pressable accessibilityLabel={`Ưu đãi: ${slide.title}`} accessibilityRole="button" key={slide.id} onPress={() => onCreateOrder?.()} style={[styles.promoSlideItem, { width: bannerWidth }]}>
-                    <HomePromoArtwork slide={slide} />
-                  </Pressable>
-                ))}
-                <Pressable accessibilityElementsHidden accessibilityRole="button" importantForAccessibility="no" key="promo-slide-clone" onPress={() => onCreateOrder?.()} style={[styles.promoSlideItem, { width: bannerWidth }]}>
-                  <HomePromoArtwork slide={PROMO_SLIDES[0]} />
-                </Pressable>
-              </Animated.View>
-            </View>
-            <View style={styles.dotsRow}>
-              {PROMO_SLIDES.map((slide, idx) => (
-                <Pressable
-                  accessibilityLabel={`Chuyển đến ưu đãi ${idx + 1}`} accessibilityRole="button" hitSlop={6}
-                  key={slide.id} onPress={() => goToSlide(idx)}
-                  style={[styles.dot, activeBannerIdx === idx ? styles.dotActive : styles.dotInactive]}
-                />
-              ))}
-            </View>
-          </View>
-
-          {/* 6. Recent Delivered Orders Ledger */}
-          <View style={styles.section}>
+          {/* 3. Recent Delivered Orders Ledger */}
+          <View style={styles.section} testID="home-recent-orders">
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionLabel}>ĐƠN GẦN ĐÂY</Text>
               <Pressable accessibilityLabel="Xem tất cả đơn hàng" accessibilityRole="button" onPress={onViewAllOrders}>
@@ -1028,38 +897,6 @@ const styles = StyleSheet.create({
   trackingInput: { flex: 1, fontSize: 12, fontWeight: '600', color: '#0F172A', padding: 0 },
   trackingSearchBtn: { backgroundColor: '#0B1E42', borderRadius: 12, paddingHorizontal: 14, height: 40, minHeight: 40, alignItems: 'center', justifyContent: 'center' },
   trackingSearchBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
-
-  /* Service Shortcuts Grid */
-  serviceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  serviceCard: { width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: 14, ...iosContinuousCurve, padding: 8, borderWidth: 1 },
-  serviceCardPressed: { opacity: 0.85 },
-  serviceImageContainer: { height: 54, borderRadius: 10, ...iosContinuousCurve, borderWidth: 1, overflow: 'hidden', marginBottom: 4, alignItems: 'center', justifyContent: 'center' },
-  serviceName: { fontSize: 12, fontWeight: '800', color: '#0F172A' },
-  serviceTagBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginTop: 3, borderWidth: 1 },
-  serviceTagText: { fontSize: 9, fontWeight: '700' },
-
-  /* Driver Partner Card */
-  driverPartnerCard: {
-    backgroundColor: '#EFF6FF', borderRadius: 16, ...iosContinuousCurve, padding: 10, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', borderWidth: 1, borderColor: '#BFDBFE', marginBottom: 10,
-  },
-  driverPartnerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, gap: 8 },
-  driverPartnerIconBox: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
-  driverPartnerTextWrap: { flex: 1 },
-  driverPartnerTitle: { fontSize: 12, fontWeight: '800', color: '#1E3A8A' },
-  driverPartnerSubtitle: { fontSize: 10, color: '#3B82F6', marginTop: 1 },
-  driverRegisterBtn: { backgroundColor: '#1D4ED8', borderRadius: 10, ...iosContinuousCurve, paddingHorizontal: 10, paddingVertical: 6, minHeight: 40, justifyContent: 'center' },
-  driverRegisterText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
-
-  /* Promo Banner Carousel */
-  promoContainer: { marginBottom: 10 },
-  promoTrackWindow: { overflow: 'hidden', borderRadius: 16, ...iosContinuousCurve },
-  promoTrack: { flexDirection: 'row' },
-  promoSlideItem: { borderRadius: 16, overflow: 'hidden' },
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 6 },
-  dot: { height: 5, borderRadius: 2.5 },
-  dotActive: { width: 20, backgroundColor: '#0B1E42' },
-  dotInactive: { width: 6, backgroundColor: '#CBD5E1' },
 
   /* Recent Orders Ledger */
   linkText: { fontSize: 12, fontWeight: '700', color: '#0284C7' },
