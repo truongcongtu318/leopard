@@ -4,6 +4,7 @@ import React, {
   useImperativeHandle,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import {
   Animated,
@@ -124,6 +125,9 @@ export const GestureBottomSheet = forwardRef<
   const activeIndexRef = useRef(
     Math.max(0, Math.min(initialSnapIndex, safeSnapPoints.length - 1))
   );
+  const [currentSnapIndex, setCurrentSnapIndex] = useState(
+    Math.max(0, Math.min(initialSnapIndex, safeSnapPoints.length - 1))
+  );
 
   const getTranslateYForSnap = (snapFraction: number) => {
     return effectiveHeight * (1 - snapFraction);
@@ -141,6 +145,7 @@ export const GestureBottomSheet = forwardRef<
     const clampedIndex = Math.max(0, Math.min(index, safeSnapPoints.length - 1));
     const targetY = getTranslateYForSnap(safeSnapPoints[clampedIndex]);
 
+    setCurrentSnapIndex(clampedIndex);
     Animated.spring(translateYAnim, {
       toValue: targetY,
       ...appleSpring.sheet,
@@ -198,6 +203,13 @@ export const GestureBottomSheet = forwardRef<
           translateYAnim.setValue(newY);
         },
         onPanResponderRelease: (_, gestureState) => {
+          const isTap = Math.abs(gestureState.dy) < 6 && Math.abs(gestureState.dx) < 6;
+          if (isTap) {
+            const nextIndex = (activeIndexRef.current + 1) % safeSnapPoints.length;
+            animateToSnap(nextIndex);
+            return;
+          }
+
           const currentY = currentTranslateY.current + gestureState.dy;
           const projectedY = currentY + (gestureState.vy || 0) * 50;
 
@@ -217,6 +229,12 @@ export const GestureBottomSheet = forwardRef<
         },
       }),
     [safeSnapPoints, effectiveHeight]
+  );
+
+  const currentSnapFraction = safeSnapPoints[currentSnapIndex] ?? safeSnapPoints[0];
+  const maxVisibleContentHeight = Math.max(
+    80,
+    Math.round(effectiveHeight * currentSnapFraction - 44)
   );
 
   return (
@@ -241,7 +259,14 @@ export const GestureBottomSheet = forwardRef<
       </View>
 
       {/* Content Container */}
-      <View testID={`${testID}-content`} style={[styles.content, contentStyle]}>
+      <View
+        testID={`${testID}-content`}
+        style={[
+          styles.content,
+          { maxHeight: maxVisibleContentHeight },
+          contentStyle,
+        ]}
+      >
         {children}
       </View>
     </Animated.View>

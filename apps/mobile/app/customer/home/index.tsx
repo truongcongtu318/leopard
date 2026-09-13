@@ -168,6 +168,20 @@ export default function CustomerHomePage() {
     }
   };
 
+  const [selectedVehicleCategory, setSelectedVehicleCategory] = useState<VehicleCategory>('LIGHT_TRUCK');
+
+  const getAmountForVehicle = (cat: VehicleCategory) => {
+    switch (cat) {
+      case '3_WHEEL_BIKE':
+        return '120000';
+      case 'HEAVY_TRUCK':
+        return '450000';
+      case 'LIGHT_TRUCK':
+      default:
+        return '280000';
+    }
+  };
+
   return (
     <HomeDashboardScreen
       activeShipment={activeShipment}
@@ -176,12 +190,43 @@ export default function CustomerHomePage() {
       recentOrders={recentOrders}
       userName={customerUser?.name}
       userPhone={customerUser?.phone}
-      onCreateOrder={() =>
+      onConfirmBooking={(booking) => {
+        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+        if (booking.paymentMethod === 'CASH') {
+          router.push({
+            pathname: `/customer/orders/searching/${orderId}`,
+            params: {
+              amount: String(booking.totalFare),
+              pickup: booking.pickup,
+              dropoff: booking.dropoff,
+              origin: booking.pickup,
+              destination: booking.dropoff,
+              vehicleName: booking.vehicleName,
+              paymentMethod: 'CASH',
+            },
+          });
+        } else {
+          router.push({
+            pathname: `/customer/orders/checkout/${orderId}`,
+            params: {
+              amount: String(booking.totalFare),
+              pickup: booking.pickup,
+              dropoff: booking.dropoff,
+              origin: booking.pickup,
+              destination: booking.dropoff,
+              vehicleName: booking.vehicleName,
+              paymentMethod: 'VIETQR',
+            },
+          });
+        }
+      }}
+      onCreateOrder={() => {
+        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
         router.push({
-          pathname: '/customer/orders/new',
-          params: buildPickupParams(),
-        })
-      }
+          pathname: `/customer/orders/checkout/${orderId}`,
+          params: { amount: getAmountForVehicle(selectedVehicleCategory) },
+        });
+      }}
       onNavigateTab={(tab) => {
         switch (tab) {
           case 'orders':
@@ -208,11 +253,13 @@ export default function CustomerHomePage() {
       onOpenProfile={() => router.push('/customer/profile')}
       onOpenQrScan={() => router.push('/customer/wallet')}
       onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
-      onQuickBook={(pickup, dropoff, dropoffCoords) =>
+      onQuickBook={(pickup, dropoff, dropoffCoords) => {
+        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
         router.push({
-          pathname: '/customer/orders/new',
+          pathname: `/customer/orders/checkout/${orderId}`,
           params: {
-            ...buildPickupParams(pickup),
+            amount: getAmountForVehicle(selectedVehicleCategory),
+            pickup,
             dropoff,
             ...(dropoffCoords
               ? {
@@ -221,18 +268,12 @@ export default function CustomerHomePage() {
                 }
               : {}),
           },
-        })
-      }
+        });
+      }}
       onRegisterDriver={() => router.push('/(public)/driver-register')}
-      onSelectVehicleAndBook={(vehicleId) =>
-        router.push({
-          pathname: '/customer/orders/new',
-          params: {
-            ...buildPickupParams(),
-            vehicleType: vehicleCategoryToOrderType(vehicleId),
-          },
-        })
-      }
+      onSelectVehicleAndBook={(vehicleId) => {
+        setSelectedVehicleCategory(vehicleId);
+      }}
       onSwitchRole={handleSwitchRole}
       onTopUpWallet={() => router.push('/customer/wallet')}
       onViewAllOrders={() => router.push('/customer/orders')}

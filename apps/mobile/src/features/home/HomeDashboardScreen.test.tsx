@@ -67,6 +67,7 @@ describe('HomeDashboardScreen', () => {
         smeName="Cửa hàng VLXD Đại Phát"
         userName="Anh Hoàng"
         walletBalance="1.850.000 ₫"
+        defaultDropoffLocation="KCN Tân Tạo"
       />,
     );
 
@@ -80,11 +81,11 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(screen.getByLabelText('Chuyển vai trò'));
     expect(onSwitchRole).toHaveBeenCalledWith('DRIVER');
 
-    // Promo banner click jumps into order creation
-    await fireEvent.press(screen.getByLabelText(/Đặt xe phù hợp với hàng/));
-    expect(onCreateOrder).toHaveBeenCalledTimes(1);
+    // Fleet vehicle card jumps into order creation
+    await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Tải 1.25T/));
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
 
-    // Active shipment sits at the top: status + route + ETA, opens on press
+    // Active shipment sits below booking: status + route + ETA, opens on press
     expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
     expect(screen.getByText('Kho Tân Bình')).toBeTruthy();
     expect(screen.getByText(/18 phút/)).toBeTruthy();
@@ -92,16 +93,9 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(screen.getByLabelText(/Chuyến đang vận chuyển/));
     expect(onOpenActiveOrder).toHaveBeenCalledWith('ord-active-1');
 
-    // Recent orders as ledger rows
-    expect(screen.getByText('Đơn LP-240902')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('order-summary-LP-240902'));
-    expect(onOpenOrder).toHaveBeenCalledWith('ord-2');
-    await fireEvent.press(screen.getByLabelText('Xem tất cả đơn hàng'));
-    expect(onViewAllOrders).toHaveBeenCalledTimes(1);
-
-    // Quick book by vehicle jumps into the create flow
-    await fireEvent.press(screen.getByLabelText('Đặt nhanh Xe Tải Nhẹ'));
-    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
+    // Quick book by Ba Gác jumps into the create flow
+    await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Ba Gác/));
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('3_WHEEL_BIKE');
 
     // Wallet utility strip removed from home dashboard
     expect(screen.queryByText('Ví VietQR')).toBeNull();
@@ -113,13 +107,15 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   }, 60000);
 
-  it('renders calm empty states when there is no work yet', async () => {
+  it('renders calm pure booking state without noise when there is no active shipment', async () => {
     const screen = await render(
       <HomeDashboardScreen activeShipment={null} recentOrders={[]} />,
     );
 
-    expect(screen.getByText('Chưa có chuyến nào đang chạy')).toBeTruthy();
-    expect(screen.getByText('Bạn chưa có đơn hàng nào.')).toBeTruthy();
+    expect(screen.queryByTestId('home-active-shipments')).toBeNull();
+    expect(screen.queryByText('Chưa có chuyến nào đang chạy')).toBeNull();
+    expect(screen.queryByText('Bạn chưa có đơn hàng nào.')).toBeNull();
+    expect(screen.getByTestId('home-booking')).toBeTruthy();
 
     await screen.unmount();
   });
@@ -144,17 +140,14 @@ describe('HomeDashboardScreen', () => {
     expect(getTimeOfDayGreeting(new Date(2026, 8, 3, 20, 0))).toBe('Chào buổi tối');
   });
 
-  it('triggers onRegisterDriver when driver registration button is pressed', async () => {
-    const onRegisterDriver = jest.fn();
-    const screen = await render(
-      <HomeDashboardScreen onRegisterDriver={onRegisterDriver} />,
-    );
+  it('excludes bloat driver-partner card, service duplicates and promo banners from home dashboard', async () => {
+    const screen = await render(<HomeDashboardScreen />);
 
-    const driverBtn = screen.getByTestId('home-driver-btn');
-    expect(driverBtn).toBeTruthy();
-    expect(screen.getByText('Đăng ký tài xế')).toBeTruthy();
-    await fireEvent.press(driverBtn);
-    expect(onRegisterDriver).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('home-driver-btn')).toBeNull();
+    expect(screen.queryByTestId('home-services')).toBeNull();
+    expect(screen.queryByText('Đặt xe phù hợp với hàng')).toBeNull();
+    expect(screen.queryByText('Lên đơn từ địa chỉ đã lưu')).toBeNull();
+    expect(screen.queryByText('Gia nhập tài xế LEOPARD')).toBeNull();
 
     await screen.unmount();
   });
@@ -168,12 +161,13 @@ describe('HomeDashboardScreen', () => {
     // Default pickup location is prefilled
     expect(screen.getByDisplayValue('Kho Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
 
-    // Type a destination and submit via fast forward button
+    // Type a destination and submit via Big CTA button
     await fireEvent.changeText(
        screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
        'KCN Sóng Thần, Bình Dương',
     );
-    await fireEvent.press(screen.getByTestId('quick-book-submit-btn'));
+    await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+    await fireEvent.press(screen.getByText(/XÁC NHẬN GỌI XE/));
     await new Promise((r) => setTimeout(r, 450));
 
     expect(onQuickBook).toHaveBeenCalledWith(
@@ -184,59 +178,38 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it('shows all three informational slides and preserves their booking actions', async () => {
-    const onCreateOrder = jest.fn();
-    const screen = await render(<HomeDashboardScreen onCreateOrder={onCreateOrder} />);
-
-    expect(screen.getByText('Đặt xe phù hợp với hàng')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText(/Đặt xe phù hợp với hàng/));
-    await fireEvent.press(screen.getByLabelText('Chuyển đến ưu đãi 2'));
-    expect(screen.getByText('Lên đơn từ địa chỉ đã lưu')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText(/Lên đơn từ địa chỉ đã lưu/));
-    await fireEvent.press(screen.getByLabelText('Chuyển đến ưu đãi 3'));
-    expect(screen.getByText('Theo dõi từng chặng giao')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText(/Theo dõi từng chặng giao/));
-    expect(onCreateOrder).toHaveBeenCalledTimes(3);
-
-    await screen.unmount();
-  });
-
-  it.each([activeShipment, null])('places shipment status directly after booking before services (%p)', async (shipment) => {
+  it.each([
+    { shipment: activeShipment, shouldShow: true },
+    { shipment: null, shouldShow: false },
+  ])('handles active shipment with progressive disclosure ($shouldShow)', async ({ shipment, shouldShow }) => {
     const screen = await render(<HomeDashboardScreen activeShipment={shipment} />);
-    const sectionIds = ['home-booking', 'home-active-shipments', 'home-services'];
-    sectionIds.forEach((id) => expect(screen.getByTestId(id)).toBeTruthy());
-    const renderedTree = JSON.stringify(screen.toJSON());
-    expect(renderedTree.indexOf('home-booking')).toBeLessThan(renderedTree.indexOf('home-active-shipments'));
-    expect(renderedTree.indexOf('home-active-shipments')).toBeLessThan(renderedTree.indexOf('home-services'));
-    if (shipment === null) {
-      expect(screen.getByLabelText('Tra cứu mã vận đơn')).toBeTruthy();
-    } else {
+    expect(screen.getByTestId('home-booking')).toBeTruthy();
+    if (shouldShow) {
+      expect(screen.getByTestId('home-active-shipments')).toBeTruthy();
       expect(screen.getByLabelText(/Chuyến đang vận chuyển/)).toBeTruthy();
+    } else {
+      expect(screen.queryByTestId('home-active-shipments')).toBeNull();
     }
 
     await screen.unmount();
   });
 
-  it('keeps every redesigned service card connected to its booking flow', async () => {
+  it('connects fleet matrix vehicles to booking flow', async () => {
     const onSelectVehicleAndBook = jest.fn();
-    const onCreateOrder = jest.fn();
     const screen = await render(
-      <HomeDashboardScreen onCreateOrder={onCreateOrder} onSelectVehicleAndBook={onSelectVehicleAndBook} />,
+      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} defaultDropoffLocation="KCN Tân Tạo" />,
     );
 
-    for (const [label, vehicleId] of [
+    for (const [name, category] of [
+      ['Van 500kg', 'LIGHT_TRUCK'],
+      ['Xe Tải 1.25T', 'LIGHT_TRUCK'],
+      ['Xe Tải 2.5T', 'HEAVY_TRUCK'],
       ['Xe Ba Gác', '3_WHEEL_BIKE'],
-      ['Xe Tải Nhẹ', 'LIGHT_TRUCK'],
-      ['Xe Tải Nặng', 'HEAVY_TRUCK'],
-    ]) {
-      await fireEvent.press(screen.getByLabelText(`Đặt nhanh ${label}`));
-      expect(onSelectVehicleAndBook).toHaveBeenLastCalledWith(vehicleId);
+    ] as const) {
+      await fireEvent.press(screen.getByLabelText(new RegExp(`Chọn xe ${name}`)));
+      expect(onSelectVehicleAndBook).toHaveBeenLastCalledWith(category);
     }
-    expect(onSelectVehicleAndBook).toHaveBeenCalledTimes(3);
-    for (const label of ['Giao Hỏa Tốc', 'Dịch Vụ Bốc Xếp', 'Thu Hộ COD']) {
-      await fireEvent.press(screen.getByLabelText(`Đặt nhanh ${label}`));
-    }
-    expect(onCreateOrder).toHaveBeenCalledTimes(3);
+    expect(onSelectVehicleAndBook).toHaveBeenCalledTimes(4);
 
     await screen.unmount();
   });
@@ -320,90 +293,65 @@ describe('HomeDashboardScreen', () => {
     // Focus pickup input to open dropdown
     await fireEvent(screen.getByTestId('cr-pickup-input'), 'focus');
 
-    // Tap "Xác nhận vị trí trên bản đồ"
-    const mapActionBtn = screen.getByLabelText('Xác nhận vị trí trên bản đồ');
-    expect(mapActionBtn).toBeTruthy();
-    await fireEvent.press(mapActionBtn);
+    // Shows search prompt when empty (no fake hardcoded places)
+    expect(screen.getByText('ĐIỂM LẤY HÀNG · GỢI Ý VỊ TRÍ')).toBeTruthy();
+    expect(screen.getByText('Nhập địa chỉ hoặc tên đường để tìm kiếm...')).toBeTruthy();
 
-    // Map modal is shown
-    expect(screen.getAllByText('Thông tin người gửi').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Lấy hàng tại')).toBeTruthy();
+    // Type query
+    await fireEvent.changeText(screen.getByTestId('cr-pickup-input'), 'Cát Lái');
+    expect(screen.getByText('Cảng Cát Lái')).toBeTruthy();
 
-    // Enter real address in modal input
-    const addressInput = screen.getByLabelText('Địa chỉ lấy hàng');
-    expect(addressInput).toBeTruthy();
-    await fireEvent.changeText(addressInput, 'Kho Tân Bình, TP. Hồ Chí Minh');
-
-    // Test "Thay đổi" button: clears to re-enter without opening address book modal
-    const changeBtn = screen.getByLabelText('Thay đổi địa chỉ');
-    expect(changeBtn).toBeTruthy();
-    await fireEvent.press(changeBtn);
-    expect(screen.getByLabelText('Địa chỉ lấy hàng').props.value).toBe('');
-
-    // Type final address
-    await fireEvent.changeText(screen.getByLabelText('Địa chỉ lấy hàng'), '120 Trường Chinh, Quận Tân Bình');
-
-    // Tap "Tôi là người gửi" shortcut
-    await fireEvent.press(screen.getByLabelText('Tôi là người gửi'));
-    expect(screen.getByDisplayValue('Anh Hoàng')).toBeTruthy();
-    expect(screen.getByDisplayValue('0901234567')).toBeTruthy();
-
-    // Tap "Lưu" to confirm
-    await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
+    // Tap a suggestion
+    await fireEvent.press(screen.getByLabelText('Chọn gợi ý Cảng Cát Lái'));
 
     // Address is applied to pickup text
-    expect(screen.getByDisplayValue('120 Trường Chinh, Quận Tân Bình')).toBeTruthy();
+    expect(screen.getByDisplayValue('Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh')).toBeTruthy();
 
     await screen.unmount();
   }, 30000);
 
-  it('supports entering destination address and filling receiver info with logged in customer', async () => {
+  it('filters live location suggestions as customer types destination', async () => {
     const screen = await render(
-      <HomeDashboardScreen userName="Nguyễn Văn A" userPhone="0987654321" />,
+      <HomeDashboardScreen />,
     );
 
-    // Click direct map pin button on dropoff input
-    const dropoffMapBtn = screen.getByLabelText('Mở bản đồ chọn điểm giao');
-    await fireEvent.press(dropoffMapBtn);
+    // Focus dropoff input
+    const dropoffInput = screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...');
+    await fireEvent(dropoffInput, 'focus');
+    await fireEvent.changeText(dropoffInput, 'Cát Lái');
 
-    // Map modal is shown for dropoff
-    expect(screen.getAllByText('Thông tin người nhận').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Giao hàng đến')).toBeTruthy();
+    // Suggestions filter in real-time
+    expect(screen.getByText('Cảng Cát Lái')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Chọn gợi ý Cảng Cát Lái'));
 
-    // Enter dropoff address directly in modal
-    await fireEvent.changeText(
-      screen.getByLabelText('Địa chỉ giao hàng'),
-      'Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh',
-    );
-
-    // Tap "Tôi là người nhận"
-    await fireEvent.press(screen.getByLabelText('Tôi là người nhận'));
-    expect(screen.getByDisplayValue('Nguyễn Văn A')).toBeTruthy();
-    expect(screen.getByDisplayValue('0987654321')).toBeTruthy();
-
-    // Save
-    await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
-    expect(screen.getByDisplayValue('Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh')).toBeTruthy();
+    // Destination is updated
+    expect(screen.getByDisplayValue('Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh')).toBeTruthy();
 
     await screen.unmount();
   }, 30000);
 
-  it('supports opening map picker directly via input map pin button', async () => {
+  it('matches Vietnamese locations without accents like Google Maps', async () => {
+    const screen = await render(<HomeDashboardScreen />);
+    const dropoffInput = screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...');
+    await fireEvent(dropoffInput, 'focus');
+    await fireEvent.changeText(dropoffInput, 'cong hoa');
+
+    expect(screen.getByText('Đường Cộng Hòa')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Chọn gợi ý Đường Cộng Hòa'));
+
+    expect(screen.getByDisplayValue('Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
+
+    await screen.unmount();
+  }, 30000);
+
+  it('keeps input rows clean without redundant map picker buttons', async () => {
     const screen = await render(
       <HomeDashboardScreen userName="Anh Hoàng" />,
     );
 
-    // Direct map pin button on pickup row
-    const directMapBtn = screen.getByLabelText('Mở bản đồ chọn điểm lấy');
-    expect(directMapBtn).toBeTruthy();
-    await fireEvent.press(directMapBtn);
-
-    // Map modal is shown immediately
-    expect(screen.getAllByText('Thông tin người gửi').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Lấy hàng tại')).toBeTruthy();
-
-    // Close map modal
-    await fireEvent.press(screen.getByLabelText('Đóng màn hình bản đồ'));
+    // Redundant map pin button inside input row is eliminated
+    expect(screen.queryByLabelText('Mở bản đồ chọn điểm lấy')).toBeNull();
+    expect(screen.queryByLabelText('Mở bản đồ chọn điểm giao')).toBeNull();
 
     await screen.unmount();
   }, 30000);
@@ -433,90 +381,18 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it('supports 1-tap reorder from recent orders to auto-populate and navigate', async () => {
-    const onQuickBook = jest.fn();
-    const screen = await render(
-      <HomeDashboardScreen
-        onQuickBook={onQuickBook}
-        recentOrders={recentOrders}
-      />,
-    );
-
-    // Tap "Đặt lại chuyến này →" on first order (Quận 7 -> Thủ Đức)
-    const reorderBtn = screen.getByLabelText('Đặt lại chuyến LP-240902');
-    expect(reorderBtn).toBeTruthy();
-    await fireEvent.press(reorderBtn);
-    await new Promise((r) => setTimeout(r, 450));
-
-    expect(onQuickBook).toHaveBeenCalledWith('Quận 7', 'Thủ Đức');
-
-    await screen.unmount();
-  });
-
-  it('allows quick tracking by order code', async () => {
-    const onOpenOrder = jest.fn();
-    const screen = await render(
-      <HomeDashboardScreen activeShipment={null} onOpenOrder={onOpenOrder} />,
-    );
-
-    const trackInput = screen.getByLabelText('Tra cứu mã vận đơn');
-    expect(trackInput).toBeTruthy();
-    await fireEvent.changeText(trackInput, 'LP-999999');
-    await fireEvent.press(screen.getByLabelText('Tra cứu đơn hàng'));
-
-    expect(onOpenOrder).toHaveBeenCalledWith('LP-999999');
-
-    await screen.unmount();
-  });
-
-  it('only displays delivered orders in recent orders section and excludes other statuses', async () => {
-    const screen = await render(
-      <HomeDashboardScreen
-        recentOrders={[
-          {
-            id: 'ord-deliv',
-            reference: 'LP-DELIVERED',
-            status: 'DELIVERED',
-            origin: 'Điểm lấy A',
-            destination: 'Điểm giao A',
-          },
-          {
-            id: 'ord-transit',
-            reference: 'LP-TRANSIT',
-            status: 'IN_TRANSIT',
-            origin: 'Điểm lấy B',
-            destination: 'Điểm giao B',
-          },
-          {
-            id: 'ord-req',
-            reference: 'LP-REQUESTED',
-            status: 'REQUESTED',
-            origin: 'Điểm lấy C',
-            destination: 'Điểm giao C',
-          },
-          {
-            id: 'ord-canc',
-            reference: 'LP-CANCELLED',
-            status: 'CANCELLED',
-            origin: 'Điểm lấy D',
-            destination: 'Điểm giao D',
-          },
-        ]}
-      />,
-    );
-
-    expect(screen.getByText('Đơn LP-DELIVERED')).toBeTruthy();
-    expect(screen.queryByText('Đơn LP-TRANSIT')).toBeNull();
-    expect(screen.queryByText('Đơn LP-REQUESTED')).toBeNull();
-    expect(screen.queryByText('Đơn LP-CANCELLED')).toBeNull();
-
+  it('enforces single responsibility principle by keeping home focused strictly on booking', async () => {
+    const screen = await render(<HomeDashboardScreen />);
+    expect(screen.getByTestId('home-booking')).toBeTruthy();
+    expect(screen.queryByTestId('home-recent-orders')).toBeNull();
+    expect(screen.queryByLabelText('Tra cứu mã vận đơn')).toBeNull();
     await screen.unmount();
   });
 
   it('displays vehicle dimensions (L x W x H) and cargo capacity in fleet matrix', async () => {
     const onSelectVehicleAndBook = jest.fn();
     const screen = await render(
-      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} />,
+      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} defaultDropoffLocation="KCN Tân Tạo" />,
     );
     expect(screen.getByText('3.2 x 1.6 x 1.7m')).toBeTruthy(); // Tải 1.25T
     expect(screen.getByText('2.1 x 1.3 x 1.2m')).toBeTruthy(); // Van 500kg
@@ -526,7 +402,7 @@ describe('HomeDashboardScreen', () => {
     expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
 
     // Tap CTA
-    await fireEvent.press(screen.getByLabelText(/Đặt xe ngay/));
+    await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
     expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
 
     await screen.unmount();
@@ -564,5 +440,139 @@ describe('HomeDashboardScreen', () => {
     expect(navStyle.zIndex).toBe(60);
 
     await screen.unmount();
+  });
+
+  describe('progressive disclosure for route and fleet selection', () => {
+    it('shows guiding prompt when destination is not selected and hides fleet matrix', async () => {
+      const screen = await render(<HomeDashboardScreen />);
+
+      // Guiding text is present
+      expect(screen.getByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeTruthy();
+
+      // Fleet matrix and fare estimate are hidden
+      expect(screen.queryByText('CHỌN LOẠI XE PHÙ HỢP')).toBeNull();
+      expect(screen.queryByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeNull();
+      expect(screen.queryByText(/TIẾP TỤC ĐẶT XE/)).toBeNull();
+
+      await screen.unmount();
+    });
+
+    it('reveals fleet matrix and CTA when saved address chip is tapped', async () => {
+      const screen = await render(
+        <HomeDashboardScreen
+          savedAddresses={[
+            {
+              id: 'addr-cat-lai',
+              label: 'Cảng Cát Lái',
+              address: 'Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh',
+              isDefault: false,
+              category: 'WAREHOUSE',
+            },
+          ]}
+        />,
+      );
+
+      // Tap saved warehouse chip
+      await fireEvent.press(screen.getByText('Cảng Cát Lái'));
+
+      // Dropoff text is auto-filled
+      expect(screen.getByDisplayValue('Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh')).toBeTruthy();
+
+      // Guiding prompt is now hidden
+      expect(screen.queryByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeNull();
+
+      // Fleet matrix, fare estimate, and CTA button are revealed
+      expect(screen.getByText('CHỌN LOẠI XE PHÙ HỢP')).toBeTruthy();
+      expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
+      expect(screen.getByText('TIẾP TỤC ĐẶT XE · 280.000 ₫ ➔')).toBeTruthy();
+
+      await screen.unmount();
+    });
+
+    it('reveals fleet matrix and CTA when dropoff destination is typed (>= 3 chars)', async () => {
+      const screen = await render(<HomeDashboardScreen />);
+
+      // Type 2 chars -> still hidden
+      await fireEvent.changeText(
+        screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
+        'KC',
+      );
+      expect(screen.getByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeTruthy();
+      expect(screen.queryByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeNull();
+
+      // Type 3rd char -> revealed
+      await fireEvent.changeText(
+        screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
+        'KCN',
+      );
+      expect(screen.queryByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeNull();
+      expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
+      expect(screen.getByText(/TIẾP TỤC ĐẶT XE/)).toBeTruthy();
+
+      // Clear -> hidden again
+      await fireEvent.press(screen.getByLabelText('Xóa điểm giao hàng'));
+      expect(screen.getByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeTruthy();
+      expect(screen.queryByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeNull();
+
+      await screen.unmount();
+    });
+  });
+
+  describe('in-place booking details modal flow', () => {
+    it('opens BookingDetailsModal when CTA is tapped with valid dropoff and invokes onConfirmBooking on confirm', async () => {
+      const onConfirmBooking = jest.fn();
+      const screen = await render(
+        <HomeDashboardScreen
+          defaultDropoffLocation="KCN Tân Tạo"
+          onConfirmBooking={onConfirmBooking}
+          userName="Nguyễn Văn A"
+          userPhone="0912345678"
+        />,
+      );
+
+      // Modal is not visible initially
+      expect(screen.queryByTestId('booking-details-modal')).toBeNull();
+
+      // Tap CTA
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+
+      // BookingDetailsModal is now visible
+      expect(screen.getByTestId('booking-details-modal')).toBeTruthy();
+      expect(screen.getByText('Chi tiết chuyến hàng')).toBeTruthy();
+      expect(screen.getByDisplayValue('Nguyễn Văn A')).toBeTruthy();
+      expect(screen.getByDisplayValue('0912345678')).toBeTruthy();
+
+      // Confirm modal
+      await fireEvent.press(screen.getByText(/XÁC NHẬN GỌI XE/));
+
+      expect(onConfirmBooking).toHaveBeenCalledTimes(1);
+      expect(onConfirmBooking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pickup: 'Kho Tân Bình, TP. Hồ Chí Minh',
+          dropoff: 'KCN Tân Tạo',
+          receiverName: 'Nguyễn Văn A',
+          receiverPhone: '0912345678',
+          vehicleCategory: 'LIGHT_TRUCK',
+          vehicleName: 'Xe Tải 1.25T',
+          totalFare: 280000,
+        }),
+      );
+
+      await screen.unmount();
+    });
+
+    it('closes modal when close button is pressed', async () => {
+      const screen = await render(
+        <HomeDashboardScreen defaultDropoffLocation="KCN Tân Tạo" />,
+      );
+
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByTestId('booking-details-modal')).toBeTruthy();
+
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+      expect(screen.queryByTestId('booking-details-modal')).toBeNull();
+
+      await screen.unmount();
+    });
   });
 });

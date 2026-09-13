@@ -8,3 +8,13 @@ export {
   reverseGeocodeCoords,
   type MapAddressPickerModalProps,
 } from './MapAddressPickerModal';
+
+export {
+  BookingDetailsModal,
+  CARGO_CATEGORIES,
+  formatVnd,
+  type BookingDetails,
+  type BookingDetailsModalProps,
+  type BookingPaymentMethod,
+} from './BookingDetailsModal';
+

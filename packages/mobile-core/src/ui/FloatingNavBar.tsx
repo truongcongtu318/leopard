@@ -77,7 +77,6 @@ function FloatingNavBarComponent({
             }}
             style={({ pressed }) => [
               styles.tabItem,
-              isActive ? { backgroundColor: resolvedAccentBg } : null,
               pressed ? styles.pressed : null,
             ]}
           >

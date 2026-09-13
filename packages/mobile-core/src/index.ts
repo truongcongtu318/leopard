@@ -45,6 +45,7 @@ export * from './ui/VehicleSelectCard';
 export * from './ui/icons/CoreIcons';
 export * from './ui/MediaImage';
 export * from './ui/GestureBottomSheet';
+export * from './ui/haptics';
 export * from './icons/svg-icons';
 export {
   IconAlertTriangle,
