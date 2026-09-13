@@ -71,17 +71,6 @@ export type RecentOrder = Readonly<{
 
 export type FleetVehicleCategory = 'VAN_500KG' | 'TRUCK_125T' | 'TRUCK_25T' | 'BIKE_3W';
 
-export type QuickDestinationHub = Readonly<{
-  label: string;
-  address: string;
-}>;
-
-export const QUICK_DESTINATION_HUBS: readonly QuickDestinationHub[] = [
-  { label: 'Kho Tân Tạo', address: 'KCN Tân Tạo, Lô B5, Bình Tân' },
-  { label: 'Cảng Cát Lái', address: 'Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh' },
-  { label: 'KCN Sóng Thần', address: 'KCN Sóng Thần, Dĩ An, Bình Dương' },
-];
-
 export type FleetVehicleItem = Readonly<{
   id: FleetVehicleCategory;
   name: string;
@@ -809,30 +798,32 @@ export function HomeDashboardScreen({
               </View>
             ) : null}
 
-            {/* Progressive Disclosure: Guiding Prompt & Quick Destination Hubs OR Fleet Matrix */}
+            {/* Progressive Disclosure: Guiding Prompt & User's Saved Addresses OR Fleet Matrix */}
             {!hasSelectedDropoff ? (
               <View style={styles.progressivePromptSection} testID="home-unselected-dropoff">
-                <Text style={styles.guidingPromptText}>Chọn điểm giao để xem giá và gọi xe</Text>
-                <ScrollView
-                  contentContainerStyle={styles.quickHubsScrollContent}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  testID="quick-hubs-row"
-                >
-                  {QUICK_DESTINATION_HUBS.map((hub) => (
-                    <Pressable
-                      accessibilityLabel={`Giao đến ${hub.label}`}
-                      accessibilityRole="button"
-                      key={hub.label}
-                      onPress={() => setDropoffText(hub.address)}
-                      style={({ pressed }) => [styles.hubChip, pressed && styles.hubChipPressed]}
-                      testID={`hub-chip-${hub.label}`}
-                    >
-                      <IconWarehouse color="#0284C7" size={16} />
-                      <Text style={styles.hubChipText}>{hub.label}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
+                <Text style={styles.guidingPromptText}>Nhập địa chỉ giao hàng để tính giá cước và gọi xe</Text>
+                {addressList.length > 0 ? (
+                  <ScrollView
+                    contentContainerStyle={styles.quickHubsScrollContent}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    testID="quick-hubs-row"
+                  >
+                    {addressList.map((addr) => (
+                      <Pressable
+                        accessibilityLabel={`Giao đến ${addr.label || addr.address}`}
+                        accessibilityRole="button"
+                        key={addr.id}
+                        onPress={() => setDropoffText(addr.address)}
+                        style={({ pressed }) => [styles.hubChip, pressed && styles.hubChipPressed]}
+                        testID={`hub-chip-${addr.label || addr.id}`}
+                      >
+                        <IconWarehouse color="#0284C7" size={16} />
+                        <Text style={styles.hubChipText}>{addr.label || addr.address}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                ) : null}
               </View>
             ) : (
               <View style={styles.fleetMatrixSection} testID="home-fleet-matrix">

@@ -440,16 +440,11 @@ describe('HomeDashboardScreen', () => {
   });
 
   describe('progressive disclosure for route and fleet selection', () => {
-    it('shows guiding prompt and quick hub chips when destination is not selected', async () => {
+    it('shows guiding prompt when destination is not selected and hides fleet matrix', async () => {
       const screen = await render(<HomeDashboardScreen />);
 
       // Guiding text is present
-      expect(screen.getByText('Chọn điểm giao để xem giá và gọi xe')).toBeTruthy();
-
-      // 3 quick destination warehouse chips are present
-      expect(screen.getByText('Kho Tân Tạo')).toBeTruthy();
-      expect(screen.getByText('Cảng Cát Lái')).toBeTruthy();
-      expect(screen.getByText('KCN Sóng Thần')).toBeTruthy();
+      expect(screen.getByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeTruthy();
 
       // Fleet matrix and fare estimate are hidden
       expect(screen.queryByText('CHỌN LOẠI XE PHÙ HỢP')).toBeNull();
@@ -459,17 +454,29 @@ describe('HomeDashboardScreen', () => {
       await screen.unmount();
     });
 
-    it('reveals fleet matrix and CTA when quick destination chip is tapped', async () => {
-      const screen = await render(<HomeDashboardScreen />);
+    it('reveals fleet matrix and CTA when saved address chip is tapped', async () => {
+      const screen = await render(
+        <HomeDashboardScreen
+          savedAddresses={[
+            {
+              id: 'addr-cat-lai',
+              label: 'Cảng Cát Lái',
+              address: 'Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh',
+              isDefault: false,
+              category: 'WAREHOUSE',
+            },
+          ]}
+        />,
+      );
 
-      // Tap Kho Tân Tạo chip
-      await fireEvent.press(screen.getByText('Kho Tân Tạo'));
+      // Tap saved warehouse chip
+      await fireEvent.press(screen.getByText('Cảng Cát Lái'));
 
       // Dropoff text is auto-filled
-      expect(screen.getByDisplayValue('KCN Tân Tạo, Lô B5, Bình Tân')).toBeTruthy();
+      expect(screen.getByDisplayValue('Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh')).toBeTruthy();
 
-      // Guiding prompt and chips are now hidden
-      expect(screen.queryByText('Chọn điểm giao để xem giá và gọi xe')).toBeNull();
+      // Guiding prompt is now hidden
+      expect(screen.queryByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeNull();
 
       // Fleet matrix, fare estimate, and CTA button are revealed
       expect(screen.getByText('CHỌN LOẠI XE PHÙ HỢP')).toBeTruthy();
@@ -487,7 +494,7 @@ describe('HomeDashboardScreen', () => {
         screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
         'KC',
       );
-      expect(screen.getByText('Chọn điểm giao để xem giá và gọi xe')).toBeTruthy();
+      expect(screen.getByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeTruthy();
       expect(screen.queryByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeNull();
 
       // Type 3rd char -> revealed
@@ -495,27 +502,14 @@ describe('HomeDashboardScreen', () => {
         screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
         'KCN',
       );
-      expect(screen.queryByText('Chọn điểm giao để xem giá và gọi xe')).toBeNull();
+      expect(screen.queryByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeNull();
       expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
       expect(screen.getByText(/TIẾP TỤC ĐẶT XE/)).toBeTruthy();
 
       // Clear -> hidden again
       await fireEvent.press(screen.getByLabelText('Xóa điểm giao hàng'));
-      expect(screen.getByText('Chọn điểm giao để xem giá và gọi xe')).toBeTruthy();
+      expect(screen.getByText('Nhập địa chỉ giao hàng để tính giá cước và gọi xe')).toBeTruthy();
       expect(screen.queryByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeNull();
-
-      await screen.unmount();
-    });
-
-    it('auto-fills corresponding address for each quick hub chip', async () => {
-      const screen = await render(<HomeDashboardScreen />);
-
-      await fireEvent.press(screen.getByText('Cảng Cát Lái'));
-      expect(screen.getByDisplayValue('Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh')).toBeTruthy();
-
-      await fireEvent.press(screen.getByLabelText('Xóa điểm giao hàng'));
-      await fireEvent.press(screen.getByText('KCN Sóng Thần'));
-      expect(screen.getByDisplayValue('KCN Sóng Thần, Dĩ An, Bình Dương')).toBeTruthy();
 
       await screen.unmount();
     });
