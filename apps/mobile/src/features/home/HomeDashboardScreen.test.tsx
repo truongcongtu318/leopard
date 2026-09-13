@@ -290,83 +290,51 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(clearPickupBtn);
     expect(screen.getByPlaceholderText('Nhập địa chỉ lấy hàng...').props.value).toBe('');
 
-    // Focus pickup input to open dropdown
+    // Focus pickup input to open dropdown with live suggestions
     await fireEvent(screen.getByTestId('cr-pickup-input'), 'focus');
 
-    // Tap "Xác nhận vị trí trên bản đồ"
-    const mapActionBtn = screen.getByLabelText('Xác nhận vị trí trên bản đồ');
-    expect(mapActionBtn).toBeTruthy();
-    await fireEvent.press(mapActionBtn);
+    // Live suggestions are shown
+    expect(screen.getByText('ĐIỂM LẤY HÀNG · GỢI Ý VỊ TRÍ')).toBeTruthy();
+    expect(screen.getAllByText('Kho Tân Bình').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('KCN Tân Tạo').length).toBeGreaterThanOrEqual(1);
 
-    // Map modal is shown
-    expect(screen.getAllByText('Ghim điểm lấy hàng').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Lấy hàng tại')).toBeTruthy();
-
-    // Enter real address in modal input
-    const addressInput = screen.getByLabelText('Địa chỉ lấy hàng');
-    expect(addressInput).toBeTruthy();
-    await fireEvent.changeText(addressInput, 'Kho Tân Bình, TP. Hồ Chí Minh');
-
-    // Test "Thay đổi" button: clears to re-enter without opening address book modal
-    const changeBtn = screen.getByLabelText('Thay đổi địa chỉ');
-    expect(changeBtn).toBeTruthy();
-    await fireEvent.press(changeBtn);
-    expect(screen.getByLabelText('Địa chỉ lấy hàng').props.value).toBe('');
-
-    // Type final address
-    await fireEvent.changeText(screen.getByLabelText('Địa chỉ lấy hàng'), '120 Trường Chinh, Quận Tân Bình');
-
-    // Tap "Lưu" to confirm
-    await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
+    // Tap a suggestion
+    await fireEvent.press(screen.getByLabelText('Chọn gợi ý Kho Tân Bình'));
 
     // Address is applied to pickup text
-    expect(screen.getByDisplayValue('120 Trường Chinh, Quận Tân Bình')).toBeTruthy();
+    expect(screen.getByDisplayValue('120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
 
     await screen.unmount();
   }, 30000);
 
-  it('supports entering destination address via map modal', async () => {
+  it('filters live location suggestions as customer types destination', async () => {
     const screen = await render(
-      <HomeDashboardScreen userName="Nguyễn Văn A" userPhone="0987654321" />,
+      <HomeDashboardScreen />,
     );
 
-    // Click direct map pin button on dropoff input
-    const dropoffMapBtn = screen.getByLabelText('Mở bản đồ chọn điểm giao');
-    await fireEvent.press(dropoffMapBtn);
+    // Focus dropoff input
+    const dropoffInput = screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...');
+    await fireEvent(dropoffInput, 'focus');
+    await fireEvent.changeText(dropoffInput, 'Cát Lái');
 
-    // Map modal is shown for dropoff
-    expect(screen.getAllByText('Ghim điểm giao hàng').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Giao hàng đến')).toBeTruthy();
+    // Suggestions filter in real-time
+    expect(screen.getByText('Cảng Cát Lái')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Chọn gợi ý Cảng Cát Lái'));
 
-    // Enter dropoff address directly in modal
-    await fireEvent.changeText(
-      screen.getByLabelText('Địa chỉ giao hàng'),
-      'Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh',
-    );
-
-    // Save
-    await fireEvent.press(screen.getByLabelText('Lưu thông tin vị trí'));
-    expect(screen.getByDisplayValue('Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh')).toBeTruthy();
+    // Destination is updated
+    expect(screen.getByDisplayValue('Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh')).toBeTruthy();
 
     await screen.unmount();
   }, 30000);
 
-  it('supports opening map picker directly via input map pin button', async () => {
+  it('keeps input rows clean without redundant map picker buttons', async () => {
     const screen = await render(
       <HomeDashboardScreen userName="Anh Hoàng" />,
     );
 
-    // Direct map pin button on pickup row
-    const directMapBtn = screen.getByLabelText('Mở bản đồ chọn điểm lấy');
-    expect(directMapBtn).toBeTruthy();
-    await fireEvent.press(directMapBtn);
-
-    // Map modal is shown immediately
-    expect(screen.getAllByText('Ghim điểm lấy hàng').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Lấy hàng tại')).toBeTruthy();
-
-    // Close map modal
-    await fireEvent.press(screen.getByLabelText('Đóng màn hình bản đồ'));
+    // Redundant map pin button inside input row is eliminated
+    expect(screen.queryByLabelText('Mở bản đồ chọn điểm lấy')).toBeNull();
+    expect(screen.queryByLabelText('Mở bản đồ chọn điểm giao')).toBeNull();
 
     await screen.unmount();
   }, 30000);

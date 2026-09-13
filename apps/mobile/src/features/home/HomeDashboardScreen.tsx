@@ -41,7 +41,6 @@ import {
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
 import {
   BookingDetailsModal,
-  MapAddressPickerModal,
   reverseGeocodeCoords,
   SavedAddressPickerModal,
   type BookingDetails,
@@ -298,9 +297,7 @@ export function HomeDashboardScreen({
   const [focusedField, setFocusedField] = useState<'pickup' | 'dropoff' | null>(null);
   const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
   const [savedAddressModalTarget, setSavedAddressModalTarget] = useState<'pickup' | 'dropoff'>('pickup');
-  const [showMapPickerModal, setShowMapPickerModal] = useState(false);
   const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
-  const [mapTarget, setMapTarget] = useState<'pickup' | 'dropoff'>('pickup');
   const [loggedInCustomer, setLoggedInCustomer] = useState<{ name?: string; phone?: string } | null>(null);
   const [addressStoreVersion, setAddressStoreVersion] = useState(0);
   const [isAutoNavigating, setIsAutoNavigating] = useState(false);
@@ -343,22 +340,6 @@ export function HomeDashboardScreen({
     },
     [onQuickBook, onCreateOrder],
   );
-
-  const handleOpenMapPicker = (target: 'pickup' | 'dropoff') => {
-    setMapTarget(target);
-    setShowMapPickerModal(true);
-  };
-
-  const handleConfirmMapLocation = (finalAddress: string, extra?: { coords?: { lat: number; lng: number } }) => {
-    if (mapTarget === 'pickup') {
-      setPickupText(finalAddress);
-      setPickupLabel(null);
-    } else {
-      setDropoffText(finalAddress);
-    }
-    setShowMapPickerModal(false);
-    setFocusedField(null);
-  };
 
   useEffect(() => {
     if (defaultPickupLocation) {
@@ -560,9 +541,6 @@ export function HomeDashboardScreen({
                       <IconClose color="#94A3B8" size={14} />
                     </Pressable>
                   ) : null}
-                  <Pressable accessibilityLabel="Mở bản đồ chọn điểm lấy" accessibilityRole="button" hitSlop={8} onPress={() => handleOpenMapPicker('pickup')} style={styles.inputActionBtn}>
-                    <IconPin color="#0B1E42" size={16} />
-                  </Pressable>
                 </View>
 
                 <View style={styles.inputDivider} />
@@ -584,9 +562,6 @@ export function HomeDashboardScreen({
                       <IconClose color="#94A3B8" size={14} />
                     </Pressable>
                   ) : null}
-                  <Pressable accessibilityLabel="Mở bản đồ chọn điểm giao" accessibilityRole="button" hitSlop={8} onPress={() => handleOpenMapPicker('dropoff')} style={styles.inputActionBtn}>
-                    <IconPin color="#DC2626" size={16} />
-                  </Pressable>
                 </View>
               </View>
             </View>
@@ -634,19 +609,6 @@ export function HomeDashboardScreen({
 
                 <View style={styles.dropdownDivider} />
 
-                <Pressable
-                  accessibilityLabel="Xác nhận vị trí trên bản đồ" accessibilityRole="button"
-                  onPress={() => { const t = focusedField || 'pickup'; setFocusedField(null); handleOpenMapPicker(t); }}
-                  style={({ pressed }) => [styles.dropdownItem, pressed && styles.dropdownItemPressed]}
-                >
-                  <View style={styles.dropdownIconCircle}><IconPin color="#0B1E42" size={16} /></View>
-                  <View style={styles.dropdownItemTextWrap}>
-                    <Text style={styles.dropdownItemTitle}>Xác nhận vị trí trên bản đồ</Text>
-                    <Text style={styles.dropdownItemSub}>Ghim vị trí chính xác trực quan trên bản đồ</Text>
-                  </View>
-                  <IconChevron color="#94A3B8" direction="right" size={16} />
-                </Pressable>
-                <View style={styles.dropdownDivider} />
                 <Pressable
                   accessibilityLabel="Chọn từ sổ địa chỉ" accessibilityRole="button"
                   onPress={() => { const t = focusedField || 'pickup'; setSavedAddressModalTarget(t); setFocusedField(null); setShowSavedAddressModal(true); }}
@@ -825,8 +787,8 @@ export function HomeDashboardScreen({
       <SavedAddressPickerModal
         addressList={addressList} currentAddress={savedAddressModalTarget === 'pickup' ? pickupText : dropoffText}
         onClose={() => setShowSavedAddressModal(false)}
+        onOpenMapPicker={() => {}}
         onDeleteAddress={(id) => { addressStore.deleteAddress(id); setAddressStoreVersion((v) => v + 1); }}
-        onOpenMapPicker={(target) => { setShowSavedAddressModal(false); handleOpenMapPicker(target); }}
         onOpenSavedAddresses={onOpenSavedAddresses ? () => { setShowSavedAddressModal(false); onOpenSavedAddresses(); } : undefined}
         onSelectAddress={(addr) => {
           if (savedAddressModalTarget === 'pickup') {
@@ -841,14 +803,6 @@ export function HomeDashboardScreen({
           setFocusedField(null);
         }}
         target={savedAddressModalTarget} visible={showSavedAddressModal}
-      />
-
-      {/* ================= MODAL XÁC NHẬN BẢN ĐỒ ================= */}
-      <MapAddressPickerModal
-        defaultFallbackAddress={initialAddress} initialAddress={mapTarget === 'pickup' ? pickupText : dropoffText}
-        loggedInCustomer={loggedInCustomer} onClose={() => setShowMapPickerModal(false)}
-        onConfirm={handleConfirmMapLocation} target={mapTarget} userName={userName} userPhone={userPhone} visible={showMapPickerModal}
-        showContactFields={false}
       />
 
       {/* ================= MODAL CHI TIẾT ĐẶT XE ================= */}
