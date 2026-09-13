@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -41,7 +41,7 @@ interface AuthResponse {
 const NUM_CELLS = 6;
 const COUNTDOWN_INITIAL = 60;
 const DRIVER_ACCENT = '#F97316';
-const driverHeroBg = require('../../assets/brand/driver-hero-bg.jpg');
+const driverHeroBg = require('../../../mobile/assets/brand/driver-hero-bg.jpg');
 
 export default function DriverVerifyOtpRoute() {
   const router = useRouter();
@@ -54,6 +54,11 @@ export default function DriverVerifyOtpRoute() {
   const [countdown, setCountdown] = useState(COUNTDOWN_INITIAL);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const otpInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    otpInputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -216,13 +221,20 @@ export default function DriverVerifyOtpRoute() {
                 void handleVerify(cleaned);
               }
             }}
+            ref={otpInputRef}
+            showSoftInputOnFocus={false}
             style={styles.hiddenInput}
             textContentType="oneTimeCode"
             value={otp}
           />
 
           {/* 6 OTP Cells */}
-          <View style={styles.cellsRow} testID="otp-boxes">
+          <Pressable
+            accessible={false}
+            onPress={() => otpInputRef.current?.focus()}
+            style={styles.cellsRow}
+            testID="otp-boxes"
+          >
             {Array.from({ length: NUM_CELLS }).map((_, index) => {
               const digit = otp[index] ?? '';
               const isCellActive = otp.length === index;
@@ -243,7 +255,7 @@ export default function DriverVerifyOtpRoute() {
                 </View>
               );
             })}
-          </View>
+          </Pressable>
 
           {/* Resend / Countdown */}
           <View style={styles.resendRow}>
@@ -289,6 +301,8 @@ export default function DriverVerifyOtpRoute() {
               <Pressable
                 accessibilityLabel={`Số ${n}`}
                 accessibilityRole="button"
+                accessibilityState={{ disabled: isSubmitting }}
+                disabled={isSubmitting}
                 key={n}
                 onPress={() => handleKeyPress(n)}
                 style={({ pressed }) => [
@@ -307,6 +321,8 @@ export default function DriverVerifyOtpRoute() {
               <Pressable
                 accessibilityLabel={`Số ${n}`}
                 accessibilityRole="button"
+                accessibilityState={{ disabled: isSubmitting }}
+                disabled={isSubmitting}
                 key={n}
                 onPress={() => handleKeyPress(n)}
                 style={({ pressed }) => [
@@ -325,6 +341,8 @@ export default function DriverVerifyOtpRoute() {
               <Pressable
                 accessibilityLabel={`Số ${n}`}
                 accessibilityRole="button"
+                accessibilityState={{ disabled: isSubmitting }}
+                disabled={isSubmitting}
                 key={n}
                 onPress={() => handleKeyPress(n)}
                 style={({ pressed }) => [
@@ -343,6 +361,8 @@ export default function DriverVerifyOtpRoute() {
             <Pressable
               accessibilityLabel="Số 0"
               accessibilityRole="button"
+              accessibilityState={{ disabled: isSubmitting }}
+              disabled={isSubmitting}
               onPress={() => handleKeyPress('0')}
               style={({ pressed }) => [
                 styles.numpadKey,
@@ -356,6 +376,8 @@ export default function DriverVerifyOtpRoute() {
             <Pressable
               accessibilityLabel="Xóa"
               accessibilityRole="button"
+              accessibilityState={{ disabled: isSubmitting }}
+              disabled={isSubmitting}
               onPress={() => handleKeyPress('backspace')}
               style={({ pressed }) => [
                 styles.numpadKey,

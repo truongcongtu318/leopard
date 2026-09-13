@@ -1,5 +1,5 @@
-import { DriverEarningsScreen } from '../src/features/earnings/DriverEarningsScreen';
+import { DriverEarningsRuntime } from '../src/features/earnings/DriverEarningsRuntime';
 
 export default function DriverEarningsRoute() {
-  return <DriverEarningsScreen />;
+  return <DriverEarningsRuntime />;
 }
