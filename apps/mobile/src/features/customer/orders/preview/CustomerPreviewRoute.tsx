@@ -3,13 +3,11 @@ import { useEffect, useState } from 'react';
 import { MobilePreviewComposition, createMobilePreviewSelection } from '../../../../preview';
 import type { MobilePreviewSelection } from '../../../../preview/scenario';
 import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
-import { CustomerCreateOrderScreen } from '../CustomerCreateOrderScreen';
 import { CustomerOrderDetailScreen } from '../CustomerOrderDetailScreen';
 import { CustomerOrdersScreen } from '../CustomerOrdersScreen';
-import { CustomerCreateOrderRuntime } from '../CustomerCreateOrderRuntime';
 import { CustomerOrderDetailRuntime } from '../CustomerOrderDetailRuntime';
 import { CustomerOrdersListRuntime } from '../CustomerOrdersListRuntime';
-import type { CustomerCreateView, CustomerDetailView, CustomerListView } from '../model';
+import type { CustomerDetailView, CustomerListView } from '../model';
 import type { CustomerPreviewScreen, CustomerPreviewView } from './catalogue';
 
 type PreviewState =
@@ -59,9 +57,6 @@ function RuntimeScreen({
       />
     );
   }
-  if (screen === 'create') {
-    return <CustomerCreateOrderRuntime onCreated={onOpenOrder ?? (() => {})} />;
-  }
   if (!orderId) {
     return (
       <ScreenScaffold title="Chi tiết đơn">
@@ -92,7 +87,6 @@ function PreviewScreen({
       />
     );
   }
-  if (screen === 'create') return <CustomerCreateOrderScreen view={view as CustomerCreateView} />;
   return <CustomerOrderDetailScreen view={view as CustomerDetailView} />;
 }
 

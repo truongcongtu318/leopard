@@ -32,7 +32,6 @@ jest.mock('react-native-qrcode-svg', () => {
 import LocationPickerScreen from '../../../../app/customer/location-picker';
 import OrderSearchingScreen from '../../../../app/customer/orders/searching/[id]';
 import OrderCheckoutScreen from '../../../../app/customer/orders/checkout/[id]';
-import CustomerCreateOrderPage from '../../../../app/customer/orders/new';
 import { addressStore } from '../addresses/address-store';
 
 describe('New Customer Screens (Task 4)', () => {
@@ -299,17 +298,6 @@ describe('New Customer Screens (Task 4)', () => {
 
       await screen.unmount();
       jest.useRealTimers();
-    });
-  });
-
-  describe('CustomerCreateOrderPage route (new.tsx)', () => {
-    it('routes onCreated to checkout screen', () => {
-      const element = CustomerCreateOrderPage();
-      expect(element).toBeDefined();
-      expect(element.props.onCreated).toBeDefined();
-
-      element.props.onCreated('test-order-123');
-      expect(mockReplace).toHaveBeenCalledWith('/customer/orders/checkout/test-order-123');
     });
   });
 });

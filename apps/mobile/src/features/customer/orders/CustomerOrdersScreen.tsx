@@ -1,9 +1,35 @@
-import { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ListRenderItemInfo } from 'react-native';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import type { OrderStatus } from '@leopard/shared';
-import { colors, customerPalette, layout, radius, spacing, typography, Button, IconSpeedTruck, OrderSummary, ScreenScaffold, SectionHeading, ScreenState, SkeletonCard, StatusBadge } from '@leopard/mobile-core';
+import {
+  Button,
+  colors,
+  customerPalette,
+  IconClock,
+  IconRoute,
+  IconSpeedTruck,
+  iosContinuousCurve,
+  layout,
+  radius,
+  ScreenScaffold,
+  ScreenState,
+  SkeletonCard,
+  SkeletonBar,
+  StatusBadge,
+  haptic,
+  spacing,
+  typography,
+} from '@leopard/mobile-core';
 import type {
   CustomerListContentView,
   CustomerListView,
@@ -35,13 +61,6 @@ const ACTIVE_STATUSES: readonly OrderStatus[] = [
   'IN_TRANSIT',
 ];
 
-const filters: readonly Readonly<{ value: CustomerOrderFilter; label: string }>[] = [
-  { value: 'ALL', label: 'Tất cả' },
-  { value: 'REQUESTED', label: 'Chờ tài xế' },
-  { value: 'IN_TRANSIT', label: 'Đang vận chuyển' },
-  { value: 'DELIVERED', label: 'Đã giao' },
-];
-
 // ── Helpers ──────────────────────────────────────────────────────────
 
 function isActiveOrder(status: OrderStatus): boolean {
@@ -50,24 +69,63 @@ function isActiveOrder(status: OrderStatus): boolean {
 
 function getActiveOrderStatusLabel(status: OrderStatus): string {
   switch (status) {
-    case 'REQUESTED':
-      return 'Chờ tài xế nhận';
-    case 'ACCEPTED':
-      return 'Tài xế đã nhận';
-    case 'PICKING_UP':
-      return 'Đang đến lấy hàng';
-    case 'PICKED_UP':
-      return 'Đã lấy hàng';
-    case 'IN_TRANSIT':
-      return 'Đang vận chuyển';
-    default:
-      return status;
+    case 'REQUESTED': return 'Đang tìm tài xế';
+    case 'ACCEPTED': return 'Tài xế đã nhận';
+    case 'PICKING_UP': return 'Đang đến lấy hàng';
+    case 'PICKED_UP': return 'Đã lấy hàng';
+    case 'IN_TRANSIT': return 'Đang vận chuyển';
+    default: return status;
   }
 }
 
-// ── Sub-components ───────────────────────────────────────────────────
+function getActiveStatusAccentColor(status: OrderStatus): string {
+  switch (status) {
+    case 'REQUESTED': return '#F59E0B';
+    case 'ACCEPTED': return '#0284C7';
+    case 'PICKING_UP': return '#8B5CF6';
+    case 'PICKED_UP': return '#0284C7';
+    case 'IN_TRANSIT': return '#16A34A';
+    default: return '#0B1E42';
+  }
+}
 
-function SegmentedControl({
+// ── Animated pulse dot ───────────────────────────────────────────────
+
+function PulseDot({ color, size = 8 }: Readonly<{ color: string; size?: number }>) {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.6, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [pulseAnim]);
+
+  return (
+    <View style={{ width: size * 2, height: size * 2, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: size * 2,
+          height: size * 2,
+          borderRadius: size,
+          backgroundColor: color,
+          opacity: 0.25,
+          transform: [{ scale: pulseAnim }],
+        }}
+      />
+      <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }} />
+    </View>
+  );
+}
+
+// ── iOS 18 Segmented Control ─────────────────────────────────────────
+
+function AppleSegmentedControl({
   activeSegment,
   activeCount,
   onSegmentChange,
@@ -77,95 +135,90 @@ function SegmentedControl({
   onSegmentChange: (segment: OrdersSegment) => void;
 }>) {
   return (
-    <View accessibilityRole="tablist" style={styles.segmentedBar}>
+    <View accessibilityRole="tablist" style={s.segmentedBar}>
       <Pressable
         accessibilityLabel={`Đang giao${activeCount > 0 ? ` (${activeCount})` : ''}`}
         accessibilityRole="tab"
         accessibilityState={{ selected: activeSegment === 'active' }}
-        onPress={() => onSegmentChange('active')}
-        style={[
-          styles.segmentTab,
-          activeSegment === 'active' ? styles.segmentTabActive : null,
-        ]}
+        onPress={() => { haptic.selection(); onSegmentChange('active'); }}
+        style={[s.segmentTab, activeSegment === 'active' && s.segmentTabActive]}
       >
-        {activeCount > 0 ? <View style={styles.segmentLiveDot} /> : null}
-        <Text
-          style={[
-            styles.segmentLabel,
-            activeSegment === 'active' ? styles.segmentLabelActive : null,
-          ]}
-        >
+        {activeCount > 0 ? <PulseDot color="#16A34A" size={5} /> : null}
+        <Text style={[s.segmentLabel, activeSegment === 'active' && s.segmentLabelActive]}>
           Đang giao
         </Text>
         {activeCount > 0 ? (
-          <View style={styles.segmentBadge}>
-            <Text style={styles.segmentBadgeText}>{activeCount}</Text>
+          <View style={s.segmentBadge}>
+            <Text style={s.segmentBadgeText}>{activeCount}</Text>
           </View>
         ) : null}
       </Pressable>
 
       <Pressable
-        accessibilityLabel="Tất cả đơn hàng"
+        accessibilityLabel="Lịch sử"
         accessibilityRole="tab"
         accessibilityState={{ selected: activeSegment === 'all' }}
-        onPress={() => onSegmentChange('all')}
-        style={[
-          styles.segmentTab,
-          activeSegment === 'all' ? styles.segmentTabActive : null,
-        ]}
+        onPress={() => { haptic.selection(); onSegmentChange('all'); }}
+        style={[s.segmentTab, activeSegment === 'all' && s.segmentTabActive]}
       >
-        <Text
-          style={[
-            styles.segmentLabel,
-            activeSegment === 'all' ? styles.segmentLabelActive : null,
-          ]}
-        >
-          Tất cả đơn hàng
+        <Text style={[s.segmentLabel, activeSegment === 'all' && s.segmentLabelActive]}>
+          Lịch sử
         </Text>
       </Pressable>
     </View>
   );
 }
 
-function FilterChip({
-  label,
-  onPress,
-  selected,
-}: Readonly<{ label: string; selected: boolean; onPress?: () => void }>) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.filter,
-        selected ? styles.filterSelected : null,
-        pressed ? styles.pressed : null,
-      ]}
-    >
-      <Text style={[styles.filterLabel, selected ? styles.filterLabelSelected : null]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+// ── Inline Filter Bar (local, no callback) ───────────────────────────
 
-function Notice({ view }: Readonly<{ view: CustomerListContentView }>) {
-  if (!view.notice) return null;
-  const isError = view.contentState === 'page-error';
+type LocalFilter = 'ALL' | 'DELIVERED' | 'CANCELLED';
+
+const LOCAL_FILTERS: readonly Readonly<{ value: LocalFilter; label: string }>[] = [
+  { value: 'ALL', label: 'Tất cả' },
+  { value: 'DELIVERED', label: 'Hoàn thành' },
+  { value: 'CANCELLED', label: 'Đã hủy' },
+];
+
+function InlineFilterBar({
+  selected,
+  onSelect,
+  counts,
+}: Readonly<{
+  selected: LocalFilter;
+  onSelect: (f: LocalFilter) => void;
+  counts: Readonly<Record<LocalFilter, number>>;
+}>) {
   return (
-    <View
-      accessibilityLiveRegion="polite"
-      style={[styles.notice, isError ? styles.noticeError : styles.noticeWarning]}
-    >
-      <Text accessibilityRole={isError ? 'alert' : undefined} style={styles.noticeText}>
-        {view.notice}
-      </Text>
+    <View style={s.filterBar}>
+      {LOCAL_FILTERS.map((f) => {
+        const isActive = f.value === selected;
+        const count = counts[f.value];
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: isActive }}
+            key={f.value}
+            onPress={() => { haptic.selection(); onSelect(f.value); }}
+            style={[s.filterChip, isActive && s.filterChipActive]}
+          >
+            <Text style={[s.filterChipText, isActive && s.filterChipTextActive]}>
+              {f.label}
+            </Text>
+            {count > 0 ? (
+              <Text style={[s.filterChipCount, isActive && s.filterChipCountActive]}>
+                {count}
+              </Text>
+            ) : null}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
-function ActiveOrderCard({
+// ── Hero Active Order Card ───────────────────────────────────────────
+
+function ActiveOrderHeroCard({
   order,
   onPress,
 }: Readonly<{
@@ -173,84 +226,215 @@ function ActiveOrderCard({
   onPress?: () => void;
 }>) {
   const statusLabel = getActiveOrderStatusLabel(order.status);
+  const accentColor = getActiveStatusAccentColor(order.status);
 
   return (
     <Pressable
-      accessibilityHint="Mở chi tiết đơn hàng"
+      accessibilityHint="Theo dõi chuyến hàng"
       accessibilityLabel={`${order.reference}, ${statusLabel}`}
       accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.activeCard,
-        pressed ? styles.activeCardPressed : null,
-      ]}
+      onPress={() => { haptic.light(); onPress?.(); }}
+      style={({ pressed }) => [s.heroCard, pressed && s.heroCardPressed]}
     >
-      {/* Header: status + reference */}
-      <View style={styles.activeCardHeader}>
-        <StatusBadge domain="order" status={order.status} />
-        <Text numberOfLines={1} style={styles.activeCardRef}>
-          {order.reference}
-        </Text>
-      </View>
-
-      {/* Route: origin → destination */}
-      <View style={styles.activeCardRoute}>
-        <View style={styles.activeRouteLine}>
-          <View style={styles.routeDotOrigin} />
-          <View style={styles.routeConnector} />
-          <View style={styles.routeDotDest} />
+      {/* Dark gradient map strip */}
+      <View style={s.heroMapStrip}>
+        <View style={s.heroMapGradient} />
+        {/* Route line overlay */}
+        <View style={s.heroRouteLine}>
+          <View style={[s.heroRouteEndpoint, { backgroundColor: '#0284C7' }]} />
+          <View style={s.heroRouteDash} />
+          <View style={s.heroRouteDash} />
+          <View style={s.heroRouteDash} />
+          <View style={[s.heroRouteEndpoint, { backgroundColor: '#16A34A' }]} />
         </View>
-        <View style={styles.activeRouteLabels}>
-          <Text numberOfLines={1} style={styles.routeLabel}>
-            {order.route.origin.label}
-          </Text>
-          <Text numberOfLines={1} style={styles.routeLabel}>
-            {order.route.destination.label}
-          </Text>
+        {/* Status overlay pill */}
+        <View style={[s.heroStatusPill, { backgroundColor: accentColor }]}>
+          <PulseDot color="#FFFFFF" size={4} />
+          <Text style={s.heroStatusText}>{statusLabel}</Text>
         </View>
       </View>
 
-      {/* Footer: meta + action */}
-      <View style={styles.activeCardFooter}>
-        <View style={styles.activeCardMeta}>
-          {order.etaLabel ? (
-            <Text numberOfLines={1} style={styles.activeEtaText}>
-              Thời gian dự kiến: {order.etaLabel}
-            </Text>
-          ) : null}
-          {order.priceLabel ? (
-            <Text numberOfLines={1} style={styles.activePriceText}>
-              {order.priceLabel}
-            </Text>
-          ) : null}
+      {/* Content */}
+      <View style={s.heroContent}>
+        {/* Route info */}
+        <View style={s.heroRouteInfo}>
+          <View style={s.heroRoutePoint}>
+            <View style={s.heroOriginDot} />
+            <View style={s.heroRouteTextWrap}>
+              <Text style={s.heroRouteLabel}>LẤY HÀNG</Text>
+              <Text numberOfLines={1} style={s.heroRouteAddress}>{order.route.origin.label}</Text>
+            </View>
+          </View>
+          <View style={s.heroRouteSeparator} />
+          <View style={s.heroRoutePoint}>
+            <View style={s.heroDestDot} />
+            <View style={s.heroRouteTextWrap}>
+              <Text style={s.heroRouteLabel}>GIAO HÀNG</Text>
+              <Text numberOfLines={1} style={s.heroRouteAddress}>{order.route.destination.label}</Text>
+            </View>
+          </View>
         </View>
-        <View style={styles.activeTrackPill}>
-          <IconSpeedTruck color="#0B1E42" size={14} />
-          <Text style={styles.activeTrackText}>Theo dõi</Text>
+
+        {/* Footer: Reference + ETA + Price */}
+        <View style={s.heroFooter}>
+          <View style={s.heroRefWrap}>
+            <IconSpeedTruck color="#64748B" size={14} />
+            <Text style={s.heroRef}>{order.reference}</Text>
+          </View>
+          <View style={s.heroMetaRight}>
+            {order.etaLabel ? (
+              <View style={s.heroEtaPill}>
+                <IconClock color="#0284C7" size={12} />
+                <Text style={s.heroEtaText}>{order.etaLabel}</Text>
+              </View>
+            ) : null}
+            {order.priceLabel ? (
+              <Text style={s.heroPrice}>{order.priceLabel}</Text>
+            ) : null}
+          </View>
         </View>
+      </View>
+
+      {/* Track CTA strip */}
+      <View style={s.heroTrackStrip}>
+        <IconRoute color="#FFFFFF" size={14} />
+        <Text style={s.heroTrackText}>Theo dõi chuyến hàng</Text>
+        <Text style={s.heroTrackArrow}>→</Text>
       </View>
     </Pressable>
   );
 }
 
-function EmptyActiveState({ onCreate }: Readonly<{ onCreate?: () => void }>) {
+// ── Completed Order Card (Apple-style clean) ─────────────────────────
+
+function CompletedOrderCard({
+  order,
+  onPress,
+}: Readonly<{
+  order: CustomerOrderListItemView;
+  onPress?: () => void;
+}>) {
+  const isDelivered = order.status === 'DELIVERED';
+  const isCancelled = order.status === 'CANCELLED';
+
   return (
-    <View style={styles.emptyActive}>
-      <View style={styles.emptyActiveIconBox}>
-        <IconSpeedTruck color="#94A3B8" size={28} />
+    <Pressable
+      accessibilityHint="Xem chi tiết đơn hàng"
+      accessibilityLabel={`Đơn ${order.reference}`}
+      accessibilityRole="button"
+      onPress={() => { haptic.light(); onPress?.(); }}
+      style={({ pressed }) => [s.completedCard, pressed && s.completedCardPressed]}
+    >
+      {/* Header: icon + reference + status */}
+      <View style={s.completedHeader}>
+        <View style={s.completedIconBox}>
+          <IconSpeedTruck color={isDelivered ? '#16A34A' : isCancelled ? '#DC2626' : '#0B1E42'} size={18} />
+        </View>
+        <View style={s.completedTitleWrap}>
+          <Text numberOfLines={1} style={s.completedRef}>Đơn {order.reference}</Text>
+          <Text numberOfLines={1} style={s.completedUpdated}>{order.updatedAtLabel}</Text>
+        </View>
+        <StatusBadge domain="order" status={order.status} />
       </View>
-      <Text style={styles.emptyActiveTitle}>Chưa có chuyến đang giao</Text>
-      <Text style={styles.emptyActiveBody}>
-        Khi bạn tạo đơn mới và tài xế nhận chuyến, đơn hàng sẽ hiển thị ở đây.
+
+      {/* Route: horizontal compact */}
+      <View style={s.completedRoute}>
+        <View style={s.completedRouteFlow}>
+          <View style={[s.completedDot, { backgroundColor: '#0284C7' }]} />
+          <Text numberOfLines={1} style={s.completedRouteText}>{order.route.origin.label}</Text>
+        </View>
+        <View style={s.completedArrow}>
+          <View style={s.completedArrowLine} />
+          <Text style={s.completedArrowHead}>›</Text>
+        </View>
+        <View style={s.completedRouteFlow}>
+          <View style={[s.completedDot, { backgroundColor: '#16A34A' }]} />
+          <Text numberOfLines={1} style={s.completedRouteText}>{order.route.destination.label}</Text>
+        </View>
+      </View>
+
+      {/* Footer: price + distance */}
+      <View style={s.completedFooter}>
+        <Text style={s.completedPrice}>{order.priceLabel || '—'}</Text>
+        {order.route.distanceLabel ? (
+          <Text style={s.completedDistance}>{order.route.distanceLabel}</Text>
+        ) : null}
+        {order.etaLabel ? (
+          <Text style={s.completedEta}>ETA dự kiến: {order.etaLabel}</Text>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
+
+// ── Empty Active State ───────────────────────────────────────────────
+
+function EmptyActiveState() {
+  return (
+    <View style={s.emptyActive}>
+      <View style={s.emptyIconOuter}>
+        <View style={s.emptyIconInner}>
+          <IconSpeedTruck color="#94A3B8" size={32} />
+        </View>
+      </View>
+      <Text style={s.emptyTitle}>Không có chuyến đang giao</Text>
+      <Text style={s.emptyBody}>
+        Khi bạn đặt chuyến mới, đơn hàng đang vận chuyển sẽ hiện tại đây.
       </Text>
-      {onCreate ? (
-        <Button
-          label="Tạo đơn mới"
-          onPress={onCreate}
-          size="driver-primary"
-          variant="primary"
-        />
-      ) : null}
+    </View>
+  );
+}
+
+// ── Notice Banner ────────────────────────────────────────────────────
+
+function Notice({ view }: Readonly<{ view: CustomerListContentView }>) {
+  if (!view.notice) return null;
+  const isError = view.contentState === 'page-error';
+  return (
+    <View
+      accessibilityLiveRegion="polite"
+      style={[s.notice, isError ? s.noticeError : s.noticeWarning]}
+    >
+      <Text accessibilityRole={isError ? 'alert' : undefined} style={s.noticeText}>
+        {view.notice}
+      </Text>
+    </View>
+  );
+}
+
+// ── Time Group Header ────────────────────────────────────────────────
+
+function TimeGroupHeader({ label }: Readonly<{ label: string }>) {
+  return (
+    <View style={s.timeGroupHeader}>
+      <Text style={s.timeGroupText}>{label}</Text>
+    </View>
+  );
+}
+
+// ── Loading Skeleton (Apple style) ───────────────────────────────────
+
+function OrdersSkeleton() {
+  return (
+    <View style={s.skeletonWrap}>
+      {/* Fake segmented control */}
+      <SkeletonBar height={36} borderRadius={10} />
+      {/* Fake cards */}
+      <SkeletonCard>
+        <SkeletonBar height={48} width="100%" borderRadius={12} />
+        <SkeletonBar height={14} width="70%" />
+        <SkeletonBar height={14} width="50%" />
+      </SkeletonCard>
+      <SkeletonCard>
+        <SkeletonBar height={14} width="60%" />
+        <SkeletonBar height={32} width="100%" />
+        <SkeletonBar height={14} width="40%" />
+      </SkeletonCard>
+      <SkeletonCard>
+        <SkeletonBar height={14} width="55%" />
+        <SkeletonBar height={32} width="100%" />
+        <SkeletonBar height={14} width="45%" />
+      </SkeletonCard>
     </View>
   );
 }
@@ -267,32 +451,28 @@ export function CustomerOrdersScreen({
   view,
 }: CustomerOrdersScreenProps) {
   const [segment, setSegment] = useState<OrdersSegment>('all');
+  const [localFilter, setLocalFilter] = useState<LocalFilter>('ALL');
 
+  // Loading state
   if (view.kind === 'loading') {
     return (
-      <ScreenScaffold
-        subtitle="Bố cục danh sách được giữ ổn định trong khi chờ dữ liệu."
-        title="Đơn hàng của tôi"
-      >
-        <View style={styles.skeletonList}>
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </View>
+      <ScreenScaffold title="Đơn hàng">
+        <OrdersSkeleton />
       </ScreenScaffold>
     );
   }
 
+  // Boundary states
   if (view.kind !== 'content') {
     const action =
       view.kind === 'empty'
-        ? { label: 'Tạo đơn mới', handler: onCreate }
+        ? { label: 'Đặt chuyến mới', handler: onCreate }
         : view.kind === 'no-results'
           ? { label: 'Xóa bộ lọc', handler: onClearFilters }
           : { label: 'Thử lại', handler: onRetry };
 
     return (
-      <ScreenScaffold title="Đơn hàng của tôi">
+      <ScreenScaffold title="Đơn hàng">
         <ScreenState
           actionLabel={action.label}
           message={view.message}
@@ -304,22 +484,36 @@ export function CustomerOrdersScreen({
     );
   }
 
-  // Partition orders into active vs all
+  // Content state
   const activeOrders = view.orders.filter((o) => isActiveOrder(o.status));
+  const completedOrders = view.orders.filter((o) => !isActiveOrder(o.status));
 
-  const renderOrder = ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
-    <OrderSummary
-      destination={item.route.destination}
-      metadata={[
-        { id: 'eta', label: 'Thời gian dự kiến', value: item.etaLabel },
-        { id: 'price', label: 'Giá cước', value: item.priceLabel },
-        { id: 'updated', label: 'Cập nhật', value: item.updatedAtLabel },
-      ]}
+  // Local filter on completed orders — no server round-trip
+  const filteredOrders = useMemo(() => {
+    if (localFilter === 'ALL') return completedOrders;
+    return completedOrders.filter((o) => o.status === localFilter);
+  }, [completedOrders, localFilter]);
+
+  const filterCounts: Record<LocalFilter, number> = useMemo(() => ({
+    ALL: completedOrders.length,
+    DELIVERED: completedOrders.filter((o) => o.status === 'DELIVERED').length,
+    CANCELLED: completedOrders.filter((o) => o.status === 'CANCELLED').length,
+  }), [completedOrders]);
+
+  // Auto-switch to active tab if there are active orders and segment is 'all'
+  // ponytail: could add useEffect to auto-switch, skipping — user controls tab
+
+  const renderActiveItem = ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
+    <ActiveOrderHeroCard
       onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-      orderReference={item.reference}
-      origin={item.route.origin}
-      status={item.status}
-      stops={item.route.stops}
+      order={item}
+    />
+  );
+
+  const renderCompletedItem = ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
+    <CompletedOrderCard
+      onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+      order={item}
     />
   );
 
@@ -328,81 +522,65 @@ export function CustomerOrdersScreen({
       hasFloatingNavBar
       stickyFooter={
         onCreate ? (
-          <Button
-            label="Tạo đơn mới"
-            onPress={onCreate}
-            size="driver-primary"
-            variant="primary"
-          />
+          <Pressable
+            accessibilityLabel="Đặt chuyến mới"
+            accessibilityRole="button"
+            onPress={() => { haptic.light(); onCreate(); }}
+            style={({ pressed }) => [s.floatingCta, pressed && s.floatingCtaPressed]}
+          >
+            <IconSpeedTruck color="#FFFFFF" size={18} />
+            <Text style={s.floatingCtaText}>Đặt chuyến mới</Text>
+          </Pressable>
         ) : undefined
       }
-      title="Đơn hàng của tôi"
+      title="Đơn hàng"
     >
       <FlatList
-        contentContainerStyle={styles.listContent}
-        data={segment === 'active' ? activeOrders : view.orders}
+        contentContainerStyle={s.listContent}
+        data={segment === 'active' ? activeOrders : filteredOrders}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
-          <View style={styles.headerContent}>
-            {/* Segmented Control: "Đang giao" | "Tất cả đơn hàng" */}
-            <SegmentedControl
+          <View style={s.headerContent}>
+            {/* Apple-style Segmented Control */}
+            <AppleSegmentedControl
               activeCount={activeOrders.length}
               activeSegment={segment}
               onSegmentChange={setSegment}
             />
 
-            {/* Sub-filters only visible in "Tất cả" mode */}
+            {/* Inline local filter in "Lịch sử" tab */}
             {segment === 'all' ? (
               <>
-                <ScrollView
-                  accessibilityRole="toolbar"
-                  contentContainerStyle={styles.filtersScroll}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                >
-                  {filters.map((filter) => (
-                    <FilterChip
-                      key={filter.value}
-                      label={filter.label}
-                      onPress={onSelectStatus ? () => onSelectStatus(filter.value) : undefined}
-                      selected={view.selectedFilter === filter.value}
-                    />
-                  ))}
-                </ScrollView>
+                <InlineFilterBar
+                  counts={filterCounts}
+                  onSelect={setLocalFilter}
+                  selected={localFilter}
+                />
                 <Notice view={view} />
-                <SectionHeading title="Hành trình gần đây" />
               </>
             ) : null}
           </View>
         }
         ListEmptyComponent={
           segment === 'active' ? (
-            <EmptyActiveState onCreate={onCreate} />
+            <EmptyActiveState />
           ) : null
         }
         ListFooterComponent={
           segment === 'all' && (view.canLoadMore || view.contentState === 'page-error') ? (
-            <View style={styles.loadMoreContainer}>
+            <View style={s.loadMoreContainer}>
               <Button
                 isLoading={view.isLoadingMore}
-                label={view.contentState === 'page-error' ? 'Thử tải thêm' : 'Tải thêm đơn hàng'}
-                loadingLabel="Đang tải thêm"
+                label={view.contentState === 'page-error' ? 'Thử tải thêm' : 'Tải thêm'}
+                loadingLabel="Đang tải..."
                 onPress={onLoadMore}
                 variant="secondary"
               />
             </View>
           ) : null
         }
-        renderItem={
-          segment === 'active'
-            ? ({ item }) => (
-                <ActiveOrderCard
-                  onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-                  order={item}
-                />
-              )
-            : renderOrder
-        }
+        renderItem={segment === 'active' ? renderActiveItem : renderCompletedItem}
+        showsVerticalScrollIndicator={false}
       />
     </ScreenScaffold>
   );
@@ -410,244 +588,459 @@ export function CustomerOrdersScreen({
 
 // ── Styles ───────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
+  // List
   listContent: {
-    gap: spacing.sm,
+    gap: 10,
     paddingBottom: layout.bottomNavClearance,
   },
   headerContent: {
-    gap: spacing.xs,
-    paddingBottom: spacing.xxs,
-  },
-  skeletonList: {
-    gap: spacing.sm,
+    gap: 10,
+    paddingBottom: 4,
   },
 
-  // Segmented Control
+  // Skeleton
+  skeletonWrap: {
+    gap: 12,
+  },
+
+  // ─── iOS 18 Segmented Control ──────────────────────────────────
   segmentedBar: {
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
-    borderRadius: radius.control,
+    borderRadius: 12,
+    ...iosContinuousCurve,
     padding: 3,
-    gap: 2,
+    gap: 3,
   },
   segmentTab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 9,
-    paddingHorizontal: 10,
-    borderRadius: radius.control - 1,
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    ...iosContinuousCurve,
   },
   segmentTabActive: {
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  segmentLiveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#16A34A',
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 3,
   },
   segmentLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     color: '#64748B',
   },
   segmentLabelActive: {
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#0F172A',
   },
   segmentBadge: {
-    backgroundColor: customerPalette.primary,
-    borderRadius: radius.pill,
-    minWidth: 18,
-    height: 18,
-    paddingHorizontal: 5,
+    backgroundColor: '#16A34A',
+    borderRadius: 999,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentBadgeText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
 
-  // Filter Chips (All segment)
-  filtersScroll: {
+  // ─── Inline Filter Bar ─────────────────────────────────────────
+  filterBar: {
     flexDirection: 'row',
-    gap: spacing.xs,
-    paddingVertical: spacing.xxs,
-  },
-  filter: {
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-  },
-  filterSelected: {
-    backgroundColor: customerPalette.primaryBg,
-    borderColor: customerPalette.primary,
-  },
-  filterLabel: {
-    color: colors.neutral.mutedText,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  filterLabelSelected: {
-    color: customerPalette.primaryText,
-    fontWeight: '700',
-  },
-
-  // Active Order Card
-  activeCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  activeCardPressed: {
-    opacity: 0.88,
-    backgroundColor: '#F0F4F9',
-  },
-  activeCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  activeCardRef: {
-    ...typography.caption,
-    color: '#64748B',
-    fontWeight: '600',
-    marginLeft: 'auto' as const,
-  },
-  activeCardRoute: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  activeRouteLine: {
-    width: 12,
-    alignItems: 'center',
+    gap: 6,
     paddingVertical: 2,
   },
-  routeDotOrigin: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: customerPalette.primary,
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    backgroundColor: '#F1F5F9',
   },
-  routeConnector: {
+  filterChipActive: {
+    backgroundColor: '#0F172A',
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#64748B',
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  filterChipCount: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginLeft: 4,
+  },
+  filterChipCountActive: {
+    color: 'rgba(255,255,255,0.6)',
+  },
+
+  // ─── Hero Active Order Card ───────────────────────────────────
+  heroCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    ...iosContinuousCurve,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  heroCardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.99 }],
+  },
+
+  // Map strip
+  heroMapStrip: {
+    height: 72,
+    backgroundColor: '#0F172A',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  heroMapGradient: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#0F172A',
+    opacity: 0.9,
+  },
+  heroRouteLine: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    top: '50%',
+    marginTop: -3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroRouteEndpoint: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.6)',
+  },
+  heroRouteDash: {
     flex: 1,
-    width: 2,
-    backgroundColor: '#CBD5E1',
-    marginVertical: 2,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 1,
   },
-  routeDotDest: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  heroStatusPill: {
+    position: 'absolute',
+    top: 10,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  heroStatusText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+
+  // Content
+  heroContent: {
+    padding: 14,
+    gap: 12,
+  },
+  heroRouteInfo: {
+    gap: 8,
+  },
+  heroRoutePoint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  heroOriginDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#0284C7',
+  },
+  heroDestDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 3,
     backgroundColor: '#16A34A',
   },
-  activeRouteLabels: {
+  heroRouteTextWrap: {
     flex: 1,
-    gap: spacing.xs,
-    justifyContent: 'space-between',
   },
-  routeLabel: {
-    ...typography.caption,
+  heroRouteLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+  },
+  heroRouteAddress: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#0F172A',
-    fontWeight: '500',
-    lineHeight: 18,
+    marginTop: 1,
   },
-  activeCardFooter: {
+  heroRouteSeparator: {
+    marginLeft: 4,
+    width: 2,
+    height: 8,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 1,
+  },
+
+  // Footer
+  heroFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
-    paddingTop: spacing.xs,
+    paddingTop: 10,
   },
-  activeCardMeta: {
-    flex: 1,
-    gap: 2,
+  heroRefWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  activeEtaText: {
+  heroRef: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#0B1E42',
-  },
-  activePriceText: {
-    fontSize: 12,
-    fontWeight: '500',
     color: '#64748B',
+    fontVariant: ['tabular-nums'],
   },
-  activeTrackPill: {
+  heroMetaRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroEtaPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F0F4F9',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    backgroundColor: '#E0F2FE',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
-  activeTrackText: {
-    fontSize: 12,
-    fontWeight: '600',
+  heroEtaText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0284C7',
+    fontVariant: ['tabular-nums'],
+  },
+  heroPrice: {
+    fontSize: 15,
+    fontWeight: '800',
     color: '#0B1E42',
+    fontVariant: ['tabular-nums'],
   },
 
-  // Empty Active State
+  // Track strip
+  heroTrackStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#0B1E42',
+    paddingVertical: 12,
+  },
+  heroTrackText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  heroTrackArrow: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // ─── Completed Order Card ─────────────────────────────────────
+  completedCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    ...iosContinuousCurve,
+    padding: 14,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  completedCardPressed: {
+    opacity: 0.88,
+    backgroundColor: '#FAFBFC',
+  },
+  completedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  completedIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  completedTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  completedRef: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  completedUpdated: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+
+  // Route horizontal compact
+  completedRoute: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    padding: 10,
+    gap: 6,
+  },
+  completedRouteFlow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
+  },
+  completedDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    flexShrink: 0,
+  },
+  completedRouteText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#334155',
+    flex: 1,
+  },
+  completedArrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 2,
+  },
+  completedArrowLine: {
+    width: 12,
+    height: 1.5,
+    backgroundColor: '#CBD5E1',
+    borderRadius: 1,
+  },
+  completedArrowHead: {
+    fontSize: 14,
+    color: '#CBD5E1',
+    fontWeight: '700',
+    lineHeight: 14,
+  },
+
+  // Footer
+  completedFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingTop: 2,
+  },
+  completedPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0B1E42',
+    fontVariant: ['tabular-nums'],
+  },
+  completedDistance: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#94A3B8',
+  },
+  completedEta: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#94A3B8',
+  },
+
+  // ─── Empty State ──────────────────────────────────────────────
   emptyActive: {
     alignItems: 'center',
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
+    paddingVertical: 48,
+    paddingHorizontal: 32,
+    gap: 12,
   },
-  emptyActiveIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  emptyIconOuter: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: 4,
   },
-  emptyActiveTitle: {
-    ...typography.sectionTitle,
-    fontSize: 16,
+  emptyIconInner: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#0F172A',
     textAlign: 'center',
   },
-  emptyActiveBody: {
-    ...typography.body,
+  emptyBody: {
+    fontSize: 14,
+    fontWeight: '400',
     color: '#64748B',
     textAlign: 'center',
     lineHeight: 20,
   },
 
-  // Shared
-  pressed: {
-    opacity: 0.85,
-  },
+  // ─── Notice ───────────────────────────────────────────────────
   notice: {
-    borderRadius: radius.control,
-    gap: spacing.xs,
+    borderRadius: 12,
+    ...iosContinuousCurve,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -662,12 +1055,59 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   noticeText: {
-    ...typography.caption,
+    fontSize: 13,
+    fontWeight: '500',
     color: colors.neutral.text,
-    fontWeight: '600',
     lineHeight: 18,
   },
+
+  // ─── Time group ───────────────────────────────────────────────
+  timeGroupHeader: {
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  timeGroupText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#94A3B8',
+    letterSpacing: 0.3,
+  },
+
+  // ─── Floating CTA ─────────────────────────────────────────────
+  floatingCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#0B1E42',
+    borderRadius: 14,
+    ...iosContinuousCurve,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    minHeight: 48,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  floatingCtaPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  floatingCtaText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  // Load more
   loadMoreContainer: {
-    paddingTop: spacing.xs,
+    paddingTop: 4,
+  },
+
+  // Shared
+  pressed: {
+    opacity: 0.85,
   },
 });

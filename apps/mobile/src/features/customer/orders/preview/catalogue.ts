@@ -1,23 +1,19 @@
 import type {
-  CustomerCreateView,
   CustomerDetailView,
   CustomerListView,
   CustomerOrderDetailDataView,
 } from '../model';
 import {
-  CUSTOMER_CREATE_SCENARIOS,
   CUSTOMER_DETAIL_SCENARIOS,
   CUSTOMER_LIST_SCENARIOS,
-  createCustomerCreateFixture,
   createCustomerDetailFixture,
   createCustomerListFixture,
-  type CustomerCreateScenarioId,
   type CustomerDetailScenarioId,
   type CustomerListScenarioId,
 } from '../fixtures';
 
-export type CustomerPreviewScreen = 'list' | 'create' | 'detail';
-export type CustomerPreviewView = CustomerListView | CustomerCreateView | CustomerDetailView;
+export type CustomerPreviewScreen = 'list' | 'detail';
+export type CustomerPreviewView = CustomerListView | CustomerDetailView;
 
 const DEFAULT_DETAIL_ORDER_ID = '11111111-1111-4111-8111-111111111001';
 
@@ -110,7 +106,6 @@ function bindCustomerDetailOrder(
 
 const defaults = {
   list: 'C-LIST-SUCCESS',
-  create: 'C-NEW-ESTIMATE-DEMO',
   detail: 'C-DETAIL-SUCCESS',
 } as const;
 
@@ -122,12 +117,6 @@ export function createCustomerPreviewView(
   const scenario = requestedScenario ?? defaults[screen];
   if (screen === 'list' && CUSTOMER_LIST_SCENARIOS.includes(scenario as CustomerListScenarioId)) {
     return createCustomerListFixture(scenario as CustomerListScenarioId);
-  }
-  if (
-    screen === 'create' &&
-    CUSTOMER_CREATE_SCENARIOS.includes(scenario as CustomerCreateScenarioId)
-  ) {
-    return createCustomerCreateFixture(scenario as CustomerCreateScenarioId);
   }
   if (
     screen === 'detail' &&
