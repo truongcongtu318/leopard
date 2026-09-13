@@ -1,6 +1,7 @@
 import type { OrderStatus } from '@leopard/shared';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -328,6 +329,39 @@ export function getAddressSuggestions(query: string): readonly LocationSuggestio
   ];
 }
 
+export async function searchPlacesLive(
+  query: string,
+  apiKey: string = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'c5a816dc04e0e2ad232a6bc91da9ae183a11b6e4b61cc646'
+): Promise<readonly LocationSuggestionItem[]> {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 2) {
+    return POPULAR_LOCATION_SUGGESTIONS.slice(0, 4);
+  }
+
+  // 1. Live Vietmap Autocomplete Places API
+  if (apiKey) {
+    try {
+      const url = `https://maps.vietmap.vn/api/autocomplete/v4?apikey=${encodeURIComponent(apiKey)}&text=${encodeURIComponent(trimmed)}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          return data.slice(0, 6).map((item: any, idx: number) => ({
+            id: item.ref_id || `vm-${idx}-${Date.now()}`,
+            title: item.name || item.display || trimmed,
+            subtitle: item.display || item.address || '',
+            address: item.display || item.address || item.name || trimmed,
+          }));
+        }
+      }
+    } catch {
+      // fallback to local matching
+    }
+  }
+
+  return getAddressSuggestions(trimmed);
+}
+
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
 export function getTimeOfDay(date: Date = new Date()): TimeOfDay {
@@ -501,7 +535,45 @@ export function HomeDashboardScreen({
   const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
 
   const activeSearchQuery = focusedField === 'pickup' ? pickupText : (focusedField === 'dropoff' ? dropoffText : '');
-  const liveSuggestions = useMemo(() => getAddressSuggestions(activeSearchQuery), [activeSearchQuery]);
+  const [liveSuggestions, setLiveSuggestions] = useState<readonly LocationSuggestionItem[]>(
+    () => getAddressSuggestions(activeSearchQuery)
+  );
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const searchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!focusedField) return;
+    const q = activeSearchQuery.trim();
+    if (q.length < 2) {
+      setLiveSuggestions(getAddressSuggestions(''));
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setLiveSuggestions(getAddressSuggestions(q));
+    setIsSearchingLocation(true);
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+    }
+    searchDebounceTimerRef.current = setTimeout(async () => {
+      try {
+        const liveResults = await searchPlacesLive(q);
+        if (liveResults && liveResults.length > 0) {
+          setLiveSuggestions(liveResults);
+        }
+      } catch {
+        // keep local results
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 250);
+
+    return () => {
+      if (searchDebounceTimerRef.current) {
+        clearTimeout(searchDebounceTimerRef.current);
+      }
+    };
+  }, [activeSearchQuery, focusedField]);
 
   const handleFleetSelectAndBook = (vehicle: FleetVehicleItem) => {
     haptic.selection();
@@ -671,7 +743,12 @@ export function HomeDashboardScreen({
             {focusedField ? (
               <View style={styles.addressDropdown} testID="address-dropdown">
                 <View style={styles.dropdownHeaderRow}>
-                  <Text style={styles.dropdownHeaderTitle}>{focusedField === 'pickup' ? 'ĐIỂM LẤY HÀNG' : 'ĐIỂM GIAO HÀNG'} · GỢI Ý VỊ TRÍ</Text>
+                  <View style={styles.dropdownHeaderLeft}>
+                    <Text style={styles.dropdownHeaderTitle}>{focusedField === 'pickup' ? 'ĐIỂM LẤY HÀNG' : 'ĐIỂM GIAO HÀNG'} · GỢI Ý VỊ TRÍ</Text>
+                    {isSearchingLocation ? (
+                      <ActivityIndicator color="#0284C7" size="small" style={{ marginLeft: 6 }} />
+                    ) : null}
+                  </View>
                   <Pressable accessibilityLabel="Đóng gợi ý" hitSlop={8} onPress={() => setFocusedField(null)} style={styles.dropdownCloseBtn}>
                     <IconClose color="#64748B" size={14} />
                   </Pressable>
@@ -998,6 +1075,7 @@ const styles = StyleSheet.create({
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
   },
   dropdownHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  dropdownHeaderLeft: { flexDirection: 'row', alignItems: 'center' },
   dropdownHeaderTitle: { fontSize: 11, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
   dropdownCloseBtn: { padding: 4 },
   suggestionsList: { gap: 2, marginBottom: 4 },
