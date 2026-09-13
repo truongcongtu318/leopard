@@ -235,13 +235,6 @@ export function HomeDashboardScreen({
     [onQuickBook, onCreateOrder],
   );
 
-  useEffect(() => {
-    if (focusedField === 'dropoff' && pickupText.trim().length >= 3 && dropoffText.trim().length >= 5 && !hasNavigatedRef.current) {
-      const timer = setTimeout(() => { triggerNavigation(pickupText, dropoffText); }, 900);
-      return () => clearTimeout(timer);
-    }
-  }, [dropoffText, pickupText, focusedField, triggerNavigation]);
-
   const handleOpenMapPicker = (target: 'pickup' | 'dropoff') => {
     setMapTarget(target);
     setShowMapPickerModal(true);
@@ -251,10 +244,8 @@ export function HomeDashboardScreen({
     if (mapTarget === 'pickup') {
       setPickupText(finalAddress);
       setPickupLabel(null);
-      if (dropoffText.trim().length >= 3) triggerNavigation(finalAddress, dropoffText);
     } else {
       setDropoffText(finalAddress);
-      if (pickupText.trim().length >= 3) triggerNavigation(pickupText, finalAddress, extra?.coords);
     }
     setShowMapPickerModal(false);
     setFocusedField(null);
