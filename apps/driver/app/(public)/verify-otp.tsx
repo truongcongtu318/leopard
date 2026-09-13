@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,7 +18,6 @@ import { IconChevron } from '@leopard/mobile-core';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { toE164Vn } from '@leopard/mobile-core/src/auth/phone';
-import { leopardPalette } from '@leopard/mobile-core/src/theme/tokens';
 import { IconClock } from '@leopard/mobile-core/src/icons/svg-icons';
 
 interface AuthResponse {
@@ -39,12 +40,15 @@ interface AuthResponse {
 
 const NUM_CELLS = 6;
 const COUNTDOWN_INITIAL = 60;
-const DRIVER_BLUE = '#1E5BB8';
+const DRIVER_ACCENT = '#F97316';
+const driverHeroBg = require('../../assets/brand/driver-hero-bg.jpg');
 
 export default function DriverVerifyOtpRoute() {
   const router = useRouter();
+  const { height: viewportHeight } = useWindowDimensions();
   const searchParams = useLocalSearchParams<{ phone?: string }>();
   const phone = searchParams.phone || '';
+  const isCompactViewport = viewportHeight < 720;
 
   const [otp, setOtp] = useState('');
   const [countdown, setCountdown] = useState(COUNTDOWN_INITIAL);
@@ -147,31 +151,48 @@ export default function DriverVerifyOtpRoute() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable
-            accessibilityLabel="Quay lại"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={handleBack}
-            style={styles.backBtn}
-            testID="btn-back"
-          >
-            <IconChevron color="#0B1E42" direction="left" size={20} />
-          </Pressable>
-          <Text accessibilityRole="header" style={styles.headerTitle}>
-            Xác minh tài xế
-          </Text>
-          <View style={styles.headerPlaceholder} />
+        <View style={[styles.heroSection, isCompactViewport && styles.heroSectionCompact]}>
+          <Image
+            accessibilityIgnoresInvertColors
+            accessibilityLabel="Xe tải LEOPARD trên cung đường núi"
+            resizeMode="cover"
+            source={driverHeroBg}
+            style={styles.heroImage}
+          />
+          <View accessible={false} aria-hidden style={styles.heroOverlay} />
+
+          <View style={styles.header}>
+            <Pressable
+              accessibilityLabel="Quay lại"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={handleBack}
+              style={({ pressed }) => [styles.backBtn, pressed && styles.controlPressed]}
+              testID="btn-back"
+            >
+              <IconChevron color="#FFFFFF" direction="left" size={20} />
+            </Pressable>
+            <Text style={styles.headerTitle}>BẢO MẬT 2 LỚP</Text>
+            <View style={styles.headerPlaceholder} />
+          </View>
+
+          <View style={styles.heroCopy}>
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepBadgeText}>6</Text>
+            </View>
+            <View style={styles.heroTextBlock}>
+              <Text accessibilityRole="header" style={styles.heroTitle}>
+                Nhập mã xác thực
+              </Text>
+              <Text style={styles.subline}>
+                Mã OTP đã gửi tới{' '}
+                <Text style={styles.phoneHighlight}>{formattedPhone || phone}</Text>
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* Body Content */}
-        <View style={styles.content}>
-          <Text style={styles.subline}>
-            Mã OTP gồm 6 chữ số đã được gửi tới SĐT đối tác{' '}
-            <Text style={styles.phoneHighlight}>{formattedPhone || phone}</Text>
-          </Text>
-
+        <View style={[styles.content, isCompactViewport && styles.contentCompact]}>
           {errorMsg ? (
             <View style={styles.errorBox} testID="otp-error-banner">
               <Text accessibilityRole="alert" style={styles.errorText}>
@@ -182,6 +203,7 @@ export default function DriverVerifyOtpRoute() {
 
           <TextInput
             accessibilityLabel="Mã OTP"
+            autoComplete="sms-otp"
             autoFocus={false}
             editable={!isSubmitting}
             keyboardType="number-pad"
@@ -195,6 +217,7 @@ export default function DriverVerifyOtpRoute() {
               }
             }}
             style={styles.hiddenInput}
+            textContentType="oneTimeCode"
             value={otp}
           />
 
@@ -226,7 +249,7 @@ export default function DriverVerifyOtpRoute() {
           <View style={styles.resendRow}>
             {countdown > 0 ? (
               <View style={styles.timerGroup}>
-                <IconClock color={leopardPalette.textMutedSlate} size="sm" />
+                <IconClock color="#9FB0C7" size="sm" />
                 <Text style={styles.countdownText}>
                   Gửi lại mã sau{' '}
                   <Text style={styles.countdownTime}>
@@ -250,14 +273,17 @@ export default function DriverVerifyOtpRoute() {
 
           {isSubmitting ? (
             <View style={styles.submittingIndicator}>
-              <ActivityIndicator color={DRIVER_BLUE} size="small" />
+              <ActivityIndicator color={DRIVER_ACCENT} size="small" />
               <Text style={styles.submittingText}>Đang xác thực hồ sơ tài xế...</Text>
             </View>
           ) : null}
         </View>
 
         {/* Numpad */}
-        <View style={styles.numpadContainer} testID="virtual-numpad">
+        <View
+          style={[styles.numpadContainer, isCompactViewport && styles.numpadContainerCompact]}
+          testID="virtual-numpad"
+        >
           <View style={styles.numpadRow}>
             {['1', '2', '3'].map((n) => (
               <Pressable
@@ -265,7 +291,11 @@ export default function DriverVerifyOtpRoute() {
                 accessibilityRole="button"
                 key={n}
                 onPress={() => handleKeyPress(n)}
-                style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
+                style={({ pressed }) => [
+                  styles.numpadKey,
+                  isCompactViewport && styles.numpadKeyCompact,
+                  pressed && styles.numpadKeyPressed,
+                ]}
                 testID={`numpad-${n}`}
               >
                 <Text style={styles.numpadKeyText}>{n}</Text>
@@ -279,7 +309,11 @@ export default function DriverVerifyOtpRoute() {
                 accessibilityRole="button"
                 key={n}
                 onPress={() => handleKeyPress(n)}
-                style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
+                style={({ pressed }) => [
+                  styles.numpadKey,
+                  isCompactViewport && styles.numpadKeyCompact,
+                  pressed && styles.numpadKeyPressed,
+                ]}
                 testID={`numpad-${n}`}
               >
                 <Text style={styles.numpadKeyText}>{n}</Text>
@@ -293,7 +327,11 @@ export default function DriverVerifyOtpRoute() {
                 accessibilityRole="button"
                 key={n}
                 onPress={() => handleKeyPress(n)}
-                style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
+                style={({ pressed }) => [
+                  styles.numpadKey,
+                  isCompactViewport && styles.numpadKeyCompact,
+                  pressed && styles.numpadKeyPressed,
+                ]}
                 testID={`numpad-${n}`}
               >
                 <Text style={styles.numpadKeyText}>{n}</Text>
@@ -301,12 +339,16 @@ export default function DriverVerifyOtpRoute() {
             ))}
           </View>
           <View style={styles.numpadRow}>
-            <View style={styles.numpadKeyEmpty} />
+            <View style={[styles.numpadKeyEmpty, isCompactViewport && styles.numpadKeyCompact]} />
             <Pressable
               accessibilityLabel="Số 0"
               accessibilityRole="button"
               onPress={() => handleKeyPress('0')}
-              style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
+              style={({ pressed }) => [
+                styles.numpadKey,
+                isCompactViewport && styles.numpadKeyCompact,
+                pressed && styles.numpadKeyPressed,
+              ]}
               testID="numpad-0"
             >
               <Text style={styles.numpadKeyText}>0</Text>
@@ -315,7 +357,11 @@ export default function DriverVerifyOtpRoute() {
               accessibilityLabel="Xóa"
               accessibilityRole="button"
               onPress={() => handleKeyPress('backspace')}
-              style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
+              style={({ pressed }) => [
+                styles.numpadKey,
+                isCompactViewport && styles.numpadKeyCompact,
+                pressed && styles.numpadKeyPressed,
+              ]}
               testID="numpad-backspace"
             >
               <Text style={styles.numpadKeyActionText}>⌫</Text>
@@ -330,64 +376,134 @@ export default function DriverVerifyOtpRoute() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#06162F',
   },
   container: {
+    alignSelf: 'center',
+    backgroundColor: '#0B1E42',
     flex: 1,
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    maxWidth: 480,
+    width: '100%',
+  },
+  heroSection: {
+    height: 220,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  heroSectionCompact: {
+    height: 180,
+  },
+  heroImage: {
+    height: '100%',
+    width: '100%',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(6, 22, 47, 0.52)',
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    flexDirection: 'row',
     height: 56,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    justifyContent: 'space-between',
+    left: 0,
+    paddingHorizontal: 16,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   backBtn: {
-    minWidth: 44,
-    minHeight: 44,
     alignItems: 'center',
+    backgroundColor: 'rgba(11, 30, 66, 0.68)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 14,
+    borderWidth: 1,
+    height: 44,
     justifyContent: 'center',
+    width: 44,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0B1E42',
+    color: '#FDBA74',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.4,
   },
   headerPlaceholder: {
     width: 44,
   },
-  content: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
+  heroCopy: {
     alignItems: 'center',
-    gap: 16,
+    bottom: 24,
+    flexDirection: 'row',
+    gap: 13,
+    left: 22,
+    position: 'absolute',
+    right: 22,
+  },
+  stepBadge: {
+    alignItems: 'center',
+    backgroundColor: '#F97316',
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 16,
+    borderWidth: 1,
+    height: 50,
+    justifyContent: 'center',
+    shadowColor: '#020817',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    width: 50,
+  },
+  stepBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 21,
+    fontWeight: '900',
+    lineHeight: 24,
+  },
+  heroTextBlock: {
+    flex: 1,
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    lineHeight: 30,
+  },
+  content: {
+    alignItems: 'center',
+    backgroundColor: '#0B1E42',
+    gap: 10,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  contentCompact: {
+    gap: 4,
+    paddingTop: 10,
   },
   subline: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: leopardPalette.textMutedSlate,
-    textAlign: 'center',
+    color: '#D8E3F0',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 3,
   },
   phoneHighlight: {
-    color: '#0B1E42',
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   errorBox: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
+    backgroundColor: 'rgba(239, 68, 68, 0.14)',
+    borderColor: 'rgba(248, 113, 113, 0.46)',
     borderRadius: 12,
-    paddingVertical: 10,
+    borderWidth: 1,
     paddingHorizontal: 16,
+    paddingVertical: 10,
     width: '100%',
   },
   errorText: {
-    color: '#B91C1C',
+    color: '#FECACA',
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -400,48 +516,50 @@ const styles = StyleSheet.create({
   },
   cellsRow: {
     flexDirection: 'row',
+    gap: 8,
     justifyContent: 'center',
-    gap: 10,
+    marginVertical: 8,
     width: '100%',
-    marginVertical: 12,
   },
   cell: {
-    width: 48,
-    height: 54,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
+    backgroundColor: '#142B50',
+    borderColor: '#40597B',
+    borderRadius: 13,
+    borderWidth: 1.5,
+    flex: 1,
+    height: 54,
     justifyContent: 'center',
-    shadowColor: '#0F172A',
+    maxWidth: 48,
+    minWidth: 0,
+    shadowColor: '#020817',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
     elevation: 1,
   },
   cellFilled: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A365F',
+    borderColor: '#8EA2BA',
   },
   cellActive: {
-    borderColor: DRIVER_BLUE,
-    backgroundColor: '#EFF6FF',
-    shadowColor: DRIVER_BLUE,
+    backgroundColor: '#1A365F',
+    borderColor: DRIVER_ACCENT,
+    shadowColor: DRIVER_ACCENT,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.38,
     shadowRadius: 6,
     elevation: 3,
   },
   cellError: {
     borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.16)',
   },
   cellText: {
+    color: '#FFFFFF',
+    fontVariant: ['tabular-nums'],
     fontSize: 22,
     fontWeight: '800',
-    color: '#0B1E42',
-    fontVariant: ['tabular-nums'],
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   resendRow: {
@@ -455,13 +573,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   countdownText: {
-    fontSize: 13,
-    color: leopardPalette.textMutedSlate,
+    color: '#9FB0C7',
+    fontSize: 12,
     fontWeight: '500',
   },
   countdownTime: {
-    fontWeight: '700',
-    color: '#0B1E42',
+    color: '#FDBA74',
     fontVariant: ['tabular-nums'],
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
@@ -472,9 +589,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resendBtnText: {
-    fontSize: 14,
+    color: '#FDBA74',
+    fontSize: 13,
     fontWeight: '700',
-    color: DRIVER_BLUE,
     textDecorationLine: 'underline',
   },
   submittingIndicator: {
@@ -484,14 +601,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   submittingText: {
-    fontSize: 13,
-    color: leopardPalette.textMutedSlate,
+    color: '#D8E3F0',
+    fontSize: 12,
     fontWeight: '600',
   },
   numpadContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    backgroundColor: '#071A35',
+    borderTopColor: 'rgba(255, 255, 255, 0.09)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
     gap: 8,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+  },
+  numpadContainerCompact: {
+    gap: 6,
+    paddingBottom: 10,
+    paddingTop: 10,
   },
   numpadRow: {
     flexDirection: 'row',
@@ -499,18 +627,24 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   numpadKey: {
-    flex: 1,
-    minHeight: 48,
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     alignItems: 'center',
+    backgroundColor: '#142B50',
+    borderColor: '#314A6B',
+    borderRadius: 14,
+    borderWidth: 1,
+    flex: 1,
+    height: 52,
     justifyContent: 'center',
+    minHeight: 48,
+  },
+  numpadKeyCompact: {
+    height: 46,
+    minHeight: 44,
   },
   numpadKeyPressed: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#F97316',
+    borderColor: '#FDBA74',
+    transform: [{ scale: 0.97 }],
   },
   numpadKeyEmpty: {
     flex: 1,
@@ -518,14 +652,18 @@ const styles = StyleSheet.create({
     height: 52,
   },
   numpadKeyText: {
+    color: '#F8FAFC',
+    fontVariant: ['tabular-nums'],
     fontSize: 22,
     fontWeight: '700',
-    color: '#0B1E42',
-    fontVariant: ['tabular-nums'],
   },
   numpadKeyActionText: {
-    fontSize: 20,
+    color: '#B8C8D9',
+    fontSize: 21,
     fontWeight: '700',
-    color: '#64748B',
+  },
+  controlPressed: {
+    opacity: 0.82,
+    transform: [{ scale: 0.96 }],
   },
 });
