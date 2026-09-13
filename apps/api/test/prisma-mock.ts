@@ -15,6 +15,8 @@ import type {
   DeviceToken,
   Invoice,
   InvoiceSequence,
+  WithdrawalRequest,
+  WithdrawalStatus,
 } from '@prisma/client';
 import { createNotificationMock, createDeviceTokenMock } from './prisma-mock-notifications';
 import { createInvoiceMock, createInvoiceSequenceMock } from './prisma-mock-invoices';
@@ -49,6 +51,7 @@ export class InMemoryPrismaService {
   public deviceTokens = new Map<string, DeviceToken>();
   public invoices = new Map<string, Invoice>();
   public invoiceSequences = new Map<number, InvoiceSequence>();
+  public withdrawalRequests = new Map<string, WithdrawalRequest>();
 
   async $transaction<T>(fn: (tx: InMemoryPrismaService) => Promise<T>): Promise<T> {
     return fn(this);
@@ -876,4 +879,68 @@ export class InMemoryPrismaService {
   invoice = createInvoiceMock(this.invoices);
 
   invoiceSequence = createInvoiceSequenceMock(this.invoiceSequences);
+
+  withdrawalRequest = {
+    create: jest.fn(async ({ data }: { data: any }) => {
+      const id = data.id ?? `wr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const request: WithdrawalRequest = {
+        id,
+        driverId: data.driverId,
+        amountVnd: data.amountVnd,
+        status: (data.status ?? 'PENDING') as WithdrawalStatus,
+        bankName: data.bankName ?? null,
+        bankAccountNumber: data.bankAccountNumber ?? null,
+        bankAccountName: data.bankAccountName ?? null,
+        clientRequestId: data.clientRequestId ?? null,
+        reviewedById: data.reviewedById ?? null,
+        reviewedAt: data.reviewedAt ?? null,
+        reviewNote: data.reviewNote ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.withdrawalRequests.set(id, request);
+      return request;
+    }),
+    findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
+      return this.withdrawalRequests.get(where.id) ?? null;
+    }),
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let list = Array.from(this.withdrawalRequests.values());
+      if (where?.driverId) list = list.filter((r) => r.driverId === where.driverId);
+      if (where?.clientRequestId) list = list.filter((r) => r.clientRequestId === where.clientRequestId);
+      if (where?.status) {
+        if (typeof where.status === 'string') list = list.filter((r) => r.status === where.status);
+        else if (where.status.in) list = list.filter((r) => where.status.in.includes(r.status));
+      }
+      list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      return list[0] ?? null;
+    }),
+    findMany: jest.fn(async ({ where, skip = 0, take }: { where?: any; skip?: number; take?: number } = {}) => {
+      let list = Array.from(this.withdrawalRequests.values());
+      if (where?.driverId) list = list.filter((r) => r.driverId === where.driverId);
+      if (where?.status) {
+        if (typeof where.status === 'string') list = list.filter((r) => r.status === where.status);
+        else if (where.status.in) list = list.filter((r) => where.status.in.includes(r.status));
+      }
+      list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      const sliced = take !== undefined ? list.slice(skip, skip + take) : list.slice(skip);
+      return sliced;
+    }),
+    update: jest.fn(async ({ where, data }: { where: { id: string }; data: Partial<WithdrawalRequest> }) => {
+      const existing = this.withdrawalRequests.get(where.id);
+      if (!existing) throw new Error('WithdrawalRequest not found');
+      const updated = { ...existing, ...data, updatedAt: new Date() } as WithdrawalRequest;
+      this.withdrawalRequests.set(where.id, updated);
+      return updated;
+    }),
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.withdrawalRequests.values());
+      if (where?.driverId) list = list.filter((r) => r.driverId === where.driverId);
+      if (where?.status) {
+        if (typeof where.status === 'string') list = list.filter((r) => r.status === where.status);
+        else if (where.status.in) list = list.filter((r) => where.status.in.includes(r.status));
+      }
+      return list.length;
+    }),
+  };
 }
