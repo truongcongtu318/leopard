@@ -37,7 +37,6 @@ export default function CustomerLayout() {
 
   const getActiveTab = (): TabKey => {
     if (
-      pathname.includes('/customer/orders/new') ||
       pathname.includes('/customer/orders/checkout') ||
       pathname.includes('/customer/orders/searching')
     ) {
@@ -82,7 +81,6 @@ export default function CustomerLayout() {
   };
 
   const isSubScreenWithoutNav =
-    pathname.includes('/customer/orders/new') ||
     pathname.includes('/customer/orders/checkout') ||
     pathname.includes('/customer/orders/searching') ||
     pathname.includes('/customer/chat') ||

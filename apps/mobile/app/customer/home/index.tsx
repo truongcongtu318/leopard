@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
-import { sessionStore } from '@leopard/mobile-core';
+import { sessionStore, httpClient } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../../src/features/customer/addresses/address-store';
 import { createCustomerHttpAdapter } from '../../../src/features/customer/orders/adapter';
 import {
@@ -79,7 +79,7 @@ export default function CustomerHomePage() {
         if (mounted) {
           setRecentOrders(
             view.orders
-              .filter((order) => order.status === 'DELIVERED' && order.id !== activeOrder?.id)
+              .filter((order) => (order.status === 'DELIVERED' || order.status === 'CANCELLED') && order.id !== activeOrder?.id)
               .slice(0, 5)
               .map((order) => ({
                 id: order.id,
@@ -117,8 +117,7 @@ export default function CustomerHomePage() {
     async function loadCustomerUser() {
       try {
         if (sessionStore.isAuthenticated()) {
-          const { httpClient } = require('@leopard/mobile-core');
-          const user = await httpClient.get('/me');
+          const user = await httpClient.get<{ id: string; name?: string | null; phone?: string | null }>('/me');
           if (mounted && user) {
             setCustomerUser({
               name: user.name || undefined,

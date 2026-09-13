@@ -7,7 +7,7 @@ export default function CustomerOrdersPage() {
 
   return (
     <CustomerOrdersListRuntime
-      onCreate={() => router.push('/customer/orders/new')}
+      onCreate={() => router.replace('/customer/home')}
       onOpenOrder={(orderId) => router.push(`/customer/orders/${orderId}`)}
     />
   );

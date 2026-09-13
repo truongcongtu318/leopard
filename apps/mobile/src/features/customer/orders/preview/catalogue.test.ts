@@ -15,7 +15,6 @@ type RouteBoundCustomerPreviewFactory = (
 describe('Customer preview catalogue', () => {
   it('selects deterministic defaults per route', () => {
     expect(createCustomerPreviewView('list', null).scenarioId).toBe('C-LIST-SUCCESS');
-    expect(createCustomerPreviewView('create', null).scenarioId).toBe('C-NEW-ESTIMATE-DEMO');
     expect(createCustomerPreviewView('detail', null).scenarioId).toBe('C-DETAIL-SUCCESS');
   });
 
