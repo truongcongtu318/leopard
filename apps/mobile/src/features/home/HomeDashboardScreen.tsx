@@ -303,7 +303,7 @@ export function HomeDashboardScreen({
 
   const handleFleetSelectAndBook = (vehicle: FleetVehicleItem) => {
     setSelectedFleetId(vehicle.id);
-    onSelectVehicleAndBook ? onSelectVehicleAndBook(vehicle.vehicleCategory) : onCreateOrder?.();
+    onSelectVehicleAndBook?.(vehicle.vehicleCategory);
   };
 
   const handleMainCtaBook = () => {
