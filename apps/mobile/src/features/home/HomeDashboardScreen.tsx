@@ -144,6 +144,15 @@ export interface LocationSuggestionItem {
   coords?: { lat: number; lng: number };
 }
 
+export function stripVietnameseAccents(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+}
+
 export const POPULAR_LOCATION_SUGGESTIONS: readonly LocationSuggestionItem[] = [
   {
     id: 'sug-1',
@@ -175,56 +184,148 @@ export const POPULAR_LOCATION_SUGGESTIONS: readonly LocationSuggestionItem[] = [
   },
   {
     id: 'sug-5',
+    title: 'Sân bay Tân Sơn Nhất',
+    subtitle: 'Đường Trường Sơn, Phường 2, Q. Tân Bình, TP.HCM',
+    address: 'Sân bay Tân Sơn Nhất, Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
+    coords: { lat: 10.818, lng: 106.659 },
+  },
+  {
+    id: 'sug-6',
+    title: 'Đường Cộng Hòa',
+    subtitle: 'Phường 13, Quận Tân Bình, TP.HCM',
+    address: 'Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
+    coords: { lat: 10.803, lng: 106.643 },
+  },
+  {
+    id: 'sug-7',
+    title: 'Đường Quang Trung',
+    subtitle: 'Phường 10, Quận Gò Vấp, TP.HCM',
+    address: 'Đường Quang Trung, Phường 10, Quận Gò Vấp, TP. Hồ Chí Minh',
+    coords: { lat: 10.835, lng: 106.666 },
+  },
+  {
+    id: 'sug-8',
+    title: 'Đường Lê Văn Sỹ',
+    subtitle: 'Phường 14, Quận 3, TP.HCM',
+    address: 'Đường Lê Văn Sỹ, Phường 14, Quận 3, TP. Hồ Chí Minh',
+    coords: { lat: 10.791, lng: 106.674 },
+  },
+  {
+    id: 'sug-9',
     title: 'Chợ Bến Thành',
     subtitle: 'Đường Lê Lợi, Phường Bến Thành, Quận 1, TP.HCM',
     address: 'Chợ Bến Thành, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
     coords: { lat: 10.7725, lng: 106.698 },
   },
   {
-    id: 'sug-6',
+    id: 'sug-10',
+    title: 'Đường Nguyễn Huệ',
+    subtitle: 'Phố đi bộ, Phường Bến Nghé, Quận 1, TP.HCM',
+    address: 'Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    coords: { lat: 10.774, lng: 106.703 },
+  },
+  {
+    id: 'sug-11',
+    title: 'Đại lộ Nguyễn Văn Linh',
+    subtitle: 'Phường Tân Phong, Quận 7, TP.HCM',
+    address: 'Đại lộ Nguyễn Văn Linh, Phường Tân Phong, Quận 7, TP. Hồ Chí Minh',
+    coords: { lat: 10.728, lng: 106.711 },
+  },
+  {
+    id: 'sug-12',
     title: 'KCX Tân Thuận',
     subtitle: 'Phường Tân Thuận Đông, Quận 7, TP.HCM',
     address: 'KCX Tân Thuận, Phường Tân Thuận Đông, Quận 7, TP. Hồ Chí Minh',
     coords: { lat: 10.756, lng: 106.732 },
   },
   {
-    id: 'sug-7',
+    id: 'sug-13',
     title: 'KCN Vĩnh Lộc',
     subtitle: 'Đường số 7, KCN Vĩnh Lộc, Bình Chánh, TP.HCM',
     address: 'KCN Vĩnh Lộc, Bình Chánh, TP. Hồ Chí Minh',
     coords: { lat: 10.824, lng: 106.574 },
   },
   {
-    id: 'sug-8',
+    id: 'sug-14',
+    title: 'Ngã tư An Sương',
+    subtitle: 'Quốc lộ 22, Phường Trung Mỹ Tây, Quận 12, TP.HCM',
+    address: 'Ngã tư An Sương, Quốc lộ 22, Quận 12, TP. Hồ Chí Minh',
+    coords: { lat: 10.852, lng: 106.621 },
+  },
+  {
+    id: 'sug-15',
+    title: 'Khu Công Nghệ Cao (SHTP)',
+    subtitle: 'Đường D1, Long Thạnh Mỹ, TP. Thủ Đức, TP.HCM',
+    address: 'Khu Công Nghệ Cao, Long Thạnh Mỹ, TP. Thủ Đức, TP. Hồ Chí Minh',
+    coords: { lat: 10.855, lng: 106.797 },
+  },
+  {
+    id: 'sug-16',
     title: 'KCN Biên Hòa 2',
     subtitle: 'Xa lộ Hà Nội, Long Bình Tân, TP. Biên Hòa, Đồng Nai',
     address: 'KCN Biên Hòa 2, TP. Biên Hòa, Đồng Nai',
     coords: { lat: 10.957, lng: 106.828 },
   },
+  {
+    id: 'sug-17',
+    title: 'KCN Amata',
+    subtitle: 'Phường Long Bình, TP. Biên Hòa, Đồng Nai',
+    address: 'KCN Amata, Phường Long Bình, TP. Biên Hòa, Đồng Nai',
+    coords: { lat: 10.961, lng: 106.874 },
+  },
+  {
+    id: 'sug-18',
+    title: 'KCN VSIP 1',
+    subtitle: 'Đại lộ Hữu Nghị, Thuận An, Bình Dương',
+    address: 'KCN VSIP 1, Đại lộ Hữu Nghị, Thuận An, Bình Dương',
+    coords: { lat: 10.923, lng: 106.702 },
+  },
+  {
+    id: 'sug-19',
+    title: 'Bến Lức Long An',
+    subtitle: 'Quốc lộ 1A, Thị trấn Bến Lức, Long An',
+    address: 'Bến Lức, Long An',
+    coords: { lat: 10.643, lng: 106.488 },
+  },
+  {
+    id: 'sug-20',
+    title: 'Cảng Quốc tế Cái Mép',
+    subtitle: 'Thị xã Phú Mỹ, Bà Rịa - Vũng Tàu',
+    address: 'Cảng Quốc tế Cái Mép, Thị xã Phú Mỹ, Bà Rịa - Vũng Tàu',
+    coords: { lat: 10.518, lng: 107.018 },
+  },
 ];
 
 export function getAddressSuggestions(query: string): readonly LocationSuggestionItem[] {
-  const q = query.trim().toLowerCase();
-  if (!q) {
-    return POPULAR_LOCATION_SUGGESTIONS.slice(0, 4);
+  const rawQ = query.trim();
+  if (!rawQ) {
+    return POPULAR_LOCATION_SUGGESTIONS.slice(0, 5);
   }
-  const filtered = POPULAR_LOCATION_SUGGESTIONS.filter(
-    (item) =>
-      item.title.toLowerCase().includes(q) ||
-      item.subtitle.toLowerCase().includes(q) ||
-      item.address.toLowerCase().includes(q)
-  );
-  return filtered.length > 0
-    ? filtered.slice(0, 5)
-    : [
-        {
-          id: 'custom-query',
-          title: query.trim(),
-          subtitle: 'Vị trí tìm kiếm theo từ khóa',
-          address: query.trim(),
-        },
-        ...POPULAR_LOCATION_SUGGESTIONS.slice(0, 3),
-      ];
+  const cleanQ = stripVietnameseAccents(rawQ);
+  const filtered = POPULAR_LOCATION_SUGGESTIONS.filter((item) => {
+    const titleClean = stripVietnameseAccents(item.title);
+    const subClean = stripVietnameseAccents(item.subtitle);
+    const addrClean = stripVietnameseAccents(item.address);
+    return (
+      titleClean.includes(cleanQ) ||
+      subClean.includes(cleanQ) ||
+      addrClean.includes(cleanQ)
+    );
+  });
+
+  if (filtered.length > 0) {
+    return filtered.slice(0, 6);
+  }
+
+  return [
+    {
+      id: 'custom-query',
+      title: rawQ,
+      subtitle: 'Tìm kiếm theo từ khóa Google Maps',
+      address: rawQ,
+    },
+    ...POPULAR_LOCATION_SUGGESTIONS.slice(0, 3),
+  ];
 }
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';

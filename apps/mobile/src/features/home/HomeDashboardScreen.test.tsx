@@ -327,6 +327,20 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   }, 30000);
 
+  it('matches Vietnamese locations without accents like Google Maps', async () => {
+    const screen = await render(<HomeDashboardScreen />);
+    const dropoffInput = screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...');
+    await fireEvent(dropoffInput, 'focus');
+    await fireEvent.changeText(dropoffInput, 'cong hoa');
+
+    expect(screen.getByText('Đường Cộng Hòa')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Chọn gợi ý Đường Cộng Hòa'));
+
+    expect(screen.getByDisplayValue('Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
+
+    await screen.unmount();
+  }, 30000);
+
   it('keeps input rows clean without redundant map picker buttons', async () => {
     const screen = await render(
       <HomeDashboardScreen userName="Anh Hoàng" />,
