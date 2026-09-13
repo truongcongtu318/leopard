@@ -27,7 +27,6 @@ import {
   IconTruck,
   IconVan,
   IconWarehouse,
-  OrderSummary,
   RealInteractiveMap,
   RouteSpine,
   StatusBadge,
@@ -180,11 +179,6 @@ export function HomeDashboardScreen({
   const topInset = insets?.top ?? 0;
   const [activeTab, setActiveTab] = useState<TabKey>('home');
 
-  const deliveredRecentOrders = useMemo(
-    () => recentOrders.filter((order) => order.status === 'DELIVERED'),
-    [recentOrders],
-  );
-
   const initialSaved = addressStore.getDefaultAddress();
   const initialAddress = defaultPickupLocation ?? initialSaved?.address ?? 'Kho Tân Bình, TP. Hồ Chí Minh';
   const initialLabel = defaultPickupLabel ?? initialSaved?.label ?? null;
@@ -201,7 +195,6 @@ export function HomeDashboardScreen({
   const [loggedInCustomer, setLoggedInCustomer] = useState<{ name?: string; phone?: string } | null>(null);
   const [addressStoreVersion, setAddressStoreVersion] = useState(0);
   const [isAutoNavigating, setIsAutoNavigating] = useState(false);
-  const [quickTrackCode, setQuickTrackCode] = useState('');
 
   const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasNavigatedRef = useRef(false);
@@ -581,18 +574,16 @@ export function HomeDashboardScreen({
           </View>
 
           {/* 2. Active Shipment / Tracking Capsule (testID="home-active-shipments") */}
-          <View style={styles.section} testID="home-active-shipments">
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.sectionTitleWithBadge}>
-                {activeShipment ? <View style={styles.liveIndicatorDotActive} /> : null}
-                <Text style={styles.sectionLabel}>ĐANG VẬN CHUYỂN</Text>
-              </View>
-              {activeShipment ? (
+          {activeShipment ? (
+            <View style={styles.section} testID="home-active-shipments">
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionTitleWithBadge}>
+                  <View style={styles.liveIndicatorDotActive} />
+                  <Text style={styles.sectionLabel}>ĐANG VẬN CHUYỂN</Text>
+                </View>
                 <View style={styles.liveTagBadge}><Text style={styles.liveTagText}>Trực tiếp</Text></View>
-              ) : null}
-            </View>
+              </View>
 
-            {activeShipment ? (
               <Pressable
                 accessibilityHint="Mở theo dõi lộ trình"
                 accessibilityLabel={`Chuyến đang vận chuyển từ ${activeShipment.origin} đến ${activeShipment.destination}`}
@@ -626,80 +617,8 @@ export function HomeDashboardScreen({
                   <View style={styles.activeTrackPill}><Text style={styles.trackText}>Theo dõi →</Text></View>
                 </View>
               </Pressable>
-            ) : (
-              <View style={styles.emptyActivityBox}>
-                <Text style={styles.emptyTitle}>Chưa có chuyến nào đang chạy</Text>
-                <Text style={styles.emptyBody}>Tạo đơn vận chuyển để bắt đầu theo dõi lộ trình theo thời gian thực.</Text>
-                <View style={styles.quickTrackingBar}>
-                  <View style={styles.trackingInputWrap}>
-                    <IconSearch color="#0B1E42" size={16} />
-                    <TextInput
-                      accessibilityLabel="Tra cứu mã vận đơn" autoCapitalize="characters"
-                      onChangeText={setQuickTrackCode} placeholder="Tra cứu nhanh mã vận đơn..."
-                      placeholderTextColor="#94A3B8" style={styles.trackingInput} value={quickTrackCode}
-                    />
-                  </View>
-                  <Pressable
-                    accessibilityLabel="Tra cứu đơn hàng" accessibilityRole="button"
-                    onPress={() => { quickTrackCode.trim() ? onOpenOrder?.(quickTrackCode.trim()) : onViewAllOrders?.(); }}
-                    style={styles.trackingSearchBtn}
-                  >
-                    <Text style={styles.trackingSearchBtnText}>Tra cứu</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* 3. Recent Delivered Orders Ledger */}
-          <View style={styles.section} testID="home-recent-orders">
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionLabel}>ĐƠN GẦN ĐÂY</Text>
-              <Pressable accessibilityLabel="Xem tất cả đơn hàng" accessibilityRole="button" onPress={onViewAllOrders}>
-                <Text style={styles.linkText}>Xem tất cả</Text>
-              </Pressable>
             </View>
-
-            {deliveredRecentOrders.length > 0 ? (
-              <View style={styles.orderList}>
-                {deliveredRecentOrders.map((order) => (
-                  <View key={order.id} style={styles.recentOrderItemWrap}>
-                    <OrderSummary
-                      accessibilityLabel={`Đơn ${order.reference}, từ ${order.origin} đến ${order.destination}`}
-                      actionButton={
-                        <Pressable
-                          accessibilityLabel={`Đặt lại chuyến ${order.reference}`} accessibilityRole="button" hitSlop={6}
-                          onPress={(e) => {
-                            if (Platform.OS === 'web') (e as any).stopPropagation?.();
-                            setPickupText(order.origin);
-                            setDropoffText(order.destination);
-                            triggerNavigation(order.origin, order.destination);
-                          }}
-                          style={({ pressed }) => [styles.reorderInlineBtn, pressed && styles.reorderInlineBtnPressed]}
-                        >
-                          <Text style={styles.reorderInlineBtnText}>Đặt lại chuyến này →</Text>
-                        </Pressable>
-                      }
-                      destination={{ id: `${order.id}-dest`, label: order.destination }}
-                      metadata={[
-                        ...(order.price ? [{ id: 'price', label: 'Giá', value: order.price }] : []),
-                        ...(order.updated ? [{ id: 'updated', label: 'Cập nhật', value: order.updated }] : []),
-                      ]}
-                      onPress={() => onOpenOrder?.(order.id)}
-                      orderReference={order.reference}
-                      origin={{ id: `${order.id}-origin`, label: order.origin }}
-                      status={order.status}
-                    />
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyTitle}>Bạn chưa có đơn hàng nào.</Text>
-                <Text style={styles.emptyBody}>Đơn đã giao thành công sẽ hiển thị tại đây để bạn có thể đặt lại nhanh chóng.</Text>
-              </View>
-            )}
-          </View>
+          ) : null}
 
           <View style={{ height: showFloatingNavBar ? 76 : 24 }} />
         </ScrollView>
@@ -884,28 +803,6 @@ const styles = StyleSheet.create({
   plateText: { fontWeight: '700', color: '#0B1E42', fontVariant: ['tabular-nums'] },
   activeTrackPill: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   trackText: { fontSize: 11, fontWeight: '700', color: '#0B1E42' },
-
-  /* Empty Activity Box & Quick Tracking */
-  emptyActivityBox: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, padding: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-  emptyTitle: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
-  emptyBody: { fontSize: 11, color: '#64748B', marginTop: 2, marginBottom: 8 },
-  quickTrackingBar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  trackingInputWrap: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
-    borderRadius: 12, paddingHorizontal: 10, height: 40, borderWidth: 1, borderColor: '#E2E8F0', gap: 6,
-  },
-  trackingInput: { flex: 1, fontSize: 12, fontWeight: '600', color: '#0F172A', padding: 0 },
-  trackingSearchBtn: { backgroundColor: '#0B1E42', borderRadius: 12, paddingHorizontal: 14, height: 40, minHeight: 40, alignItems: 'center', justifyContent: 'center' },
-  trackingSearchBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
-
-  /* Recent Orders Ledger */
-  linkText: { fontSize: 12, fontWeight: '700', color: '#0284C7' },
-  orderList: { gap: 8 },
-  recentOrderItemWrap: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
-  reorderInlineBtn: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  reorderInlineBtnPressed: { opacity: 0.7 },
-  reorderInlineBtnText: { fontSize: 11, fontWeight: '700', color: '#0B1E42' },
-  emptyBox: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, padding: 12, borderWidth: 1, borderColor: '#E2E8F0' },
 
   /* Layer 3: Floating Navigation Dock */
   layer3FloatingNav: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 60 },

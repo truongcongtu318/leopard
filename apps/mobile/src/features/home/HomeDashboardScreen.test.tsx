@@ -84,20 +84,13 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Tải 1.25T/));
     expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
 
-    // Active shipment sits at the top: status + route + ETA, opens on press
+    // Active shipment sits below booking: status + route + ETA, opens on press
     expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
     expect(screen.getByText('Kho Tân Bình')).toBeTruthy();
     expect(screen.getByText(/18 phút/)).toBeTruthy();
     expect(screen.getByText(/59C-882\.14/)).toBeTruthy();
     await fireEvent.press(screen.getByLabelText(/Chuyến đang vận chuyển/));
     expect(onOpenActiveOrder).toHaveBeenCalledWith('ord-active-1');
-
-    // Recent orders as ledger rows
-    expect(screen.getByText('Đơn LP-240902')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('order-summary-LP-240902'));
-    expect(onOpenOrder).toHaveBeenCalledWith('ord-2');
-    await fireEvent.press(screen.getByLabelText('Xem tất cả đơn hàng'));
-    expect(onViewAllOrders).toHaveBeenCalledTimes(1);
 
     // Quick book by Ba Gác jumps into the create flow
     await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Ba Gác/));
@@ -113,13 +106,15 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   }, 60000);
 
-  it('renders calm empty states when there is no work yet', async () => {
+  it('renders calm pure booking state without noise when there is no active shipment', async () => {
     const screen = await render(
       <HomeDashboardScreen activeShipment={null} recentOrders={[]} />,
     );
 
-    expect(screen.getByText('Chưa có chuyến nào đang chạy')).toBeTruthy();
-    expect(screen.getByText('Bạn chưa có đơn hàng nào.')).toBeTruthy();
+    expect(screen.queryByTestId('home-active-shipments')).toBeNull();
+    expect(screen.queryByText('Chưa có chuyến nào đang chạy')).toBeNull();
+    expect(screen.queryByText('Bạn chưa có đơn hàng nào.')).toBeNull();
+    expect(screen.getByTestId('home-booking')).toBeTruthy();
 
     await screen.unmount();
   });
@@ -181,17 +176,17 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it.each([activeShipment, null])('places shipment status directly after booking and before recent orders (%p)', async (shipment) => {
+  it.each([
+    { shipment: activeShipment, shouldShow: true },
+    { shipment: null, shouldShow: false },
+  ])('handles active shipment with progressive disclosure ($shouldShow)', async ({ shipment, shouldShow }) => {
     const screen = await render(<HomeDashboardScreen activeShipment={shipment} />);
-    const sectionIds = ['home-booking', 'home-active-shipments', 'home-recent-orders'];
-    sectionIds.forEach((id) => expect(screen.getByTestId(id)).toBeTruthy());
-    const renderedTree = JSON.stringify(screen.toJSON());
-    expect(renderedTree.indexOf('home-booking')).toBeLessThan(renderedTree.indexOf('home-active-shipments'));
-    expect(renderedTree.indexOf('home-active-shipments')).toBeLessThan(renderedTree.indexOf('home-recent-orders'));
-    if (shipment === null) {
-      expect(screen.getByLabelText('Tra cứu mã vận đơn')).toBeTruthy();
-    } else {
+    expect(screen.getByTestId('home-booking')).toBeTruthy();
+    if (shouldShow) {
+      expect(screen.getByTestId('home-active-shipments')).toBeTruthy();
       expect(screen.getByLabelText(/Chuyến đang vận chuyển/)).toBeTruthy();
+    } else {
+      expect(screen.queryByTestId('home-active-shipments')).toBeNull();
     }
 
     await screen.unmount();
@@ -409,83 +404,11 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it('supports 1-tap reorder from recent orders to auto-populate and navigate', async () => {
-    const onQuickBook = jest.fn();
-    const screen = await render(
-      <HomeDashboardScreen
-        onQuickBook={onQuickBook}
-        recentOrders={recentOrders}
-      />,
-    );
-
-    // Tap "Đặt lại chuyến này →" on first order (Quận 7 -> Thủ Đức)
-    const reorderBtn = screen.getByLabelText('Đặt lại chuyến LP-240902');
-    expect(reorderBtn).toBeTruthy();
-    await fireEvent.press(reorderBtn);
-    await new Promise((r) => setTimeout(r, 450));
-
-    expect(onQuickBook).toHaveBeenCalledWith('Quận 7', 'Thủ Đức');
-
-    await screen.unmount();
-  });
-
-  it('allows quick tracking by order code', async () => {
-    const onOpenOrder = jest.fn();
-    const screen = await render(
-      <HomeDashboardScreen activeShipment={null} onOpenOrder={onOpenOrder} />,
-    );
-
-    const trackInput = screen.getByLabelText('Tra cứu mã vận đơn');
-    expect(trackInput).toBeTruthy();
-    await fireEvent.changeText(trackInput, 'LP-999999');
-    await fireEvent.press(screen.getByLabelText('Tra cứu đơn hàng'));
-
-    expect(onOpenOrder).toHaveBeenCalledWith('LP-999999');
-
-    await screen.unmount();
-  });
-
-  it('only displays delivered orders in recent orders section and excludes other statuses', async () => {
-    const screen = await render(
-      <HomeDashboardScreen
-        recentOrders={[
-          {
-            id: 'ord-deliv',
-            reference: 'LP-DELIVERED',
-            status: 'DELIVERED',
-            origin: 'Điểm lấy A',
-            destination: 'Điểm giao A',
-          },
-          {
-            id: 'ord-transit',
-            reference: 'LP-TRANSIT',
-            status: 'IN_TRANSIT',
-            origin: 'Điểm lấy B',
-            destination: 'Điểm giao B',
-          },
-          {
-            id: 'ord-req',
-            reference: 'LP-REQUESTED',
-            status: 'REQUESTED',
-            origin: 'Điểm lấy C',
-            destination: 'Điểm giao C',
-          },
-          {
-            id: 'ord-canc',
-            reference: 'LP-CANCELLED',
-            status: 'CANCELLED',
-            origin: 'Điểm lấy D',
-            destination: 'Điểm giao D',
-          },
-        ]}
-      />,
-    );
-
-    expect(screen.getByText('Đơn LP-DELIVERED')).toBeTruthy();
-    expect(screen.queryByText('Đơn LP-TRANSIT')).toBeNull();
-    expect(screen.queryByText('Đơn LP-REQUESTED')).toBeNull();
-    expect(screen.queryByText('Đơn LP-CANCELLED')).toBeNull();
-
+  it('enforces single responsibility principle by keeping home focused strictly on booking', async () => {
+    const screen = await render(<HomeDashboardScreen />);
+    expect(screen.getByTestId('home-booking')).toBeTruthy();
+    expect(screen.queryByTestId('home-recent-orders')).toBeNull();
+    expect(screen.queryByLabelText('Tra cứu mã vận đơn')).toBeNull();
     await screen.unmount();
   });
 
