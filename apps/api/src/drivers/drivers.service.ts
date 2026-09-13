@@ -165,7 +165,7 @@ export class DriversService {
       bankName: dto.bankName,
       bankAccountNumber: dto.bankAccountNumber,
       bankAccountName: dto.bankAccountName,
-      clientRequestId: dto.clientRequestId,
+      ...(dto.clientRequestId ? { clientRequestId: dto.clientRequestId } : {}),
     });
   }
 

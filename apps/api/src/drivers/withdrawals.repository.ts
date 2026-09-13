@@ -16,7 +16,7 @@ export interface CreateWithdrawalRequestInput {
   readonly bankName: string;
   readonly bankAccountNumber: string;
   readonly bankAccountName: string;
-  readonly clientRequestId?: string;
+  readonly clientRequestId?: string | undefined;
 }
 
 @Injectable()
