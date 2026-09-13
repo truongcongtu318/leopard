@@ -883,6 +883,7 @@ export class InMemoryPrismaService {
   withdrawalRequest = {
     create: jest.fn(async ({ data }: { data: any }) => {
       const id = data.id ?? `wr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const now = new Date(Date.now() + (this.withdrawalRequests.size + 1) * 10);
       const request: WithdrawalRequest = {
         id,
         driverId: data.driverId,
@@ -895,8 +896,8 @@ export class InMemoryPrismaService {
         reviewedById: data.reviewedById ?? null,
         reviewedAt: data.reviewedAt ?? null,
         reviewNote: data.reviewNote ?? null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: data.createdAt ?? now,
+        updatedAt: data.updatedAt ?? now,
       };
       this.withdrawalRequests.set(id, request);
       return request;
