@@ -30,6 +30,7 @@ import {
   RealInteractiveMap,
   RouteSpine,
   StatusBadge,
+  haptic,
   httpClient,
   iosContinuousCurve,
   sessionStore,
@@ -327,6 +328,7 @@ export function HomeDashboardScreen({
   const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
 
   const handleFleetSelectAndBook = (vehicle: FleetVehicleItem) => {
+    haptic.selection();
     setSelectedFleetId(vehicle.id);
     onSelectVehicleAndBook?.(vehicle.vehicleCategory);
   };
@@ -349,6 +351,7 @@ export function HomeDashboardScreen({
   };
 
   const handleMainCtaBook = () => {
+    haptic.light();
     onSelectVehicleAndBook?.(currentFleetVehicle.vehicleCategory);
     if (hasSelectedDropoff) {
       setShowBookingDetailsModal(true);
@@ -699,16 +702,15 @@ export function HomeDashboardScreen({
         onOpenSavedAddresses={onOpenSavedAddresses ? () => { setShowSavedAddressModal(false); onOpenSavedAddresses(); } : undefined}
         onSelectAddress={(addr) => {
           if (savedAddressModalTarget === 'pickup') {
-            setPickupText(addr.address); setPickupLabel(addr.label); addressStore.setDefaultAddress(addr.id);
-            if (dropoffText.trim().length >= 3) triggerNavigation(addr.address, dropoffText);
+            setPickupText(addr.address);
+            setPickupLabel(addr.label);
+            addressStore.setDefaultAddress(addr.id);
           } else {
             setDropoffText(addr.address);
-            if (pickupText.trim().length >= 3) {
-              const coords = typeof addr.latitude === 'number' && typeof addr.longitude === 'number' ? { lat: addr.latitude, lng: addr.longitude } : undefined;
-              triggerNavigation(pickupText, addr.address, coords);
-            }
           }
-          onSelectSavedAddress?.(addr); setShowSavedAddressModal(false);
+          onSelectSavedAddress?.(addr);
+          setShowSavedAddressModal(false);
+          setFocusedField(null);
         }}
         target={savedAddressModalTarget} visible={showSavedAddressModal}
       />

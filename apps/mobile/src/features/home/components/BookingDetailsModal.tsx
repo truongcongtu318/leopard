@@ -197,7 +197,10 @@ export function BookingDetailsModal({
                       accessibilityLabel={cat}
                       accessibilityRole="button"
                       key={cat}
-                      onPress={() => setCargoCategory(cat)}
+                      onPress={() => {
+                        haptic.selection();
+                        setCargoCategory(cat);
+                      }}
                       style={[
                         styles.chip,
                         isSelected ? styles.chipSelected : styles.chipUnselected,
@@ -236,7 +239,10 @@ export function BookingDetailsModal({
                   accessibilityLabel="Tài xế hỗ trợ bốc xếp 2 đầu"
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: hasLoadingSupport }}
-                  onPress={() => setHasLoadingSupport((prev) => !prev)}
+                  onPress={() => {
+                    haptic.selection();
+                    setHasLoadingSupport((prev) => !prev);
+                  }}
                   style={[
                     styles.toggleRow,
                     hasLoadingSupport ? styles.toggleRowActive : null,
@@ -265,7 +271,10 @@ export function BookingDetailsModal({
                   accessibilityLabel="Xuất hóa đơn VAT điện tử (8%)"
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: hasVatInvoice }}
-                  onPress={() => setHasVatInvoice((prev) => !prev)}
+                  onPress={() => {
+                    haptic.selection();
+                    setHasVatInvoice((prev) => !prev);
+                  }}
                   style={[
                     styles.toggleRow,
                     hasVatInvoice ? styles.toggleRowActive : null,
@@ -302,7 +311,10 @@ export function BookingDetailsModal({
                   accessibilityLabel="Chuyển khoản VietQR payOS"
                   accessibilityRole="radio"
                   accessibilityState={{ checked: paymentMethod === 'VIETQR' }}
-                  onPress={() => setPaymentMethod('VIETQR')}
+                  onPress={() => {
+                    haptic.selection();
+                    setPaymentMethod('VIETQR');
+                  }}
                   style={[
                     styles.radioRow,
                     paymentMethod === 'VIETQR' ? styles.radioRowActive : null,
@@ -335,7 +347,10 @@ export function BookingDetailsModal({
                   accessibilityLabel="Tiền mặt khi nhận hàng"
                   accessibilityRole="radio"
                   accessibilityState={{ checked: paymentMethod === 'CASH' }}
-                  onPress={() => setPaymentMethod('CASH')}
+                  onPress={() => {
+                    haptic.selection();
+                    setPaymentMethod('CASH');
+                  }}
                   style={[
                     styles.radioRow,
                     paymentMethod === 'CASH' ? styles.radioRowActive : null,
