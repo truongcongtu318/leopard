@@ -37,6 +37,7 @@ export interface BookingDetailsModalProps {
   basePrice: number;
   initialReceiverName?: string;
   initialReceiverPhone?: string;
+  testID?: string;
 }
 
 export const CARGO_CATEGORIES = [
@@ -63,6 +64,7 @@ export function BookingDetailsModal({
   basePrice,
   initialReceiverName = '',
   initialReceiverPhone = '',
+  testID = 'booking-details-modal',
 }: BookingDetailsModalProps) {
   const [receiverName, setReceiverName] = useState(initialReceiverName);
   const [receiverPhone, setReceiverPhone] = useState(initialReceiverPhone);
@@ -107,6 +109,7 @@ export function BookingDetailsModal({
     <Modal
       animationType="slide"
       onRequestClose={onClose}
+      testID={testID}
       transparent
       visible={visible}
     >

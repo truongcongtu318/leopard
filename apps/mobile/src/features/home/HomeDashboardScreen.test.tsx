@@ -167,6 +167,7 @@ describe('HomeDashboardScreen', () => {
        'KCN Sóng Thần, Bình Dương',
     );
     await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+    await fireEvent.press(screen.getByText(/XÁC NHẬN GỌI XE/));
     await new Promise((r) => setTimeout(r, 450));
 
     expect(onQuickBook).toHaveBeenCalledWith(
@@ -543,6 +544,64 @@ describe('HomeDashboardScreen', () => {
       await fireEvent.press(screen.getByLabelText('Xóa điểm giao hàng'));
       await fireEvent.press(screen.getByText('KCN Sóng Thần'));
       expect(screen.getByDisplayValue('KCN Sóng Thần, Dĩ An, Bình Dương')).toBeTruthy();
+
+      await screen.unmount();
+    });
+  });
+
+  describe('in-place booking details modal flow', () => {
+    it('opens BookingDetailsModal when CTA is tapped with valid dropoff and invokes onConfirmBooking on confirm', async () => {
+      const onConfirmBooking = jest.fn();
+      const screen = await render(
+        <HomeDashboardScreen
+          defaultDropoffLocation="KCN Tân Tạo"
+          onConfirmBooking={onConfirmBooking}
+          userName="Nguyễn Văn A"
+          userPhone="0912345678"
+        />,
+      );
+
+      // Modal is not visible initially
+      expect(screen.queryByTestId('booking-details-modal')).toBeNull();
+
+      // Tap CTA
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+
+      // BookingDetailsModal is now visible
+      expect(screen.getByTestId('booking-details-modal')).toBeTruthy();
+      expect(screen.getByText('Chi tiết chuyến hàng')).toBeTruthy();
+      expect(screen.getByDisplayValue('Nguyễn Văn A')).toBeTruthy();
+      expect(screen.getByDisplayValue('0912345678')).toBeTruthy();
+
+      // Confirm modal
+      await fireEvent.press(screen.getByText(/XÁC NHẬN GỌI XE/));
+
+      expect(onConfirmBooking).toHaveBeenCalledTimes(1);
+      expect(onConfirmBooking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pickup: 'Kho Tân Bình, TP. Hồ Chí Minh',
+          dropoff: 'KCN Tân Tạo',
+          receiverName: 'Nguyễn Văn A',
+          receiverPhone: '0912345678',
+          vehicleCategory: 'LIGHT_TRUCK',
+          vehicleName: 'Xe Tải 1.25T',
+          totalFare: 280000,
+        }),
+      );
+
+      await screen.unmount();
+    });
+
+    it('closes modal when close button is pressed', async () => {
+      const screen = await render(
+        <HomeDashboardScreen defaultDropoffLocation="KCN Tân Tạo" />,
+      );
+
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByTestId('booking-details-modal')).toBeTruthy();
+
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+      expect(screen.queryByTestId('booking-details-modal')).toBeNull();
 
       await screen.unmount();
     });

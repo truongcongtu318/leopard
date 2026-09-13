@@ -190,6 +190,36 @@ export default function CustomerHomePage() {
       recentOrders={recentOrders}
       userName={customerUser?.name}
       userPhone={customerUser?.phone}
+      onConfirmBooking={(booking) => {
+        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+        if (booking.paymentMethod === 'CASH') {
+          router.push({
+            pathname: `/customer/orders/searching/${orderId}`,
+            params: {
+              amount: String(booking.totalFare),
+              pickup: booking.pickup,
+              dropoff: booking.dropoff,
+              origin: booking.pickup,
+              destination: booking.dropoff,
+              vehicleName: booking.vehicleName,
+              paymentMethod: 'CASH',
+            },
+          });
+        } else {
+          router.push({
+            pathname: `/customer/orders/checkout/${orderId}`,
+            params: {
+              amount: String(booking.totalFare),
+              pickup: booking.pickup,
+              dropoff: booking.dropoff,
+              origin: booking.pickup,
+              destination: booking.dropoff,
+              vehicleName: booking.vehicleName,
+              paymentMethod: 'VIETQR',
+            },
+          });
+        }
+      }}
       onCreateOrder={() => {
         const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
         router.push({

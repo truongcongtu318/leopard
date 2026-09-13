@@ -39,9 +39,12 @@ import {
 
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
 import {
+  BookingDetailsModal,
   MapAddressPickerModal,
   reverseGeocodeCoords,
   SavedAddressPickerModal,
+  type BookingDetails,
+  type BookingPaymentMethod,
 } from './components';
 
 export type ActiveShipment = Readonly<{
@@ -171,6 +174,7 @@ export type HomeDashboardScreenProps = Readonly<{
   onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
   onRegisterDriver?: () => void;
   onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }) => void;
+  onConfirmBooking?: (details: BookingDetails & { pickup: string; dropoff: string; vehicleCategory: VehicleCategory; vehicleName: string }) => void;
   onOpenSavedAddresses?: () => void;
   onNavigateTab?: (tab: TabKey) => void;
   onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
@@ -181,7 +185,7 @@ export type HomeDashboardScreenProps = Readonly<{
 
 export function HomeDashboardScreen({
   activeShipment = DEFAULT_ACTIVE_SHIPMENT, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
-  onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
+  onConfirmBooking, onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
   onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
   onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = DEFAULT_RECENT_ORDERS,
   savedAddresses, showFloatingNavBar = false, smeName = 'Cửa hàng VLXD Đại Phát',
@@ -203,6 +207,7 @@ export function HomeDashboardScreen({
   const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
   const [savedAddressModalTarget, setSavedAddressModalTarget] = useState<'pickup' | 'dropoff'>('pickup');
   const [showMapPickerModal, setShowMapPickerModal] = useState(false);
+  const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
   const [mapTarget, setMapTarget] = useState<'pickup' | 'dropoff'>('pickup');
   const [loggedInCustomer, setLoggedInCustomer] = useState<{ name?: string; phone?: string } | null>(null);
   const [addressStoreVersion, setAddressStoreVersion] = useState(0);
@@ -319,18 +324,36 @@ export function HomeDashboardScreen({
     () => FLEET_VEHICLES.find((v) => v.id === selectedFleetId) || FLEET_VEHICLES[1],
     [selectedFleetId],
   );
+  const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
 
   const handleFleetSelectAndBook = (vehicle: FleetVehicleItem) => {
     setSelectedFleetId(vehicle.id);
     onSelectVehicleAndBook?.(vehicle.vehicleCategory);
   };
 
+  const handleConfirmBooking = (details: BookingDetails) => {
+    setShowBookingDetailsModal(false);
+    if (onConfirmBooking) {
+      onConfirmBooking({
+        ...details,
+        pickup: pickupText,
+        dropoff: dropoffText,
+        vehicleCategory: currentFleetVehicle.vehicleCategory,
+        vehicleName: currentFleetVehicle.name,
+      });
+    } else if (onQuickBook) {
+      onQuickBook(pickupText, dropoffText);
+    } else {
+      onCreateOrder?.();
+    }
+  };
+
   const handleMainCtaBook = () => {
     onSelectVehicleAndBook?.(currentFleetVehicle.vehicleCategory);
     if (hasSelectedDropoff) {
-      triggerNavigation(pickupText, dropoffText);
+      setShowBookingDetailsModal(true);
     } else {
-      onCreateOrder?.();
+      setFocusedField('dropoff');
     }
   };
 
@@ -695,6 +718,20 @@ export function HomeDashboardScreen({
         defaultFallbackAddress={initialAddress} initialAddress={mapTarget === 'pickup' ? pickupText : dropoffText}
         loggedInCustomer={loggedInCustomer} onClose={() => setShowMapPickerModal(false)}
         onConfirm={handleConfirmMapLocation} target={mapTarget} userName={userName} userPhone={userPhone} visible={showMapPickerModal}
+      />
+
+      {/* ================= MODAL CHI TIẾT ĐẶT XE ================= */}
+      <BookingDetailsModal
+        basePrice={currentBasePrice}
+        dropoffAddress={dropoffText}
+        initialReceiverName={loggedInCustomer?.name || userName}
+        initialReceiverPhone={loggedInCustomer?.phone || userPhone}
+        onClose={() => setShowBookingDetailsModal(false)}
+        onConfirm={handleConfirmBooking}
+        pickupAddress={pickupText}
+        vehicleDimensions={currentFleetVehicle.dimensions}
+        vehicleName={currentFleetVehicle.name}
+        visible={showBookingDetailsModal}
       />
     </View>
   );
