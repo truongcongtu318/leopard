@@ -35,6 +35,7 @@ import {
   RouteSpine,
   StatusBadge,
   httpClient,
+  iosContinuousCurve,
   sessionStore,
   type TabKey,
   type VehicleCategory,
@@ -831,7 +832,7 @@ export function HomeDashboardScreen({
             )}
           </View>
 
-          <View style={{ height: showFloatingNavBar ? 100 : 40 }} />
+          <View style={{ height: showFloatingNavBar ? 76 : 24 }} />
         </ScrollView>
       </GestureBottomSheet>
 
@@ -909,31 +910,31 @@ const styles = StyleSheet.create({
 
   /* Route Booking Card */
   routeBookingCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16,
+    backgroundColor: '#FFFFFF', borderRadius: 20, ...iosContinuousCurve, padding: 12,
     borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
-    shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2, marginBottom: 16,
+    shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2, marginBottom: 10,
   },
-  routeBox: { flexDirection: 'row', backgroundColor: '#F8FAFC', borderRadius: 18, padding: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-  spineColumn: { width: 24, alignItems: 'center', paddingVertical: 10 },
+  routeBox: { flexDirection: 'row', backgroundColor: '#F8FAFC', borderRadius: 14, ...iosContinuousCurve, padding: 10, borderWidth: 1, borderColor: '#E2E8F0' },
+  spineColumn: { width: 24, alignItems: 'center', paddingVertical: 8 },
   pickupPinCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(2, 132, 199, 0.2)', alignItems: 'center', justifyContent: 'center' },
   pickupPinInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#0284C7' },
   spineLine: { flex: 1, width: 2, backgroundColor: '#CBD5E1', marginVertical: 4 },
   dropoffPinSquare: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#DC2626' },
   inputsColumn: { flex: 1, marginLeft: 10 },
-  routeInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48 },
+  routeInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
   inputInnerWrap: { flex: 1 },
   locationHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
   inputMicroLabel: { fontSize: 9, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
   pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0F2FE', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
   pickupLabelBadgeText: { fontSize: 10, fontWeight: '700', color: '#0284C7' },
   locationTextInput: { fontSize: 14, fontWeight: '600', color: '#0F172A', padding: 0, minHeight: 22 },
-  inputDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 6 },
+  inputDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 4 },
   inputActionBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
   fastForwardBtn: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#0B1E42', alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
 
   /* Dropdown Suggestions */
   addressDropdown: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 12, marginTop: 10,
+    backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: '#E2E8F0', padding: 10, marginTop: 8,
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
   },
   dropdownHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
@@ -950,31 +951,31 @@ const styles = StyleSheet.create({
   autoNavigatingText: { fontSize: 12, fontWeight: '700', color: '#059669' },
 
   /* Fleet Matrix Section */
-  fleetMatrixSection: { marginTop: 16 },
-  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  fleetMatrixSection: { marginTop: 10 },
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   sectionLabel: { fontSize: 12, fontWeight: '800', color: '#0B1E42', letterSpacing: 0.5 },
   sectionSubLabel: { fontSize: 11, fontWeight: '600', color: '#64748B' },
-  fleetScrollContent: { paddingVertical: 4 },
-  fleetCard: { width: 144, backgroundColor: '#FFFFFF', borderRadius: 18, padding: 12, marginRight: 10, borderWidth: 1.5, borderColor: '#E2E8F0', position: 'relative' },
+  fleetScrollContent: { paddingVertical: 2 },
+  fleetCard: { width: 126, backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, padding: 9, marginRight: 8, borderWidth: 1.5, borderColor: '#E2E8F0', position: 'relative' },
   fleetCardSelected: { borderColor: '#0B1E42', backgroundColor: '#F8FAFC' },
-  fleetBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  fleetBadge: { position: 'absolute', top: 6, right: 6, backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   fleetBadgeSelected: { backgroundColor: '#0B1E42' },
   fleetBadgeText: { fontSize: 9, fontWeight: '800', color: '#64748B' },
   fleetBadgeTextSelected: { color: '#FFFFFF' },
-  fleetIconContainer: { height: 44, justifyContent: 'center', marginBottom: 4 },
+  fleetIconContainer: { height: 34, justifyContent: 'center', marginBottom: 2 },
   fleetVehicleName: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
   fleetVehicleNameSelected: { color: '#0B1E42' },
-  dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginVertical: 4 },
+  dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginVertical: 2 },
   dimensionBadgeSelected: { backgroundColor: '#E2E8F0' },
   dimensionText: { fontSize: 11, fontWeight: '700', color: '#334155', fontVariant: ['tabular-nums'] },
   dimensionTextSelected: { color: '#0B1E42' },
-  fleetCapacityText: { fontSize: 10, color: '#64748B', marginBottom: 4 },
+  fleetCapacityText: { fontSize: 10, color: '#64748B', marginBottom: 2 },
   fleetPriceText: { fontSize: 13, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'] },
   fleetPriceTextSelected: { color: '#0B1E42' },
 
   /* Fare Estimation Card & Big CTA Button */
-  fareCtaCard: { backgroundColor: '#F8FAFC', borderRadius: 18, padding: 14, marginTop: 14, borderWidth: 1, borderColor: '#E2E8F0' },
-  fareInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  fareCtaCard: { backgroundColor: '#F8FAFC', borderRadius: 16, ...iosContinuousCurve, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+  fareInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   fareLeftCol: { flex: 1 },
   fareLabel: { fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
   fareVehicleTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
@@ -985,14 +986,14 @@ const styles = StyleSheet.create({
   fareAmount: { fontSize: 16, fontWeight: '800', color: '#0B1E42', fontVariant: ['tabular-nums'] },
   fareNote: { fontSize: 10, color: '#64748B' },
   bigCtaBtn: {
-    minHeight: 48, height: 52, borderRadius: 16, backgroundColor: '#0B1E42',
+    minHeight: 44, height: 46, borderRadius: 14, ...iosContinuousCurve, backgroundColor: '#0B1E42',
     alignItems: 'center', justifyContent: 'center', shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3,
   },
   bigCtaBtnPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
   bigCtaBtnText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4, fontVariant: ['tabular-nums'] },
 
   /* Section Containers */
-  section: { marginBottom: 16 },
+  section: { marginBottom: 10 },
   sectionTitleWithBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   liveIndicatorDotActive: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' },
   liveTagBadge: { backgroundColor: '#ECFDF5', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
@@ -1000,15 +1001,15 @@ const styles = StyleSheet.create({
 
   /* Active Shipment Card */
   activeCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
+    backgroundColor: '#FFFFFF', borderRadius: 18, ...iosContinuousCurve, padding: 12, borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
     shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
   },
   activeCardPressed: { opacity: 0.85 },
-  activeTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  activeTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   etaPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0F2FE', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   etaText: { fontSize: 11, fontWeight: '700', color: '#0284C7', fontVariant: ['tabular-nums'] },
-  activeRouteContainer: { marginVertical: 4 },
-  activeMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  activeRouteContainer: { marginVertical: 2 },
+  activeMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   activeDriverBox: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, gap: 6 },
   driverText: { fontSize: 12, fontWeight: '600', color: '#334155', flex: 1 },
   plateText: { fontWeight: '700', color: '#0B1E42', fontVariant: ['tabular-nums'] },
@@ -1016,58 +1017,58 @@ const styles = StyleSheet.create({
   trackText: { fontSize: 11, fontWeight: '700', color: '#0B1E42' },
 
   /* Empty Activity Box & Quick Tracking */
-  emptyActivityBox: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  emptyActivityBox: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, padding: 12, borderWidth: 1, borderColor: '#E2E8F0' },
   emptyTitle: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
-  emptyBody: { fontSize: 11, color: '#64748B', marginTop: 2, marginBottom: 10 },
+  emptyBody: { fontSize: 11, color: '#64748B', marginTop: 2, marginBottom: 8 },
   quickTrackingBar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   trackingInputWrap: {
     flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
     borderRadius: 12, paddingHorizontal: 10, height: 40, borderWidth: 1, borderColor: '#E2E8F0', gap: 6,
   },
   trackingInput: { flex: 1, fontSize: 12, fontWeight: '600', color: '#0F172A', padding: 0 },
-  trackingSearchBtn: { backgroundColor: '#0B1E42', borderRadius: 12, paddingHorizontal: 14, height: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  trackingSearchBtn: { backgroundColor: '#0B1E42', borderRadius: 12, paddingHorizontal: 14, height: 40, minHeight: 40, alignItems: 'center', justifyContent: 'center' },
   trackingSearchBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
 
   /* Service Shortcuts Grid */
-  serviceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  serviceCard: { width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: 18, padding: 12, borderWidth: 1 },
+  serviceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  serviceCard: { width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: 14, ...iosContinuousCurve, padding: 8, borderWidth: 1 },
   serviceCardPressed: { opacity: 0.85 },
-  serviceImageContainer: { height: 80, borderRadius: 12, borderWidth: 1, overflow: 'hidden', marginBottom: 8, alignItems: 'center', justifyContent: 'center' },
-  serviceName: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
-  serviceTagBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginTop: 4, borderWidth: 1 },
-  serviceTagText: { fontSize: 10, fontWeight: '700' },
+  serviceImageContainer: { height: 54, borderRadius: 10, ...iosContinuousCurve, borderWidth: 1, overflow: 'hidden', marginBottom: 4, alignItems: 'center', justifyContent: 'center' },
+  serviceName: { fontSize: 12, fontWeight: '800', color: '#0F172A' },
+  serviceTagBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginTop: 3, borderWidth: 1 },
+  serviceTagText: { fontSize: 9, fontWeight: '700' },
 
   /* Driver Partner Card */
   driverPartnerCard: {
-    backgroundColor: '#EFF6FF', borderRadius: 20, padding: 14, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', borderWidth: 1, borderColor: '#BFDBFE', marginBottom: 16,
+    backgroundColor: '#EFF6FF', borderRadius: 16, ...iosContinuousCurve, padding: 10, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', borderWidth: 1, borderColor: '#BFDBFE', marginBottom: 10,
   },
-  driverPartnerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, gap: 10 },
-  driverPartnerIconBox: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  driverPartnerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, gap: 8 },
+  driverPartnerIconBox: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
   driverPartnerTextWrap: { flex: 1 },
-  driverPartnerTitle: { fontSize: 13, fontWeight: '800', color: '#1E3A8A' },
-  driverPartnerSubtitle: { fontSize: 11, color: '#3B82F6', marginTop: 1 },
-  driverRegisterBtn: { backgroundColor: '#1D4ED8', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, minHeight: 44, justifyContent: 'center' },
+  driverPartnerTitle: { fontSize: 12, fontWeight: '800', color: '#1E3A8A' },
+  driverPartnerSubtitle: { fontSize: 10, color: '#3B82F6', marginTop: 1 },
+  driverRegisterBtn: { backgroundColor: '#1D4ED8', borderRadius: 10, ...iosContinuousCurve, paddingHorizontal: 10, paddingVertical: 6, minHeight: 40, justifyContent: 'center' },
   driverRegisterText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
 
   /* Promo Banner Carousel */
-  promoContainer: { marginBottom: 16 },
-  promoTrackWindow: { overflow: 'hidden', borderRadius: 20 },
+  promoContainer: { marginBottom: 10 },
+  promoTrackWindow: { overflow: 'hidden', borderRadius: 16, ...iosContinuousCurve },
   promoTrack: { flexDirection: 'row' },
-  promoSlideItem: { borderRadius: 20, overflow: 'hidden' },
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 8 },
+  promoSlideItem: { borderRadius: 16, overflow: 'hidden' },
+  dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 6 },
   dot: { height: 5, borderRadius: 2.5 },
   dotActive: { width: 20, backgroundColor: '#0B1E42' },
   dotInactive: { width: 6, backgroundColor: '#CBD5E1' },
 
   /* Recent Orders Ledger */
   linkText: { fontSize: 12, fontWeight: '700', color: '#0284C7' },
-  orderList: { gap: 10 },
-  recentOrderItemWrap: { backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
+  orderList: { gap: 8 },
+  recentOrderItemWrap: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
   reorderInlineBtn: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   reorderInlineBtnPressed: { opacity: 0.7 },
   reorderInlineBtnText: { fontSize: 11, fontWeight: '700', color: '#0B1E42' },
-  emptyBox: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  emptyBox: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, padding: 12, borderWidth: 1, borderColor: '#E2E8F0' },
 
   /* Layer 3: Floating Navigation Dock */
   layer3FloatingNav: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 60 },
