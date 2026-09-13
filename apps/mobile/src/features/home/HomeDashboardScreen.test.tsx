@@ -67,6 +67,7 @@ describe('HomeDashboardScreen', () => {
         smeName="Cửa hàng VLXD Đại Phát"
         userName="Anh Hoàng"
         walletBalance="1.850.000 ₫"
+        defaultDropoffLocation="KCN Tân Tạo"
       />,
     );
 
@@ -160,12 +161,12 @@ describe('HomeDashboardScreen', () => {
     // Default pickup location is prefilled
     expect(screen.getByDisplayValue('Kho Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
 
-    // Type a destination and submit via fast forward button
+    // Type a destination and submit via Big CTA button
     await fireEvent.changeText(
        screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
        'KCN Sóng Thần, Bình Dương',
     );
-    await fireEvent.press(screen.getByTestId('quick-book-submit-btn'));
+    await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
     await new Promise((r) => setTimeout(r, 450));
 
     expect(onQuickBook).toHaveBeenCalledWith(
@@ -195,7 +196,7 @@ describe('HomeDashboardScreen', () => {
   it('connects fleet matrix vehicles to booking flow', async () => {
     const onSelectVehicleAndBook = jest.fn();
     const screen = await render(
-      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} />,
+      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} defaultDropoffLocation="KCN Tân Tạo" />,
     );
 
     for (const [name, category] of [
@@ -415,7 +416,7 @@ describe('HomeDashboardScreen', () => {
   it('displays vehicle dimensions (L x W x H) and cargo capacity in fleet matrix', async () => {
     const onSelectVehicleAndBook = jest.fn();
     const screen = await render(
-      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} />,
+      <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} defaultDropoffLocation="KCN Tân Tạo" />,
     );
     expect(screen.getByText('3.2 x 1.6 x 1.7m')).toBeTruthy(); // Tải 1.25T
     expect(screen.getByText('2.1 x 1.3 x 1.2m')).toBeTruthy(); // Van 500kg
@@ -425,7 +426,7 @@ describe('HomeDashboardScreen', () => {
     expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
 
     // Tap CTA
-    await fireEvent.press(screen.getByLabelText(/Đặt xe ngay/));
+    await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
     expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
 
     await screen.unmount();
@@ -463,5 +464,87 @@ describe('HomeDashboardScreen', () => {
     expect(navStyle.zIndex).toBe(60);
 
     await screen.unmount();
+  });
+
+  describe('progressive disclosure for route and fleet selection', () => {
+    it('shows guiding prompt and quick hub chips when destination is not selected', async () => {
+      const screen = await render(<HomeDashboardScreen />);
+
+      // Guiding text is present
+      expect(screen.getByText('Chọn điểm giao để xem giá và gọi xe')).toBeTruthy();
+
+      // 3 quick destination warehouse chips are present
+      expect(screen.getByText('Kho Tân Tạo')).toBeTruthy();
+      expect(screen.getByText('Cảng Cát Lái')).toBeTruthy();
+      expect(screen.getByText('KCN Sóng Thần')).toBeTruthy();
+
+      // Fleet matrix and fare estimate are hidden
+      expect(screen.queryByText('CHỌN LOẠI XE PHÙ HỢP')).toBeNull();
+      expect(screen.queryByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeNull();
+      expect(screen.queryByText(/TIẾP TỤC ĐẶT XE/)).toBeNull();
+
+      await screen.unmount();
+    });
+
+    it('reveals fleet matrix and CTA when quick destination chip is tapped', async () => {
+      const screen = await render(<HomeDashboardScreen />);
+
+      // Tap Kho Tân Tạo chip
+      await fireEvent.press(screen.getByText('Kho Tân Tạo'));
+
+      // Dropoff text is auto-filled
+      expect(screen.getByDisplayValue('KCN Tân Tạo, Lô B5, Bình Tân')).toBeTruthy();
+
+      // Guiding prompt and chips are now hidden
+      expect(screen.queryByText('Chọn điểm giao để xem giá và gọi xe')).toBeNull();
+
+      // Fleet matrix, fare estimate, and CTA button are revealed
+      expect(screen.getByText('CHỌN LOẠI XE PHÙ HỢP')).toBeTruthy();
+      expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
+      expect(screen.getByText('TIẾP TỤC ĐẶT XE · 280.000 ₫ ➔')).toBeTruthy();
+
+      await screen.unmount();
+    });
+
+    it('reveals fleet matrix and CTA when dropoff destination is typed (>= 3 chars)', async () => {
+      const screen = await render(<HomeDashboardScreen />);
+
+      // Type 2 chars -> still hidden
+      await fireEvent.changeText(
+        screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
+        'KC',
+      );
+      expect(screen.getByText('Chọn điểm giao để xem giá và gọi xe')).toBeTruthy();
+      expect(screen.queryByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeNull();
+
+      // Type 3rd char -> revealed
+      await fireEvent.changeText(
+        screen.getByPlaceholderText('Bạn muốn giao hàng đến đâu?...'),
+        'KCN',
+      );
+      expect(screen.queryByText('Chọn điểm giao để xem giá và gọi xe')).toBeNull();
+      expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
+      expect(screen.getByText(/TIẾP TỤC ĐẶT XE/)).toBeTruthy();
+
+      // Clear -> hidden again
+      await fireEvent.press(screen.getByLabelText('Xóa điểm giao hàng'));
+      expect(screen.getByText('Chọn điểm giao để xem giá và gọi xe')).toBeTruthy();
+      expect(screen.queryByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeNull();
+
+      await screen.unmount();
+    });
+
+    it('auto-fills corresponding address for each quick hub chip', async () => {
+      const screen = await render(<HomeDashboardScreen />);
+
+      await fireEvent.press(screen.getByText('Cảng Cát Lái'));
+      expect(screen.getByDisplayValue('Cảng Cát Lái, Quận 2, TP. Hồ Chí Minh')).toBeTruthy();
+
+      await fireEvent.press(screen.getByLabelText('Xóa điểm giao hàng'));
+      await fireEvent.press(screen.getByText('KCN Sóng Thần'));
+      expect(screen.getByDisplayValue('KCN Sóng Thần, Dĩ An, Bình Dương')).toBeTruthy();
+
+      await screen.unmount();
+    });
   });
 });
