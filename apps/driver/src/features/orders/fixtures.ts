@@ -65,7 +65,12 @@ function deepFreeze<T>(value: T): T {
 
 function assignedRoute() {
   return {
-    origin: { id: 'driver-pickup', label: 'Kho VLXD Minh Khang — Tân Phú' },
+    origin: {
+      id: 'driver-pickup',
+      label: 'Kho VLXD Minh Khang — Tân Phú',
+      lat: 10.7925,
+      lng: 106.6341,
+    },
     stops: [
       { id: 'driver-stop-1', label: 'Trạm trung chuyển Quận 10' },
       { id: 'driver-stop-2', label: 'Điểm giao 1 — 128 Lê Văn Sỹ, Q.3' },
@@ -74,6 +79,8 @@ function assignedRoute() {
     destination: {
       id: 'driver-dropoff',
       label: 'Công trình Chung cư An Phú — TP. Thủ Đức',
+      lat: 10.8012,
+      lng: 106.7456,
     },
     distanceLabel: '18,4 km',
     etaDurationSeconds: 1680,
@@ -460,6 +467,8 @@ function assignedDetail(scenarioId: DriverDetailScenarioId): DriverAssignedDetai
       route: assignedRoute(),
       vehicleLabel: 'Xe tải 2.5T',
       cargoSummary: '40 bao xi măng INSEE & 15 hộp gạch Catalan · 2.100 kg',
+      cargoWeightKg: 2100,
+      contactRoleLabel: 'Người nhận',
       customerContact: 'Khách hàng: Anh Minh Khang · 0912 345 678',
       updatedAtLabel: '14:32 · 15/08/2026',
       history: [

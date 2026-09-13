@@ -222,7 +222,8 @@ describe('Concurrency tests for Order Acceptance and Cancellation', () => {
       .useValue(prismaMock)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    // Match the production bootstrap: AppModule registers scoped JSON parsers.
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -344,4 +345,33 @@ describe('Concurrency tests for Order Acceptance and Cancellation', () => {
       }
     }
   }, 15_000);
+
+  it('rejects order acceptance with 422 VEHICLE_TYPE_MISMATCH when driver vehicle does not match order vehicle', async () => {
+    const truckOrder = await prismaMock.order.create({
+      data: {
+        customerId: 'customer-1',
+        status: 'REQUESTED',
+        vehicleType: 'TRUCK',
+        distanceMeters: 5000,
+        durationSeconds: 1200,
+        priceVnd: 500000,
+      },
+    });
+
+    const motorDriver = await prismaMock.user.create({
+      data: { phone: '+84977777777', role: 'DRIVER', status: 'ACTIVE' },
+    });
+    await prismaMock.driverProfile.create({
+      data: { userId: motorDriver.id, availability: 'AVAILABLE', vehicleType: 'MOTORBIKE' },
+    });
+    const s = await refreshSessions.create(motorDriver.id);
+    const motorDriverSession = tokenService.createAuthSession(motorDriver, s);
+
+    const res = await request(app.getHttpServer())
+      .post(`/driver/orders/${truckOrder.id}/accept`)
+      .set('Authorization', `Bearer ${motorDriverSession.accessToken}`);
+
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('VEHICLE_TYPE_MISMATCH');
+  });
 });

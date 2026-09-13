@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -211,27 +211,34 @@ export default function RegisterScreen() {
     }
   };
 
+  const hasAppliedRef = useRef(false);
+  const uploadedDocTypesRef = useRef<Set<DocType>>(new Set());
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
 
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      const applied = await httpClient.post<{
-        contractVersion: string | null;
-        contractSignedAt: string | null;
-      }>('/driver/apply', {
-        name: name.trim(),
-        vehicleType,
-        licensePlate: licensePlate.trim(),
-        licenseNumber: licenseNumber.trim(),
-        contractAccepted: true,
-        signature: signatureName.trim(),
-      });
-      setContractVersionInfo(applied.contractVersion ?? null);
-      setContractSignedAtInfo(applied.contractSignedAt ?? null);
+      if (!hasAppliedRef.current) {
+        const applied = await httpClient.post<{
+          contractVersion: string | null;
+          contractSignedAt: string | null;
+        }>('/driver/apply', {
+          name: name.trim(),
+          vehicleType,
+          licensePlate: licensePlate.trim(),
+          licenseNumber: licenseNumber.trim(),
+          contractAccepted: true,
+          signature: signatureName.trim(),
+        });
+        hasAppliedRef.current = true;
+        setContractVersionInfo(applied.contractVersion ?? null);
+        setContractSignedAtInfo(applied.contractSignedAt ?? null);
+      }
 
       for (const slot of DOC_SLOTS) {
+        if (uploadedDocTypesRef.current.has(slot.type)) continue;
         const asset = docs[slot.type];
         if (!asset) continue;
         const form = new FormData();
@@ -244,6 +251,7 @@ export default function RegisterScreen() {
         form.append('type', slot.type);
         form.append('clientRequestId', newRequestId());
         await httpClient.postForm('/driver/documents', form);
+        uploadedDocTypesRef.current.add(slot.type);
       }
 
       setSuccess(true);

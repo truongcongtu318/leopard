@@ -1,6 +1,11 @@
 import type { DriverAvailability, OrderStatus, ProviderSource } from '@leopard/shared';
 
-export type DriverRoutePoint = Readonly<{ id: string; label: string }>;
+export type DriverRoutePoint = Readonly<{
+  id: string;
+  label: string;
+  lat?: number;
+  lng?: number;
+}>;
 export type DriverRouteView = Readonly<{
   origin: DriverRoutePoint;
   stops: readonly DriverRoutePoint[];
@@ -129,6 +134,8 @@ type DriverAssignedDetailOrder = Readonly<{
   route: DriverRouteView;
   vehicleLabel: string;
   cargoSummary: string;
+  cargoWeightKg?: number | null;
+  contactRoleLabel: string;
   customerContact: string;
   updatedAtLabel: string;
   history: readonly Readonly<{

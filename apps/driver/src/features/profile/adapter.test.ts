@@ -49,6 +49,28 @@ describe('createDriverProfileHttpAdapter', () => {
     expect(post).toHaveBeenCalledWith('/auth/logout');
   });
 
+  it('logout sets availability to OFFLINE before ending the session', async () => {
+    const patch = jest.fn(async () => ({ availability: 'OFFLINE' }));
+    const post = jest.fn(async () => undefined);
+    const port = createDriverProfileHttpAdapter(makeClient({ patch: patch as any, post: post as any }));
+
+    await port.logout();
+
+    expect(patch).toHaveBeenCalledWith('/driver/availability', { availability: 'OFFLINE' });
+    expect(post).toHaveBeenCalledWith('/auth/logout');
+  });
+
+  it('still logs out locally when the availability update fails', async () => {
+    const patch = jest.fn(async () => {
+      throw new Error('server unreachable');
+    });
+    const post = jest.fn(async () => undefined);
+    const port = createDriverProfileHttpAdapter(makeClient({ patch: patch as any, post: post as any }));
+
+    await expect(port.logout()).resolves.toBeUndefined();
+    expect(post).toHaveBeenCalledWith('/auth/logout');
+  });
+
   it('maps name/avatarUrl/vehicleLabel from /me and /driver/application', async () => {
     const get = jest.fn((path: string) => {
       if (path === '/me') {

@@ -211,4 +211,21 @@ describe('IncomingDispatchModal', () => {
     expect(screen.queryByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeNull();
     await screen.unmount();
   });
+
+  it('renders the vehicle type as a distinct spec chip, not inline text', async () => {
+    const screen = await render(
+      <IncomingDispatchModal
+        offer={{ ...sampleOffer, vehicleLabel: 'Xe tải' }}
+        onAccept={jest.fn()}
+        onDecline={jest.fn()}
+        visible={true}
+      />,
+    );
+
+    const chip = screen.getByTestId('dispatch-vehicle-spec-chip');
+    expect(chip).toBeTruthy();
+    expect(screen.getByText('Xe tải')).toBeTruthy();
+
+    await screen.unmount();
+  });
 });

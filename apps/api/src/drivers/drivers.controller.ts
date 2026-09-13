@@ -26,13 +26,16 @@ import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
 import { AcceptOrderService } from '../orders/accept-order.service.js';
+import { ReportOrderIncidentService } from '../orders/report-order-incident.service.js';
 import { UpdateOrderStatusService } from '../orders/update-order-status.service.js';
 import { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto.js';
 import { DriversService } from './drivers.service.js';
 import { DriverApplicationService } from './driver-application.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
 import { ApplyDriverDto } from './dto/apply-driver.dto.js';
+import { ReportOrderIncidentDto } from './dto/report-order-incident.dto.js';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
+import { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
 
 const DRIVER_DOCUMENT_TYPES: readonly DriverDocumentType[] = [
   'LICENSE',
@@ -63,6 +66,7 @@ export class DriversController {
     private readonly driverContractService: DriverContractService,
     private readonly acceptOrderService: AcceptOrderService,
     private readonly updateOrderStatusService: UpdateOrderStatusService,
+    private readonly reportOrderIncidentService: ReportOrderIncidentService,
   ) {}
 
   // Onboarding — no @RequireRoles: a CUSTOMER (or previously rejected driver)
@@ -141,6 +145,16 @@ export class DriversController {
     return this.driverDocumentService.listMyDocuments(actor);
   }
 
+  @Patch('location')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  updateLocation(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Body() dto: UpdateDriverLocationDto,
+  ) {
+    return this.driversService.updateLocation(actor, dto);
+  }
+
   @Patch('availability')
   @RequireRoles('DRIVER')
   @HttpCode(HttpStatus.OK)
@@ -157,17 +171,33 @@ export class DriversController {
     @CurrentUser() actor: AuthenticatedActor,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
+    @Query('radiusKm') radiusKm?: string,
   ) {
     const pageNum = page ? Math.max(1, parseInt(page, 10) || 1) : 1;
     const limitNum = pageSize ? Math.max(1, Math.min(100, parseInt(pageSize, 10) || 20)) : 20;
+    const parsedRadiusKm = radiusKm ? Math.max(0.1, Math.min(100, parseFloat(radiusKm))) : undefined;
+    const radiusKmNum = parsedRadiusKm !== undefined && !Number.isNaN(parsedRadiusKm) ? parsedRadiusKm : undefined;
 
-    return this.driversService.getAvailableOrders(actor, pageNum, limitNum);
+    return this.driversService.getAvailableOrders(actor, pageNum, limitNum, radiusKmNum);
   }
 
   @Get('orders/active')
   @RequireRoles('DRIVER')
   getActiveOrder(@CurrentUser() actor: AuthenticatedActor) {
     return this.driversService.getActiveOrder(actor);
+  }
+
+  @Get('orders/history')
+  @RequireRoles('DRIVER')
+  getOrderHistory(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const pageNum = page ? Math.max(1, parseInt(page, 10) || 1) : 1;
+    const limitNum = pageSize ? Math.max(1, Math.min(100, parseInt(pageSize, 10) || 20)) : 20;
+
+    return this.driversService.getOrderHistory(actor, pageNum, limitNum);
   }
 
   @Post('orders/:id/accept')
@@ -189,5 +219,16 @@ export class DriversController {
     @Body() dto: UpdateOrderStatusDto,
   ) {
     return this.updateOrderStatusService.updateStatus(actor, id, dto);
+  }
+
+  @Post('orders/:id/incident')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  reportIncident(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+    @Body() dto: ReportOrderIncidentDto,
+  ) {
+    return this.reportOrderIncidentService.reportIncident(actor, id, dto);
   }
 }

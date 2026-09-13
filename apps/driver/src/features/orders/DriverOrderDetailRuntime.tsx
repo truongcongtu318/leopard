@@ -2,10 +2,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Linking } from 'react-native';
+import { Alert, Linking } from 'react-native';
 
 import { createSocketFactory } from '@leopard/mobile-core';
 import { pickDeviceImage, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { DriverIncidentModal, type DriverIncidentSubmitPayload } from './DriverIncidentModal';
 import { createDriverHttpAdapter, createDriverProofAdapter } from './adapter';
 import { DriverOrderDetailScreen } from './DriverOrderDetailScreen';
 import type { DriverDetailView, DriverTrackingView } from './model';
@@ -32,12 +33,55 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
   const query = useQuery({
     queryKey,
     queryFn: () => port.getOrderDetailView(orderId),
+    // Poll while the driver has an active leg so an unexpected
+    // customer/admin cancellation is caught within a bounded time even if
+    // the driver never manually refreshes (see the effect below that reacts
+    // to it with an alert).
+    refetchInterval: (q) => {
+      const data = q.state.data;
+      const currentStatus =
+        data && data.kind === 'content' && 'status' in data.order ? data.order.status : null;
+      return currentStatus === 'ACCEPTED' ||
+        currentStatus === 'PICKING_UP' ||
+        currentStatus === 'IN_TRANSIT'
+        ? 8000
+        : false;
+    },
   });
 
   const [liveTracking, setLiveTracking] = useState<DriverTrackingView | null>(null);
+  const [incidentModalVisible, setIncidentModalVisible] = useState(false);
+  const [isReportingIncident, setIsReportingIncident] = useState(false);
+  const executingRef = useRef(false);
+
   const status =
     query.data && query.data.kind === 'content' ? query.data.order.status : null;
   const startedOrderRef = useRef<string | null>(null);
+  const previousStatusRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!status) return;
+    const previousStatus = previousStatusRef.current;
+    previousStatusRef.current = status;
+
+    const wasDriverActive =
+      previousStatus === 'ACCEPTED' ||
+      previousStatus === 'PICKING_UP' ||
+      previousStatus === 'IN_TRANSIT';
+
+    // Only react to a CANCELLED transition seen while this screen was open —
+    // that means the customer/admin cancelled it (a driver-initiated
+    // incident report transitions to INCIDENT_CANCELLED/RETURNING instead,
+    // never CANCELLED), so the driver would otherwise keep navigating to a
+    // stop that no longer needs them.
+    if (wasDriverActive && status === 'CANCELLED') {
+      Alert.alert(
+        'Đơn đã bị hủy',
+        'Khách hàng hoặc quản trị viên đã hủy đơn hàng này. Bạn đã được giải phóng khỏi chuyến.',
+        [{ text: 'Đã hiểu', onPress: () => router.back() }],
+      );
+    }
+  }, [status, router]);
 
   useEffect(() => {
     const subscription = sender.observeHealth(orderId, setLiveTracking);
@@ -129,8 +173,14 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
       : query.data;
 
   async function handleExecuteTask(commandId: string) {
-    const next = await port.executeLifecycle(commandId);
-    queryClient.setQueryData(queryKey, next);
+    if (executingRef.current) return;
+    executingRef.current = true;
+    try {
+      const next = await port.executeLifecycle(commandId);
+      queryClient.setQueryData(queryKey, next);
+    } finally {
+      executingRef.current = false;
+    }
   }
 
   async function handleSelectProof() {
@@ -140,22 +190,56 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
     const proof = await proofPort.uploadProof(commandId);
     queryClient.setQueryData(queryKey, (current: typeof query.data) => {
       if (!current || current.kind !== 'content') return current;
-      return { ...current, proof };
+      return {
+        ...current,
+        proof,
+        primaryTask: {
+          kind: 'advance-lifecycle',
+          command: {
+            id: `cmd-deliver-${orderId}`,
+            label: 'Xác nhận hoàn tất giao hàng',
+            targetStatus: 'DELIVERED',
+            pendingLabel: 'Đang ghi nhận...',
+          },
+        },
+      };
     });
   }
 
+  async function handleReportIncident(payload: DriverIncidentSubmitPayload) {
+    if (!port.reportIncident) return;
+    setIsReportingIncident(true);
+    try {
+      const next = await port.reportIncident(orderId, payload);
+      queryClient.setQueryData(queryKey, next);
+      setIncidentModalVisible(false);
+    } finally {
+      setIsReportingIncident(false);
+    }
+  }
+
   return (
-    <DriverOrderDetailScreen
-      onBack={() => router.back()}
-      onExecuteTask={(commandId) => void handleExecuteTask(commandId)}
-      onOpenLocationSettings={() => void Linking.openSettings()}
-      onRetry={() => {
-        void query.refetch();
-        void sender.retryConnection(orderId);
-      }}
-      onRetryProof={(commandId) => void handleExecuteTask(commandId)}
-      onSelectProof={() => void handleSelectProof()}
-      view={view}
-    />
+    <>
+      <DriverOrderDetailScreen
+        onBack={() => router.back()}
+        onExecuteTask={(commandId) => void handleExecuteTask(commandId)}
+        onOpenIncidentModal={() => setIncidentModalVisible(true)}
+        onOpenLocationSettings={() => void Linking.openSettings()}
+        onRetry={() => {
+          void query.refetch();
+          void sender.retryConnection(orderId);
+        }}
+        onRetryProof={(commandId) => void handleExecuteTask(commandId)}
+        onSelectProof={() => void handleSelectProof()}
+        view={view}
+      />
+      <DriverIncidentModal
+        isSubmitting={isReportingIncident}
+        onClose={() => setIncidentModalVisible(false)}
+        onSubmit={(payload) => void handleReportIncident(payload)}
+        orderReference={query.data?.kind === 'content' ? query.data.order.reference : undefined}
+        visible={incidentModalVisible}
+      />
+    </>
   );
 }

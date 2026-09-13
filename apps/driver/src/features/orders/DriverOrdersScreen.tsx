@@ -38,6 +38,7 @@ import {
   StatusBadge,
 } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
+import { useDriverIdlePingHealth } from './useDriverIdlePing';
 import { DriverSidebarDrawer } from '../navigation/DriverSidebarDrawer';
 import { IncomingDispatchModal } from './IncomingDispatchModal';
 import type { IncomingDispatchOffer } from './IncomingDispatchModal';
@@ -455,6 +456,7 @@ export function DriverOrdersScreen({
   const [dismissedOrderIds, setDismissedOrderIds] = useState<readonly string[]>([]);
   const [truckCoords, setTruckCoords] = useState(DEPOT_TAN_BINH_COORDS);
   const { openDrawer } = useDriverDrawer();
+  const idlePingHealth = useDriverIdlePingHealth();
 
   useEffect(() => {
     let isMounted = true;
@@ -666,6 +668,12 @@ export function DriverOrdersScreen({
   const isPending = availabilityAction?.isPending === true;
   const isAvailabilityDisabled = availabilityAction?.disabled === true || isPending;
 
+  // Surface the idle-location-ping health here — a driver toggled AVAILABLE
+  // with location denied (or a stale ping) is invisible to dispatch's radar
+  // with zero feedback otherwise.
+  const isRadarUnhealthy =
+    isOnline && !activeTrip && (idlePingHealth === 'permission-denied' || idlePingHealth === 'stale');
+
   const filteredOrders = view.requestedOrders
     .filter((item) => !dismissedOrderIds.includes(item.id))
     .filter((item) => {
@@ -862,6 +870,37 @@ export function DriverOrdersScreen({
                 trip={activeTrip}
               />
             </View>
+          ) : null}
+
+          {/* Radar health warning: online but not actually visible to dispatch */}
+          {isRadarUnhealthy ? (
+            <Pressable
+              accessibilityHint={
+                idlePingHealth === 'permission-denied'
+                  ? 'Mở cài đặt để cấp quyền vị trí'
+                  : undefined
+              }
+              accessibilityLabel={
+                idlePingHealth === 'permission-denied'
+                  ? 'Chưa cấp quyền vị trí — bạn đang ẩn khỏi radar điều phối'
+                  : 'Tín hiệu vị trí gián đoạn — bạn có thể đang ẩn khỏi radar điều phối'
+              }
+              accessibilityRole="button"
+              onPress={
+                idlePingHealth === 'permission-denied'
+                  ? () => void Linking.openSettings()
+                  : undefined
+              }
+              style={styles.radarHealthWarningBanner}
+              testID="radar-health-warning"
+            >
+              <IconShieldAlert color="#DC2626" size={16} />
+              <Text style={styles.radarHealthWarningText}>
+                {idlePingHealth === 'permission-denied'
+                  ? 'Chưa cấp quyền vị trí — bạn đang ẩn khỏi radar. Chạm để mở cài đặt.'
+                  : 'Tín hiệu vị trí gián đoạn — bạn có thể đang ẩn khỏi radar điều phối.'}
+              </Text>
+            </Pressable>
           ) : null}
 
           {/* Snap 1 Radar Scan Strip (hidden during active trip) */}
@@ -1198,6 +1237,24 @@ const styles = StyleSheet.create({
   },
 
   // Radar Live Strip
+  radarHealthWarningBanner: {
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  radarHealthWarningText: {
+    color: '#991B1B',
+    flex: 1,
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
   radarLiveStrip: {
     alignItems: 'center',
     backgroundColor: '#F8FAFC',

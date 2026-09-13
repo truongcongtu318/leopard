@@ -1,17 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import { styles } from './DriverLoginScreen.styles';
 import type { Role } from '@leopard/shared';
 
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
@@ -29,8 +30,9 @@ import { TruckLoader } from '@leopard/mobile-core';
 import { VietnamFlagIcon, IconRoleDriver, OtpPhoneHeroIcon } from '@leopard/mobile-core';
 import { IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
 
-const driverHeroBg = require('../../assets/brand/driver-hero-bg.jpg');
 const leopardEmblem = require('../../assets/brand/leopard-emblem.png');
+const brandLogin = require('../../assets/brand/brand_login.png');
+const driverHeroBg = require('../../../mobile/assets/brand/driver-hero-bg.jpg');
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-driver-recaptcha-container';
 
@@ -67,6 +69,7 @@ export function DriverLoginScreen({
   onNavigateOtp,
   sessionExpired = false,
 }: DriverLoginScreenProps) {
+  const insets = useContext(SafeAreaInsetsContext);
   const [phone, setPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [authPhase, setAuthPhase] = useState<'phone' | 'otp'>('phone');
@@ -269,51 +272,78 @@ export function DriverLoginScreen({
     }
   };
 
-
   return (
     <View style={styles.rootContainer} testID="driver-login-screen">
-      <ImageBackground
-        resizeMode="cover"
-        source={driverHeroBg}
-        style={StyleSheet.absoluteFill}
-      >
-        <View style={styles.darkBackdrop} />
-        <View style={styles.topVignette} />
-      </ImageBackground>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardWrap}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingBottom: Math.max(insets?.bottom ?? 0, 12),
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
           style={styles.scrollView}
         >
-          {/* Top Brand Block */}
-          <View style={styles.headerBlock}>
-            <View style={styles.emblemBadge}>
-              <Image
-                accessibilityLabel="LEOPARD Emblem"
-                resizeMode="contain"
-                source={leopardEmblem}
-                style={styles.emblemImage}
-              />
+          <View style={styles.heroSection}>
+            <Image
+              accessibilityIgnoresInvertColors
+              accessibilityLabel="Xe tải LEOPARD trên cung đường núi"
+              resizeMode="cover"
+              source={driverHeroBg}
+              style={styles.heroImage}
+              testID="driver-login-hero-image"
+            />
+            <View
+              accessible={false}
+              aria-hidden
+              style={styles.heroGradient}
+            >
+              <Svg height="100%" pointerEvents="none" preserveAspectRatio="none" width="100%">
+                <Defs>
+                  <LinearGradient id="driverLoginGradient" x1="0" x2="0" y1="0" y2="1">
+                    <Stop offset="0%" stopColor="#06162F" stopOpacity="0.38" />
+                    <Stop offset="48%" stopColor="#0B1E42" stopOpacity="0.16" />
+                    <Stop offset="76%" stopColor="#0B1E42" stopOpacity="0.5" />
+                    <Stop offset="100%" stopColor="#0B1E42" stopOpacity="0.92" />
+                  </LinearGradient>
+                </Defs>
+                <Rect fill="url(#driverLoginGradient)" height="100%" width="100%" />
+              </Svg>
             </View>
-            <View style={styles.headerTitles}>
-              <View style={styles.tagWrap}>
-                <Text style={styles.driverTagText}>CỔNG TÀI XẾ</Text>
+
+            <View style={[styles.brandHeader, { top: Math.max(insets?.top ?? 0, 14) }]}>
+              <View style={styles.cardBrandRow}>
+                <Image
+                  accessibilityLabel="LEOPARD Emblem"
+                  resizeMode="contain"
+                  source={leopardEmblem}
+                  style={styles.cardEmblemImage}
+                />
+                <Image
+                  accessibilityLabel="LEOPARD"
+                  resizeMode="contain"
+                  source={brandLogin}
+                  style={styles.cardBrandNameImage}
+                />
               </View>
+              <View style={styles.driverLabel}>
+                <Text style={styles.driverLabelText}>DRIVER</Text>
+              </View>
+            </View>
+
+            <View style={styles.heroCopy}>
+              <Text style={styles.eyebrow}>ĐỒNG HÀNH TRÊN MỌI HÀNH TRÌNH</Text>
               <Text accessibilityRole="header" style={styles.mainTitle}>
-                Đăng Nhập Tài Xế
+                Chào mừng bác tài
               </Text>
-              <Text style={styles.subTitle}>
-                Kết nối vận tải tải trọng lớn • Quản lý đơn hàng & lộ trình
-              </Text>
+              <Text style={styles.subTitle}>Đăng nhập để nhận đơn và theo dõi chuyến đi.</Text>
             </View>
           </View>
 
-          {/* Form Card */}
           <View style={styles.formCard}>
             {sessionExpired ? (
               <View style={styles.alertBox} testID="session-expired-banner">
@@ -349,13 +379,15 @@ export function DriverLoginScreen({
                   accessibilityLabel="Số điện thoại"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  autoComplete="tel"
+                  textContentType="telephoneNumber"
                   editable={!isSubmitting}
                   keyboardType="phone-pad"
                   onBlur={() => setIsInputFocused(false)}
                   onChangeText={setPhone}
                   onFocus={() => setIsInputFocused(true)}
-                  placeholder="09xx xxx xxx"
-                  placeholderTextColor="#64748B"
+                  placeholder="Nhập số điện thoại"
+                  placeholderTextColor="#91A3BB"
                   style={styles.textInput}
                   value={phone}
                 />
@@ -371,6 +403,7 @@ export function DriverLoginScreen({
                   </Pressable>
                 ) : null}
               </View>
+              <Text style={styles.fieldHint}>Mã xác thực được gửi qua SMS.</Text>
             </View>
 
             {/* Primary Action Button */}
@@ -400,16 +433,19 @@ export function DriverLoginScreen({
               ]}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#0B1929" size="small" />
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <Text style={styles.primaryBtnText}>Đang xử lý…</Text>
+                </View>
               ) : (
-                <Text style={styles.primaryBtnText}>Gửi mã OTP qua SMS</Text>
+                <Text style={styles.primaryBtnText}>Nhận mã OTP</Text>
               )}
             </Pressable>
 
             {/* Divider */}
             <View style={styles.orSection}>
               <View style={styles.orLine} />
-              <Text style={styles.orText}>HOẶC TIẾP TỤC VỚI</Text>
+              <Text style={styles.orText}>hoặc</Text>
               <View style={styles.orLine} />
             </View>
 
@@ -417,6 +453,7 @@ export function DriverLoginScreen({
             <Pressable
               accessibilityLabel="Đăng nhập với Google"
               accessibilityRole="button"
+              accessibilityState={{ disabled: isSubmitting || !firebaseReady }}
               disabled={isSubmitting || !firebaseReady}
               onPress={handleGoogleLogin}
               style={({ pressed }) => [
@@ -433,7 +470,9 @@ export function DriverLoginScreen({
 
             {!firebaseReady ? (
               <Text style={styles.firebaseNote}>
-                Chế độ giả lập (Demo mode khả dụng bên dưới)
+                {allowDemo
+                  ? 'Dữ liệu mô phỏng · Chọn tài khoản thử nghiệm bên dưới.'
+                  : 'Đăng nhập Google hiện chưa khả dụng.'}
               </Text>
             ) : null}
 
@@ -454,7 +493,7 @@ export function DriverLoginScreen({
                     onPress={() => handleDemoLogin('driver', 'DRIVER')}
                     style={({ pressed }) => [styles.demoBtnPrimary, pressed && styles.pressed]}
                   >
-                    <IconTruck color="#FFFFFF" size="sm" />
+                    <IconTruck color="#102A43" size="sm" />
                     <View>
                       <Text style={styles.demoBtnPrimaryTitle}>Tài xế (Driver)</Text>
                       <Text style={styles.demoBtnPrimarySubtitle}>Nhận chuyến & định vị</Text>
@@ -480,7 +519,11 @@ export function DriverLoginScreen({
             {onNavigateRegister ? (
               <View style={styles.footerLinkRow}>
                 <Text style={styles.footerPrompt}>Bạn là tài xế mới?</Text>
-                <Pressable hitSlop={8} onPress={onNavigateRegister}>
+                <Pressable
+                  accessibilityRole="button"
+                  style={styles.registerAction}
+                  onPress={onNavigateRegister}
+                >
                   <Text style={styles.footerLinkAction}>Đăng ký ngay</Text>
                 </Pressable>
               </View>
@@ -518,15 +561,13 @@ export function DriverLoginScreen({
                 <OtpPhoneHeroIcon isVerified={isVerified} size={36} />
               </View>
               <Text style={styles.otpModalTitle}>
-                {isVerified ? 'Xác thực thành công!' : 'Nhập mã xác nhận OTP'}
+                {isVerified ? 'Xác thực thành công' : 'Nhập mã xác nhận OTP'}
               </Text>
               <Text style={styles.otpModalDesc}>
                 {isVerified
                   ? `Số điện thoại ${toE164Vn(phone)} đã được xác minh.`
                   : 'Nhập mã 6 chữ số đã gửi tới số điện thoại '}
-                {!isVerified ? (
-                  <Text style={styles.phoneHighlight}>{toE164Vn(phone)}</Text>
-                ) : null}
+                {!isVerified ? <Text style={styles.phoneHighlight}>{toE164Vn(phone)}</Text> : null}
               </Text>
             </View>
 
@@ -592,486 +633,3 @@ export function DriverLoginScreen({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  rootContainer: {
-    flex: 1,
-    backgroundColor: '#070D17',
-  },
-  darkBackdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(7, 13, 23, 0.85)',
-  },
-  topVignette: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(11, 25, 41, 0.40)',
-  },
-  keyboardWrap: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 44 : 32,
-    paddingBottom: 40,
-    justifyContent: 'center',
-    maxWidth: 480,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  headerBlock: {
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  emblemBadge: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(56, 189, 248, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
-    marginBottom: 16,
-  },
-  emblemImage: {
-    width: 48,
-    height: 48,
-  },
-  headerTitles: {
-    alignItems: 'center',
-  },
-  tagWrap: {
-    backgroundColor: 'rgba(56, 189, 248, 0.14)',
-    borderColor: '#38BDF8',
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    marginBottom: 8,
-  },
-  driverTagText: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-  },
-  mainTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#F8FAFC',
-    letterSpacing: 0.5,
-    textAlign: 'center',
-  },
-  subTitle: {
-    fontSize: 13,
-    color: '#94A3B8',
-    marginTop: 6,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  formCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    borderColor: 'rgba(51, 65, 85, 0.8)',
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  alertBox: {
-    backgroundColor: 'rgba(234, 179, 8, 0.15)',
-    borderColor: 'rgba(234, 179, 8, 0.4)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  alertText: {
-    color: '#FACC15',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#F87171',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  fieldSection: {
-    marginBottom: 20,
-  },
-  fieldLabel: {
-    color: '#CBD5E1',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 8,
-    letterSpacing: 0.2,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.75)',
-    borderColor: 'rgba(71, 85, 105, 0.6)',
-    borderWidth: 1.5,
-    borderRadius: 14,
-    height: 52,
-    paddingHorizontal: 12,
-  },
-  inputRowFocused: {
-    borderColor: '#38BDF8',
-    backgroundColor: 'rgba(30, 41, 59, 0.95)',
-  },
-  inputRowValid: {
-    borderColor: 'rgba(56, 189, 248, 0.6)',
-  },
-  countryPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingRight: 6,
-  },
-  flagIcon: {
-    fontSize: 16,
-  },
-  countryCodeText: {
-    color: '#E2E8F0',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  inputDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: 'rgba(71, 85, 105, 0.6)',
-    marginHorizontal: 8,
-  },
-  textInput: {
-    flex: 1,
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: '500',
-    paddingVertical: 0,
-  },
-  clearBtn: {
-    padding: 6,
-  },
-  clearBtnText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  primaryBtn: {
-    backgroundColor: '#38BDF8',
-    borderRadius: 14,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  primaryBtnDisabled: {
-    backgroundColor: 'rgba(56, 189, 248, 0.25)',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  primaryBtnText: {
-    color: '#070D17',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  orSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 18,
-    gap: 12,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(71, 85, 105, 0.4)',
-  },
-  orText: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  googleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.75)',
-    borderColor: 'rgba(71, 85, 105, 0.8)',
-    borderWidth: 1.5,
-    borderRadius: 14,
-    height: 48,
-    gap: 10,
-  },
-  googleIconWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleG: {
-    color: '#EA4335',
-    fontWeight: '900',
-    fontSize: 13,
-  },
-  googleBtnText: {
-    color: '#F1F5F9',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  btnDisabled: {
-    opacity: 0.5,
-  },
-  firebaseNote: {
-    color: '#94A3B8',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  recaptcha: {
-    width: 0,
-    height: 0,
-  },
-  demoArea: {
-    marginTop: 4,
-  },
-  demoRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  demoBtnPrimary: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(14, 165, 233, 0.12)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    gap: 8,
-  },
-  demoBtnPrimaryIcon: {
-    fontSize: 20,
-  },
-  demoBtnPrimaryTitle: {
-    color: '#38BDF8',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  demoBtnPrimarySubtitle: {
-    color: '#94A3B8',
-    fontSize: 10,
-  },
-  demoBtnSecondary: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(51, 65, 85, 0.25)',
-    borderColor: 'rgba(71, 85, 105, 0.35)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    gap: 8,
-  },
-  demoBtnSecIcon: {
-    fontSize: 20,
-  },
-  demoBtnSecTitle: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  demoBtnSecSubtitle: {
-    color: '#64748B',
-    fontSize: 10,
-  },
-  footerLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(51, 65, 85, 0.4)',
-  },
-  footerPrompt: {
-    color: '#94A3B8',
-    fontSize: 13,
-  },
-  footerLinkAction: {
-    color: '#38BDF8',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  otpModalOverlay: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  otpBackdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(7, 13, 23, 0.88)',
-  },
-  otpModalCard: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#0F172A',
-    borderColor: 'rgba(56, 189, 248, 0.3)',
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  otpHeaderNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  otpNavBack: {
-    paddingVertical: 4,
-  },
-  otpNavBackText: {
-    color: '#38BDF8',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  otpNavStatus: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  otpCenterHero: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  otpBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderWidth: 1.5,
-    borderColor: '#38BDF8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  otpBadgeSuccess: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: '#22C55E',
-  },
-  otpBadgeIcon: {
-    fontSize: 26,
-  },
-  otpModalTitle: {
-    color: '#F8FAFC',
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  otpModalDesc: {
-    color: '#94A3B8',
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  phoneHighlight: {
-    color: '#38BDF8',
-    fontWeight: '700',
-  },
-  verifyingWrap: {
-    alignItems: 'center',
-    marginVertical: 12,
-    gap: 8,
-  },
-  verifyingText: {
-    color: '#94A3B8',
-    fontSize: 12,
-  },
-  otpErrorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 12,
-  },
-  otpErrorText: {
-    color: '#F87171',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  otpSuccessBox: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: 'rgba(34, 197, 94, 0.4)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 12,
-  },
-  otpSuccessText: {
-    color: '#4ADE80',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  otpFooter: {
-    marginTop: 18,
-    alignItems: 'center',
-  },
-  resendBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  resendBtnText: {
-    color: '#38BDF8',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  resendBtnDisabledText: {
-    color: '#64748B',
-  },
-});
-

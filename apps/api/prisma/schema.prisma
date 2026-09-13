@@ -51,6 +51,9 @@ enum OrderStatus {
   IN_TRANSIT
   DELIVERED
   CANCELLED
+  INCIDENT_CANCELLED
+  RETURNING
+  RETURNED
 }
 
 enum StopType {
@@ -180,11 +183,14 @@ model DriverProfile {
   contractSignedAt  DateTime?                             @db.Timestamptz(3)
   lastKnownLocation Unsupported("geography(Point,4326)")?
   lastKnownAt       DateTime?                             @db.Timestamptz(3)
+  autoOfflineOnComplete Boolean                           @default(false)
   createdAt         DateTime                              @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                              @default(now()) @updatedAt @db.Timestamptz(3)
   user              User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
   documents         DriverDocument[]
   contracts         DriverContract[]
+
+  @@index([availability, vehicleType, lastKnownAt])
 }
 
 enum DriverDocumentType {
@@ -227,48 +233,58 @@ model DriverContract {
 }
 
 model Order {
-  id              String               @id @default(uuid()) @db.Uuid
-  customerId      String               @db.Uuid
-  clientRequestId String?
-  driverId        String?              @db.Uuid
-  status          OrderStatus          @default(REQUESTED)
-  routeSnapshot   Json?
-  providerSource  ProviderSource?
-  distanceMeters  Int?
-  durationSeconds Int?
-  priceVnd        Int?
-  etaSeconds      Int?
-  acceptedAt      DateTime?            @db.Timestamptz(3)
-  pickingUpAt     DateTime?            @db.Timestamptz(3)
-  inTransitAt     DateTime?            @db.Timestamptz(3)
-  deliveredAt     DateTime?            @db.Timestamptz(3)
-  cancelledAt     DateTime?            @db.Timestamptz(3)
-  createdAt       DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
-  customer        User                 @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
-  driver          User?                @relation("DriverOrders", fields: [driverId], references: [id], onDelete: Restrict)
-  stops           OrderStop[]
-  statusHistory   OrderStatusHistory[]
-  trackingPoints  TrackingPoint[]
-  mediaObjects    MediaObject[]
-  paymentIntents  PaymentIntent[]
-  invoice         Invoice?
+  id                  String               @id @default(uuid()) @db.Uuid
+  customerId          String               @db.Uuid
+  clientRequestId     String?
+  driverId            String?              @db.Uuid
+  vehicleType         VehicleType          @default(MOTORBIKE)
+  cargoWeightKg       Int?
+  cargoNote           String?
+  status              OrderStatus          @default(REQUESTED)
+  routeSnapshot       Json?
+  providerSource      ProviderSource?
+  distanceMeters      Int?
+  durationSeconds     Int?
+  priceVnd            Int?
+  etaSeconds          Int?
+  proofMediaId        String?              @db.Uuid
+  incidentReason      String?
+  incidentNote        String?
+  incidentReportedAt  DateTime?            @db.Timestamptz(3)
+  acceptedAt          DateTime?            @db.Timestamptz(3)
+  pickingUpAt         DateTime?            @db.Timestamptz(3)
+  inTransitAt         DateTime?            @db.Timestamptz(3)
+  deliveredAt         DateTime?            @db.Timestamptz(3)
+  cancelledAt         DateTime?            @db.Timestamptz(3)
+  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
+  customer            User                 @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  driver              User?                @relation("DriverOrders", fields: [driverId], references: [id], onDelete: Restrict)
+  stops               OrderStop[]
+  statusHistory       OrderStatusHistory[]
+  trackingPoints      TrackingPoint[]
+  mediaObjects        MediaObject[]
+  paymentIntents      PaymentIntent[]
+  invoice             Invoice?
 
   @@unique([customerId, clientRequestId])
   @@index([customerId, createdAt(sort: Desc)])
-  @@index([status, createdAt(sort: Desc)])
+  @@index([status, vehicleType, createdAt(sort: Desc)])
 }
 
 model OrderStop {
-  id        String                               @id @default(uuid()) @db.Uuid
-  orderId   String                               @db.Uuid
-  type      StopType
-  sequence  Int
-  address   String
-  location  Unsupported("geography(Point,4326)")
-  createdAt DateTime                             @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime                             @default(now()) @updatedAt @db.Timestamptz(3)
-  order     Order                                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  id           String                               @id @default(uuid()) @db.Uuid
+  orderId      String                               @db.Uuid
+  type         StopType
+  sequence     Int
+  address      String
+  contactName  String?                              @db.VarChar(120)
+  contactPhone String?                              @db.VarChar(32)
+  note         String?
+  location     Unsupported("geography(Point,4326)")
+  createdAt    DateTime                             @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime                             @default(now()) @updatedAt @db.Timestamptz(3)
+  order        Order                                @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
   @@unique([orderId, sequence])
 }

@@ -5,6 +5,7 @@ import { requestContextStore } from '../common/logger.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { assertOrderTransition } from './domain/order-state-machine.js';
 import type { CancelOrderDto } from './dto/cancel-order.dto.js';
+import { OrderEventsPublisher, type OrderStatusChangedEvent } from './order-events.publisher.js';
 import { mapOrderResponse, type MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersRepository } from './orders.repository.js';
 
@@ -13,14 +14,19 @@ export class CancelOrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ordersRepository: OrdersRepository,
+    private readonly eventsPublisher: OrderEventsPublisher,
   ) {}
 
   async cancelOrder(
     actor: AuthenticatedActor,
     orderId: string,
     dto: CancelOrderDto,
+    explicitRequestId?: string,
   ): Promise<MappedOrderResponse> {
     const reason = dto.reason?.trim();
+    const requestId =
+      explicitRequestId ??
+      (requestContextStore.getStore()?.get('requestId') as string | undefined);
     if (actor.role === 'ADMIN' && !reason) {
       throw new DomainError(
         'VALIDATION_ERROR',
@@ -67,13 +73,20 @@ export class CancelOrderService {
       }
 
       if (order.driverId) {
+        const driverProfile = await tx.driverProfile.findUnique({
+          where: { userId: order.driverId },
+        });
+        const targetAvailability = driverProfile?.autoOfflineOnComplete ? 'OFFLINE' : 'AVAILABLE';
         await tx.driverProfile.update({
           where: { userId: order.driverId },
-          data: { availability: 'AVAILABLE' },
+          data: {
+            availability: targetAvailability,
+            autoOfflineOnComplete: false,
+          },
         });
       }
 
-      await tx.orderStatusHistory.create({
+      const history = await tx.orderStatusHistory.create({
         data: {
           orderId,
           fromStatus: order.status,
@@ -84,7 +97,6 @@ export class CancelOrderService {
       });
 
       if (actor.role === 'ADMIN') {
-        const requestId = requestContextStore.getStore()?.get('requestId');
         await tx.auditLog.create({
           data: {
             actorId: actor.userId,
@@ -99,13 +111,24 @@ export class CancelOrderService {
         });
       }
 
-      return this.ordersRepository.findById(orderId, tx);
+      return {
+        order: await this.ordersRepository.findById(orderId, tx),
+        event: {
+          orderId,
+          previousStatus: order.status,
+          currentStatus: 'CANCELLED',
+          eventId: history.id,
+          occurredAt: history.createdAt.toISOString(),
+        } satisfies OrderStatusChangedEvent,
+      };
     });
 
-    if (!result) {
+    if (!result.order) {
       throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
     }
 
-    return mapOrderResponse(result);
+    this.eventsPublisher.publishStatusChanged(result.event);
+
+    return mapOrderResponse(result.order);
   }
 }

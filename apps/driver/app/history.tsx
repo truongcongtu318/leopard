@@ -1,5 +1,5 @@
-import { DriverHistoryScreen } from '../src/features/history/DriverHistoryScreen';
+import { DriverHistoryRuntime } from '../src/features/history/DriverHistoryRuntime';
 
 export default function DriverHistoryRoute() {
-  return <DriverHistoryScreen />;
+  return <DriverHistoryRuntime />;
 }

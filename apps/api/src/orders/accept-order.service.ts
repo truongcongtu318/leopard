@@ -49,6 +49,22 @@ export class AcceptOrderService {
       );
     }
 
+    const driverProfile = await this.prisma.driverProfile.findUnique({
+      where: { userId: actor.userId },
+    });
+    if (!driverProfile) {
+      throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy hồ sơ tài xế');
+    }
+
+    if (existingOrder.vehicleType && driverProfile.vehicleType !== existingOrder.vehicleType) {
+      throw new DomainError(
+        'VEHICLE_TYPE_MISMATCH',
+        422,
+        'Loại xe không phù hợp với yêu cầu của đơn hàng',
+        { required: existingOrder.vehicleType, actual: driverProfile.vehicleType },
+      );
+    }
+
     const now = new Date();
 
     const result = await this.prisma.$transaction(async (tx) => {

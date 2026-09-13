@@ -169,6 +169,37 @@ export function formatCargoSummary(order: {
   return 'Hàng hóa tiêu chuẩn';
 }
 
+const CONTACT_ROLE_LABELS: Record<MappedDriverCurrentContact['targetRole'], string> = {
+  SENDER: 'Người gửi',
+  RECIPIENT: 'Người nhận',
+  COMPLETED: 'Liên hệ',
+  NONE: 'Liên hệ',
+};
+
+export function resolveContactRoleLabel(
+  currentContact?: MappedDriverCurrentContact,
+): string {
+  if (!currentContact) return 'Liên hệ khách hàng';
+  return CONTACT_ROLE_LABELS[currentContact.targetRole] ?? 'Liên hệ';
+}
+
+export function formatCustomerContactValue(
+  currentContact: MappedDriverCurrentContact | undefined,
+  fallback: string | null | undefined,
+): string {
+  if (currentContact?.phone) {
+    return currentContact.name
+      ? `${currentContact.name} · ${currentContact.phone}`
+      : currentContact.phone;
+  }
+  if (currentContact?.name) {
+    return currentContact.name;
+  }
+  return (
+    fallback ?? 'Thông tin liên hệ khách hàng · chỉ hiện sau phân công'
+  );
+}
+
 export function formatPublicRouteLabel(
   stops?: readonly MappedDriverOrderStopResponse[],
 ): string {
@@ -215,6 +246,17 @@ export interface MappedDriverOrderStopResponse {
   address: string;
   lat: number;
   lng: number;
+  latitude?: number;
+  longitude?: number;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  note?: string | null;
+}
+
+export interface MappedDriverCurrentContact {
+  targetRole: 'SENDER' | 'RECIPIENT' | 'COMPLETED' | 'NONE';
+  name: string | null;
+  phone: string | null;
 }
 
 export interface MappedDriverOrderStatusHistoryResponse {
@@ -244,6 +286,7 @@ export interface MappedDriverOrderResponse {
   cargoWeight?: number | null;
   deliveryProofUrl?: string | null;
   customerContact?: string | null;
+  currentContact?: MappedDriverCurrentContact;
   acceptedAt?: string | null;
   pickingUpAt?: string | null;
   inTransitAt?: string | null;
@@ -340,10 +383,14 @@ export function mapOrderToRouteView(
   const origin: DriverRoutePoint = {
     id: pickupStop?.id ?? 'driver-pickup',
     label: pickupStop?.address ?? 'Điểm lấy hàng',
+    lat: pickupStop?.lat ?? pickupStop?.latitude,
+    lng: pickupStop?.lng ?? pickupStop?.longitude,
   };
   const destination: DriverRoutePoint = {
     id: dropoffStop?.id ?? 'driver-dropoff',
     label: dropoffStop?.address ?? 'Điểm giao hàng',
+    lat: dropoffStop?.lat ?? dropoffStop?.latitude,
+    lng: dropoffStop?.lng ?? dropoffStop?.longitude,
   };
   const stops: readonly DriverRoutePoint[] = intermediateStops.map((s) => ({
     id: s.id,
@@ -627,6 +674,18 @@ export function mapOrderToDriverDetailView(
       proof.kind === 'persisted' ? 'D-DETAIL-READY-DELIVER' : 'D-DETAIL-IN-TRANSIT';
   } else if (status === 'DELIVERED') scenarioId = 'D-DETAIL-TERMINAL-DELIVERED';
   else if (status === 'CANCELLED') scenarioId = 'D-DETAIL-TERMINAL-CANCELLED';
+  else if (status === 'INCIDENT_CANCELLED') scenarioId = 'D-DETAIL-TERMINAL-INCIDENT';
+  else if (status === 'RETURNING') scenarioId = 'D-DETAIL-RETURNING';
+  else if (status === 'RETURNED') scenarioId = 'D-DETAIL-TERMINAL-RETURNED';
+
+  const terminalNotice =
+    status === 'INCIDENT_CANCELLED'
+      ? 'Báo cáo sự cố thành công. Đơn đã được gỡ khỏi hàng đợi của bạn — bạn có thể nhận đơn mới.'
+      : status === 'RETURNING'
+        ? 'Đang hoàn trả hàng về điểm gửi theo yêu cầu sự cố.'
+        : status === 'RETURNED'
+          ? 'Đã hoàn trả hàng về điểm gửi thành công.'
+          : null;
 
   const assignedOrder: DriverAssignedDetailView['order'] = {
     id: order.id,
@@ -635,9 +694,9 @@ export function mapOrderToDriverDetailView(
     route,
     vehicleLabel: formatVehicleLabel(order.vehicleType),
     cargoSummary: formatCargoSummary(order),
-    customerContact:
-      order.customerContact ??
-      'Thông tin liên hệ khách hàng · chỉ hiện sau phân công',
+    cargoWeightKg: order.cargoWeightKg ?? order.cargoWeight ?? null,
+    contactRoleLabel: resolveContactRoleLabel(order.currentContact),
+    customerContact: formatCustomerContactValue(order.currentContact, order.customerContact),
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
     history,
   };
@@ -650,7 +709,7 @@ export function mapOrderToDriverDetailView(
     tracking,
     proof,
     ...task,
-    notice: null,
+    notice: terminalNotice,
   };
 }
 
@@ -990,6 +1049,16 @@ export function createDriverHttpAdapter(
               recoveryLabel: 'Xem đơn còn trống',
             });
           }
+          if (error.code === 'VEHICLE_TYPE_MISMATCH') {
+            return deepFreeze<DriverConflictView>({
+              scenarioId: 'D-DETAIL-VEHICLE-MISMATCH',
+              kind: 'conflict',
+              title: 'Đơn không phù hợp với loại xe của bạn',
+              message:
+                'Đơn hàng này yêu cầu loại phương tiện khác. Danh sách sẽ được làm mới, vui lòng chọn đơn khác phù hợp với xe của bạn.',
+              recoveryLabel: 'Xem đơn còn trống',
+            });
+          }
           if (error.statusCode === 403 || error.code === 'FORBIDDEN') {
             return deepFreeze<DriverDetailView>({
               scenarioId: 'D-DETAIL-PERMISSION',
@@ -1097,6 +1166,7 @@ export function createDriverHttpAdapter(
                 },
                 vehicleLabel: 'Xe van',
                 cargoSummary: 'Hàng hóa tiêu chuẩn',
+                contactRoleLabel: 'Liên hệ khách hàng',
                 customerContact: 'Thông tin liên hệ khách hàng · chỉ hiện sau phân công',
                 updatedAtLabel: formatDateTime(new Date()),
                 history: [],
@@ -1152,6 +1222,45 @@ export function createDriverHttpAdapter(
           scenarioId: 'D-DETAIL-ERROR',
           kind: 'error',
           title: 'Không thể cập nhật trạng thái',
+          message:
+            error instanceof Error && error.message
+              ? error.message
+              : 'Hãy thử lại sau.',
+        });
+      }
+    },
+
+    async reportIncident(
+      orderId: string,
+      payload: { reason: string; note?: string; evidenceMediaId?: string },
+    ): Promise<DriverDetailView> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        return deepFreeze<DriverDetailView>({
+          scenarioId: 'D-DETAIL-ERROR',
+          kind: 'error',
+          title: 'Mã đơn không hợp lệ',
+          message: 'Không tìm thấy mã đơn hàng hợp lệ để báo cáo sự cố.',
+        });
+      }
+
+      try {
+        const response = await activeClient.post<MappedDriverOrderResponse>(
+          `/driver/orders/${validId}/incident`,
+          payload,
+        );
+
+        currentAvailability = 'AVAILABLE';
+
+        return deepFreeze<DriverDetailView>(
+          mapOrderToDriverDetailView(response),
+        );
+      } catch (error) {
+        return deepFreeze<DriverDetailView>({
+          scenarioId: 'D-DETAIL-ERROR',
+          kind: 'error',
+          title: 'Không thể báo cáo sự cố',
           message:
             error instanceof Error && error.message
               ? error.message

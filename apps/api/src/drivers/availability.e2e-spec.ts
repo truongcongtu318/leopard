@@ -41,7 +41,8 @@ describe('Driver Availability and Order Queue API (E2E)', () => {
       .useValue(prismaMock)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    // Match the production bootstrap: AppModule registers scoped JSON parsers.
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -145,7 +146,87 @@ describe('Driver Availability and Order Queue API (E2E)', () => {
       .set('Authorization', `Bearer ${driverSession.accessToken}`)
       .expect(200);
 
-    expect(activeRes.body).toEqual({ order: null });
+    expect(activeRes.body).toEqual({ order: null, availability: 'OFFLINE' });
+  });
+
+  it('sorts and filters available orders by radiusKm from the driver\'s last known location', async () => {
+    prismaMock.driverLocations.set(driverUserId, { lat: 10.7769, lng: 106.7009 }); // Bến Thành, Q1
+
+    const nearOrder = await prismaMock.order.create({
+      data: { customerId: 'customer-radius', status: 'REQUESTED', vehicleType: 'MOTORBIKE' },
+    });
+    prismaMock.orderStops.set('stop-near', {
+      id: 'stop-near',
+      orderId: nearOrder.id,
+      type: 'PICKUP',
+      sequence: 1,
+      address: 'Gần điểm tài xế (~1km)',
+      contactName: null,
+      contactPhone: null,
+      note: null,
+      lat: 10.786,
+      lng: 106.7,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as never);
+
+    const farOrder = await prismaMock.order.create({
+      data: { customerId: 'customer-radius-2', status: 'REQUESTED', vehicleType: 'MOTORBIKE' },
+    });
+    prismaMock.orderStops.set('stop-far', {
+      id: 'stop-far',
+      orderId: farOrder.id,
+      type: 'PICKUP',
+      sequence: 1,
+      address: 'Cách xa điểm tài xế (~30km, ngoài bán kính)',
+      contactName: null,
+      contactPhone: null,
+      note: null,
+      lat: 11.05,
+      lng: 106.7,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as never);
+
+    const res = await request(app.getHttpServer())
+      .get('/driver/orders/available')
+      .query({ radiusKm: 10 })
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .expect(200);
+
+    const ids = res.body.items.map((item: { id: string }) => item.id);
+    expect(ids).toContain(nearOrder.id);
+    expect(ids).not.toContain(farOrder.id);
+  });
+
+  it('returns only the driver\'s own completed/terminal orders in history, newest first', async () => {
+    const delivered = await prismaMock.order.create({
+      data: { customerId: 'customer-hist-1', driverId: driverUserId, status: 'DELIVERED', priceVnd: 55000 },
+    });
+    const incident = await prismaMock.order.create({
+      data: { customerId: 'customer-hist-2', driverId: driverUserId, status: 'INCIDENT_CANCELLED' },
+    });
+    // Still active — must be excluded from history.
+    await prismaMock.order.create({
+      data: { customerId: 'customer-hist-3', driverId: driverUserId, status: 'IN_TRANSIT' },
+    });
+    // Delivered, but assigned to a different driver — must be excluded.
+    await prismaMock.order.create({
+      data: { customerId: 'customer-hist-4', driverId: 'some-other-driver', status: 'DELIVERED' },
+    });
+
+    const res = await request(app.getHttpServer())
+      .get('/driver/orders/history')
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .expect(200);
+
+    const ids = res.body.items.map((item: { id: string }) => item.id);
+    expect(ids).toEqual(expect.arrayContaining([delivered.id, incident.id]));
+    expect(ids).toHaveLength(2);
+    expect(res.body.items.find((i: { id: string }) => i.id === delivered.id)).toMatchObject({
+      status: 'DELIVERED',
+      priceVnd: 55000,
+    });
   });
 
   it('blocks setting availability to AVAILABLE if driver has active order (ACCEPTED/PICKING_UP/IN_TRANSIT)', async () => {

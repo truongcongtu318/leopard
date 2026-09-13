@@ -98,9 +98,18 @@ export class UpdateOrderStatusService {
       }
 
       if (dto.status === 'DELIVERED') {
+        const profile = await tx.driverProfile.findUnique({
+          where: { userId: actor.userId },
+        });
+
+        const nextAvailability = profile?.autoOfflineOnComplete ? 'OFFLINE' : 'AVAILABLE';
+
         await tx.driverProfile.update({
           where: { userId: actor.userId },
-          data: { availability: 'AVAILABLE' },
+          data: {
+            availability: nextAvailability,
+            autoOfflineOnComplete: false,
+          },
         });
       }
 

@@ -227,7 +227,7 @@ export function IncomingDispatchModal({
 
           {/* 6. Vehicle & Cargo Chips */}
           <View style={styles.chipsRow}>
-            <View style={styles.specChip}>
+            <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
               <IconSpeedTruck color="#0B1E42" size={15} />
               <Text style={styles.specChipText}>{offer.vehicleLabel}</Text>
             </View>

@@ -16,7 +16,13 @@ describe('AcceptOrderService', () => {
       order: { findUnique: jest.fn(), updateMany: jest.fn() },
       $transaction: jest.fn((cb: any) => cb(prisma)),
     };
-    prisma.driverProfile = { updateMany: jest.fn() };
+    prisma.driverProfile = {
+      updateMany: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue({
+        userId: 'driver-1',
+        vehicleType: 'MOTORBIKE',
+      }),
+    };
     prisma.orderStatusHistory = { create: jest.fn() };
     ordersRepository = { findById: jest.fn() };
     eventsPublisher = { publishStatusChanged: jest.fn() };
@@ -25,7 +31,12 @@ describe('AcceptOrderService', () => {
 
   test('publishes exactly one canonical status-changed event on a successful accept', async () => {
     prisma.user.findUnique.mockResolvedValue({ id: 'driver-1', status: 'ACTIVE' });
-    prisma.order.findUnique.mockResolvedValue({ id: 'order-1', status: 'REQUESTED', driverId: null });
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'order-1',
+      status: 'REQUESTED',
+      driverId: null,
+      vehicleType: 'MOTORBIKE',
+    });
     prisma.driverProfile.updateMany.mockResolvedValue({ count: 1 });
     prisma.order.updateMany.mockResolvedValue({ count: 1 });
     prisma.orderStatusHistory.create.mockResolvedValue({
@@ -70,7 +81,12 @@ describe('AcceptOrderService', () => {
 
   test('does not publish when the driver is busy inside the transaction', async () => {
     prisma.user.findUnique.mockResolvedValue({ id: 'driver-1', status: 'ACTIVE' });
-    prisma.order.findUnique.mockResolvedValue({ id: 'order-1', status: 'REQUESTED', driverId: null });
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'order-1',
+      status: 'REQUESTED',
+      driverId: null,
+      vehicleType: 'MOTORBIKE',
+    });
     prisma.driverProfile.updateMany.mockResolvedValue({ count: 0 });
 
     await expect(service.acceptOrder(driverActor, 'order-1')).rejects.toThrow(DomainError);
@@ -79,7 +95,12 @@ describe('AcceptOrderService', () => {
 
   test('does not publish on a lost race for the same order inside the transaction', async () => {
     prisma.user.findUnique.mockResolvedValue({ id: 'driver-1', status: 'ACTIVE' });
-    prisma.order.findUnique.mockResolvedValue({ id: 'order-1', status: 'REQUESTED', driverId: null });
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'order-1',
+      status: 'REQUESTED',
+      driverId: null,
+      vehicleType: 'MOTORBIKE',
+    });
     prisma.driverProfile.updateMany.mockResolvedValue({ count: 1 });
     prisma.order.updateMany.mockResolvedValue({ count: 0 });
 

@@ -12,6 +12,10 @@ export type DriverOrdersPort = Readonly<{
   setAvailability: (commandId: string) => Promise<DriverAvailabilityView>;
   acceptOrder: (commandId: string) => Promise<DriverDetailView>;
   executeLifecycle: (commandId: string) => Promise<DriverDetailView>;
+  reportIncident?: (
+    orderId: string,
+    payload: { reason: string; note?: string; evidenceMediaId?: string },
+  ) => Promise<DriverDetailView>;
 }>;
 
 export type DriverTrackingPort = Readonly<{

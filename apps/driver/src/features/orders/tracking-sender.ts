@@ -138,8 +138,9 @@ export class DriverTrackingSender {
   constructor(options: DriverTrackingSenderOptions = {}) {
     this.socket = options.socket ?? null;
     this.socketFactory = options.socketFactory;
-    this.serverUrl =
+    const rawServerUrl =
       options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? '';
+    this.serverUrl = rawServerUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
     this.namespace = options.namespace ?? '/tracking';
     this.minIntervalMs = options.minIntervalMs ?? 5000;
     this.maxQueueSize = options.maxQueueSize ?? 50;

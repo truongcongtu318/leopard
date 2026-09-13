@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   Linking,
   Pressable,
   ScrollView,
@@ -29,19 +30,34 @@ export type DriverOrderDetailScreenProps = Readonly<{
   onRetry?: () => void;
   onResolveConflict?: () => void;
   onOpenLocationSettings?: () => void;
+  onOpenIncidentModal?: () => void;
   onBack?: () => void;
 }>;
 
-function openExternalNavigation(destinationLabel: string) {
-  const encoded = encodeURIComponent(destinationLabel);
+function openExternalNavigation(target: { lat?: number; lng?: number; label?: string } | string) {
+  let query = '';
+  if (typeof target === 'string') {
+    query = target;
+  } else if (typeof target?.lat === 'number' && typeof target?.lng === 'number') {
+    query = `${target.lat},${target.lng}`;
+  } else if (target?.label) {
+    query = target.label;
+  }
+  const encoded = encodeURIComponent(query);
   const url = `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
   void Linking.openURL(url).catch(() => {});
 }
 
 function callPhoneNumber(contact: string) {
-  const match = contact.match(/[\d+]{8,15}/);
-  const phone = match ? match[0] : '19001234';
-  void Linking.openURL(`tel:${phone}`).catch(() => {});
+  const match = contact?.match(/[\d+]{8,15}/);
+  if (!match) {
+    Alert.alert(
+      'Chưa có số điện thoại',
+      'Chưa có số điện thoại thực tế cho liên hệ này. Vui lòng thử lại sau hoặc liên hệ tổng đài hỗ trợ.',
+    );
+    return;
+  }
+  void Linking.openURL(`tel:${match[0]}`).catch(() => {});
 }
 
 function CommandButton({
@@ -89,6 +105,18 @@ function TaskButton({
     const disabled = task.command.disabled || task.command.isPending;
     return (
       <View style={styles.advanceLegContainer}>
+        <Pressable
+          accessibilityLabel={task.command.label}
+          accessibilityRole="button"
+          disabled={disabled}
+          onPress={() => {
+            if (onExecuteTask && !disabled) {
+              onExecuteTask(task.command.id);
+            }
+          }}
+          style={styles.a11yHiddenButton}
+          testID={`btn-lifecycle-${task.command.id}`}
+        />
         <SlideToAction
           key={task.command.id}
           resetKey={task.command.id}
@@ -581,10 +609,14 @@ function VerticalRouteStepper({
 function CargoAndContactCard({
   vehicleLabel,
   cargoSummary,
+  cargoWeightKg,
+  contactRoleLabel,
   customerContact,
 }: Readonly<{
   vehicleLabel: string;
   cargoSummary: string;
+  cargoWeightKg?: number | null;
+  contactRoleLabel: string;
   customerContact: string;
 }>) {
   return (
@@ -597,6 +629,12 @@ function CargoAndContactCard({
           <IconSpeedTruck color="#0B1E42" size={14} />
           <Text style={styles.specChipText}>{vehicleLabel}</Text>
         </View>
+        {typeof cargoWeightKg === 'number' && cargoWeightKg > 0 ? (
+          <View style={styles.specChip} testID="cargo-weight-chip">
+            <IconOrders color="#0B1E42" size={14} />
+            <Text style={styles.specChipText}>{cargoWeightKg} kg</Text>
+          </View>
+        ) : null}
         <View style={styles.specChip}>
           <IconOrders color="#0B1E42" size={14} />
           <Text numberOfLines={1} style={styles.specChipText}>
@@ -611,7 +649,7 @@ function CargoAndContactCard({
           <IconPhone color="#0B1E42" size={16} />
         </View>
         <View style={styles.contactTextColumn}>
-          <Text style={styles.contactCaption}>LIÊN HỆ KHÁCH HÀNG / THỦ KHO</Text>
+          <Text style={styles.contactCaption}>{contactRoleLabel.toUpperCase()}</Text>
           <Text style={styles.contactValue}>{customerContact}</Text>
         </View>
         <Pressable
@@ -636,6 +674,7 @@ function MissionMapCanvas({
   tracking,
   distanceLabel,
   etaLabel,
+  navigationTarget,
 }: Readonly<{
   originLabel: string;
   destinationLabel: string;
@@ -643,6 +682,7 @@ function MissionMapCanvas({
   tracking: DriverTrackingView;
   distanceLabel: string;
   etaLabel?: string;
+  navigationTarget?: { lat?: number; lng?: number; label?: string } | string;
 }>) {
   const isStale =
     tracking.kind === 'stale' ||
@@ -688,7 +728,7 @@ function MissionMapCanvas({
           accessibilityHint="Mở ứng dụng Google Maps để dẫn đường"
           accessibilityLabel="Mở Google Maps chỉ đường"
           accessibilityRole="button"
-          onPress={() => openExternalNavigation(destinationLabel)}
+          onPress={() => openExternalNavigation(navigationTarget ?? destinationLabel)}
           style={({ pressed }) => [styles.mapFloatingQuickBtn, pressed ? styles.pressed : null]}
         >
           <IconRoute color="#0B1E42" size={18} />
@@ -925,6 +965,7 @@ function PublicDetail({
 function AssignedDetail({
   onBack,
   onExecuteTask,
+  onOpenIncidentModal,
   onOpenLocationSettings,
   onRetryProof,
   onSelectProof,
@@ -935,6 +976,12 @@ function AssignedDetail({
   }
 >) {
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+  const isPickupLeg = view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP';
+  const activeNavigationTarget = isPickupLeg ? view.order.route.origin : view.order.route.destination;
+  const isMissionActive =
+    view.order.status !== 'DELIVERED' &&
+    view.order.status !== 'CANCELLED' &&
+    view.order.status !== 'INCIDENT_CANCELLED';
 
   return (
     <ScreenScaffold
@@ -956,11 +1003,29 @@ function AssignedDetail({
             accessibilityHint="Mở ứng dụng Google Maps để dẫn đường"
             accessibilityLabel="Mở Google Maps chỉ đường"
             accessibilityRole="button"
-            onPress={() => openExternalNavigation(view.order.route.destination.label)}
+            onPress={() => openExternalNavigation(activeNavigationTarget)}
             style={({ pressed }) => [styles.stickyRoundBtn, pressed ? styles.pressed : null]}
+            testID="btn-navigate-active-leg"
           >
             <IconRoute color="#0B1E42" size={20} />
           </Pressable>
+
+          {onOpenIncidentModal && isMissionActive ? (
+            <Pressable
+              accessibilityHint="Báo cáo sự cố khẩn cấp cho chuyến đi"
+              accessibilityLabel="Báo sự cố"
+              accessibilityRole="button"
+              onPress={onOpenIncidentModal}
+              style={({ pressed }) => [
+                styles.stickyRoundBtn,
+                styles.stickyIncidentBtn,
+                pressed ? styles.pressed : null,
+              ]}
+              testID="btn-open-incident-modal"
+            >
+              <IconShieldAlert color="#DC2626" size={20} />
+            </Pressable>
+          ) : null}
 
           <View style={styles.stickyPrimaryBtnWrap}>
             {view.primaryTask ? (
@@ -991,6 +1056,7 @@ function AssignedDetail({
               ? `${Math.round(view.order.route.etaDurationSeconds / 60)} phút`
               : undefined
           }
+          navigationTarget={activeNavigationTarget}
           originLabel={view.order.route.origin.label}
           stops={view.order.route.stops}
           tracking={view.tracking}
@@ -1007,10 +1073,23 @@ function AssignedDetail({
               <Text style={styles.missionLegTitle}>
                 {view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP'
                   ? 'ĐẾN ĐIỂM LẤY HÀNG'
-                  : view.order.status === 'IN_TRANSIT' || view.order.status === 'PICKED_UP'
+                  : view.order.status === 'IN_TRANSIT'
                     ? 'VẬN CHUYỂN ĐẾN ĐIỂM GIAO'
                     : 'HOÀN TẤT ĐƠN HÀNG'}
               </Text>
+              {onOpenIncidentModal && isMissionActive ? (
+                <Pressable
+                  accessibilityHint="Báo cáo sự cố khẩn cấp để huỷ chuyến và giải phóng tài xế"
+                  accessibilityLabel="Báo sự cố chuyến đi"
+                  accessibilityRole="button"
+                  onPress={onOpenIncidentModal}
+                  style={({ pressed }) => [styles.incidentBannerBtn, pressed ? styles.pressed : null]}
+                  testID="btn-report-incident"
+                >
+                  <IconShieldAlert color="#DC2626" size={13} />
+                  <Text style={styles.incidentBannerBtnText}>Báo sự cố chuyến đi</Text>
+                </Pressable>
+              ) : null}
             </View>
             <StatusBadge domain="order" status={view.order.status} />
           </View>
@@ -1038,6 +1117,8 @@ function AssignedDetail({
           {/* 4. Cargo and Customer Contact Card */}
           <CargoAndContactCard
             cargoSummary={view.order.cargoSummary}
+            cargoWeightKg={view.order.cargoWeightKg}
+            contactRoleLabel={view.order.contactRoleLabel}
             customerContact={view.order.customerContact}
             vehicleLabel={view.order.vehicleLabel}
           />
@@ -2030,6 +2111,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     width: 48,
+  },
+  stickyIncidentBtn: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+  },
+  incidentBannerBtn: {
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    alignSelf: 'flex-start',
+  },
+  incidentBannerBtnText: {
+    color: '#DC2626',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  a11yHiddenButton: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
   },
   stickyPrimaryBtnWrap: {
     flex: 1,

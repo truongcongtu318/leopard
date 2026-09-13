@@ -218,17 +218,29 @@ describe('DriverApplicationService', () => {
     expect(contractService.prepareSignedContract).not.toHaveBeenCalled();
   });
 
-  it('rejects an application that is still pending review', async () => {
-    mock = createPrismaMock({
-      id: 'user-1',
-      role: 'DRIVER',
-      status: 'PENDING_APPROVAL',
+  it('lets a still-pending driver resubmit their application instead of throwing 409 (P1-1)', async () => {
+    mock = createPrismaMock({ id: 'user-1', role: 'DRIVER', status: 'PENDING_APPROVAL', phone: '0900' });
+    mock.profiles.set('profile-1', {
+      id: 'profile-1',
+      userId: 'user-1',
+      vehicleType: 'MOTORBIKE',
+      licensePlate: 'OLD',
+      licenseNumber: 'OLD',
+      availability: 'OFFLINE',
+      submittedAt: new Date('2026-08-01T00:00:00.000Z'),
+      reviewedAt: null,
+      reviewedById: null,
+      rejectionReason: null,
+      contractVersion: 'v1',
+      contractSignedAt: new Date('2026-08-01T00:00:00.000Z'),
     });
     const service = new DriverApplicationService(mock.prisma as never, contractService as never);
 
-    await expect(service.apply(actor, validDto)).rejects.toMatchObject({
-      code: 'DRIVER_APPLICATION_PENDING',
-    });
+    const view = await service.apply(actor, validDto);
+
+    expect(view.status).toBe('PENDING_APPROVAL');
+    expect(view.vehicleType).toBe('VAN');
+    expect(mock.profiles.size).toBe(1); // same profile row updated, no duplicate/conflict
   });
 
   it('lets a rejected driver re-apply, clears the previous rejection reason, and re-signs the same version', async () => {

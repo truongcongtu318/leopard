@@ -19,6 +19,19 @@ import type {
 import { createNotificationMock, createDeviceTokenMock } from './prisma-mock-notifications';
 import { createInvoiceMock, createInvoiceSequenceMock } from './prisma-mock-invoices';
 
+/** Approximate great-circle distance in meters — good enough for the mock's
+ * radius-filter tests; production uses PostGIS ST_Distance/ST_DWithin. */
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const EARTH_RADIUS_M = 6_371_000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
 export class InMemoryPrismaService {
   public users = new Map<string, User>();
   public refreshSessions = new Map<string, RefreshSession>();
@@ -27,6 +40,7 @@ export class InMemoryPrismaService {
   public fleets = new Map<string, any>();
   public orders = new Map<string, Order>();
   public orderStops = new Map<string, OrderStop & { lat: number; lng: number }>();
+  public driverLocations = new Map<string, { lat: number; lng: number }>();
   public orderStatusHistories = new Map<string, OrderStatusHistory>();
   public paymentIntents = new Map<string, PaymentIntent>();
   public mediaObjects = new Map<string, any>();
@@ -58,6 +72,9 @@ export class InMemoryPrismaService {
         type,
         sequence,
         address,
+        contactName: (values[6] as string) ?? null,
+        contactPhone: (values[7] as string) ?? null,
+        note: (values[8] as string) ?? null,
         lat,
         lng,
         createdAt: new Date(),
@@ -68,12 +85,61 @@ export class InMemoryPrismaService {
       return [stop];
     }
 
+    // Radius-ranked pickup-distance query (JOIN "Order" + "OrderStop") — must
+    // be checked before the generic "SELECT ... OrderStop" branch below,
+    // since it also contains that substring.
+    if (rawSql.includes('JOIN "OrderStop"')) {
+      const lng = Number(values[0]);
+      const lat = Number(values[1]);
+      const vehicleType = values[2] != null ? String(values[2]) : null;
+      const radiusM = Number(values[values.length - 1]);
+
+      const results: Array<{ orderId: string; distance_m: number }> = [];
+      for (const order of this.orders.values()) {
+        if (order.status !== 'REQUESTED') continue;
+        if (vehicleType && (order as { vehicleType?: string }).vehicleType !== vehicleType) continue;
+        const pickup = Array.from(this.orderStops.values()).find(
+          (s) => s.orderId === order.id && s.type === 'PICKUP',
+        );
+        if (!pickup) continue;
+        const distanceM = haversineMeters(lat, lng, pickup.lat, pickup.lng);
+        if (distanceM <= radiusM) {
+          results.push({ orderId: order.id, distance_m: distanceM });
+        }
+      }
+      results.sort((a, b) => a.distance_m - b.distance_m);
+      return results;
+    }
+
+    // Batched stop lookup for a page of orders: `"orderId" = ANY($1::uuid[])`.
+    if (rawSql.includes('ANY(') && rawSql.includes('"OrderStop"')) {
+      const orderIds = Array.isArray(values[0]) ? (values[0] as string[]) : [String(values[0] ?? '')];
+      const stops = Array.from(this.orderStops.values())
+        .filter((s) => orderIds.includes(s.orderId))
+        .sort((a, b) => a.sequence - b.sequence);
+      return stops;
+    }
+
     if (rawSql.includes('SELECT') && rawSql.includes('"OrderStop"')) {
       const orderId = String(values[0] ?? '');
       const stops = Array.from(this.orderStops.values())
         .filter((s) => s.orderId === orderId)
         .sort((a, b) => a.sequence - b.sequence);
       return stops;
+    }
+
+    if (rawSql.includes('UPDATE "DriverProfile"') && rawSql.includes('lastKnownLocation')) {
+      const lng = Number(values[0]);
+      const lat = Number(values[1]);
+      const userId = String(values[2] ?? '');
+      this.driverLocations.set(userId, { lat, lng });
+      return [];
+    }
+
+    if (rawSql.includes('FROM "DriverProfile"') && rawSql.includes('lastKnownLocation')) {
+      const userId = String(values[0] ?? '');
+      const location = this.driverLocations.get(userId);
+      return location ? [location] : [];
     }
 
     return [];
@@ -309,6 +375,7 @@ export class InMemoryPrismaService {
           contractVersion: create.contractVersion ?? null,
           contractSignedAt: create.contractSignedAt ?? null,
           lastKnownAt: create.lastKnownAt ?? null,
+          autoOfflineOnComplete: create.autoOfflineOnComplete ?? false,
           createdAt: new Date(),
           updatedAt: new Date(),
         } as DriverProfile;
@@ -497,6 +564,9 @@ export class InMemoryPrismaService {
         if (where.driverId) {
           filtered = filtered.filter((o) => o.driverId === where.driverId);
         }
+        if (where.id?.in) {
+          filtered = filtered.filter((o) => where.id.in.includes(o.id));
+        }
         if (where.status) {
           if (typeof where.status === 'string') {
             filtered = filtered.filter((o) => o.status === where.status);
@@ -520,7 +590,10 @@ export class InMemoryPrismaService {
       }
 
       filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      const pageItems = filtered.slice(skip, skip + take);
+      // An id.in lookup (used to hydrate a specific, already-ranked page of
+      // ids — see the radius-ranked branch of findAvailableOrders) must not
+      // be re-paginated by skip/take; the caller already sliced the ids.
+      const pageItems = where?.id?.in ? filtered : filtered.slice(skip, skip + take);
 
       if (include) {
         return pageItems.map((order) => {
@@ -591,6 +664,13 @@ export class InMemoryPrismaService {
         durationSeconds: data.durationSeconds ?? null,
         priceVnd: data.priceVnd ?? null,
         etaSeconds: data.etaSeconds ?? null,
+        vehicleType: data.vehicleType ?? 'MOTORBIKE',
+        cargoWeightKg: data.cargoWeightKg ?? null,
+        cargoNote: data.cargoNote ?? null,
+        proofMediaId: data.proofMediaId ?? null,
+        incidentReason: data.incidentReason ?? null,
+        incidentNote: data.incidentNote ?? null,
+        incidentReportedAt: data.incidentReportedAt ?? null,
         acceptedAt: data.acceptedAt ?? null,
         pickingUpAt: data.pickingUpAt ?? null,
         inTransitAt: data.inTransitAt ?? null,

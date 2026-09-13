@@ -9,6 +9,7 @@ import { DeliveryProofReader, PrismaDeliveryProofReader } from './domain/deliver
 import { OrdersController } from './orders.controller.js';
 import { OrdersRepository } from './orders.repository.js';
 import { OrdersService } from './orders.service.js';
+import { ReportOrderIncidentService } from './report-order-incident.service.js';
 import { UpdateOrderStatusService } from './update-order-status.service.js';
 import { OrderEventsPublisher } from './order-events.publisher.js';
 
@@ -21,6 +22,7 @@ import { OrderEventsPublisher } from './order-events.publisher.js';
     OrdersRepository,
     AcceptOrderService,
     UpdateOrderStatusService,
+    ReportOrderIncidentService,
     OrderEventsPublisher,
     CancelOrderService,
     PrismaDeliveryProofReader,
@@ -34,6 +36,7 @@ import { OrderEventsPublisher } from './order-events.publisher.js';
     OrdersRepository,
     AcceptOrderService,
     UpdateOrderStatusService,
+    ReportOrderIncidentService,
     OrderEventsPublisher,
     CancelOrderService,
     DeliveryProofReader,
