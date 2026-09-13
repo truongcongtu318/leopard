@@ -143,179 +143,62 @@ export function stripVietnameseAccents(str: string): string {
     .toLowerCase();
 }
 
-export const POPULAR_LOCATION_SUGGESTIONS: readonly LocationSuggestionItem[] = [
-  {
-    id: 'sug-1',
-    title: 'Kho Tân Bình',
-    subtitle: '120 Trường Chinh, P.12, Q. Tân Bình, TP.HCM',
-    address: '120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
-    coords: { lat: 10.795, lng: 106.652 },
-  },
-  {
-    id: 'sug-2',
-    title: 'KCN Tân Tạo',
-    subtitle: 'Lô B5, Đường số 2, Q. Bình Tân, TP.HCM',
-    address: 'KCN Tân Tạo, Lô B5, Đường số 2, Q. Bình Tân, TP. Hồ Chí Minh',
-    coords: { lat: 10.758, lng: 106.574 },
-  },
-  {
-    id: 'sug-3',
-    title: 'Cảng Cát Lái',
-    subtitle: 'Đường Nguyễn Thị Định, P. Cát Lái, TP. Thủ Đức',
-    address: 'Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
-    coords: { lat: 10.764, lng: 106.796 },
-  },
-  {
-    id: 'sug-4',
-    title: 'KCN Sóng Thần',
-    subtitle: 'Đại lộ Độc Lập, Dĩ An, Bình Dương',
-    address: 'KCN Sóng Thần, Dĩ An, Bình Dương',
-    coords: { lat: 10.905, lng: 106.758 },
-  },
-  {
-    id: 'sug-5',
-    title: 'Sân bay Tân Sơn Nhất',
-    subtitle: 'Đường Trường Sơn, Phường 2, Q. Tân Bình, TP.HCM',
-    address: 'Sân bay Tân Sơn Nhất, Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
-    coords: { lat: 10.818, lng: 106.659 },
-  },
-  {
-    id: 'sug-6',
-    title: 'Đường Cộng Hòa',
-    subtitle: 'Phường 13, Quận Tân Bình, TP.HCM',
-    address: 'Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
-    coords: { lat: 10.803, lng: 106.643 },
-  },
-  {
-    id: 'sug-7',
-    title: 'Đường Quang Trung',
-    subtitle: 'Phường 10, Quận Gò Vấp, TP.HCM',
-    address: 'Đường Quang Trung, Phường 10, Quận Gò Vấp, TP. Hồ Chí Minh',
-    coords: { lat: 10.835, lng: 106.666 },
-  },
-  {
-    id: 'sug-8',
-    title: 'Đường Lê Văn Sỹ',
-    subtitle: 'Phường 14, Quận 3, TP.HCM',
-    address: 'Đường Lê Văn Sỹ, Phường 14, Quận 3, TP. Hồ Chí Minh',
-    coords: { lat: 10.791, lng: 106.674 },
-  },
-  {
-    id: 'sug-9',
-    title: 'Chợ Bến Thành',
-    subtitle: 'Đường Lê Lợi, Phường Bến Thành, Quận 1, TP.HCM',
-    address: 'Chợ Bến Thành, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
-    coords: { lat: 10.7725, lng: 106.698 },
-  },
-  {
-    id: 'sug-10',
-    title: 'Đường Nguyễn Huệ',
-    subtitle: 'Phố đi bộ, Phường Bến Nghé, Quận 1, TP.HCM',
-    address: 'Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
-    coords: { lat: 10.774, lng: 106.703 },
-  },
-  {
-    id: 'sug-11',
-    title: 'Đại lộ Nguyễn Văn Linh',
-    subtitle: 'Phường Tân Phong, Quận 7, TP.HCM',
-    address: 'Đại lộ Nguyễn Văn Linh, Phường Tân Phong, Quận 7, TP. Hồ Chí Minh',
-    coords: { lat: 10.728, lng: 106.711 },
-  },
-  {
-    id: 'sug-12',
-    title: 'KCX Tân Thuận',
-    subtitle: 'Phường Tân Thuận Đông, Quận 7, TP.HCM',
-    address: 'KCX Tân Thuận, Phường Tân Thuận Đông, Quận 7, TP. Hồ Chí Minh',
-    coords: { lat: 10.756, lng: 106.732 },
-  },
-  {
-    id: 'sug-13',
-    title: 'KCN Vĩnh Lộc',
-    subtitle: 'Đường số 7, KCN Vĩnh Lộc, Bình Chánh, TP.HCM',
-    address: 'KCN Vĩnh Lộc, Bình Chánh, TP. Hồ Chí Minh',
-    coords: { lat: 10.824, lng: 106.574 },
-  },
-  {
-    id: 'sug-14',
-    title: 'Ngã tư An Sương',
-    subtitle: 'Quốc lộ 22, Phường Trung Mỹ Tây, Quận 12, TP.HCM',
-    address: 'Ngã tư An Sương, Quốc lộ 22, Quận 12, TP. Hồ Chí Minh',
-    coords: { lat: 10.852, lng: 106.621 },
-  },
-  {
-    id: 'sug-15',
-    title: 'Khu Công Nghệ Cao (SHTP)',
-    subtitle: 'Đường D1, Long Thạnh Mỹ, TP. Thủ Đức, TP.HCM',
-    address: 'Khu Công Nghệ Cao, Long Thạnh Mỹ, TP. Thủ Đức, TP. Hồ Chí Minh',
-    coords: { lat: 10.855, lng: 106.797 },
-  },
-  {
-    id: 'sug-16',
-    title: 'KCN Biên Hòa 2',
-    subtitle: 'Xa lộ Hà Nội, Long Bình Tân, TP. Biên Hòa, Đồng Nai',
-    address: 'KCN Biên Hòa 2, TP. Biên Hòa, Đồng Nai',
-    coords: { lat: 10.957, lng: 106.828 },
-  },
-  {
-    id: 'sug-17',
-    title: 'KCN Amata',
-    subtitle: 'Phường Long Bình, TP. Biên Hòa, Đồng Nai',
-    address: 'KCN Amata, Phường Long Bình, TP. Biên Hòa, Đồng Nai',
-    coords: { lat: 10.961, lng: 106.874 },
-  },
-  {
-    id: 'sug-18',
-    title: 'KCN VSIP 1',
-    subtitle: 'Đại lộ Hữu Nghị, Thuận An, Bình Dương',
-    address: 'KCN VSIP 1, Đại lộ Hữu Nghị, Thuận An, Bình Dương',
-    coords: { lat: 10.923, lng: 106.702 },
-  },
-  {
-    id: 'sug-19',
-    title: 'Bến Lức Long An',
-    subtitle: 'Quốc lộ 1A, Thị trấn Bến Lức, Long An',
-    address: 'Bến Lức, Long An',
-    coords: { lat: 10.643, lng: 106.488 },
-  },
-  {
-    id: 'sug-20',
-    title: 'Cảng Quốc tế Cái Mép',
-    subtitle: 'Thị xã Phú Mỹ, Bà Rịa - Vũng Tàu',
-    address: 'Cảng Quốc tế Cái Mép, Thị xã Phú Mỹ, Bà Rịa - Vũng Tàu',
-    coords: { lat: 10.518, lng: 107.018 },
-  },
-];
-
-export function getAddressSuggestions(query: string): readonly LocationSuggestionItem[] {
-  const rawQ = query.trim();
-  if (!rawQ) {
-    return POPULAR_LOCATION_SUGGESTIONS.slice(0, 5);
+export function searchPlacesDirect(query: string): readonly LocationSuggestionItem[] {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 2) {
+    return [];
   }
-  const cleanQ = stripVietnameseAccents(rawQ);
-  const filtered = POPULAR_LOCATION_SUGGESTIONS.filter((item) => {
-    const titleClean = stripVietnameseAccents(item.title);
-    const subClean = stripVietnameseAccents(item.subtitle);
-    const addrClean = stripVietnameseAccents(item.address);
-    return (
-      titleClean.includes(cleanQ) ||
-      subClean.includes(cleanQ) ||
-      addrClean.includes(cleanQ)
-    );
-  });
-
-  if (filtered.length > 0) {
-    return filtered.slice(0, 6);
-  }
-
-  return [
+  const cleanQ = stripVietnameseAccents(trimmed);
+  const REAL_VIETNAM_PLACES: readonly LocationSuggestionItem[] = [
     {
-      id: 'custom-query',
-      title: rawQ,
-      subtitle: 'Tìm kiếm theo từ khóa Google Maps',
-      address: rawQ,
+      id: 'pl-1',
+      title: '120 Trường Chinh',
+      subtitle: 'Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
+      address: '120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
     },
-    ...POPULAR_LOCATION_SUGGESTIONS.slice(0, 3),
+    {
+      id: 'pl-2',
+      title: 'Đường Cộng Hòa',
+      subtitle: 'Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
+      address: 'Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
+    },
+    {
+      id: 'pl-3',
+      title: 'Cảng Cát Lái',
+      subtitle: 'Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
+      address: 'Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
+    },
+    {
+      id: 'pl-4',
+      title: 'Sân bay Tân Sơn Nhất',
+      subtitle: 'Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
+      address: 'Sân bay Tân Sơn Nhất, Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
+    },
+    {
+      id: 'pl-5',
+      title: 'Chợ Bến Thành',
+      subtitle: 'Đường Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
+      address: 'Chợ Bến Thành, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
+    },
   ];
+
+  const matched = REAL_VIETNAM_PLACES.filter(
+    (p) =>
+      stripVietnameseAccents(p.title).includes(cleanQ) ||
+      stripVietnameseAccents(p.subtitle).includes(cleanQ) ||
+      stripVietnameseAccents(p.address).includes(cleanQ)
+  );
+
+  return matched.length > 0
+    ? matched
+    : [
+        {
+          id: `typed-${cleanQ}`,
+          title: trimmed,
+          subtitle: 'Địa chỉ tìm kiếm theo từ khóa',
+          address: trimmed,
+        },
+      ];
 }
 
 export async function searchPlacesLive(
@@ -324,10 +207,10 @@ export async function searchPlacesLive(
 ): Promise<readonly LocationSuggestionItem[]> {
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) {
-    return POPULAR_LOCATION_SUGGESTIONS.slice(0, 4);
+    return [];
   }
 
-  // 1. Live Vietmap Autocomplete Places API
+  // 1. Live Vietmap Autocomplete Places API v4
   if (apiKey) {
     try {
       const url = `https://maps.vietmap.vn/api/autocomplete/v4?apikey=${encodeURIComponent(apiKey)}&text=${encodeURIComponent(trimmed)}`;
@@ -344,11 +227,11 @@ export async function searchPlacesLive(
         }
       }
     } catch {
-      // fallback to local matching
+      // network fallback
     }
   }
 
-  return getAddressSuggestions(trimmed);
+  return searchPlacesDirect(trimmed);
 }
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
@@ -524,9 +407,7 @@ export function HomeDashboardScreen({
   const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
 
   const activeSearchQuery = focusedField === 'pickup' ? pickupText : (focusedField === 'dropoff' ? dropoffText : '');
-  const [liveSuggestions, setLiveSuggestions] = useState<readonly LocationSuggestionItem[]>(
-    () => getAddressSuggestions(activeSearchQuery)
-  );
+  const [liveSuggestions, setLiveSuggestions] = useState<readonly LocationSuggestionItem[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const searchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -534,28 +415,26 @@ export function HomeDashboardScreen({
     if (!focusedField) return;
     const q = activeSearchQuery.trim();
     if (q.length < 2) {
-      setLiveSuggestions(getAddressSuggestions(''));
+      setLiveSuggestions([]);
       setIsSearchingLocation(false);
       return;
     }
 
-    setLiveSuggestions(getAddressSuggestions(q));
     setIsSearchingLocation(true);
+    setLiveSuggestions(searchPlacesDirect(q));
     if (searchDebounceTimerRef.current) {
       clearTimeout(searchDebounceTimerRef.current);
     }
     searchDebounceTimerRef.current = setTimeout(async () => {
       try {
         const liveResults = await searchPlacesLive(q);
-        if (liveResults && liveResults.length > 0) {
-          setLiveSuggestions(liveResults);
-        }
+        setLiveSuggestions(liveResults);
       } catch {
-        // keep local results
+        setLiveSuggestions([]);
       } finally {
         setIsSearchingLocation(false);
       }
-    }, 250);
+    }, 200);
 
     return () => {
       if (searchDebounceTimerRef.current) {
@@ -744,35 +623,45 @@ export function HomeDashboardScreen({
                 </View>
 
                 {/* Danh sách địa điểm gợi ý theo từ khóa */}
-                <View style={styles.suggestionsList}>
-                  {liveSuggestions.map((item) => (
-                    <Pressable
-                      accessibilityLabel={`Chọn gợi ý ${item.title}`}
-                      accessibilityRole="button"
-                      key={item.id}
-                      onPress={() => {
-                        haptic.selection();
-                        if (focusedField === 'pickup') {
-                          setPickupText(item.address);
-                          setPickupLabel(item.title);
-                        } else {
-                          setDropoffText(item.address);
-                        }
-                        setFocusedField(null);
-                      }}
-                      style={({ pressed }) => [styles.suggestionRowItem, pressed && styles.dropdownItemPressed]}
-                    >
-                      <View style={styles.suggestionIconBox}>
-                        <IconPin color="#0284C7" size={16} />
-                      </View>
-                      <View style={styles.dropdownItemTextWrap}>
-                        <Text numberOfLines={1} style={styles.dropdownItemTitle}>{item.title}</Text>
-                        <Text numberOfLines={1} style={styles.dropdownItemSub}>{item.subtitle}</Text>
-                      </View>
-                      <IconChevron color="#CBD5E1" direction="right" size={14} />
-                    </Pressable>
-                  ))}
-                </View>
+                {liveSuggestions.length > 0 ? (
+                  <View style={styles.suggestionsList}>
+                    {liveSuggestions.map((item) => (
+                      <Pressable
+                        accessibilityLabel={`Chọn gợi ý ${item.title}`}
+                        accessibilityRole="button"
+                        key={item.id}
+                        onPress={() => {
+                          haptic.selection();
+                          if (focusedField === 'pickup') {
+                            setPickupText(item.address);
+                            setPickupLabel(item.title);
+                          } else {
+                            setDropoffText(item.address);
+                          }
+                          setFocusedField(null);
+                        }}
+                        style={({ pressed }) => [styles.suggestionRowItem, pressed && styles.dropdownItemPressed]}
+                      >
+                        <View style={styles.suggestionIconBox}>
+                          <IconPin color="#0284C7" size={16} />
+                        </View>
+                        <View style={styles.dropdownItemTextWrap}>
+                          <Text numberOfLines={1} style={styles.dropdownItemTitle}>{item.title}</Text>
+                          <Text numberOfLines={1} style={styles.dropdownItemSub}>{item.subtitle}</Text>
+                        </View>
+                        <IconChevron color="#CBD5E1" direction="right" size={14} />
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : (
+                  <View style={styles.emptySearchHintBox}>
+                    <Text style={styles.emptySearchHintText}>
+                      {activeSearchQuery.trim().length >= 2
+                        ? (isSearchingLocation ? 'Đang tìm kiếm...' : 'Không tìm thấy địa điểm phù hợp')
+                        : 'Nhập địa chỉ hoặc tên đường để tìm kiếm...'}
+                    </Text>
+                  </View>
+                )}
 
                 <View style={styles.dropdownDivider} />
 
@@ -1070,6 +959,8 @@ const styles = StyleSheet.create({
   dropdownHeaderTitle: { fontSize: 11, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
   dropdownCloseBtn: { padding: 4 },
   suggestionsList: { gap: 2, marginBottom: 4 },
+  emptySearchHintBox: { paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center' },
+  emptySearchHintText: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
   suggestionRowItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, paddingHorizontal: 4, borderRadius: 10 },
   suggestionIconBox: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },

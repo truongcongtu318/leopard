@@ -290,19 +290,22 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(clearPickupBtn);
     expect(screen.getByPlaceholderText('Nhập địa chỉ lấy hàng...').props.value).toBe('');
 
-    // Focus pickup input to open dropdown with live suggestions
+    // Focus pickup input to open dropdown
     await fireEvent(screen.getByTestId('cr-pickup-input'), 'focus');
 
-    // Live suggestions are shown
+    // Shows search prompt when empty (no fake hardcoded places)
     expect(screen.getByText('ĐIỂM LẤY HÀNG · GỢI Ý VỊ TRÍ')).toBeTruthy();
-    expect(screen.getAllByText('Kho Tân Bình').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('KCN Tân Tạo').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Nhập địa chỉ hoặc tên đường để tìm kiếm...')).toBeTruthy();
+
+    // Type query
+    await fireEvent.changeText(screen.getByTestId('cr-pickup-input'), 'Cát Lái');
+    expect(screen.getByText('Cảng Cát Lái')).toBeTruthy();
 
     // Tap a suggestion
-    await fireEvent.press(screen.getByLabelText('Chọn gợi ý Kho Tân Bình'));
+    await fireEvent.press(screen.getByLabelText('Chọn gợi ý Cảng Cát Lái'));
 
     // Address is applied to pickup text
-    expect(screen.getByDisplayValue('120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
+    expect(screen.getByDisplayValue('Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh')).toBeTruthy();
 
     await screen.unmount();
   }, 30000);
