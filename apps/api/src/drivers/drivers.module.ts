@@ -11,6 +11,7 @@ import { OrdersModule } from '../orders/orders.module.js';
 import { PdfModule } from '../pdf/pdf.module.js';
 import { DriversController } from './drivers.controller.js';
 import { DriversRepository } from './drivers.repository.js';
+import { WithdrawalsRepository } from './withdrawals.repository.js';
 import { DriversService } from './drivers.service.js';
 import { DriverApplicationService } from './driver-application.service.js';
 import { DriverContractService } from './driver-contract.service.js';
@@ -25,6 +26,7 @@ import { DriverDocumentService } from './driver-document.service.js';
     DriverApplicationService,
     DriverContractService,
     DriversRepository,
+    WithdrawalsRepository,
     {
       provide: DriverDocumentService,
       useFactory: (storage: StorageProvider, prisma: PrismaService) => {
@@ -37,7 +39,13 @@ import { DriverDocumentService } from './driver-document.service.js';
       inject: [StorageProvider, PrismaService],
     },
   ],
-  exports: [DriversService, DriversRepository, DriverDocumentService, DriverContractService],
+  exports: [
+    DriversService,
+    DriversRepository,
+    WithdrawalsRepository,
+    DriverDocumentService,
+    DriverContractService,
+  ],
 })
 export class DriversModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

@@ -33,6 +33,7 @@ import { DriversService } from './drivers.service.js';
 import { DriverApplicationService } from './driver-application.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
 import { ApplyDriverDto } from './dto/apply-driver.dto.js';
+import { RequestWithdrawalDto } from './dto/request-withdrawal.dto.js';
 import { ReportOrderIncidentDto } from './dto/report-order-incident.dto.js';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
@@ -198,6 +199,34 @@ export class DriversController {
     const limitNum = pageSize ? Math.max(1, Math.min(100, parseInt(pageSize, 10) || 20)) : 20;
 
     return this.driversService.getOrderHistory(actor, pageNum, limitNum);
+  }
+
+  @Get('wallet')
+  @RequireRoles('DRIVER')
+  getWalletSummary(@CurrentUser() actor: AuthenticatedActor) {
+    return this.driversService.getWalletSummary(actor);
+  }
+
+  @Post('wallet/withdrawals')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.CREATED)
+  requestWithdrawal(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Body() dto: RequestWithdrawalDto,
+  ) {
+    return this.driversService.requestWithdrawal(actor, dto);
+  }
+
+  @Get('wallet/withdrawals')
+  @RequireRoles('DRIVER')
+  getWithdrawalHistory(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const pageNum = page ? Math.max(1, parseInt(page, 10) || 1) : 1;
+    const limitNum = pageSize ? Math.max(1, Math.min(100, parseInt(pageSize, 10) || 20)) : 20;
+    return this.driversService.getWithdrawalHistory(actor, pageNum, limitNum);
   }
 
   @Post('orders/:id/accept')

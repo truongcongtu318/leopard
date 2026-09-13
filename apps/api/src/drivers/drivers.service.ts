@@ -5,6 +5,8 @@ import { PrismaService } from '../database/prisma.service.js';
 import { mapOrderResponse, type MappedOrderResponse } from '../orders/order-response.mapper.js';
 import { OrdersRepository } from '../orders/orders.repository.js';
 import { DriversRepository } from './drivers.repository.js';
+import { WithdrawalsRepository } from './withdrawals.repository.js';
+import type { RequestWithdrawalDto } from './dto/request-withdrawal.dto.js';
 import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import type { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
 
@@ -13,6 +15,7 @@ export class DriversService {
   constructor(
     private readonly driversRepository: DriversRepository,
     private readonly ordersRepository: OrdersRepository,
+    private readonly withdrawalsRepository: WithdrawalsRepository,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -132,6 +135,42 @@ export class DriversService {
       pageSize: result.pageSize,
       totalPages: result.totalPages,
     };
+  }
+
+  async getWalletSummary(actor: AuthenticatedActor) {
+    return this.withdrawalsRepository.getWalletSummary(actor.userId);
+  }
+
+  async requestWithdrawal(actor: AuthenticatedActor, dto: RequestWithdrawalDto) {
+    if (dto.clientRequestId) {
+      const existing = await this.withdrawalsRepository.findWithdrawalRequestByClientRequestId(
+        actor.userId,
+        dto.clientRequestId,
+      );
+      if (existing) return existing;
+    }
+
+    const summary = await this.withdrawalsRepository.getWalletSummary(actor.userId);
+    if (dto.amountVnd > summary.availableBalanceVnd) {
+      throw new DomainError(
+        'INSUFFICIENT_BALANCE',
+        409,
+        `Số dư khả dụng (${summary.availableBalanceVnd.toLocaleString('vi-VN')}đ) không đủ để rút ${dto.amountVnd.toLocaleString('vi-VN')}đ`,
+      );
+    }
+
+    return this.withdrawalsRepository.createWithdrawalRequest({
+      driverId: actor.userId,
+      amountVnd: dto.amountVnd,
+      bankName: dto.bankName,
+      bankAccountNumber: dto.bankAccountNumber,
+      bankAccountName: dto.bankAccountName,
+      clientRequestId: dto.clientRequestId,
+    });
+  }
+
+  async getWithdrawalHistory(actor: AuthenticatedActor, page = 1, pageSize = 20) {
+    return this.withdrawalsRepository.findDriverWithdrawalHistory(actor.userId, page, pageSize);
   }
 
   async getActiveOrder(
