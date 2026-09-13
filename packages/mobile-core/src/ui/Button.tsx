@@ -1,7 +1,8 @@
 import type { PressableProps } from 'react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, control, radius, spacing, typography } from '../theme/tokens';
+import { colors, control, iosContinuousCurve, radius, spacing, typography } from '../theme/tokens';
+import { haptic } from './haptics';
 
 type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 type ButtonSize = 'default' | 'driver-primary';
@@ -75,7 +76,10 @@ export function Button({
       accessibilityRole="button"
       accessibilityState={{ busy: isLoading, disabled: isDisabled }}
       disabled={isDisabled}
-      onPress={onPress}
+      onPress={(e) => {
+        haptic.light();
+        onPress?.(e);
+      }}
       style={({ pressed }) => [
         styles.control,
         sizeStyles[size],
@@ -94,6 +98,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'stretch',
     borderRadius: radius.control,
+    ...iosContinuousCurve,
     borderWidth: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.md,

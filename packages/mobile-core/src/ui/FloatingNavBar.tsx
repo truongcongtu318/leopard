@@ -1,8 +1,9 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardRadius, radius, spacing } from '../theme/tokens';
+import { colors, iosContinuousCurve, leopardRadius, radius, spacing } from '../theme/tokens';
 import { IconClock, IconEarnings, IconHome, IconOrders, IconSpeedTruck, IconUser, IconWallet } from './icons/CoreIcons';
+import { haptic } from './haptics';
 
 export type TabKey = 'home' | 'orders' | 'wallet' | 'account';
 
@@ -70,10 +71,12 @@ function FloatingNavBarComponent({
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             key={item.key}
-            onPress={() => (handleSelect as ((k: any) => void) | undefined)?.(item.key)}
+            onPress={() => {
+              haptic.selection();
+              (handleSelect as ((k: any) => void) | undefined)?.(item.key);
+            }}
             style={({ pressed }) => [
               styles.tabItem,
-              isActive ? { backgroundColor: resolvedAccentBg } : null,
               pressed ? styles.pressed : null,
             ]}
           >
@@ -107,6 +110,7 @@ const styles = StyleSheet.create({
     bottom: Platform.OS === 'ios' ? 24 : spacing.md,
     height: 62,
     borderRadius: radius.pill,
+    ...iosContinuousCurve,
     backgroundColor: 'rgba(255, 255, 255, 0.88)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.65)',
@@ -128,6 +132,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: leopardRadius.md,
+    ...iosContinuousCurve,
     minHeight: 44,
     minWidth: 44,
   },

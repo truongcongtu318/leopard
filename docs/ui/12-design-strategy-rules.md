@@ -33,13 +33,28 @@ Mọi icon trong hệ thống tuân thủ chuẩn **Vector nét thanh (1.5px –
 
 ---
 
-## 3. Quy Chuẩn Bo Góc, Thẻ Viền Kép & Kính Mờ (Radius & Materials)
+## 3. Quy Chuẩn Bo Góc, Thẻ Viền Kép, Kính Mờ & Apple HIG (Radius, Materials & Physics)
 
 - `radius.control`: **12px–14px** — Sử dụng cho nút bấm (`Button`), ô nhập liệu (`TextInput`), dropdown (chuẩn touch target ≥ 48px).
 - `radius.card`: **16px–20px** — Thẻ nội dung tiêu chuẩn, thẻ thông tin chuyến đi, thẻ tài xế.
 - `radius.bezelOuter` (**24px**) & `radius.bezelInner` (**18px**) — Áp dụng kiến trúc **Double-Bezel** (thẻ lồng thẻ có viền hairline sáng nhẹ) tạo chiều sâu xúc giác cao cấp.
 - `radius.modal`: **26px–28px** — Khay kéo trượt từ dưới lên (Lalamove-Style Floating Bottom Sheet) và modal nhận cuốc khẩn cấp.
 - `radius.pill`: **9999px** — Sử dụng cho **2026 Liquid Glass Floating Dock**, status badge, filter chip thu gọn, chấm tín hiệu trực tuyến.
+- **Đường cong liên tục Apple Squircle (`iosContinuousCurve`):**
+  - Mọi linh kiện bo góc trên iOS kích hoạt thuộc tính `borderCurve: 'continuous'` (tương đương `kCACornerCurveContinuous` của CALayer), loại bỏ hiện tượng đơ gãy góc của bo tròn circular chuẩn CSS/Android.
+- **Vật lý lò xo Apple Fluid Spring (`appleSpring`):**
+  - Thay thế timing linear/cubic-bezier cứng nhắc bằng mô hình dao động vật lý đàn hồi:
+  - `appleSpring.snappy`: `{ damping: 20, stiffness: 220, mass: 0.8 }` (áp dụng cho thanh trượt `SlideToAction`, toggle duty và nút bấm).
+  - `appleSpring.sheet`: `{ damping: 24, stiffness: 200, mass: 0.85 }` (áp dụng cho `GestureBottomSheet` 3 nấc vuốt).
+  - `appleSpring.bouncy`: `{ damping: 14, stiffness: 180, mass: 0.9 }` (áp dụng cho huy hiệu, status icon).
+  - `appleSpring.gentle`: `{ damping: 28, stiffness: 160, mass: 1 }` (áp dụng cho backdrop mờ).
+- **Phản hồi xúc giác Taptic Engine (`haptic`):**
+  - Tích hợp chuẩn xúc giác qua module `haptic` (`packages/mobile-core/src/ui/haptics.ts`):
+  - `haptic.selection()` (~10ms): Khi chuyển tab `FloatingNavBar`, đổi nấc snap `GestureBottomSheet`.
+  - `haptic.light()` (~15ms): Khi chạm nút `Button`, kéo trượt chưa chạm ngưỡng.
+  - `haptic.medium()` (~25ms): Khi mở modal nổ đơn 15s hoặc gạt On/Off Duty.
+  - `haptic.success()`: Khi trượt `SlideToAction` thành công, xác thực xong cuốc xe hoặc thanh toán.
+  - `haptic.warning()`: Cảnh báo đơn khẩn cấp đếm ngược 15s.
 - **Vật liệu 2026 Liquid Glass:**
   - Áp dụng cho thanh điều hướng nổi đáy (Floating Capsule Dock) và các thẻ nổi trên bản đồ:
   - `backdrop-filter: blur(28px) saturate(190%) contrast(1.05)`.
@@ -82,6 +97,6 @@ Khớp chuẩn 100% với yêu cầu nhận diện thương hiệu LEOPARD và m
 
 Mọi màn hình thuộc 4 nhóm phân hệ Khách Hàng và Tài Xế bắt buộc phải tuân thủ nghiêm ngặt quy chuẩn này:
 1. **Khởi động & Xác thực B2B**: Onboarding, SĐT + OTP, Đăng ký MST, Kho bãi mặc định.
-2. **Khách hàng Đặt xe & Vận hành**: Bản đồ tràn viền, Bottom sheet chọn xe tải 3D (`D x R x C`), Route Spine đa điểm, Giữ cọc Escrow.
+2. **Khách hàng Đặt xe tại chỗ (Pure In-Place Map Booking)**: Bản đồ tràn viền (65–70%), Tiết lộ tiệm tiến (Progressive Disclosure) hiển thị ma trận xe tải 3D (`D x R x C`) sau khi chọn điểm đến, tìm kiếm địa chỉ Vietmap Places v4 không dấu tức thì, khay chi tiết `BookingDetailsModal` nổ đơn trực tiếp (Radar tìm xe / VietQR payOS), loại bỏ hoàn toàn wizard 4 bước chuyển trang rườm rà.
 3. **Giám sát & Thanh toán**: Live GPS Telemetry, VietQR payOS đối soát 3s, Xuất hóa đơn VAT điện tử PDF.
-4. **Tài xế Điều phối & Nghiệm thu e-POD**: Field Cockpit trực tuyến, đếm ngược 15s, quy trình 4 bước, Chữ ký số thủ kho & Ảnh chụp hạ tải.
+4. **Tài xế Điều phối & Nghiệm thu e-POD**: Field Cockpit trực tuyến, đếm ngược 15s, quy trình 4 bước qua `SlideToAction`, Chữ ký số thủ kho & Ảnh chụp hạ tải.

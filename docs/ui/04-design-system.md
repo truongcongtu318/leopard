@@ -236,6 +236,7 @@ Scale duy nhất: `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`, `xl=32` px.
 - **Radius tiêu chuẩn:**
   - `radius.card`: Với các thẻ container và widget trên bàn điều phối (**Modern Dispatch Dashboard**), sử dụng `20–26px` (`rounded-2xl` / `rounded-3xl`) tạo khối nổi êm ái, thân thiện và hiện đại. Đối với table row hoặc form con, dùng `6–8px`.
   - `radius.control`: `10–14px` cho các button công cụ, và `radius.pill=999` cho status badge, thanh tìm kiếm search pill, filter chips và floating vehicle toggle buttons.
+  - `iosContinuousCurve`: Áp dụng `borderCurve: 'continuous'` (Apple Squircle) cho mọi component bo góc trên nền tảng di động để loại bỏ đơ gãy góc ở tiếp tuyến bo tròn.
 - **Border & Phân tách:**
   - Border trung tính siêu mảnh (`border-slate-100` hoặc `border-white/80` trên nền canvas) kết hợp đổ bóng nhẹ để tạo sự tách biệt tự nhiên mà không gây gắt mắt.
 - **Elevation & Shadow:**
@@ -254,7 +255,7 @@ Scale duy nhất: `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`, `xl=32` px.
 - Mobile cung cấp `accessibilityRole`, label/state/hint phù hợp và thứ tự đọc trùng
   với thứ tự thị giác.
 
-### 4.7 Motion
+### 4.7 Motion, Physics & Haptics
 
 | Token             | Duration | Dùng cho                                     |
 | ----------------- | -------- | -------------------------------------------- |
@@ -263,6 +264,16 @@ Scale duy nhất: `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`, `xl=32` px.
 | `motion.standard` | `180 ms` | Drawer, disclosure, selection transition     |
 | `motion.slow`     | `240 ms` | Chỉ cho orientation change có quãng đường rõ |
 
+- **Apple Fluid Spring Physics (`appleSpring`):**
+  - `appleSpring.snappy`: `{ damping: 20, stiffness: 220, mass: 0.8 }` (SlideToAction slider, controls, toggles).
+  - `appleSpring.sheet`: `{ damping: 24, stiffness: 200, mass: 0.85 }` (GestureBottomSheet 3-snap gestures).
+  - `appleSpring.bouncy`: `{ damping: 14, stiffness: 180, mass: 0.9 }` (Indicators, badges).
+- **Phản hồi xúc giác Taptic Engine (`haptic`):**
+  - `haptic.selection()`: Chuyển tab, khấc snap bottom sheet.
+  - `haptic.light()`: Chạm nút bấm, tương tác kéo trượt.
+  - `haptic.medium()`: Modal khẩn cấp, gạt trực chiến On Duty.
+  - `haptic.success()`: Trượt chốt đơn thành công, hoàn thành giao hàng ePOD.
+  - `haptic.warning()`: Cảnh báo đếm ngược 15s push offer.
 - Motion chỉ giải thích state hoặc orientation; không dùng để che loading chậm.
 - Không animate layout liên tục, route connector, KPI hoặc map marker chỉ để trang trí.
 - Web phải tôn trọng `prefers-reduced-motion: reduce`; mobile phải tôn trọng setting
