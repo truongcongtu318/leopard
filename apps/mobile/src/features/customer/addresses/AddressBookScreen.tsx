@@ -31,36 +31,6 @@ export type SavedAddress = Readonly<{
   category?: AddressCategory;
 }>;
 
-const mockAddresses: readonly SavedAddress[] = [
-  {
-    id: 'addr-1',
-    label: 'Kho trung tâm Quận 7',
-    address: '123 Đường Huỳnh Tấn Phát, Phường Tân Phú, Quận 7, TP.HCM',
-    contactName: 'Nguyễn Văn A',
-    contactPhone: '0901234567',
-    isDefault: true,
-    category: 'WAREHOUSE',
-  },
-  {
-    id: 'addr-2',
-    label: 'Văn phòng đại diện',
-    address: '45 Lê Duẩn, Phường Bến Nghé, Quận 1, TP.HCM',
-    contactName: 'Trần Thị B',
-    contactPhone: '0912345678',
-    isDefault: false,
-    category: 'OFFICE',
-  },
-  {
-    id: 'addr-3',
-    label: 'Xưởng may Tân Bình',
-    address: '78 Trường Chinh, Phường 12, Quận Tân Bình, TP.HCM',
-    contactName: 'Lê Văn C',
-    contactPhone: '0987654321',
-    isDefault: false,
-    category: 'WAREHOUSE',
-  },
-];
-
 type FilterCategory = 'ALL' | AddressCategory;
 
 const categoryOptions = [
@@ -77,25 +47,46 @@ export type AddressBookScreenProps = Readonly<{
 
 export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScreenProps = {}) {
   const [addresses, setAddresses] = useState<readonly SavedAddress[]>(() => {
-    const stored = addressStore.getAddresses();
-    if (stored && stored.length > 0) {
-      const storedIds = new Set(stored.map((s) => s.id));
-      const remainingMocks = mockAddresses.filter((m) => !storedIds.has(m.id));
-      return [
-        ...stored.map((s) => ({
-          id: s.id,
-          label: s.label,
-          address: s.address,
-          contactName: s.contactName || 'Người nhận',
-          contactPhone: s.contactPhone || '0900000000',
-          isDefault: s.isDefault,
-          category: s.category || 'OTHER',
-        })),
-        ...remainingMocks,
-      ];
-    }
-    return mockAddresses;
+    return addressStore.getAddresses().map((s) => ({
+      id: s.id,
+      label: s.label,
+      address: s.address,
+      contactName: s.contactName || 'Người nhận',
+      contactPhone: s.contactPhone || '0900000000',
+      isDefault: s.isDefault,
+      category: s.category || 'OTHER',
+    }));
   });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    setIsLoading(true);
+    addressStore
+      .fetchAddresses()
+      .then((list) => {
+        if (!mounted) return;
+        setAddresses(
+          list.map((s) => ({
+            id: s.id,
+            label: s.label,
+            address: s.address,
+            contactName: s.contactName || 'Người nhận',
+            contactPhone: s.contactPhone || '0900000000',
+            isDefault: s.isDefault,
+            category: s.category || 'OTHER',
+          })),
+        );
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setIsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const [isAdding, setIsAdding] = useState(false);
   const [expandedMapId, setExpandedMapId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -254,37 +245,36 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
     }, 500);
   };
 
-  const handleAddAddress = () => {
+  const handleAddAddress = async () => {
     if (!newLabel.trim() || !newAddress.trim()) return;
     const shouldBeDefault = newIsDefault || addresses.length === 0;
 
-    const newItem: SavedAddress = {
-      id: `addr-${Date.now()}`,
+    const created = await addressStore.saveAddress({
       label: newLabel.trim(),
       address: newAddress.trim(),
       contactName: newContact.trim() || 'Người nhận',
       contactPhone: newPhone.trim() || '0900000000',
       isDefault: shouldBeDefault,
       category: newCategory,
+      latitude: newPinCoords?.lat,
+      longitude: newPinCoords?.lng,
+    });
+
+    const createdRow: SavedAddress = {
+      id: created.id,
+      label: created.label,
+      address: created.address,
+      contactName: created.contactName || 'Người nhận',
+      contactPhone: created.contactPhone || '0900000000',
+      isDefault: created.isDefault,
+      category: created.category || 'OTHER',
     };
 
     setAddresses((prev) => {
       const base = shouldBeDefault
         ? prev.map((a) => ({ ...a, isDefault: false }))
-        : prev;
-      return [newItem, ...base];
-    });
-
-    addressStore.saveAddress({
-      id: newItem.id,
-      label: newItem.label,
-      address: newItem.address,
-      contactName: newItem.contactName,
-      contactPhone: newItem.contactPhone,
-      isDefault: newItem.isDefault,
-      category: newItem.category,
-      latitude: newPinCoords?.lat,
-      longitude: newPinCoords?.lng,
+        : prev.filter((a) => a.id !== created.id);
+      return [createdRow, ...base];
     });
 
     setNewLabel('');
@@ -298,8 +288,8 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
     setIsAdding(false);
   };
 
-  const handleDelete = (id: string) => {
-    addressStore.deleteAddress(id);
+  const handleDelete = async (id: string) => {
+    await addressStore.deleteAddress(id);
     setAddresses((prev) => {
       const remaining = prev.filter((a) => a.id !== id);
       // If deleted address was default and there are other addresses, promote first one
@@ -311,8 +301,8 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
     });
   };
 
-  const handleSetDefault = (id: string) => {
-    addressStore.setDefaultAddress(id);
+  const handleSetDefault = async (id: string) => {
+    await addressStore.setDefaultAddress(id);
     setAddresses((prev) =>
       prev.map((a) => ({ ...a, isDefault: a.id === id })),
     );
