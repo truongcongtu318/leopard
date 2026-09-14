@@ -304,32 +304,34 @@ export const leopardPalette = {
 
 /**
  * Customer-role colour palette.
- * Amber Gold (#F59E0B) is the primary action colour; Midnight Navy (#0B1E42) is secondary/supporting.
+ * Midnight Navy (#0B1E42) is primary action colour; Leopard Amber (#F59E0B) is accent/badges/points.
  * Use this in every customer-specific screen instead of leopardPalette.
  */
 export const customerPalette = {
-  // Primary — Amber Gold (cam vàng LEOPARD)
-  primary: '#F59E0B',
-  primaryDark: '#D97706',
-  primaryBg: '#FFFBEB',
-  primaryBorder: '#FDE68A',
-  primaryText: '#92400E',   // readable text on amber bg
+  // Primary — Midnight Navy (Chủ đạo thương hiệu & Hành động)
+  primary: '#0B1E42',
+  primaryDark: '#061226',
+  primaryBg: '#F0F4F9',
+  primaryBorder: '#CBD5E1',
+  primaryText: '#0B1E42',
 
-  // Secondary — Midnight Navy
-  secondary: '#0B1E42',
-  secondaryBg: '#F0F4F9',
-  secondaryBorder: '#CBD5E1',
+  // Brand Accent — Leopard Amber (Huy hiệu, điểm thưởng, voucher)
+  accent: '#F59E0B',
+  accentDark: '#D97706',
+  accentBg: '#FFFBEB',
+  accentBorder: '#FDE68A',
+  accentText: '#92400E',
 
-  // Tab / nav
-  tabActive: '#F59E0B',
-  tabActiveBg: '#FFFBEB',
+  // Tab / nav (Active state)
+  tabActive: '#0B1E42',
+  tabActiveBg: '#F0F4F9',
   tabInactive: '#64748B',
 
   // Input focus
-  inputFocusBorder: '#F59E0B',
-  inputFocusRing: 'rgba(245, 158, 11, 0.12)',
+  inputFocusBorder: '#0B1E42',
+  inputFocusRing: 'rgba(11, 30, 66, 0.08)',
 
-  // Shared neutrals — mirrors leopardPalette
+  // Shared neutrals
   textSlateDark: '#0F172A',
   textMutedSlate: '#475569',
   textSubtle: '#64748B',
