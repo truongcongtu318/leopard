@@ -32,11 +32,13 @@ export class ResilientMapProvider implements MapProvider {
   }
 
   async route(input: RouteInput): Promise<RouteEstimate[]> {
-    return this.withDemoFallback((provider) => provider.route(input));
+    const allowDemoForThisCall = this.allowDemoProvider && input.vehicleType !== 'TRUCK';
+    return this.withDemoFallback((provider) => provider.route(input), allowDemoForThisCall);
   }
 
   private async withDemoFallback<T>(
     operation: (provider: MapProvider) => Promise<T>,
+    allowDemoOverride: boolean = this.allowDemoProvider,
   ): Promise<T> {
     try {
       return await operation(this.primaryProvider);
@@ -45,7 +47,7 @@ export class ResilientMapProvider implements MapProvider {
         throw error;
       }
 
-      if (!this.allowDemoProvider) {
+      if (!allowDemoOverride) {
         throw error;
       }
 
