@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 
 import { addressStore } from '../customer/addresses/address-store';
 import { getTimeOfDayGreeting, HomeDashboardScreen } from './HomeDashboardScreen';
@@ -578,5 +579,39 @@ describe('HomeDashboardScreen', () => {
 
       await screen.unmount();
     });
+  });
+
+  it('renders chips, badges, and ETA with logistics green and navy tones instead of cyan', async () => {
+    addressStore.saveAddress({
+      id: 'addr-hub-1',
+      label: 'Kho Thủ Đức',
+      address: 'Đường Song Hành, Thủ Đức',
+      isDefault: true,
+      category: 'WAREHOUSE',
+    });
+
+    const screen = await render(
+      <HomeDashboardScreen activeShipment={activeShipment} />,
+    );
+
+    // Pickup badge text and container
+    const badgeContainer = screen.getByTestId('pickup-label-badge');
+    expect(StyleSheet.flatten(badgeContainer.props.style).backgroundColor).toBe('#F0FDF4');
+    const badgeText = screen.getByTestId('pickup-label-badge-text');
+    expect(StyleSheet.flatten(badgeText.props.style).color).toBe('#166534');
+
+    // Hub chip style and text color
+    const hubChip = screen.getByTestId('hub-chip-Kho Thủ Đức');
+    const hubChipStyle = StyleSheet.flatten(hubChip.props.style);
+    expect(hubChipStyle.backgroundColor).toBe('#F8FAFC');
+    expect(hubChipStyle.borderColor).toBe('#E2E8F0');
+
+    // Active shipment ETA pill
+    const etaPill = screen.getByTestId('active-shipment-eta-pill');
+    expect(StyleSheet.flatten(etaPill.props.style).backgroundColor).toBe('#F0F4F9');
+    const etaText = screen.getByText(/ETA dự kiến 18 phút/);
+    expect(StyleSheet.flatten(etaText.props.style).color).toBe('#0B1E42');
+
+    await screen.unmount();
   });
 });
