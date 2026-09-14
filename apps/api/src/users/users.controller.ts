@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, Post, UploadedFile, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Patch, Post, UploadedFile, UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser, type AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
@@ -35,5 +35,11 @@ export class UsersController {
       throw new DomainError('VALIDATION_ERROR', 422, 'File là bắt buộc');
     }
     return this.avatarService.uploadAvatar(actor, file.buffer);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.OK)
+  deleteAccount(@CurrentUser() actor: AuthenticatedActor) {
+    return this.usersService.deleteAccount(actor.userId);
   }
 }

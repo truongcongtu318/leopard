@@ -75,7 +75,26 @@ export default function OrderSearchingScreen({
     vehicleType?: string;
   }>();
 
-  const id = propOrderId || params.id || '11111111-1111-4111-8111-111111111001';
+  const id = propOrderId || params.id || '';
+  if (!id) {
+    return (
+      <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0B1E42', textAlign: 'center' }}>
+            Không tìm thấy mã đơn hàng cần điều phối.
+          </Text>
+          <Pressable
+            accessibilityLabel="Quay lại"
+            accessibilityRole="button"
+            onPress={() => router.replace('/customer/orders')}
+            style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#0B1E42', borderRadius: 12 }}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Về danh sách đơn</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
   const origin = params.origin || 'Kho Tân Bình, TP.HCM';
   const destination = params.destination || 'KCN Vĩnh Lộc, Bình Chánh';
   const vehicleLabel = formatVehicleLabel(params.vehicleType);
