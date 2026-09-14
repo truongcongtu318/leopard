@@ -374,16 +374,18 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
     <Pressable
       accessibilityLabel={isAdding ? 'Hủy thêm địa chỉ' : '+ Thêm mới'}
       accessibilityRole="button"
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       onPress={() => setIsAdding(!isAdding)}
       style={({ pressed }) => [
         isAdding ? styles.cancelHeaderBtn : styles.addHeaderBtn,
         pressed ? styles.pressed : null,
       ]}
     >
-      {isAdding ? null : <IconPlus color="#FFFFFF" size={14} strokeWidth={2.5} />}
-      <Text style={isAdding ? styles.cancelHeaderBtnText : styles.addHeaderBtnText}>
-        {isAdding ? 'Hủy' : 'Thêm mới'}
-      </Text>
+      {isAdding ? (
+        <IconClose color="#0B1E42" size="sm" />
+      ) : (
+        <IconPlus color="#0B1E42" size={20} strokeWidth={2.5} />
+      )}
     </Pressable>
   );
 
@@ -423,43 +425,36 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
           </View>
         ) : null}
 
-        {/* 2. Thanh Chip Phân Loại (Category Filter Strip) */}
+        {/* 2. Phân Loại Địa Chỉ (3 chip cố định, không scroll) */}
         {!isAdding ? (
-          <ScrollView
+          <View
             accessibilityLabel="Thanh lọc phân loại địa chỉ"
-            contentContainerStyle={styles.filterStrip}
-            horizontal
-            showsHorizontalScrollIndicator={false}
+            style={styles.filterRow}
           >
-            <Pressable
-              accessibilityLabel="Tất cả địa chỉ"
-              accessibilityRole="button"
-              onPress={() => setSelectedFilter('ALL')}
-              style={({ pressed }) => [
-                styles.filterChip,
-                selectedFilter === 'ALL' ? styles.filterChipActive : null,
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  selectedFilter === 'ALL' ? styles.filterChipTextActive : null,
-                ]}
-              >
-                Tất cả ({addresses.length})
-              </Text>
-            </Pressable>
-
-            {categoryOptions.map((opt) => {
-              const active = selectedFilter === opt.id;
-              const count = addresses.filter((a) => (a.category || 'OTHER') === opt.id).length;
+            {(
+              [
+                { id: 'ALL' as FilterCategory, label: 'Tất cả', count: addresses.length },
+                {
+                  id: 'WAREHOUSE' as FilterCategory,
+                  label: 'Kho hàng',
+                  count: addresses.filter((a) => (a.category || 'OTHER') === 'WAREHOUSE').length,
+                },
+                {
+                  id: 'OFFICE' as FilterCategory,
+                  label: 'Văn phòng',
+                  count: addresses.filter((a) => (a.category || 'OTHER') === 'OFFICE').length,
+                },
+              ] as const
+            ).map((chip) => {
+              const active = selectedFilter === chip.id;
               return (
                 <Pressable
-                  accessibilityLabel={opt.label}
+                  accessibilityLabel={chip.id === 'ALL' ? 'Tất cả địa chỉ' : chip.label}
                   accessibilityRole="button"
-                  key={opt.id}
-                  onPress={() => setSelectedFilter(opt.id)}
+                  accessibilityState={{ selected: active }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  key={chip.id}
+                  onPress={() => setSelectedFilter(chip.id)}
                   style={({ pressed }) => [
                     styles.filterChip,
                     active ? styles.filterChipActive : null,
@@ -467,17 +462,18 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   ]}
                 >
                   <Text
+                    numberOfLines={1}
                     style={[
                       styles.filterChipText,
                       active ? styles.filterChipTextActive : null,
                     ]}
                   >
-                    {opt.label} {count > 0 ? `(${count})` : ''}
+                    {chip.label} ({chip.count})
                   </Text>
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         ) : null}
 
         {/* 3. Thẻ Tạo Địa Chỉ Mới (Add Address Card / Sheet) */}
@@ -885,12 +881,9 @@ const styles = StyleSheet.create({
   // Header Action
   addHeaderBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
-    borderRadius: 999,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   addHeaderBtnText: {
     color: '#FFFFFF',
@@ -898,10 +891,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cancelHeaderBtn: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   cancelHeaderBtnText: {
     color: '#475569',
@@ -943,18 +936,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // 2. Filter Strip
-  filterStrip: {
+  // 2. Filter Row (3 chips cố định, không scroll, không bao giờ bị cắt chữ)
+  filterRow: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: 8,
+    width: '100%',
     paddingBottom: 4,
   },
   filterChip: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
     borderRadius: 999,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    minHeight: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
     paddingVertical: 6,
   },
   filterChipActive: {
@@ -963,8 +961,9 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     color: '#64748B',
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '600',
+    textAlign: 'center',
   },
   filterChipTextActive: {
     color: '#FFFFFF',
