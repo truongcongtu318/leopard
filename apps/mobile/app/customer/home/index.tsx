@@ -291,11 +291,10 @@ export default function CustomerHomePage() {
         }
       }}
       onCreateOrder={() => {
-        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
-        router.push({
-          pathname: `/customer/orders/checkout/${orderId}`,
-          params: { amount: getAmountForVehicle(selectedVehicleCategory) },
-        });
+        // Quick-create is intentionally disabled: all orders must go through
+        // onConfirmBooking with a real estimateToken + createOrder API call.
+        // Redirect user into the standard booking entry point.
+        router.push('/customer/orders/new');
       }}
       onNavigateTab={(tab) => {
         switch (tab) {
