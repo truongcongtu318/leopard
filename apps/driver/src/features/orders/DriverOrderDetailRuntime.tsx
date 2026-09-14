@@ -16,6 +16,8 @@ export type DriverOrderDetailRuntimeProps = Readonly<{
   orderId: string;
 }>;
 
+const DRIVER_TERMINAL_STATUSES = new Set(['DELIVERED', 'RETURNED']);
+
 export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimeProps) {
   const port = useMemo(() => createDriverHttpAdapter(), []);
   const proofPort = useMemo(
@@ -178,6 +180,12 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
     try {
       const next = await port.executeLifecycle(commandId);
       queryClient.setQueryData(queryKey, next);
+      const nextStatus =
+        next.kind === 'content' && 'status' in next.order ? next.order.status : null;
+      if (nextStatus && DRIVER_TERMINAL_STATUSES.has(nextStatus)) {
+        void queryClient.invalidateQueries({ queryKey: ['driver', 'orders'] });
+        router.back();
+      }
     } finally {
       executingRef.current = false;
     }

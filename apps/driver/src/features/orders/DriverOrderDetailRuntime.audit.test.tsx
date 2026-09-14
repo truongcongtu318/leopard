@@ -4,7 +4,8 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 
 import type { DriverDetailView } from './model';
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn() }) }));
+const mockRouterBack = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockRouterBack }) }));
 jest.mock('./adapter', () => ({
   createDriverHttpAdapter: jest.fn(),
   createDriverProofAdapter: jest.fn(),
@@ -95,5 +96,44 @@ describe('DriverOrderDetailRuntime audit: asynchronous user actions', () => {
     await act(async () => resolveRequest(createDriverDetailFixture('D-DETAIL-PICKING-UP')));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Đã lấy hàng — bắt đầu giao' })).toBeTruthy());
     expect(requestCount).toBe(1);
+  });
+
+  it('invalidates the driver orders list and navigates back after a DELIVERED transition', async () => {
+    getOrderDetailView.mockResolvedValue(createDriverDetailFixture('D-DETAIL-READY-DELIVER'));
+    const deliveredView = {
+      ...createDriverDetailFixture('D-DETAIL-READY-DELIVER'),
+      order: { ...createDriverDetailFixture('D-DETAIL-READY-DELIVER').order, status: 'DELIVERED' },
+    } as DriverDetailView;
+    executeLifecycle.mockResolvedValue(deliveredView);
+    const invalidateSpy = jest.spyOn(client, 'invalidateQueries');
+
+    const screen = await mount();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Xác nhận đã giao' })).toBeTruthy());
+    await fireEvent.press(screen.getByRole('button', { name: 'Xác nhận đã giao' }));
+
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: ['driver', 'orders'] }),
+      ),
+    );
+    expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('does NOT navigate away or invalidate the list on a non-terminal transition', async () => {
+    getOrderDetailView.mockResolvedValue(createDriverDetailFixture('D-DETAIL-ACCEPTED'));
+    executeLifecycle.mockResolvedValue(createDriverDetailFixture('D-DETAIL-PICKING-UP'));
+    const invalidateSpy = jest.spyOn(client, 'invalidateQueries');
+    invalidateSpy.mockClear();
+    mockRouterBack.mockClear();
+
+    const screen = await mount();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Bắt đầu đi lấy hàng' })).toBeTruthy());
+    await fireEvent.press(screen.getByRole('button', { name: 'Bắt đầu đi lấy hàng' }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Đã lấy hàng — bắt đầu giao' })).toBeTruthy());
+    expect(invalidateSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: ['driver', 'orders'] }),
+    );
+    expect(mockRouterBack).not.toHaveBeenCalled();
   });
 });
