@@ -76,6 +76,9 @@ export class MapsService {
         vehicleType: input.vehicleType,
         distanceMeters: estimate.distanceM,
         stopCount: input.stops.length,
+        cargoWeightKg: input.cargoWeightKg,
+        hasLoadingSupport: input.hasLoadingSupport,
+        hasVatInvoice: input.hasVatInvoice,
       });
       const pricedEstimate = { ...estimate, estimatedPriceVnd: quote.amountVnd };
       const estimateToken = this.estimateTokenService.issue({

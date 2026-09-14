@@ -53,6 +53,8 @@ export class OrdersService {
           longitude: stop.longitude ?? stop.lng!,
         })) ?? [],
         vehicleType: dto.vehicleType,
+        hasLoadingSupport: dto.hasLoadingSupport,
+        hasVatInvoice: dto.hasVatInvoice,
       };
 
       verifiedEstimate = this.estimateTokenService.verify(dto.estimateToken, requestedInput);
@@ -132,6 +134,13 @@ export class OrdersService {
         calculatedAt: verifiedEstimate.calculatedAt,
         cargoNote: dto.cargoNote ?? null,
         cargoWeightKg: dto.cargoWeightKg ?? null,
+        baseFareVnd: verifiedEstimate.quote?.baseFareVnd,
+        loadingFeeVnd: verifiedEstimate.quote?.loadingFeeVnd,
+        vatFeeVnd: verifiedEstimate.quote?.vatFeeVnd,
+        platformFeeVnd: verifiedEstimate.quote?.platformFeeVnd,
+        driverPayoutVnd: verifiedEstimate.quote?.driverPayoutVnd,
+        hasLoadingSupport: Boolean(dto.hasLoadingSupport),
+        hasVatInvoice: Boolean(dto.hasVatInvoice),
       },
       stops: stopsToCreate,
     });

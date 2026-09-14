@@ -14,6 +14,7 @@ describe('PaymentsService', () => {
   let invoiceIssuancePort: any;
   let adminActor = { userId: 'admin1', role: 'ADMIN' as const };
   let customerActor = { userId: 'cust1', role: 'CUSTOMER' as const };
+  let driverActor = { userId: 'drv1', role: 'DRIVER' as const };
 
   beforeEach(() => {
     repo = {
@@ -241,6 +242,98 @@ describe('PaymentsService', () => {
 
       expect(res.status).toBe('PAID_MANUAL');
       expect(notificationTriggers.notifyInvoiceEmailMissing).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('confirmCashPaymentByDriver', () => {
+    test('rejects non-driver actor', async () => {
+      await expect(service.confirmCashPaymentByDriver(customerActor, 'order1', 'req1')).rejects.toThrow(DomainError);
+    });
+
+    test('rejects when order not found', async () => {
+      ordersRepo.findById.mockResolvedValue(null);
+      await expect(service.confirmCashPaymentByDriver(driverActor, 'order1', 'req1')).rejects.toThrow(DomainError);
+    });
+
+    test('rejects when driver is not assigned to order', async () => {
+      ordersRepo.findById.mockResolvedValue({ id: 'order1', driverId: 'other-drv', priceVnd: 50000 });
+      await expect(service.confirmCashPaymentByDriver(driverActor, 'order1', 'req1')).rejects.toThrow(DomainError);
+    });
+
+    test('returns existing intent if confirmationRequestId already processed', async () => {
+      repo.findByConfirmationRequestId.mockResolvedValue({ id: 'intent1', status: 'PAID_MANUAL', orderId: 'order1' });
+      ordersRepo.findById.mockResolvedValue({ id: 'order1', driverId: 'drv1', priceVnd: 50000 });
+
+      const res = await service.confirmCashPaymentByDriver(driverActor, 'order1', 'req1');
+      expect(res.id).toBe('intent1');
+      expect(invoiceIssuancePort.ensureInvoiceForPayment).toHaveBeenCalledWith('order1', 'intent1');
+    });
+
+    test('creates new intent if no active intent exists and sets PAID_MANUAL', async () => {
+      repo.findByConfirmationRequestId.mockResolvedValue(null);
+      ordersRepo.findById.mockResolvedValue({ id: 'order1', driverId: 'drv1', customerId: 'cust1', priceVnd: 50000 });
+      repo.findActiveIntent.mockResolvedValue(null);
+      repo.create.mockResolvedValue({ id: 'intent-new', status: 'UNPAID', amountVnd: 50000 });
+      repo.updateStatus.mockResolvedValue({
+        id: 'intent-new',
+        orderId: 'order1',
+        amountVnd: 50000,
+        status: 'PAID_MANUAL',
+      });
+
+      const res = await service.confirmCashPaymentByDriver(driverActor, 'order1', 'req1');
+      expect(res.status).toBe('PAID_MANUAL');
+      expect(repo.create).toHaveBeenCalledWith(
+        {
+          orderId: 'order1',
+          amountVnd: 50000,
+          status: 'UNPAID',
+          clientRequestId: 'req1',
+        },
+        prisma,
+      );
+      expect(repo.updateStatus).toHaveBeenCalledWith(
+        'intent-new',
+        expect.objectContaining({
+          status: 'PAID_MANUAL',
+          confirmedById: 'drv1',
+          confirmationRequestId: 'req1',
+        }),
+        prisma,
+      );
+      expect(notificationTriggers.notifyPaymentConfirmed).toHaveBeenCalledWith({
+        customerId: 'cust1',
+        orderId: 'order1',
+        amountVnd: 50000,
+      });
+      expect(invoiceIssuancePort.ensureInvoiceForPayment).toHaveBeenCalledWith('order1', 'intent-new');
+    });
+
+    test('reuses existing active intent if present', async () => {
+      repo.findByConfirmationRequestId.mockResolvedValue(null);
+      ordersRepo.findById.mockResolvedValue({ id: 'order1', driverId: 'drv1', customerId: 'cust1', priceVnd: 60000 });
+      repo.findActiveIntent.mockResolvedValue({ id: 'intent-active', status: 'QR_CREATED', amountVnd: 60000 });
+      repo.updateStatus.mockResolvedValue({
+        id: 'intent-active',
+        orderId: 'order1',
+        amountVnd: 60000,
+        status: 'PAID_MANUAL',
+      });
+
+      const res = await service.confirmCashPaymentByDriver(driverActor, 'order1', 'req1');
+      expect(res.status).toBe('PAID_MANUAL');
+      expect(repo.create).not.toHaveBeenCalled();
+      expect(repo.updateStatus).toHaveBeenCalledWith(
+        'intent-active',
+        expect.objectContaining({
+          status: 'PAID_MANUAL',
+          confirmedById: 'drv1',
+          confirmationRequestId: 'req1',
+        }),
+        prisma,
+      );
+      expect(notificationTriggers.notifyPaymentConfirmed).toHaveBeenCalled();
+      expect(invoiceIssuancePort.ensureInvoiceForPayment).toHaveBeenCalled();
     });
   });
 });

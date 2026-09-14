@@ -98,9 +98,18 @@ export class UpdateOrderStatusService {
       }
 
       if (dto.status === 'DELIVERED') {
+        const routeSnapshot = order.routeSnapshot as Record<string, any> | null;
+        const driverPayout =
+          typeof routeSnapshot?.driverPayoutVnd === 'number'
+            ? routeSnapshot.driverPayoutVnd
+            : Math.round((order.priceVnd ?? 0) * 0.85);
+
         await tx.driverProfile.update({
           where: { userId: actor.userId },
-          data: { availability: 'AVAILABLE' },
+          data: {
+            availability: 'AVAILABLE',
+            balanceVnd: { increment: driverPayout },
+          },
         });
       }
 

@@ -43,7 +43,7 @@ describe('Customer Orders REST API (E2E)', () => {
       .useValue(prismaMock)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -159,6 +159,74 @@ describe('Customer Orders REST API (E2E)', () => {
       .get(`/orders/${orderId}`)
       .set('Authorization', `Bearer ${otherCustomerSession.accessToken}`)
       .expect(404);
+  });
+
+  it('creates an order with hasLoadingSupport, hasVatInvoice, and saves pricing breakdown into routeSnapshot', async () => {
+    const pickup = { latitude: 10.762622, longitude: 106.660172 };
+    const dropoff = { latitude: 10.772622, longitude: 106.670172 };
+
+    const quote = {
+      amountVnd: 280_000,
+      baseFareVnd: 150_000,
+      loadingFeeVnd: 80_000,
+      vatFeeVnd: 20_000,
+      platformFeeVnd: 56_000,
+      driverPayoutVnd: 224_000,
+      currency: 'VND' as const,
+    };
+
+    const token = estimateTokenService.issue({
+      routeId: 'route-pricing-breakdown',
+      routeInput: {
+        pickup,
+        stops: [],
+        dropoff,
+        vehicleType: 'VAN',
+        hasLoadingSupport: true,
+        hasVatInvoice: true,
+      },
+      estimate: {
+        polyline: 'breakdown_polyline',
+        distanceM: 5000,
+        durationS: 1200,
+        estimatedArrivalAt: new Date(Date.now() + 1_200_000).toISOString(),
+        estimatedPriceVnd: quote.amountVnd,
+        source: 'DEMO',
+        calculatedAt: new Date().toISOString(),
+        isEstimate: true,
+        congestionLevel: 'unknown',
+      },
+      quote,
+    });
+
+    const createRes = await request(app.getHttpServer())
+      .post('/orders')
+      .set('Authorization', `Bearer ${customerSession.accessToken}`)
+      .send({
+        pickup: { address: 'Kho Tan Binh', lat: pickup.latitude, lng: pickup.longitude },
+        dropoff: { address: 'Cang Cat Lai', lat: dropoff.latitude, lng: dropoff.longitude },
+        vehicleType: 'VAN',
+        hasLoadingSupport: true,
+        hasVatInvoice: true,
+        estimateToken: token,
+      })
+      .expect(201);
+
+    expect(createRes.body).toMatchObject({
+      id: expect.any(String),
+      status: 'REQUESTED',
+      priceVnd: 280_000,
+      routeSnapshot: expect.objectContaining({
+        polyline: 'breakdown_polyline',
+        baseFareVnd: 150_000,
+        loadingFeeVnd: 80_000,
+        vatFeeVnd: 20_000,
+        platformFeeVnd: 56_000,
+        driverPayoutVnd: 224_000,
+        hasLoadingSupport: true,
+        hasVatInvoice: true,
+      }),
+    });
   });
 
   it('rejects order creation with an invalid or expired estimate token', async () => {

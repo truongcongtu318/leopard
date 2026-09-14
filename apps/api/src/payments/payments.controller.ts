@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, UseGuards, UseFilters } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, UseGuards, UseFilters } from '@nestjs/common';
 import { PaymentsService } from './payments.service.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
@@ -40,5 +40,16 @@ export class PaymentsController {
     @Body('clientRequestId') clientRequestId: string,
   ): Promise<PaymentIntent> {
     return this.paymentsService.confirmPayment(actor, paymentId, note, clientRequestId);
+  }
+
+  @Post('driver/orders/:id/confirm-cash')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  async confirmCash(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') orderId: string,
+    @Body() body: { clientRequestId: string },
+  ): Promise<PaymentIntent> {
+    return this.paymentsService.confirmCashPaymentByDriver(actor, orderId, body.clientRequestId);
   }
 }

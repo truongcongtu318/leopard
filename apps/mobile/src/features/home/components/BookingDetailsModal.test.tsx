@@ -54,7 +54,7 @@ describe('BookingDetailsModal', () => {
     await screen.unmount();
   });
 
-  it('toggles bốc xếp (+120k) and VAT (8%), verifying price recalculation', async () => {
+  it('toggles bốc xếp (+150k cho xe tải 1.25T) and VAT (8%), verifying price recalculation', async () => {
     const basePrice = 200000;
     const screen = await render(
       <BookingDetailsModal {...defaultProps} basePrice={basePrice} />,
@@ -64,21 +64,22 @@ describe('BookingDetailsModal', () => {
     expect(
       screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(200000)} ➔`),
     ).toBeTruthy();
+    expect(screen.getByText('+150.000 ₫')).toBeTruthy();
 
-    // Toggle bốc xếp (+120,000) -> 320,000
+    // Toggle bốc xếp (+150,000) -> 350,000
     const loadingToggle = screen.getByLabelText('Tài xế hỗ trợ bốc xếp 2 đầu');
     await fireEvent.press(loadingToggle);
 
     expect(
-      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(320000)} ➔`),
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(350000)} ➔`),
     ).toBeTruthy();
 
-    // Toggle VAT (8% of 200,000 = 16,000) -> 336,000
+    // Toggle VAT (8% of 200,000 = 16,000) -> 366,000
     const vatToggle = screen.getByLabelText('Xuất hóa đơn VAT điện tử (8%)');
     await fireEvent.press(vatToggle);
 
     expect(
-      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(336000)} ➔`),
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(366000)} ➔`),
     ).toBeTruthy();
 
     // Untoggle bốc xếp -> 200,000 + 16,000 = 216,000
@@ -178,15 +179,15 @@ describe('BookingDetailsModal', () => {
     const noteInput = screen.getByLabelText('Ghi chú cho tài xế');
     await fireEvent.changeText(noteInput, 'Hàng dễ vỡ, bốc cẩn thận');
 
-    // Enable bốc xếp (+120k)
+    // Enable bốc xếp (+150k for 1.25T)
     await fireEvent.press(screen.getByLabelText('Tài xế hỗ trợ bốc xếp 2 đầu'));
 
     // Select CASH
     await fireEvent.press(screen.getByLabelText('Tiền mặt khi nhận hàng'));
 
-    // Base: 300,000 + Loading: 120,000 = 420,000
+    // Base: 300,000 + Loading: 150,000 = 450,000
     const cta = screen.getByLabelText(
-      `XÁC NHẬN GỌI XE · ${formatVnd(420000)}`,
+      `XÁC NHẬN GỌI XE · ${formatVnd(450000)}`,
     );
     await fireEvent.press(cta);
 
@@ -200,7 +201,7 @@ describe('BookingDetailsModal', () => {
       hasLoadingSupport: true,
       hasVatInvoice: false,
       paymentMethod: 'CASH',
-      totalFare: 420000,
+      totalFare: 450000,
     } satisfies BookingDetails);
 
     await screen.unmount();
@@ -219,6 +220,54 @@ describe('BookingDetailsModal', () => {
     const backdrop = screen.getByLabelText('Đóng chi tiết chuyến hàng');
     await fireEvent.press(backdrop);
     expect(onClose).toHaveBeenCalledTimes(2);
+
+    await screen.unmount();
+  });
+
+  it('uses explicitly provided loadingFee prop', async () => {
+    const screen = await render(
+      <BookingDetailsModal
+        {...defaultProps}
+        basePrice={200000}
+        loadingFee={80000}
+      />,
+    );
+
+    expect(screen.getByText('+80.000 ₫')).toBeTruthy();
+
+    const loadingToggle = screen.getByLabelText('Tài xế hỗ trợ bốc xếp 2 đầu');
+    await fireEvent.press(loadingToggle);
+
+    expect(
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(280000)} ➔`),
+    ).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it.each([
+    { vehicleName: 'Xe Ba Gác', expectedFee: '+60.000 ₫', feeAmount: 60000 },
+    { vehicleName: 'Van 500kg', expectedFee: '+100.000 ₫', feeAmount: 100000 },
+    { vehicleName: 'Xe Tải 1.25T', expectedFee: '+150.000 ₫', feeAmount: 150000 },
+    { vehicleName: 'Xe Tải 2.5T', expectedFee: '+250.000 ₫', feeAmount: 250000 },
+    { vehicleName: 'Xe Khác', expectedFee: '+120.000 ₫', feeAmount: 120000 },
+  ])('defaults loadingFee based on vehicleName: $vehicleName -> $expectedFee', async ({ vehicleName, expectedFee, feeAmount }) => {
+    const screen = await render(
+      <BookingDetailsModal
+        {...defaultProps}
+        basePrice={200000}
+        vehicleName={vehicleName}
+      />,
+    );
+
+    expect(screen.getByText(expectedFee)).toBeTruthy();
+
+    const loadingToggle = screen.getByLabelText('Tài xế hỗ trợ bốc xếp 2 đầu');
+    await fireEvent.press(loadingToggle);
+
+    expect(
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(200000 + feeAmount)} ➔`),
+    ).toBeTruthy();
 
     await screen.unmount();
   });

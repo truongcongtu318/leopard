@@ -580,6 +580,37 @@ describe('HomeDashboardScreen', () => {
       await screen.unmount();
     });
 
+    it('passes vehicle-specific loadingFee to BookingDetailsModal when different vehicles are selected', async () => {
+      const screen = await render(
+        <HomeDashboardScreen defaultDropoffLocation="KCN Tân Tạo" />,
+      );
+
+      // 1. Default vehicle is TRUCK_125T -> 150.000 ₫
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByText('+150.000 ₫')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+
+      // 2. Select Xe Ba Gác (BIKE_3W) -> 60.000 ₫
+      await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Ba Gác/));
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByText('+60.000 ₫')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+
+      // 3. Select Van 500kg (VAN_500KG) -> 100.000 ₫
+      await fireEvent.press(screen.getByLabelText(/Chọn xe Van 500kg/));
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByText('+100.000 ₫')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+
+      // 4. Select Xe Tải 2.5T (TRUCK_25T) -> 250.000 ₫
+      await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Tải 2.5T/));
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByText('+250.000 ₫')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+
+      await screen.unmount();
+    });
+
     it('supports adding, updating, and removing up to 3 intermediate stops and passes them to onConfirmBooking', async () => {
       const onConfirmBooking = jest.fn();
       const screen = await render(
