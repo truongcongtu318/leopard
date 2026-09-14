@@ -218,7 +218,9 @@ export default function CustomerHomePage() {
           const formPayload = {
             pickup: booking.pickup,
             pickupCoords,
-            stops: [],
+            stops: (booking.stops || [])
+              .filter((s) => s.address.trim().length > 0)
+              .map((s) => ({ id: s.id, value: s.address, coords: s.coords })),
             dropoff: booking.dropoff,
             dropoffCoords,
             vehicleType,

@@ -91,6 +91,28 @@ describe('BookingDetailsModal', () => {
     await screen.unmount();
   });
 
+  it('shows stop count pill and surcharge when stops are provided', async () => {
+    const screen = await render(
+      <BookingDetailsModal
+        {...defaultProps}
+        basePrice={250000}
+        stops={[
+          { id: 'stop-1', address: 'Chợ An Đông, Quận 5' },
+          { id: 'stop-2', address: 'Chợ Tân Định, Quận 1' },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId('modal-stop-count-pill')).toBeTruthy();
+    expect(screen.getByText('+2 điểm dừng')).toBeTruthy();
+
+    expect(
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(300000)} ➔`),
+    ).toBeTruthy();
+
+    await screen.unmount();
+  });
+
   it('toggles payment method from VIETQR to CASH', async () => {
     const screen = await render(<BookingDetailsModal {...defaultProps} />);
 

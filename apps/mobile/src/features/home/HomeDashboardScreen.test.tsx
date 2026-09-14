@@ -579,6 +579,81 @@ describe('HomeDashboardScreen', () => {
 
       await screen.unmount();
     });
+
+    it('supports adding, updating, and removing up to 3 intermediate stops and passes them to onConfirmBooking', async () => {
+      const onConfirmBooking = jest.fn();
+      const screen = await render(
+        <HomeDashboardScreen
+          defaultDropoffLocation="KCN Tân Tạo"
+          initialCargoImageUri="file:///test-cargo.jpg"
+          onConfirmBooking={onConfirmBooking}
+        />,
+      );
+
+      // Initially no intermediate stops
+      expect(screen.queryByTestId('cr-stop-input-0')).toBeNull();
+      const addStopBtn = screen.getByTestId('cr-add-stop');
+      expect(addStopBtn).toBeTruthy();
+      expect(screen.getByText('Thêm điểm dừng')).toBeTruthy();
+
+      // Add stop 1
+      await fireEvent.press(addStopBtn);
+      expect(screen.getByTestId('cr-stop-input-0')).toBeTruthy();
+      expect(screen.getByText('ĐIỂM DỪNG 1')).toBeTruthy();
+      expect(screen.getByText('Thêm điểm dừng (1/3)')).toBeTruthy();
+
+      // Type stop 1 address
+      await fireEvent.changeText(
+        screen.getByTestId('cr-stop-input-0'),
+        'Chợ An Đông, Q.5',
+      );
+
+      // Add stop 2
+      await fireEvent.press(screen.getByTestId('cr-add-stop'));
+      expect(screen.getByTestId('cr-stop-input-1')).toBeTruthy();
+      expect(screen.getByText('ĐIỂM DỪNG 2')).toBeTruthy();
+      expect(screen.getByText('Thêm điểm dừng (2/3)')).toBeTruthy();
+
+      // Type stop 2 address
+      await fireEvent.changeText(
+        screen.getByTestId('cr-stop-input-1'),
+        'Chợ Tân Định, Q.1',
+      );
+
+      // Add stop 3
+      await fireEvent.press(screen.getByTestId('cr-add-stop'));
+      expect(screen.getByTestId('cr-stop-input-2')).toBeTruthy();
+      expect(screen.getByText('ĐIỂM DỪNG 3')).toBeTruthy();
+
+      // Maximum 3 stops reached -> Add button is replaced with limit hint
+      expect(screen.queryByTestId('cr-add-stop')).toBeNull();
+      expect(screen.getByTestId('cr-max-stop-hint')).toBeTruthy();
+      expect(screen.getByText('Tối đa 3 điểm dừng')).toBeTruthy();
+
+      // Remove stop 2
+      await fireEvent.press(screen.getByTestId('cr-stop-remove-1'));
+      // Now only 2 stops remain
+      expect(screen.queryByTestId('cr-stop-input-2')).toBeNull();
+      expect(screen.getByTestId('cr-stop-input-0')).toBeTruthy();
+      expect(screen.getByTestId('cr-stop-input-1')).toBeTruthy();
+      // Add button reappears
+      expect(screen.getByTestId('cr-add-stop')).toBeTruthy();
+      expect(screen.getByText('Thêm điểm dừng (2/3)')).toBeTruthy();
+
+      // Proceed to booking details modal
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByTestId('booking-details-modal')).toBeTruthy();
+
+      // Confirm booking
+      await fireEvent.press(screen.getByText(/XÁC NHẬN GỌI XE/));
+      expect(onConfirmBooking).toHaveBeenCalledTimes(1);
+      const passedDetails = onConfirmBooking.mock
+        .calls[0][0] as unknown as { stops: { address: string }[] };
+      expect(passedDetails.stops).toHaveLength(2);
+      expect(passedDetails.stops[0].address).toBe('Chợ An Đông, Q.5');
+
+      await screen.unmount();
+    });
   });
 
   it('renders chips, badges, and ETA with logistics green and navy tones instead of cyan', async () => {

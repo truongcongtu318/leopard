@@ -39,6 +39,7 @@ export interface BookingDetailsModalProps {
   onConfirm: (details: BookingDetails) => void;
   pickupAddress: string;
   dropoffAddress: string;
+  stops?: readonly { id: string; address: string }[];
   vehicleName: string;
   vehicleDimensions?: string;
   basePrice: number;
@@ -67,6 +68,7 @@ export function BookingDetailsModal({
   onConfirm,
   pickupAddress,
   dropoffAddress,
+  stops = [],
   vehicleName,
   vehicleDimensions,
   basePrice,
@@ -98,10 +100,12 @@ export function BookingDetailsModal({
   }, [visible, initialReceiverName, initialReceiverPhone, initialCargoImageUri]);
 
   const safeBasePrice = Math.max(0, basePrice || 0);
+  const stopCount = stops.length;
+  const stopSurcharge = stopCount * 25000;
   const loadingFee = hasLoadingSupport ? 120000 : 0;
-  const vatAmount = Math.round(safeBasePrice * 0.08);
+  const vatAmount = Math.round((safeBasePrice + stopSurcharge) * 0.08);
   const vatFee = hasVatInvoice ? vatAmount : 0;
-  const totalFare = safeBasePrice + loadingFee + vatFee;
+  const totalFare = safeBasePrice + stopSurcharge + loadingFee + vatFee;
 
   const handleConfirm = () => {
     if (!cargoImageUri) {
@@ -165,12 +169,20 @@ export function BookingDetailsModal({
 
           {/* Route Info Badge */}
           {(pickupAddress || dropoffAddress) ? (
-            <View style={styles.routeBadge}>
+            <View style={styles.routeBadge} testID="modal-route-badge">
               <View style={styles.routeBadgeDotOrigin} />
               <Text numberOfLines={1} style={styles.routeBadgeText}>
                 {pickupAddress || 'Điểm lấy hàng'}
               </Text>
-              <Text style={styles.routeBadgeArrow}>➔</Text>
+              {stopCount > 0 ? (
+                <View style={styles.routeBadgeStopCountPill} testID="modal-stop-count-pill">
+                  <Text style={styles.routeBadgeStopCountText}>
+                    {`+${stopCount} điểm dừng`}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.routeBadgeArrow}>➔</Text>
+              )}
               <View style={styles.routeBadgeDotDest} />
               <Text numberOfLines={1} style={styles.routeBadgeText}>
                 {dropoffAddress || 'Điểm giao hàng'}
@@ -618,6 +630,17 @@ const styles = StyleSheet.create({
   routeBadgeArrow: {
     fontSize: 11,
     color: '#94A3B8',
+  },
+  routeBadgeStopCountPill: {
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  routeBadgeStopCountText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0284C7',
   },
   scrollArea: {
     maxHeight: 440,

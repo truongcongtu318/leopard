@@ -23,6 +23,7 @@ import {
   IconClose,
   IconMessage,
   IconPin,
+  IconPlus,
   IconRoleDriver,
   IconSearch,
   IconTruck,
@@ -67,6 +68,12 @@ export type RecentOrder = Readonly<{
   destination: string;
   price?: string;
   updated?: string;
+}>;
+
+export type StopItem = Readonly<{
+  id: string;
+  address: string;
+  coords?: { lat: number; lng: number };
 }>;
 
 export type FleetVehicleCategory = 'VAN_500KG' | 'TRUCK_125T' | 'TRUCK_25T' | 'BIKE_3W';
@@ -272,7 +279,7 @@ export type HomeDashboardScreenProps = Readonly<{
   onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
   onRegisterDriver?: () => void;
   onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }) => void;
-  onConfirmBooking?: (details: BookingDetails & { pickup: string; dropoff: string; vehicleCategory: VehicleCategory; vehicleName: string }) => void;
+  onConfirmBooking?: (details: BookingDetails & { pickup: string; dropoff: string; stops?: readonly StopItem[]; vehicleCategory: VehicleCategory; vehicleName: string }) => void;
   onOpenSavedAddresses?: () => void;
   onNavigateTab?: (tab: TabKey) => void;
   onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
@@ -302,10 +309,11 @@ export function HomeDashboardScreen({
   const [pickupText, setPickupText] = useState(initialAddress);
   const [pickupLabel, setPickupLabel] = useState<string | null>(initialLabel);
   const [dropoffText, setDropoffText] = useState(defaultDropoffLocation ?? '');
+  const [stops, setStops] = useState<readonly StopItem[]>([]);
   const [selectedFleetId, setSelectedFleetId] = useState<FleetVehicleCategory>('TRUCK_125T');
-  const [focusedField, setFocusedField] = useState<'pickup' | 'dropoff' | null>(null);
+  const [focusedField, setFocusedField] = useState<'pickup' | 'dropoff' | `stop:${string}` | null>(null);
   const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
-  const [savedAddressModalTarget, setSavedAddressModalTarget] = useState<'pickup' | 'dropoff'>('pickup');
+  const [savedAddressModalTarget, setSavedAddressModalTarget] = useState<'pickup' | 'dropoff' | `stop:${string}`>('pickup');
   const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
   const [loggedInCustomer, setLoggedInCustomer] = useState<{ name?: string; phone?: string } | null>(null);
   const [addressStoreVersion, setAddressStoreVersion] = useState(0);
@@ -398,6 +406,20 @@ export function HomeDashboardScreen({
 
   const addressList = useMemo(() => savedAddresses ?? addressStore.getAddresses(), [savedAddresses, addressStoreVersion]);
 
+  const filledStops = useMemo(
+    () => stops.filter((s) => s.address.trim().length > 0),
+    [stops],
+  );
+  const mapStops = useMemo(
+    () =>
+      filledStops.map((s) => ({
+        id: s.id,
+        label: s.address,
+        coords: s.coords,
+      })),
+    [filledStops],
+  );
+
   const handleTabChange = (key: TabKey) => { setActiveTab(key); onNavigateTab?.(key); };
 
   const greeting = useMemo(() => getTimeOfDayGreeting(), []);
@@ -408,7 +430,43 @@ export function HomeDashboardScreen({
   );
   const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
 
-  const activeSearchQuery = focusedField === 'pickup' ? pickupText : (focusedField === 'dropoff' ? dropoffText : '');
+  const handleAddStop = useCallback(() => {
+    if (stops.length >= 3) return;
+    haptic.light();
+    const newId = `stop-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const newStop: StopItem = {
+      id: newId,
+      address: '',
+    };
+    setStops((prev) => [...prev, newStop]);
+    setFocusedField(`stop:${newId}`);
+  }, [stops.length]);
+
+  const handleRemoveStop = useCallback((stopId: string) => {
+    haptic.light();
+    setStops((prev) => prev.filter((s) => s.id !== stopId));
+    setFocusedField((current) => (current === `stop:${stopId}` ? null : current));
+  }, []);
+
+  const handleUpdateStop = useCallback(
+    (stopId: string, address: string, coords?: { lat: number; lng: number }) => {
+      setStops((prev) =>
+        prev.map((s) =>
+          s.id === stopId ? { ...s, address, ...(coords ? { coords } : {}) } : s,
+        ),
+      );
+    },
+    [],
+  );
+
+  const activeSearchQuery =
+    focusedField === 'pickup'
+      ? pickupText
+      : focusedField === 'dropoff'
+      ? dropoffText
+      : focusedField?.startsWith('stop:')
+      ? stops.find((s) => `stop:${s.id}` === focusedField)?.address ?? ''
+      : '';
   const [liveSuggestions, setLiveSuggestions] = useState<readonly LocationSuggestionItem[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const searchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -458,6 +516,7 @@ export function HomeDashboardScreen({
         ...details,
         pickup: pickupText,
         dropoff: dropoffText,
+        stops,
         vehicleCategory: currentFleetVehicle.vehicleCategory,
         vehicleName: currentFleetVehicle.name,
       });
@@ -487,6 +546,7 @@ export function HomeDashboardScreen({
           height="100%" interactive
           mode={activeShipment ? 'tracking' : dropoffText ? 'route' : 'preview'}
           origin={pickupText ? { label: pickupText } : undefined}
+          stops={mapStops}
           testID="home-interactive-map"
         />
       </View>
@@ -556,6 +616,12 @@ export function HomeDashboardScreen({
               <View style={styles.spineColumn}>
                 <View style={styles.pickupPinCircle}><View style={styles.pickupPinInner} /></View>
                 <View style={styles.spineLine} />
+                {stops.map((stop, idx) => (
+                  <View key={`spine-${stop.id}`} style={styles.stopSpineWrap}>
+                    <View style={styles.stopPinCircle}><Text style={styles.stopPinText}>{idx + 1}</Text></View>
+                    <View style={styles.spineLine} />
+                  </View>
+                ))}
                 <View style={styles.dropoffPinSquare} />
               </View>
 
@@ -586,6 +652,30 @@ export function HomeDashboardScreen({
                   ) : null}
                 </View>
 
+                {/* Điểm dừng trung gian */}
+                {stops.map((stop, idx) => (
+                  <View key={stop.id}>
+                    <View style={styles.inputDivider} />
+                    <View style={styles.routeInputRow}>
+                      <View style={styles.inputInnerWrap}>
+                        <View style={styles.locationHeaderRow}>
+                          <Text style={styles.inputMicroLabel}>ĐIỂM DỪNG {idx + 1}</Text>
+                        </View>
+                        <TextInput
+                          accessibilityLabel={`Địa điểm dừng ${idx + 1}`} autoCapitalize="none" autoCorrect={false}
+                          onChangeText={(t) => handleUpdateStop(stop.id, t)}
+                          onFocus={() => setFocusedField(`stop:${stop.id}`)}
+                          placeholder="Nhập địa chỉ điểm dừng..."
+                          placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID={`cr-stop-input-${idx}`} value={stop.address}
+                        />
+                      </View>
+                      <Pressable accessibilityLabel={`Xóa điểm dừng ${idx + 1}`} accessibilityRole="button" hitSlop={8} onPress={() => handleRemoveStop(stop.id)} style={styles.inputActionBtn} testID={`cr-stop-remove-${idx}`}>
+                        <IconClose color="#DC2626" size={14} />
+                      </Pressable>
+                    </View>
+                  </View>
+                ))}
+
                 <View style={styles.inputDivider} />
 
                 {/* Điểm giao hàng */}
@@ -609,12 +699,39 @@ export function HomeDashboardScreen({
               </View>
             </View>
 
+            {/* Add stop button */}
+            {stops.length < 3 ? (
+              <Pressable
+                accessibilityLabel={stops.length === 0 ? 'Thêm điểm dừng' : `Thêm điểm dừng (${stops.length}/3)`}
+                accessibilityRole="button"
+                onPress={handleAddStop}
+                style={({ pressed }) => [styles.addStopBtn, pressed && styles.addStopBtnPressed]}
+                testID="cr-add-stop"
+              >
+                <IconPlus color="#0B1E42" size={16} />
+                <Text style={styles.addStopBtnText}>
+                  {stops.length === 0 ? 'Thêm điểm dừng' : `Thêm điểm dừng (${stops.length}/3)`}
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={styles.maxStopHint} testID="cr-max-stop-hint">
+                <Text style={styles.maxStopHintText}>Tối đa 3 điểm dừng</Text>
+              </View>
+            )}
+
             {/* Dropdown Gợi ý & Xác nhận vị trí khi focus */}
             {focusedField ? (
               <View style={styles.addressDropdown} testID="address-dropdown">
                 <View style={styles.dropdownHeaderRow}>
                   <View style={styles.dropdownHeaderLeft}>
-                    <Text style={styles.dropdownHeaderTitle}>{focusedField === 'pickup' ? 'ĐIỂM LẤY HÀNG' : 'ĐIỂM GIAO HÀNG'} · GỢI Ý VỊ TRÍ</Text>
+                    <Text style={styles.dropdownHeaderTitle}>
+                      {focusedField === 'pickup'
+                        ? 'ĐIỂM LẤY HÀNG'
+                        : focusedField === 'dropoff'
+                        ? 'ĐIỂM GIAO HÀNG'
+                        : `ĐIỂM DỪNG ${stops.findIndex((s) => `stop:${s.id}` === focusedField) + 1}`}{' '}
+                      · GỢI Ý VỊ TRÍ
+                    </Text>
                     {isSearchingLocation ? (
                       <ActivityIndicator color="#0B1E42" size="small" style={{ marginLeft: 6 }} />
                     ) : null}
@@ -637,8 +754,11 @@ export function HomeDashboardScreen({
                           if (focusedField === 'pickup') {
                             setPickupText(item.address);
                             setPickupLabel(item.title);
-                          } else {
+                          } else if (focusedField === 'dropoff') {
                             setDropoffText(item.address);
+                          } else if (focusedField?.startsWith('stop:')) {
+                            const stopId = focusedField.slice('stop:'.length);
+                            handleUpdateStop(stopId, item.address, item.coords);
                           }
                           setFocusedField(null);
                         }}
@@ -845,7 +965,14 @@ export function HomeDashboardScreen({
 
       {/* ================= MODAL SỔ ĐỊA CHỈ ================= */}
       <SavedAddressPickerModal
-        addressList={addressList} currentAddress={savedAddressModalTarget === 'pickup' ? pickupText : dropoffText}
+        addressList={addressList}
+        currentAddress={
+          savedAddressModalTarget === 'pickup'
+            ? pickupText
+            : savedAddressModalTarget === 'dropoff'
+            ? dropoffText
+            : stops.find((s) => `stop:${s.id}` === savedAddressModalTarget)?.address || ''
+        }
         onClose={() => setShowSavedAddressModal(false)}
         onOpenMapPicker={() => {}}
         onDeleteAddress={(id) => { addressStore.deleteAddress(id); setAddressStoreVersion((v) => v + 1); }}
@@ -855,14 +982,22 @@ export function HomeDashboardScreen({
             setPickupText(addr.address);
             setPickupLabel(addr.label);
             addressStore.setDefaultAddress(addr.id);
-          } else {
+          } else if (savedAddressModalTarget === 'dropoff') {
             setDropoffText(addr.address);
+          } else if (savedAddressModalTarget.startsWith('stop:')) {
+            const stopId = savedAddressModalTarget.slice('stop:'.length);
+            handleUpdateStop(
+              stopId,
+              addr.address,
+              addr.latitude && addr.longitude ? { lat: addr.latitude, lng: addr.longitude } : undefined,
+            );
           }
           onSelectSavedAddress?.(addr);
           setShowSavedAddressModal(false);
           setFocusedField(null);
         }}
-        target={savedAddressModalTarget} visible={showSavedAddressModal}
+        target={savedAddressModalTarget === 'pickup' ? 'pickup' : 'dropoff'}
+        visible={showSavedAddressModal}
       />
 
       {/* ================= MODAL CHI TIẾT ĐẶT XE ================= */}
@@ -875,6 +1010,7 @@ export function HomeDashboardScreen({
         onClose={() => setShowBookingDetailsModal(false)}
         onConfirm={handleConfirmBooking}
         pickupAddress={pickupText}
+        stops={filledStops}
         vehicleDimensions={currentFleetVehicle.dimensions}
         vehicleName={currentFleetVehicle.name}
         visible={showBookingDetailsModal}
@@ -929,6 +1065,27 @@ const styles = StyleSheet.create({
   spineLine: { flex: 1, width: 2, backgroundColor: '#CBD5E1', marginVertical: 4 },
   dropoffPinSquare: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#DC2626' },
   inputsColumn: { flex: 1, marginLeft: 10 },
+  stopSpineWrap: { alignItems: 'center', width: 24 },
+  stopPinCircle: {
+    width: 14, height: 14, borderRadius: 7,
+    backgroundColor: '#E0F2FE', borderWidth: 1.5, borderColor: '#0284C7',
+    alignItems: 'center', justifyContent: 'center', marginVertical: 2,
+  },
+  stopPinText: { fontSize: 8, fontWeight: '700', color: '#0284C7', lineHeight: 10 },
+  addStopBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 8, paddingHorizontal: 12, marginTop: 8,
+    backgroundColor: '#F8FAFC', borderRadius: 12, ...iosContinuousCurve,
+    borderWidth: 1, borderColor: '#E2E8F0',
+  },
+  addStopBtnPressed: { backgroundColor: '#F1F5F9', opacity: 0.8 },
+  addStopBtnText: { fontSize: 13, fontWeight: '700', color: '#0B1E42' },
+  maxStopHint: {
+    alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 6, paddingHorizontal: 12, marginTop: 8,
+    backgroundColor: '#F1F5F9', borderRadius: 10,
+  },
+  maxStopHintText: { fontSize: 12, fontWeight: '600', color: '#64748B' },
   routeInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
   inputInnerWrap: { flex: 1 },
   locationHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
