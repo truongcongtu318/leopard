@@ -9,6 +9,7 @@ import { DriversModule } from './drivers/drivers.module.js';
 import { HealthModule } from './health/health.module.js';
 import { MapsModule } from './maps/maps.module.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { RoutingEtaModule } from './routing-eta/routing-eta.module.js';
 import { TrackingModule } from './tracking/tracking.module.js';
 import { FleetsModule } from './fleets/fleets.module.js';
 import { AdminModule } from './admin/admin.module.js';
@@ -20,7 +21,7 @@ import { UsersModule } from './users/users.module.js';
 import { InvoicesModule } from './invoices/invoices.module.js';
 
 @Module({
-  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, MediaModule, NotificationsModule, InvoicesModule, PaymentsModule, FleetsModule, AdminModule, UsersModule],
+  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, RoutingEtaModule, MediaModule, NotificationsModule, InvoicesModule, PaymentsModule, FleetsModule, AdminModule, UsersModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

@@ -33,7 +33,7 @@ import { VietmapProvider } from './providers/vietmap.provider.js';
         EstimateTokenService.fromEnv(testEstimateTokenDefaults(process.env)),
     },
   ],
-  exports: [EstimateTokenService],
+  exports: [EstimateTokenService, MAP_PROVIDER],
 })
 export class MapsModule {}
 
