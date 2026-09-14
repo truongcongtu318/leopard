@@ -517,26 +517,29 @@ function CustomerDetailContent({
           />
 
           {/* 🚀 Nút liên kết chuyển tiếp sang trang Tracking toàn màn hình */}
-          <Pressable
-            accessibilityHint="Mở bản đồ theo dõi GPS toàn màn hình"
-            accessibilityLabel="Xem bản đồ theo dõi trực tiếp"
-            accessibilityRole="button"
-            onPress={() => onOpenTracking?.(order.id)}
-            style={({ pressed }) => [
-              styles.trackingLinkBtn,
-              pressed ? styles.pressed : null,
-            ]}
-          >
-            <View style={styles.trackingLinkIconBox}>
-              <IconLocationPin color="#0B1E42" size={18} />
-            </View>
-            <View style={styles.trackingLinkTextWrap}>
-              <Text style={styles.trackingLinkTitle}>Xem bản đồ theo dõi trực tiếp ➔</Text>
-              <Text style={styles.trackingLinkSubtitle}>
-                Giám sát lộ trình GPS thời gian thực toàn màn hình
-              </Text>
-            </View>
-          </Pressable>
+          {/* Chỉ hiện khi đã có tài xế nhận chuyến — ẩn với REQUESTED / no-driver */}
+          {order.status !== 'REQUESTED' && order.tracking.kind !== 'no-driver' ? (
+            <Pressable
+              accessibilityHint="Mở bản đồ theo dõi GPS toàn màn hình"
+              accessibilityLabel="Xem bản đồ theo dõi trực tiếp"
+              accessibilityRole="button"
+              onPress={() => onOpenTracking?.(order.id)}
+              style={({ pressed }) => [
+                styles.trackingLinkBtn,
+                pressed ? styles.pressed : null,
+              ]}
+            >
+              <View style={styles.trackingLinkIconBox}>
+                <IconLocationPin color="#0B1E42" size={18} />
+              </View>
+              <View style={styles.trackingLinkTextWrap}>
+                <Text style={styles.trackingLinkTitle}>Xem bản đồ theo dõi trực tiếp ➔</Text>
+                <Text style={styles.trackingLinkSubtitle}>
+                  Giám sát lộ trình GPS thời gian thực toàn màn hình
+                </Text>
+              </View>
+            </Pressable>
+          ) : null}
         </View>
 
         {/* 5. Section: Route */}
