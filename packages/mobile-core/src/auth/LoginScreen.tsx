@@ -12,7 +12,7 @@ import {
 import type { Role } from '@leopard/shared';
 
 import { httpClient } from '../api/http-client';
-import { colors, iosContinuousCurve, leopardPalette, spacing } from '../theme/tokens';
+import { colors, iosContinuousCurve, leopardPalette, spacing, systemFontFamily } from '../theme/tokens';
 import { Button } from '../ui/Button';
 import {
   BrandLoginLogo,
@@ -719,13 +719,15 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   largeTitle: {
-    fontSize: 32,
+    fontFamily: systemFontFamily,
+    fontSize: 34,
     fontWeight: '800',
     color: '#0F172A',
-    letterSpacing: -0.6,
-    lineHeight: 38,
+    letterSpacing: -0.8,
+    lineHeight: 41,
   },
   largeSubtitle: {
+    fontFamily: systemFontFamily,
     fontSize: 15,
     color: '#64748B',
     lineHeight: 22,
@@ -873,9 +875,11 @@ const styles = StyleSheet.create({
   customTextInput: {
     flex: 1,
     minWidth: 0,
-    fontSize: 16,
+    fontFamily: systemFontFamily,
+    fontSize: 17,
     color: '#0F172A',
     fontWeight: '600',
+    fontVariant: ['tabular-nums'],
     paddingVertical: 0,
     height: '100%',
     ...Platform.select({
@@ -927,9 +931,10 @@ const styles = StyleSheet.create({
   },
   primaryCtaText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontFamily: systemFontFamily,
+    fontSize: 17,
     fontWeight: '700',
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
 
   /* Divider row */
