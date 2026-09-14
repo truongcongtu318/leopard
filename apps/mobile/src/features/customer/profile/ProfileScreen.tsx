@@ -89,12 +89,8 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. IMMERSIVE CYBER LOGISTICS HERO HEADER */}
+        {/* 1. IMMERSIVE APPLE LUXURY HERO HEADER */}
         <View style={styles.heroCard}>
-          {/* Subtle Ambient Decorative Glows */}
-          <View pointerEvents="none" style={styles.heroGlowTopRight} />
-          <View pointerEvents="none" style={styles.heroGlowBottomLeft} />
-
           {/* Top meta bar */}
           <View style={styles.heroTopBar}>
             <View style={styles.leopardIdBadge}>
@@ -348,41 +344,23 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: 110,
+    paddingBottom: 130,
   },
   /* HERO CARD STYLES */
   heroCard: {
-    backgroundColor: '#090D16',
-    borderColor: '#1E293B',
+    backgroundColor: '#0B1E42',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
     padding: 18,
     paddingBottom: 26,
     position: 'relative',
-    shadowColor: '#000000',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 6,
-  },
-  heroGlowTopRight: {
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderRadius: 90,
-    height: 180,
-    position: 'absolute',
-    right: -50,
-    top: -50,
-    width: 180,
-  },
-  heroGlowBottomLeft: {
-    backgroundColor: 'rgba(99, 102, 241, 0.10)',
-    borderRadius: 80,
-    bottom: -40,
-    height: 160,
-    left: -40,
-    position: 'absolute',
-    width: 160,
   },
   heroTopBar: {
     alignItems: 'center',
@@ -432,19 +410,19 @@ const styles = StyleSheet.create({
   avatarSquircle: {
     alignItems: 'center',
     backgroundColor: '#0F172A',
-    borderColor: '#38BDF8',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 18,
     borderWidth: 2,
     height: 62,
     justifyContent: 'center',
-    shadowColor: '#38BDF8',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
     width: 62,
   },
   avatarText: {
-    color: '#38BDF8',
+    color: '#F1F5F9',
     fontSize: 26,
     fontWeight: '800',
   },
@@ -456,7 +434,7 @@ const styles = StyleSheet.create({
   verifiedDot: {
     alignItems: 'center',
     backgroundColor: '#F59E0B',
-    borderColor: '#090D16',
+    borderColor: '#0B1E42',
     borderRadius: 10,
     borderWidth: 2,
     bottom: -2,
@@ -616,9 +594,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   bentoSubGreen: {
-    color: '#059669',
+    color: '#64748B',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   bentoPromoText: {
     color: '#D97706',
