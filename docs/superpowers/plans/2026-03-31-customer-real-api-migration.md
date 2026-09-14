@@ -42,19 +42,19 @@
 - Consumes: `POST /orders/:id/payments` (tạo `PaymentIntent`), `GET /orders/:id/payments` (tra cứu trạng thái)
 - Produces: Màn hình Checkout hiển thị mã QR thật từ `paymentIntent.qrPayload` và polling đối soát tự động từ backend thay vì fake `setTimeout(3000)`.
 
-- [ ] **Step 1: Viết test cho OrderCheckoutScreen với API thật**
+- [x] **Step 1: Viết test cho OrderCheckoutScreen với API thật**
 Kiểm tra `OrderCheckoutScreen` gọi `createCustomerHttpAdapter().requestOrderPayment(orderId)` khi mount, nhận `qrPayload` từ backend và hiển thị đúng mã QR. Polling trạng thái thanh toán và redirect khi `status === 'PAID_MANUAL'` hoặc `status === 'SUCCEEDED'`.
 
-- [ ] **Step 2: Chạy test xác nhận thất bại**
+- [x] **Step 2: Chạy test xác nhận thất bại**
 `pnpm --filter mobile test -- OrderCheckoutScreen`
 
-- [ ] **Step 3: Cập nhật OrderCheckoutScreen**
+- [x] **Step 3: Cập nhật OrderCheckoutScreen**
 Loại bỏ chuỗi QR ghép tay (`0002010102123854...`), gọi API tạo payment intent từ backend, load dynamic payload và ngân hàng thụ hưởng trả về từ API. Thay timer đối soát giả bằng polling gọi `GET /orders/:id/payments`.
 
-- [ ] **Step 4: Chạy test xác nhận thành công**
+- [x] **Step 4: Chạy test xác nhận thành công**
 `pnpm --filter mobile test`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 `git commit -m "feat(mobile): connect real VietQR payment intent and polling in customer checkout"`
 
 ---
@@ -69,18 +69,18 @@ Loại bỏ chuỗi QR ghép tay (`0002010102123854...`), gọi API tạo paymen
 - Consumes: `MappedOrderResponse.assignedDriver` từ `GET /orders/:id`
 - Produces: Dữ liệu tài xế thật (`name`, `phone`, `licensePlate`, `vehicleType`) được truyền xuyên suốt vào `RealtimeTrackingScreen` và Detail view.
 
-- [ ] **Step 1: Cập nhật test RealtimeTrackingScreen**
+- [x] **Step 1: Cập nhật test RealtimeTrackingScreen**
 Thêm assertion kiểm tra thông tin tài xế hiển thị từ API thay vì giá trị mặc định "Nguyễn Minh An" / "59C-882.14".
 
-- [ ] **Step 2: Chạy test xác nhận fail**
+- [x] **Step 2: Chạy test xác nhận fail**
 
-- [ ] **Step 3: Sửa CustomerTrackingRuntime và adapter.ts**
+- [x] **Step 3: Sửa CustomerTrackingRuntime và adapter.ts**
 Trích xuất `order.assignedDriver` từ `getOrderDetailView`: map `driver.name`, `driver.phone`, `driver.licensePlate` trực tiếp từ backend response. Chỉ fallback sang "Đang điều phối tài xế" nếu đơn chưa có người nhận.
 
-- [ ] **Step 4: Chạy test xác nhận pass**
+- [x] **Step 4: Chạy test xác nhận pass**
 `pnpm --filter mobile test -- RealtimeTrackingScreen`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 `git commit -m "fix(mobile): use real assigned driver info in customer tracking and detail"`
 
 ---
@@ -100,16 +100,16 @@ Trích xuất `order.assignedDriver` từ `getOrderDetailView`: map `driver.name
   - Hiển thị danh sách các khoản Ký quỹ (Escrow) theo từng đơn hàng: Mã đơn, ngày giờ, số tiền cọc/ký quỹ, trạng thái (`CHỜ THANH TOÁN`, `ĐÃ KÝ QUÝ`, `HOÀN CỌC`, `ĐÃ HOÀN TẤT`).
   - Nút "Thanh toán ngay" dẫn sang đúng mã QR thanh toán của đơn đó nếu đang chờ ký quỹ.
 
-- [ ] **Step 1: Viết test cho Wallet biến thể Escrow History**
+- [x] **Step 1: Viết test cho Wallet biến thể Escrow History**
 Đảm bảo màn hình hiển thị danh sách giao dịch từ danh sách đơn hàng của khách hàng, bỏ các nút Nạp tiền / Rút tiền / Số thẻ giả.
 
-- [ ] **Step 2: Cập nhật CustomerWalletScreen**
+- [x] **Step 2: Cập nhật CustomerWalletScreen**
 Xóa mảng `mockTransactions`, xóa `balance` RAM 1.250.000₫. Gọi `port.getOrdersView('ALL')` để tổng hợp các khoản ký quỹ và thanh toán của khách hàng. Cập nhật `ProfileScreen` hiển thị tổng số chuyến/giao dịch thay vì số dư ví ảo.
 
-- [ ] **Step 3: Chạy test và typecheck**
+- [x] **Step 3: Chạy test và typecheck**
 `pnpm --filter mobile test -- CustomerWalletScreen`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 `git commit -m "refactor(mobile): transform fake wallet into real escrow and payment history"`
 
 ---
@@ -128,22 +128,22 @@ Xóa mảng `mockTransactions`, xóa `balance` RAM 1.250.000₫. Gọi `port.get
 - Produces API: `GET /users/me/addresses`, `POST /users/me/addresses`, `DELETE /users/me/addresses/:id`, `PATCH /users/me/addresses/:id/default`
 - Consumes: `AddressBookScreen` gọi HTTP adapter thay vì chỉ lưu `localStorage`.
 
-- [ ] **Step 1: Thêm model Prisma `CustomerAddress` và migration**
+- [x] **Step 1: Thêm model Prisma `CustomerAddress` và migration**
 Model gồm `id`, `userId`, `label`, `address`, `latitude`, `longitude`, `isDefault`, `createdAt`, `updatedAt`.
 
-- [ ] **Step 2: Viết Address Module trong NestJS Backend**
+- [x] **Step 2: Viết Address Module trong NestJS Backend**
 Controller, Service, DTO với validation và xác thực `CUSTOMER`.
 
-- [ ] **Step 3: Chạy test backend**
+- [x] **Step 3: Chạy test backend**
 `pnpm --filter api test`
 
-- [ ] **Step 4: Cập nhật Mobile `address-store.ts` và `AddressBookScreen.tsx`**
+- [x] **Step 4: Cập nhật Mobile `address-store.ts` và `AddressBookScreen.tsx`**
 Thay thế `mockAddresses` và `localStorage` thuần bằng HTTP calls đồng bộ với backend.
 
-- [ ] **Step 5: Chạy test mobile**
+- [x] **Step 5: Chạy test mobile**
 `pnpm --filter mobile test -- AddressBookScreen`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 `git commit -m "feat: implement real cloud address book in backend and mobile"`
 
 ---
@@ -162,13 +162,13 @@ Thay thế `mockAddresses` và `localStorage` thuần bằng HTTP calls đồng 
 - Produces: Socket namespace `/chat`, events `chat:join`, `chat:send`, `chat:message`, REST `GET /orders/:id/messages`
 - Consumes: `OrderChatScreen` kết nối socket thật, trao đổi tin nhắn giữa Customer và Assigned Driver.
 
-- [ ] **Step 1: Prisma schema `OrderMessage` và migration**
-- [ ] **Step 2: Xây dựng ChatGateway và ChatService trong `apps/api`**
-- [ ] **Step 3: Cập nhật `OrderChatScreen.tsx` trên mobile**
+- [x] **Step 1: Prisma schema `OrderMessage` và migration**
+- [x] **Step 2: Xây dựng ChatGateway và ChatService trong `apps/api`**
+- [x] **Step 3: Cập nhật `OrderChatScreen.tsx` trên mobile**
 Loại bỏ `initialMessages` cứng, tải lịch sử tin nhắn thật và gửi tin nhắn qua WebSocket.
 
-- [ ] **Step 4: Chạy test backend và mobile**
-- [ ] **Step 5: Commit**
+- [x] **Step 4: Chạy test backend và mobile**
+- [x] **Step 5: Commit**
 `git commit -m "feat: implement real in-trip order chat via socket for customer and driver"`
 
 ---
@@ -185,13 +185,13 @@ Loại bỏ `initialMessages` cứng, tải lịch sử tin nhắn thật và g�
 - Produces: `POST /orders/:id/reviews`, `POST /orders/:id/reports`
 - Consumes: Màn hình review và report gửi payload thật lên backend, tạo ticket khiếu nại thật.
 
-- [ ] **Step 1: Định nghĩa Prisma models và tạo migration**
-- [ ] **Step 2: Viết Controllers và Services cho Review & Report**
-- [ ] **Step 3: Nối API tại `OrderReviewScreen` và `ReportIssueScreen`**
+- [x] **Step 1: Định nghĩa Prisma models và tạo migration**
+- [x] **Step 2: Viết Controllers và Services cho Review & Report**
+- [x] **Step 3: Nối API tại `OrderReviewScreen` và `ReportIssueScreen`**
 Bỏ fake `setTimeout`, gửi mutation qua HTTP adapter.
 
-- [ ] **Step 4: Chạy verification test**
-- [ ] **Step 5: Commit**
+- [x] **Step 4: Chạy verification test**
+- [x] **Step 5: Commit**
 `git commit -m "feat: implement real order reviews and support ticket reporting"`
 
 ---
@@ -215,17 +215,17 @@ Bỏ fake `setTimeout`, gửi mutation qua HTTP adapter.
   - `PromotionsScreen` gọi `GET /promotions` và `POST /promotions/validate`.
   - Áp dụng mã vào `POST /orders/estimate` và `POST /orders` để backend trừ giá cước chính xác.
 
-- [ ] **Step 1: Định nghĩa Prisma model `PromotionVoucher` và migration**
+- [x] **Step 1: Định nghĩa Prisma model `PromotionVoucher` và migration**
 Gồm: `code`, `title`, `description`, `discountType` (PERCENT / FIXED), `discountValue`, `maxDiscountVnd`, `minOrderAmountVnd`, `expiresAt`, `isActive`. Seed 3 mã chuẩn (`LEOPARD20`, `VAN50K`, `TRUCK100`).
 
-- [ ] **Step 2: Viết Promotions Module trong NestJS**
+- [x] **Step 2: Viết Promotions Module trong NestJS**
 Validate hạn dùng, giá trị đơn tối thiểu, số lượt sử dụng.
 
-- [ ] **Step 3: Cập nhật `PromotionsScreen.tsx` trên mobile**
+- [x] **Step 3: Cập nhật `PromotionsScreen.tsx` trên mobile**
 Thay mảng tĩnh `mockPromotions` bằng `useQuery` gọi `GET /promotions`. Nhập mã gọi `POST /promotions/validate`.
 
-- [ ] **Step 4: Chạy test backend và mobile**
-- [ ] **Step 5: Commit**
+- [x] **Step 4: Chạy test backend và mobile**
+- [x] **Step 5: Commit**
 `git commit -m "feat: implement real promotions and voucher validation in backend and mobile"`
 
 ---
@@ -238,20 +238,20 @@ Thay mảng tĩnh `mockPromotions` bằng `useQuery` gọi `GET /promotions`. Nh
 - Modify: `apps/mobile/src/features/customer/settings/CustomerSecurityScreen.tsx`
 - Modify: `apps/mobile/src/features/customer/deliveries.tsx`
 
-- [ ] **Step 1: Xóa bảng giá cứng tại Home Dashboard & Booking Details**
+- [x] **Step 1: Xóa bảng giá cứng tại Home Dashboard & Booking Details**
 Dùng kết quả tính toán động từ `POST /orders/estimate`. Xóa 5 địa chỉ mẫu `REAL_VIETNAM_PLACES`.
 
-- [ ] **Step 2: Deliveries screen**
+- [x] **Step 2: Deliveries screen**
 Thay mảng `INITIAL_DELIVERIES` bằng `port.getOrdersView('ACTIVE')` lấy danh sách đơn thật từ backend.
 
-- [ ] **Step 3: Searching Screen**
+- [x] **Step 3: Searching Screen**
 Bỏ fallback order ID cứng, lấy trạng thái đơn thực tế từ polling hoặc socket `/orders`.
 
-- [ ] **Step 4: Security & Settings Screen**
+- [x] **Step 4: Security & Settings Screen**
 Nối hành động xóa tài khoản vào API `DELETE /users/me`. Lưu cài đặt thông báo rõ ràng (ghi chú local device settings).
 
-- [ ] **Step 5: Run full verification suite**
+- [x] **Step 5: Run full verification suite**
 `pnpm --filter api test && pnpm --filter mobile test && pnpm typecheck`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 `git commit -m "refactor: clean up remaining mock fallbacks across home, deliveries, searching, and settings screens"`
