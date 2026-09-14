@@ -19,6 +19,11 @@ export class TrackingRepository {
     input: TrackingPointInput,
     authorize: (order: TrackingOrderAccess) => void,
     consumeRateLimit: () => void,
+    onPointRecorded?: (
+      tx: Prisma.TransactionClient,
+      point: TrackingPointRawRow,
+      previousPoint: TrackingPointRawRow | null,
+    ) => Promise<void>,
   ): Promise<TrackingPointRawRow> {
     return this.prisma.$transaction(async (tx) => {
       const order = await this.findOrderAccessInternal(tx, actorId, orderId);
@@ -57,6 +62,24 @@ export class TrackingRepository {
         return point;
       }
 
+      const previousPointResult = await tx.$queryRaw<TrackingPointRawRow[]>`
+        SELECT
+          id,
+          "orderId",
+          "driverId",
+          "clientPointId",
+          ST_Y(location::geometry) as latitude,
+          ST_X(location::geometry) as longitude,
+          "accuracyM",
+          "capturedAt",
+          "createdAt"
+        FROM "TrackingPoint"
+        WHERE "orderId" = ${orderId}::uuid
+        ORDER BY "capturedAt" DESC, id DESC
+        LIMIT 1
+      `;
+      const previousPoint = previousPointResult[0] ?? null;
+
       const insertResult = await tx.$queryRaw<TrackingPointRawRow[]>`
         INSERT INTO "TrackingPoint" (
           id,
@@ -90,6 +113,10 @@ export class TrackingRepository {
       `;
       const inserted = insertResult[0];
       if (!inserted) throw new Error('Unreachable');
+
+      if (onPointRecorded) {
+        await onPointRecorded(tx, inserted, previousPoint);
+      }
 
       await tx.$queryRaw`
         UPDATE "DriverProfile"
