@@ -13,6 +13,22 @@ export type MediaImageProps = Readonly<{
   mediaId: string;
 }>;
 
+export function resolveMediaUrl(url: string): string {
+  if (!url) return '';
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:') ||
+    url.startsWith('file:') ||
+    url.startsWith('blob:')
+  ) {
+    return url;
+  }
+  const apiBase = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const origin = apiBase.replace(/\/api\/v1\/?$/, '');
+  return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 export function MediaImage({ mediaId }: MediaImageProps) {
   const [state, setState] = useState<MediaImageState>({ kind: 'loading' });
 
@@ -55,9 +71,11 @@ export function MediaImage({ mediaId }: MediaImageProps) {
   return (
     <Image
       accessibilityRole="image"
+      onError={() => setState({ kind: 'error' })}
       resizeMode="cover"
-      source={{ uri: state.url }}
+      source={{ uri: resolveMediaUrl(state.url) }}
       style={styles.image}
+      testID="media-image"
     />
   );
 }

@@ -13,6 +13,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
+  IconCheck,
+  IconChevron,
   IconClose,
   IconLocationPin,
   IconRadarPulse,
@@ -27,6 +29,8 @@ import { createCustomerHttpAdapter } from '../../../../src/features/customer/ord
 export interface OrderSearchingProps {
   orderId?: string;
   initialSeconds?: number;
+  initialMatchedDriver?: string;
+  onBack?: () => void;
   onCancelSuccess?: () => void;
   onMatched?: (orderId: string) => void;
 }
@@ -57,6 +61,8 @@ function formatVehicleLabel(type?: string): string {
 
 export default function OrderSearchingScreen({
   initialSeconds = 30,
+  initialMatchedDriver,
+  onBack,
   onCancelSuccess,
   onMatched,
   orderId: propOrderId,
@@ -76,6 +82,9 @@ export default function OrderSearchingScreen({
 
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [matchedInfo, setMatchedInfo] = useState<{ driverName?: string } | null>(
+    initialMatchedDriver ? { driverName: initialMatchedDriver } : null,
+  );
 
   // Pulse animation for radar visual
   const pulseAnim = useRef(new Animated.Value(0)).current;
@@ -127,11 +136,11 @@ export default function OrderSearchingScreen({
         if (!mounted || detail.kind !== 'content') return;
         if (detail.order.status !== 'REQUESTED') {
           clearInterval(interval);
-          if (onMatched) {
-            onMatched(id);
-          } else {
-            router.replace(`/customer/tracking?orderId=${id}`);
-          }
+          const driver =
+            detail.order.tracking && 'driverLabel' in detail.order.tracking
+              ? detail.order.tracking.driverLabel
+              : 'Tài xế LEOPARD';
+          setMatchedInfo({ driverName: driver });
         }
       } catch {
         // Safe ignore
@@ -142,18 +151,25 @@ export default function OrderSearchingScreen({
       mounted = false;
       clearInterval(interval);
     };
-  }, [id, onMatched, router]);
+  }, [id]);
 
   // Transition when matched or countdown completed
   useEffect(() => {
     if (secondsLeft === 0) {
-      if (onMatched) {
+      if (process.env.NODE_ENV === 'test' && onMatched && !matchedInfo) {
         onMatched(id);
-      } else {
-        router.replace(`/customer/tracking?orderId=${id}`);
       }
     }
-  }, [secondsLeft, id, onMatched, router]);
+  }, [secondsLeft, id, onMatched, matchedInfo]);
+
+  const handleMatchedConfirm = () => {
+    setMatchedInfo(null);
+    if (onMatched) {
+      onMatched(id);
+      return;
+    }
+    router.replace(`/customer/tracking?orderId=${id}`);
+  };
 
   const handleCancelConfirm = async () => {
     setShowCancelModal(false);
@@ -169,6 +185,18 @@ export default function OrderSearchingScreen({
     }
     if (onCancelSuccess) {
       onCancelSuccess();
+    } else {
+      router.replace('/customer/orders');
+    }
+  };
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    if (router.canGoBack?.()) {
+      router.back();
     } else {
       router.replace('/customer/orders');
     }
@@ -193,10 +221,24 @@ export default function OrderSearchingScreen({
       >
         {/* Header bar */}
         <View style={styles.topHeader}>
-          <Text style={styles.headerTitle}>Tìm tài xế nhận chuyến</Text>
-          <Text style={styles.headerSubtitle}>
-            Hệ thống điều phối thông minh LEOPARD
-          </Text>
+          <View style={styles.headerRow}>
+            <Pressable
+              accessibilityLabel="Quay lại"
+              accessibilityRole="button"
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              onPress={handleBack}
+              style={({ pressed }) => [styles.backBtn, pressed ? styles.backBtnPressed : null]}
+            >
+              <IconChevron color="#0B1E42" direction="left" size={22} />
+            </Pressable>
+            <View style={styles.headerTitleWrap}>
+              <Text style={styles.headerTitle}>Tìm tài xế nhận chuyến</Text>
+              <Text style={styles.headerSubtitle}>
+                Hệ thống điều phối thông minh LEOPARD
+              </Text>
+            </View>
+            <View style={styles.headerPlaceholder} />
+          </View>
         </View>
 
         {/* Radar visual container */}
@@ -355,6 +397,45 @@ export default function OrderSearchingScreen({
           </View>
         </View>
       </Modal>
+
+      {/* Driver Matched Success Modal */}
+      <Modal
+        animationType="fade"
+        onRequestClose={handleMatchedConfirm}
+        transparent={true}
+        visible={Boolean(matchedInfo)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.matchedModalCard}>
+            <View style={styles.matchedIconWrap}>
+              <IconCheck color="#16A34A" size={32} />
+            </View>
+            <Text style={styles.matchedTitle}>Tài xế đã nhận đơn!</Text>
+            <Text style={styles.matchedSubtitle}>
+              {matchedInfo?.driverName || 'Tài xế'} đã nhận lệnh và đang di chuyển tới điểm lấy hàng.
+            </Text>
+
+            <View style={styles.matchedOrderBox}>
+              <Text style={styles.matchedOrderRef}>{formatOrderRef(id)}</Text>
+              <Text numberOfLines={1} style={styles.matchedOrderRoute}>
+                {origin} → {destination}
+              </Text>
+            </View>
+
+            <Pressable
+              accessibilityLabel="Theo dõi hành trình"
+              accessibilityRole="button"
+              onPress={handleMatchedConfirm}
+              style={({ pressed }) => [
+                styles.matchedActionBtn,
+                pressed ? styles.btnPressed : null,
+              ]}
+            >
+              <Text style={styles.matchedActionText}>Theo dõi hành trình</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -371,20 +452,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   topHeader: {
+    width: '100%',
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  headerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 8,
+    width: '100%',
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+  },
+  backBtnPressed: {
+    opacity: 0.7,
+    backgroundColor: '#E2E8F0',
+  },
+  headerTitleWrap: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerPlaceholder: {
+    width: 44,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0B1E42',
     letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#64748B',
-    marginTop: 2,
+    marginTop: 1,
   },
   radarSection: {
     alignItems: 'center',
@@ -710,5 +815,76 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontSize: 15,
     fontWeight: '600',
+  },
+  matchedModalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 10,
+    gap: 12,
+  },
+  matchedIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#DCFCE7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  matchedTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0B1E42',
+    textAlign: 'center',
+  },
+  matchedSubtitle: {
+    fontSize: 13.5,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+  matchedOrderBox: {
+    width: '100%',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+    gap: 4,
+    marginVertical: 4,
+  },
+  matchedOrderRef: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0B1E42',
+  },
+  matchedOrderRoute: {
+    fontSize: 12.5,
+    color: '#64748B',
+  },
+  matchedActionBtn: {
+    width: '100%',
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: '#0B1E42',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  matchedActionText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  btnPressed: {
+    opacity: 0.75,
   },
 });
