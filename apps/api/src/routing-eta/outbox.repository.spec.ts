@@ -53,4 +53,34 @@ describe('OutboxRepository', () => {
     });
     expect(ok).toBe(false);
   });
+
+  it('markFailedOrDeadLetter does not mutate when the lease no longer matches (fencing)', async () => {
+    const prisma = {
+      outboxEvent: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'job-1',
+          attempts: 1,
+          maxAttempts: 8,
+          leaseOwner: 'worker-a',
+          leaseGeneration: 3,
+        }),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+        update: jest.fn(),
+      },
+    };
+    const moduleRef = await Test.createTestingModule({
+      providers: [OutboxRepository, { provide: PrismaService, useValue: prisma }],
+    }).compile();
+    const repo = moduleRef.get(OutboxRepository);
+
+    await expect(
+      repo.markFailedOrDeadLetter('job-1', 'worker-b', 4, 'boom', 1000),
+    ).resolves.toBeUndefined();
+
+    expect(prisma.outboxEvent.updateMany).toHaveBeenCalledWith({
+      where: { id: 'job-1', status: 'LEASED', leaseOwner: 'worker-b', leaseGeneration: 4 },
+      data: expect.objectContaining({ status: 'PENDING' }),
+    });
+    expect(prisma.outboxEvent.update).not.toHaveBeenCalled();
+  });
 });

@@ -116,17 +116,21 @@ export class OutboxRepository {
   ): Promise<void> {
     const sanitizedError = redactSecrets(error).slice(0, 500);
     const current = await this.prisma.outboxEvent.findUnique({ where: { id } });
-    if (!current || current.leaseOwner !== leaseOwner || current.leaseGeneration !== leaseGeneration) {
-      return; // lost the lease — another worker owns this job now, do nothing
+    if (!current) {
+      return; // job no longer exists — nothing to update
     }
 
     const exhausted = current.attempts >= current.maxAttempts;
-    await this.prisma.outboxEvent.update({
-      where: { id },
+    const result = await this.prisma.outboxEvent.updateMany({
+      where: { id, status: 'LEASED', leaseOwner, leaseGeneration },
       data: exhausted
         ? { status: 'DEAD_LETTER', lastError: sanitizedError }
         : { status: 'PENDING', lastError: sanitizedError, nextAttemptAt: new Date(Date.now() + backoffMs) },
     });
+
+    if (result.count === 0) {
+      return; // lease was lost between the read and the write — another worker owns this job now
+    }
   }
 }
 
