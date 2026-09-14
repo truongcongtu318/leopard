@@ -374,16 +374,18 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
     <Pressable
       accessibilityLabel={isAdding ? 'Hủy thêm địa chỉ' : '+ Thêm mới'}
       accessibilityRole="button"
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       onPress={() => setIsAdding(!isAdding)}
       style={({ pressed }) => [
         isAdding ? styles.cancelHeaderBtn : styles.addHeaderBtn,
         pressed ? styles.pressed : null,
       ]}
     >
-      {isAdding ? null : <IconPlus color="#FFFFFF" size={14} strokeWidth={2.5} />}
-      <Text style={isAdding ? styles.cancelHeaderBtnText : styles.addHeaderBtnText}>
-        {isAdding ? 'Hủy' : 'Thêm mới'}
-      </Text>
+      {isAdding ? (
+        <IconClose color="#0B1E42" size="sm" />
+      ) : (
+        <IconPlus color="#0B1E42" size={20} strokeWidth={2.5} />
+      )}
     </Pressable>
   );
 
@@ -879,12 +881,9 @@ const styles = StyleSheet.create({
   // Header Action
   addHeaderBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
-    borderRadius: 999,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   addHeaderBtnText: {
     color: '#FFFFFF',
@@ -892,10 +891,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cancelHeaderBtn: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   cancelHeaderBtnText: {
     color: '#475569',
