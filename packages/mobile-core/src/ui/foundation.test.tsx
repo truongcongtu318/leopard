@@ -52,7 +52,12 @@ describe('ScreenScaffold and SectionHeading', () => {
       paddingBottom: spacing.md,
       position: 'relative',
     });
-    expect(StyleSheet.flatten(pageTitle.props.style)).toMatchObject(typography.pageTitle);
+    expect(StyleSheet.flatten(pageTitle.props.style)).toMatchObject({
+      fontSize: 17,
+      fontWeight: '600',
+      lineHeight: 22,
+      textAlign: 'center',
+    });
     expect(pageTitle.props.accessibilityRole).toBe('header');
     expect(screen.getByRole('button').props.style).toBeTruthy();
 

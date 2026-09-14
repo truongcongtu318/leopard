@@ -257,8 +257,11 @@ const styles = StyleSheet.create({
     color: colors.operational.inkMuted,
   },
   pageTitle: {
-    ...typography.pageTitle,
+    fontSize: 17,
+    fontWeight: '600',
+    lineHeight: 22,
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
   pageTitlePlain: {
     color: colors.neutral.titleText,
