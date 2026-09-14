@@ -221,11 +221,11 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F0F4F9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: '#E2E8F0',
   },
   driverName: {
     color: '#0F172A',

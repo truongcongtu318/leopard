@@ -154,6 +154,7 @@ function DriverCard({
           <Pressable
             accessibilityLabel="Gọi điện cho tài xế"
             accessibilityRole="button"
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             onPress={handleCall}
             style={({ pressed }) => [styles.driverCallBtn, pressed ? styles.pressed : null]}
           >
@@ -162,6 +163,7 @@ function DriverCard({
           <Pressable
             accessibilityLabel="Nhắn tin cho tài xế"
             accessibilityRole="button"
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             onPress={handleMessage}
             style={({ pressed }) => [styles.driverMessageBtn, pressed ? styles.pressed : null]}
           >
@@ -725,7 +727,7 @@ export function CustomerOrderDetailScreen(props: CustomerOrderDetailScreenProps)
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: layout.bottomNavClearance,
+    paddingBottom: layout.bottomNavClearance + 28,
   },
   section: {
     gap: spacing.sm,
@@ -835,8 +837,8 @@ const styles = StyleSheet.create({
   trackingLinkBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,
@@ -848,7 +850,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -857,12 +859,12 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   trackingLinkTitle: {
-    color: '#1D4ED8',
+    color: '#0B1E42',
     fontSize: 13,
     fontWeight: '700',
   },
   trackingLinkSubtitle: {
-    color: '#60A5FA',
+    color: '#64748B',
     fontSize: 11,
   },
   topMetaBar: {
@@ -897,8 +899,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   copyBtn: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#E2E8F0',
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 7,
@@ -925,7 +927,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   orderCreatedTime: {
-    color: '#94A3B8',
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '500',
   },
@@ -1011,7 +1013,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   cargoGridLabel: {
-    color: '#94A3B8',
+    color: '#64748B',
     fontSize: 9.5,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -1061,8 +1063,8 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#E2E8F0',
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1100,7 +1102,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F0F4F9',
     borderRadius: 6,
   },
   driverGpsLinkText: {
@@ -1186,8 +1188,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#22C55E',
   },
   infoBanner: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
     borderRadius: 10,
     borderWidth: 1,
     padding: spacing.sm,
