@@ -885,7 +885,7 @@ const styles = StyleSheet.create({
   // Header Action
   addHeaderBtn: {
     alignItems: 'center',
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#0B1E42',
     borderRadius: 999,
     flexDirection: 'row',
     gap: 4,
@@ -958,8 +958,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   filterChipActive: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   filterChipText: {
     color: '#64748B',
@@ -1069,8 +1069,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   catOptionSelected: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#F59E0B',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#0B1E42',
   },
   catOptionText: {
     color: '#475569',
@@ -1078,7 +1078,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   catOptionTextSelected: {
-    color: '#92400E',
+    color: '#0B1E42',
     fontWeight: '700',
   },
   contactFieldsRow: {
@@ -1104,8 +1104,8 @@ const styles = StyleSheet.create({
     width: 18,
   },
   checkboxChecked: {
-    backgroundColor: '#F59E0B',
-    borderColor: '#F59E0B',
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   checkmark: {
     color: '#FFFFFF',
@@ -1378,7 +1378,7 @@ const styles = StyleSheet.create({
   },
   firstAddBtn: {
     marginTop: 8,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#0B1E42',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
