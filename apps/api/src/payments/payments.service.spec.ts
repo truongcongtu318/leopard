@@ -260,6 +260,11 @@ describe('PaymentsService', () => {
       await expect(service.confirmCashPaymentByDriver(driverActor, 'order1', 'req1')).rejects.toThrow(DomainError);
     });
 
+    test('rejects when order status is CANCELLED', async () => {
+      ordersRepo.findById.mockResolvedValue({ id: 'order1', driverId: 'drv1', status: 'CANCELLED', priceVnd: 50000 });
+      await expect(service.confirmCashPaymentByDriver(driverActor, 'order1', 'req1')).rejects.toThrow(DomainError);
+    });
+
     test('returns existing intent if confirmationRequestId already processed', async () => {
       repo.findByConfirmationRequestId.mockResolvedValue({ id: 'intent1', status: 'PAID_MANUAL', orderId: 'order1' });
       ordersRepo.findById.mockResolvedValue({ id: 'order1', driverId: 'drv1', priceVnd: 50000 });

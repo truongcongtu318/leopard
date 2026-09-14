@@ -170,26 +170,27 @@ export class PaymentsService {
       throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế được phân công mới được xác nhận thu tiền mặt');
     }
 
+    if (order.status === 'CANCELLED') {
+      throw new DomainError('INVALID_ORDER_STATUS', 400, 'Không thể xác nhận thanh toán cho đơn hàng đã hủy');
+    }
+
     const existingIdempotency = await this.paymentsRepo.findByConfirmationRequestId(clientRequestId);
     if (existingIdempotency) {
       await this.dispatchInvoiceIssuance(existingIdempotency);
       return existingIdempotency;
     }
 
-    // ponytail: reuse any active intent regardless of its clientRequestId (no 409 here); add conflict check when multi-channel pay overlaps.
-    let intent = await this.paymentsRepo.findActiveIntent(orderId);
-    if (!intent) {
-      intent = await this.prisma.$transaction(async (tx) => {
-        return this.paymentsRepo.create({
+    const updated = await this.prisma.$transaction(async (tx) => {
+      let intent = await this.paymentsRepo.findActiveIntent(orderId, tx);
+      if (!intent) {
+        intent = await this.paymentsRepo.create({
           orderId,
           amountVnd: order.priceVnd ?? 0,
           status: 'UNPAID',
           clientRequestId,
         }, tx);
-      });
-    }
+      }
 
-    const updated = await this.prisma.$transaction(async (tx) => {
       const updatedIntent = await this.paymentsRepo.updateStatus(intent.id, {
         status: 'PAID_MANUAL',
         confirmedById: actor.userId,
