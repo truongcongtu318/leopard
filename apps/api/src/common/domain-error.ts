@@ -15,7 +15,10 @@ export class DomainError extends Error {
     this.status = status;
     this.details = details;
 
-    // Maintain proper prototype chain for instanceof checks
-    Object.setPrototypeOf(this, DomainError.prototype);
+    // Maintain proper prototype chain for instanceof checks, including for
+    // subclasses (e.g. `class FooError extends DomainError {}`) — using
+    // `new.target.prototype` instead of `DomainError.prototype` preserves the
+    // actual constructor that was invoked.
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
