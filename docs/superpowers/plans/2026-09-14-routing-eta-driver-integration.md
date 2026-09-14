@@ -1040,11 +1040,13 @@ export class EtaService {
   // TX1 — called from AcceptOrderService/StopProgressService/TrackingService in their own transaction
   async bumpRevision(tx: Prisma.TransactionClient, orderId: string): Promise<number>; // returns new routeEtaInputRevision, enqueues ROUTE_ETA_RECOMPUTE
 
-  // TX2 — called by the worker after it has a provider result for a given inputRevision
+  // TX2 — called by the worker after it has a provider result for a given inputRevision.
+  // EtaService does not know about outbox lease state — that's OutboxRepository's job
+  // (Task 5); this only decides PROMOTED vs SUPERSEDED based on Order.routeEtaInputRevision.
   async promoteOrSupersede(input: {
-    orderId: string; inputRevision: number; leaseOwner: string; leaseGeneration: number; outboxJobId: string;
+    orderId: string; inputRevision: number;
     nextStop: EstimateComputation; completion: EstimateComputation;
-  }): Promise<'PROMOTED' | 'SUPERSEDED' | 'LEASE_LOST'>;
+  }): Promise<'PROMOTED' | 'SUPERSEDED'>;
 }
 
 export interface EstimateComputation {
@@ -1159,7 +1161,7 @@ describe('EtaService.promoteOrSupersede', () => {
     const service = moduleRef.get(EtaService);
 
     const result = await service.promoteOrSupersede({
-      orderId: 'order-1', inputRevision: 6, leaseOwner: 'worker-a', leaseGeneration: 1, outboxJobId: 'job-1',
+      orderId: 'order-1', inputRevision: 6,
       nextStop: baseComputation(),
       completion: baseComputation({ targetStopId: null }),
     });
@@ -1205,7 +1207,7 @@ describe('EtaService.promoteOrSupersede', () => {
     const service = moduleRef.get(EtaService);
 
     const result = await service.promoteOrSupersede({
-      orderId: 'order-1', inputRevision: 6, leaseOwner: 'worker-a', leaseGeneration: 1, outboxJobId: 'job-1',
+      orderId: 'order-1', inputRevision: 6,
       nextStop: baseComputation(), completion: baseComputation({ targetStopId: null }),
     });
 
@@ -1277,12 +1279,9 @@ export class EtaService {
   async promoteOrSupersede(input: {
     orderId: string;
     inputRevision: number;
-    leaseOwner: string;
-    leaseGeneration: number;
-    outboxJobId: string;
     nextStop: EstimateComputation;
     completion: EstimateComputation;
-  }): Promise<'PROMOTED' | 'SUPERSEDED' | 'LEASE_LOST'> {
+  }): Promise<'PROMOTED' | 'SUPERSEDED'> {
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.findUniqueOrThrow({ where: { id: input.orderId } });
       const isStillCurrent = order.routeEtaInputRevision === input.inputRevision;
@@ -1761,13 +1760,24 @@ Replace the `throw new Error('computation not yet wired ...')` block in `route-e
           baselineSource: 'VIETMAP' as const,
         };
 
-        const outcome = await this.etaService.promoteOrSupersede({
-          orderId: claim.aggregateId, inputRevision: claim.inputRevision,
-          leaseOwner: claim.leaseOwner, leaseGeneration: claim.leaseGeneration, outboxJobId: claim.id,
-          nextStop: computation, completion: computation,
-        });
-        if (outcome === 'LEASE_LOST') {
-          return;
+        // Two workers can both pass the `alreadyComputed` check above nearly
+        // simultaneously (narrow race) and both reach here for the same
+        // (orderId, inputRevision, kind) — the DB unique constraint from Task 1
+        // (`@@unique([orderId, inputRevision, kind])` on OrderLiveEstimate) is the
+        // actual backstop, not this worker. Prisma raises P2002 on the losing
+        // insert; treat that as idempotent-success (the other worker's write is
+        // authoritative for this revision), not a job failure to retry.
+        try {
+          await this.etaService.promoteOrSupersede({
+            orderId: claim.aggregateId, inputRevision: claim.inputRevision,
+            nextStop: computation, completion: computation,
+          });
+        } catch (error) {
+          const isUniqueViolation =
+            typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002';
+          if (!isUniqueViolation) {
+            throw error;
+          }
         }
       }
 ```
