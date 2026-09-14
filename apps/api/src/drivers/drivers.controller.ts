@@ -29,6 +29,7 @@ import { AcceptOrderService } from '../orders/accept-order.service.js';
 import { ReportOrderIncidentService } from '../orders/report-order-incident.service.js';
 import { UpdateOrderStatusService } from '../orders/update-order-status.service.js';
 import { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto.js';
+import { AcceptOrderDto } from '../orders/dto/accept-order.dto.js';
 import { DriversService } from './drivers.service.js';
 import { DriverApplicationService } from './driver-application.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
@@ -235,8 +236,9 @@ export class DriversController {
   acceptOrder(
     @CurrentUser() actor: AuthenticatedActor,
     @Param('id') id: string,
+    @Body() dto: AcceptOrderDto,
   ) {
-    return this.acceptOrderService.acceptOrder(actor, id);
+    return this.acceptOrderService.acceptOrder(actor, id, dto.clientRequestId);
   }
 
   @Post('orders/:id/status')

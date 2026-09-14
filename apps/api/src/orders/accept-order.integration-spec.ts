@@ -42,7 +42,7 @@ describe('AcceptOrder Integration Tests', () => {
       .useValue(prismaMock)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -189,6 +189,32 @@ describe('AcceptOrder Integration Tests', () => {
       where: { userId: driver1UserId },
     });
     expect(driver1Profile?.availability).toBe('BUSY');
+  });
+
+  it('replays the same accept request idempotently via clientRequestId', async () => {
+    const order = await prismaMock.order.create({
+      data: { customerId: 'customer-1', status: 'REQUESTED', vehicleType: 'MOTORBIKE' },
+    });
+
+    const first = await request(app.getHttpServer())
+      .post(`/driver/orders/${order.id}/accept`)
+      .set('Authorization', `Bearer ${driver1Session.accessToken}`)
+      .send({ clientRequestId: 'req-accept-idempotent-1' })
+      .expect(200);
+
+    const second = await request(app.getHttpServer())
+      .post(`/driver/orders/${order.id}/accept`)
+      .set('Authorization', `Bearer ${driver1Session.accessToken}`)
+      .send({ clientRequestId: 'req-accept-idempotent-1' })
+      .expect(200);
+
+    expect(second.body.id).toBe(first.body.id);
+    expect(second.body.status).toBe('ACCEPTED');
+
+    const histories = Array.from(prismaMock.orderStatusHistories.values()).filter(
+      (h) => h.orderId === order.id,
+    );
+    expect(histories).toHaveLength(1); // no duplicate history row on replay
   });
 });
 

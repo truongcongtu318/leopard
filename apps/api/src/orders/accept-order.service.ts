@@ -17,9 +17,20 @@ export class AcceptOrderService {
   async acceptOrder(
     actor: AuthenticatedActor,
     orderId: string,
+    clientRequestId?: string,
   ): Promise<MappedOrderResponse> {
     if (actor.role !== 'DRIVER') {
       throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế mới có thể nhận đơn hàng');
+    }
+
+    if (clientRequestId) {
+      const existingHistory = await this.prisma.orderStatusHistory.findFirst({
+        where: { orderId, actorId: actor.userId, clientRequestId },
+      });
+      if (existingHistory) {
+        const order = await this.ordersRepository.findById(orderId);
+        if (order) return mapOrderResponse(order);
+      }
     }
 
     const driver = await this.prisma.user.findUnique({
@@ -112,6 +123,7 @@ export class AcceptOrderService {
           fromStatus: 'REQUESTED',
           toStatus: 'ACCEPTED',
           actorId: actor.userId,
+          clientRequestId: clientRequestId ?? null,
         },
       });
 
