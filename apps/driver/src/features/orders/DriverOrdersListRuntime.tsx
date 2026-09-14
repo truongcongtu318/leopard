@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { Alert } from 'react-native';
 
 import { createDriverHttpAdapter } from './adapter';
 import { DriverOrdersScreen } from './DriverOrdersScreen';
@@ -38,7 +39,8 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
     );
   }
 
-  if (query.isError || !query.data) {
+  // If query errored out and there is NO cached data, show error state
+  if (query.isError && !query.data) {
     return (
       <DriverOrdersScreen
         onNavigate={onNavigate}
@@ -54,6 +56,10 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
     );
   }
 
+  if (!query.data) {
+    return null;
+  }
+
   async function handleSetAvailability(commandId: string) {
     await port.setAvailability(commandId);
     void queryClient.invalidateQueries({ queryKey });
@@ -61,13 +67,19 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
 
   async function handleAcceptOffer(orderId: string) {
     declineOffer();
-    await port.acceptOrder(orderId);
+    const result = await port.acceptOrder(orderId);
     void queryClient.invalidateQueries({ queryKey });
+    if (result.kind === 'content') {
+      onOpenOrder(orderId);
+    } else if (result.kind === 'conflict') {
+      Alert.alert(result.title, result.message);
+    }
   }
 
   return (
     <DriverOrdersScreen
       incomingOffer={offer}
+      networkError={query.isError ? (query.error?.message ?? 'Lỗi kết nối máy chủ') : null}
       onAcceptIncomingOffer={(orderId) => void handleAcceptOffer(orderId)}
       onDeclineIncomingOffer={() => declineOffer()}
       onNavigate={onNavigate}
