@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -114,12 +116,16 @@ export function EditProfileScreen({
       }
       title="Chỉnh sửa hồ sơ"
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        style={styles.scrollWrap}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardWrap}
       >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollWrap}
+        >
         {/* Avatar Studio (Double-Bezel) */}
         <View style={styles.doubleBezelOuter}>
           <View style={styles.avatarCardInner}>
@@ -231,11 +237,15 @@ export function EditProfileScreen({
           </Text>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardWrap: {
+    flex: 1,
+  },
   scrollWrap: {
     backgroundColor: leopardPalette.canvas,
     flex: 1,
@@ -249,7 +259,9 @@ const styles = StyleSheet.create({
     backgroundColor: leopardPalette.surfaceWhite,
     borderTopColor: leopardPalette.cardBorder,
     borderTopWidth: 1,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: Platform.select({ ios: 34, default: spacing.md }),
   },
 
   doubleBezelOuter: {

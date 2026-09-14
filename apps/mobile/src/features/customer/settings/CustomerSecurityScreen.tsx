@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -86,7 +87,7 @@ export function CustomerSecurityScreen() {
         <Pressable
           accessibilityLabel="Quay lại"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={12}
           onPress={() => router.back()}
           style={styles.backButton}
         >
@@ -197,10 +198,11 @@ export function CustomerSecurityScreen() {
                 </Text>
               </View>
               <Switch
+                accessibilityLabel="Bật hoặc tắt FaceID hoặc Vân tay"
                 onValueChange={setBiometricEnabled}
                 testID="switch-biometric"
-                thumbColor={biometricEnabled ? colors.brand.background : '#F4F3F4'}
-                trackColor={{ false: '#CBD5E1', true: colors.brand.softBackground }}
+                thumbColor={Platform.OS === 'android' ? (biometricEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
+                trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
                 value={biometricEnabled}
               />
             </View>
