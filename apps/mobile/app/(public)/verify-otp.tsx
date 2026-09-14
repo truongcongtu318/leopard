@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   resendBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#B45309',
+    color: '#0B1E42',
     textDecorationLine: 'underline',
   },
   submittingIndicator: {

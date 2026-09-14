@@ -18,6 +18,7 @@ import {
   IconChevron,
   iosContinuousCurve,
   sessionStore,
+  systemFontFamily,
   isLikelyVnPhone,
   toE164Vn,
   OtpSixCellInput,
@@ -860,6 +861,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   largeTitle: {
+    fontFamily: systemFontFamily,
     fontSize: 28,
     fontWeight: '800',
     color: '#0F172A',
@@ -867,9 +869,10 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   largeSubtitle: {
-    fontSize: 14.5,
+    fontFamily: systemFontFamily,
+    fontSize: 15,
     color: '#64748B',
-    lineHeight: 20,
+    lineHeight: 21,
     marginTop: 4,
   },
   bodyWrap: {
@@ -1414,9 +1417,10 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontFamily: systemFontFamily,
+    fontSize: 17,
     fontWeight: '700',
-    letterSpacing: 0.2,
+    letterSpacing: -0.2,
   },
   btnLoadingRow: {
     flexDirection: 'row',

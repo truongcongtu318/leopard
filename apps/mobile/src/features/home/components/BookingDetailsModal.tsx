@@ -15,6 +15,7 @@ import {
   IconCamera,
   iosContinuousCurve,
   pickDeviceImage,
+  systemFontFamily,
 } from '@leopard/mobile-core';
 import { haptic } from '@leopard/mobile-core/src/ui/haptics';
 
@@ -556,6 +557,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   sheetTitle: {
+    fontFamily: systemFontFamily,
     fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
@@ -921,6 +923,7 @@ const styles = StyleSheet.create({
   },
   confirmBtnText: {
     color: '#FFFFFF',
+    fontFamily: systemFontFamily,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.2,

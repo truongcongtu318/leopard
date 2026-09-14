@@ -1,3 +1,11 @@
+import { Platform } from 'react-native';
+
+export const systemFontFamily = Platform.select({
+  ios: 'System',
+  android: 'Roboto',
+  default: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif',
+});
+
 export const spacing = {
   xxs: 4,
   xs: 8,
@@ -70,6 +78,50 @@ const sectionTitle = {
 } as const;
 
 export const typography = {
+  largeTitle: {
+    fontFamily: systemFontFamily,
+    fontSize: 34,
+    fontWeight: '800' as const,
+    lineHeight: 41,
+    letterSpacing: -0.8,
+  },
+  title1: {
+    fontFamily: systemFontFamily,
+    fontSize: 28,
+    fontWeight: '700' as const,
+    lineHeight: 34,
+    letterSpacing: -0.5,
+  },
+  title2: {
+    fontFamily: systemFontFamily,
+    fontSize: 22,
+    fontWeight: '700' as const,
+    lineHeight: 28,
+    letterSpacing: -0.3,
+  },
+  headline: {
+    fontFamily: systemFontFamily,
+    fontSize: 17,
+    fontWeight: '600' as const,
+    lineHeight: 22,
+    letterSpacing: -0.4,
+  },
+  body: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  callout: {
+    fontFamily: systemFontFamily,
+    fontSize: 15,
+    lineHeight: 20,
+    letterSpacing: -0.2,
+  },
+  subheadline: {
+    fontFamily: systemFontFamily,
+    fontSize: 14,
+    fontWeight: '600' as const,
+    lineHeight: 18,
+  },
   caption: {
     fontSize: 12,
     lineHeight: 16,
@@ -83,15 +135,14 @@ export const typography = {
     fontSize: 14,
     lineHeight: 20,
   },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
   sectionTitle,
   pageTitle: {
     fontSize: 24,
     fontWeight: '700' as const,
     lineHeight: 32,
+  },
+  tabularNums: {
+    fontVariant: ['tabular-nums'] as const,
   },
   // Compatibility alias for existing primitives; new code should name the hierarchy.
   title: sectionTitle,
