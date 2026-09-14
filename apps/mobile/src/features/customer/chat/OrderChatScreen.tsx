@@ -267,11 +267,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F0F4F9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: '#E2E8F0',
   },
   driverTextWrap: {
     flex: 1,
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   },
   bubbleTimeCustomer: {
     alignSelf: 'flex-end',
-    color: '#94A3B8',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   bubbleTimeDriver: {
     alignSelf: 'flex-start',

@@ -176,6 +176,21 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
     );
   }
 
+  // Chặn đơn chưa có tài xế: không render màn hình tài xế giả.
+  if (order.status === 'REQUESTED' || order.tracking.kind === 'no-driver') {
+    return (
+      <ScreenScaffold onBack={() => router.back()} title="Theo dõi đơn hàng">
+        <ScreenState
+          actionLabel="Xem chi tiết đơn hàng"
+          message="Chưa có tài xế nhận chuyến. Bản đồ GPS sẽ khả dụng khi tài xế nhận đơn."
+          onAction={() => router.replace(`/customer/orders/${order.id}`)}
+          state="empty"
+          title="Chưa có tài xế nhận chuyến"
+        />
+      </ScreenScaffold>
+    );
+  }
+
   const rawDistanceTotalKm = order.distanceMeters ? order.distanceMeters / 1000 : null;
   const rawDistanceRemainingKm =
     truckPoint && order.route.destination.coords

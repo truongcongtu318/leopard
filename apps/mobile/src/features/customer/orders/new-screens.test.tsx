@@ -215,6 +215,36 @@ describe('New Customer Screens (Task 4)', () => {
 
       await screen.unmount();
     });
+
+    it('navigates back to orders when pressing top back button', async () => {
+      mockSearchParams = { id: '11111111-1111-4111-8111-111111111001' };
+      const onBack = jest.fn();
+
+      const screen = await render(<OrderSearchingScreen onBack={onBack} />);
+      const backBtn = screen.getByRole('button', { name: 'Quay lại' });
+      await fireEvent.press(backBtn);
+
+      expect(onBack).toHaveBeenCalled();
+      await screen.unmount();
+    });
+
+    it('displays matched driver alert modal when driver accepts order', async () => {
+      mockSearchParams = { id: '11111111-1111-4111-8111-111111111001' };
+      const onMatched = jest.fn();
+
+      const screen = await render(
+        <OrderSearchingScreen initialMatchedDriver="Nguyễn Văn A" onMatched={onMatched} />,
+      );
+
+      expect(screen.getByText('Tài xế đã nhận đơn!')).toBeTruthy();
+      expect(screen.getByText(/Nguyễn Văn A đã nhận lệnh/)).toBeTruthy();
+
+      const trackBtn = screen.getByRole('button', { name: 'Theo dõi hành trình' });
+      await fireEvent.press(trackBtn);
+
+      expect(onMatched).toHaveBeenCalledWith('11111111-1111-4111-8111-111111111001');
+      await screen.unmount();
+    });
   });
 
   describe('OrderCheckoutScreen (Màn 10: VietQR Payment & Escrow)', () => {

@@ -82,7 +82,7 @@ function getActiveStatusAccentColor(status: OrderStatus): string {
   switch (status) {
     case 'REQUESTED': return '#F59E0B';
     case 'ACCEPTED': return '#0B1E42';
-    case 'PICKING_UP': return '#8B5CF6';
+    case 'PICKING_UP': return '#0B1E42';
     case 'PICKED_UP': return '#0B1E42';
     case 'IN_TRANSIT': return '#16A34A';
     default: return '#0B1E42';
@@ -241,11 +241,11 @@ function ActiveOrderHeroCard({
         <View style={s.heroMapGradient} />
         {/* Route line overlay */}
         <View style={s.heroRouteLine}>
-          <View style={[s.heroRouteEndpoint, { backgroundColor: '#0B1E42' }]} />
-          <View style={s.heroRouteDash} />
-          <View style={s.heroRouteDash} />
-          <View style={s.heroRouteDash} />
           <View style={[s.heroRouteEndpoint, { backgroundColor: '#16A34A' }]} />
+          <View style={s.heroRouteDash} />
+          <View style={s.heroRouteDash} />
+          <View style={s.heroRouteDash} />
+          <View style={[s.heroRouteEndpoint, { backgroundColor: '#DC2626' }]} />
         </View>
         {/* Status overlay pill */}
         <View style={[s.heroStatusPill, { backgroundColor: accentColor }]}>
@@ -348,7 +348,7 @@ function CompletedOrderCard({
           <Text style={s.completedArrowHead}>›</Text>
         </View>
         <View style={s.completedRouteFlow}>
-          <View style={[s.completedDot, { backgroundColor: '#16A34A' }]} />
+          <View style={[s.completedDot, { backgroundColor: '#DC2626' }]} />
           <Text numberOfLines={1} style={s.completedRouteText}>{order.route.destination.label}</Text>
         </View>
       </View>
@@ -592,7 +592,7 @@ const s = StyleSheet.create({
   // List
   listContent: {
     gap: 10,
-    paddingBottom: layout.bottomNavClearance,
+    paddingBottom: layout.bottomNavClearance + 28,
   },
   headerContent: {
     gap: 10,
@@ -781,13 +781,13 @@ const s = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#0B1E42',
+    backgroundColor: '#16A34A',
   },
   heroDestDot: {
     width: 10,
     height: 10,
     borderRadius: 3,
-    backgroundColor: '#16A34A',
+    backgroundColor: '#DC2626',
   },
   heroRouteTextWrap: {
     flex: 1,
@@ -795,7 +795,7 @@ const s = StyleSheet.create({
   heroRouteLabel: {
     fontSize: 9,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#64748B',
     letterSpacing: 0.5,
   },
   heroRouteAddress: {
@@ -923,7 +923,7 @@ const s = StyleSheet.create({
   },
   completedUpdated: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#64748B',
     marginTop: 1,
   },
 
@@ -991,12 +991,12 @@ const s = StyleSheet.create({
   completedDistance: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#94A3B8',
+    color: '#64748B',
   },
   completedEta: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#94A3B8',
+    color: '#64748B',
   },
 
   // ─── Empty State ──────────────────────────────────────────────
@@ -1069,7 +1069,7 @@ const s = StyleSheet.create({
   timeGroupText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: '#64748B',
     letterSpacing: 0.3,
   },
 

@@ -43,4 +43,28 @@ describe('MediaImage', () => {
     });
     await screen.unmount();
   });
+
+  it('resolves relative URLs to absolute backend origin and handles image load error', async () => {
+    (httpClient.get as jest.Mock<any>).mockResolvedValue({
+      url: '/files/cargo/test-cargo.jpg',
+      expiresAt: '2026-08-23T00:00:00.000Z',
+    });
+
+    const screen = await render(<MediaImage mediaId="media-rel" />);
+
+    await waitFor(() => {
+      const img = screen.getByTestId('media-image');
+      expect(img.props.source.uri).toMatch(/^http:\/\/localhost:3000\/files\/cargo\/test-cargo\.jpg/);
+    });
+
+    // Simulate image loading failure
+    const img = screen.getByTestId('media-image');
+    img.props.onError?.({ nativeEvent: { error: 'Failed to load' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Không thể tải ảnh')).toBeTruthy();
+    });
+
+    await screen.unmount();
+  });
 });

@@ -44,8 +44,14 @@ export class LocalStorageProvider extends StorageProvider {
 
   async createReadUrl(key: string, _expiresInSeconds: number = 3600): Promise<string> {
     // PUBLIC_FILES_BASE_URL (e.g. http://localhost:3000) makes the URL absolute
-    // so browsers on a different origin (admin web) can load dev images.
-    const base = (process.env.PUBLIC_FILES_BASE_URL ?? '').replace(/\/$/, '');
+    // so mobile apps and browsers on a different origin (admin web) can load dev images.
+    // Falls back to API_URL's origin when PUBLIC_FILES_BASE_URL is not set,
+    // so mobile clients never receive a relative URL they cannot render.
+    const configuredBase = (process.env.PUBLIC_FILES_BASE_URL ?? '').replace(/\/$/, '');
+    const apiOrigin = (process.env.API_URL ?? '')
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/$/, '');
+    const base = configuredBase || apiOrigin || 'http://localhost:3000';
     const encodedKey = key.split('/').map((segment) => encodeURIComponent(segment)).join('/');
     return `${base}/files/${encodedKey}`;
   }

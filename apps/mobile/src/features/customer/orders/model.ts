@@ -245,6 +245,7 @@ export type CustomerOrderDetailDataView = Readonly<{
     timestampLabel: string;
     description: string;
   }>[];
+  cancelReason?: string | null;
 }>;
 
 type CustomerDetailBoundaryView = Readonly<{
