@@ -193,21 +193,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'center',
     width: 44,
-    flexShrink: 0,
   },
   topBarCenter: {
     alignItems: 'center',
     flex: 1,
-    flexShrink: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.xs,
   },
   topBarTrailing: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    minWidth: 44,
-    maxWidth: 120,
-    flexShrink: 0,
+    width: 44,
   },
   topBarSpacer: {
     height: 32,
@@ -223,19 +219,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   backButton: {
-    width: 44,
-    height: 44,
     alignItems: 'center',
+    height: 44,
     justifyContent: 'center',
-    borderRadius: 22,
-  },
-  backText: {
-    ...typography.label,
-    color: colors.brand.background,
-    fontWeight: '700',
-  },
-  backTextInk: {
-    color: colors.operational.inkMuted,
+    width: 44,
   },
   eyebrowBadge: {
     alignSelf: 'center',

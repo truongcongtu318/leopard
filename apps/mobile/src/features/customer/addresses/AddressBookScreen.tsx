@@ -79,11 +79,8 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
   const [addresses, setAddresses] = useState<readonly SavedAddress[]>(() => {
     const stored = addressStore.getAddresses();
     if (stored && stored.length > 0) {
-      const hasStoredDefault = stored.some((s) => s.isDefault);
       const storedIds = new Set(stored.map((s) => s.id));
-      const remainingMocks = mockAddresses
-        .filter((m) => !storedIds.has(m.id))
-        .map((m) => (hasStoredDefault ? { ...m, isDefault: false } : m));
+      const remainingMocks = mockAddresses.filter((m) => !storedIds.has(m.id));
       return [
         ...stored.map((s) => ({
           id: s.id,
@@ -377,20 +374,18 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
     <Pressable
       accessibilityLabel={isAdding ? 'Hủy thêm địa chỉ' : '+ Thêm mới'}
       accessibilityRole="button"
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       onPress={() => setIsAdding(!isAdding)}
       style={({ pressed }) => [
         isAdding ? styles.cancelHeaderBtn : styles.addHeaderBtn,
         pressed ? styles.pressed : null,
       ]}
     >
-      {isAdding ? null : <IconPlus color="#FFFFFF" size={14} strokeWidth={2.5} />}
-      <Text
-        numberOfLines={1}
-        style={isAdding ? styles.cancelHeaderBtnText : styles.addHeaderBtnText}
-      >
-        {isAdding ? 'Hủy' : 'Thêm mới'}
-      </Text>
+      {isAdding ? (
+        <IconClose color="#0B1E42" size="sm" />
+      ) : (
+        <IconPlus color="#0B1E42" size={20} strokeWidth={2.5} />
+      )}
     </Pressable>
   );
 
@@ -430,43 +425,36 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
           </View>
         ) : null}
 
-        {/* 2. Thanh Chip Phân Loại (Category Filter Strip) */}
+        {/* 2. Phân Loại Địa Chỉ (3 chip cố định, không scroll) */}
         {!isAdding ? (
-          <ScrollView
+          <View
             accessibilityLabel="Thanh lọc phân loại địa chỉ"
-            contentContainerStyle={styles.filterStrip}
-            horizontal
-            showsHorizontalScrollIndicator={false}
+            style={styles.filterRow}
           >
-            <Pressable
-              accessibilityLabel="Tất cả địa chỉ"
-              accessibilityRole="button"
-              onPress={() => setSelectedFilter('ALL')}
-              style={({ pressed }) => [
-                styles.filterChip,
-                selectedFilter === 'ALL' ? styles.filterChipActive : null,
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  selectedFilter === 'ALL' ? styles.filterChipTextActive : null,
-                ]}
-              >
-                Tất cả ({addresses.length})
-              </Text>
-            </Pressable>
-
-            {categoryOptions.map((opt) => {
-              const active = selectedFilter === opt.id;
-              const count = addresses.filter((a) => (a.category || 'OTHER') === opt.id).length;
+            {(
+              [
+                { id: 'ALL' as FilterCategory, label: 'Tất cả', count: addresses.length },
+                {
+                  id: 'WAREHOUSE' as FilterCategory,
+                  label: 'Kho hàng',
+                  count: addresses.filter((a) => (a.category || 'OTHER') === 'WAREHOUSE').length,
+                },
+                {
+                  id: 'OFFICE' as FilterCategory,
+                  label: 'Văn phòng',
+                  count: addresses.filter((a) => (a.category || 'OTHER') === 'OFFICE').length,
+                },
+              ] as const
+            ).map((chip) => {
+              const active = selectedFilter === chip.id;
               return (
                 <Pressable
-                  accessibilityLabel={opt.label}
+                  accessibilityLabel={chip.id === 'ALL' ? 'Tất cả địa chỉ' : chip.label}
                   accessibilityRole="button"
-                  key={opt.id}
-                  onPress={() => setSelectedFilter(opt.id)}
+                  accessibilityState={{ selected: active }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  key={chip.id}
+                  onPress={() => setSelectedFilter(chip.id)}
                   style={({ pressed }) => [
                     styles.filterChip,
                     active ? styles.filterChipActive : null,
@@ -474,17 +462,18 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   ]}
                 >
                   <Text
+                    numberOfLines={1}
                     style={[
                       styles.filterChipText,
                       active ? styles.filterChipTextActive : null,
                     ]}
                   >
-                    {opt.label} {count > 0 ? `(${count})` : ''}
+                    {chip.label} ({chip.count})
                   </Text>
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         ) : null}
 
         {/* 3. Thẻ Tạo Địa Chỉ Mới (Add Address Card / Sheet) */}
@@ -821,7 +810,6 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         <Pressable
                           accessibilityLabel={`Đặt ${item.label} làm mặc định`}
                           accessibilityRole="button"
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           onPress={() => handleSetDefault(item.id)}
                           style={({ pressed }) => [
                             styles.actionBtn,
@@ -829,12 +817,12 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                           ]}
                         >
                           <IconStar color="#0B1E42" size={14} strokeWidth={2} />
-                          <Text numberOfLines={1} style={styles.setDefaultText}>Đặt làm mặc định</Text>
+                          <Text style={styles.setDefaultText}>Đặt làm mặc định</Text>
                         </Pressable>
                       ) : (
                         <View style={styles.defaultActiveNote}>
                           <IconCheck color="#059669" size={12} strokeWidth={2.5} />
-                          <Text numberOfLines={1} style={styles.defaultActiveNoteText}>
+                          <Text style={styles.defaultActiveNoteText}>
                             Đang áp dụng cho đơn mới
                           </Text>
                         </View>
@@ -843,7 +831,6 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       <Pressable
                         accessibilityLabel={`Xem bản đồ ${item.label}`}
                         accessibilityRole="button"
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         onPress={() =>
                           setExpandedMapId(expandedMapId === item.id ? null : item.id)
                         }
@@ -853,7 +840,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         ]}
                       >
                         <IconLocationPin color="#0B1E42" size={13} />
-                        <Text numberOfLines={1} style={styles.toggleMapText}>
+                        <Text style={styles.toggleMapText}>
                           {expandedMapId === item.id ? 'Ẩn bản đồ' : 'Bản đồ'}
                         </Text>
                       </Pressable>
@@ -862,7 +849,6 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                     <Pressable
                       accessibilityLabel={`Xóa ${item.label}`}
                       accessibilityRole="button"
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       onPress={() => handleDelete(item.id)}
                       style={({ pressed }) => [
                         styles.deleteBtn,
@@ -870,7 +856,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       ]}
                     >
                       <IconTrash color="#EF4444" size={14} />
-                      <Text numberOfLines={1} style={styles.deleteText}>Xóa</Text>
+                      <Text style={styles.deleteText}>Xóa</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -895,25 +881,20 @@ const styles = StyleSheet.create({
   // Header Action
   addHeaderBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
-    borderRadius: 999,
-    flexDirection: 'row',
-    flexShrink: 0,
-    gap: 4,
-    minHeight: 36,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   addHeaderBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '700',
   },
   cancelHeaderBtn: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   cancelHeaderBtnText: {
     color: '#475569',
@@ -955,24 +936,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // 2. Filter Strip
-  filterStrip: {
+  // 2. Filter Row (3 chips cố định, không scroll, không bao giờ bị cắt chữ)
+  filterRow: {
     flexDirection: 'row',
-    flexGrow: 0,
-    gap: spacing.xs,
+    gap: 8,
+    width: '100%',
     paddingBottom: 4,
-    paddingRight: spacing.sm,
   },
   filterChip: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
     borderRadius: 999,
     borderWidth: 1,
-    flexShrink: 0,
-    minHeight: 36,
+    minHeight: 38,
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
   filterChipActive: {
     backgroundColor: '#0B1E42',
@@ -980,8 +961,9 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     color: '#64748B',
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '600',
+    textAlign: 'center',
   },
   filterChipTextActive: {
     color: '#FFFFFF',
@@ -990,8 +972,11 @@ const styles = StyleSheet.create({
 
   // 3. Add Card
   cardBezelOuter: {
-    backgroundColor: 'transparent',
-    borderRadius: 18,
+    backgroundColor: 'rgba(11, 30, 66, 0.04)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 6,
   },
   addCardInner: {
     backgroundColor: '#FFFFFF',
@@ -1138,7 +1123,7 @@ const styles = StyleSheet.create({
   // 4. Address Cards List
   listContent: {
     gap: spacing.sm,
-    paddingBottom: layout.bottomNavClearance + 24,
+    paddingBottom: layout.bottomNavClearance,
   },
   addressCard: {
     backgroundColor: '#FFFFFF',
@@ -1219,22 +1204,18 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 6,
     marginTop: 3,
-    maxWidth: '100%',
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   contactItem: {
     alignItems: 'center',
     flexDirection: 'row',
-    flexShrink: 1,
     gap: 4,
   },
   contactNameText: {
     color: '#475569',
-    flexShrink: 1,
     fontSize: 11.5,
     fontWeight: '600',
   },
@@ -1244,7 +1225,6 @@ const styles = StyleSheet.create({
   },
   contactPhoneText: {
     color: '#0B1E42',
-    flexShrink: 0,
     fontSize: 11.5,
     fontWeight: '600',
   },
