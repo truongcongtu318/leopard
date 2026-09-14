@@ -16,9 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   IconChevron,
   IconCopy,
-  IconQrPayment,
   IconSecurityShield,
-  IconWallet,
   iosContinuousCurve,
   systemFontFamily,
 } from '@leopard/mobile-core';
@@ -106,7 +104,6 @@ export default function OrderCheckoutScreen({
   const initialRawAmount = propAmount ?? (params.amount ? Number(params.amount) : 280000);
   const initialAmount = Number.isFinite(initialRawAmount) ? initialRawAmount : 280000;
 
-  const [paymentMethod, setPaymentMethod] = useState<'vietqr' | 'wallet'>('vietqr');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isReconciling, setIsReconciling] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(PAYMENT_EXPIRY_SECONDS);
@@ -379,87 +376,12 @@ export default function OrderCheckoutScreen({
           </View>
         </View>
 
-        {/* Payment Method Selector */}
+        {/* VietQR Dynamic Code & Bank Details */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+          <Text style={styles.sectionTitle}>Chuyển khoản VietQR payOS</Text>
         </View>
 
-        <View style={styles.methodSelectorWrap}>
-          {/* VietQR Option */}
-          <Pressable
-            accessibilityLabel="Chọn thanh toán VietQR payOS"
-            accessibilityRole="button"
-            onPress={() => setPaymentMethod('vietqr')}
-            style={[
-              styles.methodOptionCard,
-              paymentMethod === 'vietqr' && styles.methodOptionActive,
-            ]}
-          >
-            <View style={styles.methodLeftWrap}>
-              <View style={styles.methodIconBox}>
-                <IconQrPayment color="#0B1E42" size={20} />
-              </View>
-              <View>
-                <Text style={styles.methodTitle}>VietQR payOS (Napas 24/7)</Text>
-                <Text style={styles.methodDesc}>Quét mã QR tự động qua app ngân hàng</Text>
-              </View>
-            </View>
-            <View
-              style={[
-                styles.radioOuter,
-                paymentMethod === 'vietqr' && styles.radioOuterActive,
-              ]}
-            >
-              {paymentMethod === 'vietqr' && <View style={styles.radioInner} />}
-            </View>
-          </Pressable>
-
-          {/* Business Wallet Option */}
-          <Pressable
-            accessibilityLabel="Chọn thanh toán Ví doanh nghiệp"
-            accessibilityRole="button"
-            onPress={() => setPaymentMethod('wallet')}
-            style={[
-              styles.methodOptionCard,
-              paymentMethod === 'wallet' && styles.methodOptionActive,
-            ]}
-            testID="payment-method-wallet"
-          >
-            <View style={styles.methodLeftWrap}>
-              <View style={styles.methodIconBox}>
-                <IconWallet color="#0B1E42" size={20} />
-              </View>
-              <View>
-                <Text style={styles.methodTitle}>Ví doanh nghiệp (B2B Credit)</Text>
-                <Text style={styles.methodDesc}>Hạn mức công nợ doanh nghiệp</Text>
-              </View>
-            </View>
-            <View
-              style={[
-                styles.radioOuter,
-                paymentMethod === 'wallet' && styles.radioOuterActive,
-              ]}
-            >
-              {paymentMethod === 'wallet' && <View style={styles.radioInner} />}
-            </View>
-          </Pressable>
-        </View>
-
-        {paymentMethod === 'wallet' ? (
-          /* Business Wallet Details */
-          <View style={styles.walletDetailsCard}>
-            <View style={styles.walletInfoRow}>
-              <Text style={styles.walletLabel}>Hạn mức khả dụng</Text>
-              <Text style={styles.walletLimitValue}>50.000.000 ₫</Text>
-            </View>
-            <Text style={styles.walletNoteText}>
-              Khoản tiền {formatVnd(amount)} sẽ được trừ trực tiếp vào hạn mức công
-              nợ tháng này của doanh nghiệp.
-            </Text>
-          </View>
-        ) : (
-          /* VietQR Dynamic Code & Bank Details */
-          <View style={styles.qrDoubleBezelOuter}>
+        <View style={styles.qrDoubleBezelOuter}>
             <View style={styles.qrDoubleBezelInner}>
               <View style={styles.napasBadgeRow}>
                 <Text style={styles.napasBankTitle}>{bankTitle}</Text>
@@ -556,7 +478,6 @@ export default function OrderCheckoutScreen({
               </View>
             </View>
           </View>
-        )}
       </ScrollView>
 
       {/* Timeout banner */}
@@ -737,96 +658,6 @@ const styles = StyleSheet.create({
     color: '#0B1E42',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
-  },
-  methodSelectorWrap: {
-    gap: 10,
-    marginBottom: 16,
-  },
-  methodOptionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    padding: 14,
-  },
-  methodOptionActive: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#F8FAFC',
-  },
-  methodLeftWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  methodIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  methodTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0B1E42',
-  },
-  methodDesc: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  radioOuter: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#94A3B8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  radioOuterActive: {
-    borderColor: '#0B1E42',
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#0B1E42',
-  },
-  walletDetailsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    padding: 16,
-    marginBottom: 16,
-  },
-  walletInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  walletLabel: {
-    fontSize: 14,
-    color: '#64748B',
-  },
-  walletLimitValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#10B981',
-    fontVariant: ['tabular-nums'],
-  },
-  walletNoteText: {
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 18,
   },
   qrDoubleBezelOuter: {
     borderRadius: 24,
