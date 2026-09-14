@@ -46,22 +46,48 @@ export class RouteEtaController {
       activeDriverFleetIds,
     });
 
-    const deadLetter = await this.prisma.outboxEvent.findFirst({
-      where: { aggregateId: orderId, type: 'ROUTE_ETA_RECOMPUTE', status: 'DEAD_LETTER' },
-      orderBy: { inputRevision: 'desc' },
-    });
-
-    return mapRouteEtaResponse({
-      orderId,
-      now: new Date(),
-      order: { routeEtaInputRevision: order.routeEtaInputRevision },
-      currentNextStop: order.currentNextStopEstimate as never,
-      currentCompletion: order.currentCompletionEstimate as never,
-      activeRoute: order.activeRouteSnapshot,
-      quotedRoute: order.quotedRouteSnapshot,
-      pendingDeadLetterInputRevision: deadLetter?.inputRevision ?? null,
-    });
+    return buildRouteEtaResponse(this.prisma, orderId);
   }
+}
+
+/**
+ * Builds the route-ETA response payload for an order. Shared by
+ * `RouteEtaController.get` and `StopProgressController`'s record/void
+ * endpoints (spec §4.7's `currentRouteEta` field) so both code paths shape
+ * the response identically — no duplicated response-shaping logic.
+ *
+ * Callers are responsible for authorization (`assertCanViewRouteEta` /
+ * whatever policy applies to their endpoint) before calling this.
+ */
+export async function buildRouteEtaResponse(prisma: PrismaService, orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      currentNextStopEstimate: true,
+      currentCompletionEstimate: true,
+      activeRouteSnapshot: true,
+      quotedRouteSnapshot: true,
+    },
+  });
+  if (!order) {
+    throw notFound();
+  }
+
+  const deadLetter = await prisma.outboxEvent.findFirst({
+    where: { aggregateId: orderId, type: 'ROUTE_ETA_RECOMPUTE', status: 'DEAD_LETTER' },
+    orderBy: { inputRevision: 'desc' },
+  });
+
+  return mapRouteEtaResponse({
+    orderId,
+    now: new Date(),
+    order: { routeEtaInputRevision: order.routeEtaInputRevision },
+    currentNextStop: order.currentNextStopEstimate as never,
+    currentCompletion: order.currentCompletionEstimate as never,
+    activeRoute: order.activeRouteSnapshot,
+    quotedRoute: order.quotedRouteSnapshot,
+    pendingDeadLetterInputRevision: deadLetter?.inputRevision ?? null,
+  });
 }
 
 function notFound(): DomainError {
