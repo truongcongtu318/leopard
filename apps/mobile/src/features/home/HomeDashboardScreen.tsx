@@ -91,6 +91,13 @@ export type FleetVehicleItem = Readonly<{
   badge?: string;
 }>;
 
+export const FLEET_LOADING_FEES: Record<FleetVehicleCategory, number> = {
+  BIKE_3W: 60000,
+  VAN_500KG: 100000,
+  TRUCK_125T: 150000,
+  TRUCK_25T: 250000,
+};
+
 export const FLEET_VEHICLES: readonly FleetVehicleItem[] = [
   {
     id: 'VAN_500KG', name: 'Van 500kg', subName: 'Chở hàng phố cấm',
@@ -1007,6 +1014,7 @@ export function HomeDashboardScreen({
         initialCargoImageUri={initialCargoImageUri}
         initialReceiverName={loggedInCustomer?.name || userName}
         initialReceiverPhone={loggedInCustomer?.phone || userPhone}
+        loadingFee={FLEET_LOADING_FEES[currentFleetVehicle.id]}
         onClose={() => setShowBookingDetailsModal(false)}
         onConfirm={handleConfirmBooking}
         pickupAddress={pickupText}

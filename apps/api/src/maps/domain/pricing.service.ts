@@ -2,16 +2,27 @@ export interface PricingQuoteInput {
   vehicleType: string;
   distanceMeters: number;
   stopCount: number;
+  cargoWeightKg?: number | undefined;
+  hasLoadingSupport?: boolean | undefined;
+  hasVatInvoice?: boolean | undefined;
 }
 
 export interface PricingQuote {
   amountVnd: number;
+  baseFareVnd: number;
+  distanceFareVnd: number;
+  stopFareVnd: number;
+  loadingFeeVnd: number;
+  vatFeeVnd: number;
+  platformFeeVnd: number;
+  driverPayoutVnd: number;
   currency: 'VND';
 }
 
 export interface VehiclePricingRate {
   baseFareVnd: number;
   perKmVnd: number;
+  loadingFeeVnd?: number | undefined;
 }
 
 export interface PricingConfig {
@@ -35,18 +46,57 @@ export class PricingService {
     const vehicleType = normalizeVehicleType(input.vehicleType);
     const distanceMeters = safeNonNegativeInteger(input.distanceMeters, 'distanceMeters');
     const stopCount = safeNonNegativeInteger(input.stopCount, 'stopCount');
+    const cargoWeightKg =
+      input.cargoWeightKg === undefined
+        ? undefined
+        : safeNonNegativeInteger(input.cargoWeightKg, 'cargoWeightKg');
     const rate = this.config.vehicleRates[vehicleType];
 
     if (rate === undefined) {
       throw new PricingQuoteError(`Unsupported vehicle type: ${vehicleType}`);
     }
 
-    const distanceFareVnd = Math.round((distanceMeters * rate.perKmVnd) / 1_000);
+    const isHeavyTruck = vehicleType === 'TRUCK' && (cargoWeightKg ?? 0) > 1250;
+    const baseFareVnd = isHeavyTruck ? 320_000 : rate.baseFareVnd;
+    const perKmVnd = isHeavyTruck ? 22_000 : rate.perKmVnd;
+
+    let defaultLoading = 0;
+    if (isHeavyTruck) {
+      defaultLoading = 250_000;
+    } else if (vehicleType === 'TRUCK') {
+      defaultLoading = rate.loadingFeeVnd ?? 150_000;
+    } else if (vehicleType === 'MOTORBIKE') {
+      defaultLoading = rate.loadingFeeVnd ?? 60_000;
+    } else if (vehicleType === 'VAN') {
+      defaultLoading = rate.loadingFeeVnd ?? 100_000;
+    } else {
+      defaultLoading = rate.loadingFeeVnd ?? 0;
+    }
+
+    const loadingFeeVnd = input.hasLoadingSupport ? defaultLoading : 0;
+    const distanceFareVnd = Math.round((distanceMeters * perKmVnd) / 1_000);
     const stopFareVnd = stopCount * this.config.stopSurchargeVnd;
-    const calculatedFareVnd = rate.baseFareVnd + distanceFareVnd + stopFareVnd;
+    const transportFareVnd = Math.max(
+      baseFareVnd + distanceFareVnd + stopFareVnd,
+      this.config.minimumFareVnd,
+    );
+
+    const subtotalVnd = transportFareVnd + loadingFeeVnd;
+    const vatFeeVnd = input.hasVatInvoice ? Math.round(subtotalVnd * 0.08) : 0;
+    const amountVnd = subtotalVnd + vatFeeVnd;
+
+    const platformFeeVnd = Math.round(transportFareVnd * 0.15);
+    const driverPayoutVnd = transportFareVnd - platformFeeVnd + loadingFeeVnd;
 
     return {
-      amountVnd: Math.max(calculatedFareVnd, this.config.minimumFareVnd),
+      amountVnd,
+      baseFareVnd,
+      distanceFareVnd,
+      stopFareVnd,
+      loadingFeeVnd,
+      vatFeeVnd,
+      platformFeeVnd,
+      driverPayoutVnd,
       currency: 'VND',
     };
   }
@@ -83,6 +133,9 @@ function normalizePricingConfig(config: PricingConfig): NormalizedPricingConfig 
       {
         baseFareVnd: configInteger(rate.baseFareVnd),
         perKmVnd: configInteger(rate.perKmVnd),
+        ...(rate.loadingFeeVnd !== undefined
+          ? { loadingFeeVnd: configInteger(rate.loadingFeeVnd) }
+          : {}),
       },
     ] as const;
   });
@@ -92,7 +145,11 @@ function normalizePricingConfig(config: PricingConfig): NormalizedPricingConfig 
   }
 
   for (const [, rate] of entries) {
-    if (rate.baseFareVnd === null || rate.perKmVnd === null) {
+    if (
+      rate.baseFareVnd === null ||
+      rate.perKmVnd === null ||
+      (rate.loadingFeeVnd !== undefined && rate.loadingFeeVnd === null)
+    ) {
       throw new PricingConfigError();
     }
   }

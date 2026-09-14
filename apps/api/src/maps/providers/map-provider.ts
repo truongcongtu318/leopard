@@ -1,3 +1,5 @@
+import type { PricingQuote } from '../domain/pricing.service.js';
+
 export interface GeoPoint {
   latitude: number;
   longitude: number;
@@ -35,7 +37,9 @@ export interface RouteInput {
   stops: GeoPoint[];
   dropoff: GeoPoint;
   vehicleType: string;
-  cargoWeightKg?: number;
+  cargoWeightKg?: number | undefined;
+  hasLoadingSupport?: boolean | undefined;
+  hasVatInvoice?: boolean | undefined;
 }
 
 export interface RouteEstimate {
@@ -54,6 +58,7 @@ export interface VerifiedOrderEstimate extends RouteEstimate {
   routeId: string;
   normalizedInput: RouteInput;
   expiresAt: string;
+  quote?: PricingQuote;
 }
 
 export interface RouteEstimator {

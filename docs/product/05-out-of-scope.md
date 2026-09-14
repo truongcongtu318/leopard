@@ -5,6 +5,7 @@ Các hạng mục sau không thuộc phạm vi triển khai của hệ thống L
 - **Phân phối & Đa nền tảng**: Đăng tải App Store / Google Play thương mại chính thức (sử dụng Expo / Web PWA cho giai đoạn vận hành thử nghiệm).
 - **Kiến trúc tổ chức**: Multi-tenancy phức tạp và white-label cho nhiều thương hiệu khác nhau.
 - **Quản trị đội xe nâng cao**: Quản lý đa cấp (multi-tier fleets), chi nhánh phân cấp sâu hoặc phân quyền tùy biến ngoài 4 role chuẩn (`CUSTOMER`, `DRIVER`, `FLEET_OWNER`, `ADMIN`).
+- **Vai trò trung gian quản lý đội xe (FLEET_OWNER)**: Role `FLEET_OWNER` (quản lý đội xe trung gian) được chuyển sang ngoài phạm vi pilot. Hệ thống tập trung tối giản vào mô hình 2-Sided Marketplace (`CUSTOMER` ⇄ `DRIVER`) được quản trị trực tiếp bởi `ADMIN` tổng.
 - **Tối ưu hóa đa đơn hàng (VRP)**: Thuật toán ghép nhiều đơn hàng phức tạp (multi-order routing optimization / Vehicle Routing Problem). Hệ thống chỉ tập trung vào điều phối đơn hàng đơn lẻ (`single-order dispatch`) tới tài xế gần nhất hoặc bảng hàng Load-board.
 - **Dự báo giao thông AI độc quyền**: Thuật toán máy học AI XGBoost dự báo tắc đường; ETA dự kiến sử dụng dữ liệu từ Vietmap Routing API và Demo deterministic có nhãn rõ ràng.
 - **Đối soát ngân hàng tự động ngoài cổng thanh toán**: Đối soát thủ công cho các tài khoản không hỗ trợ webhook; hệ thống chỉ tự động hóa xác nhận thanh toán qua cổng payOS / VietQR webhook đã tích hợp.

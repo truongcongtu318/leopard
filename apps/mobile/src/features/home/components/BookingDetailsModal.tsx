@@ -43,10 +43,19 @@ export interface BookingDetailsModalProps {
   vehicleName: string;
   vehicleDimensions?: string;
   basePrice: number;
+  loadingFee?: number;
   initialReceiverName?: string;
   initialReceiverPhone?: string;
   initialCargoImageUri?: string;
   testID?: string;
+}
+
+export function resolveDefaultLoadingFee(vehicleName: string): number {
+  if (vehicleName.includes('2.5')) return 250000;
+  if (vehicleName.includes('1.25') || vehicleName.toLowerCase().includes('tải')) return 150000;
+  if (vehicleName.toLowerCase().includes('van')) return 100000;
+  if (vehicleName.toLowerCase().includes('gác') || vehicleName.toLowerCase().includes('bike')) return 60000;
+  return 120000;
 }
 
 export const CARGO_CATEGORIES = [
@@ -72,6 +81,7 @@ export function BookingDetailsModal({
   vehicleName,
   vehicleDimensions,
   basePrice,
+  loadingFee: loadingFeeProp,
   initialCargoImageUri,
   initialReceiverName = '',
   initialReceiverPhone = '',
@@ -102,7 +112,8 @@ export function BookingDetailsModal({
   const safeBasePrice = Math.max(0, basePrice || 0);
   const stopCount = stops.length;
   const stopSurcharge = stopCount * 25000;
-  const loadingFee = hasLoadingSupport ? 120000 : 0;
+  const unitLoadingFee = loadingFeeProp !== undefined ? loadingFeeProp : resolveDefaultLoadingFee(vehicleName);
+  const loadingFee = hasLoadingSupport ? unitLoadingFee : 0;
   const vatAmount = Math.round((safeBasePrice + stopSurcharge) * 0.08);
   const vatFee = hasVatInvoice ? vatAmount : 0;
   const totalFare = safeBasePrice + stopSurcharge + loadingFee + vatFee;
@@ -374,7 +385,7 @@ export function BookingDetailsModal({
                       Tài xế hỗ trợ bốc xếp 2 đầu
                     </Text>
                   </View>
-                  <Text style={styles.toggleFee}>+120.000 ₫</Text>
+                  <Text style={styles.toggleFee}>+{formatVnd(unitLoadingFee)}</Text>
                 </Pressable>
 
                 {/* VAT */}

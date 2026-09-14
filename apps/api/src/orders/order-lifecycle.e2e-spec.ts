@@ -91,7 +91,7 @@ describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
       .useValue(proofReader)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -362,7 +362,7 @@ describe('Order transaction response consistency', () => {
       .useValue(prismaMock)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({

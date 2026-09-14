@@ -196,11 +196,39 @@ model DriverProfile {
   contractSignedAt  DateTime?                             @db.Timestamptz(3)
   lastKnownLocation Unsupported("geography(Point,4326)")?
   lastKnownAt       DateTime?                             @db.Timestamptz(3)
+  balanceVnd         Int                                   @default(0)
+  bankName           String?                               @db.VarChar(100)
+  bankAccountNumber  String?                               @db.VarChar(50)
+  bankAccountName    String?                               @db.VarChar(120)
   createdAt         DateTime                              @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime                              @default(now()) @updatedAt @db.Timestamptz(3)
   user              User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
   documents         DriverDocument[]
   contracts         DriverContract[]
+  payoutRequests     PayoutRequest[]
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PayoutRequest {
+  id                String        @id @default(uuid()) @db.Uuid
+  driverProfileId   String        @db.Uuid
+  amountVnd         Int
+  status            PayoutStatus  @default(PENDING)
+  bankName          String        @db.VarChar(100)
+  bankAccountNumber String        @db.VarChar(50)
+  bankAccountName   String        @db.VarChar(120)
+  processedAt       DateTime?     @db.Timestamptz(3)
+  processedById     String?       @db.Uuid
+  createdAt         DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime      @default(now()) @updatedAt @db.Timestamptz(3)
+  driverProfile     DriverProfile @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+
+  @@index([driverProfileId, status])
 }
 
 enum DriverDocumentType {

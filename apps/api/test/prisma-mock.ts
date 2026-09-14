@@ -796,4 +796,27 @@ export class InMemoryPrismaService {
   invoice = createInvoiceMock(this.invoices);
 
   invoiceSequence = createInvoiceSequenceMock(this.invoiceSequences);
+
+  promotionVouchers = new Map<string, any>();
+
+  promotionVoucher = {
+    count: jest.fn(async () => this.promotionVouchers.size),
+    upsert: jest.fn(async ({ where, create, update }: any) => {
+      const existing = this.promotionVouchers.get(where.code);
+      if (existing) {
+        const updated = { ...existing, ...update };
+        this.promotionVouchers.set(where.code, updated);
+        return updated;
+      }
+      const created = { id: `voucher-${Date.now()}`, ...create, usageCount: 0, createdAt: new Date(), updatedAt: new Date() };
+      this.promotionVouchers.set(where.code, created);
+      return created;
+    }),
+    findUnique: jest.fn(async ({ where }: any) => {
+      return this.promotionVouchers.get(where.code) ?? null;
+    }),
+    findMany: jest.fn(async () => {
+      return Array.from(this.promotionVouchers.values());
+    }),
+  };
 }

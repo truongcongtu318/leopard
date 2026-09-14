@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDefined,
   IsEnum,
   IsNotEmpty,
@@ -86,6 +87,14 @@ export class CreateOrderDto {
   @Min(0)
   @Max(10_000)
   cargoWeightKg?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  hasLoadingSupport?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasVatInvoice?: boolean;
 
   @IsString()
   @IsNotEmpty()
