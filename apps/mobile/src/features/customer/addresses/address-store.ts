@@ -106,7 +106,9 @@ export const addressStore = {
             if (inMemoryDefaultId) {
               window.localStorage.setItem(DEFAULT_ADDR_KEY, inMemoryDefaultId);
             }
-          } catch {}
+          } catch {
+            // ignore: localStorage quota or unavailable (offline cache)
+          }
         }
         return mapped;
       }
@@ -154,7 +156,9 @@ export const addressStore = {
         if (item.isDefault) {
           window.localStorage.setItem(DEFAULT_ADDR_KEY, item.id);
         }
-      } catch {}
+      } catch {
+        // ignore: localStorage quota or unavailable (offline cache)
+      }
     }
   },
 
