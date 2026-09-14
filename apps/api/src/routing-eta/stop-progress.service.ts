@@ -10,6 +10,12 @@ export class StopProgressCommandConflictError extends DomainError {
   }
 }
 
+export class StopProgressForbiddenError extends DomainError {
+  constructor(message: string) {
+    super('STOP_PROGRESS_FORBIDDEN', 403, message);
+  }
+}
+
 export type StopProgressStep = 'ARRIVED' | 'SERVICE_STARTED' | 'SERVICE_COMPLETED';
 
 @Injectable()
@@ -29,6 +35,13 @@ export class StopProgressService {
   ): Promise<{ eventId: string; replayed: boolean; inputRevision: number }> {
     return this.prisma.$transaction(async (tx) => {
       await tx.orderStop.findFirstOrThrow({ where: { id: stopId, orderId } });
+
+      const assignedOrder = await tx.order.findFirstOrThrow({ where: { id: orderId } });
+      if (assignedOrder.driverId !== actor.userId) {
+        throw new StopProgressForbiddenError(
+          'Bạn không có quyền ghi nhận tiến trình điểm dừng của đơn hàng này',
+        );
+      }
 
       const existing = await tx.stopProgressEvent.findUnique({
         where: { stopId_clientRequestId: { stopId, clientRequestId } },

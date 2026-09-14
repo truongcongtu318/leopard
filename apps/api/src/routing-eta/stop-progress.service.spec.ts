@@ -1,7 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '../database/prisma.service.js';
+import { DomainError } from '../common/domain-error.js';
 import { EtaService } from './eta.service.js';
-import { StopProgressService } from './stop-progress.service.js';
+import { StopProgressForbiddenError, StopProgressService } from './stop-progress.service.js';
 
 describe('StopProgressService.record', () => {
   const actor = { userId: 'driver-1', role: 'DRIVER' } as any;
@@ -13,7 +14,10 @@ describe('StopProgressService.record', () => {
       stopProgressEvent: {
         findUnique: jest.fn().mockResolvedValue(existingEvent),
       },
-      order: { findUniqueOrThrow: jest.fn().mockResolvedValue({ routeEtaInputRevision: 6 }) },
+      order: {
+        findFirstOrThrow: jest.fn().mockResolvedValue({ id: 'order-1', driverId: 'driver-1' }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue({ routeEtaInputRevision: 6 }),
+      },
     };
     const prisma = { $transaction: jest.fn((fn: any) => fn(tx)) };
     const etaService = { bumpRevision: jest.fn() };
@@ -45,7 +49,10 @@ describe('StopProgressService.record', () => {
         findUnique: jest.fn().mockResolvedValue(null),
         create: jest.fn(),
       },
-      order: { findUniqueOrThrow: jest.fn().mockResolvedValue({ routeEtaInputRevision: 7 }) },
+      order: {
+        findFirstOrThrow: jest.fn().mockResolvedValue({ id: 'order-1', driverId: 'driver-1' }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue({ routeEtaInputRevision: 7 }),
+      },
     };
     const prisma = { $transaction: jest.fn((fn: any) => fn(tx)) };
     const etaService = { bumpRevision: jest.fn() };
@@ -63,6 +70,72 @@ describe('StopProgressService.record', () => {
     expect(result).toEqual({ eventId: 'event-1', replayed: true, inputRevision: 7 });
     expect(tx.stopProgressState.create).not.toHaveBeenCalled();
     expect(etaService.bumpRevision).not.toHaveBeenCalled();
+  });
+
+  it('rejects a driver who is not the order`s assigned driver with a 403 and does not bump revision', async () => {
+    const tx = {
+      orderStop: { findFirstOrThrow: jest.fn().mockResolvedValue({ id: 'stop-1', orderId: 'order-1' }) },
+      order: {
+        findFirstOrThrow: jest.fn().mockResolvedValue({ id: 'order-1', driverId: 'driver-2' }),
+      },
+      stopProgressEvent: { findUnique: jest.fn() },
+    };
+    const prisma = { $transaction: jest.fn((fn: any) => fn(tx)) };
+    const etaService = { bumpRevision: jest.fn() };
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        StopProgressService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: EtaService, useValue: etaService },
+      ],
+    }).compile();
+    const service = moduleRef.get(StopProgressService);
+
+    let caught: unknown;
+    try {
+      await service.record(actor, 'order-1', 'stop-1', 'ARRIVED', 'req-1', new Date());
+      throw new Error('expected service.record to reject');
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(StopProgressForbiddenError);
+    expect(caught).toBeInstanceOf(DomainError);
+    expect(caught).toMatchObject({ status: 403, code: 'STOP_PROGRESS_FORBIDDEN' });
+    expect(tx.stopProgressEvent.findUnique).not.toHaveBeenCalled();
+    expect(etaService.bumpRevision).not.toHaveBeenCalled();
+  });
+
+  it('allows the order`s assigned driver to record progress', async () => {
+    const tx = {
+      orderStop: { findFirstOrThrow: jest.fn().mockResolvedValue({ id: 'stop-1', orderId: 'order-1' }) },
+      order: {
+        findFirstOrThrow: jest.fn().mockResolvedValue({ id: 'order-1', driverId: 'driver-1' }),
+      },
+      stopProgressEvent: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'event-new' }),
+      },
+      stopProgressState: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn(),
+      },
+    };
+    const prisma = { $transaction: jest.fn((fn: any) => fn(tx)) };
+    const etaService = { bumpRevision: jest.fn().mockResolvedValue(12) };
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        StopProgressService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: EtaService, useValue: etaService },
+      ],
+    }).compile();
+    const service = moduleRef.get(StopProgressService);
+
+    const result = await service.record(actor, 'order-1', 'stop-1', 'ARRIVED', 'req-1', new Date());
+
+    expect(result).toEqual({ eventId: 'event-new', replayed: false, inputRevision: 12 });
+    expect(etaService.bumpRevision).toHaveBeenCalledTimes(1);
   });
 });
 
