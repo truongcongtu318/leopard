@@ -145,4 +145,60 @@ describe('MyDeliveriesScreen', () => {
 
     await screen.unmount();
   });
+
+  it('renders IN_TRANSIT and ACCEPTED badges with Midnight Navy #0B1E42 and #F0F4F9', async () => {
+    const ordersWithAccepted: DeliveryOrder[] = [
+      ...mockOrders,
+      {
+        id: 'ord-4',
+        bookingCode: '#LP-00206',
+        cargoType: 'GENERAL',
+        cargoLabel: 'Thùng hàng mẫu',
+        origin: 'Quận 3',
+        destination: 'Quận 1',
+        scheduledDate: '01/09/2026 • 10:00',
+        status: 'ACCEPTED',
+        vehicleName: 'Xe Van 500kg',
+        weightKg: 50,
+        priceVnd: '120.000 ₫',
+      },
+    ];
+    const screen = await render(<MyDeliveriesScreen orders={ordersWithAccepted} />);
+
+    const inTransitText = screen.getByText('Đang vận chuyển');
+    expect(inTransitText.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ color: '#0B1E42' }),
+      ]),
+    );
+
+    const acceptedText = screen.getAllByText('Đã nhận').find((el) => {
+      const style = Array.isArray(el.props.style) ? el.props.style : [el.props.style];
+      return style.some((s: Record<string, unknown> | undefined) => s?.fontSize === 11);
+    });
+    expect(acceptedText).toBeTruthy();
+    expect(acceptedText?.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ color: '#0B1E42' }),
+      ]),
+    );
+
+    await screen.unmount();
+  });
+
+  it('applies Midnight Navy #0B1E42 border to search bar on focus', async () => {
+    const screen = await render(<MyDeliveriesScreen orders={mockOrders} />);
+
+    const searchInput = screen.getByLabelText('Tìm kiếm đơn hàng');
+    await fireEvent(searchInput, 'focus');
+
+    const searchBar = screen.getByTestId('search-bar');
+    expect(searchBar.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ borderColor: '#0B1E42' }),
+      ]),
+    );
+
+    await screen.unmount();
+  });
 });

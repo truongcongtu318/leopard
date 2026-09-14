@@ -90,9 +90,9 @@ type StatusPresentation = Readonly<{
 
 const STATUS_PRESENTATION: Record<DeliveryStatus, StatusPresentation> = {
   REQUESTED: { label: 'Chờ xác nhận', bg: '#FFF7ED', text: '#9A3412', dot: '#F97316' },
-  ACCEPTED: { label: 'Đã nhận', bg: customerPalette.primaryBg, text: '#1E40AF', dot: customerPalette.primary },
+  ACCEPTED: { label: 'Đã nhận', bg: '#F0F4F9', text: '#0B1E42', dot: '#0B1E42' },
   LOADING: { label: 'Đang bốc hàng', bg: leopardPalette.accentYellowBg, text: '#854D0E', dot: leopardPalette.accentYellow },
-  IN_TRANSIT: { label: 'Đang vận chuyển', bg: customerPalette.primaryBg, text: '#1D4ED8', dot: customerPalette.primary },
+  IN_TRANSIT: { label: 'Đang vận chuyển', bg: '#F0F4F9', text: '#0B1E42', dot: '#0B1E42' },
   ARRIVED: { label: 'Đã đến', bg: leopardPalette.ecoGreenBg, text: '#166534', dot: leopardPalette.ecoGreen },
   DELIVERED: { label: 'Hoàn thành', bg: leopardPalette.ecoGreenBg, text: '#166534', dot: leopardPalette.ecoGreen },
   CANCELLED: { label: 'Đã hủy', bg: '#FEE2E2', text: '#991B1B', dot: '#EF4444' },
@@ -286,6 +286,7 @@ export function MyDeliveriesScreen({
 }: MyDeliveriesScreenProps) {
   const [activeFilter, setActiveFilter] = useState<FilterChip>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Only in-progress shipments belong on this tab.
   const activeOrders = orders.filter((o) => isActiveStatus(o.status));
@@ -340,10 +341,15 @@ export function MyDeliveriesScreen({
         </View>
 
         {/* Search bar */}
-        <View style={styles.searchBar}>
-          <IconSearch color={leopardPalette.textMutedSlate} size={18} />
+        <View
+          style={[styles.searchBar, isSearchFocused ? styles.searchBarFocused : null]}
+          testID="search-bar"
+        >
+          <IconSearch color={isSearchFocused ? '#0B1E42' : leopardPalette.textMutedSlate} size={18} />
           <TextInput
             accessibilityLabel="Tìm kiếm đơn hàng"
+            onBlur={() => setIsSearchFocused(false)}
+            onFocus={() => setIsSearchFocused(true)}
             onChangeText={setSearchQuery}
             placeholder="Tìm mã đơn, hàng hóa, địa chỉ..."
             placeholderTextColor={leopardPalette.textMutedSlate}
@@ -478,6 +484,15 @@ const styles = StyleSheet.create({
     minHeight: 42,
     gap: spacing.xs,
   },
+  searchBarFocused: {
+    borderColor: '#0B1E42',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   searchIcon: {
     fontSize: 14,
   },
@@ -510,8 +525,8 @@ const styles = StyleSheet.create({
     borderColor: leopardPalette.cardBorder,
   },
   chipActive: {
-    backgroundColor: customerPalette.primaryBg,
-    borderColor: customerPalette.primary,
+    backgroundColor: '#F0F4F9',
+    borderColor: '#0B1E42',
   },
   chipLabel: {
     color: leopardPalette.textMutedSlate,
@@ -519,7 +534,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chipLabelActive: {
-    color: customerPalette.primary,
+    color: '#0B1E42',
     fontWeight: '700',
   },
   chipBadge: {
@@ -532,7 +547,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   chipBadgeActive: {
-    backgroundColor: customerPalette.primary,
+    backgroundColor: '#0B1E42',
   },
   chipBadgeText: {
     color: leopardPalette.textMutedSlate,

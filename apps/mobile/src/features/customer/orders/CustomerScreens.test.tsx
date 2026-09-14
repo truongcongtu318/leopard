@@ -46,6 +46,20 @@ describe('CustomerOrdersScreen', () => {
     await screen.unmount();
   });
 
+  it('renders active filter chip with Midnight Navy #0B1E42 background', async () => {
+    const screen = await render(
+      <CustomerOrdersScreen view={createCustomerListFixture('C-LIST-SUCCESS')} />,
+    );
+
+    const allFilterChip = screen.getByRole('button', { name: /Tất cả/ });
+    expect(allFilterChip.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ backgroundColor: '#0B1E42' }),
+      ]),
+    );
+    await screen.unmount();
+  });
+
   it('replaces the private list with permission-denied content', async () => {
     const screen = await render(
       <CustomerOrdersScreen view={createCustomerListFixture('C-LIST-PERMISSION')} />,
