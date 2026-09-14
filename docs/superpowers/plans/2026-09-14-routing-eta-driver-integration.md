@@ -1795,7 +1795,7 @@ git commit -m "feat(api): add StopProgressService and wire real computation into
 **Files:**
 - Modify: `apps/api/src/tracking/tracking.repository.ts:16-105` (`recordPointAtomically`)
 - Modify: `apps/api/src/tracking/tracking.service.ts` (`recordPoint`)
-- Modify: `apps/api/src/tracking/tracking.module.ts` (import `EtaService`/routing-eta module)
+- (Do NOT modify `tracking.module.ts` in this task — see Step 5.)
 - Test: `apps/api/src/tracking/tracking.repository.spec.ts` (existing file — extend)
 
 **Interfaces:**
@@ -1917,9 +1917,9 @@ export class TrackingService {
 
 Note: `MIN_RECOMPUTE_DISTANCE_M` is left as a named constant here but the distance check itself needs the previous point's coordinates, which `onPointRecorded` does not currently receive — extend the callback signature to also pass the previous point (query it right before the insert, inside the same tx) in this same step rather than deferring; do this by adding a `previousPoint` lookup via `tx.$queryRaw` (same geography-to-lat/lng pattern already used above in the file) before calling `onPointRecorded`, and skip the bump when movement is under `MIN_RECOMPUTE_DISTANCE_M` **and** `secondsSinceBump < MIN_RECOMPUTE_INTERVAL_S` **and** not expired — i.e. only bump when at least one of (interval elapsed, moved enough, estimate expired) is true, per spec §4.4.
 
-- [ ] **Step 5: Update `tracking.module.ts` to provide `EtaService`**
+- [ ] **Step 5: Do NOT wire `tracking.module.ts` in this task**
 
-Add `EtaService`, `OutboxRepository`, and the `MAP_PROVIDER` provider (import `RoutingEtaModule` — created in Task 13 — instead of re-registering providers by hand) to the module's `imports`/`providers` array.
+`RoutingEtaModule` does not exist yet (it is assembled in Task 13) — do not attempt to import it or hand-register `EtaService`/`OutboxRepository`/`MAP_PROVIDER` as ad-hoc providers here. `TrackingService`'s constructor now takes `EtaService` as a real dependency, but the module-level wiring that satisfies it at app-bootstrap time is Task 13 Step 5's job alone (`Update TrackingModule to import RoutingEtaModule`). This task's own tests (Step 6 below) construct `TrackingService`/`TrackingRepository` directly with a mocked `EtaService`, so they do not depend on real DI wiring and will pass without touching `tracking.module.ts`.
 
 - [ ] **Step 6: Run test to verify it passes**
 
@@ -2126,7 +2126,7 @@ function toEstimateView(row: EstimateRow | null, now: Date) {
 
 Run again — expect PASS, 2/2. (`GPS_STALE_AFTER_S` is defined for parity with spec §4.3 and used once GPS-point join is added — leave the constant in place even though this mapper's tests don't exercise it yet, so Task 16's Driver contract types match the field name exactly.)
 
-- [ ] **Step 5: Write the controller (no separate test — covered by e2e in Task 13)**
+- [ ] **Step 5: Write the controller (its DI wiring is smoke-tested by the `RoutingEtaModule` boot test added in Task 13 Step 6 — this task does not add a redundant controller-level test)**
 
 ```ts
 import { Controller, Get, Param, UseFilters, UseGuards } from '@nestjs/common';
@@ -2556,6 +2556,7 @@ git commit -m "feat(realtime): add route-eta socket events, retire unused legacy
 - Modify: `apps/api/src/maps/maps.module.ts` (export `MAP_PROVIDER`)
 - Modify: `apps/api/src/app.module.ts`
 - Test: `apps/api/src/routing-eta/outbox-notify.publisher.spec.ts`
+- Test: `apps/api/test/routing-eta-module.e2e-spec.ts` (module-boot smoke test — see Step 6)
 
 **Interfaces:**
 - Produces: `OutboxNotifyPublisher.runOnce(): Promise<number>` — claims `ROUTE_ETA_UPDATED`/`ROUTE_UPDATED` outbox rows and calls `RouteEtaRealtimeEmitter`.
@@ -2702,8 +2703,39 @@ Add `RoutingEtaModule` to `AppModule`'s `imports`. In `maps.module.ts`, add `MAP
 
 - [ ] **Step 5: Update `TrackingModule` to import `RoutingEtaModule`** (finishing Task 9's wiring)
 
-- [ ] **Step 6: Run full backend suite**
+- [ ] **Step 6: Add a real DI-boot smoke test, then run the full backend suite**
 
+Unit tests throughout Tasks 2-12 all construct services with manually-provided mocked dependencies — none of them exercise real NestJS module wiring, so a missing export/import (e.g. `MAP_PROVIDER` not exported from `MapsModule`, or `TrackingModule` not importing `RoutingEtaModule`) would not be caught until here. Add one boot-only e2e spec, following this repo's existing `apps/api/test/*.e2e-spec.ts` convention:
+
+```ts
+// apps/api/test/routing-eta-module.e2e-spec.ts
+import { Test } from '@nestjs/testing';
+import { AppModule } from '../src/app.module.js';
+import { RouteEtaController } from '../src/routing-eta/route-eta.controller.js';
+import { StopProgressController } from '../src/routing-eta/stop-progress.controller.js';
+import { TrackingGateway } from '../src/tracking/tracking.gateway.js';
+
+describe('RoutingEtaModule — DI boot smoke test', () => {
+  it('resolves the full module graph without missing providers', async () => {
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+    expect(moduleRef.get(RouteEtaController)).toBeDefined();
+    expect(moduleRef.get(StopProgressController)).toBeDefined();
+    expect(moduleRef.get(TrackingGateway)).toBeDefined();
+
+    await moduleRef.close();
+  });
+});
+```
+
+Run it with whatever DB/env setup `apps/api/test/*.e2e-spec.ts` already requires in this repo (check an existing e2e spec, e.g. `src/orders/order-lifecycle.e2e-spec.ts`, for the exact test-DB bootstrap pattern — reuse it verbatim, do not invent a new one):
+
+```bash
+pnpm --filter api test:e2e -- test/routing-eta-module.e2e-spec.ts
+```
+Expected: PASS — this is the one place in the whole plan that proves `TrackingModule` actually resolves `RouteEtaRealtimeEmitterImpl` (Task 12) and `EtaService` (Task 9) at runtime, not just at the type level.
+
+Then run the rest:
 ```bash
 pnpm --filter api test
 pnpm --filter api typecheck
