@@ -28,6 +28,21 @@ jest.mock('react-native-qrcode-svg', () => {
   };
 });
 
+const mockGet = jest.fn<any>();
+const mockPost = jest.fn<any>();
+
+jest.mock('@leopard/mobile-core', () => {
+  const actual = jest.requireActual('@leopard/mobile-core') as any;
+  return {
+    ...actual,
+    httpClient: {
+      ...actual.httpClient,
+      get: (...args: any[]) => mockGet(...args),
+      post: (...args: any[]) => mockPost(...args),
+    },
+  };
+});
+
 import CustomerDeliveriesScreen from '../../../app/customer/deliveries';
 import { httpClient } from '@leopard/mobile-core';
 import { OrderChatScreen } from './chat/OrderChatScreen';
@@ -106,15 +121,34 @@ describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
 
   describe('OrderChatScreen (Màn 13 - Trò chuyện trong chuyến)', () => {
     it('renders driver info, call button, message bubbles, and quick reply chips', async () => {
+      mockGet.mockResolvedValueOnce([
+        {
+          id: 'msg-1',
+          orderId: 'LP-260815-001',
+          senderId: 'driver-1',
+          body: 'Chào bạn, mình đang trên đường qua kho',
+          createdAt: new Date().toISOString(),
+          senderRole: 'DRIVER',
+        },
+        {
+          id: 'msg-2',
+          orderId: 'LP-260815-001',
+          senderId: 'customer-1',
+          body: 'Dạ vâng, hàng đã đóng gói sẵn',
+          createdAt: new Date().toISOString(),
+          senderRole: 'CUSTOMER',
+        },
+      ]);
+
       const screen = await render(<OrderChatScreen />);
 
       expect(screen.getByText('Nguyễn Văn Hùng')).toBeTruthy();
       expect(screen.getByText('59C-882.14')).toBeTruthy();
       expect(screen.getByLabelText('Gọi điện tài xế')).toBeTruthy();
 
-      // Message bubbles
-      expect(screen.getByText(/Chào bạn, mình đang trên đường qua kho/)).toBeTruthy();
-      expect(screen.getByText(/Dạ vâng, hàng đã đóng gói sẵn/)).toBeTruthy();
+      // Message bubbles from API response
+      expect(await screen.findByText(/Chào bạn, mình đang trên đường qua kho/)).toBeTruthy();
+      expect(await screen.findByText(/Dạ vâng, hàng đã đóng gói sẵn/)).toBeTruthy();
 
       // Quick suggestions
       expect(screen.getByText('Tôi đã đến điểm bốc')).toBeTruthy();

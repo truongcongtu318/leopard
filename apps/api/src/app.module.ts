@@ -22,9 +22,10 @@ import { PromotionsModule } from './promotions/promotions.module.js';
 import { AddressesModule } from './addresses/addresses.module.js';
 import { ReviewsModule } from './reviews/reviews.module.js';
 import { ReportsModule } from './reports/reports.module.js';
+import { ChatModule } from './chat/chat.module.js';
 
 @Module({
-  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, MediaModule, NotificationsModule, InvoicesModule, PaymentsModule, FleetsModule, AdminModule, UsersModule, PromotionsModule, AddressesModule, ReviewsModule, ReportsModule],
+  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, MediaModule, NotificationsModule, InvoicesModule, PaymentsModule, FleetsModule, AdminModule, UsersModule, PromotionsModule, AddressesModule, ReviewsModule, ReportsModule, ChatModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
