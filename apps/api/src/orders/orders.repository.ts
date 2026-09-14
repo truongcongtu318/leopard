@@ -25,6 +25,15 @@ export interface OrderWithRelations extends Order {
   stops: Array<OrderStop & { lat: number; lng: number }>;
   statusHistory: OrderStatusHistory[];
   mediaObjects?: MediaObject[];
+  driver?: {
+    id: string;
+    name: string | null;
+    phone: string | null;
+    driverProfile: {
+      licensePlate: string | null;
+      vehicleType: string | null;
+    } | null;
+  } | null;
 }
 
 @Injectable()
@@ -162,6 +171,19 @@ export class OrdersRepository {
       include: {
         statusHistory: { orderBy: { createdAt: 'desc' } },
         mediaObjects: true,
+        driver: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            driverProfile: {
+              select: {
+                licensePlate: true,
+                vehicleType: true,
+              },
+            },
+          },
+        },
       },
     });
 

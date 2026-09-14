@@ -200,14 +200,17 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
   const distanceRemainingKm = Math.min(rawDistanceRemainingKm ?? distanceTotalKm, distanceTotalKm);
   const etaMinutes = Math.max(1, Math.round(order.etaDurationSeconds / 60));
 
+  const assignedDriver = order.assignedDriver ?? null;
+  const driverName =
+    assignedDriver?.name?.trim() || getDriverLabel(order.tracking) || 'Đang điều phối';
+
   return (
     <RealtimeTrackingScreen
       driver={{
-        name: getDriverLabel(order.tracking),
-        rating: 4.9,
-        totalTrips: 342,
-        vehiclePlate: '59C-882.14',
-        vehicleType: 'Xe tải',
+        name: driverName,
+        ...(assignedDriver?.phone ? { phone: assignedDriver.phone } : {}),
+        ...(assignedDriver?.licensePlate ? { vehiclePlate: assignedDriver.licensePlate } : {}),
+        ...(assignedDriver?.vehicleType ? { vehicleType: assignedDriver.vehicleType } : {}),
       }}
       onBack={() => router.back()}
       onShowVietQR={() => router.push(`/customer/orders/${order.id}`)}

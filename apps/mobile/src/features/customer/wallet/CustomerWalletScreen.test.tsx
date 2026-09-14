@@ -1,144 +1,317 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render } from '@testing-library/react-native';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import React from 'react';
 
+import type { CustomerListView } from '../orders/model';
+import type { CustomerOrdersPort } from '../orders/port';
 import { CustomerWalletScreen } from './CustomerWalletScreen';
+
+const mockPush = jest.fn();
+
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush, replace: jest.fn() }),
+}));
+
+async function renderWithClient(ui: React.ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  });
+  const view = await render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return { ...view, client };
+}
 
 describe('CustomerWalletScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
   });
 
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+  const mockOrdersView: CustomerListView = {
+    scenarioId: 'C-LIST-SUCCESS',
+    kind: 'content',
+    contentState: 'success',
+    notice: null,
+    orders: [
+      {
+        id: 'order-001',
+        reference: 'LP-260905-001',
+        status: 'IN_TRANSIT',
+        route: {
+          origin: { id: 'p1', label: 'Kho A' },
+          stops: [],
+          destination: { id: 'd1', label: 'Kho B' },
+          distanceLabel: '10 km',
+        },
+        etaLabel: '20 phút',
+        priceLabel: '480.000 ₫',
+        updatedAtLabel: '14:30 · 05/09/2026',
+      },
+      {
+        id: 'order-002',
+        reference: 'LP-260905-002',
+        status: 'DELIVERED',
+        route: {
+          origin: { id: 'p2', label: 'Kho C' },
+          stops: [],
+          destination: { id: 'd2', label: 'Kho D' },
+          distanceLabel: '15 km',
+        },
+        etaLabel: 'Đã hoàn tất',
+        priceLabel: '350.000 ₫',
+        updatedAtLabel: '09:15 · 05/09/2026',
+      },
+      {
+        id: 'order-003',
+        reference: 'LP-260905-003',
+        status: 'REQUESTED',
+        route: {
+          origin: { id: 'p3', label: 'Kho E' },
+          stops: [],
+          destination: { id: 'd3', label: 'Kho F' },
+          distanceLabel: '5 km',
+        },
+        etaLabel: '10 phút',
+        priceLabel: '120.000 ₫',
+        updatedAtLabel: '16:45 · 04/09/2026',
+      },
+      {
+        id: 'order-004',
+        reference: 'LP-260905-004',
+        status: 'CANCELLED',
+        route: {
+          origin: { id: 'p4', label: 'Kho G' },
+          stops: [],
+          destination: { id: 'd4', label: 'Kho H' },
+          distanceLabel: '7 km',
+        },
+        etaLabel: 'Đã hủy',
+        priceLabel: '200.000 ₫',
+        updatedAtLabel: '11:20 · 04/09/2026',
+      },
+    ],
+    selectedFilter: 'ALL',
+    resultLabel: '4 đơn hàng',
+    canLoadMore: false,
+    isLoadingMore: false,
+  };
+
+  const mockOrdersPort: CustomerOrdersPort = {
+    getOrdersView: jest.fn(async () => mockOrdersView),
+    getCreateView: jest.fn(async () => ({}) as any),
+    getOrderDetailView: jest.fn(async () => ({}) as any),
+    searchAddress: jest.fn(async () => []),
+    estimateOrder: jest.fn(async () => ({}) as any),
+    createOrder: jest.fn(async () => ({}) as any),
+    executeIntent: jest.fn(async () => ({}) as any),
+  };
+
+  const mockFetchPaymentsForOrder = jest.fn(async (orderId: string) => {
+    if (orderId === 'order-001') {
+      return [
+        {
+          id: 'pi-001',
+          orderId: 'order-001',
+          status: 'PAID_MANUAL',
+          amountVnd: 480000,
+        },
+      ];
+    }
+    if (orderId === 'order-002') {
+      return [
+        {
+          id: 'pi-002',
+          orderId: 'order-002',
+          status: 'SUCCEEDED',
+          amountVnd: 350000,
+        },
+      ];
+    }
+    if (orderId === 'order-003') {
+      return [
+        {
+          id: 'pi-003',
+          orderId: 'order-003',
+          status: 'UNPAID',
+          amountVnd: 120000,
+        },
+      ];
+    }
+    if (orderId === 'order-004') {
+      return [
+        {
+          id: 'pi-004',
+          orderId: 'order-004',
+          status: 'REFUNDED',
+          amountVnd: 200000,
+        },
+      ];
+    }
+    return [];
   });
 
+  it('renders real escrow card with real total, and does NOT render fake wallet elements', async () => {
+    const screen = await renderWithClient(
+      <CustomerWalletScreen
+        fetchPaymentsForOrder={mockFetchPaymentsForOrder}
+        ordersPort={mockOrdersPort}
+      />,
+    );
 
-  it('renders wallet card with balance, brand pill, security badge, and action buttons', async () => {
-    const screen = await render(<CustomerWalletScreen />);
+    // Header & Escrow pool card
+    expect(screen.getByText('Lịch sử ký quỹ & thanh toán')).toBeTruthy();
+    expect(screen.getByText('Ký quỹ đảm bảo LEOPARD')).toBeTruthy();
+    expect(screen.getByText('Bảo đảm 100%')).toBeTruthy();
+    expect(screen.getByText('TỔNG ĐÃ KÝ QUỸ THEO ĐƠN')).toBeTruthy();
 
-    expect(screen.getByText('Ví & Thanh toán')).toBeTruthy();
-    expect(screen.getByText('Ví VietQR LEOPARD')).toBeTruthy();
-    expect(screen.getByText('Bảo mật 100%')).toBeTruthy();
-    expect(screen.getByText('SỐ DƯ KHẢ DỤNG')).toBeTruthy();
-    expect(screen.getByText('+ Nạp tiền')).toBeTruthy();
-    expect(screen.getByText('Quét QR')).toBeTruthy();
-    expect(screen.getByText('Rút tiền')).toBeTruthy();
-    expect(screen.getByText('PHƯƠNG THỨC LIÊN KẾT')).toBeTruthy();
-    expect(screen.getByText('LỊCH SỬ GIAO DỊCH GẦN ĐÂY')).toBeTruthy();
-
-    await screen.unmount();
-  });
-
-  it('toggles balance visibility when eye icon is pressed', async () => {
-    const screen = await render(<CustomerWalletScreen />);
-
-    // Initially, balance is visible with 1.250.000 ₫
-    expect(screen.getByText(/1\.250\.000/)).toBeTruthy();
-
-    // Press eye toggle to hide balance
-    const hideBtn = screen.getByLabelText('Ẩn số dư');
-    await fireEvent.press(hideBtn);
-
-    // Balance masked
-    expect(screen.getByText('•••••••• ₫')).toBeTruthy();
+    // Verify fake wallet elements are GONE
+    expect(screen.queryByText('Ví VietQR LEOPARD')).toBeNull();
+    expect(screen.queryByText('+ Nạp tiền')).toBeNull();
+    expect(screen.queryByText('Rút tiền')).toBeNull();
+    expect(screen.queryByText('•••• 8839')).toBeNull();
     expect(screen.queryByText(/1\.250\.000/)).toBeNull();
 
-    // Press eye toggle to show balance again
-    const showBtn = screen.getByLabelText('Hiện số dư');
+    // Total escrowed: 480.000 (HELD) + 350.000 (SETTLED) = 830.000 ₫
+    await waitFor(() => {
+      expect(screen.getByText('830.000 ₫')).toBeTruthy();
+      expect(screen.getByText('4 giao dịch đơn')).toBeTruthy();
+    });
+
+    await screen.unmount();
+    screen.client.clear();
+  });
+
+  it('toggles total escrow amount visibility with eye button', async () => {
+    const screen = await renderWithClient(
+      <CustomerWalletScreen
+        fetchPaymentsForOrder={mockFetchPaymentsForOrder}
+        ordersPort={mockOrdersPort}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('830.000 ₫')).toBeTruthy();
+    });
+
+    const hideBtn = screen.getByLabelText('Ẩn số tiền');
+    await fireEvent.press(hideBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('•••••••• ₫')).toBeTruthy();
+      expect(screen.queryByText('830.000 ₫')).toBeNull();
+    });
+
+    const showBtn = screen.getByLabelText('Hiện số tiền');
     await fireEvent.press(showBtn);
 
-    expect(screen.getByText(/1\.250\.000/)).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText('830.000 ₫')).toBeTruthy();
+    });
 
     await screen.unmount();
+    screen.client.clear();
   });
 
-  it('opens top-up section and selects preset amounts', async () => {
-    const screen = await render(<CustomerWalletScreen />);
+  it('renders real order escrows with correct status labels', async () => {
+    const screen = await renderWithClient(
+      <CustomerWalletScreen
+        fetchPaymentsForOrder={mockFetchPaymentsForOrder}
+        ordersPort={mockOrdersPort}
+      />,
+    );
 
-    // Click + Nạp tiền
-    const topupBtn = screen.getByLabelText('+ Nạp tiền');
-    await fireEvent.press(topupBtn);
+    await waitFor(() => {
+      expect(screen.getByText('LP-260905-001')).toBeTruthy();
+      expect(screen.getByText('LP-260905-002')).toBeTruthy();
+      expect(screen.getByText('LP-260905-003')).toBeTruthy();
+      expect(screen.getByText('LP-260905-004')).toBeTruthy();
+    });
 
-    // Should display presets section
-    expect(screen.getByText('CHỌN SỐ TIỀN NẠP NHANH')).toBeTruthy();
-    expect(screen.getByText('Phổ biến')).toBeTruthy();
-    expect(screen.getByText('Khuyên dùng')).toBeTruthy();
-
-    // Select 500,000 preset
-    const preset500k = screen.getByLabelText(/500\.000/);
-    await fireEvent.press(preset500k);
-
-    // Confirmation button reflects selected 500,000
-    expect(screen.getByRole('button', { name: /Tạo mã VietQR cho.*500\.000/ })).toBeTruthy();
+    expect(screen.getByText('ĐÃ KÝ QUỸ')).toBeTruthy();
+    expect(screen.getByText('ĐÃ HOÀN TẤT')).toBeTruthy();
+    expect(screen.getByText('CHỜ THANH TOÁN')).toBeTruthy();
+    expect(screen.getByText('HOÀN CỌC')).toBeTruthy();
 
     await screen.unmount();
+    screen.client.clear();
   });
 
-  it('generates VietQR code and supports copy-to-clipboard interactions', async () => {
-    const screen = await render(<CustomerWalletScreen />);
+  it('navigates to checkout when "Thanh toán ngay" button is pressed on unpaid escrow', async () => {
+    const screen = await renderWithClient(
+      <CustomerWalletScreen
+        fetchPaymentsForOrder={mockFetchPaymentsForOrder}
+        ordersPort={mockOrdersPort}
+      />,
+    );
 
-    // Open Topup
-    await fireEvent.press(screen.getByLabelText('+ Nạp tiền'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Thanh toán ngay cho đơn LP-260905-003')).toBeTruthy();
+    });
 
-    // Confirm topup with default 200k
-    const confirmBtn = screen.getByRole('button', { name: /Tạo mã VietQR cho/ });
-    await fireEvent.press(confirmBtn);
+    const payBtn = screen.getByLabelText('Thanh toán ngay cho đơn LP-260905-003');
+    await fireEvent.press(payBtn);
 
-    // VietQR view is now active
-    expect(screen.getByText('MÃ THANH TOÁN VIETQR PRO')).toBeTruthy();
-    expect(screen.getByText('NAPAS 24/7')).toBeTruthy();
-    expect(screen.getByText('Vietcombank (VCB)')).toBeTruthy();
-    expect(screen.getByText('0900000001')).toBeTruthy();
-    expect(screen.getByText('LEOPARD TOPUP 0900000001')).toBeTruthy();
-
-    // Test copy account number
-    const copyAccBtn = screen.getByLabelText('Sao chép số tài khoản');
-    await fireEvent.press(copyAccBtn);
-    expect(screen.getByText('Đã chép')).toBeTruthy();
-
-    // Test complete top-up: 1,250,000 + 200,000 = 1,450,000
-    const completeBtn = screen.getByRole('button', { name: 'Hoàn tất nạp tiền' });
-    await fireEvent.press(completeBtn);
-
-    // Modal closes and balance is updated
-    expect(screen.queryByText('MÃ THANH TOÁN VIETQR PRO')).toBeNull();
-    expect(screen.getByText(/1\.450\.000/)).toBeTruthy();
+    expect(mockPush).toHaveBeenCalledWith('/customer/orders/checkout/order-003');
 
     await screen.unmount();
+    screen.client.clear();
   });
 
-  it('filters transactions by tab (All, Nạp tiền, Thanh toán, Hoàn tiền)', async () => {
-    const screen = await render(<CustomerWalletScreen />);
+  it('filters escrow items by tabs', async () => {
+    const screen = await renderWithClient(
+      <CustomerWalletScreen
+        fetchPaymentsForOrder={mockFetchPaymentsForOrder}
+        ordersPort={mockOrdersPort}
+      />,
+    );
 
-    // All transactions initially shown
-    expect(screen.getByText('Thanh toán cước đơn VLXD Minh Khang')).toBeTruthy();
-    expect(screen.getByText('Nạp tiền ví VietQR qua MB Bank')).toBeTruthy();
-    expect(screen.getByText('Hoàn tiền cước đơn hủy lịch xuất kho')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText('LP-260905-001')).toBeTruthy();
+    });
 
-    // Filter by Nạp tiền
-    await fireEvent.press(screen.getByLabelText('Nạp tiền'));
-    expect(screen.getByText('Nạp tiền ví VietQR qua MB Bank')).toBeTruthy();
-    expect(screen.queryByText('Thanh toán cước đơn VLXD Minh Khang')).toBeNull();
-    expect(screen.queryByText('Hoàn tiền cước đơn hủy lịch xuất kho')).toBeNull();
+    // Filter by Chờ thanh toán
+    await fireEvent.press(screen.getByLabelText('Chờ thanh toán'));
+    await waitFor(() => {
+      expect(screen.getByText('LP-260905-003')).toBeTruthy();
+      expect(screen.queryByText('LP-260905-001')).toBeNull();
+      expect(screen.queryByText('LP-260905-002')).toBeNull();
+    });
 
-    // Filter by Hoàn tiền
-    await fireEvent.press(screen.getByLabelText('Hoàn tiền'));
-    expect(screen.getByText('Hoàn tiền cước đơn hủy lịch xuất kho')).toBeTruthy();
-    expect(screen.queryByText('Nạp tiền ví VietQR qua MB Bank')).toBeNull();
-    expect(screen.queryByText('Thanh toán cước đơn VLXD Minh Khang')).toBeNull();
+    // Filter by Đã ký quỹ
+    await fireEvent.press(screen.getByLabelText('Đã ký quỹ'));
+    await waitFor(() => {
+      expect(screen.getByText('LP-260905-001')).toBeTruthy();
+      expect(screen.queryByText('LP-260905-003')).toBeNull();
+    });
 
-    // Filter by Thanh toán
-    await fireEvent.press(screen.getByLabelText('Thanh toán'));
-    expect(screen.getByText('Thanh toán cước đơn VLXD Minh Khang')).toBeTruthy();
-    expect(screen.queryByText('Nạp tiền ví VietQR qua MB Bank')).toBeNull();
+    // Filter by Hoàn tất
+    await fireEvent.press(screen.getByLabelText('Hoàn tất'));
+    await waitFor(() => {
+      expect(screen.getByText('LP-260905-002')).toBeTruthy();
+      expect(screen.queryByText('LP-260905-001')).toBeNull();
+    });
+
+    // Filter by Hoàn cọc
+    await fireEvent.press(screen.getByLabelText('Hoàn cọc'));
+    await waitFor(() => {
+      expect(screen.getByText('LP-260905-004')).toBeTruthy();
+      expect(screen.queryByText('LP-260905-002')).toBeNull();
+    });
 
     // Filter back to Tất cả
     await fireEvent.press(screen.getByLabelText('Tất cả'));
-    expect(screen.getByText('Thanh toán cước đơn VLXD Minh Khang')).toBeTruthy();
-    expect(screen.getByText('Nạp tiền ví VietQR qua MB Bank')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText('LP-260905-001')).toBeTruthy();
+      expect(screen.getByText('LP-260905-002')).toBeTruthy();
+      expect(screen.getByText('LP-260905-003')).toBeTruthy();
+      expect(screen.getByText('LP-260905-004')).toBeTruthy();
+    });
 
     await screen.unmount();
+    screen.client.clear();
   });
 });

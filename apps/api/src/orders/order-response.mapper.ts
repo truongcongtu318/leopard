@@ -18,10 +18,29 @@ export interface MappedOrderStatusHistoryResponse {
   createdAt: string;
 }
 
+export interface MappedAssignedDriverResponse {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  licensePlate: string | null;
+  vehicleType: string | null;
+}
+
+export interface OrderDriverInput {
+  id: string;
+  name?: string | null;
+  phone?: string | null;
+  driverProfile?: {
+    licensePlate?: string | null;
+    vehicleType?: string | null;
+  } | null;
+}
+
 export interface MappedOrderResponse {
   id: string;
   customerId: string;
   driverId: string | null;
+  assignedDriver?: MappedAssignedDriverResponse | null;
   status: string;
   routeSnapshot: unknown;
   providerSource: string | null;
@@ -46,12 +65,24 @@ export function mapOrderResponse(
     stops?: Array<OrderStop & { lat?: number; lng?: number }>;
     statusHistory?: OrderStatusHistory[];
     mediaObjects?: MediaObject[];
+    driver?: OrderDriverInput | null;
   },
 ): MappedOrderResponse {
+  const assignedDriver: MappedAssignedDriverResponse | null = order.driver
+    ? {
+        id: order.driver.id,
+        name: order.driver.name ?? null,
+        phone: order.driver.phone ?? null,
+        licensePlate: order.driver.driverProfile?.licensePlate ?? null,
+        vehicleType: order.driver.driverProfile?.vehicleType ?? null,
+      }
+    : null;
+
   return {
     id: order.id,
     customerId: order.customerId,
     driverId: order.driverId,
+    assignedDriver,
     status: order.status,
     routeSnapshot: order.routeSnapshot,
     providerSource: order.providerSource,

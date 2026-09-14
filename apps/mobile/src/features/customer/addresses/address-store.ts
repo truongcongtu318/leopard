@@ -1,3 +1,5 @@
+import { httpClient } from '@leopard/mobile-core/src/api/http-client';
+
 export interface SavedAddress {
   id: string;
   label: string;
@@ -75,21 +77,54 @@ export const addressStore = {
     return list.find((a) => a.isDefault) ?? list[0] ?? null;
   },
 
-  saveAddress(addr: Omit<SavedAddress, 'id'> & { id?: string }): SavedAddress {
-    const list = this.getAddresses();
-    const id = addr.id || `addr_${Date.now()}_${secureRandomIdSuffix(8)}`;
-    const newAddress: SavedAddress = {
-      ...addr,
-      id,
-    };
+  async fetchAddresses(): Promise<SavedAddress[]> {
+    try {
+      const remote = await httpClient.get<any[]>('/users/me/addresses');
+      if (Array.isArray(remote)) {
+        const cached = this.getAddresses();
+        const cachedMap = new Map(cached.map((a) => [a.id, a]));
+        const mapped: SavedAddress[] = remote.map((item: any) => {
+          const local = cachedMap.get(item.id);
+          return {
+            id: item.id,
+            label: item.label,
+            address: item.address,
+            latitude: typeof item.latitude === 'number' ? item.latitude : local?.latitude,
+            longitude: typeof item.longitude === 'number' ? item.longitude : local?.longitude,
+            isDefault: Boolean(item.isDefault),
+            contactName: item.contactName || local?.contactName || 'Người nhận',
+            contactPhone: item.contactPhone || local?.contactPhone || '0900000000',
+            category: item.category || local?.category || 'OTHER',
+          };
+        });
+        inMemoryAddresses = mapped;
+        const def = mapped.find((a) => a.isDefault);
+        inMemoryDefaultId = def ? def.id : mapped[0]?.id ?? null;
+        if (isBrowser()) {
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
+            if (inMemoryDefaultId) {
+              window.localStorage.setItem(DEFAULT_ADDR_KEY, inMemoryDefaultId);
+            }
+          } catch {}
+        }
+        return mapped;
+      }
+    } catch {
+      // offline fallback to local cache
+    }
+    return this.getAddresses();
+  },
 
+  persistLocal(newAddress: SavedAddress): void {
+    const list = this.getAddresses();
     let updatedList: SavedAddress[];
     if (newAddress.isDefault) {
       updatedList = list.map((a) => ({ ...a, isDefault: false }));
       updatedList = [newAddress, ...updatedList];
-      inMemoryDefaultId = id;
+      inMemoryDefaultId = newAddress.id;
     } else {
-      updatedList = [newAddress, ...list.filter((a) => a.id !== id)];
+      updatedList = [newAddress, ...list.filter((a) => a.id !== newAddress.id)];
     }
 
     inMemoryAddresses = updatedList;
@@ -98,36 +133,32 @@ export const addressStore = {
       try {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
         if (newAddress.isDefault) {
-          window.localStorage.setItem(DEFAULT_ADDR_KEY, id);
+          window.localStorage.setItem(DEFAULT_ADDR_KEY, newAddress.id);
         }
       } catch {
         // ignore storage quota error
       }
     }
-
-    return newAddress;
   },
 
-  setDefaultAddress(id: string): void {
+  replaceLocal(oldId: string, item: SavedAddress): void {
     const list = this.getAddresses();
-    const updatedList = list.map((a) => ({
-      ...a,
-      isDefault: a.id === id,
-    }));
+    const updatedList = list.map((a) => (a.id === oldId ? item : a));
     inMemoryAddresses = updatedList;
-    inMemoryDefaultId = id;
-
+    if (inMemoryDefaultId === oldId) {
+      inMemoryDefaultId = item.id;
+    }
     if (isBrowser()) {
       try {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
-        window.localStorage.setItem(DEFAULT_ADDR_KEY, id);
-      } catch {
-        // ignore
-      }
+        if (item.isDefault) {
+          window.localStorage.setItem(DEFAULT_ADDR_KEY, item.id);
+        }
+      } catch {}
     }
   },
 
-  deleteAddress(id: string): void {
+  deleteLocal(id: string): void {
     const list = this.getAddresses();
     const updatedList = list.filter((a) => a.id !== id);
     inMemoryAddresses = updatedList;
@@ -147,6 +178,79 @@ export const addressStore = {
       } catch {
         // ignore
       }
+    }
+  },
+
+  setLocalDefault(id: string): void {
+    const list = this.getAddresses();
+    const updatedList = list.map((a) => ({
+      ...a,
+      isDefault: a.id === id,
+    }));
+    inMemoryAddresses = updatedList;
+    inMemoryDefaultId = id;
+
+    if (isBrowser()) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
+        window.localStorage.setItem(DEFAULT_ADDR_KEY, id);
+      } catch {
+        // ignore
+      }
+    }
+  },
+
+  async saveAddress(addr: Omit<SavedAddress, 'id'> & { id?: string }): Promise<SavedAddress> {
+    const tempId = addr.id || `addr_${Date.now()}_${secureRandomIdSuffix(8)}`;
+    const localAddress: SavedAddress = {
+      ...addr,
+      id: tempId,
+    };
+    this.persistLocal(localAddress);
+
+    try {
+      const res = await httpClient.post<any>('/users/me/addresses', {
+        label: addr.label,
+        address: addr.address,
+        latitude: addr.latitude ?? 10.7769,
+        longitude: addr.longitude ?? 106.7009,
+        isDefault: Boolean(addr.isDefault),
+      });
+      if (res && res.id) {
+        const realAddress: SavedAddress = {
+          ...localAddress,
+          id: res.id,
+          label: res.label ?? localAddress.label,
+          address: res.address ?? localAddress.address,
+          latitude: typeof res.latitude === 'number' ? res.latitude : localAddress.latitude,
+          longitude: typeof res.longitude === 'number' ? res.longitude : localAddress.longitude,
+          isDefault: typeof res.isDefault === 'boolean' ? res.isDefault : localAddress.isDefault,
+        };
+        this.replaceLocal(tempId, realAddress);
+        return realAddress;
+      }
+    } catch {
+      // Offline fallback: keep localAddress
+    }
+
+    return localAddress;
+  },
+
+  async setDefaultAddress(id: string): Promise<void> {
+    this.setLocalDefault(id);
+    try {
+      await httpClient.patch(`/users/me/addresses/${id}/default`);
+    } catch {
+      // offline fallback
+    }
+  },
+
+  async deleteAddress(id: string): Promise<void> {
+    this.deleteLocal(id);
+    try {
+      await httpClient.delete(`/users/me/addresses/${id}`);
+    } catch {
+      // offline fallback
     }
   },
 

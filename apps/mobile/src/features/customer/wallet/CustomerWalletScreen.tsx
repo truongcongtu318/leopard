@@ -1,112 +1,211 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography, Button, IconBank, IconCheck, IconChevron, IconCopy, IconCreditCard, IconEye, IconEyeOff, IconQrPayment, IconSecurityShield, IconTxPayment, IconTxRefund, IconTxTopup, IconWallet, ScreenScaffold } from '@leopard/mobile-core';
+import {
+  colors,
+  httpClient,
+  layout,
+  radius,
+  spacing,
+  IconCheck,
+  IconChevron,
+  IconCreditCard,
+  IconEye,
+  IconEyeOff,
+  IconQrPayment,
+  IconSecurityShield,
+  IconTxPayment,
+  IconTxRefund,
+  IconWallet,
+  ScreenScaffold,
+} from '@leopard/mobile-core';
+import { createCustomerHttpAdapter, formatOrderReference, formatVndPrice } from '../orders/adapter';
+import type { CustomerOrderListItemView } from '../orders/model';
+import type { CustomerOrdersPort } from '../orders/port';
 
-export type WalletTransaction = Readonly<{
+export type EscrowStatus = 'PENDING' | 'HELD' | 'REFUNDED' | 'SETTLED' | 'FAILED';
+
+export interface EscrowPaymentItem {
   id: string;
-  type: 'TOPUP' | 'PAYMENT' | 'REFUND';
-  title: string;
+  orderId: string;
+  orderReference: string;
   amount: number;
+  status: EscrowStatus;
+  statusLabel: string;
   createdAtLabel: string;
-  orderReference?: string;
-}>;
+  title: string;
+}
 
-const mockTransactions: readonly WalletTransaction[] = [
-  {
-    id: 'tx-001',
-    type: 'PAYMENT',
-    title: 'Thanh toán cước đơn VLXD Minh Khang',
-    amount: -480000,
-    createdAtLabel: 'Hôm nay, 14:30',
-    orderReference: 'LP-260905-001',
-  },
-  {
-    id: 'tx-002',
-    type: 'TOPUP',
-    title: 'Nạp tiền ví VietQR qua MB Bank',
-    amount: 2000000,
-    createdAtLabel: 'Hôm nay, 09:15',
-  },
-  {
-    id: 'tx-003',
-    type: 'PAYMENT',
-    title: 'Thanh toán cước xe tải chuyển đồ',
-    amount: -420000,
-    createdAtLabel: 'Hôm qua, 16:45',
-    orderReference: 'LP-260904-009',
-  },
-  {
-    id: 'tx-004',
-    type: 'REFUND',
-    title: 'Hoàn tiền cước đơn hủy lịch xuất kho',
-    amount: 350000,
-    createdAtLabel: 'Hôm qua, 11:20',
-    orderReference: 'LP-260904-004',
-  },
-  {
-    id: 'tx-005',
-    type: 'TOPUP',
-    title: 'Nạp tiền ví qua VietinBank',
-    amount: 1000000,
-    createdAtLabel: '02/09/2026',
-  },
-];
+export type EscrowFilterType = 'ALL' | 'PENDING' | 'HELD' | 'SETTLED' | 'REFUNDED';
 
-type FilterType = 'ALL' | 'TOPUP' | 'PAYMENT' | 'REFUND';
-
-const filterTabs: readonly Readonly<{ id: FilterType; label: string }>[] = [
+const filterTabs: readonly Readonly<{ id: EscrowFilterType; label: string }>[] = [
   { id: 'ALL', label: 'Tất cả' },
-  { id: 'TOPUP', label: 'Nạp tiền' },
-  { id: 'PAYMENT', label: 'Thanh toán' },
-  { id: 'REFUND', label: 'Hoàn tiền' },
+  { id: 'PENDING', label: 'Chờ thanh toán' },
+  { id: 'HELD', label: 'Đã ký quỹ' },
+  { id: 'SETTLED', label: 'Hoàn tất' },
+  { id: 'REFUNDED', label: 'Hoàn cọc' },
 ];
 
-const presets: readonly Readonly<{ amount: number; badge?: string }>[] = [
-  { amount: 100000 },
-  { amount: 200000, badge: 'Phổ biến' },
-  { amount: 500000, badge: 'Khuyên dùng' },
-  { amount: 1000000 },
-];
+export interface CustomerWalletScreenProps {
+  ordersPort?: CustomerOrdersPort;
+  fetchPaymentsForOrder?: (orderId: string) => Promise<PaymentIntentApiItem[]>;
+}
 
-export function CustomerWalletScreen() {
-  const [balance, setBalance] = useState(1250000);
+export interface PaymentIntentApiItem {
+  id: string;
+  orderId: string;
+  status: string;
+  amountVnd?: number;
+  amount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export function CustomerWalletScreen({
+  fetchPaymentsForOrder,
+  ordersPort,
+}: CustomerWalletScreenProps = {}) {
+  const router = useRouter();
+  const port = useMemo(() => ordersPort ?? createCustomerHttpAdapter(), [ordersPort]);
   const [showBalance, setShowBalance] = useState(true);
-  const [showTopupModal, setShowTopupModal] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<number | null>(200000);
-  const [showQR, setShowQR] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<FilterType>('ALL');
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<EscrowFilterType>('ALL');
 
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+  const {
+    data: escrowItems = [],
+    error,
+    isError,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['customer', 'wallet', 'escrows'],
+    queryFn: async () => {
+      const listView = await port.getOrdersView('ALL');
+      if (listView.kind !== 'content' || !listView.orders) {
+        return [];
+      }
 
-  const handleCopy = (field: string, text: string) => {
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
+      const orders = listView.orders;
 
-  const handleConfirmTopup = () => {
-    if (selectedPreset) {
-      setShowQR(true);
+      const itemsPerOrder = await Promise.all(
+        orders.map(async (order: CustomerOrderListItemView): Promise<EscrowPaymentItem[]> => {
+          let payments: PaymentIntentApiItem[] = [];
+          try {
+            if (fetchPaymentsForOrder) {
+              payments = await fetchPaymentsForOrder(order.id);
+            } else {
+              const res = await httpClient.get<PaymentIntentApiItem[]>(`/orders/${order.id}/payments`);
+              if (Array.isArray(res)) {
+                payments = res;
+              }
+            }
+          } catch {
+            payments = [];
+          }
+
+          if (payments.length === 0) {
+            // Suy diễn từ trạng thái order
+            const isDelivered = order.status === 'DELIVERED';
+            const isCancelled = order.status === 'CANCELLED';
+            const status: EscrowStatus = isDelivered ? 'SETTLED' : isCancelled ? 'REFUNDED' : 'PENDING';
+            const statusLabel = isDelivered
+              ? 'ĐÃ HOÀN TẤT'
+              : isCancelled
+                ? 'HOÀN CỌC'
+                : 'CHỜ THANH TOÁN';
+
+            const rawPrice = parseInt(order.priceLabel.replace(/\D/g, ''), 10) || 0;
+
+            return [
+              {
+                id: `order-fallback-${order.id}`,
+                orderId: order.id,
+                orderReference: order.reference || formatOrderReference(order),
+                amount: rawPrice,
+                status,
+                statusLabel,
+                createdAtLabel: order.updatedAtLabel || 'Gần đây',
+                title: `Ký quỹ đơn ${order.reference || formatOrderReference(order)}`,
+              },
+            ];
+          }
+
+          return payments.map((pi): EscrowPaymentItem => {
+            const rawStatus = (pi.status || '').toUpperCase();
+            let status: EscrowStatus = 'PENDING';
+            let statusLabel = 'CHỜ THANH TOÁN';
+
+            if (rawStatus === 'PAID_MANUAL' || rawStatus === 'SUCCEEDED' || rawStatus === 'COMPLETED') {
+              if (order.status === 'DELIVERED') {
+                status = 'SETTLED';
+                statusLabel = 'ĐÃ HOÀN TẤT';
+              } else {
+                status = 'HELD';
+                statusLabel = 'ĐÃ KÝ QUỸ';
+              }
+            } else if (rawStatus === 'REFUNDED' || order.status === 'CANCELLED') {
+              status = 'REFUNDED';
+              statusLabel = 'HOÀN CỌC';
+            } else if (rawStatus === 'FAILED') {
+              status = 'FAILED';
+              statusLabel = 'THẤT BẠI';
+            } else {
+              status = 'PENDING';
+              statusLabel = 'CHỜ THANH TOÁN';
+            }
+
+            const amount = pi.amountVnd ?? pi.amount ?? (parseInt(order.priceLabel.replace(/\D/g, ''), 10) || 0);
+
+            return {
+              id: pi.id,
+              orderId: order.id,
+              orderReference: order.reference || formatOrderReference(order),
+              amount,
+              status,
+              statusLabel,
+              createdAtLabel: order.updatedAtLabel || 'Gần đây',
+              title: `Ký quỹ đơn ${order.reference || formatOrderReference(order)}`,
+            };
+          });
+        }),
+      );
+
+      return itemsPerOrder.flat();
+    },
+  });
+
+  const totalEscrowed = useMemo(() => {
+    return escrowItems
+      .filter((item) => item.status === 'HELD' || item.status === 'SETTLED')
+      .reduce((sum, item) => sum + item.amount, 0);
+  }, [escrowItems]);
+
+  const filteredItems = useMemo(() => {
+    if (activeFilter === 'ALL') return escrowItems;
+    return escrowItems.filter((item) => item.status === activeFilter);
+  }, [escrowItems, activeFilter]);
+
+  const getStatusBadgeStyle = (status: EscrowStatus) => {
+    switch (status) {
+      case 'HELD':
+        return { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' };
+      case 'SETTLED':
+        return { bg: '#EFF6FF', text: '#2563EB', border: '#BFDBFE' };
+      case 'PENDING':
+        return { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' };
+      case 'REFUNDED':
+        return { bg: '#F5F3FF', text: '#7C3AED', border: '#DDD6FE' };
+      case 'FAILED':
+      default:
+        return { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA' };
     }
   };
-
-  const handleCompleteTopup = () => {
-    setBalance((prev) => prev + (selectedPreset || 0));
-    setShowQR(false);
-    setShowTopupModal(false);
-  };
-
-  const filteredTransactions = mockTransactions.filter((tx) => {
-    if (activeFilter === 'ALL') return true;
-    return tx.type === activeFilter;
-  });
 
   return (
     <ScreenScaffold
       hasFloatingNavBar
-      title="Ví & Thanh toán"
+      title="Lịch sử ký quỹ & thanh toán"
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -114,28 +213,28 @@ export function CustomerWalletScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* 1. Thẻ Số Dư Cao Cấp (Luxury Fintech Virtual Card) */}
+        {/* 1. Thẻ Tổng Ký Quỹ Thật (Escrow Pool Card) */}
         <View style={styles.balanceCard}>
           <View style={styles.cardTopRow}>
             <View style={styles.brandPill}>
               <View style={styles.pulseDot} />
               <IconWallet color="#F1F5F9" size={16} />
-              <Text style={styles.brandPillText}>Ví VietQR LEOPARD</Text>
+              <Text style={styles.brandPillText}>Ký quỹ đảm bảo LEOPARD</Text>
             </View>
             <View style={styles.securityBadge}>
               <IconSecurityShield color="#10B981" size={14} />
-              <Text style={styles.securityBadgeText}>Bảo mật 100%</Text>
+              <Text style={styles.securityBadgeText}>Bảo đảm 100%</Text>
             </View>
           </View>
 
           <View style={styles.balanceBody}>
-            <Text style={styles.balanceEyebrow}>SỐ DƯ KHẢ DỤNG</Text>
+            <Text style={styles.balanceEyebrow}>TỔNG ĐÃ KÝ QUỸ THEO ĐƠN</Text>
             <View style={styles.amountRow}>
               <Text style={styles.balanceAmount}>
-                {showBalance ? formatCurrency(balance) : '•••••••• ₫'}
+                {showBalance ? formatVndPrice(totalEscrowed) : '•••••••• ₫'}
               </Text>
               <Pressable
-                accessibilityLabel={showBalance ? 'Ẩn số dư' : 'Hiện số dư'}
+                accessibilityLabel={showBalance ? 'Ẩn số tiền' : 'Hiện số tiền'}
                 accessibilityRole="button"
                 onPress={() => setShowBalance(!showBalance)}
                 style={styles.eyeToggleBtn}
@@ -151,258 +250,8 @@ export function CustomerWalletScreen() {
 
           {/* Card Meta Footer */}
           <View style={styles.cardFooter}>
-            <Text style={styles.cardFooterNapas}>NAPAS 24/7 · VietQR</Text>
-            <Text style={styles.cardFooterNumber}>•••• 8839</Text>
-          </View>
-        </View>
-
-        {/* 2. Quick Action Dock (3 Nút Độc Lập Chuẩn Ngón Tay Cái) */}
-        <View style={styles.actionDock}>
-          <Pressable
-            accessibilityLabel="+ Nạp tiền"
-            accessibilityRole="button"
-            onPress={() => {
-              setShowTopupModal(!showTopupModal);
-              setShowQR(false);
-            }}
-            style={({ pressed }) => [
-              styles.dockBtnPrimary,
-              pressed ? styles.pressed : null,
-            ]}
-          >
-            <View style={styles.dockIconBoxPrimary}>
-              <IconTxTopup color="#FFFFFF" size={20} />
-            </View>
-            <Text style={styles.dockBtnPrimaryText}>+ Nạp tiền</Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityLabel="Quét VietQR"
-            accessibilityRole="button"
-            onPress={() => {
-              setShowTopupModal(true);
-              setShowQR(true);
-            }}
-            style={({ pressed }) => [
-              styles.dockBtnSecondary,
-              pressed ? styles.pressed : null,
-            ]}
-          >
-            <View style={styles.dockIconBoxSecondary}>
-              <IconQrPayment color="#0B1E42" size={20} />
-            </View>
-            <Text style={styles.dockBtnSecondaryText}>Quét QR</Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityLabel="Rút tiền"
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.dockBtnSecondary,
-              pressed ? styles.pressed : null,
-            ]}
-          >
-            <View style={styles.dockIconBoxMuted}>
-              <IconTxPayment color="#64748B" size={20} />
-            </View>
-            <Text style={styles.dockBtnMutedText}>Rút tiền</Text>
-          </Pressable>
-        </View>
-
-        {/* 2. Khối Chọn Mức Nạp Nhanh (Smart Topup Presets) */}
-        {showTopupModal && !showQR ? (
-          <View style={styles.topupCard}>
-            <View style={styles.cardHeaderRow}>
-              <Text style={styles.sectionLabel}>CHỌN SỐ TIỀN NẠP NHANH</Text>
-              <Pressable onPress={() => setShowTopupModal(false)}>
-                <Text style={styles.closeLinkText}>Đóng</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.presetGrid}>
-              {presets.map((item) => {
-                const selected = selectedPreset === item.amount;
-                return (
-                  <Pressable
-                    accessibilityLabel={formatCurrency(item.amount)}
-                    accessibilityRole="button"
-                    key={item.amount}
-                    onPress={() => setSelectedPreset(item.amount)}
-                    style={({ pressed }) => [
-                      styles.presetItem,
-                      selected ? styles.presetItemSelected : null,
-                      pressed ? styles.pressed : null,
-                    ]}
-                  >
-                    {item.badge ? (
-                      <View style={styles.presetBadge}>
-                        <Text style={styles.presetBadgeText}>{item.badge}</Text>
-                      </View>
-                    ) : null}
-                    <Text
-                      style={[
-                        styles.presetText,
-                        selected ? styles.presetTextSelected : null,
-                      ]}
-                    >
-                      {formatCurrency(item.amount)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {selectedPreset ? (
-              <Button
-                label={`Tạo mã VietQR cho ${formatCurrency(selectedPreset)}`}
-                onPress={handleConfirmTopup}
-                size="driver-primary"
-                variant="primary"
-              />
-            ) : null}
-          </View>
-        ) : null}
-
-        {/* 3. Khung Mã VietQR Pro (VietQR Pro Card) */}
-        {showTopupModal && showQR ? (
-          <View style={styles.qrCard}>
-            <View style={styles.cardHeaderRow}>
-              <Text style={styles.sectionLabel}>MÃ THANH TOÁN VIETQR PRO</Text>
-              <Pressable
-                onPress={() => {
-                  setShowQR(false);
-                  setShowTopupModal(false);
-                }}
-              >
-                <Text style={styles.closeLinkText}>Đóng</Text>
-              </Pressable>
-            </View>
-
-            {/* Khung Mã QR Chuẩn Vector */}
-            <View style={styles.qrCodeBox}>
-              <View style={styles.qrBadgeRow}>
-                <View style={styles.napasBadge}>
-                  <Text style={styles.napasBadgeText}>NAPAS 24/7</Text>
-                </View>
-                <View style={styles.vietqrBadge}>
-                  <Text style={styles.vietqrBadgeText}>VietQR</Text>
-                </View>
-              </View>
-
-              <View style={styles.qrVectorWrap}>
-                <IconQrPayment color="#0F172A" size={96} strokeWidth={2} />
-              </View>
-
-              <Text style={styles.qrCodeAmount}>
-                {formatCurrency(selectedPreset || 200000)}
-              </Text>
-            </View>
-
-            {/* Thông Tin Ngân Hàng & Sao Chép 1 Chạm */}
-            <View style={styles.bankDetailCard}>
-              <View style={styles.bankDetailRow}>
-                <Text style={styles.bankFieldLabel}>Ngân hàng thụ hưởng</Text>
-                <Text style={styles.bankFieldValue}>Vietcombank (VCB)</Text>
-              </View>
-
-              <View style={styles.bankDetailRow}>
-                <Text style={styles.bankFieldLabel}>Số tài khoản</Text>
-                <View style={styles.copyRow}>
-                  <Text style={styles.bankFieldValueBold}>0900000001</Text>
-                  <Pressable
-                    accessibilityLabel="Sao chép số tài khoản"
-                    accessibilityRole="button"
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    onPress={() => handleCopy('account', '0900000001')}
-                    style={styles.copyBtn}
-                  >
-                    {copiedField === 'account' ? (
-                      <>
-                        <IconCheck color="#059669" size={13} strokeWidth={2.5} />
-                        <Text style={[styles.copyBtnText, styles.copyBtnTextSuccess]}>Đã chép</Text>
-                      </>
-                    ) : (
-                      <>
-                        <IconCopy color="#0B1E42" size={14} />
-                        <Text style={styles.copyBtnText}>Sao chép</Text>
-                      </>
-                    )}
-                  </Pressable>
-                </View>
-              </View>
-
-              <View style={styles.bankDetailRow}>
-                <Text style={styles.bankFieldLabel}>Nội dung chuyển khoản</Text>
-                <View style={styles.copyRow}>
-                  <Text style={styles.bankFieldValueCode}>LEOPARD TOPUP 0900000001</Text>
-                  <Pressable
-                    accessibilityLabel="Sao chép nội dung chuyển khoản"
-                    accessibilityRole="button"
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    onPress={() => handleCopy('memo', 'LEOPARD TOPUP 0900000001')}
-                    style={styles.copyBtn}
-                  >
-                    {copiedField === 'memo' ? (
-                      <>
-                        <IconCheck color="#059669" size={13} strokeWidth={2.5} />
-                        <Text style={[styles.copyBtnText, styles.copyBtnTextSuccess]}>Đã chép</Text>
-                      </>
-                    ) : (
-                      <>
-                        <IconCopy color="#0B1E42" size={14} />
-                        <Text style={styles.copyBtnText}>Sao chép</Text>
-                      </>
-                    )}
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-
-            <Text style={styles.qrInstructions}>
-              Mở ứng dụng ngân hàng bất kỳ để quét mã. Tiền sẽ vào ví tự động sau 10-30 giây.
-            </Text>
-
-            <View style={styles.qrActionRow}>
-              <Button
-                label="Hoàn tất nạp tiền"
-                onPress={handleCompleteTopup}
-                size="driver-primary"
-                variant="primary"
-              />
-              <Button
-                label="Đóng"
-                onPress={() => {
-                  setShowQR(false);
-                  setShowTopupModal(false);
-                }}
-                variant="secondary"
-              />
-            </View>
-          </View>
-        ) : null}
-
-        {/* 4. Phương Thức Liên Kết */}
-        <View style={styles.methodsCard}>
-          <View style={styles.methodHeaderRow}>
-            <Text style={styles.sectionLabel}>PHƯƠNG THỨC LIÊN KẾT</Text>
-            <Text style={styles.manageLinkText}>Quản lý</Text>
-          </View>
-          <View style={styles.methodItem}>
-            <View style={styles.methodLeft}>
-              <View style={styles.methodIconBox}>
-                <IconBank color="#0B1E42" size={20} />
-              </View>
-              <View style={styles.methodTextCol}>
-                <View style={styles.methodNameRow}>
-                  <Text style={styles.methodName}>VietQR / Chuyển khoản tức thì</Text>
-                  <View style={styles.defaultBadge}>
-                    <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                  </View>
-                </View>
-                <Text style={styles.methodSub}>Miễn phí nạp & rút tiền 24/7</Text>
-              </View>
-            </View>
-            <IconChevron color="#94A3B8" direction="right" size="md" />
+            <Text style={styles.cardFooterNapas}>Thanh toán & Ký quỹ an toàn qua VietQR</Text>
+            <Text style={styles.cardFooterNumber}>{escrowItems.length} giao dịch đơn</Text>
           </View>
         </View>
 
@@ -453,13 +302,13 @@ export function CustomerWalletScreen() {
           </View>
         </View>
 
-        {/* 5. Lịch Sử Giao Dịch Gần Đây & Bộ Lọc */}
+        {/* 2. Lịch Sử Ký Quỹ & Thanh Toán Thật Theo Đơn */}
         <View style={styles.historySection}>
           <View style={styles.historyHeaderRow}>
-            <Text style={styles.sectionLabel}>LỊCH SỬ GIAO DỊCH GẦN ĐÂY</Text>
+            <Text style={styles.sectionLabel}>LỊCH SỬ KÝ QUỸ THEO ĐƠN</Text>
           </View>
 
-          {/* Thanh lọc phân loại giao dịch */}
+          {/* Thanh lọc phân loại trạng thái ký quỹ */}
           <View style={styles.filterTabsRow}>
             {filterTabs.map((tab) => {
               const active = activeFilter === tab.id;
@@ -477,9 +326,9 @@ export function CustomerWalletScreen() {
                 >
                   <Text
                     style={[
-                      styles.filterChipText,
-                      active ? styles.filterChipTextActive : null,
-                    ]}
+                    styles.filterChipText,
+                    active ? styles.filterChipTextActive : null,
+                  ]}
                   >
                     {tab.label}
                   </Text>
@@ -488,63 +337,115 @@ export function CustomerWalletScreen() {
             })}
           </View>
 
-          <View style={styles.historyList}>
-            {filteredTransactions.map((item) => {
-              const isPositive = item.amount > 0;
-              const isRefund = item.type === 'REFUND';
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color={colors.brand.primary} size="small" />
+              <Text style={styles.loadingText}>Đang tải lịch sử ký quỹ...</Text>
+            </View>
+          ) : isError ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>Không thể tải dữ liệu</Text>
+              <Text style={styles.emptySubtitle}>
+                {error instanceof Error ? error.message : 'Hãy thử lại sau'}
+              </Text>
+              <Pressable
+                accessibilityLabel="Thử lại"
+                accessibilityRole="button"
+                onPress={() => refetch()}
+                style={styles.retryBtn}
+              >
+                <Text style={styles.retryBtnText}>Thử lại</Text>
+              </Pressable>
+            </View>
+          ) : filteredItems.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>Chưa có giao dịch ký quỹ</Text>
+              <Text style={styles.emptySubtitle}>
+                Các khoản ký quỹ và thanh toán sẽ xuất hiện tại đây khi bạn tạo đơn.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.historyList}>
+              {filteredItems.map((item) => {
+                const isRefund = item.status === 'REFUNDED';
+                const badgeStyle = getStatusBadgeStyle(item.status);
+                const canPayNow = item.status === 'PENDING';
 
-              return (
-                <View key={item.id} style={styles.txRow}>
-                  <View style={styles.txLeft}>
-                    <View
-                      style={[
-                        styles.txIconBox,
-                        isPositive
-                          ? isRefund
-                            ? styles.txIconBoxRefund
-                            : styles.txIconBoxTopup
-                          : styles.txIconBoxPayment,
-                      ]}
-                    >
-                      {item.type === 'TOPUP' ? (
-                        <IconTxTopup color="#16A34A" size={18} />
-                      ) : isRefund ? (
-                        <IconTxRefund color="#16A34A" size={18} />
-                      ) : (
-                        <IconTxPayment color="#475569" size={18} />
-                      )}
-                    </View>
+                return (
+                  <View key={item.id} style={styles.txRow}>
+                    <View style={styles.txMainCol}>
+                      <View style={styles.txTopMetaRow}>
+                        <View
+                          style={[
+                            styles.txIconBox,
+                            isRefund ? styles.txIconBoxRefund : styles.txIconBoxPayment,
+                          ]}
+                        >
+                          {isRefund ? (
+                            <IconTxRefund color="#16A34A" size={18} />
+                          ) : (
+                            <IconTxPayment color="#475569" size={18} />
+                          )}
+                        </View>
 
-                    <View style={styles.txMeta}>
-                      <Text numberOfLines={1} style={styles.txTitle}>
-                        {item.title}
-                      </Text>
-                      <View style={styles.txSubRow}>
-                        <Text style={styles.txDate}>{item.createdAtLabel}</Text>
-                        {item.orderReference ? (
-                          <View style={styles.orderRefBadge}>
-                            <Text style={styles.orderRefBadgeText}>
-                              {item.orderReference}
+                        <View style={styles.txMeta}>
+                          <Text numberOfLines={1} style={styles.txTitle}>
+                            {item.title}
+                          </Text>
+                          <View style={styles.txSubRow}>
+                            <Text style={styles.txDate}>{item.createdAtLabel}</Text>
+                            <View style={styles.orderRefBadge}>
+                              <Text style={styles.orderRefBadgeText}>
+                                {item.orderReference}
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+
+                        <View style={styles.txAmountCol}>
+                          <Text style={styles.txAmount}>
+                            {formatVndPrice(item.amount)}
+                          </Text>
+                          <View
+                            style={[
+                              styles.statusBadge,
+                              {
+                                backgroundColor: badgeStyle.bg,
+                                borderColor: badgeStyle.border,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.statusBadgeText,
+                                { color: badgeStyle.text },
+                              ]}
+                            >
+                              {item.statusLabel}
                             </Text>
                           </View>
-                        ) : null}
+                        </View>
                       </View>
+
+                      {canPayNow ? (
+                        <View style={styles.txActionRow}>
+                          <Pressable
+                            accessibilityLabel={`Thanh toán ngay cho đơn ${item.orderReference}`}
+                            accessibilityRole="button"
+                            onPress={() => router.push(`/customer/orders/checkout/${item.orderId}`)}
+                            style={styles.payNowBtn}
+                          >
+                            <IconQrPayment color="#FFFFFF" size={14} />
+                            <Text style={styles.payNowBtnText}>Thanh toán ngay</Text>
+                          </Pressable>
+                        </View>
+                      ) : null}
                     </View>
                   </View>
-
-                  <Text
-                    style={[
-                      styles.txAmount,
-                      isPositive ? styles.txAmountPositive : styles.txAmountNegative,
-                    ]}
-                  >
-                    {isPositive ? '+' : ''}
-                    {formatCurrency(item.amount)}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+            </View>
+          )}
         </View>
       </ScrollView>
     </ScreenScaffold>
@@ -629,7 +530,7 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '800',
     letterSpacing: 0.5,
     fontVariant: ['tabular-nums'],
@@ -655,441 +556,262 @@ const styles = StyleSheet.create({
     color: '#E2E8F0',
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1.5,
+    letterSpacing: 0.5,
   },
 
-  /* Quick Action Dock */
-  actionDock: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  dockBtnPrimary: {
-    flex: 1.15,
-    backgroundColor: '#0B1E42',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  dockIconBoxPrimary: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dockBtnPrimaryText: {
-    color: '#FFFFFF',
-    fontSize: 12.5,
-    fontWeight: '700',
-  },
-  dockBtnSecondary: {
-    flex: 1,
+  /* B2B Credit Card */
+  creditCardOuter: {
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
     borderWidth: 1,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
-  },
-  dockIconBoxSecondary: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F0F4F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dockBtnSecondaryText: {
-    color: '#0F172A',
-    fontSize: 12.5,
-    fontWeight: '700',
-  },
-  dockIconBoxMuted: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dockBtnMutedText: {
-    color: '#64748B',
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-  topupCard: {
-    backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: radius.card,
-    borderWidth: 1,
-    gap: spacing.md,
-    padding: spacing.md,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  closeLinkText: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  presetGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  presetItem: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    borderWidth: 1.5,
-    flexBasis: '48%',
-    flexGrow: 1,
-    paddingVertical: 13,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  presetItemSelected: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
-  },
-  presetBadge: {
-    position: 'absolute',
-    top: -8,
-    right: 8,
-    backgroundColor: '#D97706',
-    borderRadius: radius.pill,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  presetBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9.5,
-    fontWeight: '800',
-  },
-  presetText: {
-    color: '#0F172A',
-    fontSize: 14.5,
-    fontWeight: '700',
-  },
-  presetTextSelected: {
-    color: '#0B1E42',
-    fontWeight: '800',
-  },
-  qrCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: radius.card,
-    borderWidth: 1,
-    gap: spacing.md,
-    padding: spacing.md,
-    shadowColor: '#0F172A',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
+    overflow: 'hidden',
   },
-  qrCodeBox: {
+  creditCardInner: {
+    padding: 16,
+    gap: 14,
+  },
+  creditHeaderRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
-  },
-  qrBadgeRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  napasBadge: {
-    backgroundColor: '#0B1E42',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  napasBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  vietqrBadge: {
-    backgroundColor: '#D97706',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  vietqrBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  qrVectorWrap: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
-  },
-  qrCodeAmount: {
-    color: '#0F172A',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  bankDetailCard: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 12,
-    gap: 8,
-  },
-  bankDetailRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  creditTitleWrap: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
-  bankFieldLabel: {
-    color: '#64748B',
-    fontSize: 12,
+  creditIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  bankFieldValue: {
-    color: '#0F172A',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  bankFieldValueBold: {
-    color: '#0F172A',
+  creditTitle: {
     fontSize: 14,
     fontWeight: '700',
-  },
-  bankFieldValueCode: {
     color: '#0B1E42',
-    fontSize: 12.5,
-    fontWeight: '700',
   },
-  copyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  copyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#F0F4F9',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  copyBtnText: {
-    color: '#0B1E42',
+  creditSubtitle: {
     fontSize: 11,
-    fontWeight: '700',
+    color: '#64748B',
+    marginTop: 1,
   },
-  copyBtnTextSuccess: {
+  creditStatusBadge: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  creditStatusText: {
+    fontSize: 10.5,
+    fontWeight: '700',
     color: '#059669',
   },
-  qrInstructions: {
-    color: '#64748B',
-    fontSize: 12.5,
-    lineHeight: 18,
-    textAlign: 'center',
+  creditMetricsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  qrActionRow: {
-    gap: 8,
+  creditMetricCol: {
+    flex: 1,
+  },
+  creditMetricLabel: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+  },
+  creditMetricValBold: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0B1E42',
+    marginTop: 2,
+  },
+  creditMetricValUsed: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#EA580C',
+    marginTop: 2,
+  },
+  creditMetricValAvailable: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#059669',
+    marginTop: 2,
+  },
+  creditMetricDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#E2E8F0',
+    marginHorizontal: 8,
+  },
+  creditProgressBg: {
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  creditProgressFill: {
+    height: '100%',
+    backgroundColor: '#0B1E42',
+    borderRadius: 3,
+  },
+  creditFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  creditFooterNote: {
+    fontSize: 10.5,
+    color: '#64748B',
+  },
+  creditFooterRatio: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#0B1E42',
+  },
+
+  /* History Section */
+  historySection: {
+    gap: 12,
+  },
+  historyHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
   },
   sectionLabel: {
-    color: '#64748B',
-    fontSize: 11,
+    color: '#0B1E42',
+    fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  methodsCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: radius.card,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  methodHeaderRow: {
+  filterTabsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  manageLinkText: {
-    color: '#0B1E42',
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-  methodItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  methodLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    flex: 1,
-  },
-  methodIconBox: {
-    alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderRadius: 10,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
-  },
-  methodTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  methodNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
     flexWrap: 'wrap',
   },
-  methodName: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  methodSub: {
-    color: '#64748B',
-    fontSize: 12,
-  },
-  methodChevron: {
-    color: '#CBD5E1',
-    fontSize: 20,
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  defaultBadge: {
-    backgroundColor: '#F0F4F9',
-    borderRadius: radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  defaultBadgeText: {
-    color: '#0B1E42',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  historySection: {
-    gap: spacing.xs,
-  },
-  historyHeaderRow: {
-    marginLeft: 4,
-    marginBottom: 2,
-  },
-  filterTabsRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 6,
-  },
   filterChip: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: radius.pill,
-    borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 7,
+    borderRadius: radius.pill,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   filterChipActive: {
     backgroundColor: '#0B1E42',
     borderColor: '#0B1E42',
   },
   filterChipText: {
-    color: '#64748B',
     fontSize: 12,
     fontWeight: '600',
+    color: '#64748B',
   },
   filterChipTextActive: {
     color: '#FFFFFF',
     fontWeight: '700',
   },
-  historyList: {
+  loadingContainer: {
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
   },
-  txRow: {
+  loadingText: {
+    fontSize: 13,
+    color: '#64748B',
+  },
+  emptyContainer: {
+    padding: 32,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: spacing.md,
-    shadowColor: '#0F172A',
+    borderColor: '#E2E8F0',
+    gap: 6,
+  },
+  emptyTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0B1E42',
+  },
+  emptySubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  retryBtn: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#0B1E42',
+    borderRadius: 8,
+  },
+  retryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  historyList: {
+    gap: 10,
+  },
+  txRow: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 3,
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
     elevation: 1,
   },
-  txLeft: {
-    alignItems: 'center',
-    flex: 1,
+  txMainCol: {
+    gap: 10,
+  },
+  txTopMetaRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
-    minWidth: 0,
   },
   txIconBox: {
-    alignItems: 'center',
+    width: 38,
+    height: 38,
     borderRadius: 10,
-    height: 40,
+    alignItems: 'center',
     justifyContent: 'center',
-    width: 40,
-  },
-  txIconBoxTopup: {
-    backgroundColor: '#F0FDF4',
   },
   txIconBoxPayment: {
     backgroundColor: '#F1F5F9',
   },
   txIconBoxRefund: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#DCFCE7',
   },
   txMeta: {
     flex: 1,
     gap: 3,
-    minWidth: 0,
   },
   txTitle: {
+    fontSize: 13,
+    fontWeight: '700',
     color: '#0F172A',
-    fontSize: 13.5,
-    fontWeight: '600',
   },
   txSubRow: {
     flexDirection: 'row',
@@ -1097,159 +819,64 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   txDate: {
+    fontSize: 11,
     color: '#94A3B8',
-    fontSize: 11.5,
   },
   orderRefBadge: {
     backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
   },
   orderRefBadgeText: {
-    color: '#475569',
     fontSize: 10.5,
     fontWeight: '600',
+    color: '#475569',
+    fontVariant: ['tabular-nums'],
+  },
+  txAmountCol: {
+    alignItems: 'flex-end',
+    gap: 4,
   },
   txAmount: {
     fontSize: 14,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-    marginLeft: 8,
-  },
-  txAmountPositive: {
-    color: '#16A34A',
-  },
-  txAmountNegative: {
+    fontWeight: '800',
     color: '#0F172A',
+    fontVariant: ['tabular-nums'],
+  },
+  statusBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  statusBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  txActionRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  payNowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#0B1E42',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  payNowBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   pressed: {
-    opacity: 0.7,
-  },
-  creditCardOuter: {
-    backgroundColor: 'rgba(11, 30, 66, 0.04)',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 6,
-  },
-  creditCardInner: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  creditHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  creditTitleWrap: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  creditIconBadge: {
-    alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: 8,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  creditTitle: {
-    color: colors.neutral.titleText,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  creditSubtitle: {
-    color: colors.neutral.subtleText,
-    fontSize: 11.5,
-    marginTop: 1,
-  },
-  creditStatusBadge: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderRadius: 6,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  creditStatusText: {
-    color: '#166534',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  creditMetricsRow: {
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: spacing.sm,
-  },
-  creditMetricCol: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  creditMetricLabel: {
-    color: '#64748B',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  creditMetricValBold: {
-    color: '#0F172A',
-    fontSize: 13.5,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  creditMetricValUsed: {
-    color: '#0F172A',
-    fontSize: 13.5,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  creditMetricValAvailable: {
-    color: '#0F172A',
-    fontSize: 13.5,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  creditMetricDivider: {
-    backgroundColor: '#E2E8F0',
-    height: 24,
-    width: 1,
-  },
-  creditProgressBg: {
-    backgroundColor: '#E2E8F0',
-    borderRadius: 4,
-    height: 6,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  creditProgressFill: {
-    backgroundColor: '#0B1E42',
-    borderRadius: 4,
-    height: 6,
-  },
-  creditFooterRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  creditFooterNote: {
-    color: '#64748B',
-    fontSize: 11,
-  },
-  creditFooterRatio: {
-    color: '#0B1E42',
-    fontSize: 11,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
+    opacity: 0.8,
   },
 });
-

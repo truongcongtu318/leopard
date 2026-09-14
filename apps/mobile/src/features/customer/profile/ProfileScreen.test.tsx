@@ -91,19 +91,14 @@ describe('CustomerProfileScreen', () => {
     await screen.unmount();
   });
 
-  it('toggles balance visibility when eye button is pressed', async () => {
+  it('navigates to wallet when escrow history is pressed', async () => {
     const screen = await render(<CustomerProfileScreen view={sampleContentView} />);
 
-    expect(screen.getByText('•••••••• ₫')).toBeTruthy();
-    expect(screen.getByLabelText('Hiện số dư')).toBeTruthy();
+    expect(screen.getByText('Lịch sử ký quỹ')).toBeTruthy();
+    expect(screen.getByText('Xem theo đơn hàng')).toBeTruthy();
 
-    await fireEvent.press(screen.getByLabelText('Hiện số dư'));
-    expect(screen.getByText('1.250.000 ₫')).toBeTruthy();
-    expect(screen.getByLabelText('Ẩn số dư')).toBeTruthy();
-
-    await fireEvent.press(screen.getByLabelText('Ẩn số dư'));
-    expect(screen.getByText('•••••••• ₫')).toBeTruthy();
-    expect(screen.getByLabelText('Hiện số dư')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Ví VietQR'));
+    expect(mockPush).toHaveBeenCalledWith('/customer/wallet');
 
     await screen.unmount();
   });

@@ -232,8 +232,24 @@ describe('Customer route adapter helpers', () => {
       const view = mapTrackingToView(mockOrder, history);
       expect(view.kind).toBe('fresh');
       if (view.kind === 'fresh') {
-        expect(view.driverLabel).toBe('Tài xế Nguyễn Minh An');
+        expect(view.driverLabel).toBe('Đang điều phối tài xế');
         expect(view.lastUpdatedLabel).toBeTruthy();
+      }
+
+      const assignedOrder: MappedOrderResponse = {
+        ...mockOrder,
+        assignedDriver: {
+          id: 'drv-1',
+          name: 'Nguyễn Văn Hùng',
+          phone: '0901234567',
+          licensePlate: '59C-882.14',
+          vehicleType: 'Xe tải',
+        },
+      };
+      const assignedView = mapTrackingToView(assignedOrder, history);
+      expect(assignedView.kind).toBe('fresh');
+      if (assignedView.kind === 'fresh') {
+        expect(assignedView.driverLabel).toBe('Tài xế Nguyễn Văn Hùng');
       }
     });
   });
@@ -1116,8 +1132,9 @@ describe('createCustomerHttpAdapter', () => {
       if (view.kind === 'content') {
         expect(view.order.tracking.kind).toBe('fresh');
         if (view.order.tracking.kind === 'fresh') {
-          expect(view.order.tracking.driverLabel).toBe('Tài xế Nguyễn Minh An');
+          expect(view.order.tracking.driverLabel).toBe('Đang điều phối tài xế');
         }
+        expect(view.order.assignedDriver).toBeNull();
       }
     });
   });

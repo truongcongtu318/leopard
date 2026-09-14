@@ -92,6 +92,18 @@ enum InvoiceStatus {
   VOIDED
 }
 
+enum PromotionDiscountType {
+  PERCENT
+  FIXED
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
 model User {
   id                String               @id @default(uuid()) @db.Uuid
   firebaseUid       String?              @unique @db.VarChar(128)
@@ -124,6 +136,10 @@ model User {
   auditLogs         AuditLog[]           @relation("AuditActor")
   notifications     Notification[]
   deviceTokens      DeviceToken[]
+  customerAddresses CustomerAddress[]
+  orderMessages     OrderMessage[]
+  orderReviews      OrderReview[]        @relation("ReviewCustomer")
+  supportTickets    SupportTicket[]      @relation("TicketCustomer")
 }
 
 model RefreshSession {
@@ -253,6 +269,9 @@ model Order {
   mediaObjects    MediaObject[]
   paymentIntents  PaymentIntent[]
   invoice         Invoice?
+  messages        OrderMessage[]
+  reviews         OrderReview[]
+  supportTickets  SupportTicket[]
 
   @@unique([customerId, clientRequestId])
   @@index([customerId, createdAt(sort: Desc)])
@@ -419,4 +438,82 @@ model DeviceToken {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, lastUsedAt(sort: Desc)])
+}
+
+model CustomerAddress {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  label     String   @db.VarChar(64)
+  address   String   @db.VarChar(500)
+  latitude  Float
+  longitude Float
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model OrderMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @db.Uuid
+  senderId  String   @db.Uuid
+  body      String   @db.VarChar(2000)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt(sort: Asc)])
+}
+
+model OrderReview {
+  id         String   @id @default(uuid()) @db.Uuid
+  orderId    String   @db.Uuid
+  customerId String   @db.Uuid
+  rating     Int
+  comment    String?  @db.VarChar(2000)
+  tipVnd     Int      @default(0)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer   User     @relation("ReviewCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, customerId])
+  @@index([orderId])
+}
+
+model SupportTicket {
+  id          String              @id @default(uuid()) @db.Uuid
+  orderId     String?             @db.Uuid
+  customerId  String              @db.Uuid
+  category    String              @db.VarChar(64)
+  description String              @db.VarChar(4000)
+  hasPhoto    Boolean             @default(false)
+  status      SupportTicketStatus @default(OPEN)
+  createdAt   DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime            @default(now()) @updatedAt @db.Timestamptz(3)
+  order       Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  customer    User                @relation("TicketCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([customerId, createdAt(sort: Desc)])
+  @@index([orderId])
+}
+
+model PromotionVoucher {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  code               String                 @unique @db.VarChar(32)
+  title              String                 @db.VarChar(200)
+  description        String?                @db.VarChar(1000)
+  discountType       PromotionDiscountType
+  discountValue      Int
+  maxDiscountVnd     Int?
+  minOrderAmountVnd  Int                    @default(0)
+  usageLimit         Int?
+  usageCount         Int                    @default(0)
+  expiresAt          DateTime?              @db.Timestamptz(3)
+  isActive           Boolean                @default(true)
+  createdAt          DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime               @default(now()) @updatedAt @db.Timestamptz(3)
+
+  @@index([isActive, expiresAt])
 }

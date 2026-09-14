@@ -193,7 +193,7 @@ export function searchPlacesDirect(query: string): readonly LocationSuggestionIt
     (p) =>
       stripVietnameseAccents(p.title).includes(cleanQ) ||
       stripVietnameseAccents(p.subtitle).includes(cleanQ) ||
-      stripVietnameseAccents(p.address).includes(cleanQ)
+      stripVietnameseAccents(p.address).includes(cleanQ),
   );
 
   return matched.length > 0

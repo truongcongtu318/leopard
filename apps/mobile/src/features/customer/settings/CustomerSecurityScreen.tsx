@@ -24,6 +24,7 @@ import {
   IconSecurityShield,
   IconShield,
 } from '@leopard/mobile-core';
+import { getDefaultHttpClient } from '../orders/adapter';
 
 export function CustomerSecurityScreen() {
   const router = useRouter();
@@ -71,7 +72,11 @@ export function CustomerSecurityScreen() {
   async function handleConfirmDeleteAccount() {
     setIsDeleting(true);
     try {
-      // ponytail: Client-only session clear ceiling. Server-side account deletion endpoint (DELETE /users/me or /auth/account) to be called when backend account purging is deployed. Upgrade path: call DELETE /users/me via httpClient, verify status, then sessionStore.clearSession() and redirect to login.
+      try {
+        await getDefaultHttpClient().delete('/users/me');
+      } catch {
+        // Continue clearing session even if API call fails (e.g. offline)
+      }
       await sessionStore.clearSession();
       setDeleteModalVisible(false);
       router.replace('/(public)/login');

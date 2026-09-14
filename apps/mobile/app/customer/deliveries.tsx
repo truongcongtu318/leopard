@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   FlatList,
   Pressable,
@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { createCustomerHttpAdapter } from '../../src/features/customer/orders/adapter';
 
 import {
   colors,
@@ -101,9 +102,54 @@ export default function CustomerDeliveriesScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deliveries, setDeliveries] = useState<readonly DeliveryItem[]>(INITIAL_DELIVERIES);
+
+  useEffect(() => {
+    let mounted = true;
+    const port = createCustomerHttpAdapter();
+
+    async function loadRealOrders() {
+      try {
+        const view = await port.getOrdersView('ALL');
+        if (!mounted || view.kind !== 'content' || view.orders.length === 0) return;
+
+        const mapped: DeliveryItem[] = view.orders.map((o) => {
+          const isDelivered = o.status === 'DELIVERED';
+          return {
+            id: o.id,
+            bookingCode: o.reference,
+            status: isDelivered ? 'DELIVERED' : 'IN_TRANSIT',
+            statusLabel: isDelivered ? 'Đã giao' : 'Đang điều phối',
+            driverName: 'Tài xế LEOPARD',
+            driverPlate: 'Xe tải LEOPARD',
+            driverRating: 4.95,
+            driverPhone: '0900000000',
+            origin: o.route.origin.label,
+            destination: o.route.destination.label,
+            etaLabel: o.etaLabel,
+            distanceRemainingKm: 0,
+            cargoLabel: 'Hàng hóa LEOPARD',
+            weightKg: 0,
+            priceVnd: o.priceLabel,
+          };
+        });
+
+        if (mounted && mapped.length > 0) {
+          setDeliveries(mapped);
+        }
+      } catch {
+        // Fallback to initial
+      }
+    }
+
+    loadRealOrders();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredDeliveries = useMemo(() => {
-    return INITIAL_DELIVERIES.filter((item) => {
+    return deliveries.filter((item) => {
       if (activeTab === 'IN_TRANSIT' && item.status !== 'IN_TRANSIT') return false;
       if (activeTab === 'DELIVERED' && item.status !== 'DELIVERED') return false;
 

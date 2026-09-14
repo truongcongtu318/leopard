@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, IconChevron, IconCreditCard, IconCrown, IconEye, IconEyeOff, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, IconChevron, IconCreditCard, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { CustomerProfileView } from './model';
 
 export type CustomerProfileScreenProps = Readonly<{
@@ -64,7 +64,6 @@ function MenuRow({
 
 export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfileScreenProps) {
   const router = useRouter();
-  const [showBalance, setShowBalance] = useState(false);
 
   if (view.kind !== 'content') {
     return (
@@ -168,7 +167,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 
         {/* 2. FLOATING BENTO BENEFIT CARD (NẰM ĐÈ LÊN CHÂN HERO) */}
         <View style={styles.bentoWalletCard}>
-          {/* VietQR Balance Hub */}
+          {/* VietQR Escrow & Payment History Hub */}
           <View style={styles.bentoCol}>
             <View style={styles.bentoHeaderRow}>
               <Pressable
@@ -183,21 +182,9 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                 <View style={[styles.bentoIconBadge, { backgroundColor: '#F1F5F9' }]}>
                   <IconWallet color="#0B1E42" size={14} />
                 </View>
-                <Text style={styles.bentoEyebrow}>VÍ VIETQR</Text>
+                <Text style={styles.bentoEyebrow}>KÝ QUỸ & ĐƠN</Text>
               </Pressable>
-              <Pressable
-                accessibilityLabel={showBalance ? 'Ẩn số dư' : 'Hiện số dư'}
-                accessibilityRole="button"
-                hitSlop={14}
-                onPress={() => setShowBalance(!showBalance)}
-                style={styles.eyeToggleBtn}
-              >
-                {showBalance ? (
-                  <IconEyeOff color="#94A3B8" size={16} />
-                ) : (
-                  <IconEye color="#94A3B8" size={16} />
-                )}
-              </Pressable>
+              <IconChevron color="#94A3B8" direction="right" size="sm" />
             </View>
 
             <Pressable
@@ -209,10 +196,8 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                 pressed ? styles.pressed : null,
               ]}
             >
-              <Text style={styles.bentoAmountText}>
-                {showBalance ? '1.250.000 ₫' : '•••••••• ₫'}
-              </Text>
-              <Text style={styles.bentoSubGreen}>Nạp rút 0đ Napas</Text>
+              <Text style={styles.bentoAmountText}>Lịch sử ký quỹ</Text>
+              <Text style={styles.bentoSubGreen}>Xem theo đơn hàng</Text>
             </Pressable>
           </View>
 
