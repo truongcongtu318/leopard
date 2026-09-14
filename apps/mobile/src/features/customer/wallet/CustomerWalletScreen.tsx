@@ -119,7 +119,7 @@ export function CustomerWalletScreen() {
           <View style={styles.cardTopRow}>
             <View style={styles.brandPill}>
               <View style={styles.pulseDot} />
-              <IconWallet color="#38BDF8" size={16} />
+              <IconWallet color="#F1F5F9" size={16} />
               <Text style={styles.brandPillText}>Ví VietQR LEOPARD</Text>
             </View>
             <View style={styles.securityBadge}>
@@ -509,7 +509,7 @@ export function CustomerWalletScreen() {
                       {item.type === 'TOPUP' ? (
                         <IconTxTopup color="#16A34A" size={18} />
                       ) : isRefund ? (
-                        <IconTxRefund color="#D97706" size={18} />
+                        <IconTxRefund color="#16A34A" size={18} />
                       ) : (
                         <IconTxPayment color="#475569" size={18} />
                       )}
@@ -561,13 +561,13 @@ const styles = StyleSheet.create({
     paddingBottom: layout.bottomNavClearance + 32,
   },
   balanceCard: {
-    backgroundColor: '#0F172A',
-    borderColor: '#1E293B',
-    borderRadius: 22,
+    backgroundColor: '#0B1E42',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 24,
     borderWidth: 1,
     gap: spacing.md,
     padding: spacing.lg,
-    shadowColor: '#0F172A',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
     shadowRadius: 16,
@@ -584,21 +584,21 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#38BDF8',
+    backgroundColor: '#10B981',
   },
   brandPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   brandPillText: {
-    color: '#38BDF8',
+    color: '#F1F5F9',
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -774,8 +774,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   presetItemSelected: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#F59E0B',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#0B1E42',
   },
   presetBadge: {
     position: 'absolute',
@@ -797,7 +797,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   presetTextSelected: {
-    color: '#92400E',
+    color: '#0B1E42',
+    fontWeight: '800',
   },
   qrCard: {
     backgroundColor: '#FFFFFF',
@@ -1027,8 +1028,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   filterChipActive: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   filterChipText: {
     color: '#64748B',
@@ -1072,13 +1073,13 @@ const styles = StyleSheet.create({
     width: 40,
   },
   txIconBoxTopup: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#F0FDF4',
   },
   txIconBoxPayment: {
     backgroundColor: '#F1F5F9',
   },
   txIconBoxRefund: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#F0FDF4',
   },
   txMeta: {
     flex: 1,
@@ -1167,15 +1168,15 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   creditStatusBadge: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#6EE7B7',
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
     borderRadius: 6,
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   creditStatusText: {
-    color: '#059669',
+    color: '#166534',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1205,14 +1206,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   creditMetricValUsed: {
-    color: '#D97706',
+    color: '#0F172A',
     fontSize: 13.5,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
     marginTop: 2,
   },
   creditMetricValAvailable: {
-    color: '#16A34A',
+    color: '#0F172A',
     fontSize: 13.5,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
