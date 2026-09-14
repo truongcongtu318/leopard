@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
-import { sessionStore, httpClient } from '@leopard/mobile-core';
+import { sessionStore, httpClient, appendFileToFormData } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../../src/features/customer/addresses/address-store';
 import { createCustomerHttpAdapter } from '../../../src/features/customer/orders/adapter';
 import {
@@ -159,7 +159,22 @@ export default function CustomerHomePage() {
   }
 
   const handleSwitchRole = async (targetRole: 'CUSTOMER' | 'DRIVER') => {
-    await sessionStore.setSession('preview-acc-token', 'preview-ref-token', targetRole);
+    try {
+      const accountId = targetRole === 'DRIVER' ? 'driver' : 'customer';
+      const auth = await httpClient.post<{
+        session: { accessToken: string; refreshToken: string };
+        user: { role: 'CUSTOMER' | 'DRIVER' };
+      }>('/auth/login/demo', { accountId });
+      if (auth?.session) {
+        await sessionStore.setSession(
+          auth.session.accessToken,
+          auth.session.refreshToken,
+          targetRole,
+        );
+      }
+    } catch {
+      await sessionStore.setSession('preview-acc-token', 'preview-ref-token', targetRole);
+    }
     if (targetRole === 'DRIVER') {
       router.replace('/(public)/login');
     } else {
@@ -224,6 +239,21 @@ export default function CustomerHomePage() {
             const created = await port.createOrder(formPayload, estimateToken);
             if (created.kind === 'content') {
               orderId = created.order.id;
+
+              if (booking.cargoImageUri) {
+                try {
+                  const form = new FormData();
+                  await appendFileToFormData(form, 'file', {
+                    uri: booking.cargoImageUri,
+                    name: 'cargo.jpg',
+                    mimeType: 'image/jpeg',
+                  });
+                  form.append('clientRequestId', `req-${Date.now()}`);
+                  await httpClient.postForm(`/orders/${orderId}/media/cargo`, form);
+                } catch {
+                  // Non-blocking upload fallback
+                }
+              }
             }
           }
         } catch {
