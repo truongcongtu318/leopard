@@ -56,12 +56,9 @@ export class EtaService {
   async promoteOrSupersede(input: {
     orderId: string;
     inputRevision: number;
-    leaseOwner: string;
-    leaseGeneration: number;
-    outboxJobId: string;
     nextStop: EstimateComputation;
     completion: EstimateComputation;
-  }): Promise<'PROMOTED' | 'SUPERSEDED' | 'LEASE_LOST'> {
+  }): Promise<'PROMOTED' | 'SUPERSEDED'> {
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.findUniqueOrThrow({ where: { id: input.orderId } });
       const isStillCurrent = order.routeEtaInputRevision === input.inputRevision;

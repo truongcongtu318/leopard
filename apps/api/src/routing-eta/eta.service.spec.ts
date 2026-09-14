@@ -85,7 +85,7 @@ describe('EtaService.promoteOrSupersede', () => {
     const service = moduleRef.get(EtaService);
 
     const result = await service.promoteOrSupersede({
-      orderId: 'order-1', inputRevision: 6, leaseOwner: 'worker-a', leaseGeneration: 1, outboxJobId: 'job-1',
+      orderId: 'order-1', inputRevision: 6,
       nextStop: baseComputation(),
       completion: baseComputation({ targetStopId: null }),
     });
@@ -131,7 +131,7 @@ describe('EtaService.promoteOrSupersede', () => {
     const service = moduleRef.get(EtaService);
 
     const result = await service.promoteOrSupersede({
-      orderId: 'order-1', inputRevision: 6, leaseOwner: 'worker-a', leaseGeneration: 1, outboxJobId: 'job-1',
+      orderId: 'order-1', inputRevision: 6,
       nextStop: baseComputation(), completion: baseComputation({ targetStopId: null }),
     });
 
