@@ -33,14 +33,17 @@ export class RouteEtaController {
       throw notFound();
     }
 
-    // fleet membership lookup follows the same repository call already used by
-    // tracking.repository's findOrderAccess — reuse that query here instead of
-    // duplicating fleet-membership SQL.
+    const { activeOwnerFleetIds, activeDriverFleetIds } = await resolveFleetAccess(
+      this.prisma,
+      actor.userId,
+      order.driverId,
+    );
+
     assertCanViewRouteEta(actor, {
       customerId: order.customerId,
       driverId: order.driverId,
-      activeOwnerFleetIds: [],
-      activeDriverFleetIds: [],
+      activeOwnerFleetIds,
+      activeDriverFleetIds,
     });
 
     const deadLetter = await this.prisma.outboxEvent.findFirst({
@@ -63,4 +66,40 @@ export class RouteEtaController {
 
 function notFound(): DomainError {
   return new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
+}
+
+interface FleetAccess {
+  activeOwnerFleetIds: string[];
+  activeDriverFleetIds: string[];
+}
+
+/**
+ * Duplicated from tracking.repository's findOrderAccessInternal fleet-membership
+ * lookup rather than shared cross-module — deliberately kept small and local to
+ * this controller.
+ */
+export async function resolveFleetAccess(
+  prisma: Pick<PrismaService, 'fleetMember'>,
+  actorId: string,
+  driverId: string | null,
+): Promise<FleetAccess> {
+  const fleetMemberships = await prisma.fleetMember.findMany({
+    where: { userId: actorId, status: 'ACTIVE' },
+    select: { fleetId: true, role: true },
+  });
+
+  const activeOwnerFleetIds = fleetMemberships
+    .filter((membership) => membership.role === 'OWNER')
+    .map((membership) => membership.fleetId);
+
+  let activeDriverFleetIds: string[] = [];
+  if (driverId) {
+    const driverMemberships = await prisma.fleetMember.findMany({
+      where: { userId: driverId, status: 'ACTIVE', role: 'DRIVER' },
+      select: { fleetId: true },
+    });
+    activeDriverFleetIds = driverMemberships.map((membership) => membership.fleetId);
+  }
+
+  return { activeOwnerFleetIds, activeDriverFleetIds };
 }
