@@ -192,7 +192,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               <Pressable
                 accessibilityLabel={showBalance ? 'Ẩn số dư' : 'Hiện số dư'}
                 accessibilityRole="button"
-                hitSlop={8}
+                hitSlop={14}
                 onPress={() => setShowBalance(!showBalance)}
                 style={styles.eyeToggleBtn}
               >
@@ -348,7 +348,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: 110,
   },
   /* HERO CARD STYLES */
   heroCard: {

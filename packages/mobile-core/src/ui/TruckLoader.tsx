@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import {
+  AccessibilityInfo,
   Animated,
   Easing,
   Platform,
@@ -397,14 +398,33 @@ export function TruckLoader({
       ]),
     );
 
-    bounceLoop.start();
-    roadLoop.start();
-    windLoop.start();
-    dustLoop.start();
-    pulseLoop.start();
-    dotStagger.start();
+    let isMounted = true;
+    AccessibilityInfo.isReduceMotionEnabled?.()
+      ?.then((enabled) => {
+        if (!isMounted) return;
+        if (enabled) {
+          // Respect reduced motion: keep static clean truck representation
+          return;
+        }
+        bounceLoop.start();
+        roadLoop.start();
+        windLoop.start();
+        dustLoop.start();
+        pulseLoop.start();
+        dotStagger.start();
+      })
+      ?.catch(() => {
+        if (!isMounted) return;
+        bounceLoop.start();
+        roadLoop.start();
+        windLoop.start();
+        dustLoop.start();
+        pulseLoop.start();
+        dotStagger.start();
+      });
 
     return () => {
+      isMounted = false;
       bounceLoop.stop();
       roadLoop.stop();
       windLoop.stop();

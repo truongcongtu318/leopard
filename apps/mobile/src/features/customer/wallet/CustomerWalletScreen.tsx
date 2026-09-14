@@ -312,6 +312,7 @@ export function CustomerWalletScreen() {
                   <Pressable
                     accessibilityLabel="Sao chép số tài khoản"
                     accessibilityRole="button"
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     onPress={() => handleCopy('account', '0900000001')}
                     style={styles.copyBtn}
                   >
@@ -337,6 +338,7 @@ export function CustomerWalletScreen() {
                   <Pressable
                     accessibilityLabel="Sao chép nội dung chuyển khoản"
                     accessibilityRole="button"
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     onPress={() => handleCopy('memo', 'LEOPARD TOPUP 0900000001')}
                     style={styles.copyBtn}
                   >

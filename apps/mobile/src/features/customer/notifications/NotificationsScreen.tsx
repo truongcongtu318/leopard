@@ -197,6 +197,7 @@ export function NotificationsScreen({
               <View style={styles.cardBezelOuter}>
                 <Pressable
                   accessibilityLabel={item.title}
+                  accessibilityHint={`${item.isRead ? '' : 'Chưa đọc. '}${item.body}. ${item.createdAtLabel}`}
                   accessibilityRole="button"
                   onPress={() => onPressItem(item)}
                   style={({ pressed }) => [

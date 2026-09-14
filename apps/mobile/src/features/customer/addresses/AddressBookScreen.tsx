@@ -565,7 +565,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                     </Text>
                     <Pressable
                       accessibilityLabel="Đóng danh sách gợi ý"
-                      hitSlop={8}
+                      hitSlop={12}
                       onPress={() => setShowAddressSuggestions(false)}
                     >
                       <Text style={styles.suggestionsCloseText}>Đóng</Text>

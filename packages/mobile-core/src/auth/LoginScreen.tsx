@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import type { Role } from '@leopard/shared';
@@ -288,7 +291,10 @@ export function LoginScreen({
   };
 
   return (
-    <View style={styles.rootContainer}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.rootContainer}
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -703,7 +709,7 @@ export function LoginScreen({
           </View>
         </View>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -913,13 +919,15 @@ const styles = StyleSheet.create({
     }),
   },
   clearBtn: {
+    minHeight: 44,
+    minWidth: 44,
     paddingHorizontal: 6,
     paddingVertical: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
   clearBtnText: {
-    color: '#94A3B8',
+    color: '#64748B',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -960,7 +968,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   primaryCtaTextDisabled: {
-    color: '#94A3B8',
+    color: '#64748B',
   },
 
   /* Divider row */

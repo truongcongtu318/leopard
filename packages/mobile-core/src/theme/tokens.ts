@@ -157,10 +157,10 @@ export const colors = {
     text: '#0F172A',
     titleText: '#0F172A',
     mutedText: '#475569',
-    subtleText: '#94A3B8',
+    subtleText: '#64748B',
     border: '#E2E8F0',
-    subtleBorder: '#F1F5F9',
-    rowDivider: '#F1F5F9',
+    subtleBorder: '#CBD5E1',
+    rowDivider: '#E2E8F0',
   },
   operational: {
     ink: '#0F172A',
@@ -269,11 +269,11 @@ export const leopardPalette = {
   // Typography
   textSlateDark: '#0F172A',
   textMutedSlate: '#475569',
-  textSubtle: '#94A3B8',
+  textSubtle: '#64748B',
 
   // Borders & dividers
   cardBorder: '#E2E8F0',
-  subtleDivider: '#F1F5F9',
+  subtleDivider: '#E2E8F0',
 
   // Tab bar
   tabActive: '#0B1E42',
@@ -332,9 +332,9 @@ export const customerPalette = {
   // Shared neutrals — mirrors leopardPalette
   textSlateDark: '#0F172A',
   textMutedSlate: '#475569',
-  textSubtle: '#94A3B8',
+  textSubtle: '#64748B',
   cardBorder: '#E2E8F0',
-  subtleDivider: '#F1F5F9',
+  subtleDivider: '#E2E8F0',
   surfaceWhite: '#FFFFFF',
   bgMuted: '#F8FAFC',
   canvas: '#F8FAFC',
@@ -364,6 +364,27 @@ export const leopardElevation = {
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+  },
+} as const;
+
+export const glass = {
+  liquidDock: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  glassCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
   },
 } as const;
 

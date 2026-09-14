@@ -90,7 +90,7 @@ function FloatingNavBarComponent({
                 </View>
               ) : null}
             </View>
-            <Text style={[styles.label, isActive ? { color: resolvedAccentColor, fontWeight: '600' } : null]}>
+            <Text maxFontSizeMultiplier={1.2} style={[styles.label, isActive ? { color: resolvedAccentColor, fontWeight: '600' } : null]}>
               {item.label}
             </Text>
           </Pressable>
@@ -107,6 +107,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: spacing.md,
     right: spacing.md,
+    maxWidth: 500,
+    alignSelf: 'center',
     bottom: Platform.OS === 'ios' ? 24 : spacing.md,
     height: 62,
     borderRadius: radius.pill,

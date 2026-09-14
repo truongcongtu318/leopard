@@ -36,6 +36,7 @@ export function CustomerSettingsScreen() {
               <Text style={styles.settingDesc}>Nhận thông báo khi tài xế nhận đơn và di chuyển</Text>
             </View>
             <Switch
+              accessibilityLabel="Bật hoặc tắt thông báo đẩy"
               onValueChange={setPushEnabled}
               thumbColor={Platform.OS === 'android' ? (pushEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
               trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
@@ -49,6 +50,7 @@ export function CustomerSettingsScreen() {
               <Text style={styles.settingDesc}>Gửi SMS khi đơn hàng hoàn tất hoặc có sự cố</Text>
             </View>
             <Switch
+              accessibilityLabel="Bật hoặc tắt tin nhắn SMS cập nhật"
               onValueChange={setSmsEnabled}
               thumbColor={Platform.OS === 'android' ? (smsEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
               trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
@@ -62,6 +64,7 @@ export function CustomerSettingsScreen() {
               <Text style={styles.settingDesc}>Phát âm thanh khi có cập nhật mới</Text>
             </View>
             <Switch
+              accessibilityLabel="Bật hoặc tắt âm thanh thông báo"
               onValueChange={setSoundEnabled}
               thumbColor={Platform.OS === 'android' ? (soundEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
               trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
@@ -75,6 +78,7 @@ export function CustomerSettingsScreen() {
               <Text style={styles.settingDesc}>Nhận thông tin ưu đãi và giảm giá cước</Text>
             </View>
             <Switch
+              accessibilityLabel="Bật hoặc tắt tin tức và khuyến mãi"
               onValueChange={setPromoEnabled}
               thumbColor={Platform.OS === 'android' ? (promoEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
               trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}

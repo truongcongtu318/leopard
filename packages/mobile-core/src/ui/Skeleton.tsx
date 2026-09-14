@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
-import { Animated, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, StyleSheet, View } from 'react-native';
 
 import { colors, radius } from '../theme/tokens';
 
@@ -20,6 +20,7 @@ export function SkeletonBar({
   const opacity = useRef(new Animated.Value(0.45)).current;
 
   useEffect(() => {
+    let isMounted = true;
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
@@ -34,8 +35,24 @@ export function SkeletonBar({
         }),
       ]),
     );
-    animation.start();
-    return () => animation.stop();
+
+    AccessibilityInfo.isReduceMotionEnabled?.()
+      ?.then((enabled) => {
+        if (!isMounted) return;
+        if (enabled) {
+          opacity.setValue(0.65);
+          return;
+        }
+        animation.start();
+      })
+      ?.catch(() => {
+        if (isMounted) animation.start();
+      });
+
+    return () => {
+      isMounted = false;
+      animation.stop();
+    };
   }, [opacity]);
 
   return (
