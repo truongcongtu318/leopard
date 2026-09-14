@@ -136,4 +136,21 @@ describe('DriverOrderDetailRuntime audit: asynchronous user actions', () => {
     );
     expect(mockRouterBack).not.toHaveBeenCalled();
   });
+
+  it('navigates back when the conflict view\'s recovery action is triggered', async () => {
+    getOrderDetailView.mockResolvedValue({
+      scenarioId: 'D-DETAIL-VEHICLE-MISMATCH',
+      kind: 'conflict',
+      title: 'Đơn không phù hợp với loại xe của bạn',
+      message: 'Đơn hàng này yêu cầu loại phương tiện khác.',
+      recoveryLabel: 'Xem đơn còn trống',
+    } as DriverDetailView);
+    mockRouterBack.mockClear();
+
+    const screen = await mount();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Xem đơn còn trống' })).toBeTruthy());
+    await fireEvent.press(screen.getByRole('button', { name: 'Xem đơn còn trống' }));
+
+    expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
 });

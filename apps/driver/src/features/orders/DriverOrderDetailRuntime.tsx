@@ -233,6 +233,7 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
         onExecuteTask={(commandId) => void handleExecuteTask(commandId)}
         onOpenIncidentModal={() => setIncidentModalVisible(true)}
         onOpenLocationSettings={() => void Linking.openSettings()}
+        onResolveConflict={() => router.back()}
         onRetry={() => {
           void query.refetch();
           void sender.retryConnection(orderId);
