@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import React from 'react';
 
@@ -119,7 +119,8 @@ describe('NotificationsRuntime', () => {
     await waitFor(() => {
       expect(screen.getByText('Tài xế đang giao hàng')).toBeTruthy();
     });
-    expect(screen.getByText(/Chưa đọc \(1\)/)).toBeTruthy();
+    const unreadChip = screen.getByLabelText('Chưa đọc');
+    expect(within(unreadChip).getByText('1')).toBeTruthy();
 
     await screen.unmount();
     screen.client.clear();
@@ -222,7 +223,8 @@ describe('NotificationsRuntime', () => {
     });
     // Rollback + refetch restores the original (still-unread) count.
     await waitFor(() => {
-      expect(screen.getByText(/Chưa đọc \(1\)/)).toBeTruthy();
+      const unreadChip = screen.getByLabelText('Chưa đọc');
+      expect(within(unreadChip).getByText('1')).toBeTruthy();
     });
 
     await screen.unmount();

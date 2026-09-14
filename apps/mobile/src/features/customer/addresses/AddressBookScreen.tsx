@@ -381,8 +381,20 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
 
   return (
     <ScreenScaffold
+      hasFloatingNavBar
       headerRight={headerRight}
       onBack={onBack}
+      stickyFooter={
+        isAdding ? (
+          <Button
+            disabled={!newLabel.trim() || !newAddress.trim()}
+            label="Lưu địa chỉ vào sổ"
+            onPress={handleAddAddress}
+            size="driver-primary"
+            variant="primary"
+          />
+        ) : undefined
+      }
       subtitle="Lưu sẵn địa chỉ thường dùng để tạo đơn và giao hàng nhanh chóng."
       title="Sổ địa chỉ"
     >
@@ -483,14 +495,18 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
 
         {/* 3. Thẻ Tạo Địa Chỉ Mới (Add Address Card / Sheet) */}
         {isAdding ? (
-          <View style={styles.cardBezelOuter}>
-            <View style={styles.addCardInner}>
+          <ScrollView
+            contentContainerStyle={styles.addFormScroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.addCard}>
               <View style={styles.addCardHeader}>
                 <View style={styles.addTitleGroup}>
                   <View style={styles.addIconCircle}>
-                    <IconLocationPin color="#0B1E42" size={20} />
+                    <IconLocationPin color="#0B1E42" size={18} />
                   </View>
-                  <View>
+                  <View style={styles.addTitleTextCol}>
                     <Text style={styles.formTitle}>Thêm địa chỉ mới</Text>
                     <Text style={styles.formSubtitle}>Lưu địa điểm thường xuyên gửi/nhận hàng</Text>
                   </View>
@@ -500,197 +516,201 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   accessibilityRole="button"
                   hitSlop={12}
                   onPress={() => setIsAdding(false)}
-                  style={styles.closeBtn}
+                  style={({ pressed }) => [styles.closeBtn, pressed && styles.pressed]}
                 >
-                  <IconClose color="#475569" size="md" />
+                  <IconClose color="#64748B" size="md" />
                 </Pressable>
               </View>
 
-            {/* Chọn Loại Địa Điểm */}
-            <View style={styles.categoryPickerSection}>
-              <Text style={styles.categoryPickerLabel}>Loại địa điểm:</Text>
-              <View style={styles.categoryGrid}>
-                {categoryOptions.map((cat) => {
-                  const selected = newCategory === cat.id;
-                  return (
-                    <Pressable
-                      accessibilityLabel={cat.label}
-                      accessibilityRole="button"
-                      key={cat.id}
-                      onPress={() => setNewCategory(cat.id)}
-                      style={({ pressed }) => [
-                        styles.catOption,
-                        selected ? styles.catOptionSelected : null,
-                        pressed ? styles.pressed : null,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.catOptionText,
-                          selected ? styles.catOptionTextSelected : null,
+              {/* Chọn Loại Địa Điểm (Apple HIG Segmented Control) */}
+              <View style={styles.categoryPickerSection}>
+                <Text style={styles.categoryPickerLabel}>Loại địa điểm:</Text>
+                <View style={styles.segmentedControl}>
+                  {categoryOptions.map((cat) => {
+                    const selected = newCategory === cat.id;
+                    return (
+                      <Pressable
+                        accessibilityLabel={cat.label}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        key={cat.id}
+                        onPress={() => {
+                          haptic.selection();
+                          setNewCategory(cat.id);
+                        }}
+                        style={({ pressed }) => [
+                          styles.segmentItem,
+                          selected ? styles.segmentItemSelected : null,
+                          pressed ? styles.pressed : null,
                         ]}
                       >
-                        {cat.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            <FormField
-              label="Tên gợi nhớ (VD: Kho Quận 7, Xưởng may Tân Bình...)"
-              onChangeText={setNewLabel}
-              placeholder="Nhập tên gọi nhớ..."
-              value={newLabel}
-            />
-
-            <View style={styles.addressFieldWrapper}>
-              <FormField
-                label="Địa chỉ chi tiết"
-                onChangeText={handleAddressChange}
-                onFocus={() => {
-                  if (!newAddress.trim() || newAddress.trim().length < 2) {
-                    setAddressSuggestions(POPULAR_MAP_SUGGESTIONS);
-                  }
-                  setShowAddressSuggestions(true);
-                }}
-                placeholder="Số nhà, tên đường, phường, quận, tỉnh/thành..."
-                value={newAddress}
-              />
-              {showAddressSuggestions && addressSuggestions.length > 0 ? (
-                <View style={styles.suggestionsContainer}>
-                  <View style={styles.suggestionsHeader}>
-                    <Text style={styles.suggestionsHeaderTitle}>
-                      {newAddress.trim().length < 2 ? 'GỢI Ý ĐỊA ĐIỂM PHỔ BIẾN' : 'GỢI Ý TỪ BẢN ĐỒ'}
-                    </Text>
-                    <Pressable
-                      accessibilityLabel="Đóng danh sách gợi ý"
-                      hitSlop={12}
-                      onPress={() => setShowAddressSuggestions(false)}
-                    >
-                      <Text style={styles.suggestionsCloseText}>Đóng</Text>
-                    </Pressable>
-                  </View>
-                  <ScrollView
-                    keyboardShouldPersistTaps="handled"
-                    nestedScrollEnabled
-                    style={styles.suggestionsListScroll}
-                  >
-                    {addressSuggestions.map((item) => {
-                      const isGpsItem = item.id === 'popular-gps';
-                      return (
-                        <Pressable
-                          key={item.id}
-                          onPress={() => handleSelectAddressSuggestion(item)}
-                          style={({ pressed }) => [
-                            styles.suggestionItem,
-                            pressed && styles.suggestionItemPressed,
+                        <Text
+                          numberOfLines={1}
+                          style={[
+                            styles.segmentText,
+                            selected ? styles.segmentTextSelected : null,
                           ]}
                         >
-                          <View
-                            style={[
-                              styles.suggestionIconBox,
-                              isGpsItem && styles.suggestionIconBoxGps,
+                          {cat.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <FormField
+                label="Tên gợi nhớ (VD: Kho Quận 7, Xưởng may Tân Bình...)"
+                onChangeText={setNewLabel}
+                placeholder="Nhập tên gọi nhớ..."
+                value={newLabel}
+              />
+
+              <View style={styles.addressFieldWrapper}>
+                <FormField
+                  label="Địa chỉ chi tiết"
+                  onChangeText={handleAddressChange}
+                  onFocus={() => {
+                    if (!newAddress.trim() || newAddress.trim().length < 2) {
+                      setAddressSuggestions(POPULAR_MAP_SUGGESTIONS);
+                    }
+                    setShowAddressSuggestions(true);
+                  }}
+                  placeholder="Số nhà, tên đường, phường, quận, tỉnh/thành..."
+                  value={newAddress}
+                />
+                {showAddressSuggestions && addressSuggestions.length > 0 ? (
+                  <View style={styles.suggestionsContainer}>
+                    <View style={styles.suggestionsHeader}>
+                      <Text style={styles.suggestionsHeaderTitle}>
+                        {newAddress.trim().length < 2 ? 'GỢI Ý ĐỊA ĐIỂM PHỔ BIẾN' : 'GỢI Ý TỪ BẢN ĐỒ'}
+                      </Text>
+                      <Pressable
+                        accessibilityLabel="Đóng danh sách gợi ý"
+                        hitSlop={12}
+                        onPress={() => setShowAddressSuggestions(false)}
+                      >
+                        <Text style={styles.suggestionsCloseText}>Đóng</Text>
+                      </Pressable>
+                    </View>
+                    <ScrollView
+                      keyboardShouldPersistTaps="handled"
+                      nestedScrollEnabled
+                      style={styles.suggestionsListScroll}
+                    >
+                      {addressSuggestions.map((item) => {
+                        const isGpsItem = item.id === 'popular-gps';
+                        return (
+                          <Pressable
+                            key={item.id}
+                            onPress={() => handleSelectAddressSuggestion(item)}
+                            style={({ pressed }) => [
+                              styles.suggestionItem,
+                              pressed && styles.suggestionItemPressed,
                             ]}
                           >
-                            <IconLocationPin
-                              color={isGpsItem ? '#16A34A' : '#0B1E42'}
-                              size={16}
-                            />
-                          </View>
-                          <View style={styles.suggestionTextCol}>
-                            <Text numberOfLines={1} style={styles.suggestionTitle}>
-                              {item.label}
+                            <View
+                              style={[
+                                styles.suggestionIconBox,
+                                isGpsItem && styles.suggestionIconBoxGps,
+                              ]}
+                            >
+                              <IconLocationPin
+                                color={isGpsItem ? '#16A34A' : '#0B1E42'}
+                                size={16}
+                              />
+                            </View>
+                            <View style={styles.suggestionTextCol}>
+                              <Text numberOfLines={1} style={styles.suggestionTitle}>
+                                {item.label}
+                              </Text>
+                              <Text numberOfLines={1} style={styles.suggestionSubtitle}>
+                                {item.address}
+                              </Text>
+                            </View>
+                            <Text style={styles.suggestionActionText}>
+                              {isGpsItem ? 'Định vị ›' : 'Chọn ›'}
                             </Text>
-                            <Text numberOfLines={1} style={styles.suggestionSubtitle}>
-                              {item.address}
-                            </Text>
-                          </View>
-                          <Text style={styles.suggestionActionText}>
-                            {isGpsItem ? 'Định vị ›' : 'Chọn ›'}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                ) : null}
+              </View>
+
+              {/* Định vị vị trí thực tế trên bản đồ vệ tinh / đường phố (Apple Maps style) */}
+              <View style={styles.mapPinSection}>
+                <View style={styles.mapPinHeader}>
+                  <View style={styles.mapPinTitleRow}>
+                    <IconLocationPin color="#0B1E42" size={15} />
+                    <Text style={styles.mapPinTitle}>Định vị trên bản đồ</Text>
+                  </View>
+                  <Text style={styles.mapPinHint}>Chạm hoặc kéo ghim để chỉnh</Text>
                 </View>
-              ) : null}
-            </View>
-
-            {/* Định vị vị trí thực tế trên bản đồ vệ tinh / đường phố */}
-            <View style={styles.mapPinSection}>
-              <View style={styles.mapPinHeader}>
-                <View style={styles.mapPinTitleRow}>
-                  <IconLocationPin color="#0B1E42" size={15} />
-                  <Text style={styles.mapPinTitle}>Định vị trên bản đồ</Text>
+                <View style={styles.mapPinBox}>
+                  <RealInteractiveMap
+                    height={165}
+                    initialPinCoords={newPinCoords || resolveLocationCoords(newAddress)}
+                    interactive={true}
+                    mode="pin"
+                    onLocationChange={handlePinMoved}
+                    title="Bản đồ định vị địa chỉ mới"
+                  />
                 </View>
-                <Text style={styles.mapPinHint}>Chạm hoặc kéo ghim để chỉnh</Text>
+                {newAddress.trim() || newPinCoords ? (
+                  <View style={styles.pinnedNotice}>
+                    <IconLocationPin color="#15803D" size={13} />
+                    <Text numberOfLines={2} style={styles.pinnedNoticeText}>
+                      {isReverseGeocoding ? 'Đang cập nhật địa chỉ…' : `Đã ghim: ${newAddress || 'Vị trí đã chọn'}`}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
-              <View style={styles.mapPinBox}>
-                <RealInteractiveMap
-                  height={150}
-                  initialPinCoords={newPinCoords || resolveLocationCoords(newAddress)}
-                  interactive={true}
-                  mode="pin"
-                  onLocationChange={handlePinMoved}
-                  title="Bản đồ định vị địa chỉ mới"
-                />
-              </View>
-              {newAddress.trim() || newPinCoords ? (
-                <View style={styles.pinnedNotice}>
-                  <Text numberOfLines={2} style={styles.pinnedNoticeText}>
-                    {isReverseGeocoding ? 'Đang cập nhật địa chỉ…' : `Đã ghim: ${newAddress || 'Vị trí đã chọn'}`}
-                  </Text>
+
+              <View style={styles.contactFieldsRow}>
+                <View style={styles.flexField}>
+                  <FormField
+                    label="Tên người liên hệ"
+                    onChangeText={setNewContact}
+                    placeholder="Tên người gửi/nhận"
+                    value={newContact}
+                  />
                 </View>
-              ) : null}
-            </View>
-
-            <View style={styles.contactFieldsRow}>
-              <View style={styles.flexField}>
-                <FormField
-                  label="Tên người liên hệ"
-                  onChangeText={setNewContact}
-                  placeholder="Tên người gửi/nhận"
-                  value={newContact}
-                />
+                <View style={styles.flexField}>
+                  <FormField
+                    keyboardType="phone-pad"
+                    label="Số điện thoại"
+                    onChangeText={setNewPhone}
+                    placeholder="0901234567"
+                    value={newPhone}
+                  />
+                </View>
               </View>
-              <View style={styles.flexField}>
-                <FormField
-                  keyboardType="phone-pad"
-                  label="Số điện thoại"
-                  onChangeText={setNewPhone}
-                  placeholder="0901234567"
-                  value={newPhone}
-                />
-              </View>
-            </View>
 
-            {/* Checkbox Đặt làm mặc định */}
-            <Pressable
-              accessibilityLabel="Đặt làm địa chỉ mặc định"
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: newIsDefault }}
-              onPress={() => setNewIsDefault(!newIsDefault)}
-              style={styles.checkboxRow}
-            >
-              <View style={[styles.checkboxBox, newIsDefault ? styles.checkboxChecked : null]}>
-                {newIsDefault ? <IconCheck color="#FFFFFF" size={11} strokeWidth={2.5} /> : null}
-              </View>
-              <Text style={styles.checkboxLabel}>Đặt làm địa chỉ mặc định khi tạo đơn</Text>
-            </Pressable>
-
-            <View style={styles.formActionRow}>
-              <Button
-                disabled={!newLabel.trim() || !newAddress.trim()}
-                label="Lưu địa chỉ vào sổ"
-                onPress={handleAddAddress}
-                size="driver-primary"
-                variant="primary"
-              />
+              {/* Apple HIG iOS Switch Row */}
+              <Pressable
+                accessibilityLabel="Đặt làm địa chỉ mặc định"
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: newIsDefault }}
+                onPress={() => {
+                  haptic.selection();
+                  setNewIsDefault(!newIsDefault);
+                }}
+                style={({ pressed }) => [styles.switchRow, pressed && styles.pressed]}
+              >
+                <View style={styles.switchTextCol}>
+                  <Text style={styles.switchLabel}>Đặt làm địa chỉ mặc định khi tạo đơn</Text>
+                  <Text style={styles.switchSublabel}>Tự động chọn địa chỉ này khi tạo chuyến mới</Text>
+                </View>
+                <View style={[styles.switchTrack, newIsDefault ? styles.switchTrackActive : null]}>
+                  <View style={[styles.switchThumb, newIsDefault ? styles.switchThumbActive : null]}>
+                    {newIsDefault ? <IconCheck color="#0B1E42" size={10} strokeWidth={3} /> : null}
+                  </View>
+                </View>
+              </Pressable>
             </View>
-          </View>
-        </View>
+          </ScrollView>
         ) : null}
 
         {/* 4. Danh Sách Thẻ Địa Chỉ (Address Cards List) */}
@@ -742,14 +762,13 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
               const meta = getCategoryMeta(item.category);
 
               return (
-                <View style={styles.cardBezelOuter}>
-                  <View
-                    style={[
-                      styles.addressCard,
-                      item.isDefault ? styles.addressCardDefault : null,
-                    ]}
-                  >
-                    <View style={styles.cardMainRow}>
+                <View
+                  style={[
+                    styles.addressCard,
+                    item.isDefault ? styles.addressCardDefault : null,
+                  ]}
+                >
+                  <View style={styles.cardMainRow}>
                     {/* Hộp icon phân loại */}
                     <View style={[styles.categoryIconBox, { backgroundColor: meta.bg }]}>
                       {meta.icon}
@@ -766,7 +785,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                             <IconStar
                               color="#0B1E42"
                               fill="#0B1E42"
-                              size={12}
+                              size={11}
                               strokeWidth={2}
                             />
                             <Text style={styles.defaultBadgeText}>Mặc định</Text>
@@ -775,7 +794,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       </View>
 
                       <View style={styles.addressLineWrap}>
-                        <IconLocationPin color="#64748B" size={14} />
+                        <IconLocationPin color="#64748B" size={13} />
                         <Text numberOfLines={2} style={styles.addressText}>
                           {item.address}
                         </Text>
@@ -784,12 +803,12 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       {/* Thông tin liên hệ dạng Pill mềm mại (100% Vector Icons) */}
                       <View style={styles.contactPill}>
                         <View style={styles.contactItem}>
-                          <IconUser color="#475569" size={13} />
+                          <IconUser color="#475569" size={12} />
                           <Text style={styles.contactNameText}>{item.contactName}</Text>
                         </View>
                         <Text style={styles.contactDivider}>•</Text>
                         <View style={styles.contactItem}>
-                          <IconPhone color="#0B1E42" size={13} />
+                          <IconPhone color="#0B1E42" size={12} />
                           <Text style={styles.contactPhoneText}>{item.contactPhone}</Text>
                         </View>
                       </View>
@@ -821,7 +840,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                             pressed ? styles.pressed : null,
                           ]}
                         >
-                          <IconStar color="#0B1E42" size={14} strokeWidth={2} />
+                          <IconStar color="#0B1E42" size={13} strokeWidth={2} />
                           <Text style={styles.setDefaultText}>Đặt làm mặc định</Text>
                         </Pressable>
                       ) : (
@@ -860,12 +879,11 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         pressed ? styles.pressed : null,
                       ]}
                     >
-                      <IconTrash color="#EF4444" size={14} />
+                      <IconTrash color="#EF4444" size={13} />
                       <Text style={styles.deleteText}>Xóa</Text>
                     </Pressable>
                   </View>
                 </View>
-              </View>
               );
             }}
           />
@@ -996,116 +1014,118 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // 3. Add Card
-  cardBezelOuter: {
-    backgroundColor: 'rgba(11, 30, 66, 0.04)',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 6,
-  },
-  addCardInner: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+  // 3. Add Card (Apple HIG Inset Grouped Card)
+  addFormScroll: {
+    paddingBottom: 24,
   },
   addCard: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderRadius: 16,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    gap: spacing.sm,
+    gap: spacing.md,
     padding: spacing.md,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   addCardHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    paddingBottom: spacing.xs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E2E8F0',
   },
   addTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    flex: 1,
   },
   addIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    ...iosContinuousCurve,
     backgroundColor: '#F0F4F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  addTitleTextCol: {
+    flex: 1,
+    gap: 2,
+  },
   formTitle: {
     color: '#0F172A',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
+    letterSpacing: -0.2,
   },
   formSubtitle: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: 12,
   },
   closeBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 44,
-    padding: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
   },
-  closeBtnText: {
-    color: '#94A3B8',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+
+  // Apple HIG Segmented Control
   categoryPickerSection: {
     gap: 6,
   },
   categoryPickerLabel: {
-    color: '#334155',
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  catOption: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingVertical: 7,
-    alignItems: 'center',
-  },
-  catOptionSelected: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
-  },
-  catOptionText: {
-    color: '#475569',
+    color: '#64748B',
     fontSize: 12,
     fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
-  catOptionTextSelected: {
+  segmentedControl: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    flexDirection: 'row',
+    padding: 3,
+    minHeight: 36,
+  },
+  segmentItem: {
+    alignItems: 'center',
+    borderRadius: 8,
+    ...iosContinuousCurve,
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+  },
+  segmentItemSelected: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  segmentText: {
+    color: '#64748B',
+    fontSize: 12.5,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  segmentTextSelected: {
     color: '#0B1E42',
     fontWeight: '700',
   },
+
+  // Fields & Contact
   contactFieldsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -1113,37 +1133,60 @@ const styles = StyleSheet.create({
   flexField: {
     flex: 1,
   },
-  checkboxRow: {
+
+  // Apple HIG iOS Switch Row
+  switchRow: {
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    ...iosContinuousCurve,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 4,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 10,
+    gap: spacing.xs,
   },
-  checkboxBox: {
-    alignItems: 'center',
-    borderColor: '#CBD5E1',
-    borderRadius: 5,
-    borderWidth: 1.5,
-    height: 18,
+  switchTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  switchLabel: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  switchSublabel: {
+    color: '#64748B',
+    fontSize: 11.5,
+  },
+  switchTrack: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 28,
     justifyContent: 'center',
-    width: 18,
+    paddingHorizontal: 2,
+    width: 48,
   },
-  checkboxChecked: {
+  switchTrackActive: {
     backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
   },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '900',
-    lineHeight: 13,
+  switchThumb: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    height: 24,
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2.5,
+    elevation: 2,
+    width: 24,
   },
-  checkboxLabel: {
-    color: '#334155',
-    fontSize: 12.5,
-  },
-  formActionRow: {
-    marginTop: 4,
+  switchThumbActive: {
+    transform: [{ translateX: 20 }],
   },
 
   // 4. Address Cards List
@@ -1291,10 +1334,11 @@ const styles = StyleSheet.create({
   mapPinSection: {
     backgroundColor: '#F8FAFC',
     borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderRadius: 14,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 6,
-    padding: 10,
+    gap: 8,
+    padding: spacing.sm,
   },
   mapPinHeader: {
     alignItems: 'center',
@@ -1304,19 +1348,20 @@ const styles = StyleSheet.create({
   mapPinTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
+    gap: 6,
   },
   mapPinTitle: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '700',
   },
   mapPinHint: {
     color: '#64748B',
-    fontSize: 11,
+    fontSize: 11.5,
   },
   mapPinBox: {
-    borderRadius: 8,
+    borderRadius: 10,
+    ...iosContinuousCurve,
     overflow: 'hidden',
     borderColor: '#CBD5E1',
     borderWidth: 1,
@@ -1497,17 +1542,21 @@ const styles = StyleSheet.create({
     color: '#0B1E42',
   },
   pinnedNotice: {
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.cardLg,
+    alignItems: 'center',
     backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#DCFCE7',
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   pinnedNoticeText: {
-    fontSize: 12,
     color: '#15803D',
+    flex: 1,
+    fontSize: 11.5,
     fontWeight: '600',
   },
 });
