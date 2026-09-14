@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
-import type { DriverDetailView } from './model';
+import type { DriverAssignedDetailView, DriverDetailView } from './model';
 
 const mockRouterBack = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockRouterBack }) }));
@@ -99,11 +99,12 @@ describe('DriverOrderDetailRuntime audit: asynchronous user actions', () => {
   });
 
   it('invalidates the driver orders list and navigates back after a DELIVERED transition', async () => {
-    getOrderDetailView.mockResolvedValue(createDriverDetailFixture('D-DETAIL-READY-DELIVER'));
-    const deliveredView = {
-      ...createDriverDetailFixture('D-DETAIL-READY-DELIVER'),
-      order: { ...createDriverDetailFixture('D-DETAIL-READY-DELIVER').order, status: 'DELIVERED' },
-    } as DriverDetailView;
+    const baseFixture = createDriverDetailFixture('D-DETAIL-READY-DELIVER') as DriverAssignedDetailView;
+    getOrderDetailView.mockResolvedValue(baseFixture);
+    const deliveredView: DriverDetailView = {
+      ...baseFixture,
+      order: { ...baseFixture.order, status: 'DELIVERED' },
+    };
     executeLifecycle.mockResolvedValue(deliveredView);
     const invalidateSpy = jest.spyOn(client, 'invalidateQueries');
 
