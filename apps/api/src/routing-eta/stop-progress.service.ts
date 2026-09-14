@@ -45,9 +45,34 @@ export class StopProgressService {
         throw new StopProgressCommandConflictError(`Bước ${step} của điểm dừng này đã được ghi nhận`);
       }
 
-      const event = await tx.stopProgressEvent.create({
-        data: { orderId, stopId, step, action: 'RECORDED', actorId: actor.userId, clientRequestId, occurredAt },
-      });
+      // Two truly concurrent record() calls with the same clientRequestId can both
+      // pass the findUnique idempotency check above (READ COMMITTED doesn't see the
+      // other's uncommitted insert yet). The unique constraint on
+      // (stopId, clientRequestId) is the actual backstop: the losing insert raises
+      // P2002, which we treat as idempotent-success — re-query the now-committed
+      // winning event and return the same replayed shape the sequential-retry path
+      // above returns, instead of letting the raw Prisma error propagate.
+      let event: { id: string };
+      try {
+        event = await tx.stopProgressEvent.create({
+          data: { orderId, stopId, step, action: 'RECORDED', actorId: actor.userId, clientRequestId, occurredAt },
+        });
+      } catch (error) {
+        const isUniqueViolation =
+          typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002';
+        if (!isUniqueViolation) {
+          throw error;
+        }
+        const winningEvent = await tx.stopProgressEvent.findUnique({
+          where: { stopId_clientRequestId: { stopId, clientRequestId } },
+        });
+        if (!winningEvent) {
+          throw error;
+        }
+        const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+        return { eventId: winningEvent.id, replayed: true, inputRevision: order.routeEtaInputRevision };
+      }
+
       await tx.stopProgressState.create({
         data: { orderId, stopId, step, activeEventId: event.id },
       });
@@ -82,19 +107,42 @@ export class StopProgressService {
         where: { id: supersedesEventId, orderId, stopId },
       });
 
-      const voidEvent = await tx.stopProgressEvent.create({
-        data: {
-          orderId,
-          stopId,
-          step: original.step,
-          action: 'VOIDED',
-          actorId: actor.userId,
-          clientRequestId,
-          occurredAt,
-          supersedesEventId,
-          reason,
-        },
-      });
+      // Same race as record(): two truly concurrent void() calls with the same
+      // clientRequestId can both pass the findUnique check above before either
+      // commits. The unique constraint on (stopId, clientRequestId) is the actual
+      // backstop — the losing insert raises P2002, treated here as idempotent
+      // success by re-querying the now-committed winning event.
+      let voidEvent: { id: string };
+      try {
+        voidEvent = await tx.stopProgressEvent.create({
+          data: {
+            orderId,
+            stopId,
+            step: original.step,
+            action: 'VOIDED',
+            actorId: actor.userId,
+            clientRequestId,
+            occurredAt,
+            supersedesEventId,
+            reason,
+          },
+        });
+      } catch (error) {
+        const isUniqueViolation =
+          typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002';
+        if (!isUniqueViolation) {
+          throw error;
+        }
+        const winningEvent = await tx.stopProgressEvent.findUnique({
+          where: { stopId_clientRequestId: { stopId, clientRequestId } },
+        });
+        if (!winningEvent) {
+          throw error;
+        }
+        const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+        return { eventId: winningEvent.id, replayed: true, inputRevision: order.routeEtaInputRevision };
+      }
+
       await tx.stopProgressState.delete({
         where: { orderId_stopId_step: { orderId, stopId, step: original.step } },
       });
