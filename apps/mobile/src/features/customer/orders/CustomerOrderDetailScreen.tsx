@@ -358,7 +358,12 @@ function CustomerDetailContent({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const isUnpaid = order.payment.status === 'UNPAID' || order.payment.status === 'QR_CREATED';
+  const isUnpaid = (order.payment.status === 'UNPAID' || order.payment.status === 'QR_CREATED')
+    && order.status !== 'CANCELLED' && order.status !== 'DELIVERED';
+  const showEta = typeof order.etaDurationSeconds === 'number'
+    && !Number.isNaN(order.etaDurationSeconds)
+    && order.status !== 'CANCELLED'
+    && order.status !== 'DELIVERED';
 
   return (
     <ScreenScaffold
@@ -439,7 +444,7 @@ function CustomerDetailContent({
         <View style={styles.heroCard}>
           <View style={styles.heroTopRow}>
             <View style={styles.heroStatusWrap}>
-              <StatusBadge domain="order" status={order.status} />
+              <Text style={styles.heroSectionTitle}>Tổng quan đơn hàng</Text>
               {order.status === 'IN_TRANSIT' ? (
                 <View style={styles.liveTagBadge}>
                   <View style={styles.pulseDotGreen} />
@@ -465,20 +470,20 @@ function CustomerDetailContent({
                 </Text>
               </View>
             ) : null}
-            {typeof order.etaDurationSeconds === 'number' && !Number.isNaN(order.etaDurationSeconds) ? (
+            {showEta ? (
               <View style={styles.heroStatItem}>
                 <Text style={styles.heroStatLabel}>DỰ KIẾN (ETA)</Text>
                 <Text style={styles.heroStatValue}>
-                  ~{Math.round(order.etaDurationSeconds / 60)} phút
+                  ~{Math.round(order.etaDurationSeconds as number / 60)} phút
                 </Text>
               </View>
             ) : null}
           </View>
 
-          {typeof order.etaDurationSeconds === 'number' && !Number.isNaN(order.etaDurationSeconds) ? (
+          {showEta ? (
             <View style={styles.etaIndicatorBox}>
               <EtaIndicator
-                durationSeconds={order.etaDurationSeconds}
+                durationSeconds={order.etaDurationSeconds as number}
                 source={order.etaSource}
               />
             </View>
@@ -735,17 +740,20 @@ const styles = StyleSheet.create({
   heroCard: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
     borderRadius: 16,
     borderWidth: 1,
     padding: spacing.md,
     gap: 12,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  heroSectionTitle: {
+    fontSize: 15.5,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   heroTopRow: {
     flexDirection: 'row',
