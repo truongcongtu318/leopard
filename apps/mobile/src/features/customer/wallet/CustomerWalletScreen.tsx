@@ -11,7 +11,6 @@ import {
   spacing,
   IconCheck,
   IconChevron,
-  IconCreditCard,
   IconEye,
   IconEyeOff,
   IconQrPayment,
@@ -252,53 +251,6 @@ export function CustomerWalletScreen({
           <View style={styles.cardFooter}>
             <Text style={styles.cardFooterNapas}>Thanh toán & Ký quỹ an toàn qua VietQR</Text>
             <Text style={styles.cardFooterNumber}>{escrowItems.length} giao dịch đơn</Text>
-          </View>
-        </View>
-
-        {/* HẠN MỨC TÍN DỤNG DOANH NGHIỆP (B2B CREDIT LINE) */}
-        <View style={styles.creditCardOuter}>
-          <View style={styles.creditCardInner}>
-            <View style={styles.creditHeaderRow}>
-              <View style={styles.creditTitleWrap}>
-                <View style={styles.creditIconBadge}>
-                  <IconCreditCard color={colors.brand.primary} size={18} />
-                </View>
-                <View>
-                  <Text style={styles.creditTitle}>Hạn Mức Tín Dụng B2B</Text>
-                  <Text style={styles.creditSubtitle}>Công nợ trả sau kỳ đối soát T+30</Text>
-                </View>
-              </View>
-              <View style={styles.creditStatusBadge}>
-                <Text style={styles.creditStatusText}>Đang kích hoạt</Text>
-              </View>
-            </View>
-
-            <View style={styles.creditMetricsRow}>
-              <View style={styles.creditMetricCol}>
-                <Text style={styles.creditMetricLabel}>HẠN MỨC CẤP</Text>
-                <Text style={styles.creditMetricValBold}>50.000.000 ₫</Text>
-              </View>
-              <View style={styles.creditMetricDivider} />
-              <View style={styles.creditMetricCol}>
-                <Text style={styles.creditMetricLabel}>ĐÃ SỬ DỤNG</Text>
-                <Text style={styles.creditMetricValUsed}>12.450.000 ₫</Text>
-              </View>
-              <View style={styles.creditMetricDivider} />
-              <View style={styles.creditMetricCol}>
-                <Text style={styles.creditMetricLabel}>CÒN LẠI</Text>
-                <Text style={styles.creditMetricValAvailable}>37.550.000 ₫</Text>
-              </View>
-            </View>
-
-            {/* Progress Bar */}
-            <View style={styles.creditProgressBg}>
-              <View style={[styles.creditProgressFill, { width: '24.9%' }]} />
-            </View>
-
-            <View style={styles.creditFooterRow}>
-              <Text style={styles.creditFooterNote}>Kỳ đối soát & thanh toán: Ngày 25 hàng tháng</Text>
-              <Text style={styles.creditFooterRatio}>24.9% đã dùng</Text>
-            </View>
           </View>
         </View>
 
@@ -557,131 +509,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
-  },
-
-  /* B2B Credit Card */
-  creditCardOuter: {
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  creditCardInner: {
-    padding: 16,
-    gap: 14,
-  },
-  creditHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  creditTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  creditIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  creditTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0B1E42',
-  },
-  creditSubtitle: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 1,
-  },
-  creditStatusBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  creditStatusText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#059669',
-  },
-  creditMetricsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  creditMetricCol: {
-    flex: 1,
-  },
-  creditMetricLabel: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: '#94A3B8',
-    letterSpacing: 0.5,
-  },
-  creditMetricValBold: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0B1E42',
-    marginTop: 2,
-  },
-  creditMetricValUsed: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#EA580C',
-    marginTop: 2,
-  },
-  creditMetricValAvailable: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#059669',
-    marginTop: 2,
-  },
-  creditMetricDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: '#E2E8F0',
-    marginHorizontal: 8,
-  },
-  creditProgressBg: {
-    height: 6,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  creditProgressFill: {
-    height: '100%',
-    backgroundColor: '#0B1E42',
-    borderRadius: 3,
-  },
-  creditFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  creditFooterNote: {
-    fontSize: 10.5,
-    color: '#64748B',
-  },
-  creditFooterRatio: {
-    fontSize: 10.5,
-    fontWeight: '600',
-    color: '#0B1E42',
   },
 
   /* History Section */
