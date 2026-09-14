@@ -36,6 +36,11 @@ export interface OrderCheckoutProps {
   client?: CustomerHttpClient;
 }
 
+// Polling + countdown constants (conflict-free)
+const PAYMENT_EXPIRY_SECONDS = 600; // 10-minute QR validity window
+const RECONCILE_MAX_TICKS = 30; // 30 ticks * 2s = 60s timeout
+const RECONCILE_POLL_MS = 2000;
+
 interface PaymentApiResponse {
   id?: string;
   orderId?: string;
@@ -77,6 +82,13 @@ function generateClientRequestId(): string {
   });
 }
 
+function formatCountdown(totalSeconds: number): string {
+  const clamped = Math.max(0, totalSeconds);
+  const mm = Math.floor(clamped / 60);
+  const ss = clamped % 60;
+  return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
+}
+
 export default function OrderCheckoutScreen({
   amount: propAmount,
   client: propClient,
@@ -97,6 +109,10 @@ export default function OrderCheckoutScreen({
   const [paymentMethod, setPaymentMethod] = useState<'vietqr' | 'wallet'>('vietqr');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isReconciling, setIsReconciling] = useState(false);
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(PAYMENT_EXPIRY_SECONDS);
+  const [isExpired, setIsExpired] = useState(false);
+  const [renderExpired, setRenderExpired] = useState(false);
+  const [showTimeoutBanner, setShowTimeoutBanner] = useState(false);
 
   const [qrPayload, setQrPayload] = useState<string>('');
   const [bankName, setBankName] = useState<string>('VietQR (Napas 24/7)');
@@ -170,10 +186,36 @@ export default function OrderCheckoutScreen({
     };
   }, [id, activeClient]);
 
-  // Step 2: Poll GET /orders/:id/payments during reconciliation
+  // Step 1.5: 10-minute order expiry countdown + auto-cancel
+  useEffect(() => {
+    if (isExpired) return undefined;
+
+    const timer = setInterval(() => {
+      setSecondsRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsExpired(true);
+          setRenderExpired(true);
+          // Auto-cancel order on backend
+          activeClient
+            .post(`/orders/${id}/cancel`, {
+              reason: 'Hết hạn thanh toán tự động (10 phút)',
+            })
+            .catch(() => {});
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [id, isExpired, activeClient]);
+
+  // Step 2: Poll GET /orders/:id/payments during reconciliation (max 60s)
   useEffect(() => {
     if (!isReconciling) return undefined;
     let isMounted = true;
+    let ticks = 0;
 
     async function checkStatus() {
       try {
@@ -200,20 +242,48 @@ export default function OrderCheckoutScreen({
           } else {
             router.replace(`/customer/orders/searching/${id}`);
           }
+          return;
+        }
+
+        ticks += 1;
+        if (ticks >= RECONCILE_MAX_TICKS) {
+          setIsReconciling(false);
+          setShowTimeoutBanner(true);
         }
       } catch {
         // Safe retry on next poll tick
+        ticks += 1;
+        if (ticks >= RECONCILE_MAX_TICKS && isMounted) {
+          setIsReconciling(false);
+          setShowTimeoutBanner(true);
+        }
       }
     }
 
     checkStatus();
-    const interval = setInterval(checkStatus, 2000);
+    const interval = setInterval(checkStatus, RECONCILE_POLL_MS);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
   }, [isReconciling, id, onSuccess, router, activeClient]);
+
+  function handleRetryReconcile() {
+    setShowTimeoutBanner(false);
+    setIsReconciling(true);
+  }
+
+  async function handleCancelOrder() {
+    try {
+      await activeClient.post(`/orders/${id}/cancel`, {
+        reason: 'Khách hàng hủy đơn từ màn thanh toán',
+      });
+    } catch {
+      // Continue redirect even if cancel fails
+    }
+    router.replace('/customer/orders');
+  }
 
   const handleCopy = (field: string, text: string) => {
     setCopiedField(field);
@@ -276,6 +346,31 @@ export default function OrderCheckoutScreen({
         <View style={styles.priceCard}>
           <Text style={styles.priceLabel}>Tổng tiền ký quỹ (Escrow)</Text>
           <Text style={styles.priceAmount}>{formatVnd(amount)}</Text>
+
+          {/* Countdown pill */}
+          <View
+            accessibilityLabel="Thời gian còn lại để thanh toán"
+            style={[
+              styles.countdownPill,
+              secondsRemaining <= 30 && styles.countdownPillUrgent,
+              secondsRemaining > 30 &&
+                secondsRemaining <= 120 &&
+                styles.countdownPillWarning,
+            ]}
+            testID="payment-expiry-countdown"
+          >
+            <Text
+              style={[
+                styles.countdownText,
+                secondsRemaining <= 30 && styles.countdownTextUrgent,
+                secondsRemaining > 30 &&
+                  secondsRemaining <= 120 &&
+                  styles.countdownTextWarning,
+              ]}
+            >
+              Hết hạn sau {formatCountdown(secondsRemaining)}
+            </Text>
+          </View>
           <View style={styles.escrowNoticeRow}>
             <IconSecurityShield color="#10B981" size={16} />
             <Text style={styles.escrowNoticeText}>
@@ -464,6 +559,17 @@ export default function OrderCheckoutScreen({
         )}
       </ScrollView>
 
+      {/* Timeout banner */}
+      {showTimeoutBanner && !isReconciling ? (
+        <View style={styles.timeoutBanner} testID="reconcile-timeout-banner">
+          <Text style={styles.timeoutTitle}>Chưa ghi nhận giao dịch</Text>
+          <Text style={styles.timeoutDesc}>
+            Hệ thống chưa nhận được tiền sau 60 giây. Nếu bạn đã chuyển khoản,
+            ngân hàng có thể đang xử lý chậm. Hãy kiểm tra lại hoặc hủy đơn.
+          </Text>
+        </View>
+      ) : null}
+
       {/* Sticky Bottom Action Dock */}
       <View style={styles.stickyBottomBar}>
         {isReconciling ? (
@@ -472,6 +578,31 @@ export default function OrderCheckoutScreen({
             <Text style={styles.reconcileText}>
               Đang đối soát tự động... Gạch nợ trong vài giây
             </Text>
+          </View>
+        ) : showTimeoutBanner ? (
+          <View style={styles.retryRow}>
+            <Pressable
+              accessibilityLabel="Kiểm tra lại"
+              accessibilityRole="button"
+              onPress={handleRetryReconcile}
+              style={({ pressed }) => [
+                styles.confirmPaidBtn,
+                pressed ? styles.btnPressed : null,
+              ]}
+            >
+              <Text style={styles.confirmPaidText}>Kiểm tra lại</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Hủy đơn hàng này"
+              accessibilityRole="button"
+              onPress={handleCancelOrder}
+              style={({ pressed }) => [
+                styles.cancelOrderBtn,
+                pressed ? styles.btnPressed : null,
+              ]}
+            >
+              <Text style={styles.cancelOrderText}>Hủy đơn</Text>
+            </Pressable>
           </View>
         ) : (
           <Pressable
@@ -487,6 +618,27 @@ export default function OrderCheckoutScreen({
           </Pressable>
         )}
       </View>
+
+      {/* Expired modal */}
+      {renderExpired ? (
+        <View style={styles.expiredOverlay} testID="payment-expired-modal">
+          <View style={styles.expiredCard}>
+            <Text style={styles.expiredTitle}>Hết hạn thanh toán</Text>
+            <Text style={styles.expiredDesc}>
+              Đơn hàng đã hết hạn thanh toán sau 10 phút. Đơn đã được tự động
+              hủy. Vui lòng tạo đơn mới nếu bạn vẫn cần vận chuyển.
+            </Text>
+            <Pressable
+              accessibilityLabel="Về danh sách đơn"
+              accessibilityRole="button"
+              onPress={() => router.replace('/customer/orders')}
+              style={styles.expiredBtn}
+            >
+              <Text style={styles.expiredBtnText}>Về danh sách đơn</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -847,5 +999,135 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#92400E',
     marginLeft: 10,
+  },
+  countdownPill: {
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignSelf: 'center',
+  },
+  countdownPillWarning: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+  },
+  countdownPillUrgent: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#FECACA',
+  },
+  countdownText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.2,
+  },
+  countdownTextWarning: {
+    color: '#92400E',
+  },
+  countdownTextUrgent: {
+    color: '#DC2626',
+  },
+  timeoutBanner: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
+    ...iosContinuousCurve,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  timeoutTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  timeoutDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#78350F',
+    marginTop: 4,
+  },
+  retryRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelOrderBtn: {
+    flex: 1,
+    height: 52,
+    minHeight: 52,
+    borderRadius: 16,
+    ...iosContinuousCurve,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  cancelOrderText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  expiredOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(11, 30, 66, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  expiredCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    ...iosContinuousCurve,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: 'center',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  expiredTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0B1E42',
+    textAlign: 'center',
+  },
+  expiredDesc: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#475569',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  expiredBtn: {
+    marginTop: 20,
+    width: '100%',
+    height: 52,
+    minHeight: 52,
+    borderRadius: 16,
+    ...iosContinuousCurve,
+    backgroundColor: '#0B1E42',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expiredBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

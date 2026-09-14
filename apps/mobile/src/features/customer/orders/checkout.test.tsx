@@ -182,4 +182,102 @@ describe('OrderCheckoutScreen (Real API & Polling)', () => {
     await screen.unmount();
     jest.useRealTimers();
   });
+
+  it('displays countdown timer and auto-cancels order when 10 minutes expire', async () => {
+    jest.useFakeTimers();
+
+    const mockPost = jest.fn<any>().mockResolvedValue({
+      id: 'pmt-intent-001',
+      orderId,
+      amountVnd: 280000,
+      status: 'QR_CREATED',
+      qrPayload: 'PAYOS-QR-COUNTDOWN',
+    });
+
+    const mockClient = {
+      get: jest.fn<any>().mockResolvedValue([]),
+      post: mockPost,
+      postForm: jest.fn<any>(),
+      put: jest.fn<any>(),
+      patch: jest.fn<any>(),
+      delete: jest.fn<any>(),
+    };
+
+    const screen = await render(
+      <OrderCheckoutScreen client={mockClient as any} orderId={orderId} />,
+    );
+
+    // Initial 10-minute countdown badge
+    expect(screen.getByText(/10:00|09:59/)).toBeTruthy();
+
+    // Advance 600 seconds (10 minutes)
+    await act(async () => {
+      jest.advanceTimersByTime(600_000);
+    });
+
+    // Should call cancel API
+    expect(mockPost).toHaveBeenCalledWith(
+      `/orders/${orderId}/cancel`,
+      expect.objectContaining({
+        reason: expect.stringMatching(/hết hạn/i),
+      }),
+    );
+
+    // Shows expiry alert/modal
+    expect(screen.getByTestId('payment-expired-modal')).toBeTruthy();
+    expect(screen.getAllByText(/Hết hạn thanh toán/i).length).toBeGreaterThanOrEqual(1);
+
+    await screen.unmount();
+    jest.useRealTimers();
+  });
+
+  it('times out reconciliation after 60s and displays retry and cancel buttons', async () => {
+    jest.useFakeTimers();
+
+    const mockPost = jest.fn<any>().mockResolvedValue({
+      id: 'pmt-intent-001',
+      orderId,
+      amountVnd: 280000,
+      status: 'QR_CREATED',
+      qrPayload: 'PAYOS-QR-TIMEOUT',
+    });
+
+    // Never returns paid status
+    const mockGet = jest.fn<any>().mockResolvedValue([
+      { id: 'pmt-intent-001', status: 'QR_CREATED', amountVnd: 280000 },
+    ]);
+
+    const mockClient = {
+      get: mockGet,
+      post: mockPost,
+      postForm: jest.fn<any>(),
+      put: jest.fn<any>(),
+      patch: jest.fn<any>(),
+      delete: jest.fn<any>(),
+    };
+
+    const screen = await render(
+      <OrderCheckoutScreen client={mockClient as any} orderId={orderId} />,
+    );
+
+    const confirmPaidBtn = screen.getByRole('button', {
+      name: 'Xác nhận đã thanh toán',
+    });
+    await fireEvent.press(confirmPaidBtn);
+
+    expect(screen.getByText(/Đang đối soát/)).toBeTruthy();
+
+    // Advance 60s (30 ticks)
+    await act(async () => {
+      jest.advanceTimersByTime(61_000);
+    });
+
+    // Reconciliation timed out
+    expect(screen.getByText(/Chưa ghi nhận giao dịch/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Kiểm tra lại/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Hủy đơn/i })).toBeTruthy();
+
+    await screen.unmount();
+    jest.useRealTimers();
+  });
 });
