@@ -20,6 +20,8 @@ import {
   IconQrPayment,
   IconSecurityShield,
   IconWallet,
+  iosContinuousCurve,
+  systemFontFamily,
 } from '@leopard/mobile-core';
 
 export interface OrderCheckoutProps {
@@ -329,28 +331,31 @@ export default function OrderCheckoutScreen({
             </View>
           </View>
         )}
-
-        {/* Action Button */}
-        <View style={styles.bottomActionWrap}>
-          {isReconciling ? (
-            <View style={styles.reconcileBox}>
-              <ActivityIndicator color="#0B1E42" size="small" />
-              <Text style={styles.reconcileText}>
-                Đang đối soát tự động... Gạch nợ trong 3 giây
-              </Text>
-            </View>
-          ) : (
-            <Pressable
-              accessibilityLabel="Xác nhận đã thanh toán"
-              accessibilityRole="button"
-              onPress={handleConfirmPaid}
-              style={styles.confirmPaidBtn}
-            >
-              <Text style={styles.confirmPaidText}>Xác nhận đã thanh toán</Text>
-            </Pressable>
-          )}
-        </View>
       </ScrollView>
+
+      {/* Sticky Bottom Action Dock (Apple HIG Sticky CTA) */}
+      <View style={styles.stickyBottomBar}>
+        {isReconciling ? (
+          <View style={styles.reconcileBox}>
+            <ActivityIndicator color="#0B1E42" size="small" />
+            <Text style={styles.reconcileText}>
+              Đang đối soát tự động... Gạch nợ trong 3 giây
+            </Text>
+          </View>
+        ) : (
+          <Pressable
+            accessibilityLabel="Xác nhận đã thanh toán"
+            accessibilityRole="button"
+            onPress={handleConfirmPaid}
+            style={({ pressed }) => [
+              styles.confirmPaidBtn,
+              pressed ? styles.btnPressed : null,
+            ]}
+          >
+            <Text style={styles.confirmPaidText}>Xác nhận đã thanh toán</Text>
+          </Pressable>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -651,29 +656,53 @@ const styles = StyleSheet.create({
     color: '#0B1E42',
     marginLeft: 6,
   },
-  bottomActionWrap: {
-    marginTop: 8,
-    marginBottom: 24,
+  stickyBottomBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: Platform.select({ ios: 16, default: 14 }),
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 6,
   },
   confirmPaidBtn: {
-    minHeight: 48,
+    height: 52,
+    minHeight: 52,
     borderRadius: 16,
+    ...iosContinuousCurve,
     backgroundColor: '#0B1E42',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
   },
   confirmPaidText: {
     color: '#FFFFFF',
+    fontFamily: systemFontFamily,
     fontSize: 16,
     fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  btnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
   reconcileBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    height: 52,
+    minHeight: 52,
     borderRadius: 16,
+    ...iosContinuousCurve,
     backgroundColor: '#FEF3C7',
     borderWidth: 1,
     borderColor: '#FDE68A',

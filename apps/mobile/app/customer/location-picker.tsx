@@ -13,12 +13,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   colors,
+  iosContinuousCurve,
   IconChevron,
   IconClose,
   IconPin,
   IconSearch,
   RealInteractiveMap,
   resolveLocationCoords,
+  systemFontFamily,
   typography,
   VIETNAM_LOCATION_DICT,
   type MapCoordinate,
@@ -271,32 +273,33 @@ export default function LocationPickerScreen({
         ) : null}
       </SafeAreaView>
 
-      {/* Layer 3: Double-Bezel Bottom Floating Card */}
+      {/* Layer 3: Apple Floating Sheet Bottom Card */}
       <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
         <View style={styles.bottomOuterCard}>
-          <View style={styles.bottomInnerCard}>
-            <View style={styles.addressHeaderRow}>
-              <View style={styles.pinIndicatorDot} />
-              <Text style={styles.addressHeaderLabel}>Điểm ghim được chọn</Text>
-            </View>
+          <View style={styles.addressHeaderRow}>
+            <View style={styles.pinIndicatorDot} />
+            <Text style={styles.addressHeaderLabel}>Điểm ghim được chọn</Text>
+          </View>
 
-            <Text numberOfLines={2} style={styles.detectedAddressText}>
-              {address}
+          <Text numberOfLines={2} style={styles.detectedAddressText}>
+            {address}
+          </Text>
+
+          <View style={styles.coordsRow}>
+            <Text style={styles.coordsLabel}>Tọa độ GPS:</Text>
+            <Text style={styles.coordsValue}>
+              {`${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`}
             </Text>
-
-            <View style={styles.coordsRow}>
-              <Text style={styles.coordsLabel}>Tọa độ GPS:</Text>
-              <Text style={styles.coordsValue}>
-                {`${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`}
-              </Text>
-            </View>
           </View>
 
           <Pressable
             accessibilityLabel="Xác nhận điểm này"
             accessibilityRole="button"
             onPress={handleConfirm}
-            style={styles.confirmBtn}
+            style={({ pressed }) => [
+              styles.confirmBtn,
+              pressed ? styles.btnPressed : null,
+            ]}
           >
             <Text style={styles.confirmBtnText}>Xác nhận điểm này</Text>
           </Pressable>
@@ -433,23 +436,16 @@ const styles = StyleSheet.create({
   },
   bottomOuterCard: {
     borderRadius: 24,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
-    padding: 16,
-    shadowColor: '#0B1E42',
+    padding: 20,
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
     elevation: 8,
-  },
-  bottomInnerCard: {
-    borderRadius: 18,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.04)',
-    padding: 14,
-    marginBottom: 14,
   },
   addressHeaderRow: {
     flexDirection: 'row',
@@ -460,33 +456,38 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#0B1E42',
     marginRight: 6,
   },
   addressHeaderLabel: {
+    fontFamily: systemFontFamily,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748B',
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
   detectedAddressText: {
-    fontSize: 16,
+    fontFamily: systemFontFamily,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#0B1E42',
-    lineHeight: 22,
+    color: '#0F172A',
+    lineHeight: 23,
     marginBottom: 8,
   },
   coordsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
   },
   coordsLabel: {
-    fontSize: 12,
+    fontFamily: systemFontFamily,
+    fontSize: 12.5,
     color: '#94A3B8',
     marginRight: 6,
   },
   coordsValue: {
+    fontFamily: systemFontFamily,
     fontSize: 13,
     fontWeight: '600',
     color: '#475569',
@@ -495,14 +496,27 @@ const styles = StyleSheet.create({
   confirmBtn: {
     backgroundColor: '#0B1E42',
     borderRadius: 16,
-    minHeight: 48,
+    ...iosContinuousCurve,
+    height: 52,
+    minHeight: 52,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  btnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
   confirmBtnText: {
     color: '#FFFFFF',
+    fontFamily: systemFontFamily,
     fontSize: 16,
     fontWeight: '700',
+    letterSpacing: -0.2,
   },
 });

@@ -19,6 +19,8 @@ import {
   IconRoute,
   IconSecurityShield,
   IconSpeedTruck,
+  iosContinuousCurve,
+  systemFontFamily,
 } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from '../../../../src/features/customer/orders/adapter';
 
@@ -284,18 +286,23 @@ export default function OrderSearchingScreen({
               </View>
             </View>
           </View>
-
-          {/* Cancel button */}
-          <Pressable
-            accessibilityLabel="Hủy tìm xe"
-            accessibilityRole="button"
-            onPress={() => setShowCancelModal(true)}
-            style={styles.cancelBtn}
-          >
-            <Text style={styles.cancelBtnText}>Hủy tìm xe</Text>
-          </Pressable>
         </View>
       </ScrollView>
+
+      {/* Fixed Bottom Cancel Action Bar (Apple HIG Thumb-friendly Cancel Control) */}
+      <View style={styles.fixedBottomBar}>
+        <Pressable
+          accessibilityLabel="Hủy tìm xe"
+          accessibilityRole="button"
+          onPress={() => setShowCancelModal(true)}
+          style={({ pressed }) => [
+            styles.cancelBtn,
+            pressed && styles.cancelBtnPressed,
+          ]}
+        >
+          <Text style={styles.cancelBtnText}>Hủy tìm xe</Text>
+        </Pressable>
+      </View>
 
       {/* Cancel Confirmation Modal with 100% Escrow refund */}
       <Modal
@@ -581,19 +588,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
+  fixedBottomBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: Platform.select({ ios: 16, default: 14 }),
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   cancelBtn: {
-    minHeight: 48,
+    height: 52,
+    minHeight: 52,
     borderRadius: 16,
+    ...iosContinuousCurve,
     borderWidth: 1.5,
-    borderColor: '#EF4444',
+    borderColor: '#FCA5A5',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FEF2F2',
   },
+  cancelBtnPressed: {
+    backgroundColor: '#FEE2E2',
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
+  },
   cancelBtnText: {
-    fontSize: 15,
+    fontFamily: systemFontFamily,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#EF4444',
+    color: '#DC2626',
+    letterSpacing: -0.2,
   },
   modalOverlay: {
     flex: 1,
