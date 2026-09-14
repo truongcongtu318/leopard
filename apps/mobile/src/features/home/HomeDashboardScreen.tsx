@@ -613,89 +613,83 @@ export function HomeDashboardScreen({
           {/* 1. Route Booking Card (testID="home-booking") */}
           <View style={styles.routeBookingCard} testID="home-booking">
             <View style={styles.routeBox}>
-              <View style={styles.spineColumn}>
-                <View style={styles.pickupPinCircle}><View style={styles.pickupPinInner} /></View>
-                <View style={styles.spineLine} />
-                {stops.map((stop, idx) => (
-                  <View key={`spine-${stop.id}`} style={styles.stopSpineWrap}>
-                    <View style={styles.stopPinCircle}><Text style={styles.stopPinText}>{idx + 1}</Text></View>
-                    <View style={styles.spineLine} />
+              {/* Điểm lấy hàng */}
+              <View style={styles.unifiedRouteRow}>
+                <View style={styles.nodeRail}>
+                  <View style={styles.pickupPinCircle}><View style={styles.pickupPinInner} /></View>
+                  <View style={styles.nodeConnector} />
+                </View>
+                <View style={styles.inputInnerWrap}>
+                  <View style={styles.locationHeaderRow}>
+                    <Text style={styles.inputMicroLabel}>ĐIỂM LẤY HÀNG</Text>
+                    {pickupLabel ? (
+                      <View style={styles.pickupLabelBadge} testID="pickup-label-badge">
+                        <IconWarehouse color="#166534" size={12} />
+                        <Text style={styles.pickupLabelBadgeText} testID="pickup-label-badge-text">{pickupLabel}</Text>
+                      </View>
+                    ) : null}
                   </View>
-                ))}
-                <View style={styles.dropoffPinSquare} />
+                  <TextInput
+                    accessibilityLabel="Địa điểm lấy hàng" autoCapitalize="none" autoCorrect={false}
+                    onChangeText={(t) => { setPickupText(t); if (pickupLabel) setPickupLabel(null); }}
+                    onFocus={() => setFocusedField('pickup')} placeholder="Nhập địa chỉ lấy hàng..."
+                    placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID="cr-pickup-input" value={pickupText}
+                  />
+                </View>
+                {pickupText.length > 0 ? (
+                  <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); }} style={styles.inputActionBtn}>
+                    <IconClose color="#94A3B8" size={14} />
+                  </Pressable>
+                ) : null}
               </View>
 
-              <View style={styles.inputsColumn}>
-                {/* Điểm lấy hàng */}
-                <View style={styles.routeInputRow}>
+              {/* Điểm dừng trung gian */}
+              {stops.map((stop, idx) => (
+                <View key={stop.id} style={styles.unifiedRouteRow}>
+                  <View style={styles.nodeRail}>
+                    <View style={styles.nodeConnectorTop} />
+                    <View style={styles.stopPinCircle}><Text style={styles.stopPinText}>{idx + 1}</Text></View>
+                    <View style={styles.nodeConnector} />
+                  </View>
                   <View style={styles.inputInnerWrap}>
                     <View style={styles.locationHeaderRow}>
-                      <Text style={styles.inputMicroLabel}>ĐIỂM LẤY HÀNG</Text>
-                      {pickupLabel ? (
-                        <View style={styles.pickupLabelBadge} testID="pickup-label-badge">
-                          <IconWarehouse color="#166534" size={12} />
-                          <Text style={styles.pickupLabelBadgeText} testID="pickup-label-badge-text">{pickupLabel}</Text>
-                        </View>
-                      ) : null}
+                      <Text style={styles.inputMicroLabel}>ĐIỂM DỪNG {idx + 1}</Text>
                     </View>
                     <TextInput
-                      accessibilityLabel="Địa điểm lấy hàng" autoCapitalize="none" autoCorrect={false}
-                      onChangeText={(t) => { setPickupText(t); if (pickupLabel) setPickupLabel(null); }}
-                      onFocus={() => setFocusedField('pickup')} placeholder="Nhập địa chỉ lấy hàng..."
-                      placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID="cr-pickup-input" value={pickupText}
+                      accessibilityLabel={`Địa điểm dừng ${idx + 1}`} autoCapitalize="none" autoCorrect={false}
+                      onChangeText={(t) => handleUpdateStop(stop.id, t)}
+                      onFocus={() => setFocusedField(`stop:${stop.id}`)}
+                      placeholder="Nhập địa chỉ điểm dừng..."
+                      placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID={`cr-stop-input-${idx}`} value={stop.address}
                     />
                   </View>
-                  {pickupText.length > 0 ? (
-                    <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); }} style={styles.inputActionBtn}>
-                      <IconClose color="#94A3B8" size={14} />
-                    </Pressable>
-                  ) : null}
+                  <Pressable accessibilityLabel={`Xóa điểm dừng ${idx + 1}`} accessibilityRole="button" hitSlop={8} onPress={() => handleRemoveStop(stop.id)} style={styles.inputActionBtn} testID={`cr-stop-remove-${idx}`}>
+                    <IconClose color="#DC2626" size={14} />
+                  </Pressable>
                 </View>
+              ))}
 
-                {/* Điểm dừng trung gian */}
-                {stops.map((stop, idx) => (
-                  <View key={stop.id}>
-                    <View style={styles.inputDivider} />
-                    <View style={styles.routeInputRow}>
-                      <View style={styles.inputInnerWrap}>
-                        <View style={styles.locationHeaderRow}>
-                          <Text style={styles.inputMicroLabel}>ĐIỂM DỪNG {idx + 1}</Text>
-                        </View>
-                        <TextInput
-                          accessibilityLabel={`Địa điểm dừng ${idx + 1}`} autoCapitalize="none" autoCorrect={false}
-                          onChangeText={(t) => handleUpdateStop(stop.id, t)}
-                          onFocus={() => setFocusedField(`stop:${stop.id}`)}
-                          placeholder="Nhập địa chỉ điểm dừng..."
-                          placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID={`cr-stop-input-${idx}`} value={stop.address}
-                        />
-                      </View>
-                      <Pressable accessibilityLabel={`Xóa điểm dừng ${idx + 1}`} accessibilityRole="button" hitSlop={8} onPress={() => handleRemoveStop(stop.id)} style={styles.inputActionBtn} testID={`cr-stop-remove-${idx}`}>
-                        <IconClose color="#DC2626" size={14} />
-                      </Pressable>
-                    </View>
-                  </View>
-                ))}
-
-                <View style={styles.inputDivider} />
-
-                {/* Điểm giao hàng */}
-                <View style={styles.routeInputRow}>
-                  <View style={styles.inputInnerWrap}>
-                    <Text style={styles.inputMicroLabel}>ĐIỂM GIAO HÀNG</Text>
-                    <TextInput
-                      accessibilityLabel="Địa điểm giao hàng" autoCapitalize="none" autoCorrect={false}
-                      onChangeText={setDropoffText} onFocus={() => setFocusedField('dropoff')}
-                      onSubmitEditing={() => { if (pickupText.trim().length >= 3 && dropoffText.trim().length >= 3) triggerNavigation(pickupText, dropoffText); }}
-                      placeholder="Bạn muốn giao hàng đến đâu?..." placeholderTextColor="#94A3B8"
-                      style={styles.locationTextInput} testID="cr-dropoff-input" value={dropoffText}
-                    />
-                  </View>
-                  {dropoffText.length > 0 ? (
-                    <Pressable accessibilityLabel="Xóa điểm giao hàng" accessibilityRole="button" hitSlop={8} onPress={() => setDropoffText('')} style={styles.inputActionBtn}>
-                      <IconClose color="#94A3B8" size={14} />
-                    </Pressable>
-                  ) : null}
+              {/* Điểm giao hàng */}
+              <View style={[styles.unifiedRouteRow, styles.lastRouteRow]}>
+                <View style={styles.nodeRail}>
+                  <View style={styles.nodeConnectorTop} />
+                  <View style={styles.dropoffPinSquare} />
                 </View>
+                <View style={styles.inputInnerWrap}>
+                  <Text style={styles.inputMicroLabel}>ĐIỂM GIAO HÀNG</Text>
+                  <TextInput
+                    accessibilityLabel="Địa điểm giao hàng" autoCapitalize="none" autoCorrect={false}
+                    onChangeText={setDropoffText} onFocus={() => setFocusedField('dropoff')}
+                    onSubmitEditing={() => { if (pickupText.trim().length >= 3 && dropoffText.trim().length >= 3) triggerNavigation(pickupText, dropoffText); }}
+                    placeholder="Bạn muốn giao hàng đến đâu?..." placeholderTextColor="#94A3B8"
+                    style={styles.locationTextInput} testID="cr-dropoff-input" value={dropoffText}
+                  />
+                </View>
+                {dropoffText.length > 0 ? (
+                  <Pressable accessibilityLabel="Xóa điểm giao hàng" accessibilityRole="button" hitSlop={8} onPress={() => setDropoffText('')} style={styles.inputActionBtn}>
+                    <IconClose color="#94A3B8" size={14} />
+                  </Pressable>
+                ) : null}
               </View>
             </View>
 
@@ -1058,20 +1052,21 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
     shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2, marginBottom: 10,
   },
-  routeBox: { flexDirection: 'row', backgroundColor: '#F8FAFC', borderRadius: 14, ...iosContinuousCurve, padding: 10, borderWidth: 1, borderColor: '#E2E8F0' },
-  spineColumn: { width: 24, alignItems: 'center', paddingVertical: 8 },
-  pickupPinCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(22, 163, 74, 0.15)', alignItems: 'center', justifyContent: 'center' },
+  routeBox: { backgroundColor: '#F8FAFC', borderRadius: 14, ...iosContinuousCurve, padding: 10, borderWidth: 1, borderColor: '#E2E8F0' },
+  unifiedRouteRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40, paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  lastRouteRow: { borderBottomWidth: 0 },
+  nodeRail: { width: 24, alignItems: 'center', alignSelf: 'stretch', marginRight: 10 },
+  nodeConnectorTop: { width: 2, height: 6, backgroundColor: '#CBD5E1' },
+  nodeConnector: { flex: 1, width: 2, backgroundColor: '#CBD5E1', marginTop: 2 },
+  pickupPinCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(22, 163, 74, 0.15)', alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   pickupPinInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A' },
-  spineLine: { flex: 1, width: 2, backgroundColor: '#CBD5E1', marginVertical: 4 },
-  dropoffPinSquare: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#DC2626' },
-  inputsColumn: { flex: 1, marginLeft: 10 },
-  stopSpineWrap: { alignItems: 'center', width: 24 },
+  dropoffPinSquare: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#DC2626', marginTop: 2 },
   stopPinCircle: {
-    width: 14, height: 14, borderRadius: 7,
+    width: 16, height: 16, borderRadius: 8,
     backgroundColor: '#E0F2FE', borderWidth: 1.5, borderColor: '#0284C7',
-    alignItems: 'center', justifyContent: 'center', marginVertical: 2,
+    alignItems: 'center', justifyContent: 'center',
   },
-  stopPinText: { fontSize: 8, fontWeight: '700', color: '#0284C7', lineHeight: 10 },
+  stopPinText: { fontSize: 9, fontWeight: '700', color: '#0284C7', lineHeight: 11 },
   addStopBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     paddingVertical: 8, paddingHorizontal: 12, marginTop: 8,
