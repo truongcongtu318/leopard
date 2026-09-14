@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Clipboard,
@@ -14,7 +14,6 @@ import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
-  IconCheck,
   IconChevron,
   IconCopy,
   IconQrPayment,
@@ -24,11 +23,32 @@ import {
   systemFontFamily,
 } from '@leopard/mobile-core';
 
+import {
+  getDefaultHttpClient,
+  type CustomerHttpClient,
+} from '../../../../src/features/customer/orders/adapter';
+
 export interface OrderCheckoutProps {
   orderId?: string;
   amount?: number;
   onSuccess?: () => void;
   onBack?: () => void;
+  client?: CustomerHttpClient;
+}
+
+interface PaymentApiResponse {
+  id?: string;
+  orderId?: string;
+  amountVnd?: number;
+  status?: string;
+  provider?: string;
+  providerReference?: string;
+  qrPayload?: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
+  memo?: string;
+  referenceLabel?: string;
 }
 
 function formatVnd(val: number): string {
@@ -42,8 +62,24 @@ function formatOrderRef(id: string): string {
   return `LP-${clean}`;
 }
 
+function generateClientRequestId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // fallback below
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export default function OrderCheckoutScreen({
   amount: propAmount,
+  client: propClient,
   onBack,
   onSuccess,
   orderId: propOrderId,
@@ -55,30 +91,129 @@ export default function OrderCheckoutScreen({
   }>();
 
   const id = propOrderId || params.id || '11111111-1111-4111-8111-111111111001';
-  const rawAmount = propAmount ?? (params.amount ? Number(params.amount) : 280000);
-  const amount = Number.isFinite(rawAmount) ? rawAmount : 280000;
+  const initialRawAmount = propAmount ?? (params.amount ? Number(params.amount) : 280000);
+  const initialAmount = Number.isFinite(initialRawAmount) ? initialRawAmount : 280000;
 
   const [paymentMethod, setPaymentMethod] = useState<'vietqr' | 'wallet'>('vietqr');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isReconciling, setIsReconciling] = useState(false);
 
-  const bankName = 'MB Bank (Ngân hàng Quân Đội)';
-  const accountNumber = '0383188888';
-  const accountName = 'CONG TY CO PHAN LEOPARD LOGISTICS';
-  const orderReference = formatOrderRef(id);
-
-  const cleanRef = orderReference.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-  const qrPayload = `00020101021238540010A000000727012600069704220112${accountNumber}0208QRIBFTTA520400005303704540${amount}5802VN62${cleanRef.length.toString().padStart(2, '0')}${cleanRef}6304ABCD`;
+  const [qrPayload, setQrPayload] = useState<string>('');
+  const [bankName, setBankName] = useState<string>('VietQR (Napas 24/7)');
+  const [bankTitle, setBankTitle] = useState<string>('VIETQR');
+  const [accountNumber, setAccountNumber] = useState<string>('');
+  const [accountName, setAccountName] = useState<string>('CONG TY CO PHAN LEOPARD LOGISTICS');
+  const [orderReference, setOrderReference] = useState<string>(formatOrderRef(id));
+  const [amount, setAmount] = useState<number>(initialAmount);
+  const [isLoadingPayment, setIsLoadingPayment] = useState<boolean>(true);
 
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeClient = propClient ?? getDefaultHttpClient();
 
+  // Step 1: Create payment intent on mount
   useEffect(() => {
+    let isMounted = true;
+    const clientRequestId = generateClientRequestId();
+
+    async function createPayment() {
+      try {
+        setIsLoadingPayment(true);
+        const res = await activeClient.post<PaymentApiResponse>(
+          `/orders/${id}/payments`,
+          { clientRequestId },
+        );
+
+        if (!isMounted) return;
+
+        if (res) {
+          if (res.qrPayload) setQrPayload(res.qrPayload);
+          if (typeof res.amountVnd === 'number' && Number.isFinite(res.amountVnd)) {
+            setAmount(res.amountVnd);
+          }
+          if (res.bankName) {
+            setBankName(res.bankName);
+            setBankTitle(res.bankName.split(' ')[0].toUpperCase());
+          } else if (res.provider) {
+            setBankName(res.provider === 'DEMO' ? 'Ngân hàng Demo' : 'VietQR payOS (Napas 24/7)');
+            setBankTitle(`${res.provider} BANK`);
+          }
+          if (res.accountNumber) {
+            setAccountNumber(res.accountNumber);
+          } else if (res.providerReference) {
+            setAccountNumber(res.providerReference);
+          }
+          if (res.accountName) {
+            setAccountName(res.accountName);
+          }
+          if (res.memo) {
+            setOrderReference(res.memo);
+          } else if (res.referenceLabel) {
+            setOrderReference(res.referenceLabel);
+          }
+        }
+      } catch {
+        // Fallback gracefully on network / auth error
+      } finally {
+        if (isMounted) {
+          setIsLoadingPayment(false);
+        }
+      }
+    }
+
+    createPayment();
+
     return () => {
+      isMounted = false;
       if (copyTimeoutRef.current) {
         clearTimeout(copyTimeoutRef.current);
       }
     };
-  }, []);
+  }, [id, activeClient]);
+
+  // Step 2: Poll GET /orders/:id/payments during reconciliation
+  useEffect(() => {
+    if (!isReconciling) return undefined;
+    let isMounted = true;
+
+    async function checkStatus() {
+      try {
+        const payments = await activeClient.get<
+          Array<{
+            id?: string;
+            status?: string;
+            amountVnd?: number;
+          }>
+        >(`/orders/${id}/payments`);
+
+        if (!isMounted) return;
+
+        const isPaid =
+          Array.isArray(payments) &&
+          payments.some(
+            (p) => p.status === 'PAID_MANUAL' || p.status === 'SUCCEEDED',
+          );
+
+        if (isPaid) {
+          setIsReconciling(false);
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            router.replace(`/customer/orders/searching/${id}`);
+          }
+        }
+      } catch {
+        // Safe retry on next poll tick
+      }
+    }
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 2000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isReconciling, id, onSuccess, router, activeClient]);
 
   const handleCopy = (field: string, text: string) => {
     setCopiedField(field);
@@ -109,18 +244,8 @@ export default function OrderCheckoutScreen({
     setIsReconciling(true);
   };
 
-  useEffect(() => {
-    if (!isReconciling) return undefined;
-    const timer = setTimeout(() => {
-      setIsReconciling(false);
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.replace(`/customer/orders/searching/${id}`);
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [isReconciling, id, onSuccess, router]);
+  // ponytail: fallback dummy string avoids react-native-qrcode-svg crash before dynamic API response arrives
+  const qrDisplayValue = qrPayload || `LEOPARD-ORDER-${id}`;
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
@@ -242,7 +367,7 @@ export default function OrderCheckoutScreen({
           <View style={styles.qrDoubleBezelOuter}>
             <View style={styles.qrDoubleBezelInner}>
               <View style={styles.napasBadgeRow}>
-                <Text style={styles.napasBankTitle}>MB BANK</Text>
+                <Text style={styles.napasBankTitle}>{bankTitle}</Text>
                 <View style={styles.napasBadge}>
                   <Text style={styles.napasBadgeText}>NAPAS 24/7</Text>
                 </View>
@@ -250,11 +375,15 @@ export default function OrderCheckoutScreen({
 
               {/* QR Code Container */}
               <View style={styles.qrCodeWrapper}>
-                <QRCode
-                  size={190}
-                  testID="vietqr-code"
-                  value={qrPayload}
-                />
+                {isLoadingPayment ? (
+                  <ActivityIndicator color="#0B1E42" size="large" />
+                ) : (
+                  <QRCode
+                    size={190}
+                    testID="vietqr-code"
+                    value={qrDisplayValue}
+                  />
+                )}
               </View>
 
               <Text style={styles.qrInstruction}>
@@ -271,23 +400,25 @@ export default function OrderCheckoutScreen({
               </View>
 
               {/* Account Number */}
-              <View style={styles.bankDetailRow}>
-                <View>
-                  <Text style={styles.detailLabel}>Số tài khoản</Text>
-                  <Text style={styles.detailValueMono}>{accountNumber}</Text>
+              {accountNumber ? (
+                <View style={styles.bankDetailRow}>
+                  <View>
+                    <Text style={styles.detailLabel}>Số tài khoản</Text>
+                    <Text style={styles.detailValueMono}>{accountNumber}</Text>
+                  </View>
+                  <Pressable
+                    accessibilityLabel="Sao chép số tài khoản"
+                    accessibilityRole="button"
+                    onPress={() => handleCopy('accountNumber', accountNumber)}
+                    style={styles.copyBtn}
+                  >
+                    <IconCopy color="#0B1E42" size={16} />
+                    <Text style={styles.copyBtnText}>
+                      {copiedField === 'accountNumber' ? 'Đã sao chép' : 'Sao chép'}
+                    </Text>
+                  </Pressable>
                 </View>
-                <Pressable
-                  accessibilityLabel="Sao chép số tài khoản"
-                  accessibilityRole="button"
-                  onPress={() => handleCopy('accountNumber', accountNumber)}
-                  style={styles.copyBtn}
-                >
-                  <IconCopy color="#0B1E42" size={16} />
-                  <Text style={styles.copyBtnText}>
-                    {copiedField === 'accountNumber' ? 'Đã sao chép' : 'Sao chép'}
-                  </Text>
-                </Pressable>
-              </View>
+              ) : null}
 
               {/* Account Name */}
               <View style={styles.bankDetailRow}>
@@ -333,13 +464,13 @@ export default function OrderCheckoutScreen({
         )}
       </ScrollView>
 
-      {/* Sticky Bottom Action Dock (Apple HIG Sticky CTA) */}
+      {/* Sticky Bottom Action Dock */}
       <View style={styles.stickyBottomBar}>
         {isReconciling ? (
           <View style={styles.reconcileBox}>
             <ActivityIndicator color="#0B1E42" size="small" />
             <Text style={styles.reconcileText}>
-              Đang đối soát tự động... Gạch nợ trong 3 giây
+              Đang đối soát tự động... Gạch nợ trong vài giây
             </Text>
           </View>
         ) : (
@@ -360,7 +491,6 @@ export default function OrderCheckoutScreen({
   );
 }
 
-// ponytail: basic simulated auto-reconciliation; add payOS webhook websocket push when backend gateway connected.
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -601,6 +731,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
     marginVertical: 8,
+    minWidth: 214,
+    minHeight: 214,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   qrInstruction: {
     fontSize: 12,
