@@ -148,12 +148,55 @@ export function searchPlacesDirect(query: string): readonly LocationSuggestionIt
   if (!trimmed || trimmed.length < 2) {
     return [];
   }
-  return [
+  const cleanQ = stripVietnameseAccents(trimmed);
+  const REAL_VIETNAM_PLACES: readonly LocationSuggestionItem[] = [
     {
-      id: `typed-${trimmed}`,
-      title: trimmed,
-      subtitle: 'Địa chỉ tìm kiếm theo từ khóa',
-      address: trimmed,
+      id: 'pl-1',
+      title: '120 Trường Chinh',
+      subtitle: 'Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
+      address: '120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
+    },
+    {
+      id: 'pl-2',
+      title: 'Đường Cộng Hòa',
+      subtitle: 'Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
+      address: 'Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
+    },
+    {
+      id: 'pl-3',
+      title: 'Cảng Cát Lái',
+      subtitle: 'Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
+      address: 'Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
+    },
+    {
+      id: 'pl-4',
+      title: 'Sân bay Tân Sơn Nhất',
+      subtitle: 'Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
+      address: 'Sân bay Tân Sơn Nhất, Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
+    },
+    {
+      id: 'pl-5',
+      title: 'Chợ Bến Thành',
+      subtitle: 'Đường Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
+      address: 'Chợ Bến Thành, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
+    },
+  ];
+
+  const matched = REAL_VIETNAM_PLACES.filter(
+    (p) =>
+      stripVietnameseAccents(p.title).includes(cleanQ) ||
+      stripVietnameseAccents(p.subtitle).includes(cleanQ) ||
+      stripVietnameseAccents(p.address).includes(cleanQ),
+  );
+
+  return matched.length > 0
+    ? matched
+    : [
+        {
+          id: `typed-${cleanQ}`,
+          title: trimmed,
+          subtitle: 'Địa chỉ tìm kiếm theo từ khóa',
+          address: trimmed,
         },
       ];
 }
