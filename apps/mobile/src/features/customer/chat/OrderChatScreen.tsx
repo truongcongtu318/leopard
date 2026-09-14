@@ -152,8 +152,13 @@ export function OrderChatScreen() {
             }
 
             const isCustomer = item.sender === 'CUSTOMER';
+            const senderLabel = isCustomer ? 'Bạn' : 'Tài xế';
             return (
-              <View style={[styles.bubbleWrap, isCustomer ? styles.bubbleCustomer : styles.bubbleDriver]}>
+              <View
+                accessibilityLabel={`${senderLabel} gửi lúc ${item.time}: ${item.text}`}
+                accessible={true}
+                style={[styles.bubbleWrap, isCustomer ? styles.bubbleCustomer : styles.bubbleDriver]}
+              >
                 <Text style={[styles.bubbleText, isCustomer ? styles.bubbleTextCustomer : styles.bubbleTextDriver]}>
                   {item.text}
                 </Text>

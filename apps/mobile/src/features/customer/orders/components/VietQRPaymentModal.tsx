@@ -110,7 +110,7 @@ export function VietQRPaymentModal({
   const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
   return (
-    <Modal animationType="fade" transparent visible={visible}>
+    <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
           {/* Header */}
@@ -134,6 +134,7 @@ export function VietQRPaymentModal({
               <Pressable
                 accessibilityLabel="Đóng modal thanh toán"
                 accessibilityRole="button"
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 onPress={onClose}
                 style={styles.closeBtn}
               >
@@ -225,6 +226,7 @@ export function VietQRPaymentModal({
                     <Pressable
                       accessibilityLabel="Sao chép số tài khoản"
                       accessibilityRole="button"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       onPress={() => handleCopy('accountNumber', accountNumber)}
                       style={[
                         styles.copyBtn,
@@ -265,6 +267,7 @@ export function VietQRPaymentModal({
                     <Pressable
                       accessibilityLabel="Sao chép số tiền"
                       accessibilityRole="button"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       onPress={() => handleCopy('amount', String(amount))}
                       style={[
                         styles.copyBtn,
@@ -296,6 +299,7 @@ export function VietQRPaymentModal({
                     <Pressable
                       accessibilityLabel="Sao chép nội dung chuyển khoản"
                       accessibilityRole="button"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       onPress={() => handleCopy('reference', cleanRef)}
                       style={[
                         styles.copyBtn,

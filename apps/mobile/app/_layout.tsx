@@ -1,8 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot } from 'expo-router';
 import { Component, type PropsWithChildren } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { queryClient } from '@leopard/mobile-core';
 
@@ -46,9 +46,10 @@ export default function RootLayout() {
   return (
     <RootErrorBoundary>
       <RootProviders>
-        <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.boundary}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.boundary}>
           <Slot />
-        </SafeAreaView>
+        </View>
       </RootProviders>
     </RootErrorBoundary>
   );

@@ -197,6 +197,7 @@ export function NotificationsScreen({
               <View style={styles.cardBezelOuter}>
                 <Pressable
                   accessibilityLabel={item.title}
+                  accessibilityHint={`${item.isRead ? '' : 'Chưa đọc. '}${item.body}. ${item.createdAtLabel}`}
                   accessibilityRole="button"
                   onPress={() => onPressItem(item)}
                   style={({ pressed }) => [
@@ -302,8 +303,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   filterChipActive: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   filterChipText: {
     color: '#64748B',

@@ -97,8 +97,8 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 
           {/* Top meta bar */}
           <View style={styles.heroTopBar}>
-            <View style={styles.brandPill}>
-              <Text style={styles.brandPillText}>LEOPARD ID</Text>
+            <View style={styles.leopardIdBadge}>
+              <Text style={styles.leopardIdText}>LEOPARD ID</Text>
             </View>
 
             <Pressable
@@ -184,7 +184,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <View style={[styles.bentoIconBadge, { backgroundColor: '#F0F4F9' }]}>
+                <View style={[styles.bentoIconBadge, { backgroundColor: '#F1F5F9' }]}>
                   <IconWallet color="#0B1E42" size={14} />
                 </View>
                 <Text style={styles.bentoEyebrow}>VÍ VIETQR</Text>
@@ -192,7 +192,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               <Pressable
                 accessibilityLabel={showBalance ? 'Ẩn số dư' : 'Hiện số dư'}
                 accessibilityRole="button"
-                hitSlop={8}
+                hitSlop={14}
                 onPress={() => setShowBalance(!showBalance)}
                 style={styles.eyeToggleBtn}
               >
@@ -231,8 +231,8 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           >
             <View style={styles.bentoHeaderRow}>
               <View style={styles.bentoLabelWithIcon}>
-                <View style={[styles.bentoIconBadge, { backgroundColor: '#FEF3C7' }]}>
-                  <IconTag color="#D97706" size={14} />
+                <View style={[styles.bentoIconBadge, { backgroundColor: '#F1F5F9' }]}>
+                  <IconTag color="#0B1E42" size={14} />
                 </View>
                 <Text style={styles.bentoEyebrow}>MÃ ƯU ĐÃI</Text>
               </View>
@@ -251,14 +251,14 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
             <MenuRow
               badge="1 đang giao"
               icon={<IconOrders color="#0B1E42" size={19} />}
-              iconBg="#F0F4F9"
+              iconBg="#F1F5F9"
               label="Đơn hàng của tôi"
               onPress={() => router.push('/customer/orders')}
               subtitle="Xem lộ trình & lịch sử các chuyến xe"
             />
             <MenuRow
               icon={<IconLocationPin color="#0B1E42" size={19} />}
-              iconBg="#F0F4F9"
+              iconBg="#F1F5F9"
               isLast
               label="Sổ địa chỉ"
               onPress={() => router.push('/customer/addresses')}
@@ -272,15 +272,15 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <SectionHeader title="TÀI CHÍNH & DOANH NGHIỆP" />
           <View style={styles.insetCard}>
             <MenuRow
-              icon={<IconFileText color="#D97706" size={19} />}
-              iconBg="#FEF3C7"
+              icon={<IconFileText color="#0B1E42" size={19} />}
+              iconBg="#F1F5F9"
               label="Thông tin xuất hóa đơn VAT"
               onPress={() => router.push('/customer/settings')}
               subtitle="Tự động xuất hóa đơn đỏ điện tử theo chuyến"
             />
             <MenuRow
-              icon={<IconCreditCard color="#10B981" size={19} />}
-              iconBg="#D1FAE5"
+              icon={<IconCreditCard color="#0B1E42" size={19} />}
+              iconBg="#F1F5F9"
               isLast
               label="Liên kết ngân hàng & Thẻ"
               onPress={() => router.push('/customer/wallet')}
@@ -294,14 +294,14 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <SectionHeader title="HỖ TRỢ & HỆ THỐNG" />
           <View style={styles.insetCard}>
             <MenuRow
-              icon={<IconSupport247 color="#EF4444" size={19} />}
+              icon={<IconSupport247 color="#DC2626" size={19} />}
               iconBg="#FEE2E2"
               label="Trợ giúp & SOS"
               onPress={() => router.push('/customer/support')}
               subtitle="Hỗ trợ trực tuyến 24/7 và giải quyết sự cố"
             />
             <MenuRow
-              icon={<IconSettings color="#64748B" size={19} />}
+              icon={<IconSettings color="#0B1E42" size={19} />}
               iconBg="#F1F5F9"
               isLast
               label="Cài đặt"
@@ -348,7 +348,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: 110,
   },
   /* HERO CARD STYLES */
   heroCard: {
@@ -392,16 +392,16 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 2,
   },
-  brandPill: {
-    backgroundColor: 'rgba(2, 132, 199, 0.18)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+  leopardIdBadge: {
+    backgroundColor: '#1E293B',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 9,
     paddingVertical: 3,
   },
-  brandPillText: {
-    color: '#38BDF8',
+  leopardIdText: {
+    color: '#94A3B8',
     fontSize: 10.5,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -536,13 +536,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   statValueGold: {
-    color: '#FBBF24',
+    color: '#FFFFFF',
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
   statValueGreen: {
-    color: '#34D399',
+    color: '#FFFFFF',
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
@@ -690,7 +690,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   menuBadgePill: {
-    backgroundColor: '#F0F4F9',
+    backgroundColor: '#F1F5F9',
     borderRadius: 999,
     paddingHorizontal: 7,
     paddingVertical: 1.5,

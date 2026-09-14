@@ -34,10 +34,14 @@ describe('CustomerProfileScreen', () => {
   it('renders user hero card with phone, role, and app version', async () => {
     const screen = await render(<CustomerProfileScreen view={sampleContentView} />);
 
+    expect(screen.getByText('LEOPARD ID')).toBeTruthy();
     expect(screen.getByText('0900000001')).toBeTruthy();
     expect(screen.getByText('Khách hàng')).toBeTruthy();
     expect(screen.getByText(/1.0.0-pilot/)).toBeTruthy();
     expect(screen.getByText('Hồ sơ')).toBeTruthy();
+    expect(screen.getByText('18')).toBeTruthy();
+    expect(screen.getByText('850 pts')).toBeTruthy();
+    expect(screen.getByText('320k ₫')).toBeTruthy();
     expect(screen.queryByText('CUSTOMER · JOURNEY SHEET')).toBeNull();
     await screen.unmount();
   });
@@ -45,7 +49,10 @@ describe('CustomerProfileScreen', () => {
   it('renders all modern navigation menu items with accessibility labels', async () => {
     const screen = await render(<CustomerProfileScreen view={sampleContentView} />);
 
+    expect(screen.getByLabelText('Đơn hàng của tôi')).toBeTruthy();
     expect(screen.getByLabelText('Sổ địa chỉ')).toBeTruthy();
+    expect(screen.getByLabelText('Thông tin xuất hóa đơn VAT')).toBeTruthy();
+    expect(screen.getByLabelText('Liên kết ngân hàng & Thẻ')).toBeTruthy();
     expect(screen.getByLabelText('Ví VietQR')).toBeTruthy();
     expect(screen.getByLabelText('Khuyến mãi & Thanh toán')).toBeTruthy();
     expect(screen.getByLabelText('Trợ giúp & SOS')).toBeTruthy();

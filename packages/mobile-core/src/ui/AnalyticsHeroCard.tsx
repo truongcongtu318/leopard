@@ -31,6 +31,7 @@ function AnalyticsHeroCardComponent({
           <Pressable
             accessibilityLabel="Nạp tiền nhanh VietQR"
             accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={onTopUp}
             style={({ pressed }) => [styles.topUpButton, pressed ? styles.pressed : null]}
           >
@@ -46,6 +47,7 @@ function AnalyticsHeroCardComponent({
         <Pressable
           accessibilityLabel={`Có ${activeBookingsCount} chuyến đang vận chuyển`}
           accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           onPress={onViewActiveBookings}
           style={({ pressed }) => [styles.bookingBadge, pressed ? styles.pressed : null]}
         >
@@ -55,7 +57,7 @@ function AnalyticsHeroCardComponent({
 
         <View style={styles.aiEtaBadge}>
           <Text style={styles.aiEtaDot}>•</Text>
-          <Text style={styles.aiEtaText}>AI ETA: {aiEtaAccuracy}</Text>
+          <Text style={styles.aiEtaText}>ETA dự kiến: {aiEtaAccuracy}</Text>
         </View>
       </View>
     </View>

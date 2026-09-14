@@ -81,9 +81,9 @@ function getActiveOrderStatusLabel(status: OrderStatus): string {
 function getActiveStatusAccentColor(status: OrderStatus): string {
   switch (status) {
     case 'REQUESTED': return '#F59E0B';
-    case 'ACCEPTED': return '#0284C7';
+    case 'ACCEPTED': return '#0B1E42';
     case 'PICKING_UP': return '#8B5CF6';
-    case 'PICKED_UP': return '#0284C7';
+    case 'PICKED_UP': return '#0B1E42';
     case 'IN_TRANSIT': return '#16A34A';
     default: return '#0B1E42';
   }
@@ -241,7 +241,7 @@ function ActiveOrderHeroCard({
         <View style={s.heroMapGradient} />
         {/* Route line overlay */}
         <View style={s.heroRouteLine}>
-          <View style={[s.heroRouteEndpoint, { backgroundColor: '#0284C7' }]} />
+          <View style={[s.heroRouteEndpoint, { backgroundColor: '#0B1E42' }]} />
           <View style={s.heroRouteDash} />
           <View style={s.heroRouteDash} />
           <View style={s.heroRouteDash} />
@@ -284,7 +284,7 @@ function ActiveOrderHeroCard({
           <View style={s.heroMetaRight}>
             {order.etaLabel ? (
               <View style={s.heroEtaPill}>
-                <IconClock color="#0284C7" size={12} />
+                <IconClock color="#64748B" size={12} />
                 <Text style={s.heroEtaText}>{order.etaLabel}</Text>
               </View>
             ) : null}
@@ -340,7 +340,7 @@ function CompletedOrderCard({
       {/* Route: horizontal compact */}
       <View style={s.completedRoute}>
         <View style={s.completedRouteFlow}>
-          <View style={[s.completedDot, { backgroundColor: '#0284C7' }]} />
+          <View style={[s.completedDot, { backgroundColor: '#16A34A' }]} />
           <Text numberOfLines={1} style={s.completedRouteText}>{order.route.origin.label}</Text>
         </View>
         <View style={s.completedArrow}>
@@ -671,7 +671,7 @@ const s = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   filterChipActive: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#0B1E42',
   },
   filterChipText: {
     fontSize: 13,
@@ -781,7 +781,7 @@ const s = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#0284C7',
+    backgroundColor: '#0B1E42',
   },
   heroDestDot: {
     width: 10,
@@ -841,7 +841,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F0F4F9',
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -849,7 +849,7 @@ const s = StyleSheet.create({
   heroEtaText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#0284C7',
+    color: '#0B1E42',
     fontVariant: ['tabular-nums'],
   },
   heroPrice: {

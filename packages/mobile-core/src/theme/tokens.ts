@@ -157,10 +157,10 @@ export const colors = {
     text: '#0F172A',
     titleText: '#0F172A',
     mutedText: '#475569',
-    subtleText: '#94A3B8',
+    subtleText: '#64748B',
     border: '#E2E8F0',
-    subtleBorder: '#F1F5F9',
-    rowDivider: '#F1F5F9',
+    subtleBorder: '#CBD5E1',
+    rowDivider: '#E2E8F0',
   },
   operational: {
     ink: '#0F172A',
@@ -269,11 +269,11 @@ export const leopardPalette = {
   // Typography
   textSlateDark: '#0F172A',
   textMutedSlate: '#475569',
-  textSubtle: '#94A3B8',
+  textSubtle: '#64748B',
 
   // Borders & dividers
   cardBorder: '#E2E8F0',
-  subtleDivider: '#F1F5F9',
+  subtleDivider: '#E2E8F0',
 
   // Tab bar
   tabActive: '#0B1E42',
@@ -304,37 +304,39 @@ export const leopardPalette = {
 
 /**
  * Customer-role colour palette.
- * Amber Gold (#F59E0B) is the primary action colour; Midnight Navy (#0B1E42) is secondary/supporting.
+ * Midnight Navy (#0B1E42) is primary action colour; Leopard Amber (#F59E0B) is accent/badges/points.
  * Use this in every customer-specific screen instead of leopardPalette.
  */
 export const customerPalette = {
-  // Primary — Amber Gold (cam vàng LEOPARD)
-  primary: '#F59E0B',
-  primaryDark: '#D97706',
-  primaryBg: '#FFFBEB',
-  primaryBorder: '#FDE68A',
-  primaryText: '#92400E',   // readable text on amber bg
+  // Primary — Midnight Navy (Chủ đạo thương hiệu & Hành động)
+  primary: '#0B1E42',
+  primaryDark: '#061226',
+  primaryBg: '#F0F4F9',
+  primaryBorder: '#CBD5E1',
+  primaryText: '#0B1E42',
 
-  // Secondary — Midnight Navy
-  secondary: '#0B1E42',
-  secondaryBg: '#F0F4F9',
-  secondaryBorder: '#CBD5E1',
+  // Brand Accent — Leopard Amber (Huy hiệu, điểm thưởng, voucher)
+  accent: '#F59E0B',
+  accentDark: '#D97706',
+  accentBg: '#FFFBEB',
+  accentBorder: '#FDE68A',
+  accentText: '#92400E',
 
-  // Tab / nav
-  tabActive: '#F59E0B',
-  tabActiveBg: '#FFFBEB',
+  // Tab / nav (Active state)
+  tabActive: '#0B1E42',
+  tabActiveBg: '#F0F4F9',
   tabInactive: '#64748B',
 
   // Input focus
-  inputFocusBorder: '#F59E0B',
-  inputFocusRing: 'rgba(245, 158, 11, 0.12)',
+  inputFocusBorder: '#0B1E42',
+  inputFocusRing: 'rgba(11, 30, 66, 0.08)',
 
-  // Shared neutrals — mirrors leopardPalette
+  // Shared neutrals
   textSlateDark: '#0F172A',
   textMutedSlate: '#475569',
-  textSubtle: '#94A3B8',
+  textSubtle: '#64748B',
   cardBorder: '#E2E8F0',
-  subtleDivider: '#F1F5F9',
+  subtleDivider: '#E2E8F0',
   surfaceWhite: '#FFFFFF',
   bgMuted: '#F8FAFC',
   canvas: '#F8FAFC',
@@ -364,6 +366,27 @@ export const leopardElevation = {
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+  },
+} as const;
+
+export const glass = {
+  liquidDock: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  glassCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
   },
 } as const;
 

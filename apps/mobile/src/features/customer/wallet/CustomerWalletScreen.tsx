@@ -312,6 +312,7 @@ export function CustomerWalletScreen() {
                   <Pressable
                     accessibilityLabel="Sao chép số tài khoản"
                     accessibilityRole="button"
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     onPress={() => handleCopy('account', '0900000001')}
                     style={styles.copyBtn}
                   >
@@ -337,6 +338,7 @@ export function CustomerWalletScreen() {
                   <Pressable
                     accessibilityLabel="Sao chép nội dung chuyển khoản"
                     accessibilityRole="button"
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     onPress={() => handleCopy('memo', 'LEOPARD TOPUP 0900000001')}
                     style={styles.copyBtn}
                   >
@@ -663,16 +665,16 @@ const styles = StyleSheet.create({
   },
   dockBtnPrimary: {
     flex: 1.15,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#0B1E42',
     borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    shadowColor: '#F59E0B',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.22,
+    shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 3,
   },

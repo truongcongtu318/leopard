@@ -1,4 +1,5 @@
 import React from 'react';
+import Svg, { Circle, Line, Path, Polygon, Polyline, Rect, G } from 'react-native-svg';
 import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
 
 const leopardWordmarkSource = require('../../../assets/brand/leopard-wordmark.png');
@@ -51,21 +52,22 @@ export function IconLocationPin({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View
-        style={[
-          styles.nativePinOuter,
-          {
-            width: size * 0.65,
-            height: size * 0.65,
-            borderRadius: (size * 0.65) / 2,
-            borderColor: color,
-            borderWidth: strokeWidth,
-            backgroundColor: secondaryColor,
-          },
-        ]}
-      />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M12 21C16 16.5 19 13.5 19 9.5C19 5.63401 15.866 2.5 12 2.5C8.13401 2.5 5 5.63401 5 9.5C5 13.5 8 16.5 12 21Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <Circle cx="12" cy="9.5" r="3" fill={secondaryColor} stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -112,9 +114,32 @@ export function IconSpeedTruck({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.75, height: size * 0.45, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Rect
+          height="10"
+          rx="1"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          width="11"
+          x="2"
+          y="6"
+        />
+        <Path
+          d="M13 8H17.5L21 12V16H13V8Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <Circle cx="6" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="17" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -157,9 +182,28 @@ export function IconSecurityShield({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeShield, { width: size * 0.65, height: size * 0.75, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M12 2.5L4 5.5V11.5C4 16.5 7.5 20.8 12 22C16.5 20.8 20 16.5 20 11.5V5.5L12 2.5Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <Path
+          d="M8.5 12L11 14.5L15.5 9.5"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -196,20 +240,22 @@ export function IconCamera({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View
-        style={[
-          styles.nativeRect,
-          {
-            width: size * 0.75,
-            height: size * 0.55,
-            borderColor: color,
-            borderWidth: strokeWidth,
-            backgroundColor: secondaryColor,
-          },
-        ]}
-      />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <Circle cx="12" cy="13" fill={secondaryColor} r="4" stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -251,9 +297,28 @@ export function IconSupport247({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M3 13V11C3 6.02944 7.02944 2 12 2C16.9706 2 21 6.02944 21 11V13"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth={strokeWidth}
+        />
+        <Rect height="6" rx="1.5" stroke={color} strokeWidth={strokeWidth} width="3" x="2" y="11" />
+        <Rect height="6" rx="1.5" stroke={color} strokeWidth={strokeWidth} width="3" x="19" y="11" />
+        <Path
+          d="M19 16V18C19 19.6569 17.6569 21 16 21H13"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -292,9 +357,25 @@ export function IconPaymentConvenient({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Rect
+          height="14"
+          rx="2"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          width="20"
+          x="2"
+          y="5"
+        />
+        <Line stroke={color} strokeWidth={strokeWidth} x1="2" x2="22" y1="9.5" y2="9.5" />
+        <Rect fill={color} height="2" rx="0.5" width="4" x="5" y="14" />
+      </Svg>
   );
 }
 
@@ -326,9 +407,18 @@ export function IconQrPayment({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="3" y="3" />
+        <Rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="15" y="3" />
+        <Rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="3" y="15" />
+        <Path d="M15 15H17V17H15V15ZM19 15H21V17H19V15ZM15 19H17V21H15V19ZM19 19H21V21H19V19ZM10 4H12V6H10V4ZM4 10H6V12H4V10ZM10 10H14V14H10V10Z" fill={color} />
+      </Svg>
   );
 }
 
@@ -350,10 +440,13 @@ export function IconBank({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M3 9.5L12 4L21 9.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M5 10V18M10 10V18M14 10V18M19 10V18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M2 20H22" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -373,10 +466,11 @@ export function IconTxTopup({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <Text style={{ color, fontSize: size * 0.7, fontWeight: '800' }}>↓</Text>
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M17 7L7 17M7 17H15M7 17V9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -396,10 +490,11 @@ export function IconTxPayment({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <Text style={{ color, fontSize: size * 0.7, fontWeight: '800' }}>↑</Text>
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M7 17L17 7M17 7H9M17 7V15" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -420,10 +515,12 @@ export function IconTxRefund({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <Text style={{ color, fontSize: size * 0.7, fontWeight: '800' }}>↺</Text>
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M3 10H14C17.3137 10 20 12.6863 20 16C20 19.3137 17.3137 22 14 22H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M7 6L3 10L7 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -444,10 +541,12 @@ export function IconCopy({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Rect height="13" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} width="13" x="9" y="9" />
+        <Path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -468,10 +567,12 @@ export function IconEye({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.5, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -493,10 +594,13 @@ export function IconEyeOff({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.5, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12A18.45 18.45 0 0 1 5.06 6.06L17.94 17.94Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M9.9 4.24A9.12 9.12 0 0 1 12 4C19 4 23 12 23 12A18.5 18.5 0 0 1 19.82 16.14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M1 1L23 23" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -517,10 +621,12 @@ export function IconHome({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M3 9.5L12 3L21 9.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M9 21V12H15V21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -542,10 +648,13 @@ export function IconRoute({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Circle cx="6" cy="18" r="3" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="18" cy="6" r="3" stroke={color} strokeWidth={strokeWidth} />
+        <Path d="M9 18H13C15.2091 18 17 16.2091 17 14V10C17 7.79086 15.2091 6 13 6H9" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -567,10 +676,13 @@ export function IconWallet({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.7, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M21 7V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V17" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Rect height="8" rx="2" stroke={color} strokeWidth={strokeWidth} width="7" x="15" y="8" />
+        <Circle cx="18.5" cy="12" fill={color} r="1" />
+      </Svg>
   );
 }
 
@@ -592,10 +704,13 @@ export function IconOrders({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M21 16V8C21 7.64 20.81 7.31 20.5 7.13L13 2.87C12.38 2.51 11.62 2.51 11 2.87L3.5 7.13C3.19 7.31 3 7.64 3 8V16C3 16.36 3.19 16.69 3.5 16.87L11 21.13C11.62 21.49 12.38 21.49 13 21.13L20.5 16.87C20.81 16.69 21 16.36 21 16Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M3.3 7.5L12 12.5L20.7 7.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M12 21.5V12.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -616,10 +731,12 @@ export function IconUser({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.5, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Circle cx="12" cy="7" r="4" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -640,10 +757,12 @@ export function IconBell({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21S18 15 18 8Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M13.73 21A2 2 0 0 1 10.27 21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -664,10 +783,12 @@ export function IconSearch({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Circle cx="11" cy="11" r="7" stroke={color} strokeWidth={strokeWidth} />
+        <Path d="M20 20L16 16" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -688,10 +809,12 @@ export function IconCameraProof({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.7, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 3H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Circle cx="12" cy="13" r="4" stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -711,10 +834,11 @@ export function IconPhone({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M22 16.92V19.92C22.0011 20.1986 21.9441 20.4742 21.8325 20.7294C21.7209 20.9846 21.5573 21.2137 21.3521 21.4019C21.1468 21.5902 20.9046 21.7336 20.6407 21.8228C20.3769 21.912 20.0974 21.9452 19.82 21.92C16.7428 21.5857 13.787 20.5342 11.19 18.85C8.77382 17.3147 6.72533 15.2662 5.19 12.85C3.49997 10.2412 2.44824 7.27099 2.12 4.18C2.095 3.90353 2.12787 3.62486 2.21656 3.36171C2.30526 3.09856 2.44787 2.85679 2.6353 2.65174C2.82274 2.44669 3.05086 2.2829 3.30514 2.17079C3.55942 2.05868 3.83424 2.00072 4.112 2H7.112C7.5953 1.99524 8.06377 2.16708 8.43003 2.48354C8.7963 2.80001 9.03456 3.23899 9.102 3.72C9.22723 4.61464 9.44577 5.49258 9.752 6.33C9.89745 6.72103 9.91978 7.14725 9.81643 7.55106C9.71308 7.95487 9.48834 8.31889 9.172 8.59L7.902 9.86C9.33614 12.3827 11.4173 14.4639 13.94 15.9L15.21 14.63C15.4811 14.3137 15.8451 14.0889 16.2489 13.9856C16.6528 13.8822 17.079 13.9045 17.47 14.05C18.3074 14.3562 19.1854 14.5748 20.08 14.7C20.5663 14.7679 21.0102 15.0103 21.3277 15.3819C21.6451 15.7535 21.8136 16.2287 21.8 16.71L22 16.92Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -734,10 +858,11 @@ export function IconMessage({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -761,10 +886,15 @@ export function IconVehicleMotorbike({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
+        <Circle cx="7" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="21" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={strokeWidth} />
+        <Path d="M7 19H12L15 13H19L21 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M15 13L17 7H19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M10 11H13.5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -788,10 +918,15 @@ export function IconVehicleVan({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.75, height: size * 0.45, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
+        <Path d="M3 8C3 7.44772 3.44772 7 4 7H17V18H3V8Z" stroke={color} strokeWidth={strokeWidth} />
+        <Path d="M17 9H21.5C22.1 9 22.6 9.4 22.8 10L24.5 13.5C24.7 13.8 24.8 14.1 24.8 14.5V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Rect height="4" rx="0.5" stroke={color} strokeWidth={strokeWidth} width="4.5" x="17.5" y="10" />
+        <Circle cx="7.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="20.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -813,10 +948,13 @@ export function IconWarningShield({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeShield, { width: size * 0.6, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} x1="12" x2="12" y1="8" y2="13" />
+        <Circle cx="12" cy="16.5" fill={color} r="1" />
+      </Svg>
   );
 }
 
@@ -841,10 +979,16 @@ export function IconVehicle3Wheel({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.7, height: size * 0.45, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
+        <Rect height="9" rx="1" stroke={color} strokeWidth={strokeWidth} width="12" x="2" y="9" />
+        <Line stroke={color} strokeWidth={strokeWidth} x1="6" x2="6" y1="9" y2="18" />
+        <Path d="M14 15H18L21 10H19" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M21 10L22.5 7H24.5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Circle cx="8" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="21" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -868,10 +1012,15 @@ export function IconVehicleLightTruck({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.75, height: size * 0.45, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
+        <Path d="M2 9C2 7.89543 2.89543 7 4 7H16V18H2V9Z" stroke={color} strokeWidth={strokeWidth} />
+        <Path d="M16 10H20.5C21.1 10 21.6 10.4 21.8 10.9L23.8 14.3C23.9 14.5 24 14.8 24 15.1V18H16V10Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Line stroke={color} strokeWidth={strokeWidth} x1="17.5" x2="22" y1="14" y2="14" />
+        <Circle cx="7" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="19" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -896,10 +1045,16 @@ export function IconVehicleHeavyTruck({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.45, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
+        <Rect height="12" rx="1" stroke={color} strokeWidth={strokeWidth} width="15" x="2" y="6" />
+        <Line stroke={color} strokeDasharray="2 2" strokeWidth={strokeWidth} x1="2" x2="17" y1="12" y2="12" />
+        <Path d="M17 9H22C22.6 9 23.2 9.5 23.4 10.1L24.8 13.5C24.9 13.8 25 14.1 25 14.4V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Circle cx="6" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="11" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="20" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -916,7 +1071,14 @@ export function IconRoleCustomer({ color = '#0B1E42', secondaryColor = '#F0F4F9'
       </svg>
     );
   }
-  return <View style={[styles.centerBox, { width: size, height: size }]}><View style={[styles.nativeCircle, { width: size * 0.5, height: size * 0.5, borderColor: color, borderWidth: 1.5 }]} /></View>;
+
+  return (
+      <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Circle cx="10" cy="8" fill={secondaryColor} r="4" stroke={color} strokeWidth="1.75" />
+        <Path d="M3 19C3 15.7 5.7 13 9 13H11C14.3 13 17 15.7 17 19" stroke={color} strokeLinecap="round" strokeWidth="1.75" />
+        <Rect fill={color} height="6" rx="1" width="7" x="15" y="14" />
+      </Svg>
+  );
 }
 
 /**
@@ -934,7 +1096,16 @@ export function IconRoleDriver({ color = '#1D4ED8', secondaryColor = '#DBEAFE', 
       </svg>
     );
   }
-  return <View style={[styles.centerBox, { width: size, height: size }]}><View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: 1.5 }]} /></View>;
+
+  return (
+      <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Circle cx="12" cy="12" fill={secondaryColor} r="9" stroke={color} strokeWidth="1.75" />
+        <Circle cx="12" cy="12" fill={color} r="2.5" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="12" x2="12" y1="3" y2="9.5" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="4.5" x2="9.8" y1="16.5" y2="13.5" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="19.5" x2="14.2" y1="16.5" y2="13.5" />
+      </Svg>
+  );
 }
 
 /**
@@ -952,7 +1123,16 @@ export function IconRoleFleet({ color = '#0F172A', secondaryColor = '#F0F4F9', s
       </svg>
     );
   }
-  return <View style={[styles.centerBox, { width: size, height: size }]}><View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: 1.5 }]} /></View>;
+
+  return (
+      <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M3 21H21M4 21V6C4 4.9 4.9 4 6 4H14C15.1 4 16 4.9 16 6V21M16 10H19C19.6 10 20 10.4 20 11V21" stroke={color} strokeLinecap="round" strokeWidth="1.75" />
+        <Rect fill={secondaryColor} height="2" width="2" x="7" y="7" />
+        <Rect fill={secondaryColor} height="2" width="2" x="11" y="7" />
+        <Rect fill={secondaryColor} height="2" width="2" x="7" y="11" />
+        <Rect fill={secondaryColor} height="2" width="2" x="11" y="11" />
+      </Svg>
+  );
 }
 
 /**
@@ -970,7 +1150,16 @@ export function IconRoleAdmin({ color = '#0F172A', secondaryColor = '#38BDF8', s
       </svg>
     );
   }
-  return <View style={[styles.centerBox, { width: size, height: size }]}><View style={[styles.nativeShield, { width: size * 0.6, height: size * 0.7, borderColor: color, borderWidth: 1.5 }]} /></View>;
+
+  return (
+      <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M12 2L4 5.5V11.5C4 16.5 7.5 21.1 12 22.5C16.5 21.1 20 16.5 20 11.5V5.5L12 2Z" fill="#F8FAFC" stroke={color} strokeLinejoin="round" strokeWidth="1.75" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth="1.5" x1="8" x2="16" y1="9" y2="9" />
+        <Circle cx="10" cy="9" fill={secondaryColor} r="1.5" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth="1.5" x1="8" x2="16" y1="14" y2="14" />
+        <Circle cx="14" cy="14" fill={secondaryColor} r="1.5" />
+      </Svg>
+  );
 }
 
 /**
@@ -1099,21 +1288,22 @@ export function VietnamFlagIcon({
   }
 
   return (
-    <View
-      style={[
-        styles.vietnamFlagNative,
-        {
-          width,
-          height,
+      <Svg
+        testID={testID}
+        height={height}
+        style={{
           borderRadius,
-        },
-      ]}
-      testID={testID}
-    >
-      <Text style={[styles.vietnamStarText, { fontSize: height * 0.78, lineHeight: height }]}>
-        ★
-      </Text>
-    </View>
+          overflow: 'hidden',
+        }}
+        viewBox="0 0 30 20"
+        width={width}
+      >
+        <Rect fill="#DA251D" height="20" width="30" />
+        <Polygon
+          fill="#FFFF00"
+          points="15,3.8 16.6,8.6 21.7,8.6 17.6,11.6 19.2,16.4 15,13.4 10.8,16.4 12.4,11.6 8.3,8.6 13.4,8.6"
+        />
+      </Svg>
   );
 }
 
@@ -1262,9 +1452,34 @@ export function IconWarehouse({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={{ width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M3 21V8L12 3L21 8V21H3Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <Path
+          d="M9 21V13H15V21"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <Path
+          d="M9 17H15"
+          stroke={color}
+          strokeLinecap="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1309,9 +1524,30 @@ export function IconOffice({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={{ width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Rect
+          height="18"
+          rx="1"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+          width="14"
+          x="5"
+          y="3"
+        />
+        <Path d="M9 7H11" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M13 7H15" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M9 11H11" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M13 11H15" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M10 21V17H14V21" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1347,9 +1583,22 @@ export function IconTag({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={{ width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M12 2H2V12L13.59 23.59C14.37 24.37 15.63 24.37 16.41 23.59L22.59 17.41C23.37 16.63 23.37 15.37 22.59 14.59L12 2Z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+        <Circle cx="7" cy="7" fill={color} r="1.5" />
+      </Svg>
   );
 }
 
@@ -1385,17 +1634,22 @@ export function IconSettings({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View
-        style={{
-          width: size * 0.7,
-          height: size * 0.7,
-          borderRadius: (size * 0.7) / 2,
-          borderColor: color,
-          borderWidth: strokeWidth,
-        }}
-      />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth={strokeWidth} />
+        <Path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1430,14 +1684,21 @@ export function IconTrash({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View
-        style={[
-          styles.nativeRect,
-          { width: size * 0.65, height: size * 0.7, borderColor: color, borderWidth: strokeWidth },
-        ]}
-      />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1473,14 +1734,21 @@ export function IconStar({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View
-        style={[
-          styles.nativeCircle,
-          { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth },
-        ]}
-      />
-    </View>
+      <Svg
+        testID={testID}
+        fill={fill}
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Polygon
+          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1515,14 +1783,21 @@ export function IconPlus({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View
-        style={[
-          styles.nativeCircle,
-          { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth },
-        ]}
-      />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M12 5v14M5 12h14"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1547,10 +1822,15 @@ export function IconTrophy({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.5, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M6 9H4C3.44772 9 3 8.55228 3 8V5C3 4.44772 3.44772 4 4 4H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M18 9H20C20.5523 9 21 8.55228 21 8V5C21 4.44772 20.5523 4 20 4H18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M6 4H18V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M12 17V20" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M8 20H16" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1574,10 +1854,15 @@ export function IconIdCard({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Rect height="16" rx="2" stroke={color} strokeWidth={strokeWidth} width="20" x="2" y="4" />
+        <Circle cx="8" cy="11" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+        <Path d="M4 18C4 16 5.5 14.5 8 14.5C10.5 14.5 12 16 12 18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M14 9H19" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M14 13H18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1601,10 +1886,15 @@ export function IconLicense({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Rect height="16" rx="2" stroke={color} strokeWidth={strokeWidth} width="20" x="2" y="4" />
+        <Path d="M6 8H10" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M6 12H9" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Circle cx="16" cy="10" r="3" stroke={color} strokeWidth={strokeWidth} />
+        <Path d="M6 16H18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1626,10 +1916,13 @@ export function IconInsuranceDoc({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.75, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M14 2V8H20" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M12 11L10 15H14L12 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1650,10 +1943,12 @@ export function IconClock({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.7, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={strokeWidth} />
+        <Path d="M12 6V12L16 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1674,10 +1969,12 @@ export function IconEarnings({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeCircle, { width: size * 0.6, height: size * 0.6, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M12 2V22" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1712,21 +2009,21 @@ export function IconChevronLeft({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View
-        style={[
-          styles.nativeChevron,
-          {
-            width: size * 0.5,
-            height: size * 0.5,
-            borderTopWidth: strokeWidth,
-            borderLeftWidth: strokeWidth,
-            borderTopColor: color,
-            borderLeftColor: color,
-          },
-        ]}
-      />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M15 18L9 12L15 6"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1799,11 +2096,21 @@ export function IconMenu({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={{ width: size * 0.7, height: strokeWidth, backgroundColor: color, marginVertical: 2, borderRadius: 1 }} />
-      <View style={{ width: size * 0.7, height: strokeWidth, backgroundColor: color, marginVertical: 2, borderRadius: 1 }} />
-      <View style={{ width: size * 0.7, height: strokeWidth, backgroundColor: color, marginVertical: 2, borderRadius: 1 }} />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M4 6H20M4 12H20M4 18H20"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1838,9 +2145,21 @@ export function IconClose({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <Text style={{ color, fontSize: size * 0.8, fontWeight: '700', lineHeight: size }}>✕</Text>
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M18 6L6 18M6 6L18 18"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1875,22 +2194,21 @@ export function IconChevronRight({
   }
 
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View
-        style={[
-          styles.nativeChevron,
-          {
-            width: size * 0.45,
-            height: size * 0.45,
-            borderTopWidth: strokeWidth,
-            borderRightWidth: strokeWidth,
-            borderTopColor: color,
-            borderRightColor: color,
-            transform: [{ rotate: '45deg' }],
-          },
-        ]}
-      />
-    </View>
+      <Svg
+        testID={testID}
+        fill="none"
+        height={size}
+        viewBox="0 0 24 24"
+        width={size}
+      >
+        <Path
+          d="M9 18L15 12L9 6"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={strokeWidth}
+        />
+      </Svg>
   );
 }
 
@@ -1913,10 +2231,14 @@ export function IconFuelPump({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.55, height: size * 0.7, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M3 21H13V5C13 3.89543 12.1046 3 11 3H5C3.89543 3 3 3.89543 3 5V21Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M6 7H10V10H6V7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M13 9H16C17.1046 9 18 9.89543 18 11V16C18 17.1046 18.8954 18 20 18C21.1046 18 22 17.1046 22 16V9L19.5 6.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M2 21H14" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1937,10 +2259,12 @@ export function IconScaleWeight({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.75, height: size * 0.45, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M12 3V21M6 21H18M3 7L12 5L21 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M6 7L3 13H9L6 7ZM18 7L15 13H21L18 7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1961,10 +2285,12 @@ export function IconCoffeeRest({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.65, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M17 8H4V16C4 18.2091 5.79086 20 8 20H13C15.2091 20 17 18.2091 17 16V8ZM17 9H19C20.1046 9 21 9.89543 21 11C21 12.1046 20.1046 13 19 13H17" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Path d="M7 2V5M11 2V5M15 2V5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -1986,10 +2312,13 @@ export function IconRadarPulse({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativePinOuter, { width: size * 0.65, height: size * 0.65, borderRadius: (size * 0.65) / 2, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Circle cx="12" cy="12" fill={color} r="2.5" />
+        <Path d="M16.24 7.76C18.58 10.1 18.58 13.9 16.24 16.24M7.76 7.76C5.42 10.1 5.42 13.9 7.76 16.24" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M19.07 4.93C22.98 8.84 22.98 15.16 19.07 19.07M4.93 4.93C1.02 8.84 1.02 15.16 4.93 19.07" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -2009,10 +2338,11 @@ export function IconCrown({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <Text style={{ color, fontSize: size * 0.75, fontWeight: '700' }}>👑</Text>
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M2 19H22M5 19L2 7L8 11L12 3L16 11L22 7L19 19H5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -2032,10 +2362,11 @@ export function IconCheck({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <Text style={{ color, fontSize: size * 0.8, fontWeight: '800' }}>✓</Text>
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Polyline points="20 6 9 17 4 12" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -2057,10 +2388,13 @@ export function IconExternalLink({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <Text style={{ color, fontSize: size * 0.75 }}>↗</Text>
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Polyline points="15 3 21 3 21 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="10" x2="21" y1="14" y2="3" />
+      </Svg>
   );
 }
 
@@ -2084,10 +2418,15 @@ export function IconFileText({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.6, height: size * 0.75, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Polyline points="14 2 14 8 20 8" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="16" x2="8" y1="13" y2="13" />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="16" x2="8" y1="17" y2="17" />
+        <Polyline points="10 9 9 9 8 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      </Svg>
   );
 }
 
@@ -2108,10 +2447,12 @@ export function IconCreditCard({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeRect, { width: size * 0.8, height: size * 0.55, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Rect height="16" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} width="22" x="1" y="4" />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="1" x2="23" y1="10" y2="10" />
+      </Svg>
   );
 }
 
@@ -2133,10 +2474,13 @@ export function IconShieldAlert({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <View style={[styles.nativeShield, { width: size * 0.7, height: size * 0.8, borderColor: color, borderWidth: strokeWidth }]} />
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M12 22S4 18 4 12V5L12 2L20 5V12C20 18 12 22 12 22Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="12" x2="12" y1="8" y2="12" />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="12" x2="12.01" y1="16" y2="16" />
+      </Svg>
   );
 }
 
@@ -2158,10 +2502,13 @@ export function IconLogOut({
       </svg>
     );
   }
+
   return (
-    <View style={[styles.centerBox, { width: size, height: size }]} testID={testID}>
-      <Text style={{ color, fontSize: size * 0.75 }}>🚪</Text>
-    </View>
+      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+        <Path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Polyline points="16 17 21 12 16 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="21" x2="9" y1="12" y2="12" />
+      </Svg>
   );
 }
 

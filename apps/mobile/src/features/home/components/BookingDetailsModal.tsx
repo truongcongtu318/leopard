@@ -902,7 +902,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: Platform.select({ ios: 28, default: 20 }),
+    paddingBottom: Platform.select({ ios: 34, default: 20 }),
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
     backgroundColor: '#FFFFFF',

@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   promoCardApplied: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#F0F4F9',
     borderColor: colors.brand.background,
     borderWidth: 1.5,
   },
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   discountText: {
-    color: colors.brand.background,
+    color: '#D97706',
     fontSize: 14,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',

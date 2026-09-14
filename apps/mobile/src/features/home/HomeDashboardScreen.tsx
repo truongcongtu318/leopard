@@ -566,9 +566,9 @@ export function HomeDashboardScreen({
                     <View style={styles.locationHeaderRow}>
                       <Text style={styles.inputMicroLabel}>ĐIỂM LẤY HÀNG</Text>
                       {pickupLabel ? (
-                        <View style={styles.pickupLabelBadge}>
-                          <IconWarehouse color="#0284C7" size={12} />
-                          <Text style={styles.pickupLabelBadgeText}>{pickupLabel}</Text>
+                        <View style={styles.pickupLabelBadge} testID="pickup-label-badge">
+                          <IconWarehouse color="#166534" size={12} />
+                          <Text style={styles.pickupLabelBadgeText} testID="pickup-label-badge-text">{pickupLabel}</Text>
                         </View>
                       ) : null}
                     </View>
@@ -616,7 +616,7 @@ export function HomeDashboardScreen({
                   <View style={styles.dropdownHeaderLeft}>
                     <Text style={styles.dropdownHeaderTitle}>{focusedField === 'pickup' ? 'ĐIỂM LẤY HÀNG' : 'ĐIỂM GIAO HÀNG'} · GỢI Ý VỊ TRÍ</Text>
                     {isSearchingLocation ? (
-                      <ActivityIndicator color="#0284C7" size="small" style={{ marginLeft: 6 }} />
+                      <ActivityIndicator color="#0B1E42" size="small" style={{ marginLeft: 6 }} />
                     ) : null}
                   </View>
                   <Pressable accessibilityLabel="Đóng gợi ý" hitSlop={8} onPress={() => setFocusedField(null)} style={styles.dropdownCloseBtn}>
@@ -645,7 +645,7 @@ export function HomeDashboardScreen({
                         style={({ pressed }) => [styles.suggestionRowItem, pressed && styles.dropdownItemPressed]}
                       >
                         <View style={styles.suggestionIconBox}>
-                          <IconPin color="#0284C7" size={16} />
+                          <IconPin color="#0B1E42" size={16} />
                         </View>
                         <View style={styles.dropdownItemTextWrap}>
                           <Text numberOfLines={1} style={styles.dropdownItemTitle}>{item.title}</Text>
@@ -709,7 +709,7 @@ export function HomeDashboardScreen({
                         style={({ pressed }) => [styles.hubChip, pressed && styles.hubChipPressed]}
                         testID={`hub-chip-${addr.label || addr.id}`}
                       >
-                        <IconWarehouse color="#0284C7" size={16} />
+                        <IconWarehouse color="#0B1E42" size={16} />
                         <Text style={styles.hubChipText}>{addr.label || addr.address}</Text>
                       </Pressable>
                     ))}
@@ -805,8 +805,8 @@ export function HomeDashboardScreen({
                 <View style={styles.activeTop}>
                   <StatusBadge domain="order" status={activeShipment.status} />
                   {activeShipment.etaMinutes !== undefined ? (
-                    <View style={styles.etaPill}>
-                      <IconClock color="#0284C7" size={14} />
+                    <View style={styles.etaPill} testID="active-shipment-eta-pill">
+                      <IconClock color="#0B1E42" size={14} />
                       <Text style={styles.etaText}>ETA dự kiến {activeShipment.etaMinutes} phút</Text>
                     </View>
                   ) : null}
@@ -924,8 +924,8 @@ const styles = StyleSheet.create({
   },
   routeBox: { flexDirection: 'row', backgroundColor: '#F8FAFC', borderRadius: 14, ...iosContinuousCurve, padding: 10, borderWidth: 1, borderColor: '#E2E8F0' },
   spineColumn: { width: 24, alignItems: 'center', paddingVertical: 8 },
-  pickupPinCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(2, 132, 199, 0.2)', alignItems: 'center', justifyContent: 'center' },
-  pickupPinInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#0284C7' },
+  pickupPinCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(22, 163, 74, 0.15)', alignItems: 'center', justifyContent: 'center' },
+  pickupPinInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A' },
   spineLine: { flex: 1, width: 2, backgroundColor: '#CBD5E1', marginVertical: 4 },
   dropoffPinSquare: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#DC2626' },
   inputsColumn: { flex: 1, marginLeft: 10 },
@@ -933,8 +933,8 @@ const styles = StyleSheet.create({
   inputInnerWrap: { flex: 1 },
   locationHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
   inputMicroLabel: { fontSize: 9, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
-  pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0F2FE', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
-  pickupLabelBadgeText: { fontSize: 10, fontWeight: '700', color: '#0284C7' },
+  pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
+  pickupLabelBadgeText: { fontSize: 10, fontWeight: '700', color: '#166534' },
   locationTextInput: { fontSize: 14, fontWeight: '600', color: '#0F172A', padding: 0, minHeight: 22 },
   inputDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 4 },
   inputActionBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
@@ -946,7 +946,7 @@ const styles = StyleSheet.create({
   hubChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     minHeight: 44, minWidth: 44, paddingHorizontal: 12, paddingVertical: 10,
-    backgroundColor: '#F1F5F9', borderRadius: 12, ...iosContinuousCurve,
+    backgroundColor: '#F8FAFC', borderRadius: 12, ...iosContinuousCurve,
     borderWidth: 1, borderColor: '#E2E8F0',
   },
   hubChipPressed: { backgroundColor: '#E2E8F0', opacity: 0.85 },
@@ -965,7 +965,7 @@ const styles = StyleSheet.create({
   emptySearchHintBox: { paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center' },
   emptySearchHintText: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
   suggestionRowItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, paddingHorizontal: 4, borderRadius: 10 },
-  suggestionIconBox: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  suggestionIconBox: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
   dropdownItemPressed: { opacity: 0.7 },
   dropdownIconCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
@@ -1032,8 +1032,8 @@ const styles = StyleSheet.create({
   },
   activeCardPressed: { opacity: 0.85 },
   activeTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  etaPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E0F2FE', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
-  etaText: { fontSize: 11, fontWeight: '700', color: '#0284C7', fontVariant: ['tabular-nums'] },
+  etaPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0F4F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
+  etaText: { fontSize: 11, fontWeight: '700', color: '#0B1E42', fontVariant: ['tabular-nums'] },
   activeRouteContainer: { marginVertical: 2 },
   activeMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   activeDriverBox: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, gap: 6 },
