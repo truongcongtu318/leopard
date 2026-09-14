@@ -295,23 +295,24 @@ export function LoginScreen({
         showsVerticalScrollIndicator={false}
         style={styles.container}
       >
-        <View style={styles.topNavigation}>
-          <BrandLoginLogo height={32} />
-        </View>
+        <View style={styles.mainSection}>
+          <View style={styles.topNavigation}>
+            <BrandLoginLogo height={32} />
+          </View>
 
-        <View style={styles.titleSection}>
-          <Text accessibilityRole="header" style={styles.largeTitle}>
-            Đăng nhập
-          </Text>
-          <Text style={styles.largeSubtitle}>
-            Nhập số điện thoại để tiếp tục với LEOPARD.
-          </Text>
-        </View>
+          <View style={styles.titleSection}>
+            <Text accessibilityRole="header" style={styles.largeTitle}>
+              Đăng nhập
+            </Text>
+            <Text style={styles.largeSubtitle}>
+              Nhập số điện thoại để tiếp tục với LEOPARD.
+            </Text>
+          </View>
 
-        <View style={styles.bodyWrap}>
-        <View style={styles.innerWrapper}>
-          {/* ================= LOGIN FORM (flat, no card) ================= */}
-          <View style={styles.formGroup}>
+          <View style={styles.bodyWrap}>
+            <View style={styles.innerWrapper}>
+              {/* ================= LOGIN FORM (flat, no card) ================= */}
+              <View style={styles.formGroup}>
             {sessionExpired ? (
               <View style={styles.alertBox} testID="session-expired-banner">
                 <Text accessibilityRole="alert" style={styles.alertText}>
@@ -402,7 +403,15 @@ export function LoginScreen({
               {isSubmitting ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.primaryCtaText}>Tiếp tục</Text>
+                <Text
+                  style={[
+                    styles.primaryCtaText,
+                    (!isLikelyVnPhone(phone) || isSubmitting) &&
+                      styles.primaryCtaTextDisabled,
+                  ]}
+                >
+                  Tiếp tục
+                </Text>
               )}
             </Pressable>
 
@@ -523,8 +532,12 @@ export function LoginScreen({
               </View>
             </View>
           ) : null}
+            </View>
+          </View>
+        </View>
 
-          {/* Footer Navigation */}
+        {/* Footer Navigation pinned to bottom */}
+        <View style={styles.bottomSection}>
           {onNavigateRegister ? (
             <View style={styles.registerRow}>
               <Text style={styles.registerHelper}>Chưa có tài khoản?</Text>
@@ -537,7 +550,6 @@ export function LoginScreen({
           <Text style={styles.termsNote}>
             Bằng việc đăng nhập, bạn đồng ý với Điều khoản dịch vụ & Chính sách bảo mật của LEOPARD.
           </Text>
-        </View>
         </View>
       </ScrollView>
 
@@ -706,7 +718,18 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 24,
+    justifyContent: 'space-between',
+    paddingBottom: Platform.select({ ios: 34, default: 24 }),
+  },
+  mainSection: {
+    width: '100%',
+  },
+  bottomSection: {
+    width: '100%',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    gap: 12,
+    alignItems: 'center',
   },
   topNavigation: {
     paddingHorizontal: 24,
@@ -935,6 +958,9 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  primaryCtaTextDisabled: {
+    color: '#94A3B8',
   },
 
   /* Divider row */

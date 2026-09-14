@@ -59,7 +59,7 @@ describe('CustomerAddAddressScreen (customer-address route)', () => {
     expect(screen.getByText('Kho chính')).toBeTruthy();
     expect(screen.getByText('Văn phòng')).toBeTruthy();
     expect(screen.getByText('Kho phụ')).toBeTruthy();
-    expect(screen.getByText('THỦ KHO GIAO NHẬN')).toBeTruthy();
+    expect(screen.getByText('Thủ kho giao nhận')).toBeTruthy();
     expect(screen.getByText('Lưu kho & Vào trang chủ')).toBeTruthy();
     await screen.unmount();
   });
