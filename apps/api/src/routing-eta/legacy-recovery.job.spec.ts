@@ -13,6 +13,7 @@ describe('runLegacyRouteRecovery', () => {
             stops: [{ id: 'stop-1', latitude: 10.1, longitude: 106.1, sequence: 0 }],
           },
         ]),
+        update: jest.fn().mockResolvedValue({}),
       },
       orderRouteSnapshot: { create: jest.fn().mockResolvedValue({ id: 'snap-1' }) },
       $transaction: jest.fn((fn: any) => fn(prisma)),
@@ -25,6 +26,10 @@ describe('runLegacyRouteRecovery', () => {
     expect(prisma.orderRouteSnapshot.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ quality: 'LEGACY_RECOVERED', recoveryJobVersion: 'v1' }) }),
     );
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: 'order-1' },
+      data: { activeRouteSnapshotId: 'snap-1' },
+    });
   });
 
   it('does NOT fabricate a snapshot when geometry is missing — enqueues a recompute instead', async () => {

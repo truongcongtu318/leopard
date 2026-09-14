@@ -38,7 +38,7 @@ export async function runLegacyRouteRecovery(
 
       if (legacy && hasValidGeometry && hasValidCoords) {
         const normalizedInput = { stopIds: stops.map((s) => s.id) };
-        await tx.orderRouteSnapshot.create({
+        const snapshot = await tx.orderRouteSnapshot.create({
           data: {
             orderId: order.id,
             version: 1,
@@ -64,6 +64,7 @@ export async function runLegacyRouteRecovery(
             recoveredAt: new Date(),
           },
         });
+        await tx.order.update({ where: { id: order.id }, data: { activeRouteSnapshotId: snapshot.id } });
         recovered += 1;
         return;
       }
