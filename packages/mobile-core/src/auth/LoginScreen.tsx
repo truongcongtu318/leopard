@@ -12,9 +12,17 @@ import {
 import type { Role } from '@leopard/shared';
 
 import { httpClient } from '../api/http-client';
-import { colors, leopardPalette, spacing } from '../theme/tokens';
+import { colors, iosContinuousCurve, leopardPalette, spacing } from '../theme/tokens';
 import { Button } from '../ui/Button';
-import { IconRoleAdmin, IconRoleCustomer, IconRoleDriver, IconRoleFleet, OtpPhoneHeroIcon, VietnamFlagIcon } from '../ui/icons/CoreIcons';
+import {
+  BrandLoginLogo,
+  IconRoleAdmin,
+  IconRoleCustomer,
+  IconRoleDriver,
+  IconRoleFleet,
+  OtpPhoneHeroIcon,
+  VietnamFlagIcon,
+} from '../ui/icons/CoreIcons';
 import { TruckLoader } from '../ui/TruckLoader';
 import { sessionStore } from './session-store';
 import { isFirebaseConfigured } from './firebase';
@@ -284,21 +292,26 @@ export function LoginScreen({
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         style={styles.container}
       >
-        <AuthHeroHeader
-          subtitle="Nhập số điện thoại để đặt xe giao hàng ngay."
-          title="Chào mừng trở lại"
-        />
+        <View style={styles.topNavigation}>
+          <BrandLoginLogo height={32} />
+        </View>
+
+        <View style={styles.titleSection}>
+          <Text accessibilityRole="header" style={styles.largeTitle}>
+            Đăng nhập
+          </Text>
+          <Text style={styles.largeSubtitle}>
+            Nhập số điện thoại để tiếp tục với LEOPARD.
+          </Text>
+        </View>
 
         <View style={styles.bodyWrap}>
         <View style={styles.innerWrapper}>
           {/* ================= LOGIN FORM (flat, no card) ================= */}
           <View style={styles.formGroup}>
-            <Text accessibilityRole="header" style={styles.srOnly}>
-              Đăng nhập
-            </Text>
-
             {sessionExpired ? (
               <View style={styles.alertBox} testID="session-expired-banner">
                 <Text accessibilityRole="alert" style={styles.alertText}>
@@ -375,13 +388,13 @@ export function LoginScreen({
               accessibilityRole="button"
               accessibilityState={{
                 busy: isSubmitting,
-                disabled: isSubmitting || !isLikelyVnPhone(phone) || !firebaseReady,
+                disabled: isSubmitting || !isLikelyVnPhone(phone),
               }}
-              disabled={isSubmitting || !isLikelyVnPhone(phone) || !firebaseReady}
+              disabled={isSubmitting || !isLikelyVnPhone(phone)}
               onPress={handleSendOtp}
               style={({ pressed }) => [
                 styles.primaryCtaBtn,
-                (!isLikelyVnPhone(phone) || isSubmitting || !firebaseReady) &&
+                (!isLikelyVnPhone(phone) || isSubmitting) &&
                   styles.primaryCtaBtnDisabled,
                 pressed && styles.primaryCtaBtnPressed,
               ]}
@@ -413,12 +426,6 @@ export function LoginScreen({
               <Text style={styles.googleG}>G</Text>
               <Text style={styles.googleBtnText}>Đăng nhập với Google</Text>
             </Pressable>
-
-            {!firebaseReady ? (
-              <Text style={styles.configNote}>
-                Chưa cấu hình Firebase — dùng tài khoản demo bên dưới.
-              </Text>
-            ) : null}
 
             {/* Invisible reCAPTCHA container required by Firebase web Phone Auth */}
             <View nativeID={RECAPTCHA_CONTAINER_ID} style={styles.recaptcha} />
@@ -701,8 +708,30 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 24,
   },
+  topNavigation: {
+    paddingHorizontal: 24,
+    paddingTop: Platform.select({ ios: 20, default: 28 }),
+    paddingBottom: 4,
+  },
+  titleSection: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+  largeTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.6,
+    lineHeight: 38,
+  },
+  largeSubtitle: {
+    fontSize: 15,
+    color: '#64748B',
+    lineHeight: 22,
+    marginTop: 6,
+  },
   bodyWrap: {
-    marginTop: 12,
     paddingHorizontal: 24,
     alignItems: 'center',
   },
@@ -793,62 +822,59 @@ const styles = StyleSheet.create({
   customInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    ...iosContinuousCurve,
     borderWidth: 1.5,
-    paddingLeft: 8,
-    paddingRight: 6,
-    height: 54,
-    gap: 4,
-    shadowColor: '#94A3B8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    elevation: 2,
+    paddingLeft: 10,
+    paddingRight: 8,
+    height: 52,
+    gap: 6,
   },
   customInputWrapperFocused: {
-    borderColor: orange.primary,
-    shadowColor: orange.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 3,
+    borderColor: '#0B1E42',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   customInputWrapperValid: {
-    borderColor: '#86EFAC',
+    borderColor: '#10B981',
   },
   countryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     backgroundColor: '#F1F5F9',
     paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   countryCode: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '700',
-    color: leopardPalette.textSlateDark,
+    color: '#0F172A',
   },
   countryChevron: {
     fontSize: 10,
-    color: leopardPalette.textMutedSlate,
+    color: '#64748B',
     fontWeight: '700',
     marginTop: -1,
   },
   badgeDivider: {
     width: 1,
     height: 22,
-    backgroundColor: leopardPalette.cardBorder,
+    backgroundColor: '#E2E8F0',
     marginHorizontal: 4,
   },
   customTextInput: {
     flex: 1,
     minWidth: 0,
-    fontSize: 15,
-    color: leopardPalette.textSlateDark,
+    fontSize: 16,
+    color: '#0F172A',
     fontWeight: '600',
     paddingVertical: 0,
     height: '100%',
@@ -866,27 +892,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clearBtnText: {
-    color: leopardPalette.textSubtle,
+    color: '#94A3B8',
     fontSize: 13,
     fontWeight: '600',
   },
 
   /* Primary CTA */
   primaryCtaBtn: {
-    backgroundColor: orange.primary,
+    backgroundColor: '#0B1E42',
     borderRadius: 16,
-    paddingVertical: 15,
+    ...iosContinuousCurve,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
-    shadowColor: orange.primaryDark,
+    marginTop: 6,
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
     elevation: 3,
   },
   primaryCtaBtnDisabled: {
-    backgroundColor: '#F3C989',
+    backgroundColor: '#E2E8F0',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -895,12 +922,14 @@ const styles = StyleSheet.create({
     shadowColor: '#16A34A',
   },
   primaryCtaBtnPressed: {
-    opacity: 0.9,
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
   primaryCtaText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
+    letterSpacing: -0.2,
   },
 
   /* Divider row */
@@ -908,16 +937,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginVertical: 2,
+    marginVertical: 4,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: leopardPalette.subtleDivider,
+    backgroundColor: '#E2E8F0',
   },
   orText: {
     fontSize: 12,
-    color: leopardPalette.textSubtle,
+    color: '#94A3B8',
     fontWeight: '600',
   },
 
@@ -926,25 +955,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 10,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: leopardPalette.cardBorder,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     borderRadius: 16,
-    paddingVertical: 13,
+    ...iosContinuousCurve,
+    height: 50,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
   },
   googleBtnDisabled: {
     opacity: 0.5,
   },
   googleG: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: '#EA4335',
   },
   googleBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: leopardPalette.textSlateDark,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
   },
   configNote: {
     fontSize: 11.5,
@@ -1051,7 +1085,7 @@ const styles = StyleSheet.create({
   registerLink: {
     fontSize: 13,
     fontWeight: '700',
-    color: orange.primaryDark,
+    color: '#0B1E42',
   },
   termsNote: {
     fontSize: 10.5,
