@@ -251,7 +251,7 @@ export default function VerifyOtpRoute() {
 
           {isSubmitting ? (
             <View style={styles.submittingIndicator}>
-              <ActivityIndicator color="#F59E0B" size="small" />
+              <ActivityIndicator color="#0B1E42" size="small" />
               <Text style={styles.submittingText}>Đang xác thực mã OTP...</Text>
             </View>
           ) : null}
@@ -426,11 +426,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   cellActive: {
-    borderColor: '#F59E0B',
-    backgroundColor: '#FFFBEB',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
+    borderColor: '#0B1E42',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 3,
   },

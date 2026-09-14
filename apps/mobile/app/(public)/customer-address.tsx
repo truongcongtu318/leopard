@@ -1200,8 +1200,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   chipActive: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#F59E0B',
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   chipText: {
     fontSize: 13,
@@ -1209,7 +1209,7 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   chipTextActive: {
-    color: '#B45309',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
 
@@ -1231,8 +1231,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   checkboxOn: {
-    backgroundColor: '#F59E0B',
-    borderColor: '#F59E0B',
+    backgroundColor: '#0B1E42',
+    borderColor: '#0B1E42',
   },
   checkboxTick: {
     color: '#FFFFFF',
@@ -1248,15 +1248,16 @@ const styles = StyleSheet.create({
 
   /* Action Buttons */
   primaryBtn: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#0B1E42',
     borderRadius: 16,
     paddingVertical: 15,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#F59E0B',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
     elevation: 3,
   },
   primaryBtnText: {
