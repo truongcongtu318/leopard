@@ -193,17 +193,21 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'center',
     width: 44,
+    flexShrink: 0,
   },
   topBarCenter: {
     alignItems: 'center',
     flex: 1,
+    flexShrink: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.xs,
   },
   topBarTrailing: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    width: 44,
+    minWidth: 44,
+    maxWidth: 120,
+    flexShrink: 0,
   },
   topBarSpacer: {
     height: 32,

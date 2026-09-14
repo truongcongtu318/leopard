@@ -79,8 +79,11 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
   const [addresses, setAddresses] = useState<readonly SavedAddress[]>(() => {
     const stored = addressStore.getAddresses();
     if (stored && stored.length > 0) {
+      const hasStoredDefault = stored.some((s) => s.isDefault);
       const storedIds = new Set(stored.map((s) => s.id));
-      const remainingMocks = mockAddresses.filter((m) => !storedIds.has(m.id));
+      const remainingMocks = mockAddresses
+        .filter((m) => !storedIds.has(m.id))
+        .map((m) => (hasStoredDefault ? { ...m, isDefault: false } : m));
       return [
         ...stored.map((s) => ({
           id: s.id,
@@ -374,6 +377,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
     <Pressable
       accessibilityLabel={isAdding ? 'Hủy thêm địa chỉ' : '+ Thêm mới'}
       accessibilityRole="button"
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       onPress={() => setIsAdding(!isAdding)}
       style={({ pressed }) => [
         isAdding ? styles.cancelHeaderBtn : styles.addHeaderBtn,
@@ -381,7 +385,10 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       ]}
     >
       {isAdding ? null : <IconPlus color="#FFFFFF" size={14} strokeWidth={2.5} />}
-      <Text style={isAdding ? styles.cancelHeaderBtnText : styles.addHeaderBtnText}>
+      <Text
+        numberOfLines={1}
+        style={isAdding ? styles.cancelHeaderBtnText : styles.addHeaderBtnText}
+      >
         {isAdding ? 'Hủy' : 'Thêm mới'}
       </Text>
     </Pressable>
@@ -814,6 +821,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         <Pressable
                           accessibilityLabel={`Đặt ${item.label} làm mặc định`}
                           accessibilityRole="button"
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           onPress={() => handleSetDefault(item.id)}
                           style={({ pressed }) => [
                             styles.actionBtn,
@@ -821,12 +829,12 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                           ]}
                         >
                           <IconStar color="#0B1E42" size={14} strokeWidth={2} />
-                          <Text style={styles.setDefaultText}>Đặt làm mặc định</Text>
+                          <Text numberOfLines={1} style={styles.setDefaultText}>Đặt làm mặc định</Text>
                         </Pressable>
                       ) : (
                         <View style={styles.defaultActiveNote}>
                           <IconCheck color="#059669" size={12} strokeWidth={2.5} />
-                          <Text style={styles.defaultActiveNoteText}>
+                          <Text numberOfLines={1} style={styles.defaultActiveNoteText}>
                             Đang áp dụng cho đơn mới
                           </Text>
                         </View>
@@ -835,6 +843,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       <Pressable
                         accessibilityLabel={`Xem bản đồ ${item.label}`}
                         accessibilityRole="button"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         onPress={() =>
                           setExpandedMapId(expandedMapId === item.id ? null : item.id)
                         }
@@ -844,7 +853,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         ]}
                       >
                         <IconLocationPin color="#0B1E42" size={13} />
-                        <Text style={styles.toggleMapText}>
+                        <Text numberOfLines={1} style={styles.toggleMapText}>
                           {expandedMapId === item.id ? 'Ẩn bản đồ' : 'Bản đồ'}
                         </Text>
                       </Pressable>
@@ -853,6 +862,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                     <Pressable
                       accessibilityLabel={`Xóa ${item.label}`}
                       accessibilityRole="button"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       onPress={() => handleDelete(item.id)}
                       style={({ pressed }) => [
                         styles.deleteBtn,
@@ -860,7 +870,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       ]}
                     >
                       <IconTrash color="#EF4444" size={14} />
-                      <Text style={styles.deleteText}>Xóa</Text>
+                      <Text numberOfLines={1} style={styles.deleteText}>Xóa</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -888,13 +898,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B1E42',
     borderRadius: 999,
     flexDirection: 'row',
+    flexShrink: 0,
     gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    minHeight: 36,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   addHeaderBtnText: {
     color: '#FFFFFF',
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '700',
   },
   cancelHeaderBtn: {
@@ -946,16 +958,21 @@ const styles = StyleSheet.create({
   // 2. Filter Strip
   filterStrip: {
     flexDirection: 'row',
+    flexGrow: 0,
     gap: spacing.xs,
     paddingBottom: 4,
+    paddingRight: spacing.sm,
   },
   filterChip: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
     borderRadius: 999,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    flexShrink: 0,
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   filterChipActive: {
     backgroundColor: '#0B1E42',
@@ -973,11 +990,8 @@ const styles = StyleSheet.create({
 
   // 3. Add Card
   cardBezelOuter: {
-    backgroundColor: 'rgba(11, 30, 66, 0.04)',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 6,
+    backgroundColor: 'transparent',
+    borderRadius: 18,
   },
   addCardInner: {
     backgroundColor: '#FFFFFF',
@@ -1124,7 +1138,7 @@ const styles = StyleSheet.create({
   // 4. Address Cards List
   listContent: {
     gap: spacing.sm,
-    paddingBottom: layout.bottomNavClearance,
+    paddingBottom: layout.bottomNavClearance + 24,
   },
   addressCard: {
     backgroundColor: '#FFFFFF',
@@ -1205,18 +1219,22 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 6,
     marginTop: 3,
+    maxWidth: '100%',
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   contactItem: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexShrink: 1,
     gap: 4,
   },
   contactNameText: {
     color: '#475569',
+    flexShrink: 1,
     fontSize: 11.5,
     fontWeight: '600',
   },
@@ -1226,6 +1244,7 @@ const styles = StyleSheet.create({
   },
   contactPhoneText: {
     color: '#0B1E42',
+    flexShrink: 0,
     fontSize: 11.5,
     fontWeight: '600',
   },
