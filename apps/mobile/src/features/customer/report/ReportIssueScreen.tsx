@@ -12,7 +12,17 @@ import {
   IconPlus,
   IconSecurityShield,
   ScreenScaffold,
+  httpClient,
 } from '@leopard/mobile-core';
+
+export interface ReportIssueScreenProps {
+  orderId?: string;
+}
+
+type CreateReportResponse = {
+  id: string;
+  ticketCode?: string;
+};
 
 const issueCategories = [
   { id: 'damaged', label: 'Hàng vỡ hỏng' },
@@ -21,24 +31,43 @@ const issueCategories = [
   { id: 'wrong_fee', label: 'Sai cước phí' },
 ];
 
-export function ReportIssueScreen() {
+export function ReportIssueScreen(props?: ReportIssueScreenProps) {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const searchParams = useLocalSearchParams<{ id?: string }>();
+  const orderId = props?.orderId ?? searchParams.id;
   const [selectedCategory, setSelectedCategory] = useState('damaged');
   const [description, setDescription] = useState('');
   const [hasPhoto, setHasPhoto] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [ticketCode, setTicketCode] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    setTimeout(() => {
-      router.replace(id ? `/customer/orders/${id}` : '/customer/orders');
-    }, 1800);
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const res = await httpClient.post<CreateReportResponse>(
+        `/orders/${orderId ?? 'LP-260815-001'}/reports`,
+        {
+          category: selectedCategory,
+          description: description.trim(),
+          hasPhoto,
+        },
+      );
+      const code = res?.ticketCode ?? res?.id ?? 'TK-PENDING';
+      setTicketCode(code.startsWith('#') ? code : `#${code}`);
+      setSubmitted(true);
+    } catch (err: any) {
+      setErrorMessage(err?.message ?? 'Gửi báo cáo sự cố thất bại. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <ScreenScaffold
-      eyebrow={`ORDER · ${id ?? 'LP-260815-001'}`}
+      eyebrow={`ORDER · ${orderId ?? 'LP-260815-001'}`}
       onBack={() => router.back()}
       subtitle="Báo cáo khiếu nại để bộ phận CSKH hỗ trợ xử lý và bồi thường."
       title="Báo cáo sự cố"
@@ -51,10 +80,14 @@ export function ReportIssueScreen() {
                 <IconSecurityShield color="#16A34A" size={32} strokeWidth={2} />
               </View>
               <Text style={styles.successTitle}>Đã tiếp nhận sự cố</Text>
-              <Text style={styles.ticketCode}>#TK-260815</Text>
+              <Text style={styles.ticketCode}>{ticketCode ?? '#TK-PENDING'}</Text>
               <Text style={styles.successMessage}>
                 Khiếu nại của bạn đã được chuyển đến bộ phận CSKH và bảo hiểm hàng hóa LEOPARD. Đội ngũ xử lý sẽ liên hệ với bạn trong vòng 2 giờ làm việc.
               </Text>
+              <Button
+                label="Quay lại chi tiết đơn hàng"
+                onPress={() => router.replace(orderId ? `/customer/orders/${orderId}` : '/customer/orders')}
+              />
             </View>
           </View>
         ) : (
@@ -129,9 +162,12 @@ export function ReportIssueScreen() {
             />
 
             {/* ── Submit Button (>= 48px) ───────────────────────── */}
+            {errorMessage ? (
+              <Text style={{ color: '#DC2626', fontSize: 14 }}>{errorMessage}</Text>
+            ) : null}
             <Button
-              disabled={!description.trim()}
-              label="Gửi báo cáo sự cố"
+              disabled={!description.trim() || submitting}
+              label={submitting ? 'Đang gửi...' : 'Gửi báo cáo sự cố'}
               onPress={handleSubmit}
               variant="destructive"
             />

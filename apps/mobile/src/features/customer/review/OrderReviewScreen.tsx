@@ -11,7 +11,17 @@ import {
   IconRoleDriver,
   IconStar,
   ScreenScaffold,
+  httpClient,
 } from '@leopard/mobile-core';
+
+export interface OrderReviewScreenProps {
+  orderId?: string;
+  assignedDriver?: {
+    name?: string | null;
+    licensePlate?: string | null;
+    vehicleType?: string | null;
+  } | null;
+}
 
 const feedbackTags = [
   'Đúng giờ',
@@ -22,14 +32,38 @@ const feedbackTags = [
 
 const tipOptions = [10000, 20000, 50000];
 
-export function OrderReviewScreen() {
+export function OrderReviewScreen(props?: OrderReviewScreenProps) {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const searchParams = useLocalSearchParams<{
+    id?: string;
+    driverName?: string;
+    licensePlate?: string;
+    vehicleType?: string;
+  }>();
+
+  const orderId = props?.orderId ?? searchParams.id;
+  const driverName =
+    props?.assignedDriver?.name ??
+    searchParams.driverName ??
+    'Nguyễn Văn Hùng';
+  const licensePlate =
+    props?.assignedDriver?.licensePlate ??
+    searchParams.licensePlate ??
+    '59C-882.14';
+  const vehicleType =
+    props?.assignedDriver?.vehicleType ??
+    searchParams.vehicleType ??
+    'Xe tải 2.5T';
+
+  const vehicleBadgeText = [vehicleType, licensePlate].filter(Boolean).join(' · ');
+
   const [rating, setRating] = useState<number>(5);
   const [selectedTags, setSelectedTags] = useState<string[]>(['Đúng giờ', 'Cẩn thận']);
   const [selectedTip, setSelectedTip] = useState<number | null>(20000);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -37,11 +71,28 @@ export function OrderReviewScreen() {
     );
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    setTimeout(() => {
-      router.replace(id ? `/customer/orders/${id}` : '/customer/orders');
-    }, 1500);
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const formattedComment = [
+        selectedTags.length > 0 ? selectedTags.join(', ') : '',
+        comment.trim(),
+      ]
+        .filter(Boolean)
+        .join(' - ');
+
+      await httpClient.post(`/orders/${orderId ?? 'LP-260815-001'}/reviews`, {
+        rating,
+        comment: formattedComment || undefined,
+        tipVnd: selectedTip ?? 0,
+      });
+      setSubmitted(true);
+    } catch (err: any) {
+      setErrorMessage(err?.message ?? 'Gửi đánh giá thất bại. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const formatCurrency = (val: number) => {
@@ -50,7 +101,7 @@ export function OrderReviewScreen() {
 
   return (
     <ScreenScaffold
-      eyebrow={`ORDER · ${id ?? 'LP-260815-001'}`}
+      eyebrow={`ORDER · ${orderId ?? 'LP-260815-001'}`}
       onBack={() => router.back()}
       subtitle="Chia sẻ trải nghiệm dịch vụ để giúp chúng tôi nâng cao chất lượng."
       title="Đánh giá chuyến đi"
@@ -64,8 +115,12 @@ export function OrderReviewScreen() {
               </View>
               <Text style={styles.successTitle}>Cảm ơn bạn đã đánh giá!</Text>
               <Text style={styles.successMessage}>
-                Phản hồi của bạn đã được gửi đến tài xế và hệ thống điều phối LEOPARD. Đang quay lại chi tiết đơn hàng...
+                Phản hồi của bạn đã được gửi đến tài xế và hệ thống điều phối LEOPARD.
               </Text>
+              <Button
+                label="Quay lại chi tiết đơn hàng"
+                onPress={() => router.replace(orderId ? `/customer/orders/${orderId}` : '/customer/orders')}
+              />
             </View>
           </View>
         ) : (
@@ -76,10 +131,12 @@ export function OrderReviewScreen() {
                 <View style={styles.avatarBox}>
                   <IconRoleDriver color="#0B1E42" size={26} />
                 </View>
-                <Text style={styles.driverName}>Nguyễn Văn Hùng</Text>
-                <View style={styles.plateBadge}>
-                  <Text style={styles.plateText}>Xe tải 2.5T · 59C-882.14</Text>
-                </View>
+                <Text style={styles.driverName}>{driverName}</Text>
+                {vehicleBadgeText ? (
+                  <View style={styles.plateBadge}>
+                    <Text style={styles.plateText}>{vehicleBadgeText}</Text>
+                  </View>
+                ) : null}
 
                 {/* 1-5 Star SVG Rating (Touch targets >= 44x44px, Zero Emoji) */}
                 <View style={styles.starsRow}>
@@ -174,11 +231,17 @@ export function OrderReviewScreen() {
             />
 
             {/* ── Submit Review Button (>= 48px) ───────────────── */}
+            {errorMessage ? (
+              <Text style={{ color: '#DC2626', fontSize: 14 }}>{errorMessage}</Text>
+            ) : null}
             <Button
+              disabled={submitting}
               label={
-                selectedTip
-                  ? `Gửi đánh giá & Tip ${formatCurrency(selectedTip)}`
-                  : 'Gửi đánh giá'
+                submitting
+                  ? 'Đang gửi...'
+                  : selectedTip
+                    ? `Gửi đánh giá & Tip ${formatCurrency(selectedTip)}`
+                    : 'Gửi đánh giá'
               }
               onPress={handleSubmit}
             />

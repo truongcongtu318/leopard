@@ -29,19 +29,24 @@ jest.mock('react-native-qrcode-svg', () => {
 });
 
 import CustomerDeliveriesScreen from '../../../app/customer/deliveries';
+import { httpClient } from '@leopard/mobile-core';
 import { OrderChatScreen } from './chat/OrderChatScreen';
 import { OrderReviewScreen } from './review/OrderReviewScreen';
 import { ReportIssueScreen } from './report/ReportIssueScreen';
 
 describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
+  let postSpy: any;
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockSearchParams = {};
     jest.useRealTimers();
+    postSpy = jest.spyOn(httpClient, 'post').mockResolvedValue({});
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    postSpy?.mockRestore();
   });
 
   describe('CustomerDeliveriesScreen (Màn 14 - Bảng điều phối chuyến xe)', () => {
@@ -181,9 +186,29 @@ describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
 
       // Submit
       const submitBtn = screen.getByRole('button', { name: /Gửi đánh giá/ });
-      await fireEvent.press(submitBtn);
+      await act(async () => {
+        await fireEvent.press(submitBtn);
+      });
 
+      expect(httpClient.post).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/orders\/.+\/reviews$/),
+        expect.objectContaining({ rating: 4 }),
+      );
       expect(screen.getByText('Cảm ơn bạn đã đánh giá!')).toBeTruthy();
+
+      await screen.unmount();
+    });
+
+    it('displays assignedDriver from props instead of hardcoded fallback', async () => {
+      const screen = await render(
+        <OrderReviewScreen
+          assignedDriver={{ name: 'Trần Đức Minh', licensePlate: '43A-555.01', vehicleType: 'Xe tải 1.25T' }}
+        />,
+      );
+
+      expect(screen.getByText('Trần Đức Minh')).toBeTruthy();
+      expect(screen.getByText('Xe tải 1.25T · 43A-555.01')).toBeTruthy();
+      expect(screen.queryByText('Nguyễn Văn Hùng')).toBeNull();
 
       await screen.unmount();
     });
@@ -220,12 +245,28 @@ describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
       await fireEvent.press(photoBtn);
       expect(screen.getByText('Đã đính kèm ảnh minh chứng (Bấm để đổi ảnh)')).toBeTruthy();
 
+      // Mock successful API response with real ticket code
+      postSpy.mockResolvedValueOnce({
+        id: 'tk-real-uuid',
+        ticketCode: 'TK-20260915-ABCD',
+      });
+
       // Submit
       const submitBtn = screen.getByRole('button', { name: 'Gửi báo cáo sự cố' });
-      await fireEvent.press(submitBtn);
+      await act(async () => {
+        await fireEvent.press(submitBtn);
+      });
 
+      expect(httpClient.post).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/orders\/.+\/reports$/),
+        expect.objectContaining({
+          category: 'delayed',
+          description: 'Xe giao trễ hơn 2 tiếng làm lỡ ca thi công.',
+          hasPhoto: true,
+        }),
+      );
       expect(screen.getByText('Đã tiếp nhận sự cố')).toBeTruthy();
-      expect(screen.getByText('#TK-260815')).toBeTruthy();
+      expect(screen.getByText('#TK-20260915-ABCD')).toBeTruthy();
 
       await screen.unmount();
     });
