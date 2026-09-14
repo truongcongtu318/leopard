@@ -104,6 +104,15 @@ ALTER TABLE "QuoteVehicleRoutingPolicy" ADD CONSTRAINT "quote_vehicle_routing_po
 
 Quy tắc tính (service layer, không phải cột riêng): `actualGrossWeightKg = tareWeightKg + cargoWeightKg + operationalAllowanceKg`. Fail nếu `cargoWeightKg > maxPayloadKg` hoặc `actualGrossWeightKg > maxGrossWeightKg`. `maxGrossWeightKg` là giới hạn đăng kiểm, **không phải** số gửi Vietmap — số gửi Vietmap luôn là `actualGrossWeightKg` đã tính, khắc phục tận gốc R01.
 
+### 3.1bis — Bắt buộc dùng đúng năng lực truck-routing thật của Vietmap (không phải chỉ "có gọi API")
+
+Đã xác nhận [`buildRouteUrl`](../../../apps/api/src/maps/providers/vietmap.provider.ts:180) hiện **đã** gửi `vehicle=truck&capacity=<cargoWeightKg>` khi `vehicleType==='TRUCK'` — hạ tầng gọi Vietmap Route v4 tồn tại. Nhưng `capacity` hiện dùng trực tiếp `cargoWeightKg` (trọng lượng hàng), **không phải** `actualGrossWeightKg` (tổng trọng lượng vận hành thật vừa chốt ở trên) — đây chính xác là R01: capacity sai giá trị khiến Vietmap có thể không áp đúng giới hạn cầu/đường cấm tải cho xe cụ thể. Yêu cầu nghiệm thu bổ sung, không chỉ "gọi Vietmap có tham số vehicle/capacity":
+
+1. **Mọi lời gọi route cho TRUCK trong `routing-eta/` phải dùng `capacity=actualGrossWeightKg`** (tính từ `VehicleRoutingProfile`/`QuoteVehicleRoutingPolicy` như mục 3.1), không dùng `cargoWeightKg` thô — sửa cả `VietmapProvider.buildRouteUrl` (đang nhận `RouteInput.cargoWeightKg` trực tiếp) lẫn cách `EtaService` chuẩn hoá input trước khi gọi route-thuần-túy (quyết định kiến trúc #1, mục 2).
+2. **Không được fallback demo cho TRUCK trong production** khi Vietmap khả dụng — `DemoRouteEstimator` (Haversine × 1.25) không mô phỏng được giới hạn cầu/đường cấm tải, dùng nó cho TRUCK sẽ tạo cảm giác "đã dùng Vietmap" nhưng thực chất mất hết giá trị routing đúng của Vietmap (đúng tinh thần 2 ảnh minh hoạ: TRUCK_125T/TRUCK_25T đi 7.68km/12 phút vòng tránh cầu cấm tải — số này chỉ đúng khi gọi Vietmap thật với capacity đúng). `ALLOW_DEMO_PROVIDER` (đã có trong hệ thống, xem CLAUDE.md) phải bị chặn cho `vehicleType==='TRUCK'` ở môi trường production bất kể cấu hình global, và ghi log cảnh báo nếu bị bật nhầm.
+3. **Test hồi quy bắt buộc — "golden route" theo đúng ca thực tế đã kiểm chứng bằng tay** (dùng lại các cặp OD trong ảnh làm fixture, không phát minh dữ liệu mới): cùng một cặp origin/destination, gọi route cho `BIKE_3W` (vehicle=motorcycle), `VAN_500KG` (vehicle=car), `TRUCK_125T`/`TRUCK_25T` (vehicle=truck, capacity đúng theo `actualGrossWeightKg` từng loại) — assert quãng đường/thời gian **khác nhau** giữa các profile khi tuyến có ràng buộc tải trọng (ví dụ khu vực có cầu/đường cấm tải), và xe tải không được trả về tuyến trùng với xe máy/van trên đoạn có ràng buộc. Test này chạy contract-test có network thật tới Vietmap (không mock), tách khỏi unit test thường, và được đánh dấu rõ "cần API key thật + có thể fail nếu Vietmap đổi dữ liệu bản đồ" — không chạy trong CI mặc định, chạy theo lịch/khi review R01.
+4. `VAN` hiện map sang `vehicle=car` không có `capacity` (khớp với ảnh) — giữ nguyên trừ khi có bằng chứng Vietmap hỗ trợ `capacity` cho profile `car`/`motorcycle` cải thiện độ chính xác; đây là quyết định cần xác nhận thêm (đưa vào mục 9), không tự ý mở rộng `capacity` sang các profile đó mà chưa kiểm chứng.
+
 ### 3.2 Route snapshot + live estimate
 
 ```prisma
@@ -643,6 +652,8 @@ Migration phải test trên DB sạch **và** DB có dữ liệu giả lập đ�
 - Retry cùng `clientRequestId` trên `/progress` → trả đúng event cũ, không bump revision lần 2.
 - Migration recovery job: đơn đủ dữ liệu → `LEGACY_RECOVERED`; đơn thiếu → không tạo snapshot giả, có outbox chờ tính lại.
 - `pnpm --filter api exec prisma validate` và `prisma migrate diff --exit-code` sạch trước khi coi migration xong.
+- **TRUCK dùng đúng `capacity=actualGrossWeightKg` (mục 3.1bis)**: test riêng khẳng định `buildRouteUrl`/interface route-thuần-túy không còn nhận thẳng `cargoWeightKg` làm `capacity` cho TRUCK. `ALLOW_DEMO_PROVIDER` bị chặn cho TRUCK ở production dù cấu hình global bật.
+- **Golden-route contract test** (mục 3.1bis điểm 3) chạy được, tách khỏi CI mặc định, dùng lại đúng cặp OD đã kiểm chứng thủ công (khu vực có cầu/đường cấm tải) — xác nhận TRUCK_125T/TRUCK_25T cho quãng đường/thời gian khác BIKE_3W/VAN_500KG khi tuyến có ràng buộc tải trọng.
 
 **Driver app:**
 - `MissionMapCanvas` đủ 4 tổ hợp `recompute × outcome`.
@@ -667,3 +678,5 @@ Migration phải test trên DB sạch **và** DB có dữ liệu giả lập đ�
 2. Ngưỡng "lệch tuyến" dùng để quyết định route cũ còn dùng được hay phải gọi lại provider.
 3. Có tích hợp SDK dẫn đường giữ tuyến Vietmap thay Google Maps external nav hay chấp nhận giới hạn đã nêu ở mục 5.3.
 4. Ngưỡng độ dài polyline/số điểm tối đa trước khi coi là "quá lớn" cho decoder + WebView.
+5. `VAN` có nên gửi kèm `capacity` cho Vietmap (hiện chỉ TRUCK gửi) hay giữ `vehicle=car` không capacity như bằng chứng thực tế đã kiểm chứng (mục 3.1bis điểm 4) — cần xác nhận thêm với Vietmap trước khi tự ý mở rộng.
+6. Bộ cặp OD dùng làm fixture cho golden-route contract test (mục 3.1bis điểm 3) — nên tái dùng chính các tuyến đã đo tay (Sơn Trà↔Hải Châu qua Cầu Sông Hàn, hẻm nội đô TP.HCM Q.3→Chợ Tân Định) hay cần bộ khác đại diện địa bàn pilot thật.
