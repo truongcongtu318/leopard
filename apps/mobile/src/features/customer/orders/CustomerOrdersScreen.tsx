@@ -205,9 +205,11 @@ function InlineFilterBar({
               {f.label}
             </Text>
             {count > 0 ? (
-              <Text style={[s.filterChipCount, isActive && s.filterChipCountActive]}>
-                {count}
-              </Text>
+              <View style={[s.filterBadge, isActive && s.filterBadgeActive]}>
+                <Text style={[s.filterBadgeText, isActive && s.filterBadgeTextActive]}>
+                  {count}
+                </Text>
+              </View>
             ) : null}
           </Pressable>
         );
@@ -664,6 +666,8 @@ const s = StyleSheet.create({
     paddingVertical: 2,
   },
   filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 10,
@@ -682,14 +686,27 @@ const s = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  filterChipCount: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#94A3B8',
-    marginLeft: 4,
+  filterBadge: {
+    minWidth: 20,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    marginLeft: 6,
   },
-  filterChipCountActive: {
-    color: 'rgba(255,255,255,0.6)',
+  filterBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  filterBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    color: '#475569',
+  },
+  filterBadgeTextActive: {
+    color: '#FFFFFF',
   },
 
   // ─── Hero Active Order Card ───────────────────────────────────

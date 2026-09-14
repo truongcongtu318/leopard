@@ -81,8 +81,10 @@ describe('NotificationsScreen', () => {
     expect(screen.getByText('Thanh toán thành công')).toBeTruthy();
     expect(screen.getByText('Ưu đãi 20% cước xe tải')).toBeTruthy();
     expect(screen.getByText('Bảo trì hệ thống định kỳ')).toBeTruthy();
-    expect(screen.getByText(/Tất cả \(4\)/)).toBeTruthy();
-    expect(screen.getByText(/Chưa đọc \(2\)/)).toBeTruthy();
+    expect(screen.getByText('Tất cả')).toBeTruthy();
+    expect(screen.getByText('4')).toBeTruthy();
+    expect(screen.getByText('Chưa đọc')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Đọc tất cả thông báo' })).toBeTruthy();
 
     await screen.unmount();

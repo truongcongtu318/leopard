@@ -383,14 +383,16 @@ export function MyDeliveriesScreen({
                   {chip.label}
                 </Text>
                 {chipCounts[chip.key] > 0 ? (
-                  <Text
-                    style={[
-                      styles.chipCountText,
-                      isActive ? styles.chipCountTextActive : null,
-                    ]}
-                  >
-                    {chipCounts[chip.key]}
-                  </Text>
+                  <View style={[styles.filterBadge, isActive && styles.filterBadgeActive]}>
+                    <Text
+                      style={[
+                        styles.filterBadgeText,
+                        isActive ? styles.filterBadgeTextActive : null,
+                      ]}
+                    >
+                      {chipCounts[chip.key]}
+                    </Text>
+                  </View>
                 ) : null}
               </Pressable>
             );
@@ -538,14 +540,27 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  chipCountText: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '600',
-    marginLeft: 4,
+  filterBadge: {
+    minWidth: 20,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    marginLeft: 6,
   },
-  chipCountTextActive: {
-    color: 'rgba(255,255,255,0.6)',
+  filterBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  filterBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    color: '#475569',
+  },
+  filterBadgeTextActive: {
+    color: '#FFFFFF',
   },
   listContent: {
     padding: spacing.md,
