@@ -148,7 +148,7 @@ export function CustomerSettingsScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.xs,
-    paddingBottom: layout.bottomNavClearance,
+    paddingBottom: layout.bottomNavClearance + 32,
   },
   sectionLabel: {
     fontFamily: systemFontFamily,

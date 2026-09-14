@@ -65,8 +65,8 @@ type FilterCategory = 'ALL' | AddressCategory;
 
 const categoryOptions = [
   { id: 'WAREHOUSE' as const, label: 'Kho hàng', color: '#0B1E42', bg: '#F0F4F9' },
-  { id: 'OFFICE' as const, label: 'Văn phòng', color: '#6366F1', bg: '#EEF2FF' },
-  { id: 'HOME' as const, label: 'Nhà riêng', color: '#0D9488', bg: '#CCFBF1' },
+  { id: 'OFFICE' as const, label: 'Văn phòng', color: '#0B1E42', bg: '#F0F4F9' },
+  { id: 'HOME' as const, label: 'Nhà riêng', color: '#0B1E42', bg: '#F0F4F9' },
   { id: 'OTHER' as const, label: 'Khác', color: '#64748B', bg: '#F1F5F9' },
 ] as const;
 
@@ -349,16 +349,16 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       case 'OFFICE':
         return {
           label: 'Văn phòng',
-          icon: <IconOffice color="#6366F1" size={20} />,
-          color: '#6366F1',
-          bg: '#EEF2FF',
+          icon: <IconOffice color="#0B1E42" size={20} />,
+          color: '#0B1E42',
+          bg: '#F0F4F9',
         };
       case 'HOME':
         return {
           label: 'Nhà riêng',
-          icon: <IconHome color="#0D9488" size={20} />,
-          color: '#0D9488',
-          bg: '#CCFBF1',
+          icon: <IconHome color="#0B1E42" size={20} />,
+          color: '#0B1E42',
+          bg: '#F0F4F9',
         };
       default:
         return {
