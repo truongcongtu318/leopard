@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -10,7 +11,11 @@ import {
   View,
 } from 'react-native';
 
-import { iosContinuousCurve } from '@leopard/mobile-core';
+import {
+  IconCamera,
+  iosContinuousCurve,
+  pickDeviceImage,
+} from '@leopard/mobile-core';
 import { haptic } from '@leopard/mobile-core/src/ui/haptics';
 
 export type BookingPaymentMethod = 'VIETQR' | 'CASH';
@@ -20,6 +25,7 @@ export interface BookingDetails {
   receiverPhone: string;
   cargoCategory: string;
   cargoNote?: string;
+  cargoImageUri: string;
   hasLoadingSupport: boolean;
   hasVatInvoice: boolean;
   paymentMethod: BookingPaymentMethod;
@@ -37,6 +43,7 @@ export interface BookingDetailsModalProps {
   basePrice: number;
   initialReceiverName?: string;
   initialReceiverPhone?: string;
+  initialCargoImageUri?: string;
   testID?: string;
 }
 
@@ -62,6 +69,7 @@ export function BookingDetailsModal({
   vehicleName,
   vehicleDimensions,
   basePrice,
+  initialCargoImageUri,
   initialReceiverName = '',
   initialReceiverPhone = '',
   testID = 'booking-details-modal',
@@ -70,6 +78,11 @@ export function BookingDetailsModal({
   const [receiverPhone, setReceiverPhone] = useState(initialReceiverPhone);
   const [cargoCategory, setCargoCategory] = useState<string>('Kiện hàng');
   const [cargoNote, setCargoNote] = useState('');
+  const [cargoImageUri, setCargoImageUri] = useState<string | null>(
+    initialCargoImageUri ?? null,
+  );
+  const [cargoImageName, setCargoImageName] = useState<string | null>(null);
+  const [cargoImageError, setCargoImageError] = useState<string | null>(null);
   const [hasLoadingSupport, setHasLoadingSupport] = useState(false);
   const [hasVatInvoice, setHasVatInvoice] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<BookingPaymentMethod>('VIETQR');
@@ -78,8 +91,10 @@ export function BookingDetailsModal({
     if (visible) {
       if (initialReceiverName !== undefined) setReceiverName(initialReceiverName);
       if (initialReceiverPhone !== undefined) setReceiverPhone(initialReceiverPhone);
+      if (initialCargoImageUri !== undefined) setCargoImageUri(initialCargoImageUri);
+      setCargoImageError(null);
     }
-  }, [visible, initialReceiverName, initialReceiverPhone]);
+  }, [visible, initialReceiverName, initialReceiverPhone, initialCargoImageUri]);
 
   const safeBasePrice = Math.max(0, basePrice || 0);
   const loadingFee = hasLoadingSupport ? 120000 : 0;
@@ -88,12 +103,19 @@ export function BookingDetailsModal({
   const totalFare = safeBasePrice + loadingFee + vatFee;
 
   const handleConfirm = () => {
+    if (!cargoImageUri) {
+      haptic.warning();
+      setCargoImageError('Vui lòng chụp hoặc tải ảnh hàng hóa (Bắt buộc).');
+      return;
+    }
+    setCargoImageError(null);
     haptic.medium();
     onConfirm({
       receiverName: receiverName.trim(),
       receiverPhone: receiverPhone.trim(),
       cargoCategory,
       cargoNote: cargoNote.trim() ? cargoNote.trim() : undefined,
+      cargoImageUri,
       hasLoadingSupport,
       hasVatInvoice,
       paymentMethod,
@@ -230,7 +252,83 @@ export function BookingDetailsModal({
               />
             </View>
 
-            {/* 3. Dịch vụ cộng thêm */}
+            {/* 3. Ảnh chụp hàng hóa (Bắt buộc) */}
+            <View style={styles.section}>
+              <View style={styles.sectionTitleRow}>
+                <Text style={styles.sectionTitle}>Ảnh chụp hàng hóa</Text>
+                <View style={styles.badgeRequired}>
+                  <Text style={styles.badgeRequiredText}>BẮT BUỘC</Text>
+                </View>
+              </View>
+              {cargoImageUri ? (
+                <View style={styles.imagePreviewRow}>
+                  <Image
+                    accessibilityLabel="Ảnh hàng hóa đã chọn"
+                    source={{ uri: cargoImageUri }}
+                    style={styles.imageThumbnail}
+                  />
+                  <View style={styles.imageInfoCol}>
+                    <Text numberOfLines={1} style={styles.imageFileName}>
+                      {cargoImageName || 'Ảnh chụp hàng hóa'}
+                    </Text>
+                    <Text style={styles.imageReadyText}>Đã sẵn sàng tải lên</Text>
+                  </View>
+                  <Pressable
+                    accessibilityLabel="Xóa ảnh"
+                    accessibilityRole="button"
+                    onPress={() => {
+                      haptic.light();
+                      setCargoImageUri(null);
+                      setCargoImageName(null);
+                    }}
+                    style={styles.removePhotoBtn}
+                    testID="btn-remove-cargo-image"
+                  >
+                    <Text style={styles.removePhotoBtnText}>✕ Xóa</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  accessibilityLabel="Chụp hoặc chọn ảnh hàng hóa"
+                  accessibilityRole="button"
+                  onPress={async () => {
+                    haptic.selection();
+                    try {
+                      const file = await pickDeviceImage();
+                      if (file) {
+                        setCargoImageUri(file.uri);
+                        setCargoImageName(file.name);
+                        setCargoImageError(null);
+                      }
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  style={[
+                    styles.photoPickerBox,
+                    cargoImageError ? styles.photoPickerBoxError : null,
+                  ]}
+                  testID="btn-pick-cargo-image"
+                >
+                  <View style={styles.photoPickerIconCircle}>
+                    <IconCamera color="#0B1E42" size={20} />
+                  </View>
+                  <View style={styles.photoPickerTextCol}>
+                    <Text style={styles.photoPickerTitle}>
+                      Chụp hoặc tải ảnh hàng hóa
+                    </Text>
+                    <Text style={styles.photoPickerSubtitle}>
+                      Tài xế đối chiếu kích thước trước khi nhận chuyến
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+              {cargoImageError ? (
+                <Text style={styles.errorFeedbackText}>{cargoImageError}</Text>
+              ) : null}
+            </View>
+
+            {/* 4. Dịch vụ cộng thêm */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Dịch vụ cộng thêm</Text>
               <View style={styles.toggleStack}>
@@ -530,12 +628,113 @@ const styles = StyleSheet.create({
   section: {
     gap: 8,
   },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 13.5,
     fontWeight: '700',
     color: '#334155',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
+  },
+  badgeRequired: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  badgeRequiredText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#B91C1C',
+    letterSpacing: 0.4,
+  },
+  photoPickerBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#CBD5E1',
+    gap: 12,
+  },
+  photoPickerBoxError: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+  },
+  photoPickerIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoPickerTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  photoPickerTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0B1E42',
+  },
+  photoPickerSubtitle: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  imagePreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 12,
+  },
+  imageThumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: '#CBD5E1',
+  },
+  imageInfoCol: {
+    flex: 1,
+    gap: 2,
+  },
+  imageFileName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  imageReadyText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#16A34A',
+  },
+  removePhotoBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#FEE2E2',
+  },
+  removePhotoBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#B91C1C',
+  },
+  errorFeedbackText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#DC2626',
+    marginTop: 2,
   },
   inputStack: {
     gap: 8,

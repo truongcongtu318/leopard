@@ -108,12 +108,36 @@ describe('BookingDetailsModal', () => {
     await screen.unmount();
   });
 
-  it('invokes onConfirm with all updated fields on CTA press', async () => {
+  it('blocks confirm and displays error when cargo image is missing', async () => {
     const onConfirm = jest.fn();
     const screen = await render(
       <BookingDetailsModal
         {...defaultProps}
         basePrice={300000}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    const cta = screen.getByLabelText(
+      `XÁC NHẬN GỌI XE · ${formatVnd(300000)}`,
+    );
+    await fireEvent.press(cta);
+
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('Vui lòng chụp hoặc tải ảnh hàng hóa (Bắt buộc).'),
+    ).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('invokes onConfirm with all updated fields on CTA press when image is present', async () => {
+    const onConfirm = jest.fn();
+    const screen = await render(
+      <BookingDetailsModal
+        {...defaultProps}
+        basePrice={300000}
+        initialCargoImageUri="file:///test-cargo.jpg"
         onConfirm={onConfirm}
       />,
     );
@@ -150,6 +174,7 @@ describe('BookingDetailsModal', () => {
       receiverPhone: '0988776655',
       cargoCategory: 'Nội thất',
       cargoNote: 'Hàng dễ vỡ, bốc cẩn thận',
+      cargoImageUri: 'file:///test-cargo.jpg',
       hasLoadingSupport: true,
       hasVatInvoice: false,
       paymentMethod: 'CASH',

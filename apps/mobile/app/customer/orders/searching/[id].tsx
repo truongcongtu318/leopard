@@ -20,6 +20,7 @@ import {
   IconSecurityShield,
   IconSpeedTruck,
 } from '@leopard/mobile-core';
+import { createCustomerHttpAdapter } from '../../../../src/features/customer/orders/adapter';
 
 export interface OrderSearchingProps {
   orderId?: string;
@@ -111,6 +112,36 @@ export default function OrderSearchingScreen({
     return () => clearInterval(timer);
   }, []);
 
+  // Listen to real order status if driver accepts
+  useEffect(() => {
+    if (!id || id.startsWith('11111111-1111-4111-8111-')) return undefined;
+    if (process.env.NODE_ENV === 'test') return undefined;
+    let mounted = true;
+    const port = createCustomerHttpAdapter();
+
+    const interval = setInterval(async () => {
+      try {
+        const detail = await port.getOrderDetailView(id);
+        if (!mounted || detail.kind !== 'content') return;
+        if (detail.order.status !== 'REQUESTED') {
+          clearInterval(interval);
+          if (onMatched) {
+            onMatched(id);
+          } else {
+            router.replace(`/customer/tracking?orderId=${id}`);
+          }
+        }
+      } catch {
+        // Safe ignore
+      }
+    }, 3000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [id, onMatched, router]);
+
   // Transition when matched or countdown completed
   useEffect(() => {
     if (secondsLeft === 0) {
@@ -122,8 +153,18 @@ export default function OrderSearchingScreen({
     }
   }, [secondsLeft, id, onMatched, router]);
 
-  const handleCancelConfirm = () => {
+  const handleCancelConfirm = async () => {
     setShowCancelModal(false);
+    try {
+      const port = createCustomerHttpAdapter();
+      await port.executeIntent({
+        orderId: id,
+        actionId: 'cancel-order',
+        value: 'Khách hàng hủy tìm xe',
+      });
+    } catch {
+      // Safe fallback
+    }
     if (onCancelSuccess) {
       onCancelSuccess();
     } else {
