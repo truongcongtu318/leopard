@@ -504,6 +504,8 @@ export function mapPaymentToView(
       payment.expiresAt &&
       !isNaN(new Date(payment.expiresAt).getTime()) &&
       new Date(payment.expiresAt).getTime() <= Date.now();
+    const canRefresh =
+      orderStatus !== 'CANCELLED' && orderStatus !== 'DELIVERED';
 
     if (isExpired) {
       return {
@@ -513,12 +515,14 @@ export function mapPaymentToView(
         expiresAtLabel: 'Đã hết hạn theo phản hồi hệ thống',
         sourceLabel,
         qrState: 'expired',
-        notice: 'Mã QR đã hết hạn',
-        action: {
-          id: 'refresh-payment',
-          label: 'Tạo mã QR mới',
-          emphasis: 'secondary',
-        },
+        notice: canRefresh ? 'Mã QR đã hết hạn' : null,
+        action: canRefresh
+          ? {
+              id: 'refresh-payment',
+              label: 'Tạo mã QR mới',
+              emphasis: 'secondary',
+            }
+          : null,
       };
     }
 
@@ -537,6 +541,9 @@ export function mapPaymentToView(
     };
   }
 
+  const canCreateUnpaidAction =
+    orderStatus !== 'CANCELLED' && orderStatus !== 'DELIVERED';
+
   return {
     status: 'UNPAID',
     amountLabel,
@@ -544,11 +551,13 @@ export function mapPaymentToView(
     sourceLabel,
     qrState: 'none',
     notice: null,
-    action: {
-      id: 'create-payment',
-      label: 'Tạo mã QR thanh toán',
-      emphasis: 'primary',
-    },
+    action: canCreateUnpaidAction
+      ? {
+          id: 'create-payment',
+          label: 'Tạo mã QR thanh toán',
+          emphasis: 'primary',
+        }
+      : null,
   };
 }
 
