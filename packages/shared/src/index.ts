@@ -11,4 +11,6 @@ export * from './socket.js';
 export * from './tracking.js';
 export * from './fleet.js';
 export * from './admin.js';
+export * from './routing/route-coordinate.js';
+export * from './routing/decode-polyline.js';
 
