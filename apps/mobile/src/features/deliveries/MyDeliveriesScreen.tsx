@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { customerPalette, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
+import { customerPalette, haptic, iosContinuousCurve, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -373,22 +373,25 @@ export function MyDeliveriesScreen({
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
                 key={chip.key}
-                onPress={() => setActiveFilter(chip.key)}
+                onPress={() => {
+                  haptic.selection();
+                  setActiveFilter(chip.key);
+                }}
                 style={[styles.chip, isActive ? styles.chipActive : null]}
               >
                 <Text style={[styles.chipLabel, isActive ? styles.chipLabelActive : null]}>
                   {chip.label}
                 </Text>
-                <View style={[styles.chipBadge, isActive ? styles.chipBadgeActive : null]}>
+                {chipCounts[chip.key] > 0 ? (
                   <Text
                     style={[
-                      styles.chipBadgeText,
-                      isActive ? styles.chipBadgeTextActive : null,
+                      styles.chipCountText,
+                      isActive ? styles.chipCountTextActive : null,
                     ]}
                   >
                     {chipCounts[chip.key]}
                   </Text>
-                </View>
+                ) : null}
               </Pressable>
             );
           })}
@@ -511,51 +514,38 @@ const styles = StyleSheet.create({
   },
   chipRow: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: 6,
+    paddingVertical: 2,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: leopardPalette.bgMuted,
-    borderRadius: leopardRadius.pill,
-    paddingHorizontal: 12,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    paddingHorizontal: 14,
     paddingVertical: 7,
-    borderWidth: 1,
-    borderColor: leopardPalette.cardBorder,
   },
   chipActive: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#0B1E42',
-  },
-  chipLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-  chipLabelActive: {
-    color: '#0B1E42',
-    fontWeight: '700',
-  },
-  chipBadge: {
-    backgroundColor: leopardPalette.cardBorder,
-    borderRadius: leopardRadius.pill,
-    minWidth: 20,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 5,
-  },
-  chipBadgeActive: {
     backgroundColor: '#0B1E42',
   },
-  chipBadgeText: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 10,
-    fontWeight: '800',
+  chipLabel: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '500',
   },
-  chipBadgeTextActive: {
+  chipLabelActive: {
     color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  chipCountText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  chipCountTextActive: {
+    color: 'rgba(255,255,255,0.6)',
   },
   listContent: {
     padding: spacing.md,

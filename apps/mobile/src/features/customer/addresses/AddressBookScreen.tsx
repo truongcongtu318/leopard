@@ -11,7 +11,7 @@ import {
 
 import { httpClient } from '@leopard/mobile-core';
 import { addressStore } from './address-store';
-import { colors, layout, radius, spacing, typography, Button, FormField, IconCheck, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, haptic, iosContinuousCurve, layout, radius, spacing, typography, Button, FormField, IconCheck, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
 import {
   POPULAR_MAP_SUGGESTIONS,
   reverseGeocodeCoords,
@@ -444,7 +444,10 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   accessibilityState={{ selected: active }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   key={chip.id}
-                  onPress={() => setSelectedFilter(chip.id)}
+                  onPress={() => {
+                    haptic.selection();
+                    setSelectedFilter(chip.id);
+                  }}
                   style={({ pressed }) => [
                     styles.filterChip,
                     active ? styles.filterChipActive : null,
@@ -458,8 +461,18 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       active ? styles.filterChipTextActive : null,
                     ]}
                   >
-                    {chip.label} ({chip.count})
+                    {chip.label}
                   </Text>
+                  {chip.count > 0 ? (
+                    <Text
+                      style={[
+                        styles.filterChipCount,
+                        active ? styles.filterChipCountActive : null,
+                      ]}
+                    >
+                      {chip.count}
+                    </Text>
+                  ) : null}
                 </Pressable>
               );
             })}
@@ -929,35 +942,43 @@ const styles = StyleSheet.create({
   // 2. Filter Row (3 chips cố định, không scroll, không bao giờ bị cắt chữ)
   filterRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     width: '100%',
     paddingBottom: 4,
   },
   filterChip: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 999,
-    borderWidth: 1,
-    minHeight: 38,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    minHeight: 36,
     paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingVertical: 7,
   },
   filterChipActive: {
     backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
   },
   filterChipText: {
     color: '#64748B',
-    fontSize: 12.5,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
     textAlign: 'center',
   },
   filterChipTextActive: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '600',
+  },
+  filterChipCount: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginLeft: 4,
+  },
+  filterChipCountActive: {
+    color: 'rgba(255,255,255,0.6)',
   },
 
   // 3. Add Card

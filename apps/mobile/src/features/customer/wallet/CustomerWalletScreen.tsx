@@ -5,7 +5,9 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import {
   colors,
+  haptic,
   httpClient,
+  iosContinuousCurve,
   layout,
   radius,
   spacing,
@@ -185,6 +187,14 @@ export function CustomerWalletScreen({
     return escrowItems.filter((item) => item.status === activeFilter);
   }, [escrowItems, activeFilter]);
 
+  const filterCounts = useMemo<Record<EscrowFilterType, number>>(() => ({
+    ALL: escrowItems.length,
+    PENDING: escrowItems.filter((item) => item.status === 'PENDING').length,
+    HELD: escrowItems.filter((item) => item.status === 'HELD').length,
+    SETTLED: escrowItems.filter((item) => item.status === 'SETTLED').length,
+    REFUNDED: escrowItems.filter((item) => item.status === 'REFUNDED').length,
+  }), [escrowItems]);
+
   const getStatusBadgeStyle = (status: EscrowStatus) => {
     switch (status) {
       case 'HELD':
@@ -261,15 +271,24 @@ export function CustomerWalletScreen({
           </View>
 
           {/* Thanh lọc phân loại trạng thái ký quỹ */}
-          <View style={styles.filterTabsRow}>
+          <ScrollView
+            contentContainerStyle={styles.filterTabsRow}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
             {filterTabs.map((tab) => {
               const active = activeFilter === tab.id;
+              const count = filterCounts[tab.id];
               return (
                 <Pressable
                   accessibilityLabel={tab.label}
                   accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
                   key={tab.id}
-                  onPress={() => setActiveFilter(tab.id)}
+                  onPress={() => {
+                    haptic.selection();
+                    setActiveFilter(tab.id);
+                  }}
                   style={({ pressed }) => [
                     styles.filterChip,
                     active ? styles.filterChipActive : null,
@@ -278,16 +297,26 @@ export function CustomerWalletScreen({
                 >
                   <Text
                     style={[
-                    styles.filterChipText,
-                    active ? styles.filterChipTextActive : null,
-                  ]}
+                      styles.filterChipText,
+                      active ? styles.filterChipTextActive : null,
+                    ]}
                   >
                     {tab.label}
                   </Text>
+                  {count > 0 ? (
+                    <Text
+                      style={[
+                        styles.filterChipCount,
+                        active ? styles.filterChipCountActive : null,
+                      ]}
+                    >
+                      {count}
+                    </Text>
+                  ) : null}
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
 
           {isLoading ? (
             <View style={styles.loadingContainer}>
@@ -529,29 +558,39 @@ const styles = StyleSheet.create({
   },
   filterTabsRow: {
     flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
+    gap: 6,
+    paddingVertical: 2,
+    paddingRight: 4,
   },
   filterChip: {
-    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: radius.pill,
+    borderRadius: 10,
+    ...iosContinuousCurve,
     backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
   filterChipActive: {
     backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
   },
   filterChipText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
     color: '#64748B',
   },
   filterChipTextActive: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '600',
+  },
+  filterChipCount: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginLeft: 4,
+  },
+  filterChipCountActive: {
+    color: 'rgba(255,255,255,0.6)',
   },
   loadingContainer: {
     padding: 32,

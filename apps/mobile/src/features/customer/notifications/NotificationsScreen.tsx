@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography, IconBell, IconOrders, IconTag, IconTxPayment, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, haptic, iosContinuousCurve, layout, radius, spacing, typography, IconBell, IconOrders, IconTag, IconTxPayment, ScreenScaffold } from '@leopard/mobile-core';
 import { isOlderThanOneDay } from './adapter';
 import type { NotificationFilter, NotificationItemView, NotificationsContentView } from './model';
 
@@ -107,14 +107,13 @@ export function NotificationsScreen({
           >
             {filterOptions.map((opt) => {
               const active = filter === opt.id;
-              let countLabel = '';
+              let count = 0;
               if (opt.id === 'all') {
-                countLabel = ` (${items.length})`;
+                count = items.length;
               } else if (opt.id === 'unread') {
-                countLabel = ` (${unreadCount})`;
+                count = unreadCount;
               } else {
-                const count = items.filter((n) => n.type === opt.id).length;
-                countLabel = count > 0 ? ` (${count})` : '';
+                count = items.filter((n) => n.type === opt.id).length;
               }
 
               return (
@@ -123,7 +122,10 @@ export function NotificationsScreen({
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
                   key={opt.id}
-                  onPress={() => setFilter(opt.id)}
+                  onPress={() => {
+                    haptic.selection();
+                    setFilter(opt.id);
+                  }}
                   style={({ pressed }) => [
                     styles.filterChip,
                     active ? styles.filterChipActive : null,
@@ -137,7 +139,16 @@ export function NotificationsScreen({
                     ]}
                   >
                     {opt.label}
-                    {countLabel}
+                    {count > 0 ? (
+                      <Text
+                        style={[
+                          styles.filterChipCount,
+                          active ? styles.filterChipCountActive : null,
+                        ]}
+                      >
+                        {` (${count})`}
+                      </Text>
+                    ) : null}
                   </Text>
                 </Pressable>
               );
@@ -291,29 +302,39 @@ const styles = StyleSheet.create({
   },
   filterStrip: {
     flexDirection: 'row',
-    gap: spacing.xs,
-    paddingBottom: 2,
+    gap: 6,
+    paddingVertical: 2,
+    paddingRight: 4,
   },
   filterChip: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    backgroundColor: '#F1F5F9',
   },
   filterChipActive: {
     backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
   },
   filterChipText: {
+    fontSize: 13,
+    fontWeight: '500',
     color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
   },
   filterChipTextActive: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '600',
+  },
+  filterChipCount: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginLeft: 4,
+  },
+  filterChipCountActive: {
+    color: 'rgba(255,255,255,0.6)',
   },
   listContent: {
     gap: spacing.sm,
