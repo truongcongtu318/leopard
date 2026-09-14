@@ -252,11 +252,20 @@ export interface PaymentQrApiResponse {
   createdAt?: string;
 }
 
+export interface AssignedDriverResponse {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  licensePlate: string | null;
+  vehicleType: string | null;
+}
+
 export interface MappedOrderResponse {
   id: string;
   reference?: string;
   customerId?: string;
   driverId: string | null;
+  assignedDriver?: AssignedDriverResponse | null;
   status: string;
   routeSnapshot?: unknown;
   providerSource: string | null;
@@ -573,7 +582,8 @@ export function mapTrackingToView(
     return { kind: 'no-driver', message: 'Chưa có tài xế nhận đơn.' };
   }
 
-  const driverLabel = 'Tài xế Nguyễn Minh An';
+  const driverName = order.assignedDriver?.name?.trim();
+  const driverLabel = driverName ? `Tài xế ${driverName}` : 'Đang điều phối tài xế';
 
   if (!trackingData) {
     const lastUpdatedLabel = formatDateTime(order.updatedAt || order.createdAt);
@@ -728,6 +738,15 @@ export function mapOrderToDetail(
     media,
     history,
     cancelReason,
+    assignedDriver: order.assignedDriver
+      ? {
+          id: order.assignedDriver.id,
+          name: order.assignedDriver.name ?? null,
+          phone: order.assignedDriver.phone ?? null,
+          licensePlate: order.assignedDriver.licensePlate ?? null,
+          vehicleType: order.assignedDriver.vehicleType ?? null,
+        }
+      : null,
   };
 }
 
