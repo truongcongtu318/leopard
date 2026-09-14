@@ -184,7 +184,7 @@ export class VehicleRoutingProfileService {
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { VehicleRoutingProfileService, VehicleWeightExceededError } from './vehicle-routing-profile.service.js';
 
 describe('VehicleRoutingProfileService', () => {
@@ -260,7 +260,7 @@ Expected: FAIL — module `./vehicle-routing-profile.service.js` does not exist.
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { DomainError } from '../common/domain-error.js';
 import type { VehicleType } from '@prisma/client';
 
@@ -588,7 +588,7 @@ Expected: PASS.
 ```ts
 import { Test } from '@nestjs/testing';
 import { MAP_PROVIDER } from '../maps/maps.service.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { VehicleRoutingProfileService } from './vehicle-routing-profile.service.js';
 import { RouteSnapshotService } from './route-snapshot.service.js';
 
@@ -802,7 +802,7 @@ export class OutboxRepository {
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository } from './outbox.repository.js';
 
 describe('OutboxRepository', () => {
@@ -872,7 +872,7 @@ Expected: FAIL — module not found.
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 type OutboxEventType = 'ROUTE_ETA_RECOMPUTE' | 'ROUTE_ETA_UPDATED' | 'ROUTE_UPDATED';
 
@@ -1060,7 +1060,7 @@ export interface EstimateComputation {
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository } from './outbox.repository.js';
 import { EtaService } from './eta.service.js';
 
@@ -1228,7 +1228,7 @@ Expected: FAIL — module not found / methods missing.
 ```ts
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository } from './outbox.repository.js';
 
 export type EtaUnavailableReason =
@@ -1389,7 +1389,7 @@ export class RouteEtaRecomputeWorker {
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository } from './outbox.repository.js';
 import { EtaService } from './eta.service.js';
 import { MAP_PROVIDER } from '../maps/maps.service.js';
@@ -1443,7 +1443,7 @@ Expected: FAIL — module not found.
 
 ```ts
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository, newWorkerId } from './outbox.repository.js';
 import { EtaService } from './eta.service.js';
 
@@ -1588,7 +1588,7 @@ Run again — expect PASS, 2/2.
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { EtaService } from './eta.service.js';
 import { StopProgressService } from './stop-progress.service.js';
 
@@ -1636,7 +1636,7 @@ Expected: FAIL — module not found.
 import { Injectable } from '@nestjs/common';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { EtaService } from './eta.service.js';
 
 export class StopProgressCommandConflictError extends DomainError {
@@ -2135,7 +2135,7 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { assertCanViewRouteEta } from './route-eta.policy.js';
 import { mapRouteEtaResponse } from './route-eta-response.mapper.js';
 
@@ -2319,7 +2319,7 @@ import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { validateStopProgressBody, validateStopProgressVoidBody } from './dto/stop-progress.dto.js';
 import { StopProgressService } from './stop-progress.service.js';
 import { buildRouteEtaResponse } from './route-eta.controller.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Controller('orders/:id/stops/:stopId/progress')
 @UseFilters(ApiExceptionFilter)
@@ -2568,7 +2568,7 @@ import { Test } from '@nestjs/testing';
 import { OutboxRepository } from './outbox.repository.js';
 import { RouteEtaRealtimeEmitterImpl } from './route-eta-realtime.emitter.js';
 import { OutboxNotifyPublisher } from './outbox-notify.publisher.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 describe('OutboxNotifyPublisher', () => {
   it('emits ROUTE_ETA_UPDATED payload then marks the job completed', async () => {
@@ -2608,7 +2608,7 @@ Expected: FAIL, then:
 
 ```ts
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository, newWorkerId } from './outbox.repository.js';
 import { RouteEtaRealtimeEmitterImpl } from './route-eta-realtime.emitter.js';
 
@@ -2824,7 +2824,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement**
 
 ```ts
-import type { PrismaService } from '../prisma/prisma.service.js';
+import type { PrismaService } from '../database/prisma.service.js';
 import type { EtaService } from './eta.service.js';
 import { computeInputHash, computeRouteHash } from './polyline-hash.js';
 
@@ -2904,7 +2904,7 @@ Expected: PASS, 2/2.
 // apps/api/src/routing-eta/scripts/run-legacy-recovery.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../app.module.js';
-import { PrismaService } from '../../prisma/prisma.service.js';
+import { PrismaService } from '../../database/prisma.service.js';
 import { EtaService } from '../eta.service.js';
 import { runLegacyRouteRecovery } from '../legacy-recovery.job.js';
 
