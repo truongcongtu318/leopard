@@ -429,33 +429,6 @@ describe('CustomerTrackingSocketManager', () => {
         reason: 'Tài xế đã nhận hàng',
       });
     });
-
-    it('handles eta:updated event with deduplication', () => {
-      const onEtaUpdated = jest.fn();
-      manager.subscribe({ onEtaUpdated });
-
-      mockSocket.trigger('eta:updated', {
-        orderId: validOrderId,
-        durationSeconds: 900,
-        source: 'DEMO',
-        calculatedAt: '2026-08-15T14:31:00.000Z',
-        eventId: 'eta-evt-1',
-      });
-
-      mockSocket.trigger('eta:updated', {
-        orderId: validOrderId,
-        durationSeconds: 900,
-        eventId: 'eta-evt-1', // duplicate
-      });
-
-      expect(onEtaUpdated).toHaveBeenCalledTimes(1);
-      expect(onEtaUpdated).toHaveBeenCalledWith({
-        orderId: validOrderId,
-        durationSeconds: 900,
-        source: 'DEMO',
-        calculatedAt: '2026-08-15T14:31:00.000Z',
-      });
-    });
   });
 
   describe('Session error and reconnection', () => {

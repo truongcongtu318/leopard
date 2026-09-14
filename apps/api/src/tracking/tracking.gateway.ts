@@ -5,6 +5,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   type OnGatewayConnection,
+  type OnGatewayInit,
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import { TrackingSocketEvent, type SocketAck, type SocketErrorCode, type JoinOrderPayload, type LeaveOrderPayload, type SendTrackingPointPayload } from '@leopard/shared';
@@ -16,12 +17,13 @@ import { sessionErrorEvent, trackingPointEvent } from './tracking.events.js';
 import { TrackingService } from './tracking.service.js';
 import { OrderEventsPublisher } from '../orders/order-events.publisher.js';
 import type { OrderStatusChangedEvent } from '../orders/order-events.publisher.js';
+import { RouteEtaRealtimeEmitterImpl } from '../routing-eta/route-eta-realtime.emitter.js';
 
 type TrackingSocket = Socket & { data: { actor?: AuthenticatedActor; token?: string } };
 const room = (orderId: string) => `order:${orderId}`;
 
 @WebSocketGateway({ namespace: '/tracking' })
-export class TrackingGateway implements OnGatewayConnection {
+export class TrackingGateway implements OnGatewayConnection, OnGatewayInit {
   @WebSocketServer()
   private server!: Server;
 
@@ -29,8 +31,13 @@ export class TrackingGateway implements OnGatewayConnection {
     private readonly auth: SocketAuthAdapter,
     private readonly tracking: TrackingService,
     private readonly orderEvents: OrderEventsPublisher,
+    private readonly routeEtaEmitter: RouteEtaRealtimeEmitterImpl,
   ) {
     this.orderEvents.subscribe((event) => this.broadcastOrderStatus(event));
+  }
+
+  public afterInit(server: Server): void {
+    this.routeEtaEmitter.attach(server);
   }
 
   public async handleConnection(client: TrackingSocket): Promise<void> {
