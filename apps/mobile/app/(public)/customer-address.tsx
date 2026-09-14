@@ -467,7 +467,7 @@ export default function CustomerAddAddressScreen() {
 
           {/* 2. Người liên hệ & Số điện thoại */}
           <View style={styles.sectionGroup}>
-            <Text style={styles.sectionTitle}>THỦ KHO GIAO NHẬN</Text>
+            <Text style={styles.sectionTitle}>Thủ kho giao nhận</Text>
             <View style={styles.contactRow}>
               <View style={styles.contactCol}>
                 <View style={styles.contactInputWrap}>

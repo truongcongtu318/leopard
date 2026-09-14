@@ -30,6 +30,7 @@ const mockPush = jest.fn();
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, push: mockPush, back: mockBack, canGoBack: () => true }),
+  useLocalSearchParams: () => ({}),
 }));
 
 describe('CustomerRegisterScreen', () => {
@@ -56,8 +57,8 @@ describe('CustomerRegisterScreen', () => {
 
   it('validates tax code and corporate email before completing registration', async () => {
     const screen = await render(<CustomerRegisterScreen />);
-    expect(screen.getByText('MÃ SỐ THUẾ (MST)')).toBeTruthy();
-    expect(screen.getByText('EMAIL NHẬN HÓA ĐƠN VAT')).toBeTruthy();
+    expect(screen.getByText('Mã số thuế (MST)')).toBeTruthy();
+    expect(screen.getByText('Email nhận hóa đơn VAT')).toBeTruthy();
     expect(screen.getByTestId('cr-company-name')).toBeTruthy();
     expect(screen.getByTestId('cr-tax-code')).toBeTruthy();
     expect(screen.getByTestId('cr-consent-insurance')).toBeTruthy();

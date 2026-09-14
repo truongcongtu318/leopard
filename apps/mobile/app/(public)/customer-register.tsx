@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import {
   httpClient,
@@ -115,15 +115,26 @@ function describeAuthError(err: unknown): string {
 
 export default function CustomerRegisterScreen() {
   const router = useRouter();
-  const [phone, setPhone] = useState<string | null>(null);
+  const searchParams =
+    typeof useLocalSearchParams === 'function'
+      ? useLocalSearchParams<{ phone?: string }>()
+      : {};
+  const [phone, setPhone] = useState<string | null>(searchParams.phone || null);
   const [phoneInput, setPhoneInput] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(Boolean(searchParams.phone));
   const [phoneBusy, setPhoneBusy] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
   const challengeRef = useRef<OtpChallenge | null>(null);
+
+  useEffect(() => {
+    if (searchParams.phone) {
+      setPhone(searchParams.phone);
+      setPhoneVerified(true);
+    }
+  }, [searchParams.phone]);
 
   const [name, setName] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -419,7 +430,7 @@ export default function CustomerRegisterScreen() {
                         if (errorMsg) setErrorMsg(null);
                       }}
                       onFocus={() => setFocusedField('phone')}
-                      placeholder="Nhập số điện thoại..."
+                      placeholder="Số điện thoại..."
                       placeholderTextColor="#94A3B8"
                       style={styles.phoneTextInput}
                       testID="cr-phone-input"
@@ -464,7 +475,12 @@ export default function CustomerRegisterScreen() {
                       {phoneBusy ? (
                         <ActivityIndicator color="#FFFFFF" size="small" />
                       ) : (
-                        <Text style={styles.sendOtpBtnText}>
+                        <Text
+                          style={[
+                            styles.sendOtpBtnText,
+                            !canSendOtp && styles.sendOtpBtnTextDisabled,
+                          ]}
+                        >
                           {otpSent ? 'Nhập OTP' : 'Gửi mã'}
                         </Text>
                       )}
@@ -536,10 +552,10 @@ export default function CustomerRegisterScreen() {
 
             <View style={styles.fieldItem}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.label}>MÃ SỐ THUẾ (MST)</Text>
+                <Text style={styles.label}>Mã số thuế (MST)</Text>
               </View>
               <TextInput
-                accessibilityLabel="MÃ SỐ THUẾ (MST)"
+                accessibilityLabel="Mã số thuế (MST)"
                 autoCapitalize="characters"
                 autoCorrect={false}
                 editable={!isSubmitting}
@@ -562,11 +578,11 @@ export default function CustomerRegisterScreen() {
 
             <View style={styles.fieldItem}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.label}>EMAIL NHẬN HÓA ĐƠN VAT</Text>
+                <Text style={styles.label}>Email nhận hóa đơn VAT</Text>
                 <Text style={styles.requiredStar}>*</Text>
               </View>
               <TextInput
-                accessibilityLabel="EMAIL NHẬN HÓA ĐƠN VAT"
+                accessibilityLabel="Email nhận hóa đơn VAT"
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isSubmitting}
@@ -655,7 +671,14 @@ export default function CustomerRegisterScreen() {
               <Text style={styles.primaryBtnText}>Đang lưu...</Text>
             </View>
           ) : (
-            <Text style={styles.primaryBtnText}>Hoàn tất</Text>
+            <Text
+              style={[
+                styles.primaryBtnText,
+                !canSubmit && styles.primaryBtnTextDisabled,
+              ]}
+            >
+              Hoàn tất
+            </Text>
           )}
         </Pressable>
 
@@ -1064,7 +1087,7 @@ const styles = StyleSheet.create({
   sendOtpBtn: {
     backgroundColor: brandNavy,
     borderRadius: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
     height: 38,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1076,6 +1099,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  sendOtpBtnTextDisabled: {
+    color: '#94A3B8',
   },
   clearBtn: {
     paddingHorizontal: 6,
@@ -1421,6 +1447,9 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.2,
+  },
+  primaryBtnTextDisabled: {
+    color: '#94A3B8',
   },
   btnLoadingRow: {
     flexDirection: 'row',
