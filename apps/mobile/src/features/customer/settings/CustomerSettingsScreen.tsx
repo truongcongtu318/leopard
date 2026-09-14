@@ -110,7 +110,7 @@ export function CustomerSettingsScreen() {
           >
             <View style={styles.textWrap}>
               <Text style={styles.settingTitle}>Bảo mật tài khoản & PIN</Text>
-              <Text style={styles.settingDesc}>Đổi mã PIN ví, FaceID và xóa tài khoản vĩnh viễn</Text>
+              <Text style={styles.settingDesc}>Sinh trắc học FaceID và xóa tài khoản vĩnh viễn</Text>
             </View>
             <IconChevron color="#94A3B8" direction="right" size="md" />
           </Pressable>

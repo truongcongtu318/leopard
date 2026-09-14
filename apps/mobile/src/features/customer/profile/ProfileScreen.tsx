@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, IconChevron, IconCreditCard, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, IconChevron, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { CustomerProfileView } from './model';
 
 export type CustomerProfileScreenProps = Readonly<{
@@ -132,35 +132,35 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               </Text>
               <Text style={styles.heroPhone}>{view.phone}</Text>
 
-              {/* Crown Membership Pill */}
+              {/* Role Pill */}
               <View style={styles.membershipPill}>
                 <IconCrown color="#F59E0B" size={13} />
-                <Text style={styles.membershipText}>
-                  Hạng Vàng · <Text style={styles.membershipRole}>{view.roleLabel}</Text>
-                </Text>
+                <Text style={styles.membershipText}>{view.roleLabel}</Text>
               </View>
             </View>
           </View>
 
-          {/* Quick Stats: Tổng chuyến · Điểm thưởng · Tiết kiệm */}
+          {/* Quick Stats: Tổng đơn · Đang xử lý · Ưu đãi */}
           <View style={styles.quickStatsRow}>
             <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Tổng chuyến</Text>
-              <Text style={styles.statValueWhite}>18</Text>
+              <Text style={styles.statLabel}>Tổng đơn</Text>
+              <Text style={styles.statValueWhite}>{view.totalOrdersLabel ?? '0'}</Text>
             </View>
 
             <View style={styles.statDivider} />
 
             <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Điểm tích lũy</Text>
-              <Text style={styles.statValueGold}>850 pts</Text>
+              <Text style={styles.statLabel}>Đang xử lý</Text>
+              <Text style={styles.statValueGold}>{view.activeOrdersLabel ?? '0'}</Text>
             </View>
 
             <View style={styles.statDivider} />
 
             <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Tiết kiệm</Text>
-              <Text style={styles.statValueGreen}>320k ₫</Text>
+              <Text style={styles.statLabel}>Mã ưu đãi</Text>
+              <Text style={styles.statValueGreen}>
+                {view.vouchersLabel ? `${view.vouchersLabel} mã` : '0 mã'}
+              </Text>
             </View>
           </View>
         </View>
@@ -220,8 +220,10 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               <IconChevron color="#94A3B8" direction="right" size="sm" />
             </View>
 
-            <Text style={styles.bentoPromoText}>3 khả dụng</Text>
-            <Text style={styles.bentoSubMuted}>Hết hạn trong 3 ngày</Text>
+            <Text style={styles.bentoPromoText}>
+              {view.vouchersLabel ? `${view.vouchersLabel} khả dụng` : '0 khả dụng'}
+            </Text>
+            <Text style={styles.bentoSubMuted}>Mã giảm cước vận chuyển</Text>
           </Pressable>
         </View>
 
@@ -230,7 +232,11 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <SectionHeader title="VẬN CHUYỂN & ĐƠN HÀNG" />
           <View style={styles.insetCard}>
             <MenuRow
-              badge="1 đang giao"
+              badge={
+                view.activeOrdersLabel && view.activeOrdersLabel !== '0'
+                  ? `${view.activeOrdersLabel} đang giao`
+                  : undefined
+              }
               icon={<IconOrders color="#0B1E42" size={19} />}
               iconBg="#F1F5F9"
               label="Đơn hàng của tôi"
@@ -255,17 +261,10 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
             <MenuRow
               icon={<IconFileText color="#0B1E42" size={19} />}
               iconBg="#F1F5F9"
+              isLast
               label="Thông tin xuất hóa đơn VAT"
               onPress={() => router.push('/customer/settings')}
               subtitle="Tự động xuất hóa đơn đỏ điện tử theo chuyến"
-            />
-            <MenuRow
-              icon={<IconCreditCard color="#0B1E42" size={19} />}
-              iconBg="#F1F5F9"
-              isLast
-              label="Liên kết ngân hàng & Thẻ"
-              onPress={() => router.push('/customer/wallet')}
-              subtitle="VietQR Napas247, Visa, Mastercard"
             />
           </View>
         </View>

@@ -32,42 +32,9 @@ export function CustomerSecurityScreen() {
   // Biometric state
   const [biometricEnabled, setBiometricEnabled] = useState(true);
 
-  // PIN state
-  const [currentPin, setCurrentPin] = useState('');
-  const [newPin, setNewPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
-  const [pinError, setPinError] = useState<string | null>(null);
-  const [pinSuccess, setPinSuccess] = useState<string | null>(null);
-
   // Account deletion modal state (Apple Guideline 5.1.1)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  function handleUpdatePin() {
-    setPinError(null);
-    setPinSuccess(null);
-
-    if (!currentPin.trim() || !newPin.trim() || !confirmPin.trim()) {
-      setPinError('Vui lòng điền đầy đủ thông tin mã PIN.');
-      return;
-    }
-
-    if (newPin.length !== 6) {
-      setPinError('Mã PIN mới phải bao gồm đúng 6 chữ số.');
-      return;
-    }
-
-    if (newPin !== confirmPin) {
-      setPinError('Mã PIN mới và xác nhận mã PIN không khớp.');
-      return;
-    }
-
-    // Success
-    setPinSuccess('Cập nhật mã PIN thanh toán thành công!');
-    setCurrentPin('');
-    setNewPin('');
-    setConfirmPin('');
-  }
 
   async function handleConfirmDeleteAccount() {
     setIsDeleting(true);
@@ -106,92 +73,7 @@ export function CustomerSecurityScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* SECTION 1: MÃ PIN THANH TOÁN (DOUBLE-BEZEL CARD) */}
-        <Text style={styles.sectionLabel}>MÃ PIN THANH TOÁN</Text>
-        <View style={styles.doubleBezelOuter}>
-          <View style={styles.doubleBezelInner}>
-            <View style={styles.sectionTitleRow}>
-              <View style={styles.iconBadge}>
-                <IconShield color={colors.brand.background} size="md" />
-              </View>
-              <View style={styles.sectionTitleTextWrap}>
-                <Text style={styles.cardHeading}>Đổi mã PIN thanh toán ví</Text>
-                <Text style={styles.cardSubtext}>
-                  Mã PIN 6 số dùng để xác thực các giao dịch nạp, rút và thanh toán cước vận chuyển.
-                </Text>
-              </View>
-            </View>
-
-            {pinError ? (
-              <View style={styles.alertError}>
-                <IconAlertTriangle color="#DC2626" size="sm" />
-                <Text style={styles.alertErrorText}>{pinError}</Text>
-              </View>
-            ) : null}
-
-            {pinSuccess ? (
-              <View style={styles.alertSuccess}>
-                <IconSecurityShield color="#16A34A" size={16} />
-                <Text style={styles.alertSuccessText}>{pinSuccess}</Text>
-              </View>
-            ) : null}
-
-            <View style={styles.formGroup}>
-              <Text style={styles.inputLabel}>Mã PIN hiện tại</Text>
-              <TextInput
-                keyboardType="numeric"
-                maxLength={6}
-                onChangeText={setCurrentPin}
-                placeholder="Nhập mã PIN hiện tại"
-                placeholderTextColor={colors.neutral.subtleText}
-                secureTextEntry
-                style={styles.pinInput}
-                value={currentPin}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.inputLabel}>Mã PIN mới (6 chữ số)</Text>
-              <TextInput
-                keyboardType="numeric"
-                maxLength={6}
-                onChangeText={setNewPin}
-                placeholder="Nhập mã PIN mới (6 số)"
-                placeholderTextColor={colors.neutral.subtleText}
-                secureTextEntry
-                style={styles.pinInput}
-                value={newPin}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.inputLabel}>Xác nhận mã PIN mới</Text>
-              <TextInput
-                keyboardType="numeric"
-                maxLength={6}
-                onChangeText={setConfirmPin}
-                placeholder="Xác nhận mã PIN mới"
-                placeholderTextColor={colors.neutral.subtleText}
-                secureTextEntry
-                style={styles.pinInput}
-                value={confirmPin}
-              />
-            </View>
-
-            <Pressable
-              accessibilityRole="button"
-              onPress={handleUpdatePin}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                pressed ? styles.primaryButtonPressed : null,
-              ]}
-            >
-              <Text style={styles.primaryButtonText}>Cập nhật mã PIN</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* SECTION 2: SINH TRẮC HỌC (DOUBLE-BEZEL CARD) */}
+        {/* SECTION 1: SINH TRẮC HỌC (DOUBLE-BEZEL CARD) */}
         <Text style={styles.sectionLabel}>SINH TRẮC HỌC</Text>
         <View style={styles.doubleBezelOuter}>
           <View style={styles.doubleBezelInner}>

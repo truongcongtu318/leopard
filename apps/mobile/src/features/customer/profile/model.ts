@@ -10,6 +10,9 @@ export type ProfileContentView = Readonly<{
   statusTone: 'active' | 'danger';
   appVersion: string;
   isLoggingOut: boolean;
+  totalOrdersLabel?: string | null;
+  activeOrdersLabel?: string | null;
+  vouchersLabel?: string | null;
 }>;
 
 export type ProfileBoundaryView = Readonly<{

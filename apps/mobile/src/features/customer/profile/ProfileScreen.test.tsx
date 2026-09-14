@@ -29,9 +29,12 @@ describe('CustomerProfileScreen', () => {
     statusTone: 'active',
     appVersion: '1.0.0-pilot',
     isLoggingOut: false,
+    totalOrdersLabel: '12',
+    activeOrdersLabel: '2',
+    vouchersLabel: '3',
   };
 
-  it('renders user hero card with phone, role, and app version', async () => {
+  it('renders user hero card with phone, role, and real metrics from API', async () => {
     const screen = await render(<CustomerProfileScreen view={sampleContentView} />);
 
     expect(screen.getByText('LEOPARD ID')).toBeTruthy();
@@ -39,9 +42,15 @@ describe('CustomerProfileScreen', () => {
     expect(screen.getByText('Khách hàng')).toBeTruthy();
     expect(screen.getByText(/1.0.0-pilot/)).toBeTruthy();
     expect(screen.getByText('Hồ sơ')).toBeTruthy();
-    expect(screen.getByText('18')).toBeTruthy();
-    expect(screen.getByText('850 pts')).toBeTruthy();
-    expect(screen.getByText('320k ₫')).toBeTruthy();
+    // Real metrics from API, not hardcoded 18 / 850 pts / 320k
+    expect(screen.getByText('Tổng đơn')).toBeTruthy();
+    expect(screen.getByText('12')).toBeTruthy();
+    expect(screen.getByText('Đang xử lý')).toBeTruthy();
+    expect(screen.getByText('Mã ưu đãi')).toBeTruthy();
+    expect(screen.getByText('3 mã')).toBeTruthy();
+    expect(screen.queryByText('850 pts')).toBeNull();
+    expect(screen.queryByText('320k ₫')).toBeNull();
+    expect(screen.queryByText('Hạng Vàng')).toBeNull();
     expect(screen.queryByText('CUSTOMER · JOURNEY SHEET')).toBeNull();
     await screen.unmount();
   });
@@ -52,7 +61,8 @@ describe('CustomerProfileScreen', () => {
     expect(screen.getByLabelText('Đơn hàng của tôi')).toBeTruthy();
     expect(screen.getByLabelText('Sổ địa chỉ')).toBeTruthy();
     expect(screen.getByLabelText('Thông tin xuất hóa đơn VAT')).toBeTruthy();
-    expect(screen.getByLabelText('Liên kết ngân hàng & Thẻ')).toBeTruthy();
+    // Bank-link menu removed (escrow-only model)
+    expect(screen.queryByLabelText('Liên kết ngân hàng & Thẻ')).toBeNull();
     expect(screen.getByLabelText('Ví VietQR')).toBeTruthy();
     expect(screen.getByLabelText('Khuyến mãi & Thanh toán')).toBeTruthy();
     expect(screen.getByLabelText('Trợ giúp & SOS')).toBeTruthy();

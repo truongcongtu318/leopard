@@ -379,24 +379,25 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
     </Pressable>
   );
 
+  const handleBack = () => {
+    if (isAdding) {
+      setIsAdding(false);
+    } else {
+      onBack?.();
+    }
+  };
+
   return (
     <ScreenScaffold
       hasFloatingNavBar
       headerRight={headerRight}
-      onBack={onBack}
-      stickyFooter={
-        isAdding ? (
-          <Button
-            disabled={!newLabel.trim() || !newAddress.trim()}
-            label="Lưu địa chỉ vào sổ"
-            onPress={handleAddAddress}
-            size="driver-primary"
-            variant="primary"
-          />
-        ) : undefined
+      onBack={handleBack}
+      subtitle={
+        isAdding
+          ? 'Lưu địa điểm thường xuyên gửi/nhận hàng'
+          : 'Lưu sẵn địa chỉ thường dùng để tạo đơn và giao hàng nhanh chóng.'
       }
-      subtitle="Lưu sẵn địa chỉ thường dùng để tạo đơn và giao hàng nhanh chóng."
-      title="Sổ địa chỉ"
+      title={isAdding ? 'Thêm địa chỉ mới' : 'Sổ địa chỉ'}
     >
       <View style={styles.container}>
         {/* 1. Thanh Tìm Kiếm Nhanh (Realtime Search Bar) */}
@@ -493,38 +494,17 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
           </View>
         ) : null}
 
-        {/* 3. Thẻ Tạo Địa Chỉ Mới (Add Address Card / Sheet) */}
+        {/* 3. Form Tạo Địa Chỉ Mới (Apple HIG Inset Grouped, không box lồng) */}
         {isAdding ? (
           <ScrollView
             contentContainerStyle={styles.addFormScroll}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.addCard}>
-              <View style={styles.addCardHeader}>
-                <View style={styles.addTitleGroup}>
-                  <View style={styles.addIconCircle}>
-                    <IconLocationPin color="#0B1E42" size={18} />
-                  </View>
-                  <View style={styles.addTitleTextCol}>
-                    <Text style={styles.formTitle}>Thêm địa chỉ mới</Text>
-                    <Text style={styles.formSubtitle}>Lưu địa điểm thường xuyên gửi/nhận hàng</Text>
-                  </View>
-                </View>
-                <Pressable
-                  accessibilityLabel="Đóng biểu mẫu"
-                  accessibilityRole="button"
-                  hitSlop={12}
-                  onPress={() => setIsAdding(false)}
-                  style={({ pressed }) => [styles.closeBtn, pressed && styles.pressed]}
-                >
-                  <IconClose color="#64748B" size="md" />
-                </Pressable>
-              </View>
-
+            <View style={styles.addFormPlain}>
               {/* Chọn Loại Địa Điểm (Apple HIG Segmented Control) */}
               <View style={styles.categoryPickerSection}>
-                <Text style={styles.categoryPickerLabel}>Loại địa điểm:</Text>
+                <Text style={styles.categoryPickerLabel}>Loại địa điểm</Text>
                 <View style={styles.segmentedControl}>
                   {categoryOptions.map((cat) => {
                     const selected = newCategory === cat.id;
@@ -709,6 +689,17 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   </View>
                 </View>
               </Pressable>
+
+              {/* Nút lưu địa chỉ cuộn theo trang */}
+              <View style={styles.submitBtnWrap}>
+                <Button
+                  disabled={!newLabel.trim() || !newAddress.trim()}
+                  label="Lưu địa chỉ vào sổ"
+                  onPress={handleAddAddress}
+                  size="driver-primary"
+                  variant="primary"
+                />
+              </View>
             </View>
           </ScrollView>
         ) : null}
@@ -1014,68 +1005,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // 3. Add Card (Apple HIG Inset Grouped Card)
+  // 3. Form (Apple HIG Grouped, không box lồng)
   addFormScroll: {
-    paddingBottom: 24,
-  },
-  addCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 18,
-    ...iosContinuousCurve,
-    borderWidth: 1,
+    flexGrow: 1,
     gap: spacing.md,
-    padding: spacing.md,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    paddingBottom: layout.bottomNavClearance,
   },
-  addCardHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: spacing.xs,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E8F0',
+  addFormPlain: {
+    gap: spacing.md,
   },
-  addTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    flex: 1,
-  },
-  addIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    ...iosContinuousCurve,
-    backgroundColor: '#F0F4F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addTitleTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  formTitle: {
-    color: '#0F172A',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-  formSubtitle: {
-    color: '#64748B',
-    fontSize: 12,
-  },
-  closeBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+  submitBtnWrap: {
+    paddingTop: spacing.xs,
   },
 
   // Apple HIG Segmented Control

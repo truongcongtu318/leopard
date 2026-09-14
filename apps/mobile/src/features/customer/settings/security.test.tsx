@@ -26,18 +26,11 @@ describe('CustomerSecurityScreen', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders all main security sections: header, PIN change, biometrics, Apple account deletion', async () => {
+  it('renders all main security sections: header, biometrics, Apple account deletion', async () => {
     const screen = await render(<CustomerSecurityScreen />);
 
     expect(screen.getByText('Bảo mật tài khoản')).toBeTruthy();
     expect(screen.getByLabelText('Quay lại')).toBeTruthy();
-
-    // PIN section
-    expect(screen.getByText('MÃ PIN THANH TOÁN')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Nhập mã PIN hiện tại')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Nhập mã PIN mới (6 số)')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Xác nhận mã PIN mới')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Cập nhật mã PIN' })).toBeTruthy();
 
     // Biometric section
     expect(screen.getByText('SINH TRẮC HỌC')).toBeTruthy();
@@ -65,38 +58,6 @@ describe('CustomerSecurityScreen', () => {
 
     await fireEvent(screen.getByTestId('switch-biometric'), 'valueChange', true);
     expect(screen.getByTestId('switch-biometric').props.value).toBe(true);
-  });
-
-  it('validates and handles PIN change with error and success states', async () => {
-    const screen = await render(<CustomerSecurityScreen />);
-
-    const currentPinInput = screen.getByPlaceholderText('Nhập mã PIN hiện tại');
-    const newPinInput = screen.getByPlaceholderText('Nhập mã PIN mới (6 số)');
-    const confirmPinInput = screen.getByPlaceholderText('Xác nhận mã PIN mới');
-    const updatePinBtn = screen.getByRole('button', { name: 'Cập nhật mã PIN' });
-
-    // Try submit empty
-    await fireEvent.press(updatePinBtn);
-    expect(screen.getByText('Vui lòng điền đầy đủ thông tin mã PIN.')).toBeTruthy();
-
-    // Try submit mismatched PINs
-    await fireEvent.changeText(currentPinInput, '123456');
-    await fireEvent.changeText(newPinInput, '654321');
-    await fireEvent.changeText(confirmPinInput, '111111');
-    await fireEvent.press(updatePinBtn);
-    expect(screen.getByText('Mã PIN mới và xác nhận mã PIN không khớp.')).toBeTruthy();
-
-    // Try submit invalid length
-    await fireEvent.changeText(newPinInput, '123');
-    await fireEvent.changeText(confirmPinInput, '123');
-    await fireEvent.press(updatePinBtn);
-    expect(screen.getByText('Mã PIN mới phải bao gồm đúng 6 chữ số.')).toBeTruthy();
-
-    // Valid PIN change
-    await fireEvent.changeText(newPinInput, '987654');
-    await fireEvent.changeText(confirmPinInput, '987654');
-    await fireEvent.press(updatePinBtn);
-    expect(screen.getByText('Cập nhật mã PIN thanh toán thành công!')).toBeTruthy();
   });
 
   it('handles Apple Guideline 5.1.1 account deletion flow: modal open, cancellation, confirm & clear session', async () => {
