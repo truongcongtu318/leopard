@@ -13,4 +13,11 @@ module.exports = {
   ...baseConfig,
   testRegex: '.*\\.contract-spec\\.ts$',
   testPathIgnorePatterns: [],
+  // The test makes 3 sequential real network calls, and VietmapProvider has
+  // its own 5000ms per-request timeout with up to 2 retry attempts — a
+  // single retry on one call alone can approach 10s, and worst case across
+  // 3 calls approaches 30s. Jest's 5000ms default would false-negative on
+  // ordinary real-world latency. Match jest-e2e.config.cjs's precedent of a
+  // generous whole-test budget for suites that make real external calls.
+  testTimeout: 30000,
 };
