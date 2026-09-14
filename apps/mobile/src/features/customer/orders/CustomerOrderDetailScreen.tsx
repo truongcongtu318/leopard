@@ -14,13 +14,147 @@ export type CustomerOrderDetailScreenProps = Readonly<{
   onBack?: () => void;
   onPrimaryAction?: (actionId: string) => void;
   onPaymentAction?: (actionId: string) => void;
-  onCancel?: (actionId: string) => void;
+  onCancel?: (actionId: string, reason?: string) => void;
   onRetry?: () => void;
   onPickCargoImage?: () => void;
   onOpenTracking?: (orderId: string) => void;
   onOpenInvoice?: (invoiceId: string) => void;
   onSendInvoiceEmail?: (invoiceId: string, email: string) => void;
 }>;
+
+const CANCEL_REASONS: readonly string[] = [
+  'Đặt nhầm địa chỉ',
+  'Đổi thời gian giao hàng',
+  'Cước phí quá cao',
+  'Tìm được phương tiện khác',
+];
+
+function CancelOrderSheet({
+  onConfirm,
+  onDismiss,
+}: Readonly<{
+  onConfirm: (reason: string) => void;
+  onDismiss: () => void;
+}>) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [customReason, setCustomReason] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleConfirm = () => {
+    const reason =
+      selected === '__OTHER__' ? customReason.trim() : selected?.trim() ?? '';
+    if (!reason) {
+      setError('Vui lòng chọn hoặc nhập lý do hủy đơn.');
+      return;
+    }
+    setError(null);
+    onConfirm(reason);
+  };
+
+  return (
+    <View style={styles.cancelOverlay}>
+      <Pressable
+        accessibilityLabel="Đóng"
+        accessibilityRole="button"
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        onPress={onDismiss}
+        style={styles.cancelBackdrop}
+      />
+      <View style={styles.cancelSheet}>
+        <Text style={styles.cancelSheetTitle}>Hủy đơn hàng</Text>
+        <Text style={styles.cancelSheetSubtitle}>
+          Vui lòng cho biết lý do để hệ thống cải thiện chất lượng dịch vụ.
+        </Text>
+        {CANCEL_REASONS.map((reasonOption) => {
+          const isSelected = selected === reasonOption;
+          return (
+            <Pressable
+              key={reasonOption}
+              accessibilityLabel={`Lý do: ${reasonOption}`}
+              accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={() => {
+                setSelected(reasonOption);
+                setError(null);
+              }}
+              style={({ pressed }) => [
+                styles.cancelOption,
+                isSelected ? styles.cancelOptionSelected : null,
+                pressed ? styles.pressed : null,
+              ]}
+            >
+              <View style={[styles.cancelRadio, isSelected ? styles.cancelRadioSelected : null]}>
+                {isSelected ? <View style={styles.cancelRadioDot} /> : null}
+              </View>
+              <Text
+                style={[
+                  styles.cancelOptionText,
+                  isSelected ? styles.cancelOptionTextSelected : null,
+                ]}
+              >
+                {reasonOption}
+              </Text>
+            </Pressable>
+          );
+        })}
+        <Pressable
+          accessibilityLabel="Lý do: Khác"
+          accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          onPress={() => {
+            setSelected('__OTHER__');
+            setError(null);
+          }}
+          style={({ pressed }) => [
+            styles.cancelOption,
+            selected === '__OTHER__' ? styles.cancelOptionSelected : null,
+            pressed ? styles.pressed : null,
+          ]}
+        >
+          <View
+            style={[
+              styles.cancelRadio,
+              selected === '__OTHER__' ? styles.cancelRadioSelected : null,
+            ]}
+          >
+            {selected === '__OTHER__' ? <View style={styles.cancelRadioDot} /> : null}
+          </View>
+          <Text
+            style={[
+              styles.cancelOptionText,
+              selected === '__OTHER__' ? styles.cancelOptionTextSelected : null,
+            ]}
+          >
+            Lý do khác
+          </Text>
+        </Pressable>
+        {selected === '__OTHER__' ? (
+          <TextInput
+            accessibilityLabel="Nhập lý do hủy đơn"
+            multiline
+            onChangeText={(value) => {
+              setCustomReason(value);
+              setError(null);
+            }}
+            placeholder="Nhập lý do hủy đơn…"
+            placeholderTextColor="#94A3B8"
+            style={styles.cancelInput}
+            value={customReason}
+          />
+        ) : null}
+        {error ? <Text style={styles.cancelErrorText}>{error}</Text> : null}
+        <View style={styles.cancelSheetActions}>
+          <View style={styles.cancelSheetActionFlex}>
+            <Button label="Quay lại" onPress={onDismiss} variant="secondary" />
+          </View>
+          <View style={styles.cancelSheetActionFlex}>
+            <Button label="Xác nhận hủy" onPress={handleConfirm} variant="destructive" />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -339,7 +473,7 @@ function CustomerDetailContent({
   onBack?: () => void;
   onPrimaryAction?: (actionId: string) => void;
   onPaymentAction?: (actionId: string) => void;
-  onCancel?: (actionId: string) => void;
+  onCancel?: (actionId: string, reason?: string) => void;
   onRetry?: () => void;
   onPickCargoImage?: () => void;
   onOpenTracking?: (orderId: string) => void;
@@ -349,6 +483,7 @@ function CustomerDetailContent({
   const order = view.order;
   const cancelAction = 'action' in view.cancel ? view.cancel.action : null;
   const [copied, setCopied] = useState(false);
+  const [showCancelSheet, setShowCancelSheet] = useState(false);
 
   const handleCopyOrderCode = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -402,6 +537,20 @@ function CustomerDetailContent({
             <StatusBadge domain="order" status={order.status} />
           </View>
         </View>
+
+        {/* 1b. Thẻ hiển thị lý do hủy khi đơn CANCELLED */}
+        {order.status === 'CANCELLED' ? (
+          <View style={styles.cancelledReasonCard}>
+            <View style={styles.cancelledReasonHeader}>
+              <View style={styles.cancelledDot} />
+              <Text style={styles.cancelledReasonTitle}>Lý do hủy đơn</Text>
+            </View>
+            <Text style={styles.cancelledReasonContent}>
+              {order.cancelReason?.trim() || 'Khách hàng hủy đơn'}
+            </Text>
+            <Text style={styles.cancelledReasonTime}>Hủy vào lúc {order.updatedAtLabel}</Text>
+          </View>
+        ) : null}
 
         {/* 2. Thẻ Cảnh Báo Thanh Toán Cấp Bách (Urgent Payment Card) */}
         {isUnpaid ? (
@@ -702,12 +851,22 @@ function CustomerDetailContent({
               disabled={cancelAction.disabled}
               isLoading={cancelAction.isPending}
               label={cancelAction.label}
-              onPress={onCancel ? () => onCancel(cancelAction.id) : undefined}
+              onPress={() => setShowCancelSheet(true)}
               variant="destructive"
             />
           </View>
         ) : null}
       </ScrollView>
+
+      {showCancelSheet && cancelAction ? (
+        <CancelOrderSheet
+          onConfirm={(reason) => {
+            setShowCancelSheet(false);
+            onCancel?.(cancelAction.id, reason);
+          }}
+          onDismiss={() => setShowCancelSheet(false)}
+        />
+      ) : null}
     </ScreenScaffold>
   );
 }
@@ -1340,6 +1499,150 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     padding: spacing.sm,
     borderRadius: 10,
+  },
+  cancelledReasonCard: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    gap: 6,
+  },
+  cancelledReasonHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cancelledDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#DC2626',
+  },
+  cancelledReasonTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#991B1B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cancelledReasonContent: {
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: '#7F1D1D',
+  },
+  cancelledReasonTime: {
+    fontSize: 11.5,
+    color: '#991B1B',
+    opacity: 0.8,
+  },
+  cancelOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    zIndex: 999,
+  },
+  cancelBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+  },
+  cancelSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 34,
+    gap: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  cancelSheetTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  cancelSheetSubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: 4,
+  },
+  cancelOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    gap: 12,
+  },
+  cancelOptionSelected: {
+    borderColor: '#0B1E42',
+    backgroundColor: '#F0F4F9',
+  },
+  cancelRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#94A3B8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelRadioSelected: {
+    borderColor: '#0B1E42',
+  },
+  cancelRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#0B1E42',
+  },
+  cancelOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#334155',
+    flex: 1,
+  },
+  cancelOptionTextSelected: {
+    fontWeight: '700',
+    color: '#0B1E42',
+  },
+  cancelInput: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 13.5,
+    color: '#0F172A',
+    minHeight: 70,
+    textAlignVertical: 'top',
+  },
+  cancelErrorText: {
+    fontSize: 12,
+    color: '#DC2626',
+    fontWeight: '600',
+  },
+  cancelSheetActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+  cancelSheetActionFlex: {
+    flex: 1,
   },
   cancelSection: {
     borderTopColor: '#FEE2E2',

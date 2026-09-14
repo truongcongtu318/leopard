@@ -694,6 +694,14 @@ export function mapOrderToDetail(
     description: h.reason || describeStatus(h.toStatus as OrderStatus),
   }));
 
+  const cancelReason =
+    status === 'CANCELLED'
+      ? (order.statusHistory ?? [])
+          .filter((h) => h.toStatus === 'CANCELLED' && h.reason?.trim())
+          .map((h) => h.reason!.trim())
+          .at(-1) ?? null
+      : null;
+
   if (history.length === 0) {
     history.push({
       id: `history-${order.id}`,
@@ -719,6 +727,7 @@ export function mapOrderToDetail(
     invoice: invoiceData ? mapInvoiceToView(invoiceData) : null,
     media,
     history,
+    cancelReason,
   };
 }
 

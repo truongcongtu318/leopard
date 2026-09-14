@@ -187,7 +187,9 @@ describe('CustomerOrderDetailScreen', () => {
       />,
     );
     await fireEvent.press(cancel.getByRole('button', { name: 'Hủy đơn' }));
-    expect(onCancel).toHaveBeenCalledWith('cancel-order');
+    await fireEvent.press(cancel.getByRole('button', { name: 'Lý do: Đặt nhầm địa chỉ' }));
+    await fireEvent.press(cancel.getByRole('button', { name: 'Xác nhận hủy' }));
+    expect(onCancel).toHaveBeenCalledWith('cancel-order', 'Đặt nhầm địa chỉ');
     await cancel.unmount();
 
     const onRetry = jest.fn();
