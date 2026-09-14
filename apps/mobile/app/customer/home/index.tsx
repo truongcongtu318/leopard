@@ -189,8 +189,47 @@ export default function CustomerHomePage() {
       recentOrders={recentOrders}
       userName={customerUser?.name}
       userPhone={customerUser?.phone}
-      onConfirmBooking={(booking) => {
-        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+      onConfirmBooking={async (booking) => {
+        let orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+        try {
+          const port = createCustomerHttpAdapter();
+          const pickupCoords =
+            defaultAddress?.latitude && defaultAddress?.longitude
+              ? { lat: defaultAddress.latitude, lng: defaultAddress.longitude }
+              : { lat: 10.8012, lng: 106.6544 };
+          const dropoffCoords = { lat: 10.7769, lng: 106.7009 };
+          const vehicleType = vehicleCategoryToOrderType(booking.vehicleCategory);
+
+          const formPayload = {
+            pickup: booking.pickup,
+            pickupCoords,
+            stops: [],
+            dropoff: booking.dropoff,
+            dropoffCoords,
+            vehicleType,
+            cargoNote: [booking.cargoCategory, booking.cargoNote].filter(Boolean).join(' · '),
+            cargoWeight: vehicleType === 'TRUCK' ? '1250' : '300',
+            requiresLoadingSupport: booking.hasLoadingSupport,
+            paymentMethod: booking.paymentMethod,
+            fieldErrors: {},
+          };
+
+          const estimateView = await port.estimateOrder(formPayload);
+          const estimateToken =
+            estimateView.kind === 'form' && estimateView.estimate.kind === 'ready'
+              ? estimateView.estimate.routes[0]?.estimateToken
+              : undefined;
+
+          if (estimateToken) {
+            const created = await port.createOrder(formPayload, estimateToken);
+            if (created.kind === 'content') {
+              orderId = created.order.id;
+            }
+          }
+        } catch {
+          // Keep offline fallback orderId if network unavailable
+        }
+
         if (booking.paymentMethod === 'CASH') {
           router.push({
             pathname: `/customer/orders/searching/${orderId}`,

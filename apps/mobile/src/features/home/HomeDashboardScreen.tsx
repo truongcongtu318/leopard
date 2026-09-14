@@ -279,10 +279,12 @@ export type HomeDashboardScreenProps = Readonly<{
   onTopUpWallet?: () => void;
   onOpenQrScan?: () => void;
   showFloatingNavBar?: boolean;
+  initialCargoImageUri?: string;
 }>;
 
 export function HomeDashboardScreen({
   activeShipment = DEFAULT_ACTIVE_SHIPMENT, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
+  initialCargoImageUri,
   onConfirmBooking, onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
   onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
   onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = DEFAULT_RECENT_ORDERS,
@@ -867,6 +869,7 @@ export function HomeDashboardScreen({
       <BookingDetailsModal
         basePrice={currentBasePrice}
         dropoffAddress={dropoffText}
+        initialCargoImageUri={initialCargoImageUri}
         initialReceiverName={loggedInCustomer?.name || userName}
         initialReceiverPhone={loggedInCustomer?.phone || userPhone}
         onClose={() => setShowBookingDetailsModal(false)}

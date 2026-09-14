@@ -155,7 +155,10 @@ describe('HomeDashboardScreen', () => {
   it('submits quick route booking with custom pickup and dropoff', async () => {
     const onQuickBook = jest.fn();
     const screen = await render(
-      <HomeDashboardScreen onQuickBook={onQuickBook} />,
+      <HomeDashboardScreen
+        initialCargoImageUri="file:///test-cargo.jpg"
+        onQuickBook={onQuickBook}
+      />,
     );
 
     // Default pickup location is prefilled
@@ -524,6 +527,7 @@ describe('HomeDashboardScreen', () => {
       const screen = await render(
         <HomeDashboardScreen
           defaultDropoffLocation="KCN Tân Tạo"
+          initialCargoImageUri="file:///test-cargo.jpg"
           onConfirmBooking={onConfirmBooking}
           userName="Nguyễn Văn A"
           userPhone="0912345678"
