@@ -7,6 +7,7 @@ COPY packages/shared/src/ packages/shared/src/
 COPY packages/validators/src/ packages/validators/src/
 COPY packages/mobile-core/src/ packages/mobile-core/src/
 COPY packages/mobile-core/assets/ packages/mobile-core/assets/
+COPY apps/driver/app.json apps/driver/app.json
 COPY apps/driver/app/ apps/driver/app/
 COPY apps/driver/src/ apps/driver/src/
 COPY apps/driver/assets/ apps/driver/assets/

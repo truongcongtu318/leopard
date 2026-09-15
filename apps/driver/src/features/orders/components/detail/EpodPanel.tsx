@@ -14,6 +14,16 @@ import {
   spacing,
 } from '@leopard/mobile-core';
 import type { DriverProofView } from '../../model';
+import { getDriverCurrentLocation } from '../../driver-current-location';
+
+/** Shown on the watermark when the device will not give us a position. */
+export const EPOD_GPS_UNAVAILABLE = 'Chưa có vị trí GPS';
+
+function formatWatermarkCoords(coords: { lat: number; lng: number }): string {
+  const lat = `${Math.abs(coords.lat).toFixed(5)}° ${coords.lat >= 0 ? 'N' : 'S'}`;
+  const lng = `${Math.abs(coords.lng).toFixed(5)}° ${coords.lng >= 0 ? 'E' : 'W'}`;
+  return `${lat}, ${lng}`;
+}
 
 export type EpodPanelProps = Readonly<{
   proof: DriverProofView;
@@ -52,10 +62,11 @@ export function EpodPanel({
     proof.kind === 'persisted'
       ? {
           timestamp: '14:30:15 15/08/2026',
-          coords: '10.7769° N, 106.7009° E (GPS lock ±5m)',
+          coords: EPOD_GPS_UNAVAILABLE,
         }
       : null,
   );
+  const [isLocating, setIsLocating] = useState(false);
   const [signatureCaptured, setSignatureCaptured] = useState<boolean>(
     proof.kind === 'persisted',
   );
@@ -67,18 +78,31 @@ export function EpodPanel({
     proof.kind === 'invalid-type' || proof.kind === 'too-large' || proof.kind === 'upload-retry';
 
   const handleSimulateCameraCapture = () => {
+    if (isLocating) return;
+    setIsLocating(true);
+
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} ${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-    const coordsStr = '10.7769° N, 106.7009° E (GPS lock ±3m)';
-    setCargoPhotoUri(proof.fileLabel || 'epod-cargo-photo-watermarked.jpg');
-    setPhotoWatermark({
-      timestamp: timeStr,
-      coords: coordsStr,
-    });
-    setErrorMsg(null);
-    if (onSelectProof) {
-      onSelectProof();
-    }
+
+    void (async () => {
+      // The watermark must carry the driver's real position, or say plainly that
+      // there is none. It used to stamp a fixed Ho Chi Minh City coordinate with
+      // a fabricated "GPS lock ±3m", which put an authoritative-looking but
+      // wrong location on delivery evidence.
+      const location = await getDriverCurrentLocation();
+      const coordsStr =
+        location.kind === 'ready'
+          ? formatWatermarkCoords(location.coords)
+          : EPOD_GPS_UNAVAILABLE;
+
+      setCargoPhotoUri(proof.fileLabel || 'epod-cargo-photo-watermarked.jpg');
+      setPhotoWatermark({ timestamp: timeStr, coords: coordsStr });
+      setErrorMsg(null);
+      setIsLocating(false);
+      if (onSelectProof) {
+        onSelectProof();
+      }
+    })();
   };
 
   const handleSignTouch = () => {
@@ -241,7 +265,7 @@ export function EpodPanel({
                 <View style={styles.watermarkRow}>
                   <IconLocationPin color="#F59E0B" size={12} strokeWidth={2} />
                   <Text style={styles.watermarkText}>
-                    {photoWatermark?.coords || '10.7769° N, 106.7009° E (GPS lock)'}
+                    {photoWatermark?.coords || EPOD_GPS_UNAVAILABLE}
                   </Text>
                 </View>
                 <View style={styles.watermarkRow}>
@@ -275,7 +299,9 @@ export function EpodPanel({
                 <IconCamera color="#FFFFFF" size={20} />
               </View>
               <View style={styles.captureBtnTextCol}>
-                <Text style={styles.captureBtnTitle}>Chụp ảnh kiện hàng giao thực tế</Text>
+                <Text style={styles.captureBtnTitle}>
+                  {isLocating ? 'Đang lấy vị trí GPS…' : 'Chụp ảnh kiện hàng giao thực tế'}
+                </Text>
                 <Text style={styles.captureBtnDesc}>
                   Tự động gắn watermark tọa độ GPS và thời gian thực
                 </Text>

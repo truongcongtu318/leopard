@@ -116,6 +116,15 @@ export const VIETNAM_LOCATION_DICT: Record<string, MapCoordinate> = {
 };
 
 /**
+ * Where an address with no resolvable coordinates is anchored. It is a fixed
+ * demo anchor, not a guess at the user's position: `resolveLocationCoords` is a
+ * dictionary lookup, so any address it does not recognise (a real street
+ * address, for instance) lands here. Callers that need a truthful position —
+ * the e-POD watermark, the driver location ping — must use the device location.
+ */
+export const UNKNOWN_LOCATION_ANCHOR: MapCoordinate = { lat: 10.7769, lng: 106.7009 };
+
+/**
  * Deterministically resolves an address or location name to coordinates in Vietnam.
  */
 export function resolveLocationCoords(
@@ -123,7 +132,7 @@ export function resolveLocationCoords(
   referenceCoords?: MapCoordinate,
 ): MapCoordinate {
   if (!nameOrAddress || !nameOrAddress.trim()) {
-    return referenceCoords || { lat: 10.7769, lng: 106.7009 }; // Central HCMC
+    return referenceCoords || UNKNOWN_LOCATION_ANCHOR;
   }
 
   const query = nameOrAddress.toLowerCase().trim();
@@ -136,11 +145,11 @@ export function resolveLocationCoords(
 
   // Strict real-GPS fallback: never invent nearby jitter.
   // Anchors exactly at the given reference (e.g. current origin) when available,
-  // otherwise at central HCMC as the explicit unknown-location anchor.
+  // otherwise at the explicit unknown-location anchor.
   if (referenceCoords) {
     return { lat: referenceCoords.lat, lng: referenceCoords.lng };
   }
-  return { lat: 10.7769, lng: 106.7009 }; // Central HCMC
+  return UNKNOWN_LOCATION_ANCHOR;
 }
 
 /**

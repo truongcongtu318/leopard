@@ -31,6 +31,9 @@
       "scope": "/",
       "description": "Kết nối vận tải hàng hóa trọng tải lớn"
     },
+    "experiments": {
+      "baseUrl": "/customer"
+    },
     "plugins": [
       "expo-router",
       [

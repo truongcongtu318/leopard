@@ -32,6 +32,7 @@ import {
   RealInteractiveMap,
   RouteSpine,
   StatusBadge,
+  describeGeolocationFailure,
   haptic,
   httpClient,
   iosContinuousCurve,
@@ -329,6 +330,10 @@ export function HomeDashboardScreen({
   const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
   const [loggedInCustomer, setLoggedInCustomer] = useState<{ name?: string; phone?: string } | null>(null);
   const [addressStoreVersion, setAddressStoreVersion] = useState(0);
+  // Geolocation is unavailable on an insecure origin, and browsers refuse it
+  // silently. Without surfacing that, the pickup field just stays empty and the
+  // customer has no idea why "vị trí hiện tại" did nothing.
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [isAutoNavigating, setIsAutoNavigating] = useState(false);
 
   const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -400,28 +405,35 @@ export function HomeDashboardScreen({
   useEffect(() => {
     const saved = addressStore.getDefaultAddress();
     if (defaultPickupLocation || saved?.address) return;
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          try {
-            const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
-            if (resolved && resolved.trim().length > 0) {
-              setPickupText(resolved);
-              setPickupLabel('Vị trí hiện tại');
-              addressStore.saveAddress({ label: 'Vị trí hiện tại', address: resolved, category: 'OTHER', latitude: lat, longitude: lng, isDefault: true });
-              setAddressStoreVersion((v) => v + 1);
-            }
-          } catch {
-            // Keep default
-          }
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 8000 },
-      );
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setLocationNotice('Thiết bị không hỗ trợ định vị — vui lòng nhập điểm lấy hàng thủ công.');
+      return;
     }
+    const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        try {
+          const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
+          if (resolved && resolved.trim().length > 0) {
+            setPickupText(resolved);
+            setPickupLabel('Vị trí hiện tại');
+            setLocationNotice(null);
+            addressStore.saveAddress({ label: 'Vị trí hiện tại', address: resolved, category: 'OTHER', latitude: lat, longitude: lng, isDefault: true });
+            setAddressStoreVersion((v) => v + 1);
+          }
+        } catch {
+          // Keep default
+        }
+      },
+      (error) => {
+        // PositionUnavailable (2) and Timeout (3) are ordinary outdoors, so the
+        // wording stays about what to do next rather than blaming the device.
+        setLocationNotice(describeGeolocationFailure(error));
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
   }, [defaultPickupLocation]);
 
   const addressList = useMemo(() => savedAddresses ?? addressStore.getAddresses(), [savedAddresses, addressStoreVersion]);
@@ -682,6 +694,15 @@ export function HomeDashboardScreen({
                     onFocus={() => setFocusedField('pickup')} placeholder="Nhập địa chỉ lấy hàng..."
                     placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID="cr-pickup-input" value={pickupText}
                   />
+                  {locationNotice ? (
+                    <Text
+                      accessibilityRole="alert"
+                      style={styles.locationNoticeText}
+                      testID="pickup-location-notice"
+                    >
+                      {locationNotice}
+                    </Text>
+                  ) : null}
                 </View>
                 {pickupText.length > 0 ? (
                   <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); setPickupCoords(null); }} style={styles.inputActionBtn}>
@@ -1174,6 +1195,7 @@ const styles = StyleSheet.create({
   inputMicroLabel: { fontSize: 9, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
   pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
   pickupLabelBadgeText: { fontSize: 10, fontWeight: '700', color: '#166534' },
+  locationNoticeText: { fontSize: 11, lineHeight: 16, color: '#92400E', marginTop: 4 },
   locationTextInput: { fontSize: 14, fontWeight: '600', color: '#0F172A', padding: 0, minHeight: 22 },
   inputDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 4 },
   inputActionBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },

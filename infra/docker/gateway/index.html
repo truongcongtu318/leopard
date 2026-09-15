@@ -61,23 +61,23 @@
       <h3>Admin Console</h3>
       <p>NexaFleet Dispatch Console — giám sát đơn hàng, tài xế, người dùng, bản đồ real-time và doanh thu.</p>
       <div class="link">Mở Admin →</div>
-      <div class="port-hint" id="hint-admin">cổng 3002</div>
+      <div class="port-hint" id="hint-admin">/login</div>
     </a>
 
-    <a class="card" id="card-customer" href="#" data-port="8081">
+    <a class="card" id="card-customer" href="/customer/">
       <div class="card-icon customer">📦</div>
       <h3>Customer App</h3>
       <p>Đặt đơn hàng, chọn loại xe, theo dõi thời gian thực, thanh toán VietQR và xem hoá đơn VAT.</p>
       <div class="link">Mở Customer →</div>
-      <div class="port-hint" id="hint-customer">cổng 8081</div>
+      <div class="port-hint" id="hint-customer">/customer/</div>
     </a>
 
-    <a class="card" id="card-driver" href="#" data-port="8082">
+    <a class="card" id="card-driver" href="/driver/">
       <div class="card-icon driver">🚛</div>
       <h3>Driver App</h3>
       <p>Cockpit tài xế — nhận đơn dispatch, 4 bước giao hàng, ký e-POD, ví và thu nhập.</p>
       <div class="link">Mở Driver →</div>
-      <div class="port-hint" id="hint-driver">cổng 8082</div>
+      <div class="port-hint" id="hint-driver">/driver/</div>
     </a>
   </div>
 
@@ -132,31 +132,18 @@
 </div>
 
 <script>
-  // The two Expo Web apps are served from their own ports (see the routing note
-  // in gateway/nginx.conf), so build their links from the host the portal was
-  // opened on. This keeps the links correct for an IP, a domain, or a tunnel.
+  // Every app is served from this one origin under its own path prefix:
+  // /login (Admin), /customer/, /driver/. Nothing here needs to know the
+  // hostname or port, so the same portal works behind an IP, a domain, or a
+  // tunnel — and, importantly, a single HTTPS origin is what lets the apps use
+  // the browser Geolocation API, which refuses to run on an insecure origin.
   (function () {
-    var host = window.location.hostname;
-    var scheme = window.location.protocol === 'https:' ? 'https:' : 'http:';
-
-    ['customer', 'driver'].forEach(function (name) {
+    ['admin', 'customer', 'driver'].forEach(function (name) {
+      var el = document.getElementById('hint-' + name);
       var card = document.getElementById('card-' + name);
-      if (!card) return;
-      var url = scheme + '//' + host + ':' + card.dataset.port + '/';
-      card.href = url;
-      var hint = document.getElementById('hint-' + name);
-      if (hint) hint.textContent = url;
+      if (!el || !card) return;
+      el.textContent = new URL(card.getAttribute('href'), window.location.href).pathname;
     });
-
-    // The admin console is reachable through this gateway; point at the direct
-    // port when the portal itself is not on port 80.
-    var adminCard = document.getElementById('card-admin');
-    var adminHint = document.getElementById('hint-admin');
-    if (adminCard && window.location.port && window.location.port !== '80') {
-      var adminUrl = scheme + '//' + host + ':3002/login';
-      adminCard.href = adminUrl;
-      if (adminHint) adminHint.textContent = adminUrl;
-    }
   })();
 
   document.querySelectorAll('.copy-btn').forEach(function (btn) {

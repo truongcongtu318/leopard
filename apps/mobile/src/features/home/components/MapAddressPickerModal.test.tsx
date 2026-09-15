@@ -128,4 +128,55 @@ describe('MapAddressPickerModal', () => {
 
     await screen.unmount();
   }, 30000);
+
+  it('explains a blocked GPS lookup instead of silently keeping the old address', async () => {
+    const originalGeolocation = (globalThis.navigator as { geolocation?: unknown } | undefined)
+      ?.geolocation;
+    Object.defineProperty(globalThis.navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        // Mirrors the browser shape: the error codes live on the geolocation
+        // object itself, so the component can read `err.PERMISSION_DENIED`.
+        PERMISSION_DENIED: 1,
+        getCurrentPosition: (
+          _success: unknown,
+          error: (err: { code: number; message: string }) => void,
+        ) => error({ code: 1, message: 'Only secure origins are allowed' }),
+      },
+    });
+
+    try {
+      const screen = await render(
+        <MapAddressPickerModal
+          defaultFallbackAddress="Kho Tân Bình, TP. Hồ Chí Minh"
+          initialAddress="120 Trường Chinh, Quận Tân Bình"
+          onClose={jest.fn()}
+          onConfirm={jest.fn()}
+          target="pickup"
+          visible={true}
+        />,
+      );
+
+      // Clearing the field brings up the quick suggestions, which include the
+      // "use my current position" entry.
+      const addressInput = screen.getByLabelText('Địa chỉ lấy hàng');
+      await fireEvent(addressInput, 'focus');
+      await fireEvent.changeText(addressInput, '');
+      await fireEvent.press(
+        await screen.findByLabelText('Chọn Vị trí hiện tại của bạn', {}, { timeout: 5000 }),
+      );
+
+      expect(await screen.findByTestId('gps-location-notice')).toBeTruthy();
+      expect(await screen.findByText(/Trình duyệt chặn quyền vị trí/)).toBeTruthy();
+      // The previous address is restored, so nothing looks like a GPS result.
+      expect(screen.getByDisplayValue('120 Trường Chinh, Quận Tân Bình')).toBeTruthy();
+
+      await screen.unmount();
+    } finally {
+      Object.defineProperty(globalThis.navigator, 'geolocation', {
+        configurable: true,
+        value: originalGeolocation,
+      });
+    }
+  }, 30000);
 });

@@ -33,6 +33,7 @@ export * from './ui/PaymentSummary';
 export * from './ui/ProcessingModal';
 export * from './ui/RealInteractiveMap';
 export { VIETNAM_LOCATION_DICT } from './ui/RealInteractiveMap';
+export * from './ui/geolocation';
 export * from './ui/RouteMapSchematic';
 export * from './ui/RouteSpine';
 export * from './ui/ScreenScaffold';
