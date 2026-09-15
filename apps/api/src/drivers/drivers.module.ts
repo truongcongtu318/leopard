@@ -45,17 +45,12 @@ import { WalletService } from './wallet.service.js';
   exports: [
     DriversService,
     DriversRepository,
+    WithdrawalsRepository,
     DriverDocumentService,
     DriverContractService,
     WalletService,
   ],
-  exports: [
-    DriversService,
-    DriversRepository,
-    WithdrawalsRepository,
-    DriverDocumentService,
-    DriverContractService,
-  ],
+
 })
 export class DriversModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

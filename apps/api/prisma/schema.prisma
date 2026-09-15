@@ -216,6 +216,9 @@ model DriverProfile {
   documents         DriverDocument[]
   contracts         DriverContract[]
   payoutRequests     PayoutRequest[]
+  affiliations      DriverAffiliation[]
+
+  @@index([availability, vehicleType, lastKnownAt])
 }
 
 enum PayoutStatus {
@@ -239,9 +242,6 @@ model PayoutRequest {
   driverProfile     DriverProfile @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
 
   @@index([driverProfileId, status])
-  affiliations      DriverAffiliation[]
-
-  @@index([availability, vehicleType, lastKnownAt])
 }
 
 enum DriverDocumentType {
@@ -302,35 +302,6 @@ model DriverContract {
 }
 
 model Order {
-  id              String               @id @default(uuid()) @db.Uuid
-  customerId      String               @db.Uuid
-  clientRequestId String?
-  driverId        String?              @db.Uuid
-  status          OrderStatus          @default(REQUESTED)
-  routeSnapshot   Json?
-  providerSource  ProviderSource?
-  distanceMeters  Int?
-  durationSeconds Int?
-  priceVnd        Int?
-  etaSeconds      Int?
-  acceptedAt      DateTime?            @db.Timestamptz(3)
-  pickingUpAt     DateTime?            @db.Timestamptz(3)
-  inTransitAt     DateTime?            @db.Timestamptz(3)
-  deliveredAt     DateTime?            @db.Timestamptz(3)
-  cancelledAt     DateTime?            @db.Timestamptz(3)
-  createdAt       DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
-  customer        User                 @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
-  driver          User?                @relation("DriverOrders", fields: [driverId], references: [id], onDelete: Restrict)
-  stops           OrderStop[]
-  statusHistory   OrderStatusHistory[]
-  trackingPoints  TrackingPoint[]
-  mediaObjects    MediaObject[]
-  paymentIntents  PaymentIntent[]
-  invoice         Invoice?
-  messages        OrderMessage[]
-  reviews         OrderReview[]
-  supportTickets  SupportTicket[]
   id                  String               @id @default(uuid()) @db.Uuid
   customerId          String               @db.Uuid
   clientRequestId     String?
@@ -364,6 +335,9 @@ model Order {
   mediaObjects        MediaObject[]
   paymentIntents      PaymentIntent[]
   invoice             Invoice?
+  messages            OrderMessage[]
+  reviews             OrderReview[]
+  supportTickets      SupportTicket[]
 
   @@unique([customerId, clientRequestId])
   @@index([customerId, createdAt(sort: Desc)])

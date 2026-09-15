@@ -113,12 +113,9 @@ export class UpdateOrderStatusService {
         await tx.driverProfile.update({
           where: { userId: actor.userId },
           data: {
-            availability: 'AVAILABLE',
-            balanceVnd: { increment: driverPayout },
-          },
-          data: {
             availability: nextAvailability,
             autoOfflineOnComplete: false,
+            balanceVnd: { increment: driverPayout },
           },
         });
       }
