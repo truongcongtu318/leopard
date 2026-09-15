@@ -23,3 +23,24 @@ export class ApproveDriverDto {
   @IsString()
   clientRequestId?: string;
 }
+
+export class RequestChangesDriverDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(5)
+  @MaxLength(500)
+  declare reason: string;
+
+  @IsOptional()
+  @IsString()
+  documentId?: string;
+
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+
+  @IsOptional()
+  @IsString()
+  clientRequestId?: string;
+}
+

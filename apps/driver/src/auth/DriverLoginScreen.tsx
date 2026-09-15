@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { styles } from './DriverLoginScreen.styles';
 import type { Role } from '@leopard/shared';
@@ -24,17 +24,22 @@ import {
   signInWithGoogle,
   type OtpChallenge,
 } from '@leopard/mobile-core/src/auth/firebase-auth';
-import { isLikelyVnPhone, toE164Vn } from '@leopard/mobile-core';
+import { isLikelyVnPhone, toE164Vn, VietnamFlagIcon } from '@leopard/mobile-core';
 import { OtpSixCellInput } from '@leopard/mobile-core';
 import { TruckLoader } from '@leopard/mobile-core';
-import { VietnamFlagIcon, IconRoleDriver, OtpPhoneHeroIcon } from '@leopard/mobile-core';
-import { IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
+import { OtpPhoneHeroIcon } from '@leopard/mobile-core';
 
 const leopardEmblem = require('../../assets/brand/leopard-emblem.png');
 const brandLogin = require('../../assets/brand/brand_login.png');
-const driverHeroBg = require('../../../mobile/assets/brand/driver-hero-bg.jpg');
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-driver-recaptcha-container';
+
+export function formatVietnamPhone(input: string): string {
+  const digits = input.replace(/\D/g, '').slice(0, 10);
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+  return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 10)}`;
+}
 
 export interface DriverLoginScreenProps {
   onLoginSuccess?: (role: Role, profileComplete: boolean) => void;
@@ -148,13 +153,14 @@ export function DriverLoginScreen({
 
   const handleSendOtp = async () => {
     if (isSubmitting) return;
-    if (!isLikelyVnPhone(phone)) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!isLikelyVnPhone(cleanPhone)) {
       setErrorMsg('Số điện thoại không hợp lệ');
       return;
     }
 
     if (onNavigateOtp) {
-      onNavigateOtp(phone);
+      onNavigateOtp(cleanPhone);
       return;
     }
 
@@ -162,7 +168,7 @@ export function DriverLoginScreen({
     setErrorMsg(null);
     setResendSuccessMsg(null);
     try {
-      otpChallengeRef.current = await sendPhoneOtp(phone, RECAPTCHA_CONTAINER_ID);
+      otpChallengeRef.current = await sendPhoneOtp(cleanPhone, RECAPTCHA_CONTAINER_ID);
       setOtpCode('');
       setResendSeconds(60);
       setIsVerified(false);
@@ -181,7 +187,8 @@ export function DriverLoginScreen({
     setErrorMsg(null);
     setResendSuccessMsg(null);
     try {
-      otpChallengeRef.current = await sendPhoneOtp(phone, RECAPTCHA_CONTAINER_ID);
+      const cleanPhone = phone.replace(/\D/g, '');
+      otpChallengeRef.current = await sendPhoneOtp(cleanPhone, RECAPTCHA_CONTAINER_ID);
       setResendSeconds(60);
       setOtpCode('');
       setResendSuccessMsg('Đã gửi lại mã OTP mới');
@@ -241,36 +248,12 @@ export function DriverLoginScreen({
     setAuthPhase('phone');
   };
 
-  const handleDemoLogin = async (accountId: string, defaultRole: Role) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    setErrorMsg(null);
-
-    try {
-      const res = await httpClient.post<AuthResponse>('/auth/login/demo', { accountId });
-      const accessToken = res.session?.accessToken ?? '';
-      const refreshToken = res.session?.refreshToken ?? '';
-      await sessionStore.setSession(accessToken, refreshToken, res.user.role);
-      const role = res.user?.role ?? defaultRole;
-      if (res.user?.profileComplete !== undefined) {
-        onLoginSuccess?.(role, res.user.profileComplete);
-      } else {
-        (onLoginSuccess as any)?.(role);
-      }
-    } catch (err) {
-      const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
-      const message = (err as { message?: string })?.message;
-      if (statusCode === 401 || statusCode === 403) {
-        setErrorMsg(message || 'Tài khoản demo không hợp lệ');
-      } else if (statusCode === 503 || statusCode === 0) {
-        setErrorMsg(message || 'Hệ thống xác thực tạm thời không khả dụng');
-      } else {
-        setErrorMsg(message || 'Đã xảy ra lỗi khi đăng nhập demo');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const cleanPhone = phone.replace(/\D/g, '');
+  const isPhoneValid = isLikelyVnPhone(cleanPhone);
+  const isBtnDisabled =
+    isSubmitting ||
+    !isPhoneValid ||
+    (!firebaseReady && !allowDemo && !onNavigateOtp);
 
   return (
     <View style={styles.rootContainer} testID="driver-login-screen">
@@ -282,65 +265,56 @@ export function DriverLoginScreen({
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingBottom: Math.max(insets?.bottom ?? 0, 12),
+              paddingBottom: Math.max(insets?.bottom ?? 0, 24) + 12,
             },
           ]}
           keyboardShouldPersistTaps="handled"
           style={styles.scrollView}
         >
-          <View style={styles.heroSection}>
-            <Image
-              accessibilityIgnoresInvertColors
-              accessibilityLabel="Xe tải LEOPARD trên cung đường núi"
-              resizeMode="cover"
-              source={driverHeroBg}
-              style={styles.heroImage}
-              testID="driver-login-hero-image"
-            />
-            <View
-              accessible={false}
-              aria-hidden
-              style={styles.heroGradient}
-            >
-              <Svg height="100%" pointerEvents="none" preserveAspectRatio="none" width="100%">
-                <Defs>
-                  <LinearGradient id="driverLoginGradient" x1="0" x2="0" y1="0" y2="1">
-                    <Stop offset="0%" stopColor="#06162F" stopOpacity="0.38" />
-                    <Stop offset="48%" stopColor="#0B1E42" stopOpacity="0.16" />
-                    <Stop offset="76%" stopColor="#0B1E42" stopOpacity="0.5" />
-                    <Stop offset="100%" stopColor="#0B1E42" stopOpacity="0.92" />
-                  </LinearGradient>
-                </Defs>
-                <Rect fill="url(#driverLoginGradient)" height="100%" width="100%" />
-              </Svg>
-            </View>
+          <View style={styles.heroSection} testID="driver-login-hero-image">
+            <Svg height="100%" pointerEvents="none" preserveAspectRatio="none" style={styles.heroAuraSvg} width="100%">
+              <Defs>
+                <LinearGradient id="driverLoginGradient" x1="0" x2="0" y1="0" y2="1">
+                  <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
+                  <Stop offset="65%" stopColor="#0B1E42" stopOpacity="1" />
+                  <Stop offset="100%" stopColor="#0B1E42" stopOpacity="1" />
+                </LinearGradient>
+                <RadialGradient id="loginAuraGlow" cx="50%" cy="32%" r="48%">
+                  <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.28" />
+                  <Stop offset="70%" stopColor="#0284C7" stopOpacity="0.06" />
+                  <Stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
+                </RadialGradient>
+              </Defs>
+              <Rect fill="url(#driverLoginGradient)" height="100%" width="100%" />
+              <Rect fill="url(#loginAuraGlow)" height="100%" width="100%" />
+            </Svg>
 
-            <View style={[styles.brandHeader, { top: Math.max(insets?.top ?? 0, 14) }]}>
-              <View style={styles.cardBrandRow}>
+            <View style={[styles.brandHeader, { paddingTop: Math.max(insets?.top ?? 0, 18) }]}>
+              <View style={styles.brandRow}>
                 <Image
-                  accessibilityLabel="LEOPARD Emblem"
+                  accessibilityLabel="LEOPARD Logo"
                   resizeMode="contain"
                   source={leopardEmblem}
-                  style={styles.cardEmblemImage}
+                  style={styles.brandEmblem}
                 />
                 <Image
                   accessibilityLabel="LEOPARD"
                   resizeMode="contain"
                   source={brandLogin}
-                  style={styles.cardBrandNameImage}
+                  style={styles.brandWordmark}
                 />
               </View>
-              <View style={styles.driverLabel}>
-                <Text style={styles.driverLabelText}>DRIVER</Text>
+              <View style={styles.driverBadge}>
+                <View style={styles.driverBadgeDot} />
+                <Text style={styles.driverBadgeText}>DRIVER PILOT</Text>
               </View>
             </View>
 
             <View style={styles.heroCopy}>
-              <Text style={styles.eyebrow}>ĐỒNG HÀNH TRÊN MỌI HÀNH TRÌNH</Text>
               <Text accessibilityRole="header" style={styles.mainTitle}>
                 Chào mừng bác tài
               </Text>
-              <Text style={styles.subTitle}>Đăng nhập để nhận đơn và theo dõi chuyến đi.</Text>
+              <Text style={styles.subTitle}>Đăng nhập để nhận đơn và điều hướng chuyến đi.</Text>
             </View>
           </View>
 
@@ -362,19 +336,29 @@ export function DriverLoginScreen({
             ) : null}
 
             <View style={styles.fieldSection}>
-              <Text style={styles.fieldLabel}>Số điện thoại tài xế</Text>
+              <View style={styles.labelRow}>
+                <Text style={styles.fieldLabel}>Số điện thoại tài xế</Text>
+                {isPhoneValid ? (
+                  <View style={styles.validBadge}>
+                    <Text style={styles.validCheckIcon}>✓</Text>
+                    <Text style={styles.validText}>Hợp lệ</Text>
+                  </View>
+                ) : null}
+              </View>
+
               <View
                 style={[
                   styles.inputRow,
                   isInputFocused && styles.inputRowFocused,
-                  !isInputFocused && isLikelyVnPhone(phone) && styles.inputRowValid,
+                  !isInputFocused && isPhoneValid && styles.inputRowValid,
                 ]}
               >
-                <View style={styles.countryPill}>
+                <View style={styles.countryBadge}>
                   <VietnamFlagIcon height={15} width={22} />
-                  <Text style={styles.countryCodeText}>+84</Text>
+                  <Text style={styles.countryCode}>+84</Text>
+                  <Text style={styles.countryChevron}>▾</Text>
                 </View>
-                <View style={styles.inputDivider} />
+                <View style={styles.badgeDivider} />
                 <TextInput
                   accessibilityLabel="Số điện thoại"
                   autoCapitalize="none"
@@ -384,10 +368,14 @@ export function DriverLoginScreen({
                   editable={!isSubmitting}
                   keyboardType="phone-pad"
                   onBlur={() => setIsInputFocused(false)}
-                  onChangeText={setPhone}
+                  onChangeText={(text) => {
+                    const formatted = formatVietnamPhone(text);
+                    setPhone(formatted);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   onFocus={() => setIsInputFocused(true)}
-                  placeholder="Nhập số điện thoại"
-                  placeholderTextColor="#91A3BB"
+                  placeholder="0912 345 678"
+                  placeholderTextColor="#94A3B8"
                   style={styles.textInput}
                   value={phone}
                 />
@@ -395,7 +383,7 @@ export function DriverLoginScreen({
                   <Pressable
                     accessibilityLabel="Xóa số điện thoại"
                     accessibilityRole="button"
-                    hitSlop={8}
+                    hitSlop={10}
                     onPress={() => setPhone('')}
                     style={styles.clearBtn}
                   >
@@ -412,24 +400,14 @@ export function DriverLoginScreen({
               accessibilityRole="button"
               accessibilityState={{
                 busy: isSubmitting,
-                disabled:
-                  isSubmitting ||
-                  !isLikelyVnPhone(phone) ||
-                  (!firebaseReady && !allowDemo && !onNavigateOtp),
+                disabled: isBtnDisabled,
               }}
-              disabled={
-                isSubmitting ||
-                !isLikelyVnPhone(phone) ||
-                (!firebaseReady && !allowDemo && !onNavigateOtp)
-              }
+              disabled={isBtnDisabled}
               onPress={handleSendOtp}
               style={({ pressed }) => [
                 styles.primaryBtn,
-                (isSubmitting ||
-                  !isLikelyVnPhone(phone) ||
-                  (!firebaseReady && !allowDemo && !onNavigateOtp)) &&
-                  styles.primaryBtnDisabled,
-                pressed && styles.pressed,
+                isBtnDisabled && styles.primaryBtnDisabled,
+                pressed && !isBtnDisabled && styles.pressed,
               ]}
             >
               {isSubmitting ? (
@@ -438,7 +416,14 @@ export function DriverLoginScreen({
                   <Text style={styles.primaryBtnText}>Đang xử lý…</Text>
                 </View>
               ) : (
-                <Text style={styles.primaryBtnText}>Nhận mã OTP</Text>
+                <Text
+                  style={[
+                    styles.primaryBtnText,
+                    isBtnDisabled && styles.primaryBtnDisabledText,
+                  ]}
+                >
+                  Nhận mã OTP
+                </Text>
               )}
             </Pressable>
 
@@ -470,50 +455,11 @@ export function DriverLoginScreen({
 
             {!firebaseReady ? (
               <Text style={styles.firebaseNote}>
-                {allowDemo
-                  ? 'Dữ liệu mô phỏng · Chọn tài khoản thử nghiệm bên dưới.'
-                  : 'Đăng nhập Google hiện chưa khả dụng.'}
+                Đăng nhập Google hiện chưa khả dụng trên thiết bị này.
               </Text>
             ) : null}
 
             <View nativeID={RECAPTCHA_CONTAINER_ID} style={styles.recaptcha} />
-
-            {/* Demo Quick Logins */}
-            {allowDemo ? (
-              <View style={styles.demoArea}>
-                <View style={styles.orSection}>
-                  <View style={styles.orLine} />
-                  <Text style={styles.orText}>TÀI KHOẢN THỬ NGHIỆM</Text>
-                  <View style={styles.orLine} />
-                </View>
-
-                <View style={styles.demoRow}>
-                  <Pressable
-                    disabled={isSubmitting}
-                    onPress={() => handleDemoLogin('driver', 'DRIVER')}
-                    style={({ pressed }) => [styles.demoBtnPrimary, pressed && styles.pressed]}
-                  >
-                    <IconTruck color="#102A43" size="sm" />
-                    <View>
-                      <Text style={styles.demoBtnPrimaryTitle}>Tài xế (Driver)</Text>
-                      <Text style={styles.demoBtnPrimarySubtitle}>Nhận chuyến & định vị</Text>
-                    </View>
-                  </Pressable>
-
-                  <Pressable
-                    disabled={isSubmitting}
-                    onPress={() => handleDemoLogin('customer', 'CUSTOMER')}
-                    style={({ pressed }) => [styles.demoBtnSecondary, pressed && styles.pressed]}
-                  >
-                    <IconRoleDriver color="#2E6FD6" secondaryColor="#EFF6FF" size={20} />
-                    <View>
-                      <Text style={styles.demoBtnSecTitle}>Khách hàng</Text>
-                      <Text style={styles.demoBtnSecSubtitle}>Test cảnh báo vai trò</Text>
-                    </View>
-                  </Pressable>
-                </View>
-              </View>
-            ) : null}
 
             {/* Registration link */}
             {onNavigateRegister ? (

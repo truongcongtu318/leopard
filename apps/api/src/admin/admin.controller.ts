@@ -5,7 +5,7 @@ import { AdminCommandService } from './admin-command.service.js';
 import { AdminDriverReviewService } from './admin-driver-review.service.js';
 import { AdminWithdrawalReviewService } from './admin-withdrawal-review.service.js';
 import { DriverDocumentService } from '../drivers/driver-document.service.js';
-import { ApproveDriverDto, RejectDriverDto } from './dto/review-driver.dto.js';
+import { ApproveDriverDto, RejectDriverDto, RequestChangesDriverDto } from './dto/review-driver.dto.js';
 import { ReviewWithdrawalDto } from './dto/review-withdrawal.dto.js';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { CurrentUser } from '../auth/decorators/current-user.js';
@@ -127,6 +127,24 @@ export class AdminController {
     await this.driverReviewService.reject(actor, id, body.reason, body.clientRequestId);
     return { success: true };
   }
+
+  @Post('drivers/:id/request-changes')
+  async requestChangesDriver(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+    @Body() body: RequestChangesDriverDto,
+  ) {
+    await this.driverReviewService.requestChanges(
+      actor,
+      id,
+      body.reason,
+      body.documentId,
+      body.reasonCode,
+      body.clientRequestId,
+    );
+    return { success: true };
+  }
+
 
   @Get('withdrawals')
   async getPendingWithdrawals() {

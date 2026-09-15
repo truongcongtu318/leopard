@@ -5,12 +5,14 @@ import { useRouter } from 'expo-router';
 import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, ScreenState, StatusBadge, IconCheck, IconChevron, IconClock, IconIdCard, IconInsuranceDoc, IconLicense, IconPhone, IconSecurityShield, IconSpeedTruck, IconStar, IconSupport247, IconTrophy, IconUser, IconWallet } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
+import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
 import type { DriverProfileView } from './model';
 
 export type DriverProfileScreenProps = Readonly<{
   view: DriverProfileView;
   onLogout?: () => void;
   onRetry?: () => void;
+  onNavigate?: (route: string) => void;
 }>;
 
 type ProfileTab = 'personal' | 'documents' | 'settings';
@@ -76,26 +78,38 @@ function MenuRow({
   );
 }
 
-export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileScreenProps) {
+export function DriverProfileScreen({
+  onLogout,
+  onNavigate,
+  onRetry,
+  view,
+}: DriverProfileScreenProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ProfileTab>('personal');
   const { openDrawer } = useDriverDrawer();
 
   if (view.kind !== 'content') {
     return (
-      <ScreenScaffold
-        headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-        headerTone="plain"
-        title="Hồ sơ"
-      >
-        <ScreenState
-          actionLabel={view.kind === 'error' ? 'Thử lại' : undefined}
-          message={view.message}
-          onAction={onRetry}
-          state={view.kind}
-          title={view.title}
+      <View style={styles.screenContainer}>
+        <ScreenScaffold
+          headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
+          headerTone="plain"
+          title="Hồ sơ"
+        >
+          <ScreenState
+            actionLabel={view.kind === 'error' ? 'Thử lại' : undefined}
+            message={view.message}
+            onAction={onRetry}
+            state={view.kind}
+            title={view.title}
+          />
+        </ScreenScaffold>
+
+        <DriverBottomNavigation
+          activeTab="profile"
+          onNavigate={onNavigate ?? ((route) => router.push(route))}
         />
-      </ScreenScaffold>
+      </View>
     );
   }
 
@@ -103,11 +117,12 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
   const vehicleName = view.vehicleLabel ?? '51C-889.24 · Xe tải 2.5T';
 
   return (
-    <ScreenScaffold
-      headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-      headerTone="plain"
-      title="Hồ sơ tài xế"
-    >
+    <View style={styles.screenContainer}>
+      <ScreenScaffold
+        headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
+        headerTone="plain"
+        title="Hồ sơ tài xế"
+      >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -155,7 +170,7 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
                 accessibilityLabel="Chỉnh sửa hồ sơ"
                 accessibilityRole="button"
                 hitSlop={8}
-                onPress={() => router.push('/driver/profile-edit')}
+                onPress={() => router.push('/profile-edit')}
                 style={styles.editProfileBtn}
               >
                 <Text style={styles.editProfileText}>Chỉnh sửa hồ sơ</Text>
@@ -307,7 +322,7 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
             <Pressable
               accessibilityLabel="Chỉnh sửa hồ sơ tài xế"
               accessibilityRole="button"
-              onPress={() => router.push('/driver/profile-edit')}
+              onPress={() => router.push('/profile-edit')}
               style={({ pressed }) => [styles.editActionCard, pressed ? styles.pressed : null]}
             >
               <Text style={styles.editActionCardText}>Chỉnh sửa thông tin hồ sơ & hình đại diện →</Text>
@@ -391,7 +406,7 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
             <Pressable
               accessibilityLabel="Mở màn hình quản lý hồ sơ KYC"
               accessibilityRole="button"
-              onPress={() => router.push('/driver/kyc')}
+              onPress={() => router.push('/kyc')}
               style={({ pressed }) => [styles.editActionCard, pressed ? styles.pressed : null]}
             >
               <Text style={styles.editActionCardText}>Xem chi tiết & Cập nhật hồ sơ KYC ›</Text>
@@ -408,26 +423,26 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
                 <MenuRow
                   icon={<IconWallet color="#0B1E42" size={18} />}
                   label="Ví tài xế & Quyết toán"
-                  onPress={() => router.push('/driver/wallet')}
+                  onPress={() => router.push('/wallet')}
                   sublabel="Số dư khả dụng 1.450.000 ₫ · MB Bank"
                 />
                 <MenuRow
                   icon={<IconTrophy color="#F59E0B" size={18} />}
                   label="Báo cáo điểm hiệu suất"
-                  onPress={() => router.push('/driver/performance')}
+                  onPress={() => router.push('/performance')}
                   sublabel="Điểm 4.8 ★ · Xếp hạng Vàng"
                 />
                 <MenuRow
                   icon={<IconSecurityShield color="#10B981" size={18} />}
                   label="Hồ sơ KYC & Pháp lý"
-                  onPress={() => router.push('/driver/kyc')}
+                  onPress={() => router.push('/kyc')}
                   sublabel="4/4 giấy tờ đã kiểm duyệt hợp lệ"
                 />
                 <MenuRow
                   icon={<IconClock color="#475569" size={18} />}
                   isLast
                   label="Cài đặt chuông báo & GPS"
-                  onPress={() => router.push('/driver/settings')}
+                  onPress={() => router.push('/settings')}
                   sublabel="Chuông to, Vietmap Nav"
                 />
               </View>
@@ -468,10 +483,20 @@ export function DriverProfileScreen({ onLogout, onRetry, view }: DriverProfileSc
         )}
       </ScrollView>
     </ScreenScaffold>
+
+    <DriverBottomNavigation
+      activeTab="profile"
+      onNavigate={onNavigate ?? ((route) => router.push(route))}
+    />
+  </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    position: 'relative',
+  },
   scrollWrap: {
     backgroundColor: leopardPalette.canvas,
     flex: 1,
@@ -479,7 +504,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
     padding: spacing.md,
-    paddingBottom: spacing.xl * 1.5,
+    paddingBottom: 100,
   },
 
   // Executive Cockpit ID Card

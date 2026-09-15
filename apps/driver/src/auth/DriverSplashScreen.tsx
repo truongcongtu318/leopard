@@ -13,9 +13,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
-const splashRiverBg = require('../../assets/brand/splash_river.jpg');
+const leopardEmblemSource = require('../../assets/brand/leopard-emblem.png');
+const leopardWordmarkSource = require('../../assets/brand/leopard-wordmark.png');
 
 export interface DriverSplashScreenProps {
   onGetStarted?: () => void;
@@ -215,15 +216,11 @@ export function DriverSplashScreen({
 
   return (
     <View style={styles.container} testID={testID}>
-      {/* Upper Hero Image with smooth downward fade into dark backdrop */}
-      <View style={[styles.imageContainer, { height: heroHeight }]}>
-        <Image
-          accessibilityLabel="Driver Scenic Highway View"
-          resizeMode="cover"
-          source={splashRiverBg}
-          style={styles.heroImage}
-          testID="splash-river-image"
-        />
+      {/* Upper Hero Area with clean SVG aura and brand logo */}
+      <View
+        style={[styles.imageContainer, { height: heroHeight }]}
+        testID="splash-river-image"
+      >
         <Svg
           height="100%"
           preserveAspectRatio="none"
@@ -232,15 +229,46 @@ export function DriverSplashScreen({
         >
           <Defs>
             <LinearGradient id="heroGradient" x1="0" x2="0" y1="0" y2="1">
-              <Stop offset="0%" stopColor="#0B1E42" stopOpacity="0" />
-              <Stop offset="42%" stopColor="#0B1E42" stopOpacity="0.08" />
-              <Stop offset="68%" stopColor="#0B1E42" stopOpacity="0.65" />
-              <Stop offset="88%" stopColor="#0B1E42" stopOpacity="0.95" />
+              <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
+              <Stop offset="55%" stopColor="#0B1E42" stopOpacity="1" />
+              <Stop offset="85%" stopColor="#0B1E42" stopOpacity="0.95" />
               <Stop offset="100%" stopColor="#0B1E42" stopOpacity="1" />
             </LinearGradient>
+            <RadialGradient id="auraGlow" cx="50%" cy="45%" r="45%">
+              <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.28" />
+              <Stop offset="60%" stopColor="#0284C7" stopOpacity="0.08" />
+              <Stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
+            </RadialGradient>
           </Defs>
           <Rect fill="url(#heroGradient)" height="100%" width="100%" />
+          <Rect fill="url(#auraGlow)" height="100%" width="100%" />
         </Svg>
+
+        {/* Central Brand Emblem and Wordmark */}
+        <View style={styles.brandCenterContainer}>
+          <View style={styles.emblemBox}>
+            <Image
+              accessibilityLabel="LEOPARD Emblem"
+              accessibilityRole="image"
+              resizeMode="contain"
+              source={leopardEmblemSource}
+              style={styles.emblemImage}
+              testID="splash-leopard-emblem"
+            />
+          </View>
+          <Image
+            accessibilityLabel="LEOPARD Wordmark"
+            accessibilityRole="image"
+            resizeMode="contain"
+            source={leopardWordmarkSource}
+            style={styles.wordmarkImage}
+            testID="splash-leopard-wordmark"
+          />
+          <View style={styles.driverBadge}>
+            <View style={styles.driverBadgeDot} />
+            <Text style={styles.driverBadgeText}>DRIVER PILOT</Text>
+          </View>
+        </View>
       </View>
 
       {/* Bottom Content Area */}
@@ -289,6 +317,53 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     overflow: 'hidden',
+  },
+  brandCenterContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 20,
+  },
+  emblemBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emblemImage: {
+    width: 140,
+    height: 67,
+  },
+  wordmarkImage: {
+    width: 190,
+    height: 43,
+    marginTop: 2,
+  },
+  driverBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(2, 132, 199, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderRadius: 9999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    gap: 6,
+    marginTop: 14,
+  },
+  driverBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#38BDF8',
+  },
+  driverBadgeText: {
+    color: '#38BDF8',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   heroImage: {
     width: '100%',

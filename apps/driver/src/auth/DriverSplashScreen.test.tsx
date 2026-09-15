@@ -14,6 +14,9 @@ describe('DriverSplashScreen', () => {
 
     expect(rendered.getByTestId('driver-splash-screen')).toBeTruthy();
     expect(rendered.getByTestId('splash-river-image')).toBeTruthy();
+    expect(rendered.getByTestId('splash-leopard-emblem')).toBeTruthy();
+    expect(rendered.getByTestId('splash-leopard-wordmark')).toBeTruthy();
+    expect(rendered.getByText('DRIVER PILOT')).toBeTruthy();
     expect(rendered.getByTestId('splash-indicators')).toBeTruthy();
 
     const titleEl = rendered.getByTestId('splash-title');

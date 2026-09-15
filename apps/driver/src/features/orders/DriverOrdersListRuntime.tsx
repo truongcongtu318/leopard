@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { Alert } from 'react-native';
 
+import { createDriverProfileHttpAdapter } from '../profile/adapter';
 import { createDriverHttpAdapter } from './adapter';
 import { DriverOrdersScreen } from './DriverOrdersScreen';
 import { useDispatchOffer } from './useDispatchOffer';
@@ -13,6 +14,7 @@ export type DriverOrdersListRuntimeProps = Readonly<{
 
 export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrdersListRuntimeProps) {
   const port = useMemo(() => createDriverHttpAdapter(), []);
+  const profilePort = useMemo(() => createDriverProfileHttpAdapter(), []);
   const queryClient = useQueryClient();
   const queryKey = ['driver', 'orders'];
 
@@ -21,14 +23,34 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
     queryFn: () => port.getOrdersView(),
   });
 
+  const profileQuery = useQuery({
+    queryKey: ['driver', 'profile'],
+    queryFn: () => profilePort.getProfileView(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const driverIdentity = useMemo(() => {
+    if (profileQuery.data && profileQuery.data.kind === 'content') {
+      return {
+        name: profileQuery.data.name ?? null,
+        vehicleLabel: profileQuery.data.vehicleLabel ?? null,
+      };
+    }
+    return undefined;
+  }, [profileQuery.data]);
+
   const { offer, declineOffer } = useDispatchOffer();
 
   if (query.isPending) {
     return (
       <DriverOrdersScreen
+        driverIdentity={driverIdentity}
         onNavigate={onNavigate}
         onOpenOrder={onOpenOrder}
-        onRetry={() => query.refetch()}
+        onRetry={() => {
+          void query.refetch();
+          void profileQuery.refetch();
+        }}
         view={{
           kind: 'loading',
           message: '',
@@ -43,9 +65,13 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
   if (query.isError && !query.data) {
     return (
       <DriverOrdersScreen
+        driverIdentity={driverIdentity}
         onNavigate={onNavigate}
         onOpenOrder={onOpenOrder}
-        onRetry={() => query.refetch()}
+        onRetry={() => {
+          void query.refetch();
+          void profileQuery.refetch();
+        }}
         view={{
           kind: 'error',
           message: query.error?.message || 'Đã có lỗi xảy ra trong quá trình tải dữ liệu.',
@@ -78,13 +104,17 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
 
   return (
     <DriverOrdersScreen
+      driverIdentity={driverIdentity}
       incomingOffer={offer}
       networkError={query.isError ? (query.error?.message ?? 'Lỗi kết nối máy chủ') : null}
       onAcceptIncomingOffer={(orderId) => void handleAcceptOffer(orderId)}
       onDeclineIncomingOffer={() => declineOffer()}
       onNavigate={onNavigate}
       onOpenOrder={onOpenOrder}
-      onRetry={() => query.refetch()}
+      onRetry={() => {
+        void query.refetch();
+        void profileQuery.refetch();
+      }}
       onSetAvailability={(commandId) => void handleSetAvailability(commandId)}
       view={query.data}
     />

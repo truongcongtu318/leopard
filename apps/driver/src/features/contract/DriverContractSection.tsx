@@ -4,14 +4,16 @@ import { radius, spacing } from '@leopard/mobile-core';
 
 /** Palette mirrored from `app/(public)/driver-register.tsx` for visual continuity. */
 const scene = {
-  surface: '#FFFFFF',
-  fieldBg: '#F8FAFC',
-  ink: '#0B1F3A',
-  muted: '#5B6B80',
-  border: '#CAD9EB',
-  ctaTop: '#2E6FD6',
-  ctaBottom: '#1E5BB8',
-  danger: '#B91C1C',
+  surface: '#0F2347',
+  fieldBg: '#132B52',
+  ink: '#FFFFFF',
+  muted: '#CBD5E1',
+  subtle: '#94A3B8',
+  border: 'rgba(255, 255, 255, 0.12)',
+  ctaTop: '#0284C7',
+  ctaBottom: '#0284C7',
+  ctaCyan: '#38BDF8',
+  danger: '#F87171',
 } as const;
 
 export interface DriverContractPreview {
@@ -118,7 +120,7 @@ export function DriverContractSection({
             onChangeText={onChangeSignature}
             onFocus={onFocusSignature}
             placeholder="Nhập họ tên để xác nhận chữ ký"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             style={styles.input}
             value={signatureName}
           />
@@ -136,44 +138,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.lg,
-    shadowColor: 'rgba(15, 23, 42, 0.06)',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 14,
+    shadowColor: '#020817',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
     elevation: 3,
   },
   sectionLabel: {
-    color: scene.muted,
+    color: scene.ctaCyan,
     fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   contractRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
   hintText: { color: scene.muted, fontSize: 12.5, flexShrink: 1 },
   errorHintText: { color: scene.danger, fontSize: 12.5 },
   contractLink: {
-    borderColor: scene.ctaTop,
+    backgroundColor: 'rgba(2, 132, 199, 0.14)',
+    borderColor: 'rgba(56, 189, 248, 0.40)',
     borderRadius: radius.pill,
     borderWidth: 1.5,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  contractLinkText: { color: scene.ctaTop, fontSize: 12.5, fontWeight: '700' },
+  contractLinkText: { color: scene.ctaCyan, fontSize: 12.5, fontWeight: '700' },
   pressed: { opacity: 0.85 },
   consentRow: {
     alignItems: 'flex-start',
-    borderTopColor: '#F1F5F9',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
     borderTopWidth: 1,
     flexDirection: 'row',
     gap: spacing.sm,
     paddingTop: spacing.sm,
     paddingVertical: spacing.xs,
   },
-  consentRowPressed: { backgroundColor: scene.fieldBg },
+  consentRowPressed: { backgroundColor: 'rgba(255, 255, 255, 0.04)' },
   checkbox: {
     alignItems: 'center',
-    backgroundColor: scene.surface,
-    borderColor: scene.border,
+    backgroundColor: scene.fieldBg,
+    borderColor: 'rgba(255, 255, 255, 0.20)',
     borderRadius: 6,
     borderWidth: 1.5,
     height: 22,
@@ -181,28 +184,34 @@ const styles = StyleSheet.create({
     marginTop: 1,
     width: 22,
   },
-  checkboxOn: { backgroundColor: scene.ctaBottom, borderColor: scene.ctaBottom },
+  checkboxOn: { backgroundColor: scene.ctaBottom, borderColor: scene.ctaCyan },
   checkboxTick: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-  consentText: { color: scene.ink, flex: 1, fontSize: 13, lineHeight: 19 },
+  consentText: { color: '#E2E8F0', flex: 1, fontSize: 13, lineHeight: 19 },
   field: { gap: spacing.xs },
   inputLabel: { color: scene.ink, fontSize: 13, fontWeight: '700' },
   inputWrap: {
     backgroundColor: scene.fieldBg,
-    borderColor: scene.border,
-    borderRadius: radius.card,
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    borderRadius: 14,
     borderWidth: 1.5,
-    height: 50,
+    height: 48,
     justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 14,
   },
   inputWrapFocused: {
-    backgroundColor: scene.surface,
-    borderColor: scene.ctaTop,
-    shadowColor: scene.ctaTop,
+    backgroundColor: '#163566',
+    borderColor: scene.ctaCyan,
+    shadowColor: scene.ctaBottom,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.35,
     shadowRadius: 6,
     elevation: 2,
   },
-  input: { color: scene.ink, fontSize: 14.5, fontWeight: '600' },
+  input: {
+    color: scene.ink,
+    fontSize: 14.5,
+    fontWeight: '600',
+    outlineStyle: 'none',
+  } as any,
 });
+

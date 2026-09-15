@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,6 +7,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
+import { DriverModalSurface } from '../../navigation/DriverModalSurface';
 
 import { colors, leopardPalette, radius, spacing, typography, Button, IconShieldAlert, IconTrash } from '@leopard/mobile-core';
 
@@ -67,9 +68,10 @@ export function DriverIncidentModal({
   };
 
   return (
-    <Modal
+    <DriverModalSurface
       animationType="slide"
       onRequestClose={onClose}
+      testID="driver-incident-modal"
       transparent
       visible={visible}
     >
@@ -173,7 +175,7 @@ export function DriverIncidentModal({
           </View>
         </View>
       </View>
-    </Modal>
+    </DriverModalSurface>
   );
 }
 

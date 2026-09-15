@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { Animated, PanResponder, StyleSheet } from 'react-native';
+import { Animated, PanResponder, Platform, StyleSheet } from 'react-native';
 
 import { IncomingDispatchModal } from './IncomingDispatchModal';
 import type { IncomingDispatchOffer } from './IncomingDispatchModal';
@@ -227,5 +227,35 @@ describe('IncomingDispatchModal', () => {
     expect(screen.getByText('Xe tải')).toBeTruthy();
 
     await screen.unmount();
+  });
+
+  it('uses the contained modal surface on web with dialog role', async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'web';
+    const originalAdd = (window as any).addEventListener;
+    const originalRemove = (window as any).removeEventListener;
+    (window as any).addEventListener = (window as any).addEventListener || jest.fn();
+    (window as any).removeEventListener = (window as any).removeEventListener || jest.fn();
+
+    try {
+      const screen = await render(
+        <IncomingDispatchModal
+          offer={sampleOffer}
+          onAccept={jest.fn()}
+          onDecline={jest.fn()}
+          visible={true}
+        />,
+      );
+
+      const modalSurface = screen.getByTestId('incoming-dispatch-modal');
+      expect(modalSurface).toBeTruthy();
+      expect(modalSurface.props.accessibilityViewIsModal).toBe(true);
+
+      await screen.unmount();
+    } finally {
+      Platform.OS = originalOS;
+      (window as any).addEventListener = originalAdd;
+      (window as any).removeEventListener = originalRemove;
+    }
   });
 });

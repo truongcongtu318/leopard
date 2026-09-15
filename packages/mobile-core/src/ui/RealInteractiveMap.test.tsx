@@ -1,7 +1,10 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 
+jest.mock('react-native-webview', () => ({ WebView: () => null }));
+
 import {
+  postTruckLocationToMapFrame,
   RealInteractiveMap,
   resolveLocationCoords,
 } from './RealInteractiveMap';
@@ -51,6 +54,46 @@ describe('RealInteractiveMap', () => {
     expect(screen.getByTestId('real-interactive-map')).toBeTruthy();
     expect(screen.getByText('12 phút')).toBeTruthy();
     await screen.unmount();
+  });
+
+  it('renders a current-location map without route endpoints', async () => {
+    const screen = await render(
+      <RealInteractiveMap
+        initialPinCoords={{ lat: 10.81234, lng: 106.67123 }}
+        mode="location"
+        truckLocation={{ lat: 10.81234, lng: 106.67123 }}
+      />,
+    );
+
+    expect(screen.getByLabelText('Bản đồ vị trí hiện tại của tài xế')).toBeTruthy();
+    expect(screen.queryByLabelText(/Bản đồ lộ trình từ/)).toBeNull();
+    await screen.unmount();
+  });
+
+  it('sends precise GPS coordinates only to the selected map frame', () => {
+    const selectedFramePostMessage = jest.fn();
+    const unrelatedFramePostMessage = jest.fn();
+    const selectedFrame = {
+      contentWindow: { postMessage: selectedFramePostMessage },
+    } as unknown as Pick<HTMLIFrameElement, 'contentWindow'>;
+
+    postTruckLocationToMapFrame(selectedFrame, {
+      type: 'LEOPARD_UPDATE_TRUCK_LOCATION',
+      mapInstanceId: 'driver-home-map',
+      lat: 10.81234,
+      lng: 106.67123,
+      eta: '',
+    });
+
+    expect(selectedFramePostMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mapInstanceId: 'driver-home-map',
+        lat: 10.81234,
+        lng: 106.67123,
+      }),
+      '*',
+    );
+    expect(unrelatedFramePostMessage).not.toHaveBeenCalled();
   });
 
   it('does not render naked numeric coordinate text in screen hierarchy', async () => {

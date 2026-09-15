@@ -4,7 +4,7 @@ import { refreshSession, sessionStore } from '@leopard/mobile-core';
 import { resolveDriverLogin } from '../src/navigation/driver-session';
 import { DriverSplashScreen } from '../src/auth/DriverSplashScreen';
 
-export const DEFAULT_SPLASH_DURATION_MS = 3500;
+export const DEFAULT_SPLASH_DURATION_MS = 5000;
 
 export interface DriverIndexProps {
   minDurationMs?: number;

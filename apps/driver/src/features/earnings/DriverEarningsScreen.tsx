@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, leopardPalette, radius, spacing, IconClock, IconSecurityShield, IconSpeedTruck, IconStar, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
+import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
 
 export type DriverEarningsScreenProps = Readonly<{
   lifetimeDeliveredVnd: number;
@@ -14,6 +15,7 @@ export type DriverEarningsScreenProps = Readonly<{
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
+  onNavigate?: (route: string) => void;
 }>;
 
 function formatCurrency(val: number): string {
@@ -28,17 +30,19 @@ export function DriverEarningsScreen({
   isLoading,
   isError,
   onRetry,
+  onNavigate,
 }: DriverEarningsScreenProps) {
   const router = useRouter();
   const { openDrawer } = useDriverDrawer();
   const completionRate = totalOrderCount > 0 ? Math.round((deliveredOrderCount / totalOrderCount) * 100) : 0;
 
   return (
-    <ScreenScaffold
-      headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-      headerTone="plain"
-      title="Thu nhập"
-    >
+    <View style={styles.screenContainer}>
+      <ScreenScaffold
+        headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
+        headerTone="plain"
+        title="Thu nhập"
+      >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} style={styles.scrollWrap}>
         {isLoading ? <ScreenState state="loading" /> : isError ? (
           <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
@@ -59,7 +63,7 @@ export function DriverEarningsScreen({
                       <Text style={styles.walletAvailAmount}>{formatCurrency(availableBalanceVnd)}</Text>
                     </View>
                   </View>
-                  <Text style={styles.walletLink} onPress={() => router.push('/driver/wallet')}>
+                  <Text style={styles.walletLink} onPress={() => router.push('/wallet')}>
                     Đến ví →
                   </Text>
                 </View>
@@ -103,12 +107,19 @@ export function DriverEarningsScreen({
         )}
       </ScrollView>
     </ScreenScaffold>
+
+    <DriverBottomNavigation
+      activeTab="earnings"
+      onNavigate={onNavigate ?? ((route) => router.push(route))}
+    />
+  </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: { flex: 1, position: 'relative' },
   scrollWrap: { flex: 1 },
-  scrollContent: { gap: spacing.sm, paddingBottom: spacing.xl + 20 },
+  scrollContent: { gap: spacing.sm, paddingBottom: 100 },
   doubleBezelOuter: { backgroundColor: '#0B1E42', borderRadius: radius.bezelOuter, padding: 3, shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   doubleBezelInner: { backgroundColor: '#FFFFFF', borderRadius: radius.bezelInner, borderColor: '#E2E8F0', borderWidth: 1, padding: spacing.md, gap: spacing.xs + 2 },
   financialEyebrow: { color: '#0B1E42', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },

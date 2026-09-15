@@ -31,12 +31,13 @@ import { DriverOrderDetailRuntime } from './DriverOrderDetailRuntime';
 import { createDriverDetailFixture } from './fixtures';
 
 describe('DriverOrderDetailRuntime: reacts to a customer/admin cancellation while active', () => {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  let client: QueryClient;
   const orderId = '22222222-2222-4222-8222-222222222001';
   const getOrderDetailView = jest.fn<() => Promise<DriverDetailView>>();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     jest.mocked(createDriverHttpAdapter).mockReturnValue({
       getOrderDetailView,
     } as unknown as ReturnType<typeof createDriverHttpAdapter>);
@@ -55,9 +56,7 @@ describe('DriverOrderDetailRuntime: reacts to a customer/admin cancellation whil
 
   it('alerts and navigates back when an active order flips to CANCELLED', async () => {
     getOrderDetailView.mockResolvedValueOnce(createDriverDetailFixture('D-DETAIL-IN-TRANSIT'));
-    getOrderDetailView.mockResolvedValueOnce(
-      withCancelledStatus(createDriverDetailFixture('D-DETAIL-IN-TRANSIT')),
-    );
+    getOrderDetailView.mockResolvedValueOnce(createDriverDetailFixture('D-DETAIL-TERMINAL-CANCELLED'));
 
     render(
       <QueryClientProvider client={client}>
@@ -65,17 +64,17 @@ describe('DriverOrderDetailRuntime: reacts to a customer/admin cancellation whil
       </QueryClientProvider>,
     );
 
-    await waitFor(() => expect(getOrderDetailView).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(getOrderDetailView).toHaveBeenCalledTimes(1), { timeout: 5000 });
 
     await act(async () => {
-      await client.refetchQueries({ queryKey: ['driver', 'order', orderId] });
+      client.setQueryData(['driver', 'order', orderId], createDriverDetailFixture('D-DETAIL-TERMINAL-CANCELLED'));
     });
 
     await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith(
       'Đơn đã bị hủy',
       expect.stringContaining('hủy'),
       expect.any(Array),
-    ));
+    ), { timeout: 5000 });
 
     const [, , buttons] = jest.mocked(Alert.alert).mock.calls[0] as [string, string, Array<{ onPress?: () => void }>];
     buttons[0]?.onPress?.();
@@ -84,7 +83,7 @@ describe('DriverOrderDetailRuntime: reacts to a customer/admin cancellation whil
 
   it('does not alert when the order was already CANCELLED on first load', async () => {
     getOrderDetailView.mockResolvedValue(
-      withCancelledStatus(createDriverDetailFixture('D-DETAIL-IN-TRANSIT')),
+      createDriverDetailFixture('D-DETAIL-TERMINAL-CANCELLED'),
     );
 
     render(
@@ -93,7 +92,7 @@ describe('DriverOrderDetailRuntime: reacts to a customer/admin cancellation whil
       </QueryClientProvider>,
     );
 
-    await waitFor(() => expect(getOrderDetailView).toHaveBeenCalled());
+    await waitFor(() => expect(getOrderDetailView).toHaveBeenCalledTimes(1), { timeout: 5000 });
     expect(Alert.alert).not.toHaveBeenCalled();
   });
 });

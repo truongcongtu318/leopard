@@ -22,10 +22,11 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('renders floating glass HUD with hero duty switch, plate, and mini KPI stats', async () => {
+  it('renders a compact HUD with live driver identity and no demo KPI values', async () => {
     const onSetAvailability = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
+        driverIdentity={{ name: 'Trần Minh', vehicleLabel: 'Xe tải · 29H-123.45' }}
         onSetAvailability={onSetAvailability}
         view={createDriverListFixture('D-LIST-REQUESTED')}
       />,
@@ -34,18 +35,14 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     // Menu button
     expect(screen.getByTestId('driver-menu-button')).toBeTruthy();
 
-    // Plate & vehicle type
-    expect(screen.getByText('51C-889.24 (2.5T)')).toBeTruthy();
+    expect(screen.getByText('Trần Minh')).toBeTruthy();
+    expect(screen.getByText('Xe tải · 29H-123.45')).toBeTruthy();
+    expect(screen.queryByText('Nguyễn Văn Tuấn')).toBeNull();
+    expect(screen.queryByText('51C-889.24 (2.5T)')).toBeNull();
 
-    // Hero Duty Switch
-    expect(screen.getByText('TRỰC TUYẾN')).toBeTruthy();
-    expect(screen.getByText('NGOẠI TUYẾN')).toBeTruthy();
-
-    // Mini KPI stats
-    expect(screen.getByText('4 chuyến · 620.000 ₫ · 5.5h')).toBeTruthy();
-    expect(screen.getByText('Chuyến xong')).toBeTruthy();
-    expect(screen.getByText('Thu nhập hôm nay')).toBeTruthy();
-    expect(screen.getByText('Giờ online')).toBeTruthy();
+    expect(screen.getByText('Trực tuyến')).toBeTruthy();
+    expect(screen.queryByText('4 chuyến · 620.000 ₫ · 5.5h')).toBeNull();
+    expect(screen.queryByText('Thu nhập hôm nay')).toBeNull();
 
     // Toggle duty availability
     const toggle = screen.getByTestId('driver-availability-toggle');
@@ -60,13 +57,12 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
       <DriverOrdersScreen view={createDriverListFixture('D-LIST-OFFLINE')} />,
     );
 
-    expect(screen.getByText('TRỰC TUYẾN')).toBeTruthy();
-    expect(screen.getByText('NGOẠI TUYẾN')).toBeTruthy();
+    expect(screen.getByText('Ngoại tuyến')).toBeTruthy();
 
     await screen.unmount();
   });
 
-  it('renders GestureBottomSheet with B2B load-board and vehicle filter chips when idle', async () => {
+  it('renders the load board without unsafe vehicle filters or production debug actions', async () => {
     const onOpenOrder = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
@@ -78,17 +74,16 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     // GestureBottomSheet container
     expect(screen.getByTestId('driver-load-board-sheet')).toBeTruthy();
 
-    // Radar strip info & simulate button
+    // Radar strip is the single place that communicates the scan radius.
     expect(screen.getByText(/Radar đang quét bán kính/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeNull();
 
     // Load-board section header
     expect(screen.getByRole('header', { name: 'Đơn có thể nhận' })).toBeTruthy();
 
-    // B2B vehicle filter chips
-    expect(screen.getByText('Xe van')).toBeTruthy();
-    expect(screen.getByText('1.25T')).toBeTruthy();
-    expect(screen.getByText('2.5T')).toBeTruthy();
+    expect(screen.queryByText('Xe van')).toBeNull();
+    expect(screen.queryByText('1.25T')).toBeNull();
+    expect(screen.queryByText('2.5T')).toBeNull();
 
     // Double-Bezel order cards
     expect(screen.getByText('LP-D-260815-101')).toBeTruthy();
@@ -165,24 +160,12 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('syncs load-board subtitle counter with vehicle filter chips and dismiss action', async () => {
+  it('keeps the load-board counter in sync when a compatible order is dismissed', async () => {
     const screen = await render(
       <DriverOrdersScreen view={createDriverListFixture('D-LIST-REQUESTED')} />,
     );
 
     // Initial state: 2 orders matching
-    expect(screen.getByText('2 đơn phù hợp gần bạn')).toBeTruthy();
-
-    // Filter to 'Xe van' (0 matching -> shows in subtitle & empty state)
-    await fireEvent.press(screen.getByText('Xe van'));
-    expect(screen.getAllByText('Chưa có đơn phù hợp').length).toBeGreaterThanOrEqual(1);
-
-    // Filter to '2.5T' (1 matching)
-    await fireEvent.press(screen.getByText('2.5T'));
-    expect(screen.getByText('1 đơn phù hợp gần bạn')).toBeTruthy();
-
-    // Back to 'Tất cả' (2 matching)
-    await fireEvent.press(screen.getByText('Tất cả'));
     expect(screen.getByText('2 đơn phù hợp gần bạn')).toBeTruthy();
 
     // Press "Bỏ qua" on the first order
@@ -193,6 +176,28 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     // Counter updates to 1 order
     expect(screen.getByText('1 đơn phù hợp gần bạn')).toBeTruthy();
 
+    await screen.unmount();
+  });
+
+  it('shows dispatch simulation only in an explicitly enabled preview harness', async () => {
+    const screen = await render(
+      <DriverOrdersScreen
+        showDebugActions
+        view={createDriverListFixture('D-LIST-REQUESTED')}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('does not mount a second local sidebar and hides the dock during an active trip', async () => {
+    const screen = await render(
+      <DriverOrdersScreen view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')} />,
+    );
+
+    expect(screen.queryByTestId('driver-sidebar-container')).toBeNull();
+    expect(screen.queryByTestId('driver-bottom-navigation')).toBeNull();
     await screen.unmount();
   });
 

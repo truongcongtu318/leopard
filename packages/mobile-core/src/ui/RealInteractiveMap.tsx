@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo } from 'react';
+import React, { useEffect, useId, useMemo, useRef } from 'react';
 import {
   Platform,
   StyleSheet,
@@ -7,6 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import type { WebViewMessageEvent, WebViewProps } from 'react-native-webview';
 
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { IconLocationPin, IconSpeedTruck } from './icons/CoreIcons';
@@ -22,7 +23,7 @@ export type MapStop = {
   coords?: MapCoordinate;
 };
 
-export type RealInteractiveMapMode = 'route' | 'tracking' | 'pin' | 'preview';
+export type RealInteractiveMapMode = 'route' | 'tracking' | 'location' | 'pin' | 'preview';
 
 export type RealInteractiveMapProps = Readonly<{
   mode?: RealInteractiveMapMode;
@@ -41,6 +42,21 @@ export type RealInteractiveMapProps = Readonly<{
   title?: string;
   vietmapApiKey?: string;
 }>;
+
+type TruckLocationMessage = Readonly<{
+  type: 'LEOPARD_UPDATE_TRUCK_LOCATION';
+  mapInstanceId: string;
+  lat: number;
+  lng: number;
+  eta: string;
+}>;
+
+export function postTruckLocationToMapFrame(
+  mapFrame: Pick<HTMLIFrameElement, 'contentWindow'> | null,
+  message: TruckLocationMessage,
+): void {
+  mapFrame?.contentWindow?.postMessage(message, '*');
+}
 
 // ── Vietnamese Logistics Hubs Dictionary ────────────────────────────────
 export const VIETNAM_LOCATION_DICT: Record<string, MapCoordinate> = {
@@ -126,6 +142,7 @@ export function resolveLocationCoords(
 function buildLeafletHtml({
   destinationCoords,
   destinationLabel,
+  hasTruckLocation,
   interactive,
   mapInstanceId,
   mode,
@@ -139,6 +156,7 @@ function buildLeafletHtml({
 }: {
   destinationCoords: MapCoordinate;
   destinationLabel: string;
+  hasTruckLocation: boolean;
   interactive: boolean;
   mapInstanceId: string;
   mode: RealInteractiveMapMode;
@@ -158,6 +176,7 @@ function buildLeafletHtml({
     truck: { coords: truckCoords, eta: truckEtaLabel },
     pin: pinCoords,
     interactive,
+    hasTruckLocation,
     mapInstanceId,
     vietmapApiKey: vietmapApiKey || '',
   });
@@ -262,12 +281,17 @@ function buildLeafletHtml({
 
     function notify(lat, lng) {
       try {
-        window.parent.postMessage({
+        var payload = {
           type: 'LEOPARD_MAP_PIN_MOVED',
           mapInstanceId: config.mapInstanceId,
           lat: lat,
           lng: lng
-        }, '*');
+        };
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+        } else {
+          window.parent.postMessage(payload, '*');
+        }
       } catch (e) {}
     }
 
@@ -302,6 +326,18 @@ function buildLeafletHtml({
         icon: createPulseIcon('dest')
       }).addTo(map);
       previewMarker.bindPopup('<b>' + pLabel + '</b>').openPopup();
+    } else if (config.mode === 'location') {
+      if (config.hasTruckLocation) {
+        var current = config.truck.coords;
+        bounds.push([current.lat, current.lng]);
+        map.setView([current.lat, current.lng], 16);
+        var currentMarker = L.marker([current.lat, current.lng], {
+          icon: createTruckIcon('Vị trí hiện tại')
+        }).addTo(map);
+        currentMarker.bindPopup('<b>Vị trí hiện tại của bạn</b>');
+      } else {
+        map.setView([config.pin.lat, config.pin.lng], 13);
+      }
     } else {
       // Route or Tracking mode
       var latlngs = [];
@@ -446,7 +482,11 @@ function buildLeafletHtml({
 
       // Smooth real-time truck position updates via message
       window.addEventListener('message', function(event) {
-        if (event.data && event.data.type === 'LEOPARD_UPDATE_TRUCK_LOCATION') {
+        if (
+          event.data &&
+          event.data.type === 'LEOPARD_UPDATE_TRUCK_LOCATION' &&
+          event.data.mapInstanceId === config.mapInstanceId
+        ) {
           var nLat = event.data.lat;
           var nLng = event.data.lng;
           var nEta = event.data.eta;
@@ -499,6 +539,7 @@ export function RealInteractiveMap({
   vietmapApiKey,
 }: RealInteractiveMapProps) {
   const mapInstanceId = useId();
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Coordinates calculation
   const originCoords = useMemo(
@@ -565,35 +606,24 @@ export function RealInteractiveMap({
     return () => window.removeEventListener('message', handleMessage);
   }, [mapInstanceId, onLocationChange]);
 
-  // Real-time truck position message emitter without iframe reloading
+  // Send precise location only to this component's own map frame.
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined' || !truckLocation) return;
-    try {
-      const iframes = document.querySelectorAll('iframe');
-      iframes.forEach((iframe) => {
-        if (!iframe.contentWindow || !iframe.src) return;
-        try {
-          const targetUrl = new URL(iframe.src, window.location.href);
-          const isHttpOrigin = targetUrl.protocol === 'http:' || targetUrl.protocol === 'https:';
-          if (!isHttpOrigin) return;
+    const mapFrame = iframeRef.current;
+    if (!mapFrame?.contentWindow) return;
 
-          iframe.contentWindow.postMessage(
-            {
-              type: 'LEOPARD_UPDATE_TRUCK_LOCATION',
-              lat: truckLocation.lat,
-              lng: truckLocation.lng,
-              eta: displayEta,
-            },
-            targetUrl.origin,
-          );
-        } catch {
-          // Ignore invalid iframe URLs
-        }
+    try {
+      postTruckLocationToMapFrame(mapFrame, {
+        type: 'LEOPARD_UPDATE_TRUCK_LOCATION',
+        mapInstanceId,
+        lat: truckLocation.lat,
+        lng: truckLocation.lng,
+        eta: displayEta,
       });
     } catch {
       // Ignore postMessage communication errors on unmounted iframe
     }
-  }, [truckLocation?.lat, truckLocation?.lng, displayEta]);
+  }, [displayEta, mapInstanceId, truckLocation?.lat, truckLocation?.lng]);
 
   const mapHtml = useMemo(() => {
     const resolvedVietmapKey =
@@ -601,6 +631,7 @@ export function RealInteractiveMap({
     return buildLeafletHtml({
       destinationCoords,
       destinationLabel: destination?.label || 'Điểm giao',
+      hasTruckLocation: Boolean(truckLocation),
       interactive,
       mapInstanceId,
       mode,
@@ -628,6 +659,10 @@ export function RealInteractiveMap({
   ]);
 
   const isFullScreen = height === '100%';
+  const NativeWebView =
+    (Platform.OS === 'ios' || Platform.OS === 'android') && process.env.NODE_ENV !== 'test'
+      ? (require('react-native-webview').WebView as React.ComponentType<WebViewProps>)
+      : null;
   const containerStyle: StyleProp<ViewStyle> = [
     styles.container,
     isFullScreen ? { height: '100%', borderRadius: 0 } : { height: (height as any) ?? 240 },
@@ -638,7 +673,12 @@ export function RealInteractiveMap({
     <View style={containerStyle} testID={testID}>
       {Platform.OS === 'web' ? (
         React.createElement('iframe', {
+          'aria-label':
+            mode === 'location'
+              ? 'Bản đồ vị trí hiện tại của tài xế'
+              : 'Bản đồ thực tế tương tác',
           key: `leopard-map-${mode}-${originCoords.lat}-${destinationCoords.lat}`,
+          ref: iframeRef,
           srcDoc: mapHtml,
           style: {
             width: '100%',
@@ -646,13 +686,50 @@ export function RealInteractiveMap({
             border: 'none',
             borderRadius: isFullScreen ? 0 : 14,
           },
-          title: 'Bản đồ thực tế tương tác',
+          title:
+            mode === 'location'
+              ? 'Bản đồ vị trí hiện tại của tài xế'
+              : 'Bản đồ thực tế tương tác',
         })
+      ) : NativeWebView ? (
+        <NativeWebView
+          accessibilityLabel={
+            mode === 'location'
+              ? 'Bản đồ vị trí hiện tại của tài xế'
+              : 'Bản đồ thực tế tương tác'
+          }
+          javaScriptEnabled
+          onMessage={(event: WebViewMessageEvent) => {
+            try {
+              const payload = JSON.parse(event.nativeEvent.data) as {
+                type?: string;
+                mapInstanceId?: string;
+                lat?: number;
+                lng?: number;
+              };
+              if (
+                payload.type === 'LEOPARD_MAP_PIN_MOVED' &&
+                payload.mapInstanceId === mapInstanceId &&
+                typeof payload.lat === 'number' &&
+                typeof payload.lng === 'number'
+              ) {
+                onLocationChange?.({ lat: payload.lat, lng: payload.lng });
+              }
+            } catch {
+              // Ignore malformed messages from the embedded map document.
+            }
+          }}
+          originWhitelist={['https://*', 'http://*']}
+          source={{ html: mapHtml }}
+          style={styles.nativeWebView}
+        />
       ) : (
         /* Native & Test Environment Accessible Fallback */
         <View
           accessibilityLabel={
-            mode === 'tracking'
+            mode === 'location'
+              ? 'Bản đồ vị trí hiện tại của tài xế'
+              : mode === 'tracking'
               ? `Bản đồ theo dõi xe trực tiếp${displayEta ? `; ETA: ${displayEta}` : ''}`
               : `Bản đồ lộ trình từ ${origin?.label || 'điểm lấy'} đến ${destination?.label || 'điểm giao'}`
           }
@@ -661,16 +738,20 @@ export function RealInteractiveMap({
         >
           <View style={styles.roadGridH} />
           <View style={styles.roadGridV} />
-          <View style={styles.routeTraceLine} />
+          {mode !== 'location' ? <View style={styles.routeTraceLine} /> : null}
 
           {/* Markers */}
-          <View style={[styles.markerPin, styles.originPin]}>
-            <IconLocationPin color="#10B981" size={16} strokeWidth={2} />
-          </View>
-          <View style={[styles.markerPin, styles.destPin]}>
-            <IconLocationPin color="#EF4444" size={16} strokeWidth={2} />
-          </View>
-          {mode === 'tracking' ? (
+          {mode !== 'location' ? (
+            <>
+              <View style={[styles.markerPin, styles.originPin]}>
+                <IconLocationPin color="#10B981" size={16} strokeWidth={2} />
+              </View>
+              <View style={[styles.markerPin, styles.destPin]}>
+                <IconLocationPin color="#EF4444" size={16} strokeWidth={2} />
+              </View>
+            </>
+          ) : null}
+          {mode === 'tracking' || (mode === 'location' && truckLocation) ? (
             <View style={styles.truckMarkerWrap}>
               <View style={styles.truckMarker}>
                 <IconSpeedTruck color="#FFFFFF" size={14} />
@@ -707,6 +788,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     minHeight: 180,
+  },
+  nativeWebView: {
+    flex: 1,
+    backgroundColor: colors.operational.mapLand,
   },
   roadGridH: {
     position: 'absolute',

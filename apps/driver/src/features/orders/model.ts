@@ -137,6 +137,7 @@ type DriverAssignedDetailOrder = Readonly<{
   cargoWeightKg?: number | null;
   contactRoleLabel: string;
   customerContact: string;
+  priceLabel?: string;
   updatedAtLabel: string;
   history: readonly Readonly<{
     id: string;

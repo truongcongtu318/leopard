@@ -152,7 +152,8 @@ function availabilityFor(scenarioId: DriverListScenarioId): DriverAvailabilityVi
   }
   const pending = scenarioId === 'D-LIST-AVAILABILITY-PENDING';
   const blocked = scenarioId === 'D-LIST-OFFLINE';
-  const currentStatus = scenarioId === 'D-LIST-EMPTY' ? 'OFFLINE' : 'AVAILABLE';
+  const currentStatus =
+    scenarioId === 'D-LIST-EMPTY' || scenarioId === 'D-LIST-OFFLINE' ? 'OFFLINE' : 'AVAILABLE';
   return {
     status: currentStatus,
     action: {

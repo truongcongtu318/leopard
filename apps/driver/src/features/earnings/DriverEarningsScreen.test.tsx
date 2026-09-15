@@ -22,7 +22,8 @@ describe('DriverEarningsScreen', () => {
   it('renders real revenue and trip counts, with no invented commission/fee breakdown', async () => {
     const screen = await render(<DriverEarningsScreen {...baseProps} />);
 
-    expect(screen.getByText('Thu nhập')).toBeTruthy();
+    expect(screen.getAllByText('Thu nhập').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('driver-bottom-navigation')).toBeTruthy();
     expect(screen.getByText(/18.450.000/)).toBeTruthy();
     expect(screen.getByText('128')).toBeTruthy();
     expect(screen.queryByText(/Chiết khấu nền tảng/)).toBeNull();

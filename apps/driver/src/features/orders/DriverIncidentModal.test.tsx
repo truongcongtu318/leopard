@@ -62,4 +62,29 @@ describe('DriverIncidentModal', () => {
 
     await screen.unmount();
   });
+
+  it('uses the contained modal surface on web with dialog role', async () => {
+    const { Platform } = require('react-native');
+    const originalOS = Platform.OS;
+    Platform.OS = 'web';
+
+    try {
+      const screen = await render(
+        <DriverIncidentModal
+          onClose={jest.fn()}
+          onSubmit={jest.fn<any>().mockResolvedValue(undefined)}
+          orderReference="ORD-1234"
+          visible={true}
+        />,
+      );
+
+      const modalSurface = screen.getByTestId('driver-incident-modal');
+      expect(modalSurface).toBeTruthy();
+      expect(modalSurface.props.accessibilityViewIsModal).toBe(true);
+
+      await screen.unmount();
+    } finally {
+      Platform.OS = originalOS;
+    }
+  });
 });

@@ -259,6 +259,34 @@ export class DriverApplicationService {
         prepared,
       });
 
+      if ((tx as any).driverApplication) {
+        await (tx as any).driverApplication.create({
+          data: {
+            userId,
+            vehicleType: dto.vehicleType,
+            licensePlate: dto.licensePlate,
+            licenseNumber: dto.licenseNumber,
+            status: 'SUBMITTED',
+            submittedAt: now,
+          },
+        });
+      }
+
+      if ((tx as any).contractAcceptance) {
+        await (tx as any).contractAcceptance.create({
+          data: {
+            userId,
+            driverProfileId: profileId,
+            contractVersion: CONTRACT_VERSION,
+            documentHash: prepared.pdfStorageKey,
+            pdfStorageKey: prepared.pdfStorageKey,
+            signMethod: 'OTP',
+            signedByName: dto.signature || dto.name,
+            signedAt: prepared.signedAt,
+          },
+        });
+      }
+
       return profile;
     });
   }

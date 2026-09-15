@@ -66,6 +66,7 @@ describe('DriverHistoryScreen', () => {
     expect(screen.getByText('Kho Tân Bình, TP.HCM')).toBeTruthy();
     expect(screen.getByText('14.2 km')).toBeTruthy();
     expect(screen.getByText('128')).toBeTruthy();
+    expect(screen.getByTestId('driver-bottom-navigation')).toBeTruthy();
 
     await screen.unmount();
   });

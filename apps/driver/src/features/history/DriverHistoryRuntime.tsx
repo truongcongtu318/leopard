@@ -4,7 +4,9 @@ import { useMemo } from 'react';
 import { createDriverHistoryHttpAdapter } from './adapter';
 import { DriverHistoryScreen } from './DriverHistoryScreen';
 
-export function DriverHistoryRuntime() {
+export function DriverHistoryRuntime({
+  onNavigate,
+}: Readonly<{ onNavigate?: (route: string) => void }> = {}) {
   const adapter = useMemo(() => createDriverHistoryHttpAdapter(), []);
   const query = useQuery({
     queryKey: ['driver', 'order-history'],
@@ -16,6 +18,7 @@ export function DriverHistoryRuntime() {
       isError={query.isError}
       isLoading={query.isLoading}
       items={query.data?.items ?? []}
+      onNavigate={onNavigate}
       onRetry={() => void query.refetch()}
       total={query.data?.total ?? 0}
     />

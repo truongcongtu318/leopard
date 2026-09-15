@@ -20,6 +20,7 @@ import { CONTRACT_VERSION } from './driver-contract-template.js';
 import { DriverContractService } from './driver-contract.service.js';
 import { AllowUserStatuses } from '../auth/decorators/allow-user-statuses.js';
 import { CurrentUser, type AuthenticatedActor } from '../auth/decorators/current-user.js';
+import { Public } from '../auth/decorators/public.js';
 import { RequireRoles } from '../auth/decorators/require-roles.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
@@ -91,12 +92,14 @@ export class DriversController {
 
   // Contract review, before applying: version + a link to the unsigned
   // template PDF. No DB row is created for this read-only preview.
+  @Public()
   @Get('contract')
   @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
   getContract() {
     return this.driverContractService.getContractPreview();
   }
 
+  @Public()
   @Get('contract/pdf')
   @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
   async getContractPdf(

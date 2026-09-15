@@ -16,6 +16,7 @@ import {
 import { TokenService } from '../token.service.js';
 import { AccountStatusCache } from './account-status-cache.js';
 import { ALLOW_USER_STATUSES_KEY } from '../decorators/allow-user-statuses.js';
+import { IS_PUBLIC_KEY } from '../decorators/public.js';
 
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
@@ -27,9 +28,32 @@ export class AccessTokenGuard implements CanActivate {
   ) {}
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector?.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
     const request = context.switchToHttp().getRequest<Record<string, unknown>>();
-    const token = this.extractBearerToken(request['headers']);
-    const claims = this.tokenService.verifyAccessToken(token);
+    let token: string;
+    try {
+      token = this.extractBearerToken(request['headers']);
+    } catch (err) {
+      if (isPublic) {
+        return true;
+      }
+      throw err;
+    }
+
+    let claims;
+    try {
+      claims = this.tokenService.verifyAccessToken(token);
+    } catch (err) {
+      if (isPublic) {
+        return true;
+      }
+      throw err;
+    }
+
     const session = await this.prisma.refreshSession.findUnique({
       where: { id: claims.sessionId },
     });
@@ -40,6 +64,9 @@ export class AccessTokenGuard implements CanActivate {
       session.revokedAt !== null ||
       session.expiresAt.getTime() <= Date.now()
     ) {
+      if (isPublic) {
+        return true;
+      }
       throw this.unauthorized();
     }
 

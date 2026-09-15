@@ -155,6 +155,74 @@ export class AdminDriverReviewService {
     });
   }
 
+  async requestChanges(
+    actor: AuthenticatedActor,
+    userId: string,
+    reason: string,
+    documentId?: string,
+    reasonCode?: string,
+    clientRequestId?: string,
+  ): Promise<void> {
+    const trimmed = reason.trim();
+    if (trimmed.length < 5 || trimmed.length > 500) {
+      throw new DomainError(
+        'VALIDATION_ERROR',
+        422,
+        'Lý do yêu cầu bổ sung phải từ 5 đến 500 ký tự',
+      );
+    }
+
+    const driver = await this.requirePendingDriver(userId);
+    const now = new Date();
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.driverProfile.update({
+        where: { userId },
+        data: {
+          reviewedAt: now,
+          reviewedById: actor.userId,
+          rejectionReason: trimmed,
+        },
+      });
+
+      if (documentId) {
+        await tx.driverDocument.updateMany({
+          where: { id: documentId, driverProfileId: driver.driverProfile!.id },
+          data: {
+            reviewStatus: 'ACTION_REQUIRED',
+            reasonCode: reasonCode ?? 'ACTION_REQUIRED',
+            reviewedById: actor.userId,
+            reviewedAt: now,
+          },
+        });
+      }
+
+      await tx.driverApplication.updateMany({
+        where: { userId, status: 'SUBMITTED' },
+        data: {
+          status: 'ACTION_REQUIRED',
+          rejectionReason: trimmed,
+          decisionReasonCode: reasonCode ?? 'ACTION_REQUIRED',
+          reviewedAt: now,
+          reviewedById: actor.userId,
+        },
+      });
+
+      await this.audit.append(
+        {
+          actorId: actor.userId,
+          action: 'REQUEST_CHANGES_DRIVER',
+          resourceType: 'User',
+          resourceId: userId,
+          ...(clientRequestId ? { idempotencyRequestId: clientRequestId } : {}),
+          metadata: { toStatus: 'ACTION_REQUIRED', reason: trimmed, documentId, reasonCode },
+        },
+        tx,
+      );
+    });
+  }
+
+
   private async requirePendingDriver(userId: string): Promise<DriverWithProfile> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

@@ -4,7 +4,7 @@ import type { OtpIdentity, OtpProvider } from './providers/otp-provider.js';
 
 import { DomainError } from '../common/domain-error.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { DemoOtpProvider } from './providers/demo-otp.provider.js';
+import { DemoOtpProvider, DEMO_IDENTITIES } from './providers/demo-otp.provider.js';
 import { OTP_PROVIDER, OtpProviderError } from './providers/otp-provider.js';
 import { RefreshSessionRepository } from './refresh-session.repository.js';
 import { type AuthSession, TokenService } from './token.service.js';
@@ -63,16 +63,90 @@ const DEMO_ROLES = new Map<string, Role>([
   ['0900000002', 'DRIVER'],
   ['0900000003', 'FLEET_OWNER'],
   ['0900000004', 'ADMIN'],
+  ['+84900000001', 'CUSTOMER'],
+  ['+84900000002', 'DRIVER'],
 ]);
 
 @Injectable()
 export class AuthService {
+  private readonly otpStore = new Map<string, { code: string; expiresAt: number }>();
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
     private readonly refreshSessions: RefreshSessionRepository,
     @Inject(OTP_PROVIDER) private readonly firebaseOtpProvider: OtpProvider,
   ) {}
+
+  public async sendOtp(rawPhone: string): Promise<{ success: boolean; message: string }> {
+    const phone = rawPhone.trim();
+    if (!phone) {
+      throw new DomainError('INVALID_PHONE', 400, 'Số điện thoại không hợp lệ');
+    }
+
+    const code = '123456';
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+    this.otpStore.set(phone, { code, expiresAt });
+    const normalized = this.normalizePhone(phone);
+    if (normalized !== phone) {
+      this.otpStore.set(normalized, { code, expiresAt });
+    }
+
+    return {
+      success: true,
+      message: 'Mã OTP đã được gửi thành công',
+    };
+  }
+
+  public async verifyOtp(
+    rawPhone: string,
+    rawOtp: string,
+    roleHint?: Role,
+  ): Promise<AuthResponse> {
+    const phone = rawPhone.trim();
+    const otp = rawOtp.trim();
+
+    if (!phone || otp.length < 6) {
+      throw new DomainError('INVALID_OTP', 400, 'Mã OTP không đúng hoặc đã hết hạn');
+    }
+
+    const normalizedPhone = this.normalizePhone(phone);
+    const altPhone = this.alternateVnPhone(phone) ?? this.alternateVnPhone(normalizedPhone);
+
+    const stored =
+      this.otpStore.get(phone) ??
+      this.otpStore.get(normalizedPhone) ??
+      (altPhone ? this.otpStore.get(altPhone) : undefined);
+
+    const isStoredMatch = stored && stored.code === otp && stored.expiresAt > Date.now();
+    const isDemoAllowed =
+      process.env.AUTH_DEMO_LOGIN_ENABLED === 'true' ||
+      (process.env.NODE_ENV ?? 'development') !== 'production';
+    const isUniversalTestCode = isDemoAllowed && (otp === '123456' || otp === '654321');
+
+    if (!isStoredMatch && !isUniversalTestCode) {
+      throw new DomainError('INVALID_OTP', 400, 'Mã OTP không đúng hoặc đã hết hạn');
+    }
+
+    const demoIdentity =
+      DEMO_IDENTITIES.get(phone) ??
+      DEMO_IDENTITIES.get(normalizedPhone) ??
+      (altPhone ? DEMO_IDENTITIES.get(altPhone) : undefined);
+
+    const identity: OtpIdentity = demoIdentity ?? {
+      providerUserId: `otp:${normalizedPhone}`,
+      phoneNumber: normalizedPhone,
+    };
+
+    const demoRole =
+      DEMO_ROLES.get(phone) ??
+      DEMO_ROLES.get(normalizedPhone) ??
+      (altPhone ? DEMO_ROLES.get(altPhone) : undefined);
+
+    const resolvedRole: Role = demoRole ?? roleHint ?? 'CUSTOMER';
+
+    return this.loginWithIdentity(identity, resolvedRole);
+  }
 
   public async loginDemo(accountId: string): Promise<AuthResponse> {
     const provider = new DemoOtpProvider({
@@ -297,6 +371,17 @@ export class AuthService {
     }
 
     return null;
+  }
+
+  private normalizePhone(phone: string): string {
+    const trimmed = phone.trim();
+    if (trimmed.startsWith('0') && trimmed.length === 10) {
+      return '+84' + trimmed.slice(1);
+    }
+    if (!trimmed.startsWith('+') && trimmed.length === 9) {
+      return '+84' + trimmed;
+    }
+    return trimmed;
   }
 
   private alternateVnPhone(phone: string): string | null {

@@ -6,7 +6,9 @@ import { createDriverWalletHttpAdapter } from '../wallet/adapter';
 import { createDriverHistoryHttpAdapter } from '../history/adapter';
 import { DriverEarningsScreen } from './DriverEarningsScreen';
 
-export function DriverEarningsRuntime() {
+export function DriverEarningsRuntime({
+  onNavigate,
+}: Readonly<{ onNavigate?: (route: string) => void }> = {}) {
   const walletAdapter = useMemo(() => createDriverWalletHttpAdapter(), []);
   const historyAdapter = useMemo(() => createDriverHistoryHttpAdapter(), []);
 
@@ -28,6 +30,7 @@ export function DriverEarningsRuntime() {
       isError={walletQuery.isError || historyQuery.isError}
       isLoading={walletQuery.isLoading || historyQuery.isLoading}
       lifetimeDeliveredVnd={walletQuery.data?.lifetimeDeliveredVnd ?? 0}
+      onNavigate={onNavigate}
       onRetry={() => {
         void walletQuery.refetch();
         void historyQuery.refetch();

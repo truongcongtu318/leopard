@@ -39,3 +39,32 @@ describe('AuthService.serializeUser', () => {
     expect(out.avatarStorageKey).toBe('avatars/u1/x.png');
   });
 });
+
+describe('AuthService.sendOtp and verifyOtp', () => {
+  it('sendOtp validates phone and saves OTP', async () => {
+    const authSvc = new AuthService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
+    const res = await authSvc.sendOtp('0900000001');
+    expect(res.success).toBe(true);
+    expect(res.message).toContain('thành công');
+  });
+
+  it('verifyOtp rejects invalid OTP code', async () => {
+    const authSvc = new AuthService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
+    await expect(authSvc.verifyOtp('0900000001', '000000')).rejects.toThrow(
+      'Mã OTP không đúng hoặc đã hết hạn',
+    );
+  });
+});
+

@@ -22,6 +22,7 @@ import {
 } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
+import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
 
 export type HistoryTripItem = Readonly<{
   id: string;
@@ -46,11 +47,19 @@ export type DriverHistoryScreenProps = Readonly<{
   isLoading?: boolean;
   isError?: boolean;
   onRetry?: () => void;
+  onNavigate?: (route: string) => void;
 }>;
 
 type DateFilterType = 'ALL' | 'today' | 'week';
 
-export function DriverHistoryScreen({ items, total, isLoading, isError, onRetry }: DriverHistoryScreenProps) {
+export function DriverHistoryScreen({
+  items,
+  total,
+  isLoading,
+  isError,
+  onRetry,
+  onNavigate,
+}: DriverHistoryScreenProps) {
   const router = useRouter();
   const [dateFilter, setDateFilter] = useState<DateFilterType>('ALL');
   const [selectedEpodTrip, setSelectedEpodTrip] = useState<HistoryTripItem | null>(null);
@@ -77,12 +86,13 @@ export function DriverHistoryScreen({ items, total, isLoading, isError, onRetry 
     val >= 1_000_000 ? `${(val / 1_000_000).toFixed(2)}tr` : formatCurrency(val);
 
   return (
-    <ScreenScaffold
-      eyebrow="DRIVER · TRIP LOG"
-      headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-      headerTone="plain"
-      title="Lịch sử chuyến"
-    >
+    <View style={styles.screenContainer}>
+      <ScreenScaffold
+        eyebrow="DRIVER · TRIP LOG"
+        headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
+        headerTone="plain"
+        title="Lịch sử chuyến"
+      >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -250,7 +260,7 @@ export function DriverHistoryScreen({ items, total, isLoading, isError, onRetry 
                       accessibilityLabel={`Xem chi tiết đơn ${item.reference}`}
                       accessibilityRole="button"
                       hitSlop={8}
-                      onPress={() => router.push(`/driver/orders/${item.id}`)}
+                      onPress={() => router.push(`/orders/${item.id}`)}
                       style={styles.detailLink}
                     >
                       <Text style={styles.viewDetailCta}>Chi tiết</Text>
@@ -330,16 +340,26 @@ export function DriverHistoryScreen({ items, total, isLoading, isError, onRetry 
         </Pressable>
       </Modal>
     </ScreenScaffold>
+
+    <DriverBottomNavigation
+      activeTab="orders"
+      onNavigate={onNavigate ?? ((route) => router.push(route))}
+    />
+  </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    position: 'relative',
+  },
   scrollWrap: {
     flex: 1,
   },
   scrollContent: {
     gap: spacing.sm,
-    paddingBottom: spacing.xl + 20,
+    paddingBottom: 100,
   },
   /* Cumulative KPI Strip */
   kpiStripRow: {

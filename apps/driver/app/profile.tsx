@@ -1,5 +1,7 @@
+import { useRouter } from 'expo-router';
 import { DriverProfileRuntime } from '../src/features/profile/ProfileRuntime';
 
 export default function DriverProfileRoute() {
-  return <DriverProfileRuntime />;
+  const router = useRouter();
+  return <DriverProfileRuntime onNavigate={(route) => router.push(route)} />;
 }

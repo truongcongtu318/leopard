@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+
+import { DriverModalSurface } from '../../navigation/DriverModalSurface';
 
 import {
   leopardPalette,
@@ -79,9 +80,10 @@ export function IncomingDispatchModal({
   const isWarning = secondsLeft <= 10 && !isUrgent;
 
   return (
-    <Modal
+    <DriverModalSurface
       animationType="slide"
       hardwareAccelerated
+      onRequestClose={() => onDecline(offer.id)}
       statusBarTranslucent
       testID="incoming-dispatch-modal"
       transparent
@@ -272,7 +274,7 @@ export function IncomingDispatchModal({
           </View>
         </View>
       </View>
-    </Modal>
+    </DriverModalSurface>
   );
 }
 

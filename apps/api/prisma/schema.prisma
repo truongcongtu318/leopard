@@ -129,6 +129,7 @@ model User {
   auditLogs         AuditLog[]           @relation("AuditActor")
   notifications     Notification[]
   deviceTokens      DeviceToken[]
+  driverApplications DriverApplication[]
 }
 
 model RefreshSession {
@@ -150,6 +151,7 @@ model Fleet {
   createdAt   DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime      @default(now()) @updatedAt @db.Timestamptz(3)
   memberships FleetMember[]
+  driverAffiliations DriverAffiliation[]
 }
 
 model FleetMember {
@@ -177,6 +179,8 @@ model DriverProfile {
   vehicleType       VehicleType
   licensePlate      String?                               @db.VarChar(32)
   licenseNumber     String?                               @db.VarChar(64)
+  fleetCode         String?                               @db.VarChar(64)
+  operatingCity     String?                               @db.VarChar(120)
   submittedAt       DateTime?                             @db.Timestamptz(3)
   reviewedAt        DateTime?                             @db.Timestamptz(3)
   reviewedById      String?                               @db.Uuid
@@ -191,6 +195,7 @@ model DriverProfile {
   user              User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
   documents         DriverDocument[]
   contracts         DriverContract[]
+  affiliations      DriverAffiliation[]
 
   @@index([availability, vehicleType, lastKnownAt])
 }
@@ -200,20 +205,38 @@ enum DriverDocumentType {
   VEHICLE_REGISTRATION
   ID_CARD
   VEHICLE_PHOTO
+  INSPECTION_CERTIFICATE
+  MANDATORY_INSURANCE
+}
+
+enum DocumentReviewStatus {
+  PENDING_REVIEW
+  VERIFIED
+  ACTION_REQUIRED
+  REJECTED
+  EXPIRED
 }
 
 model DriverDocument {
-  id              String             @id @default(uuid()) @db.Uuid
-  driverProfileId String             @db.Uuid
+  id              String               @id @default(uuid()) @db.Uuid
+  driverProfileId String               @db.Uuid
   type            DriverDocumentType
   provider        ProviderSource
-  storageKey      String             @unique
+  storageKey      String               @unique
   contentType     String
   sizeBytes       Int
   checksumSha256  String
+  documentNumber  String?              @db.VarChar(64)
+  holderName      String?              @db.VarChar(120)
+  issuedAt        DateTime?            @db.Timestamptz(3)
+  expiresAt       DateTime?            @db.Timestamptz(3)
+  reviewStatus    DocumentReviewStatus @default(PENDING_REVIEW)
+  reasonCode      String?              @db.VarChar(64)
+  reviewedById    String?              @db.Uuid
+  reviewedAt      DateTime?            @db.Timestamptz(3)
   clientRequestId String?
-  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
-  driverProfile   DriverProfile      @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+  createdAt       DateTime             @default(now()) @db.Timestamptz(3)
+  driverProfile   DriverProfile        @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
 
   @@index([driverProfileId, type])
 }
@@ -465,3 +488,104 @@ model DeviceToken {
 
   @@index([userId, lastUsedAt(sort: Desc)])
 }
+
+enum DriverApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACTION_REQUIRED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum DriverLegalModel {
+  FLEET_AFFILIATED
+  EMPLOYEE
+  INDEPENDENT_OPERATOR
+}
+
+model DriverApplication {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  userId             String                  @db.Uuid
+  legalModel         DriverLegalModel        @default(FLEET_AFFILIATED)
+  status             DriverApplicationStatus @default(SUBMITTED)
+  operatingCity      String?                 @db.VarChar(120)
+  fleetCode          String?                 @db.VarChar(64)
+  vehicleType        VehicleType             @default(VAN)
+  licensePlate       String?                 @db.VarChar(32)
+  licenseNumber      String?                 @db.VarChar(64)
+  currentRevision    Int                     @default(1)
+  rejectionReason    String?
+  decisionReasonCode String?                 @db.VarChar(64)
+  submittedAt        DateTime?               @db.Timestamptz(3)
+  reviewedAt         DateTime?               @db.Timestamptz(3)
+  reviewedById       String?                 @db.Uuid
+  approvedAt         DateTime?               @db.Timestamptz(3)
+  rejectedAt         DateTime?               @db.Timestamptz(3)
+  withdrawnAt        DateTime?               @db.Timestamptz(3)
+  createdAt          DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                @default(now()) @updatedAt @db.Timestamptz(3)
+  user               User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, submittedAt(sort: Desc)])
+}
+
+enum DriverAffiliationStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+model DriverAffiliation {
+  id               String                  @id @default(uuid()) @db.Uuid
+  driverProfileId  String                  @db.Uuid
+  fleetId          String                  @db.Uuid
+  relationshipType String                  @default("FLEET_MEMBER")
+  status           DriverAffiliationStatus @default(PENDING)
+  validFrom        DateTime                @default(now()) @db.Timestamptz(3)
+  validTo          DateTime?               @db.Timestamptz(3)
+  verifiedById     String?                 @db.Uuid
+  createdAt        DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime                @default(now()) @updatedAt @db.Timestamptz(3)
+  driverProfile    DriverProfile           @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+  fleet            Fleet                   @relation(fields: [fleetId], references: [id], onDelete: Cascade)
+
+  @@unique([driverProfileId, fleetId])
+  @@index([fleetId, status])
+}
+
+model ContractAcceptance {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @db.Uuid
+  driverProfileId String?   @db.Uuid
+  contractVersion String    @db.VarChar(32)
+  documentHash    String    @db.VarChar(128)
+  pdfStorageKey   String    @db.VarChar(500)
+  signMethod      String    @default("OTP")
+  authEventId     String?   @db.VarChar(128)
+  signedPhone     String?   @db.VarChar(32)
+  signedByName    String    @db.VarChar(120)
+  signedAt        DateTime  @default(now()) @db.Timestamptz(3)
+  evidenceMetadata Json?
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, contractVersion])
+}
+
+model ConsentRecord {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @db.Uuid
+  noticeType    String    @db.VarChar(64)
+  noticeVersion String    @db.VarChar(32)
+  purpose       String    @db.VarChar(128)
+  decision      Boolean   @default(true)
+  capturedAt    DateTime  @default(now()) @db.Timestamptz(3)
+  withdrawnAt   DateTime? @db.Timestamptz(3)
+  evidence      Json?
+
+  @@index([userId, noticeType])
+}
+

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
+import { sessionStore } from '@leopard/mobile-core';
 import { createDriverHttpAdapter } from './adapter';
 import { createDriverIdleLocationPing, type DriverIdleLocationPing, type IdlePingHealth } from './idle-location-ping';
 
@@ -17,6 +18,18 @@ let sharedIdlePing: DriverIdleLocationPing | null = null;
  * Phase 1 plan, Phần B.
  */
 export function useDriverIdlePing(enabled: boolean): void {
+  const [isAuthenticatedDriver, setIsAuthenticatedDriver] = useState(
+    () => sessionStore.isAuthenticated() && sessionStore.getRole() === 'DRIVER',
+  );
+
+  useEffect(() => {
+    return sessionStore.subscribe((state) => {
+      setIsAuthenticatedDriver(state.authenticated && state.role === 'DRIVER');
+    });
+  }, []);
+
+  const isPingActive = enabled && isAuthenticatedDriver;
+
   const port = useMemo(() => createDriverHttpAdapter(), []);
   const idlePing = useMemo(() => {
     const instance = createDriverIdleLocationPing();
@@ -27,10 +40,10 @@ export function useDriverIdlePing(enabled: boolean): void {
   const query = useQuery({
     queryKey: ['driver', 'orders'],
     queryFn: () => port.getOrdersView(),
-    enabled,
+    enabled: isPingActive,
   });
 
-  const status = query.data?.kind === 'content' ? query.data.availability.status : null;
+  const status = isPingActive && query.data?.kind === 'content' ? query.data.availability.status : null;
 
   useEffect(() => {
     if (status === 'AVAILABLE') {
