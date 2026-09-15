@@ -30,7 +30,6 @@ export interface BentoOrdersCardProps {
 const FILTERS = [
   { id: 'all', label: 'Tất cả' },
   { id: 'pending', label: 'Chờ tiếp nhận' },
-  { id: 'loading', label: 'Đang lấy hàng' },
   { id: 'in_transit', label: 'Đang vận chuyển' },
   { id: 'delivered', label: 'Đã giao hàng' },
 ] as const;
@@ -62,11 +61,14 @@ export function BentoOrdersCard({
         o.status === 'ACCEPTED'
       );
     }
-    if (currentFilter === 'loading') {
-      return o.status === 'PICKING_UP' || o.status === 'LOADING';
-    }
     if (currentFilter === 'in_transit') {
-      return o.status === 'IN_TRANSIT' || o.status === 'PICKED_UP' || o.status === 'UNLOADING';
+      return (
+        o.status === 'IN_TRANSIT' ||
+        o.status === 'PICKING_UP' ||
+        o.status === 'LOADING' ||
+        o.status === 'PICKED_UP' ||
+        o.status === 'UNLOADING'
+      );
     }
     if (currentFilter === 'delivered') {
       return o.status === 'DELIVERED' || o.status === 'COMPLETED';

@@ -9,11 +9,12 @@ import type { AdminCommandView, AdminDialogPreviewView } from './model';
 
 function commandList(commands: readonly AdminCommandView[], onOpen: (command: AdminCommandView) => void) {
   return (
-    <div className="mt-sm flex flex-wrap gap-xs">
+    <div className="mt-sm flex flex-wrap gap-2">
       {commands.map((command) => (
         <Button
           key={`${command.kind}-${command.targetId}`}
           variant={command.buttonVariant}
+          className="rounded-full shadow-2xs px-4"
           onPress={() => onOpen(command)}
         >
           {command.commandLabel}
@@ -89,11 +90,12 @@ function PreviewCommandLauncher({
       {!hideTriggerList ? (
         <section aria-labelledby="admin-command-heading" className="min-w-0">
           {launcherCopy()}
-          <div aria-hidden={activeCommand ? 'true' : undefined} className="mt-sm flex flex-wrap gap-xs">
+          <div aria-hidden={activeCommand ? 'true' : undefined} className="mt-sm flex flex-wrap gap-2">
             {commands.map((command) => (
               <Button
                 key={`${command.kind}-${command.targetId}`}
                 variant={command.buttonVariant}
+                className="rounded-full shadow-2xs px-4"
                 onPress={() => {
                   setActiveCommand(command);
                   setReason('');

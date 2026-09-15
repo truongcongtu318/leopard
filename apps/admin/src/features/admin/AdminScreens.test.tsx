@@ -195,4 +195,28 @@ describe('Admin static operations screens', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Đóng' }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
+
+  it('aligns AdminListScreen and AdminShared with Apple 2026 glass card and pill filters', () => {
+    render(<AdminListScreen screen="orders" view={createAdminPreviewView('orders', 'ADM-ORD-DENSE')} />);
+
+    const searchInput = screen.getByRole('searchbox', { name: /Tìm nhanh trong phiên/ });
+    expect(searchInput.className).toContain('rounded-full');
+
+    const filterScope = screen.getByLabelText('Phạm vi điều tra đơn hàng');
+    expect(filterScope.className).toContain('rounded-3xl');
+    expect(filterScope.className).toContain('backdrop-blur-xl');
+
+    const allPill = screen.getByRole('link', { name: 'Tất cả' });
+    expect(allPill.className).toContain('rounded-full');
+  });
+
+  it('renders AdminOrderDetailScreen in Apple 2026 2-column Bento with e-POD evidence card', () => {
+    render(<AdminOrderDetailScreen view={createAdminPreviewView('order-detail', 'ADM-ORD-DETAIL')} />);
+
+    expect(screen.getByText('Chứng từ số hóa e-POD')).toBeTruthy();
+    expect(screen.getByText('Đã lưu trữ')).toBeTruthy();
+
+    const paymentCard = screen.getByRole('heading', { name: 'Thanh toán' });
+    expect(paymentCard).toBeTruthy();
+  });
 });

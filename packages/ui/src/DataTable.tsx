@@ -48,11 +48,11 @@ export function DataTable({
   className,
 }: DataTableProps) {
   return (
-    <div className={cn('w-full overflow-hidden rounded-card rounded-2xl border border-slate-200/80 bg-white shadow-2xs', className)}>
+    <div className={cn('w-full overflow-hidden rounded-card rounded-2xl border border-slate-100/90 bg-white/90 shadow-2xs backdrop-blur-md', className)}>
       <table role="table" className="w-full border-collapse text-left text-xs sm:text-sm">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
-          <tr role="row" className="border-b border-slate-200/80 bg-slate-50/90">
+          <tr role="row" className="border-b border-slate-100 bg-slate-50/60">
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -60,7 +60,7 @@ export function DataTable({
                 scope="col"
                 aria-sort={col.sortable && col.key === sortKey ? sortDirection : undefined}
                 className={cn(
-                  'text-[11px] font-extrabold tracking-wider uppercase text-slate-500 py-3',
+                  'text-xs font-semibold uppercase tracking-wider text-slate-400 py-3',
                   col.sortable ? 'p-0' : 'px-4',
                   col.className,
                 )}
@@ -70,7 +70,7 @@ export function DataTable({
                     type="button"
                     onClick={() => onSort?.(col.key)}
                     className={cn(
-                      'flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1.5 bg-transparent px-4 py-3 text-left text-[11px] font-extrabold tracking-wider uppercase text-slate-500',
+                      'flex min-h-11 min-w-11 w-full cursor-pointer select-none items-center gap-1.5 bg-transparent px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400',
                       'hover:text-slate-800 hover:bg-slate-100/60 focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-brand-soft focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset motion-reduce:transition-none',
                     )}
                   >
@@ -98,7 +98,7 @@ export function DataTable({
               <tr
                 key={rowIdx}
                 role="row"
-                className="border-b border-slate-100/90 last:border-b-0 hover:bg-sky-50/40 transition-colors"
+                className="border-b border-slate-100/80 last:border-b-0 hover:bg-slate-50/70 transition-colors"
               >
                 {columns.map((col) => (
                   <td key={col.key} className={cn('px-4 py-3.5 text-slate-700', col.className)}>
