@@ -81,8 +81,7 @@ describe('HomeDashboardScreen', () => {
     // Header actions
     await fireEvent.press(screen.getByLabelText(/Thông báo/));
     expect(onOpenNotifications).toHaveBeenCalledTimes(1);
-    await fireEvent.press(screen.getByLabelText('Chuyển vai trò'));
-    expect(onSwitchRole).toHaveBeenCalledWith('DRIVER');
+    expect(screen.queryByLabelText('Chuyển vai trò')).toBeNull();
 
     // Fleet vehicle card jumps into order creation
     await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Tải 1.25T/));
