@@ -192,14 +192,25 @@ echo "  ✅ $(docker compose version)"
 
 ensure_buildx || exit 1
 
-# Warn about the RAM the build needs; Expo + Next builds OOM on small VPSes.
+# How the build is scheduled depends on the memory available, so measure it here.
+# BuildKit compiles every service concurrently and the peak is well above what a
+# single build needs: on a 4GB box with no swap the OOM killer takes out
+# docker-buildx and docker-compose part way through, leaving one image behind.
+TOTAL_MB=0
 if [ -r /proc/meminfo ]; then
   TOTAL_MB=$(awk '/MemTotal/{printf "%d", $2/1024}' /proc/meminfo)
-  if [ "$TOTAL_MB" -lt 3000 ]; then
-    echo "  ⚠️  Only ${TOTAL_MB}MB RAM detected — image builds may fail. 4GB+ recommended."
-  else
-    echo "  ✅ RAM ${TOTAL_MB}MB"
-  fi
+fi
+SWAP_MB=0
+if [ -r /proc/meminfo ]; then
+  SWAP_MB=$(awk '/SwapTotal/{printf "%d", $2/1024}' /proc/meminfo)
+fi
+
+echo "  ✅ RAM ${TOTAL_MB}MB, swap ${SWAP_MB}MB"
+if [ "$TOTAL_MB" -lt 8000 ] && [ "$SWAP_MB" -lt 1024 ]; then
+  echo "  ⚠️  Little RAM and no swap. Images will be built one at a time;"
+  echo "     adding swap makes this much safer:"
+  echo "       fallocate -l 4G /swapfile && chmod 600 /swapfile"
+  echo "       mkswap /swapfile && swapon /swapfile"
 fi
 
 # ── Step 2: Environment file ────────────────────────────────────
@@ -273,7 +284,17 @@ elif [ "$REBUILD" = true ]; then
   compose build --pull
   echo "  ✅ Images rebuilt"
 else
-  compose build
+  # Below 8GB, build one service at a time: concurrent builds are what pushes a
+  # small VPS into the OOM killer, and the images are independent anyway.
+  if [ "$TOTAL_MB" -lt 8000 ]; then
+    echo "  ℹ️  ${TOTAL_MB}MB RAM — building one service at a time"
+    for service in api migrate admin customer driver gateway; do
+      echo "     ▶ ${service}"
+      compose build "$service"
+    done
+  else
+    compose build
+  fi
   echo "  ✅ Images ready (cached layers reused)"
 fi
 
