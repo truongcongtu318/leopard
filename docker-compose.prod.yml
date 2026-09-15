@@ -1,0 +1,104 @@
+# LEOPARD Full Demo Stack
+# Usage: docker compose -f docker-compose.prod.yml up -d --build
+# Requires: .env.prod (copy from .env.prod.example, run deploy-demo.sh to auto-generate)
+
+name: leopard-demo
+
+services:
+  # ── Database ──
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-leopard}
+      POSTGRES_USER: ${POSTGRES_USER:-leopard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leopard_demo_change_me}
+    volumes:
+      - leopard-demo-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  # ── Backend API ──
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-3000}:3000"
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-leopard}:${POSTGRES_PASSWORD:-leopard_demo_change_me}@postgres:5432/${POSTGRES_DB:-leopard}?schema=public
+      PORT: "3000"
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/v1/health/live',(r)=>{process.exit(r.statusCode===200?0:1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # ── Admin Console (Next.js) ──
+  admin:
+    build:
+      context: .
+      dockerfile: infra/docker/admin.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${ADMIN_PORT:-3002}:3002"
+    environment:
+      API_URL: http://api:3000/api/v1
+      NEXT_PUBLIC_ALLOW_DEMO_AUTH: "true"
+
+  # ── Customer App (Expo Web) ──
+  customer:
+    build:
+      context: .
+      dockerfile: infra/docker/customer.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  # ── Driver App (Expo Web) ──
+  driver:
+    build:
+      context: .
+      dockerfile: infra/docker/driver.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+
+  # ── Gateway (Nginx Landing Portal) ──
+  gateway:
+    build:
+      context: infra/docker/gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+      - admin
+      - customer
+      - driver
+    ports:
+      - "${GATEWAY_PORT:-80}:80"
+
+volumes:
+  leopard-demo-data:
+    name: leopard-demo-data
