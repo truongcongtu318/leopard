@@ -157,13 +157,13 @@ describe('HomeDashboardScreen', () => {
     // Exactly one primary CTA, showing fare inside
     const ctas = await screen.findAllByTestId('home-main-cta-btn');
     expect(ctas).toHaveLength(1);
-    expect(screen.getByText(/TIẾP TỤC ĐẶT XE · 280\.000 ₫/)).toBeTruthy();
+    expect(screen.getByText(/TIẾP TỤC ĐẶT XE · 200\.000 ₫/)).toBeTruthy();
 
     // No horizontal-carousel-only styles: full-width rows, all price strings visible
-    expect(screen.getByText('160.000 ₫')).toBeTruthy();
-    expect(screen.getAllByText('280.000 ₫').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('450.000 ₫')).toBeTruthy();
-    expect(screen.getByText('120.000 ₫')).toBeTruthy();
+    expect(screen.getByText('130.000 ₫')).toBeTruthy();
+    expect(screen.getAllByText('200.000 ₫').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('320.000 ₫')).toBeTruthy();
+    expect(screen.getByText('70.000 ₫')).toBeTruthy();
 
     await screen.unmount();
   }, 60000);
@@ -481,7 +481,26 @@ describe('HomeDashboardScreen', () => {
     const navStyle = [navBar.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
     expect(navStyle.zIndex).toBe(60);
 
+    // Bottom sheet spacer provides floating nav clearance
+    const spacer = screen.getByTestId('home-sheet-bottom-spacer');
+    const spacerStyle = [spacer.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(spacerStyle.height).toBeGreaterThanOrEqual(104);
+
     await screen.unmount();
+  });
+
+  it('provides bottom nav clearance by default and collapses when hasFloatingNavBar is false', async () => {
+    const screenWithDock = await render(<HomeDashboardScreen />);
+    const spacerDefault = screenWithDock.getByTestId('home-sheet-bottom-spacer');
+    const defaultStyle = [spacerDefault.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(defaultStyle.height).toBeGreaterThanOrEqual(104);
+    await screenWithDock.unmount();
+
+    const screenWithoutDock = await render(<HomeDashboardScreen hasFloatingNavBar={false} />);
+    const spacerCollapsed = screenWithoutDock.getByTestId('home-sheet-bottom-spacer');
+    const collapsedStyle = [spacerCollapsed.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(collapsedStyle.height).toBe(24);
+    await screenWithoutDock.unmount();
   });
 
   describe('progressive disclosure for route and fleet selection', () => {
@@ -526,7 +545,7 @@ describe('HomeDashboardScreen', () => {
       // Fleet matrix, fare estimate, and CTA button are revealed
       expect(screen.getByText('CHỌN LOẠI XE PHÙ HỢP')).toBeTruthy();
       expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
-      expect(screen.getByText('TIẾP TỤC ĐẶT XE · 280.000 ₫ ➔')).toBeTruthy();
+      expect(screen.getByText('TIẾP TỤC ĐẶT XE · 200.000 ₫ ➔')).toBeTruthy();
 
       await screen.unmount();
     });
@@ -597,7 +616,7 @@ describe('HomeDashboardScreen', () => {
           receiverPhone: '0912345678',
           vehicleCategory: 'LIGHT_TRUCK',
           vehicleName: 'Xe Tải 1.25T',
-          totalFare: 280000,
+          totalFare: 200000,
         }),
       );
 
