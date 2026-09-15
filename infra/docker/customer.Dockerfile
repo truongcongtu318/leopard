@@ -34,9 +34,12 @@ COPY apps/mobile/assets/ apps/mobile/assets/
 COPY apps/mobile/public/ apps/mobile/public/
 
 ENV CI=true
-# Relative API base: each Expo app is served by its own nginx, which proxies
-# /api/v1 and /socket.io to the API, so the apps stay same-origin and need no CORS.
-ENV EXPO_PUBLIC_API_URL=""
+# Relative REST base. It must NOT be empty: the client falls back to
+# http://localhost:3000/api/v1 when the value is falsy, which makes the deployed
+# app call the visitor's own machine and fail every request. A leading-slash path
+# resolves against the app's origin, and each app's nginx proxies /api/v1 and
+# /socket.io to the API, so no CORS is involved.
+ENV EXPO_PUBLIC_API_URL=/api/v1
 # Off, so the login screen shows the ordinary phone + OTP flow instead of the
 # one-click demo accounts. Clients sign in with a seeded phone number and the
 # demo OTP, which the gateway portal lists. Note this is inlined into the bundle

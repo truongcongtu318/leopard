@@ -247,8 +247,18 @@ export class CustomerTrackingSocketManager {
   constructor(options: CustomerTrackingSocketOptions = {}) {
     this.socket = options.socket ?? null;
     this.socketFactory = options.socketFactory;
-    this.serverUrl =
-      options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? '';
+    // EXPO_PUBLIC_API_URL points at the REST base, which may carry the /api/v1
+    // suffix. Socket.IO reads everything after the host as the namespace path, so
+    // leaving the suffix in place would connect to a namespace like
+    // /api/v1/tracking that the gateway does not expose. Strip it, matching
+    // apps/driver's senders, and an empty result means "current origin".
+    this.serverUrl = (
+      options.serverUrl ??
+      process.env.EXPO_PUBLIC_API_URL ??
+      ''
+    )
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/$/, '');
     this.namespace = options.namespace ?? '/tracking';
     this.driverLabel = options.driverLabel ?? 'Tài xế Nguyễn Minh An';
     this.tokenProvider = options.tokenProvider;

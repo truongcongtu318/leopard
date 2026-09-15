@@ -33,7 +33,9 @@ COPY apps/driver/src/ apps/driver/src/
 COPY apps/driver/assets/ apps/driver/assets/
 
 ENV CI=true
-ENV EXPO_PUBLIC_API_URL=""
+# See customer.Dockerfile: a relative base, never empty, or the client falls back
+# to http://localhost:3000/api/v1 and calls the visitor's own machine.
+ENV EXPO_PUBLIC_API_URL=/api/v1
 # See customer.Dockerfile: the one-click demo accounts are hidden in favour of
 # the phone + demo-OTP flow. Inlined at build time, so a server-side env file
 # cannot override it.
