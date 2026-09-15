@@ -285,7 +285,7 @@ export type HomeDashboardScreenProps = Readonly<{
   onOpenProfile?: () => void;
   onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
   onRegisterDriver?: () => void;
-  onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }) => void;
+  onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }, pickupCoords?: { lat: number; lng: number }) => void;
   onConfirmBooking?: (details: BookingDetails & { pickup: string; dropoff: string; stops?: readonly StopItem[]; vehicleCategory: VehicleCategory; vehicleName: string }) => void;
   onOpenSavedAddresses?: () => void;
   onNavigateTab?: (tab: TabKey) => void;
@@ -312,10 +312,16 @@ export function HomeDashboardScreen({
   const initialSaved = addressStore.getDefaultAddress();
   const initialAddress = defaultPickupLocation ?? initialSaved?.address ?? 'Kho Tân Bình, TP. Hồ Chí Minh';
   const initialLabel = defaultPickupLabel ?? initialSaved?.label ?? null;
+  const initialPickupCoords =
+    initialSaved?.latitude && initialSaved?.longitude
+      ? { lat: initialSaved.latitude, lng: initialSaved.longitude }
+      : null;
 
   const [pickupText, setPickupText] = useState(initialAddress);
   const [pickupLabel, setPickupLabel] = useState<string | null>(initialLabel);
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | null>(initialPickupCoords);
   const [dropoffText, setDropoffText] = useState(defaultDropoffLocation ?? '');
+  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [stops, setStops] = useState<readonly StopItem[]>([]);
   const [selectedFleetId, setSelectedFleetId] = useState<FleetVehicleCategory>('TRUCK_125T');
   const [focusedField, setFocusedField] = useState<'pickup' | 'dropoff' | `stop:${string}` | null>(null);
@@ -355,14 +361,19 @@ export function HomeDashboardScreen({
       if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
       navigationTimeoutRef.current = setTimeout(() => {
         if (onQuickBook) {
-          dropoffCoords ? onQuickBook(pickup, dropoff, dropoffCoords) : onQuickBook(pickup, dropoff);
+          onQuickBook(
+            pickup,
+            dropoff,
+            dropoffCoords || undefined,
+            pickupCoords || undefined,
+          );
         } else {
           onCreateOrder?.();
         }
         setTimeout(() => { setIsAutoNavigating(false); hasNavigatedRef.current = false; }, 1500);
       }, 400);
     },
-    [onQuickBook, onCreateOrder],
+    [onQuickBook, onCreateOrder, pickupCoords],
   );
 
   useEffect(() => {
@@ -374,6 +385,9 @@ export function HomeDashboardScreen({
       if (saved?.address) {
         setPickupText(saved.address);
         setPickupLabel(saved.label || null);
+        if (saved.latitude && saved.longitude) {
+          setPickupCoords({ lat: saved.latitude, lng: saved.longitude });
+        }
       }
     }
   }, [defaultPickupLocation, defaultPickupLabel]);
@@ -528,7 +542,12 @@ export function HomeDashboardScreen({
         vehicleName: currentFleetVehicle.name,
       });
     } else if (onQuickBook) {
-      onQuickBook(pickupText, dropoffText);
+      onQuickBook(
+        pickupText,
+        dropoffText,
+        dropoffCoords || undefined,
+        pickupCoords || undefined,
+      );
     } else {
       onCreateOrder?.();
     }
@@ -553,7 +572,7 @@ export function HomeDashboardScreen({
             activeShipment
               ? { label: activeShipment.destination }
               : hasSelectedDropoff
-                ? { label: dropoffText }
+                ? { label: dropoffText, coords: dropoffCoords || undefined }
                 : undefined
           }
           height="100%" interactive
@@ -562,7 +581,7 @@ export function HomeDashboardScreen({
             activeShipment
               ? { label: activeShipment.origin }
               : pickupText
-                ? { label: pickupText }
+                ? { label: pickupText, coords: pickupCoords || undefined }
                 : undefined
           }
           stops={activeShipment ? [] : mapStops}
@@ -657,7 +676,7 @@ export function HomeDashboardScreen({
                   />
                 </View>
                 {pickupText.length > 0 ? (
-                  <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); }} style={styles.inputActionBtn}>
+                  <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); setPickupCoords(null); }} style={styles.inputActionBtn}>
                     <IconClose color="#94A3B8" size={14} />
                   </Pressable>
                 ) : null}
@@ -706,7 +725,7 @@ export function HomeDashboardScreen({
                   />
                 </View>
                 {dropoffText.length > 0 ? (
-                  <Pressable accessibilityLabel="Xóa điểm giao hàng" accessibilityRole="button" hitSlop={8} onPress={() => setDropoffText('')} style={styles.inputActionBtn}>
+                  <Pressable accessibilityLabel="Xóa điểm giao hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setDropoffText(''); setDropoffCoords(null); }} style={styles.inputActionBtn}>
                     <IconClose color="#94A3B8" size={14} />
                   </Pressable>
                 ) : null}
@@ -768,8 +787,10 @@ export function HomeDashboardScreen({
                           if (focusedField === 'pickup') {
                             setPickupText(item.address);
                             setPickupLabel(item.title);
+                            setPickupCoords(item.coords || null);
                           } else if (focusedField === 'dropoff') {
                             setDropoffText(item.address);
+                            setDropoffCoords(item.coords || null);
                           } else if (focusedField?.startsWith('stop:')) {
                             const stopId = focusedField.slice('stop:'.length);
                             handleUpdateStop(stopId, item.address, item.coords);
@@ -995,9 +1016,19 @@ export function HomeDashboardScreen({
           if (savedAddressModalTarget === 'pickup') {
             setPickupText(addr.address);
             setPickupLabel(addr.label);
+            if (addr.latitude && addr.longitude) {
+              setPickupCoords({ lat: addr.latitude, lng: addr.longitude });
+            } else {
+              setPickupCoords(null);
+            }
             addressStore.setDefaultAddress(addr.id);
           } else if (savedAddressModalTarget === 'dropoff') {
             setDropoffText(addr.address);
+            if (addr.latitude && addr.longitude) {
+              setDropoffCoords({ lat: addr.latitude, lng: addr.longitude });
+            } else {
+              setDropoffCoords(null);
+            }
           } else if (savedAddressModalTarget.startsWith('stop:')) {
             const stopId = savedAddressModalTarget.slice('stop:'.length);
             handleUpdateStop(

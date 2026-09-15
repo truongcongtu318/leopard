@@ -177,6 +177,8 @@ describe('HomeDashboardScreen', () => {
     expect(onQuickBook).toHaveBeenCalledWith(
       'Kho Tân Bình, TP. Hồ Chí Minh',
       'KCN Sóng Thần, Bình Dương',
+      undefined,
+      undefined,
     );
 
     await screen.unmount();
@@ -380,6 +382,8 @@ describe('HomeDashboardScreen', () => {
     expect(onQuickBook).toHaveBeenCalledWith(
       'Kho Tân Bình, TP. Hồ Chí Minh',
       'KCN Amata, Đồng Nai',
+      undefined,
+      undefined,
     );
 
     await screen.unmount();
