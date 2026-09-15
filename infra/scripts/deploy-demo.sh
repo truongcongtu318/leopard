@@ -253,9 +253,12 @@ else
 fi
 
 HOST=$(detect_public_host)
-# Media URLs are absolute, so they must point at the address clients actually
-# use — otherwise cargo photos and POD signatures resolve to localhost.
-env_set PUBLIC_FILES_BASE_URL "http://${HOST}:$(env_value API_PORT 3000)"
+# Media URLs must stay on whatever origin the client is already using. An
+# absolute http://<ip>:3000 URL breaks the HTTPS tunnel twice over: the browser
+# blocks it as mixed content, and it leaks an address the client may not be able
+# to reach. A root-relative path resolves against the app origin, which proxies
+# /files/ to the API (gateway and both Expo app configs do).
+env_set PUBLIC_FILES_BASE_URL "/files"
 
 # Clients reach the apps through the gateway port, so the API must accept those
 # origins. Include the bare host too, for direct-port access.
