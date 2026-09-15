@@ -47,6 +47,25 @@ export class UsersService {
     }
   }
 
+  public async deleteAccount(userId: string): Promise<{ success: boolean }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { status: 'DISABLED' },
+      }),
+      this.prisma.refreshSession.deleteMany({
+        where: { userId },
+      }),
+    ]);
+
+    return { success: true };
+  }
+
   private serialize(u: {
     id: string; phone: string | null; email: string | null; name: string | null;
     role: Role; status: UserStatus; onboardedAt: Date | null; avatarStorageKey: string | null;

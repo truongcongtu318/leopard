@@ -55,7 +55,7 @@ describe('AnalyticsHeroCard', () => {
 
     expect(screen.getByText('1.850.000 ₫')).toBeTruthy();
     expect(screen.getByText('2 chuyến đang chạy')).toBeTruthy();
-    expect(screen.getByText('AI ETA: 94%')).toBeTruthy();
+    expect(screen.getByText('ETA dự kiến: 94%')).toBeTruthy();
 
     const topUpBtn = screen.getByLabelText('Nạp tiền nhanh VietQR');
     await fireEvent.press(topUpBtn);

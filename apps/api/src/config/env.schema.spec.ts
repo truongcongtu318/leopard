@@ -46,6 +46,20 @@ describe('production environment schema', () => {
     });
   });
 
+  it('accepts vehicle rates JSON with optional loadingFeeVnd', () => {
+    const envWithLoadingFees = {
+      ...validProductionEnv,
+      PRICING_VEHICLE_RATES_JSON: JSON.stringify({
+        MOTORBIKE: { baseFareVnd: 70_000, perKmVnd: 10_000, loadingFeeVnd: 60_000 },
+        VAN: { baseFareVnd: 130_000, perKmVnd: 14_000, loadingFeeVnd: 100_000 },
+        TRUCK: { baseFareVnd: 200_000, perKmVnd: 18_000, loadingFeeVnd: 150_000 },
+      }),
+    };
+    expect(parseEnv(envWithLoadingFees)).toMatchObject({
+      NODE_ENV: 'production',
+    });
+  });
+
   it.each([
     'AUTH_ACCESS_TOKEN_SECRET',
     'AUTH_REFRESH_TOKEN_SECRET',

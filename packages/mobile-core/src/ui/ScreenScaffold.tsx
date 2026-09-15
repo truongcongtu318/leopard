@@ -51,6 +51,7 @@ export function ScreenScaffold({
               <Pressable
                 accessibilityLabel="Quay lại"
                 accessibilityRole="button"
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 onPress={onBack}
                 style={({ pressed }) => [
                   styles.backButton,
@@ -59,9 +60,8 @@ export function ScreenScaffold({
               >
                 <IconChevronLeft
                   color={inverse ? colors.operational.inkMuted : colors.brand.background}
-                  size={20}
+                  size={22}
                 />
-                <Text style={[styles.backText, inverse ? styles.backTextInk : null]}>Quay lại</Text>
               </Pressable>
             ) : headerLeading ? (
               headerLeading
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   topBarLeading: {
     alignItems: 'flex-start',
     justifyContent: 'center',
-    minWidth: 44,
+    width: 44,
   },
   topBarCenter: {
     alignItems: 'center',
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   topBarTrailing: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    minWidth: 44,
+    width: 44,
   },
   topBarSpacer: {
     height: 32,
@@ -219,19 +219,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   backButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xxs,
-    paddingVertical: spacing.xxs,
-    alignSelf: 'flex-start',
-  },
-  backText: {
-    ...typography.label,
-    color: colors.brand.background,
-    fontWeight: '700',
-  },
-  backTextInk: {
-    color: colors.operational.inkMuted,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
   },
   eyebrowBadge: {
     alignSelf: 'center',
@@ -257,8 +248,11 @@ const styles = StyleSheet.create({
     color: colors.operational.inkMuted,
   },
   pageTitle: {
-    ...typography.pageTitle,
+    fontSize: 17,
+    fontWeight: '600',
+    lineHeight: 22,
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
   pageTitlePlain: {
     color: colors.neutral.titleText,

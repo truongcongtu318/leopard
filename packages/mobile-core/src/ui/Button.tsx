@@ -16,6 +16,7 @@ type ButtonProps = {
   disabledLabel?: string;
   loadingLabel?: string;
   size?: ButtonSize;
+  enableHaptics?: boolean;
 };
 
 const variantStyles = StyleSheet.create({
@@ -63,8 +64,10 @@ export function Button({
   disabledLabel,
   loadingLabel = 'Đang xử lý',
   size = 'default',
+  enableHaptics,
 }: ButtonProps) {
   const isDisabled = disabled || isLoading;
+  const shouldHaptic = enableHaptics ?? (variant === 'primary' || variant === 'destructive');
   const visibleLabel = isLoading
     ? loadingLabel
     : disabled
@@ -77,7 +80,9 @@ export function Button({
       accessibilityState={{ busy: isLoading, disabled: isDisabled }}
       disabled={isDisabled}
       onPress={(e) => {
-        haptic.light();
+        if (shouldHaptic) {
+          haptic.light();
+        }
         onPress?.(e);
       }}
       style={({ pressed }) => [
@@ -88,7 +93,7 @@ export function Button({
         isDisabled ? styles.disabled : null,
       ]}
     >
-      <Text style={[styles.label, variantTextStyles[variant]]}>{visibleLabel}</Text>
+      <Text maxFontSizeMultiplier={1.3} style={[styles.label, variantTextStyles[variant]]}>{visibleLabel}</Text>
     </Pressable>
   );
 }

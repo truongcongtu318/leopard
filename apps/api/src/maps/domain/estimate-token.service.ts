@@ -91,7 +91,9 @@ export class EstimateTokenService {
         isEqualPoint(normalizedRequested.dropoff, payload.routeInput.dropoff) &&
         normalizedRequested.stops.length === payload.routeInput.stops.length &&
         normalizedRequested.stops.every((stop, i) => isEqualPoint(stop, payload.routeInput.stops[i]!)) &&
-        normalizedRequested.cargoWeightKg === payload.routeInput.cargoWeightKg;
+        normalizedRequested.cargoWeightKg === payload.routeInput.cargoWeightKg &&
+        normalizedRequested.hasLoadingSupport === payload.routeInput.hasLoadingSupport &&
+        normalizedRequested.hasVatInvoice === payload.routeInput.hasVatInvoice;
 
       if (!isMatch) {
         throw new EstimateMismatchError('Estimate parameters mismatch');
@@ -104,6 +106,7 @@ export class EstimateTokenService {
       routeId: payload.routeId,
       normalizedInput: payload.routeInput,
       expiresAt: payload.expiresAt,
+      quote: payload.quote,
     };
   }
 
@@ -221,12 +224,24 @@ function validateRouteId(routeId: string): string {
   return routeId;
 }
 
-function validateQuote(quote: PricingQuote): PricingQuote {
+function validateQuote(
+  quote: PricingQuote | (Pick<PricingQuote, 'amountVnd' | 'currency'> & Partial<PricingQuote>),
+): PricingQuote {
   if (!isSafePositiveInteger(quote.amountVnd) || quote.currency !== 'VND') {
     throw new EstimateTokenError('Estimate token quote is invalid');
   }
 
-  return quote;
+  return {
+    amountVnd: quote.amountVnd,
+    baseFareVnd: quote.baseFareVnd ?? 0,
+    distanceFareVnd: quote.distanceFareVnd ?? 0,
+    stopFareVnd: quote.stopFareVnd ?? 0,
+    loadingFeeVnd: quote.loadingFeeVnd ?? 0,
+    vatFeeVnd: quote.vatFeeVnd ?? 0,
+    platformFeeVnd: quote.platformFeeVnd ?? 0,
+    driverPayoutVnd: quote.driverPayoutVnd ?? 0,
+    currency: 'VND',
+  };
 }
 
 function normalizeRouteInput(input: RouteInput): RouteInput {
@@ -236,6 +251,8 @@ function normalizeRouteInput(input: RouteInput): RouteInput {
     dropoff: normalizePoint(input.dropoff),
     vehicleType: input.vehicleType.trim().toUpperCase(),
     ...(input.cargoWeightKg === undefined ? {} : { cargoWeightKg: Math.round(input.cargoWeightKg) }),
+    hasLoadingSupport: Boolean(input.hasLoadingSupport),
+    hasVatInvoice: Boolean(input.hasVatInvoice),
   };
 }
 
@@ -273,12 +290,22 @@ function routeInputOrNull(value: unknown): RouteInput | null {
     return null;
   }
 
+  if (value.hasLoadingSupport !== undefined && typeof value.hasLoadingSupport !== 'boolean') {
+    return null;
+  }
+
+  if (value.hasVatInvoice !== undefined && typeof value.hasVatInvoice !== 'boolean') {
+    return null;
+  }
+
   return {
     pickup,
     stops: stops as GeoPoint[],
     dropoff,
     vehicleType: value.vehicleType,
     ...(value.cargoWeightKg === undefined ? {} : { cargoWeightKg: value.cargoWeightKg }),
+    hasLoadingSupport: Boolean(value.hasLoadingSupport),
+    hasVatInvoice: Boolean(value.hasVatInvoice),
   };
 }
 
@@ -331,8 +358,19 @@ function quoteOrNull(value: unknown): PricingQuote | null {
 
   return {
     amountVnd: value.amountVnd,
+    baseFareVnd: optionalNonNegative(value.baseFareVnd),
+    distanceFareVnd: optionalNonNegative(value.distanceFareVnd),
+    stopFareVnd: optionalNonNegative(value.stopFareVnd),
+    loadingFeeVnd: optionalNonNegative(value.loadingFeeVnd),
+    vatFeeVnd: optionalNonNegative(value.vatFeeVnd),
+    platformFeeVnd: optionalNonNegative(value.platformFeeVnd),
+    driverPayoutVnd: optionalNonNegative(value.driverPayoutVnd),
     currency: 'VND',
   };
+}
+
+function optionalNonNegative(value: unknown): number {
+  return isSafeNonNegativeInteger(value) ? value : 0;
 }
 
 function pointOrNull(value: unknown): GeoPoint | null {

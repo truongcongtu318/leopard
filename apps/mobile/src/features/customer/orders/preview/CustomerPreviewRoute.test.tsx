@@ -35,7 +35,7 @@ describe('CustomerPreviewRoute', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Đơn hàng của tôi')).toBeTruthy();
+      expect(screen.getByText('Đơn hàng')).toBeTruthy();
     });
     expect(screen.queryByText(/Bản xem trước giao diện/)).toBeNull();
     expect(screen.queryByText('Kho mô phỏng Quận 7, Thành phố Hồ Chí Minh')).toBeNull();
@@ -57,7 +57,7 @@ describe('CustomerPreviewRoute', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Đơn LP-260905-001')).toBeTruthy();
+      expect(screen.getByText('Đơn LP-260904-009')).toBeTruthy();
     });
     expect(screen.getByLabelText('LEOPARD Logistics · Phiên bản Thử nghiệm Pilot')).toBeTruthy();
     expect(loadCatalogue).toHaveBeenCalledTimes(1);

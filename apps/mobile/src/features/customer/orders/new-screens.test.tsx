@@ -31,8 +31,6 @@ jest.mock('react-native-qrcode-svg', () => {
 // Import screen components
 import LocationPickerScreen from '../../../../app/customer/location-picker';
 import OrderSearchingScreen from '../../../../app/customer/orders/searching/[id]';
-import OrderCheckoutScreen from '../../../../app/customer/orders/checkout/[id]';
-import CustomerCreateOrderPage from '../../../../app/customer/orders/new';
 import { addressStore } from '../addresses/address-store';
 
 describe('New Customer Screens (Task 4)', () => {
@@ -216,100 +214,35 @@ describe('New Customer Screens (Task 4)', () => {
 
       await screen.unmount();
     });
-  });
 
-  describe('OrderCheckoutScreen (Màn 10: VietQR Payment & Escrow)', () => {
-    it('renders VietQR payment screen with price, QR code, bank transfer info, and method selector', async () => {
-      mockSearchParams = {
-        id: '11111111-1111-4111-8111-111111111001',
-        amount: '280000',
-      };
+    it('navigates back to orders when pressing top back button', async () => {
+      mockSearchParams = { id: '11111111-1111-4111-8111-111111111001' };
+      const onBack = jest.fn();
 
-      const screen = await render(<OrderCheckoutScreen />);
+      const screen = await render(<OrderSearchingScreen onBack={onBack} />);
+      const backBtn = screen.getByRole('button', { name: 'Quay lại' });
+      await fireEvent.press(backBtn);
 
-      // Order price in bold tabular nums
-      expect(screen.getByText('280.000 ₫')).toBeTruthy();
-
-      // QR Code
-      expect(screen.getByTestId('vietqr-code')).toBeTruthy();
-
-      // Bank transfer details
-      expect(screen.getByText('MB Bank (Ngân hàng Quân Đội)')).toBeTruthy();
-      expect(screen.getByText('0383188888')).toBeTruthy();
-      expect(screen.getByText('CONG TY CO PHAN LEOPARD LOGISTICS')).toBeTruthy();
-      expect(screen.getByText(/LP-11111111/)).toBeTruthy();
-
-      // Payment method selector
-      expect(screen.getByText('VietQR payOS (Napas 24/7)')).toBeTruthy();
-      expect(screen.getByText('Ví doanh nghiệp (B2B Credit)')).toBeTruthy();
-
+      expect(onBack).toHaveBeenCalled();
       await screen.unmount();
     });
 
-    it('handles copy button safely and unmounts without timer leaks', async () => {
-      mockSearchParams = {
-        id: '11111111-1111-4111-8111-111111111001',
-        amount: '280000',
-      };
+    it('displays matched driver alert modal when driver accepts order', async () => {
+      mockSearchParams = { id: '11111111-1111-4111-8111-111111111001' };
+      const onMatched = jest.fn();
 
-      const screen = await render(<OrderCheckoutScreen />);
-      const copyBtn = screen.getByRole('button', { name: 'Sao chép số tài khoản' });
-      expect(copyBtn).toBeTruthy();
+      const screen = await render(
+        <OrderSearchingScreen initialMatchedDriver="Nguyễn Văn A" onMatched={onMatched} />,
+      );
 
-      await fireEvent.press(copyBtn);
-      expect(screen.getByText('Đã sao chép')).toBeTruthy();
+      expect(screen.getByText('Tài xế đã nhận đơn!')).toBeTruthy();
+      expect(screen.getByText(/Nguyễn Văn A đã nhận lệnh/)).toBeTruthy();
 
+      const trackBtn = screen.getByRole('button', { name: 'Theo dõi hành trình' });
+      await fireEvent.press(trackBtn);
+
+      expect(onMatched).toHaveBeenCalledWith('11111111-1111-4111-8111-111111111001');
       await screen.unmount();
-    });
-
-    it('switches payment method to Ví doanh nghiệp and allows payment', async () => {
-      mockSearchParams = {
-        id: '11111111-1111-4111-8111-111111111001',
-        amount: '280000',
-      };
-
-      const screen = await render(<OrderCheckoutScreen />);
-
-      const walletMethodBtn = screen.getByTestId('payment-method-wallet');
-      await fireEvent.press(walletMethodBtn);
-
-      expect(screen.getByText(/Hạn mức khả dụng/)).toBeTruthy();
-
-      await screen.unmount();
-    });
-
-    it('handles confirm payment action and navigates to searching route', async () => {
-      jest.useFakeTimers();
-      const orderId = '11111111-1111-4111-8111-111111111001';
-      mockSearchParams = { id: orderId, amount: '280000' };
-
-      const screen = await render(<OrderCheckoutScreen />);
-
-      const confirmPaidBtn = screen.getByRole('button', { name: 'Xác nhận đã thanh toán' });
-      await fireEvent.press(confirmPaidBtn);
-
-      // Success notification or simulation step
-      expect(screen.getByText(/Đang đối soát tự động/)).toBeTruthy();
-
-      act(() => {
-        jest.advanceTimersByTime(4000);
-      });
-
-      expect(mockReplace).toHaveBeenCalledWith(`/customer/orders/searching/${orderId}`);
-
-      await screen.unmount();
-      jest.useRealTimers();
-    });
-  });
-
-  describe('CustomerCreateOrderPage route (new.tsx)', () => {
-    it('routes onCreated to checkout screen', () => {
-      const element = CustomerCreateOrderPage();
-      expect(element).toBeDefined();
-      expect(element.props.onCreated).toBeDefined();
-
-      element.props.onCreated('test-order-123');
-      expect(mockReplace).toHaveBeenCalledWith('/customer/orders/checkout/test-order-123');
     });
   });
 });

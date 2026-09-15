@@ -590,7 +590,7 @@ export function MapAddressPickerModal({
             <Pressable
               accessibilityLabel="Đóng màn hình bản đồ"
               accessibilityRole="button"
-              hitSlop={8}
+              hitSlop={12}
               onPress={onClose}
               style={styles.mapModalCloseBtn}
             >
@@ -713,7 +713,7 @@ export function MapAddressPickerModal({
                 {modalAddress.length > 0 ? (
                   <Pressable
                     accessibilityLabel="Xóa địa chỉ"
-                    hitSlop={8}
+                    hitSlop={12}
                     onPress={() => {
                       setModalAddress('');
                       setCustomPinCoords(null);
@@ -739,7 +739,7 @@ export function MapAddressPickerModal({
                     </Text>
                     <Pressable
                       accessibilityLabel="Đóng gợi ý địa chỉ"
-                      hitSlop={8}
+                      hitSlop={12}
                       onPress={() => setShowSuggestions(false)}
                       style={styles.suggestionsCloseBtn}
                     >
@@ -845,7 +845,7 @@ export function MapAddressPickerModal({
                 {mapAddressNote.length > 0 ? (
                   <Pressable
                     accessibilityLabel="Xóa ghi chú"
-                    hitSlop={8}
+                    hitSlop={12}
                     onPress={() => setMapAddressNote('')}
                     style={styles.clearBtn}
                   >
@@ -896,7 +896,7 @@ export function MapAddressPickerModal({
                     {senderName.length > 0 ? (
                       <Pressable
                         accessibilityLabel="Xóa tên người gửi"
-                        hitSlop={8}
+                        hitSlop={12}
                         onPress={() => setSenderName('')}
                         style={styles.clearBtn}
                       >
@@ -926,7 +926,7 @@ export function MapAddressPickerModal({
                     {senderPhone.length > 0 ? (
                       <Pressable
                         accessibilityLabel="Xóa số điện thoại"
-                        hitSlop={8}
+                        hitSlop={12}
                         onPress={() => setSenderPhone('')}
                         style={styles.clearBtn}
                       >

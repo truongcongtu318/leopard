@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   FlatList,
   Pressable,
@@ -8,6 +8,8 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { createCustomerHttpAdapter } from '../../src/features/customer/orders/adapter';
+import type { CustomerOrdersPort } from '../../src/features/customer/orders/port';
 
 import {
   colors,
@@ -28,10 +30,10 @@ export type DeliveryItem = Readonly<{
   bookingCode: string;
   status: 'IN_TRANSIT' | 'DELIVERED';
   statusLabel: string;
-  driverName: string;
-  driverPlate: string;
-  driverRating: number;
-  driverPhone: string;
+  driverName?: string;
+  driverPlate?: string;
+  driverRating?: number;
+  driverPhone?: string;
   origin: string;
   destination: string;
   etaLabel: string;
@@ -41,77 +43,79 @@ export type DeliveryItem = Readonly<{
   priceVnd: string;
 }>;
 
-const INITIAL_DELIVERIES: readonly DeliveryItem[] = [
-  {
-    id: 'LP-D-260815-001',
-    bookingCode: '#LP-260815-001',
-    status: 'IN_TRANSIT',
-    statusLabel: 'Đang giao',
-    driverName: 'Nguyễn Văn Hùng',
-    driverPlate: '59C-882.14',
-    driverRating: 4.98,
-    driverPhone: '0901234567',
-    origin: 'Kho VLXD Tân Bình, 142 Tây Thạnh, Tân Phú',
-    destination: 'Công trình Landmark 81, P.22, Bình Thạnh',
-    etaLabel: '14 phút',
-    distanceRemainingKm: 3.8,
-    cargoLabel: 'Xi măng Hà Tiên',
-    weightKg: 2500,
-    priceVnd: '850.000 ₫',
-  },
-  {
-    id: 'LP-D-260815-002',
-    bookingCode: '#LP-260815-002',
-    status: 'IN_TRANSIT',
-    statusLabel: 'Đang giao',
-    driverName: 'Trần Minh Quân',
-    driverPlate: '59D-334.82',
-    driverRating: 4.92,
-    driverPhone: '0907654321',
-    origin: 'Kho Tổng Sóng Thần, Dĩ An, Bình Dương',
-    destination: 'Showroom Lê Lợi, P. Bến Nghé, Quận 1',
-    etaLabel: '28 phút',
-    distanceRemainingKm: 11.2,
-    cargoLabel: 'Linh kiện điện tử cao cấp',
-    weightKg: 420,
-    priceVnd: '480.000 ₫',
-  },
-  {
-    id: 'LP-D-260815-003',
-    bookingCode: '#LP-260815-003',
-    status: 'DELIVERED',
-    statusLabel: 'Đã giao',
-    driverName: 'Lê Hoàng Phúc',
-    driverPlate: '50H-192.65',
-    driverRating: 5.0,
-    driverPhone: '0909998877',
-    origin: 'Cảng Cát Lái, P. Cát Lái, TP. Thủ Đức',
-    destination: 'Kho Tân Tạo, KCN Tân Tạo, Bình Tân',
-    etaLabel: 'Đã hoàn tất',
-    distanceRemainingKm: 0,
-    cargoLabel: 'Vải sợi may mặc xuất khẩu',
-    weightKg: 1200,
-    priceVnd: '650.000 ₫',
-  },
-];
-
 type FilterTab = 'ALL' | 'IN_TRANSIT' | 'DELIVERED';
 
-export default function CustomerDeliveriesScreen() {
+export interface CustomerDeliveriesProps {
+  initialDeliveries?: readonly DeliveryItem[];
+  ordersPort?: CustomerOrdersPort;
+}
+
+export default function CustomerDeliveriesScreen({
+  initialDeliveries,
+  ordersPort,
+}: CustomerDeliveriesProps = {}) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deliveries, setDeliveries] = useState<readonly DeliveryItem[]>(
+    () => initialDeliveries ?? [],
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    const port = ordersPort ?? createCustomerHttpAdapter();
+
+    async function loadRealOrders() {
+      try {
+        const view = await port.getOrdersView('ALL');
+        if (!mounted || view.kind !== 'content' || view.orders.length === 0) return;
+
+        const mapped: DeliveryItem[] = view.orders.map((o) => {
+          const isDelivered = o.status === 'DELIVERED';
+          return {
+            id: o.id,
+            bookingCode: o.reference,
+            status: isDelivered ? 'DELIVERED' : 'IN_TRANSIT',
+            statusLabel: isDelivered ? 'Đã giao' : 'Đang điều phối',
+            driverName: undefined,
+            driverPlate: undefined,
+            driverRating: undefined,
+            driverPhone: undefined,
+            origin: o.route.origin.label,
+            destination: o.route.destination.label,
+            etaLabel: o.etaLabel,
+            distanceRemainingKm: 0,
+            cargoLabel: 'Vận chuyển tiêu chuẩn',
+            weightKg: 0,
+            priceVnd: o.priceLabel,
+          };
+        });
+
+        if (mounted && mapped.length > 0) {
+          setDeliveries(mapped);
+        }
+      } catch {
+        // Safe ignore
+      }
+    }
+
+    loadRealOrders();
+
+    return () => {
+      mounted = false;
+    };
+  }, [ordersPort]);
 
   const filteredDeliveries = useMemo(() => {
-    return INITIAL_DELIVERIES.filter((item) => {
+    return deliveries.filter((item) => {
       if (activeTab === 'IN_TRANSIT' && item.status !== 'IN_TRANSIT') return false;
       if (activeTab === 'DELIVERED' && item.status !== 'DELIVERED') return false;
 
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase();
         const matchCode = item.bookingCode.toLowerCase().includes(query);
-        const matchPlate = item.driverPlate.toLowerCase().includes(query);
-        const matchDriver = item.driverName.toLowerCase().includes(query);
+        const matchPlate = item.driverPlate?.toLowerCase().includes(query) ?? false;
+        const matchDriver = item.driverName?.toLowerCase().includes(query) ?? false;
         const matchOrigin = item.origin.toLowerCase().includes(query);
         const matchDest = item.destination.toLowerCase().includes(query);
         return matchCode || matchPlate || matchDriver || matchOrigin || matchDest;
@@ -252,11 +256,15 @@ export default function CustomerDeliveriesScreen() {
                     <View style={styles.driverCol}>
                       <View style={styles.driverInfoInline}>
                         <IconRoleDriver color="#0B1E42" size={16} />
-                        <Text style={styles.driverNameText}>{item.driverName}</Text>
-                        <View style={styles.ratingBadge}>
-                          <IconStar color="#F59E0B" fill="#F59E0B" size={12} strokeWidth={1.8} />
-                          <Text style={styles.ratingText}>{item.driverRating.toFixed(2)}</Text>
-                        </View>
+                        <Text style={styles.driverNameText}>
+                          {item.driverName || 'Đang tìm tài xế'}
+                        </Text>
+                        {typeof item.driverRating === 'number' ? (
+                          <View style={styles.ratingBadge}>
+                            <IconStar color="#F59E0B" fill="#F59E0B" size={12} strokeWidth={1.8} />
+                            <Text style={styles.ratingText}>{item.driverRating.toFixed(2)}</Text>
+                          </View>
+                        ) : null}
                       </View>
                       <Text style={styles.cargoText}>
                         {item.cargoLabel} • {item.weightKg} kg

@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer';
 
 import { describe, expect, it } from '@jest/globals';
 
-import { EstimateTokenService } from './estimate-token.service.js';
+import { EstimateTokenService, EstimateMismatchError } from './estimate-token.service.js';
 import type { RouteEstimate, RouteInput } from '../providers/map-provider.js';
 
 describe('EstimateTokenService', () => {
@@ -24,18 +24,22 @@ describe('EstimateTokenService', () => {
 
     const verified = service.verify(token);
 
-    expect(verified).toEqual({
-      ...routeEstimate(),
-      estimatedPriceVnd: 87_654,
-      routeId: 'route-0',
-      normalizedInput: {
-        pickup: { latitude: 10.762623, longitude: 106.660172 },
-        stops: [{ latitude: 10.776889, longitude: 106.700807 }],
-        dropoff: { latitude: 10.823099, longitude: 106.629664 },
-        vehicleType: 'VAN',
-      },
-      expiresAt: '2026-08-01T03:10:00.000Z',
-    });
+    expect(verified).toEqual(
+      expect.objectContaining({
+        ...routeEstimate(),
+        estimatedPriceVnd: 87_654,
+        routeId: 'route-0',
+        normalizedInput: {
+          pickup: { latitude: 10.762623, longitude: 106.660172 },
+          stops: [{ latitude: 10.776889, longitude: 106.700807 }],
+          dropoff: { latitude: 10.823099, longitude: 106.629664 },
+          vehicleType: 'VAN',
+          hasLoadingSupport: false,
+          hasVatInvoice: false,
+        },
+        expiresAt: '2026-08-01T03:10:00.000Z',
+      }),
+    );
   });
 
   it('rejects a token whose signed route payload was tampered', () => {
@@ -137,6 +141,22 @@ describe('EstimateTokenService', () => {
     expect(() =>
       service.verify(token, { ...routeInput(), vehicleType: 'TRUCK', cargoWeightKg: 1_250 }),
     ).not.toThrow();
+  });
+
+  it('rejects verification if client tampered with loading support or vat flags', () => {
+    const service = new EstimateTokenService({ secret, now: () => issuedAt });
+    const token = service.issue({
+      routeInput: { ...routeInput(), hasLoadingSupport: false, hasVatInvoice: false },
+      estimate: routeEstimate(),
+      quote: { amountVnd: 87_654, currency: 'VND' },
+      routeId: 'route-0',
+    });
+    expect(() => {
+      service.verify(token, { ...routeInput(), hasLoadingSupport: true, hasVatInvoice: false });
+    }).toThrow(EstimateMismatchError);
+    expect(() => {
+      service.verify(token, { ...routeInput(), hasLoadingSupport: false, hasVatInvoice: true });
+    }).toThrow(EstimateMismatchError);
   });
 
   it('keeps every route in a multi-route estimate bound to its own token: decoding Token A never returns Route B data', () => {

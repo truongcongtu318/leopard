@@ -133,7 +133,7 @@ export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRunti
   return (
     <CustomerOrderDetailScreen
       onBack={() => router.back()}
-      onCancel={(actionId) => void runIntent({ actionId, orderId })}
+      onCancel={(actionId, reason) => void runIntent({ actionId, orderId, value: reason })}
       onOpenTracking={(id) =>
         router.push({ pathname: '/customer/tracking', params: { orderId: id } })
       }

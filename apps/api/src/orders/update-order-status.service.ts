@@ -16,7 +16,7 @@ export class UpdateOrderStatusService {
     private readonly ordersRepository: OrdersRepository,
     private readonly proofReader: DeliveryProofReader,
     private readonly eventsPublisher: OrderEventsPublisher,
-  ) {}
+  ) { }
 
   async updateStatus(
     actor: AuthenticatedActor,
@@ -98,6 +98,12 @@ export class UpdateOrderStatusService {
       }
 
       if (dto.status === 'DELIVERED') {
+        const routeSnapshot = order.routeSnapshot as Record<string, any> | null;
+        const driverPayout =
+          typeof routeSnapshot?.driverPayoutVnd === 'number'
+            ? routeSnapshot.driverPayoutVnd
+            : Math.round((order.priceVnd ?? 0) * 0.85);
+
         const profile = await tx.driverProfile.findUnique({
           where: { userId: actor.userId },
         });
@@ -106,6 +112,10 @@ export class UpdateOrderStatusService {
 
         await tx.driverProfile.update({
           where: { userId: actor.userId },
+          data: {
+            availability: 'AVAILABLE',
+            balanceVnd: { increment: driverPayout },
+          },
           data: {
             availability: nextAvailability,
             autoOfflineOnComplete: false,

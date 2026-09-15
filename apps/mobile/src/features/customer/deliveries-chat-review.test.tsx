@@ -28,25 +28,101 @@ jest.mock('react-native-qrcode-svg', () => {
   };
 });
 
+const TEST_DELIVERIES_FIXTURE = [
+  {
+    id: 'LP-D-260815-001',
+    bookingCode: '#LP-260815-001',
+    status: 'IN_TRANSIT' as const,
+    statusLabel: 'Đang giao',
+    driverName: 'Nguyễn Văn Hùng',
+    driverPlate: '59C-882.14',
+    driverRating: 4.98,
+    driverPhone: '0901234567',
+    origin: 'Kho VLXD Tân Bình, 142 Tây Thạnh, Tân Phú',
+    destination: 'Công trình Landmark 81, P.22, Bình Thạnh',
+    etaLabel: '14 phút',
+    distanceRemainingKm: 3.8,
+    cargoLabel: 'Xi măng Hà Tiên',
+    weightKg: 2500,
+    priceVnd: '850.000 ₫',
+  },
+  {
+    id: 'LP-D-260815-002',
+    bookingCode: '#LP-260815-002',
+    status: 'IN_TRANSIT' as const,
+    statusLabel: 'Đang giao',
+    driverName: 'Trần Minh Quân',
+    driverPlate: '59D-334.82',
+    driverRating: 4.92,
+    driverPhone: '0907654321',
+    origin: 'Kho Tổng Sóng Thần, Dĩ An, Bình Dương',
+    destination: 'Showroom Lê Lợi, P. Bến Nghé, Quận 1',
+    etaLabel: '28 phút',
+    distanceRemainingKm: 11.2,
+    cargoLabel: 'Linh kiện điện tử cao cấp',
+    weightKg: 420,
+    priceVnd: '480.000 ₫',
+  },
+  {
+    id: 'LP-D-260815-003',
+    bookingCode: '#LP-260815-003',
+    status: 'DELIVERED' as const,
+    statusLabel: 'Đã giao',
+    driverName: 'Lê Hoàng Phúc',
+    driverPlate: '50H-192.65',
+    driverRating: 5.0,
+    driverPhone: '0909998877',
+    origin: 'Cảng Cát Lái, P. Cát Lái, TP. Thủ Đức',
+    destination: 'Kho Tân Tạo, KCN Tân Tạo, Bình Tân',
+    etaLabel: 'Đã hoàn tất',
+    distanceRemainingKm: 0,
+    cargoLabel: 'Vải sợi may mặc xuất khẩu',
+    weightKg: 1200,
+    priceVnd: '650.000 ₫',
+  },
+];
+
+const mockGet = jest.fn<any>();
+const mockPost = jest.fn<any>();
+
+jest.mock('@leopard/mobile-core', () => {
+  const actual = jest.requireActual('@leopard/mobile-core') as any;
+  return {
+    ...actual,
+    httpClient: {
+      ...actual.httpClient,
+      get: (...args: any[]) => mockGet(...args),
+      post: (...args: any[]) => mockPost(...args),
+    },
+  };
+});
+
 import CustomerDeliveriesScreen from '../../../app/customer/deliveries';
+import { httpClient } from '@leopard/mobile-core';
 import { OrderChatScreen } from './chat/OrderChatScreen';
 import { OrderReviewScreen } from './review/OrderReviewScreen';
 import { ReportIssueScreen } from './report/ReportIssueScreen';
 
 describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
+  let postSpy: any;
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockSearchParams = {};
     jest.useRealTimers();
+    postSpy = jest.spyOn(httpClient, 'post').mockResolvedValue({});
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    postSpy?.mockRestore();
   });
 
   describe('CustomerDeliveriesScreen (Màn 14 - Bảng điều phối chuyến xe)', () => {
     it('renders header, search bar, filter pills, and active shipment cards', async () => {
-      const screen = await render(<CustomerDeliveriesScreen />);
+      const screen = await render(
+        <CustomerDeliveriesScreen initialDeliveries={TEST_DELIVERIES_FIXTURE} />,
+      );
 
       expect(screen.getByText('Bảng điều phối chuyến xe')).toBeTruthy();
       expect(screen.getByPlaceholderText('Tìm theo mã đơn, biển số, điểm giao...')).toBeTruthy();
@@ -64,7 +140,9 @@ describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
     });
 
     it('filters shipment cards by status and search keyword', async () => {
-      const screen = await render(<CustomerDeliveriesScreen />);
+      const screen = await render(
+        <CustomerDeliveriesScreen initialDeliveries={TEST_DELIVERIES_FIXTURE} />,
+      );
 
       // Filter by "Đã giao"
       const deliveredPill = screen.getByLabelText('Chuyến đã giao');
@@ -85,7 +163,9 @@ describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
     });
 
     it('jumps 1-tap to tracking or chat', async () => {
-      const screen = await render(<CustomerDeliveriesScreen />);
+      const screen = await render(
+        <CustomerDeliveriesScreen initialDeliveries={TEST_DELIVERIES_FIXTURE} />,
+      );
 
       const trackingBtn = screen.getByLabelText('Theo dõi trực tiếp đơn #LP-260815-001');
       await fireEvent.press(trackingBtn);
@@ -101,15 +181,34 @@ describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
 
   describe('OrderChatScreen (Màn 13 - Trò chuyện trong chuyến)', () => {
     it('renders driver info, call button, message bubbles, and quick reply chips', async () => {
+      mockGet.mockResolvedValueOnce([
+        {
+          id: 'msg-1',
+          orderId: 'LP-260815-001',
+          senderId: 'driver-1',
+          body: 'Chào bạn, mình đang trên đường qua kho',
+          createdAt: new Date().toISOString(),
+          senderRole: 'DRIVER',
+        },
+        {
+          id: 'msg-2',
+          orderId: 'LP-260815-001',
+          senderId: 'customer-1',
+          body: 'Dạ vâng, hàng đã đóng gói sẵn',
+          createdAt: new Date().toISOString(),
+          senderRole: 'CUSTOMER',
+        },
+      ]);
+
       const screen = await render(<OrderChatScreen />);
 
       expect(screen.getByText('Nguyễn Văn Hùng')).toBeTruthy();
       expect(screen.getByText('59C-882.14')).toBeTruthy();
       expect(screen.getByLabelText('Gọi điện tài xế')).toBeTruthy();
 
-      // Message bubbles
-      expect(screen.getByText(/Chào bạn, mình đang trên đường qua kho/)).toBeTruthy();
-      expect(screen.getByText(/Dạ vâng, hàng đã đóng gói sẵn/)).toBeTruthy();
+      // Message bubbles from API response
+      expect(await screen.findByText(/Chào bạn, mình đang trên đường qua kho/)).toBeTruthy();
+      expect(await screen.findByText(/Dạ vâng, hàng đã đóng gói sẵn/)).toBeTruthy();
 
       // Quick suggestions
       expect(screen.getByText('Tôi đã đến điểm bốc')).toBeTruthy();
@@ -181,9 +280,29 @@ describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
 
       // Submit
       const submitBtn = screen.getByRole('button', { name: /Gửi đánh giá/ });
-      await fireEvent.press(submitBtn);
+      await act(async () => {
+        await fireEvent.press(submitBtn);
+      });
 
+      expect(httpClient.post).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/orders\/.+\/reviews$/),
+        expect.objectContaining({ rating: 4 }),
+      );
       expect(screen.getByText('Cảm ơn bạn đã đánh giá!')).toBeTruthy();
+
+      await screen.unmount();
+    });
+
+    it('displays assignedDriver from props instead of hardcoded fallback', async () => {
+      const screen = await render(
+        <OrderReviewScreen
+          assignedDriver={{ name: 'Trần Đức Minh', licensePlate: '43A-555.01', vehicleType: 'Xe tải 1.25T' }}
+        />,
+      );
+
+      expect(screen.getByText('Trần Đức Minh')).toBeTruthy();
+      expect(screen.getByText('Xe tải 1.25T · 43A-555.01')).toBeTruthy();
+      expect(screen.queryByText('Nguyễn Văn Hùng')).toBeNull();
 
       await screen.unmount();
     });
@@ -220,12 +339,28 @@ describe('Customer Delivery, Chat, Review & Report Screens (Task 5)', () => {
       await fireEvent.press(photoBtn);
       expect(screen.getByText('Đã đính kèm ảnh minh chứng (Bấm để đổi ảnh)')).toBeTruthy();
 
+      // Mock successful API response with real ticket code
+      postSpy.mockResolvedValueOnce({
+        id: 'tk-real-uuid',
+        ticketCode: 'TK-20260915-ABCD',
+      });
+
       // Submit
       const submitBtn = screen.getByRole('button', { name: 'Gửi báo cáo sự cố' });
-      await fireEvent.press(submitBtn);
+      await act(async () => {
+        await fireEvent.press(submitBtn);
+      });
 
+      expect(httpClient.post).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/orders\/.+\/reports$/),
+        expect.objectContaining({
+          category: 'delayed',
+          description: 'Xe giao trễ hơn 2 tiếng làm lỡ ca thi công.',
+          hasPhoto: true,
+        }),
+      );
       expect(screen.getByText('Đã tiếp nhận sự cố')).toBeTruthy();
-      expect(screen.getByText('#TK-260815')).toBeTruthy();
+      expect(screen.getByText('#TK-20260915-ABCD')).toBeTruthy();
 
       await screen.unmount();
     });

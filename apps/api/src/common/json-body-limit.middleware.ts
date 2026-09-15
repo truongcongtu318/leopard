@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { DomainError } from './domain-error.js';
@@ -94,6 +95,7 @@ function readJsonBody(
   const chunks: Buffer[] = [];
   let receivedBytes = 0;
   let settled = false;
+  const restoreContext = AsyncLocalStorage.snapshot();
 
   const finish = (error?: unknown): void => {
     if (settled) return;
@@ -101,11 +103,13 @@ function readJsonBody(
     req.removeListener('data', onData);
     req.removeListener('end', onEnd);
     req.removeListener('error', onError);
-    if (error !== undefined) {
-      next(error);
-    } else {
-      next();
-    }
+    restoreContext(() => {
+      if (error !== undefined) {
+        next(error);
+      } else {
+        next();
+      }
+    });
   };
 
   const onData = (chunk: Buffer): void => {

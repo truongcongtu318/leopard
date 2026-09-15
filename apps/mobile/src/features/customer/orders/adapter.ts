@@ -252,11 +252,20 @@ export interface PaymentQrApiResponse {
   createdAt?: string;
 }
 
+export interface AssignedDriverResponse {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  licensePlate: string | null;
+  vehicleType: string | null;
+}
+
 export interface MappedOrderResponse {
   id: string;
   reference?: string;
   customerId?: string;
   driverId: string | null;
+  assignedDriver?: AssignedDriverResponse | null;
   status: string;
   routeSnapshot?: unknown;
   providerSource: string | null;
@@ -504,6 +513,8 @@ export function mapPaymentToView(
       payment.expiresAt &&
       !isNaN(new Date(payment.expiresAt).getTime()) &&
       new Date(payment.expiresAt).getTime() <= Date.now();
+    const canRefresh =
+      orderStatus !== 'CANCELLED' && orderStatus !== 'DELIVERED';
 
     if (isExpired) {
       return {
@@ -513,12 +524,14 @@ export function mapPaymentToView(
         expiresAtLabel: 'Đã hết hạn theo phản hồi hệ thống',
         sourceLabel,
         qrState: 'expired',
-        notice: 'Mã QR đã hết hạn',
-        action: {
-          id: 'refresh-payment',
-          label: 'Tạo mã QR mới',
-          emphasis: 'secondary',
-        },
+        notice: canRefresh ? 'Mã QR đã hết hạn' : null,
+        action: canRefresh
+          ? {
+              id: 'refresh-payment',
+              label: 'Tạo mã QR mới',
+              emphasis: 'secondary',
+            }
+          : null,
       };
     }
 
@@ -537,6 +550,9 @@ export function mapPaymentToView(
     };
   }
 
+  const canCreateUnpaidAction =
+    orderStatus !== 'CANCELLED' && orderStatus !== 'DELIVERED';
+
   return {
     status: 'UNPAID',
     amountLabel,
@@ -544,11 +560,13 @@ export function mapPaymentToView(
     sourceLabel,
     qrState: 'none',
     notice: null,
-    action: {
-      id: 'create-payment',
-      label: 'Tạo mã QR thanh toán',
-      emphasis: 'primary',
-    },
+    action: canCreateUnpaidAction
+      ? {
+          id: 'create-payment',
+          label: 'Tạo mã QR thanh toán',
+          emphasis: 'primary',
+        }
+      : null,
   };
 }
 
@@ -564,7 +582,8 @@ export function mapTrackingToView(
     return { kind: 'no-driver', message: 'Chưa có tài xế nhận đơn.' };
   }
 
-  const driverLabel = 'Tài xế Nguyễn Minh An';
+  const driverName = order.assignedDriver?.name?.trim();
+  const driverLabel = driverName ? `Tài xế ${driverName}` : 'Đang điều phối tài xế';
 
   if (!trackingData) {
     const lastUpdatedLabel = formatDateTime(order.updatedAt || order.createdAt);
@@ -685,6 +704,14 @@ export function mapOrderToDetail(
     description: h.reason || describeStatus(h.toStatus as OrderStatus),
   }));
 
+  const cancelReason =
+    status === 'CANCELLED'
+      ? (order.statusHistory ?? [])
+          .filter((h) => h.toStatus === 'CANCELLED' && h.reason?.trim())
+          .map((h) => h.reason!.trim())
+          .at(-1) ?? null
+      : null;
+
   if (history.length === 0) {
     history.push({
       id: `history-${order.id}`,
@@ -710,6 +737,16 @@ export function mapOrderToDetail(
     invoice: invoiceData ? mapInvoiceToView(invoiceData) : null,
     media,
     history,
+    cancelReason,
+    assignedDriver: order.assignedDriver
+      ? {
+          id: order.assignedDriver.id,
+          name: order.assignedDriver.name ?? null,
+          phone: order.assignedDriver.phone ?? null,
+          licensePlate: order.assignedDriver.licensePlate ?? null,
+          vehicleType: order.assignedDriver.vehicleType ?? null,
+        }
+      : null,
   };
 }
 

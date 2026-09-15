@@ -10,6 +10,12 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
+config.resolver.blockList = [
+  new RegExp(`${path.resolve(workspaceRoot, 'apps/api')}/.*`),
+  new RegExp(`${path.resolve(workspaceRoot, 'apps/admin')}/.*`),
+  new RegExp(`${path.resolve(workspaceRoot, 'apps/driver')}/.*`),
+];
 
 module.exports = config;
+
 

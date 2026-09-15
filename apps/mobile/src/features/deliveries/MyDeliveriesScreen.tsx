@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { customerPalette, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
+import { customerPalette, haptic, iosContinuousCurve, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -90,9 +90,9 @@ type StatusPresentation = Readonly<{
 
 const STATUS_PRESENTATION: Record<DeliveryStatus, StatusPresentation> = {
   REQUESTED: { label: 'Chờ xác nhận', bg: '#FFF7ED', text: '#9A3412', dot: '#F97316' },
-  ACCEPTED: { label: 'Đã nhận', bg: customerPalette.primaryBg, text: '#1E40AF', dot: customerPalette.primary },
+  ACCEPTED: { label: 'Đã nhận', bg: '#F0F4F9', text: '#0B1E42', dot: '#0B1E42' },
   LOADING: { label: 'Đang bốc hàng', bg: leopardPalette.accentYellowBg, text: '#854D0E', dot: leopardPalette.accentYellow },
-  IN_TRANSIT: { label: 'Đang vận chuyển', bg: customerPalette.primaryBg, text: '#1D4ED8', dot: customerPalette.primary },
+  IN_TRANSIT: { label: 'Đang vận chuyển', bg: '#F0F4F9', text: '#0B1E42', dot: '#0B1E42' },
   ARRIVED: { label: 'Đã đến', bg: leopardPalette.ecoGreenBg, text: '#166534', dot: leopardPalette.ecoGreen },
   DELIVERED: { label: 'Hoàn thành', bg: leopardPalette.ecoGreenBg, text: '#166534', dot: leopardPalette.ecoGreen },
   CANCELLED: { label: 'Đã hủy', bg: '#FEE2E2', text: '#991B1B', dot: '#EF4444' },
@@ -286,6 +286,7 @@ export function MyDeliveriesScreen({
 }: MyDeliveriesScreenProps) {
   const [activeFilter, setActiveFilter] = useState<FilterChip>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Only in-progress shipments belong on this tab.
   const activeOrders = orders.filter((o) => isActiveStatus(o.status));
@@ -340,10 +341,15 @@ export function MyDeliveriesScreen({
         </View>
 
         {/* Search bar */}
-        <View style={styles.searchBar}>
-          <IconSearch color={leopardPalette.textMutedSlate} size={18} />
+        <View
+          style={[styles.searchBar, isSearchFocused ? styles.searchBarFocused : null]}
+          testID="search-bar"
+        >
+          <IconSearch color={isSearchFocused ? '#0B1E42' : leopardPalette.textMutedSlate} size={18} />
           <TextInput
             accessibilityLabel="Tìm kiếm đơn hàng"
+            onBlur={() => setIsSearchFocused(false)}
+            onFocus={() => setIsSearchFocused(true)}
             onChangeText={setSearchQuery}
             placeholder="Tìm mã đơn, hàng hóa, địa chỉ..."
             placeholderTextColor={leopardPalette.textMutedSlate}
@@ -367,22 +373,27 @@ export function MyDeliveriesScreen({
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
                 key={chip.key}
-                onPress={() => setActiveFilter(chip.key)}
+                onPress={() => {
+                  haptic.selection();
+                  setActiveFilter(chip.key);
+                }}
                 style={[styles.chip, isActive ? styles.chipActive : null]}
               >
                 <Text style={[styles.chipLabel, isActive ? styles.chipLabelActive : null]}>
                   {chip.label}
                 </Text>
-                <View style={[styles.chipBadge, isActive ? styles.chipBadgeActive : null]}>
-                  <Text
-                    style={[
-                      styles.chipBadgeText,
-                      isActive ? styles.chipBadgeTextActive : null,
-                    ]}
-                  >
-                    {chipCounts[chip.key]}
-                  </Text>
-                </View>
+                {chipCounts[chip.key] > 0 ? (
+                  <View style={[styles.filterBadge, isActive && styles.filterBadgeActive]}>
+                    <Text
+                      style={[
+                        styles.filterBadgeText,
+                        isActive ? styles.filterBadgeTextActive : null,
+                      ]}
+                    >
+                      {chipCounts[chip.key]}
+                    </Text>
+                  </View>
+                ) : null}
               </Pressable>
             );
           })}
@@ -478,6 +489,15 @@ const styles = StyleSheet.create({
     minHeight: 42,
     gap: spacing.xs,
   },
+  searchBarFocused: {
+    borderColor: '#0B1E42',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   searchIcon: {
     fontSize: 14,
   },
@@ -496,50 +516,50 @@ const styles = StyleSheet.create({
   },
   chipRow: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: 6,
+    paddingVertical: 2,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: leopardPalette.bgMuted,
-    borderRadius: leopardRadius.pill,
-    paddingHorizontal: 12,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    paddingHorizontal: 14,
     paddingVertical: 7,
-    borderWidth: 1,
-    borderColor: leopardPalette.cardBorder,
   },
   chipActive: {
-    backgroundColor: customerPalette.primaryBg,
-    borderColor: customerPalette.primary,
+    backgroundColor: '#0B1E42',
   },
   chipLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 12.5,
-    fontWeight: '600',
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '500',
   },
   chipLabelActive: {
-    color: customerPalette.primary,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
-  chipBadge: {
-    backgroundColor: leopardPalette.cardBorder,
-    borderRadius: leopardRadius.pill,
+  filterBadge: {
     minWidth: 20,
     height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
+    marginLeft: 6,
   },
-  chipBadgeActive: {
-    backgroundColor: customerPalette.primary,
+  filterBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
-  chipBadgeText: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 10,
-    fontWeight: '800',
+  filterBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    color: '#475569',
   },
-  chipBadgeTextActive: {
+  filterBadgeTextActive: {
     color: '#FFFFFF',
   },
   listContent: {

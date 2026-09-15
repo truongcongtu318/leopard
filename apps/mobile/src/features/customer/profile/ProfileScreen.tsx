@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, IconChevron, IconCreditCard, IconCrown, IconEye, IconEyeOff, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { colors, layout, radius, spacing, IconChevron, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { CustomerProfileView } from './model';
 
 export type CustomerProfileScreenProps = Readonly<{
@@ -64,7 +64,6 @@ function MenuRow({
 
 export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfileScreenProps) {
   const router = useRouter();
-  const [showBalance, setShowBalance] = useState(false);
 
   if (view.kind !== 'content') {
     return (
@@ -89,16 +88,12 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. IMMERSIVE CYBER LOGISTICS HERO HEADER */}
+        {/* 1. IMMERSIVE APPLE LUXURY HERO HEADER */}
         <View style={styles.heroCard}>
-          {/* Subtle Ambient Decorative Glows */}
-          <View pointerEvents="none" style={styles.heroGlowTopRight} />
-          <View pointerEvents="none" style={styles.heroGlowBottomLeft} />
-
           {/* Top meta bar */}
           <View style={styles.heroTopBar}>
-            <View style={styles.brandPill}>
-              <Text style={styles.brandPillText}>LEOPARD ID</Text>
+            <View style={styles.leopardIdBadge}>
+              <Text style={styles.leopardIdText}>LEOPARD ID</Text>
             </View>
 
             <Pressable
@@ -137,42 +132,42 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               </Text>
               <Text style={styles.heroPhone}>{view.phone}</Text>
 
-              {/* Crown Membership Pill */}
+              {/* Role Pill */}
               <View style={styles.membershipPill}>
                 <IconCrown color="#F59E0B" size={13} />
-                <Text style={styles.membershipText}>
-                  Hạng Vàng · <Text style={styles.membershipRole}>{view.roleLabel}</Text>
-                </Text>
+                <Text style={styles.membershipText}>{view.roleLabel}</Text>
               </View>
             </View>
           </View>
 
-          {/* Quick Stats: Tổng chuyến · Điểm thưởng · Tiết kiệm */}
+          {/* Quick Stats: Tổng đơn · Đang xử lý · Ưu đãi */}
           <View style={styles.quickStatsRow}>
             <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Tổng chuyến</Text>
-              <Text style={styles.statValueWhite}>18</Text>
+              <Text style={styles.statLabel}>Tổng đơn</Text>
+              <Text style={styles.statValueWhite}>{view.totalOrdersLabel ?? '0'}</Text>
             </View>
 
             <View style={styles.statDivider} />
 
             <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Điểm tích lũy</Text>
-              <Text style={styles.statValueGold}>850 pts</Text>
+              <Text style={styles.statLabel}>Đang xử lý</Text>
+              <Text style={styles.statValueGold}>{view.activeOrdersLabel ?? '0'}</Text>
             </View>
 
             <View style={styles.statDivider} />
 
             <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Tiết kiệm</Text>
-              <Text style={styles.statValueGreen}>320k ₫</Text>
+              <Text style={styles.statLabel}>Mã ưu đãi</Text>
+              <Text style={styles.statValueGreen}>
+                {view.vouchersLabel ? `${view.vouchersLabel} mã` : '0 mã'}
+              </Text>
             </View>
           </View>
         </View>
 
         {/* 2. FLOATING BENTO BENEFIT CARD (NẰM ĐÈ LÊN CHÂN HERO) */}
         <View style={styles.bentoWalletCard}>
-          {/* VietQR Balance Hub */}
+          {/* VietQR Escrow & Payment History Hub */}
           <View style={styles.bentoCol}>
             <View style={styles.bentoHeaderRow}>
               <Pressable
@@ -184,24 +179,12 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <View style={[styles.bentoIconBadge, { backgroundColor: '#F0F4F9' }]}>
+                <View style={[styles.bentoIconBadge, { backgroundColor: '#F1F5F9' }]}>
                   <IconWallet color="#0B1E42" size={14} />
                 </View>
-                <Text style={styles.bentoEyebrow}>VÍ VIETQR</Text>
+                <Text style={styles.bentoEyebrow}>KÝ QUỸ & ĐƠN</Text>
               </Pressable>
-              <Pressable
-                accessibilityLabel={showBalance ? 'Ẩn số dư' : 'Hiện số dư'}
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={() => setShowBalance(!showBalance)}
-                style={styles.eyeToggleBtn}
-              >
-                {showBalance ? (
-                  <IconEyeOff color="#94A3B8" size={16} />
-                ) : (
-                  <IconEye color="#94A3B8" size={16} />
-                )}
-              </Pressable>
+              <IconChevron color="#94A3B8" direction="right" size="sm" />
             </View>
 
             <Pressable
@@ -213,10 +196,8 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                 pressed ? styles.pressed : null,
               ]}
             >
-              <Text style={styles.bentoAmountText}>
-                {showBalance ? '1.250.000 ₫' : '•••••••• ₫'}
-              </Text>
-              <Text style={styles.bentoSubGreen}>Nạp rút 0đ Napas</Text>
+              <Text style={styles.bentoAmountText}>Lịch sử ký quỹ</Text>
+              <Text style={styles.bentoSubGreen}>Xem theo đơn hàng</Text>
             </Pressable>
           </View>
 
@@ -231,16 +212,18 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           >
             <View style={styles.bentoHeaderRow}>
               <View style={styles.bentoLabelWithIcon}>
-                <View style={[styles.bentoIconBadge, { backgroundColor: '#FEF3C7' }]}>
-                  <IconTag color="#D97706" size={14} />
+                <View style={[styles.bentoIconBadge, { backgroundColor: '#F1F5F9' }]}>
+                  <IconTag color="#0B1E42" size={14} />
                 </View>
                 <Text style={styles.bentoEyebrow}>MÃ ƯU ĐÃI</Text>
               </View>
               <IconChevron color="#94A3B8" direction="right" size="sm" />
             </View>
 
-            <Text style={styles.bentoPromoText}>3 khả dụng</Text>
-            <Text style={styles.bentoSubMuted}>Hết hạn trong 3 ngày</Text>
+            <Text style={styles.bentoPromoText}>
+              {view.vouchersLabel ? `${view.vouchersLabel} khả dụng` : '0 khả dụng'}
+            </Text>
+            <Text style={styles.bentoSubMuted}>Mã giảm cước vận chuyển</Text>
           </Pressable>
         </View>
 
@@ -249,16 +232,20 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <SectionHeader title="VẬN CHUYỂN & ĐƠN HÀNG" />
           <View style={styles.insetCard}>
             <MenuRow
-              badge="1 đang giao"
+              badge={
+                view.activeOrdersLabel && view.activeOrdersLabel !== '0'
+                  ? `${view.activeOrdersLabel} đang giao`
+                  : undefined
+              }
               icon={<IconOrders color="#0B1E42" size={19} />}
-              iconBg="#F0F4F9"
+              iconBg="#F1F5F9"
               label="Đơn hàng của tôi"
               onPress={() => router.push('/customer/orders')}
               subtitle="Xem lộ trình & lịch sử các chuyến xe"
             />
             <MenuRow
               icon={<IconLocationPin color="#0B1E42" size={19} />}
-              iconBg="#F0F4F9"
+              iconBg="#F1F5F9"
               isLast
               label="Sổ địa chỉ"
               onPress={() => router.push('/customer/addresses')}
@@ -272,19 +259,12 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <SectionHeader title="TÀI CHÍNH & DOANH NGHIỆP" />
           <View style={styles.insetCard}>
             <MenuRow
-              icon={<IconFileText color="#D97706" size={19} />}
-              iconBg="#FEF3C7"
+              icon={<IconFileText color="#0B1E42" size={19} />}
+              iconBg="#F1F5F9"
+              isLast
               label="Thông tin xuất hóa đơn VAT"
               onPress={() => router.push('/customer/settings')}
               subtitle="Tự động xuất hóa đơn đỏ điện tử theo chuyến"
-            />
-            <MenuRow
-              icon={<IconCreditCard color="#10B981" size={19} />}
-              iconBg="#D1FAE5"
-              isLast
-              label="Liên kết ngân hàng & Thẻ"
-              onPress={() => router.push('/customer/wallet')}
-              subtitle="VietQR Napas247, Visa, Mastercard"
             />
           </View>
         </View>
@@ -294,14 +274,14 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <SectionHeader title="HỖ TRỢ & HỆ THỐNG" />
           <View style={styles.insetCard}>
             <MenuRow
-              icon={<IconSupport247 color="#EF4444" size={19} />}
+              icon={<IconSupport247 color="#DC2626" size={19} />}
               iconBg="#FEE2E2"
               label="Trợ giúp & SOS"
               onPress={() => router.push('/customer/support')}
               subtitle="Hỗ trợ trực tuyến 24/7 và giải quyết sự cố"
             />
             <MenuRow
-              icon={<IconSettings color="#64748B" size={19} />}
+              icon={<IconSettings color="#0B1E42" size={19} />}
               iconBg="#F1F5F9"
               isLast
               label="Cài đặt"
@@ -348,41 +328,23 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: 130,
   },
   /* HERO CARD STYLES */
   heroCard: {
-    backgroundColor: '#090D16',
-    borderColor: '#1E293B',
+    backgroundColor: '#0B1E42',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
     padding: 18,
     paddingBottom: 26,
     position: 'relative',
-    shadowColor: '#000000',
+    shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 6,
-  },
-  heroGlowTopRight: {
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderRadius: 90,
-    height: 180,
-    position: 'absolute',
-    right: -50,
-    top: -50,
-    width: 180,
-  },
-  heroGlowBottomLeft: {
-    backgroundColor: 'rgba(99, 102, 241, 0.10)',
-    borderRadius: 80,
-    bottom: -40,
-    height: 160,
-    left: -40,
-    position: 'absolute',
-    width: 160,
   },
   heroTopBar: {
     alignItems: 'center',
@@ -392,16 +354,16 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 2,
   },
-  brandPill: {
-    backgroundColor: 'rgba(2, 132, 199, 0.18)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+  leopardIdBadge: {
+    backgroundColor: '#1E293B',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 9,
     paddingVertical: 3,
   },
-  brandPillText: {
-    color: '#38BDF8',
+  leopardIdText: {
+    color: '#94A3B8',
     fontSize: 10.5,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -432,19 +394,19 @@ const styles = StyleSheet.create({
   avatarSquircle: {
     alignItems: 'center',
     backgroundColor: '#0F172A',
-    borderColor: '#38BDF8',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 18,
     borderWidth: 2,
     height: 62,
     justifyContent: 'center',
-    shadowColor: '#38BDF8',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
     width: 62,
   },
   avatarText: {
-    color: '#38BDF8',
+    color: '#F1F5F9',
     fontSize: 26,
     fontWeight: '800',
   },
@@ -456,7 +418,7 @@ const styles = StyleSheet.create({
   verifiedDot: {
     alignItems: 'center',
     backgroundColor: '#F59E0B',
-    borderColor: '#090D16',
+    borderColor: '#0B1E42',
     borderRadius: 10,
     borderWidth: 2,
     bottom: -2,
@@ -536,13 +498,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   statValueGold: {
-    color: '#FBBF24',
+    color: '#FFFFFF',
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
   statValueGreen: {
-    color: '#34D399',
+    color: '#FFFFFF',
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
@@ -616,9 +578,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   bentoSubGreen: {
-    color: '#059669',
+    color: '#64748B',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   bentoPromoText: {
     color: '#D97706',
@@ -690,7 +652,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   menuBadgePill: {
-    backgroundColor: '#F0F4F9',
+    backgroundColor: '#F1F5F9',
     borderRadius: 999,
     paddingHorizontal: 7,
     paddingVertical: 1.5,

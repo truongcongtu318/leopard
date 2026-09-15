@@ -245,6 +245,14 @@ export type CustomerOrderDetailDataView = Readonly<{
     timestampLabel: string;
     description: string;
   }>[];
+  cancelReason?: string | null;
+  assignedDriver?: Readonly<{
+    id: string;
+    name: string | null;
+    phone: string | null;
+    licensePlate: string | null;
+    vehicleType: string | null;
+  }> | null;
 }>;
 
 type CustomerDetailBoundaryView = Readonly<{

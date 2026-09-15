@@ -102,7 +102,7 @@ export function SupportSosScreen() {
           <View style={styles.hotlineCardInner}>
             <View style={styles.hotlineLeft}>
               <View style={styles.hotlineIconBox}>
-                <IconPhone color="#38BDF8" size={22} />
+                <IconPhone color="#FFFFFF" size={22} />
               </View>
               <View>
                 <Text style={styles.hotlineLabel}>TỔNG ĐÀI HỖ TRỢ 24/7</Text>
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   hotlineIconBox: {
     alignItems: 'center',
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
     height: 44,
     justifyContent: 'center',
@@ -348,12 +348,12 @@ const styles = StyleSheet.create({
   },
   callBtn: {
     alignItems: 'center',
-    backgroundColor: '#0284C7',
-    borderRadius: 10,
+    backgroundColor: '#16A34A',
+    borderRadius: 12,
     height: 44,
     justifyContent: 'center',
     minHeight: 44,
-    minWidth: 80,
+    minWidth: 84,
     paddingHorizontal: 16,
   },
   callBtnText: {

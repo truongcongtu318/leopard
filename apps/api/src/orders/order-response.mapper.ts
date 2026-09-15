@@ -21,6 +21,24 @@ export interface MappedOrderStatusHistoryResponse {
   createdAt: string;
 }
 
+export interface MappedAssignedDriverResponse {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  licensePlate: string | null;
+  vehicleType: string | null;
+}
+
+export interface OrderDriverInput {
+  id: string;
+  name?: string | null;
+  phone?: string | null;
+  driverProfile?: {
+    licensePlate?: string | null;
+    vehicleType?: string | null;
+  } | null;
+}
+
 export interface CurrentContactSummary {
   targetRole: 'SENDER' | 'RECIPIENT' | 'COMPLETED' | 'NONE';
   name: string | null;
@@ -31,6 +49,7 @@ export interface MappedOrderResponse {
   id: string;
   customerId: string;
   driverId: string | null;
+  assignedDriver?: MappedAssignedDriverResponse | null;
   vehicleType?: string;
   cargoWeightKg?: number | null;
   cargoNote?: string | null;
@@ -78,8 +97,19 @@ export function mapOrderResponse(
     >;
     statusHistory?: OrderStatusHistory[];
     mediaObjects?: MediaObject[];
+    driver?: OrderDriverInput | null;
   },
 ): MappedOrderResponse {
+  const assignedDriver: MappedAssignedDriverResponse | null = order.driver
+    ? {
+      id: order.driver.id,
+      name: order.driver.name ?? null,
+      phone: order.driver.phone ?? null,
+      licensePlate: order.driver.driverProfile?.licensePlate ?? null,
+      vehicleType: order.driver.driverProfile?.vehicleType ?? null,
+    }
+    : null;
+
   const sortedStops = order.stops ? [...order.stops].sort((a, b) => a.sequence - b.sequence) : [];
   const pickupStop = sortedStops.find((s) => s.type === 'PICKUP') ?? sortedStops[0];
   const dropoffStop = [...sortedStops].reverse().find((s) => s.type === 'DROPOFF') ?? sortedStops[sortedStops.length - 1];
@@ -169,6 +199,7 @@ export function mapOrderResponse(
     id: order.id,
     customerId: order.customerId,
     driverId: order.driverId,
+    assignedDriver,
     vehicleType: order.vehicleType,
     cargoWeightKg: order.cargoWeightKg ?? null,
     cargoNote: order.cargoNote ?? null,
@@ -194,24 +225,24 @@ export function mapOrderResponse(
     ...(order.stops && order.stops.length > 0 ? { currentContact } : {}),
     ...(order.statusHistory
       ? {
-          statusHistory: order.statusHistory.map((history) => ({
-            id: history.id,
-            fromStatus: history.fromStatus,
-            toStatus: history.toStatus,
-            actorId: history.actorId,
-            reason: history.reason,
-            createdAt: history.createdAt.toISOString(),
-          })),
-        }
+        statusHistory: order.statusHistory.map((history) => ({
+          id: history.id,
+          fromStatus: history.fromStatus,
+          toStatus: history.toStatus,
+          actorId: history.actorId,
+          reason: history.reason,
+          createdAt: history.createdAt.toISOString(),
+        })),
+      }
       : {}),
     ...(order.mediaObjects
       ? {
-          media: order.mediaObjects.map((m) => ({
-            id: m.id,
-            type: m.type,
-            createdAt: m.createdAt.toISOString(),
-          })),
-        }
+        media: order.mediaObjects.map((m) => ({
+          id: m.id,
+          type: m.type,
+          createdAt: m.createdAt.toISOString(),
+        })),
+      }
       : {}),
   };
 }

@@ -47,14 +47,17 @@ const vehicleRatesSchema = z
       MOTORBIKE: z.strictObject({
         baseFareVnd: z.number().int().nonnegative(),
         perKmVnd: z.number().int().nonnegative(),
+        loadingFeeVnd: nonNegativeIntegerSchema.optional(),
       }),
       VAN: z.strictObject({
         baseFareVnd: z.number().int().nonnegative(),
         perKmVnd: z.number().int().nonnegative(),
+        loadingFeeVnd: nonNegativeIntegerSchema.optional(),
       }),
       TRUCK: z.strictObject({
         baseFareVnd: z.number().int().nonnegative(),
         perKmVnd: z.number().int().nonnegative(),
+        loadingFeeVnd: nonNegativeIntegerSchema.optional(),
       }),
     }),
   );

@@ -77,7 +77,13 @@ export function TabBar({ items }: TabBarProps) {
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
               key={item.id}
-              onPress={() => router.push(item.route)}
+              onPress={() => {
+                if (typeof router.replace === 'function') {
+                  router.replace(item.route);
+                } else {
+                  router.push(item.route);
+                }
+              }}
               style={({ pressed }) => [
                 styles.tab,
                 isActive ? styles.tabActive : null,

@@ -176,6 +176,21 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
     );
   }
 
+  // Chặn đơn chưa có tài xế: không render màn hình tài xế giả.
+  if (order.status === 'REQUESTED' || order.tracking.kind === 'no-driver') {
+    return (
+      <ScreenScaffold onBack={() => router.back()} title="Theo dõi đơn hàng">
+        <ScreenState
+          actionLabel="Xem chi tiết đơn hàng"
+          message="Chưa có tài xế nhận chuyến. Bản đồ GPS sẽ khả dụng khi tài xế nhận đơn."
+          onAction={() => router.replace(`/customer/orders/${order.id}`)}
+          state="empty"
+          title="Chưa có tài xế nhận chuyến"
+        />
+      </ScreenScaffold>
+    );
+  }
+
   const rawDistanceTotalKm = order.distanceMeters ? order.distanceMeters / 1000 : null;
   const rawDistanceRemainingKm =
     truckPoint && order.route.destination.coords
@@ -185,14 +200,17 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
   const distanceRemainingKm = Math.min(rawDistanceRemainingKm ?? distanceTotalKm, distanceTotalKm);
   const etaMinutes = Math.max(1, Math.round(order.etaDurationSeconds / 60));
 
+  const assignedDriver = order.assignedDriver ?? null;
+  const driverName =
+    assignedDriver?.name?.trim() || getDriverLabel(order.tracking) || 'Đang điều phối';
+
   return (
     <RealtimeTrackingScreen
       driver={{
-        name: getDriverLabel(order.tracking),
-        rating: 4.9,
-        totalTrips: 342,
-        vehiclePlate: '59C-882.14',
-        vehicleType: 'Xe tải',
+        name: driverName,
+        ...(assignedDriver?.phone ? { phone: assignedDriver.phone } : {}),
+        ...(assignedDriver?.licensePlate ? { vehiclePlate: assignedDriver.licensePlate } : {}),
+        ...(assignedDriver?.vehicleType ? { vehicleType: assignedDriver.vehicleType } : {}),
       }}
       onBack={() => router.back()}
       onShowVietQR={() => router.push(`/customer/orders/${order.id}`)}

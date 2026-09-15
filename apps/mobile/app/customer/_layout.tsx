@@ -37,7 +37,6 @@ export default function CustomerLayout() {
 
   const getActiveTab = (): TabKey => {
     if (
-      pathname.includes('/customer/orders/new') ||
       pathname.includes('/customer/orders/checkout') ||
       pathname.includes('/customer/orders/searching')
     ) {
@@ -67,24 +66,25 @@ export default function CustomerLayout() {
   const handleTabChange = (key: TabKey) => {
     switch (key) {
       case 'home':
-        router.push('/customer/home');
+        router.replace('/customer/home');
         break;
       case 'orders':
-        router.push('/customer/orders');
+        router.replace('/customer/orders');
         break;
       case 'wallet':
-        router.push('/customer/wallet');
+        router.replace('/customer/wallet');
         break;
       case 'account':
-        router.push('/customer/profile');
+        router.replace('/customer/profile');
         break;
     }
   };
 
   const isSubScreenWithoutNav =
-    pathname.includes('/customer/orders/new') ||
     pathname.includes('/customer/orders/checkout') ||
     pathname.includes('/customer/orders/searching') ||
+    pathname.match(/\/customer\/orders\/[^/]+$/) !== null ||
+    pathname.includes('/customer/profile-edit') ||
     pathname.includes('/customer/chat') ||
     pathname.includes('/customer/report') ||
     pathname.includes('/customer/review') ||

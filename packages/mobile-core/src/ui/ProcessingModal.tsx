@@ -13,7 +13,7 @@ export type ProcessingModalProps = Readonly<{
 
 const steps = [
   'Đang quét tài xế xe tải trong bán kính 3 km...',
-  'AI dự báo ETA & tối ưu ghép hàng VRP...',
+  'Tính toán ETA dự kiến & lộ trình vận chuyển...',
   'Đang gửi tín hiệu chuyến đi đến tài xế gần nhất...',
   'Đã tìm thấy tài xế phù hợp! Đang kết nối...',
 ];
@@ -165,6 +165,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   cancelButton: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: 9,
     paddingHorizontal: 16,
     borderRadius: leopardRadius.md,
@@ -178,6 +180,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   demoButton: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: 9,
     paddingHorizontal: 16,
     borderRadius: leopardRadius.md,

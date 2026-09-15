@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 
 import { addressStore } from '../customer/addresses/address-store';
 import { getTimeOfDayGreeting, HomeDashboardScreen } from './HomeDashboardScreen';
@@ -155,7 +156,10 @@ describe('HomeDashboardScreen', () => {
   it('submits quick route booking with custom pickup and dropoff', async () => {
     const onQuickBook = jest.fn();
     const screen = await render(
-      <HomeDashboardScreen onQuickBook={onQuickBook} />,
+      <HomeDashboardScreen
+        initialCargoImageUri="file:///test-cargo.jpg"
+        onQuickBook={onQuickBook}
+      />,
     );
 
     // Default pickup location is prefilled
@@ -524,6 +528,7 @@ describe('HomeDashboardScreen', () => {
       const screen = await render(
         <HomeDashboardScreen
           defaultDropoffLocation="KCN Tân Tạo"
+          initialCargoImageUri="file:///test-cargo.jpg"
           onConfirmBooking={onConfirmBooking}
           userName="Nguyễn Văn A"
           userPhone="0912345678"
@@ -574,5 +579,145 @@ describe('HomeDashboardScreen', () => {
 
       await screen.unmount();
     });
+
+    it('passes vehicle-specific loadingFee to BookingDetailsModal when different vehicles are selected', async () => {
+      const screen = await render(
+        <HomeDashboardScreen defaultDropoffLocation="KCN Tân Tạo" />,
+      );
+
+      // 1. Default vehicle is TRUCK_125T -> 150.000 ₫
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByText('+150.000 ₫')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+
+      // 2. Select Xe Ba Gác (BIKE_3W) -> 60.000 ₫
+      await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Ba Gác/));
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByText('+60.000 ₫')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+
+      // 3. Select Van 500kg (VAN_500KG) -> 100.000 ₫
+      await fireEvent.press(screen.getByLabelText(/Chọn xe Van 500kg/));
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByText('+100.000 ₫')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+
+      // 4. Select Xe Tải 2.5T (TRUCK_25T) -> 250.000 ₫
+      await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Tải 2.5T/));
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByText('+250.000 ₫')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Đóng modal chi tiết'));
+
+      await screen.unmount();
+    });
+
+    it('supports adding, updating, and removing up to 3 intermediate stops and passes them to onConfirmBooking', async () => {
+      const onConfirmBooking = jest.fn();
+      const screen = await render(
+        <HomeDashboardScreen
+          defaultDropoffLocation="KCN Tân Tạo"
+          initialCargoImageUri="file:///test-cargo.jpg"
+          onConfirmBooking={onConfirmBooking}
+        />,
+      );
+
+      // Initially no intermediate stops
+      expect(screen.queryByTestId('cr-stop-input-0')).toBeNull();
+      const addStopBtn = screen.getByTestId('cr-add-stop');
+      expect(addStopBtn).toBeTruthy();
+      expect(screen.getByText('Thêm điểm dừng')).toBeTruthy();
+
+      // Add stop 1
+      await fireEvent.press(addStopBtn);
+      expect(screen.getByTestId('cr-stop-input-0')).toBeTruthy();
+      expect(screen.getByText('ĐIỂM DỪNG 1')).toBeTruthy();
+      expect(screen.getByText('Thêm điểm dừng (1/3)')).toBeTruthy();
+
+      // Type stop 1 address
+      await fireEvent.changeText(
+        screen.getByTestId('cr-stop-input-0'),
+        'Chợ An Đông, Q.5',
+      );
+
+      // Add stop 2
+      await fireEvent.press(screen.getByTestId('cr-add-stop'));
+      expect(screen.getByTestId('cr-stop-input-1')).toBeTruthy();
+      expect(screen.getByText('ĐIỂM DỪNG 2')).toBeTruthy();
+      expect(screen.getByText('Thêm điểm dừng (2/3)')).toBeTruthy();
+
+      // Type stop 2 address
+      await fireEvent.changeText(
+        screen.getByTestId('cr-stop-input-1'),
+        'Chợ Tân Định, Q.1',
+      );
+
+      // Add stop 3
+      await fireEvent.press(screen.getByTestId('cr-add-stop'));
+      expect(screen.getByTestId('cr-stop-input-2')).toBeTruthy();
+      expect(screen.getByText('ĐIỂM DỪNG 3')).toBeTruthy();
+
+      // Maximum 3 stops reached -> Add button is replaced with limit hint
+      expect(screen.queryByTestId('cr-add-stop')).toBeNull();
+      expect(screen.getByTestId('cr-max-stop-hint')).toBeTruthy();
+      expect(screen.getByText('Tối đa 3 điểm dừng')).toBeTruthy();
+
+      // Remove stop 2
+      await fireEvent.press(screen.getByTestId('cr-stop-remove-1'));
+      // Now only 2 stops remain
+      expect(screen.queryByTestId('cr-stop-input-2')).toBeNull();
+      expect(screen.getByTestId('cr-stop-input-0')).toBeTruthy();
+      expect(screen.getByTestId('cr-stop-input-1')).toBeTruthy();
+      // Add button reappears
+      expect(screen.getByTestId('cr-add-stop')).toBeTruthy();
+      expect(screen.getByText('Thêm điểm dừng (2/3)')).toBeTruthy();
+
+      // Proceed to booking details modal
+      await fireEvent.press(screen.getByText(/TIẾP TỤC ĐẶT XE/));
+      expect(screen.getByTestId('booking-details-modal')).toBeTruthy();
+
+      // Confirm booking
+      await fireEvent.press(screen.getByText(/XÁC NHẬN GỌI XE/));
+      expect(onConfirmBooking).toHaveBeenCalledTimes(1);
+      const passedDetails = onConfirmBooking.mock
+        .calls[0][0] as unknown as { stops: { address: string }[] };
+      expect(passedDetails.stops).toHaveLength(2);
+      expect(passedDetails.stops[0].address).toBe('Chợ An Đông, Q.5');
+
+      await screen.unmount();
+    });
+  });
+
+  it('renders chips, badges, and ETA with logistics green and navy tones instead of cyan', async () => {
+    addressStore.saveAddress({
+      id: 'addr-hub-1',
+      label: 'Kho Thủ Đức',
+      address: 'Đường Song Hành, Thủ Đức',
+      isDefault: true,
+      category: 'WAREHOUSE',
+    });
+
+    const screen = await render(
+      <HomeDashboardScreen activeShipment={activeShipment} />,
+    );
+
+    // Pickup badge text and container
+    const badgeContainer = screen.getByTestId('pickup-label-badge');
+    expect(StyleSheet.flatten(badgeContainer.props.style).backgroundColor).toBe('#F0FDF4');
+    const badgeText = screen.getByTestId('pickup-label-badge-text');
+    expect(StyleSheet.flatten(badgeText.props.style).color).toBe('#166534');
+
+    // Hub chip style and text color
+    const hubChip = screen.getByTestId('hub-chip-Kho Thủ Đức');
+    const hubChipStyle = StyleSheet.flatten(hubChip.props.style);
+    expect(hubChipStyle.backgroundColor).toBe('#F8FAFC');
+    expect(hubChipStyle.borderColor).toBe('#E2E8F0');
+
+    // Active shipment ETA pill
+    const etaPill = screen.getByTestId('active-shipment-eta-pill');
+    expect(StyleSheet.flatten(etaPill.props.style).backgroundColor).toBe('#F0F4F9');
+    const etaText = screen.getByText(/ETA dự kiến 18 phút/);
+    expect(StyleSheet.flatten(etaText.props.style).color).toBe('#0B1E42');
+
+    await screen.unmount();
   });
 });

@@ -164,6 +164,7 @@ export function SlideToAction({
           testID={`${testID}-label`}
           style={[styles.label, { color: variantStyle.textColor }]}
           numberOfLines={1}
+          maxFontSizeMultiplier={1.2}
         >
           {label}
         </Text>

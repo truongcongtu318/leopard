@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, layout, spacing, typography } from '../theme/tokens';
+import { colors, customerPalette, layout, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
 import { LedgerSection } from './LedgerSection';
 import { MapPanel } from './MapPanel';
@@ -52,7 +52,12 @@ describe('ScreenScaffold and SectionHeading', () => {
       paddingBottom: spacing.md,
       position: 'relative',
     });
-    expect(StyleSheet.flatten(pageTitle.props.style)).toMatchObject(typography.pageTitle);
+    expect(StyleSheet.flatten(pageTitle.props.style)).toMatchObject({
+      fontSize: 17,
+      fontWeight: '600',
+      lineHeight: 22,
+      textAlign: 'center',
+    });
     expect(pageTitle.props.accessibilityRole).toBe('header');
     expect(screen.getByRole('button').props.style).toBeTruthy();
 
@@ -428,5 +433,14 @@ describe('MapPanel', () => {
     expect(panel.props.accessibilityLiveRegion).toBe('polite');
 
     await screen.unmount();
+  });
+});
+
+describe('customerPalette', () => {
+  it('aligns customerPalette with Midnight Navy primary and tabActive', () => {
+    expect(customerPalette.primary).toBe('#0B1E42');
+    expect(customerPalette.tabActive).toBe('#0B1E42');
+    expect(customerPalette.tabActiveBg).toBe('#F0F4F9');
+    expect(customerPalette.accent).toBe('#F59E0B');
   });
 });

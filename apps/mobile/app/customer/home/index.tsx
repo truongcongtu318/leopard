@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
-import { sessionStore } from '@leopard/mobile-core';
+import { sessionStore, httpClient, appendFileToFormData } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../../src/features/customer/addresses/address-store';
 import { createCustomerHttpAdapter } from '../../../src/features/customer/orders/adapter';
 import {
@@ -79,7 +79,7 @@ export default function CustomerHomePage() {
         if (mounted) {
           setRecentOrders(
             view.orders
-              .filter((order) => order.status === 'DELIVERED' && order.id !== activeOrder?.id)
+              .filter((order) => (order.status === 'DELIVERED' || order.status === 'CANCELLED') && order.id !== activeOrder?.id)
               .slice(0, 5)
               .map((order) => ({
                 id: order.id,
@@ -117,8 +117,7 @@ export default function CustomerHomePage() {
     async function loadCustomerUser() {
       try {
         if (sessionStore.isAuthenticated()) {
-          const { httpClient } = require('@leopard/mobile-core');
-          const user = await httpClient.get('/me');
+          const user = await httpClient.get<{ id: string; name?: string | null; phone?: string | null }>('/me');
           if (mounted && user) {
             setCustomerUser({
               name: user.name || undefined,
@@ -160,7 +159,22 @@ export default function CustomerHomePage() {
   }
 
   const handleSwitchRole = async (targetRole: 'CUSTOMER' | 'DRIVER') => {
-    await sessionStore.setSession('preview-acc-token', 'preview-ref-token', targetRole);
+    try {
+      const accountId = targetRole === 'DRIVER' ? 'driver' : 'customer';
+      const auth = await httpClient.post<{
+        session: { accessToken: string; refreshToken: string };
+        user: { role: 'CUSTOMER' | 'DRIVER' };
+      }>('/auth/login/demo', { accountId });
+      if (auth?.session) {
+        await sessionStore.setSession(
+          auth.session.accessToken,
+          auth.session.refreshToken,
+          targetRole,
+        );
+      }
+    } catch {
+      await sessionStore.setSession('preview-acc-token', 'preview-ref-token', targetRole);
+    }
     if (targetRole === 'DRIVER') {
       router.replace('/(public)/login');
     } else {
@@ -190,8 +204,64 @@ export default function CustomerHomePage() {
       recentOrders={recentOrders}
       userName={customerUser?.name}
       userPhone={customerUser?.phone}
-      onConfirmBooking={(booking) => {
-        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+      onConfirmBooking={async (booking) => {
+        let orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+        try {
+          const port = createCustomerHttpAdapter();
+          const pickupCoords =
+            defaultAddress?.latitude && defaultAddress?.longitude
+              ? { lat: defaultAddress.latitude, lng: defaultAddress.longitude }
+              : { lat: 10.8012, lng: 106.6544 };
+          const dropoffCoords = { lat: 10.7769, lng: 106.7009 };
+          const vehicleType = vehicleCategoryToOrderType(booking.vehicleCategory);
+
+          const formPayload = {
+            pickup: booking.pickup,
+            pickupCoords,
+            stops: (booking.stops || [])
+              .filter((s) => s.address.trim().length > 0)
+              .map((s) => ({ id: s.id, value: s.address, coords: s.coords })),
+            dropoff: booking.dropoff,
+            dropoffCoords,
+            vehicleType,
+            cargoNote: [booking.cargoCategory, booking.cargoNote].filter(Boolean).join(' · '),
+            cargoWeight: vehicleType === 'TRUCK' ? '1250' : '300',
+            requiresLoadingSupport: booking.hasLoadingSupport,
+            paymentMethod: booking.paymentMethod,
+            fieldErrors: {},
+          };
+
+          const estimateView = await port.estimateOrder(formPayload);
+          const estimateToken =
+            estimateView.kind === 'form' && estimateView.estimate.kind === 'ready'
+              ? estimateView.estimate.routes[0]?.estimateToken
+              : undefined;
+
+          if (estimateToken) {
+            const created = await port.createOrder(formPayload, estimateToken);
+            if (created.kind === 'content') {
+              orderId = created.order.id;
+
+              if (booking.cargoImageUri) {
+                try {
+                  const form = new FormData();
+                  await appendFileToFormData(form, 'file', {
+                    uri: booking.cargoImageUri,
+                    name: 'cargo.jpg',
+                    mimeType: 'image/jpeg',
+                  });
+                  form.append('clientRequestId', `req-${Date.now()}`);
+                  await httpClient.postForm(`/orders/${orderId}/media/cargo`, form);
+                } catch {
+                  // Non-blocking upload fallback
+                }
+              }
+            }
+          }
+        } catch {
+          // Keep offline fallback orderId if network unavailable
+        }
+
         if (booking.paymentMethod === 'CASH') {
           router.push({
             pathname: `/customer/orders/searching/${orderId}`,
@@ -221,11 +291,10 @@ export default function CustomerHomePage() {
         }
       }}
       onCreateOrder={() => {
-        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
-        router.push({
-          pathname: `/customer/orders/checkout/${orderId}`,
-          params: { amount: getAmountForVehicle(selectedVehicleCategory) },
-        });
+        // Quick-create is intentionally disabled: all orders must go through
+        // onConfirmBooking with a real estimateToken + createOrder API call.
+        // Redirect user into the standard booking entry point.
+        router.push('/customer/orders/new');
       }}
       onNavigateTab={(tab) => {
         switch (tab) {

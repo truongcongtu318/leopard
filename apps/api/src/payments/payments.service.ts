@@ -156,6 +156,66 @@ export class PaymentsService {
     return updated;
   }
 
+  async confirmCashPaymentByDriver(actor: AuthenticatedActor, orderId: string, clientRequestId: string): Promise<PaymentIntent> {
+    if (actor.role !== 'DRIVER') {
+      throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế mới được xác nhận thu tiền mặt');
+    }
+
+    const order = await this.ordersRepo.findById(orderId);
+    if (!order) {
+      throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
+    }
+
+    if (order.driverId !== actor.userId) {
+      throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế được phân công mới được xác nhận thu tiền mặt');
+    }
+
+    if (order.status === 'CANCELLED') {
+      throw new DomainError('INVALID_ORDER_STATUS', 400, 'Không thể xác nhận thanh toán cho đơn hàng đã hủy');
+    }
+
+    const existingIdempotency = await this.paymentsRepo.findByConfirmationRequestId(clientRequestId);
+    if (existingIdempotency) {
+      await this.dispatchInvoiceIssuance(existingIdempotency);
+      return existingIdempotency;
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      let intent = await this.paymentsRepo.findActiveIntent(orderId, tx);
+      if (!intent) {
+        intent = await this.paymentsRepo.create({
+          orderId,
+          amountVnd: order.priceVnd ?? 0,
+          status: 'UNPAID',
+          clientRequestId,
+        }, tx);
+      }
+
+      const updatedIntent = await this.paymentsRepo.updateStatus(intent.id, {
+        status: 'PAID_MANUAL',
+        confirmedById: actor.userId,
+        confirmedAt: new Date(),
+        confirmationNote: `Tài xế đã thu tiền mặt ${(order.priceVnd ?? 0).toLocaleString('vi-VN')} ₫ từ khách`,
+        confirmationRequestId: clientRequestId,
+      }, tx);
+
+      await this.auditService.append({
+        actorId: actor.userId,
+        action: 'CONFIRM_PAYMENT',
+        resourceType: 'PaymentIntent',
+        resourceId: intent.id,
+        idempotencyRequestId: clientRequestId,
+      }, tx);
+
+      return updatedIntent;
+    });
+
+    await this.dispatchPaymentConfirmedNotification(updated);
+    await this.dispatchInvoiceIssuance(updated);
+
+    return updated;
+  }
+
   /**
    * Post-commit, best-effort invoice issuance (Phase 0's chosen recovery
    * model: synchronous retry-on-replay, not a durable outbox). Never throws

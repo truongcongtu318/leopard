@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -15,7 +15,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
   colors,
-  radius,
   spacing,
   IconCamera,
   IconChevronRight,
@@ -23,7 +22,21 @@ import {
   IconRoleDriver,
   IconStar,
   ScreenScaffold,
+  httpClient,
 } from '@leopard/mobile-core';
+
+export interface OrderChatScreenProps {
+  orderId?: string;
+  currentUserId?: string;
+  assignedDriver?: {
+    id?: string | null;
+    name?: string | null;
+    phone?: string | null;
+    licensePlate?: string | null;
+    vehicleType?: string | null;
+    rating?: number | null;
+  } | null;
+}
 
 type ChatMessage = {
   id: string;
@@ -32,26 +45,14 @@ type ChatMessage = {
   time: string;
 };
 
-const initialMessages: ChatMessage[] = [
-  {
-    id: 'm-1',
-    sender: 'SYSTEM',
-    text: 'Tài xế Nguyễn Văn Hùng đã nhận chuyến hàng #LP-260815-001.',
-    time: '14:20',
-  },
-  {
-    id: 'm-2',
-    sender: 'DRIVER',
-    text: 'Chào bạn, mình đang trên đường qua kho lấy hàng, khoảng 10 phút nữa tới nơi nhé.',
-    time: '14:22',
-  },
-  {
-    id: 'm-3',
-    sender: 'CUSTOMER',
-    text: 'Dạ vâng, hàng đã đóng gói sẵn ở cổng số 2 kho Tân Bình rồi ạ.',
-    time: '14:25',
-  },
-];
+type ApiOrderMessage = {
+  id: string;
+  orderId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+  senderRole?: 'CUSTOMER' | 'DRIVER';
+};
 
 const quickReplies = [
   'Tôi đã đến điểm bốc',
@@ -60,13 +61,82 @@ const quickReplies = [
   'Cảm ơn tài xế nhiều',
 ];
 
-export function OrderChatScreen() {
+export function OrderChatScreen(props?: OrderChatScreenProps) {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const searchParams = useLocalSearchParams<{
+    id?: string;
+    driverName?: string;
+    driverPhone?: string;
+    licensePlate?: string;
+    vehicleType?: string;
+    rating?: string;
+  }>();
+
+  const orderId = props?.orderId ?? searchParams.id ?? 'LP-260815-001';
+  const driverName =
+    props?.assignedDriver?.name ??
+    searchParams.driverName ??
+    'Nguyễn Văn Hùng';
+  const driverPhone =
+    props?.assignedDriver?.phone ??
+    searchParams.driverPhone ??
+    '0901234567';
+  const licensePlate =
+    props?.assignedDriver?.licensePlate ??
+    searchParams.licensePlate ??
+    '59C-882.14';
+  const ratingText =
+    props?.assignedDriver?.rating != null
+      ? props.assignedDriver.rating.toFixed(2)
+      : searchParams.rating ?? '4.98';
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
 
-  const handleSend = (textToSend?: string) => {
+  const displayPhone =
+    driverPhone.length >= 10
+      ? `${driverPhone.slice(0, 4)} *** ${driverPhone.slice(-3)}`
+      : driverPhone;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchMessages() {
+      try {
+        const data = await httpClient.get<ApiOrderMessage[]>(`/orders/${orderId}/messages`);
+        if (isMounted && Array.isArray(data)) {
+          const mapped: ChatMessage[] = data.map((msg) => {
+            const isCustomer =
+              msg.senderRole === 'CUSTOMER' ||
+              (Boolean(props?.currentUserId) && msg.senderId === props?.currentUserId);
+            const timeStr = msg.createdAt
+              ? new Date(msg.createdAt).toLocaleTimeString('vi-VN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '';
+            return {
+              id: msg.id,
+              sender: isCustomer ? 'CUSTOMER' : 'DRIVER',
+              text: msg.body,
+              time: timeStr,
+            };
+          });
+          setMessages(mapped);
+        }
+      } catch {
+        // Ignore fetch error in chat screen
+      }
+    }
+
+    void fetchMessages();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [orderId, props?.currentUserId]);
+
+  const handleSend = async (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
     if (!text) return;
 
@@ -79,11 +149,17 @@ export function OrderChatScreen() {
 
     setMessages((prev) => [...prev, newMsg]);
     if (!textToSend) setInputText('');
+
+    try {
+      await httpClient.post(`/orders/${orderId}/messages`, { body: text });
+    } catch {
+      // Retain optimistic message in local state
+    }
   };
 
   const handleCall = () => {
-    Linking.openURL('tel:0901234567').catch(() => {
-      Alert.alert('Gọi tài xế', 'Số điện thoại: 0901 *** 567');
+    Linking.openURL(`tel:${driverPhone}`).catch(() => {
+      Alert.alert('Gọi tài xế', `Số điện thoại: ${displayPhone}`);
     });
   };
 
@@ -105,7 +181,7 @@ export function OrderChatScreen() {
 
   return (
     <ScreenScaffold
-      eyebrow={`ORDER · ${id ?? 'LP-260815-001'}`}
+      eyebrow={`ORDER · ${orderId}`}
       headerRight={callButton}
       onBack={() => router.back()}
       subtitle="Trò chuyện trực tiếp với tài xế phụ trách."
@@ -122,16 +198,16 @@ export function OrderChatScreen() {
               <IconRoleDriver color="#0B1E42" size={20} />
             </View>
             <View style={styles.driverTextWrap}>
-              <Text style={styles.driverName}>Nguyễn Văn Hùng</Text>
+              <Text style={styles.driverName}>{driverName}</Text>
               <View style={styles.driverMetaRow}>
                 <View style={styles.plateBadge}>
-                  <Text style={styles.plateText}>59C-882.14</Text>
+                  <Text style={styles.plateText}>{licensePlate}</Text>
                 </View>
                 <View style={styles.ratingBadge}>
                   <IconStar color="#F59E0B" fill="#F59E0B" size={12} strokeWidth={1.8} />
-                  <Text style={styles.ratingText}>4.98</Text>
+                  <Text style={styles.ratingText}>{ratingText}</Text>
                 </View>
-                <Text style={styles.driverPhone}>0901 *** 567</Text>
+                <Text style={styles.driverPhone}>{displayPhone}</Text>
               </View>
             </View>
           </View>
@@ -152,8 +228,13 @@ export function OrderChatScreen() {
             }
 
             const isCustomer = item.sender === 'CUSTOMER';
+            const senderLabel = isCustomer ? 'Bạn' : 'Tài xế';
             return (
-              <View style={[styles.bubbleWrap, isCustomer ? styles.bubbleCustomer : styles.bubbleDriver]}>
+              <View
+                accessibilityLabel={`${senderLabel} gửi lúc ${item.time}: ${item.text}`}
+                accessible={true}
+                style={[styles.bubbleWrap, isCustomer ? styles.bubbleCustomer : styles.bubbleDriver]}
+              >
                 <Text style={[styles.bubbleText, isCustomer ? styles.bubbleTextCustomer : styles.bubbleTextDriver]}>
                   {item.text}
                 </Text>
@@ -175,7 +256,7 @@ export function OrderChatScreen() {
               <Pressable
                 accessibilityLabel={`Gợi ý tin nhắn: ${item}`}
                 accessibilityRole="button"
-                onPress={() => handleSend(item)}
+                onPress={() => void handleSend(item)}
                 style={({ pressed }) => [styles.quickChip, pressed ? styles.pressed : null]}
               >
                 <Text style={styles.quickChipText}>{item}</Text>
@@ -209,7 +290,7 @@ export function OrderChatScreen() {
             accessibilityLabel="Gửi tin nhắn"
             accessibilityRole="button"
             disabled={!inputText.trim()}
-            onPress={() => handleSend()}
+            onPress={() => void handleSend()}
             style={({ pressed }) => [
               styles.sendBtn,
               !inputText.trim() ? styles.sendBtnDisabled : null,
@@ -262,11 +343,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F0F4F9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: '#E2E8F0',
   },
   driverTextWrap: {
     flex: 1,
@@ -392,7 +473,7 @@ const styles = StyleSheet.create({
   },
   bubbleTimeCustomer: {
     alignSelf: 'flex-end',
-    color: '#94A3B8',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   bubbleTimeDriver: {
     alignSelf: 'flex-start',

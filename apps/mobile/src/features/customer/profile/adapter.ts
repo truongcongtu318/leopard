@@ -55,6 +55,36 @@ export function createCustomerProfileHttpAdapter(
       try {
         const user = await getClient().get<AuthUserResponse>('/me');
         const status = statusView(user.status);
+
+        let totalOrdersLabel: string | null = null;
+        let activeOrdersLabel: string | null = null;
+        let vouchersLabel: string | null = null;
+
+        try {
+          const ordersRes = await getClient().get<{ items?: Array<{ status: string }> } | Array<{ status: string }>>('/orders');
+          const ordersList = Array.isArray(ordersRes)
+            ? ordersRes
+            : Array.isArray(ordersRes?.items)
+              ? ordersRes.items
+              : [];
+          totalOrdersLabel = String(ordersList.length);
+          const activeCount = ordersList.filter(
+            (o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED',
+          ).length;
+          activeOrdersLabel = String(activeCount);
+        } catch {
+          // Safe non-blocking metrics fallback
+        }
+
+        try {
+          const promosRes = await getClient().get<Array<{ code: string }>>('/promotions');
+          if (Array.isArray(promosRes)) {
+            vouchersLabel = String(promosRes.length);
+          }
+        } catch {
+          // Safe non-blocking metrics fallback
+        }
+
         return {
           scenarioId: 'CP-PROFILE-SUCCESS',
           kind: 'content',
@@ -67,6 +97,9 @@ export function createCustomerProfileHttpAdapter(
           statusTone: status.tone,
           appVersion: APP_VERSION,
           isLoggingOut: false,
+          totalOrdersLabel,
+          activeOrdersLabel,
+          vouchersLabel,
         };
       } catch (error) {
         return {

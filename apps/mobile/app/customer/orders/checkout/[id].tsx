@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Clipboard,
@@ -14,19 +14,44 @@ import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
-  IconCheck,
   IconChevron,
   IconCopy,
-  IconQrPayment,
   IconSecurityShield,
-  IconWallet,
+  iosContinuousCurve,
+  systemFontFamily,
 } from '@leopard/mobile-core';
+
+import {
+  getDefaultHttpClient,
+  type CustomerHttpClient,
+} from '../../../../src/features/customer/orders/adapter';
 
 export interface OrderCheckoutProps {
   orderId?: string;
   amount?: number;
   onSuccess?: () => void;
   onBack?: () => void;
+  client?: CustomerHttpClient;
+}
+
+// Polling + countdown constants (conflict-free)
+const PAYMENT_EXPIRY_SECONDS = 600; // 10-minute QR validity window
+const RECONCILE_MAX_TICKS = 30; // 30 ticks * 2s = 60s timeout
+const RECONCILE_POLL_MS = 2000;
+
+interface PaymentApiResponse {
+  id?: string;
+  orderId?: string;
+  amountVnd?: number;
+  status?: string;
+  provider?: string;
+  providerReference?: string;
+  qrPayload?: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
+  memo?: string;
+  referenceLabel?: string;
 }
 
 function formatVnd(val: number): string {
@@ -40,8 +65,31 @@ function formatOrderRef(id: string): string {
   return `LP-${clean}`;
 }
 
+function generateClientRequestId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // fallback below
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function formatCountdown(totalSeconds: number): string {
+  const clamped = Math.max(0, totalSeconds);
+  const mm = Math.floor(clamped / 60);
+  const ss = clamped % 60;
+  return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
+}
+
 export default function OrderCheckoutScreen({
   amount: propAmount,
+  client: propClient,
   onBack,
   onSuccess,
   orderId: propOrderId,
@@ -53,30 +101,186 @@ export default function OrderCheckoutScreen({
   }>();
 
   const id = propOrderId || params.id || '11111111-1111-4111-8111-111111111001';
-  const rawAmount = propAmount ?? (params.amount ? Number(params.amount) : 280000);
-  const amount = Number.isFinite(rawAmount) ? rawAmount : 280000;
+  const initialRawAmount = propAmount ?? (params.amount ? Number(params.amount) : 280000);
+  const initialAmount = Number.isFinite(initialRawAmount) ? initialRawAmount : 280000;
 
-  const [paymentMethod, setPaymentMethod] = useState<'vietqr' | 'wallet'>('vietqr');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isReconciling, setIsReconciling] = useState(false);
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(PAYMENT_EXPIRY_SECONDS);
+  const [isExpired, setIsExpired] = useState(false);
+  const [renderExpired, setRenderExpired] = useState(false);
+  const [showTimeoutBanner, setShowTimeoutBanner] = useState(false);
 
-  const bankName = 'MB Bank (Ngân hàng Quân Đội)';
-  const accountNumber = '0383188888';
-  const accountName = 'CONG TY CO PHAN LEOPARD LOGISTICS';
-  const orderReference = formatOrderRef(id);
-
-  const cleanRef = orderReference.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-  const qrPayload = `00020101021238540010A000000727012600069704220112${accountNumber}0208QRIBFTTA520400005303704540${amount}5802VN62${cleanRef.length.toString().padStart(2, '0')}${cleanRef}6304ABCD`;
+  const [qrPayload, setQrPayload] = useState<string>('');
+  const [bankName, setBankName] = useState<string>('VietQR (Napas 24/7)');
+  const [bankTitle, setBankTitle] = useState<string>('VIETQR');
+  const [accountNumber, setAccountNumber] = useState<string>('');
+  const [accountName, setAccountName] = useState<string>('CONG TY CO PHAN LEOPARD LOGISTICS');
+  const [orderReference, setOrderReference] = useState<string>(formatOrderRef(id));
+  const [amount, setAmount] = useState<number>(initialAmount);
+  const [isLoadingPayment, setIsLoadingPayment] = useState<boolean>(true);
 
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeClient = propClient ?? getDefaultHttpClient();
 
+  // Step 1: Create payment intent on mount
   useEffect(() => {
+    let isMounted = true;
+    const clientRequestId = generateClientRequestId();
+
+    async function createPayment() {
+      try {
+        setIsLoadingPayment(true);
+        const res = await activeClient.post<PaymentApiResponse>(
+          `/orders/${id}/payments`,
+          { clientRequestId },
+        );
+
+        if (!isMounted) return;
+
+        if (res) {
+          if (res.qrPayload) setQrPayload(res.qrPayload);
+          if (typeof res.amountVnd === 'number' && Number.isFinite(res.amountVnd)) {
+            setAmount(res.amountVnd);
+          }
+          if (res.bankName) {
+            setBankName(res.bankName);
+            setBankTitle(res.bankName.split(' ')[0].toUpperCase());
+          } else if (res.provider) {
+            setBankName(res.provider === 'DEMO' ? 'Ngân hàng Demo' : 'VietQR payOS (Napas 24/7)');
+            setBankTitle(`${res.provider} BANK`);
+          }
+          if (res.accountNumber) {
+            setAccountNumber(res.accountNumber);
+          } else if (res.providerReference) {
+            setAccountNumber(res.providerReference);
+          }
+          if (res.accountName) {
+            setAccountName(res.accountName);
+          }
+          if (res.memo) {
+            setOrderReference(res.memo);
+          } else if (res.referenceLabel) {
+            setOrderReference(res.referenceLabel);
+          }
+        }
+      } catch {
+        // Fallback gracefully on network / auth error
+      } finally {
+        if (isMounted) {
+          setIsLoadingPayment(false);
+        }
+      }
+    }
+
+    createPayment();
+
     return () => {
+      isMounted = false;
       if (copyTimeoutRef.current) {
         clearTimeout(copyTimeoutRef.current);
       }
     };
-  }, []);
+  }, [id, activeClient]);
+
+  // Step 1.5: 10-minute order expiry countdown + auto-cancel
+  useEffect(() => {
+    if (isExpired) return undefined;
+
+    const timer = setInterval(() => {
+      setSecondsRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsExpired(true);
+          setRenderExpired(true);
+          // Auto-cancel order on backend
+          activeClient
+            .post(`/orders/${id}/cancel`, {
+              reason: 'Hết hạn thanh toán tự động (10 phút)',
+            })
+            .catch(() => {});
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [id, isExpired, activeClient]);
+
+  // Step 2: Poll GET /orders/:id/payments during reconciliation (max 60s)
+  useEffect(() => {
+    if (!isReconciling) return undefined;
+    let isMounted = true;
+    let ticks = 0;
+
+    async function checkStatus() {
+      try {
+        const payments = await activeClient.get<
+          Array<{
+            id?: string;
+            status?: string;
+            amountVnd?: number;
+          }>
+        >(`/orders/${id}/payments`);
+
+        if (!isMounted) return;
+
+        const isPaid =
+          Array.isArray(payments) &&
+          payments.some(
+            (p) => p.status === 'PAID_MANUAL' || p.status === 'SUCCEEDED',
+          );
+
+        if (isPaid) {
+          setIsReconciling(false);
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            router.replace(`/customer/orders/searching/${id}`);
+          }
+          return;
+        }
+
+        ticks += 1;
+        if (ticks >= RECONCILE_MAX_TICKS) {
+          setIsReconciling(false);
+          setShowTimeoutBanner(true);
+        }
+      } catch {
+        // Safe retry on next poll tick
+        ticks += 1;
+        if (ticks >= RECONCILE_MAX_TICKS && isMounted) {
+          setIsReconciling(false);
+          setShowTimeoutBanner(true);
+        }
+      }
+    }
+
+    checkStatus();
+    const interval = setInterval(checkStatus, RECONCILE_POLL_MS);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isReconciling, id, onSuccess, router, activeClient]);
+
+  function handleRetryReconcile() {
+    setShowTimeoutBanner(false);
+    setIsReconciling(true);
+  }
+
+  async function handleCancelOrder() {
+    try {
+      await activeClient.post(`/orders/${id}/cancel`, {
+        reason: 'Khách hàng hủy đơn từ màn thanh toán',
+      });
+    } catch {
+      // Continue redirect even if cancel fails
+    }
+    router.replace('/customer/orders');
+  }
 
   const handleCopy = (field: string, text: string) => {
     setCopiedField(field);
@@ -107,18 +311,8 @@ export default function OrderCheckoutScreen({
     setIsReconciling(true);
   };
 
-  useEffect(() => {
-    if (!isReconciling) return undefined;
-    const timer = setTimeout(() => {
-      setIsReconciling(false);
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.replace(`/customer/orders/searching/${id}`);
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [isReconciling, id, onSuccess, router]);
+  // ponytail: fallback dummy string avoids react-native-qrcode-svg crash before dynamic API response arrives
+  const qrDisplayValue = qrPayload || `LEOPARD-ORDER-${id}`;
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
@@ -149,6 +343,31 @@ export default function OrderCheckoutScreen({
         <View style={styles.priceCard}>
           <Text style={styles.priceLabel}>Tổng tiền ký quỹ (Escrow)</Text>
           <Text style={styles.priceAmount}>{formatVnd(amount)}</Text>
+
+          {/* Countdown pill */}
+          <View
+            accessibilityLabel="Thời gian còn lại để thanh toán"
+            style={[
+              styles.countdownPill,
+              secondsRemaining <= 30 && styles.countdownPillUrgent,
+              secondsRemaining > 30 &&
+                secondsRemaining <= 120 &&
+                styles.countdownPillWarning,
+            ]}
+            testID="payment-expiry-countdown"
+          >
+            <Text
+              style={[
+                styles.countdownText,
+                secondsRemaining <= 30 && styles.countdownTextUrgent,
+                secondsRemaining > 30 &&
+                  secondsRemaining <= 120 &&
+                  styles.countdownTextWarning,
+              ]}
+            >
+              Hết hạn sau {formatCountdown(secondsRemaining)}
+            </Text>
+          </View>
           <View style={styles.escrowNoticeRow}>
             <IconSecurityShield color="#10B981" size={16} />
             <Text style={styles.escrowNoticeText}>
@@ -157,90 +376,15 @@ export default function OrderCheckoutScreen({
           </View>
         </View>
 
-        {/* Payment Method Selector */}
+        {/* VietQR Dynamic Code & Bank Details */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+          <Text style={styles.sectionTitle}>Chuyển khoản VietQR payOS</Text>
         </View>
 
-        <View style={styles.methodSelectorWrap}>
-          {/* VietQR Option */}
-          <Pressable
-            accessibilityLabel="Chọn thanh toán VietQR payOS"
-            accessibilityRole="button"
-            onPress={() => setPaymentMethod('vietqr')}
-            style={[
-              styles.methodOptionCard,
-              paymentMethod === 'vietqr' && styles.methodOptionActive,
-            ]}
-          >
-            <View style={styles.methodLeftWrap}>
-              <View style={styles.methodIconBox}>
-                <IconQrPayment color="#0B1E42" size={20} />
-              </View>
-              <View>
-                <Text style={styles.methodTitle}>VietQR payOS (Napas 24/7)</Text>
-                <Text style={styles.methodDesc}>Quét mã QR tự động qua app ngân hàng</Text>
-              </View>
-            </View>
-            <View
-              style={[
-                styles.radioOuter,
-                paymentMethod === 'vietqr' && styles.radioOuterActive,
-              ]}
-            >
-              {paymentMethod === 'vietqr' && <View style={styles.radioInner} />}
-            </View>
-          </Pressable>
-
-          {/* Business Wallet Option */}
-          <Pressable
-            accessibilityLabel="Chọn thanh toán Ví doanh nghiệp"
-            accessibilityRole="button"
-            onPress={() => setPaymentMethod('wallet')}
-            style={[
-              styles.methodOptionCard,
-              paymentMethod === 'wallet' && styles.methodOptionActive,
-            ]}
-            testID="payment-method-wallet"
-          >
-            <View style={styles.methodLeftWrap}>
-              <View style={styles.methodIconBox}>
-                <IconWallet color="#0B1E42" size={20} />
-              </View>
-              <View>
-                <Text style={styles.methodTitle}>Ví doanh nghiệp (B2B Credit)</Text>
-                <Text style={styles.methodDesc}>Hạn mức công nợ doanh nghiệp</Text>
-              </View>
-            </View>
-            <View
-              style={[
-                styles.radioOuter,
-                paymentMethod === 'wallet' && styles.radioOuterActive,
-              ]}
-            >
-              {paymentMethod === 'wallet' && <View style={styles.radioInner} />}
-            </View>
-          </Pressable>
-        </View>
-
-        {paymentMethod === 'wallet' ? (
-          /* Business Wallet Details */
-          <View style={styles.walletDetailsCard}>
-            <View style={styles.walletInfoRow}>
-              <Text style={styles.walletLabel}>Hạn mức khả dụng</Text>
-              <Text style={styles.walletLimitValue}>50.000.000 ₫</Text>
-            </View>
-            <Text style={styles.walletNoteText}>
-              Khoản tiền {formatVnd(amount)} sẽ được trừ trực tiếp vào hạn mức công
-              nợ tháng này của doanh nghiệp.
-            </Text>
-          </View>
-        ) : (
-          /* VietQR Dynamic Code & Bank Details */
-          <View style={styles.qrDoubleBezelOuter}>
+        <View style={styles.qrDoubleBezelOuter}>
             <View style={styles.qrDoubleBezelInner}>
               <View style={styles.napasBadgeRow}>
-                <Text style={styles.napasBankTitle}>MB BANK</Text>
+                <Text style={styles.napasBankTitle}>{bankTitle}</Text>
                 <View style={styles.napasBadge}>
                   <Text style={styles.napasBadgeText}>NAPAS 24/7</Text>
                 </View>
@@ -248,11 +392,15 @@ export default function OrderCheckoutScreen({
 
               {/* QR Code Container */}
               <View style={styles.qrCodeWrapper}>
-                <QRCode
-                  size={190}
-                  testID="vietqr-code"
-                  value={qrPayload}
-                />
+                {isLoadingPayment ? (
+                  <ActivityIndicator color="#0B1E42" size="large" />
+                ) : (
+                  <QRCode
+                    size={190}
+                    testID="vietqr-code"
+                    value={qrDisplayValue}
+                  />
+                )}
               </View>
 
               <Text style={styles.qrInstruction}>
@@ -269,23 +417,25 @@ export default function OrderCheckoutScreen({
               </View>
 
               {/* Account Number */}
-              <View style={styles.bankDetailRow}>
-                <View>
-                  <Text style={styles.detailLabel}>Số tài khoản</Text>
-                  <Text style={styles.detailValueMono}>{accountNumber}</Text>
+              {accountNumber ? (
+                <View style={styles.bankDetailRow}>
+                  <View>
+                    <Text style={styles.detailLabel}>Số tài khoản</Text>
+                    <Text style={styles.detailValueMono}>{accountNumber}</Text>
+                  </View>
+                  <Pressable
+                    accessibilityLabel="Sao chép số tài khoản"
+                    accessibilityRole="button"
+                    onPress={() => handleCopy('accountNumber', accountNumber)}
+                    style={styles.copyBtn}
+                  >
+                    <IconCopy color="#0B1E42" size={16} />
+                    <Text style={styles.copyBtnText}>
+                      {copiedField === 'accountNumber' ? 'Đã sao chép' : 'Sao chép'}
+                    </Text>
+                  </Pressable>
                 </View>
-                <Pressable
-                  accessibilityLabel="Sao chép số tài khoản"
-                  accessibilityRole="button"
-                  onPress={() => handleCopy('accountNumber', accountNumber)}
-                  style={styles.copyBtn}
-                >
-                  <IconCopy color="#0B1E42" size={16} />
-                  <Text style={styles.copyBtnText}>
-                    {copiedField === 'accountNumber' ? 'Đã sao chép' : 'Sao chép'}
-                  </Text>
-                </Pressable>
-              </View>
+              ) : null}
 
               {/* Account Name */}
               <View style={styles.bankDetailRow}>
@@ -328,34 +478,92 @@ export default function OrderCheckoutScreen({
               </View>
             </View>
           </View>
-        )}
-
-        {/* Action Button */}
-        <View style={styles.bottomActionWrap}>
-          {isReconciling ? (
-            <View style={styles.reconcileBox}>
-              <ActivityIndicator color="#0B1E42" size="small" />
-              <Text style={styles.reconcileText}>
-                Đang đối soát tự động... Gạch nợ trong 3 giây
-              </Text>
-            </View>
-          ) : (
-            <Pressable
-              accessibilityLabel="Xác nhận đã thanh toán"
-              accessibilityRole="button"
-              onPress={handleConfirmPaid}
-              style={styles.confirmPaidBtn}
-            >
-              <Text style={styles.confirmPaidText}>Xác nhận đã thanh toán</Text>
-            </Pressable>
-          )}
-        </View>
       </ScrollView>
+
+      {/* Timeout banner */}
+      {showTimeoutBanner && !isReconciling ? (
+        <View style={styles.timeoutBanner} testID="reconcile-timeout-banner">
+          <Text style={styles.timeoutTitle}>Chưa ghi nhận giao dịch</Text>
+          <Text style={styles.timeoutDesc}>
+            Hệ thống chưa nhận được tiền sau 60 giây. Nếu bạn đã chuyển khoản,
+            ngân hàng có thể đang xử lý chậm. Hãy kiểm tra lại hoặc hủy đơn.
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Sticky Bottom Action Dock */}
+      <View style={styles.stickyBottomBar}>
+        {isReconciling ? (
+          <View style={styles.reconcileBox}>
+            <ActivityIndicator color="#0B1E42" size="small" />
+            <Text style={styles.reconcileText}>
+              Đang đối soát tự động... Gạch nợ trong vài giây
+            </Text>
+          </View>
+        ) : showTimeoutBanner ? (
+          <View style={styles.retryRow}>
+            <Pressable
+              accessibilityLabel="Kiểm tra lại"
+              accessibilityRole="button"
+              onPress={handleRetryReconcile}
+              style={({ pressed }) => [
+                styles.confirmPaidBtn,
+                pressed ? styles.btnPressed : null,
+              ]}
+            >
+              <Text style={styles.confirmPaidText}>Kiểm tra lại</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Hủy đơn hàng này"
+              accessibilityRole="button"
+              onPress={handleCancelOrder}
+              style={({ pressed }) => [
+                styles.cancelOrderBtn,
+                pressed ? styles.btnPressed : null,
+              ]}
+            >
+              <Text style={styles.cancelOrderText}>Hủy đơn</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            accessibilityLabel="Xác nhận đã thanh toán"
+            accessibilityRole="button"
+            onPress={handleConfirmPaid}
+            style={({ pressed }) => [
+              styles.confirmPaidBtn,
+              pressed ? styles.btnPressed : null,
+            ]}
+          >
+            <Text style={styles.confirmPaidText}>Xác nhận đã thanh toán</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {/* Expired modal */}
+      {renderExpired ? (
+        <View style={styles.expiredOverlay} testID="payment-expired-modal">
+          <View style={styles.expiredCard}>
+            <Text style={styles.expiredTitle}>Hết hạn thanh toán</Text>
+            <Text style={styles.expiredDesc}>
+              Đơn hàng đã hết hạn thanh toán sau 10 phút. Đơn đã được tự động
+              hủy. Vui lòng tạo đơn mới nếu bạn vẫn cần vận chuyển.
+            </Text>
+            <Pressable
+              accessibilityLabel="Về danh sách đơn"
+              accessibilityRole="button"
+              onPress={() => router.replace('/customer/orders')}
+              style={styles.expiredBtn}
+            >
+              <Text style={styles.expiredBtnText}>Về danh sách đơn</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
 
-// ponytail: basic simulated auto-reconciliation; add payOS webhook websocket push when backend gateway connected.
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -451,96 +659,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
-  methodSelectorWrap: {
-    gap: 10,
-    marginBottom: 16,
-  },
-  methodOptionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    padding: 14,
-  },
-  methodOptionActive: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#F8FAFC',
-  },
-  methodLeftWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  methodIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  methodTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0B1E42',
-  },
-  methodDesc: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  radioOuter: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#94A3B8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  radioOuterActive: {
-    borderColor: '#0B1E42',
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#0B1E42',
-  },
-  walletDetailsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    padding: 16,
-    marginBottom: 16,
-  },
-  walletInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  walletLabel: {
-    fontSize: 14,
-    color: '#64748B',
-  },
-  walletLimitValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#10B981',
-    fontVariant: ['tabular-nums'],
-  },
-  walletNoteText: {
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 18,
-  },
   qrDoubleBezelOuter: {
     borderRadius: 24,
     borderWidth: 1,
@@ -596,6 +714,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
     marginVertical: 8,
+    minWidth: 214,
+    minHeight: 214,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   qrInstruction: {
     fontSize: 12,
@@ -651,29 +773,53 @@ const styles = StyleSheet.create({
     color: '#0B1E42',
     marginLeft: 6,
   },
-  bottomActionWrap: {
-    marginTop: 8,
-    marginBottom: 24,
+  stickyBottomBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: Platform.select({ ios: 16, default: 14 }),
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 6,
   },
   confirmPaidBtn: {
-    minHeight: 48,
+    height: 52,
+    minHeight: 52,
     borderRadius: 16,
+    ...iosContinuousCurve,
     backgroundColor: '#0B1E42',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
   },
   confirmPaidText: {
     color: '#FFFFFF',
+    fontFamily: systemFontFamily,
     fontSize: 16,
     fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  btnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
   reconcileBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    height: 52,
+    minHeight: 52,
     borderRadius: 16,
+    ...iosContinuousCurve,
     backgroundColor: '#FEF3C7',
     borderWidth: 1,
     borderColor: '#FDE68A',
@@ -684,5 +830,135 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#92400E',
     marginLeft: 10,
+  },
+  countdownPill: {
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignSelf: 'center',
+  },
+  countdownPillWarning: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+  },
+  countdownPillUrgent: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#FECACA',
+  },
+  countdownText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.2,
+  },
+  countdownTextWarning: {
+    color: '#92400E',
+  },
+  countdownTextUrgent: {
+    color: '#DC2626',
+  },
+  timeoutBanner: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
+    ...iosContinuousCurve,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  timeoutTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  timeoutDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#78350F',
+    marginTop: 4,
+  },
+  retryRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelOrderBtn: {
+    flex: 1,
+    height: 52,
+    minHeight: 52,
+    borderRadius: 16,
+    ...iosContinuousCurve,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  cancelOrderText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  expiredOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(11, 30, 66, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  expiredCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    ...iosContinuousCurve,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: 'center',
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  expiredTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0B1E42',
+    textAlign: 'center',
+  },
+  expiredDesc: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#475569',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  expiredBtn: {
+    marginTop: 20,
+    width: '100%',
+    height: 52,
+    minHeight: 52,
+    borderRadius: 16,
+    ...iosContinuousCurve,
+    backgroundColor: '#0B1E42',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expiredBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

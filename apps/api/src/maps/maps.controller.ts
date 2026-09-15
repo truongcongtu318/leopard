@@ -51,6 +51,8 @@ interface EstimateRequestDto {
   dropoff: EstimateStop;
   vehicleType: VehicleType;
   cargoWeightKg?: number;
+  hasLoadingSupport?: boolean;
+  hasVatInvoice?: boolean;
 }
 
 interface SearchResponse {
@@ -224,6 +226,8 @@ function toRouteInput(request: EstimateRequestDto): RouteInput {
     dropoff: toGeoPoint(request.dropoff),
     vehicleType: request.vehicleType,
     ...(request.cargoWeightKg === undefined ? {} : { cargoWeightKg: request.cargoWeightKg }),
+    hasLoadingSupport: request.hasLoadingSupport,
+    hasVatInvoice: request.hasVatInvoice,
   };
 }
 
@@ -275,6 +279,8 @@ function validateEstimateRequest(rawBody: unknown): EstimateRequestDto {
   const dropoff = validateEstimateStop(body.dropoff, 'dropoff', issues);
   const vehicleType = validateVehicleType(body.vehicleType, issues);
   const cargoWeightKg = validateCargoWeightKg(body.cargoWeightKg, vehicleType, issues);
+  const hasLoadingSupport = validateOptionalBoolean(body.hasLoadingSupport, 'hasLoadingSupport', issues);
+  const hasVatInvoice = validateOptionalBoolean(body.hasVatInvoice, 'hasVatInvoice', issues);
 
   if (issues.length > 0 || pickup === null || dropoff === null || vehicleType === null) {
     validationError(issues);
@@ -286,7 +292,26 @@ function validateEstimateRequest(rawBody: unknown): EstimateRequestDto {
     dropoff,
     vehicleType,
     ...(cargoWeightKg === undefined ? {} : { cargoWeightKg }),
+    ...(hasLoadingSupport === undefined ? {} : { hasLoadingSupport }),
+    ...(hasVatInvoice === undefined ? {} : { hasVatInvoice }),
   };
+}
+
+function validateOptionalBoolean(
+  rawValue: unknown,
+  field: string,
+  issues: ValidationIssue[],
+): boolean | undefined {
+  if (rawValue === undefined) {
+    return undefined;
+  }
+
+  if (typeof rawValue !== 'boolean') {
+    issues.push({ field, messages: ['must be a boolean'] });
+    return undefined;
+  }
+
+  return rawValue;
 }
 
 function validateCargoWeightKg(

@@ -9,18 +9,35 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
-import { httpClient, ApiError, AuthHeroHeader, sessionStore, isLikelyVnPhone, toE164Vn, OtpSixCellInput, leopardPalette, IconPhone, IconSecurityShield, IconUser, IconOffice, OtpPhoneHeroIcon, VietnamFlagIcon, TruckLoader, IconAlertTriangle } from '@leopard/mobile-core';
+import {
+  httpClient,
+  ApiError,
+  BrandLoginLogo,
+  IconChevron,
+  iosContinuousCurve,
+  sessionStore,
+  systemFontFamily,
+  isLikelyVnPhone,
+  toE164Vn,
+  OtpSixCellInput,
+  leopardPalette,
+  IconPhone,
+  IconSecurityShield,
+  IconUser,
+  IconOffice,
+  OtpPhoneHeroIcon,
+  VietnamFlagIcon,
+  TruckLoader,
+  IconAlertTriangle,
+} from '@leopard/mobile-core';
 import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '@leopard/mobile-core/src/auth/firebase-auth';
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-register';
 
-/** Warm orange accent matching the curved hero header used across auth screens. */
-const orange = {
-  primary: '#F59E0B',
-  primaryDark: '#B45309',
-} as const;
+/** Midnight Navy brand color for Apple HIG components. */
+const brandNavy = '#0B1E42';
 
 interface MeResponse {
   phone: string | null;
@@ -98,15 +115,26 @@ function describeAuthError(err: unknown): string {
 
 export default function CustomerRegisterScreen() {
   const router = useRouter();
-  const [phone, setPhone] = useState<string | null>(null);
+  const searchParams =
+    typeof useLocalSearchParams === 'function'
+      ? useLocalSearchParams<{ phone?: string }>()
+      : {};
+  const [phone, setPhone] = useState<string | null>(searchParams.phone || null);
   const [phoneInput, setPhoneInput] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(Boolean(searchParams.phone));
   const [phoneBusy, setPhoneBusy] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
   const challengeRef = useRef<OtpChallenge | null>(null);
+
+  useEffect(() => {
+    if (searchParams.phone) {
+      setPhone(searchParams.phone);
+      setPhoneVerified(true);
+    }
+  }, [searchParams.phone]);
 
   const [name, setName] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -304,14 +332,32 @@ export default function CustomerRegisterScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         style={styles.container}
       >
-        <AuthHeroHeader
-          backTestID="cr-back-btn"
-          onBack={handleBack}
-          subtitle="Đăng ký để đặt xe và theo dõi hành trình dễ dàng."
-          title="Tạo tài khoản mới"
-        />
+        <View style={styles.topNavigation}>
+          <Pressable
+            accessibilityLabel="Quay lại"
+            accessibilityRole="button"
+            hitSlop={10}
+            onPress={handleBack}
+            style={styles.backBtn}
+            testID="cr-back-btn"
+          >
+            <IconChevron color="#0B1E42" direction="left" size={20} />
+          </Pressable>
+          <BrandLoginLogo height={30} />
+          <View style={styles.navSpacer} />
+        </View>
+
+        <View style={styles.titleSection}>
+          <Text accessibilityRole="header" style={styles.largeTitle}>
+            Tạo tài khoản mới
+          </Text>
+          <Text style={styles.largeSubtitle}>
+            Đăng ký để đặt xe và theo dõi hành trình dễ dàng.
+          </Text>
+        </View>
 
         <View style={styles.bodyWrap}>
         <View style={styles.innerWrapper}>
@@ -384,7 +430,7 @@ export default function CustomerRegisterScreen() {
                         if (errorMsg) setErrorMsg(null);
                       }}
                       onFocus={() => setFocusedField('phone')}
-                      placeholder="Nhập số điện thoại..."
+                      placeholder="Số điện thoại..."
                       placeholderTextColor="#94A3B8"
                       style={styles.phoneTextInput}
                       testID="cr-phone-input"
@@ -429,7 +475,12 @@ export default function CustomerRegisterScreen() {
                       {phoneBusy ? (
                         <ActivityIndicator color="#FFFFFF" size="small" />
                       ) : (
-                        <Text style={styles.sendOtpBtnText}>
+                        <Text
+                          style={[
+                            styles.sendOtpBtnText,
+                            !canSendOtp && styles.sendOtpBtnTextDisabled,
+                          ]}
+                        >
                           {otpSent ? 'Nhập OTP' : 'Gửi mã'}
                         </Text>
                       )}
@@ -501,10 +552,10 @@ export default function CustomerRegisterScreen() {
 
             <View style={styles.fieldItem}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.label}>MÃ SỐ THUẾ (MST)</Text>
+                <Text style={styles.label}>Mã số thuế (MST)</Text>
               </View>
               <TextInput
-                accessibilityLabel="MÃ SỐ THUẾ (MST)"
+                accessibilityLabel="Mã số thuế (MST)"
                 autoCapitalize="characters"
                 autoCorrect={false}
                 editable={!isSubmitting}
@@ -527,11 +578,11 @@ export default function CustomerRegisterScreen() {
 
             <View style={styles.fieldItem}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.label}>EMAIL NHẬN HÓA ĐƠN VAT</Text>
+                <Text style={styles.label}>Email nhận hóa đơn VAT</Text>
                 <Text style={styles.requiredStar}>*</Text>
               </View>
               <TextInput
-                accessibilityLabel="EMAIL NHẬN HÓA ĐƠN VAT"
+                accessibilityLabel="Email nhận hóa đơn VAT"
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isSubmitting}
@@ -620,7 +671,14 @@ export default function CustomerRegisterScreen() {
               <Text style={styles.primaryBtnText}>Đang lưu...</Text>
             </View>
           ) : (
-            <Text style={styles.primaryBtnText}>Hoàn tất</Text>
+            <Text
+              style={[
+                styles.primaryBtnText,
+                !canSubmit && styles.primaryBtnTextDisabled,
+              ]}
+            >
+              Hoàn tất
+            </Text>
           )}
         </Pressable>
 
@@ -797,10 +855,50 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 24,
+    paddingBottom: 32,
+  },
+  topNavigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.select({ ios: 16, default: 20 }),
+    paddingBottom: 8,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navSpacer: {
+    width: 36,
+  },
+  titleSection: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  largeTitle: {
+    fontFamily: systemFontFamily,
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.6,
+    lineHeight: 34,
+  },
+  largeSubtitle: {
+    fontFamily: systemFontFamily,
+    fontSize: 15,
+    color: '#64748B',
+    lineHeight: 21,
+    marginTop: 4,
   },
   bodyWrap: {
-    marginTop: -20,
     paddingHorizontal: 16,
     alignItems: 'center',
   },
@@ -987,20 +1085,23 @@ const styles = StyleSheet.create({
     }),
   },
   sendOtpBtn: {
-    backgroundColor: orange.primary,
+    backgroundColor: brandNavy,
     borderRadius: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
     height: 38,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendOtpBtnDisabled: {
-    backgroundColor: '#F3C989',
+    backgroundColor: '#E2E8F0',
   },
   sendOtpBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  sendOtpBtnTextDisabled: {
+    color: '#94A3B8',
   },
   clearBtn: {
     paddingHorizontal: 6,
@@ -1068,7 +1169,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   otpBackBtnText: {
-    color: orange.primary,
+    color: brandNavy,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1129,20 +1230,20 @@ const styles = StyleSheet.create({
   },
   modalSubmitBtn: {
     width: '100%',
-    backgroundColor: orange.primary,
+    backgroundColor: brandNavy,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
-    shadowColor: orange.primary,
+    shadowColor: brandNavy,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 3,
   },
   modalSubmitBtnDisabled: {
-    backgroundColor: '#F3C989',
+    backgroundColor: '#E2E8F0',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -1215,7 +1316,7 @@ const styles = StyleSheet.create({
   resendActionLink: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: orange.primary,
+    color: brandNavy,
     textDecorationLine: 'underline',
   },
 
@@ -1262,13 +1363,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   inputFocused: {
-    borderColor: orange.primary,
+    borderColor: brandNavy,
     backgroundColor: '#FFFFFF',
-    shadowColor: orange.primary,
+    shadowColor: brandNavy,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
   },
 
   /* Consents */
@@ -1299,8 +1400,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   checkboxOn: {
-    backgroundColor: orange.primary,
-    borderColor: orange.primary,
+    backgroundColor: brandNavy,
+    borderColor: brandNavy,
   },
   checkboxTick: {
     color: '#FFFFFF',
@@ -1323,27 +1424,32 @@ const styles = StyleSheet.create({
 
   /* Primary Button */
   primaryBtn: {
-    backgroundColor: orange.primary,
+    backgroundColor: brandNavy,
     borderRadius: 16,
-    paddingVertical: 15,
+    ...iosContinuousCurve,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: orange.primary,
+    shadowColor: brandNavy,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
     elevation: 3,
   },
   primaryBtnDisabled: {
-    backgroundColor: '#F3C989',
+    backgroundColor: '#E2E8F0',
     shadowOpacity: 0,
     elevation: 0,
   },
   primaryBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontFamily: systemFontFamily,
+    fontSize: 17,
     fontWeight: '700',
-    letterSpacing: 0.2,
+    letterSpacing: -0.2,
+  },
+  primaryBtnTextDisabled: {
+    color: '#94A3B8',
   },
   btnLoadingRow: {
     flexDirection: 'row',
@@ -1351,7 +1457,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
 
   /* Driver Link Card */
@@ -1370,7 +1477,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   driverLinkText: {
-    color: orange.primary,
+    color: brandNavy,
     fontSize: 14,
     fontWeight: '700',
   },
