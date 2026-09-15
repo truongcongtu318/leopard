@@ -129,6 +129,14 @@ export class OrdersService {
         distanceMeters: verifiedEstimate.distanceM,
         durationSeconds: verifiedEstimate.durationS,
         priceVnd: verifiedEstimate.estimatedPriceVnd,
+        // Order.vehicleType and Order.cargoWeightKg are the columns that dispatch
+        // and accept-order read. They were only written into routeSnapshot below,
+        // so both columns kept their defaults and every order was persisted as
+        // MOTORBIKE — no VAN or TRUCK driver could ever accept a booking that the
+        // customer had made for their vehicle.
+        vehicleType: dto.vehicleType,
+        // exactOptionalPropertyTypes: omit rather than pass undefined.
+        ...(dto.cargoWeightKg !== undefined ? { cargoWeightKg: dto.cargoWeightKg } : {}),
       routeSnapshot: {
         polyline: verifiedEstimate.polyline,
         source: verifiedEstimate.source,

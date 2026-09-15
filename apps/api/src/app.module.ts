@@ -24,9 +24,10 @@ import { AddressesModule } from './addresses/addresses.module.js';
 import { ReviewsModule } from './reviews/reviews.module.js';
 import { ReportsModule } from './reports/reports.module.js';
 import { ChatModule } from './chat/chat.module.js';
+import { DispatchModule } from './dispatch/dispatch.module.js';
 
 @Module({
-  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, RoutingEtaModule, MediaModule, NotificationsModule, InvoicesModule, PaymentsModule, FleetsModule, AdminModule, UsersModule, PromotionsModule, AddressesModule, ReviewsModule, ReportsModule, ChatModule],
+  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, RoutingEtaModule, MediaModule, NotificationsModule, InvoicesModule, PaymentsModule, FleetsModule, AdminModule, UsersModule, PromotionsModule, AddressesModule, ReviewsModule, ReportsModule, ChatModule, DispatchModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
