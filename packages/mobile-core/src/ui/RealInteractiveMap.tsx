@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import type { WebViewMessageEvent, WebViewProps } from 'react-native-webview';
 
+import type { RouteCoordinate } from '@leopard/shared';
+
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { IconLocationPin, IconSpeedTruck } from './icons/CoreIcons';
 
@@ -24,6 +26,8 @@ export type MapStop = {
 };
 
 export type RealInteractiveMapMode = 'route' | 'tracking' | 'location' | 'pin' | 'preview';
+
+export type RouteResolutionPolicy = 'PROVIDED_ONLY' | 'ALLOW_CLIENT_PREVIEW';
 
 export type RealInteractiveMapProps = Readonly<{
   mode?: RealInteractiveMapMode;
@@ -41,6 +45,8 @@ export type RealInteractiveMapProps = Readonly<{
   interactive?: boolean;
   title?: string;
   vietmapApiKey?: string;
+  routeResolutionPolicy?: RouteResolutionPolicy;
+  routeCoords?: readonly RouteCoordinate[];
 }>;
 
 type TruckLocationMessage = Readonly<{
@@ -139,7 +145,7 @@ export function resolveLocationCoords(
 /**
  * Generates an interactive Leaflet HTML template.
  */
-function buildLeafletHtml({
+export function buildLeafletHtml({
   destinationCoords,
   destinationLabel,
   hasTruckLocation,
@@ -153,6 +159,8 @@ function buildLeafletHtml({
   truckCoords,
   truckEtaLabel,
   vietmapApiKey,
+  routeResolutionPolicy = 'ALLOW_CLIENT_PREVIEW',
+  routeCoords = [],
 }: {
   destinationCoords: MapCoordinate;
   destinationLabel: string;
@@ -167,6 +175,8 @@ function buildLeafletHtml({
   truckCoords: MapCoordinate;
   truckEtaLabel: string;
   vietmapApiKey?: string;
+  routeResolutionPolicy?: RouteResolutionPolicy;
+  routeCoords?: readonly RouteCoordinate[];
 }): string {
   const pointsJson = JSON.stringify({
     mode,
@@ -178,8 +188,102 @@ function buildLeafletHtml({
     interactive,
     hasTruckLocation,
     mapInstanceId,
-    vietmapApiKey: vietmapApiKey || '',
+    // Never include the Vietmap API key in the generated config when the caller
+    // requires provided-only geometry — it must be structurally absent from the
+    // WebView HTML, not merely unused at runtime.
+    vietmapApiKey:
+      routeResolutionPolicy === 'PROVIDED_ONLY' ? '' : vietmapApiKey || '',
   });
+
+  // The body of the client-side route-fetching chain (Vietmap -> OSRM -> straight
+  // line fallback) lives in this constant so it can be conditionally interpolated
+  // below. When routeResolutionPolicy === 'PROVIDED_ONLY', this constant is never
+  // referenced, so its contents (including the Vietmap URL/API key and the OSRM
+  // URL) are structurally absent from the generated HTML — not merely unreached
+  // at runtime.
+  const fetchRealRouteBody = `
+        var waypoints = [[o.lng, o.lat]];
+        if (config.stops && config.stops.length > 0) {
+          config.stops.forEach(function(s) {
+            if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
+              waypoints.push([s.coords.lng, s.coords.lat]);
+            }
+          });
+        }
+        waypoints.push([d.lng, d.lat]);
+
+        if (config.vietmapApiKey) {
+          var pts = 'point=' + o.lat + ',' + o.lng;
+          if (config.stops && config.stops.length > 0) {
+            config.stops.forEach(function(s) {
+              if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
+                pts += '&point=' + s.coords.lat + ',' + s.coords.lng;
+              }
+            });
+          }
+          pts += '&point=' + d.lat + ',' + d.lng;
+          var vmUrl = 'https://maps.vietmap.vn/api/route/v4?apikey=' + config.vietmapApiKey + '&' + pts + '&vehicle=car&points_encoded=false';
+
+          var abortCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+          var timeoutTimer = setTimeout(function() {
+            if (abortCtrl) abortCtrl.abort();
+          }, 4000);
+
+          fetch(vmUrl, abortCtrl ? { signal: abortCtrl.signal } : {})
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              clearTimeout(timeoutTimer);
+              if (data && data.paths && data.paths[0] && data.paths[0].points && data.paths[0].points.coordinates) {
+                var coords = data.paths[0].points.coordinates.map(function(c) { return [c[1], c[0]]; });
+                applyRouteCoords(coords);
+                return;
+              }
+              fetchOsrmRoute(waypoints);
+            })
+            .catch(function() {
+              clearTimeout(timeoutTimer);
+              fetchOsrmRoute(waypoints);
+            });
+        } else {
+          fetchOsrmRoute(waypoints);
+        }`;
+
+  const routeSection =
+    routeResolutionPolicy === 'PROVIDED_ONLY'
+      ? routeCoords.length >= 2
+        ? `
+      applyRouteCoords(${JSON.stringify(routeCoords.map((c) => [c.lat, c.lng]))});
+        `
+        : `
+      var noRouteBanner = document.createElement('div');
+      noRouteBanner.style.cssText = 'position:absolute;bottom:12px;left:12px;right:12px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:8px 12px;font:600 12px sans-serif;color:#92400E;z-index:20;text-align:center;';
+      noRouteBanner.innerText = 'Chưa có dữ liệu tuyến đường';
+      document.body.appendChild(noRouteBanner);
+        `
+      : `
+      // Real street routing: Vietmap Route v4 with timeout -> OSRM driving engine -> straight line
+      function fetchRealRoute() {
+        ${fetchRealRouteBody}
+      }
+
+      function fetchOsrmRoute(waypoints) {
+        var coordsStr = waypoints.map(function(w) { return w[0] + ',' + w[1]; }).join(';');
+        var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson';
+        fetch(osrmUrl)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && data.routes && data.routes[0] && data.routes[0].geometry && data.routes[0].geometry.coordinates) {
+              var coords = data.routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+              applyRouteCoords(coords);
+            }
+          })
+          .catch(function() {
+            // Keep straight line fallback
+          });
+      }
+
+      try { fetchRealRoute(); } catch (e) {}
+      `;
 
   return `<!DOCTYPE html>
 <html>
@@ -400,74 +504,7 @@ function buildLeafletHtml({
         } catch(e) {}
       }
 
-      // Real street routing: Vietmap Route v4 with timeout -> OSRM driving engine -> straight line
-      function fetchRealRoute() {
-        var waypoints = [[o.lng, o.lat]];
-        if (config.stops && config.stops.length > 0) {
-          config.stops.forEach(function(s) {
-            if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
-              waypoints.push([s.coords.lng, s.coords.lat]);
-            }
-          });
-        }
-        waypoints.push([d.lng, d.lat]);
-
-        if (config.vietmapApiKey) {
-          var pts = 'point=' + o.lat + ',' + o.lng;
-          if (config.stops && config.stops.length > 0) {
-            config.stops.forEach(function(s) {
-              if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
-                pts += '&point=' + s.coords.lat + ',' + s.coords.lng;
-              }
-            });
-          }
-          pts += '&point=' + d.lat + ',' + d.lng;
-          var vmUrl = 'https://maps.vietmap.vn/api/route/v4?apikey=' + config.vietmapApiKey + '&' + pts + '&vehicle=car&points_encoded=false';
-
-          var abortCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-          var timeoutTimer = setTimeout(function() {
-            if (abortCtrl) abortCtrl.abort();
-          }, 4000);
-
-          fetch(vmUrl, abortCtrl ? { signal: abortCtrl.signal } : {})
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-              clearTimeout(timeoutTimer);
-              if (data && data.paths && data.paths[0] && data.paths[0].points && data.paths[0].points.coordinates) {
-                var coords = data.paths[0].points.coordinates.map(function(c) { return [c[1], c[0]]; });
-                applyRouteCoords(coords);
-                return;
-              }
-              fetchOsrmRoute(waypoints);
-            })
-            .catch(function() {
-              clearTimeout(timeoutTimer);
-              fetchOsrmRoute(waypoints);
-            });
-        } else {
-          fetchOsrmRoute(waypoints);
-        }
-      }
-
-      function fetchOsrmRoute(waypoints) {
-        var coordsStr = waypoints.map(function(w) { return w[0] + ',' + w[1]; }).join(';');
-        var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson';
-        fetch(osrmUrl)
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (data && data.routes && data.routes[0] && data.routes[0].geometry && data.routes[0].geometry.coordinates) {
-              var coords = data.routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
-              applyRouteCoords(coords);
-            }
-          })
-          .catch(function() {
-            // Keep straight line fallback
-          });
-      }
-
-      try {
-        fetchRealRoute();
-      } catch (e) {}
+      ${routeSection}
 
       // Tracking truck
       var truckMarker = null;
@@ -537,6 +574,8 @@ export function RealInteractiveMap({
   truckEtaMinutes,
   truckLocation,
   vietmapApiKey,
+  routeResolutionPolicy,
+  routeCoords,
 }: RealInteractiveMapProps) {
   const mapInstanceId = useId();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -642,6 +681,8 @@ export function RealInteractiveMap({
       truckCoords,
       truckEtaLabel: displayEta,
       vietmapApiKey: resolvedVietmapKey,
+      routeResolutionPolicy: routeResolutionPolicy ?? 'ALLOW_CLIENT_PREVIEW',
+      routeCoords: routeCoords ?? [],
     });
   }, [
     destination?.label,
@@ -656,6 +697,8 @@ export function RealInteractiveMap({
     stopsCoords,
     truckCoords,
     vietmapApiKey,
+    routeResolutionPolicy,
+    routeCoords,
   ]);
 
   const isFullScreen = height === '100%';

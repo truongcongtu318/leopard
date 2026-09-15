@@ -184,7 +184,7 @@ export class VehicleRoutingProfileService {
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { VehicleRoutingProfileService, VehicleWeightExceededError } from './vehicle-routing-profile.service.js';
 
 describe('VehicleRoutingProfileService', () => {
@@ -260,7 +260,7 @@ Expected: FAIL — module `./vehicle-routing-profile.service.js` does not exist.
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { DomainError } from '../common/domain-error.js';
 import type { VehicleType } from '@prisma/client';
 
@@ -588,7 +588,7 @@ Expected: PASS.
 ```ts
 import { Test } from '@nestjs/testing';
 import { MAP_PROVIDER } from '../maps/maps.service.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { VehicleRoutingProfileService } from './vehicle-routing-profile.service.js';
 import { RouteSnapshotService } from './route-snapshot.service.js';
 
@@ -802,7 +802,7 @@ export class OutboxRepository {
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository } from './outbox.repository.js';
 
 describe('OutboxRepository', () => {
@@ -872,7 +872,7 @@ Expected: FAIL — module not found.
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 type OutboxEventType = 'ROUTE_ETA_RECOMPUTE' | 'ROUTE_ETA_UPDATED' | 'ROUTE_UPDATED';
 
@@ -1040,11 +1040,13 @@ export class EtaService {
   // TX1 — called from AcceptOrderService/StopProgressService/TrackingService in their own transaction
   async bumpRevision(tx: Prisma.TransactionClient, orderId: string): Promise<number>; // returns new routeEtaInputRevision, enqueues ROUTE_ETA_RECOMPUTE
 
-  // TX2 — called by the worker after it has a provider result for a given inputRevision
+  // TX2 — called by the worker after it has a provider result for a given inputRevision.
+  // EtaService does not know about outbox lease state — that's OutboxRepository's job
+  // (Task 5); this only decides PROMOTED vs SUPERSEDED based on Order.routeEtaInputRevision.
   async promoteOrSupersede(input: {
-    orderId: string; inputRevision: number; leaseOwner: string; leaseGeneration: number; outboxJobId: string;
+    orderId: string; inputRevision: number;
     nextStop: EstimateComputation; completion: EstimateComputation;
-  }): Promise<'PROMOTED' | 'SUPERSEDED' | 'LEASE_LOST'>;
+  }): Promise<'PROMOTED' | 'SUPERSEDED'>;
 }
 
 export interface EstimateComputation {
@@ -1060,7 +1062,7 @@ export interface EstimateComputation {
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository } from './outbox.repository.js';
 import { EtaService } from './eta.service.js';
 
@@ -1159,7 +1161,7 @@ describe('EtaService.promoteOrSupersede', () => {
     const service = moduleRef.get(EtaService);
 
     const result = await service.promoteOrSupersede({
-      orderId: 'order-1', inputRevision: 6, leaseOwner: 'worker-a', leaseGeneration: 1, outboxJobId: 'job-1',
+      orderId: 'order-1', inputRevision: 6,
       nextStop: baseComputation(),
       completion: baseComputation({ targetStopId: null }),
     });
@@ -1205,7 +1207,7 @@ describe('EtaService.promoteOrSupersede', () => {
     const service = moduleRef.get(EtaService);
 
     const result = await service.promoteOrSupersede({
-      orderId: 'order-1', inputRevision: 6, leaseOwner: 'worker-a', leaseGeneration: 1, outboxJobId: 'job-1',
+      orderId: 'order-1', inputRevision: 6,
       nextStop: baseComputation(), completion: baseComputation({ targetStopId: null }),
     });
 
@@ -1228,7 +1230,7 @@ Expected: FAIL — module not found / methods missing.
 ```ts
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository } from './outbox.repository.js';
 
 export type EtaUnavailableReason =
@@ -1277,12 +1279,9 @@ export class EtaService {
   async promoteOrSupersede(input: {
     orderId: string;
     inputRevision: number;
-    leaseOwner: string;
-    leaseGeneration: number;
-    outboxJobId: string;
     nextStop: EstimateComputation;
     completion: EstimateComputation;
-  }): Promise<'PROMOTED' | 'SUPERSEDED' | 'LEASE_LOST'> {
+  }): Promise<'PROMOTED' | 'SUPERSEDED'> {
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.findUniqueOrThrow({ where: { id: input.orderId } });
       const isStillCurrent = order.routeEtaInputRevision === input.inputRevision;
@@ -1389,7 +1388,7 @@ export class RouteEtaRecomputeWorker {
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository } from './outbox.repository.js';
 import { EtaService } from './eta.service.js';
 import { MAP_PROVIDER } from '../maps/maps.service.js';
@@ -1443,7 +1442,7 @@ Expected: FAIL — module not found.
 
 ```ts
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository, newWorkerId } from './outbox.repository.js';
 import { EtaService } from './eta.service.js';
 
@@ -1588,7 +1587,7 @@ Run again — expect PASS, 2/2.
 
 ```ts
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { EtaService } from './eta.service.js';
 import { StopProgressService } from './stop-progress.service.js';
 
@@ -1636,7 +1635,7 @@ Expected: FAIL — module not found.
 import { Injectable } from '@nestjs/common';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { EtaService } from './eta.service.js';
 
 export class StopProgressCommandConflictError extends DomainError {
@@ -1761,13 +1760,24 @@ Replace the `throw new Error('computation not yet wired ...')` block in `route-e
           baselineSource: 'VIETMAP' as const,
         };
 
-        const outcome = await this.etaService.promoteOrSupersede({
-          orderId: claim.aggregateId, inputRevision: claim.inputRevision,
-          leaseOwner: claim.leaseOwner, leaseGeneration: claim.leaseGeneration, outboxJobId: claim.id,
-          nextStop: computation, completion: computation,
-        });
-        if (outcome === 'LEASE_LOST') {
-          return;
+        // Two workers can both pass the `alreadyComputed` check above nearly
+        // simultaneously (narrow race) and both reach here for the same
+        // (orderId, inputRevision, kind) — the DB unique constraint from Task 1
+        // (`@@unique([orderId, inputRevision, kind])` on OrderLiveEstimate) is the
+        // actual backstop, not this worker. Prisma raises P2002 on the losing
+        // insert; treat that as idempotent-success (the other worker's write is
+        // authoritative for this revision), not a job failure to retry.
+        try {
+          await this.etaService.promoteOrSupersede({
+            orderId: claim.aggregateId, inputRevision: claim.inputRevision,
+            nextStop: computation, completion: computation,
+          });
+        } catch (error) {
+          const isUniqueViolation =
+            typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002';
+          if (!isUniqueViolation) {
+            throw error;
+          }
         }
       }
 ```
@@ -1795,7 +1805,7 @@ git commit -m "feat(api): add StopProgressService and wire real computation into
 **Files:**
 - Modify: `apps/api/src/tracking/tracking.repository.ts:16-105` (`recordPointAtomically`)
 - Modify: `apps/api/src/tracking/tracking.service.ts` (`recordPoint`)
-- Modify: `apps/api/src/tracking/tracking.module.ts` (import `EtaService`/routing-eta module)
+- (Do NOT modify `tracking.module.ts` in this task — see Step 5.)
 - Test: `apps/api/src/tracking/tracking.repository.spec.ts` (existing file — extend)
 
 **Interfaces:**
@@ -1917,9 +1927,9 @@ export class TrackingService {
 
 Note: `MIN_RECOMPUTE_DISTANCE_M` is left as a named constant here but the distance check itself needs the previous point's coordinates, which `onPointRecorded` does not currently receive — extend the callback signature to also pass the previous point (query it right before the insert, inside the same tx) in this same step rather than deferring; do this by adding a `previousPoint` lookup via `tx.$queryRaw` (same geography-to-lat/lng pattern already used above in the file) before calling `onPointRecorded`, and skip the bump when movement is under `MIN_RECOMPUTE_DISTANCE_M` **and** `secondsSinceBump < MIN_RECOMPUTE_INTERVAL_S` **and** not expired — i.e. only bump when at least one of (interval elapsed, moved enough, estimate expired) is true, per spec §4.4.
 
-- [ ] **Step 5: Update `tracking.module.ts` to provide `EtaService`**
+- [ ] **Step 5: Do NOT wire `tracking.module.ts` in this task**
 
-Add `EtaService`, `OutboxRepository`, and the `MAP_PROVIDER` provider (import `RoutingEtaModule` — created in Task 13 — instead of re-registering providers by hand) to the module's `imports`/`providers` array.
+`RoutingEtaModule` does not exist yet (it is assembled in Task 13) — do not attempt to import it or hand-register `EtaService`/`OutboxRepository`/`MAP_PROVIDER` as ad-hoc providers here. `TrackingService`'s constructor now takes `EtaService` as a real dependency, but the module-level wiring that satisfies it at app-bootstrap time is Task 13 Step 5's job alone (`Update TrackingModule to import RoutingEtaModule`). This task's own tests (Step 6 below) construct `TrackingService`/`TrackingRepository` directly with a mocked `EtaService`, so they do not depend on real DI wiring and will pass without touching `tracking.module.ts`.
 
 - [ ] **Step 6: Run test to verify it passes**
 
@@ -2126,7 +2136,7 @@ function toEstimateView(row: EstimateRow | null, now: Date) {
 
 Run again — expect PASS, 2/2. (`GPS_STALE_AFTER_S` is defined for parity with spec §4.3 and used once GPS-point join is added — leave the constant in place even though this mapper's tests don't exercise it yet, so Task 16's Driver contract types match the field name exactly.)
 
-- [ ] **Step 5: Write the controller (no separate test — covered by e2e in Task 13)**
+- [ ] **Step 5: Write the controller (its DI wiring is smoke-tested by the `RoutingEtaModule` boot test added in Task 13 Step 6 — this task does not add a redundant controller-level test)**
 
 ```ts
 import { Controller, Get, Param, UseFilters, UseGuards } from '@nestjs/common';
@@ -2135,7 +2145,7 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { assertCanViewRouteEta } from './route-eta.policy.js';
 import { mapRouteEtaResponse } from './route-eta-response.mapper.js';
 
@@ -2319,7 +2329,7 @@ import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { validateStopProgressBody, validateStopProgressVoidBody } from './dto/stop-progress.dto.js';
 import { StopProgressService } from './stop-progress.service.js';
 import { buildRouteEtaResponse } from './route-eta.controller.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 @Controller('orders/:id/stops/:stopId/progress')
 @UseFilters(ApiExceptionFilter)
@@ -2556,6 +2566,7 @@ git commit -m "feat(realtime): add route-eta socket events, retire unused legacy
 - Modify: `apps/api/src/maps/maps.module.ts` (export `MAP_PROVIDER`)
 - Modify: `apps/api/src/app.module.ts`
 - Test: `apps/api/src/routing-eta/outbox-notify.publisher.spec.ts`
+- Test: `apps/api/test/routing-eta-module.e2e-spec.ts` (module-boot smoke test — see Step 6)
 
 **Interfaces:**
 - Produces: `OutboxNotifyPublisher.runOnce(): Promise<number>` — claims `ROUTE_ETA_UPDATED`/`ROUTE_UPDATED` outbox rows and calls `RouteEtaRealtimeEmitter`.
@@ -2567,7 +2578,7 @@ import { Test } from '@nestjs/testing';
 import { OutboxRepository } from './outbox.repository.js';
 import { RouteEtaRealtimeEmitterImpl } from './route-eta-realtime.emitter.js';
 import { OutboxNotifyPublisher } from './outbox-notify.publisher.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 
 describe('OutboxNotifyPublisher', () => {
   it('emits ROUTE_ETA_UPDATED payload then marks the job completed', async () => {
@@ -2607,7 +2618,7 @@ Expected: FAIL, then:
 
 ```ts
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { OutboxRepository, newWorkerId } from './outbox.repository.js';
 import { RouteEtaRealtimeEmitterImpl } from './route-eta-realtime.emitter.js';
 
@@ -2702,8 +2713,39 @@ Add `RoutingEtaModule` to `AppModule`'s `imports`. In `maps.module.ts`, add `MAP
 
 - [ ] **Step 5: Update `TrackingModule` to import `RoutingEtaModule`** (finishing Task 9's wiring)
 
-- [ ] **Step 6: Run full backend suite**
+- [ ] **Step 6: Add a real DI-boot smoke test, then run the full backend suite**
 
+Unit tests throughout Tasks 2-12 all construct services with manually-provided mocked dependencies — none of them exercise real NestJS module wiring, so a missing export/import (e.g. `MAP_PROVIDER` not exported from `MapsModule`, or `TrackingModule` not importing `RoutingEtaModule`) would not be caught until here. Add one boot-only e2e spec, following this repo's existing `apps/api/test/*.e2e-spec.ts` convention:
+
+```ts
+// apps/api/test/routing-eta-module.e2e-spec.ts
+import { Test } from '@nestjs/testing';
+import { AppModule } from '../src/app.module.js';
+import { RouteEtaController } from '../src/routing-eta/route-eta.controller.js';
+import { StopProgressController } from '../src/routing-eta/stop-progress.controller.js';
+import { TrackingGateway } from '../src/tracking/tracking.gateway.js';
+
+describe('RoutingEtaModule — DI boot smoke test', () => {
+  it('resolves the full module graph without missing providers', async () => {
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+    expect(moduleRef.get(RouteEtaController)).toBeDefined();
+    expect(moduleRef.get(StopProgressController)).toBeDefined();
+    expect(moduleRef.get(TrackingGateway)).toBeDefined();
+
+    await moduleRef.close();
+  });
+});
+```
+
+Run it with whatever DB/env setup `apps/api/test/*.e2e-spec.ts` already requires in this repo (check an existing e2e spec, e.g. `src/orders/order-lifecycle.e2e-spec.ts`, for the exact test-DB bootstrap pattern — reuse it verbatim, do not invent a new one):
+
+```bash
+pnpm --filter api test:e2e -- test/routing-eta-module.e2e-spec.ts
+```
+Expected: PASS — this is the one place in the whole plan that proves `TrackingModule` actually resolves `RouteEtaRealtimeEmitterImpl` (Task 12) and `EtaService` (Task 9) at runtime, not just at the type level.
+
+Then run the rest:
 ```bash
 pnpm --filter api test
 pnpm --filter api typecheck
@@ -2792,7 +2834,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement**
 
 ```ts
-import type { PrismaService } from '../prisma/prisma.service.js';
+import type { PrismaService } from '../database/prisma.service.js';
 import type { EtaService } from './eta.service.js';
 import { computeInputHash, computeRouteHash } from './polyline-hash.js';
 
@@ -2872,7 +2914,7 @@ Expected: PASS, 2/2.
 // apps/api/src/routing-eta/scripts/run-legacy-recovery.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../app.module.js';
-import { PrismaService } from '../../prisma/prisma.service.js';
+import { PrismaService } from '../../database/prisma.service.js';
 import { EtaService } from '../eta.service.js';
 import { runLegacyRouteRecovery } from '../legacy-recovery.job.js';
 

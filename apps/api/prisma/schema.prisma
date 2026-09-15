@@ -107,45 +107,122 @@ enum SupportTicketStatus {
   CLOSED
 }
 
+enum RouteSnapshotReason {
+  INITIAL_QUOTE
+  REROUTE
+  STOP_COMPLETED
+  MANUAL_RECOVERY
+}
+
+enum RouteProviderSource {
+  VIETMAP
+  DEMO
+}
+
+enum VehicleProfileSource {
+  STANDARD_QUOTE_PROFILE
+  ASSIGNED_VEHICLE_PROFILE
+  MANUAL_RECOVERY
+}
+
+enum RouteSnapshotQuality {
+  VERIFIED_PROVIDER
+  DEMO
+  LEGACY_RECOVERED
+  PARTIAL
+}
+
+enum EstimateKind {
+  NEXT_STOP
+  COMPLETION
+}
+
+enum LiveEstimateStatus {
+  AVAILABLE
+  UNAVAILABLE
+  SUPERSEDED
+}
+
+enum EtaUnavailableReason {
+  NO_TARGET_STOP
+  GPS_TOO_OLD
+  ROUTE_UNAVAILABLE
+  PROVIDER_EXHAUSTED
+  INVALID_ROUTE_INPUT
+}
+
+enum EtaAdjustmentSource {
+  NONE
+  WEATHER
+  OPERATIONAL
+  WEATHER_AND_OPERATIONAL
+}
+
+enum OutboxEventType {
+  ROUTE_ETA_RECOMPUTE
+  ROUTE_ETA_UPDATED
+  ROUTE_UPDATED
+}
+
+enum OutboxEventStatus {
+  PENDING
+  LEASED
+  COMPLETED
+  DEAD_LETTER
+}
+
+enum StopProgressStep {
+  ARRIVED
+  SERVICE_STARTED
+  SERVICE_COMPLETED
+}
+
+enum StopProgressAction {
+  RECORDED
+  VOIDED
+}
+
 model User {
-  id                String               @id @default(uuid()) @db.Uuid
-  firebaseUid       String?              @unique @db.VarChar(128)
-  phone             String?              @unique @db.VarChar(32)
-  email             String?              @unique @db.VarChar(255)
-  name              String?              @db.VarChar(120)
-  phoneVerifiedAt   DateTime?            @db.Timestamptz(3)
-  emailVerifiedAt   DateTime?            @db.Timestamptz(3)
-  onboardedAt       DateTime?            @db.Timestamptz(3)
-  consentTermsAt    DateTime?            @db.Timestamptz(3)
-  consentServiceAt  DateTime?            @db.Timestamptz(3)
-  consentMarketing  Boolean              @default(false)
-  consentThirdParty Boolean              @default(false)
-  avatarMediaId     String?              @db.Uuid
-  avatarStorageKey  String?              @db.VarChar(500)
-  avatarContentType String?              @db.VarChar(100)
-  role              Role
-  status            UserStatus           @default(ACTIVE)
-  createdAt         DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
-  refreshSessions   RefreshSession[]
-  fleetMemberships  FleetMember[]
-  driverProfile     DriverProfile?
-  customerOrders    Order[]              @relation("CustomerOrders")
-  driverOrders      Order[]              @relation("DriverOrders")
-  statusChanges     OrderStatusHistory[] @relation("OrderStatusActor")
-  trackingPoints    TrackingPoint[]      @relation("TrackingDriver")
-  mediaObjects      MediaObject[]        @relation("MediaUploader")
-  confirmedPayments PaymentIntent[]      @relation("PaymentConfirmer")
-  withdrawalRequests  WithdrawalRequest[]  @relation("DriverWithdrawals")
-  reviewedWithdrawals WithdrawalRequest[]  @relation("WithdrawalReviewer")
-  auditLogs         AuditLog[]           @relation("AuditActor")
-  notifications     Notification[]
-  deviceTokens      DeviceToken[]
-  customerAddresses CustomerAddress[]
-  orderMessages     OrderMessage[]
-  orderReviews      OrderReview[]        @relation("ReviewCustomer")
-  supportTickets    SupportTicket[]      @relation("TicketCustomer")
-  driverApplications DriverApplication[]
+  id                             String                  @id @default(uuid()) @db.Uuid
+  firebaseUid                    String?                 @unique @db.VarChar(128)
+  phone                          String?                 @unique @db.VarChar(32)
+  email                          String?                 @unique @db.VarChar(255)
+  name                           String?                 @db.VarChar(120)
+  phoneVerifiedAt                DateTime?               @db.Timestamptz(3)
+  emailVerifiedAt                DateTime?               @db.Timestamptz(3)
+  onboardedAt                    DateTime?               @db.Timestamptz(3)
+  consentTermsAt                 DateTime?               @db.Timestamptz(3)
+  consentServiceAt               DateTime?               @db.Timestamptz(3)
+  consentMarketing               Boolean                 @default(false)
+  consentThirdParty              Boolean                 @default(false)
+  avatarMediaId                  String?                 @db.Uuid
+  avatarStorageKey               String?                 @db.VarChar(500)
+  avatarContentType              String?                 @db.VarChar(100)
+  role                           Role
+  status                         UserStatus              @default(ACTIVE)
+  createdAt                      DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt                      DateTime                @default(now()) @updatedAt @db.Timestamptz(3)
+  refreshSessions                RefreshSession[]
+  fleetMemberships               FleetMember[]
+  driverProfile                  DriverProfile?
+  customerOrders                 Order[]                 @relation("CustomerOrders")
+  driverOrders                   Order[]                 @relation("DriverOrders")
+  statusChanges                  OrderStatusHistory[]    @relation("OrderStatusActor")
+  trackingPoints                 TrackingPoint[]         @relation("TrackingDriver")
+  mediaObjects                   MediaObject[]           @relation("MediaUploader")
+  confirmedPayments              PaymentIntent[]         @relation("PaymentConfirmer")
+  withdrawalRequests             WithdrawalRequest[]     @relation("DriverWithdrawals")
+  reviewedWithdrawals            WithdrawalRequest[]     @relation("WithdrawalReviewer")
+  auditLogs                      AuditLog[]              @relation("AuditActor")
+  notifications                  Notification[]
+  deviceTokens                   DeviceToken[]
+  customerAddresses              CustomerAddress[]
+  orderMessages                  OrderMessage[]
+  orderReviews                   OrderReview[]           @relation("ReviewCustomer")
+  supportTickets                 SupportTicket[]         @relation("TicketCustomer")
+  driverApplications             DriverApplication[]
+  verifiedVehicleRoutingProfiles VehicleRoutingProfile[] @relation("VehicleProfileVerifier")
+  stopProgressActions            StopProgressEvent[]     @relation("StopProgressActor")
 }
 
 model RefreshSession {
@@ -189,34 +266,35 @@ model FleetMember {
 }
 
 model DriverProfile {
-  id                String                                @id @default(uuid()) @db.Uuid
-  userId            String                                @unique @db.Uuid
-  availability      DriverAvailability                    @default(OFFLINE)
-  vehicleType       VehicleType
-  licensePlate      String?                               @db.VarChar(32)
-  licenseNumber     String?                               @db.VarChar(64)
-  fleetCode         String?                               @db.VarChar(64)
-  operatingCity     String?                               @db.VarChar(120)
-  submittedAt       DateTime?                             @db.Timestamptz(3)
-  reviewedAt        DateTime?                             @db.Timestamptz(3)
-  reviewedById      String?                               @db.Uuid
-  rejectionReason   String?
-  contractVersion   String?                               @db.VarChar(32)
-  contractSignedAt  DateTime?                             @db.Timestamptz(3)
-  lastKnownLocation Unsupported("geography(Point,4326)")?
-  lastKnownAt       DateTime?                             @db.Timestamptz(3)
-  balanceVnd         Int                                   @default(0)
-  bankName           String?                               @db.VarChar(100)
-  bankAccountNumber  String?                               @db.VarChar(50)
-  bankAccountName    String?                               @db.VarChar(120)
-  autoOfflineOnComplete Boolean                           @default(false)
-  createdAt         DateTime                              @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime                              @default(now()) @updatedAt @db.Timestamptz(3)
-  user              User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
-  documents         DriverDocument[]
-  contracts         DriverContract[]
-  payoutRequests     PayoutRequest[]
-  affiliations      DriverAffiliation[]
+  id                    String                                @id @default(uuid()) @db.Uuid
+  userId                String                                @unique @db.Uuid
+  availability          DriverAvailability                    @default(OFFLINE)
+  vehicleType           VehicleType
+  licensePlate          String?                               @db.VarChar(32)
+  licenseNumber         String?                               @db.VarChar(64)
+  fleetCode             String?                               @db.VarChar(64)
+  operatingCity         String?                               @db.VarChar(120)
+  submittedAt           DateTime?                             @db.Timestamptz(3)
+  reviewedAt            DateTime?                             @db.Timestamptz(3)
+  reviewedById          String?                               @db.Uuid
+  rejectionReason       String?
+  contractVersion       String?                               @db.VarChar(32)
+  contractSignedAt      DateTime?                             @db.Timestamptz(3)
+  lastKnownLocation     Unsupported("geography(Point,4326)")?
+  lastKnownAt           DateTime?                             @db.Timestamptz(3)
+  balanceVnd            Int                                   @default(0)
+  bankName              String?                               @db.VarChar(100)
+  bankAccountNumber     String?                               @db.VarChar(50)
+  bankAccountName       String?                               @db.VarChar(120)
+  autoOfflineOnComplete Boolean                               @default(false)
+  createdAt             DateTime                              @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime                              @default(now()) @updatedAt @db.Timestamptz(3)
+  user                  User                                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  documents             DriverDocument[]
+  contracts             DriverContract[]
+  payoutRequests        PayoutRequest[]
+  affiliations          DriverAffiliation[]
+  routingProfiles       VehicleRoutingProfile[]
 
   @@index([availability, vehicleType, lastKnownAt])
 }
@@ -327,6 +405,17 @@ model Order {
   cancelledAt         DateTime?            @db.Timestamptz(3)
   createdAt           DateTime             @default(now()) @db.Timestamptz(3)
   updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamptz(3)
+
+  routeEtaInputRevision  Int       @default(0)
+  routeSnapshotVersion   Int       @default(0)
+  routeEtaLastBumpAt     DateTime? @db.Timestamptz(3)
+  routeEtaLastGpsPointId String?   @db.Uuid
+
+  quotedRouteSnapshotId       String? @db.Uuid
+  activeRouteSnapshotId       String? @db.Uuid
+  currentNextStopEstimateId   String? @db.Uuid
+  currentCompletionEstimateId String? @db.Uuid
+
   customer            User                 @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
   driver              User?                @relation("DriverOrders", fields: [driverId], references: [id], onDelete: Restrict)
   stops               OrderStop[]
@@ -339,26 +428,41 @@ model Order {
   reviews             OrderReview[]
   supportTickets      SupportTicket[]
 
+  quotedRouteSnapshot OrderRouteSnapshot?  @relation("QuotedRoute", fields: [id, quotedRouteSnapshotId], references: [orderId, id])
+  activeRouteSnapshot OrderRouteSnapshot?  @relation("ActiveRoute", fields: [id, activeRouteSnapshotId], references: [orderId, id])
+  routeSnapshots      OrderRouteSnapshot[] @relation("OrderRouteHistory")
+
+  currentNextStopEstimate   OrderLiveEstimate?  @relation("CurrentNextStopEstimate", fields: [id, currentNextStopEstimateId], references: [orderId, id])
+  currentCompletionEstimate OrderLiveEstimate?  @relation("CurrentCompletionEstimate", fields: [id, currentCompletionEstimateId], references: [orderId, id])
+  liveEstimates             OrderLiveEstimate[] @relation("OrderLiveEstimateHistory")
+
+  stopProgressEvents StopProgressEvent[]
+  stopProgressStates StopProgressState[]
+
   @@unique([customerId, clientRequestId])
   @@index([customerId, createdAt(sort: Desc)])
   @@index([status, vehicleType, createdAt(sort: Desc)])
 }
 
 model OrderStop {
-  id           String                               @id @default(uuid()) @db.Uuid
-  orderId      String                               @db.Uuid
-  type         StopType
-  sequence     Int
-  address      String
-  contactName  String?                              @db.VarChar(120)
-  contactPhone String?                              @db.VarChar(32)
-  note         String?
-  location     Unsupported("geography(Point,4326)")
-  createdAt    DateTime                             @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime                             @default(now()) @updatedAt @db.Timestamptz(3)
-  order        Order                                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  id                  String                               @id @default(uuid()) @db.Uuid
+  orderId             String                               @db.Uuid
+  type                StopType
+  sequence            Int
+  address             String
+  contactName         String?                              @db.VarChar(120)
+  contactPhone        String?                              @db.VarChar(32)
+  note                String?
+  location            Unsupported("geography(Point,4326)")
+  createdAt           DateTime                             @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                             @default(now()) @updatedAt @db.Timestamptz(3)
+  order               Order                                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  stopProgressEvents  StopProgressEvent[]
+  stopProgressStates  StopProgressState[]
+  liveEstimateTargets OrderLiveEstimate[]
 
   @@unique([orderId, sequence])
+  @@unique([id, orderId])
 }
 
 model OrderStatusHistory {
@@ -388,6 +492,7 @@ model TrackingPoint {
   createdAt     DateTime                             @default(now()) @db.Timestamptz(3)
   order         Order                                @relation(fields: [orderId], references: [id], onDelete: Restrict)
   driver        User                                 @relation("TrackingDriver", fields: [driverId], references: [id], onDelete: Restrict)
+  liveEstimates OrderLiveEstimate[]
 
   @@unique([orderId, clientPointId])
   @@index([orderId, capturedAt(sort: Desc)])
@@ -714,3 +819,181 @@ model ConsentRecord {
   @@index([userId, noticeType])
 }
 
+model VehicleRoutingProfile {
+  id               String      @id @default(uuid()) @db.Uuid
+  driverProfileId  String      @db.Uuid
+  version          Int
+  vehicleType      VehicleType
+  tareWeightKg     Int
+  maxPayloadKg     Int
+  maxGrossWeightKg Int
+  verifiedAt       DateTime?   @db.Timestamptz(3)
+  verifiedById     String?     @db.Uuid
+  supersededAt     DateTime?   @db.Timestamptz(3)
+  createdAt        DateTime    @default(now()) @db.Timestamptz(3)
+
+  driverProfile  DriverProfile        @relation(fields: [driverProfileId], references: [id], onDelete: Restrict)
+  verifiedBy     User?                @relation("VehicleProfileVerifier", fields: [verifiedById], references: [id], onDelete: Restrict)
+  routeSnapshots OrderRouteSnapshot[]
+
+  @@unique([driverProfileId, version])
+  @@index([driverProfileId, supersededAt])
+}
+
+model QuoteVehicleRoutingPolicy {
+  id                      String               @id @default(uuid()) @db.Uuid
+  vehicleType             VehicleType
+  version                 Int
+  assumedTareWeightKg     Int
+  assumedMaxPayloadKg     Int
+  assumedMaxGrossWeightKg Int
+  operationalAllowanceKg  Int                  @default(0)
+  effectiveFrom           DateTime             @db.Timestamptz(3)
+  supersededAt            DateTime?            @db.Timestamptz(3)
+  createdAt               DateTime             @default(now()) @db.Timestamptz(3)
+  routeSnapshots          OrderRouteSnapshot[]
+
+  @@unique([vehicleType, version])
+  @@index([vehicleType, supersededAt])
+}
+
+model OrderRouteSnapshot {
+  id                          String               @id @default(uuid()) @db.Uuid
+  orderId                     String               @db.Uuid
+  version                     Int
+  reason                      RouteSnapshotReason
+  quality                     RouteSnapshotQuality
+  geometry                    String
+  geometryEncoding            String               @db.VarChar(16)
+  routeHash                   String               @db.VarChar(64)
+  inputHash                   String               @db.VarChar(64)
+  hashAlgorithmVersion        String               @db.VarChar(16)
+  providerRouteId             String?
+  legs                        Json
+  stopSequence                Json
+  normalizedInput             Json
+  vehicleProfileSource        VehicleProfileSource
+  vehicleRoutingProfileId     String?              @db.Uuid
+  quoteVehicleRoutingPolicyId String?              @db.Uuid
+  departureAt                 DateTime             @db.Timestamptz(3)
+  source                      RouteProviderSource
+  calculatedAt                DateTime             @db.Timestamptz(3)
+  legacySourceSnapshotJson    Json?
+  legacyMissingFields         String[]
+  recoveryJobVersion          String?
+  recoveredAt                 DateTime?            @db.Timestamptz(3)
+  createdAt                   DateTime             @default(now()) @db.Timestamptz(3)
+
+  order                     Order                      @relation("OrderRouteHistory", fields: [orderId], references: [id], onDelete: Restrict)
+  vehicleRoutingProfile     VehicleRoutingProfile?     @relation(fields: [vehicleRoutingProfileId], references: [id], onDelete: Restrict)
+  quoteVehicleRoutingPolicy QuoteVehicleRoutingPolicy? @relation(fields: [quoteVehicleRoutingPolicyId], references: [id], onDelete: Restrict)
+  quotedForOrders           Order[]                    @relation("QuotedRoute")
+  activeForOrders           Order[]                    @relation("ActiveRoute")
+  liveEstimates             OrderLiveEstimate[]
+
+  @@unique([orderId, version])
+  @@unique([orderId, id], map: "order_route_snapshot_order_id_id_key")
+}
+
+model OrderLiveEstimate {
+  id                     String                @id @default(uuid()) @db.Uuid
+  orderId                String                @db.Uuid
+  inputRevision          Int
+  kind                   EstimateKind
+  targetStopId           String?               @db.Uuid
+  routeSnapshotId        String                @db.Uuid
+  status                 LiveEstimateStatus
+  unavailableReason      EtaUnavailableReason?
+  remainingDistanceM     Int?
+  remainingDurationS     Int?
+  arrivalAt              DateTime?             @db.Timestamptz(3)
+  baselineDurationS      Int?
+  adjustmentDurationS    Int                   @default(0)
+  baselineSource         RouteProviderSource
+  adjustmentSource       EtaAdjustmentSource   @default(NONE)
+  weatherSnapshotVersion Int?
+  policyVersion          Int                   @default(1)
+  gpsPointId             String?               @db.Uuid
+  calculatedAt           DateTime              @db.Timestamptz(3)
+  validUntil             DateTime              @db.Timestamptz(3)
+  createdAt              DateTime              @default(now()) @db.Timestamptz(3)
+
+  order                Order              @relation("OrderLiveEstimateHistory", fields: [orderId], references: [id], onDelete: Restrict)
+  routeSnapshot        OrderRouteSnapshot @relation(fields: [orderId, routeSnapshotId], references: [orderId, id])
+  targetStop           OrderStop?         @relation(fields: [targetStopId], references: [id], onDelete: Restrict)
+  gpsPoint             TrackingPoint?     @relation(fields: [gpsPointId], references: [id], onDelete: SetNull)
+  currentForNextStop   Order[]            @relation("CurrentNextStopEstimate")
+  currentForCompletion Order[]            @relation("CurrentCompletionEstimate")
+
+  @@unique([orderId, inputRevision, kind])
+  @@unique([orderId, id], map: "order_live_estimate_order_id_id_key")
+  @@index([orderId, inputRevision])
+  @@index([orderId, status, kind])
+}
+
+model StopProgressEvent {
+  id                String             @id @default(uuid()) @db.Uuid
+  orderId           String             @db.Uuid
+  stopId            String             @db.Uuid
+  step              StopProgressStep
+  action            StopProgressAction @default(RECORDED)
+  actorId           String             @db.Uuid
+  clientRequestId   String?
+  occurredAt        DateTime           @db.Timestamptz(3)
+  supersedesEventId String?            @unique @db.Uuid
+  reason            String?            @db.VarChar(500)
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+
+  order        Order              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  stop         OrderStop          @relation(fields: [stopId, orderId], references: [id, orderId], onDelete: Restrict)
+  actor        User               @relation("StopProgressActor", fields: [actorId], references: [id], onDelete: Restrict)
+  supersedes   StopProgressEvent? @relation("StopProgressVoid", fields: [orderId, stopId, step, supersedesEventId], references: [orderId, stopId, step, id], onDelete: Restrict)
+  supersededBy StopProgressEvent? @relation("StopProgressVoid")
+  state        StopProgressState?
+
+  @@unique([stopId, clientRequestId])
+  @@unique([orderId, stopId, step, id], map: "stop_progress_event_order_stop_step_id_key")
+  @@unique([orderId, stopId, step, supersedesEventId], map: "stop_progress_event_void_target_key")
+  @@index([orderId, stopId, step])
+}
+
+model StopProgressState {
+  orderId       String           @db.Uuid
+  stopId        String           @db.Uuid
+  step          StopProgressStep
+  activeEventId String           @unique @db.Uuid
+  updatedAt     DateTime         @updatedAt @db.Timestamptz(3)
+
+  order       Order             @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  stop        OrderStop         @relation(fields: [stopId, orderId], references: [id, orderId], onDelete: Restrict)
+  activeEvent StopProgressEvent @relation(fields: [orderId, stopId, step, activeEventId], references: [orderId, stopId, step, id], onDelete: Restrict)
+
+  @@id([orderId, stopId, step])
+  @@unique([orderId, stopId, step, activeEventId], map: "stop_progress_state_active_event_key")
+}
+
+model OutboxEvent {
+  id              String            @id @default(uuid()) @db.Uuid
+  aggregateType   String            @db.VarChar(64)
+  aggregateId     String            @db.Uuid
+  type            OutboxEventType
+  schemaVersion   Int               @default(1)
+  inputRevision   Int?
+  payload         Json
+  dedupeKey       String            @unique
+  status          OutboxEventStatus @default(PENDING)
+  attempts        Int               @default(0)
+  maxAttempts     Int               @default(8)
+  leaseOwner      String?           @db.VarChar(128)
+  leaseGeneration Int               @default(0)
+  leaseExpiresAt  DateTime?         @db.Timestamptz(3)
+  nextAttemptAt   DateTime          @default(now()) @db.Timestamptz(3)
+  lastError       String?           @db.VarChar(500)
+  completedAt     DateTime?         @db.Timestamptz(3)
+  createdAt       DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime          @default(now()) @updatedAt @db.Timestamptz(3)
+
+  @@index([status, nextAttemptAt])
+  @@index([status, leaseExpiresAt])
+  @@index([aggregateId, type, inputRevision(sort: Desc)])
+}

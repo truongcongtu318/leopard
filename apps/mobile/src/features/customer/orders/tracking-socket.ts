@@ -580,10 +580,6 @@ export class CustomerTrackingSocketManager {
       this.handleIncomingStatus(payload);
     });
 
-    socket.on('eta:updated', (payload: SocketEtaPayload) => {
-      this.handleIncomingEta(payload);
-    });
-
     socket.on('session:error', (payload: SocketSessionErrorPayload) => {
       void this.handleSessionError(payload);
     });

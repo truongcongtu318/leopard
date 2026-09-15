@@ -1,4 +1,4 @@
-import type { OrderStatus, ProviderSource } from './enums.js';
+import type { OrderStatus } from './enums.js';
 import type { VehicleType } from './domain/vehicle/vehicle-type.js';
 import type { TrackingPoint } from './tracking.js';
 
@@ -31,6 +31,8 @@ export const TrackingSocketEvent = {
   pointUpdated: 'tracking:point-updated',
   orderStatusUpdated: 'order:status-updated',
   sessionError: 'session:error',
+  routeEtaUpdated: 'route-eta:updated',
+  routeUpdated: 'route:updated',
 } as const;
 export type TrackingSocketEvent = (typeof TrackingSocketEvent)[keyof typeof TrackingSocketEvent];
 
@@ -105,15 +107,6 @@ export interface OrderStatusUpdatedEvent {
   occurredAt?: string;
 }
 
-export interface EtaUpdatedEvent {
-  orderId: string;
-  durationSeconds: number;
-  source?: ProviderSource;
-  calculatedAt?: string;
-  eventId?: string;
-  occurredAt?: string;
-}
-
 export interface SessionErrorEvent {
   code: string;
   message: string;
@@ -141,5 +134,37 @@ export interface NotificationCreatedEvent {
   readonly body: string;
   readonly createdAt: string;
   readonly orderId?: string;
+}
+
+export interface CurrentEstimateSocketView {
+  kind: 'NEXT_STOP' | 'COMPLETION';
+  outcome: 'AVAILABLE' | 'UNAVAILABLE';
+  targetStopId: string | null;
+  remainingDistanceM: number | null;
+  remainingDurationS: number | null;
+  arrivalAt: string | null;
+  unavailableReason: string | null;
+  calculatedAt: string;
+  validUntil: string;
+}
+
+export interface RouteEtaUpdatedEventV1 {
+  schemaVersion: 1;
+  eventId: string;
+  orderId: string;
+  inputRevision: number;
+  occurredAt: string;
+  estimates: { nextStop: CurrentEstimateSocketView; completion: CurrentEstimateSocketView };
+}
+
+export interface RouteUpdatedEventV1 {
+  schemaVersion: 1;
+  eventId: string;
+  orderId: string;
+  inputRevision: number;
+  occurredAt: string;
+  routeSnapshotVersion: number;
+  geometryHash: string;
+  reason: 'REROUTE' | 'STOP_COMPLETED' | 'MANUAL_RECOVERY';
 }
 
