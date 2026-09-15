@@ -1,6 +1,6 @@
-// apps/driver/src/features/wallet/DriverWalletRuntime.tsx
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { Alert } from 'react-native';
 
 import { createDriverWalletHttpAdapter } from './adapter';
 import { DriverWalletScreen } from './DriverWalletScreen';
@@ -31,6 +31,10 @@ export function DriverWalletRuntime() {
         queryClient.invalidateQueries({ queryKey: ['driver', 'wallet', 'summary'] }),
         queryClient.invalidateQueries({ queryKey: ['driver', 'wallet', 'history'] }),
       ]);
+      Alert.alert(
+        'Thành công',
+        'Đã gửi yêu cầu rút tiền. Admin sẽ xác nhận và chuyển khoản trong giờ hành chính.',
+      );
     } catch (error) {
       setWithdrawalError(
         error instanceof Error ? error.message : 'Không thể gửi yêu cầu rút tiền. Vui lòng thử lại.',

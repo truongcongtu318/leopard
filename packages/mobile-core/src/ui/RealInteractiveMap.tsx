@@ -23,7 +23,14 @@ export type MapStop = {
   id: string;
   label: string;
   coords?: MapCoordinate;
+  progress?: 'PENDING' | 'ARRIVED' | 'IN_SERVICE' | 'COMPLETED';
+  sequence?: number;
 };
+
+export type RoutePolylineSegment = Readonly<{
+  coords: readonly RouteCoordinate[];
+  kind: 'completed' | 'active' | 'pending';
+}>;
 
 export type RealInteractiveMapMode = 'route' | 'tracking' | 'location' | 'pin' | 'preview';
 
@@ -47,6 +54,7 @@ export type RealInteractiveMapProps = Readonly<{
   vietmapApiKey?: string;
   routeResolutionPolicy?: RouteResolutionPolicy;
   routeCoords?: readonly RouteCoordinate[];
+  routeSegments?: readonly RoutePolylineSegment[];
 }>;
 
 type TruckLocationMessage = Readonly<{
@@ -161,6 +169,7 @@ export function buildLeafletHtml({
   vietmapApiKey,
   routeResolutionPolicy = 'ALLOW_CLIENT_PREVIEW',
   routeCoords = [],
+  routeSegments = [],
 }: {
   destinationCoords: MapCoordinate;
   destinationLabel: string;
@@ -171,12 +180,18 @@ export function buildLeafletHtml({
   originCoords: MapCoordinate;
   originLabel: string;
   pinCoords: MapCoordinate;
-  stopsCoords: readonly { label: string; coords: MapCoordinate }[];
+  stopsCoords: readonly {
+    label: string;
+    coords: MapCoordinate;
+    progress?: 'PENDING' | 'ARRIVED' | 'IN_SERVICE' | 'COMPLETED';
+    sequence?: number;
+  }[];
   truckCoords: MapCoordinate;
   truckEtaLabel: string;
   vietmapApiKey?: string;
   routeResolutionPolicy?: RouteResolutionPolicy;
   routeCoords?: readonly RouteCoordinate[];
+  routeSegments?: readonly RoutePolylineSegment[];
 }): string {
   const pointsJson = JSON.stringify({
     mode,
@@ -188,6 +203,7 @@ export function buildLeafletHtml({
     interactive,
     hasTruckLocation,
     mapInstanceId,
+    routeResolutionPolicy,
     // Never include the Vietmap API key in the generated config when the caller
     // requires provided-only geometry — it must be structurally absent from the
     // WebView HTML, not merely unused at runtime.
@@ -248,9 +264,19 @@ export function buildLeafletHtml({
           fetchOsrmRoute(waypoints);
         }`;
 
+  const hasSegments = Boolean(
+    routeSegments &&
+      routeSegments.length > 0 &&
+      routeSegments.some((s) => s.coords && s.coords.length >= 2),
+  );
+
   const routeSection =
     routeResolutionPolicy === 'PROVIDED_ONLY'
-      ? routeCoords.length >= 2
+      ? hasSegments
+        ? `
+      applyRouteSegments(${JSON.stringify(routeSegments)});
+        `
+        : routeCoords.length >= 2
         ? `
       applyRouteCoords(${JSON.stringify(routeCoords.map((c) => [c.lat, c.lng]))});
         `
@@ -304,6 +330,10 @@ export function buildLeafletHtml({
     .pin-core.origin { background: #16A34A; }
     .pin-core.dest { background: #0B1E42; }
     .pin-core.stop { background: #D97706; }
+    .pin-core.stop-pending { background: #D97706; }
+    .pin-core.stop-arrived { background: #2563EB; }
+    .pin-core.stop-in_service { background: #059669; }
+    .pin-core.stop-completed { background: #64748B; opacity: 0.85; }
     .pin-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFFFFF; }
 
     /* Truck Marker Styles */
@@ -462,10 +492,18 @@ export function buildLeafletHtml({
           if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
             latlngs.push([s.coords.lat, s.coords.lng]);
             bounds.push([s.coords.lat, s.coords.lng]);
+            var seq = s.sequence != null ? s.sequence : (idx + 1);
+            var progClass = s.progress ? 'stop-' + s.progress.toLowerCase() : '';
+            var iconType = 'stop ' + progClass;
+            var numText = s.progress === 'COMPLETED' ? '✓' : seq.toString();
             var sm = L.marker([s.coords.lat, s.coords.lng], {
-              icon: createPulseIcon('stop', (idx + 1).toString())
+              icon: createPulseIcon(iconType, numText),
+              title: 'Điểm dừng ' + seq + (s.progress ? ' (' + s.progress + ')' : '') + ': ' + (s.label || '')
             }).addTo(map);
-            if (s.label) sm.bindPopup('<b>Điểm dừng ' + (idx + 1) + ':</b> ' + s.label);
+            if (s.label) {
+              var progLabel = s.progress ? ' - ' + s.progress : '';
+              sm.bindPopup('<b>Điểm dừng ' + seq + progLabel + ':</b> ' + s.label);
+            }
           }
         });
       }
@@ -479,29 +517,98 @@ export function buildLeafletHtml({
       }).addTo(map);
       if (config.destination.label) destMarker.bindPopup('<b>Điểm giao:</b> ' + config.destination.label);
 
-      // Dual-layer Route Polyline with subtle glow effect
-      var routeLayerGlow = L.polyline(latlngs, {
-        color: '#0B1E42',
-        weight: 8,
-        opacity: 0.28,
-        lineJoin: 'round',
-        lineCap: 'round'
-      }).addTo(map);
+      var hasProvidedSegments = ${hasSegments ? 'true' : 'false'};
+      var routeLayerGlow = null;
+      var routeLayer = null;
 
-      var routeLayer = L.polyline(latlngs, {
-        color: '#0B1E42',
-        weight: 4.5,
-        opacity: 0.95,
-        lineJoin: 'round',
-        lineCap: 'round'
-      }).addTo(map);
+      if (!hasProvidedSegments && config.routeResolutionPolicy !== 'PROVIDED_ONLY') {
+        routeLayerGlow = L.polyline(latlngs, {
+          color: '#0B1E42',
+          weight: 8,
+          opacity: 0.28,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+
+        routeLayer = L.polyline(latlngs, {
+          color: '#0B1E42',
+          weight: 4.5,
+          opacity: 0.95,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+      }
 
       function applyRouteCoords(coords) {
-        routeLayerGlow.setLatLngs(coords);
-        routeLayer.setLatLngs(coords);
+        if (!routeLayer) {
+          routeLayerGlow = L.polyline(coords, {
+            color: '#0B1E42',
+            weight: 8,
+            opacity: 0.28,
+            lineJoin: 'round',
+            lineCap: 'round'
+          }).addTo(map);
+          routeLayer = L.polyline(coords, {
+            color: '#0B1E42',
+            weight: 4.5,
+            opacity: 0.95,
+            lineJoin: 'round',
+            lineCap: 'round'
+          }).addTo(map);
+        } else {
+          routeLayerGlow.setLatLngs(coords);
+          routeLayer.setLatLngs(coords);
+        }
         try {
           map.fitBounds(routeLayer.getBounds(), { padding: [36, 36], maxZoom: 16 });
         } catch(e) {}
+      }
+
+      function applyRouteSegments(segments) {
+        var segBounds = [];
+        segments.forEach(function(seg) {
+          if (!seg.coords || seg.coords.length < 2) return;
+          var segLatLngs = seg.coords.map(function(c) { return [c.lat, c.lng]; });
+          segLatLngs.forEach(function(ll) { segBounds.push(ll); });
+          if (seg.kind === 'completed') {
+            L.polyline(segLatLngs, {
+              color: '#94A3B8',
+              weight: 4,
+              opacity: 0.5,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }).addTo(map);
+          } else if (seg.kind === 'active') {
+            L.polyline(segLatLngs, {
+              color: '#0B1E42',
+              weight: 8,
+              opacity: 0.25,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }).addTo(map);
+            L.polyline(segLatLngs, {
+              color: '#0B1E42',
+              weight: 5,
+              opacity: 0.95,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }).addTo(map);
+          } else {
+            L.polyline(segLatLngs, {
+              color: '#94A3B8',
+              weight: 3.5,
+              opacity: 0.7,
+              dashArray: '6, 8',
+              lineJoin: 'round',
+              lineCap: 'round'
+            }).addTo(map);
+          }
+        });
+        if (segBounds.length > 0) {
+          try {
+            map.fitBounds(segBounds, { padding: [36, 36], maxZoom: 16 });
+          } catch(e) {}
+        }
       }
 
       ${routeSection}
@@ -576,6 +683,7 @@ export function RealInteractiveMap({
   vietmapApiKey,
   routeResolutionPolicy,
   routeCoords,
+  routeSegments,
 }: RealInteractiveMapProps) {
   const mapInstanceId = useId();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -595,9 +703,11 @@ export function RealInteractiveMap({
     () =>
       stops
         .filter((s) => s.label && s.label.trim().length > 0 && s.label !== 'Chưa chọn')
-        .map((s) => ({
+        .map((s, idx) => ({
           label: s.label,
           coords: s.coords || resolveLocationCoords(s.label, originCoords),
+          progress: s.progress,
+          sequence: s.sequence ?? idx + 1,
         })),
     [stops, originCoords],
   );
@@ -683,6 +793,7 @@ export function RealInteractiveMap({
       vietmapApiKey: resolvedVietmapKey,
       routeResolutionPolicy: routeResolutionPolicy ?? 'ALLOW_CLIENT_PREVIEW',
       routeCoords: routeCoords ?? [],
+      routeSegments: routeSegments ?? [],
     });
   }, [
     destination?.label,
@@ -699,6 +810,7 @@ export function RealInteractiveMap({
     vietmapApiKey,
     routeResolutionPolicy,
     routeCoords,
+    routeSegments,
   ]);
 
   const isFullScreen = height === '100%';

@@ -2,6 +2,8 @@ import type {
   DriverAvailability,
   OrderStatus,
   ProviderSource,
+  RouteEtaResponse,
+  StopProgressCommandResponse,
   VehicleType,
 } from '@leopard/shared';
 
@@ -19,6 +21,8 @@ import type {
   DriverProofView,
   DriverPublicOrderView,
   DriverRoutePoint,
+  DriverRouteStopView,
+  DriverStopProgressStatus,
   DriverRouteView,
   DriverTrackingView,
 } from './model';
@@ -251,6 +255,7 @@ export interface MappedDriverOrderStopResponse {
   contactName?: string | null;
   contactPhone?: string | null;
   note?: string | null;
+  progress?: DriverStopProgressStatus;
 }
 
 export interface MappedDriverCurrentContact {
@@ -297,6 +302,9 @@ export interface MappedDriverOrderResponse {
   stops?: MappedDriverOrderStopResponse[];
   statusHistory?: MappedDriverOrderStatusHistoryResponse[];
   media?: Array<{ id: string; type: string; createdAt: string }>;
+  paymentMethod?: string | null;
+  paymentStatus?: string | null;
+  isCashConfirmed?: boolean | null;
 }
 
 export interface DriverAvailableOrdersApiResponse {
@@ -392,10 +400,20 @@ export function mapOrderToRouteView(
     lat: dropoffStop?.lat ?? dropoffStop?.latitude,
     lng: dropoffStop?.lng ?? dropoffStop?.longitude,
   };
-  const stops: readonly DriverRoutePoint[] = intermediateStops.map((s) => ({
-    id: s.id,
-    label: s.address,
-  }));
+  const stops: readonly DriverRouteStopView[] = intermediateStops.map(
+    (s, idx) => ({
+      id: s.id,
+      stopId: s.id,
+      sequence: s.sequence ?? idx + 1,
+      address: s.address,
+      label: s.address,
+      lat: s.lat ?? s.latitude,
+      lng: s.lng ?? s.longitude,
+      progress: s.progress ?? 'PENDING',
+      contactName: s.contactName,
+      contactPhone: s.contactPhone,
+    }),
+  );
 
   const distanceLabel = formatDistance(order.distanceMeters);
   const etaDurationSeconds = order.durationSeconds ?? order.etaSeconds ?? 0;
@@ -408,6 +426,7 @@ export function mapOrderToRouteView(
     distanceLabel,
     etaDurationSeconds,
     etaSource,
+    eta: null,
   };
 }
 
@@ -471,6 +490,8 @@ export function mapOrderToActiveTrip(
     proofLabel: proofRequired
       ? 'Cần ảnh xác nhận trước khi hoàn tất'
       : null,
+    customerContact: formatCustomerContactValue(order.currentContact, order.customerContact),
+    contactRoleLabel: resolveContactRoleLabel(order.currentContact),
   };
 }
 
@@ -612,6 +633,18 @@ function resolveDriverTask(
       offeredLifecycleCommand: null,
     };
   }
+  if (status === 'RETURNING') {
+    const returnCommand: DriverCommandView = {
+      id: `cmd-return-${order.id}`,
+      orderId: order.id,
+      label: 'Xác nhận đã hoàn hàng',
+      targetStatus: 'RETURNED',
+    };
+    return {
+      primaryTask: { kind: 'advance-lifecycle', command: returnCommand },
+      offeredLifecycleCommand: returnCommand,
+    };
+  }
   return { primaryTask: null, offeredLifecycleCommand: null };
 }
 
@@ -687,16 +720,37 @@ export function mapOrderToDriverDetailView(
           ? 'Đã hoàn trả hàng về điểm gửi thành công.'
           : null;
 
+  const routeSnapshot =
+    order.routeSnapshot && typeof order.routeSnapshot === 'object'
+      ? (order.routeSnapshot as Record<string, any>)
+      : null;
+  const paymentMethod =
+    order.paymentMethod === 'CASH' || routeSnapshot?.paymentMethod === 'CASH'
+      ? 'CASH'
+      : (order.paymentMethod || routeSnapshot?.paymentMethod || undefined);
+  const driverPayoutVnd =
+    typeof routeSnapshot?.driverPayoutVnd === 'number'
+      ? routeSnapshot.driverPayoutVnd
+      : typeof order.priceVnd === 'number'
+        ? Math.round(order.priceVnd * 0.85)
+        : null;
+
   const assignedOrder: DriverAssignedDetailView['order'] = {
     id: order.id,
     reference: formatOrderReference(order),
     status: status as Exclude<OrderStatus, 'REQUESTED'>,
     route,
     vehicleLabel: formatVehicleLabel(order.vehicleType),
+    vehicleType: (order.vehicleType as VehicleType) ?? null,
     cargoSummary: formatCargoSummary(order),
     cargoWeightKg: order.cargoWeightKg ?? order.cargoWeight ?? null,
     contactRoleLabel: resolveContactRoleLabel(order.currentContact),
     customerContact: formatCustomerContactValue(order.currentContact, order.customerContact),
+    priceLabel: formatVndPrice(order.priceVnd),
+    priceVnd: order.priceVnd ?? null,
+    paymentMethod,
+    isCashConfirmed: false,
+    driverPayoutVnd,
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
     history,
   };
@@ -1124,6 +1178,8 @@ export function createDriverHttpAdapter(
         targetStatus = 'DELIVERED';
       } else if (commandId.includes('pickup')) {
         targetStatus = 'PICKING_UP';
+      } else if (commandId.includes('return')) {
+        targetStatus = 'RETURNED';
       } else if (commandId.includes('accept')) {
         return this.acceptOrder(commandId);
       }
@@ -1134,7 +1190,7 @@ export function createDriverHttpAdapter(
           { status: targetStatus },
         );
 
-        if (targetStatus === 'DELIVERED') {
+        if (targetStatus === 'DELIVERED' || targetStatus === 'RETURNED') {
           currentAvailability = 'AVAILABLE';
         }
 
@@ -1148,6 +1204,37 @@ export function createDriverHttpAdapter(
             error.code === 'DELIVERY_PROOF_REQUIRED' ||
             (error.statusCode === 400 && error.message.toLowerCase().includes('proof'))
           ) {
+            try {
+              const currentOrder = await activeClient.get<MappedDriverOrderResponse>(
+                `/driver/orders/${orderId}`,
+              );
+              const fetchedView = mapOrderToDriverDetailView(currentOrder);
+              if (fetchedView.kind === 'content' && fetchedView.accessScope === 'ASSIGNED_FULL') {
+                return deepFreeze<DriverDetailView>({
+                  ...fetchedView,
+                  scenarioId: 'D-DETAIL-PROOF-REQUIRED',
+                  proof: {
+                    kind: 'required',
+                    label: 'Cần ảnh xác nhận trước khi hoàn tất',
+                    message: 'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.',
+                    fileLabel: null,
+                  },
+                  primaryTask: {
+                    kind: 'upload-proof',
+                    command: {
+                      id: `cmd-select-proof-${orderId}`,
+                      orderId,
+                      label: 'Thêm ảnh xác nhận giao hàng',
+                    },
+                  },
+                  offeredLifecycleCommand: null,
+                  notice: 'Cần tải ảnh xác nhận trước khi hoàn tất giao hàng.',
+                });
+              }
+            } catch {
+              // Fallback to minimal state preserving order ID if GET fails
+            }
+
             return deepFreeze<DriverDetailView>({
               scenarioId: 'D-DETAIL-PROOF-REQUIRED',
               kind: 'content',
@@ -1267,6 +1354,63 @@ export function createDriverHttpAdapter(
               : 'Hãy thử lại sau.',
         });
       }
+    },
+
+    async confirmCashPayment(
+      orderId: string,
+      clientRequestId?: string,
+    ): Promise<{ success: boolean; message?: string }> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        throw new Error('Mã đơn hàng không hợp lệ');
+      }
+
+      const reqId =
+        clientRequestId ||
+        (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `req-cash-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+      await activeClient.post(`/driver/orders/${validId}/confirm-cash`, {
+        clientRequestId: reqId,
+      });
+
+      return { success: true, message: 'Đã xác nhận thu tiền mặt thành công.' };
+    },
+
+    async getRouteEta(orderId: string): Promise<RouteEtaResponse> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        throw new Error('Mã đơn hàng không hợp lệ');
+      }
+      const res = await activeClient.get<
+        RouteEtaResponse | { data: RouteEtaResponse }
+      >(`/orders/${validId}/route-eta`);
+      if (res && typeof res === 'object' && 'data' in res && res.data) {
+        return (res as { data: RouteEtaResponse }).data;
+      }
+      return res as RouteEtaResponse;
+    },
+
+    async recordStopProgress(
+      orderId: string,
+      stopId: string,
+      payload: { step: string; clientRequestId: string; occurredAt?: string },
+    ): Promise<StopProgressCommandResponse> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        throw new Error('Mã đơn hàng không hợp lệ');
+      }
+      const res = await activeClient.post<
+        StopProgressCommandResponse | { data: StopProgressCommandResponse }
+      >(`/orders/${validId}/stops/${stopId}/progress`, payload);
+      if (res && typeof res === 'object' && 'data' in res && res.data) {
+        return (res as { data: StopProgressCommandResponse }).data;
+      }
+      return res as StopProgressCommandResponse;
     },
   };
 }

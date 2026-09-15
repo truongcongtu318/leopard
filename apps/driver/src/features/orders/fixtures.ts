@@ -72,9 +72,36 @@ function assignedRoute() {
       lng: 106.6341,
     },
     stops: [
-      { id: 'driver-stop-1', label: 'Trạm trung chuyển Quận 10' },
-      { id: 'driver-stop-2', label: 'Điểm giao 1 — 128 Lê Văn Sỹ, Q.3' },
-      { id: 'driver-stop-3', label: 'Điểm giao 2 — 45 Nam Kỳ Khởi Nghĩa, Q.1' },
+      {
+        id: 'driver-stop-1',
+        stopId: 'driver-stop-1',
+        sequence: 1,
+        address: 'Trạm trung chuyển Quận 10',
+        label: 'Trạm trung chuyển Quận 10',
+        lat: 10.7725,
+        lng: 106.6641,
+        progress: 'COMPLETED' as const,
+      },
+      {
+        id: 'driver-stop-2',
+        stopId: 'driver-stop-2',
+        sequence: 2,
+        address: '128 Lê Văn Sỹ, Q.3',
+        label: 'Điểm giao 1 — 128 Lê Văn Sỹ, Q.3',
+        lat: 10.7895,
+        lng: 106.6781,
+        progress: 'ARRIVED' as const,
+      },
+      {
+        id: 'driver-stop-3',
+        stopId: 'driver-stop-3',
+        sequence: 3,
+        address: '45 Nam Kỳ Khởi Nghĩa, Q.1',
+        label: 'Điểm giao 2 — 45 Nam Kỳ Khởi Nghĩa, Q.1',
+        lat: 10.7712,
+        lng: 106.6987,
+        progress: 'PENDING' as const,
+      },
     ],
     destination: {
       id: 'driver-dropoff',
@@ -133,6 +160,8 @@ function activeTrip(proofRequired = false): DriverActiveTripView {
     route: assignedRoute(),
     trackingLabel: 'Đang gửi vị trí · cập nhật lúc 14:32',
     proofLabel: proofRequired ? 'Cần ảnh xác nhận trước khi hoàn tất' : null,
+    customerContact: 'Thủ kho Nam (0987654321)',
+    contactRoleLabel: 'Người nhận hàng',
   };
 }
 

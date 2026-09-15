@@ -58,13 +58,13 @@ describe('DriverOrderDetailRuntime: reacts to a customer/admin cancellation whil
     getOrderDetailView.mockResolvedValueOnce(createDriverDetailFixture('D-DETAIL-IN-TRANSIT'));
     getOrderDetailView.mockResolvedValueOnce(createDriverDetailFixture('D-DETAIL-TERMINAL-CANCELLED'));
 
-    render(
+    const screen = await render(
       <QueryClientProvider client={client}>
         <DriverOrderDetailRuntime orderId={orderId} />
       </QueryClientProvider>,
     );
 
-    await waitFor(() => expect(getOrderDetailView).toHaveBeenCalledTimes(1), { timeout: 5000 });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Thêm ảnh xác nhận giao hàng' })).toBeTruthy());
 
     await act(async () => {
       client.setQueryData(['driver', 'order', orderId], createDriverDetailFixture('D-DETAIL-TERMINAL-CANCELLED'));
@@ -86,7 +86,7 @@ describe('DriverOrderDetailRuntime: reacts to a customer/admin cancellation whil
       createDriverDetailFixture('D-DETAIL-TERMINAL-CANCELLED'),
     );
 
-    render(
+    await render(
       <QueryClientProvider client={client}>
         <DriverOrderDetailRuntime orderId={orderId} />
       </QueryClientProvider>,

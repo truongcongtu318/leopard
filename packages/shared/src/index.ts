@@ -13,4 +13,5 @@ export * from './fleet.js';
 export * from './admin.js';
 export * from './routing/route-coordinate.js';
 export * from './routing/decode-polyline.js';
+export * from './routing/route-eta.js';
 

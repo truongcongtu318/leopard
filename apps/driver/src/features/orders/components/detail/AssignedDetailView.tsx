@@ -7,6 +7,7 @@ import {
   IconPhone,
   IconRoute,
   IconShieldAlert,
+  IconTxPayment,
   radius,
   ScreenScaffold,
   spacing,
@@ -14,6 +15,7 @@ import {
   StatusTimeline,
 } from '@leopard/mobile-core';
 import type { DriverAssignedDetailView, DriverPrimaryTaskView } from '../../model';
+import { formatVndPrice } from '../../adapter';
 import { MissionMapCanvas, openExternalNavigation } from './MissionMapCanvas';
 import { MissionStepper } from './MissionStepper';
 import { VerticalRouteStepper } from './VerticalRouteStepper';
@@ -30,6 +32,13 @@ export type AssignedDetailViewProps = Readonly<{
   onRetryProof?: (commandId: string) => void;
   onOpenIncidentModal?: () => void;
   onOpenLocationSettings?: () => void;
+  onConfirmCashPayment?: () => void;
+  isConfirmingCash?: boolean;
+  onRecordStopProgress?: (
+    stopId: string,
+    step: 'ARRIVED' | 'SERVICE_STARTED' | 'SERVICE_COMPLETED',
+  ) => void | Promise<void>;
+  inFlightStopCommand?: { stopId: string; step: string } | null;
 }>;
 
 export function AssignedDetailView({
@@ -41,14 +50,31 @@ export function AssignedDetailView({
   onRetryProof,
   onOpenIncidentModal,
   onOpenLocationSettings,
+  onConfirmCashPayment,
+  isConfirmingCash,
+  onRecordStopProgress,
+  inFlightStopCommand,
 }: AssignedDetailViewProps) {
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const isPickupLeg = view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP';
-  const activeNavigationTarget = isPickupLeg ? view.order.route.origin : view.order.route.destination;
+  const isReturning = view.order.status === 'RETURNING';
+  const isTerminal = view.order.status === 'DELIVERED' || view.order.status === 'RETURNED';
+
+  const activeNavigationTarget = React.useMemo(() => {
+    if (isReturning || isPickupLeg) {
+      return view.order.route.origin;
+    }
+    return view.order.route.destination;
+  }, [isReturning, isPickupLeg, view.order.route.origin, view.order.route.destination]);
+
   const isMissionActive =
-    view.order.status !== 'DELIVERED' &&
+    !isTerminal &&
     view.order.status !== 'CANCELLED' &&
     view.order.status !== 'INCIDENT_CANCELLED';
+  const isCashOrder = view.order.paymentMethod === 'CASH';
+  const isCashConfirmed = Boolean(
+    view.order.isCashConfirmed || view.order.paymentStatus === 'PAID_MANUAL',
+  );
 
   return (
     <ScreenScaffold
@@ -56,52 +82,59 @@ export function AssignedDetailView({
       onBack={onBack}
       stickyFooter={
         <View style={styles.stickyActionRow}>
-          <Pressable
-            accessibilityHint="Gọi điện thoại trực tiếp cho người nhận hoặc thủ kho"
-            accessibilityLabel="Gọi cho người nhận"
-            accessibilityRole="button"
-            onPress={() => callPhoneNumber(view.order.customerContact)}
-            style={({ pressed }) => [styles.stickyRoundBtn, pressed ? styles.pressed : null]}
-          >
-            <IconPhone color="#0B1E42" size={20} />
-          </Pressable>
+          {!isTerminal && (
+            <>
+              <Pressable
+                accessibilityHint="Gọi điện thoại trực tiếp cho người nhận hoặc thủ kho"
+                accessibilityLabel="Gọi cho người nhận"
+                accessibilityRole="button"
+                onPress={() => callPhoneNumber(view.order.customerContact)}
+                style={({ pressed }) => [styles.stickyRoundBtn, pressed ? styles.pressed : null]}
+              >
+                <IconPhone color="#0B1E42" size={20} />
+              </Pressable>
 
-          <Pressable
-            accessibilityHint="Mở ứng dụng Google Maps để dẫn đường"
-            accessibilityLabel="Mở Google Maps chỉ đường"
-            accessibilityRole="button"
-            onPress={() => openExternalNavigation(activeNavigationTarget)}
-            style={({ pressed }) => [styles.stickyRoundBtn, pressed ? styles.pressed : null]}
-            testID="btn-navigate-active-leg"
-          >
-            <IconRoute color="#0B1E42" size={20} />
-          </Pressable>
+              <Pressable
+                accessibilityHint="Mở ứng dụng Google Maps để dẫn đường"
+                accessibilityLabel="Mở Google Maps chỉ đường"
+                accessibilityRole="button"
+                onPress={() => openExternalNavigation(activeNavigationTarget)}
+                style={({ pressed }) => [styles.stickyRoundBtn, pressed ? styles.pressed : null]}
+                testID="btn-navigate-active-leg"
+              >
+                <IconRoute color="#0B1E42" size={20} />
+              </Pressable>
 
-          {onOpenIncidentModal && isMissionActive ? (
-            <Pressable
-              accessibilityHint="Báo cáo sự cố khẩn cấp cho chuyến đi"
-              accessibilityLabel="Báo sự cố"
-              accessibilityRole="button"
-              onPress={onOpenIncidentModal}
-              style={({ pressed }) => [
-                styles.stickyRoundBtn,
-                styles.stickyIncidentBtn,
-                pressed ? styles.pressed : null,
-              ]}
-              testID="btn-open-incident-modal"
-            >
-              <IconShieldAlert color="#DC2626" size={20} />
-            </Pressable>
-          ) : null}
+              {onOpenIncidentModal && isMissionActive ? (
+                <Pressable
+                  accessibilityHint="Báo cáo sự cố khẩn cấp cho chuyến đi"
+                  accessibilityLabel="Báo sự cố"
+                  accessibilityRole="button"
+                  onPress={onOpenIncidentModal}
+                  style={({ pressed }) => [
+                    styles.stickyRoundBtn,
+                    styles.stickyIncidentBtn,
+                    pressed ? styles.pressed : null,
+                  ]}
+                  testID="btn-open-incident-modal"
+                >
+                  <IconShieldAlert color="#DC2626" size={20} />
+                </Pressable>
+              ) : null}
+            </>
+          )}
 
           <View style={styles.stickyPrimaryBtnWrap}>
-            {taskButtonComponent ? (
+            {!isTerminal && taskButtonComponent ? (
               taskButtonComponent
             ) : (
-              <View style={styles.completedTripBadge}>
-                <IconCheck color="#15803D" size={14} strokeWidth={2.5} />
-                <Text style={styles.completedTripText}>Đã hoàn thành chuyến</Text>
-              </View>
+              <Button
+                label="Về trang chủ"
+                onPress={onBack}
+                size="driver-primary"
+                variant="primary"
+                testID="btn-terminal-home"
+              />
             )}
           </View>
         </View>
@@ -111,17 +144,43 @@ export function AssignedDetailView({
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Full Interactive Map Canvas at Top */}
         <MissionMapCanvas
+          destination={{
+            label: view.order.route.destination.label,
+            coords:
+              view.order.route.destination.lat != null &&
+              view.order.route.destination.lng != null
+                ? {
+                    lat: view.order.route.destination.lat,
+                    lng: view.order.route.destination.lng,
+                  }
+                : undefined,
+          }}
           destinationLabel={view.order.route.destination.label}
           distanceLabel={view.order.route.distanceLabel}
+          eta={view.order.route.eta}
           etaLabel={
             view.order.route.etaDurationSeconds > 0
               ? `${Math.round(view.order.route.etaDurationSeconds / 60)} phút`
               : undefined
           }
           navigationTarget={activeNavigationTarget}
+          origin={{
+            label: view.order.route.origin.label,
+            coords:
+              view.order.route.origin.lat != null &&
+              view.order.route.origin.lng != null
+                ? {
+                    lat: view.order.route.origin.lat,
+                    lng: view.order.route.origin.lng,
+                  }
+                : undefined,
+          }}
           originLabel={view.order.route.origin.label}
+          routeCoords={view.order.route.routeCoords}
+          routeSegments={view.order.route.routeSegments}
           stops={view.order.route.stops}
           tracking={view.tracking}
+          vehicleType={view.order.vehicleType}
         />
 
         {/* 2. Floating Bottom Sheet: Task Sheet overlapping map */}
@@ -137,7 +196,9 @@ export function AssignedDetailView({
                   ? 'ĐẾN ĐIỂM LẤY HÀNG'
                   : view.order.status === 'IN_TRANSIT'
                     ? 'VẬN CHUYỂN ĐẾN ĐIỂM GIAO'
-                    : 'HOÀN TẤT ĐƠN HÀNG'}
+                    : view.order.status === 'RETURNING'
+                      ? 'HOÀN HÀNG VỀ ĐIỂM GỬI'
+                      : 'HOÀN TẤT ĐƠN HÀNG'}
               </Text>
               {onOpenIncidentModal && isMissionActive ? (
                 <Pressable
@@ -180,10 +241,15 @@ export function AssignedDetailView({
 
           {/* 3. Vertical Route Stepper (A -> B) */}
           <VerticalRouteStepper
+            destination={view.order.route.destination}
             destinationLabel={view.order.route.destination.label}
             distanceLabel={view.order.route.distanceLabel}
+            inFlightCommand={inFlightStopCommand}
+            onRecordProgress={onRecordStopProgress}
+            origin={view.order.route.origin}
             originLabel={view.order.route.origin.label}
             status={view.order.status}
+            stops={view.order.route.stops}
           />
 
           {/* 4. Cargo and Customer Contact Card */}
@@ -195,15 +261,97 @@ export function AssignedDetailView({
             vehicleLabel={view.order.vehicleLabel}
           />
 
-          {/* 5. Proof of Delivery / e-POD Panel */}
-          <EpodPanel
-            onExecuteTask={onExecuteTask}
-            onRetryProof={onRetryProof}
-            onSelectProof={onSelectProof}
-            orderId={view.order.id}
-            proof={view.proof}
-            status={view.order.status}
-          />
+          {/* 5. Thu tiền mặt (Cash on Delivery) khi đơn thanh toán CASH */}
+          {isCashOrder && (view.order.status === 'IN_TRANSIT' || isTerminal) && (
+            <View style={styles.cashCardOuter} testID="cash-collection-container">
+              <View style={styles.cashCardInner}>
+                <View style={styles.cashHeaderRow}>
+                  <View
+                    style={[
+                      styles.cashIconBadge,
+                      isCashConfirmed ? styles.cashIconBadgeSuccess : null,
+                    ]}
+                  >
+                    {isCashConfirmed ? (
+                      <IconCheck color="#10B981" size={18} strokeWidth={2.5} />
+                    ) : (
+                      <IconTxPayment color="#D97706" size={18} />
+                    )}
+                  </View>
+                  <View style={styles.cashHeaderTextCol}>
+                    <Text style={styles.cashSectionTitle}>THU TIỀN MẶT KHI GIAO HÀNG (CASH)</Text>
+                    <Text style={styles.cashSectionSubtitle}>
+                      {isCashConfirmed
+                        ? 'Đã xác nhận thu tiền mặt từ khách'
+                        : 'Thu đúng cước tiền mặt khi bàn giao đơn hàng'}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.cashStatusPill,
+                      isCashConfirmed ? styles.cashStatusPillReady : styles.cashStatusPillPending,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.cashStatusPillText,
+                        isCashConfirmed
+                          ? styles.cashStatusPillTextReady
+                          : styles.cashStatusPillTextPending,
+                      ]}
+                    >
+                      {isCashConfirmed ? 'ĐÃ THU TIỀN MẶT' : 'CHƯA THU TIỀN'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.cashAmountRow}>
+                  <Text style={styles.cashAmountLabel}>Số tiền cước cần thu:</Text>
+                  <Text style={styles.cashAmountValue} testID="cash-amount-to-collect">
+                    {view.order.priceLabel ||
+                      (view.order.priceVnd ? formatVndPrice(view.order.priceVnd) : '285.000 ₫')}
+                  </Text>
+                </View>
+
+                {isCashConfirmed ? (
+                  <View style={styles.cashSuccessNotice} testID="cash-confirmed-notice">
+                    <IconCheck color="#15803D" size={16} strokeWidth={2.5} />
+                    <Text style={styles.cashSuccessNoticeText}>
+                      Đã xác nhận thu tiền mặt thành công. Hệ thống tự động xuất hóa đơn VAT điện tử.
+                    </Text>
+                  </View>
+                ) : onConfirmCashPayment ? (
+                  <View style={styles.cashActionWrap}>
+                    <Button
+                      disabled={isConfirmingCash}
+                      isLoading={isConfirmingCash}
+                      label="XÁC NHẬN ĐÃ THU TIỀN MẶT"
+                      loadingLabel="Đang ghi nhận thu tiền..."
+                      onPress={onConfirmCashPayment}
+                      size="driver-primary"
+                      testID="btn-confirm-cash"
+                      variant="primary"
+                    />
+                    <Text style={styles.cashActionHint}>
+                      Bấm xác nhận sau khi đã nhận đủ tiền mặt từ khách
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          )}
+
+          {/* 6. Proof of Delivery / e-POD Panel chỉ mở khi IN_TRANSIT */}
+          {view.order.status === 'IN_TRANSIT' && (
+            <EpodPanel
+              onExecuteTask={onExecuteTask}
+              onRetryProof={onRetryProof}
+              onSelectProof={onSelectProof}
+              orderId={view.order.id}
+              proof={view.proof}
+              status={view.order.status}
+            />
+          )}
 
           {/* 6. Permission Denied Recovery Block */}
           {view.tracking.kind === 'permission-denied' ? (
@@ -428,5 +576,123 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
+  },
+
+  /* Cash on Delivery Card */
+  cashCardOuter: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 3,
+  },
+  cashCardInner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 17,
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  cashHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cashIconBadge: {
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  cashIconBadgeSuccess: {
+    backgroundColor: '#DCFCE7',
+  },
+  cashHeaderTextCol: {
+    flex: 1,
+  },
+  cashSectionTitle: {
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  cashSectionSubtitle: {
+    color: '#64748B',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  cashStatusPill: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  cashStatusPillPending: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+  },
+  cashStatusPillReady: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+  },
+  cashStatusPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  cashStatusPillTextPending: {
+    color: '#D97706',
+  },
+  cashStatusPillTextReady: {
+    color: '#059669',
+  },
+  cashAmountRow: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  cashAmountLabel: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  cashAmountValue: {
+    color: '#0B1E42',
+    fontSize: 18,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  cashSuccessNotice: {
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    padding: spacing.sm,
+  },
+  cashSuccessNoticeText: {
+    color: '#15803D',
+    fontSize: 11.5,
+    fontWeight: '600',
+    flex: 1,
+  },
+  cashActionWrap: {
+    gap: 6,
+    marginTop: 4,
+  },
+  cashActionHint: {
+    color: '#64748B',
+    fontSize: 10.5,
+    textAlign: 'center',
   },
 });

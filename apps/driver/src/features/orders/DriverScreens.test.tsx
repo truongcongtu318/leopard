@@ -226,4 +226,62 @@ describe('DriverOrderDetailScreen', () => {
     expect(screen.queryByText('Ảnh xác nhận đã tải lên')).toBeNull();
     await screen.unmount();
   });
+
+  it('renders cash confirmation card and triggers onConfirmCashPayment for cash orders', async () => {
+    const onConfirmCashPayment = jest.fn();
+    const baseFixture = createDriverDetailFixture('D-DETAIL-READY-DELIVER') as any;
+    const cashView = {
+      ...baseFixture,
+      order: {
+        ...baseFixture.order,
+        paymentMethod: 'CASH',
+        paymentStatus: 'PENDING',
+        isCashConfirmed: false,
+        priceVnd: 280000,
+        driverPayoutVnd: 238000,
+      },
+    };
+
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onConfirmCashPayment={onConfirmCashPayment}
+        view={cashView}
+      />,
+    );
+
+    expect(screen.getByText('THU TIỀN MẶT KHI GIAO HÀNG (CASH)')).toBeTruthy();
+    expect(screen.getByText('CHƯA THU TIỀN')).toBeTruthy();
+    expect(screen.getByText('280.000 ₫')).toBeTruthy();
+
+    const confirmBtn = screen.getByTestId('btn-confirm-cash');
+    expect(confirmBtn).toBeTruthy();
+    await fireEvent.press(confirmBtn);
+    expect(onConfirmCashPayment).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('shows confirmed status pill and hides action button when cash is already confirmed', async () => {
+    const baseFixture = createDriverDetailFixture('D-DETAIL-READY-DELIVER') as any;
+    const cashConfirmedView = {
+      ...baseFixture,
+      order: {
+        ...baseFixture.order,
+        paymentMethod: 'CASH',
+        paymentStatus: 'PAID',
+        isCashConfirmed: true,
+        priceVnd: 280000,
+      },
+    };
+
+    const screen = await render(
+      <DriverOrderDetailScreen view={cashConfirmedView} />,
+    );
+
+    expect(screen.getByText('THU TIỀN MẶT KHI GIAO HÀNG (CASH)')).toBeTruthy();
+    expect(screen.getByText('ĐÃ THU TIỀN MẶT')).toBeTruthy();
+    expect(screen.queryByTestId('btn-confirm-cash')).toBeNull();
+
+    await screen.unmount();
+  });
 });

@@ -21,6 +21,13 @@ export type DriverOrderDetailScreenProps = Readonly<{
   onResolveConflict?: () => void;
   onOpenLocationSettings?: () => void;
   onOpenIncidentModal?: () => void;
+  onConfirmCashPayment?: () => void;
+  isConfirmingCash?: boolean;
+  onRecordStopProgress?: (
+    stopId: string,
+    step: 'ARRIVED' | 'SERVICE_STARTED' | 'SERVICE_COMPLETED',
+  ) => void | Promise<void>;
+  inFlightStopCommand?: { stopId: string; step: string } | null;
   onBack?: () => void;
 }>;
 
@@ -181,10 +188,14 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
 
   return (
     <AssignedDetailView
+      inFlightStopCommand={props.inFlightStopCommand}
+      isConfirmingCash={props.isConfirmingCash}
       onBack={onBack}
+      onConfirmCashPayment={props.onConfirmCashPayment}
       onExecuteTask={props.onExecuteTask}
       onOpenIncidentModal={props.onOpenIncidentModal}
       onOpenLocationSettings={props.onOpenLocationSettings}
+      onRecordStopProgress={props.onRecordStopProgress}
       onRetryProof={props.onRetryProof}
       onSelectProof={props.onSelectProof}
       taskButtonComponent={

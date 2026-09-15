@@ -67,6 +67,12 @@ export async function buildRouteEtaResponse(prisma: PrismaService, orderId: stri
       currentCompletionEstimate: true,
       activeRouteSnapshot: true,
       quotedRouteSnapshot: true,
+      stops: {
+        include: {
+          stopProgressStates: true,
+        },
+        orderBy: { sequence: 'asc' },
+      },
     },
   });
   if (!order) {
@@ -78,15 +84,27 @@ export async function buildRouteEtaResponse(prisma: PrismaService, orderId: stri
     orderBy: { inputRevision: 'desc' },
   });
 
+  const stopsWithProgress = order.stops?.map((s) => {
+    let progress: 'COMPLETED' | 'ACTIVE' | 'PENDING' = 'PENDING';
+    const stateSteps = new Set(s.stopProgressStates?.map((st) => st.step) ?? []);
+    if (stateSteps.has('SERVICE_COMPLETED')) {
+      progress = 'COMPLETED';
+    } else if (stateSteps.has('SERVICE_STARTED') || stateSteps.has('ARRIVED')) {
+      progress = 'ACTIVE';
+    }
+    return { id: s.id, progress };
+  });
+
   return mapRouteEtaResponse({
     orderId,
     now: new Date(),
-    order: { routeEtaInputRevision: order.routeEtaInputRevision },
+    order: { routeEtaInputRevision: order.routeEtaInputRevision, status: order.status },
     currentNextStop: order.currentNextStopEstimate as never,
     currentCompletion: order.currentCompletionEstimate as never,
-    activeRoute: order.activeRouteSnapshot,
-    quotedRoute: order.quotedRouteSnapshot,
+    activeRoute: order.activeRouteSnapshot as never,
+    quotedRoute: order.quotedRouteSnapshot as never,
     pendingDeadLetterInputRevision: deadLetter?.inputRevision ?? null,
+    stopsWithProgress,
   });
 }
 

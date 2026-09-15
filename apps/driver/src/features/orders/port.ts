@@ -1,4 +1,8 @@
 import type {
+  RouteEtaResponse,
+  StopProgressCommandResponse,
+} from '@leopard/shared';
+import type {
   DriverAvailabilityView,
   DriverDetailView,
   DriverListView,
@@ -9,6 +13,12 @@ import type {
 export type DriverOrdersPort = Readonly<{
   getOrdersView: () => Promise<DriverListView>;
   getOrderDetailView: (orderId: string) => Promise<DriverDetailView>;
+  getRouteEta?: (orderId: string) => Promise<RouteEtaResponse>;
+  recordStopProgress?: (
+    orderId: string,
+    stopId: string,
+    payload: { step: string; clientRequestId: string; occurredAt?: string },
+  ) => Promise<StopProgressCommandResponse>;
   setAvailability: (commandId: string) => Promise<DriverAvailabilityView>;
   acceptOrder: (commandId: string) => Promise<DriverDetailView>;
   executeLifecycle: (commandId: string) => Promise<DriverDetailView>;
@@ -16,6 +26,10 @@ export type DriverOrdersPort = Readonly<{
     orderId: string,
     payload: { reason: string; note?: string; evidenceMediaId?: string },
   ) => Promise<DriverDetailView>;
+  confirmCashPayment?: (
+    orderId: string,
+    clientRequestId?: string,
+  ) => Promise<{ success: boolean; message?: string }>;
 }>;
 
 export type DriverTrackingPort = Readonly<{

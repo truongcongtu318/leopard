@@ -59,6 +59,7 @@ export type DriverOrdersScreenProps = Readonly<{
   incomingOffer?: IncomingDispatchOffer | null;
   onAcceptIncomingOffer?: (orderId: string) => void;
   onDeclineIncomingOffer?: (orderId: string) => void;
+  isAcceptingIncomingOffer?: boolean;
   onNavigate?: (route: string) => void;
   networkError?: string | null;
   driverIdentity?: { name?: string | null; vehicleLabel?: string | null };
@@ -223,6 +224,7 @@ function DriverLocationStatus({
 export function DriverOrdersScreen({
   driverIdentity,
   incomingOffer = null,
+  isAcceptingIncomingOffer = false,
   networkError = null,
   onAcceptIncomingOffer,
   onDeclineIncomingOffer,
@@ -590,12 +592,13 @@ export function DriverOrdersScreen({
 
       {/* ── Layer 4: Modals ── */}
       <IncomingDispatchModal
+        isAccepting={isAcceptingIncomingOffer}
         offer={activeIncomingOffer}
         onAccept={(orderId) => {
-          setSimulatedOffer(null);
           if (onAcceptIncomingOffer) {
             onAcceptIncomingOffer(orderId);
           } else if (onOpenOrder) {
+            setSimulatedOffer(null);
             onOpenOrder(orderId);
           }
         }}

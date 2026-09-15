@@ -1,5 +1,5 @@
 import React from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   colors,
@@ -13,6 +13,7 @@ import {
   StatusBadge,
 } from '@leopard/mobile-core';
 import type { DriverActiveTripView } from '../model';
+import { callPhoneNumber } from './detail/CargoAndContactCard';
 
 export type DriverActiveTripCardProps = Readonly<{
   trip: DriverActiveTripView;
@@ -26,14 +27,14 @@ export function DriverActiveTripCard({
   trip,
 }: DriverActiveTripCardProps) {
   const handleCall = () => {
-    try {
-      const res = Linking.openURL('tel:0988123128');
-      if (res && typeof res.catch === 'function') {
-        res.catch(() => {});
-      }
-    } catch {
-      // Safe no-op
+    if (!trip.customerContact) {
+      Alert.alert(
+        'Chưa có số điện thoại',
+        'Chưa có số điện thoại thực tế cho liên hệ chặng này. Vui lòng kiểm tra lại trong chi tiết đơn hàng.',
+      );
+      return;
     }
+    callPhoneNumber(trip.customerContact);
   };
 
   const handleChat = () => {

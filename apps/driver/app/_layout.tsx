@@ -8,6 +8,7 @@ import { queryClient, sessionStore } from '@leopard/mobile-core';
 import { DriverViewportShell } from '../src/navigation/DriverViewportShell';
 import { DriverDrawerProvider } from '../src/navigation/DriverDrawerContext';
 import { useDriverIdlePing } from '../src/features/orders/useDriverIdlePing';
+import { DriverDispatchProvider } from '../src/features/orders/DriverDispatchContext';
 
 type RootErrorBoundaryState = {
   hasError: boolean;
@@ -59,7 +60,9 @@ function RootProviders({ children }: PropsWithChildren) {
         <DriverViewportShell>
           <DriverDrawerProvider>
             <DriverIdlePingListener />
-            {children}
+            <DriverDispatchProvider>
+              {children}
+            </DriverDispatchProvider>
           </DriverDrawerProvider>
         </DriverViewportShell>
       </SafeAreaProvider>

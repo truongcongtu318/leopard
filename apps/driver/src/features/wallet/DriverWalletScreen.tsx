@@ -40,13 +40,33 @@ export function DriverWalletScreen({
 }: DriverWalletScreenProps) {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [amountText, setAmountText] = useState('');
-  const [bankName, setBankName] = useState('');
-  const [bankAccountNumber, setBankAccountNumber] = useState('');
-  const [bankAccountName, setBankAccountName] = useState('');
+  const [bankName, setBankName] = useState(summary.bankName ?? '');
+  const [bankAccountNumber, setBankAccountNumber] = useState(summary.bankAccountNumber ?? '');
+  const [bankAccountName, setBankAccountName] = useState(summary.bankAccountName ?? '');
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const handleOpenModal = () => {
+    setAmountText('');
+    setBankName(summary.bankName ?? '');
+    setBankAccountNumber(summary.bankAccountNumber ?? '');
+    setBankAccountName(summary.bankAccountName ?? '');
+    setValidationError(null);
+    setShowWithdrawModal(true);
+  };
 
   const handleSubmit = () => {
     const amountVnd = parseInt(amountText.replace(/[^0-9]/g, ''), 10);
-    if (!amountVnd || !bankName.trim() || !bankAccountNumber.trim() || !bankAccountName.trim()) return;
+    if (!amountVnd || isNaN(amountVnd) || amountVnd <= 0) {
+      setValidationError('Vui lòng nhập số tiền rút lớn hơn 0');
+      return;
+    }
+    if (amountVnd > summary.availableBalanceVnd) {
+      setValidationError(
+        `Số tiền rút không được vượt quá số dư khả dụng (${formatCurrency(summary.availableBalanceVnd)})`,
+      );
+      return;
+    }
+    setValidationError(null);
     onRequestWithdrawal({
       amountVnd,
       bankName: bankName.trim(),
@@ -90,7 +110,7 @@ export function DriverWalletScreen({
                   </View>
                 </View>
 
-                <Button label="Yêu cầu rút tiền" onPress={() => setShowWithdrawModal(true)} size="driver-primary" variant="primary" />
+                <Button label="Yêu cầu rút tiền" onPress={handleOpenModal} size="driver-primary" variant="primary" />
               </View>
             </View>
 
@@ -129,7 +149,14 @@ export function DriverWalletScreen({
             <Text style={styles.modalTitle}>Yêu cầu rút tiền về tài khoản ngân hàng</Text>
             <Text style={styles.modalSub}>Admin sẽ xác nhận và chuyển khoản thủ công. Thời gian xử lý trong giờ hành chính.</Text>
 
-            {withdrawalError ? <Text style={styles.errorText}>{withdrawalError}</Text> : null}
+            <View style={styles.modalBalanceInfo}>
+              <Text style={styles.modalBalanceLabel}>Số dư khả dụng:</Text>
+              <Text style={styles.modalBalanceValue}>{formatCurrency(summary.availableBalanceVnd)}</Text>
+            </View>
+
+            {validationError || withdrawalError ? (
+              <Text style={styles.errorText}>{validationError || withdrawalError}</Text>
+            ) : null}
 
             <Text style={styles.inputLabel}>Số tiền muốn rút (₫)</Text>
             <TextInput keyboardType="numeric" onChangeText={setAmountText} placeholder="Nhập số tiền" style={styles.amountInput} value={amountText} />
@@ -206,6 +233,28 @@ const styles = StyleSheet.create({
   modalTitle: { color: colors.neutral.titleText, fontSize: 17, fontWeight: '800' },
   modalSub: { color: colors.neutral.mutedText, fontSize: 12.5, lineHeight: 18 },
   errorText: { color: '#DC2626', fontSize: 12.5, fontWeight: '600' },
+  modalBalanceInfo: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  modalBalanceLabel: {
+    color: colors.neutral.subtleText,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalBalanceValue: {
+    color: '#0B1E42',
+    fontSize: 14,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
   inputLabel: { color: colors.neutral.titleText, fontSize: 12, fontWeight: '700', marginTop: spacing.xs },
   amountInput: { borderColor: colors.neutral.subtleBorder, borderRadius: radius.card, borderWidth: 1, color: colors.neutral.titleText, fontSize: 20, fontWeight: '700', fontVariant: ['tabular-nums'], paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   textInput: { borderColor: colors.neutral.subtleBorder, borderRadius: radius.card, borderWidth: 1, color: colors.neutral.titleText, fontSize: 14, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },

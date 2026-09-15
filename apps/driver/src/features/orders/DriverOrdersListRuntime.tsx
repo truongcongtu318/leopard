@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { createDriverProfileHttpAdapter } from '../profile/adapter';
@@ -40,6 +40,7 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
   }, [profileQuery.data]);
 
   const { offer, declineOffer } = useDispatchOffer();
+  const [isAcceptingOffer, setIsAcceptingOffer] = useState(false);
 
   if (query.isPending) {
     return (
@@ -92,13 +93,24 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
   }
 
   async function handleAcceptOffer(orderId: string) {
-    declineOffer();
-    const result = await port.acceptOrder(orderId);
-    void queryClient.invalidateQueries({ queryKey });
-    if (result.kind === 'content') {
-      onOpenOrder(orderId);
-    } else if (result.kind === 'conflict') {
-      Alert.alert(result.title, result.message);
+    if (isAcceptingOffer) return;
+    setIsAcceptingOffer(true);
+    try {
+      const result = await port.acceptOrder(orderId);
+      void queryClient.invalidateQueries({ queryKey });
+      declineOffer();
+      if (result.kind === 'content') {
+        onOpenOrder(orderId);
+      } else if (result.kind === 'conflict') {
+        Alert.alert(result.title, result.message);
+      }
+    } catch (err: any) {
+      Alert.alert(
+        'Không thể nhận đơn',
+        err instanceof Error ? err.message : 'Đã có lỗi xảy ra khi tiếp nhận đơn hàng.',
+      );
+    } finally {
+      setIsAcceptingOffer(false);
     }
   }
 
@@ -106,6 +118,7 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
     <DriverOrdersScreen
       driverIdentity={driverIdentity}
       incomingOffer={offer}
+      isAcceptingIncomingOffer={isAcceptingOffer}
       networkError={query.isError ? (query.error?.message ?? 'Lỗi kết nối máy chủ') : null}
       onAcceptIncomingOffer={(orderId) => void handleAcceptOffer(orderId)}
       onDeclineIncomingOffer={() => declineOffer()}

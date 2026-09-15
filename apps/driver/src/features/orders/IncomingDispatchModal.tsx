@@ -22,12 +22,35 @@ import {
   SlideToAction,
 } from '@leopard/mobile-core';
 
+export function formatPublicArea(address?: string | null): string {
+  if (!address || !address.trim()) {
+    return 'Khu vực chưa xác định';
+  }
+  const clean = address.trim();
+  if (clean.toLowerCase().startsWith('khu vực')) {
+    return clean;
+  }
+  const districtMatch = clean.match(
+    /(?:Quận|Huyện|Thị xã|Q\.)\s*[^,]+/i,
+  );
+  if (districtMatch) {
+    return `Khu vực ${districtMatch[0].trim()}`;
+  }
+  const parts = clean.split(',').map((p) => p.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return `Khu vực ${parts.slice(-2).join(', ')}`;
+  }
+  return `Khu vực ${clean}`;
+}
+
 export type IncomingDispatchOffer = Readonly<{
   id: string;
   reference: string;
   pickupDistanceLabel: string;
   pickupAddress: string;
+  pickupArea?: string;
   dropoffAddress: string;
+  dropoffArea?: string;
   tripDistanceLabel: string;
   etaLabel: string;
   priceLabel: string;
@@ -78,6 +101,9 @@ export function IncomingDispatchModal({
   const progressPercent = Math.max(0, Math.min(100, (secondsLeft / initialSeconds) * 100));
   const isUrgent = secondsLeft <= 5;
   const isWarning = secondsLeft <= 10 && !isUrgent;
+
+  const pickupDisplay = offer.pickupArea || formatPublicArea(offer.pickupAddress);
+  const dropoffDisplay = offer.dropoffArea || formatPublicArea(offer.dropoffAddress);
 
   return (
     <DriverModalSurface
@@ -204,7 +230,7 @@ export function IncomingDispatchModal({
                     </View>
                   </View>
                   <Text numberOfLines={2} style={styles.addressNameText}>
-                    {offer.pickupAddress}
+                    {pickupDisplay}
                   </Text>
                 </View>
 
@@ -220,7 +246,7 @@ export function IncomingDispatchModal({
                 <View style={styles.addressBlock}>
                   <Text style={styles.addressTypeLabelDropoff}>ĐIỂM GIAO HÀNG</Text>
                   <Text numberOfLines={2} style={styles.addressNameText}>
-                    {offer.dropoffAddress}
+                    {dropoffDisplay}
                   </Text>
                 </View>
               </View>

@@ -16,8 +16,15 @@ export type CargoAndContactCardProps = Readonly<{
   onChat?: () => void;
 }>;
 
-export function callPhoneNumber(contact: string) {
-  const match = contact?.match(/[\d+]{8,15}/);
+export function callPhoneNumber(contact?: string | null) {
+  if (!contact) {
+    Alert.alert(
+      'Chưa có số điện thoại',
+      'Chưa có số điện thoại thực tế cho liên hệ này. Vui lòng thử lại sau hoặc liên hệ tổng đài hỗ trợ.',
+    );
+    return;
+  }
+  const match = contact.match(/[\d+]{8,15}/);
   if (!match) {
     Alert.alert(
       'Chưa có số điện thoại',
@@ -25,7 +32,14 @@ export function callPhoneNumber(contact: string) {
     );
     return;
   }
-  void Linking.openURL(`tel:${match[0]}`).catch(() => {});
+  try {
+    const res = Linking.openURL(`tel:${match[0]}`);
+    if (res && typeof res.catch === 'function') {
+      res.catch(() => {});
+    }
+  } catch {
+    // Ignore linking errors in test environment or unsupported devices
+  }
 }
 
 export function CargoAndContactCard({

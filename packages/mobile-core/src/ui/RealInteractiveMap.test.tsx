@@ -142,15 +142,87 @@ describe('RealInteractiveMap — PROVIDED_ONLY route policy', () => {
     expect(html).not.toContain('maps.vietmap.vn/api/route');
   });
 
-  it('preserves the existing client-fetch behavior when routeResolutionPolicy is ALLOW_CLIENT_PREVIEW (default)', () => {
+  it('renders routeSegments with 3 distinct polyline bands when provided under PROVIDED_ONLY', () => {
     const html = buildLeafletHtml({
-      destinationCoords: { lat: 10.76, lng: 106.8 }, destinationLabel: 'Điểm giao',
-      interactive: true, mapInstanceId: 'test-3', mode: 'route',
-      originCoords: { lat: 10.79, lng: 106.65 }, originLabel: 'Điểm lấy',
-      pinCoords: { lat: 0, lng: 0 }, stopsCoords: [], truckCoords: { lat: 0, lng: 0 }, truckEtaLabel: '',
-      vietmapApiKey: 'a-key',
+      destinationCoords: { lat: 10.76, lng: 106.8 },
+      destinationLabel: 'Điểm giao',
+      interactive: true,
+      mapInstanceId: 'test-segments',
+      mode: 'tracking',
+      originCoords: { lat: 10.79, lng: 106.65 },
+      originLabel: 'Điểm lấy',
+      pinCoords: { lat: 0, lng: 0 },
+      stopsCoords: [],
+      truckCoords: { lat: 0, lng: 0 },
+      truckEtaLabel: '',
+      vietmapApiKey: 'super-secret-key',
+      routeResolutionPolicy: 'PROVIDED_ONLY',
+      routeSegments: [
+        {
+          kind: 'completed',
+          coords: [
+            { lat: 10.79, lng: 106.65 },
+            { lat: 10.78, lng: 106.67 },
+          ],
+        },
+        {
+          kind: 'active',
+          coords: [
+            { lat: 10.78, lng: 106.67 },
+            { lat: 10.77, lng: 106.72 },
+          ],
+        },
+        {
+          kind: 'pending',
+          coords: [
+            { lat: 10.77, lng: 106.72 },
+            { lat: 10.76, lng: 106.8 },
+          ],
+        },
+      ],
     });
 
-    expect(html).toContain('maps.vietmap.vn/api/route');
+    expect(html).not.toContain('super-secret-key');
+    expect(html).not.toContain('maps.vietmap.vn/api/route');
+    expect(html).toContain('applyRouteSegments');
+    expect(html).toContain('#94A3B8'); // completed and pending color
+    expect(html).toContain('#0B1E42'); // active glow and active band
+    expect(html).toContain('dashArray'); // pending dashes
+  });
+
+  it('renders intermediate stops with progress classes and sequence markers', () => {
+    const html = buildLeafletHtml({
+      destinationCoords: { lat: 10.76, lng: 106.8 },
+      destinationLabel: 'Điểm giao',
+      interactive: true,
+      mapInstanceId: 'test-stops',
+      mode: 'tracking',
+      originCoords: { lat: 10.79, lng: 106.65 },
+      originLabel: 'Điểm lấy',
+      pinCoords: { lat: 0, lng: 0 },
+      stopsCoords: [
+        {
+          label: 'Kho trung chuyển',
+          coords: { lat: 10.775, lng: 106.7 },
+          progress: 'IN_SERVICE',
+          sequence: 1,
+        },
+        {
+          label: 'Điểm dỡ hàng 2',
+          coords: { lat: 10.768, lng: 106.75 },
+          progress: 'COMPLETED',
+          sequence: 2,
+        },
+      ],
+      truckCoords: { lat: 0, lng: 0 },
+      truckEtaLabel: '',
+      routeResolutionPolicy: 'PROVIDED_ONLY',
+    });
+
+    expect(html).toContain('.pin-core.stop-in_service');
+    expect(html).toContain('.pin-core.stop-completed');
+    expect(html).toContain('"progress":"IN_SERVICE"');
+    expect(html).toContain('"progress":"COMPLETED"');
+    expect(html).toContain("s.progress === 'COMPLETED' ? '✓' : seq.toString()");
   });
 });

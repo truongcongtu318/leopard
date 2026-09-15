@@ -46,10 +46,15 @@ export class DispatchOfferListener {
 
   constructor(options: DispatchOfferListenerOptions = {}) {
     this.socketFactory = options.socketFactory ?? createSocketFactory;
-    const rawServerUrl = options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? '';
+    const rawServerUrl =
+      options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
     this.serverUrl = rawServerUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
     this.tokenProvider = options.tokenProvider ?? (() => sessionStore.getAccessToken());
     this.onOffer = options.onOffer;
+  }
+
+  isConnected(): boolean {
+    return Boolean(this.socket?.connected);
   }
 
   connect(): void {

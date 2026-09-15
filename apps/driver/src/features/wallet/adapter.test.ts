@@ -4,12 +4,23 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { createDriverWalletHttpAdapter } from './adapter';
 
 describe('createDriverWalletHttpAdapter', () => {
-  it('maps GET /driver/wallet to a WalletSummary', async () => {
+  it('maps GET /driver/wallet to a WalletSummary with real balanceVnd and recentPayouts', async () => {
     const get = jest.fn(async () => ({
-      availableBalanceVnd: 200000,
-      lifetimeDeliveredVnd: 500000,
-      pendingWithdrawalVnd: 100000,
-      deliveredOrderCount: 5,
+      balanceVnd: 200000,
+      bankName: 'MB Bank',
+      bankAccountNumber: '0987654321',
+      bankAccountName: 'NGUYEN VAN A',
+      recentPayouts: [
+        {
+          id: 'wr-1',
+          status: 'PENDING',
+          amountVnd: 50000,
+          bankName: 'MB Bank',
+          bankAccountNumber: '0987654321',
+          bankAccountName: 'NGUYEN VAN A',
+          createdAt: '2026-09-13T00:00:00.000Z',
+        },
+      ],
     }));
     const adapter = createDriverWalletHttpAdapter({ get: get as any, post: jest.fn() as any });
 
@@ -17,9 +28,11 @@ describe('createDriverWalletHttpAdapter', () => {
 
     expect(get).toHaveBeenCalledWith('/driver/wallet');
     expect(summary.availableBalanceVnd).toBe(200000);
+    expect(summary.pendingWithdrawalVnd).toBe(50000);
+    expect(summary.bankName).toBe('MB Bank');
   });
 
-  it('posts a withdrawal request and auto-generates a clientRequestId when none given', async () => {
+  it('posts a payout request to /driver/payout and auto-generates clientRequestId', async () => {
     const post = jest.fn(async () => ({
       id: 'wr-1',
       status: 'PENDING',
@@ -39,15 +52,16 @@ describe('createDriverWalletHttpAdapter', () => {
     });
 
     expect(post).toHaveBeenCalledWith(
-      '/driver/wallet/withdrawals',
+      '/driver/payout',
       expect.objectContaining({ amountVnd: 100000, clientRequestId: expect.any(String) }),
     );
     expect(result.status).toBe('PENDING');
   });
 
-  it('maps GET /driver/wallet/withdrawals to a list of history items', async () => {
+  it('retrieves withdrawal history from /driver/wallet recentPayouts', async () => {
     const get = jest.fn(async () => ({
-      items: [
+      balanceVnd: 150000,
+      recentPayouts: [
         {
           id: 'wr-1',
           status: 'APPROVED',
@@ -58,16 +72,13 @@ describe('createDriverWalletHttpAdapter', () => {
           createdAt: '2026-09-10T00:00:00.000Z',
         },
       ],
-      total: 1,
-      page: 1,
-      pageSize: 20,
-      totalPages: 1,
     }));
     const adapter = createDriverWalletHttpAdapter({ get: get as any, post: jest.fn() as any });
 
     const history = await adapter.getWithdrawalHistory();
 
-    expect(get).toHaveBeenCalledWith('/driver/wallet/withdrawals?page=1&pageSize=20');
+    expect(get).toHaveBeenCalledWith('/driver/wallet');
     expect(history.items[0].status).toBe('APPROVED');
+    expect(history.items[0].amountVnd).toBe(50000);
   });
 });

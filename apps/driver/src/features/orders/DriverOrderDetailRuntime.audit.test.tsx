@@ -117,6 +117,8 @@ describe('DriverOrderDetailRuntime audit: asynchronous user actions', () => {
         expect.objectContaining({ queryKey: ['driver', 'orders'] }),
       ),
     );
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Về trang chủ' })).toBeTruthy());
+    await fireEvent.press(screen.getByRole('button', { name: 'Về trang chủ' }));
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
 

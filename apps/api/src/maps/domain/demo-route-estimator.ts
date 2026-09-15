@@ -23,6 +23,23 @@ export class DemoRouteEstimator implements RouteEstimator {
     );
     const estimatedArrivalAt = new Date(calculatedAt.getTime() + durationS * 1_000);
 
+    const legs = [];
+    for (let i = 0; i < routePoints.length - 1; i++) {
+      const p1 = routePoints[i]!;
+      const p2 = routePoints[i + 1]!;
+      const legDist = Math.round(sumHaversineLegsMeters([p1, p2]) * ROAD_FACTOR);
+      const isIntermediate = i < input.stops.length;
+      const legDur = roundToMinute(
+        legDist / SPEED_METERS_PER_SECOND + (isIntermediate ? STOP_DELAY_SECONDS : 0),
+      );
+      legs.push({
+        distanceM: legDist,
+        durationS: legDur,
+        geometryStartIndex: i,
+        geometryEndIndex: i + 1,
+      });
+    }
+
     return [
       {
         polyline: encodePolyline(routePoints),
@@ -34,6 +51,7 @@ export class DemoRouteEstimator implements RouteEstimator {
         isEstimate: true,
         calculatedAt: calculatedAt.toISOString(),
         congestionLevel: 'unknown',
+        legs,
       },
     ];
   }

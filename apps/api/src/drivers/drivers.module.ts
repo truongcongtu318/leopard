@@ -21,7 +21,7 @@ import { WalletService } from './wallet.service.js';
 
 @Module({
   imports: [AuthModule, DatabaseModule, OrdersModule, MediaModule, PdfModule],
-  controllers: [DriversController, WalletController],
+  controllers: [WalletController, DriversController],
   providers: [
     AccountStatusCache,
     DriversService,

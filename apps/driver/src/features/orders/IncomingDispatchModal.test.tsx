@@ -44,8 +44,10 @@ describe('IncomingDispatchModal', () => {
     expect(screen.getByText('245.000 ₫')).toBeTruthy();
     expect(screen.getByText('25s')).toBeTruthy();
     expect(screen.getByText('Cách bạn 1.2 km · 4 phút')).toBeTruthy();
-    expect(screen.getByText('Kho Depot Tân Bình, 108 Trường Chinh, Q.Tân Bình')).toBeTruthy();
-    expect(screen.getByText('Saigon Centre, 65 Lê Lợi, Bến Nghé, Quận 1')).toBeTruthy();
+    expect(screen.getByText('Khu vực Q.Tân Bình')).toBeTruthy();
+    expect(screen.getByText('Khu vực Quận 1')).toBeTruthy();
+    expect(screen.queryByText('108 Trường Chinh')).toBeNull();
+    expect(screen.queryByText('65 Lê Lợi')).toBeNull();
     expect(screen.getByText('Xe tải thùng kín 2.5T')).toBeTruthy();
     expect(screen.getByText('120 kg linh kiện điện tử')).toBeTruthy();
     expect(screen.getByText('Hàng dễ vỡ, bốc xếp nhẹ tay')).toBeTruthy();

@@ -42,6 +42,13 @@ export interface RouteInput {
   hasVatInvoice?: boolean | undefined;
 }
 
+export interface RouteEstimateLeg {
+  distanceM: number;
+  durationS: number;
+  geometryStartIndex?: number;
+  geometryEndIndex?: number;
+}
+
 export interface RouteEstimate {
   polyline: string;
   distanceM: number;
@@ -52,6 +59,7 @@ export interface RouteEstimate {
   calculatedAt: string;
   isEstimate: boolean;
   congestionLevel: CongestionLevel;
+  legs?: readonly RouteEstimateLeg[];
 }
 
 export interface VerifiedOrderEstimate extends RouteEstimate {

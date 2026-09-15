@@ -59,9 +59,9 @@ export function EpodPanel({
 
   const handleSimulateCameraCapture = () => {
     const now = new Date();
-    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} 15/08/2026`;
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} ${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
     const coordsStr = '10.7769° N, 106.7009° E (GPS lock ±3m)';
-    setCargoPhotoUri('epod-cargo-photo-watermarked.jpg');
+    setCargoPhotoUri(proof.fileLabel || 'epod-cargo-photo-watermarked.jpg');
     setPhotoWatermark({
       timestamp: timeStr,
       coords: coordsStr,

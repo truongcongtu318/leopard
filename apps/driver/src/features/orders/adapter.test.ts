@@ -793,6 +793,32 @@ describe('createDriverHttpAdapter', () => {
         expect(view.primaryTask?.command.id).toBe(`cmd-select-proof-${sampleOrder.id}`);
       }
     });
+
+    describe('confirmCashPayment', () => {
+      it('calls POST /driver/orders/:id/confirm-cash with clientRequestId', async () => {
+        const client = createMockClient();
+        client.post.mockResolvedValueOnce({ success: true });
+
+        const adapter = createDriverHttpAdapter(client);
+        const result = await adapter.confirmCashPayment!(sampleOrder.id, 'custom-req-id');
+
+        expect(result.success).toBe(true);
+        expect(client.post).toHaveBeenCalledWith(
+          `/driver/orders/${sampleOrder.id}/confirm-cash`,
+          { clientRequestId: 'custom-req-id' },
+        );
+      });
+
+      it('rejects invalid order UUID', async () => {
+        const client = createMockClient();
+        const adapter = createDriverHttpAdapter(client);
+
+        await expect(adapter.confirmCashPayment!('invalid-id')).rejects.toThrow(
+          'Mã đơn hàng không hợp lệ',
+        );
+        expect(client.post).not.toHaveBeenCalled();
+      });
+    });
   });
 });
 

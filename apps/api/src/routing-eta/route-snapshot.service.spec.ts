@@ -34,6 +34,9 @@ describe('RouteSnapshotService', () => {
         count: jest.fn().mockResolvedValue(0),
         create: jest.fn().mockResolvedValue({ id: 'snap-1', version: 1 }),
       },
+      orderStop: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -72,6 +75,15 @@ describe('RouteSnapshotService', () => {
           geometryEncoding: 'POLYLINE5',
           quality: 'VERIFIED_PROVIDER',
           vehicleProfileSource: 'STANDARD_QUOTE_PROFILE',
+          legs: [
+            {
+              fromStopId: 'pickup',
+              toStopId: 'dropoff',
+              distanceM: 7680,
+              durationS: 720,
+              geometryStartIndex: 0,
+            },
+          ],
         }),
       }),
     );

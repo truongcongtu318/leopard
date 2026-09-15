@@ -9,16 +9,17 @@ export type MissionStepperProps = Readonly<{
 export function MissionStepper({ status }: MissionStepperProps) {
   let activeIndex = 0;
   if (status === 'PICKING_UP') activeIndex = 1;
-  else if (status === 'PICKED_UP' || status === 'IN_TRANSIT') activeIndex = 2;
-  else if (status === 'DELIVERED') {
+  else if (status === 'PICKED_UP' || status === 'IN_TRANSIT' || status === 'RETURNING') activeIndex = 2;
+  else if (status === 'DELIVERED' || status === 'RETURNED') {
     activeIndex = 3;
   }
 
+  const isReturningFlow = status === 'RETURNING' || status === 'RETURNED';
   const steps = [
     { label: 'Nhận đơn (ACCEPTED)', index: 0 },
     { label: 'Lấy hàng (PICKING_UP)', index: 1 },
-    { label: 'Vận chuyển (IN_TRANSIT)', index: 2 },
-    { label: 'Giao hàng (DELIVERED)', index: 3 },
+    { label: isReturningFlow ? 'Hoàn hàng (RETURNING)' : 'Vận chuyển (IN_TRANSIT)', index: 2 },
+    { label: isReturningFlow ? 'Đã hoàn (RETURNED)' : 'Giao hàng (DELIVERED)', index: 3 },
   ];
 
   return (
