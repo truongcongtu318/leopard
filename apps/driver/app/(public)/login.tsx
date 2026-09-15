@@ -56,13 +56,23 @@ export default function DriverLoginRoute() {
     );
   }
 
+  // Demo mode and real OTP are mutually exclusive, and this prop is the switch.
+  // DriverLoginScreen uses the Firebase flow (reCAPTCHA + SMS, verified by the
+  // API at /auth/firebase) whenever `onNavigateOtp` is absent, so passing it
+  // unconditionally, as this route used to, would have kept production on the
+  // demo OTP screen even with Firebase configured.
+  const allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true';
+
   return (
     <DriverLoginScreen
-      allowDemo={process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true'}
+      allowDemo={allowDemo}
       onLoginSuccess={handleLoginSuccess}
-      onNavigateOtp={(phone) =>
-        router.push({ pathname: '/(public)/verify-otp', params: { phone } })
-      }
+      {...(allowDemo
+        ? {
+            onNavigateOtp: (phone: string) =>
+              router.push({ pathname: '/(public)/verify-otp', params: { phone } }),
+          }
+        : {})}
       onNavigateRegister={() => router.push('/(public)/driver-register')}
       sessionExpired={isExpired}
     />

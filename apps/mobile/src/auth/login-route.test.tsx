@@ -65,14 +65,20 @@ async function loginWithGoogleAs(role: string, profileComplete = true) {
 }
 
 describe('LoginRoute (Mobile)', () => {
+  const originalDemoFlag = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH;
+
   beforeEach(() => {
     jest.setTimeout(20000);
     jest.clearAllMocks();
     mockSignInWithGoogle.mockResolvedValue('google-id-token');
+    // This suite drives the demo flow, which is only wired up when the flag is on.
+    process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH = 'true';
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    if (originalDemoFlag === undefined) delete process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH;
+    else process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH = originalDemoFlag;
   });
 
   it('renders the LoginScreen phone form', async () => {
@@ -97,6 +103,27 @@ describe('LoginRoute (Mobile)', () => {
       pathname: '/(public)/verify-otp',
       params: { phone: '0900000001' },
     });
+    await screen.unmount();
+  });
+
+  it('sends a real OTP instead of routing to the demo screen when demo auth is off', async () => {
+    // The route used to pass onNavigateOtp unconditionally, which silently kept
+    // production on the demo OTP screen even with Firebase configured.
+    process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH = 'false';
+    const { sendPhoneOtp } = jest.requireMock(
+      '@leopard/mobile-core/src/auth/firebase-auth',
+    ) as { sendPhoneOtp: jest.Mock };
+
+    const screen = await render(<LoginRoute />);
+    await fireEvent.changeText(screen.getByLabelText('Số điện thoại'), '0900000001');
+    await fireEvent.press(screen.getByRole('button', { name: 'Tiếp tục' }));
+
+    await waitFor(() => {
+      expect(sendPhoneOtp).toHaveBeenCalledWith('0900000001', expect.any(String));
+    });
+    expect(mockPush).not.toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: '/(public)/verify-otp' }),
+    );
     await screen.unmount();
   });
 

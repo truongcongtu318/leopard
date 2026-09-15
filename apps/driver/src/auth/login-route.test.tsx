@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
@@ -64,10 +64,20 @@ async function loginWithGoogleAs(role: string) {
 }
 
 describe('DriverLoginRoute', () => {
+  const originalDemoFlag = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH;
+
   beforeEach(() => {
     jest.setTimeout(20000);
     jest.clearAllMocks();
     mockSignInWithGoogle.mockResolvedValue('google-id-token');
+    // The route only wires the demo OTP screen when this flag is on; the
+    // verify-otp case below is a demo-mode expectation.
+    process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH = 'true';
+  });
+
+  afterEach(() => {
+    if (originalDemoFlag === undefined) delete process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH;
+    else process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH = originalDemoFlag;
   });
 
   it('điều hướng vào /orders khi tài khoản là DRIVER', async () => {

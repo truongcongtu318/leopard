@@ -113,6 +113,23 @@ ALLOW_DEMO_AUTH_PROVIDER=false
 
 4. Cho push notification (FCM): **Project settings → Cloud Messaging → Web Push certificates → Generate key pair** → 🔓 `EXPO_PUBLIC_FIREBASE_VAPID_KEY`
 
+5. **Tắt luồng OTP demo trong app** — mắt xích dễ bỏ sót nhất:
+
+```
+EXPO_PUBLIC_ALLOW_DEMO_AUTH=false
+```
+
+App dùng cờ này để chọn **một trong hai** luồng, không phải cả hai:
+
+| Giá trị | Luồng đăng nhập |
+|---|---|
+| `true` | Màn `/verify-otp` của app → API `/auth/verify-otp` → nhận mã demo dùng chung |
+| `false` | Firebase thật: reCAPTCHA → SMS → idToken → API `/auth/firebase` (backend verify bằng Admin SDK) |
+
+Nếu để `true` thì **dù đã cấu hình Firebase đầy đủ, khách vẫn đăng nhập bằng mã demo** — Firebase không hề được gọi. Phải đặt `false` **rồi rebuild image** customer/driver.
+
+Trạng thái hiện tại trên VPS: `EXPO_PUBLIC_ALLOW_DEMO_AUTH=false` (đã tắt), và hai route login đã được sửa để chỉ dùng luồng demo khi cờ bật — trước đó chúng luôn truyền `onNavigateOtp`, nên kể cả tắt cờ thì nút "Tiếp tục" vẫn đi vào màn OTP demo.
+
 > ⚠️ `EXPO_PUBLIC_*` bị **inline vào bundle lúc build**, không đọc lúc chạy. Đổi giá trị phải rebuild image (customer/driver), không chỉ sửa `.env.prod`.
 
 ### 2.5 Cho app native (chỉ khi build iOS/Android thật)
