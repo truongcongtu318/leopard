@@ -173,11 +173,29 @@ const envSchema = z
       validateProductionS3Endpoint(env.S3_ENDPOINT, context);
     }
 
-    if (env.MAP_PROVIDER === 'vietmap' && env.VIETMAP_API_KEY === undefined) {
+    // A blank key is as unusable as a missing one, and the resilient provider
+    // then falls back to the demo map — which would silently ship simulated
+    // routes to production. Require a real key, or make the fallback explicit.
+    const vietmapKey = (env.VIETMAP_API_KEY ?? '').trim();
+    if (env.MAP_PROVIDER === 'vietmap' && vietmapKey.length === 0) {
       context.addIssue({
         code: 'custom',
         path: ['VIETMAP_API_KEY'],
         message: 'VIETMAP_API_KEY is required when MAP_PROVIDER=vietmap',
+      });
+    }
+
+    if (
+      env.MAP_PROVIDER === 'vietmap' &&
+      vietmapKey.length > 0 &&
+      env.ALLOW_DEMO_PROVIDER === true
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['ALLOW_DEMO_PROVIDER'],
+        message:
+          'ALLOW_DEMO_PROVIDER must not be true in production when MAP_PROVIDER=vietmap: ' +
+          'a failed Vietmap call would silently fall back to the demo map',
       });
     }
 

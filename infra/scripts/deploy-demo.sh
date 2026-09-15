@@ -327,9 +327,9 @@ else
   echo "  ✅ Images ready (cached layers reused)"
 fi
 
-# ── Step 4: Database up + migrations/seed ───────────────────────
+# ── Step 4: Database up, migrate, and seed only when that is safe ──
 echo ""
-echo "🗃️  Step 4/6 — Starting database, then migrating and seeding..."
+echo "🗃️  Step 4/6 — Starting database, then migrating..."
 
 compose up -d postgres
 
@@ -347,7 +347,56 @@ if [ "$NO_BUILD" = false ]; then
 else
   compose run --rm migrate
 fi
-echo "  ✅ Migrations applied and demo data seeded"
+echo "  ✅ Migrations applied"
+
+# Seeding wipes and reloads the demo dataset, including the demo accounts. Run
+# it on an empty database (first deploy) or when --reseed is asked for — never on
+# a routine deploy, where it would silently destroy accounts and orders created
+# since the previous one.
+user_count() {
+  # Read the credentials from .env.prod rather than the shell: compose loads
+  # that file for interpolation, it is not exported into this script's
+  # environment, so `$POSTGRES_USER` is empty here.
+  local user db out
+  user=$(env_value POSTGRES_USER leopard)
+  db=$(env_value POSTGRES_DB leopard)
+  out=$(compose exec -T postgres psql -U "$user" -d "$db" -tAc \
+    'SELECT count(*) FROM "User";' 2>/dev/null | tr -d '[:space:]') || true
+  printf '%s' "${out:-0}"
+}
+
+EXISTING_USERS=$(user_count)
+SEED_NOW=false
+if [ "$RESEED" = true ]; then
+  SEED_NOW=true
+  echo "  ℹ️  --reseed: nạp lại dữ liệu demo (thay thế dữ liệu hiện có)"
+elif [ "$EXISTING_USERS" = "0" ]; then
+  SEED_NOW=true
+  echo "  ℹ️  Database trống — nạp dữ liệu demo lần đầu"
+else
+  echo "  ⏭️  Giữ nguyên dữ liệu hiện có (${EXISTING_USERS} tài khoản)"
+  echo "     Nạp lại dữ liệu demo: ./infra/scripts/deploy-demo.sh --reseed"
+fi
+
+if [ "$SEED_NOW" = true ]; then
+  # A destructive step gets a backup first: --reseed is deliberate, but a typo
+  # or a mistaken terminal should still be recoverable.
+  if [ "$EXISTING_USERS" != "0" ]; then
+    echo "  💾 Sao lưu database trước khi nạp lại..."
+    if compose exec -T postgres pg_dump -U "$(env_value POSTGRES_USER leopard)" -d "$(env_value POSTGRES_DB leopard)" \
+        > "/tmp/leopard-preseed-$(date +%Y%m%d-%H%M%S).sql" 2>/dev/null; then
+      echo "     ✅ Đã lưu vào /tmp/leopard-preseed-*.sql trên VPS"
+    else
+      echo "     ⚠️  Sao lưu thất bại — vẫn tiếp tục theo yêu cầu --reseed"
+    fi
+  fi
+  if [ "$NO_BUILD" = false ]; then
+    compose run --rm --build seed
+  else
+    compose run --rm seed
+  fi
+  echo "  ✅ Đã nạp dữ liệu demo"
+fi
 
 # ── Step 5: Start application services ──────────────────────────
 echo ""

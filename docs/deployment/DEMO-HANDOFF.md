@@ -59,7 +59,7 @@ Script tự động, theo 6 bước:
 1. Kiểm tra Docker, Docker Compose, RAM.
 2. Sinh `.env.prod` với secret ngẫu nhiên 32 byte (chỉ lần đầu).
 3. Build 5 image.
-4. Bật Postgres → chờ healthy → chạy `prisma migrate deploy` + seed demo.
+4. Bật Postgres → chờ healthy → chạy `prisma migrate deploy`. Chỉ nạp dữ liệu demo khi database trống (lần deploy đầu) hoặc khi gọi `--reseed`.
 5. Bật API/Admin/Customer/Driver/Gateway → chờ API healthy.
 6. Smoke test 6 endpoint, in bảng link truy cập.
 
@@ -75,7 +75,7 @@ PUBLIC_HOST=demo.leopard.vn ./infra/scripts/deploy-demo.sh
 |---|---|
 | `./infra/scripts/deploy-demo.sh` | Deploy / cập nhật (dùng cache image) |
 | `... --rebuild` | Build lại image, bỏ qua cache |
-| `... --reseed` | Chỉ chạy lại migration + seed demo |
+| `... --reseed` | Nạp lại dữ liệu demo (có sao lưu trước). **Xoá tài khoản và đơn khách đã tạo** |
 | `... --no-build` | Khởi động không build lại |
 | `... --help` | Xem hướng dẫn |
 
@@ -187,29 +187,30 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml down -v
 
 ### Kiến trúc container
 
-```
-Edge nginx (:8888 trên host, chỉ loopback) ← cloudflared tunnel → HTTPS
-│
-Gateway (nginx unprivileged :8080 trong container → host :80)
-├── /            → Landing portal
-├── /login       → Admin Console
-├── /admin/      → Admin Console (Next.js standalone :3002)
-├── /_next/      → tài nguyên của Admin
-├── /customer/   → Customer App (:8081)
-├── /driver/     → Driver App (:8082)
-└── /api/v1/     → Admin BFF → API
+Ba tunnel HTTPS, mỗi app một origin:
 
-Customer App  → http://<HOST>:8081/   (Expo Web + nginx, proxy /api/v1 + /socket.io → API)
-Driver App    → http://<HOST>:8082/   (Expo Web + nginx, proxy /api/v1 + /socket.io → API)
-API           → http://<HOST>:3000/   (NestJS + Socket.IO)
+```
+cloudflared (portal)    → :80    Gateway ─┬─ /            Landing portal
+                                          ├─ /login       Admin Console
+                                          ├─ /admin/      Admin Console (:3002)
+                                          ├─ /_next/      tài nguyên Admin
+                                          └─ /api/v1/     Admin BFF → API
+
+cloudflared (customer)  → :8081  Customer App   (Expo Web + nginx)
+cloudflared (driver)    → :8082  Driver App     (Expo Web + nginx)
+
+Mỗi app container tự proxy /api/v1, /files, /socket.io → API, nên mọi app gọi
+API same-origin, không cần CORS.
+
+API           → :3000   (NestJS + Socket.IO)
                    │
                    ├── PostgreSQL + PostGIS (:5432, volume leopard-demo-data)
                    └── uploads/ (volume leopard-demo-uploads)
 ```
 
-**Vì sao 2 app Expo cần `experiments.baseUrl`:** bản export của Expo tham chiếu bundle ở đường dẫn tuyệt đối. Nếu để nguyên, cả hai app đều đòi `/_expo/static/js/web/entry-*.js` và nginx chỉ trỏ được tới một app. Đặt `experiments.baseUrl` = `/customer` và `/driver` trong `app.json` khiến chúng đòi `/customer/_expo/...` và `/driver/_expo/...`, nhờ đó cả hai nằm chung một origin — điều kiện để có HTTPS cho tất cả.
+**Vì sao mỗi app một origin, không gộp theo đường dẫn:** bundle export của Expo tham chiếu `/_expo/static/js/web/entry-*.js` ở **gốc**, nên hai app không thể chung một host. Đã thử dùng `experiments.baseUrl` để gộp — **không dùng được**: app ghi cứng các route tuyệt đối như `/customer/home` (66 chỗ), còn Expo Router lại ghép prefix vào chính những path đó, nên sau khi đăng nhập app đi tới `/customer/customer/home` và hiện trang 404 của chính nó. Vì vậy mỗi app có tunnel riêng, phục vụ ở gốc.
 
-**Vì sao Admin không cần baseUrl:** route của Next.js vốn đã tuyệt đối (`/login`, `/_next/`), nên để ở gốc origin là đúng.
+**Vì sao Admin không cần tunnel riêng:** route của Next.js vốn đã tuyệt đối (`/login`, `/_next/`), nên ở chung host portal là đúng.
 
 **Vì sao đứng sau proxy mà login Admin vẫn qua được kiểm tra CSRF:** `isSameOriginRequest` so `Origin` với origin suy ra từ `request.url`, mà Next.js dựng URL đó từ hostname lúc khởi động — trong container là `admin:3002`, không bao giờ khớp origin công khai. Hàm này đã được sửa để nhận thêm `X-Forwarded-Host` / `Host` do proxy gửi tới.
 

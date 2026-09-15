@@ -54,9 +54,15 @@ services:
       retries: 12
       start_period: 20s
 
-  # ── One-shot migrations + demo seed ──
-  # Runs from the builder stage because the Prisma CLI and the seed script are
-  # dev-only deps and are intentionally absent from the runtime image.
+  # ── One-shot migrations ──
+  # Runs from the builder stage because the Prisma CLI is a dev-only dep and is
+  # intentionally absent from the runtime image.
+  #
+  # Migrations only. Seeding is a separate service because the seed script wipes
+  # and reloads the demo dataset: running it on every deploy destroyed customer
+  # accounts and orders that had been created since the previous one. The deploy
+  # script decides when seeding is appropriate — an empty database, or an
+  # explicit --reseed.
   migrate:
     image: leopard-demo/migrate:${IMAGE_TAG:-dev}
     build:
@@ -78,9 +84,31 @@ services:
     command:
       - sh
       - -c
-      - >-
-        pnpm --filter api exec prisma migrate deploy &&
-        node --experimental-strip-types apps/api/prisma/seed.ts
+      - pnpm --filter api exec prisma migrate deploy
+
+  # ── Demo data reload (destructive, on demand only) ──
+  seed:
+    image: leopard-demo/migrate:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+      target: builder
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-leopard}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-leopard}?schema=public
+      NODE_ENV: production
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - node --experimental-strip-types apps/api/prisma/seed.ts
 
   # ── Admin Console (Next.js standalone) ──
   admin:

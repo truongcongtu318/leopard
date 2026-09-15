@@ -170,6 +170,21 @@ describe('production environment schema', () => {
     ).toThrow(/VIETMAP_API_KEY/);
   });
 
+  it('rejects a whitespace-only VIETMAP_API_KEY', () => {
+    expect(() =>
+      parseEnv({ ...validProductionEnv, VIETMAP_API_KEY: '   ' }),
+    ).toThrow(/VIETMAP_API_KEY/);
+  });
+
+  it('rejects the demo fallback alongside a real Vietmap key in production', () => {
+    // With ALLOW_DEMO_PROVIDER=true, a failed Vietmap call silently serves the
+    // demo map instead of failing loudly — production would show simulated
+    // routes while claiming to run Vietmap.
+    expect(() =>
+      parseEnv({ ...validProductionEnv, ALLOW_DEMO_PROVIDER: 'true' }),
+    ).toThrow(/ALLOW_DEMO_PROVIDER/);
+  });
+
   it('accepts FCM_ENABLED=true alongside FIREBASE_PROJECT_ID', () => {
     expect(
       parseEnv({ ...validProductionEnv, FCM_ENABLED: 'true' }),
