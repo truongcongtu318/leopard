@@ -194,6 +194,18 @@ sudo ss -tlnp | grep -E ':(80|3000|3002|8081|8082)\b'
 docker compose -f docker-compose.prod.yml logs --tail 80 api
 ```
 
+**Đăng nhập báo “Đăng nhập demo đang bị tắt” (403 `DEMO_LOGIN_DISABLED`)**
+
+Demo auth mặc định chỉ chạy ở local/staging; bản deploy production phải bật cờ
+xác nhận trong `.env.prod`:
+```
+AUTH_DEMO_LOGIN_ENABLED=true
+ALLOW_DEMO_AUTH_PROVIDER=true
+```
+Thiếu dòng thứ hai thì API từ chối khởi động ngay (env schema bắt buộc). Nếu API
+đang chạy mà vẫn 403 thì `.env.prod` chưa được nạp — chạy lại
+`./infra/scripts/deploy-demo.sh`, script tự thêm cờ nếu thiếu.
+
 **Migration lỗi**
 ```bash
 docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm migrate
