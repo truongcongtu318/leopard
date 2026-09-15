@@ -48,7 +48,6 @@ export type DriverOrdersScreenProps = Readonly<{
   networkError?: string | null;
   driverIdentity?: {
     name?: string | null;
-    vehicleLabel?: string | null;
     vehiclePlate?: string | null;
     vehicleType?: string | null;
   };
@@ -324,12 +323,10 @@ export function DriverOrdersScreen({
 
               <DriverOrderFilters
                 hasActiveTrip={Boolean(activeTrip)}
-                onOpenSettings={() => setIsSettingsOpen(true)}
                 onSimulateOffer={showDebugActions ? handleSimulateIncomingOffer : undefined}
                 radiusKm={radiusKm}
                 showDebugActions={showDebugActions}
                 totalCount={filteredOrders.length}
-                waitingCount={filteredOrders.length}
               />
 
               {filteredOrders.length > 0 ? (
@@ -348,11 +345,7 @@ export function DriverOrdersScreen({
                   ))}
                 </View>
               ) : activeTrip ? null : (
-                <DriverEmptyBoard
-                  isOnline={isOnline}
-                  onExpandRadius={() => setIsSettingsOpen(true)}
-                  onGoOnline={handleToggleAvailability}
-                />
+                <DriverEmptyBoard isOnline={isOnline} />
               )}
             </>
           ) : null}

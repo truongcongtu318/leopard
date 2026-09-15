@@ -10,21 +10,15 @@ export type DriverLocationStatusProps = Readonly<{
 }>;
 
 /**
- * Compact GPS pill pinned under the glass top bar. Always tells the driver the
- * truth about whether dispatch can see them, and doubles as the retry control.
+ * Location recovery affordance.
+ *
+ * The happy path renders nothing: the map already shows the driver's position,
+ * and a permanent "Vị trí hiện tại" pill was pure chrome. Only a truly broken
+ * state (permission denied / no fix / still locating) surfaces a control.
  */
 export function DriverLocationStatus({ location, onRetry }: DriverLocationStatusProps) {
   if (location.kind === 'ready') {
-    return (
-      <View
-        accessibilityLabel="Đang hiển thị vị trí GPS hiện tại"
-        style={styles.pill}
-        testID="driver-current-location-status"
-      >
-        <View style={[styles.dot, styles.dotReady]} />
-        <Text style={styles.text}>Vị trí hiện tại</Text>
-      </View>
-    );
+    return null;
   }
 
   if (location.kind === 'loading') {
@@ -88,9 +82,6 @@ const styles = StyleSheet.create({
     height: 8,
     marginRight: 6,
     width: 8,
-  },
-  dotReady: {
-    backgroundColor: '#16A34A',
   },
   dotLoading: {
     backgroundColor: '#94A3B8',

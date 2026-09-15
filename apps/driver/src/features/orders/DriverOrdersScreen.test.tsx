@@ -70,7 +70,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('renders the offline board with a capsule CTA that turns dispatch on', async () => {
+  it('renders the offline board without a duplicate call to action', async () => {
     const onSetAvailability = jest.fn();
     // D-LIST-EMPTY is the fixture set's offline + no-orders scenario, which is
     // exactly when the board must explain how to start receiving dispatch.
@@ -86,7 +86,10 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     expect(screen.getByTestId('driver-offline-board')).toBeTruthy();
     expect(screen.getByText('Radar đang tạm dừng')).toBeTruthy();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Bật trực tuyến' }));
+    // The pill above the sheet owns the action, so the board adds no second button.
+    expect(screen.queryByRole('button', { name: 'Bật trực tuyến' })).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('driver-connection-toggle'));
     expect(onSetAvailability).toHaveBeenCalled();
 
     await screen.unmount();
@@ -130,13 +133,11 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     // GestureBottomSheet container
     expect(screen.getByTestId('driver-load-board-sheet')).toBeTruthy();
 
-    // Radar strip is the single place that communicates the scan radius and scanning status.
-    expect(screen.getByText(/Radar đang quét bán kính/)).toBeTruthy();
-    expect(screen.getByText(/Đang tìm cuốc xe gần bạn/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeNull();
-
-    // Load-board section header
+    // Single compact load-board header carries both the title and the radar status.
+    expect(screen.getByTestId('driver-load-board-header')).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Đơn có thể nhận' })).toBeTruthy();
+    expect(screen.getByText('2 đơn phù hợp trong bán kính 5 km')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeNull();
 
     expect(screen.queryByText('Xe van')).toBeNull();
     expect(screen.queryByText('1.25T')).toBeNull();
@@ -226,7 +227,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     );
 
     // Initial state: 2 orders matching
-    expect(screen.getByText('2 đơn phù hợp gần bạn')).toBeTruthy();
+    expect(screen.getByText('2 đơn phù hợp trong bán kính 5 km')).toBeTruthy();
 
     // Press "Bỏ qua" on the first order
     const declineButtons = screen.getAllByRole('button', { name: 'Bỏ qua đơn này' });
@@ -234,7 +235,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await fireEvent.press(declineButtons[0]);
 
     // Counter updates to 1 order
-    expect(screen.getByText('1 đơn phù hợp gần bạn')).toBeTruthy();
+    expect(screen.getByText('1 đơn phù hợp trong bán kính 5 km')).toBeTruthy();
 
     await screen.unmount();
   });
@@ -261,7 +262,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('hides radar scan strip and provides safe contact actions when activeTrip is present', async () => {
+  it('pauses the radar line and provides safe contact actions when activeTrip is present', async () => {
     const onNavigate = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
@@ -270,8 +271,8 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
       />,
     );
 
-    // Radar strip MUST NOT be rendered when on active trip
-    expect(screen.queryByText(/Radar đang quét bán kính/)).toBeNull();
+    // The header stays for the load board, but the radar must report a pause.
+    expect(screen.getByText('Tạm dừng nhận đơn mới trong lúc chạy chuyến')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeNull();
 
     // Contact buttons work safely

@@ -10,7 +10,7 @@ describe('DriverOrdersScreen', () => {
     const onOpenOrder = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
-        driverIdentity={{ name: 'Nguyễn Văn Tuấn', vehicleLabel: 'Xe tải · 51C-889.24' }}
+        driverIdentity={{ name: 'Nguyễn Văn Tuấn', vehiclePlate: '51C-889.24', vehicleType: 'Xe tải 2.5T' }}
         onOpenOrder={onOpenOrder}
         view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
       />,
