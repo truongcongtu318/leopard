@@ -82,7 +82,13 @@ const envSchema = z
     ALLOW_IN_MEMORY_SOCKET_PROVIDER: booleanFlagSchema.optional(),
     ALLOW_LOCAL_STORAGE_PROVIDER: booleanFlagSchema.optional(),
     ALLOW_DEMO_PAYMENT_PROVIDER: booleanFlagSchema.optional(),
-    VIETMAP_API_KEY: z.string().trim().min(10).optional(),
+    // An empty value must mean "not configured", like the S3/PAYOS/SMTP
+    // credentials below. Otherwise the demo configuration that .env.example
+    // ships (MAP_PROVIDER=demo with VIETMAP_API_KEY= left blank) fails to boot,
+    // even though the map provider never reads the key. The real requirement —
+    // a key is mandatory when MAP_PROVIDER=vietmap — is enforced in the refine
+    // at the bottom of this schema.
+    VIETMAP_API_KEY: optionalProviderValue(10),
     FIREBASE_PROJECT_ID: z.string().trim().min(1).optional(),
     FCM_ENABLED: booleanFlagSchema.optional(),
     S3_ACCESS_KEY_ID: optionalProviderValue(10),

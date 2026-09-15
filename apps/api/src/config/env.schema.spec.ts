@@ -105,6 +105,27 @@ describe('production environment schema', () => {
     ).toThrow();
   });
 
+  it('treats a blank VIETMAP_API_KEY as unset when the demo map provider is selected', () => {
+    // .env.example ships MAP_PROVIDER=demo with VIETMAP_API_KEY= left blank, so
+    // an empty value must behave like an absent one instead of failing the
+    // min-length rule and preventing the API from starting.
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        MAP_PROVIDER: 'demo',
+        ALLOW_DEMO_PROVIDER: 'true',
+        VIETMAP_API_KEY: '',
+        FIREBASE_PROJECT_ID: 'leopard-demo',
+      }),
+    ).toMatchObject({ MAP_PROVIDER: 'demo', VIETMAP_API_KEY: undefined });
+  });
+
+  it('still requires VIETMAP_API_KEY when MAP_PROVIDER=vietmap', () => {
+    expect(() =>
+      parseEnv({ ...validProductionEnv, VIETMAP_API_KEY: '' }),
+    ).toThrow(/VIETMAP_API_KEY/);
+  });
+
   it('accepts FCM_ENABLED=true alongside FIREBASE_PROJECT_ID', () => {
     expect(
       parseEnv({ ...validProductionEnv, FCM_ENABLED: 'true' }),
