@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Button,
+  IconCamera,
   IconCheck,
   IconClock,
+  IconOrders,
   IconPhone,
   IconRoute,
   IconShieldAlert,
@@ -56,6 +58,7 @@ export function AssignedDetailView({
   inFlightStopCommand,
 }: AssignedDetailViewProps) {
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+  const [preloadingPhotoCaptured, setPreloadingPhotoCaptured] = useState(false);
   const isPickupLeg = view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP';
   const isReturning = view.order.status === 'RETURNING';
   const isTerminal = view.order.status === 'DELIVERED' || view.order.status === 'RETURNED';
@@ -261,6 +264,79 @@ export function AssignedDetailView({
             vehicleLabel={view.order.vehicleLabel}
           />
 
+          {/* Stage 2 Checklist: Kiểm hàng & Bốc hàng */}
+          {view.order.status === 'PICKING_UP' && (
+            <View style={styles.pickingChecklistCard} testID="cargo-specs-checklist">
+              <View style={styles.pickingChecklistHeader}>
+                <View style={styles.pickingChecklistIconBadge}>
+                  <IconOrders color="#0B1E42" size={18} />
+                </View>
+                <View style={styles.pickingChecklistTitleCol}>
+                  <Text style={styles.pickingChecklistTitle}>DANH SÁCH KIỂM HÀNG & BỐC HÀNG</Text>
+                  <Text style={styles.pickingChecklistSubtitle}>
+                    Kiểm tra đúng quy cách trước khi tài xế bốc hàng lên xe
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.checklistItemsCol}>
+                <View style={styles.checklistItemRow}>
+                  <IconCheck color="#16A34A" size={16} strokeWidth={2.5} />
+                  <Text style={styles.checklistItemLabel}>Tên hàng hóa:</Text>
+                  <Text style={styles.checklistItemValue}>{view.order.cargoSummary}</Text>
+                </View>
+                <View style={styles.checklistItemRow}>
+                  <IconCheck color="#16A34A" size={16} strokeWidth={2.5} />
+                  <Text style={styles.checklistItemLabel}>Khối lượng:</Text>
+                  <Text style={styles.checklistItemValue}>
+                    {view.order.cargoWeightKg ? `${view.order.cargoWeightKg} kg` : 'Theo tải trọng xe'}
+                  </Text>
+                </View>
+                <View style={styles.checklistItemRow}>
+                  <IconCheck color="#16A34A" size={16} strokeWidth={2.5} />
+                  <Text style={styles.checklistItemLabel}>Phí bốc xếp:</Text>
+                  <Text style={styles.checklistItemValue}>
+                    Miễn phí bốc xếp tiêu chuẩn
+                  </Text>
+                </View>
+              </View>
+
+              <Pressable
+                accessibilityHint="Chụp ảnh hàng hóa trước khi bốc lên xe để làm bằng chứng tránh khiếu nại"
+                accessibilityLabel="Chụp ảnh hàng trước khi bốc"
+                accessibilityRole="button"
+                onPress={() => {
+                  setPreloadingPhotoCaptured(true);
+                  if (onSelectProof) {
+                    onSelectProof();
+                  }
+                }}
+                style={({ pressed }) => [
+                  styles.preloadingCaptureBtn,
+                  preloadingPhotoCaptured ? styles.preloadingCaptureBtnDone : null,
+                  pressed ? styles.pressed : null,
+                ]}
+                testID="btn-preloading-cargo-photo"
+              >
+                {preloadingPhotoCaptured ? (
+                  <View style={styles.preloadingCaptureInner}>
+                    <IconCheck color="#16A34A" size={16} strokeWidth={2.5} />
+                    <Text style={styles.preloadingCaptureTextDone}>
+                      Đã chụp ảnh kiểm hàng trước khi bốc (tránh khiếu nại)
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.preloadingCaptureInner}>
+                    <IconCamera color="#0B1E42" size={16} />
+                    <Text style={styles.preloadingCaptureText}>
+                      Chụp ảnh hàng trước khi bốc (tránh khiếu nại)
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            </View>
+          )}
+
           {/* 5. Thu tiền mặt (Cash on Delivery) khi đơn thanh toán CASH */}
           {isCashOrder && (view.order.status === 'IN_TRANSIT' || isTerminal) && (
             <View style={styles.cashCardOuter} testID="cash-collection-container">
@@ -341,13 +417,20 @@ export function AssignedDetailView({
             </View>
           )}
 
-          {/* 6. Proof of Delivery / e-POD Panel chỉ mở khi IN_TRANSIT */}
-          {view.order.status === 'IN_TRANSIT' && (
+          {/* 6. Proof of Delivery / e-POD Panel */}
+          {(view.order.status === 'IN_TRANSIT' || view.order.status === 'DELIVERED') && (
             <EpodPanel
+              isCashConfirmed={isCashConfirmed}
               onExecuteTask={onExecuteTask}
               onRetryProof={onRetryProof}
               onSelectProof={onSelectProof}
               orderId={view.order.id}
+              paymentMethod={view.order.paymentMethod}
+              paymentStatus={view.order.paymentStatus}
+              priceLabel={
+                view.order.priceLabel ||
+                (view.order.priceVnd ? formatVndPrice(view.order.priceVnd) : undefined)
+              }
               proof={view.proof}
               status={view.order.status}
             />
@@ -694,5 +777,95 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 10.5,
     textAlign: 'center',
+  },
+  pickingChecklistCard: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: spacing.sm + 2,
+    padding: spacing.md,
+  },
+  pickingChecklistHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  pickingChecklistIconBadge: {
+    alignItems: 'center',
+    backgroundColor: '#EEF2F6',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  pickingChecklistTitleCol: {
+    flex: 1,
+    gap: 2,
+  },
+  pickingChecklistTitle: {
+    color: '#0B1E42',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  pickingChecklistSubtitle: {
+    color: '#64748B',
+    fontSize: 10.5,
+  },
+  checklistItemsCol: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+    padding: spacing.sm + 2,
+  },
+  checklistItemRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  checklistItemLabel: {
+    color: '#475569',
+    fontSize: 11.5,
+    fontWeight: '600',
+    width: 90,
+  },
+  checklistItemValue: {
+    color: '#0B1E42',
+    flex: 1,
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  preloadingCaptureBtn: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    borderStyle: 'dashed',
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  preloadingCaptureBtnDone: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#86EFAC',
+    borderStyle: 'solid',
+  },
+  preloadingCaptureInner: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  preloadingCaptureText: {
+    color: '#0B1E42',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  preloadingCaptureTextDone: {
+    color: '#15803D',
+    fontSize: 11.5,
+    fontWeight: '700',
   },
 });

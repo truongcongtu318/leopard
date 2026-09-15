@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import {
   IconCamera,
   IconCameraProof,
@@ -9,6 +9,7 @@ import {
   IconOrders,
   IconShieldAlert,
   IconTrash,
+  IconTxPayment,
   SlideToAction,
   spacing,
 } from '@leopard/mobile-core';
@@ -18,6 +19,10 @@ export type EpodPanelProps = Readonly<{
   proof: DriverProofView;
   status: string;
   orderId?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  priceLabel?: string;
+  isCashConfirmed?: boolean;
   onSelectProof?: () => void;
   onRetryProof?: (commandId: string) => void;
   onExecuteTask?: (commandId: string) => void;
@@ -27,6 +32,10 @@ export function EpodPanel({
   proof,
   status,
   orderId,
+  paymentMethod,
+  paymentStatus,
+  priceLabel,
+  isCashConfirmed,
   onSelectProof,
   onRetryProof,
   onExecuteTask,
@@ -50,7 +59,7 @@ export function EpodPanel({
   const [signatureCaptured, setSignatureCaptured] = useState<boolean>(
     proof.kind === 'persisted',
   );
-  const [receiverName] = useState<string>('Thủ kho Nguyễn Văn A');
+  const [receiverName, setReceiverName] = useState<string>('Nguyễn Văn A');
   const [signPoints, setSignPoints] = useState<number>(proof.kind === 'persisted' ? 12 : 0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -157,6 +166,53 @@ export function EpodPanel({
           </View>
         ) : null}
 
+        {/* Payment Collection Reminder */}
+        <View style={styles.paymentReminderCard} testID="epod-payment-reminder">
+          <View style={styles.paymentReminderIconWrap}>
+            <IconTxPayment
+              color={paymentMethod === 'CASH' && !isCashConfirmed ? '#D97706' : '#10B981'}
+              size={18}
+            />
+          </View>
+          <View style={styles.paymentReminderCol}>
+            <Text style={styles.paymentReminderTitle}>
+              {paymentMethod === 'CASH'
+                ? 'NHẮC NHỞ THU TIỀN MẶT (COD)'
+                : 'THANH TOÁN ĐƠN HÀNG'}
+            </Text>
+            <Text style={styles.paymentReminderText}>
+              {paymentMethod === 'CASH'
+                ? isCashConfirmed
+                  ? 'Đã xác nhận thu tiền mặt từ khách'
+                  : `Thu tiền mặt khi giao (COD): ${priceLabel || '285.000 ₫'}`
+                : 'Đã thanh toán qua VietQR'}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.paymentBadge,
+              paymentMethod === 'CASH' && !isCashConfirmed
+                ? styles.paymentBadgePending
+                : styles.paymentBadgeSuccess,
+            ]}
+          >
+            <Text
+              style={[
+                styles.paymentBadgeText,
+                paymentMethod === 'CASH' && !isCashConfirmed
+                  ? styles.paymentBadgeTextPending
+                  : styles.paymentBadgeTextSuccess,
+              ]}
+            >
+              {paymentMethod === 'CASH'
+                ? isCashConfirmed
+                  ? 'ĐÃ THU COD'
+                  : 'CẦN THU COD'
+                : 'VIETQR'}
+            </Text>
+          </View>
+        </View>
+
         {/* Part 1: Cargo Delivery Photo with Watermark */}
         <View style={styles.epodCardSection}>
           <View style={styles.epodSubHeaderRow}>
@@ -246,7 +302,15 @@ export function EpodPanel({
 
           <View style={styles.signatureReceiverBox}>
             <Text style={styles.signatureReceiverLabel}>Đại diện nhận hàng:</Text>
-            <Text style={styles.signatureReceiverValue}>{receiverName}</Text>
+            <TextInput
+              accessibilityLabel="Tên người nhận hàng"
+              onChangeText={setReceiverName}
+              placeholder="Nhập họ tên người nhận / thủ kho"
+              placeholderTextColor="#94A3B8"
+              style={styles.signatureReceiverInput}
+              testID="epod-recipient-name-input"
+              value={receiverName}
+            />
           </View>
 
           {/* Interactive Signature Pad Canvas */}
@@ -306,12 +370,12 @@ export function EpodPanel({
         </View>
 
         {/* Step 4 Completion / Confirmation Trigger if inside e-POD section */}
-        {status === 'IN_TRANSIT' && (
+        {(status === 'IN_TRANSIT' || status === 'DELIVERED') && (
           <View style={styles.epodCompleteSection}>
             <SlideToAction
               colorVariant="success"
               disabled={!isCompleteReady}
-              label="Vuốt: Hoàn tất giao hàng (DELIVERED) ➔"
+              label="Vuốt hoàn tất cuốc xe ➔"
               onActionComplete={handleConfirmDelivery}
               resetKey={`${orderId}-${signatureCaptured ? 'signed' : 'unsigned'}`}
               testID="btn-epod-complete-delivery"
@@ -575,6 +639,72 @@ const styles = StyleSheet.create({
     color: '#0B1E42',
     fontSize: 11.5,
     fontWeight: '800',
+  },
+  signatureReceiverInput: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    borderWidth: 1,
+    color: '#0B1E42',
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  paymentReminderCard: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    padding: 10,
+  },
+  paymentReminderIconWrap: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  paymentReminderCol: {
+    flex: 1,
+    gap: 2,
+  },
+  paymentReminderTitle: {
+    color: '#0B1E42',
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  paymentReminderText: {
+    color: '#334155',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  paymentBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  paymentBadgePending: {
+    backgroundColor: '#FEF3C7',
+  },
+  paymentBadgeSuccess: {
+    backgroundColor: '#DCFCE7',
+  },
+  paymentBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  paymentBadgeTextPending: {
+    color: '#B45309',
+  },
+  paymentBadgeTextSuccess: {
+    color: '#15803D',
   },
   signaturePadArea: {
     alignItems: 'center',
