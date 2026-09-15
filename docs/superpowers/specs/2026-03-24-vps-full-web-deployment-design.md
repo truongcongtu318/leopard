@@ -6,32 +6,49 @@
 
 ## 1. System Topology & Architecture
 
-Hệ thống đóng gói chạy trên Docker Compose gồm 6 services:
+Hệ thống đóng gói chạy trên Docker Compose gồm 7 services (6 thường trực + 1 one-shot cho migration):
 
 ```
 [Khách truy cập / Browser]
          │
          ▼
-[Nginx Gateway :80] ───────────────┬─ / ──────────> [Landing Demo Portal]
-                                   ├─ :3002 (/admin)───> [apps/admin (Next.js 16)]
-                                   ├─ :8081 (/customer)─> [apps/mobile (Expo Web)]
-                                   ├─ :8082 (/driver)──> [apps/driver (Expo Web)]
-                                   └─ :3000 (/api) ────> [apps/api (NestJS)]
-                                                               │
-                                                               ▼
-                                                    [PostGIS 17 Database :5432]
+[Nginx Gateway :80 → container :8080] ─┬─ / ────────────> [Landing Demo Portal]
+                                       ├─ /login        ─> [apps/admin (Next.js standalone)]
+                                       ├─ /admin/       ─> [apps/admin]
+                                       ├─ /_next/       ─> [apps/admin]
+                                       └─ /api/v1/      ─> [apps/admin BFF] ─> [apps/api]
+
+[Nginx :8081] ─ Customer App (Expo Web static, proxy /api/v1 + /socket.io) ─> [apps/api]
+[Nginx :8082] ─ Driver App   (Expo Web static, proxy /api/v1 + /socket.io) ─> [apps/api]
+                                                                                  │
+                                                                                  ▼
+                                                                   [PostGIS 17 Database :5432]
 ```
+
+> **Điều chỉnh so với thiết kế ban đầu — hai app Expo không đi qua gateway.**
+> Bản export của Expo tham chiếu bundle ở đường dẫn tuyệt đối
+> `/_expo/static/js/web/entry-*.js`. Nếu phục vụ cả hai app sau cùng một origin
+> (`/customer/`, `/driver/`), chúng sẽ tranh nhau prefix `/_expo/` và nginx chỉ
+> trỏ được tới một app. Mỗi app vì vậy chạy ở gốc port riêng, nơi `/_expo/` phân
+> giải đúng; portal trỏ thẳng tới port đó.
 
 ### Components
 
 1. **`postgres`** (`postgis/postgis:17-3.5`):
    - Lưu trữ dữ liệu hệ thống + PostGIS index.
-   - Volume: `leopard-postgres-data`.
+   - Volume: `leopard-demo-data`.
 
 2. **`api`** (`apps/api`):
-   - Build từ `infra/docker/api.Dockerfile` (Node 24 Alpine).
+   - Build từ `infra/docker/api.Dockerfile` (Node 24.21.0 Alpine 3.24, pin cứng).
    - Expose port `3000`.
    - Cung cấp REST API (`/api/v1`), Swagger Docs (`/api/docs`), WebSocket Gateway (`/dispatch`, `/tracking`, `/notifications`).
+   - Volume `leopard-demo-uploads` cho media/POD do `LocalStorageProvider` ghi ra.
+
+2b. **`migrate`** (one-shot, `profiles: ["tools"]`):
+   - Build từ cùng `api.Dockerfile` nhưng `target: builder`, vì Prisma CLI và seed
+     script là dev-only dependency, không có trong runtime image.
+   - Chạy `prisma migrate deploy` rồi `node --experimental-strip-types prisma/seed.ts`.
+   - Không chạy khi `up`; deploy script gọi tường minh bằng `compose run --rm`.
 
 3. **`admin`** (`apps/admin`):
    - Build từ `infra/docker/admin.Dockerfile` (Node 24 Alpine Next.js 16 runner).
@@ -59,32 +76,55 @@ Hệ thống đóng gói chạy trên Docker Compose gồm 6 services:
 
 ## 2. Dữ liệu Demo & Tài khoản Seed sẵn
 
-Dữ liệu mô phỏng theo `infra/seed/demo-manifest.json` gồm xe, đơn hàng, tuyến đường mẫu:
+Dữ liệu mô phỏng theo `infra/seed/demo-manifest.json`: 9 user, 6 driver profile, 56 đơn hàng, 2 đội xe.
 
-| Vai trò | Số điện thoại | Cơ chế đăng nhập | Quyền hạn |
-|---|---|---|---|
-| **Admin** | `+840000000004` | Demo Login (1 click) hoặc OTP `123456` | Giám sát toàn hệ thống, tài xế, đội xe |
-| **Fleet Owner** | `+840000000003` | Demo Login (1 click) hoặc OTP `123456` | Quản trị đội xe, đơn hàng của đội |
-| **Driver** | `+840000000002` | Demo Login (1 click) hoặc OTP `123456` | Cockpit tài xế, nhận đơn, e-POD |
-| **Customer** | `+840000000001` | Demo Login (1 click) hoặc OTP `123456` | Đặt đơn hàng, theo dõi thời gian thực |
+Giao diện chỉ còn **3 vai trò**: Admin, Driver, Customer. Giao diện Fleet Owner
+(`apps/admin/src/app/(fleet)`, `src/features/fleet`) đã được gỡ bỏ; backend vẫn
+giữ model `Fleet`/`FleetMember` và module `fleets` nên không cần thay đổi schema,
+nhưng không có đường đăng nhập nào cấp role đó.
 
-## 3. Tự động hóa Deploy (`deploy.sh`)
+| Vai trò | Từ khoá đăng nhập | Quyền hạn |
+|---|---|---|
+| **Admin** | `admin` | Giám sát toàn hệ thống, tài xế, đội xe, rút tiền |
+| **Driver** | `driver` | Cockpit tài xế, nhận đơn, cập nhật trạng thái, e-POD, ví |
+| **Customer** | `customer` | Đặt đơn hàng, theo dõi thời gian thực, thanh toán, hoá đơn |
 
-Script chạy tự động trên VPS:
-1. `validate_prerequisites`: Kiểm tra Docker, Docker Compose, Port khả dụng.
-2. `setup_env`: Tạo file `.env` từ `.env.example` với random secret 32-byte an toàn.
-3. `start_database`: Bật `postgres`, đợi healthcheck pass.
-4. `run_migrations_and_seed`: Chạy `prisma migrate deploy` và `node prisma/seed.ts`.
-5. `build_and_start_services`: `docker compose -f docker-compose.prod.yml up -d --build`.
-6. `healthcheck`: Kiểm tra HTTP 200/302 cho cả 4 services.
-7. `print_handoff_summary`: Xuất link truy cập, hướng dẫn test và tài khoản demo để gửi trực tiếp cho đối tác.
+## 3. Tự động hóa Deploy (`infra/scripts/deploy-demo.sh`)
+
+Script chạy tự động trên VPS, 6 bước:
+
+1. `prerequisites`: Kiểm tra Docker, Docker Compose, Docker daemon, RAM; **cài buildx nếu thiếu** (các Dockerfile dùng `RUN --mount=type=cache` nên cần BuildKit).
+2. `environment`: Sinh `.env.prod` với secret ngẫu nhiên 32 byte; tự dò `PUBLIC_HOST` và ghi lại `PUBLIC_FILES_BASE_URL` + `CORS_ORIGINS` theo host thật.
+3. `build`: Build 5 image, tag theo `IMAGE_TAG` (mặc định = commit SHA ngắn).
+4. `migrate`: Bật `postgres` → chờ healthy → `compose run --rm migrate` (migrate + seed).
+5. `start`: `compose up -d --remove-orphans` → chờ API healthy.
+6. `smoke`: Kiểm tra 6 endpoint, in bảng link truy cập và tài khoản demo.
+
+Cờ: `--rebuild`, `--reseed`, `--no-build`, `--help`.
 
 ## 4. Kế hoạch Verification
 
-1. Build thử nghiệm Dockerfile `customer` và `driver` đảm bảo build xanh 100%.
-2. Chạy thử `docker-compose.prod.yml` cục bộ, kiểm tra:
-   - Gateway port 80 trả về Landing Portal.
-   - Admin port 3002 đăng nhập thành công role Admin/Fleet Owner.
-   - Customer port 8081 load UI, gọi API `/api/v1` không lỗi CORS.
-   - Driver port 8082 load Cockpit, nhận đơn qua Socket.IO.
-3. Kiểm tra script `deploy.sh` chạy sạch, idempotent.
+1. Build cả 5 image từ cache sạch, không lỗi.
+2. Chạy `docker-compose.prod.yml` cục bộ, kiểm tra:
+   - Gateway trả về Landing Portal, và `/login` trả về trang đăng nhập Admin.
+   - Admin đăng nhập được bằng `admin`.
+   - Customer port 8081 load UI và gọi `/api/v1` không lỗi CORS (same-origin qua nginx proxy).
+   - Driver port 8082 load Cockpit, kết nối Socket.IO qua `/socket.io/`.
+   - Upload media/POD ghi được vào volume (user runtime sở hữu `/app/uploads`).
+3. Kiểm tra `deploy-demo.sh` chạy sạch và idempotent.
+
+## 5. Ghi chú triển khai (phát sinh trong quá trình làm)
+
+Những điểm dưới đây không có trong thiết kế ban đầu và đã được xử lý khi implement:
+
+| Phát hiện | Xử lý |
+|---|---|
+| Không có `.dockerignore` → context 27 GB (`.turbo` 13 GB, `.worktrees` 11 GB) | Thêm `.dockerignore` → còn **78.7 MB** |
+| `api.Dockerfile` chưa từng build được: thiếu root `package.json` (`tsc`), chưa build `shared`/`validators`, thiếu `scripts/` và `infra/seed/`, `pnpm deploy` thiếu `--legacy` | Sửa hết |
+| User runtime không ghi được `<cwd>/uploads` → upload ảnh/POD lỗi 500 | `install -d -o leopard` cho `/app/uploads` + volume |
+| `pnpm deploy` không có Prisma CLI trong runtime image | Tách service `migrate` chạy từ builder stage |
+| Expo export dùng `/_expo/` tuyệt đối → không thể phục vụ 2 app dưới subpath | Mỗi app một port riêng |
+| Base image trôi (`node:24-alpine`) | Pin `node:24.21.0-alpine3.24`, `nginxinc/nginx-unprivileged:1.31-alpine` |
+| nginx chạy root | Chuyển sang image unprivileged (uid 101); gateway listen 8080 trong container, map host 80 |
+| Không có cache cho pnpm store / Next / Metro | Thêm `RUN --mount=type=cache`; script tự cài buildx |
+| Image không có tag → không rollback được | `image: ...:${IMAGE_TAG:-dev}`, script set theo commit SHA |
