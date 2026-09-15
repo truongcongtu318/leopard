@@ -20,6 +20,33 @@ type ManifestUser = TimestampedManifest & {
   phone: string;
   role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
   status: 'ACTIVE' | 'DISABLED';
+  /**
+   * Onboarding fields. `onboardedAt` is what the API exposes as
+   * `profileComplete`, so a seeded driver without it is bounced to the
+   * registration wizard on every login.
+   */
+  name?: string;
+  email?: string;
+  onboardedAt?: string;
+  consentTermsAt?: string;
+  consentServiceAt?: string;
+};
+
+type DriverDocumentManifest = {
+  id: string;
+  type: 'ID_CARD' | 'LICENSE' | 'VEHICLE_REGISTRATION' | 'VEHICLE_PHOTO';
+  provider: 'LOCAL' | 'S3' | 'DEMO';
+  storageKey: string;
+  contentType: string;
+  sizeBytes: number;
+  checksumSha256: string;
+  reviewStatus?: 'PENDING_REVIEW' | 'VERIFIED' | 'ACTION_REQUIRED' | 'REJECTED' | 'EXPIRED';
+  reviewedAt?: string;
+  documentNumber?: string;
+  holderName?: string;
+  issuedAt?: string;
+  expiresAt?: string;
+  createdAt?: string;
 };
 
 type DriverProfileManifest = TimestampedManifest & {
@@ -29,6 +56,24 @@ type DriverProfileManifest = TimestampedManifest & {
   vehicleType: 'MOTORBIKE' | 'VAN' | 'TRUCK';
   lastKnownAt: string | null;
   location: Coordinate | null;
+  /**
+   * Partner application + contract state. Populated for the drivers that should
+   * look like approved partners so the pilot can be exercised end to end;
+   * omitted for drivers used to demonstrate the pending/rejected review flows.
+   */
+  licensePlate?: string;
+  licenseNumber?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedById?: string;
+  rejectionReason?: string;
+  contractSignedAt?: string;
+  contractVersion?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountName?: string;
+  balanceVnd?: number;
+  documents?: DriverDocumentManifest[];
 };
 
 type FleetManifest = TimestampedManifest & {
@@ -222,12 +267,19 @@ function toTokenHash(seedKey: string): string {
 }
 
 async function loadExistingDemoBoundary(client: SeedClient, manifest: DemoManifest): Promise<DemoBoundary> {
-  const orderIds = manifest.orders.map((order) => order.id);
+  const userIds = manifest.users.map((user) => user.id);
+
+  // Orders created at runtime by a manifest user are still demo data: they hold
+  // Restrict references to the users and driver profiles we are about to
+  // replace, so they must fall inside the boundary even though the manifest
+  // never declared them.
   const existingOrders = await client.order.findMany({
     where: {
-      id: {
-        in: orderIds,
-      },
+      OR: [
+        { id: { in: manifest.orders.map((order) => order.id) } },
+        { customerId: { in: userIds } },
+        { driverId: { in: userIds } },
+      ],
     },
     select: {
       id: true,
@@ -253,11 +305,61 @@ async function loadExistingDemoBoundary(client: SeedClient, manifest: DemoManife
     trackingPointIds: manifest.orders.flatMap((order) =>
       order.trackingPoints.map((trackingPoint) => trackingPoint.id),
     ),
-    userIds: manifest.users.map((user) => user.id),
+    userIds,
   };
 }
 
+/**
+ * Runtime activity (invoices, tickets, chat, stop progress, routing profiles,
+ * withdrawals) references the demo orders, users and driver profiles with
+ * `onDelete: Restrict`. Without clearing it first, a single interaction in the
+ * running pilot makes `prisma:seed` impossible to re-run.
+ *
+ * Every clause is scoped strictly to the manifest boundary so non-demo rows
+ * always survive.
+ */
+async function deleteDemoRuntimeChildren(
+  client: SeedClient,
+  boundary: DemoBoundary,
+): Promise<void> {
+  const { driverProfileIds, orderIds, userIds } = boundary;
+
+  if (orderIds.length > 0) {
+    // StopProgressState -> StopProgressEvent must go first (activeEventId Restrict).
+    await client.stopProgressState.deleteMany({ where: { orderId: { in: orderIds } } });
+    await client.stopProgressEvent.deleteMany({ where: { orderId: { in: orderIds } } });
+    // Estimates point at route snapshots.
+    await client.orderLiveEstimate.deleteMany({ where: { orderId: { in: orderIds } } });
+    await client.orderRouteSnapshot.deleteMany({ where: { orderId: { in: orderIds } } });
+    await client.invoice.deleteMany({ where: { orderId: { in: orderIds } } });
+    await client.orderMessage.deleteMany({ where: { orderId: { in: orderIds } } });
+    await client.orderReview.deleteMany({ where: { orderId: { in: orderIds } } });
+  }
+
+  if (userIds.length > 0) {
+    await client.supportTicket.deleteMany({ where: { customerId: { in: userIds } } });
+    await client.orderMessage.deleteMany({ where: { senderId: { in: userIds } } });
+    await client.orderReview.deleteMany({ where: { customerId: { in: userIds } } });
+    await client.withdrawalRequest.deleteMany({
+      where: { OR: [{ driverId: { in: userIds } }, { reviewedById: { in: userIds } }] },
+    });
+  }
+
+  if (driverProfileIds.length > 0 || userIds.length > 0) {
+    await client.vehicleRoutingProfile.deleteMany({
+      where: {
+        OR: [
+          { driverProfileId: { in: driverProfileIds } },
+          { verifiedById: { in: userIds } },
+        ],
+      },
+    });
+  }
+}
+
 async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoundary): Promise<void> {
+  await deleteDemoRuntimeChildren(client, boundary);
+
   if (boundary.userIds.length > 0) {
     // Actor-owned rows can point at orders outside the demo order boundary.
     await client.auditLog.deleteMany({
@@ -296,6 +398,11 @@ async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoun
               in: boundary.userIds,
             },
           },
+          {
+            orderId: {
+              in: boundary.orderIds,
+            },
+          },
         ],
       },
     });
@@ -310,6 +417,11 @@ async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoun
           {
             uploaderId: {
               in: boundary.userIds,
+            },
+          },
+          {
+            orderId: {
+              in: boundary.orderIds,
             },
           },
         ],
@@ -482,12 +594,18 @@ async function insertUsers(client: SeedClient, manifest: DemoManifest): Promise<
   await client.user.createMany({
     data: manifest.users.map((user) => {
       const createdAt = requiredCreatedAt(user.createdAt, `users[${user.id}]`);
+      const onboardedAt = toDate(user.onboardedAt ?? null);
 
       return {
         id: user.id,
         phone: user.phone,
         role: user.role,
         status: user.status,
+        name: user.name ?? null,
+        email: user.email ?? null,
+        onboardedAt,
+        consentTermsAt: toDate(user.consentTermsAt ?? user.onboardedAt ?? null),
+        consentServiceAt: toDate(user.consentServiceAt ?? user.onboardedAt ?? null),
         createdAt,
         updatedAt: createdAt,
       };
@@ -505,12 +623,26 @@ async function insertDriverProfiles(client: SeedClient, manifest: DemoManifest):
         userId: profile.userId,
         availability: profile.availability,
         vehicleType: profile.vehicleType,
+        licensePlate: profile.licensePlate ?? null,
+        licenseNumber: profile.licenseNumber ?? null,
+        submittedAt: toDate(profile.submittedAt ?? null),
+        reviewedAt: toDate(profile.reviewedAt ?? null),
+        reviewedById: profile.reviewedById ?? null,
+        rejectionReason: profile.rejectionReason ?? null,
+        contractSignedAt: toDate(profile.contractSignedAt ?? null),
+        contractVersion: profile.contractVersion ?? null,
+        bankName: profile.bankName ?? null,
+        bankAccountNumber: profile.bankAccountNumber ?? null,
+        bankAccountName: profile.bankAccountName ?? null,
+        balanceVnd: profile.balanceVnd ?? 0,
         lastKnownAt: toDate(profile.lastKnownAt),
         createdAt,
         updatedAt: createdAt,
       };
     }),
   });
+
+  await insertDriverDocuments(client, manifest);
 
   for (const profile of manifest.driverProfiles) {
     if (!profile.location) {
@@ -526,6 +658,44 @@ async function insertDriverProfiles(client: SeedClient, manifest: DemoManifest):
       WHERE id = ${profile.id}::uuid
     `;
   }
+}
+
+/**
+ * KYC documents attached to a driver application. Rows are cascade-deleted with
+ * their DriverProfile, so no extra boundary cleanup is required.
+ */
+async function insertDriverDocuments(
+  client: SeedClient,
+  manifest: DemoManifest,
+): Promise<void> {
+  const rows = manifest.driverProfiles.flatMap((profile) =>
+    (profile.documents ?? []).map((document) => ({
+      id: document.id,
+      driverProfileId: profile.id,
+      type: document.type,
+      provider: document.provider,
+      storageKey: document.storageKey,
+      contentType: document.contentType,
+      sizeBytes: document.sizeBytes,
+      checksumSha256: document.checksumSha256,
+      reviewStatus: document.reviewStatus ?? 'PENDING_REVIEW',
+      reviewedAt: toDate(document.reviewedAt ?? null),
+      documentNumber: document.documentNumber ?? null,
+      holderName: document.holderName ?? null,
+      issuedAt: toDate(document.issuedAt ?? null),
+      expiresAt: toDate(document.expiresAt ?? null),
+      createdAt: requiredCreatedAt(
+        document.createdAt ?? profile.submittedAt ?? profile.createdAt,
+        `driverProfiles[${profile.id}].documents[${document.id}]`,
+      ),
+    })),
+  );
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  await client.driverDocument.createMany({ data: rows });
 }
 
 async function insertFleets(client: SeedClient, manifest: DemoManifest): Promise<void> {
