@@ -21,22 +21,19 @@ COPY apps/admin/src/ apps/admin/src/
 ENV CI=true
 RUN pnpm --filter web run build
 
-# ---- production deps stage ----
-FROM builder AS deps
-RUN pnpm --filter web deploy --prod /app/web-prod
-
-# ---- runner stage ----
+# ---- runner stage (standalone) ----
 FROM node:24-alpine AS runner
 RUN addgroup -g 1001 leopard && adduser -u 1001 -G leopard -D leopard
 WORKDIR /app
 
-COPY --from=deps /app/web-prod/ ./
-COPY --from=builder /app/apps/admin/.next/ ./.next/
-COPY --from=builder /app/apps/admin/next.config.mjs ./
-COPY --from=builder /app/apps/admin/package.json ./
+COPY --from=builder /app/apps/admin/.next/standalone/apps/admin/ ./
+COPY --from=builder /app/apps/admin/.next/standalone/node_modules/ ./node_modules/
+COPY --from=builder /app/apps/admin/.next/static/ ./.next/static/
 
 USER leopard
 EXPOSE 3002
+ENV PORT=3002
+ENV HOSTNAME=0.0.0.0
 HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3002',(r)=>{process.exit(r.statusCode===200||r.statusCode===302?0:1)})"
-ENTRYPOINT ["node", "node_modules/.bin/next", "start", "-p", "3002"]
+ENTRYPOINT ["node", "server.js"]
