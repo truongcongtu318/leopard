@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { DriverProfile, User, UserStatus } from '@prisma/client';
+import type { DriverDocumentType, DriverProfile, User, UserStatus } from '@prisma/client';
 
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -65,7 +65,26 @@ export class AdminDriverReviewService {
     userId: string,
     clientRequestId?: string,
   ): Promise<void> {
-    await this.requirePendingDriver(userId);
+    const driver = await this.requirePendingDriver(userId);
+
+    // Enforce KYC documents gate: LICENSE, VEHICLE_REGISTRATION, ID_CARD
+    if (this.prisma.driverDocument) {
+      const uploadedDocs = await this.prisma.driverDocument.findMany({
+        where: { driverProfileId: driver.driverProfile!.id },
+        select: { type: true },
+      });
+      const uploadedTypes = new Set(uploadedDocs.map((d) => d.type));
+      const REQUIRED_KYC_TYPES: DriverDocumentType[] = ['LICENSE', 'VEHICLE_REGISTRATION', 'ID_CARD'];
+      const missingDocs = REQUIRED_KYC_TYPES.filter((t) => !uploadedTypes.has(t));
+      if (missingDocs.length > 0) {
+        throw new DomainError(
+          'KYC_DOCUMENTS_INCOMPLETE',
+          422,
+          `Tài xế chưa nộp đủ giấy tờ KYC bắt buộc: ${missingDocs.join(', ')}`,
+        );
+      }
+    }
+
     const now = new Date();
 
     await this.prisma.$transaction(async (tx) => {
@@ -136,6 +155,74 @@ export class AdminDriverReviewService {
     });
   }
 
+  async requestChanges(
+    actor: AuthenticatedActor,
+    userId: string,
+    reason: string,
+    documentId?: string,
+    reasonCode?: string,
+    clientRequestId?: string,
+  ): Promise<void> {
+    const trimmed = reason.trim();
+    if (trimmed.length < 5 || trimmed.length > 500) {
+      throw new DomainError(
+        'VALIDATION_ERROR',
+        422,
+        'Lý do yêu cầu bổ sung phải từ 5 đến 500 ký tự',
+      );
+    }
+
+    const driver = await this.requirePendingDriver(userId);
+    const now = new Date();
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.driverProfile.update({
+        where: { userId },
+        data: {
+          reviewedAt: now,
+          reviewedById: actor.userId,
+          rejectionReason: trimmed,
+        },
+      });
+
+      if (documentId) {
+        await tx.driverDocument.updateMany({
+          where: { id: documentId, driverProfileId: driver.driverProfile!.id },
+          data: {
+            reviewStatus: 'ACTION_REQUIRED',
+            reasonCode: reasonCode ?? 'ACTION_REQUIRED',
+            reviewedById: actor.userId,
+            reviewedAt: now,
+          },
+        });
+      }
+
+      await tx.driverApplication.updateMany({
+        where: { userId, status: 'SUBMITTED' },
+        data: {
+          status: 'ACTION_REQUIRED',
+          rejectionReason: trimmed,
+          decisionReasonCode: reasonCode ?? 'ACTION_REQUIRED',
+          reviewedAt: now,
+          reviewedById: actor.userId,
+        },
+      });
+
+      await this.audit.append(
+        {
+          actorId: actor.userId,
+          action: 'REQUEST_CHANGES_DRIVER',
+          resourceType: 'User',
+          resourceId: userId,
+          ...(clientRequestId ? { idempotencyRequestId: clientRequestId } : {}),
+          metadata: { toStatus: 'ACTION_REQUIRED', reason: trimmed, documentId, reasonCode },
+        },
+        tx,
+      );
+    });
+  }
+
+
   private async requirePendingDriver(userId: string): Promise<DriverWithProfile> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -154,6 +241,6 @@ export class AdminDriverReviewService {
       );
     }
 
-    return user;
+    return user as DriverWithProfile;
   }
 }

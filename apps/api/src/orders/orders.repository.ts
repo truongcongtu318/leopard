@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus, MediaObject } from '@prisma/client';
+import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus, MediaObject, VehicleType } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 
 type OrdersPrismaClient = PrismaService | Prisma.TransactionClient;
@@ -11,12 +11,18 @@ export interface CreateOrderParams {
   durationSeconds: number;
   priceVnd: number;
   routeSnapshot: Prisma.InputJsonValue;
+  vehicleType?: VehicleType;
+  cargoWeightKg?: number;
+  cargoNote?: string;
   stops: Array<{
     type: StopType;
     sequence: number;
     address: string;
     latitude: number;
     longitude: number;
+    contactName?: string;
+    contactPhone?: string;
+    note?: string;
   }>;
   clientRequestId?: string;
 }
@@ -52,6 +58,9 @@ export class OrdersRepository {
           durationSeconds: params.durationSeconds,
           priceVnd: params.priceVnd,
           routeSnapshot: params.routeSnapshot,
+          vehicleType: params.vehicleType ?? 'MOTORBIKE',
+          cargoWeightKg: params.cargoWeightKg ?? null,
+          cargoNote: params.cargoNote ?? null,
           statusHistory: {
             create: {
               fromStatus: null,
@@ -79,6 +88,9 @@ export class OrdersRepository {
             type,
             sequence,
             address,
+            "contactName",
+            "contactPhone",
+            note,
             location,
             "createdAt",
             "updatedAt"
@@ -89,6 +101,9 @@ export class OrdersRepository {
             ${stop.type}::"StopType",
             ${stop.sequence},
             ${stop.address},
+            ${stop.contactName ?? null},
+            ${stop.contactPhone ?? null},
+            ${stop.note ?? null},
             ST_SetSRID(ST_MakePoint(${stop.longitude}, ${stop.latitude}), 4326)::geography,
             NOW(),
             NOW()
@@ -99,6 +114,9 @@ export class OrdersRepository {
             type,
             sequence,
             address,
+            "contactName",
+            "contactPhone",
+            note,
             ST_Y(location::geometry) as lat,
             ST_X(location::geometry) as lng,
             "createdAt",
@@ -111,20 +129,30 @@ export class OrdersRepository {
         }
       }
 
-      const statusHistory = await tx.orderStatusHistory.findMany({
-        where: { orderId: order.id },
-        orderBy: { createdAt: 'desc' },
+      const createdOrder = await tx.order.findUnique({
+        where: { id: order.id },
+        include: {
+          statusHistory: { orderBy: { createdAt: 'desc' } },
+        },
       });
 
       return {
-        ...order,
+        ...createdOrder!,
         stops: stopsWithCoords,
-        statusHistory,
+        statusHistory: createdOrder!.statusHistory,
       };
     });
   }
 
   async findByClientRequestId(
+    customerId: string,
+    clientRequestId: string,
+    tx?: OrdersPrismaClient,
+  ): Promise<OrderWithRelations | null> {
+    return this.findByCustomerAndClientRequestId(customerId, clientRequestId, tx);
+  }
+
+  async findByCustomerAndClientRequestId(
     customerId: string,
     clientRequestId: string,
     tx?: OrdersPrismaClient,
@@ -148,6 +176,9 @@ export class OrdersRepository {
         type,
         sequence,
         address,
+        "contactName",
+        "contactPhone",
+        note,
         ST_Y(location::geometry) as lat,
         ST_X(location::geometry) as lng,
         "createdAt",
@@ -198,6 +229,9 @@ export class OrdersRepository {
         type,
         sequence,
         address,
+        "contactName",
+        "contactPhone",
+        note,
         ST_Y(location::geometry) as lat,
         ST_X(location::geometry) as lng,
         "createdAt",
@@ -244,6 +278,9 @@ export class OrdersRepository {
             type,
             sequence,
             address,
+            "contactName",
+            "contactPhone",
+            note,
             ST_Y(location::geometry) as lat,
             ST_X(location::geometry) as lng,
             "createdAt",
@@ -260,6 +297,79 @@ export class OrdersRepository {
         };
       }),
     );
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize) || 0,
+    };
+  }
+
+  private async findStopsForOrderIds(orderIds: string[]): Promise<Map<string, Array<OrderStop & { lat: number; lng: number }>>> {
+    if (orderIds.length === 0) return new Map();
+
+    const rows = await this.prisma.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
+      SELECT
+        id,
+        "orderId",
+        type,
+        sequence,
+        address,
+        "contactName",
+        "contactPhone",
+        note,
+        ST_Y(location::geometry) as lat,
+        ST_X(location::geometry) as lng,
+        "createdAt",
+        "updatedAt"
+      FROM "OrderStop"
+      WHERE "orderId" = ANY(${orderIds}::uuid[])
+      ORDER BY sequence ASC
+    `;
+
+    const byOrderId = new Map<string, Array<OrderStop & { lat: number; lng: number }>>();
+    for (const row of rows) {
+      const list = byOrderId.get(row.orderId) ?? [];
+      list.push(row);
+      byOrderId.set(row.orderId, list);
+    }
+    return byOrderId;
+  }
+
+  /** Driver's completed/terminal orders (DELIVERED, CANCELLED,
+   * INCIDENT_CANCELLED, RETURNED) — backs the driver history screen. */
+  async findDriverOrderHistory(
+    driverId: string,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{ items: OrderWithRelations[]; total: number; page: number; pageSize: number; totalPages: number }> {
+    const skip = (page - 1) * pageSize;
+    const where: Prisma.OrderWhereInput = {
+      driverId,
+      status: { in: ['DELIVERED', 'CANCELLED', 'INCIDENT_CANCELLED', 'RETURNED'] },
+    };
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        orderBy: { updatedAt: 'desc' },
+        skip,
+        take: pageSize,
+        include: {
+          statusHistory: { orderBy: { createdAt: 'desc' } },
+        },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    const stopsByOrderId = await this.findStopsForOrderIds(orders.map((order) => order.id));
+    const items: OrderWithRelations[] = orders.map((order) => ({
+      ...order,
+      stops: stopsByOrderId.get(order.id) ?? [],
+      statusHistory: order.statusHistory,
+    }));
 
     return {
       items,

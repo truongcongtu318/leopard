@@ -6,6 +6,7 @@ export * from './api/api-error';
 export * from './api/http-client';
 export * from './api/query-client';
 export * from './api/socket-client';
+export { createSocketFactory } from './api/socket-client';
 
 // NOTE: './auth/firebase', './auth/firebase-auth' and './auth/LoginScreen'
 // are intentionally NOT re-exported here. They import (LoginScreen does so

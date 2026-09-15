@@ -6,7 +6,7 @@ import RegisterScreen from '../../app/(public)/driver-register';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { openDriverContractPdf } from '../features/contract/contract-pdf';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
-import { pickDeviceImage } from '@leopard/mobile-core';
+import { captureDeviceImage } from '@leopard/mobile-core';
 
 const mockReplace = jest.fn();
 
@@ -24,7 +24,7 @@ jest.mock('@leopard/mobile-core/src/auth/session-store', () => ({
 
 jest.mock('@leopard/mobile-core', () => ({
   ...jest.requireActual<typeof import('@leopard/mobile-core')>('@leopard/mobile-core'),
-  pickDeviceImage: jest.fn(),
+  captureDeviceImage: jest.fn(),
 }));
 
 jest.mock('../features/contract/contract-pdf', () => ({
@@ -58,8 +58,7 @@ function mockHttpGet() {
 }
 
 /**
- * Fills the driver fields (name/plate/GPLX) — enough for the contract step
- * to appear, since it does not wait on the KYC documents to render.
+ * Fills the driver fields (name in Step 1, plate/GPLX in Step 2).
  *
  * `fireEvent.*` calls here are awaited: in this testing-library version
  * they return a promise, and leaving one unawaited leaks an open `act()`
@@ -67,55 +66,93 @@ function mockHttpGet() {
  */
 async function fillBasicInfo(screen: Awaited<ReturnType<typeof render>>) {
   await fireEvent.changeText(screen.getByLabelText('Họ và tên'), 'Nguyễn Văn A');
+  await fireEvent.press(screen.getByLabelText('Tiếp tục sang bước phương tiện'));
   await fireEvent.changeText(screen.getByLabelText('Biển số xe'), '59D-123.45');
   await fireEvent.changeText(screen.getByLabelText('Số GPLX'), '590123456789');
 }
 
 /**
- * Fills the driver fields and all three KYC documents — needed only by
- * tests that actually submit, since the CTA stays disabled without docs.
+ * Fills the driver fields across steps 1 & 2, uploads all three KYC documents
+ * in step 3, and advances to step 4 (Contract & Signature).
  */
 async function fillFormAndDocs(screen: Awaited<ReturnType<typeof render>>) {
   await fillBasicInfo(screen);
 
-  await fireEvent.press(screen.getByLabelText('Chọn ảnh Giấy phép lái xe (GPLX)'));
-  await fireEvent.press(screen.getByLabelText('Chọn ảnh Cà-vẹt / Đăng ký xe'));
-  await fireEvent.press(screen.getByLabelText('Chọn ảnh CCCD / CMND'));
+  await fireEvent.press(screen.getByLabelText('Tiếp tục sang chụp giấy tờ'));
 
-  await waitFor(() => expect(screen.getAllByText('Đổi ảnh')).toHaveLength(3));
+  await fireEvent.press(screen.getByLabelText('Chụp ảnh Giấy phép lái xe (GPLX)'));
+  await fireEvent.press(screen.getByLabelText('Chụp ảnh Cà-vẹt / Đăng ký xe'));
+  await fireEvent.press(screen.getByLabelText('Chụp ảnh CCCD / CMND'));
+
+  await waitFor(() => expect(screen.getAllByText('Chụp lại')).toHaveLength(3));
+
+  await fireEvent.press(screen.getByLabelText('Tiếp tục xem hợp đồng'));
 }
 
 describe('RegisterScreen (Driver registration)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (sessionStore.getAccessToken as jest.Mock).mockReturnValue('access-token');
-    (pickDeviceImage as jest.Mock).mockResolvedValue(asset as never);
+    (captureDeviceImage as jest.Mock).mockResolvedValue(asset as never);
     (openDriverContractPdf as jest.Mock).mockResolvedValue(undefined as never);
     mockHttpGet();
   });
 
-  it('shows a login gate when the user is not authenticated', async () => {
+  it('allows unauthenticated users to access the driver registration form directly with phone input', async () => {
     (sessionStore.getAccessToken as jest.Mock).mockReturnValue(null);
 
     const screen = await render(<RegisterScreen />);
-    expect(screen.getByText('Cần đăng nhập trước')).toBeTruthy();
+    expect(screen.queryByText('Cần đăng nhập trước')).toBeNull();
+    expect(screen.getByLabelText('Số điện thoại')).toBeTruthy();
+    expect(screen.getByLabelText('Họ và tên')).toBeTruthy();
+    expect(screen.getByTestId('driver-register-stepper')).toBeTruthy();
+    await waitFor(() => expect(httpClient.get).toHaveBeenCalledWith('/driver/contract'));
     await screen.unmount();
   });
 
-  it('renders the driver form fields when authenticated', async () => {
+  it('allows navigating back to previous steps without losing entered state', async () => {
+    const screen = await render(<RegisterScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Họ và tên'), 'Nguyễn Văn A');
+    await fireEvent.press(screen.getByLabelText('Tiếp tục sang bước phương tiện'));
+
+    expect(screen.getByLabelText('Biển số xe')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Quay lại bước cá nhân'));
+    expect(screen.getByLabelText('Họ và tên').props.value).toBe('Nguyễn Văn A');
+    await screen.unmount();
+  });
+
+  it('triggers in-flow OTP modal when an unauthenticated user submits the form with valid phone', async () => {
+    (sessionStore.getAccessToken as jest.Mock).mockReturnValue(null);
+
+    const screen = await render(<RegisterScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Số điện thoại'), '0912345678');
+    await fillFormAndDocs(screen);
+    await fireEvent.press(screen.getByLabelText('Tôi đã đọc và đồng ý với hợp đồng tài xế'));
+    await fireEvent.press(screen.getByLabelText('Gửi hồ sơ đăng ký'));
+
+    expect(await screen.findByTestId('register-otp-modal')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('renders the driver form fields across multi-step wizard when authenticated', async () => {
     const screen = await render(<RegisterScreen />);
     await waitFor(() => expect(httpClient.get).toHaveBeenCalledWith('/driver/contract'));
     expect(screen.getByLabelText('Họ và tên')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Họ và tên'), 'Nguyễn Văn A');
+    await fireEvent.press(screen.getByLabelText('Tiếp tục sang bước phương tiện'));
     expect(screen.getByLabelText('Biển số xe')).toBeTruthy();
     expect(screen.getByLabelText('Số GPLX')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Biển số xe'), '59D-123.45');
+    await fireEvent.changeText(screen.getByLabelText('Số GPLX'), '590123456789');
+    await fireEvent.press(screen.getByLabelText('Tiếp tục sang chụp giấy tờ'));
     expect(screen.getByText('Giấy phép lái xe (GPLX)')).toBeTruthy();
     expect(screen.getByText('CCCD / CMND')).toBeTruthy();
     await screen.unmount();
   });
 
-  it('fetches the contract preview and shows an accessible "Xem hợp đồng" link once driver info is filled', async () => {
+  it('fetches the contract preview and shows an accessible "Xem hợp đồng" link once driver reaches step 4', async () => {
     const screen = await render(<RegisterScreen />);
-    await fillBasicInfo(screen);
+    await fillFormAndDocs(screen);
 
     const link = await screen.findByLabelText('Xem hợp đồng');
     expect(link).toBeTruthy();
@@ -134,7 +171,7 @@ describe('RegisterScreen (Driver registration)', () => {
     (openDriverContractPdf as jest.Mock).mockRejectedValue(new Error('boom') as never);
 
     const screen = await render(<RegisterScreen />);
-    await fillBasicInfo(screen);
+    await fillFormAndDocs(screen);
 
     const link = await screen.findByLabelText('Xem hợp đồng');
     await fireEvent.press(link);
@@ -162,7 +199,7 @@ describe('RegisterScreen (Driver registration)', () => {
     });
 
     const screen = await render(<RegisterScreen />);
-    await fillBasicInfo(screen);
+    await fillFormAndDocs(screen);
 
     expect(
       await screen.findByText('Không tải được hợp đồng, vui lòng thử lại'),

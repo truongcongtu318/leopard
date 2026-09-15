@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { Animated, PanResponder, StyleSheet } from 'react-native';
+import { Animated, PanResponder, Platform, StyleSheet } from 'react-native';
 
 import { IncomingDispatchModal } from './IncomingDispatchModal';
 import type { IncomingDispatchOffer } from './IncomingDispatchModal';
@@ -44,8 +44,10 @@ describe('IncomingDispatchModal', () => {
     expect(screen.getByText('245.000 ₫')).toBeTruthy();
     expect(screen.getByText('25s')).toBeTruthy();
     expect(screen.getByText('Cách bạn 1.2 km · 4 phút')).toBeTruthy();
-    expect(screen.getByText('Kho Depot Tân Bình, 108 Trường Chinh, Q.Tân Bình')).toBeTruthy();
-    expect(screen.getByText('Saigon Centre, 65 Lê Lợi, Bến Nghé, Quận 1')).toBeTruthy();
+    expect(screen.getByText('Khu vực Q.Tân Bình')).toBeTruthy();
+    expect(screen.getByText('Khu vực Quận 1')).toBeTruthy();
+    expect(screen.queryByText('108 Trường Chinh')).toBeNull();
+    expect(screen.queryByText('65 Lê Lợi')).toBeNull();
     expect(screen.getByText('Xe tải thùng kín 2.5T')).toBeTruthy();
     expect(screen.getByText('120 kg linh kiện điện tử')).toBeTruthy();
     expect(screen.getByText('Hàng dễ vỡ, bốc xếp nhẹ tay')).toBeTruthy();
@@ -210,5 +212,52 @@ describe('IncomingDispatchModal', () => {
 
     expect(screen.queryByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeNull();
     await screen.unmount();
+  });
+
+  it('renders the vehicle type as a distinct spec chip, not inline text', async () => {
+    const screen = await render(
+      <IncomingDispatchModal
+        offer={{ ...sampleOffer, vehicleLabel: 'Xe tải' }}
+        onAccept={jest.fn()}
+        onDecline={jest.fn()}
+        visible={true}
+      />,
+    );
+
+    const chip = screen.getByTestId('dispatch-vehicle-spec-chip');
+    expect(chip).toBeTruthy();
+    expect(screen.getByText('Xe tải')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('uses the contained modal surface on web with dialog role', async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'web';
+    const originalAdd = (window as any).addEventListener;
+    const originalRemove = (window as any).removeEventListener;
+    (window as any).addEventListener = (window as any).addEventListener || jest.fn();
+    (window as any).removeEventListener = (window as any).removeEventListener || jest.fn();
+
+    try {
+      const screen = await render(
+        <IncomingDispatchModal
+          offer={sampleOffer}
+          onAccept={jest.fn()}
+          onDecline={jest.fn()}
+          visible={true}
+        />,
+      );
+
+      const modalSurface = screen.getByTestId('incoming-dispatch-modal');
+      expect(modalSurface).toBeTruthy();
+      expect(modalSurface.props.accessibilityViewIsModal).toBe(true);
+
+      await screen.unmount();
+    } finally {
+      Platform.OS = originalOS;
+      (window as any).addEventListener = originalAdd;
+      (window as any).removeEventListener = originalRemove;
+    }
   });
 });

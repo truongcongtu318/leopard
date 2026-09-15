@@ -1,12 +1,14 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot } from 'expo-router';
-import { Component, type PropsWithChildren } from 'react';
+import { Component, useEffect, useState, type PropsWithChildren } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { queryClient } from '@leopard/mobile-core';
+import { queryClient, sessionStore } from '@leopard/mobile-core';
+import { DriverViewportShell } from '../src/navigation/DriverViewportShell';
 import { DriverDrawerProvider } from '../src/navigation/DriverDrawerContext';
 import { useDriverIdlePing } from '../src/features/orders/useDriverIdlePing';
+import { DriverDispatchProvider } from '../src/features/orders/DriverDispatchContext';
 
 type RootErrorBoundaryState = {
   hasError: boolean;
@@ -37,7 +39,17 @@ class RootErrorBoundary extends Component<PropsWithChildren, RootErrorBoundarySt
 }
 
 function DriverIdlePingListener() {
-  useDriverIdlePing(true);
+  const [isAuthenticatedDriver, setIsAuthenticatedDriver] = useState(
+    () => sessionStore.isAuthenticated() && sessionStore.getRole() === 'DRIVER',
+  );
+
+  useEffect(() => {
+    return sessionStore.subscribe((state) => {
+      setIsAuthenticatedDriver(state.authenticated && state.role === 'DRIVER');
+    });
+  }, []);
+
+  useDriverIdlePing(isAuthenticatedDriver);
   return null;
 }
 
@@ -45,10 +57,14 @@ function RootProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <DriverDrawerProvider>
-          <DriverIdlePingListener />
-          {children}
-        </DriverDrawerProvider>
+        <DriverViewportShell>
+          <DriverDrawerProvider>
+            <DriverIdlePingListener />
+            <DriverDispatchProvider>
+              {children}
+            </DriverDispatchProvider>
+          </DriverDrawerProvider>
+        </DriverViewportShell>
       </SafeAreaProvider>
     </QueryClientProvider>
   );
@@ -58,9 +74,7 @@ export default function RootLayout() {
   return (
     <RootErrorBoundary>
       <RootProviders>
-        <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.boundary}>
-          <Slot />
-        </SafeAreaView>
+        <Slot />
       </RootProviders>
     </RootErrorBoundary>
   );

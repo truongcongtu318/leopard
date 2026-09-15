@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { defineConfig, env } from 'prisma/config';
 
 export default defineConfig({
@@ -7,7 +6,7 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    url: process.env.DATABASE_URL || 'postgresql://leopard:leopard_local@127.0.0.1:5433/leopard?schema=public',
   },
 });
 

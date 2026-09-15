@@ -26,6 +26,20 @@ describe('DemoRouteEstimator', () => {
         isEstimate: true,
         calculatedAt: '2026-08-01T03:00:00.000Z',
         congestionLevel: 'unknown',
+        legs: [
+          {
+            distanceM: 138_994,
+            durationS: 16_980,
+            geometryStartIndex: 0,
+            geometryEndIndex: 1,
+          },
+          {
+            distanceM: 138_994,
+            durationS: 16_680,
+            geometryStartIndex: 1,
+            geometryEndIndex: 2,
+          },
+        ],
       },
     ]);
   });

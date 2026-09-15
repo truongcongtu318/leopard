@@ -38,9 +38,17 @@ function distanceMeters(a: LatLng, b: LatLng): number {
  * order) so dispatch can find nearby drivers. Foreground-only for now — see
  * Dispatch Radar design doc, Phase 1 decision on background location permissions.
  */
+const STATIONARY_HEARTBEAT_MS = 45_000;
+const STALE_AFTER_MS = 60_000;
+
+export type IdlePingHealth = 'idle' | 'healthy' | 'permission-denied' | 'stale';
+
 export class DriverIdleLocationPing {
   private timer: ReturnType<typeof setInterval> | null = null;
   private lastSent: LatLng | null = null;
+  private lastSentAt: number | null = null;
+  private health: IdlePingHealth = 'idle';
+  private readonly healthSubscribers = new Set<(health: IdlePingHealth) => void>();
 
   constructor(
     private readonly client: IdleLocationHttpClient = httpClient,
@@ -50,6 +58,24 @@ export class DriverIdleLocationPing {
 
   isRunning(): boolean {
     return this.timer !== null;
+  }
+
+  getHealth(): IdlePingHealth {
+    return this.health;
+  }
+
+  /** Mirrors `DriverTrackingSender.observeHealth` — immediately replays the
+   * current state, then notifies on every change. */
+  observeHealth(callback: (health: IdlePingHealth) => void): { unsubscribe: () => void } {
+    callback(this.health);
+    this.healthSubscribers.add(callback);
+    return { unsubscribe: () => this.healthSubscribers.delete(callback) };
+  }
+
+  private setHealth(next: IdlePingHealth): void {
+    if (this.health === next) return;
+    this.health = next;
+    for (const subscriber of this.healthSubscribers) subscriber(next);
   }
 
   start(): void {
@@ -66,12 +92,17 @@ export class DriverIdleLocationPing {
       this.timer = null;
     }
     this.lastSent = null;
+    this.lastSentAt = null;
+    this.setHealth('idle');
   }
 
   private async tick(): Promise<void> {
     try {
       const { status } = await this.location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+      if (status !== 'granted') {
+        this.setHealth('permission-denied');
+        return;
+      }
 
       const position = await this.location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
@@ -82,14 +113,30 @@ export class DriverIdleLocationPing {
       };
 
       if (this.lastSent && distanceMeters(this.lastSent, next) < MIN_MOVE_METERS) {
+        const elapsed = this.lastSentAt !== null ? Date.now() - this.lastSentAt : 0;
+        if (elapsed < STATIONARY_HEARTBEAT_MS) {
+          if (elapsed > STALE_AFTER_MS) this.setHealth('stale');
+          return;
+        }
+        await this.client.patch('/driver/location', {
+          ...next,
+          isStationaryHeartbeat: true,
+        });
+        this.lastSent = next;
+        this.lastSentAt = Date.now();
+        this.setHealth('healthy');
         return;
       }
 
       await this.client.patch('/driver/location', next);
       this.lastSent = next;
+      this.lastSentAt = Date.now();
+      this.setHealth('healthy');
     } catch {
       // Best-effort ping: a transient GPS/network failure should not stop the
-      // interval, next tick will retry.
+      // interval, next tick will retry — but do surface it as stale so the
+      // driver isn't left believing they're visible to dispatch.
+      this.setHealth('stale');
     }
   }
 }

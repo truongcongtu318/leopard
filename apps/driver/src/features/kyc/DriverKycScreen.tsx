@@ -1,9 +1,10 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconIdCard, IconInsuranceDoc, IconLicense, IconSecurityShield, IconSpeedTruck } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconCheck, IconClose, IconIdCard, IconInsuranceDoc, IconLicense, IconSecurityShield, IconSpeedTruck } from '@leopard/mobile-core';
+import { DOCUMENT_TITLE, REQUIRED_DOCUMENT_TYPES, type DriverDocumentType } from './adapter';
 
 export type DriverKycScreenProps = Readonly<{
-  documents: readonly { id: string; title: string; url: string; createdAt: string }[];
+  documents: readonly { id: string; type: DriverDocumentType; title: string; url: string; createdAt: string }[];
   isLoading: boolean;
   isError?: boolean;
   onBack?: () => void;
@@ -26,6 +27,10 @@ function getDocIcon(title: string) {
 }
 
 export function DriverKycScreen({ documents, isLoading, isError, onBack }: DriverKycScreenProps) {
+  const uploadedTypes = new Set(documents.map((doc) => doc.type));
+  const missingRequiredTypes = REQUIRED_DOCUMENT_TYPES.filter((type) => !uploadedTypes.has(type));
+  const isKycComplete = missingRequiredTypes.length === 0;
+
   return (
     <ScreenScaffold
       headerTone="plain"
@@ -44,6 +49,35 @@ export function DriverKycScreen({ documents, isLoading, isError, onBack }: Drive
             </View>
           </View>
         </View>
+
+        {!isLoading && !isError ? (
+          <View
+            style={[styles.checklistCard, isKycComplete ? styles.checklistCardComplete : styles.checklistCardIncomplete]}
+            testID="kyc-document-checklist"
+          >
+            <Text style={styles.sectionLabel}>Trạng thái giấy tờ bắt buộc</Text>
+            {REQUIRED_DOCUMENT_TYPES.map((type) => {
+              const hasType = uploadedTypes.has(type);
+              return (
+                <View key={type} style={styles.checklistRow}>
+                  {hasType ? (
+                    <IconCheck color={colors.success.text} size={16} strokeWidth={2.5} />
+                  ) : (
+                    <IconClose color={colors.danger.text} size={16} />
+                  )}
+                  <Text style={[styles.checklistLabel, hasType ? null : styles.checklistLabelMissing]}>
+                    {DOCUMENT_TITLE[type]}
+                  </Text>
+                </View>
+              );
+            })}
+            <Text style={isKycComplete ? styles.checklistSummaryOk : styles.checklistSummaryMissing}>
+              {isKycComplete
+                ? 'Đã nộp đủ giấy tờ bắt buộc.'
+                : `Còn thiếu: ${missingRequiredTypes.map((t) => DOCUMENT_TITLE[t]).join(', ')}.`}
+            </Text>
+          </View>
+        ) : null}
 
         <Text style={styles.sectionLabel}>Giấy tờ đã nộp</Text>
 
@@ -119,6 +153,45 @@ const styles = StyleSheet.create({
     color: leopardPalette.textMutedSlate,
     fontSize: 13,
     fontWeight: '700',
+  },
+  checklistCard: {
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.md,
+  },
+  checklistCardComplete: {
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
+  },
+  checklistCardIncomplete: {
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
+  },
+  checklistRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  checklistLabel: {
+    color: colors.neutral.titleText,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  checklistLabelMissing: {
+    color: colors.danger.text,
+  },
+  checklistSummaryOk: {
+    color: colors.success.text,
+    fontSize: 12.5,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  checklistSummaryMissing: {
+    color: colors.danger.text,
+    fontSize: 12.5,
+    fontWeight: '600',
+    marginTop: 4,
   },
   loadingText: {
     color: leopardPalette.textMutedSlate,

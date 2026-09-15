@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 
 import { AuthService, type AuthResponse, type AuthUser } from './auth.service.js';
-import { DemoLoginDto, FirebaseLoginDto } from './dto/login.dto.js';
+import { DemoLoginDto, FirebaseLoginDto, SendOtpDto, VerifyOtpDto } from './dto/login.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { AuthThrottleGuard } from './guards/auth-throttle.guard.js';
 import type { AuthSession } from './token.service.js';
@@ -17,6 +17,18 @@ import type { AuthSession } from './token.service.js';
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('auth/send-otp')
+  @UseGuards(AuthThrottleGuard)
+  public sendOtp(@Body() body: SendOtpDto): Promise<{ success: boolean; message: string }> {
+    return this.authService.sendOtp(body.phone);
+  }
+
+  @Post('auth/verify-otp')
+  @UseGuards(AuthThrottleGuard)
+  public verifyOtp(@Body() body: VerifyOtpDto): Promise<AuthResponse> {
+    return this.authService.verifyOtp(body.phone, body.otp, body.role);
+  }
 
   @Post('auth/login/demo')
   @UseGuards(AuthThrottleGuard)

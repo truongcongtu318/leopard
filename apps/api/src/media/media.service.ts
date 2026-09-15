@@ -45,6 +45,13 @@ export class MediaService {
       if (order.driverId !== actor.userId) {
         throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế được phân công mới được upload bằng chứng giao hàng');
       }
+      if (order.status !== 'IN_TRANSIT') {
+        throw new DomainError(
+          'ORDER_INVALID_TRANSITION',
+          409,
+          'Chỉ có thể tải lên bằng chứng giao hàng khi đơn đang trong trạng thái IN_TRANSIT',
+        );
+      }
     }
 
     // 2. Idempotency check
@@ -76,7 +83,7 @@ export class MediaService {
     // 7. Persist metadata transactionally
     try {
       return await this.prisma.$transaction(async (tx) => {
-        return this.mediaRepository.create(
+        const createdMedia = await this.mediaRepository.create(
           {
             orderId,
             uploaderId: actor.userId,
@@ -90,6 +97,15 @@ export class MediaService {
           },
           tx,
         );
+
+        if (type === 'DELIVERY_PROOF') {
+          await tx.order.update({
+            where: { id: orderId },
+            data: { proofMediaId: createdMedia.id },
+          });
+        }
+
+        return createdMedia;
       });
     } catch (error) {
       // Compensating delete on DB failure

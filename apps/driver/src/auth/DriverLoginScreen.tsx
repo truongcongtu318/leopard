@@ -1,17 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import { styles } from './DriverLoginScreen.styles';
 import type { Role } from '@leopard/shared';
 
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
@@ -23,16 +24,22 @@ import {
   signInWithGoogle,
   type OtpChallenge,
 } from '@leopard/mobile-core/src/auth/firebase-auth';
-import { isLikelyVnPhone, toE164Vn } from '@leopard/mobile-core';
+import { isLikelyVnPhone, toE164Vn, VietnamFlagIcon } from '@leopard/mobile-core';
 import { OtpSixCellInput } from '@leopard/mobile-core';
 import { TruckLoader } from '@leopard/mobile-core';
-import { VietnamFlagIcon, IconRoleDriver, OtpPhoneHeroIcon } from '@leopard/mobile-core';
-import { IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
+import { OtpPhoneHeroIcon } from '@leopard/mobile-core';
 
-const driverHeroBg = require('../../assets/brand/driver-hero-bg.jpg');
 const leopardEmblem = require('../../assets/brand/leopard-emblem.png');
+const brandLogin = require('../../assets/brand/brand_login.png');
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-driver-recaptcha-container';
+
+export function formatVietnamPhone(input: string): string {
+  const digits = input.replace(/\D/g, '').slice(0, 10);
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+  return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 10)}`;
+}
 
 export interface DriverLoginScreenProps {
   onLoginSuccess?: (role: Role, profileComplete: boolean) => void;
@@ -67,6 +74,7 @@ export function DriverLoginScreen({
   onNavigateOtp,
   sessionExpired = false,
 }: DriverLoginScreenProps) {
+  const insets = useContext(SafeAreaInsetsContext);
   const [phone, setPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [authPhase, setAuthPhase] = useState<'phone' | 'otp'>('phone');
@@ -145,13 +153,14 @@ export function DriverLoginScreen({
 
   const handleSendOtp = async () => {
     if (isSubmitting) return;
-    if (!isLikelyVnPhone(phone)) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!isLikelyVnPhone(cleanPhone)) {
       setErrorMsg('Số điện thoại không hợp lệ');
       return;
     }
 
     if (onNavigateOtp) {
-      onNavigateOtp(phone);
+      onNavigateOtp(cleanPhone);
       return;
     }
 
@@ -159,7 +168,7 @@ export function DriverLoginScreen({
     setErrorMsg(null);
     setResendSuccessMsg(null);
     try {
-      otpChallengeRef.current = await sendPhoneOtp(phone, RECAPTCHA_CONTAINER_ID);
+      otpChallengeRef.current = await sendPhoneOtp(cleanPhone, RECAPTCHA_CONTAINER_ID);
       setOtpCode('');
       setResendSeconds(60);
       setIsVerified(false);
@@ -178,7 +187,8 @@ export function DriverLoginScreen({
     setErrorMsg(null);
     setResendSuccessMsg(null);
     try {
-      otpChallengeRef.current = await sendPhoneOtp(phone, RECAPTCHA_CONTAINER_ID);
+      const cleanPhone = phone.replace(/\D/g, '');
+      otpChallengeRef.current = await sendPhoneOtp(cleanPhone, RECAPTCHA_CONTAINER_ID);
       setResendSeconds(60);
       setOtpCode('');
       setResendSuccessMsg('Đã gửi lại mã OTP mới');
@@ -238,82 +248,76 @@ export function DriverLoginScreen({
     setAuthPhase('phone');
   };
 
-  const handleDemoLogin = async (accountId: string, defaultRole: Role) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    setErrorMsg(null);
-
-    try {
-      const res = await httpClient.post<AuthResponse>('/auth/login/demo', { accountId });
-      const accessToken = res.session?.accessToken ?? '';
-      const refreshToken = res.session?.refreshToken ?? '';
-      await sessionStore.setSession(accessToken, refreshToken, res.user.role);
-      const role = res.user?.role ?? defaultRole;
-      if (res.user?.profileComplete !== undefined) {
-        onLoginSuccess?.(role, res.user.profileComplete);
-      } else {
-        (onLoginSuccess as any)?.(role);
-      }
-    } catch (err) {
-      const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
-      const message = (err as { message?: string })?.message;
-      if (statusCode === 401 || statusCode === 403) {
-        setErrorMsg(message || 'Tài khoản demo không hợp lệ');
-      } else if (statusCode === 503 || statusCode === 0) {
-        setErrorMsg(message || 'Hệ thống xác thực tạm thời không khả dụng');
-      } else {
-        setErrorMsg(message || 'Đã xảy ra lỗi khi đăng nhập demo');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+  const cleanPhone = phone.replace(/\D/g, '');
+  const isPhoneValid = isLikelyVnPhone(cleanPhone);
+  const isBtnDisabled =
+    isSubmitting ||
+    !isPhoneValid ||
+    (!firebaseReady && !allowDemo && !onNavigateOtp);
 
   return (
     <View style={styles.rootContainer} testID="driver-login-screen">
-      <ImageBackground
-        resizeMode="cover"
-        source={driverHeroBg}
-        style={StyleSheet.absoluteFill}
-      >
-        <View style={styles.darkBackdrop} />
-        <View style={styles.topVignette} />
-      </ImageBackground>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardWrap}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingBottom: Math.max(insets?.bottom ?? 0, 24) + 12,
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
           style={styles.scrollView}
         >
-          {/* Top Brand Block */}
-          <View style={styles.headerBlock}>
-            <View style={styles.emblemBadge}>
-              <Image
-                accessibilityLabel="LEOPARD Emblem"
-                resizeMode="contain"
-                source={leopardEmblem}
-                style={styles.emblemImage}
-              />
-            </View>
-            <View style={styles.headerTitles}>
-              <View style={styles.tagWrap}>
-                <Text style={styles.driverTagText}>CỔNG TÀI XẾ</Text>
+          <View style={styles.heroSection} testID="driver-login-hero-image">
+            <Svg height="100%" pointerEvents="none" preserveAspectRatio="none" style={styles.heroAuraSvg} width="100%">
+              <Defs>
+                <LinearGradient id="driverLoginGradient" x1="0" x2="0" y1="0" y2="1">
+                  <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
+                  <Stop offset="65%" stopColor="#0B1E42" stopOpacity="1" />
+                  <Stop offset="100%" stopColor="#0B1E42" stopOpacity="1" />
+                </LinearGradient>
+                <RadialGradient id="loginAuraGlow" cx="50%" cy="32%" r="48%">
+                  <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.28" />
+                  <Stop offset="70%" stopColor="#0284C7" stopOpacity="0.06" />
+                  <Stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
+                </RadialGradient>
+              </Defs>
+              <Rect fill="url(#driverLoginGradient)" height="100%" width="100%" />
+              <Rect fill="url(#loginAuraGlow)" height="100%" width="100%" />
+            </Svg>
+
+            <View style={[styles.brandHeader, { paddingTop: Math.max(insets?.top ?? 0, 18) }]}>
+              <View style={styles.brandRow}>
+                <Image
+                  accessibilityLabel="LEOPARD Logo"
+                  resizeMode="contain"
+                  source={leopardEmblem}
+                  style={styles.brandEmblem}
+                />
+                <Image
+                  accessibilityLabel="LEOPARD"
+                  resizeMode="contain"
+                  source={brandLogin}
+                  style={styles.brandWordmark}
+                />
               </View>
+              <View style={styles.driverBadge}>
+                <View style={styles.driverBadgeDot} />
+                <Text style={styles.driverBadgeText}>DRIVER PILOT</Text>
+              </View>
+            </View>
+
+            <View style={styles.heroCopy}>
               <Text accessibilityRole="header" style={styles.mainTitle}>
-                Đăng Nhập Tài Xế
+                Chào mừng bác tài
               </Text>
-              <Text style={styles.subTitle}>
-                Kết nối vận tải tải trọng lớn • Quản lý đơn hàng & lộ trình
-              </Text>
+              <Text style={styles.subTitle}>Đăng nhập để nhận đơn và điều hướng chuyến đi.</Text>
             </View>
           </View>
 
-          {/* Form Card */}
           <View style={styles.formCard}>
             {sessionExpired ? (
               <View style={styles.alertBox} testID="session-expired-banner">
@@ -332,30 +336,46 @@ export function DriverLoginScreen({
             ) : null}
 
             <View style={styles.fieldSection}>
-              <Text style={styles.fieldLabel}>Số điện thoại tài xế</Text>
+              <View style={styles.labelRow}>
+                <Text style={styles.fieldLabel}>Số điện thoại tài xế</Text>
+                {isPhoneValid ? (
+                  <View style={styles.validBadge}>
+                    <Text style={styles.validCheckIcon}>✓</Text>
+                    <Text style={styles.validText}>Hợp lệ</Text>
+                  </View>
+                ) : null}
+              </View>
+
               <View
                 style={[
                   styles.inputRow,
                   isInputFocused && styles.inputRowFocused,
-                  !isInputFocused && isLikelyVnPhone(phone) && styles.inputRowValid,
+                  !isInputFocused && isPhoneValid && styles.inputRowValid,
                 ]}
               >
-                <View style={styles.countryPill}>
+                <View style={styles.countryBadge}>
                   <VietnamFlagIcon height={15} width={22} />
-                  <Text style={styles.countryCodeText}>+84</Text>
+                  <Text style={styles.countryCode}>+84</Text>
+                  <Text style={styles.countryChevron}>▾</Text>
                 </View>
-                <View style={styles.inputDivider} />
+                <View style={styles.badgeDivider} />
                 <TextInput
                   accessibilityLabel="Số điện thoại"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  autoComplete="tel"
+                  textContentType="telephoneNumber"
                   editable={!isSubmitting}
                   keyboardType="phone-pad"
                   onBlur={() => setIsInputFocused(false)}
-                  onChangeText={setPhone}
+                  onChangeText={(text) => {
+                    const formatted = formatVietnamPhone(text);
+                    setPhone(formatted);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   onFocus={() => setIsInputFocused(true)}
-                  placeholder="09xx xxx xxx"
-                  placeholderTextColor="#64748B"
+                  placeholder="0912 345 678"
+                  placeholderTextColor="#94A3B8"
                   style={styles.textInput}
                   value={phone}
                 />
@@ -363,7 +383,7 @@ export function DriverLoginScreen({
                   <Pressable
                     accessibilityLabel="Xóa số điện thoại"
                     accessibilityRole="button"
-                    hitSlop={8}
+                    hitSlop={10}
                     onPress={() => setPhone('')}
                     style={styles.clearBtn}
                   >
@@ -371,6 +391,7 @@ export function DriverLoginScreen({
                   </Pressable>
                 ) : null}
               </View>
+              <Text style={styles.fieldHint}>Mã xác thực được gửi qua SMS.</Text>
             </View>
 
             {/* Primary Action Button */}
@@ -379,37 +400,37 @@ export function DriverLoginScreen({
               accessibilityRole="button"
               accessibilityState={{
                 busy: isSubmitting,
-                disabled:
-                  isSubmitting ||
-                  !isLikelyVnPhone(phone) ||
-                  (!firebaseReady && !allowDemo && !onNavigateOtp),
+                disabled: isBtnDisabled,
               }}
-              disabled={
-                isSubmitting ||
-                !isLikelyVnPhone(phone) ||
-                (!firebaseReady && !allowDemo && !onNavigateOtp)
-              }
+              disabled={isBtnDisabled}
               onPress={handleSendOtp}
               style={({ pressed }) => [
                 styles.primaryBtn,
-                (isSubmitting ||
-                  !isLikelyVnPhone(phone) ||
-                  (!firebaseReady && !allowDemo && !onNavigateOtp)) &&
-                  styles.primaryBtnDisabled,
-                pressed && styles.pressed,
+                isBtnDisabled && styles.primaryBtnDisabled,
+                pressed && !isBtnDisabled && styles.pressed,
               ]}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#0B1929" size="small" />
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <Text style={styles.primaryBtnText}>Đang xử lý…</Text>
+                </View>
               ) : (
-                <Text style={styles.primaryBtnText}>Gửi mã OTP qua SMS</Text>
+                <Text
+                  style={[
+                    styles.primaryBtnText,
+                    isBtnDisabled && styles.primaryBtnDisabledText,
+                  ]}
+                >
+                  Nhận mã OTP
+                </Text>
               )}
             </Pressable>
 
             {/* Divider */}
             <View style={styles.orSection}>
               <View style={styles.orLine} />
-              <Text style={styles.orText}>HOẶC TIẾP TỤC VỚI</Text>
+              <Text style={styles.orText}>hoặc</Text>
               <View style={styles.orLine} />
             </View>
 
@@ -417,6 +438,7 @@ export function DriverLoginScreen({
             <Pressable
               accessibilityLabel="Đăng nhập với Google"
               accessibilityRole="button"
+              accessibilityState={{ disabled: isSubmitting || !firebaseReady }}
               disabled={isSubmitting || !firebaseReady}
               onPress={handleGoogleLogin}
               style={({ pressed }) => [
@@ -433,54 +455,21 @@ export function DriverLoginScreen({
 
             {!firebaseReady ? (
               <Text style={styles.firebaseNote}>
-                Chế độ giả lập (Demo mode khả dụng bên dưới)
+                Đăng nhập Google hiện chưa khả dụng trên thiết bị này.
               </Text>
             ) : null}
 
             <View nativeID={RECAPTCHA_CONTAINER_ID} style={styles.recaptcha} />
 
-            {/* Demo Quick Logins */}
-            {allowDemo ? (
-              <View style={styles.demoArea}>
-                <View style={styles.orSection}>
-                  <View style={styles.orLine} />
-                  <Text style={styles.orText}>TÀI KHOẢN THỬ NGHIỆM</Text>
-                  <View style={styles.orLine} />
-                </View>
-
-                <View style={styles.demoRow}>
-                  <Pressable
-                    disabled={isSubmitting}
-                    onPress={() => handleDemoLogin('driver', 'DRIVER')}
-                    style={({ pressed }) => [styles.demoBtnPrimary, pressed && styles.pressed]}
-                  >
-                    <IconTruck color="#FFFFFF" size="sm" />
-                    <View>
-                      <Text style={styles.demoBtnPrimaryTitle}>Tài xế (Driver)</Text>
-                      <Text style={styles.demoBtnPrimarySubtitle}>Nhận chuyến & định vị</Text>
-                    </View>
-                  </Pressable>
-
-                  <Pressable
-                    disabled={isSubmitting}
-                    onPress={() => handleDemoLogin('customer', 'CUSTOMER')}
-                    style={({ pressed }) => [styles.demoBtnSecondary, pressed && styles.pressed]}
-                  >
-                    <IconRoleDriver color="#2E6FD6" secondaryColor="#EFF6FF" size={20} />
-                    <View>
-                      <Text style={styles.demoBtnSecTitle}>Khách hàng</Text>
-                      <Text style={styles.demoBtnSecSubtitle}>Test cảnh báo vai trò</Text>
-                    </View>
-                  </Pressable>
-                </View>
-              </View>
-            ) : null}
-
             {/* Registration link */}
             {onNavigateRegister ? (
               <View style={styles.footerLinkRow}>
                 <Text style={styles.footerPrompt}>Bạn là tài xế mới?</Text>
-                <Pressable hitSlop={8} onPress={onNavigateRegister}>
+                <Pressable
+                  accessibilityRole="button"
+                  style={styles.registerAction}
+                  onPress={onNavigateRegister}
+                >
                   <Text style={styles.footerLinkAction}>Đăng ký ngay</Text>
                 </Pressable>
               </View>
@@ -518,15 +507,13 @@ export function DriverLoginScreen({
                 <OtpPhoneHeroIcon isVerified={isVerified} size={36} />
               </View>
               <Text style={styles.otpModalTitle}>
-                {isVerified ? 'Xác thực thành công!' : 'Nhập mã xác nhận OTP'}
+                {isVerified ? 'Xác thực thành công' : 'Nhập mã xác nhận OTP'}
               </Text>
               <Text style={styles.otpModalDesc}>
                 {isVerified
                   ? `Số điện thoại ${toE164Vn(phone)} đã được xác minh.`
                   : 'Nhập mã 6 chữ số đã gửi tới số điện thoại '}
-                {!isVerified ? (
-                  <Text style={styles.phoneHighlight}>{toE164Vn(phone)}</Text>
-                ) : null}
+                {!isVerified ? <Text style={styles.phoneHighlight}>{toE164Vn(phone)}</Text> : null}
               </Text>
             </View>
 
@@ -592,486 +579,3 @@ export function DriverLoginScreen({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  rootContainer: {
-    flex: 1,
-    backgroundColor: '#070D17',
-  },
-  darkBackdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(7, 13, 23, 0.85)',
-  },
-  topVignette: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(11, 25, 41, 0.40)',
-  },
-  keyboardWrap: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 44 : 32,
-    paddingBottom: 40,
-    justifyContent: 'center',
-    maxWidth: 480,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  headerBlock: {
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  emblemBadge: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(56, 189, 248, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
-    marginBottom: 16,
-  },
-  emblemImage: {
-    width: 48,
-    height: 48,
-  },
-  headerTitles: {
-    alignItems: 'center',
-  },
-  tagWrap: {
-    backgroundColor: 'rgba(56, 189, 248, 0.14)',
-    borderColor: '#38BDF8',
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    marginBottom: 8,
-  },
-  driverTagText: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-  },
-  mainTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#F8FAFC',
-    letterSpacing: 0.5,
-    textAlign: 'center',
-  },
-  subTitle: {
-    fontSize: 13,
-    color: '#94A3B8',
-    marginTop: 6,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  formCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    borderColor: 'rgba(51, 65, 85, 0.8)',
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  alertBox: {
-    backgroundColor: 'rgba(234, 179, 8, 0.15)',
-    borderColor: 'rgba(234, 179, 8, 0.4)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  alertText: {
-    color: '#FACC15',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#F87171',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  fieldSection: {
-    marginBottom: 20,
-  },
-  fieldLabel: {
-    color: '#CBD5E1',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 8,
-    letterSpacing: 0.2,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.75)',
-    borderColor: 'rgba(71, 85, 105, 0.6)',
-    borderWidth: 1.5,
-    borderRadius: 14,
-    height: 52,
-    paddingHorizontal: 12,
-  },
-  inputRowFocused: {
-    borderColor: '#38BDF8',
-    backgroundColor: 'rgba(30, 41, 59, 0.95)',
-  },
-  inputRowValid: {
-    borderColor: 'rgba(56, 189, 248, 0.6)',
-  },
-  countryPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingRight: 6,
-  },
-  flagIcon: {
-    fontSize: 16,
-  },
-  countryCodeText: {
-    color: '#E2E8F0',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  inputDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: 'rgba(71, 85, 105, 0.6)',
-    marginHorizontal: 8,
-  },
-  textInput: {
-    flex: 1,
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: '500',
-    paddingVertical: 0,
-  },
-  clearBtn: {
-    padding: 6,
-  },
-  clearBtnText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  primaryBtn: {
-    backgroundColor: '#38BDF8',
-    borderRadius: 14,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  primaryBtnDisabled: {
-    backgroundColor: 'rgba(56, 189, 248, 0.25)',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  primaryBtnText: {
-    color: '#070D17',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  orSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 18,
-    gap: 12,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(71, 85, 105, 0.4)',
-  },
-  orText: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  googleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.75)',
-    borderColor: 'rgba(71, 85, 105, 0.8)',
-    borderWidth: 1.5,
-    borderRadius: 14,
-    height: 48,
-    gap: 10,
-  },
-  googleIconWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleG: {
-    color: '#EA4335',
-    fontWeight: '900',
-    fontSize: 13,
-  },
-  googleBtnText: {
-    color: '#F1F5F9',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  btnDisabled: {
-    opacity: 0.5,
-  },
-  firebaseNote: {
-    color: '#94A3B8',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  recaptcha: {
-    width: 0,
-    height: 0,
-  },
-  demoArea: {
-    marginTop: 4,
-  },
-  demoRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  demoBtnPrimary: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(14, 165, 233, 0.12)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    gap: 8,
-  },
-  demoBtnPrimaryIcon: {
-    fontSize: 20,
-  },
-  demoBtnPrimaryTitle: {
-    color: '#38BDF8',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  demoBtnPrimarySubtitle: {
-    color: '#94A3B8',
-    fontSize: 10,
-  },
-  demoBtnSecondary: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(51, 65, 85, 0.25)',
-    borderColor: 'rgba(71, 85, 105, 0.35)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    gap: 8,
-  },
-  demoBtnSecIcon: {
-    fontSize: 20,
-  },
-  demoBtnSecTitle: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  demoBtnSecSubtitle: {
-    color: '#64748B',
-    fontSize: 10,
-  },
-  footerLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(51, 65, 85, 0.4)',
-  },
-  footerPrompt: {
-    color: '#94A3B8',
-    fontSize: 13,
-  },
-  footerLinkAction: {
-    color: '#38BDF8',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  otpModalOverlay: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  otpBackdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(7, 13, 23, 0.88)',
-  },
-  otpModalCard: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#0F172A',
-    borderColor: 'rgba(56, 189, 248, 0.3)',
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  otpHeaderNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  otpNavBack: {
-    paddingVertical: 4,
-  },
-  otpNavBackText: {
-    color: '#38BDF8',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  otpNavStatus: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  otpCenterHero: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  otpBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderWidth: 1.5,
-    borderColor: '#38BDF8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  otpBadgeSuccess: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: '#22C55E',
-  },
-  otpBadgeIcon: {
-    fontSize: 26,
-  },
-  otpModalTitle: {
-    color: '#F8FAFC',
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  otpModalDesc: {
-    color: '#94A3B8',
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  phoneHighlight: {
-    color: '#38BDF8',
-    fontWeight: '700',
-  },
-  verifyingWrap: {
-    alignItems: 'center',
-    marginVertical: 12,
-    gap: 8,
-  },
-  verifyingText: {
-    color: '#94A3B8',
-    fontSize: 12,
-  },
-  otpErrorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 12,
-  },
-  otpErrorText: {
-    color: '#F87171',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  otpSuccessBox: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: 'rgba(34, 197, 94, 0.4)',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 12,
-  },
-  otpSuccessText: {
-    color: '#4ADE80',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  otpFooter: {
-    marginTop: 18,
-    alignItems: 'center',
-  },
-  resendBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  resendBtnText: {
-    color: '#38BDF8',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  resendBtnDisabledText: {
-    color: '#64748B',
-  },
-});
-

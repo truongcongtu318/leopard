@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { VehicleType } from '@prisma/client';
 
 import { DriversRepository } from '../drivers/drivers.repository.js';
 
@@ -13,12 +14,14 @@ export class DispatchService {
     pickup: { lat: number; lng: number },
     radiusM: number = DEFAULT_RADIUS_M,
     limit: number = DEFAULT_CANDIDATE_LIMIT,
+    vehicleType?: VehicleType,
   ): Promise<Array<{ userId: string; distanceM: number }>> {
     return this.driversRepository.findNearbyAvailableDrivers(
       pickup.lat,
       pickup.lng,
       radiusM,
       limit,
+      vehicleType,
     );
   }
 }

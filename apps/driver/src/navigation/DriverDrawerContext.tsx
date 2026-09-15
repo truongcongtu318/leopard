@@ -91,7 +91,7 @@ export function DriverDrawerProvider({
     <DriverDrawerContext.Provider value={value}>
       {children}
       <DriverSidebarDrawer
-        activeRoute={pathname || '/driver/orders'}
+        activeRoute={pathname || '/orders'}
         availability={availability}
         isOpen={isOpen}
         onClose={closeDrawer}

@@ -7,7 +7,9 @@ import { createDriverProfileHttpAdapter } from './adapter';
 import type { DriverProfileView } from './model';
 import { DriverProfileScreen } from './ProfileScreen';
 
-export function DriverProfileRuntime() {
+export function DriverProfileRuntime({
+  onNavigate,
+}: Readonly<{ onNavigate?: (route: string) => void }> = {}) {
   const port = useMemo(() => createDriverProfileHttpAdapter(), []);
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -43,6 +45,7 @@ export function DriverProfileRuntime() {
   return (
     <DriverProfileScreen
       onLogout={() => void handleLogout()}
+      onNavigate={onNavigate}
       onRetry={() => query.refetch()}
       view={displayView}
     />

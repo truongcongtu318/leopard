@@ -14,6 +14,14 @@ import {
 } from './driver-contract.service.js';
 import type { ApplyDriverDto } from './dto/apply-driver.dto.js';
 
+export interface DriverDocumentsSummary {
+  readonly hasLicense: boolean;
+  readonly hasVehicleRegistration: boolean;
+  readonly hasIdCard: boolean;
+  readonly hasVehiclePhoto: boolean;
+  readonly isKycComplete: boolean;
+}
+
 export interface DriverApplicationView {
   readonly status: UserStatus;
   readonly vehicleType: DriverProfile['vehicleType'] | null;
@@ -24,6 +32,7 @@ export interface DriverApplicationView {
   readonly rejectionReason: string | null;
   readonly contractVersion: string | null;
   readonly contractSignedAt: string | null;
+  readonly documentsSummary?: DriverDocumentsSummary;
 }
 
 interface ApplicableUser {
@@ -99,7 +108,13 @@ export class DriverApplicationService {
   ): Promise<DriverApplicationView> {
     const user = await this.prisma.user.findUnique({
       where: { id: actor.userId },
-      include: { driverProfile: true },
+      include: {
+        driverProfile: {
+          include: {
+            documents: true,
+          },
+        },
+      },
     });
 
     if (!user || !user.driverProfile) {
@@ -110,7 +125,23 @@ export class DriverApplicationService {
       );
     }
 
-    return this.toView(user.status, user.driverProfile);
+    const docs = (user.driverProfile as any).documents ?? [];
+    const docTypes = new Set(docs.map((d: any) => d.type));
+    const documentsSummary: DriverDocumentsSummary = {
+      hasLicense: docTypes.has('LICENSE'),
+      hasVehicleRegistration: docTypes.has('VEHICLE_REGISTRATION'),
+      hasIdCard: docTypes.has('ID_CARD'),
+      hasVehiclePhoto: docTypes.has('VEHICLE_PHOTO'),
+      isKycComplete:
+        docTypes.has('LICENSE') &&
+        docTypes.has('VEHICLE_REGISTRATION') &&
+        docTypes.has('ID_CARD'),
+    };
+
+    return {
+      ...this.toView(user.status, user.driverProfile),
+      documentsSummary,
+    };
   }
 
   /** Loads the acting user and applies the existing role/status guard rules. */
@@ -131,15 +162,14 @@ export class DriverApplicationService {
       );
     }
 
-    if (user.role === 'DRIVER' && user.status === 'PENDING_APPROVAL') {
-      throw new DomainError(
-        'DRIVER_APPLICATION_PENDING',
-        409,
-        'Hồ sơ tài xế đang chờ duyệt',
-      );
-    }
+    // A driver still PENDING_APPROVAL may resubmit/update their application
+    // (e.g. to finish uploading KYC docs after a network failure) — this is
+    // the P1-1 resumable-apply fix. It intentionally does NOT throw here;
+    // `commitApplication`'s upsert overwrites the existing pending profile
+    // rather than creating a duplicate.
 
-    // Only a customer (self-upgrade) or a previously rejected driver may apply.
+    // Only a customer (self-upgrade), a previously rejected driver, or a
+    // still-pending driver (resubmitting) may apply.
     if (user.role !== 'CUSTOMER' && user.role !== 'DRIVER') {
       throw new DomainError(
         'DRIVER_APPLICATION_FORBIDDEN',
@@ -228,6 +258,34 @@ export class DriverApplicationService {
         version: CONTRACT_VERSION,
         prepared,
       });
+
+      if ((tx as any).driverApplication) {
+        await (tx as any).driverApplication.create({
+          data: {
+            userId,
+            vehicleType: dto.vehicleType,
+            licensePlate: dto.licensePlate,
+            licenseNumber: dto.licenseNumber,
+            status: 'SUBMITTED',
+            submittedAt: now,
+          },
+        });
+      }
+
+      if ((tx as any).contractAcceptance) {
+        await (tx as any).contractAcceptance.create({
+          data: {
+            userId,
+            driverProfileId: profileId,
+            contractVersion: CONTRACT_VERSION,
+            documentHash: prepared.pdfStorageKey,
+            pdfStorageKey: prepared.pdfStorageKey,
+            signMethod: 'OTP',
+            signedByName: dto.signature || dto.name,
+            signedAt: prepared.signedAt,
+          },
+        });
+      }
 
       return profile;
     });

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import React from 'react';
+import { Alert } from 'react-native';
 
 jest.mock('./adapter', () => {
   const actual = jest.requireActual('./adapter') as object;
@@ -112,6 +113,73 @@ describe('DriverOrdersListRuntime', () => {
     });
     expect(declineOffer).toHaveBeenCalledTimes(1);
 
+    await screen.unmount();
+    screen.client.clear();
+  }, 15000);
+
+  it('navigates to the order detail screen after a successful accept', async () => {
+    const declineOffer = jest.fn();
+    const acceptOrder = jest.fn(async () => ({ kind: 'content' }));
+    const onOpenOrder = jest.fn();
+    mockUseDispatchOffer.mockReturnValue({ offer: SAMPLE_OFFER, declineOffer });
+    (createDriverHttpAdapter as jest.Mock<any>).mockReturnValue({
+      getOrdersView: jest.fn(async () => CONTENT_VIEW),
+      acceptOrder,
+    });
+
+    const screen = await renderWithClient(<DriverOrdersListRuntime onOpenOrder={onOpenOrder} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('68.000 ₫')).toBeTruthy();
+    });
+
+    await fireEvent(screen.getByTestId('dispatch-slide-action'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+
+    await waitFor(() => {
+      expect(onOpenOrder).toHaveBeenCalledWith(SAMPLE_OFFER.id);
+    });
+
+    await screen.unmount();
+    screen.client.clear();
+  }, 15000);
+
+  it('shows an alert with the conflict message instead of silently dropping it', async () => {
+    const declineOffer = jest.fn();
+    const acceptOrder = jest.fn(async () => ({
+      kind: 'conflict',
+      title: 'Đơn không phù hợp với loại xe của bạn',
+      message: 'Đơn hàng này yêu cầu loại phương tiện khác.',
+      recoveryLabel: 'Xem đơn còn trống',
+    }));
+    const onOpenOrder = jest.fn();
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockUseDispatchOffer.mockReturnValue({ offer: SAMPLE_OFFER, declineOffer });
+    (createDriverHttpAdapter as jest.Mock<any>).mockReturnValue({
+      getOrdersView: jest.fn(async () => CONTENT_VIEW),
+      acceptOrder,
+    });
+
+    const screen = await renderWithClient(<DriverOrdersListRuntime onOpenOrder={onOpenOrder} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('68.000 ₫')).toBeTruthy();
+    });
+
+    await fireEvent(screen.getByTestId('dispatch-slide-action'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Đơn không phù hợp với loại xe của bạn',
+        'Đơn hàng này yêu cầu loại phương tiện khác.',
+      );
+    });
+    expect(onOpenOrder).not.toHaveBeenCalled();
+
+    alertSpy.mockRestore();
     await screen.unmount();
     screen.client.clear();
   }, 15000);

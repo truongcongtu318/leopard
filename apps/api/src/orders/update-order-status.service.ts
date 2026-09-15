@@ -16,7 +16,7 @@ export class UpdateOrderStatusService {
     private readonly ordersRepository: OrdersRepository,
     private readonly proofReader: DeliveryProofReader,
     private readonly eventsPublisher: OrderEventsPublisher,
-  ) {}
+  ) { }
 
   async updateStatus(
     actor: AuthenticatedActor,
@@ -104,10 +104,17 @@ export class UpdateOrderStatusService {
             ? routeSnapshot.driverPayoutVnd
             : Math.round((order.priceVnd ?? 0) * 0.85);
 
+        const profile = await tx.driverProfile.findUnique({
+          where: { userId: actor.userId },
+        });
+
+        const nextAvailability = profile?.autoOfflineOnComplete ? 'OFFLINE' : 'AVAILABLE';
+
         await tx.driverProfile.update({
           where: { userId: actor.userId },
           data: {
-            availability: 'AVAILABLE',
+            availability: nextAvailability,
+            autoOfflineOnComplete: false,
             balanceVnd: { increment: driverPayout },
           },
         });

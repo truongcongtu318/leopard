@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -6,18 +6,19 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Role } from '@leopard/shared';
 
-import { IconChevron } from '@leopard/mobile-core';
+import { IconChevron, OtpPhoneHeroIcon } from '@leopard/mobile-core';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { toE164Vn } from '@leopard/mobile-core/src/auth/phone';
-import { leopardPalette } from '@leopard/mobile-core/src/theme/tokens';
 import { IconClock } from '@leopard/mobile-core/src/icons/svg-icons';
+import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 interface AuthResponse {
   user: {
@@ -39,17 +40,37 @@ interface AuthResponse {
 
 const NUM_CELLS = 6;
 const COUNTDOWN_INITIAL = 60;
-const DRIVER_BLUE = '#1E5BB8';
+const DRIVER_ACCENT = '#0284C7';
+
+const KEYPAD_LETTERS: Record<string, string> = {
+  '1': '',
+  '2': 'ABC',
+  '3': 'DEF',
+  '4': 'GHI',
+  '5': 'JKL',
+  '6': 'MNO',
+  '7': 'PQRS',
+  '8': 'TUV',
+  '9': 'WXYZ',
+  '0': '+',
+};
 
 export default function DriverVerifyOtpRoute() {
   const router = useRouter();
+  const { height: viewportHeight } = useWindowDimensions();
   const searchParams = useLocalSearchParams<{ phone?: string }>();
   const phone = searchParams.phone || '';
+  const isCompactViewport = viewportHeight < 720;
 
   const [otp, setOtp] = useState('');
   const [countdown, setCountdown] = useState(COUNTDOWN_INITIAL);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const otpInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    otpInputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -75,7 +96,7 @@ export default function DriverVerifyOtpRoute() {
     try {
       await httpClient.post('/auth/send-otp', { phone });
     } catch {
-      // ponytail: demo environments may not have send-otp endpoint, reset countdown anyway
+      // Demo environments may not have send-otp endpoint, reset countdown anyway
     }
   };
 
@@ -93,9 +114,14 @@ export default function DriverVerifyOtpRoute() {
         });
       } catch (err) {
         const statusCode = (err as { statusCode?: number })?.statusCode;
-        if (statusCode === 404 && (phone.startsWith('09000000') || phone === 'driver')) {
+        const isDemoPhone =
+          phone.startsWith('09000000') ||
+          phone.startsWith('+849000000') ||
+          phone.startsWith('+84000000') ||
+          phone === 'driver';
+        if (statusCode === 404 && isDemoPhone) {
           res = await httpClient.post<AuthResponse>('/auth/login/demo', {
-            accountId: phone === 'driver' ? 'driver' : phone,
+            accountId: phone === 'driver' ? 'driver' : (phone.startsWith('+84') ? 'driver' : phone),
           });
         } else {
           throw err;
@@ -144,33 +170,115 @@ export default function DriverVerifyOtpRoute() {
 
   const formattedPhone = phone ? (phone.startsWith('+84') ? phone : toE164Vn(phone)) : '';
 
+  const renderCell = (index: number) => {
+    const digit = otp[index] ?? '';
+    const isCellActive = otp.length === index;
+    const isFilled = digit !== '';
+
+    return (
+      <View
+        key={`driver-cell-${index}`}
+        style={[
+          styles.cell,
+          isFilled && styles.cellFilled,
+          isCellActive && styles.cellActive,
+          errorMsg ? styles.cellError : null,
+        ]}
+        testID={`otp-cell-${index}`}
+      >
+        {isCellActive && !isFilled ? (
+          <View style={styles.activeCursor} />
+        ) : (
+          <Text style={styles.cellText}>{digit}</Text>
+        )}
+      </View>
+    );
+  };
+
+  const renderNumpadKey = (n: string) => (
+    <Pressable
+      accessibilityLabel={`Số ${n}`}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isSubmitting }}
+      disabled={isSubmitting}
+      key={n}
+      onPress={() => handleKeyPress(n)}
+      style={({ pressed }) => [
+        styles.numpadKey,
+        isCompactViewport && styles.numpadKeyCompact,
+        pressed && styles.numpadKeyPressed,
+      ]}
+      testID={`numpad-${n}`}
+    >
+      <Text style={styles.numpadKeyText}>{n}</Text>
+      {KEYPAD_LETTERS[n] ? (
+        <Text style={styles.numpadSubText}>{KEYPAD_LETTERS[n]}</Text>
+      ) : null}
+    </Pressable>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Header */}
+        {/* Top Ambient Glow */}
+        <Svg height={160} pointerEvents="none" preserveAspectRatio="none" style={styles.heroAuraSvg} width="100%">
+          <Defs>
+            <LinearGradient id="verifyOtpGradient" x1="0" x2="0" y1="0" y2="1">
+              <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
+              <Stop offset="100%" stopColor="#0B1E42" stopOpacity="0" />
+            </LinearGradient>
+            <RadialGradient id="verifyAuraGlow" cx="50%" cy="15%" r="65%">
+              <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.32" />
+              <Stop offset="70%" stopColor="#0284C7" stopOpacity="0.08" />
+              <Stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
+            </RadialGradient>
+          </Defs>
+          <Rect fill="url(#verifyOtpGradient)" height="100%" width="100%" />
+          <Rect fill="url(#verifyAuraGlow)" height="100%" width="100%" />
+        </Svg>
+
+        {/* Top Header */}
         <View style={styles.header}>
           <Pressable
             accessibilityLabel="Quay lại"
             accessibilityRole="button"
             hitSlop={8}
             onPress={handleBack}
-            style={styles.backBtn}
+            style={({ pressed }) => [styles.backBtn, pressed && styles.controlPressed]}
             testID="btn-back"
           >
-            <IconChevron color="#0B1E42" direction="left" size={20} />
+            <IconChevron color="#FFFFFF" direction="left" size={20} />
           </Pressable>
-          <Text accessibilityRole="header" style={styles.headerTitle}>
-            Xác minh tài xế
-          </Text>
+          <Text style={styles.headerTitle}>XÁC THỰC BẢO MẬT</Text>
           <View style={styles.headerPlaceholder} />
         </View>
 
-        {/* Body Content */}
-        <View style={styles.content}>
-          <Text style={styles.subline}>
-            Mã OTP gồm 6 chữ số đã được gửi tới SĐT đối tác{' '}
-            <Text style={styles.phoneHighlight}>{formattedPhone || phone}</Text>
+        {/* Central Verification Card */}
+        <View style={[styles.content, isCompactViewport && styles.contentCompact]}>
+          {/* Visual Anchor Hero Badge */}
+          <View style={styles.heroBadge}>
+            <OtpPhoneHeroIcon isVerified={false} size={30} />
+          </View>
+
+          <Text accessibilityRole="header" style={styles.heroTitle}>
+            Nhập mã xác thực
           </Text>
+
+          <View style={styles.sublineWrap}>
+            <Text style={styles.subline}>
+              Mã 6 chữ số đã gửi tới{' '}
+              <Text style={styles.phoneHighlight}>{formattedPhone || phone}</Text>
+            </Text>
+            <Pressable
+              accessibilityLabel="Đổi số điện thoại"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={handleBack}
+              style={styles.changePhoneBtn}
+            >
+              <Text style={styles.changePhoneText}>Đổi số</Text>
+            </Pressable>
+          </View>
 
           {errorMsg ? (
             <View style={styles.errorBox} testID="otp-error-banner">
@@ -182,6 +290,7 @@ export default function DriverVerifyOtpRoute() {
 
           <TextInput
             accessibilityLabel="Mã OTP"
+            autoComplete="sms-otp"
             autoFocus={false}
             editable={!isSubmitting}
             keyboardType="number-pad"
@@ -194,39 +303,38 @@ export default function DriverVerifyOtpRoute() {
                 void handleVerify(cleaned);
               }
             }}
+            ref={otpInputRef}
+            showSoftInputOnFocus={false}
             style={styles.hiddenInput}
+            textContentType="oneTimeCode"
             value={otp}
           />
 
-          {/* 6 OTP Cells */}
-          <View style={styles.cellsRow} testID="otp-boxes">
-            {Array.from({ length: NUM_CELLS }).map((_, index) => {
-              const digit = otp[index] ?? '';
-              const isCellActive = otp.length === index;
-              const isFilled = digit !== '';
+          {/* 6 OTP Cells in 3 - 3 Rhythm */}
+          <Pressable
+            accessible={false}
+            onPress={() => otpInputRef.current?.focus()}
+            style={styles.cellsRow}
+            testID="otp-boxes"
+          >
+            <View style={styles.cellTriplet}>
+              {[0, 1, 2].map((index) => renderCell(index))}
+            </View>
 
-              return (
-                <View
-                  key={`driver-cell-${index}`}
-                  style={[
-                    styles.cell,
-                    isFilled && styles.cellFilled,
-                    isCellActive && styles.cellActive,
-                    errorMsg ? styles.cellError : null,
-                  ]}
-                  testID={`otp-cell-${index}`}
-                >
-                  <Text style={styles.cellText}>{digit}</Text>
-                </View>
-              );
-            })}
-          </View>
+            <View style={styles.cellDivider}>
+              <View style={styles.dividerBar} />
+            </View>
 
-          {/* Resend / Countdown */}
+            <View style={styles.cellTriplet}>
+              {[3, 4, 5].map((index) => renderCell(index))}
+            </View>
+          </Pressable>
+
+          {/* Resend / Countdown Capsule */}
           <View style={styles.resendRow}>
             {countdown > 0 ? (
-              <View style={styles.timerGroup}>
-                <IconClock color={leopardPalette.textMutedSlate} size="sm" />
+              <View style={styles.timerCapsule}>
+                <IconClock color="#38BDF8" size="sm" />
                 <Text style={styles.countdownText}>
                   Gửi lại mã sau{' '}
                   <Text style={styles.countdownTime}>
@@ -243,79 +351,47 @@ export default function DriverVerifyOtpRoute() {
                 style={styles.resendBtn}
                 testID="btn-resend"
               >
-                <Text style={styles.resendBtnText}>Gửi lại mã</Text>
+                <Text style={styles.resendBtnText}>Gửi lại mã OTP</Text>
               </Pressable>
             )}
           </View>
 
           {isSubmitting ? (
             <View style={styles.submittingIndicator}>
-              <ActivityIndicator color={DRIVER_BLUE} size="small" />
+              <ActivityIndicator color={DRIVER_ACCENT} size="small" />
               <Text style={styles.submittingText}>Đang xác thực hồ sơ tài xế...</Text>
             </View>
           ) : null}
         </View>
 
-        {/* Numpad */}
-        <View style={styles.numpadContainer} testID="virtual-numpad">
+        {/* iOS-Style Numeric Keypad */}
+        <View
+          style={[styles.numpadContainer, isCompactViewport && styles.numpadContainerCompact]}
+          testID="virtual-numpad"
+        >
           <View style={styles.numpadRow}>
-            {['1', '2', '3'].map((n) => (
-              <Pressable
-                accessibilityLabel={`Số ${n}`}
-                accessibilityRole="button"
-                key={n}
-                onPress={() => handleKeyPress(n)}
-                style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
-                testID={`numpad-${n}`}
-              >
-                <Text style={styles.numpadKeyText}>{n}</Text>
-              </Pressable>
-            ))}
+            {['1', '2', '3'].map((n) => renderNumpadKey(n))}
           </View>
           <View style={styles.numpadRow}>
-            {['4', '5', '6'].map((n) => (
-              <Pressable
-                accessibilityLabel={`Số ${n}`}
-                accessibilityRole="button"
-                key={n}
-                onPress={() => handleKeyPress(n)}
-                style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
-                testID={`numpad-${n}`}
-              >
-                <Text style={styles.numpadKeyText}>{n}</Text>
-              </Pressable>
-            ))}
+            {['4', '5', '6'].map((n) => renderNumpadKey(n))}
           </View>
           <View style={styles.numpadRow}>
-            {['7', '8', '9'].map((n) => (
-              <Pressable
-                accessibilityLabel={`Số ${n}`}
-                accessibilityRole="button"
-                key={n}
-                onPress={() => handleKeyPress(n)}
-                style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
-                testID={`numpad-${n}`}
-              >
-                <Text style={styles.numpadKeyText}>{n}</Text>
-              </Pressable>
-            ))}
+            {['7', '8', '9'].map((n) => renderNumpadKey(n))}
           </View>
           <View style={styles.numpadRow}>
-            <View style={styles.numpadKeyEmpty} />
-            <Pressable
-              accessibilityLabel="Số 0"
-              accessibilityRole="button"
-              onPress={() => handleKeyPress('0')}
-              style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
-              testID="numpad-0"
-            >
-              <Text style={styles.numpadKeyText}>0</Text>
-            </Pressable>
+            <View style={[styles.numpadKeyEmpty, isCompactViewport && styles.numpadKeyCompact]} />
+            {renderNumpadKey('0')}
             <Pressable
               accessibilityLabel="Xóa"
               accessibilityRole="button"
+              accessibilityState={{ disabled: isSubmitting }}
+              disabled={isSubmitting}
               onPress={() => handleKeyPress('backspace')}
-              style={({ pressed }) => [styles.numpadKey, pressed && styles.numpadKeyPressed]}
+              style={({ pressed }) => [
+                styles.numpadKey,
+                isCompactViewport && styles.numpadKeyCompact,
+                pressed && styles.numpadKeyPressed,
+              ]}
               testID="numpad-backspace"
             >
               <Text style={styles.numpadKeyActionText}>⌫</Text>
@@ -330,64 +406,126 @@ export default function DriverVerifyOtpRoute() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#06162F',
   },
   container: {
+    alignSelf: 'center',
+    backgroundColor: '#0B1E42',
     flex: 1,
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    maxWidth: 480,
+    width: '100%',
+    position: 'relative',
+  },
+  heroAuraSvg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 160,
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
+    height: 56,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    height: 56,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    zIndex: 10,
   },
   backBtn: {
-    minWidth: 44,
-    minHeight: 44,
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+    borderColor: 'rgba(255, 255, 255, 0.20)',
+    borderRadius: 22,
+    borderWidth: 1,
+    height: 44,
     justifyContent: 'center',
+    width: 44,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0B1E42',
+    color: '#38BDF8',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.4,
   },
   headerPlaceholder: {
     width: 44,
   },
   content: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
     alignItems: 'center',
-    gap: 16,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    zIndex: 5,
+  },
+  contentCompact: {
+    paddingBottom: 4,
+  },
+  heroBadge: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(2, 132, 199, 0.16)',
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    height: 56,
+    justifyContent: 'center',
+    marginBottom: 14,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    width: 56,
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    lineHeight: 28,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  sublineWrap: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   subline: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: leopardPalette.textMutedSlate,
+    color: '#CBD5E1',
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: 'center',
   },
   phoneHighlight: {
-    color: '#0B1E42',
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
+  changePhoneBtn: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  changePhoneText: {
+    color: '#38BDF8',
+    fontSize: 13,
+    fontWeight: '800',
+    textDecorationLine: 'underline',
+  },
   errorBox: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
+    backgroundColor: 'rgba(239, 68, 68, 0.14)',
+    borderColor: 'rgba(248, 113, 113, 0.46)',
     borderRadius: 12,
-    paddingVertical: 10,
+    borderWidth: 1,
+    marginBottom: 12,
     paddingHorizontal: 16,
+    paddingVertical: 10,
     width: '100%',
   },
   errorText: {
-    color: '#B91C1C',
+    color: '#FECACA',
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -399,133 +537,195 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   cellsRow: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 10,
+    marginBottom: 18,
     width: '100%',
-    marginVertical: 12,
   },
-  cell: {
-    width: 48,
-    height: 54,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
+  cellTriplet: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cellDivider: {
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
+    paddingHorizontal: 8,
+  },
+  dividerBar: {
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
+    borderRadius: 1,
+    height: 3,
+    width: 12,
+  },
+  cell: {
+    alignItems: 'center',
+    backgroundColor: '#0F2347',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    height: 52,
+    justifyContent: 'center',
+    shadowColor: '#020817',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    width: 44,
     elevation: 1,
   },
   cellFilled: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#132C56',
+    borderColor: 'rgba(56, 189, 248, 0.55)',
   },
   cellActive: {
-    borderColor: DRIVER_BLUE,
-    backgroundColor: '#EFF6FF',
-    shadowColor: DRIVER_BLUE,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+    backgroundColor: '#163566',
+    borderColor: '#38BDF8',
     elevation: 3,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+  },
+  activeCursor: {
+    backgroundColor: '#38BDF8',
+    borderRadius: 1,
+    height: 20,
+    width: 2,
   },
   cellError: {
     borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.16)',
   },
   cellText: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0B1E42',
-    fontVariant: ['tabular-nums'],
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 22,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '800',
   },
   resendRow: {
-    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 40,
   },
-  timerGroup: {
-    flexDirection: 'row',
+  timerCapsule: {
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
     gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
   },
   countdownText: {
-    fontSize: 13,
-    color: leopardPalette.textMutedSlate,
-    fontWeight: '500',
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontWeight: '600',
   },
   countdownTime: {
-    fontWeight: '700',
-    color: '#0B1E42',
-    fontVariant: ['tabular-nums'],
+    color: '#38BDF8',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
   },
   resendBtn: {
-    minHeight: 44,
-    paddingHorizontal: 16,
     alignItems: 'center',
+    backgroundColor: 'rgba(2, 132, 199, 0.16)',
+    borderColor: 'rgba(56, 189, 248, 0.40)',
+    borderRadius: 999,
+    borderWidth: 1,
     justifyContent: 'center',
+    minHeight: 40,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
   },
   resendBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: DRIVER_BLUE,
-    textDecorationLine: 'underline',
+    color: '#38BDF8',
+    fontSize: 13,
+    fontWeight: '800',
   },
   submittingIndicator: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     gap: 8,
-    marginTop: 4,
+    marginTop: 10,
   },
   submittingText: {
-    fontSize: 13,
-    color: leopardPalette.textMutedSlate,
+    color: '#D8E3F0',
+    fontSize: 12,
     fontWeight: '600',
   },
   numpadContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    backgroundColor: '#071830',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
     gap: 8,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  numpadContainerCompact: {
+    gap: 6,
+    paddingBottom: 10,
+    paddingTop: 8,
   },
   numpadRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 12,
+    justifyContent: 'space-between',
   },
   numpadKey: {
-    flex: 1,
-    minHeight: 48,
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
+    flex: 1,
+    height: 50,
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  numpadKeyCompact: {
+    height: 44,
   },
   numpadKeyPressed: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#0284C7',
+    borderColor: '#38BDF8',
+    transform: [{ scale: 0.97 }],
   },
   numpadKeyEmpty: {
     flex: 1,
-    minHeight: 48,
-    height: 52,
+    height: 50,
   },
   numpadKeyText: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0B1E42',
+    color: '#FFFFFF',
+    fontSize: 21,
     fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  numpadSubText: {
+    color: '#94A3B8',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    marginTop: -1,
   },
   numpadKeyActionText: {
+    color: '#CBD5E1',
     fontSize: 20,
     fontWeight: '700',
-    color: '#64748B',
+  },
+  controlPressed: {
+    opacity: 0.82,
+    transform: [{ scale: 0.96 }],
   },
 });

@@ -12,6 +12,7 @@ import { PdfModule } from '../pdf/pdf.module.js';
 import { DriversController } from './drivers.controller.js';
 import { WalletController } from './wallet.controller.js';
 import { DriversRepository } from './drivers.repository.js';
+import { WithdrawalsRepository } from './withdrawals.repository.js';
 import { DriversService } from './drivers.service.js';
 import { DriverApplicationService } from './driver-application.service.js';
 import { DriverContractService } from './driver-contract.service.js';
@@ -20,7 +21,7 @@ import { WalletService } from './wallet.service.js';
 
 @Module({
   imports: [AuthModule, DatabaseModule, OrdersModule, MediaModule, PdfModule],
-  controllers: [DriversController, WalletController],
+  controllers: [WalletController, DriversController],
   providers: [
     AccountStatusCache,
     DriversService,
@@ -28,6 +29,7 @@ import { WalletService } from './wallet.service.js';
     DriverContractService,
     DriversRepository,
     WalletService,
+    WithdrawalsRepository,
     {
       provide: DriverDocumentService,
       useFactory: (storage: StorageProvider, prisma: PrismaService) => {
@@ -43,10 +45,12 @@ import { WalletService } from './wallet.service.js';
   exports: [
     DriversService,
     DriversRepository,
+    WithdrawalsRepository,
     DriverDocumentService,
     DriverContractService,
     WalletService,
   ],
+
 })
 export class DriversModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

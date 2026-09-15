@@ -7,11 +7,12 @@ import { TrackingRateLimiter } from './tracking-rate-limiter.js';
 import { TrackingRepository } from './tracking.repository.js';
 import { TrackingService } from './tracking.service.js';
 import { OrdersModule } from '../orders/orders.module.js';
+import { RoutingEtaModule } from '../routing-eta/routing-eta.module.js';
 import { TrackingGateway } from './tracking.gateway.js';
 import { SocketAuthAdapter } from './socket-auth.adapter.js';
 
 @Module({
-  imports: [AuthModule, DatabaseModule, OrdersModule],
+  imports: [AuthModule, DatabaseModule, OrdersModule, RoutingEtaModule],
   controllers: [TrackingController],
   providers: [
     TrackingRateLimiter,

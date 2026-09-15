@@ -40,7 +40,8 @@ describe('Driver Location Ping API (E2E)', () => {
       .useValue(prismaMock)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    // Match the production bootstrap: AppModule registers scoped JSON parsers.
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -81,6 +82,14 @@ describe('Driver Location Ping API (E2E)', () => {
       .patch('/driver/location')
       .set('Authorization', `Bearer ${driverSession.accessToken}`)
       .send({ lat: 10.7326, lng: 106.7168 })
+      .expect(200);
+  });
+
+  it('allows Driver to report stationary heartbeat location', async () => {
+    await request(app.getHttpServer())
+      .patch('/driver/location')
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .send({ lat: 10.7326, lng: 106.7168, accuracyM: 5.2, isStationaryHeartbeat: true })
       .expect(200);
   });
 

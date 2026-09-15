@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -68,7 +69,8 @@ export class OrdersController {
     @CurrentUser() actor: AuthenticatedActor,
     @Param('id') id: string,
     @Body() dto: CancelOrderDto,
+    @Headers('x-request-id') requestId?: string,
   ): Promise<MappedOrderResponse> {
-    return this.cancelOrderService.cancelOrder(actor, id, dto);
+    return this.cancelOrderService.cancelOrder(actor, id, dto, requestId);
   }
 }

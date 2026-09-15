@@ -11,6 +11,7 @@
     "test": "jest --config jest.config.cjs --passWithNoTests",
     "test:e2e": "jest --config jest-e2e.config.cjs --runInBand",
     "test:contract": "jest --config jest.config.cjs --passWithNoTests --testPathPatterns=openapi-contract",
+    "test:contract:vietmap": "jest --config jest.config.contract-vietmap.cjs test/vietmap-truck-restriction.contract-spec.ts",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:migrate:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
     "prisma:seed": "node --env-file=.env prisma/seed.ts",

@@ -91,6 +91,7 @@ describe('Order Lifecycle & Audited Cancellation REST API (E2E)', () => {
       .useValue(proofReader)
       .compile();
 
+    // Match the production bootstrap: AppModule registers scoped JSON parsers.
     app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
@@ -362,6 +363,7 @@ describe('Order transaction response consistency', () => {
       .useValue(prismaMock)
       .compile();
 
+    // Match the production bootstrap: AppModule registers scoped JSON parsers.
     app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(

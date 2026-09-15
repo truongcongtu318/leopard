@@ -23,7 +23,7 @@ export type DriverSidebarDrawerProps = Readonly<{
 const MENU_ITEMS = [
   {
     key: 'orders',
-    route: '/driver/orders',
+    route: '/orders',
     label: 'Buồng lái & Đơn hàng',
     description: 'Bản đồ, đơn chờ & chuyến chạy',
     icon: (active: boolean) => (
@@ -32,7 +32,7 @@ const MENU_ITEMS = [
   },
   {
     key: 'earnings',
-    route: '/driver/earnings',
+    route: '/earnings',
     label: 'Doanh thu & Ví',
     description: 'Thực nhận, thưởng & quyết toán',
     icon: (active: boolean) => (
@@ -41,7 +41,7 @@ const MENU_ITEMS = [
   },
   {
     key: 'history',
-    route: '/driver/history',
+    route: '/history',
     label: 'Lịch sử chuyến đi',
     description: 'Nhật ký các cuốc đã hoàn thành',
     icon: (active: boolean) => (
@@ -50,7 +50,7 @@ const MENU_ITEMS = [
   },
   {
     key: 'profile',
-    route: '/driver/profile',
+    route: '/profile',
     label: 'Hồ sơ & Giấy tờ',
     description: 'CCCD, GPLX & thông tin xe',
     icon: (active: boolean) => (
@@ -59,7 +59,7 @@ const MENU_ITEMS = [
   },
   {
     key: 'settings',
-    route: '/driver/settings',
+    route: '/settings',
     label: 'Cài đặt ứng dụng',
     description: 'Âm thanh thông báo, dẫn đường',
     icon: (active: boolean) => (
@@ -69,13 +69,15 @@ const MENU_ITEMS = [
 ] as const;
 
 export function DriverSidebarDrawer({
-  activeRoute = '/driver/orders',
+  activeRoute = '/orders',
   availability,
   isOpen,
   onClose,
   onNavigate,
   onSetAvailability,
 }: DriverSidebarDrawerProps) {
+  if (!isOpen) return null;
+
   const isOnline = availability.status === 'AVAILABLE';
   const action = availability.action;
   const pending = action?.isPending ?? false;
@@ -135,105 +137,17 @@ export function DriverSidebarDrawer({
               </Pressable>
             </View>
 
-            {/* 2. Driver Identity Card */}
-            <View style={styles.driverProfileCard}>
-              <View style={styles.avatarRow}>
-                <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarInitials}>VT</Text>
-                  <View style={styles.avatarVerifiedBadge}>
-                    <IconSecurityShield color="#FFFFFF" size={10} strokeWidth={2.5} />
-                  </View>
-                </View>
-                <View style={styles.driverNameGroup}>
-                  <Text style={styles.driverName}>Nguyễn Văn Tuấn</Text>
-                  <View style={styles.tierPill}>
-                    <IconStar color="#F59E0B" fill="#F59E0B" size={11} />
-                    <Text style={styles.tierText}>4.95 · Hạng Vàng</Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.vehicleStrip}>
-                <IconSpeedTruck color="#38BDF8" size={14} />
-                <Text style={styles.vehiclePlate}>51C-889.24</Text>
-                <Text style={styles.vehicleDivider}>·</Text>
-                <Text style={styles.vehicleType}>Thùng kín 2.5T</Text>
-              </View>
-            </View>
-
-            {/* 3. Availability Switcher (Nút bật/tắt nhận đơn trực tuyến) */}
-            <View style={styles.availabilityCockpit}>
-              <View style={styles.availabilityHeaderRow}>
-                <View style={styles.availabilityTitleBlock}>
-                  <View
-                    style={[
-                      styles.pulseDotOuter,
-                      isOnline ? styles.pulseDotOnlineOuter : styles.pulseDotOfflineOuter,
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.pulseDotInner,
-                        isOnline ? styles.dotOnline : styles.dotOffline,
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.availabilityTextGroup}>
-                    <Text style={styles.availabilitySectionTitle}>Trạng thái nhận đơn</Text>
-                    <Text style={styles.availabilitySectionSub}>
-                      {isOnline ? 'Đang sẵn sàng kết nối đơn mới' : 'Đang tạm dừng nhận chuyến'}
-                    </Text>
-                  </View>
-                </View>
-                <StatusBadge domain="driver-availability" status={availability.status} />
-              </View>
-
-              {action ? (
-                <Button
-                  disabled={disabled}
-                  isLoading={pending}
-                  label={action.label}
-                  loadingLabel="Đang cập nhật trạng thái nhận đơn"
-                  onPress={
-                    onSetAvailability && !disabled ? () => onSetAvailability(action.id) : undefined
-                  }
-                  variant={isOnline ? 'secondary' : 'primary'}
-                />
-              ) : null}
-
-              {availability.error ? (
-                <View style={styles.errorBanner}>
-                  <Text accessibilityRole="alert" style={styles.dangerText}>
-                    {availability.error}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-
-            {/* 4. Mini Performance Pill */}
-            <View style={styles.miniStatsCard}>
-              <View style={styles.statCol}>
-                <Text style={styles.statLabel}>HÔM NAY</Text>
-                <Text style={styles.statValue}>4 chuyến</Text>
-              </View>
-              <View style={styles.statSeparator} />
-              <View style={styles.statCol}>
-                <Text style={styles.statLabel}>THỰC NHẬN</Text>
-                <Text style={styles.statValuePositive}>620.000 ₫</Text>
-              </View>
-            </View>
-
-            {/* 5. Navigation Links */}
+            {/* Utility Navigation Links */}
             <View style={styles.navMenuSection}>
-              <Text style={styles.menuHeading}>ĐIỀU HƯỚNG TÀI XẾ</Text>
+              <Text style={styles.menuHeading}>TIỆN ÍCH & CÀI ĐẶT</Text>
               {MENU_ITEMS.map((item) => {
                 const isActive =
                   activeRoute.startsWith(item.route) ||
-                  (item.key === 'earnings' && activeRoute.startsWith('/driver/wallet')) ||
+                  (item.key === 'earnings' && activeRoute.startsWith('/wallet')) ||
                   (item.key === 'profile' &&
-                    (activeRoute.startsWith('/driver/profile-edit') ||
-                      activeRoute.startsWith('/driver/kyc') ||
-                      activeRoute.startsWith('/driver/performance')));
+                    (activeRoute.startsWith('/profile-edit') ||
+                      activeRoute.startsWith('/kyc') ||
+                      activeRoute.startsWith('/performance')));
                 return (
                   <Pressable
                     accessibilityLabel={item.label}

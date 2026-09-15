@@ -44,7 +44,12 @@ export class DispatchGateway implements OnGatewayConnection {
   }
 
   private async dispatchOrder(event: OrderRequestedEvent): Promise<void> {
-    const candidates = await this.dispatch.findCandidates(event.pickup);
+    const candidates = await this.dispatch.findCandidates(
+      event.pickup,
+      undefined,
+      undefined,
+      event.vehicleType,
+    );
 
     const payload: DispatchOfferEvent = {
       orderId: event.orderId,

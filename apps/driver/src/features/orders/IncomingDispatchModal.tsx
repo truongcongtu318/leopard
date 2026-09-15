@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+
+import { DriverModalSurface } from '../../navigation/DriverModalSurface';
 
 import {
   leopardPalette,
@@ -21,13 +22,36 @@ import {
   SlideToAction,
 } from '@leopard/mobile-core';
 
+export function formatPublicArea(address?: string | null): string {
+  if (!address || !address.trim()) {
+    return 'Khu vực chưa xác định';
+  }
+  const clean = address.trim();
+  if (clean.toLowerCase().startsWith('khu vực')) {
+    return clean;
+  }
+  const districtMatch = clean.match(
+    /(?:Quận|Huyện|Thị xã|Q\.)\s*[^,]+/i,
+  );
+  if (districtMatch) {
+    return `Khu vực ${districtMatch[0].trim()}`;
+  }
+  const parts = clean.split(',').map((p) => p.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return `Khu vực ${parts.slice(-2).join(', ')}`;
+  }
+  return `Khu vực ${clean}`;
+}
+
 export type IncomingDispatchOffer = Readonly<{
   id: string;
   reference: string;
   pickupDistanceLabel: string;
   pickupAddress: string;
+  pickupArea?: string;
   pickupCoords?: { lat: number; lng: number };
   dropoffAddress: string;
+  dropoffArea?: string;
   dropoffCoords?: { lat: number; lng: number };
   tripDistanceLabel: string;
   etaLabel: string;
@@ -80,10 +104,14 @@ export function IncomingDispatchModal({
   const isUrgent = secondsLeft <= 5;
   const isWarning = secondsLeft <= 10 && !isUrgent;
 
+  const pickupDisplay = offer.pickupArea || formatPublicArea(offer.pickupAddress);
+  const dropoffDisplay = offer.dropoffArea || formatPublicArea(offer.dropoffAddress);
+
   return (
-    <Modal
+    <DriverModalSurface
       animationType="slide"
       hardwareAccelerated
+      onRequestClose={() => onDecline(offer.id)}
       statusBarTranslucent
       testID="incoming-dispatch-modal"
       transparent
@@ -204,7 +232,7 @@ export function IncomingDispatchModal({
                     </View>
                   </View>
                   <Text numberOfLines={2} style={styles.addressNameText}>
-                    {offer.pickupAddress}
+                    {pickupDisplay}
                   </Text>
                 </View>
 
@@ -220,7 +248,7 @@ export function IncomingDispatchModal({
                 <View style={styles.addressBlock}>
                   <Text style={styles.addressTypeLabelDropoff}>ĐIỂM GIAO HÀNG</Text>
                   <Text numberOfLines={2} style={styles.addressNameText}>
-                    {offer.dropoffAddress}
+                    {dropoffDisplay}
                   </Text>
                 </View>
               </View>
@@ -229,7 +257,7 @@ export function IncomingDispatchModal({
 
           {/* 6. Vehicle & Cargo Chips */}
           <View style={styles.chipsRow}>
-            <View style={styles.specChip}>
+            <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
               <IconSpeedTruck color="#0B1E42" size={15} />
               <Text style={styles.specChipText}>{offer.vehicleLabel}</Text>
             </View>
@@ -274,7 +302,7 @@ export function IncomingDispatchModal({
           </View>
         </View>
       </View>
-    </Modal>
+    </DriverModalSurface>
   );
 }
 

@@ -19,6 +19,7 @@
     "react-native-qrcode-svg": "*",
     "react": "*",
     "react-native": "*",
+    "react-native-webview": "*",
     "react-native-svg": "*",
     "@tanstack/react-query": "*",
     "socket.io-client": "*"

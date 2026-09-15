@@ -2,6 +2,8 @@ import type {
   DriverAvailability,
   OrderStatus,
   ProviderSource,
+  RouteEtaResponse,
+  StopProgressCommandResponse,
   VehicleType,
 } from '@leopard/shared';
 
@@ -19,6 +21,8 @@ import type {
   DriverProofView,
   DriverPublicOrderView,
   DriverRoutePoint,
+  DriverRouteStopView,
+  DriverStopProgressStatus,
   DriverRouteView,
   DriverTrackingView,
 } from './model';
@@ -169,6 +173,37 @@ export function formatCargoSummary(order: {
   return 'Hàng hóa tiêu chuẩn';
 }
 
+const CONTACT_ROLE_LABELS: Record<MappedDriverCurrentContact['targetRole'], string> = {
+  SENDER: 'Người gửi',
+  RECIPIENT: 'Người nhận',
+  COMPLETED: 'Liên hệ',
+  NONE: 'Liên hệ',
+};
+
+export function resolveContactRoleLabel(
+  currentContact?: MappedDriverCurrentContact,
+): string {
+  if (!currentContact) return 'Liên hệ khách hàng';
+  return CONTACT_ROLE_LABELS[currentContact.targetRole] ?? 'Liên hệ';
+}
+
+export function formatCustomerContactValue(
+  currentContact: MappedDriverCurrentContact | undefined,
+  fallback: string | null | undefined,
+): string {
+  if (currentContact?.phone) {
+    return currentContact.name
+      ? `${currentContact.name} · ${currentContact.phone}`
+      : currentContact.phone;
+  }
+  if (currentContact?.name) {
+    return currentContact.name;
+  }
+  return (
+    fallback ?? 'Thông tin liên hệ khách hàng · chỉ hiện sau phân công'
+  );
+}
+
 export function formatPublicRouteLabel(
   stops?: readonly MappedDriverOrderStopResponse[],
 ): string {
@@ -215,6 +250,18 @@ export interface MappedDriverOrderStopResponse {
   address: string;
   lat: number;
   lng: number;
+  latitude?: number;
+  longitude?: number;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  note?: string | null;
+  progress?: DriverStopProgressStatus;
+}
+
+export interface MappedDriverCurrentContact {
+  targetRole: 'SENDER' | 'RECIPIENT' | 'COMPLETED' | 'NONE';
+  name: string | null;
+  phone: string | null;
 }
 
 export interface MappedDriverOrderStatusHistoryResponse {
@@ -244,6 +291,7 @@ export interface MappedDriverOrderResponse {
   cargoWeight?: number | null;
   deliveryProofUrl?: string | null;
   customerContact?: string | null;
+  currentContact?: MappedDriverCurrentContact;
   acceptedAt?: string | null;
   pickingUpAt?: string | null;
   inTransitAt?: string | null;
@@ -254,6 +302,9 @@ export interface MappedDriverOrderResponse {
   stops?: MappedDriverOrderStopResponse[];
   statusHistory?: MappedDriverOrderStatusHistoryResponse[];
   media?: Array<{ id: string; type: string; createdAt: string }>;
+  paymentMethod?: string | null;
+  paymentStatus?: string | null;
+  isCashConfirmed?: boolean | null;
 }
 
 export interface DriverAvailableOrdersApiResponse {
@@ -337,21 +388,53 @@ export function mapOrderToRouteView(
       (s) => s.type === 'STOP' && s !== pickupStop && s !== dropoffStop,
     ) ?? [];
 
+  const originLat = pickupStop?.lat ?? pickupStop?.latitude;
+  const originLng = pickupStop?.lng ?? pickupStop?.longitude;
+  const originCoords =
+    originLat != null && originLng != null ? { lat: originLat, lng: originLng } : undefined;
+
   const origin: DriverRoutePoint = {
     id: pickupStop?.id ?? 'driver-pickup',
     label: pickupStop?.address ?? 'Điểm lấy hàng',
-    coords: pickupStop ? { lat: pickupStop.lat, lng: pickupStop.lng } : undefined,
+    lat: originLat,
+    lng: originLng,
+    coords: originCoords,
   };
+
+  const destLat = dropoffStop?.lat ?? dropoffStop?.latitude;
+  const destLng = dropoffStop?.lng ?? dropoffStop?.longitude;
+  const destCoords =
+    destLat != null && destLng != null ? { lat: destLat, lng: destLng } : undefined;
+
   const destination: DriverRoutePoint = {
     id: dropoffStop?.id ?? 'driver-dropoff',
     label: dropoffStop?.address ?? 'Điểm giao hàng',
-    coords: dropoffStop ? { lat: dropoffStop.lat, lng: dropoffStop.lng } : undefined,
+    lat: destLat,
+    lng: destLng,
+    coords: destCoords,
   };
-  const stops: readonly DriverRoutePoint[] = intermediateStops.map((s) => ({
-    id: s.id,
-    label: s.address,
-    coords: { lat: s.lat, lng: s.lng },
-  }));
+
+  const stops: readonly DriverRouteStopView[] = intermediateStops.map(
+    (s, idx) => {
+      const lat = s.lat ?? s.latitude;
+      const lng = s.lng ?? s.longitude;
+      return {
+        id: s.id,
+        stopId: s.id,
+        sequence: s.sequence ?? idx + 1,
+        address: s.address,
+        label: s.address,
+        lat,
+        lng,
+        latitude: lat,
+        longitude: lng,
+        coords: lat != null && lng != null ? { lat, lng } : undefined,
+        progress: s.progress ?? 'PENDING',
+        contactName: s.contactName,
+        contactPhone: s.contactPhone,
+      };
+    },
+  );
 
   const distanceLabel = formatDistance(order.distanceMeters);
   const etaDurationSeconds = order.durationSeconds ?? order.etaSeconds ?? 0;
@@ -364,6 +447,7 @@ export function mapOrderToRouteView(
     distanceLabel,
     etaDurationSeconds,
     etaSource,
+    eta: null,
   };
 }
 
@@ -427,6 +511,8 @@ export function mapOrderToActiveTrip(
     proofLabel: proofRequired
       ? 'Cần ảnh xác nhận trước khi hoàn tất'
       : null,
+    customerContact: formatCustomerContactValue(order.currentContact, order.customerContact),
+    contactRoleLabel: resolveContactRoleLabel(order.currentContact),
   };
 }
 
@@ -568,6 +654,18 @@ function resolveDriverTask(
       offeredLifecycleCommand: null,
     };
   }
+  if (status === 'RETURNING') {
+    const returnCommand: DriverCommandView = {
+      id: `cmd-return-${order.id}`,
+      orderId: order.id,
+      label: 'Xác nhận đã hoàn hàng',
+      targetStatus: 'RETURNED',
+    };
+    return {
+      primaryTask: { kind: 'advance-lifecycle', command: returnCommand },
+      offeredLifecycleCommand: returnCommand,
+    };
+  }
   return { primaryTask: null, offeredLifecycleCommand: null };
 }
 
@@ -630,6 +728,33 @@ export function mapOrderToDriverDetailView(
       proof.kind === 'persisted' ? 'D-DETAIL-READY-DELIVER' : 'D-DETAIL-IN-TRANSIT';
   } else if (status === 'DELIVERED') scenarioId = 'D-DETAIL-TERMINAL-DELIVERED';
   else if (status === 'CANCELLED') scenarioId = 'D-DETAIL-TERMINAL-CANCELLED';
+  else if (status === 'INCIDENT_CANCELLED') scenarioId = 'D-DETAIL-TERMINAL-INCIDENT';
+  else if (status === 'RETURNING') scenarioId = 'D-DETAIL-RETURNING';
+  else if (status === 'RETURNED') scenarioId = 'D-DETAIL-TERMINAL-RETURNED';
+
+  const terminalNotice =
+    status === 'INCIDENT_CANCELLED'
+      ? 'Báo cáo sự cố thành công. Đơn đã được gỡ khỏi hàng đợi của bạn — bạn có thể nhận đơn mới.'
+      : status === 'RETURNING'
+        ? 'Đang hoàn trả hàng về điểm gửi theo yêu cầu sự cố.'
+        : status === 'RETURNED'
+          ? 'Đã hoàn trả hàng về điểm gửi thành công.'
+          : null;
+
+  const routeSnapshot =
+    order.routeSnapshot && typeof order.routeSnapshot === 'object'
+      ? (order.routeSnapshot as Record<string, any>)
+      : null;
+  const paymentMethod =
+    order.paymentMethod === 'CASH' || routeSnapshot?.paymentMethod === 'CASH'
+      ? 'CASH'
+      : (order.paymentMethod || routeSnapshot?.paymentMethod || undefined);
+  const driverPayoutVnd =
+    typeof routeSnapshot?.driverPayoutVnd === 'number'
+      ? routeSnapshot.driverPayoutVnd
+      : typeof order.priceVnd === 'number'
+        ? Math.round(order.priceVnd * 0.85)
+        : null;
 
   const assignedOrder: DriverAssignedDetailView['order'] = {
     id: order.id,
@@ -637,10 +762,16 @@ export function mapOrderToDriverDetailView(
     status: status as Exclude<OrderStatus, 'REQUESTED'>,
     route,
     vehicleLabel: formatVehicleLabel(order.vehicleType),
+    vehicleType: (order.vehicleType as VehicleType) ?? null,
     cargoSummary: formatCargoSummary(order),
-    customerContact:
-      order.customerContact ??
-      'Thông tin liên hệ khách hàng · chỉ hiện sau phân công',
+    cargoWeightKg: order.cargoWeightKg ?? order.cargoWeight ?? null,
+    contactRoleLabel: resolveContactRoleLabel(order.currentContact),
+    customerContact: formatCustomerContactValue(order.currentContact, order.customerContact),
+    priceLabel: formatVndPrice(order.priceVnd),
+    priceVnd: order.priceVnd ?? null,
+    paymentMethod,
+    isCashConfirmed: false,
+    driverPayoutVnd,
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
     history,
   };
@@ -653,7 +784,7 @@ export function mapOrderToDriverDetailView(
     tracking,
     proof,
     ...task,
-    notice: null,
+    notice: terminalNotice,
   };
 }
 
@@ -993,6 +1124,16 @@ export function createDriverHttpAdapter(
               recoveryLabel: 'Xem đơn còn trống',
             });
           }
+          if (error.code === 'VEHICLE_TYPE_MISMATCH') {
+            return deepFreeze<DriverConflictView>({
+              scenarioId: 'D-DETAIL-VEHICLE-MISMATCH',
+              kind: 'conflict',
+              title: 'Đơn không phù hợp với loại xe của bạn',
+              message:
+                'Đơn hàng này yêu cầu loại phương tiện khác. Danh sách sẽ được làm mới, vui lòng chọn đơn khác phù hợp với xe của bạn.',
+              recoveryLabel: 'Xem đơn còn trống',
+            });
+          }
           if (error.statusCode === 403 || error.code === 'FORBIDDEN') {
             return deepFreeze<DriverDetailView>({
               scenarioId: 'D-DETAIL-PERMISSION',
@@ -1058,6 +1199,8 @@ export function createDriverHttpAdapter(
         targetStatus = 'DELIVERED';
       } else if (commandId.includes('pickup')) {
         targetStatus = 'PICKING_UP';
+      } else if (commandId.includes('return')) {
+        targetStatus = 'RETURNED';
       } else if (commandId.includes('accept')) {
         return this.acceptOrder(commandId);
       }
@@ -1068,7 +1211,7 @@ export function createDriverHttpAdapter(
           { status: targetStatus },
         );
 
-        if (targetStatus === 'DELIVERED') {
+        if (targetStatus === 'DELIVERED' || targetStatus === 'RETURNED') {
           currentAvailability = 'AVAILABLE';
         }
 
@@ -1082,6 +1225,37 @@ export function createDriverHttpAdapter(
             error.code === 'DELIVERY_PROOF_REQUIRED' ||
             (error.statusCode === 400 && error.message.toLowerCase().includes('proof'))
           ) {
+            try {
+              const currentOrder = await activeClient.get<MappedDriverOrderResponse>(
+                `/driver/orders/${orderId}`,
+              );
+              const fetchedView = mapOrderToDriverDetailView(currentOrder);
+              if (fetchedView.kind === 'content' && fetchedView.accessScope === 'ASSIGNED_FULL') {
+                return deepFreeze<DriverDetailView>({
+                  ...fetchedView,
+                  scenarioId: 'D-DETAIL-PROOF-REQUIRED',
+                  proof: {
+                    kind: 'required',
+                    label: 'Cần ảnh xác nhận trước khi hoàn tất',
+                    message: 'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.',
+                    fileLabel: null,
+                  },
+                  primaryTask: {
+                    kind: 'upload-proof',
+                    command: {
+                      id: `cmd-select-proof-${orderId}`,
+                      orderId,
+                      label: 'Thêm ảnh xác nhận giao hàng',
+                    },
+                  },
+                  offeredLifecycleCommand: null,
+                  notice: 'Cần tải ảnh xác nhận trước khi hoàn tất giao hàng.',
+                });
+              }
+            } catch {
+              // Fallback to minimal state preserving order ID if GET fails
+            }
+
             return deepFreeze<DriverDetailView>({
               scenarioId: 'D-DETAIL-PROOF-REQUIRED',
               kind: 'content',
@@ -1100,6 +1274,7 @@ export function createDriverHttpAdapter(
                 },
                 vehicleLabel: 'Xe van',
                 cargoSummary: 'Hàng hóa tiêu chuẩn',
+                contactRoleLabel: 'Liên hệ khách hàng',
                 customerContact: 'Thông tin liên hệ khách hàng · chỉ hiện sau phân công',
                 updatedAtLabel: formatDateTime(new Date()),
                 history: [],
@@ -1161,6 +1336,102 @@ export function createDriverHttpAdapter(
               : 'Hãy thử lại sau.',
         });
       }
+    },
+
+    async reportIncident(
+      orderId: string,
+      payload: { reason: string; note?: string; evidenceMediaId?: string },
+    ): Promise<DriverDetailView> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        return deepFreeze<DriverDetailView>({
+          scenarioId: 'D-DETAIL-ERROR',
+          kind: 'error',
+          title: 'Mã đơn không hợp lệ',
+          message: 'Không tìm thấy mã đơn hàng hợp lệ để báo cáo sự cố.',
+        });
+      }
+
+      try {
+        const response = await activeClient.post<MappedDriverOrderResponse>(
+          `/driver/orders/${validId}/incident`,
+          payload,
+        );
+
+        currentAvailability = 'AVAILABLE';
+
+        return deepFreeze<DriverDetailView>(
+          mapOrderToDriverDetailView(response),
+        );
+      } catch (error) {
+        return deepFreeze<DriverDetailView>({
+          scenarioId: 'D-DETAIL-ERROR',
+          kind: 'error',
+          title: 'Không thể báo cáo sự cố',
+          message:
+            error instanceof Error && error.message
+              ? error.message
+              : 'Hãy thử lại sau.',
+        });
+      }
+    },
+
+    async confirmCashPayment(
+      orderId: string,
+      clientRequestId?: string,
+    ): Promise<{ success: boolean; message?: string }> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        throw new Error('Mã đơn hàng không hợp lệ');
+      }
+
+      const reqId =
+        clientRequestId ||
+        (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `req-cash-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+      await activeClient.post(`/driver/orders/${validId}/confirm-cash`, {
+        clientRequestId: reqId,
+      });
+
+      return { success: true, message: 'Đã xác nhận thu tiền mặt thành công.' };
+    },
+
+    async getRouteEta(orderId: string): Promise<RouteEtaResponse> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        throw new Error('Mã đơn hàng không hợp lệ');
+      }
+      const res = await activeClient.get<
+        RouteEtaResponse | { data: RouteEtaResponse }
+      >(`/orders/${validId}/route-eta`);
+      if (res && typeof res === 'object' && 'data' in res && res.data) {
+        return (res as { data: RouteEtaResponse }).data;
+      }
+      return res as RouteEtaResponse;
+    },
+
+    async recordStopProgress(
+      orderId: string,
+      stopId: string,
+      payload: { step: string; clientRequestId: string; occurredAt?: string },
+    ): Promise<StopProgressCommandResponse> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        throw new Error('Mã đơn hàng không hợp lệ');
+      }
+      const res = await activeClient.post<
+        StopProgressCommandResponse | { data: StopProgressCommandResponse }
+      >(`/orders/${validId}/stops/${stopId}/progress`, payload);
+      if (res && typeof res === 'object' && 'data' in res && res.data) {
+        return (res as { data: StopProgressCommandResponse }).data;
+      }
+      return res as StopProgressCommandResponse;
     },
   };
 }

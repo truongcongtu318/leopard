@@ -1,4 +1,9 @@
-import type { OrderStatus, SendTrackingPointPayload } from '@leopard/shared';
+import type {
+  OrderStatus,
+  RouteEtaUpdatedEventV1,
+  RouteUpdatedEventV1,
+  SendTrackingPointPayload,
+} from '@leopard/shared';
 
 import {
   deepFreeze,
@@ -98,6 +103,13 @@ export interface DriverTrackingSenderOptions {
   onPointSent?: (payload: SendTrackingPointPayload) => void;
   onQueueFlushed?: (count: number) => void;
   onError?: (error: Error | { code: string; message: string }) => void;
+  onOrderStatusChanged?: (event: { orderId: string; previousStatus: OrderStatus; currentStatus: OrderStatus }) => void;
+}
+
+export interface RouteEtaSubscriptionCallbacks {
+  readonly onRouteEtaUpdated: (event: RouteEtaUpdatedEventV1) => void;
+  readonly onRouteUpdated: (event: RouteUpdatedEventV1) => void;
+  readonly onJoinedAck?: () => void;
 }
 
 export function isTrackingEligibleStatus(status?: OrderStatus | null): boolean {
@@ -121,6 +133,10 @@ export class DriverTrackingSender {
   private offlineQueue: SendTrackingPointPayload[] = [];
   private seenClientPointIds = new Set<string>();
   private healthListeners = new Set<(health: DriverTrackingView) => void>();
+  private statusListeners = new Set<
+    (event: { orderId: string; previousStatus: OrderStatus; currentStatus: OrderStatus }) => void
+  >();
+  private routeEtaSubscriptions = new Map<string, Set<RouteEtaSubscriptionCallbacks>>();
   private isFlushing = false;
 
   private readonly socketFactory?: SocketFactory;
@@ -134,12 +150,18 @@ export class DriverTrackingSender {
   private readonly onPointSentHandler?: (payload: SendTrackingPointPayload) => void;
   private readonly onQueueFlushedHandler?: (count: number) => void;
   private readonly onErrorHandler?: (error: Error | { code: string; message: string }) => void;
+  private readonly onOrderStatusChangedHandler?: (event: {
+    orderId: string;
+    previousStatus: OrderStatus;
+    currentStatus: OrderStatus;
+  }) => void;
 
   constructor(options: DriverTrackingSenderOptions = {}) {
     this.socket = options.socket ?? null;
     this.socketFactory = options.socketFactory;
-    this.serverUrl =
-      options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? '';
+    const rawServerUrl =
+      options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
+    this.serverUrl = rawServerUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
     this.namespace = options.namespace ?? '/tracking';
     this.minIntervalMs = options.minIntervalMs ?? 5000;
     this.maxQueueSize = options.maxQueueSize ?? 50;
@@ -149,6 +171,7 @@ export class DriverTrackingSender {
     this.onPointSentHandler = options.onPointSent;
     this.onQueueFlushedHandler = options.onQueueFlushed;
     this.onErrorHandler = options.onError;
+    this.onOrderStatusChangedHandler = options.onOrderStatusChanged;
 
     if (this.socket) {
       this.attachSocketListeners(this.socket);
@@ -543,6 +566,65 @@ export class DriverTrackingSender {
     };
   }
 
+  public observeOrderStatus(
+    orderId: string,
+    onChange: (event: { orderId: string; previousStatus: OrderStatus; currentStatus: OrderStatus }) => void,
+  ): Readonly<{ unsubscribe: () => void }> {
+    const listener = (event: { orderId: string; previousStatus: OrderStatus; currentStatus: OrderStatus }) => {
+      if (event.orderId === orderId) {
+        onChange(event);
+      }
+    };
+    this.statusListeners.add(listener);
+    return {
+      unsubscribe: () => {
+        this.statusListeners.delete(listener);
+      },
+    };
+  }
+
+  public subscribeRouteEta(
+    orderId: string,
+    callbacks: RouteEtaSubscriptionCallbacks,
+  ): Readonly<{ unsubscribe: () => void }> {
+    let orderSubs = this.routeEtaSubscriptions.get(orderId);
+    if (!orderSubs) {
+      orderSubs = new Set();
+      this.routeEtaSubscriptions.set(orderId, orderSubs);
+    }
+    orderSubs.add(callbacks);
+
+    // Connect socket if not connected yet (without starting GPS tracking)
+    void this.connect().then(() => {
+      if (this.socket?.connected) {
+        this.socket.emit(
+          'tracking:join-order',
+          { orderId },
+          (ack?: { ok?: boolean }) => {
+            if (ack?.ok !== false) {
+              callbacks.onJoinedAck?.();
+            }
+          },
+        );
+      }
+    });
+
+    return {
+      unsubscribe: () => {
+        const subs = this.routeEtaSubscriptions.get(orderId);
+        if (subs) {
+          subs.delete(callbacks);
+          if (subs.size === 0) {
+            this.routeEtaSubscriptions.delete(orderId);
+            if (this.socket?.connected && this.activeOrderId !== orderId) {
+              this.socket.emit('tracking:leave-order', { orderId });
+            }
+          }
+        }
+      },
+    };
+  }
+
   public async retryConnection(orderId?: string): Promise<DriverTrackingView> {
     const targetId = orderId ?? this.activeOrderId;
     if (targetId) {
@@ -596,6 +678,8 @@ export class DriverTrackingSender {
   public destroy(): void {
     this.stop('DESTROY');
     this.healthListeners.clear();
+    this.statusListeners.clear();
+    this.routeEtaSubscriptions.clear();
     this.offlineQueue = [];
     this.seenClientPointIds.clear();
     if (this.socket?.removeAllListeners) {
@@ -624,6 +708,43 @@ export class DriverTrackingSender {
       if (this.activeOrderId && isTrackingEligibleStatus(this.activeStatus)) {
         socket.emit('tracking:join-order', { orderId: this.activeOrderId });
         void this.flushQueue();
+      }
+      // Re-join any active route ETA order rooms on connect/reconnect
+      for (const [orderId, subs] of this.routeEtaSubscriptions.entries()) {
+        socket.emit('tracking:join-order', { orderId }, (ack?: { ok?: boolean }) => {
+          if (ack?.ok !== false) {
+            for (const sub of subs) {
+              sub.onJoinedAck?.();
+            }
+          }
+        });
+      }
+    });
+
+    socket.on('order:status-updated', (event: any) => {
+      this.onOrderStatusChangedHandler?.(event);
+      for (const listener of this.statusListeners) {
+        listener(event);
+      }
+    });
+
+    socket.on('route-eta:updated', (event: any) => {
+      if (!event || typeof event !== 'object' || !event.orderId) return;
+      const subs = this.routeEtaSubscriptions.get(event.orderId);
+      if (subs) {
+        for (const sub of subs) {
+          sub.onRouteEtaUpdated(event);
+        }
+      }
+    });
+
+    socket.on('route:updated', (event: any) => {
+      if (!event || typeof event !== 'object' || !event.orderId) return;
+      const subs = this.routeEtaSubscriptions.get(event.orderId);
+      if (subs) {
+        for (const sub of subs) {
+          sub.onRouteUpdated(event);
+        }
       }
     });
 

@@ -3,6 +3,7 @@ import type {
   MapProvider,
   PlaceCandidate,
   RouteEstimate,
+  RouteEstimateLeg,
   RouteInput,
   CongestionLevel,
 } from './map-provider.js';
@@ -45,6 +46,8 @@ interface VietmapRoutePath {
   time?: unknown;
   points?: unknown;
   annotations?: unknown;
+  instructions?: unknown;
+  legs?: unknown;
 }
 
 interface VietmapRouteResponse {
@@ -155,6 +158,68 @@ export class VietmapProvider implements MapProvider {
       const durationS = Math.round(durationMs / 1_000);
       const estimatedArrivalAt = new Date(calculatedAt.getTime() + durationS * 1_000);
 
+      let legs: RouteEstimateLeg[] | undefined;
+      if (Array.isArray(path.legs) && path.legs.length > 0) {
+        legs = path.legs.map((leg: unknown) => {
+          const legRec = isRecord(leg) ? leg : {};
+          const legDist = numberOrNull(legRec.distance) ?? 0;
+          const legTime = numberOrNull(legRec.time) ?? ((numberOrNull(legRec.duration) ?? 0) * 1000);
+          return {
+            distanceM: Math.round(legDist),
+            durationS: Math.round(legTime / 1000),
+          };
+        });
+      } else if (Array.isArray(path.instructions) && path.instructions.length > 0) {
+        const parsedLegs: RouteEstimateLeg[] = [];
+        let curDist = 0;
+        let curTime = 0;
+        let curStart: number | undefined;
+        let curEnd: number | undefined;
+
+        for (const instr of path.instructions) {
+          if (!isRecord(instr)) continue;
+          const d = numberOrNull(instr.distance) ?? 0;
+          const t = numberOrNull(instr.time) ?? 0;
+          curDist += d;
+          curTime += t;
+
+          if (
+            Array.isArray(instr.interval) &&
+            typeof instr.interval[0] === 'number' &&
+            typeof instr.interval[1] === 'number'
+          ) {
+            if (curStart === undefined) curStart = instr.interval[0];
+            curEnd = instr.interval[1];
+          }
+
+          const sign = numberOrNull(instr.sign);
+          if (sign === 4 || sign === 5) {
+            parsedLegs.push({
+              distanceM: Math.round(curDist),
+              durationS: Math.round(curTime / 1000),
+              ...(curStart !== undefined ? { geometryStartIndex: curStart } : {}),
+              ...(curEnd !== undefined ? { geometryEndIndex: curEnd } : {}),
+            });
+            curDist = 0;
+            curTime = 0;
+            curStart = curEnd;
+          }
+        }
+        if (parsedLegs.length > 0) {
+          legs = parsedLegs;
+        }
+      }
+
+      if (!legs && input.stops.length === 0) {
+        legs = [
+          {
+            distanceM: Math.round(distance),
+            durationS,
+            geometryStartIndex: 0,
+          },
+        ];
+      }
+
       return [
         {
           polyline: path.points,
@@ -166,6 +231,7 @@ export class VietmapProvider implements MapProvider {
           calculatedAt: calculatedAt.toISOString(),
           isEstimate: true,
           congestionLevel: deriveCongestionLevel(path),
+          ...(legs ? { legs } : {}),
         },
       ];
     });

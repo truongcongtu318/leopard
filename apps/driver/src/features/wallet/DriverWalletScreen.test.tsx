@@ -1,47 +1,93 @@
+// apps/driver/src/features/wallet/DriverWalletScreen.test.tsx
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 
-import { DriverWalletScreen } from './DriverWalletScreen';
+import { DriverWalletScreen, type DriverWalletScreenProps } from './DriverWalletScreen';
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    back: jest.fn(),
-  }),
+  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
 }));
 
+const baseProps: DriverWalletScreenProps = {
+  summary: {
+    availableBalanceVnd: 1450000,
+    lifetimeDeliveredVnd: 3450000,
+    pendingWithdrawalVnd: 300000,
+    deliveredOrderCount: 12,
+  },
+  history: [
+    {
+      id: 'wr-1',
+      status: 'APPROVED',
+      amountVnd: 500000,
+      bankName: 'MB Bank',
+      bankAccountNumber: '0987654321',
+      bankAccountName: 'NGUYEN VAN A',
+      createdAt: '2026-09-10T08:30:00.000Z',
+    },
+    {
+      id: 'wr-2',
+      status: 'PENDING',
+      amountVnd: 300000,
+      bankName: 'MB Bank',
+      bankAccountNumber: '0987654321',
+      bankAccountName: 'NGUYEN VAN A',
+      createdAt: '2026-09-12T14:32:00.000Z',
+    },
+  ],
+  isLoading: false,
+  isError: false,
+  isSubmittingWithdrawal: false,
+  withdrawalError: null,
+  onRequestWithdrawal: jest.fn(),
+  onRetry: jest.fn(),
+};
+
 describe('DriverWalletScreen', () => {
-  it('renders wallet balance, linked bank account, and transaction list', async () => {
-    const screen = await render(<DriverWalletScreen />);
+  it('renders the real available balance, not a hardcoded number', async () => {
+    const screen = await render(<DriverWalletScreen {...baseProps} />);
 
-    expect(screen.getByText('DRIVER · WALLET & PAYOUT')).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Ví tài xế' })).toBeTruthy();
-    expect(screen.getByText('Số dư khả dụng để rút')).toBeTruthy();
-    expect(screen.getByText('MB Bank')).toBeTruthy();
-    expect(screen.getByText('0987 **** **68 · NGUYEN VAN A')).toBeTruthy();
-    expect(screen.getAllByText(/Rút tiền về MB Bank/).length).toBeGreaterThan(0);
-
-    await screen.unmount();
-  });
-
-  it('can open withdrawal modal and see preset options', async () => {
-    const screen = await render(<DriverWalletScreen />);
-
-    const withdrawBtn = screen.getByRole('button', { name: 'Rút tiền về tài khoản ngân hàng' });
-    await fireEvent.press(withdrawBtn);
-
-    expect(screen.getAllByText('Rút tiền về tài khoản ngân hàng').length).toBeGreaterThan(0);
-    expect(screen.getByText('Xác nhận rút tiền')).toBeTruthy();
+    expect(screen.getByText('Ví tài xế')).toBeTruthy();
+    expect(screen.getByText(/1.450.000/)).toBeTruthy();
+    // The old fake instant-transfer claim must be gone.
+    expect(screen.queryByText(/tức thì 24\/7/)).toBeNull();
+    expect(screen.queryByText(/trong 60s/)).toBeNull();
 
     await screen.unmount();
   });
 
-  it('displays today earnings and instant payout action button', async () => {
-    const screen = await render(<DriverWalletScreen />);
-    expect(screen.getByText(/Rút tiền về tài khoản ngân hàng/)).toBeTruthy();
-    expect(screen.getByText('Rút tiền tức thì 24/7')).toBeTruthy();
-    expect(screen.getByText('MB Bank')).toBeTruthy();
-    expect(screen.getByText('Vietcombank')).toBeTruthy();
+  it('does not show a saved-bank-account selector (out of scope for this pilot)', async () => {
+    const screen = await render(<DriverWalletScreen {...baseProps} />);
+    expect(screen.queryByText('Vietcombank')).toBeNull();
+    await screen.unmount();
+  });
+
+  it('submits a withdrawal request with the entered bank details', async () => {
+    const onRequestWithdrawal = jest.fn();
+    const screen = await render(
+      <DriverWalletScreen {...baseProps} onRequestWithdrawal={onRequestWithdrawal} />,
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Yêu cầu rút tiền' }));
+    await fireEvent.changeText(screen.getByPlaceholderText('Nhập số tiền'), '200000');
+    await fireEvent.changeText(screen.getByPlaceholderText('VD: MB Bank'), 'MB Bank');
+    await fireEvent.changeText(screen.getByPlaceholderText('Nhập số tài khoản'), '0987654321');
+    await fireEvent.changeText(screen.getByPlaceholderText('Nhập tên chủ tài khoản (không dấu)'), 'NGUYEN VAN A');
+    await fireEvent.press(screen.getByRole('button', { name: 'Gửi yêu cầu rút tiền' }));
+
+    expect(onRequestWithdrawal).toHaveBeenCalledWith({
+      amountVnd: 200000,
+      bankName: 'MB Bank',
+      bankAccountNumber: '0987654321',
+      bankAccountName: 'NGUYEN VAN A',
+    });
+
+    await screen.unmount();
+  });
+
+  it('shows PENDING/APPROVED/REJECTED status labels for withdrawal history rows, not always "Thành công"', async () => {
+    const screen = await render(<DriverWalletScreen {...baseProps} />);
+    expect(screen.getByText('Đã duyệt')).toBeTruthy(); // APPROVED row's status label
     await screen.unmount();
   });
 });

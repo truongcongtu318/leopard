@@ -50,15 +50,21 @@ Hai endpoint trả `source`; provider error dùng error envelope chuẩn. Client
 
 ## Driver
 
+Chi tiết thiết lập và quy tắc cải tiến: xem [05-driver-backend-api-refactor-spec.md](file:///d:/leopard/docs/api/05-driver-backend-api-refactor-spec.md).
+
 | Method | Path | Role | Mô tả |
 | --- | --- | --- | --- |
-| PATCH | `/driver/availability` | Driver | Đổi availability |
-| GET | `/driver/orders/available` | Driver | Danh sách `REQUESTED` |
-| GET | `/driver/orders/active` | Driver | Order active hiện tại |
-| POST | `/driver/orders/:id/accept` | Driver | Nhận order |
-| POST | `/driver/orders/:id/status` | Assigned Driver | Transition status |
+| PATCH | `/driver/availability` | Driver | Đổi availability (`AVAILABLE` / `OFFLINE`) |
+| PATCH | `/driver/location` | Driver | Báo cáo vị trí radar và heartbeat tài xế |
+| GET | `/driver/orders/available` | Driver | Danh sách `REQUESTED` lọc theo `vehicleType` |
+| GET | `/driver/orders/active` | Driver | Order active hiện tại kèm contact động |
+| POST | `/driver/orders/:id/accept` | Driver | Nhận order (đối soát `vehicleType`) |
+| POST | `/driver/orders/:id/status` | Assigned Driver | Transition status (yêu cầu proof khi `DELIVERED`) |
+| POST | `/driver/orders/:id/incident` | Assigned Driver | Báo cáo sự cố, hủy đơn bất khả kháng và giải phóng tài xế |
 
 Status input: `{"status":"IN_TRANSIT","clientRequestId":"uuid"}`. Request lặp với cùng ID trả kết quả cũ.
+Incident input: `{"reason":"RECIPIENT_REJECTED","note":"...","clientRequestId":"uuid"}`.
+Location input: `{"lat":10.7326,"lng":106.7168,"isStationaryHeartbeat":true}`.
 
 ## Đăng ký tài xế (driver onboarding)
 

@@ -46,25 +46,44 @@ export type JsonBodyLimitMiddlewareFn = (
  * `NestExpressApplication.useBodyParser()`, which has no route-scoping —
  * see `AppModule.configure()` and `DriversModule.configure()`.
  */
+import { requestContextStore } from './logger.service.js';
+
 export function createJsonBodyLimitMiddleware(
   options: JsonBodyLimitOptions,
 ): JsonBodyLimitMiddlewareFn {
   const { limitBytes } = options;
 
   return function jsonBodyLimitMiddleware(req, res, next): void {
+    const store = requestContextStore.getStore();
+    const safeNext = (...args: [unknown?]) => {
+      if (store) {
+        requestContextStore.run(store, () => {
+          if (args.length > 0) {
+            next(args[0]);
+          } else {
+            next();
+          }
+        });
+      } else if (args.length > 0) {
+        next(args[0]);
+      } else {
+        next();
+      }
+    };
+
     const mimeType = req.headers['content-type']?.split(';')[0]?.trim().toLowerCase();
     if (mimeType !== JSON_MIME_TYPE) {
-      next();
+      safeNext();
       return;
     }
 
     const declaredLength = Number(req.headers['content-length']);
     if (Number.isFinite(declaredLength) && declaredLength > limitBytes) {
-      next(tooLargeError());
+      safeNext(tooLargeError());
       return;
     }
 
-    readJsonBody(req, limitBytes, next);
+    readJsonBody(req, limitBytes, safeNext);
   };
 }
 

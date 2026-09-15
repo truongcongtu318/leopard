@@ -23,6 +23,7 @@ export function DriverSettingsScreen() {
   const [voiceAnnouncement, setVoiceAnnouncement] = useState(true);
   const [autoAccept, setAutoAccept] = useState(false);
   const [autoAcceptRadius, setAutoAcceptRadius] = useState<number>(5);
+  const [autoOfflineOnComplete, setAutoOfflineOnComplete] = useState(false);
 
   // 2. Navigation state
   const [defaultNav, setDefaultNav] = useState<'vietmap' | 'google'>('vietmap');
@@ -288,7 +289,7 @@ export function DriverSettingsScreen() {
             </View>
 
             {/* Tự động nhận đơn */}
-            <View style={[styles.settingRow, autoAccept ? null : styles.settingRowLast]}>
+            <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
                 <IconSpeedTruck color={colors.brand.background} size={18} />
               </View>
@@ -336,6 +337,26 @@ export function DriverSettingsScreen() {
                 </View>
               </View>
             )}
+
+            {/* Tự động nghỉ sau chuyến này */}
+            <View style={[styles.settingRow, styles.settingRowLast]}>
+              <View style={styles.iconWrap}>
+                <IconClock color={colors.brand.background} size={18} />
+              </View>
+              <View style={styles.textWrap}>
+                <Text style={styles.settingTitle}>Tự động nghỉ sau chuyến này</Text>
+                <Text style={styles.settingDesc}>
+                  Tự động chuyển về trạng thái Nghỉ (Offline) ngay khi hoàn tất đơn hiện tại
+                </Text>
+              </View>
+              <Switch
+                accessibilityLabel="Tự động nghỉ sau chuyến này"
+                onValueChange={setAutoOfflineOnComplete}
+                thumbColor={autoOfflineOnComplete ? colors.brand.background : '#F4F3F4'}
+                trackColor={{ false: '#CBD5E1', true: colors.brand.softBackground }}
+                value={autoOfflineOnComplete}
+              />
+            </View>
           </View>
         </View>
 

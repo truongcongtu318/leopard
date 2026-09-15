@@ -60,6 +60,9 @@ export function DriverApplicationsScreen() {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [requestingChangesId, setRequestingChangesId] = useState<string | null>(null);
+  const [changeReasonNote, setChangeReasonNote] = useState('');
+  const [changeReasonCode, setChangeReasonCode] = useState('BLURRY_IMAGE');
   const [openDocsId, setOpenDocsId] = useState<string | null>(null);
   const [docsByUser, setDocsByUser] = useState<
     Record<string, DriverDocument[] | 'loading' | undefined>
@@ -153,6 +156,34 @@ export function DriverApplicationsScreen() {
     [load, rejectReason],
   );
 
+  const submitRequestChanges = useCallback(
+    async (userId: string) => {
+      const trimmed = changeReasonNote.trim();
+      if (trimmed.length < 5) {
+        setErrorMsg('Ghi chú yêu cầu bổ sung phải từ 5 ký tự trở lên');
+        return;
+      }
+      setPendingId(userId);
+      setErrorMsg(null);
+      try {
+        await browserClient.post(`/admin/drivers/${userId}/request-changes`, {
+          reason: trimmed,
+          reasonCode: changeReasonCode,
+          clientRequestId: newRequestId(),
+        });
+        setRequestingChangesId(null);
+        setChangeReasonNote('');
+        await load();
+      } catch (err) {
+        setErrorMsg(err instanceof ApiError ? err.message : 'Yêu cầu bổ sung hồ sơ thất bại');
+      } finally {
+        setPendingId(null);
+      }
+    },
+    [load, changeReasonNote, changeReasonCode],
+  );
+
+
   return (
     <div className="flex min-w-0 flex-col gap-lg">
       <header>
@@ -223,6 +254,16 @@ export function DriverApplicationsScreen() {
                       className="rounded-control bg-brand px-md py-xs text-body-compact font-semibold text-white disabled:opacity-60"
                     >
                       {pendingId === app.userId ? 'Đang xử lý…' : 'Duyệt'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pendingId === app.userId}
+                      onClick={() =>
+                        setRequestingChangesId(requestingChangesId === app.userId ? null : app.userId)
+                      }
+                      className="rounded-control border border-amber-600 bg-amber-50 px-md py-xs text-body-compact font-semibold text-amber-900 disabled:opacity-60"
+                    >
+                      Yêu cầu bổ sung
                     </button>
                     <button
                       type="button"
@@ -302,6 +343,64 @@ export function DriverApplicationsScreen() {
                           setRejectReason('');
                         }}
                         className="rounded-control border border-neutral-border px-md py-xs text-body-compact"
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {requestingChangesId === app.userId ? (
+                  <div className="mt-sm flex flex-col gap-xs rounded-card border border-amber-300 bg-amber-50/50 p-sm">
+                    <label className="text-body-compact font-semibold text-amber-900" htmlFor={`changes-reason-${app.userId}`}>
+                      Yêu cầu bổ sung tài liệu (ACTION_REQUIRED)
+                    </label>
+                    <div className="flex flex-wrap gap-xs">
+                      {[
+                        { code: 'BLURRY_IMAGE', label: 'Ảnh bị mờ / chói sáng' },
+                        { code: 'EXPIRED_DOCUMENT', label: 'Giấy tờ đã hết hạn' },
+                        { code: 'CLASS_MISMATCH', label: 'Hạng GPLX không khớp xe' },
+                        { code: 'NAME_MISMATCH', label: 'Họ tên không khớp' },
+                        { code: 'PLATE_MISMATCH', label: 'Biển số không khớp' },
+                      ].map((item) => (
+                        <button
+                          key={item.code}
+                          type="button"
+                          onClick={() => setChangeReasonCode(item.code)}
+                          className={`rounded-pill border px-sm py-xxs text-xs font-semibold ${
+                            changeReasonCode === item.code
+                              ? 'border-amber-700 bg-amber-700 text-white'
+                              : 'border-amber-300 bg-white text-amber-900'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      id={`changes-reason-${app.userId}`}
+                      value={changeReasonNote}
+                      onChange={(e) => setChangeReasonNote(e.target.value)}
+                      placeholder="VD: Vui lòng chụp lại mặt trước GPLX rõ nét, không bị chói ở vùng số bằng lái."
+                      rows={2}
+                      className="rounded-control border border-neutral-border bg-white px-sm py-xs text-body-compact"
+                    />
+                    <div className="flex gap-xs">
+                      <button
+                        type="button"
+                        disabled={pendingId === app.userId}
+                        onClick={() => void submitRequestChanges(app.userId)}
+                        className="rounded-control bg-amber-700 px-md py-xs text-body-compact font-semibold text-white disabled:opacity-60"
+                      >
+                        Gửi yêu cầu bổ sung
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRequestingChangesId(null);
+                          setChangeReasonNote('');
+                        }}
+                        className="rounded-control border border-neutral-border bg-white px-md py-xs text-body-compact"
                       >
                         Hủy
                       </button>

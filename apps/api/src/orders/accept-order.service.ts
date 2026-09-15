@@ -17,9 +17,20 @@ export class AcceptOrderService {
   async acceptOrder(
     actor: AuthenticatedActor,
     orderId: string,
+    clientRequestId?: string,
   ): Promise<MappedOrderResponse> {
     if (actor.role !== 'DRIVER') {
       throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế mới có thể nhận đơn hàng');
+    }
+
+    if (clientRequestId) {
+      const existingHistory = await this.prisma.orderStatusHistory.findFirst({
+        where: { orderId, actorId: actor.userId, clientRequestId },
+      });
+      if (existingHistory) {
+        const order = await this.ordersRepository.findById(orderId);
+        if (order) return mapOrderResponse(order);
+      }
     }
 
     const driver = await this.prisma.user.findUnique({
@@ -46,6 +57,22 @@ export class AcceptOrderService {
         'ORDER_ALREADY_ASSIGNED',
         409,
         'Đơn hàng đã có tài xế khác tiếp nhận',
+      );
+    }
+
+    const driverProfile = await this.prisma.driverProfile.findUnique({
+      where: { userId: actor.userId },
+    });
+    if (!driverProfile) {
+      throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy hồ sơ tài xế');
+    }
+
+    if (existingOrder.vehicleType && driverProfile.vehicleType !== existingOrder.vehicleType) {
+      throw new DomainError(
+        'VEHICLE_TYPE_MISMATCH',
+        422,
+        'Loại xe không phù hợp với yêu cầu của đơn hàng',
+        { required: existingOrder.vehicleType, actual: driverProfile.vehicleType },
       );
     }
 
@@ -96,6 +123,7 @@ export class AcceptOrderService {
           fromStatus: 'REQUESTED',
           toStatus: 'ACCEPTED',
           actorId: actor.userId,
+          clientRequestId: clientRequestId ?? null,
         },
       });
 

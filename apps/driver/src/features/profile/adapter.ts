@@ -105,6 +105,12 @@ export function createDriverProfileHttpAdapter(client?: ProfileHttpClient): Driv
 
     async logout(): Promise<void> {
       try {
+        await getClient().patch('/driver/availability', { availability: 'OFFLINE' });
+      } catch {
+        // Best-effort: the driver must still be able to log out locally even if
+        // this call fails (e.g. account already deactivated, network drop).
+      }
+      try {
         await getClient().post('/auth/logout');
       } catch {
         // Logout must always succeed on the client even if the server call fails.

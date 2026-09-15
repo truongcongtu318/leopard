@@ -1,17 +1,83 @@
-import type { DriverAvailability, OrderStatus, ProviderSource } from '@leopard/shared';
+import type {
+  DriverAvailability,
+  OrderStatus,
+  ProviderSource,
+  RouteCoordinate,
+  VehicleType,
+} from '@leopard/shared';
+import type { RoutePolylineSegment } from '@leopard/mobile-core';
+
+export type DriverStopProgressStatus =
+  | 'PENDING'
+  | 'ARRIVED'
+  | 'IN_SERVICE'
+  | 'COMPLETED';
 
 export type DriverRoutePoint = Readonly<{
   id: string;
   label: string;
+  lat?: number;
+  lng?: number;
   coords?: { lat: number; lng: number };
+}>;
+
+export type DriverRoutePointView = Readonly<{
+  id: string;
+  label: string;
+  lat?: number;
+  lng?: number;
+  address?: string;
+  sequence?: number;
+  stopId?: string;
+  progress?: DriverStopProgressStatus;
+}>;
+
+export type DriverRouteStopView = Readonly<{
+  id: string;
+  stopId: string;
+  sequence: number;
+  address: string;
+  label: string;
+  lat?: number;
+  lng?: number;
+  latitude?: number;
+  longitude?: number;
+  coords?: { lat: number; lng: number };
+  progress: DriverStopProgressStatus;
+  contactName?: string | null;
+  contactPhone?: string | null;
+}>;
+
+export type DriverEtaOutcomeView =
+  | 'COMPUTED'
+  | 'STALE'
+  | 'NOT_COMPUTABLE'
+  | 'NOT_REQUESTED';
+
+export type DriverRouteEtaView = Readonly<{
+  distanceMeters: number;
+  durationSeconds: number;
+  etaTargetTime: string | null;
+  estimateAgeLabel: string | null;
+  recomputeStatus: 'PENDING' | 'RECOMPUTING' | 'FAILED' | 'READY';
+  recomputeFailureReason?: string;
+  outcome: DriverEtaOutcomeView;
+  source: 'DIRECT' | 'STATION' | 'DEMO' | 'VIETMAP' | 'OSRM';
+  activeLegIndex: number;
+  activeStopId: string | null;
+  polylineCoords: readonly RouteCoordinate[];
+  polylineSegments?: readonly RoutePolylineSegment[];
 }>;
 export type DriverRouteView = Readonly<{
   origin: DriverRoutePoint;
-  stops: readonly DriverRoutePoint[];
+  stops: readonly DriverRouteStopView[];
   destination: DriverRoutePoint;
   distanceLabel: string;
   etaDurationSeconds: number;
   etaSource: ProviderSource;
+  eta?: DriverRouteEtaView | null;
+  routeCoords?: readonly RouteCoordinate[];
+  routeSegments?: readonly RoutePolylineSegment[];
 }>;
 
 export type DriverCommandView = Readonly<{
@@ -62,6 +128,8 @@ export type DriverActiveTripView = Readonly<{
   route: DriverRouteView;
   trackingLabel: string;
   proofLabel: string | null;
+  customerContact?: string | null;
+  contactRoleLabel?: string | null;
 }>;
 
 type DriverListBoundaryView = Readonly<{
@@ -132,8 +200,17 @@ type DriverAssignedDetailOrder = Readonly<{
   status: Exclude<OrderStatus, 'REQUESTED'>;
   route: DriverRouteView;
   vehicleLabel: string;
+  vehicleType?: VehicleType | string | null;
   cargoSummary: string;
+  cargoWeightKg?: number | null;
+  contactRoleLabel: string;
   customerContact: string;
+  priceLabel?: string;
+  priceVnd?: number | null;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  isCashConfirmed?: boolean;
+  driverPayoutVnd?: number | null;
   updatedAtLabel: string;
   history: readonly Readonly<{
     id: string;

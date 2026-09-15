@@ -14,6 +14,7 @@ import {
   StopType,
   UserStatus,
   VehicleType,
+  WithdrawalStatus,
 } from './index.js';
 import type { Page } from './index.js';
 
@@ -31,18 +32,30 @@ describe('shared domain contracts', () => {
       PaymentStatus,
       ProviderSource,
       VehicleType,
+      WithdrawalStatus,
     }).toEqual({
       Role: ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'],
       UserStatus: ['ACTIVE', 'DISABLED'],
       FleetMemberRole: ['OWNER', 'DRIVER'],
       FleetMemberStatus: ['INVITED', 'ACTIVE', 'REMOVED'],
       DriverAvailability: ['OFFLINE', 'AVAILABLE', 'BUSY'],
-      OrderStatus: ['REQUESTED', 'ACCEPTED', 'PICKING_UP', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'],
+      OrderStatus: [
+        'REQUESTED',
+        'ACCEPTED',
+        'PICKING_UP',
+        'IN_TRANSIT',
+        'DELIVERED',
+        'CANCELLED',
+        'INCIDENT_CANCELLED',
+        'RETURNING',
+        'RETURNED',
+      ],
       StopType: ['PICKUP', 'STOP', 'DROPOFF'],
       MediaType: ['CARGO', 'DELIVERY_PROOF'],
       PaymentStatus: ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'],
       ProviderSource: ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'],
       VehicleType: ['MOTORBIKE', 'VAN', 'TRUCK'],
+      WithdrawalStatus: ['PENDING', 'APPROVED', 'REJECTED'],
     });
     expect(ProviderSource).not.toContain('FIREBASE');
   });

@@ -1,4 +1,4 @@
-import { IsNumber, Max, Min } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
 export class UpdateDriverLocationDto {
   @IsNumber({ allowInfinity: false, allowNaN: false })
@@ -10,4 +10,13 @@ export class UpdateDriverLocationDto {
   @Min(-180)
   @Max(180)
   lng!: number;
+
+  @IsOptional()
+  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @Min(0)
+  accuracyM?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isStationaryHeartbeat?: boolean;
 }

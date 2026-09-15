@@ -17,10 +17,12 @@ import {
   IconSpeedTruck,
   IconTrophy,
   ScreenScaffold,
+  ScreenState,
   StatusBadge,
 } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
+import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
 
 export type HistoryTripItem = Readonly<{
   id: string;
@@ -32,97 +34,65 @@ export type HistoryTripItem = Readonly<{
   completedAtLabel: string;
   datePeriod: 'today' | 'week' | 'older';
   payoutAmount: number;
-  status: 'DELIVERED' | 'CANCELLED';
+  status: 'DELIVERED' | 'CANCELLED' | 'INCIDENT_CANCELLED' | 'RETURNING' | 'RETURNED';
   hasProof: boolean;
   signerName?: string;
-  paymentMethod: string;
+  vehicleLabel: string;
 }>;
 
-const mockHistory: readonly HistoryTripItem[] = [
-  {
-    id: 'ord-001',
-    reference: 'LP-D-260815-001',
-    origin: 'Kho Tân Bình, TP.HCM',
-    destination: 'TP. Thủ Đức, TP.HCM',
-    distanceLabel: '14.2 km',
-    cargoSummary: '40 bao xi măng INSEE (2.000 kg)',
-    completedAtLabel: '15/08/2026 · 14:32',
-    datePeriod: 'today',
-    payoutAmount: 170000,
-    status: 'DELIVERED',
-    hasProof: true,
-    signerName: 'Thủ kho Nguyễn Văn Bình',
-    paymentMethod: 'Ví tài xế',
-  },
-  {
-    id: 'ord-002',
-    reference: 'LP-D-260815-002',
-    origin: 'Cảng Cát Lái, Quận 2',
-    destination: 'KCN Tân Bình, Tân Phú',
-    distanceLabel: '18.5 km',
-    cargoSummary: 'Kiện pallet linh kiện điện tử (1.5T)',
-    completedAtLabel: '15/08/2026 · 11:15',
-    datePeriod: 'today',
-    payoutAmount: 250000,
-    status: 'DELIVERED',
-    hasProof: true,
-    signerName: 'Trưởng kho Lê Hoàng Long',
-    paymentMethod: 'VietQR',
-  },
-  {
-    id: 'ord-003',
-    reference: 'LP-D-260814-009',
-    origin: 'Chợ Đầu Mối Thủ Đức',
-    destination: 'Quận 1, TP.HCM',
-    distanceLabel: '12.0 km',
-    cargoSummary: 'Rau củ quả Đà Lạt (800 kg)',
-    completedAtLabel: '14/08/2026 · 18:20',
-    datePeriod: 'week',
-    payoutAmount: 0,
-    status: 'CANCELLED',
-    hasProof: false,
-    paymentMethod: 'Hủy đơn',
-  },
-  {
-    id: 'ord-004',
-    reference: 'LP-D-260814-005',
-    origin: 'Kho Tân Tạo, Bình Tân',
-    destination: 'Khu dân cư Trung Sơn, Quận 8',
-    distanceLabel: '9.8 km',
-    cargoSummary: 'Nội thất gỗ gia dụng (1.2T)',
-    completedAtLabel: '14/08/2026 · 15:45',
-    datePeriod: 'week',
-    payoutAmount: 140000,
-    status: 'DELIVERED',
-    hasProof: true,
-    signerName: 'Khách hàng Trần Thu Hà',
-    paymentMethod: 'Tiền mặt',
-  },
-];
+export type DriverHistoryScreenProps = Readonly<{
+  items: readonly HistoryTripItem[];
+  /** True total from the backend (not limited by the fetched page). */
+  total: number;
+  isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
+  onNavigate?: (route: string) => void;
+}>;
 
 type DateFilterType = 'ALL' | 'today' | 'week';
 
-export function DriverHistoryScreen() {
+export function DriverHistoryScreen({
+  items,
+  total,
+  isLoading,
+  isError,
+  onRetry,
+  onNavigate,
+}: DriverHistoryScreenProps) {
   const router = useRouter();
   const [dateFilter, setDateFilter] = useState<DateFilterType>('ALL');
   const [selectedEpodTrip, setSelectedEpodTrip] = useState<HistoryTripItem | null>(null);
   const { openDrawer } = useDriverDrawer();
 
-  const displayedList = mockHistory.filter((item) => {
+  const displayedList = items.filter((item) => {
     if (dateFilter === 'ALL') return true;
     return item.datePeriod === dateFilter;
   });
 
+  // These two are computed only over the currently fetched batch (not a
+  // second aggregate query), so they're labeled "hiển thị" (shown) rather
+  // than implying a true lifetime total — only "Tổng chuyến" below reflects
+  // the real all-time count from the backend's pagination total.
+  const deliveredCount = items.filter((item) => item.status === 'DELIVERED').length;
+  const completionRate = items.length > 0 ? Math.round((deliveredCount / items.length) * 100) : 0;
+  const displayedRevenue = items
+    .filter((item) => item.status === 'DELIVERED')
+    .reduce((sum, item) => sum + item.payoutAmount, 0);
+
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+  const formatCompact = (val: number) =>
+    val >= 1_000_000 ? `${(val / 1_000_000).toFixed(2)}tr` : formatCurrency(val);
 
   return (
-    <ScreenScaffold
-      eyebrow="DRIVER · TRIP LOG"
-      headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-      headerTone="plain"
-      title="Lịch sử chuyến"
-    >
+    <View style={styles.screenContainer}>
+      <ScreenScaffold
+        eyebrow="DRIVER · TRIP LOG"
+        headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
+        headerTone="plain"
+        title="Lịch sử chuyến"
+      >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -134,7 +104,7 @@ export function DriverHistoryScreen() {
             <View style={styles.kpiIconChip}>
               <IconSpeedTruck color={leopardPalette.primary} size={15} />
             </View>
-            <Text style={styles.kpiValue}>128</Text>
+            <Text style={styles.kpiValue}>{total}</Text>
             <Text style={styles.kpiLabel}>Tổng chuyến</Text>
           </View>
 
@@ -142,18 +112,24 @@ export function DriverHistoryScreen() {
             <View style={styles.kpiIconChip}>
               <IconTrophy color="#16A34A" size={15} />
             </View>
-            <Text style={[styles.kpiValue, styles.kpiValueGreen]}>18.45tr</Text>
-            <Text style={styles.kpiLabel}>Tích lũy</Text>
+            <Text style={[styles.kpiValue, styles.kpiValueGreen]}>{formatCompact(displayedRevenue)}</Text>
+            <Text style={styles.kpiLabel}>Doanh thu hiển thị</Text>
           </View>
 
           <View style={styles.kpiBox}>
             <View style={styles.kpiIconChip}>
               <IconSecurityShield color="#0B1E42" size={15} />
             </View>
-            <Text style={styles.kpiValue}>98.5%</Text>
-            <Text style={styles.kpiLabel}>Hoàn thành</Text>
+            <Text style={styles.kpiValue}>{completionRate}%</Text>
+            <Text style={styles.kpiLabel}>Tỷ lệ giao thành công</Text>
           </View>
         </View>
+
+        {isLoading ? (
+          <ScreenState state="loading" />
+        ) : isError ? (
+          <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
+        ) : null}
 
         {/* 2. Date Filter Segmented Toolbar */}
         <View accessibilityRole="toolbar" style={styles.filterRow}>
@@ -165,7 +141,7 @@ export function DriverHistoryScreen() {
             style={[styles.filterChip, dateFilter === 'ALL' ? styles.filterChipActive : null]}
           >
             <Text style={[styles.filterText, dateFilter === 'ALL' ? styles.filterTextActive : null]}>
-              Tất cả ({mockHistory.length})
+              Tất cả ({items.length})
             </Text>
           </Pressable>
 
@@ -229,7 +205,7 @@ export function DriverHistoryScreen() {
                       >
                         {item.payoutAmount > 0 ? `+${formatCurrency(item.payoutAmount)}` : '0 ₫'}
                       </Text>
-                      <Text style={styles.paymentMethodLabel}>{item.paymentMethod}</Text>
+                      <Text style={styles.paymentMethodLabel}>{item.vehicleLabel}</Text>
                     </View>
                   </View>
 
@@ -284,7 +260,7 @@ export function DriverHistoryScreen() {
                       accessibilityLabel={`Xem chi tiết đơn ${item.reference}`}
                       accessibilityRole="button"
                       hitSlop={8}
-                      onPress={() => router.push(`/driver/orders/${item.id}`)}
+                      onPress={() => router.push(`/orders/${item.id}`)}
                       style={styles.detailLink}
                     >
                       <Text style={styles.viewDetailCta}>Chi tiết</Text>
@@ -364,16 +340,26 @@ export function DriverHistoryScreen() {
         </Pressable>
       </Modal>
     </ScreenScaffold>
+
+    <DriverBottomNavigation
+      activeTab="orders"
+      onNavigate={onNavigate ?? ((route) => router.push(route))}
+    />
+  </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    position: 'relative',
+  },
   scrollWrap: {
     flex: 1,
   },
   scrollContent: {
     gap: spacing.sm,
-    paddingBottom: spacing.xl + 20,
+    paddingBottom: 100,
   },
   /* Cumulative KPI Strip */
   kpiStripRow: {

@@ -2,12 +2,14 @@ import { OrderStatus } from './order-status.js';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   REQUESTED: ['ACCEPTED', 'CANCELLED'],
-  ACCEPTED: ['PICKING_UP', 'PICKED_UP', 'CANCELLED'],
-  PICKING_UP: ['IN_TRANSIT', 'CANCELLED'],
-  PICKED_UP: ['IN_TRANSIT', 'CANCELLED'],
-  IN_TRANSIT: ['DELIVERED'],
+  ACCEPTED: ['PICKING_UP', 'CANCELLED', 'INCIDENT_CANCELLED'],
+  PICKING_UP: ['IN_TRANSIT', 'CANCELLED', 'INCIDENT_CANCELLED'],
+  IN_TRANSIT: ['DELIVERED', 'INCIDENT_CANCELLED', 'RETURNING'],
+  RETURNING: ['RETURNED'],
+  RETURNED: [],
   DELIVERED: [],
   CANCELLED: [],
+  INCIDENT_CANCELLED: [],
 };
 
 export function canTransition(from: OrderStatus, to: OrderStatus): boolean {

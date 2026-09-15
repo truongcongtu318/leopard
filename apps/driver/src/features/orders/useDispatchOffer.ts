@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { createDispatchOfferListener } from './dispatch-offer-listener';
+import { useDriverDispatch } from './DriverDispatchContext';
 import type { IncomingDispatchOffer } from './IncomingDispatchModal';
 
 export type UseDispatchOfferResult = Readonly<{
@@ -9,25 +10,33 @@ export type UseDispatchOfferResult = Readonly<{
 }>;
 
 /**
- * Connects to the dispatch socket while mounted and surfaces the latest
- * incoming offer for IncomingDispatchModal. See Dispatch Radar Phase 2 plan —
- * intentionally screen-scoped (only listens while the Orders tab is mounted),
- * not a global layout-level overlay.
+ * Accesses incoming dispatch offers. Backed by global DriverDispatchContext when mounted
+ * inside the root provider, or falls back to a screen-scoped listener if standalone.
  */
 export function useDispatchOffer(): UseDispatchOfferResult {
-  const [offer, setOffer] = useState<IncomingDispatchOffer | null>(null);
+  const globalDispatch = useDriverDispatch();
+  const [localOffer, setLocalOffer] = useState<IncomingDispatchOffer | null>(null);
+
   const listener = useMemo(
-    () => createDispatchOfferListener({ onOffer: setOffer }),
-    [],
+    () => (globalDispatch ? null : createDispatchOfferListener({ onOffer: setLocalOffer })),
+    [globalDispatch],
   );
 
   useEffect(() => {
+    if (!listener) return;
     listener.connect();
     return () => listener.disconnect();
   }, [listener]);
 
+  if (globalDispatch) {
+    return {
+      offer: globalDispatch.offer,
+      declineOffer: globalDispatch.declineOffer,
+    };
+  }
+
   return {
-    offer,
-    declineOffer: () => setOffer(null),
+    offer: localOffer,
+    declineOffer: () => setLocalOffer(null),
   };
 }

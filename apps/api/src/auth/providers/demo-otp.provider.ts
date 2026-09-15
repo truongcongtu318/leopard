@@ -9,7 +9,7 @@ export interface DemoOtpProviderOptions {
   readonly nodeEnv: string;
 }
 
-const DEMO_IDENTITIES = new Map<string, OtpIdentity>([
+export const DEMO_IDENTITIES = new Map<string, OtpIdentity>([
   ['customer', { providerUserId: 'demo:customer', phoneNumber: '+840000000001' }],
   ['driver', { providerUserId: 'demo:driver', phoneNumber: '+840000000002' }],
   [

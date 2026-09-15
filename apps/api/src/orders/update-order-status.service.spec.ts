@@ -28,6 +28,7 @@ describe('UpdateOrderStatusService - Balance Accrual', () => {
         create: jest.fn(),
       },
       driverProfile: {
+        findUnique: jest.fn().mockResolvedValue(null),
         update: jest.fn(),
       },
     };
@@ -94,6 +95,7 @@ describe('UpdateOrderStatusService - Balance Accrual', () => {
       where: { userId: driverActor.userId },
       data: {
         availability: 'AVAILABLE',
+        autoOfflineOnComplete: false,
         balanceVnd: { increment: 85_000 },
       },
     });
@@ -134,6 +136,7 @@ describe('UpdateOrderStatusService - Balance Accrual', () => {
       where: { userId: driverActor.userId },
       data: {
         availability: 'AVAILABLE',
+        autoOfflineOnComplete: false,
         balanceVnd: { increment: 170_000 },
       },
     });

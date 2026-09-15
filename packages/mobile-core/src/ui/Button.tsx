@@ -8,6 +8,7 @@ type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 type ButtonSize = 'default' | 'driver-primary';
 
 type ButtonProps = {
+  testID?: string;
   label: string;
   onPress?: PressableProps['onPress'];
   variant?: ButtonVariant;
@@ -56,6 +57,7 @@ const sizeStyles = StyleSheet.create({
 });
 
 export function Button({
+  testID,
   label,
   onPress,
   variant = 'primary',
@@ -85,6 +87,7 @@ export function Button({
         }
         onPress?.(e);
       }}
+      testID={testID}
       style={({ pressed }) => [
         styles.control,
         sizeStyles[size],
