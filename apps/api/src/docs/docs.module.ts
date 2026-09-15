@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 
 import type { INestApplication } from '@nestjs/common';
@@ -30,7 +31,13 @@ export class DocsModule {
     const raw = readFileSync(resolvedPath, 'utf-8');
     const document = yaml.load(raw) as OpenAPIObject;
 
-    const { SwaggerModule } = require('@nestjs/swagger') as typeof import('@nestjs/swagger');
+    // Loaded on demand so that a deployment without ENABLE_API_DOCS never pulls
+    // Swagger in at all. The compiled output is an ES module, where there is no
+    // ambient `require`, so the CommonJS loader has to be created explicitly —
+    // calling bare `require(...)` here throws "require is not defined" and takes
+    // the whole process down at boot.
+    const nodeRequire = createRequire(import.meta.url);
+    const { SwaggerModule } = nodeRequire('@nestjs/swagger') as typeof import('@nestjs/swagger');
 
     const swaggerOptions: SwaggerCustomOptions = {
       customSiteTitle: 'LEOPARD API Docs',
