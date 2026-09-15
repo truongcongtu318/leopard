@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, Button, IconTxPayment, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, Button, IconBank, IconTxPayment, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { WalletSummary, WithdrawalHistoryItem, WithdrawalRequestInput } from './adapter';
 
 export type DriverWalletScreenProps = Readonly<{
@@ -82,7 +82,7 @@ export function DriverWalletScreen({
           <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
         ) : (
           <>
-            <View style={styles.doubleBezelOuter}>
+            <View testID="driver-wallet-balance-card" style={styles.doubleBezelOuter}>
               <View style={styles.doubleBezelInner}>
                 <View style={styles.balanceHeader}>
                   <View style={styles.balanceHeaderLeft}>
@@ -110,32 +110,86 @@ export function DriverWalletScreen({
                   </View>
                 </View>
 
-                <Button label="Yêu cầu rút tiền" onPress={handleOpenModal} size="driver-primary" variant="primary" />
+                <Button
+                  testID="btn-request-withdrawal"
+                  label="Yêu cầu rút tiền"
+                  onPress={handleOpenModal}
+                  size="driver-primary"
+                  variant="primary"
+                />
               </View>
             </View>
 
-            <View style={styles.historySection}>
-              <Text style={styles.sectionLabel}>Lịch sử yêu cầu rút tiền</Text>
-              <View style={styles.txList}>
-                {history.map((item) => (
-                  <View key={item.id} style={styles.txCard}>
-                    <View style={styles.txLeft}>
-                      <View style={[styles.txIconChip, styles.txIconNegative]}>
-                        <IconTxPayment color={colors.neutral.mutedText} size={18} />
-                      </View>
-                      <View style={styles.txInfo}>
-                        <Text style={styles.txTitle}>Rút tiền về {item.bankName ?? 'ngân hàng'}</Text>
-                        <Text style={styles.txTime}>{new Date(item.createdAt).toLocaleString('vi-VN')}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.txRight}>
-                      <Text style={[styles.txAmount, styles.txAmountNegative]}>
-                        -{formatCurrency(item.amountVnd)}
-                      </Text>
-                      <Text style={styles.txStatus}>{STATUS_LABELS[item.status]}</Text>
-                    </View>
+            {/* Linked Bank Accounts Bento Card */}
+            <View testID="driver-linked-bank-card" style={styles.bentoCard}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.cardHeaderLeft}>
+                  <View style={styles.bankIconChip}>
+                    <IconBank color="#0B1E42" size={16} />
                   </View>
-                ))}
+                  <View>
+                    <Text style={styles.bentoCardTitle}>Tài khoản liên kết</Text>
+                    <Text style={styles.bentoCardSub}>Nhận tiền thanh toán và rút số dư</Text>
+                  </View>
+                </View>
+              </View>
+              {summary.bankAccountNumber ? (
+                <View style={styles.bankDetailRow}>
+                  <View style={styles.bankInfoCol}>
+                    <Text style={styles.bankNameText}>{summary.bankName ?? 'Ngân hàng'}</Text>
+                    <Text style={styles.bankAccountNumText}>{summary.bankAccountNumber}</Text>
+                    {summary.bankAccountName ? (
+                      <Text style={styles.bankHolderText}>{summary.bankAccountName.toUpperCase()}</Text>
+                    ) : null}
+                  </View>
+                </View>
+              ) : (
+                <Text style={styles.unlinkedText}>Chưa liên kết tài khoản ngân hàng</Text>
+              )}
+            </View>
+
+            <View style={styles.historySection}>
+              <Text style={styles.sectionLabel}>Lịch sử giao dịch</Text>
+              <View style={styles.txList}>
+                {history.map((item) => {
+                  const isPayout = item.type === 'ORDER_PAYOUT';
+                  const isFee = item.type === 'PLATFORM_FEE';
+                  const badgeLabel = isPayout ? '+cước' : isFee ? '-phí sàn' : '-rút tiền';
+                  const badgeStyle = isPayout ? styles.badgePayout : isFee ? styles.badgeFee : styles.badgeWithdrawal;
+                  const badgeTextStyle = isPayout ? styles.badgeTextPayout : isFee ? styles.badgeTextFee : styles.badgeTextWithdrawal;
+                  const amountPrefix = isPayout ? '+' : '-';
+                  const amountStyle = isPayout ? styles.txAmountPositive : styles.txAmountNegative;
+                  const itemTitle = item.title ?? (isPayout ? 'Cước chuyến hoàn thành' : isFee ? 'Phí sàn nền tảng' : `Rút tiền về ${item.bankName ?? 'ngân hàng'}`);
+
+                  return (
+                    <View key={item.id} style={styles.txCard}>
+                      <View style={styles.txLeft}>
+                        <View style={[styles.txIconChip, isPayout ? styles.txIconPositive : styles.txIconNegative]}>
+                          {isPayout ? (
+                            <IconWallet color="#16A34A" size={18} />
+                          ) : (
+                            <IconTxPayment color={colors.neutral.mutedText} size={18} />
+                          )}
+                        </View>
+                        <View style={styles.txInfo}>
+                          <View style={styles.txTitleRow}>
+                            <Text style={styles.txTitle}>{itemTitle}</Text>
+                            <View style={[styles.txIndicatorBadge, badgeStyle]}>
+                              <Text style={[styles.txIndicatorText, badgeTextStyle]}>{badgeLabel}</Text>
+                            </View>
+                          </View>
+                          <Text style={styles.txTime}>{new Date(item.createdAt).toLocaleString('vi-VN')}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.txRight}>
+                        <Text style={[styles.txAmount, amountStyle]}>
+                          {amountPrefix}{formatCurrency(item.amountVnd)}
+                        </Text>
+                        <Text style={styles.txStatus}>{STATUS_LABELS[item.status] ?? item.status}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           </>
@@ -211,6 +265,30 @@ const styles = StyleSheet.create({
   balanceStatDivider: { backgroundColor: colors.neutral.rowDivider, width: 1 },
   balanceStatLabel: { color: colors.neutral.subtleText, fontSize: 11 },
   balanceStatValue: { color: '#0F172A', fontSize: 12.5, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  bentoCard: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.cardXl,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.md,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cardHeaderRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  cardHeaderLeft: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+  bankIconChip: { alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: radius.card, height: 32, justifyContent: 'center', width: 32 },
+  bentoCardTitle: { color: '#0B1E42', fontSize: 13, fontWeight: '700' },
+  bentoCardSub: { color: leopardPalette.textMutedSlate, fontSize: 10.5, marginTop: 1 },
+  bankDetailRow: { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0', borderRadius: radius.card, borderWidth: 1, padding: spacing.sm },
+  bankInfoCol: { gap: 2 },
+  bankNameText: { color: '#0B1E42', fontSize: 13, fontWeight: '700' },
+  bankAccountNumText: { color: colors.neutral.text, fontSize: 14, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  bankHolderText: { color: leopardPalette.textMutedSlate, fontSize: 11, fontWeight: '600', letterSpacing: 0.5 },
+  unlinkedText: { color: leopardPalette.textMutedSlate, fontSize: 12, fontStyle: 'italic' },
   historySection: { gap: spacing.xs },
   sectionLabel: { color: leopardPalette.textMutedSlate, fontSize: 13, fontWeight: '700' },
   txList: { gap: spacing.xs },
@@ -220,7 +298,16 @@ const styles = StyleSheet.create({
   txIconPositive: { backgroundColor: colors.success.background },
   txIconNegative: { backgroundColor: colors.neutral.surfaceMuted },
   txInfo: { flex: 1, gap: 2 },
+  txTitleRow: { alignItems: 'center', flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   txTitle: { color: colors.neutral.titleText, fontSize: 13, fontWeight: '600' },
+  txIndicatorBadge: { borderRadius: radius.pill, paddingHorizontal: 6, paddingVertical: 2 },
+  badgePayout: { backgroundColor: '#DCFCE7' },
+  badgeFee: { backgroundColor: '#FEF3C7' },
+  badgeWithdrawal: { backgroundColor: '#F1F5F9' },
+  txIndicatorText: { fontSize: 10, fontWeight: '700' },
+  badgeTextPayout: { color: '#166534' },
+  badgeTextFee: { color: '#B45309' },
+  badgeTextWithdrawal: { color: '#475569' },
   txTime: { color: colors.neutral.subtleText, fontSize: 11, fontVariant: ['tabular-nums'] },
   txRight: { alignItems: 'flex-end', gap: 2 },
   txAmount: { fontSize: 13.5, fontWeight: '700', fontVariant: ['tabular-nums'] },

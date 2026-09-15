@@ -28,6 +28,8 @@ export interface WalletSummary {
 
 export type WithdrawalStatusValue = 'PENDING' | 'APPROVED' | 'REJECTED';
 
+export type WalletTransactionType = 'WITHDRAWAL' | 'ORDER_PAYOUT' | 'PLATFORM_FEE';
+
 export interface WithdrawalHistoryItem {
   id: string;
   status: WithdrawalStatusValue;
@@ -36,6 +38,8 @@ export interface WithdrawalHistoryItem {
   bankAccountNumber: string | null;
   bankAccountName: string | null;
   createdAt: string;
+  type?: WalletTransactionType | string;
+  title?: string;
 }
 
 export interface WithdrawalRequestInput {
