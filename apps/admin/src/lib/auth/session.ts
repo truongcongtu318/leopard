@@ -1,5 +1,7 @@
 /**
- * Mirror of the shared Role type to avoid dependency on @leopard/shared.
+ * Mirror of the backend Role enum to avoid dependency on @leopard/shared.
+ * Intent: keep FLEET_OWNER here because the backend still issues it;
+ * admin route guard stays ADMIN-only via role-policy + admin layout.
  */
 export type Role = "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN";
 

@@ -28,12 +28,6 @@ const ROLE_CONTEXT: Readonly<Record<string, RoleContext>> = {
     navigationLabel: 'Điều hướng quản trị',
     drawerLabel: 'Điều hướng quản trị vận hành',
   },
-  fleet_owner: {
-    contextLabel: 'Quản lý đội xe',
-    roleLabel: 'Chủ đội xe',
-    navigationLabel: 'Điều hướng đội xe',
-    drawerLabel: 'Điều hướng quản lý đội xe',
-  },
 };
 
 const FALLBACK_CONTEXT: RoleContext = {
@@ -49,9 +43,6 @@ const NAVIGATION_LABELS: Readonly<Record<string, string>> = {
   '/admin/fleets': 'Đội xe',
   '/admin/drivers': 'Tài xế',
   '/admin/orders': 'Đơn hàng',
-  '/fleet': 'Tổng quan',
-  '/fleet/drivers': 'Tài xế',
-  '/fleet/orders': 'Đơn hàng',
 };
 
 const FOCUSABLE_SELECTOR = [
@@ -149,7 +140,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
         {/* Left: Brand Logo & Horizontal Tabs */}
         <div className="flex items-center gap-6 lg:gap-8">
           <Link
-            href={role === 'admin' ? '/admin' : '/fleet'}
+            href="/admin"
             className="flex items-center gap-2.5 transition-opacity motion-reduce:transition-none"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white shadow-2xs">
@@ -184,14 +175,14 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
           {/* User Profile Capsule */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-700 ring-1 ring-slate-300">
-              {role === 'admin' ? 'QTV' : 'CĐX'}
+              QTV
             </span>
             <div className="hidden text-left sm:block">
               <p className="text-xs font-bold text-slate-800 leading-tight">
-                {role === 'admin' ? 'Nguyễn Hoài Nam' : 'Trần Quốc Tuấn'}
+                Nguyễn Hoài Nam
               </p>
               <p className="text-[10px] font-medium text-slate-400 leading-none">
-                {role === 'admin' ? 'Quản trị viên điều phối' : 'Chủ đội xe Sao Mai'}
+                Quản trị viên điều phối
               </p>
             </div>
           </div>

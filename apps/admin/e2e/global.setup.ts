@@ -15,7 +15,7 @@ export default async function globalSetup() {
     }
 
     const token = request.headers.authorization?.replace(/^Bearer\s+/u, '') ?? '';
-    const role = token === 'qa-fleet' ? 'FLEET_OWNER' : token === 'qa-admin' ? 'ADMIN' : null;
+    const role = token === 'qa-admin' ? 'ADMIN' : null;
     if (!role) {
       response.statusCode = 401;
       response.end(JSON.stringify({ code: 'UNAUTHORIZED' }));
@@ -24,7 +24,7 @@ export default async function globalSetup() {
 
     response.end(
       JSON.stringify({
-        id: role === 'ADMIN' ? 'admin-static-e2e' : 'fleet-static-e2e',
+        id: 'admin-static-e2e',
         role,
         status: 'ACTIVE',
       }),
