@@ -29,6 +29,13 @@ const optionalProviderUrl = z.preprocess(
   (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
   z.string().trim().url().optional(),
 );
+// The universal demo code every deployment used to accept. Recognised here only
+// so production can refuse it.
+const WELL_KNOWN_DEMO_OTPS = new Set(['123456', '654321']);
+const demoOtpSchema = z
+  .string()
+  .trim()
+  .regex(/^[0-9]{4,8}$/, 'must be 4-8 digits');
 const nonNegativeIntegerSchema = z.coerce.number().int().nonnegative();
 const vehicleRatesSchema = z
   .string()
@@ -72,6 +79,7 @@ const envSchema = z
     AUTH_REFRESH_TOKEN_SECRET: secretSchema.optional(),
     AUTH_DEMO_LOGIN_ENABLED: booleanFlagSchema.optional(),
     ALLOW_DEMO_AUTH_PROVIDER: booleanFlagSchema.optional(),
+    AUTH_DEMO_OTP: demoOtpSchema.optional(),
     ESTIMATE_TOKEN_HMAC_SECRET: secretSchema.optional(),
     PRICING_MINIMUM_FARE_VND: nonNegativeIntegerSchema.optional(),
     PRICING_STOP_SURCHARGE_VND: nonNegativeIntegerSchema.optional(),
@@ -219,6 +227,30 @@ const envSchema = z
       });
     }
 
+    // With demo auth on in production, the OTP that authorises a login must not
+    // be a value anyone can guess or read out of this repository. `123456` was
+    // accepted for every seeded phone number, so knowing the code was enough to
+    // sign in as the demo admin. A deployment that genuinely needs demo logins
+    // has to set its own code.
+    if (env.AUTH_DEMO_LOGIN_ENABLED === true) {
+      const demoOtp = (env.AUTH_DEMO_OTP ?? '').trim();
+      if (demoOtp.length === 0) {
+        context.addIssue({
+          code: 'custom',
+          path: ['AUTH_DEMO_OTP'],
+          message:
+            'AUTH_DEMO_OTP is required in production when AUTH_DEMO_LOGIN_ENABLED=true',
+        });
+      } else if (WELL_KNOWN_DEMO_OTPS.has(demoOtp)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['AUTH_DEMO_OTP'],
+          message:
+            'AUTH_DEMO_OTP must not be the well-known demo code (123456/654321) in production',
+        });
+      }
+    }
+
     if (
       env.SOCKET_PROVIDER === 'in-memory' &&
       env.ALLOW_IN_MEMORY_SOCKET_PROVIDER !== true
@@ -341,6 +373,7 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     AUTH_REFRESH_TOKEN_SECRET: source.AUTH_REFRESH_TOKEN_SECRET,
     AUTH_DEMO_LOGIN_ENABLED: source.AUTH_DEMO_LOGIN_ENABLED,
     ALLOW_DEMO_AUTH_PROVIDER: source.ALLOW_DEMO_AUTH_PROVIDER,
+    AUTH_DEMO_OTP: source.AUTH_DEMO_OTP,
     ESTIMATE_TOKEN_HMAC_SECRET: source.ESTIMATE_TOKEN_HMAC_SECRET,
     PRICING_MINIMUM_FARE_VND: source.PRICING_MINIMUM_FARE_VND,
     PRICING_STOP_SURCHARGE_VND: source.PRICING_STOP_SURCHARGE_VND,

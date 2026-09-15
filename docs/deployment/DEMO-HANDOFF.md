@@ -133,29 +133,36 @@ Thay `<HOST>` bằng IP hoặc domain của VPS. **Địa chỉ nên gửi khác
 ## 4. Tài khoản demo
 
 Bản deploy **không hiện nút đăng nhập nhanh** trong app. Khách đăng nhập bằng số
-điện thoại seed sẵn và mã OTP dùng chung của bản demo:
+điện thoại seed sẵn và mã OTP của bản này:
 
 1. Nhập số điện thoại → bấm **Tiếp tục**
-2. Nhập OTP `123456`
+2. Nhập OTP `<OTP>` — lấy bằng: `grep AUTH_DEMO_OTP .env.prod` trên VPS
 
 | Vai trò | Số điện thoại | OTP |
 |---|---|---|
-| Admin | `0900000004` | `123456` |
-| Driver | `0900000002` | `123456` |
-| Customer | `0900000001` | `123456` |
+| Admin | `0900000004` | `<OTP>` |
+| Driver | `0900000002` | `<OTP>` |
+| Customer | `0900000001` | `<OTP>` |
 
-Không có SMS thật được gửi đi — `123456` là mã dùng chung, do
-`AUTH_DEMO_LOGIN_ENABLED` + `ALLOW_DEMO_AUTH_PROVIDER` bật trong `.env.prod`.
-Trang portal ở `http://<HOST>/` cũng liệt kê sẵn các số này kèm nút sao chép.
+Không có SMS thật được gửi đi — `<OTP>` là mã dùng chung cho mọi tài khoản demo,
+do `AUTH_DEMO_LOGIN_ENABLED` + `ALLOW_DEMO_AUTH_PROVIDER` bật trong `.env.prod`.
+
+**Mã này sinh riêng cho từng deployment** (`AUTH_DEMO_OTP` trong `.env.prod`, in ra
+ở bước 6 của `deploy-demo.sh`). API **từ chối khởi động** nếu đặt demo login ở
+production mà dùng `123456`/`654321` hoặc để trống — vì `123456` mở được mọi tài
+khoản seed, kể cả admin, nên ai đọc repo là đăng nhập được.
+
+Trang portal nhận mã qua query string, nên link gửi khách nên kèm `?otp=<OTP>`
+(xem lệnh ở mục 2b) thì bảng tài khoản mới hiện đúng mã.
 
 > Hệ thống pilot chỉ còn **3 vai trò**: Admin, Driver, Customer. Giao diện Fleet Owner đã được gỡ bỏ.
 
 ## 5. Kịch bản demo đề xuất
 
-1. **Customer App** → `0900000001` + OTP `123456` → tạo đơn mới (chọn xe, điểm đón/trả).
-2. **Driver App** → `0900000002` + OTP `123456` → bật duty → nhận đơn dispatch.
+1. **Customer App** → `0900000001` + OTP `<OTP>` → tạo đơn mới (chọn xe, điểm đón/trả).
+2. **Driver App** → `0900000002` + OTP `<OTP>` → bật duty → nhận đơn dispatch.
 3. Driver chuyển trạng thái: **Accepted → Picking Up → In Transit → Delivered**, ký e-POD.
-4. **Admin Console** → `0900000004` + OTP `123456` → xem đơn trên bản đồ real-time, doanh thu, người dùng.
+4. **Admin Console** → `0900000004` + OTP `<OTP>` → xem đơn trên bản đồ real-time, doanh thu, người dùng.
 5. Kiểm tra chi tiết đơn: giá, thanh toán, hoá đơn VAT.
 
 Dữ liệu seed sẵn: 9 user, 6 driver profile, 56 đơn hàng, 2 đội xe. Có thể đặt đơn mới để test trọn luồng.
@@ -328,13 +335,13 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml down -v
 > Hệ thống LEOPARD demo đã sẵn sàng tại: **http://\<HOST\>/**
 >
 > Đăng nhập: nhập số điện thoại dùng thử, bấm **Tiếp tục**, rồi nhập mã OTP
-> `123456` (mã dùng chung cho bản demo, không gửi SMS thật).
+> `<OTP>` (mã dùng chung cho bản demo, không gửi SMS thật).
 >
 > | Vai trò | Số điện thoại | OTP |
 > |---|---|---|
-> | Quản trị viên | `0900000004` | `123456` |
-> | Tài xế | `0900000002` | `123456` |
-> | Khách hàng | `0900000001` | `123456` |
+> | Quản trị viên | `0900000004` | `<OTP>` |
+> | Tài xế | `0900000002` | `<OTP>` |
+> | Khách hàng | `0900000001` | `<OTP>` |
 >
 > Trang chủ http://\<HOST\>/ liệt kê sẵn các số này và có nút sao chép.
 >

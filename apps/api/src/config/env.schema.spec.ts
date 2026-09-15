@@ -136,10 +136,12 @@ describe('production environment schema', () => {
         ...validProductionEnv,
         AUTH_DEMO_LOGIN_ENABLED: 'true',
         ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: '718204',
       }),
     ).toMatchObject({
       AUTH_DEMO_LOGIN_ENABLED: true,
       ALLOW_DEMO_AUTH_PROVIDER: true,
+      AUTH_DEMO_OTP: '718204',
     });
   });
 
@@ -183,6 +185,63 @@ describe('production environment schema', () => {
     expect(() =>
       parseEnv({ ...validProductionEnv, ALLOW_DEMO_PROVIDER: 'true' }),
     ).toThrow(/ALLOW_DEMO_PROVIDER/);
+  });
+
+  it('rejects the well-known demo OTP in production', () => {
+    // `123456` opened every seeded account, so knowing it was a full sign-in
+    // bypass for the demo admin.
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: '123456',
+      }),
+    ).toThrow(/AUTH_DEMO_OTP/);
+  });
+
+  it('requires an explicit demo OTP when demo login is on in production', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: undefined,
+      }),
+    ).toThrow(/AUTH_DEMO_OTP/);
+  });
+
+  it('accepts a generated demo OTP in production', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: '481920',
+      }),
+    ).toMatchObject({ AUTH_DEMO_OTP: '481920' });
+  });
+
+  it('rejects a demo OTP that is not a plausible code', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: 'abc',
+      }),
+    ).toThrow();
+  });
+
+  it('does not require a demo OTP when demo login is off', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'false',
+        ALLOW_DEMO_AUTH_PROVIDER: undefined,
+        AUTH_DEMO_OTP: undefined,
+      }),
+    ).toMatchObject({ AUTH_DEMO_LOGIN_ENABLED: false });
   });
 
   it('accepts FCM_ENABLED=true alongside FIREBASE_PROJECT_ID', () => {

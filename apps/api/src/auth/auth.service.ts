@@ -95,7 +95,7 @@ export class AuthService {
       throw new DomainError('INVALID_PHONE', 400, 'Số điện thoại không hợp lệ');
     }
 
-    const code = '123456';
+    const code = this.demoOtpCode();
     const expiresAt = Date.now() + 5 * 60 * 1000;
     this.otpStore.set(phone, { code, expiresAt });
     const normalized = this.normalizePhone(phone);
@@ -107,6 +107,19 @@ export class AuthService {
       success: true,
       message: 'Mã OTP đã được gửi thành công',
     };
+  }
+
+  /**
+   * The code the demo OTP path accepts.
+   *
+   * Defaults to the classic 123456 outside production, where a fixed code is
+   * convenient. In production the env schema requires AUTH_DEMO_OTP and rejects
+   * the well-known values, so this never becomes a guessable production login.
+   */
+  private demoOtpCode(): string {
+    const configured = (process.env.AUTH_DEMO_OTP ?? '').trim();
+    if (configured.length > 0) return configured;
+    return '123456';
   }
 
   public async verifyOtp(
@@ -136,7 +149,7 @@ export class AuthService {
     const isDemoAllowed =
       process.env.AUTH_DEMO_LOGIN_ENABLED === 'true' &&
       (!this.isProduction() || this.isDemoAuthAcknowledged());
-    const isUniversalTestCode = isDemoAllowed && (otp === '123456' || otp === '654321');
+    const isUniversalTestCode = isDemoAllowed && otp === this.demoOtpCode();
 
     if (!isStoredMatch && !isUniversalTestCode) {
       throw new DomainError('INVALID_OTP', 400, 'Mã OTP không đúng hoặc đã hết hạn');

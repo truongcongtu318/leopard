@@ -277,6 +277,23 @@ if [ "$(env_value AUTH_DEMO_LOGIN_ENABLED false)" = "true" ] &&
   echo "  ✅ Added ALLOW_DEMO_AUTH_PROVIDER=true (required for demo login in production)"
 fi
 
+# The demo login accepts one code for every seeded account, so it must not be the
+# published 123456: that is a complete sign-in bypass for anyone who has read
+# this repository. Generate a per-deployment code instead, keep it on re-deploys
+# so the code handed to a client stays valid, and replace the well-known value
+# wherever an older .env.prod still carries it.
+if [ "$(env_value AUTH_DEMO_LOGIN_ENABLED false)" = "true" ]; then
+  DEMO_OTP="$(env_value AUTH_DEMO_OTP '')"
+  if [ -z "$DEMO_OTP" ] || [ "$DEMO_OTP" = "123456" ] || [ "$DEMO_OTP" = "654321" ]; then
+    DEMO_OTP=$(generate_secret | tr -dc '0-9' | cut -c1-6)
+    # tr can leave fewer than six digits on an unlucky draw; pad deterministically.
+    while [ "${#DEMO_OTP}" -lt 6 ]; do DEMO_OTP="${DEMO_OTP}$(generate_secret | tr -dc '0-9' | cut -c1-1)"; done
+    env_set AUTH_DEMO_OTP "$DEMO_OTP"
+    echo "  ✅ Generated a per-deployment demo OTP (no longer 123456)"
+  fi
+  AUTH_DEMO_OTP_VALUE="$DEMO_OTP"
+fi
+
 # ── Step 3: Build images ────────────────────────────────────────
 echo ""
 echo "📦 Step 3/6 — Building images (first run takes several minutes)..."
@@ -472,6 +489,10 @@ echo "  📡 API docs      http://${HOST}:${API_PORT_VALUE}/docs"
 echo ""
 echo "  🔑 Demo accounts (type into the login box)"
 echo "     admin · driver · customer"
+if [ -n "${AUTH_DEMO_OTP_VALUE:-}" ]; then
+  echo "     Mã OTP demo của bản này: ${AUTH_DEMO_OTP_VALUE}"
+  echo "     (đổi theo từng deployment, xem lại: grep AUTH_DEMO_OTP .env.prod)"
+fi
 echo ""
 echo "  ⚠️  Địa chỉ trên là HTTP — mọi tính năng vị trí (định vị GPS, watermark"
 echo "      e-POD, dispatch theo vị trí) SẼ KHÔNG CHẠY. Trình duyệt chặn"

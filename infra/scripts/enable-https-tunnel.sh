@@ -137,8 +137,22 @@ echo "  Customer             ${CUSTOMER_URL:-<chưa có>}/"
 echo "  Driver               ${DRIVER_URL:-<chưa có>}/"
 echo
 if [[ -n "${CUSTOMER_URL}" && -n "${DRIVER_URL}" ]]; then
+  # The demo OTP is generated per deployment, so the portal needs it to show the
+  # right code in the account table. Read it from .env.prod when present.
+  ENV_FILE="${REPO_ROOT}/.env.prod"
+  DEMO_OTP="$(grep -E '^AUTH_DEMO_OTP=' "${ENV_FILE}" 2>/dev/null | tail -1 | cut -d= -f2- || true)"
+  OTP_QS=""
+  [[ -n "${DEMO_OTP}" ]] && OTP_QS="&otp=${DEMO_OTP}"
+
   echo "Portal tự trỏ tới 2 app qua query string, nên hãy gửi khách link này:"
-  echo "  ${PORTAL_URL}/?customer=${CUSTOMER_URL}&driver=${DRIVER_URL}"
+  echo "  ${PORTAL_URL}/?customer=${CUSTOMER_URL}&driver=${DRIVER_URL}${OTP_QS}"
+  echo
+  if [[ -n "${DEMO_OTP}" ]]; then
+    echo "Mã OTP demo của bản này: ${DEMO_OTP}"
+  else
+    echo "Chưa có AUTH_DEMO_OTP trong .env.prod — portal sẽ hiện '······' thay vì mã."
+    echo "Chạy ./infra/scripts/deploy-demo.sh một lần để sinh mã."
+  fi
   echo
 fi
 echo "Địa chỉ đổi mỗi khi tunnel khởi động lại:"

@@ -91,19 +91,19 @@
         <tr>
           <td><span class="role-pill admin">Admin</span></td>
           <td><code>0900000004</code></td>
-          <td><code>123456</code></td>
+          <td><code data-demo-otp>······</code></td>
           <td><button class="copy-btn" data-copy="0900000004">Sao chép SĐT</button></td>
         </tr>
         <tr>
           <td><span class="role-pill driver">Driver</span></td>
           <td><code>0900000002</code></td>
-          <td><code>123456</code></td>
+          <td><code data-demo-otp>······</code></td>
           <td><button class="copy-btn" data-copy="0900000002">Sao chép SĐT</button></td>
         </tr>
         <tr>
           <td><span class="role-pill customer">Customer</span></td>
           <td><code>0900000001</code></td>
-          <td><code>123456</code></td>
+          <td><code data-demo-otp>······</code></td>
           <td><button class="copy-btn" data-copy="0900000001">Sao chép SĐT</button></td>
         </tr>
       </tbody>
@@ -112,17 +112,18 @@
   <div class="steps" style="margin-top:-1rem;margin-bottom:2rem">
     <p style="font-size:.8rem;color:#64748b;line-height:1.7">
       Nhập số điện thoại ở trên vào ô đăng nhập, bấm <strong>Tiếp tục</strong>, rồi nhập mã OTP
-      <code>123456</code>. Đây là mã dùng chung cho bản demo, không gửi SMS thật.
+      <code data-demo-otp>······</code>. Đây là mã dùng chung cho mọi tài khoản demo ở bản này —
+      mỗi lần deploy sinh một mã khác, không gửi SMS thật.
     </p>
   </div>
 
   <div class="section-title">📋 Kịch bản demo</div>
   <div class="steps">
     <ol>
-      <li>Mở <strong>Customer App</strong> → SĐT <code>0900000001</code> + OTP <code>123456</code> → tạo đơn hàng mới.</li>
-      <li>Mở <strong>Driver App</strong> → SĐT <code>0900000002</code> + OTP <code>123456</code> → bật duty → nhận đơn dispatch.</li>
+      <li>Mở <strong>Customer App</strong> → SĐT <code>0900000001</code> + OTP <code data-demo-otp>······</code> → tạo đơn hàng mới.</li>
+      <li>Mở <strong>Driver App</strong> → SĐT <code>0900000002</code> + OTP <code data-demo-otp>······</code> → bật duty → nhận đơn dispatch.</li>
       <li>Tài xế chuyển trạng thái: <strong>Accepted → Picking Up → In Transit → Delivered</strong> (kèm ký e-POD).</li>
-      <li>Mở <strong>Admin Console</strong> → SĐT <code>0900000004</code> + OTP <code>123456</code> → theo dõi đơn trên bản đồ real-time.</li>
+      <li>Mở <strong>Admin Console</strong> → SĐT <code>0900000004</code> + OTP <code data-demo-otp>······</code> → theo dõi đơn trên bản đồ real-time.</li>
     </ol>
   </div>
 </div>
@@ -157,6 +158,17 @@
     var adminCard = document.getElementById('card-admin');
     var adminHint = document.getElementById('hint-admin');
     if (adminCard && adminHint) adminHint.textContent = '/login';
+
+    // The demo OTP is generated per deployment, so it arrives as a query
+    // parameter rather than being baked into this page. Without it the page
+    // still renders, showing a placeholder instead of a code that would be
+    // wrong.
+    var otp = params.get('otp');
+    if (otp) {
+      document.querySelectorAll('[data-demo-otp]').forEach(function (el) {
+        el.textContent = otp;
+      });
+    }
   })();
 
   document.querySelectorAll('.copy-btn').forEach(function (btn) {
