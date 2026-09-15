@@ -41,7 +41,7 @@ Hệ thống đóng gói chạy trên Docker Compose gồm 7 services (6 thườ
 2. **`api`** (`apps/api`):
    - Build từ `infra/docker/api.Dockerfile` (Node 24.21.0 Alpine 3.24, pin cứng).
    - Expose port `3000`.
-   - Cung cấp REST API (`/api/v1`), Swagger Docs (`/api/docs`), WebSocket Gateway (`/dispatch`, `/tracking`, `/notifications`).
+   - Cung cấp REST API (`/api/v1`), Swagger Docs (`/docs`), WebSocket Gateway (`/dispatch`, `/tracking`, `/notifications`).
    - Volume `leopard-demo-uploads` cho media/POD do `LocalStorageProvider` ghi ra.
 
 2b. **`migrate`** (one-shot, `profiles: ["tools"]`):

@@ -87,7 +87,7 @@ Thay `<HOST>` bằng IP hoặc domain của VPS.
 | Admin Console | `http://<HOST>/login` |
 | Customer App | `http://<HOST>:8081/` |
 | Driver App | `http://<HOST>:8082/` |
-| API + Swagger | `http://<HOST>:3000/api/docs` |
+| API + Swagger | `http://<HOST>:3000/docs` |
 
 ## 4. Tài khoản demo
 

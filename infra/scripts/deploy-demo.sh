@@ -154,7 +154,11 @@ wait_healthy() {
 }
 
 http_status() {
-  curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$1" 2>/dev/null || echo "000"
+  # curl already prints 000 when it cannot connect, so a trailing `|| echo 000`
+  # would emit 000000. Capture the output and fall back only when it is empty.
+  local code
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$1" 2>/dev/null) || true
+  printf '%s' "${code:-000}"
 }
 
 # ── Banner ──────────────────────────────────────────────────────
@@ -309,18 +313,28 @@ CUSTOMER_PORT_VALUE=$(env_value CUSTOMER_PORT 8081)
 DRIVER_PORT_VALUE=$(env_value DRIVER_PORT 8082)
 
 FAILED=0
+# Retry, because `compose up -d` returns as soon as the containers are created
+# while Next.js still needs a few seconds to answer. On a fresh VPS this window
+# is wider than on a warm local machine.
 check() {
-  local label=$1 url=$2
-  local code
-  code=$(http_status "$url")
-  case "$code" in
-    200|302|307|308) echo "  ✅ ${label} (HTTP ${code})" ;;
-    *)               echo "  ❌ ${label} (HTTP ${code}) — ${url}"; FAILED=$((FAILED + 1)) ;;
-  esac
+  local label=$1 url=$2 attempts=${3:-10} i code
+  for ((i = 1; i <= attempts; i++)); do
+    code=$(http_status "$url")
+    case "$code" in
+      200|302|307|308)
+        echo "  ✅ ${label} (HTTP ${code})"
+        return 0
+        ;;
+    esac
+    sleep 3
+  done
+  echo "  ❌ ${label} (HTTP ${code}) — ${url}"
+  FAILED=$((FAILED + 1))
+  return 1
 }
 
 check "API health"    "http://localhost:${API_PORT_VALUE}/api/v1/health/live"
-check "API docs"      "http://localhost:${API_PORT_VALUE}/api/docs"
+check "API docs"      "http://localhost:${API_PORT_VALUE}/docs"
 check "Admin console" "http://localhost:${ADMIN_PORT_VALUE}/login"
 check "Customer app"  "http://localhost:${CUSTOMER_PORT_VALUE}/"
 check "Driver app"    "http://localhost:${DRIVER_PORT_VALUE}/"
@@ -345,7 +359,7 @@ echo "  🌐 Demo portal  http://${HOST}:${GATEWAY_PORT_VALUE}/"
 echo "  🛡️  Admin         http://${HOST}:${ADMIN_PORT_VALUE}/login"
 echo "  📦 Customer      http://${HOST}:${CUSTOMER_PORT_VALUE}/"
 echo "  🚛 Driver        http://${HOST}:${DRIVER_PORT_VALUE}/"
-echo "  📡 API docs      http://${HOST}:${API_PORT_VALUE}/api/docs"
+echo "  📡 API docs      http://${HOST}:${API_PORT_VALUE}/docs"
 echo ""
 echo "  🔑 Demo accounts (type into the login box)"
 echo "     admin · driver · customer"

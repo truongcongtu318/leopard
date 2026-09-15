@@ -43,6 +43,6 @@ RUN --mount=type=cache,id=metro-cache-driver,target=/tmp/metro-cache \
 # nginx-unprivileged — see the note in customer.Dockerfile. Listens on 8080
 # internally; the host port comes from the compose mapping.
 FROM nginxinc/nginx-unprivileged:1.31-alpine AS runner
-COPY --from=builder /app/apps/driver/dist/ /usr/share/nginx/html/
-COPY infra/docker/nginx-expo.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder --chown=101:101 /app/apps/driver/dist/ /usr/share/nginx/html/
+COPY --chown=101:101 infra/docker/nginx-expo.conf /etc/nginx/conf.d/default.conf
 EXPOSE 8080

@@ -53,6 +53,10 @@ RUN --mount=type=cache,id=metro-cache-mobile,target=/tmp/metro-cache \
 # avoids having to rewrite the config (which the unprivileged user cannot do) or
 # keep two near-identical nginx configs in sync.
 FROM nginxinc/nginx-unprivileged:1.31-alpine AS runner
-COPY --from=builder /app/apps/mobile/dist/ /usr/share/nginx/html/
-COPY infra/docker/nginx-expo.conf /etc/nginx/conf.d/default.conf
+# --chown=101:101 (the image's nginx user) keeps the config readable no matter
+# what mode the file has in the build context; a 0600 source file would otherwise
+# land in the image owned by root and nginx would exit with
+# "open() .../default.conf failed (13: Permission denied)".
+COPY --from=builder --chown=101:101 /app/apps/mobile/dist/ /usr/share/nginx/html/
+COPY --chown=101:101 infra/docker/nginx-expo.conf /etc/nginx/conf.d/default.conf
 EXPOSE 8080
