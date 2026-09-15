@@ -22,57 +22,94 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('renders DriverTopHud with driver identity, duty toggle, and earnings pill', async () => {
-    const onSetAvailability = jest.fn();
+  it('renders the Liquid Glass topbar with driver identity and profile navigation', async () => {
     const onNavigate = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
-        driverIdentity={{ name: 'Trần Minh', vehicleLabel: 'Xe tải · 29H-123.45' }}
+        driverIdentity={{
+          name: 'Trần Minh',
+          vehiclePlate: '29H-123.45',
+          vehicleType: 'Xe tải 1.25T',
+        }}
         onNavigate={onNavigate}
+        view={createDriverListFixture('D-LIST-REQUESTED')}
+      />,
+    );
+
+    expect(screen.getByTestId('driver-glass-topbar')).toBeTruthy();
+    expect(screen.getByText('Trần Minh')).toBeTruthy();
+    expect(screen.getByText('29H-123.45 · Xe tải 1.25T')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('driver-topbar-profile'));
+    expect(onNavigate).toHaveBeenCalledWith('/profile');
+
+    await screen.unmount();
+  });
+
+  it('exposes the floating connection capsule as the single availability control', async () => {
+    const onSetAvailability = jest.fn();
+    const screen = await render(
+      <DriverOrdersScreen
         onSetAvailability={onSetAvailability}
         view={createDriverListFixture('D-LIST-REQUESTED')}
       />,
     );
 
-    // DriverTopHud root and pills
-    expect(screen.getByTestId('driver-top-hud')).toBeTruthy();
-    expect(screen.getByTestId('driver-profile-pill')).toBeTruthy();
-    expect(screen.getByText('Trần Minh')).toBeTruthy();
-    expect(screen.getByTestId('driver-duty-toggle')).toBeTruthy();
-    expect(screen.getByText('TRỰC TUYẾN')).toBeTruthy();
-    expect(screen.getByTestId('driver-earnings-pill')).toBeTruthy();
+    // Online fixture: QR capsule reads ĐANG KẾT NỐI and toggles back to OFFLINE.
+    expect(screen.getByTestId('driver-connection-capsule')).toBeTruthy();
+    expect(screen.getByText('ĐANG KẾT NỐI')).toBeTruthy();
 
-    // Navigate to profile and earnings on pill tap
-    await fireEvent.press(screen.getByTestId('driver-profile-pill'));
-    expect(onNavigate).toHaveBeenCalledWith('/profile');
-
-    await fireEvent.press(screen.getByTestId('driver-earnings-pill'));
-    expect(onNavigate).toHaveBeenCalledWith('/earnings');
-
-    // Toggle duty availability
-    const toggle = screen.getByTestId('driver-duty-toggle');
-    await fireEvent.press(toggle);
+    await fireEvent.press(screen.getByTestId('driver-connection-toggle'));
     expect(onSetAvailability).toHaveBeenCalledWith('set-availability-demo');
 
     await screen.unmount();
   });
 
-  it('renders offline hero duty state with prominent offline banner prompting driver to go online', async () => {
+  it('renders the offline board with a capsule CTA that turns dispatch on', async () => {
     const onSetAvailability = jest.fn();
+    // D-LIST-EMPTY is the fixture set's offline + no-orders scenario, which is
+    // exactly when the board must explain how to start receiving dispatch.
     const screen = await render(
       <DriverOrdersScreen
         onSetAvailability={onSetAvailability}
-        view={createDriverListFixture('D-LIST-OFFLINE')}
+        view={createDriverListFixture('D-LIST-EMPTY')}
       />,
     );
 
-    expect(screen.getByTestId('driver-offline-banner')).toBeTruthy();
-    expect(screen.getByText('Ngoại tuyến')).toBeTruthy();
-    const goOnlineBtn = screen.getByRole('button', { name: 'Bật trực tuyến' });
-    expect(goOnlineBtn).toBeTruthy();
+    expect(screen.getByTestId('driver-connection-capsule')).toBeTruthy();
+    expect(screen.getByText('BẬT KẾT NỐI')).toBeTruthy();
+    expect(screen.getByText('Bạn đang ngoại tuyến')).toBeTruthy();
+    expect(screen.getByTestId('driver-offline-board')).toBeTruthy();
+    expect(screen.getByText('Radar đang tạm dừng')).toBeTruthy();
 
-    await fireEvent.press(goOnlineBtn);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bật trực tuyến' }));
     expect(onSetAvailability).toHaveBeenCalled();
+
+    await screen.unmount();
+  });
+
+  it('routes the idle quick-action grid to vehicle, trips, wallet and settings', async () => {
+    const onNavigate = jest.fn();
+    const screen = await render(
+      <DriverOrdersScreen
+        onNavigate={onNavigate}
+        view={createDriverListFixture('D-LIST-REQUESTED')}
+      />,
+    );
+
+    expect(screen.getByTestId('driver-quick-action-grid')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('quick-action-vehicle'));
+    expect(onNavigate).toHaveBeenCalledWith('/profile');
+
+    await fireEvent.press(screen.getByTestId('quick-action-trips'));
+    expect(onNavigate).toHaveBeenCalledWith('/history');
+
+    await fireEvent.press(screen.getByTestId('quick-action-wallet'));
+    expect(onNavigate).toHaveBeenCalledWith('/wallet');
+
+    await fireEvent.press(screen.getByTestId('quick-action-settings'));
+    expect(screen.getByTestId('driver-receiving-settings')).toBeTruthy();
 
     await screen.unmount();
   });

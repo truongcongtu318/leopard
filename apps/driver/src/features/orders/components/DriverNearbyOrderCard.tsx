@@ -10,6 +10,7 @@ import {
   IconScaleWeight,
   IconSpeedTruck,
   StatusBadge,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 import type { DriverPublicOrderView } from '../model';
 
@@ -41,11 +42,11 @@ export function DriverNearbyOrderCard({
   const rawCargoSummary = item.cargoSummary?.trim() || '';
   const cargoParts = rawCargoSummary ? rawCargoSummary.split('·').map((s) => s.trim()) : [];
   const cargoName =
-    (item as any).cargoName ||
+    item.cargoName?.trim() ||
     (cargoParts.length > 0 && cargoParts[0] ? cargoParts[0] : 'Hàng hóa tiêu chuẩn');
 
-  let cargoWeight = (item as any).cargoWeightKg
-    ? `${(item as any).cargoWeightKg.toLocaleString('vi-VN')} kg`
+  let cargoWeight = item.cargoWeightKg
+    ? `${item.cargoWeightKg.toLocaleString('vi-VN')} kg`
     : null;
   if (!cargoWeight && cargoParts.length > 1) {
     cargoWeight = cargoParts[1].replace(/^khoảng\s*/i, '');
@@ -54,15 +55,15 @@ export function DriverNearbyOrderCard({
     if (match) cargoWeight = match[1];
   }
 
-  const cargoDimensions = (item as any).cargoDimensions || null;
-  const loadingFee = (item as any).loadingFee;
-  const loadingDesc = (item as any).loadingDescription;
-  const hasLoadingFee = Boolean(loadingFee && loadingFee > 0);
+  const cargoDimensions = item.cargoDimensions?.trim() || null;
+  const loadingFee = item.loadingFee ?? null;
+  const loadingDesc = item.loadingDescription?.trim() || null;
+  const hasLoadingFee = typeof loadingFee === 'number' && loadingFee > 0;
   const loadingFeeBadge = hasLoadingFee
     ? loadingDesc
       ? `${loadingDesc} (+${loadingFee.toLocaleString('vi-VN')} ₫)`
       : `Bốc xếp (+${loadingFee.toLocaleString('vi-VN')} ₫)`
-    : loadingDesc || null;
+    : loadingDesc;
 
   return (
     <View style={styles.orderCardOuter}>
@@ -194,8 +195,9 @@ export function DriverNearbyOrderCard({
 const styles = StyleSheet.create({
   orderCardOuter: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
     borderRadius: 22,
+    ...iosContinuousCurve,
     borderWidth: 1,
     elevation: 2,
     marginBottom: 14,
@@ -209,6 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderColor: '#F1F5F9',
     borderRadius: 18,
+    ...iosContinuousCurve,
     borderWidth: 1,
     padding: 12,
   },

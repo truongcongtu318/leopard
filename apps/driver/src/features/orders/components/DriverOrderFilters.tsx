@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, IconRadarPulse, IconSettings } from '@leopard/mobile-core';
+import { colors, radius, spacing, IconRadarPulse, IconSettings, iosContinuousCurve } from '@leopard/mobile-core';
 
 export type DriverOrderFiltersProps = Readonly<{
   selectedFilter?: string;
@@ -133,8 +133,9 @@ const styles = StyleSheet.create({
   radarLiveStrip: {
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
     borderRadius: 16,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -225,8 +226,9 @@ const styles = StyleSheet.create({
   settingsBtn: {
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
     borderRadius: 12,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
     minHeight: 44,
@@ -254,8 +256,9 @@ const styles = StyleSheet.create({
   filterChip: {
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
     borderRadius: 14,
+    ...iosContinuousCurve,
     borderWidth: 1,
     justifyContent: 'center',
     minHeight: 44,

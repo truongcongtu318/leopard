@@ -119,6 +119,12 @@ export type DriverPublicOrderView = Readonly<{
   pickupLocationLabel?: string;
   dropoffLocationLabel?: string;
   pickupDistanceLabel?: string;
+  /** Cargo-first freight fields. Optional: older payloads only carry `cargoSummary`. */
+  cargoName?: string | null;
+  cargoWeightKg?: number | null;
+  cargoDimensions?: string | null;
+  loadingFee?: number | null;
+  loadingDescription?: string | null;
 }>;
 
 export type DriverActiveTripView = Readonly<{
