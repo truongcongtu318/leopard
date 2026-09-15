@@ -2,13 +2,11 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
-  colors,
-  radius,
-  spacing,
   IconEarnings,
   IconHome,
   IconOrders,
   IconUser,
+  IconWallet,
 } from '@leopard/mobile-core';
 
 export type DriverBottomNavigationProps = Readonly<{
@@ -20,6 +18,7 @@ export type DriverBottomNavigationProps = Readonly<{
 export type DriverNavItem = Readonly<{
   key: string;
   label: string;
+  a11yLabel?: string;
   route: string;
   icon: (active: boolean) => React.ReactNode;
 }>;
@@ -28,24 +27,35 @@ const NAV_ITEMS: readonly DriverNavItem[] = [
   {
     key: 'home',
     label: 'Trang chủ',
+    a11yLabel: 'Trang chủ',
     route: '/orders',
     icon: (active) => <IconHome color={active ? '#0B1E42' : '#64748B'} size={20} />,
   },
   {
     key: 'orders',
-    label: 'Đơn',
+    label: 'Chuyến xe',
+    a11yLabel: 'Chuyến xe',
     route: '/history',
     icon: (active) => <IconOrders color={active ? '#0B1E42' : '#64748B'} size={20} />,
   },
   {
     key: 'earnings',
     label: 'Thu nhập',
+    a11yLabel: 'Thu nhập',
     route: '/earnings',
     icon: (active) => <IconEarnings color={active ? '#0B1E42' : '#64748B'} size={20} />,
   },
   {
+    key: 'wallet',
+    label: 'Ví tiền',
+    a11yLabel: 'Ví tiền',
+    route: '/wallet',
+    icon: (active) => <IconWallet color={active ? '#0B1E42' : '#64748B'} size={20} />,
+  },
+  {
     key: 'profile',
-    label: 'Tôi',
+    label: 'Hồ sơ',
+    a11yLabel: 'Hồ sơ',
     route: '/profile',
     icon: (active) => <IconUser color={active ? '#0B1E42' : '#64748B'} size={20} />,
   },
@@ -72,7 +82,7 @@ export function DriverBottomNavigation({
           const isActive = activeTab === item.key;
           return (
             <Pressable
-              accessibilityLabel={item.label}
+              accessibilityLabel={item.a11yLabel || item.label}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
               key={item.key}
@@ -84,7 +94,10 @@ export function DriverBottomNavigation({
               ]}
             >
               <View style={styles.iconWrap}>{item.icon(isActive)}</View>
-              <Text style={[styles.navLabel, isActive ? styles.navLabelActive : null]}>
+              <Text
+                numberOfLines={1}
+                style={[styles.navLabel, isActive ? styles.navLabelActive : null]}
+              >
                 {item.label}
               </Text>
             </Pressable>
@@ -97,38 +110,38 @@ export function DriverBottomNavigation({
 
 const styles = StyleSheet.create({
   dockWrapper: {
-    bottom: Platform.OS === 'ios' ? 24 : 16,
-    left: 16,
+    bottom: 0,
+    left: 0,
     position: 'absolute',
-    right: 16,
+    right: 0,
     zIndex: 50,
   },
   dockContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#E2E8F0',
-    borderRadius: 26,
-    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopColor: '#E2E8F0',
+    borderTopWidth: 1,
     elevation: 8,
     flexDirection: 'row',
-    height: 64,
+    height: Platform.OS === 'ios' ? 72 : 62,
     justifyContent: 'space-around',
-    paddingHorizontal: 8,
+    paddingBottom: Platform.OS === 'ios' ? 14 : 4,
+    paddingHorizontal: 4,
     shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   navItem: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 12,
     flex: 1,
     height: 48,
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   navItemActive: {
-    backgroundColor: 'rgba(11, 30, 66, 0.07)',
+    backgroundColor: 'rgba(11, 30, 66, 0.06)',
   },
   iconWrap: {
     alignItems: 'center',
@@ -137,7 +150,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     color: '#64748B',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     marginTop: 2,
   },

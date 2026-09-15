@@ -32,7 +32,7 @@ describe('DriverProfileScreen', () => {
     expect(screen.getByText('Trần Văn Nam')).toBeTruthy();
     expect(screen.getByTestId('driver-bottom-navigation')).toBeTruthy();
 
-    const profileTab = screen.getByLabelText('Tôi');
+    const profileTab = screen.getByLabelText(/Hồ sơ|Tôi/);
     expect(profileTab.props.accessibilityState).toEqual({ selected: true });
 
     await screen.unmount();

@@ -18,6 +18,10 @@ import {
   IconClose,
   IconLocationPin,
   IconMenu,
+  IconOrders,
+  IconSpeedTruck,
+  IconSupport247,
+  IconWallet,
   RealInteractiveMap,
   resolveLocationCoords,
   ScreenState,
@@ -509,6 +513,51 @@ export function DriverOrdersScreen({
         <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
       </View>
 
+      {/* ── Layer 1.5: Floating Map Connection Capsule (Grab Driver Style) ── */}
+      {!activeTrip ? (
+        <View pointerEvents="box-none" style={styles.mapHeroConnectionWrap}>
+          <Pressable
+            accessibilityLabel={
+              isOnline
+                ? 'Đang trực tuyến. Chạm để tạm nghỉ'
+                : 'Đang ngoại tuyến. Chạm để bật trực tuyến nhận đơn'
+            }
+            accessibilityRole="button"
+            disabled={Boolean(view.availability.action?.disabled) || Boolean(view.availability.action?.isPending)}
+            onPress={handleToggleAvailability}
+            style={({ pressed }) => [
+              styles.heroConnectionCapsule,
+              isOnline ? styles.heroCapsuleOnline : styles.heroCapsuleOffline,
+              pressed ? styles.pressed : null,
+            ]}
+            testID="driver-hero-connection-capsule"
+          >
+            <View
+              style={[
+                styles.heroPowerDot,
+                { backgroundColor: isOnline ? '#16A34A' : '#94A3B8' },
+              ]}
+            >
+              <Text style={styles.heroPowerSymbol}>⏻</Text>
+            </View>
+            <Text style={styles.heroCapsuleText}>
+              {isOnline ? 'ĐANG KẾT NỐI' : 'BẬT KẾT NỐI'}
+            </Text>
+          </Pressable>
+          <View style={styles.heroStatusSubtextRow}>
+            <View
+              style={[
+                styles.heroStatusDot,
+                { backgroundColor: isOnline ? '#16A34A' : '#DC2626' },
+              ]}
+            />
+            <Text style={styles.heroStatusSubtext}>
+              {isOnline ? 'Bạn đang online (Sẵn sàng nhận đơn)' : 'Bạn đang offline'}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
       {/* ── Layer 2: GestureBottomSheet for Dispatch Load-Board & Active Trip ── */}
       <GestureBottomSheet
         initialSnapIndex={initialSnapIndex}
@@ -527,6 +576,80 @@ export function DriverOrdersScreen({
               onOpenOrder={onOpenOrder}
               trip={activeTrip}
             />
+          ) : null}
+
+          {/* Quick Action Grid (Grab Driver 4-Button Grid) */}
+          {!activeTrip ? (
+            <View style={styles.quickActionGrid} testID="driver-quick-action-grid">
+              <Pressable
+                accessibilityLabel="Thông tin xe vận chuyển"
+                accessibilityRole="button"
+                onPress={() => onNavigate?.('/profile')}
+                style={({ pressed }) => [styles.quickActionBtn, pressed && styles.pressed]}
+                testID="quick-action-vehicle"
+              >
+                <View style={styles.quickActionCircle}>
+                  <IconSpeedTruck color="#0B1E42" size={20} />
+                </View>
+                <Text style={styles.quickActionLabel}>Loại xe</Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityLabel="Lịch sử cuốc xe"
+                accessibilityRole="button"
+                onPress={() => onNavigate?.('/history')}
+                style={({ pressed }) => [styles.quickActionBtn, pressed && styles.pressed]}
+                testID="quick-action-trips"
+              >
+                <View style={styles.quickActionCircle}>
+                  <IconOrders color="#0B1E42" size={20} />
+                </View>
+                <Text style={styles.quickActionLabel}>Chuyến xe</Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityLabel="Ví tài xế"
+                accessibilityRole="button"
+                onPress={() => onNavigate?.('/wallet')}
+                style={({ pressed }) => [styles.quickActionBtn, pressed && styles.pressed]}
+                testID="quick-action-wallet"
+              >
+                <View style={styles.quickActionCircle}>
+                  <IconWallet color="#0B1E42" size={20} />
+                </View>
+                <Text style={styles.quickActionLabel}>Ví tài xế</Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityLabel="Cài đặt và hỗ trợ"
+                accessibilityRole="button"
+                onPress={() => setIsSettingsOpen(true)}
+                style={({ pressed }) => [styles.quickActionBtn, pressed && styles.pressed]}
+                testID="quick-action-settings"
+              >
+                <View style={styles.quickActionCircle}>
+                  <IconSupport247 color="#0B1E42" size={20} />
+                </View>
+                <Text style={styles.quickActionLabel}>Cài đặt</Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          {/* Demand Opportunity Card (Khu vực nhu cầu cao) */}
+          {!activeTrip ? (
+            <View style={styles.demandCard} testID="driver-demand-card">
+              <View style={styles.demandHeader}>
+                <View style={styles.demandIconCircle}>
+                  <IconLocationPin color="#F97316" size={16} />
+                </View>
+                <View style={styles.demandMeta}>
+                  <Text style={styles.demandTitle}>Điểm nóng hàng hóa lân cận</Text>
+                  <Text style={styles.demandDesc}>
+                    KCN Tân Bình · Depot Cát Lái · KCN Sóng Thần đang tập trung nhiều đơn chở hàng.
+                  </Text>
+                </View>
+              </View>
+            </View>
           ) : null}
 
           {/* Prominent Offline Banner when not active and offline */}
@@ -800,6 +923,147 @@ const styles = StyleSheet.create({
   },
   statusTextOffline: {
     color: '#475569',
+  },
+
+  // Hero Map Connection Capsule
+  mapHeroConnectionWrap: {
+    alignItems: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 92,
+    zIndex: 25,
+  },
+  heroConnectionCapsule: {
+    alignItems: 'center',
+    borderRadius: 24,
+    elevation: 6,
+    flexDirection: 'row',
+    height: 44,
+    paddingHorizontal: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+  },
+  heroCapsuleOffline: {
+    backgroundColor: '#0B1E42',
+    borderColor: '#334155',
+    borderWidth: 1,
+  },
+  heroCapsuleOnline: {
+    backgroundColor: '#16A34A',
+    borderColor: '#15803D',
+    borderWidth: 1,
+  },
+  heroPowerDot: {
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 24,
+    justifyContent: 'center',
+    marginRight: 8,
+    width: 24,
+  },
+  heroPowerSymbol: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  heroCapsuleText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  heroStatusSubtextRow: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    flexDirection: 'row',
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  heroStatusDot: {
+    borderRadius: 4,
+    height: 8,
+    marginRight: 6,
+    width: 8,
+  },
+  heroStatusSubtext: {
+    color: '#1E293B',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  // Quick Action Grid (Grab Style 4-Button Grid)
+  quickActionGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    marginTop: 4,
+  },
+  quickActionBtn: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quickActionCircle: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 25,
+    borderWidth: 1,
+    elevation: 2,
+    height: 50,
+    justifyContent: 'center',
+    marginBottom: 6,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    width: 50,
+  },
+  quickActionLabel: {
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // Demand Bento Card
+  demandCard: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 14,
+    padding: 12,
+  },
+  demandHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  demandIconCircle: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(249, 115, 22, 0.12)',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    marginRight: 10,
+    width: 36,
+  },
+  demandMeta: {
+    flex: 1,
+  },
+  demandTitle: {
+    color: '#0B1E42',
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  demandDesc: {
+    color: '#64748B',
+    fontSize: 11,
+    lineHeight: 16,
   },
 
   // Sheet Content
