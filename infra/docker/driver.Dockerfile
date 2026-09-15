@@ -34,7 +34,10 @@ COPY apps/driver/assets/ apps/driver/assets/
 
 ENV CI=true
 ENV EXPO_PUBLIC_API_URL=""
-ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=true
+# See customer.Dockerfile: the one-click demo accounts are hidden in favour of
+# the phone + demo-OTP flow. Inlined at build time, so a server-side env file
+# cannot override it.
+ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=false
 
 RUN --mount=type=cache,id=metro-cache-driver,target=/tmp/metro-cache \
     TMPDIR=/tmp/metro-cache pnpm --filter driver export --platform web

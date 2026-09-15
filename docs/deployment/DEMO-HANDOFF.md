@@ -91,24 +91,30 @@ Thay `<HOST>` bằng IP hoặc domain của VPS.
 
 ## 4. Tài khoản demo
 
-Tất cả dùng **Demo Login** — gõ thẳng từ khoá vào ô đăng nhập, không cần OTP.
+Bản deploy **không hiện nút đăng nhập nhanh** trong app. Khách đăng nhập bằng số
+điện thoại seed sẵn và mã OTP dùng chung của bản demo:
 
-| Vai trò | Gõ vào ô đăng nhập |
-|---|---|
-| Admin | `admin` |
-| Driver | `driver` |
-| Customer | `customer` |
+1. Nhập số điện thoại → bấm **Tiếp tục**
+2. Nhập OTP `123456`
 
-Số điện thoại tương ứng cũng dùng được: `+840000000004` (admin), `+840000000002` (driver), `+840000000001` (customer).
+| Vai trò | Số điện thoại | OTP |
+|---|---|---|
+| Admin | `0900000004` | `123456` |
+| Driver | `0900000002` | `123456` |
+| Customer | `0900000001` | `123456` |
+
+Không có SMS thật được gửi đi — `123456` là mã dùng chung, do
+`AUTH_DEMO_LOGIN_ENABLED` + `ALLOW_DEMO_AUTH_PROVIDER` bật trong `.env.prod`.
+Trang portal ở `http://<HOST>/` cũng liệt kê sẵn các số này kèm nút sao chép.
 
 > Hệ thống pilot chỉ còn **3 vai trò**: Admin, Driver, Customer. Giao diện Fleet Owner đã được gỡ bỏ.
 
 ## 5. Kịch bản demo đề xuất
 
-1. **Customer App** → đăng nhập `customer` → tạo đơn mới (chọn xe, điểm đón/trả).
-2. **Driver App** → đăng nhập `driver` → bật duty → nhận đơn dispatch.
+1. **Customer App** → `0900000001` + OTP `123456` → tạo đơn mới (chọn xe, điểm đón/trả).
+2. **Driver App** → `0900000002` + OTP `123456` → bật duty → nhận đơn dispatch.
 3. Driver chuyển trạng thái: **Accepted → Picking Up → In Transit → Delivered**, ký e-POD.
-4. **Admin Console** → đăng nhập `admin` → xem đơn trên bản đồ real-time, doanh thu, người dùng.
+4. **Admin Console** → `0900000004` + OTP `123456` → xem đơn trên bản đồ real-time, doanh thu, người dùng.
 5. Kiểm tra chi tiết đơn: giá, thanh toán, hoá đơn VAT.
 
 Dữ liệu seed sẵn: 9 user, 6 driver profile, 56 đơn hàng, 2 đội xe. Có thể đặt đơn mới để test trọn luồng.
@@ -238,12 +244,15 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml down -v
 >
 > Hệ thống LEOPARD demo đã sẵn sàng tại: **http://\<HOST\>/**
 >
-> Tài khoản dùng thử (gõ từ khoá vào ô đăng nhập):
+> Đăng nhập: nhập số điện thoại dùng thử, bấm **Tiếp tục**, rồi nhập mã OTP
+> `123456` (mã dùng chung cho bản demo, không gửi SMS thật).
 >
-> | Vai trò | Từ khoá |
-> |---|---|
-> | Quản trị viên | `admin` |
-> | Tài xế | `driver` |
-> | Khách hàng | `customer` |
+> | Vai trò | Số điện thoại | OTP |
+> |---|---|---|
+> | Quản trị viên | `0900000004` | `123456` |
+> | Tài xế | `0900000002` | `123456` |
+> | Khách hàng | `0900000001` | `123456` |
+>
+> Trang chủ http://\<HOST\>/ liệt kê sẵn các số này và có nút sao chép.
 >
 > Xin lưu ý đây là môi trường demo với dữ liệu mô phỏng, phục vụ mục đích trải nghiệm luồng nghiệp vụ.

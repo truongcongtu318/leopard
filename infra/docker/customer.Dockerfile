@@ -37,7 +37,11 @@ ENV CI=true
 # Relative API base: each Expo app is served by its own nginx, which proxies
 # /api/v1 and /socket.io to the API, so the apps stay same-origin and need no CORS.
 ENV EXPO_PUBLIC_API_URL=""
-ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=true
+# Off, so the login screen shows the ordinary phone + OTP flow instead of the
+# one-click demo accounts. Clients sign in with a seeded phone number and the
+# demo OTP, which the gateway portal lists. Note this is inlined into the bundle
+# at build time by Expo — it cannot be changed by an env file on the server.
+ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=false
 
 # Metro caches transforms under TMPDIR; pointing it at a cache mount keeps that
 # cache across builds instead of re-transforming every module.
