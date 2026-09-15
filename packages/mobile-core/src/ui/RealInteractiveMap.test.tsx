@@ -3,6 +3,7 @@ import { render } from '@testing-library/react-native';
 
 import {
   RealInteractiveMap,
+  buildLeafletHtml,
   resolveLocationCoords,
 } from './RealInteractiveMap';
 
@@ -64,5 +65,49 @@ describe('RealInteractiveMap', () => {
 
     expect(screen.queryByText(/10\.\d+,\s*106\.\d+/)).toBeNull();
     await screen.unmount();
+  });
+});
+
+describe('RealInteractiveMap — PROVIDED_ONLY route policy', () => {
+  it('never emits a Vietmap/OSRM fetch call when routeResolutionPolicy is PROVIDED_ONLY, even with valid routeCoords', () => {
+    const html = buildLeafletHtml({
+      destinationCoords: { lat: 10.76, lng: 106.8 }, destinationLabel: 'Điểm giao',
+      interactive: true, mapInstanceId: 'test-1', mode: 'tracking',
+      originCoords: { lat: 10.79, lng: 106.65 }, originLabel: 'Điểm lấy',
+      pinCoords: { lat: 0, lng: 0 }, stopsCoords: [], truckCoords: { lat: 0, lng: 0 }, truckEtaLabel: '',
+      vietmapApiKey: 'super-secret-key',
+      routeResolutionPolicy: 'PROVIDED_ONLY',
+      routeCoords: [{ lat: 10.79, lng: 106.65 }, { lat: 10.76, lng: 106.8 }],
+    });
+
+    expect(html).not.toContain('super-secret-key');
+    expect(html).not.toContain('maps.vietmap.vn/api/route');
+    expect(html).not.toContain('router.project-osrm.org');
+  });
+
+  it('shows a "no route data" banner when routeCoords is empty under PROVIDED_ONLY', () => {
+    const html = buildLeafletHtml({
+      destinationCoords: { lat: 10.76, lng: 106.8 }, destinationLabel: 'Điểm giao',
+      interactive: true, mapInstanceId: 'test-2', mode: 'tracking',
+      originCoords: { lat: 10.79, lng: 106.65 }, originLabel: 'Điểm lấy',
+      pinCoords: { lat: 0, lng: 0 }, stopsCoords: [], truckCoords: { lat: 0, lng: 0 }, truckEtaLabel: '',
+      routeResolutionPolicy: 'PROVIDED_ONLY',
+      routeCoords: [],
+    });
+
+    expect(html).toContain('Chưa có dữ liệu tuyến đường');
+    expect(html).not.toContain('maps.vietmap.vn/api/route');
+  });
+
+  it('preserves the existing client-fetch behavior when routeResolutionPolicy is ALLOW_CLIENT_PREVIEW (default)', () => {
+    const html = buildLeafletHtml({
+      destinationCoords: { lat: 10.76, lng: 106.8 }, destinationLabel: 'Điểm giao',
+      interactive: true, mapInstanceId: 'test-3', mode: 'route',
+      originCoords: { lat: 10.79, lng: 106.65 }, originLabel: 'Điểm lấy',
+      pinCoords: { lat: 0, lng: 0 }, stopsCoords: [], truckCoords: { lat: 0, lng: 0 }, truckEtaLabel: '',
+      vietmapApiKey: 'a-key',
+    });
+
+    expect(html).toContain('maps.vietmap.vn/api/route');
   });
 });
