@@ -1,17 +1,25 @@
 /**
  * End-to-end business-flow check against a DEPLOYED demo stack.
  *
- * It talks to the app origins (:8081 customer, :8082 driver) rather than the API
- * port, so it exercises exactly the path a browser takes: the app's own nginx
- * proxies /api/v1 and /socket.io to the API. That is the difference between
- * "the page loads" and "the app can actually do its job".
+ * It talks to the app origins rather than the API port, so it exercises exactly
+ * the path a browser takes: each app's own nginx proxies /api/v1 and /socket.io
+ * to the API. That is the difference between "the page loads" and "the app can
+ * actually do its job".
  *
- * Usage: node infra/scripts/verify-flows.mjs http://<host>
+ * Two deployments are supported, and the base URL says which:
+ *   node infra/scripts/verify-flows.mjs http://<host>            apps on their own ports
+ *   node infra/scripts/verify-flows.mjs https://<tunnel-host>    all apps on one origin
+ *
+ * The second form is the HTTPS tunnel in infra/scripts/enable-https-tunnel.sh,
+ * where the apps are paths (/customer, /driver) rather than ports — the form a
+ * client actually uses, and the only one where the browser Geolocation API runs.
  */
 
 const base = (process.argv[2] ?? 'http://localhost').replace(/\/$/, '');
-const CUSTOMER = `${base}:8081`;
-const DRIVER = `${base}:8082`;
+// A port in the base means "each app on its own port"; no port means one origin.
+const usesPorts = /:\d+$/.test(base);
+const CUSTOMER = usesPorts ? `${base}:8081` : `${base}/customer`;
+const DRIVER = usesPorts ? `${base}:8082` : `${base}/driver`;
 const OTP = '123456';
 
 const results = [];
@@ -118,7 +126,7 @@ console.log(`\n═══ LEOPARD flow verification against ${base} ═══\n`)
 // listening when the order was created, so this has to run before the customer
 // books. Doing it the other way round is what made the first run report "no
 // offer" — the order had been placed before anyone was on duty.
-console.log('🚛 Driver app (:8082) — lên ca trước');
+console.log(`🚛 Driver app (${DRIVER}) — lên ca trước`);
 const driverLogin = await login(DRIVER, '0900000002');
 record('đăng nhập bằng SĐT + OTP', driverLogin.ok, driverLogin.role ?? '');
 const driverToken = driverLogin.token;
@@ -143,10 +151,17 @@ record('bật nhận đơn (PATCH /driver/availability)', availability.status < 
 // seen within the last 90 seconds, so the driver app pings while on duty (see
 // useDriverIdlePing). Without this ping dispatch finds nobody and no offer is
 // sent — the order is simply never pushed to anyone.
+//
+// isStationaryHeartbeat must be false here. That flag means "the driver has not
+// moved": the API deliberately skips re-writing the geography point and only
+// extends lastKnownAt. Sending true left the driver pinned at whatever
+// coordinate the profile already held — for a seeded driver, a Ho Chi Minh City
+// address in the manifest, or wherever a previous run put them — so the driver
+// was never within range of the order and never received an offer.
 const ping = await api(DRIVER, '/driver/location', {
   method: 'PATCH',
   token: driverToken,
-  body: { lat: ROUTE.pickup.lat, lng: ROUTE.pickup.lng, isStationaryHeartbeat: true },
+  body: { lat: ROUTE.pickup.lat, lng: ROUTE.pickup.lng, isStationaryHeartbeat: false },
 });
 record('gửi vị trí khi lên ca (PATCH /driver/location)', ping.status < 300, `HTTP ${ping.status}`);
 
@@ -158,7 +173,10 @@ let offerPromise = Promise.resolve(null);
 let dispatchSocket = null;
 try {
   const { io } = requireFromDriver('socket.io-client');
-  dispatchSocket = io(`${DRIVER}/dispatch`, {
+  // Sockets live at the origin, NOT under an app path prefix: the driver app
+  // strips /api/v1 off its API base and connects to `${origin}/dispatch`. Using
+  // the app path here would ask for /driver/dispatch, which no gateway serves.
+  dispatchSocket = io(`${base}/dispatch`, {
     auth: { token: driverToken },
     transports: ['websocket'],
     reconnection: false,
@@ -181,7 +199,7 @@ try {
 }
 
 // ── Customer ───────────────────────────────────────────────────────────────
-console.log('\n👤 Customer app (:8081)');
+console.log(`\n👤 Customer app (${CUSTOMER})`);
 const customerLogin = await login(CUSTOMER, '0900000001');
 record('đăng nhập bằng SĐT + OTP', customerLogin.ok, customerLogin.role ?? JSON.stringify(customerLogin.raw.body).slice(0, 120));
 if (!customerLogin.ok) process.exit(1);

@@ -46,11 +46,20 @@ fi
 info "Cài cấu hình edge proxy (cổng ${EDGE_PORT})"
 install -m 0644 "${EDGE_CONFIG}" /etc/nginx/conf.d/demo-edge.conf
 
-# Ubuntu ships a default server on :80 that would shadow nothing here (the edge
-# listens on 8888 and proxies to :80 on purpose), so it is left alone.
+# Ubuntu's stock site listens on :80, which the demo stack's gateway container
+# already owns — with it enabled nginx refuses to start at all ("port 80 is
+# already in use"). Nothing else on this host serves :80 through the system
+# nginx, so the stock site is disabled rather than edited, and the gateway keeps
+# that port. The symlink is only removed; the file in sites-available stays.
+if [[ -e /etc/nginx/sites-enabled/default ]]; then
+  info "Tắt site mặc định của Ubuntu (port 80 thuộc về container gateway)"
+  rm -f /etc/nginx/sites-enabled/default
+fi
+
 nginx -t >/dev/null 2>&1 || fail "nginx -t thất bại — xem: nginx -t"
 systemctl enable nginx >/dev/null 2>&1 || true
-systemctl reload nginx 2>/dev/null || systemctl restart nginx
+systemctl restart nginx
+systemctl is-active --quiet nginx || fail "nginx không chạy — xem: journalctl -xeu nginx"
 ok "nginx đang phục vụ cổng ${EDGE_PORT}"
 
 # ── 2. cloudflared ──

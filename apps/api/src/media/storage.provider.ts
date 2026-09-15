@@ -43,16 +43,27 @@ export class LocalStorageProvider extends StorageProvider {
   }
 
   async createReadUrl(key: string, _expiresInSeconds: number = 3600): Promise<string> {
-    // PUBLIC_FILES_BASE_URL (e.g. http://localhost:3000) makes the URL absolute
-    // so mobile apps and browsers on a different origin (admin web) can load dev images.
-    // Falls back to API_URL's origin when PUBLIC_FILES_BASE_URL is not set,
-    // so mobile clients never receive a relative URL they cannot render.
-    const configuredBase = (process.env.PUBLIC_FILES_BASE_URL ?? '').replace(/\/$/, '');
+    // PUBLIC_FILES_BASE_URL is an origin to serve media from; the `/files/` route
+    // is appended here.
+    //
+    // Set it to a bare `/` to mean "same origin as the client". That resolves to
+    // a root-relative /files/<key>, which is what keeps cargo photos and POD
+    // signatures loading once the apps are served over HTTPS — an absolute
+    // http://<ip>:3000 URL is dropped by the browser as mixed content.
+    const rawBase = (process.env.PUBLIC_FILES_BASE_URL ?? '').trim();
+    const encodedKey = key.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+
+    // Returned early on purpose: passing '' through the fallback chain below
+    // would be swallowed by `||` and silently become the localhost default.
+    if (rawBase === '/') {
+      return `/files/${encodedKey}`;
+    }
+
+    const configuredBase = rawBase.replace(/[/]$/, '');
     const apiOrigin = (process.env.API_URL ?? '')
       .replace(/\/api\/v1\/?$/, '')
       .replace(/\/$/, '');
     const base = configuredBase || apiOrigin || 'http://localhost:3000';
-    const encodedKey = key.split('/').map((segment) => encodeURIComponent(segment)).join('/');
     return `${base}/files/${encodedKey}`;
   }
 

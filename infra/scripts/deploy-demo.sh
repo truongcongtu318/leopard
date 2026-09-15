@@ -255,10 +255,10 @@ fi
 HOST=$(detect_public_host)
 # Media URLs must stay on whatever origin the client is already using. An
 # absolute http://<ip>:3000 URL breaks the HTTPS tunnel twice over: the browser
-# blocks it as mixed content, and it leaks an address the client may not be able
-# to reach. A root-relative path resolves against the app origin, which proxies
-# /files/ to the API (gateway and both Expo app configs do).
-env_set PUBLIC_FILES_BASE_URL "/files"
+# blocks it as mixed content, and it leaks an address the client may not reach.
+# A bare "/" means "same origin as the client", so the API returns a
+# root-relative /files/<key> that each app proxies to the API.
+env_set PUBLIC_FILES_BASE_URL "/"
 
 # Clients reach the apps through the gateway port, so the API must accept those
 # origins. Include the bare host too, for direct-port access.
