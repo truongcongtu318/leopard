@@ -198,6 +198,7 @@ type OrderRow = {
   acceptedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;
+  vehicleType: string;
   customerId: string;
   deliveredAt: string | null;
   driverId: string | null;
@@ -535,6 +536,7 @@ function expectedSeedState(manifest: DemoManifest): SeedSnapshot {
           providerSource: order.providerSource,
           status: order.status,
           updatedAt: createdAt,
+          vehicleType: order.vehicleType,
         };
       }),
     ),
@@ -719,6 +721,7 @@ async function snapshotSeedState(client: Client, manifest: DemoManifest): Promis
          "customerId",
          "driverId",
          status,
+         "vehicleType",
          "providerSource",
          "priceVnd",
          "etaSeconds",

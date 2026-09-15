@@ -684,6 +684,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "REQUESTED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 5200,
       "durationSeconds": 1320,
@@ -746,6 +747,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "ACCEPTED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6800,
       "durationSeconds": 1680,
@@ -827,6 +829,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "PICKING_UP",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 9100,
       "durationSeconds": 2160,
@@ -950,6 +953,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "IN_TRANSIT",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 7400,
       "durationSeconds": 1860,
@@ -1082,6 +1086,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1202,6 +1207,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 4100,
       "durationSeconds": 1020,
@@ -1272,6 +1278,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1392,6 +1399,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1512,6 +1520,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1632,6 +1641,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1752,6 +1762,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1872,6 +1883,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1992,6 +2004,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2112,6 +2125,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2232,6 +2246,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2352,6 +2367,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2472,6 +2488,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2592,6 +2609,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2712,6 +2730,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2832,6 +2851,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2952,6 +2972,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3072,6 +3093,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "CANCELLED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3192,6 +3214,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "CANCELLED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3312,6 +3335,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3432,6 +3456,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3552,6 +3577,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3672,6 +3698,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3792,6 +3819,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3912,6 +3940,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4032,6 +4061,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "CANCELLED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4152,6 +4182,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4272,6 +4303,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4392,6 +4424,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4512,6 +4545,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4632,6 +4666,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4752,6 +4787,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4872,6 +4908,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4992,6 +5029,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5112,6 +5150,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5232,6 +5271,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5352,6 +5392,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5472,6 +5513,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5592,6 +5634,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5712,6 +5755,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5832,6 +5876,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5952,6 +5997,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6072,6 +6118,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6192,6 +6239,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6312,6 +6360,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6432,6 +6481,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6552,6 +6602,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6672,6 +6723,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "CANCELLED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6792,6 +6844,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6912,6 +6965,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -7032,6 +7086,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -7152,6 +7207,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -7266,6 +7322,258 @@
           "expiresAt": null
         }
       ]
+    },
+    {
+      "id": "b9fb08b0-4609-54e0-842a-4beb615d2e8e",
+      "customerId": "11111111-1111-4111-8111-111111111111",
+      "driverId": null,
+      "status": "REQUESTED",
+      "vehicleType": "VAN",
+      "providerSource": "DEMO",
+      "distanceMeters": 7400,
+      "durationSeconds": 1138,
+      "priceVnd": 235000,
+      "etaSeconds": 1138,
+      "timestamps": {
+        "acceptedAt": null,
+        "pickingUpAt": null,
+        "inTransitAt": null,
+        "deliveredAt": null,
+        "cancelledAt": null
+      },
+      "routeSnapshot": {
+        "provider": "DEMO",
+        "label": "Bình Thạnh → Quận 5",
+        "pickup": "Kho điện máy Hòa Phát — Bình Thạnh",
+        "dropoff": "Cửa hàng VLXD 92 Nguyễn Trãi — Quận 5",
+        "stopCount": 0
+      },
+      "stops": [
+        {
+          "id": "44ae7f64-2ae2-592c-92ba-e67dec8cdb3d",
+          "type": "PICKUP",
+          "sequence": 0,
+          "address": "Kho điện máy Hòa Phát — Bình Thạnh",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.801,
+            "lng": 106.702
+          }
+        },
+        {
+          "id": "26523bfc-fa41-55eb-968d-b14b32c7e11b",
+          "type": "DROPOFF",
+          "sequence": 1,
+          "address": "Cửa hàng VLXD 92 Nguyễn Trãi — Quận 5",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.754,
+            "lng": 106.677
+          }
+        }
+      ],
+      "statusHistory": [
+        {
+          "id": "25c02e62-28c9-5bd4-bf42-bad55b903092",
+          "fromStatus": null,
+          "toStatus": "REQUESTED",
+          "actorId": "11111111-1111-4111-8111-111111111111",
+          "reason": "Đơn hàng mới đang chờ tài xế phù hợp",
+          "createdAt": "2026-09-15T01:00:00.000Z"
+        }
+      ],
+      "trackingPoints": [],
+      "mediaObjects": [],
+      "paymentIntents": []
+    },
+    {
+      "id": "cf61fbb3-eb39-5f35-a4c8-91512b5504f0",
+      "customerId": "11111111-1111-4111-8111-111111111111",
+      "driverId": null,
+      "status": "REQUESTED",
+      "vehicleType": "VAN",
+      "providerSource": "DEMO",
+      "distanceMeters": 11200,
+      "durationSeconds": 1723,
+      "priceVnd": 312000,
+      "etaSeconds": 1723,
+      "timestamps": {
+        "acceptedAt": null,
+        "pickingUpAt": null,
+        "inTransitAt": null,
+        "deliveredAt": null,
+        "cancelledAt": null
+      },
+      "routeSnapshot": {
+        "provider": "DEMO",
+        "label": "Quận 12 → Nhà máy Thủ Đức, Xa lộ Hà Nội",
+        "pickup": "Xưởng gỗ nội thất An Phú — Quận 12",
+        "dropoff": "Nhà máy Thủ Đức, Xa lộ Hà Nội",
+        "stopCount": 0
+      },
+      "stops": [
+        {
+          "id": "a5e433c3-b55f-50f9-b275-19dd8853d1e7",
+          "type": "PICKUP",
+          "sequence": 0,
+          "address": "Xưởng gỗ nội thất An Phú — Quận 12",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.842,
+            "lng": 106.658
+          }
+        },
+        {
+          "id": "8f56acc1-e9d1-57d9-9a42-e65d6df5e77d",
+          "type": "DROPOFF",
+          "sequence": 1,
+          "address": "Nhà máy Thủ Đức, Xa lộ Hà Nội",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.851,
+            "lng": 106.762
+          }
+        }
+      ],
+      "statusHistory": [
+        {
+          "id": "40d4b23b-9700-5935-888b-61e5a7ae62cf",
+          "fromStatus": null,
+          "toStatus": "REQUESTED",
+          "actorId": "11111111-1111-4111-8111-111111111111",
+          "reason": "Đơn hàng mới đang chờ tài xế phù hợp",
+          "createdAt": "2026-09-15T01:00:00.000Z"
+        }
+      ],
+      "trackingPoints": [],
+      "mediaObjects": [],
+      "paymentIntents": []
+    },
+    {
+      "id": "8417b85c-ffa6-563d-81d9-694e8f9a617f",
+      "customerId": "11111111-1111-4111-8111-111111111111",
+      "driverId": null,
+      "status": "REQUESTED",
+      "vehicleType": "VAN",
+      "providerSource": "DEMO",
+      "distanceMeters": 5100,
+      "durationSeconds": 784,
+      "priceVnd": 178000,
+      "etaSeconds": 784,
+      "timestamps": {
+        "acceptedAt": null,
+        "pickingUpAt": null,
+        "inTransitAt": null,
+        "deliveredAt": null,
+        "cancelledAt": null
+      },
+      "routeSnapshot": {
+        "provider": "DEMO",
+        "label": "Kho nước giải khát Tân Bình → Đại lý tạp hóa Gò Vấp, Phan Văn Trị",
+        "pickup": "Kho nước giải khát Tân Bình",
+        "dropoff": "Đại lý tạp hóa Gò Vấp, Phan Văn Trị",
+        "stopCount": 0
+      },
+      "stops": [
+        {
+          "id": "a8a60b7a-a196-53e3-895d-35810d83fd9e",
+          "type": "PICKUP",
+          "sequence": 0,
+          "address": "Kho nước giải khát Tân Bình",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.796,
+            "lng": 106.661
+          }
+        },
+        {
+          "id": "b046afdb-e5b3-51d5-b5e9-55541faf80f9",
+          "type": "DROPOFF",
+          "sequence": 1,
+          "address": "Đại lý tạp hóa Gò Vấp, Phan Văn Trị",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.838,
+            "lng": 106.69
+          }
+        }
+      ],
+      "statusHistory": [
+        {
+          "id": "a854720d-1673-5f7a-adad-56108af01153",
+          "fromStatus": null,
+          "toStatus": "REQUESTED",
+          "actorId": "11111111-1111-4111-8111-111111111111",
+          "reason": "Đơn hàng mới đang chờ tài xế phù hợp",
+          "createdAt": "2026-09-15T01:00:00.000Z"
+        }
+      ],
+      "trackingPoints": [],
+      "mediaObjects": [],
+      "paymentIntents": []
+    },
+    {
+      "id": "24ee4409-8f31-588b-97a7-84ba843afade",
+      "customerId": "11111111-1111-4111-8111-111111111111",
+      "driverId": null,
+      "status": "REQUESTED",
+      "vehicleType": "TRUCK",
+      "providerSource": "DEMO",
+      "distanceMeters": 24800,
+      "durationSeconds": 3815,
+      "priceVnd": 615000,
+      "etaSeconds": 3815,
+      "timestamps": {
+        "acceptedAt": null,
+        "pickingUpAt": null,
+        "inTransitAt": null,
+        "deliveredAt": null,
+        "cancelledAt": null
+      },
+      "routeSnapshot": {
+        "provider": "DEMO",
+        "label": "Bãi container A → KCN Sóng Thần 1, Dĩ An, Bình Dương",
+        "pickup": "Cảng Cát Lái — Bãi container A",
+        "dropoff": "KCN Sóng Thần 1, Dĩ An, Bình Dương",
+        "stopCount": 0
+      },
+      "stops": [
+        {
+          "id": "c08e0303-deb9-5360-b463-0133216cdb6c",
+          "type": "PICKUP",
+          "sequence": 0,
+          "address": "Cảng Cát Lái — Bãi container A",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.762,
+            "lng": 106.799
+          }
+        },
+        {
+          "id": "cc8d78cb-7569-5224-8e10-4886c5565986",
+          "type": "DROPOFF",
+          "sequence": 1,
+          "address": "KCN Sóng Thần 1, Dĩ An, Bình Dương",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.898,
+            "lng": 106.752
+          }
+        }
+      ],
+      "statusHistory": [
+        {
+          "id": "96ec9b33-f721-5bca-adef-88584682f99e",
+          "fromStatus": null,
+          "toStatus": "REQUESTED",
+          "actorId": "11111111-1111-4111-8111-111111111111",
+          "reason": "Đơn hàng mới đang chờ tài xế phù hợp",
+          "createdAt": "2026-09-15T01:00:00.000Z"
+        }
+      ],
+      "trackingPoints": [],
+      "mediaObjects": [],
+      "paymentIntents": []
     }
   ]
 }

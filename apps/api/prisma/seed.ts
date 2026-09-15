@@ -150,6 +150,12 @@ type OrderManifest = TimestampedManifest & {
   customerId: string;
   driverId: string | null;
   status: 'REQUESTED' | 'ACCEPTED' | 'PICKING_UP' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
+  /**
+   * Required: Order.vehicleType defaults to MOTORBIKE, so omitting it silently
+   * made every seeded order a motorbike job that no VAN or TRUCK partner could
+   * ever be offered.
+   */
+  vehicleType: 'MOTORBIKE' | 'VAN' | 'TRUCK';
   providerSource: 'VIETMAP' | 'DEMO' | 'PAYOS' | 'VIETQR' | 'LOCAL' | 'S3' | null;
   distanceMeters: number | null;
   durationSeconds: number | null;
@@ -762,6 +768,7 @@ async function insertOrders(client: SeedClient, manifest: DemoManifest): Promise
         customerId: order.customerId,
         driverId: order.driverId,
         status: order.status,
+        vehicleType: order.vehicleType,
         routeSnapshot: order.routeSnapshot,
         providerSource: order.providerSource,
         distanceMeters: order.distanceMeters,
