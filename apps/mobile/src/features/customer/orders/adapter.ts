@@ -386,14 +386,17 @@ export function mapOrderToListItem(
   const origin: CustomerRoutePoint = {
     id: pickupStop?.id ?? 'pickup',
     label: pickupStop?.address ?? 'Điểm lấy hàng',
+    coords: pickupStop ? { lat: pickupStop.lat, lng: pickupStop.lng } : undefined,
   };
   const destination: CustomerRoutePoint = {
     id: dropoffStop?.id ?? 'dropoff',
     label: dropoffStop?.address ?? 'Điểm giao hàng',
+    coords: dropoffStop ? { lat: dropoffStop.lat, lng: dropoffStop.lng } : undefined,
   };
   const stops: readonly CustomerRoutePoint[] = intermediateStops.map((s) => ({
     id: s.id,
     label: s.address,
+    coords: { lat: s.lat, lng: s.lng },
   }));
 
   const distanceLabel = formatDistance(order.distanceMeters);

@@ -338,18 +338,24 @@ function DriverCard({
 
 function TrackingPanel({
   destinationLabel,
+  destinationCoords,
   distanceMeters,
   etaDurationSeconds,
   onOpenTracking,
   onRetry,
   orderId,
   originLabel,
+  originCoords,
+  stops,
   tracking,
 }: Readonly<{
   tracking: CustomerTrackingView;
   onRetry?: () => void;
   originLabel: string;
+  originCoords?: { lat: number; lng: number };
   destinationLabel: string;
+  destinationCoords?: { lat: number; lng: number };
+  stops?: readonly { id: string; label: string; coords?: { lat: number; lng: number } }[];
   onOpenTracking?: (orderId: string) => void;
   etaDurationSeconds?: number | null;
   distanceMeters?: number | null;
@@ -378,7 +384,13 @@ function TrackingPanel({
           <Text style={styles.body}>{tracking.message}</Text>
         </View>
         <MapPanel state="ready" summary="Bản đồ lộ trình; chưa có tài xế">
-          <RouteMapSchematic destinationLabel={destinationLabel} originLabel={originLabel} />
+          <RouteMapSchematic
+            destinationCoords={destinationCoords}
+            destinationLabel={destinationLabel}
+            originCoords={originCoords}
+            originLabel={originLabel}
+            stops={stops}
+          />
         </MapPanel>
       </View>
     );
@@ -398,16 +410,25 @@ function TrackingPanel({
           <Text style={styles.body}>{tracking.message}</Text>
         </View>
         <MapPanel state="ready" summary="Bản đồ lộ trình; chưa có vị trí tài xế">
-          <RouteMapSchematic destinationLabel={destinationLabel} originLabel={originLabel} />
+          <RouteMapSchematic
+            destinationCoords={destinationCoords}
+            destinationLabel={destinationLabel}
+            originCoords={originCoords}
+            originLabel={originLabel}
+            stops={stops}
+          />
         </MapPanel>
       </View>
     );
   }
   const mapContent = (
     <RouteMapSchematic
+      destinationCoords={destinationCoords}
       destinationLabel={destinationLabel}
       markerLabel={`${tracking.driverLabel} (Đang di chuyển)`}
+      originCoords={originCoords}
       originLabel={originLabel}
+      stops={stops}
     />
   );
   if (tracking.kind === 'fresh') {
@@ -655,13 +676,16 @@ function CustomerDetailContent({
           </View>
 
           <TrackingPanel
+            destinationCoords={order.route.destination.coords}
             destinationLabel={order.route.destination.label}
             distanceMeters={order.distanceMeters}
             etaDurationSeconds={order.etaDurationSeconds}
             onOpenTracking={onOpenTracking}
             onRetry={onRetry}
             orderId={order.id}
+            originCoords={order.route.origin.coords}
             originLabel={order.route.origin.label}
+            stops={order.route.stops}
             tracking={order.tracking}
           />
 

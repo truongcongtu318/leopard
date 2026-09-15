@@ -5,14 +5,20 @@ import { RealInteractiveMap } from './RealInteractiveMap';
 
 export type RouteMapSchematicProps = Readonly<{
   destinationLabel: string;
+  destinationCoords?: { lat: number; lng: number };
   markerLabel?: string;
   originLabel: string;
+  originCoords?: { lat: number; lng: number };
+  stops?: readonly { id: string; label: string; coords?: { lat: number; lng: number } }[];
 }>;
 
 export function RouteMapSchematic({
   destinationLabel,
+  destinationCoords,
   markerLabel,
   originLabel,
+  originCoords,
+  stops,
 }: RouteMapSchematicProps) {
   return (
     <View style={styles.container} testID="route-map-schematic">
@@ -22,10 +28,11 @@ export function RouteMapSchematic({
         style={styles.map}
       >
         <RealInteractiveMap
-          destination={{ label: destinationLabel }}
+          destination={{ label: destinationLabel, coords: destinationCoords }}
           height="100%"
           mode={markerLabel ? 'tracking' : 'route'}
-          origin={{ label: originLabel }}
+          origin={{ label: originLabel, coords: originCoords }}
+          stops={stops}
           truckEtaLabel={markerLabel}
         />
       </View>
