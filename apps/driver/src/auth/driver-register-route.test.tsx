@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-import RegisterScreen from '../../app/(public)/driver-register';
+import RegisterScreen, { draftStorage, DRAFT_STORAGE_KEY } from '../../app/(public)/driver-register';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { openDriverContractPdf } from '../features/contract/contract-pdf';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
@@ -346,5 +346,107 @@ describe('RegisterScreen (Driver registration)', () => {
     expect(await screen.findByText('Hồ sơ bị từ chối')).toBeTruthy();
     expect(screen.getByText(/Đã ký hợp đồng phiên bản v1 lúc/)).toBeTruthy();
     await screen.unmount();
+  });
+
+  it('renders the 3-step progress stepper with "1. Cá nhân", "2. Phương tiện", "3. Giấy tờ"', async () => {
+    const screen = await render(<RegisterScreen />);
+    const stepper = screen.getByTestId('driver-register-stepper');
+    expect(stepper).toBeTruthy();
+    expect(screen.getByText('1. Cá nhân')).toBeTruthy();
+    expect(screen.getByText('2. Phương tiện')).toBeTruthy();
+    expect(screen.getByText('3. Giấy tờ')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('requires full name to have at least 3 characters before advancing to step 2', async () => {
+    const screen = await render(<RegisterScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Họ và tên'), 'Ab');
+    const nextBtn = screen.getByLabelText('Tiếp tục sang bước phương tiện');
+    expect(nextBtn.props.accessibilityState?.disabled ?? nextBtn.props.disabled).toBe(true);
+    await fireEvent.press(nextBtn);
+    expect(screen.queryByLabelText('Biển số xe')).toBeNull();
+
+    await fireEvent.changeText(screen.getByLabelText('Họ và tên'), 'Nguyễn Văn A');
+    expect(
+      screen.getByLabelText('Tiếp tục sang bước phương tiện').props.accessibilityState?.disabled ??
+        false,
+    ).toBe(false);
+    await screen.unmount();
+  });
+
+  it('enforces single vehicle selection among the 4 vehicle categories and updates payload', async () => {
+    const screen = await render(<RegisterScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Họ và tên'), 'Nguyễn Văn A');
+    await fireEvent.press(screen.getByLabelText('Tiếp tục sang bước phương tiện'));
+
+    expect(screen.getByLabelText('Xe Van 500kg')).toBeTruthy();
+    expect(screen.getByLabelText('Xe Tải nhẹ 1.25T')).toBeTruthy();
+    expect(screen.getByLabelText('Xe Tải 2.5T')).toBeTruthy();
+    expect(screen.getByLabelText('Xe Ba gác')).toBeTruthy();
+
+    expect(screen.getByLabelText('Xe Van 500kg').props.accessibilityState.selected).toBe(true);
+    expect(screen.getByLabelText('Xe Tải nhẹ 1.25T').props.accessibilityState.selected).toBe(false);
+
+    await fireEvent.press(screen.getByLabelText('Xe Tải nhẹ 1.25T'));
+    expect(screen.getByLabelText('Xe Van 500kg').props.accessibilityState.selected).toBe(false);
+    expect(screen.getByLabelText('Xe Tải nhẹ 1.25T').props.accessibilityState.selected).toBe(true);
+    expect(screen.getByLabelText('Tải trọng đăng kiểm').props.value).toBe('1250');
+    await screen.unmount();
+  });
+
+  it('enforces valid license plate format before advancing to step 3', async () => {
+    const screen = await render(<RegisterScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Họ và tên'), 'Nguyễn Văn A');
+    await fireEvent.press(screen.getByLabelText('Tiếp tục sang bước phương tiện'));
+
+    await fireEvent.changeText(screen.getByLabelText('Biển số xe'), 'invalid-plate');
+    await fireEvent.changeText(screen.getByLabelText('Số GPLX'), '590123456789');
+
+    const nextBtn = screen.getByLabelText('Tiếp tục sang chụp giấy tờ');
+    expect(nextBtn.props.accessibilityState?.disabled ?? nextBtn.props.disabled).toBe(true);
+    await fireEvent.press(nextBtn);
+    expect(screen.queryByText('Giấy phép lái xe (GPLX)')).toBeNull();
+
+    await fireEvent.changeText(screen.getByLabelText('Biển số xe'), '59D-123.45');
+    expect(
+      screen.getByLabelText('Tiếp tục sang chụp giấy tờ').props.accessibilityState?.disabled ?? false,
+    ).toBe(false);
+    await screen.unmount();
+  });
+
+  it('allows deleting a captured KYC document back to uncaptured state', async () => {
+    const screen = await render(<RegisterScreen />);
+    await fillBasicInfo(screen);
+    await fireEvent.press(screen.getByLabelText('Tiếp tục sang chụp giấy tờ'));
+
+    await fireEvent.press(screen.getByLabelText('Chụp ảnh Giấy phép lái xe (GPLX)'));
+    expect(await screen.findByText('Chụp lại')).toBeTruthy();
+    expect(screen.getByLabelText('Xóa Giấy phép lái xe (GPLX)')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Xóa Giấy phép lái xe (GPLX)'));
+    expect(screen.getByLabelText('Chụp ảnh Giấy phép lái xe (GPLX)')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('restores draft form values from storage on mount and clears draft on submit', async () => {
+    await draftStorage.saveDraft({
+      fullName: 'Trần Văn Draft',
+      phoneNumber: '0987654321',
+      licensePlate: '51D-999.99',
+      licenseNumber: '510987654321',
+      selectedVehicle: 'TRUCK_1250KG',
+    });
+
+    const screen = await render(<RegisterScreen />);
+    await waitFor(() => {
+      expect(screen.getByLabelText('Họ và tên').props.value).toBe('Trần Văn Draft');
+    });
+
+    await fireEvent.press(screen.getByLabelText('Tiếp tục sang bước phương tiện'));
+    expect(screen.getByLabelText('Biển số xe').props.value).toBe('51D-999.99');
+    expect(screen.getByLabelText('Xe Tải nhẹ 1.25T').props.accessibilityState.selected).toBe(true);
+
+    await screen.unmount();
+    await draftStorage.clearDraft();
   });
 });
