@@ -30,9 +30,6 @@
       "startUrl": "/",
       "scope": "/"
     },
-    "experiments": {
-      "baseUrl": "/driver"
-    },
     "plugins": [
       "expo-router",
       [
