@@ -22,7 +22,6 @@ import {
   IconRoleAdmin,
   IconRoleCustomer,
   IconRoleDriver,
-  IconRoleFleet,
   OtpPhoneHeroIcon,
   VietnamFlagIcon,
 } from '../ui/icons/CoreIcons';
@@ -492,26 +491,6 @@ export function LoginScreen({
                     disabled={isSubmitting}
                     label="Demo Driver"
                     onPress={() => handleDemoLogin('driver', 'DRIVER')}
-                    variant="secondary"
-                  />
-                </View>
-
-                <View style={[styles.demoCard, styles.demoCardAmber]}>
-                  <View style={styles.demoCardTop}>
-                    <IconRoleFleet
-                      color={colors.warning.border}
-                      secondaryColor={colors.warning.background}
-                      size={22}
-                    />
-                    <View style={[styles.demoRoleBadge, styles.demoRoleBadgeAmber]}>
-                      <Text style={styles.demoRoleBadgeText}>Đội xe</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.demoCardDesc}>Giám sát xe & đối tác tài xế</Text>
-                  <Button
-                    disabled={isSubmitting}
-                    label="Demo Fleet Owner"
-                    onPress={() => handleDemoLogin('fleet-owner', 'FLEET_OWNER')}
                     variant="secondary"
                   />
                 </View>
@@ -1069,10 +1048,6 @@ const styles = StyleSheet.create({
     borderColor: colors.success.border,
     backgroundColor: colors.success.background,
   },
-  demoCardAmber: {
-    borderColor: colors.warning.border,
-    backgroundColor: colors.warning.background,
-  },
   demoCardSlate: {
     borderColor: leopardPalette.cardBorder,
     backgroundColor: '#F8FAFC',
@@ -1092,9 +1067,6 @@ const styles = StyleSheet.create({
   },
   demoRoleBadgeGreen: {
     backgroundColor: colors.success.text,
-  },
-  demoRoleBadgeAmber: {
-    backgroundColor: leopardPalette.accentYellowDark,
   },
   demoRoleBadgeSlate: {
     backgroundColor: leopardPalette.textMutedSlate,
