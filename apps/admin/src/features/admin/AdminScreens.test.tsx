@@ -23,6 +23,13 @@ describe('Admin static operations screens', () => {
     expect(strip.textContent).toContain('Đơn đang chạy');
     expect(strip.textContent).toContain('Đội xe');
     expect(strip.textContent).toContain('Doanh thu');
+
+    const kpiCards = strip.querySelectorAll('.rounded-3xl');
+    expect(kpiCards.length).toBe(4);
+    for (const card of kpiCards) {
+      expect(card.className).toContain('border-black/[0.06]');
+      expect(card.className).toContain('rounded-3xl');
+    }
   });
 
   it('renders Bento map, orders table, status, OTD and revenue cards', () => {
@@ -39,6 +46,11 @@ describe('Admin static operations screens', () => {
     expect(screen.getByText('Cơ cấu trạng thái đơn')).toBeTruthy();
     expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)')).toBeTruthy();
     expect(screen.getByText('Doanh thu cước vận chuyển')).toBeTruthy();
+
+    expect(screen.getByText('Sổ điều phối đơn hàng').closest('.rounded-3xl')?.className).toContain('border-black/[0.06]');
+    expect(screen.getByText('Cơ cấu trạng thái đơn').closest('.rounded-3xl')?.className).toContain('border-black/[0.06]');
+    expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)').closest('.rounded-3xl')?.className).toContain('border-black/[0.06]');
+    expect(screen.getByText('Doanh thu cước vận chuyển').closest('.rounded-3xl')?.className).toContain('border-black/[0.06]');
   });
 
   it('keeps operational context for readiness and offline overview scenarios', () => {

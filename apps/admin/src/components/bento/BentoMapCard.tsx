@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, Search } from 'lucide-react';
 
 export interface MapPackageMarker {
   readonly id: string;
@@ -209,7 +209,7 @@ export function BentoMapCard({
   return (
     <div
       aria-label={title}
-      className={`relative overflow-hidden rounded-3xl bg-[#0b111a] border border-slate-800/80 shadow-sm transition-all duration-300 flex flex-1 flex-col justify-between select-none ${
+      className={`relative overflow-hidden rounded-3xl bg-[#0b111a] border border-black/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.03)] transition-all duration-300 flex flex-1 flex-col justify-between select-none ${
         isFullscreen ? 'fixed inset-4 z-50 min-h-[90vh]' : 'min-h-[380px] sm:min-h-[430px] xl:min-h-0 h-full'
       }`}
     >
@@ -238,18 +238,14 @@ export function BentoMapCard({
         ))}
       </div>
 
-      {/* Floating Header Controls: Glassmorphic Search & Fullscreen Toggle */}
+      {/* Floating glass pill search bar & glassmorphism popover */}
       <div className="relative z-20 flex items-center justify-between p-3 sm:p-4 pointer-events-auto">
         <div className="relative w-52 sm:w-64">
-          <svg
-            className="w-3.5 h-3.5 text-slate-300 absolute left-3 top-2.5 pointer-events-none"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          <Search
+            className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500"
+            strokeWidth={2}
             aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          />
           <input
             type="text"
             value={searchValue}
@@ -259,13 +255,13 @@ export function BentoMapCard({
             }}
             placeholder={searchPlaceholder}
             aria-label="Tìm kiếm trên bản đồ"
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900/85 backdrop-blur-md border border-white/15 text-white rounded-xl placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 shadow-md transition-all"
+            className="w-full rounded-full py-2 pl-9 pr-4 text-xs font-medium text-slate-900 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md bg-white/85 border border-black/[0.08] placeholder:text-slate-400 transition-all focus:border-white/60 focus:outline-none focus:ring-2 focus:ring-white/70"
           />
         </div>
 
-        {/* Active Order Pill Display */}
-        <div className="hidden md:flex items-center gap-2 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 px-3 py-1 text-xs text-white shadow-md">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+        {/* Active Order glassmorphism popover */}
+        <div className="hidden items-center gap-2 rounded-full px-3.5 py-1.5 text-xs text-slate-800 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md bg-white/85 border border-black/[0.08] md:flex">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
           <span className="font-semibold">{displayActiveLabel}</span>
         </div>
 
@@ -274,7 +270,7 @@ export function BentoMapCard({
           type="button"
           onClick={() => setIsFullscreen((f) => !f)}
           aria-label={isFullscreen ? 'Thu nhỏ bản đồ' : 'Phóng to toàn màn hình'}
-          className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-md"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-800 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md bg-white/85 border border-black/[0.08] transition-colors hover:bg-white"
         >
           {isFullscreen ? (
             <Minimize2 className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
@@ -284,29 +280,28 @@ export function BentoMapCard({
         </button>
       </div>
 
-      {/* Floating Bottom Controls: Live Telemetry Status & Zoom Controls */}
+      {/* Floating glass telemetry status & frosted glass zoom buttons */}
       <div className="relative z-20 flex items-center justify-between p-3 sm:p-4 pointer-events-auto">
-        <div className="flex items-center gap-2 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 px-3 py-1 text-[11px] font-medium text-slate-300 shadow-md">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[11px] font-medium text-slate-700 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md bg-white/85 border border-black/[0.08]">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
           <span>Bản đồ số thực tế · GIS Dark Mode</span>
         </div>
 
-        {/* Custom Zoom Controls connected directly to Leaflet engine */}
-        <div className="flex flex-col rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 overflow-hidden shadow-lg">
+        {/* Frosted glass circular zoom buttons */}
+        <div className="flex flex-col gap-1.5">
           <button
             type="button"
             onClick={handleZoomIn}
             aria-label="Phóng to bản đồ"
-            className="flex h-7 w-7 items-center justify-center text-sm font-bold text-white hover:bg-white/15 transition-colors cursor-pointer"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-base font-bold text-slate-800 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md bg-white/85 border border-black/[0.08] transition-colors hover:bg-white"
           >
             +
           </button>
-          <div className="h-px w-full bg-white/15" />
           <button
             type="button"
             onClick={handleZoomOut}
             aria-label="Thu nhỏ bản đồ"
-            className="flex h-7 w-7 items-center justify-center text-sm font-bold text-white hover:bg-white/15 transition-colors cursor-pointer"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-base font-bold text-slate-800 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md bg-white/85 border border-black/[0.08] transition-colors hover:bg-white"
           >
             −
           </button>

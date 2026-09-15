@@ -127,7 +127,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
 
   return (
     <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <div className="min-h-screen bg-[#F4F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
+      <div className="min-h-screen bg-[#F5F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
         <LiveRefreshBridge />
         <a
           href="#noi-dung-chinh"

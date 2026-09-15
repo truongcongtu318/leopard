@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Building2, CircleDollarSign, Truck, Users } from 'lucide-react';
 
 import {
   AdminBoundaryState,
@@ -142,10 +143,34 @@ export function AdminOverviewScreen({
   const fleetsMetric = view.metrics.find((m) => m.id === 'fleets');
   const activeOrdersMetric = view.metrics.find((m) => m.id === 'active-orders');
   const kpis = [
-    { id: 'users', label: 'Người dùng', value: usersMetric?.value ?? 0 },
-    { id: 'active-orders', label: 'Đơn đang chạy', value: activeOrdersMetric?.value ?? 0 },
-    { id: 'fleets', label: 'Đội xe', value: fleetsMetric?.value ?? 0 },
-    { id: 'revenue', label: 'Doanh thu', value: formattedRevenue },
+    {
+      id: 'users',
+      label: 'Người dùng',
+      value: usersMetric?.value ?? 0,
+      icon: Users,
+      iconClass: 'bg-sky-50 text-sky-600',
+    },
+    {
+      id: 'active-orders',
+      label: 'Đơn đang chạy',
+      value: activeOrdersMetric?.value ?? 0,
+      icon: Truck,
+      iconClass: 'bg-emerald-50 text-emerald-600',
+    },
+    {
+      id: 'fleets',
+      label: 'Đội xe',
+      value: fleetsMetric?.value ?? 0,
+      icon: Building2,
+      iconClass: 'bg-amber-50 text-amber-600',
+    },
+    {
+      id: 'revenue',
+      label: 'Doanh thu',
+      value: formattedRevenue,
+      icon: CircleDollarSign,
+      iconClass: 'bg-indigo-50 text-indigo-600',
+    },
   ];
 
   return (
@@ -156,15 +181,25 @@ export function AdminOverviewScreen({
 
       {/* KPI strip: 4 BE numbers, single row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4" aria-label="Chỉ số tổng quan">
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.id}
-            className="rounded-3xl border border-slate-100 bg-white px-5 py-3.5 shadow-sm flex items-center justify-between gap-2"
-          >
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{kpi.label}</p>
-            <p className="text-xl font-extrabold tracking-tight text-slate-900 tabular-nums">{kpi.value}</p>
-          </div>
-        ))}
+        {kpis.map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <div
+              key={kpi.id}
+              className="rounded-3xl bg-white/80 backdrop-blur-xl border border-black/[0.06] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex items-center justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{kpi.label}</p>
+                <p className="text-2xl font-bold font-mono tracking-tight text-slate-900 tabular-nums truncate mt-1">
+                  {kpi.value}
+                </p>
+              </div>
+              <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl ${kpi.iconClass}`}>
+                <Icon className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* NexaFleet Dispatch Console: 5 widgets fill viewport height */}
