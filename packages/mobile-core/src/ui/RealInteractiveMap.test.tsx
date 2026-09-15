@@ -72,4 +72,11 @@ describe('RealInteractiveMap', () => {
     expect(screen.queryByText(/10\.\d+,\s*106\.\d+/)).toBeNull();
     await screen.unmount();
   });
+
+  it('anchors destination coordinates around origin when destination is not in dictionary', () => {
+    const daNangOriginCoords = { lat: 16.035, lng: 108.243 };
+    const resolved = resolveLocationCoords('400 Đường Chưa Biết Tên ABC', daNangOriginCoords);
+    expect(Math.abs(resolved.lat - daNangOriginCoords.lat)).toBeLessThan(0.05);
+    expect(Math.abs(resolved.lng - daNangOriginCoords.lng)).toBeLessThan(0.05);
+  });
 });

@@ -35,8 +35,12 @@ export async function searchVietmapWithCoords(query: string, apiKey: string = DE
     const resolved = await Promise.all(top.map(async (item, idx): Promise<GeocodedSuggestion> => {
       const placeId = item.ref_id || `sugg-${idx}-${Date.now()}`;
       const title = item.display || item.name || trimmed;
-      const address = item.address || item.display || item.name || trimmed;
-      const subtitle = item.display && item.address ? item.address : '';
+      const address =
+        item.display ||
+        (item.name && item.address ? `${item.name}, ${item.address}` : item.name) ||
+        item.address ||
+        trimmed;
+      const subtitle = item.address || (item.display && item.display !== title ? item.display : '');
       const directLat = typeof item.lat === 'number' ? item.lat : null;
       const directLng = typeof item.lng === 'number' ? item.lng : null;
       if (directLat !== null && directLng !== null) return { id: placeId, title, subtitle, address, coords: { lat: directLat, lng: directLng } };

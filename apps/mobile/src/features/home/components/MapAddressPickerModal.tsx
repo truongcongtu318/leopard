@@ -66,7 +66,11 @@ export async function searchVietmapDirect(
       top.map(async (item, idx): Promise<AddressSuggestion | null> => {
         const placeId = item.ref_id || `sugg-${idx}`;
         const label = item.display || item.name || 'Địa điểm';
-        const addr = item.address || item.display || item.name || q;
+        const addr =
+          item.display ||
+          (item.name && item.address ? `${item.name}, ${item.address}` : item.name) ||
+          item.address ||
+          q;
         const itemLat = typeof item.lat === 'number' ? item.lat : null;
         const itemLng = typeof item.lng === 'number' ? item.lng : null;
 

@@ -508,8 +508,8 @@ export function RealInteractiveMap({
   );
 
   const destinationCoords = useMemo(
-    () => destination?.coords || resolveLocationCoords(destination?.label),
-    [destination?.coords, destination?.label],
+    () => destination?.coords || resolveLocationCoords(destination?.label, originCoords),
+    [destination?.coords, destination?.label, originCoords],
   );
 
   const stopsCoords = useMemo(
