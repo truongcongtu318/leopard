@@ -97,7 +97,7 @@ describe('NexaFleet Bento Widgets', () => {
       />,
     );
 
-    const inTransitBtn = screen.getByRole('button', { name: 'Đang vận chuyển' });
+    const inTransitBtn = screen.getByRole('button', { name: 'Đang giao' });
     fireEvent.click(inTransitBtn);
 
     expect(screen.getByText('LP-PICKING')).toBeTruthy();

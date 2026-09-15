@@ -29,15 +29,9 @@ export interface BentoOrdersCardProps {
 
 const FILTERS = [
   { id: 'all', label: 'Tất cả' },
-<<<<<<< HEAD
-  { id: 'pending', label: 'Chờ tiếp nhận' },
-  { id: 'in_transit', label: 'Đang vận chuyển' },
-  { id: 'delivered', label: 'Đã giao hàng' },
-=======
   { id: 'pending', label: 'Chờ tài xế' },
   { id: 'in_transit', label: 'Đang giao' },
   { id: 'delivered', label: 'Hoàn thành' },
->>>>>>> 80ddf87 (feat(web): elevate Bento dispatch console to Apple 2026 aesthetics)
 ] as const;
 
 export function BentoOrdersCard({

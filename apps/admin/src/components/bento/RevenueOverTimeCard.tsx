@@ -33,8 +33,7 @@ export function RevenueOverTimeCard({
   const isZeroRevenue = displayAmount === '0 ₫' || displayAmount === '0' || displayAmount === '0 VND';
 
   return (
-<<<<<<< HEAD
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 p-5 sm:p-6 text-white border border-white/20 shadow-sm flex flex-1 flex-col justify-between">
+    <div className="relative overflow-hidden rounded-3xl border border-black/[0.06] bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 p-5 sm:p-6 text-white shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-1 flex-col justify-between">
       {/* Subtle ambient glow */}
       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/15 blur-3xl pointer-events-none" aria-hidden="true" />
       <div className="absolute -left-10 -bottom-10 h-36 w-36 rounded-full bg-rose-700/20 blur-3xl pointer-events-none" aria-hidden="true" />
@@ -42,26 +41,12 @@ export function RevenueOverTimeCard({
       {/* Top Header & Amounts */}
       <div className="relative z-10">
         <h2 className="text-xs font-bold uppercase tracking-wider text-white/80">{title}</h2>
-=======
-    <div className="relative overflow-hidden rounded-3xl border border-black/[0.06] bg-gradient-to-br from-orange-500 via-rose-500 to-purple-600 p-5 sm:p-6 text-white shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-1 flex-col justify-between">
-      {/* Subtle ambient glow */}
-      <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10 blur-3xl pointer-events-none" aria-hidden="true" />
-      <div className="absolute -left-10 -bottom-10 h-36 w-36 rounded-full bg-amber-400/20 blur-3xl pointer-events-none" aria-hidden="true" />
-
-      {/* Top Header & Amounts */}
-      <div className="relative z-10">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-white/80">{title}</h2>
->>>>>>> 80ddf87 (feat(web): elevate Bento dispatch console to Apple 2026 aesthetics)
         <div className="mt-2.5 flex flex-wrap items-baseline gap-2.5">
           <p className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-white tabular-nums">
             {displayAmount}
           </p>
           {!isZeroRevenue ? (
-<<<<<<< HEAD
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 border border-white/30 px-2 py-0.5 text-[11px] font-bold text-white shadow-2xs backdrop-blur-xs">
-=======
             <span className="inline-flex items-center gap-1 rounded-full bg-white/20 border border-white/30 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-xs">
->>>>>>> 80ddf87 (feat(web): elevate Bento dispatch console to Apple 2026 aesthetics)
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
                 <polyline points="16 7 22 7 22 13" />
@@ -69,22 +54,14 @@ export function RevenueOverTimeCard({
               {displayGrowth}
             </span>
           ) : (
-<<<<<<< HEAD
-            <span className="inline-flex items-center rounded-full bg-black/20 border border-white/20 px-2 py-0.5 text-[11px] font-semibold text-white/80 backdrop-blur-xs">
-=======
             <span className="inline-flex items-center rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur-xs">
->>>>>>> 80ddf87 (feat(web): elevate Bento dispatch console to Apple 2026 aesthetics)
               Chưa phát sinh doanh thu
             </span>
           )}
         </div>
       </div>
 
-<<<<<<< HEAD
-      {/* SVG Smooth Flowing White Wave Sparkline Chart */}
-=======
       {/* SVG Smooth Flowing Soft White Wave Sparkline Chart */}
->>>>>>> 80ddf87 (feat(web): elevate Bento dispatch console to Apple 2026 aesthetics)
       <div className="absolute inset-x-0 bottom-14 h-24 overflow-hidden pointer-events-none" aria-hidden="true">
         <svg
           className="w-full h-full"
@@ -95,11 +72,7 @@ export function RevenueOverTimeCard({
         >
           <defs>
             <linearGradient id="revenue-wave-gradient" x1="0" y1="0" x2="0" y2="1">
-<<<<<<< HEAD
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
-=======
               <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
->>>>>>> 80ddf87 (feat(web): elevate Bento dispatch console to Apple 2026 aesthetics)
               <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
             </linearGradient>
           </defs>
@@ -110,16 +83,9 @@ export function RevenueOverTimeCard({
               y1="82"
               x2="400"
               y2="82"
-<<<<<<< HEAD
-              stroke="#ffffff"
-              strokeWidth="2"
-              strokeDasharray="4 4"
-              opacity="0.4"
-=======
               stroke="rgba(255,255,255,0.35)"
               strokeWidth="2"
               strokeDasharray="4 4"
->>>>>>> 80ddf87 (feat(web): elevate Bento dispatch console to Apple 2026 aesthetics)
             />
           ) : (
             <>
@@ -153,11 +119,7 @@ export function RevenueOverTimeCard({
               className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
                 isActive
                   ? 'bg-white text-slate-900 shadow-xs font-bold'
-<<<<<<< HEAD
-                  : 'bg-black/20 hover:bg-black/30 text-white/90 hover:text-white border border-white/25 backdrop-blur-xs'
-=======
                   : 'bg-white/20 hover:bg-white/30 text-white/90 border border-white/25 backdrop-blur-xs'
->>>>>>> 80ddf87 (feat(web): elevate Bento dispatch console to Apple 2026 aesthetics)
               }`}
             >
               {p.label}
