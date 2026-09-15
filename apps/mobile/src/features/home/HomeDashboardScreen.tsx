@@ -618,15 +618,6 @@ export function HomeDashboardScreen({
         </View>
 
         <View style={styles.topBarActions}>
-          <Pressable
-            accessibilityLabel="Chuyển vai trò" accessibilityRole="button"
-            onPress={() => { onSwitchRole ? onSwitchRole('DRIVER') : onRegisterDriver?.(); }}
-            style={styles.roleSwitchBtn}
-          >
-            <IconRoleDriver color="#0B1E42" size={16} />
-            <Text style={styles.roleSwitchText}>Tài xế</Text>
-          </Pressable>
-
           {onOpenNotifications ? (
             <Pressable
               accessibilityLabel={`Thông báo (${unreadNotifications} chưa đọc)`} accessibilityRole="button"
