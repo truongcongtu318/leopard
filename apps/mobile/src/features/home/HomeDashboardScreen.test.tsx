@@ -121,19 +121,51 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it('renders the floating nav bar when enabled', async () => {
-    const onNavigateTab = jest.fn();
+  it('hides home tab bar while booking flow is active and restores on unmount', async () => {
+    const { tabBarVisibilityStore } = require('../../navigation/tabBarVisibilityStore');
+    expect(tabBarVisibilityStore.isHidden()).toBe(false);
+
+    const screen = await render(<HomeDashboardScreen />);
+
+    // Typing dropoff (>= 3 chars) reveals fleet matrix and hides tab bar
+    await fireEvent.changeText(screen.getByTestId('cr-dropoff-input'), 'KCN Tân Tạo');
+    expect(screen.getByTestId('home-fleet-matrix')).toBeTruthy();
+    expect(tabBarVisibilityStore.isHidden()).toBe(true);
+
+    // Clearing dropoff restores tab bar
+    await fireEvent.changeText(screen.getByTestId('cr-dropoff-input'), '');
+    expect(tabBarVisibilityStore.isHidden()).toBe(false);
+
+    // Re-activating booking then unmounting restores tab bar
+    await fireEvent.changeText(screen.getByTestId('cr-dropoff-input'), 'KCN Tân Tạo');
+    expect(tabBarVisibilityStore.isHidden()).toBe(true);
+    await screen.unmount();
+    expect(tabBarVisibilityStore.isHidden()).toBe(false);
+  }, 60000);
+
+  it('exposes iOS 18 Inset Grouped vertical vehicle list with single CTA (no horizontal carousel)', async () => {
     const screen = await render(
-      <HomeDashboardScreen onNavigateTab={onNavigateTab} showFloatingNavBar />,
+      <HomeDashboardScreen defaultDropoffLocation="KCN Tân Tạo" />,
     );
 
-    const walletTab = screen.getByLabelText('Ví');
-    expect(walletTab).toBeTruthy();
-    await fireEvent.press(walletTab);
-    expect(onNavigateTab).toHaveBeenCalledWith('wallet');
+    for (const id of ['VAN_500KG', 'TRUCK_125T', 'TRUCK_25T', 'BIKE_3W']) {
+      expect(screen.getByTestId(`vehicle-row-${id}`)).toBeTruthy();
+    }
+
+    // Exactly one primary CTA, showing fare inside
+    const ctas = await screen.findAllByTestId('home-main-cta-btn');
+    expect(ctas).toHaveLength(1);
+    expect(screen.getByText(/TIẾP TỤC ĐẶT XE · 280\.000 ₫/)).toBeTruthy();
+
+    // No horizontal-carousel-only styles: full-width rows, all price strings visible
+    expect(screen.getByText('160.000 ₫')).toBeTruthy();
+    expect(screen.getAllByText('280.000 ₫').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('450.000 ₫')).toBeTruthy();
+    expect(screen.getByText('120.000 ₫')).toBeTruthy();
 
     await screen.unmount();
-  });
+  }, 60000);
+
 
   it('renders time-of-day greeting correctly', () => {
     expect(getTimeOfDayGreeting(new Date(2026, 8, 3, 8, 0))).toBe('Chào buổi sáng');

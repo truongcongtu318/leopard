@@ -41,6 +41,7 @@ import {
 } from '@leopard/mobile-core';
 
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
+import { tabBarVisibilityStore } from '../../navigation/tabBarVisibilityStore';
 import {
   BookingDetailsModal,
   reverseGeocodeCoords,
@@ -450,6 +451,15 @@ export function HomeDashboardScreen({
     [selectedFleetId],
   );
   const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
+
+  // Hide the home tab bar while the booking flow is active (dropoff picked).
+  // Single bottom action (action bar CTA) owns the thumb zone per iOS HIG.
+  useEffect(() => {
+    tabBarVisibilityStore.setHidden(hasSelectedDropoff && !activeShipment);
+    return () => {
+      tabBarVisibilityStore.setHidden(false);
+    };
+  }, [hasSelectedDropoff, activeShipment]);
 
   const handleAddStop = useCallback(() => {
     if (stops.length >= 3) return;
@@ -878,38 +888,64 @@ export function HomeDashboardScreen({
                   <Text style={styles.sectionSubLabel}>Kích thước thùng chuẩn xác</Text>
                 </View>
 
-                <ScrollView contentContainerStyle={styles.fleetScrollContent} horizontal showsHorizontalScrollIndicator={false}>
+                {/* iOS 18 Inset Grouped vertical vehicle list — full row, no truncation */}
+                <View style={styles.vehicleList}>
                   {FLEET_VEHICLES.map((vehicle) => {
                     const isSelected = vehicle.id === selectedFleetId;
                     return (
                       <Pressable
                         accessibilityLabel={`Chọn xe ${vehicle.name}, kích thước ${vehicle.dimensions}, giá dự kiến ${vehicle.estimatedPrice}`}
-                        accessibilityRole="button" key={vehicle.id} onPress={() => handleFleetSelectAndBook(vehicle)}
-                        style={[styles.fleetCard, isSelected && styles.fleetCardSelected]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: isSelected }}
+                        key={vehicle.id}
+                        onPress={() => handleFleetSelectAndBook(vehicle)}
+                        style={({ pressed }) => [
+                          styles.vehicleRow,
+                          isSelected && styles.vehicleRowSelected,
+                          pressed && styles.vehicleRowPressed,
+                        ]}
+                        testID={`vehicle-row-${vehicle.id}`}
                       >
-                        {vehicle.badge ? (
-                          <View style={[styles.fleetBadge, isSelected && styles.fleetBadgeSelected]}>
-                            <Text style={[styles.fleetBadgeText, isSelected && styles.fleetBadgeTextSelected]}>{vehicle.badge}</Text>
+                        <View style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}>
+                          {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? '#F59E0B' : '#64748B'} size={28} />}
+                          {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? '#0284C7' : '#64748B'} size={28} />}
+                          {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={28} />}
+                          {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={30} />}
+                        </View>
+                        <View style={styles.vehicleMeta}>
+                          <View style={styles.vehicleNameRow}>
+                            <Text numberOfLines={1} style={[styles.vehicleName, isSelected && styles.vehicleNameSelected]}>
+                              {vehicle.name}
+                            </Text>
+                            {vehicle.badge ? (
+                              <View style={[styles.vehicleBadge, isSelected && styles.vehicleBadgeSelected]}>
+                                <Text style={[styles.vehicleBadgeText, isSelected && styles.vehicleBadgeTextSelected]}>
+                                  {vehicle.badge}
+                                </Text>
+                              </View>
+                            ) : null}
                           </View>
-                        ) : null}
-                        <View style={styles.fleetIconContainer}>
-                          {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? '#F59E0B' : '#64748B'} size={32} />}
-                          {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? '#0284C7' : '#64748B'} size={34} />}
-                          {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={34} />}
-                          {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={36} />}
+                          <View style={styles.vehicleSpecRow}>
+                            <View style={[styles.dimensionBadge, isSelected && styles.dimensionBadgeSelected]}>
+                              <Text style={[styles.dimensionText, isSelected && styles.dimensionTextSelected]}>
+                                {vehicle.dimensions}
+                              </Text>
+                            </View>
+                            <Text style={styles.fleetCapacityText}> · Tải trọng: {vehicle.weightCapacity}</Text>
+                          </View>
                         </View>
-                        <Text numberOfLines={1} style={[styles.fleetVehicleName, isSelected && styles.fleetVehicleNameSelected]}>{vehicle.name}</Text>
-                        <View style={[styles.dimensionBadge, isSelected && styles.dimensionBadgeSelected]}>
-                          <Text style={[styles.dimensionText, isSelected && styles.dimensionTextSelected]}>{vehicle.dimensions}</Text>
+                        <View style={styles.vehiclePriceCol}>
+                          <Text numberOfLines={1} style={[styles.vehiclePrice, isSelected && styles.vehiclePriceSelected]}>
+                            {vehicle.estimatedPrice}
+                          </Text>
+                          <View style={[styles.selectionDot, isSelected && styles.selectionDotSelected]} />
                         </View>
-                        <Text style={styles.fleetCapacityText}>Tải trọng: {vehicle.weightCapacity}</Text>
-                        <Text style={[styles.fleetPriceText, isSelected && styles.fleetPriceTextSelected]}>{vehicle.estimatedPrice}</Text>
                       </Pressable>
                     );
                   })}
-                </ScrollView>
+                </View>
 
-                {/* Fare Estimation & Big Sticky Bottom CTA */}
+                {/* Unified iOS 18 sticky bottom action bar: Fare estimation + Primary CTA */}
                 <View style={styles.fareCtaCard}>
                   <View style={styles.fareInfoRow}>
                     <View style={styles.fareLeftCol}>
@@ -929,7 +965,8 @@ export function HomeDashboardScreen({
 
                   <Pressable
                     accessibilityLabel={`Tiếp tục đặt xe ${currentFleetVehicle.name}, giá ${currentFleetVehicle.estimatedPrice}`}
-                    accessibilityRole="button" onPress={handleMainCtaBook}
+                    accessibilityRole="button"
+                    onPress={handleMainCtaBook}
                     style={({ pressed }) => [styles.bigCtaBtn, pressed && styles.bigCtaBtnPressed]}
                     testID="home-main-cta-btn"
                   >
@@ -1180,28 +1217,36 @@ const styles = StyleSheet.create({
   autoNavigatingBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', borderRadius: 10, padding: 8, marginTop: 8, gap: 8 },
   autoNavigatingText: { fontSize: 12, fontWeight: '700', color: '#059669' },
 
-  /* Fleet Matrix Section */
+  /* Fleet Matrix Section: iOS 18 Inset Grouped vertical list + unified action bar */
   fleetMatrixSection: { marginTop: 10 },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   sectionLabel: { fontSize: 12, fontWeight: '800', color: '#0B1E42', letterSpacing: 0.5 },
   sectionSubLabel: { fontSize: 11, fontWeight: '600', color: '#64748B' },
-  fleetScrollContent: { paddingVertical: 2 },
-  fleetCard: { width: 126, backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, padding: 9, marginRight: 8, borderWidth: 1.5, borderColor: '#E2E8F0', position: 'relative' },
-  fleetCardSelected: { borderColor: '#0B1E42', backgroundColor: '#F8FAFC' },
-  fleetBadge: { position: 'absolute', top: 6, right: 6, backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  fleetBadgeSelected: { backgroundColor: '#0B1E42' },
-  fleetBadgeText: { fontSize: 9, fontWeight: '800', color: '#64748B' },
-  fleetBadgeTextSelected: { color: '#FFFFFF' },
-  fleetIconContainer: { height: 34, justifyContent: 'center', marginBottom: 2 },
-  fleetVehicleName: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
-  fleetVehicleNameSelected: { color: '#0B1E42' },
-  dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginVertical: 2 },
+  vehicleList: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', minHeight: 60 },
+  vehicleRowSelected: { backgroundColor: '#F2F6FC' },
+  vehicleRowPressed: { opacity: 0.85 },
+  vehicleIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center' },
+  vehicleIconBoxSelected: { backgroundColor: '#EAF0FA' },
+  vehicleMeta: { flex: 1, minWidth: 0 },
+  vehicleNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  vehicleName: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  vehicleNameSelected: { color: '#0B1E42' },
+  vehicleBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  vehicleBadgeSelected: { backgroundColor: '#0B1E42' },
+  vehicleBadgeText: { fontSize: 10, fontWeight: '800', color: '#64748B' },
+  vehicleBadgeTextSelected: { color: '#FFFFFF' },
+  vehicleSpecRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 4 },
+  dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   dimensionBadgeSelected: { backgroundColor: '#E2E8F0' },
   dimensionText: { fontSize: 11, fontWeight: '700', color: '#334155', fontVariant: ['tabular-nums'] },
   dimensionTextSelected: { color: '#0B1E42' },
-  fleetCapacityText: { fontSize: 10, color: '#64748B', marginBottom: 2 },
-  fleetPriceText: { fontSize: 13, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'] },
-  fleetPriceTextSelected: { color: '#0B1E42' },
+  fleetCapacityText: { fontSize: 11, color: '#64748B' },
+  vehiclePriceCol: { alignItems: 'flex-end', gap: 4 },
+  vehiclePrice: { fontSize: 15, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'], marginLeft: 8 },
+  vehiclePriceSelected: { color: '#0B1E42' },
+  selectionDot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: '#CBD5E1', backgroundColor: '#FFFFFF' },
+  selectionDotSelected: { borderColor: '#0B1E42', backgroundColor: '#0B1E42' },
 
   /* Fare Estimation Card & Big CTA Button */
   fareCtaCard: { backgroundColor: '#F8FAFC', borderRadius: 16, ...iosContinuousCurve, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E8F0' },
