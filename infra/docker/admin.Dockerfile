@@ -51,5 +51,5 @@ EXPOSE 3002
 ENV PORT=3002
 ENV HOSTNAME=0.0.0.0
 HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3002',(r)=>{process.exit(r.statusCode===200||r.statusCode===302?0:1)})"
+  CMD node -e "require('http').get('http://localhost:3002/login',(r)=>{process.exit([200,302,307,308].includes(r.statusCode)?0:1)})"
 ENTRYPOINT ["node", "apps/admin/server.js"]
