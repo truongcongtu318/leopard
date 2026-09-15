@@ -119,20 +119,20 @@ Dữ liệu seed sẵn: 9 user, 6 driver profile, 56 đơn hàng, 2 đội xe. C
 cd leopard
 
 # Xem log tất cả / một service
-docker compose -f docker-compose.prod.yml logs -f
-docker compose -f docker-compose.prod.yml logs -f api
+docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f
+docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f api
 
 # Trạng thái
-docker compose -f docker-compose.prod.yml ps
+docker compose --env-file .env.prod -f docker-compose.prod.yml ps
 
 # Restart
-docker compose -f docker-compose.prod.yml restart
+docker compose --env-file .env.prod -f docker-compose.prod.yml restart
 
 # Dừng (giữ dữ liệu)
-docker compose -f docker-compose.prod.yml down
+docker compose --env-file .env.prod -f docker-compose.prod.yml down
 
 # Dừng và xoá sạch dữ liệu
-docker compose -f docker-compose.prod.yml down -v
+docker compose --env-file .env.prod -f docker-compose.prod.yml down -v
 
 # Nạp lại dữ liệu demo (không mất schema)
 ./infra/scripts/deploy-demo.sh --reseed
@@ -191,7 +191,7 @@ sudo ss -tlnp | grep -E ':(80|3000|3002|8081|8082)\b'
 
 **API không healthy**
 ```bash
-docker compose -f docker-compose.prod.yml logs --tail 80 api
+docker compose --env-file .env.prod -f docker-compose.prod.yml logs --tail 80 api
 ```
 
 **Đăng nhập báo “Đăng nhập demo đang bị tắt” (403 `DEMO_LOGIN_DISABLED`)**
@@ -220,7 +220,7 @@ Sửa xong chạy lại script (script tự cập nhật biến này).
 
 **Muốn deploy lại từ đầu**
 ```bash
-docker compose -f docker-compose.prod.yml down -v
+docker compose --env-file .env.prod -f docker-compose.prod.yml down -v
 ./infra/scripts/deploy-demo.sh --rebuild
 ```
 
