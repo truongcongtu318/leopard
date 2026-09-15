@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
-import { colors, haptic, iosContinuousCurve, layout, radius, spacing, typography, IconBell, IconOrders, IconTag, IconTxPayment, ScreenScaffold } from '@leopard/mobile-core';
+import { typeScale, colors, haptic, iosContinuousCurve, layout, radius, spacing, typography, IconBell, IconOrders, IconTag, IconTxPayment, ScreenScaffold } from '@leopard/mobile-core';
 import { isOlderThanOneDay } from './adapter';
 import type { NotificationFilter, NotificationItemView, NotificationsContentView } from './model';
 
@@ -419,17 +419,17 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   typeBadgeText: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   cardTitle: {
     color: '#0F172A',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   cardTime: {
     color: '#94A3B8',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
   },
   unreadDot: {
     backgroundColor: '#F59E0B',
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   },
   cardBody: {
     color: '#475569',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 18,
     paddingLeft: 46,
   },
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   emptyMessage: {
     color: '#64748B',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 18,
     textAlign: 'center',
   },
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   },
   resetFilterBtnText: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   loadMoreBtn: {
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
   },
   loadMoreBtnText: {
     color: '#0B1E42',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
 });

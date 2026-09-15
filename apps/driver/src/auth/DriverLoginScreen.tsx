@@ -25,6 +25,7 @@ import {
   type OtpChallenge,
 } from '@leopard/mobile-core/src/auth/firebase-auth';
 import { isLikelyVnPhone, toE164Vn, VietnamFlagIcon } from '@leopard/mobile-core';
+import { hitSlop, IconCheck, IconClose, iconSize } from '@leopard/mobile-core';
 import { OtpSixCellInput } from '@leopard/mobile-core';
 import { TruckLoader } from '@leopard/mobile-core';
 import { OtpPhoneHeroIcon } from '@leopard/mobile-core';
@@ -340,7 +341,7 @@ export function DriverLoginScreen({
                 <Text style={styles.fieldLabel}>Số điện thoại tài xế</Text>
                 {isPhoneValid ? (
                   <View style={styles.validBadge}>
-                    <Text style={styles.validCheckIcon}>✓</Text>
+                    <IconCheck color="#15803D" size={iconSize.xs} />
                     <Text style={styles.validText}>Hợp lệ</Text>
                   </View>
                 ) : null}
@@ -383,11 +384,11 @@ export function DriverLoginScreen({
                   <Pressable
                     accessibilityLabel="Xóa số điện thoại"
                     accessibilityRole="button"
-                    hitSlop={10}
+                    hitSlop={hitSlop(iconSize.sm)}
                     onPress={() => setPhone('')}
                     style={styles.clearBtn}
                   >
-                    <Text style={styles.clearBtnText}>✕</Text>
+                    <IconClose color="#94A3B8" size={iconSize.sm} />
                   </Pressable>
                 ) : null}
               </View>
@@ -549,8 +550,13 @@ export function DriverLoginScreen({
             ) : null}
 
             {resendSuccessMsg ? (
-              <View style={styles.otpSuccessBox}>
-                <Text style={styles.otpSuccessText}>✓ {resendSuccessMsg}</Text>
+              <View
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+                style={styles.otpSuccessBox}
+              >
+                <IconCheck color="#167A3A" size={iconSize.sm} />
+                <Text style={styles.otpSuccessText}>{resendSuccessMsg}</Text>
               </View>
             ) : null}
 

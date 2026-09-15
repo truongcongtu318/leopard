@@ -1,3 +1,4 @@
+import { typeScale } from '@leopard/mobile-core';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -397,7 +398,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F97316',
   },
   title: {
-    fontSize: 32,
+    fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: -0.5,
@@ -405,7 +406,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '400',
     color: '#CBD5E1',
     lineHeight: 22,

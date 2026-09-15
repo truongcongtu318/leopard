@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconCheck, IconClose, IconIdCard, IconInsuranceDoc, IconLicense, IconSecurityShield, IconSpeedTruck } from '@leopard/mobile-core';
+import { typeScale, colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconCheck, IconClose, IconIdCard, IconInsuranceDoc, IconLicense, IconSecurityShield, IconSpeedTruck } from '@leopard/mobile-core';
 import { DOCUMENT_TITLE, REQUIRED_DOCUMENT_TYPES, type DriverDocumentType } from './adapter';
 
 export type DriverKycScreenProps = Readonly<{
@@ -183,13 +183,13 @@ const styles = StyleSheet.create({
   },
   checklistSummaryOk: {
     color: colors.success.text,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     marginTop: 4,
   },
   checklistSummaryMissing: {
     color: colors.danger.text,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     marginTop: 4,
   },
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   docTitle: {
     color: colors.neutral.titleText,
     flex: 1,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   updateCard: {
@@ -246,12 +246,12 @@ const styles = StyleSheet.create({
   },
   updateTitle: {
     color: colors.neutral.titleText,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   updateDesc: {
     color: colors.neutral.mutedText,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 17,
   },
 });

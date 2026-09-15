@@ -5,7 +5,7 @@ import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 
 const orderBoxes3dSource = require('../../assets/brand/order-boxes-3d.png');
 
-import { colors, control, radius, spacing, typography } from '../theme/tokens';
+import { colors, control, letterSpacing, radius, spacing, typeScale } from '../theme/tokens';
 import { IconSpeedTruck } from './icons/CoreIcons';
 import type { RoutePoint } from './RouteSpine';
 import { StatusBadge } from './StatusBadge';
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   etaLabel: {
-    ...typography.caption,
+    ...typeScale.caption1,
     color: colors.info.text,
     fontSize: 11,
     fontWeight: '600',
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   updatedAt: {
-    ...typography.caption,
+    ...typeScale.caption1,
     color: colors.neutral.subtleText,
     marginTop: 1,
   },
@@ -294,11 +294,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   routeLabel: {
-    ...typography.caption,
+    ...typeScale.caption2,
     color: colors.brand.softText,
-    fontSize: 10,
     fontWeight: '600',
-    letterSpacing: 0.3,
+    letterSpacing: letterSpacing.uppercaseLabel,
   },
   routeAddress: {
     color: colors.neutral.text,
@@ -403,10 +402,10 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   routeSubLabel: {
+    ...typeScale.caption2,
     color: colors.neutral.mutedText,
-    fontSize: 9.5,
     fontWeight: '700',
-    letterSpacing: 0.4,
+    letterSpacing: letterSpacing.uppercaseLabel,
     marginBottom: 1,
   },
   routeAddressVertical: {
@@ -416,7 +415,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   stopsBadge: {
-    ...typography.caption,
+    ...typeScale.caption1,
     color: colors.brand.background,
     fontSize: 11,
     fontWeight: '600',
@@ -434,10 +433,10 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   priceSubLabel: {
+    ...typeScale.caption2,
     color: colors.neutral.mutedText,
-    fontSize: 10,
     fontWeight: '600',
-    letterSpacing: 0.3,
+    letterSpacing: letterSpacing.uppercaseLabel,
   },
   priceText: {
     color: colors.brand.background,
@@ -462,14 +461,14 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   etaText: {
-    ...typography.caption,
+    ...typeScale.caption1,
     color: colors.info.text,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   chevron: {
     color: colors.neutral.mutedText,
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '700',
     lineHeight: 18,
     marginLeft: 2,

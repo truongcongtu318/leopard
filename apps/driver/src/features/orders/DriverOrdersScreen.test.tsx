@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { Alert, Linking } from 'react-native';
 
 import { DriverOrdersScreen } from './DriverOrdersScreen';
 import { createDriverListFixture } from './fixtures';
@@ -58,11 +59,13 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     );
 
     // Online fixture: the status row confirms dispatch can see the driver, and
-    // the subtitle prioritises how many offer are waiting over vehicle identity.
+    // the subtitle shows the driver's registered vehicle (Home carries no order count —
+    // that lives on the "Đơn" tab now).
     expect(screen.getByTestId('driver-connection-status')).toBeTruthy();
     expect(screen.getByText('Bạn đang bật kết nối.')).toBeTruthy();
-    expect(screen.getByText('Đang nhận cuốc')).toBeTruthy();
-    expect(screen.getByText('2 đơn đang chờ bạn nhận')).toBeTruthy();
+    // Online capsule is icon-only — the label is already on the status card below it.
+    expect(screen.queryByText('Đang nhận cuốc')).toBeNull();
+    expect(screen.getByText('29H-123.45 · Xe tải 1.25T')).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('driver-connection-toggle'));
     expect(onSetAvailability).toHaveBeenCalledWith('set-availability-demo');
@@ -70,10 +73,11 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('renders the offline board without a duplicate call to action', async () => {
+  it('keeps the offline sheet minimal — status and quick actions only, no order board', async () => {
     const onSetAvailability = jest.fn();
-    // D-LIST-EMPTY is the fixture set's offline + no-orders scenario, which is
-    // exactly when the board must explain how to start receiving dispatch.
+    // D-LIST-EMPTY is the fixture set's offline + no-orders scenario. Matches
+    // Grab Driver's own idle sheet: nothing below the quick-action row while
+    // offline, since the duty pill already owns the "go online" action.
     const screen = await render(
       <DriverOrdersScreen
         onSetAvailability={onSetAvailability}
@@ -83,10 +87,10 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
 
     expect(screen.getByText('Bạn đang tắt kết nối.')).toBeTruthy();
     expect(screen.getByText('Bật kết nối')).toBeTruthy();
-    expect(screen.getByTestId('driver-offline-board')).toBeTruthy();
-    expect(screen.getByText('Radar đang tạm dừng')).toBeTruthy();
+    expect(screen.getByTestId('driver-quick-action-grid')).toBeTruthy();
+    expect(screen.queryByTestId('driver-offline-board')).toBeNull();
 
-    // The pill above the sheet owns the action, so the board adds no second button.
+    // The pill above the sheet owns the action, so the sheet adds no second button.
     expect(screen.queryByRole('button', { name: 'Bật trực tuyến' })).toBeNull();
 
     await fireEvent.press(screen.getByTestId('driver-connection-toggle'));
@@ -95,8 +99,9 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('routes the idle quick-action grid to vehicle, trips, wallet and settings', async () => {
+  it('routes the idle quick-action grid to vehicle, SOS, wallet and settings', async () => {
     const onNavigate = jest.fn();
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const screen = await render(
       <DriverOrdersScreen
         onNavigate={onNavigate}
@@ -109,8 +114,18 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await fireEvent.press(screen.getByTestId('quick-action-vehicle'));
     expect(onNavigate).toHaveBeenCalledWith('/profile');
 
-    await fireEvent.press(screen.getByTestId('quick-action-trips'));
-    expect(onNavigate).toHaveBeenCalledWith('/history');
+    await fireEvent.press(screen.getByTestId('quick-action-sos'));
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Cuộc gọi khẩn cấp SOS',
+      expect.stringContaining('1900 1919'),
+      expect.any(Array),
+    );
+
+    const linkingSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined as never);
+    const sosButtons = alertSpy.mock.calls[0][2] as Array<{ text: string; onPress?: () => void }>;
+    sosButtons.find((button) => button.text === 'Gọi ngay')?.onPress?.();
+    expect(linkingSpy).toHaveBeenCalledWith('tel:19001919');
+    linkingSpy.mockRestore();
 
     await fireEvent.press(screen.getByTestId('quick-action-wallet'));
     expect(onNavigate).toHaveBeenCalledWith('/wallet');
@@ -118,37 +133,18 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await fireEvent.press(screen.getByTestId('quick-action-settings'));
     expect(screen.getByTestId('driver-receiving-settings')).toBeTruthy();
 
+    alertSpy.mockRestore();
+
     await screen.unmount();
   });
 
-  it('renders the load board without unsafe vehicle filters or production debug actions', async () => {
-    const onOpenOrder = jest.fn();
+  it('keeps the GestureBottomSheet cockpit mounted as the idle surface', async () => {
     const screen = await render(
-      <DriverOrdersScreen
-        onOpenOrder={onOpenOrder}
-        view={createDriverListFixture('D-LIST-REQUESTED')}
-      />,
+      <DriverOrdersScreen view={createDriverListFixture('D-LIST-REQUESTED')} />,
     );
 
-    // GestureBottomSheet container
     expect(screen.getByTestId('driver-load-board-sheet')).toBeTruthy();
-
-    // Single compact load-board header carries both the title and the radar status.
-    expect(screen.getByTestId('driver-load-board-header')).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Đơn có thể nhận' })).toBeTruthy();
-    expect(screen.getByText('2 đơn phù hợp trong bán kính 5 km')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeNull();
-
-    expect(screen.queryByText('Xe van')).toBeNull();
-    expect(screen.queryByText('1.25T')).toBeNull();
-    expect(screen.queryByText('2.5T')).toBeNull();
-
-    // Double-Bezel order cards with cargo bento tags
-    expect(screen.getByText('LP-D-260815-101')).toBeTruthy();
-    expect(screen.getByText('285.000 ₫')).toBeTruthy();
-    expect(screen.getAllByTestId('nearby-order-cargo-bento').length).toBeGreaterThan(0);
-    expect(screen.getAllByTestId('nearby-order-cargo-name').length).toBeGreaterThan(0);
-    expect(screen.getAllByTestId('nearby-order-cargo-weight').length).toBeGreaterThan(0);
 
     await screen.unmount();
   });
@@ -221,25 +217,6 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('keeps the load-board counter in sync when a compatible order is dismissed', async () => {
-    const screen = await render(
-      <DriverOrdersScreen view={createDriverListFixture('D-LIST-REQUESTED')} />,
-    );
-
-    // Initial state: 2 orders matching
-    expect(screen.getByText('2 đơn phù hợp trong bán kính 5 km')).toBeTruthy();
-
-    // Press "Bỏ qua" on the first order
-    const declineButtons = screen.getAllByRole('button', { name: 'Bỏ qua đơn này' });
-    expect(declineButtons.length).toBe(2);
-    await fireEvent.press(declineButtons[0]);
-
-    // Counter updates to 1 order
-    expect(screen.getByText('1 đơn phù hợp trong bán kính 5 km')).toBeTruthy();
-
-    await screen.unmount();
-  });
-
   it('shows dispatch simulation only in an explicitly enabled preview harness', async () => {
     const screen = await render(
       <DriverOrdersScreen
@@ -262,7 +239,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('pauses the radar line and provides safe contact actions when activeTrip is present', async () => {
+  it('hides the debug offer trigger and provides safe contact actions when activeTrip is present', async () => {
     const onNavigate = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
@@ -271,8 +248,6 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
       />,
     );
 
-    // The header stays for the load board, but the radar must report a pause.
-    expect(screen.getByText('Tạm dừng nhận đơn mới trong lúc chạy chuyến')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeNull();
 
     // Contact buttons work safely

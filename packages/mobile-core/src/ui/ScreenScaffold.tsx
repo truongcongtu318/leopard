@@ -1,7 +1,8 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { colors, layout, letterSpacing, radius, spacing } from '../theme/tokens';
+import { AppText } from './AppText';
 import { IconChevronLeft } from './icons/CoreIcons';
 
 // The app root applies all SafeAreaView edges. Children only own in-safe spacing.
@@ -71,16 +72,17 @@ export function ScreenScaffold({
           </View>
 
           <View style={styles.topBarCenter}>
-            <Text
+            <AppText
               accessibilityRole="header"
               numberOfLines={1}
+              variant="headline"
               style={[
                 styles.pageTitle,
                 inverse ? styles.pageTitleInk : styles.pageTitlePlain,
               ]}
             >
               {title}
-            </Text>
+            </AppText>
           </View>
 
           <View style={styles.topBarTrailing}>
@@ -99,18 +101,22 @@ export function ScreenScaffold({
               inverse ? styles.eyebrowBadgeInk : styles.eyebrowBadgePlain,
             ]}
           >
-            <Text
+            <AppText
+              variant="caption2"
               style={[styles.eyebrowText, inverse ? styles.eyebrowTextInk : styles.eyebrowTextPlain]}
             >
               {eyebrow}
-            </Text>
+            </AppText>
           </View>
         ) : null}
 
         {subtitle ? (
-          <Text style={[styles.subtitle, inverse ? styles.subtitleInk : styles.subtitlePlain]}>
+          <AppText
+            variant="footnote"
+            style={[styles.subtitle, inverse ? styles.subtitleInk : styles.subtitlePlain]}
+          >
             {subtitle}
-          </Text>
+          </AppText>
         ) : null}
       </View>
 
@@ -136,10 +142,14 @@ export function ScreenScaffold({
 export function SectionHeading({ description, title }: SectionHeadingProps) {
   return (
     <View style={styles.sectionHeading}>
-      <Text accessibilityRole="header" style={styles.sectionTitle}>
+      <AppText accessibilityRole="header" variant="title3" style={styles.sectionTitle}>
         {title}
-      </Text>
-      {description ? <Text style={styles.sectionDescription}>{description}</Text> : null}
+      </AppText>
+      {description ? (
+        <AppText variant="caption1" style={styles.sectionDescription}>
+          {description}
+        </AppText>
+      ) : null}
     </View>
   );
 }
@@ -227,8 +237,8 @@ const styles = StyleSheet.create({
   eyebrowBadge: {
     alignSelf: 'center',
     borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   eyebrowBadgePlain: {
     backgroundColor: colors.brand.softBackground,
@@ -237,9 +247,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.operational.inkPillBg,
   },
   eyebrowText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    fontWeight: '700',
+    letterSpacing: letterSpacing.uppercaseLabel,
   },
   eyebrowTextPlain: {
     color: colors.brand.background,
@@ -248,11 +257,7 @@ const styles = StyleSheet.create({
     color: colors.operational.inkMuted,
   },
   pageTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    lineHeight: 22,
     textAlign: 'center',
-    letterSpacing: -0.2,
   },
   pageTitlePlain: {
     color: colors.neutral.titleText,
@@ -261,8 +266,7 @@ const styles = StyleSheet.create({
     color: colors.neutral.background,
   },
   subtitle: {
-    ...typography.body,
-    fontSize: 13.5,
+    flexShrink: 1,
   },
   subtitlePlain: {
     color: colors.neutral.mutedText,
@@ -296,12 +300,10 @@ const styles = StyleSheet.create({
     gap: spacing.xxs,
   },
   sectionTitle: {
-    ...typography.sectionTitle,
     color: colors.neutral.titleText,
     flexShrink: 1,
   },
   sectionDescription: {
-    ...typography.caption,
     color: colors.neutral.mutedText,
     flexShrink: 1,
   },

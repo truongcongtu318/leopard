@@ -172,9 +172,13 @@ describe('MyDeliveriesScreen', () => {
       ]),
     );
 
+    // 'Đã nhận' also appears as a progress step label, so select the status
+    // badge by the colour under test rather than by a font size.
     const acceptedText = screen.getAllByText('Đã nhận').find((el) => {
       const style = Array.isArray(el.props.style) ? el.props.style : [el.props.style];
-      return style.some((s: Record<string, unknown> | undefined) => s?.fontSize === 11);
+      return style.some(
+        (s: Record<string, unknown> | undefined) => s?.color === '#0B1E42',
+      );
     });
     expect(acceptedText).toBeTruthy();
     expect(acceptedText?.props.style).toEqual(

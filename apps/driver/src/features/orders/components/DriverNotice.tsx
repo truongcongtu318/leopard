@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Button, iosContinuousCurve } from '@leopard/mobile-core';
 import type { DriverListContentView } from '../model';
@@ -42,10 +42,18 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     ...iosContinuousCurve,
     borderWidth: 1,
+    elevation: 6,
     gap: 8,
     marginBottom: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    ...Platform.select({
+      web: { boxShadow: '0 6px 14px rgba(11, 30, 66, 0.14)' } as object,
+    }),
   },
   info: {
     backgroundColor: '#F0F4F9',

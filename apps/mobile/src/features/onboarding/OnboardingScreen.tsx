@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
-import { spacing, LeopardEmblem } from '@leopard/mobile-core';
+import { typeScale, spacing, LeopardEmblem } from '@leopard/mobile-core';
 
 const onboarding1 = require('../../../assets/brand/onboarding-1.jpg');
 const onboarding2 = require('../../../assets/brand/onboarding-2.jpg');
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   },
   skipBtnText: {
     color: '#FFFFFF',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
 
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   titleText: {
-    fontSize: 27,
+    fontSize: typeScale.title1.fontSize,
     fontWeight: '900',
     color: '#FFFFFF',
     lineHeight: 35,

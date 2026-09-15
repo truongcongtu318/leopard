@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { GestureBottomSheet, RealInteractiveMap, ScreenState, SkeletonCard, resolveLocationCoords } from '@leopard/mobile-core';
 
@@ -11,28 +12,26 @@ import { DriverConnectionCapsule } from './components/DriverConnectionCapsule';
 import { DriverConnectionStatusRow } from './components/DriverConnectionStatusRow';
 import { DriverMapControlStack } from './components/DriverMapControlStack';
 import { DriverQuickActionGrid } from './components/DriverQuickActionGrid';
-import { DriverEmptyBoard } from './components/DriverEmptyBoard';
 import { DriverLocationStatus } from './components/DriverLocationStatus';
 import { DriverReceivingSettingsModal } from './components/DriverReceivingSettingsModal';
 import { DriverSystemBanner } from './components/DriverSystemBanner';
 import { DriverActiveTripCard } from './components/DriverActiveTripCard';
-import { DriverOrderFilters } from './components/DriverOrderFilters';
-import { DriverNearbyOrderCard } from './components/DriverNearbyOrderCard';
-import { DriverBottomNavigation } from './components/DriverBottomNavigation';
 import { DriverNotice } from './components/DriverNotice';
+import { DriverQuickNavOverlay } from './components/DriverQuickNavOverlay';
 import { useDriverIdlePingHealth } from './useDriverIdlePing';
 import { getDriverCurrentLocation, type DriverLocationState } from './driver-current-location';
 
 /**
- * Idle board snap points: collapsed map peek, working load board, expanded list.
- * Matches the Customer home sheet geometry so both apps feel like one product.
+ * Home is a pure cockpit: duty toggle, map/location, active trip. The idle
+ * panel (status + quick actions) is a fixed, non-scrolling block — there is
+ * nothing in it worth dragging or scrolling, so it is a plain View, not a
+ * GestureBottomSheet. The sheet is reserved for the active-trip mission
+ * cockpit, which has enough content to benefit from drag/snap.
  */
-const IDLE_SNAP_POINTS: number[] = [0.18, 0.52, 0.92];
-/** Active trip keeps a taller collapsed position: the mission card must stay readable. */
 const ACTIVE_TRIP_SNAP_POINTS: number[] = [0.32, 0.62, 0.92];
 
 /** Vertical gap between the connection pill and the sheet's top edge. */
-const CAPSULE_GAP = 14;
+const CAPSULE_GAP = 8;
 
 export type DriverOrdersScreenProps = Readonly<{
   view: DriverListView;
@@ -69,17 +68,14 @@ export function DriverOrdersScreen({
   showDebugActions = false,
   view,
 }: DriverOrdersScreenProps) {
-  const { height: viewportHeight } = useWindowDimensions();
-
   const [dismissedOfferId, setDismissedOfferId] = useState<string | null>(null);
   const [simulatedOffer, setSimulatedOffer] = useState<IncomingDispatchOffer | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [radiusKm, setRadiusKm] = useState('5');
-  const [dismissedOrderIds, setDismissedOrderIds] = useState<readonly string[]>([]);
   const [locationRequestKey, setLocationRequestKey] = useState(0);
   const [driverLocation, setDriverLocation] = useState<DriverLocationState>({ kind: 'loading' });
-  /** Fraction of the viewport currently covered by the bottom sheet. */
-  const [sheetFraction, setSheetFraction] = useState(IDLE_SNAP_POINTS[1]);
+  /** Measured height of the fixed idle panel, so the duty capsule floats just above it. */
+  const [idlePanelHeight, setIdlePanelHeight] = useState(0);
   const idlePingHealth = useDriverIdlePingHealth();
 
   useEffect(() => {
@@ -95,6 +91,26 @@ export function DriverOrdersScreen({
 
   const truckCoords = driverLocation.kind === 'ready' ? driverLocation.coords : undefined;
   const retryCurrentLocation = () => setLocationRequestKey((current) => current + 1);
+
+  /** Demo hotline for LEOPARD's own emergency dispatch desk (fictional, dialable digits). */
+  const SOS_HOTLINE_DIAL = '19001919';
+  const SOS_HOTLINE_LABEL = '1900 1919';
+
+  const handleTriggerSos = () => {
+    const title = 'Cuộc gọi khẩn cấp SOS';
+    const message = `Gọi Đội cứu hộ khẩn cấp LEOPARD 24/7 (${SOS_HOTLINE_LABEL})? Tọa độ GPS của bạn sẽ được chuyển tiếp tức thì.`;
+    const dial = () => void Linking.openURL(`tel:${SOS_HOTLINE_DIAL}`);
+    // react-native-web's Alert.alert is a no-op (no dialog implementation) —
+    // fall back to window.confirm so the action still dials while testing on web.
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${message}`)) dial();
+      return;
+    }
+    Alert.alert(title, message, [
+      { text: 'Hủy', style: 'cancel' },
+      { text: 'Gọi ngay', style: 'destructive', onPress: dial },
+    ]);
+  };
 
   const handleSimulateIncomingOffer = () => {
     const first =
@@ -155,25 +171,10 @@ export function DriverOrdersScreen({
     }
   };
 
-  const pendingOfferCount = isContent
-    ? view.requestedOrders.filter((item) => !dismissedOrderIds.includes(item.id)).length
-    : 0;
-
-  const filteredOrders = isContent
-    ? view.requestedOrders.filter((item) => !dismissedOrderIds.includes(item.id))
-    : [];
-
-  /** Secondary line under the connection status: what dispatch can send right now. */
-  const vehicleLine = [driverIdentity?.vehiclePlate?.trim(), driverIdentity?.vehicleType?.trim()]
+  /** Secondary line under the connection status: the driver's registered vehicle. */
+  const vehicleSubtitle = [driverIdentity?.vehiclePlate?.trim(), driverIdentity?.vehicleType?.trim()]
     .filter((part): part is string => Boolean(part))
     .join(' · ');
-  const vehicleSubtitle =
-    pendingOfferCount > 0
-      ? `${pendingOfferCount} đơn đang chờ bạn nhận`
-      : vehicleLine;
-
-  const snapPoints = activeTrip ? ACTIVE_TRIP_SNAP_POINTS : IDLE_SNAP_POINTS;
-  const initialSnapIndex = 1;
 
   return (
     <View style={styles.screenRoot}>
@@ -234,7 +235,7 @@ export function DriverOrdersScreen({
       {isContent && !activeTrip ? (
         <View
           pointerEvents="box-none"
-          style={[styles.capsuleLayer, { bottom: sheetFraction * viewportHeight + CAPSULE_GAP }]}
+          style={[styles.capsuleLayer, { bottom: idlePanelHeight + CAPSULE_GAP }]}
         >
           <DriverConnectionCapsule
             disabled={Boolean(view.availability.action?.disabled)}
@@ -245,18 +246,55 @@ export function DriverOrdersScreen({
         </View>
       ) : null}
 
-      {/* ── Layer 3: gesture bottom sheet — mission cockpit or idle load board ── */}
-      <GestureBottomSheet
-        initialSnapIndex={initialSnapIndex}
-        onSnapChange={(_index, snapPoint) => setSheetFraction(snapPoint)}
-        snapPoints={snapPoints}
-        testID="driver-load-board-sheet"
-      >
-        <ScrollView
-          contentContainerStyle={styles.sheetContent}
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
+      {/* ── Layer 3: mission cockpit (draggable) or idle panel (fixed, no scroll) ── */}
+      {activeTrip ? (
+        <GestureBottomSheet
+          initialSnapIndex={1}
+          snapPoints={ACTIVE_TRIP_SNAP_POINTS}
+          style={styles.sheetSurface}
+          testID="driver-load-board-sheet"
         >
+          <ScrollView
+            contentContainerStyle={styles.sheetContent}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+          >
+            <DriverActiveTripCard onNavigate={onNavigate} onOpenOrder={onOpenOrder} trip={activeTrip} />
+
+            <DriverSystemBanner
+              hasActiveTrip
+              idlePingHealth={idlePingHealth}
+              isOnline={isOnline}
+              networkError={networkError}
+              onRetry={onRetry}
+            />
+
+            {isContent ? <DriverNotice onNoticeAction={onNoticeAction} view={view} /> : null}
+          </ScrollView>
+        </GestureBottomSheet>
+      ) : (
+        /* Grab renders this as a couple of stacked, fixed floating cards over the
+           map — not a scrollable/draggable sheet. There's nothing here worth
+           dragging, so this is a plain View: no ScrollView, no gesture handle. */
+        <View
+          onLayout={(event) => setIdlePanelHeight(event.nativeEvent.layout.height)}
+          style={styles.idlePanel}
+          testID="driver-load-board-sheet"
+        >
+          {/* Fade the backdrop in from the map (transparent) to solid canvas toward the
+              bottom, instead of a flat opacity — a hard-edged rectangle over the map reads
+              as a pasted-on panel. */}
+          <Svg height="100%" style={[StyleSheet.absoluteFill, styles.idlePanelFadeSvg]} width="100%">
+            <Defs>
+              <LinearGradient id="idlePanelFade" x1="0" x2="0" y1="0" y2="1">
+                <Stop offset="0" stopColor="#F8FAFC" stopOpacity={0} />
+                <Stop offset="0.35" stopColor="#F8FAFC" stopOpacity={0.8} />
+                <Stop offset="1" stopColor="#F8FAFC" stopOpacity={0.97} />
+              </LinearGradient>
+            </Defs>
+            <Rect fill="url(#idlePanelFade)" height="100%" width="100%" />
+          </Svg>
+
           {view.kind === 'loading' ? (
             <View style={styles.sheetSectionGap}>
               <View style={styles.sheetHeader}>
@@ -284,35 +322,31 @@ export function DriverOrdersScreen({
 
           {isContent ? (
             <>
-              {activeTrip ? (
-                <DriverActiveTripCard
-                  onNavigate={onNavigate}
-                  onOpenOrder={onOpenOrder}
-                  trip={activeTrip}
-                />
-              ) : (
-                <>
-                  <DriverConnectionStatusRow
-                    isOnline={isOnline}
-                    subtitle={vehicleSubtitle || null}
-                  />
+              <DriverConnectionStatusRow isOnline={isOnline} subtitle={vehicleSubtitle || null} />
 
-                  <DriverQuickActionGrid
-                    onOpenSettings={() => setIsSettingsOpen(true)}
-                    onOpenTrips={() => onNavigate?.('/history')}
-                    onOpenVehicle={() => onNavigate?.('/profile')}
-                    onOpenWallet={() => onNavigate?.('/wallet')}
-                  />
+              <DriverQuickActionGrid
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                onOpenVehicle={() => onNavigate?.('/profile')}
+                onOpenWallet={() => onNavigate?.('/wallet')}
+                onTriggerSos={handleTriggerSos}
+              />
 
-                  <DriverLocationStatus
-                    location={driverLocation}
-                    onRetry={retryCurrentLocation}
-                  />
-                </>
-              )}
+              <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
+
+              {showDebugActions ? (
+                <Pressable
+                  accessibilityHint="Mở modal đơn nổ để thử nghiệm giao diện tiếp nhận"
+                  accessibilityLabel="Mô phỏng nổ đơn"
+                  accessibilityRole="button"
+                  onPress={handleSimulateIncomingOffer}
+                  style={({ pressed }) => [styles.debugBtn, pressed ? styles.debugBtnPressed : null]}
+                >
+                  <Text style={styles.debugBtnText}>Thử nổ đơn</Text>
+                </Pressable>
+              ) : null}
 
               <DriverSystemBanner
-                hasActiveTrip={Boolean(activeTrip)}
+                hasActiveTrip={false}
                 idlePingHealth={idlePingHealth}
                 isOnline={isOnline}
                 networkError={networkError}
@@ -320,40 +354,16 @@ export function DriverOrdersScreen({
               />
 
               <DriverNotice onNoticeAction={onNoticeAction} view={view} />
-
-              <DriverOrderFilters
-                hasActiveTrip={Boolean(activeTrip)}
-                onSimulateOffer={showDebugActions ? handleSimulateIncomingOffer : undefined}
-                radiusKm={radiusKm}
-                showDebugActions={showDebugActions}
-                totalCount={filteredOrders.length}
-              />
-
-              {filteredOrders.length > 0 ? (
-                <View style={styles.ordersFeed}>
-                  {filteredOrders.map((item) => (
-                    <DriverNearbyOrderCard
-                      item={item}
-                      key={item.id}
-                      onDecline={(orderId) => {
-                        setDismissedOrderIds((prev) =>
-                          prev.includes(orderId) ? prev : [...prev, orderId],
-                        );
-                      }}
-                      onOpenOrder={onOpenOrder}
-                    />
-                  ))}
-                </View>
-              ) : activeTrip ? null : (
-                <DriverEmptyBoard isOnline={isOnline} />
-              )}
             </>
           ) : null}
-        </ScrollView>
-      </GestureBottomSheet>
+        </View>
+      )}
 
-      {/* ── Layer 4: docked 5-tab navigation (hidden during an active trip) ── */}
-      {!activeTrip ? <DriverBottomNavigation activeTab="home" onNavigate={onNavigate} /> : null}
+      {/* ── Layer 4: Grab-style floating quick-nav (pill + avatar), not a docked tab bar.
+          Hidden during an active trip — the mission cockpit owns the full screen then. ── */}
+      {!activeTrip ? (
+        <DriverQuickNavOverlay driverName={driverIdentity?.name} onNavigate={onNavigate} />
+      ) : null}
 
       {/* ── Layer 5: overlays ── */}
       <IncomingDispatchModal
@@ -388,6 +398,11 @@ export function DriverOrdersScreen({
 }
 
 const styles = StyleSheet.create({
+  sheetSurface: {
+    backgroundColor: '#F8FAFC',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   screenRoot: {
     backgroundColor: '#F8FAFC',
     flex: 1,
@@ -404,9 +419,23 @@ const styles = StyleSheet.create({
     top: '34%',
     zIndex: 20,
   },
-  capsuleLayer: {
-    alignItems: 'center',
+  idlePanelFadeSvg: {
+    pointerEvents: 'none',
+  },
+  idlePanel: {
+    bottom: 0,
     left: 0,
+    paddingBottom: 28,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    position: 'absolute',
+    right: 0,
+    zIndex: 40,
+  },
+  capsuleLayer: {
+    alignItems: 'flex-start',
+    left: 0,
+    paddingLeft: 16,
     position: 'absolute',
     right: 0,
     zIndex: 25,
@@ -436,8 +465,24 @@ const styles = StyleSheet.create({
   boundaryBox: {
     paddingVertical: 12,
   },
-  ordersFeed: {
-    gap: 12,
+  debugBtn: {
+    alignItems: 'center',
+    backgroundColor: '#F0F4F9',
+    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 10,
+    minHeight: 36,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  debugBtnPressed: {
+    opacity: 0.85,
+  },
+  debugBtnText: {
+    color: '#0B1E42',
+    fontSize: 11,
+    fontWeight: '700',
   },
   srOnly: {
     height: 1,

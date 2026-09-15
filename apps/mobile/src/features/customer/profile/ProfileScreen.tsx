@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, radius, spacing, IconChevron, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { typeScale, colors, layout, radius, spacing, IconChevron, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { CustomerProfileView } from './model';
 
 export type CustomerProfileScreenProps = Readonly<{
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   leopardIdText: {
     color: '#94A3B8',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.6,
   },
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: '#F1F5F9',
-    fontSize: 26,
+    fontSize: typeScale.title1.fontSize,
     fontWeight: '800',
   },
   avatarImage: {
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
   },
   bentoEyebrow: {
     color: '#64748B',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
   },
   menuLabel: {
     color: '#0F172A',
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
   },
   menuBadgePill: {
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   },
   menuBadgeText: {
     color: '#0B1E42',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   menuSubtitle: {
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
   },
   menuChevron: {
     color: '#94A3B8',
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '400',
   },
 
@@ -689,7 +689,7 @@ const styles = StyleSheet.create({
   },
   logoutBtnText: {
     color: '#DC2626',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
 

@@ -1,3 +1,4 @@
+import { typeScale } from '../theme/tokens';
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, {
   ClipPath,
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
   title: {
     alignSelf: 'center',
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
     letterSpacing: 0.2,
     textAlign: 'center',
@@ -175,13 +176,13 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   compactTitle: {
-    fontSize: 29,
+    fontSize: typeScale.title1.fontSize,
     letterSpacing: 0,
   },
   subtitle: {
     alignSelf: 'center',
     color: 'rgba(255, 255, 255, 0.96)',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
     marginTop: 2,
     maxWidth: '92%',

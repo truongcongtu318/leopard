@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { radius, spacing } from '@leopard/mobile-core';
+import { radius, spacing, typeScale } from '@leopard/mobile-core';
+import { IconCheck, iconSize } from '@leopard/mobile-core';
 
 /** Palette mirrored from `app/(public)/driver-register.tsx` for visual continuity. */
 const scene = {
@@ -100,7 +101,7 @@ export function DriverContractSection({
         testID="driver-contract-consent"
       >
         <View style={[styles.checkbox, consentChecked && styles.checkboxOn]}>
-          {consentChecked ? <Text style={styles.checkboxTick}>✓</Text> : null}
+          {consentChecked ? <IconCheck color="#FFFFFF" size={iconSize.sm} /> : null}
         </View>
         <Text style={styles.consentText}>
           Tôi đã đọc và đồng ý với hợp đồng tài xế của LEOPARD.
@@ -151,8 +152,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   contractRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
-  hintText: { color: scene.muted, fontSize: 12.5, flexShrink: 1 },
-  errorHintText: { color: scene.danger, fontSize: 12.5 },
+  hintText: { color: scene.muted, fontSize: typeScale.footnote.fontSize, flexShrink: 1 },
+  errorHintText: { color: scene.danger, fontSize: typeScale.footnote.fontSize },
   contractLink: {
     backgroundColor: 'rgba(2, 132, 199, 0.14)',
     borderColor: 'rgba(56, 189, 248, 0.40)',
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  contractLinkText: { color: scene.ctaCyan, fontSize: 12.5, fontWeight: '700' },
+  contractLinkText: { color: scene.ctaCyan, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
   pressed: { opacity: 0.85 },
   consentRow: {
     alignItems: 'flex-start',
@@ -185,10 +186,18 @@ const styles = StyleSheet.create({
     width: 22,
   },
   checkboxOn: { backgroundColor: scene.ctaBottom, borderColor: scene.ctaCyan },
-  checkboxTick: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-  consentText: { color: '#E2E8F0', flex: 1, fontSize: 13, lineHeight: 19 },
+  consentText: {
+    color: '#E2E8F0',
+    flex: 1,
+    fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
+  },
   field: { gap: spacing.xs },
-  inputLabel: { color: scene.ink, fontSize: 13, fontWeight: '700' },
+  inputLabel: {
+    color: scene.ink,
+    fontSize: typeScale.footnote.fontSize,
+    fontWeight: '700',
+  },
   inputWrap: {
     backgroundColor: scene.fieldBg,
     borderColor: 'rgba(255, 255, 255, 0.16)',
@@ -209,7 +218,7 @@ const styles = StyleSheet.create({
   },
   input: {
     color: scene.ink,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     outlineStyle: 'none',
   } as any,

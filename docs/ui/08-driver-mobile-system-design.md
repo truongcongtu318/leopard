@@ -426,9 +426,12 @@ Không có Driver-private palette. Mọi role style map về
 | Active trip            | `active.*`                                                       | `ACCEPTED`, `IN_TRANSIT`, active-trip rail           |
 | Healthy/completed      | `success.*`                                                      | Availability, tracking healthy, `DELIVERED`          |
 | Error/blocked          | `danger.*`                                                       | Permission/error/conflict; status vẫn có text        |
-| Type                   | `caption`, `label`, `body`, `sectionTitle`, `pageTitle`          | Một page title; numeric/time dễ quét; long text wrap |
-| Spacing                | `xxs/xs/sm/md/lg/xl = 4/8/12/16/24/32`                           | Cluster `sm`, section `md–lg`, no arbitrary gaps     |
+| Type                   | `typeScale` HIG styles (`body`, `headline`, `title3`, `title2`, `caption1`, `caption2`) | Một page title; numeric/time dễ quét; long text wrap; sàn 11 pt |
+| Type (legacy alias)    | `caption`, `label`, `body`, `sectionTitle`, `pageTitle`          | Vẫn resolve qua `typeScaleAliases`; code mới dùng tên HIG |
+| Spacing                | `none/hairline/xxs/xs/sm/md/lg/xl/xxl/xxxl = 0/2/4/8/12/16/24/32/40/48` | Cluster `sm`, section `md–lg`, no arbitrary gaps |
 | Sizing                 | Touch `>=44`; sticky primary `>=48`; content max `768`           | One-handed and Dynamic Type safe                     |
+| Icon                   | `iconSize` `xs/sm/md/lg/xl/xxl/display = 12/16/20/24/28/32/56`   | Neo vào text style kèm theo; không dùng số tuỳ ý      |
+| Icon stroke            | `iconStroke` `regular/medium/bold = 1.5/1.75/2`                  | Một stroke cho mỗi visual layer                      |
 | Shape                  | `radius.control=6`, `radius.card=6`, `radius.pill` chỉ badge     | Border 1 px; no rounded-everything                   |
 | Elevation              | Không shadow cho page section                                    | Chỉ modal/drawer nếu platform primitive yêu cầu      |
 | Motion                 | `none=0`, `fast=120`, `standard=180`, `slow=240`                 | Press/state/orientation only                         |

@@ -19,6 +19,7 @@ import {
   ScreenScaffold,
   ScreenState,
   StatusBadge,
+  typeScale,
 } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
   },
   kpiValue: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -453,7 +454,7 @@ const styles = StyleSheet.create({
   },
   kpiLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
   },
 
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
   },
   dateFilterText: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   dateFilterTextActive: {
@@ -556,7 +557,7 @@ const styles = StyleSheet.create({
   },
   referenceText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   statusRow: {
@@ -578,7 +579,7 @@ const styles = StyleSheet.create({
   },
   paymentMethodLabel: {
     color: leopardPalette.textSubtle,
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '500',
     marginTop: 1,
   },
@@ -623,7 +624,7 @@ const styles = StyleSheet.create({
   },
   routeOriginText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   distanceEtaRow: {
@@ -639,7 +640,7 @@ const styles = StyleSheet.create({
   },
   routeDestText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
 
@@ -652,7 +653,7 @@ const styles = StyleSheet.create({
   },
   cargoPillText: {
     color: '#475569',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '500',
   },
 
@@ -673,7 +674,7 @@ const styles = StyleSheet.create({
   },
   timeText: {
     color: leopardPalette.textSubtle,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
   },
   proofBadgeBtn: {
@@ -765,7 +766,7 @@ const styles = StyleSheet.create({
   },
   modalSub: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
   },
   modalCloseBtn: {
@@ -804,7 +805,7 @@ const styles = StyleSheet.create({
   },
   watermarkText: {
     color: '#38BDF8',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
@@ -823,7 +824,7 @@ const styles = StyleSheet.create({
   },
   signatureTitle: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   signatureCanvasPreview: {
@@ -845,7 +846,7 @@ const styles = StyleSheet.create({
   },
   signerNameText: {
     color: '#475569',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
 });

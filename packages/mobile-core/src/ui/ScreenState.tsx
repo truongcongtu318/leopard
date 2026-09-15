@@ -1,7 +1,8 @@
-import type { PropsWithChildren } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import type { PropsWithChildren, ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing } from '../theme/tokens';
+import { AppText } from './AppText';
 import { Button } from './Button';
 import { TruckLoader } from './TruckLoader';
 
@@ -71,6 +72,12 @@ type ScreenStateProps = PropsWithChildren<{
   message?: string;
   actionLabel?: string;
   onAction?: () => void;
+  /**
+   * Optional symbol rendered above the title. A state panel reads faster with a
+   * glyph than with copy alone, the way Apple pairs a symbol with an empty or
+   * error state.
+   */
+  icon?: ReactNode;
 }>;
 
 export function ScreenState({
@@ -79,6 +86,7 @@ export function ScreenState({
   message,
   actionLabel,
   onAction,
+  icon,
   children,
 }: ScreenStateProps) {
   const copy = defaultCopy[state];
@@ -90,6 +98,14 @@ export function ScreenState({
     state === 'conflict';
   const isBusy = state === 'loading' || state === 'reconnecting';
   const liveRegion = isAlert ? 'assertive' : state === 'empty' ? 'none' : 'polite';
+  const iconToneStyle =
+    state === 'success'
+      ? styles.iconBadgeSuccess
+      : isAlert
+        ? styles.iconBadgeDanger
+        : state === 'offline' || state === 'stale'
+          ? styles.iconBadgeWarning
+          : styles.iconBadgeNeutral;
   const panelStyle =
     state === 'success'
       ? styles.successPanel
@@ -113,20 +129,28 @@ export function ScreenState({
           <View style={styles.loaderArea}>
             <TruckLoader size="md" />
           </View>
+        ) : icon ? (
+          <View style={[styles.iconBadge, iconToneStyle]}>{icon}</View>
         ) : null}
-        <Text
+        <AppText
           accessibilityRole={isAlert ? 'alert' : 'header'}
+          variant="title3"
           style={[styles.title, isBusy && styles.loadingTextCenter]}
         >
           {title ?? copy.title}
-        </Text>
-        <Text style={[styles.message, isBusy && styles.loadingTextCenter]}>
+        </AppText>
+        <AppText
+          variant="body"
+          style={[styles.message, isBusy && styles.loadingTextCenter]}
+        >
           {message ?? copy.message}
-        </Text>
+        </AppText>
       </View>
       {!isPrivateBoundary ? children : null}
       {actionLabel && onAction ? (
-        <Button label={actionLabel} onPress={onAction} variant="secondary" />
+        // The recovery action is the only thing a blocked screen offers, so it
+        // carries the primary emphasis rather than a quiet secondary style.
+        <Button label={actionLabel} onPress={onAction} variant="primary" />
       ) : null}
     </View>
   );
@@ -136,6 +160,26 @@ const styles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',
     gap: spacing.md,
+  },
+  iconBadge: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  iconBadgeNeutral: {
+    backgroundColor: colors.info.background,
+  },
+  iconBadgeDanger: {
+    backgroundColor: colors.danger.background,
+  },
+  iconBadgeWarning: {
+    backgroundColor: colors.warning.background,
+  },
+  iconBadgeSuccess: {
+    backgroundColor: colors.success.background,
   },
   messagePanel: {
     alignSelf: 'stretch',
@@ -177,12 +221,10 @@ const styles = StyleSheet.create({
     borderColor: colors.warning.border,
   },
   title: {
-    ...typography.sectionTitle,
     color: colors.neutral.text,
     flexShrink: 1,
   },
   message: {
-    ...typography.body,
     color: colors.neutral.mutedText,
     flexShrink: 1,
   },

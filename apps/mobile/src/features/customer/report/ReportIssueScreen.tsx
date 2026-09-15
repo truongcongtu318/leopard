@@ -13,6 +13,7 @@ import {
   IconSecurityShield,
   ScreenScaffold,
   httpClient,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export interface ReportIssueScreenProps {
@@ -163,7 +164,7 @@ export function ReportIssueScreen(props?: ReportIssueScreenProps) {
 
             {/* ── Submit Button (>= 48px) ───────────────────────── */}
             {errorMessage ? (
-              <Text style={{ color: '#DC2626', fontSize: 14 }}>{errorMessage}</Text>
+              <Text style={{ color: '#DC2626', fontSize: typeScale.subheadline.fontSize }}>{errorMessage}</Text>
             ) : null}
             <Button
               disabled={!description.trim() || submitting}
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     color: '#334155',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
   },
   categoryTextSelected: {
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
   },
   ticketCode: {
     color: '#166534',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     backgroundColor: '#DCFCE7',

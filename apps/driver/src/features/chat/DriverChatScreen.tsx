@@ -6,13 +6,21 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { colors, radius, spacing, typography, ScreenScaffold, IconPhone } from '@leopard/mobile-core';
+import {
+  AppText,
+  colors,
+  iconSize,
+  radius,
+  spacing,
+  typeScale,
+  ScreenScaffold,
+  IconPhone,
+} from '@leopard/mobile-core';
 
 type DriverChatMessage = {
   id: string;
@@ -81,8 +89,10 @@ export function DriverChatScreen() {
       onPress={handleCall}
       style={styles.callBtn}
     >
-      <IconPhone color="#FFFFFF" size={14} />
-      <Text style={styles.callBtnText}>Gọi khách</Text>
+      <IconPhone color="#FFFFFF" size={iconSize.sm} />
+      <AppText variant="footnote" style={styles.callBtnText}>
+        Gọi khách
+      </AppText>
     </Pressable>
   );
 
@@ -107,7 +117,9 @@ export function DriverChatScreen() {
             if (item.sender === 'SYSTEM') {
               return (
                 <View style={styles.systemMsgWrap}>
-                  <Text style={styles.systemMsgText}>{item.text}</Text>
+                  <AppText variant="caption1" style={styles.systemMsgText}>
+                    {item.text}
+                  </AppText>
                 </View>
               );
             }
@@ -115,12 +127,21 @@ export function DriverChatScreen() {
             const isDriver = item.sender === 'DRIVER';
             return (
               <View style={[styles.bubbleWrap, isDriver ? styles.bubbleDriver : styles.bubbleCustomer]}>
-                <Text style={[styles.bubbleText, isDriver ? styles.bubbleTextDriver : styles.bubbleTextCustomer]}>
+                <AppText
+                  variant="callout"
+                  style={[
+                    styles.bubbleText,
+                    isDriver ? styles.bubbleTextDriver : styles.bubbleTextCustomer,
+                  ]}
+                >
                   {item.text}
-                </Text>
-                <Text style={[styles.bubbleTime, isDriver ? styles.bubbleTimeDriver : null]}>
+                </AppText>
+                <AppText
+                  variant="caption2"
+                  style={[styles.bubbleTime, isDriver ? styles.bubbleTimeDriver : null]}
+                >
                   {item.time}
-                </Text>
+                </AppText>
               </View>
             );
           }}
@@ -133,7 +154,9 @@ export function DriverChatScreen() {
             keyExtractor={(item) => item}
             renderItem={({ item }) => (
               <Pressable onPress={() => handleSend(item)} style={styles.quickChip}>
-                <Text style={styles.quickChipText}>{item}</Text>
+                <AppText variant="caption1" style={styles.quickChipText}>
+                  {item}
+                </AppText>
               </Pressable>
             )}
             showsHorizontalScrollIndicator={false}
@@ -145,7 +168,7 @@ export function DriverChatScreen() {
             onChangeText={setInputText}
             placeholder="Nhập tin nhắn cho khách..."
             placeholderTextColor={colors.neutral.subtleText}
-            style={styles.textInput}
+            style={[styles.textInput, typeScale.callout]}
             value={inputText}
           />
           <Pressable
@@ -153,7 +176,9 @@ export function DriverChatScreen() {
             onPress={() => handleSend()}
             style={[styles.sendBtn, !inputText.trim() ? styles.sendBtnDisabled : null]}
           >
-            <Text style={styles.sendBtnText}>Gửi</Text>
+            <AppText variant="footnote" style={styles.sendBtnText}>
+              Gửi
+            </AppText>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -177,7 +202,6 @@ const styles = StyleSheet.create({
   },
   callBtnText: {
     color: colors.neutral.background,
-    fontSize: 12.5,
     fontWeight: '700',
   },
   messageList: {
@@ -193,7 +217,6 @@ const styles = StyleSheet.create({
   },
   systemMsgText: {
     color: colors.neutral.mutedText,
-    fontSize: 11.5,
     textAlign: 'center',
   },
   bubbleWrap: {
@@ -215,8 +238,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 2,
   },
   bubbleText: {
-    fontSize: 13.5,
-    lineHeight: 19,
+    flexShrink: 1,
   },
   bubbleTextDriver: {
     color: colors.neutral.background,
@@ -226,8 +248,7 @@ const styles = StyleSheet.create({
   },
   bubbleTime: {
     color: colors.neutral.subtleText,
-    fontSize: 10,
-    marginTop: 4,
+    marginTop: spacing.xxs,
     textAlign: 'right',
   },
   bubbleTimeDriver: {
@@ -247,7 +268,6 @@ const styles = StyleSheet.create({
   },
   quickChipText: {
     color: colors.neutral.text,
-    fontSize: 12,
   },
   inputBar: {
     alignItems: 'center',
@@ -263,7 +283,6 @@ const styles = StyleSheet.create({
   textInput: {
     color: colors.neutral.text,
     flex: 1,
-    fontSize: 13.5,
     minHeight: 40,
     paddingVertical: 0,
   },
@@ -280,7 +299,6 @@ const styles = StyleSheet.create({
   },
   sendBtnText: {
     color: colors.neutral.background,
-    fontSize: 13,
     fontWeight: '700',
   },
 });

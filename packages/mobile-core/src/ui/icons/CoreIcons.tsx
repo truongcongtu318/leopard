@@ -2,6 +2,16 @@ import React from 'react';
 import Svg, { Circle, Line, Path, Polygon, Polyline, Rect, G } from 'react-native-svg';
 import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
 
+import {
+  iconSize,
+  iconStroke,
+  resolveIconSize,
+  resolveIconStroke,
+  type IconSizeToken,
+  type IconStrokeToken,
+  typeScale,
+} from '../../theme/tokens';
+
 const leopardWordmarkSource = require('../../../assets/brand/leopard-wordmark.png');
 const brandLoginSource = require('../../../assets/brand/brand_login.png');
 const leopardEmblemSource = require('../../../assets/brand/leopard-emblem.png');
@@ -12,11 +22,13 @@ const BRAND_LOGIN_RATIO = 2233 / 704;
 const EMBLEM_RATIO = 678 / 324;
 
 export type VectorIconProps = Readonly<{
-  size?: number;
+  size?: number | IconSizeToken;
   color?: string;
   secondaryColor?: string;
-  strokeWidth?: number;
+  strokeWidth?: number | IconStrokeToken;
   testID?: string;
+  /** Solid-fill variant for active nav/tab states, instead of the default outline. */
+  filled?: boolean;
 }>;
 
 /**
@@ -25,18 +37,20 @@ export type VectorIconProps = Readonly<{
 export function IconLocationPin({
   color = '#0B1E42',
   secondaryColor = '#F0F4F9',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-location-pin',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -44,9 +58,9 @@ export function IconLocationPin({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
-        <circle cx="12" cy="9.5" r="3" fill={secondaryColor} stroke={color} strokeWidth={strokeWidth} />
+        <circle cx="12" cy="9.5" r="3" fill={secondaryColor} stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
@@ -55,18 +69,18 @@ export function IconLocationPin({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M12 21C16 16.5 19 13.5 19 9.5C19 5.63401 15.866 2.5 12 2.5C8.13401 2.5 5 5.63401 5 9.5C5 13.5 8 16.5 12 21Z"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
-        <Circle cx="12" cy="9.5" r="3" fill={secondaryColor} stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="12" cy="9.5" r="3" fill={secondaryColor} stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -77,25 +91,27 @@ export function IconLocationPin({
 export function IconSpeedTruck({
   color = '#0B1E42',
   secondaryColor = '#F0F4F9',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-speed-truck',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <rect
           height="10"
           rx="1"
           stroke={color}
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
           width="11"
           x="2"
           y="6"
@@ -105,10 +121,10 @@ export function IconSpeedTruck({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
-        <circle cx="6" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={strokeWidth} />
-        <circle cx="17" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={strokeWidth} />
+        <circle cx="6" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <circle cx="17" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
@@ -117,15 +133,15 @@ export function IconSpeedTruck({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Rect
           height="10"
           rx="1"
           stroke={color}
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
           width="11"
           x="2"
           y="6"
@@ -135,10 +151,10 @@ export function IconSpeedTruck({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
-        <Circle cx="6" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={strokeWidth} />
-        <Circle cx="17" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="6" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="17" cy="18" fill="#FFFFFF" r="2" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -149,18 +165,20 @@ export function IconSpeedTruck({
 export function IconSecurityShield({
   color = '#16A34A',
   secondaryColor = '#DCFCE7',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-security-shield',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -168,14 +186,14 @@ export function IconSecurityShield({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
         <path
           d="M8.5 12L11 14.5L15.5 9.5"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -185,23 +203,23 @@ export function IconSecurityShield({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M12 2.5L4 5.5V11.5C4 16.5 7.5 20.8 12 22C16.5 20.8 20 16.5 20 11.5V5.5L12 2.5Z"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
         <Path
           d="M8.5 12L11 14.5L15.5 9.5"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -213,18 +231,20 @@ export function IconSecurityShield({
 export function IconCamera({
   color = '#0B1E42',
   secondaryColor = '#F0F4F9',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-camera',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -232,9 +252,9 @@ export function IconCamera({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
-        <circle cx="12" cy="13" fill={secondaryColor} r="4" stroke={color} strokeWidth={strokeWidth} />
+        <circle cx="12" cy="13" fill={secondaryColor} r="4" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
@@ -243,18 +263,18 @@ export function IconCamera({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
-        <Circle cx="12" cy="13" fill={secondaryColor} r="4" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="12" cy="13" fill={secondaryColor} r="4" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -264,33 +284,35 @@ export function IconCamera({
  */
 export function IconSupport247({
   color = '#0B1E42',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-support-247',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
           d="M3 13V11C3 6.02944 7.02944 2 12 2C16.9706 2 21 6.02944 21 11V13"
           stroke={color}
           strokeLinecap="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
-        <rect height="6" rx="1.5" stroke={color} strokeWidth={strokeWidth} width="3" x="2" y="11" />
-        <rect height="6" rx="1.5" stroke={color} strokeWidth={strokeWidth} width="3" x="19" y="11" />
+        <rect height="6" rx="1.5" stroke={color} strokeWidth={resolvedStrokeWidth} width="3" x="2" y="11" />
+        <rect height="6" rx="1.5" stroke={color} strokeWidth={resolvedStrokeWidth} width="3" x="19" y="11" />
         <path
           d="M19 16V18C19 19.6569 17.6569 21 16 21H13"
           stroke={color}
           strokeLinecap="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -300,23 +322,23 @@ export function IconSupport247({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M3 13V11C3 6.02944 7.02944 2 12 2C16.9706 2 21 6.02944 21 11V13"
           stroke={color}
           strokeLinecap="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
-        <Rect height="6" rx="1.5" stroke={color} strokeWidth={strokeWidth} width="3" x="2" y="11" />
-        <Rect height="6" rx="1.5" stroke={color} strokeWidth={strokeWidth} width="3" x="19" y="11" />
+        <Rect height="6" rx="1.5" stroke={color} strokeWidth={resolvedStrokeWidth} width="3" x="2" y="11" />
+        <Rect height="6" rx="1.5" stroke={color} strokeWidth={resolvedStrokeWidth} width="3" x="19" y="11" />
         <Path
           d="M19 16V18C19 19.6569 17.6569 21 16 21H13"
           stroke={color}
           strokeLinecap="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -327,30 +349,32 @@ export function IconSupport247({
  */
 export function IconPaymentConvenient({
   color = '#0B1E42',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-payment-convenient',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <rect
           height="14"
           rx="2"
           stroke={color}
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
           width="20"
           x="2"
           y="5"
         />
-        <line stroke={color} strokeWidth={strokeWidth} x1="2" x2="22" y1="9.5" y2="9.5" />
+        <line stroke={color} strokeWidth={resolvedStrokeWidth} x1="2" x2="22" y1="9.5" y2="9.5" />
         <rect fill={color} height="2" rx="0.5" width="4" x="5" y="14" />
       </svg>
     );
@@ -360,20 +384,20 @@ export function IconPaymentConvenient({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Rect
           height="14"
           rx="2"
           stroke={color}
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
           width="20"
           x="2"
           y="5"
         />
-        <Line stroke={color} strokeWidth={strokeWidth} x1="2" x2="22" y1="9.5" y2="9.5" />
+        <Line stroke={color} strokeWidth={resolvedStrokeWidth} x1="2" x2="22" y1="9.5" y2="9.5" />
         <Rect fill={color} height="2" rx="0.5" width="4" x="5" y="14" />
       </Svg>
   );
@@ -384,23 +408,25 @@ export function IconPaymentConvenient({
  */
 export function IconQrPayment({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-qr-payment',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
-        <rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="3" y="3" />
-        <rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="15" y="3" />
-        <rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="3" y="15" />
+        <rect height="6" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="6" x="3" y="3" />
+        <rect height="6" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="6" x="15" y="3" />
+        <rect height="6" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="6" x="3" y="15" />
         <path d="M15 15H17V17H15V15ZM19 15H21V17H19V15ZM15 19H17V21H15V19ZM19 19H21V21H19V19ZM10 4H12V6H10V4ZM4 10H6V12H4V10ZM10 10H14V14H10V10Z" fill={color} />
       </svg>
     );
@@ -410,13 +436,13 @@ export function IconQrPayment({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
-        <Rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="3" y="3" />
-        <Rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="15" y="3" />
-        <Rect height="6" rx="1" stroke={color} strokeWidth={strokeWidth} width="6" x="3" y="15" />
+        <Rect height="6" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="6" x="3" y="3" />
+        <Rect height="6" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="6" x="15" y="3" />
+        <Rect height="6" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="6" x="3" y="15" />
         <Path d="M15 15H17V17H15V15ZM19 15H21V17H19V15ZM15 19H17V21H15V19ZM19 19H21V21H19V19ZM10 4H12V6H10V4ZM4 10H6V12H4V10ZM10 10H14V14H10V10Z" fill={color} />
       </Svg>
   );
@@ -427,25 +453,27 @@ export function IconQrPayment({
  */
 export function IconBank({
   color = '#0B1E42',
-  size = 22,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-bank',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 9.5L12 4L21 9.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M5 10V18M10 10V18M14 10V18M19 10V18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M2 20H22" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 9.5L12 4L21 9.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M5 10V18M10 10V18M14 10V18M19 10V18" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M2 20H22" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M3 9.5L12 4L21 9.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M5 10V18M10 10V18M14 10V18M19 10V18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M2 20H22" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M3 9.5L12 4L21 9.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M5 10V18M10 10V18M14 10V18M19 10V18" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M2 20H22" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -455,21 +483,23 @@ export function IconBank({
  */
 export function IconTxTopup({
   color = '#16A34A',
-  size = 20,
-  strokeWidth = 2,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-tx-topup',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M17 7L7 17M7 17H15M7 17V9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M20.5 3.5L3.5 20.5M3.5 20.5H14M3.5 20.5V10" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M17 7L7 17M7 17H15M7 17V9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M20.5 3.5L3.5 20.5M3.5 20.5H14M3.5 20.5V10" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -479,21 +509,23 @@ export function IconTxTopup({
  */
 export function IconTxPayment({
   color = '#475569',
-  size = 20,
-  strokeWidth = 2,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-tx-payment',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M7 17L17 7M17 7H9M17 7V15" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3.5 20.5L20.5 3.5M20.5 3.5H10M20.5 3.5V14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M7 17L17 7M17 7H9M17 7V15" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M3.5 20.5L20.5 3.5M20.5 3.5H10M20.5 3.5V14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -503,23 +535,25 @@ export function IconTxPayment({
  */
 export function IconTxRefund({
   color = '#D97706',
-  size = 20,
-  strokeWidth = 2,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-tx-refund',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 10H14C17.3137 10 20 12.6863 20 16C20 19.3137 17.3137 22 14 22H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M7 6L3 10L7 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 10H14C17.3137 10 20 12.6863 20 16C20 19.3137 17.3137 22 14 22H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M7 6L3 10L7 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M3 10H14C17.3137 10 20 12.6863 20 16C20 19.3137 17.3137 22 14 22H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M7 6L3 10L7 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M3 10H14C17.3137 10 20 12.6863 20 16C20 19.3137 17.3137 22 14 22H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M7 6L3 10L7 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -529,23 +563,25 @@ export function IconTxRefund({
  */
 export function IconCopy({
   color = '#0B1E42',
-  size = 18,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-copy',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <rect height="13" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} width="13" x="9" y="9" />
-        <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <rect height="13" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} width="13" x="9" y="9" />
+        <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Rect height="13" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} width="13" x="9" y="9" />
-        <Path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Rect height="13" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} width="13" x="9" y="9" />
+        <Path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -555,23 +591,25 @@ export function IconCopy({
  */
 export function IconEye({
   color = '#94A3B8',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-eye',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <circle cx="12" cy="12" r="3" stroke={color} strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <circle cx="12" cy="12" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -581,25 +619,27 @@ export function IconEye({
  */
 export function IconEyeOff({
   color = '#94A3B8',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-eye-off',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12A18.45 18.45 0 0 1 5.06 6.06L17.94 17.94Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4C19 4 23 12 23 12A18.5 18.5 0 0 1 19.82 16.14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M1 1L23 23" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12A18.45 18.45 0 0 1 5.06 6.06L17.94 17.94Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4C19 4 23 12 23 12A18.5 18.5 0 0 1 19.82 16.14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M1 1L23 23" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12A18.45 18.45 0 0 1 5.06 6.06L17.94 17.94Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M9.9 4.24A9.12 9.12 0 0 1 12 4C19 4 23 12 23 12A18.5 18.5 0 0 1 19.82 16.14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M1 1L23 23" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12A18.45 18.45 0 0 1 5.06 6.06L17.94 17.94Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M9.9 4.24A9.12 9.12 0 0 1 12 4C19 4 23 12 23 12A18.5 18.5 0 0 1 19.82 16.14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M1 1L23 23" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -609,23 +649,29 @@ export function IconEyeOff({
  */
 export function IconHome({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  filled = false,
+  secondaryColor = '#FFFFFF',
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-home',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
+  const roofFill = filled ? color : 'none';
+  const doorColor = filled ? secondaryColor : color;
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 9.5L12 3L21 9.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M9 21V12H15V21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 9.5L12 3L21 9.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.5Z" fill={roofFill} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M9 21V12H15V21" stroke={doorColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M3 9.5L12 3L21 9.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M9 21V12H15V21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M3 9.5L12 3L21 9.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.5Z" fill={roofFill} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M9 21V12H15V21" stroke={doorColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -635,25 +681,27 @@ export function IconHome({
  */
 export function IconRoute({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-route',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="6" cy="18" r="3" stroke={color} strokeWidth={strokeWidth} />
-        <circle cx="18" cy="6" r="3" stroke={color} strokeWidth={strokeWidth} />
-        <path d="M9 18H13C15.2091 18 17 16.2091 17 14V10C17 7.79086 15.2091 6 13 6H9" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="6" cy="18" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <circle cx="18" cy="6" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M9 18H13C15.2091 18 17 16.2091 17 14V10C17 7.79086 15.2091 6 13 6H9" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Circle cx="6" cy="18" r="3" stroke={color} strokeWidth={strokeWidth} />
-        <Circle cx="18" cy="6" r="3" stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M9 18H13C15.2091 18 17 16.2091 17 14V10C17 7.79086 15.2091 6 13 6H9" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Circle cx="6" cy="18" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="18" cy="6" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M9 18H13C15.2091 18 17 16.2091 17 14V10C17 7.79086 15.2091 6 13 6H9" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -663,24 +711,26 @@ export function IconRoute({
  */
 export function IconWallet({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-wallet',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M21 7V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V17" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <rect height="8" rx="2" stroke={color} strokeWidth={strokeWidth} width="7" x="15" y="8" />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 7V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V17" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <rect height="8" rx="2" stroke={color} strokeWidth={resolvedStrokeWidth} width="7" x="15" y="8" />
         <circle cx="18.5" cy="12" fill={color} r="1" />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M21 7V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V17" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Rect height="8" rx="2" stroke={color} strokeWidth={strokeWidth} width="7" x="15" y="8" />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M21 7V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V17" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Rect height="8" rx="2" stroke={color} strokeWidth={resolvedStrokeWidth} width="7" x="15" y="8" />
         <Circle cx="18.5" cy="12" fill={color} r="1" />
       </Svg>
   );
@@ -691,25 +741,31 @@ export function IconWallet({
  */
 export function IconOrders({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  filled = false,
+  secondaryColor = '#FFFFFF',
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-orders',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
+  const boxFill = filled ? color : 'none';
+  const seamColor = filled ? secondaryColor : color;
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M21 16V8C21 7.64 20.81 7.31 20.5 7.13L13 2.87C12.38 2.51 11.62 2.51 11 2.87L3.5 7.13C3.19 7.31 3 7.64 3 8V16C3 16.36 3.19 16.69 3.5 16.87L11 21.13C11.62 21.49 12.38 21.49 13 21.13L20.5 16.87C20.81 16.69 21 16.36 21 16Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M3.3 7.5L12 12.5L20.7 7.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M12 21.5V12.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 16V8C21 7.64 20.81 7.31 20.5 7.13L13 2.87C12.38 2.51 11.62 2.51 11 2.87L3.5 7.13C3.19 7.31 3 7.64 3 8V16C3 16.36 3.19 16.69 3.5 16.87L11 21.13C11.62 21.49 12.38 21.49 13 21.13L20.5 16.87C20.81 16.69 21 16.36 21 16Z" fill={boxFill} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M3.3 7.5L12 12.5L20.7 7.5" stroke={seamColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M12 21.5V12.5" stroke={seamColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M21 16V8C21 7.64 20.81 7.31 20.5 7.13L13 2.87C12.38 2.51 11.62 2.51 11 2.87L3.5 7.13C3.19 7.31 3 7.64 3 8V16C3 16.36 3.19 16.69 3.5 16.87L11 21.13C11.62 21.49 12.38 21.49 13 21.13L20.5 16.87C20.81 16.69 21 16.36 21 16Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M3.3 7.5L12 12.5L20.7 7.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M12 21.5V12.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M21 16V8C21 7.64 20.81 7.31 20.5 7.13L13 2.87C12.38 2.51 11.62 2.51 11 2.87L3.5 7.13C3.19 7.31 3 7.64 3 8V16C3 16.36 3.19 16.69 3.5 16.87L11 21.13C11.62 21.49 12.38 21.49 13 21.13L20.5 16.87C20.81 16.69 21 16.36 21 16Z" fill={boxFill} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M3.3 7.5L12 12.5L20.7 7.5" stroke={seamColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M12 21.5V12.5" stroke={seamColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -719,23 +775,27 @@ export function IconOrders({
  */
 export function IconUser({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  filled = false,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-user',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
+  const glyphFill = filled ? color : 'none';
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <circle cx="12" cy="7" r="4" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" fill={glyphFill} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <circle cx="12" cy="7" fill={glyphFill} r="4" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Circle cx="12" cy="7" r="4" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" fill={glyphFill} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="12" cy="7" fill={glyphFill} r="4" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -745,23 +805,25 @@ export function IconUser({
  */
 export function IconBell({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-bell',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21S18 15 18 8Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M13.73 21A2 2 0 0 1 10.27 21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21S18 15 18 8Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M13.73 21A2 2 0 0 1 10.27 21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21S18 15 18 8Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M13.73 21A2 2 0 0 1 10.27 21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21S18 15 18 8Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M13.73 21A2 2 0 0 1 10.27 21" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -771,23 +833,25 @@ export function IconBell({
  */
 export function IconSearch({
   color = '#64748B',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-search',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="11" cy="11" r="7" stroke={color} strokeWidth={strokeWidth} />
-        <path d="M20 20L16 16" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="11" r="7" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M20 20L16 16" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Circle cx="11" cy="11" r="7" stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M20 20L16 16" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Circle cx="11" cy="11" r="7" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M20 20L16 16" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -797,23 +861,25 @@ export function IconSearch({
  */
 export function IconCameraProof({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-camera-proof',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 3H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <circle cx="12" cy="13" r="4" stroke={color} strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 3H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <circle cx="12" cy="13" r="4" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 3H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Circle cx="12" cy="13" r="4" stroke={color} strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 3H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="12" cy="13" r="4" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -823,21 +889,23 @@ export function IconCameraProof({
  */
 export function IconPhone({
   color = '#0B1E42',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-phone',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M22 16.92V19.92C22.0011 20.1986 21.9441 20.4742 21.8325 20.7294C21.7209 20.9846 21.5573 21.2137 21.3521 21.4019C21.1468 21.5902 20.9046 21.7336 20.6407 21.8228C20.3769 21.912 20.0974 21.9452 19.82 21.92C16.7428 21.5857 13.787 20.5342 11.19 18.85C8.77382 17.3147 6.72533 15.2662 5.19 12.85C3.49997 10.2412 2.44824 7.27099 2.12 4.18C2.095 3.90353 2.12787 3.62486 2.21656 3.36171C2.30526 3.09856 2.44787 2.85679 2.6353 2.65174C2.82274 2.44669 3.05086 2.2829 3.30514 2.17079C3.55942 2.05868 3.83424 2.00072 4.112 2H7.112C7.5953 1.99524 8.06377 2.16708 8.43003 2.48354C8.7963 2.80001 9.03456 3.23899 9.102 3.72C9.22723 4.61464 9.44577 5.49258 9.752 6.33C9.89745 6.72103 9.91978 7.14725 9.81643 7.55106C9.71308 7.95487 9.48834 8.31889 9.172 8.59L7.902 9.86C9.33614 12.3827 11.4173 14.4639 13.94 15.9L15.21 14.63C15.4811 14.3137 15.8451 14.0889 16.2489 13.9856C16.6528 13.8822 17.079 13.9045 17.47 14.05C18.3074 14.3562 19.1854 14.5748 20.08 14.7C20.5663 14.7679 21.0102 15.0103 21.3277 15.3819C21.6451 15.7535 21.8136 16.2287 21.8 16.71L22 16.92Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M22 16.92V19.92C22.0011 20.1986 21.9441 20.4742 21.8325 20.7294C21.7209 20.9846 21.5573 21.2137 21.3521 21.4019C21.1468 21.5902 20.9046 21.7336 20.6407 21.8228C20.3769 21.912 20.0974 21.9452 19.82 21.92C16.7428 21.5857 13.787 20.5342 11.19 18.85C8.77382 17.3147 6.72533 15.2662 5.19 12.85C3.49997 10.2412 2.44824 7.27099 2.12 4.18C2.095 3.90353 2.12787 3.62486 2.21656 3.36171C2.30526 3.09856 2.44787 2.85679 2.6353 2.65174C2.82274 2.44669 3.05086 2.2829 3.30514 2.17079C3.55942 2.05868 3.83424 2.00072 4.112 2H7.112C7.5953 1.99524 8.06377 2.16708 8.43003 2.48354C8.7963 2.80001 9.03456 3.23899 9.102 3.72C9.22723 4.61464 9.44577 5.49258 9.752 6.33C9.89745 6.72103 9.91978 7.14725 9.81643 7.55106C9.71308 7.95487 9.48834 8.31889 9.172 8.59L7.902 9.86C9.33614 12.3827 11.4173 14.4639 13.94 15.9L15.21 14.63C15.4811 14.3137 15.8451 14.0889 16.2489 13.9856C16.6528 13.8822 17.079 13.9045 17.47 14.05C18.3074 14.3562 19.1854 14.5748 20.08 14.7C20.5663 14.7679 21.0102 15.0103 21.3277 15.3819C21.6451 15.7535 21.8136 16.2287 21.8 16.71L22 16.92Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M22 16.92V19.92C22.0011 20.1986 21.9441 20.4742 21.8325 20.7294C21.7209 20.9846 21.5573 21.2137 21.3521 21.4019C21.1468 21.5902 20.9046 21.7336 20.6407 21.8228C20.3769 21.912 20.0974 21.9452 19.82 21.92C16.7428 21.5857 13.787 20.5342 11.19 18.85C8.77382 17.3147 6.72533 15.2662 5.19 12.85C3.49997 10.2412 2.44824 7.27099 2.12 4.18C2.095 3.90353 2.12787 3.62486 2.21656 3.36171C2.30526 3.09856 2.44787 2.85679 2.6353 2.65174C2.82274 2.44669 3.05086 2.2829 3.30514 2.17079C3.55942 2.05868 3.83424 2.00072 4.112 2H7.112C7.5953 1.99524 8.06377 2.16708 8.43003 2.48354C8.7963 2.80001 9.03456 3.23899 9.102 3.72C9.22723 4.61464 9.44577 5.49258 9.752 6.33C9.89745 6.72103 9.91978 7.14725 9.81643 7.55106C9.71308 7.95487 9.48834 8.31889 9.172 8.59L7.902 9.86C9.33614 12.3827 11.4173 14.4639 13.94 15.9L15.21 14.63C15.4811 14.3137 15.8451 14.0889 16.2489 13.9856C16.6528 13.8822 17.079 13.9045 17.47 14.05C18.3074 14.3562 19.1854 14.5748 20.08 14.7C20.5663 14.7679 21.0102 15.0103 21.3277 15.3819C21.6451 15.7535 21.8136 16.2287 21.8 16.71L22 16.92Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M22 16.92V19.92C22.0011 20.1986 21.9441 20.4742 21.8325 20.7294C21.7209 20.9846 21.5573 21.2137 21.3521 21.4019C21.1468 21.5902 20.9046 21.7336 20.6407 21.8228C20.3769 21.912 20.0974 21.9452 19.82 21.92C16.7428 21.5857 13.787 20.5342 11.19 18.85C8.77382 17.3147 6.72533 15.2662 5.19 12.85C3.49997 10.2412 2.44824 7.27099 2.12 4.18C2.095 3.90353 2.12787 3.62486 2.21656 3.36171C2.30526 3.09856 2.44787 2.85679 2.6353 2.65174C2.82274 2.44669 3.05086 2.2829 3.30514 2.17079C3.55942 2.05868 3.83424 2.00072 4.112 2H7.112C7.5953 1.99524 8.06377 2.16708 8.43003 2.48354C8.7963 2.80001 9.03456 3.23899 9.102 3.72C9.22723 4.61464 9.44577 5.49258 9.752 6.33C9.89745 6.72103 9.91978 7.14725 9.81643 7.55106C9.71308 7.95487 9.48834 8.31889 9.172 8.59L7.902 9.86C9.33614 12.3827 11.4173 14.4639 13.94 15.9L15.21 14.63C15.4811 14.3137 15.8451 14.0889 16.2489 13.9856C16.6528 13.8822 17.079 13.9045 17.47 14.05C18.3074 14.3562 19.1854 14.5748 20.08 14.7C20.5663 14.7679 21.0102 15.0103 21.3277 15.3819C21.6451 15.7535 21.8136 16.2287 21.8 16.71L22 16.92Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -847,21 +915,23 @@ export function IconPhone({
  */
 export function IconMessage({
   color = '#0B1E42',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-message',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -871,29 +941,31 @@ export function IconMessage({
  */
 export function IconVehicleMotorbike({
   color = '#0B1E42',
-  size = 28,
-  strokeWidth = 1.75,
+  size = iconSize.xl,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-vehicle-motorbike',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 28 28" width={size} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="7" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={strokeWidth} />
-        <circle cx="21" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={strokeWidth} />
-        <path d="M7 19H12L15 13H19L21 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M15 13L17 7H19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M10 11H13.5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="7" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <circle cx="21" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M7 19H12L15 13H19L21 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M15 13L17 7H19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M10 11H13.5" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
-        <Circle cx="7" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={strokeWidth} />
-        <Circle cx="21" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M7 19H12L15 13H19L21 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M15 13L17 7H19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M10 11H13.5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize}>
+        <Circle cx="7" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="21" cy="19" fill="#FFFFFF" r="3.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M7 19H12L15 13H19L21 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M15 13L17 7H19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M10 11H13.5" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -903,29 +975,31 @@ export function IconVehicleMotorbike({
  */
 export function IconVehicleVan({
   color = '#0B1E42',
-  size = 28,
-  strokeWidth = 1.75,
+  size = iconSize.xl,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-vehicle-van',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 28 28" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 8C3 7.44772 3.44772 7 4 7H17V18H3V8Z" stroke={color} strokeWidth={strokeWidth} />
-        <path d="M17 9H21.5C22.1 9 22.6 9.4 22.8 10L24.5 13.5C24.7 13.8 24.8 14.1 24.8 14.5V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <rect height="4" rx="0.5" stroke={color} strokeWidth={strokeWidth} width="4.5" x="17.5" y="10" />
-        <circle cx="7.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <circle cx="20.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 8C3 7.44772 3.44772 7 4 7H17V18H3V8Z" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M17 9H21.5C22.1 9 22.6 9.4 22.8 10L24.5 13.5C24.7 13.8 24.8 14.1 24.8 14.5V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <rect height="4" rx="0.5" stroke={color} strokeWidth={resolvedStrokeWidth} width="4.5" x="17.5" y="10" />
+        <circle cx="7.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <circle cx="20.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
-        <Path d="M3 8C3 7.44772 3.44772 7 4 7H17V18H3V8Z" stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M17 9H21.5C22.1 9 22.6 9.4 22.8 10L24.5 13.5C24.7 13.8 24.8 14.1 24.8 14.5V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Rect height="4" rx="0.5" stroke={color} strokeWidth={strokeWidth} width="4.5" x="17.5" y="10" />
-        <Circle cx="7.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <Circle cx="20.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize}>
+        <Path d="M3 8C3 7.44772 3.44772 7 4 7H17V18H3V8Z" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M17 9H21.5C22.1 9 22.6 9.4 22.8 10L24.5 13.5C24.7 13.8 24.8 14.1 24.8 14.5V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Rect height="4" rx="0.5" stroke={color} strokeWidth={resolvedStrokeWidth} width="4.5" x="17.5" y="10" />
+        <Circle cx="7.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="20.5" cy="19.5" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -933,61 +1007,45 @@ export function IconVehicleVan({
 /**
  * ⚠️ Vector Icon: Cảnh báo / Thoát (Warning Shield)
  */
-export function IconWarningShield({
-  color = '#D97706',
-  size = 32,
-  strokeWidth = 1.75,
-  testID = 'icon-warning-shield',
-}: VectorIconProps) {
-  if (Platform.OS === 'web') {
-    return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <line stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} x1="12" x2="12" y1="8" y2="13" />
-        <circle cx="12" cy="16.5" fill={color} r="1" />
-      </svg>
-    );
-  }
-
-  return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Line stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} x1="12" x2="12" y1="8" y2="13" />
-        <Circle cx="12" cy="16.5" fill={color} r="1" />
-      </Svg>
-  );
-}
+/**
+ * @deprecated Same shield-with-alert metaphor as `IconShieldAlert`; the set used to
+ * ship two drawings for it. Kept as an alias so call sites keep compiling, but new
+ * code should use `IconShieldAlert`.
+ */
+export const IconWarningShield = IconShieldAlert;
 
 /**
  * 🛺 Vector Icon Phương Tiện: Xe Ba Gác (3-Wheel Bike)
  */
 export function IconVehicle3Wheel({
   color = '#D97706',
-  size = 28,
-  strokeWidth = 1.75,
+  size = iconSize.xl,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-vehicle-3wheel',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 28 28" width={size} xmlns="http://www.w3.org/2000/svg">
-        <rect height="9" rx="1" stroke={color} strokeWidth={strokeWidth} width="12" x="2" y="9" />
-        <line stroke={color} strokeWidth={strokeWidth} x1="6" x2="6" y1="9" y2="18" />
-        <path d="M14 15H18L21 10H19" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M21 10L22.5 7H24.5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <circle cx="8" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <circle cx="21" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <rect height="9" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="12" x="2" y="9" />
+        <line stroke={color} strokeWidth={resolvedStrokeWidth} x1="6" x2="6" y1="9" y2="18" />
+        <path d="M14 15H18L21 10H19" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M21 10L22.5 7H24.5" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <circle cx="8" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <circle cx="21" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
-        <Rect height="9" rx="1" stroke={color} strokeWidth={strokeWidth} width="12" x="2" y="9" />
-        <Line stroke={color} strokeWidth={strokeWidth} x1="6" x2="6" y1="9" y2="18" />
-        <Path d="M14 15H18L21 10H19" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M21 10L22.5 7H24.5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Circle cx="8" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <Circle cx="21" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize}>
+        <Rect height="9" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="12" x="2" y="9" />
+        <Line stroke={color} strokeWidth={resolvedStrokeWidth} x1="6" x2="6" y1="9" y2="18" />
+        <Path d="M14 15H18L21 10H19" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M21 10L22.5 7H24.5" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="8" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="21" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -997,29 +1055,31 @@ export function IconVehicle3Wheel({
  */
 export function IconVehicleLightTruck({
   color = '#0B1E42',
-  size = 28,
-  strokeWidth = 1.75,
+  size = iconSize.xl,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-vehicle-light-truck',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 28 28" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M2 9C2 7.89543 2.89543 7 4 7H16V18H2V9Z" stroke={color} strokeWidth={strokeWidth} />
-        <path d="M16 10H20.5C21.1 10 21.6 10.4 21.8 10.9L23.8 14.3C23.9 14.5 24 14.8 24 15.1V18H16V10Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <line stroke={color} strokeWidth={strokeWidth} x1="17.5" x2="22" y1="14" y2="14" />
-        <circle cx="7" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <circle cx="19" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 9C2 7.89543 2.89543 7 4 7H16V18H2V9Z" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M16 10H20.5C21.1 10 21.6 10.4 21.8 10.9L23.8 14.3C23.9 14.5 24 14.8 24 15.1V18H16V10Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <line stroke={color} strokeWidth={resolvedStrokeWidth} x1="17.5" x2="22" y1="14" y2="14" />
+        <circle cx="7" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <circle cx="19" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
-        <Path d="M2 9C2 7.89543 2.89543 7 4 7H16V18H2V9Z" stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M16 10H20.5C21.1 10 21.6 10.4 21.8 10.9L23.8 14.3C23.9 14.5 24 14.8 24 15.1V18H16V10Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Line stroke={color} strokeWidth={strokeWidth} x1="17.5" x2="22" y1="14" y2="14" />
-        <Circle cx="7" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <Circle cx="19" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize}>
+        <Path d="M2 9C2 7.89543 2.89543 7 4 7H16V18H2V9Z" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M16 10H20.5C21.1 10 21.6 10.4 21.8 10.9L23.8 14.3C23.9 14.5 24 14.8 24 15.1V18H16V10Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Line stroke={color} strokeWidth={resolvedStrokeWidth} x1="17.5" x2="22" y1="14" y2="14" />
+        <Circle cx="7" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="19" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1029,31 +1089,33 @@ export function IconVehicleLightTruck({
  */
 export function IconVehicleHeavyTruck({
   color = '#2563EB',
-  size = 28,
-  strokeWidth = 1.75,
+  size = iconSize.xl,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-vehicle-heavy-truck',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 28 28" width={size} xmlns="http://www.w3.org/2000/svg">
-        <rect height="12" rx="1" stroke={color} strokeWidth={strokeWidth} width="15" x="2" y="6" />
-        <line stroke={color} strokeDasharray="2 2" strokeWidth={strokeWidth} x1="2" x2="17" y1="12" y2="12" />
-        <path d="M17 9H22C22.6 9 23.2 9.5 23.4 10.1L24.8 13.5C24.9 13.8 25 14.1 25 14.4V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <circle cx="6" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <circle cx="11" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <circle cx="20" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <rect height="12" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="15" x="2" y="6" />
+        <line stroke={color} strokeDasharray="2 2" strokeWidth={resolvedStrokeWidth} x1="2" x2="17" y1="12" y2="12" />
+        <path d="M17 9H22C22.6 9 23.2 9.5 23.4 10.1L24.8 13.5C24.9 13.8 25 14.1 25 14.4V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <circle cx="6" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <circle cx="11" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <circle cx="20" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 28 28" width={size}>
-        <Rect height="12" rx="1" stroke={color} strokeWidth={strokeWidth} width="15" x="2" y="6" />
-        <Line stroke={color} strokeDasharray="2 2" strokeWidth={strokeWidth} x1="2" x2="17" y1="12" y2="12" />
-        <Path d="M17 9H22C22.6 9 23.2 9.5 23.4 10.1L24.8 13.5C24.9 13.8 25 14.1 25 14.4V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Circle cx="6" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <Circle cx="11" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <Circle cx="20" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 28 28" width={resolvedSize}>
+        <Rect height="12" rx="1" stroke={color} strokeWidth={resolvedStrokeWidth} width="15" x="2" y="6" />
+        <Line stroke={color} strokeDasharray="2 2" strokeWidth={resolvedStrokeWidth} x1="2" x2="17" y1="12" y2="12" />
+        <Path d="M17 9H22C22.6 9 23.2 9.5 23.4 10.1L24.8 13.5C24.9 13.8 25 14.1 25 14.4V18H17V9Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="6" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="11" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="20" cy="20" fill="#FFFFFF" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1061,21 +1123,23 @@ export function IconVehicleHeavyTruck({
 /**
  * 📦 Vector Icon Vai trò: Khách hàng (Customer)
  */
-export function IconRoleCustomer({ color = '#0B1E42', secondaryColor = '#F0F4F9', size = 24 }: VectorIconProps) {
+export function IconRoleCustomer({ color = '#0B1E42', secondaryColor = '#F0F4F9', size = iconSize.lg, strokeWidth = iconStroke.medium }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <circle cx="10" cy="8" fill={secondaryColor} r="4" stroke={color} strokeWidth="1.75" />
-        <path d="M3 19C3 15.7 5.7 13 9 13H11C14.3 13 17 15.7 17 19" stroke={color} strokeLinecap="round" strokeWidth="1.75" />
+      <svg fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <circle cx="10" cy="8" fill={secondaryColor} r="4" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M3 19C3 15.7 5.7 13 9 13H11C14.3 13 17 15.7 17 19" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
         <rect fill={color} height="6" rx="1" width="7" x="15" y="14" />
       </svg>
     );
   }
 
   return (
-      <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Circle cx="10" cy="8" fill={secondaryColor} r="4" stroke={color} strokeWidth="1.75" />
-        <Path d="M3 19C3 15.7 5.7 13 9 13H11C14.3 13 17 15.7 17 19" stroke={color} strokeLinecap="round" strokeWidth="1.75" />
+      <Svg fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Circle cx="10" cy="8" fill={secondaryColor} r="4" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M3 19C3 15.7 5.7 13 9 13H11C14.3 13 17 15.7 17 19" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
         <Rect fill={color} height="6" rx="1" width="7" x="15" y="14" />
       </Svg>
   );
@@ -1084,26 +1148,28 @@ export function IconRoleCustomer({ color = '#0B1E42', secondaryColor = '#F0F4F9'
 /**
  * 🚚 Vector Icon Vai trò: Tài xế (Driver)
  */
-export function IconRoleDriver({ color = '#1D4ED8', secondaryColor = '#DBEAFE', size = 24 }: VectorIconProps) {
+export function IconRoleDriver({ color = '#1D4ED8', secondaryColor = '#DBEAFE', size = iconSize.lg, strokeWidth = iconStroke.medium }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <circle cx="12" cy="12" fill={secondaryColor} r="9" stroke={color} strokeWidth="1.75" />
+      <svg fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <circle cx="12" cy="12" fill={secondaryColor} r="9" stroke={color} strokeWidth={resolvedStrokeWidth} />
         <circle cx="12" cy="12" fill={color} r="2.5" />
-        <line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="12" x2="12" y1="3" y2="9.5" />
-        <line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="4.5" x2="9.8" y1="16.5" y2="13.5" />
-        <line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="19.5" x2="14.2" y1="16.5" y2="13.5" />
+        <line stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} x1="12" x2="12" y1="3" y2="9.5" />
+        <line stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} x1="4.5" x2="9.8" y1="16.5" y2="13.5" />
+        <line stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} x1="19.5" x2="14.2" y1="16.5" y2="13.5" />
       </svg>
     );
   }
 
   return (
-      <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Circle cx="12" cy="12" fill={secondaryColor} r="9" stroke={color} strokeWidth="1.75" />
+      <Svg fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Circle cx="12" cy="12" fill={secondaryColor} r="9" stroke={color} strokeWidth={resolvedStrokeWidth} />
         <Circle cx="12" cy="12" fill={color} r="2.5" />
-        <Line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="12" x2="12" y1="3" y2="9.5" />
-        <Line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="4.5" x2="9.8" y1="16.5" y2="13.5" />
-        <Line stroke={color} strokeLinecap="round" strokeWidth="1.75" x1="19.5" x2="14.2" y1="16.5" y2="13.5" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} x1="12" x2="12" y1="3" y2="9.5" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} x1="4.5" x2="9.8" y1="16.5" y2="13.5" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} x1="19.5" x2="14.2" y1="16.5" y2="13.5" />
       </Svg>
   );
 }
@@ -1111,11 +1177,13 @@ export function IconRoleDriver({ color = '#1D4ED8', secondaryColor = '#DBEAFE', 
 /**
  * 🏢 Vector Icon Vai trò: Đội xe (Fleet Owner)
  */
-export function IconRoleFleet({ color = '#0F172A', secondaryColor = '#F0F4F9', size = 24 }: VectorIconProps) {
+export function IconRoleFleet({ color = '#0F172A', secondaryColor = '#F0F4F9', size = iconSize.lg, strokeWidth = iconStroke.medium }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <path d="M3 21H21M4 21V6C4 4.9 4.9 4 6 4H14C15.1 4 16 4.9 16 6V21M16 10H19C19.6 10 20 10.4 20 11V21" stroke={color} strokeLinecap="round" strokeWidth="1.75" />
+      <svg fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <path d="M3 21H21M4 21V6C4 4.9 4.9 4 6 4H14C15.1 4 16 4.9 16 6V21M16 10H19C19.6 10 20 10.4 20 11V21" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
         <rect fill={secondaryColor} height="2" width="2" x="7" y="7" />
         <rect fill={secondaryColor} height="2" width="2" x="11" y="7" />
         <rect fill={secondaryColor} height="2" width="2" x="7" y="11" />
@@ -1125,8 +1193,8 @@ export function IconRoleFleet({ color = '#0F172A', secondaryColor = '#F0F4F9', s
   }
 
   return (
-      <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M3 21H21M4 21V6C4 4.9 4.9 4 6 4H14C15.1 4 16 4.9 16 6V21M16 10H19C19.6 10 20 10.4 20 11V21" stroke={color} strokeLinecap="round" strokeWidth="1.75" />
+      <Svg fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M3 21H21M4 21V6C4 4.9 4.9 4 6 4H14C15.1 4 16 4.9 16 6V21M16 10H19C19.6 10 20 10.4 20 11V21" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
         <Rect fill={secondaryColor} height="2" width="2" x="7" y="7" />
         <Rect fill={secondaryColor} height="2" width="2" x="11" y="7" />
         <Rect fill={secondaryColor} height="2" width="2" x="7" y="11" />
@@ -1138,25 +1206,27 @@ export function IconRoleFleet({ color = '#0F172A', secondaryColor = '#F0F4F9', s
 /**
  * 🛡️ Vector Icon Vai trò: Quản trị viên (Admin)
  */
-export function IconRoleAdmin({ color = '#0F172A', secondaryColor = '#38BDF8', size = 24 }: VectorIconProps) {
+export function IconRoleAdmin({ color = '#0F172A', secondaryColor = '#38BDF8', size = iconSize.lg, strokeWidth = iconStroke.medium }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <path d="M12 2L4 5.5V11.5C4 16.5 7.5 21.1 12 22.5C16.5 21.1 20 16.5 20 11.5V5.5L12 2Z" fill="#F8FAFC" stroke={color} strokeLinejoin="round" strokeWidth="1.75" />
-        <line stroke={color} strokeLinecap="round" strokeWidth="1.5" x1="8" x2="16" y1="9" y2="9" />
+      <svg fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <path d="M12 2L4 5.5V11.5C4 16.5 7.5 21.1 12 22.5C16.5 21.1 20 16.5 20 11.5V5.5L12 2Z" fill="#F8FAFC" stroke={color} strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeWidth={resolveIconStroke('regular')} x1="8" x2="16" y1="9" y2="9" />
         <circle cx="10" cy="9" fill={secondaryColor} r="1.5" />
-        <line stroke={color} strokeLinecap="round" strokeWidth="1.5" x1="8" x2="16" y1="14" y2="14" />
+        <line stroke={color} strokeLinecap="round" strokeWidth={resolveIconStroke('regular')} x1="8" x2="16" y1="14" y2="14" />
         <circle cx="14" cy="14" fill={secondaryColor} r="1.5" />
       </svg>
     );
   }
 
   return (
-      <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M12 2L4 5.5V11.5C4 16.5 7.5 21.1 12 22.5C16.5 21.1 20 16.5 20 11.5V5.5L12 2Z" fill="#F8FAFC" stroke={color} strokeLinejoin="round" strokeWidth="1.75" />
-        <Line stroke={color} strokeLinecap="round" strokeWidth="1.5" x1="8" x2="16" y1="9" y2="9" />
+      <Svg fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M12 2L4 5.5V11.5C4 16.5 7.5 21.1 12 22.5C16.5 21.1 20 16.5 20 11.5V5.5L12 2Z" fill="#F8FAFC" stroke={color} strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeWidth={resolveIconStroke('regular')} x1="8" x2="16" y1="9" y2="9" />
         <Circle cx="10" cy="9" fill={secondaryColor} r="1.5" />
-        <Line stroke={color} strokeLinecap="round" strokeWidth="1.5" x1="8" x2="16" y1="14" y2="14" />
+        <Line stroke={color} strokeLinecap="round" strokeWidth={resolveIconStroke('regular')} x1="8" x2="16" y1="14" y2="14" />
         <Circle cx="14" cy="14" fill={secondaryColor} r="1.5" />
       </Svg>
   );
@@ -1413,18 +1483,20 @@ export function OtpPhoneHeroIcon({
  */
 export function IconWarehouse({
   color = '#2563EB',
-  size = 18,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-warehouse',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -1432,20 +1504,20 @@ export function IconWarehouse({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
         <path
           d="M9 21V13H15V21"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
         <path
           d="M9 17H15"
           stroke={color}
           strokeLinecap="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -1455,29 +1527,29 @@ export function IconWarehouse({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M3 21V8L12 3L21 8V21H3Z"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
         <Path
           d="M9 21V13H15V21"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
         <Path
           d="M9 17H15"
           stroke={color}
           strokeLinecap="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -1489,18 +1561,20 @@ export function IconWarehouse({
  */
 export function IconOffice({
   color = '#2563EB',
-  size = 18,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-office',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <rect
@@ -1509,16 +1583,16 @@ export function IconOffice({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
           width="14"
           x="5"
           y="3"
         />
-        <path d="M9 7H11" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M13 7H15" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M9 11H11" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M13 11H15" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M10 21V17H14V21" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M9 7H11" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M13 7H15" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M9 11H11" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M13 11H15" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M10 21V17H14V21" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
@@ -1527,9 +1601,9 @@ export function IconOffice({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Rect
           height="18"
@@ -1537,16 +1611,16 @@ export function IconOffice({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
           width="14"
           x="5"
           y="3"
         />
-        <Path d="M9 7H11" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M13 7H15" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M9 11H11" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M13 11H15" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M10 21V17H14V21" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M9 7H11" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M13 7H15" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M9 11H11" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M13 11H15" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M10 21V17H14V21" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1556,18 +1630,20 @@ export function IconOffice({
  */
 export function IconTag({
   color = '#2563EB',
-  size = 18,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-tag',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -1575,7 +1651,7 @@ export function IconTag({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
         <circle cx="7" cy="7" fill={color} r="1.5" />
       </svg>
@@ -1586,16 +1662,16 @@ export function IconTag({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M12 2H2V12L13.59 23.59C14.37 24.37 15.63 24.37 16.41 23.59L22.59 17.41C23.37 16.63 23.37 15.37 22.59 14.59L12 2Z"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
         <Circle cx="7" cy="7" fill={color} r="1.5" />
       </Svg>
@@ -1607,27 +1683,29 @@ export function IconTag({
  */
 export function IconSettings({
   color = '#64748B',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-settings',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
-        <circle cx="12" cy="12" r="3" stroke={color} strokeWidth={strokeWidth} />
+        <circle cx="12" cy="12" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
         <path
           d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -1637,17 +1715,17 @@ export function IconSettings({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
-        <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth={strokeWidth} />
+        <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
         <Path
           d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -1658,18 +1736,20 @@ export function IconSettings({
  */
 export function IconTrash({
   color = '#EF4444',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-trash',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -1677,7 +1757,7 @@ export function IconTrash({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -1687,16 +1767,16 @@ export function IconTrash({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -1756,19 +1836,21 @@ export function IconStar({
  * ➕ Vector Icon: Dấu cộng (Plus / Add)
  */
 export function IconPlus({
-  color = '#FFFFFF',
-  size = 18,
-  strokeWidth = 2,
+  color = '#0F172A',
+  size = iconSize.md,
+  strokeWidth = iconStroke.bold,
   testID = 'icon-plus',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -1776,7 +1858,7 @@ export function IconPlus({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -1786,16 +1868,16 @@ export function IconPlus({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M12 5v14M5 12h14"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -1807,29 +1889,31 @@ export function IconPlus({
  */
 export function IconTrophy({
   color = '#D97706',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-trophy',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 9H4C3.44772 9 3 8.55228 3 8V5C3 4.44772 3.44772 4 4 4H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M18 9H20C20.5523 9 21 8.55228 21 8V5C21 4.44772 20.5523 4 20 4H18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M6 4H18V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M12 17V20" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M8 20H16" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 9H4C3.44772 9 3 8.55228 3 8V5C3 4.44772 3.44772 4 4 4H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M18 9H20C20.5523 9 21 8.55228 21 8V5C21 4.44772 20.5523 4 20 4H18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M6 4H18V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M12 17V20" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M8 20H16" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M6 9H4C3.44772 9 3 8.55228 3 8V5C3 4.44772 3.44772 4 4 4H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M18 9H20C20.5523 9 21 8.55228 21 8V5C21 4.44772 20.5523 4 20 4H18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M6 4H18V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M12 17V20" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M8 20H16" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M6 9H4C3.44772 9 3 8.55228 3 8V5C3 4.44772 3.44772 4 4 4H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M18 9H20C20.5523 9 21 8.55228 21 8V5C21 4.44772 20.5523 4 20 4H18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M6 4H18V11C18 14.3137 15.3137 17 12 17C8.68629 17 6 14.3137 6 11V4Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M12 17V20" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M8 20H16" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1839,29 +1923,31 @@ export function IconTrophy({
  */
 export function IconIdCard({
   color = '#0B1E42',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-id-card',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <rect height="16" rx="2" stroke={color} strokeWidth={strokeWidth} width="20" x="2" y="4" />
-        <circle cx="8" cy="11" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <path d="M4 18C4 16 5.5 14.5 8 14.5C10.5 14.5 12 16 12 18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M14 9H19" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M14 13H18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <rect height="16" rx="2" stroke={color} strokeWidth={resolvedStrokeWidth} width="20" x="2" y="4" />
+        <circle cx="8" cy="11" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M4 18C4 16 5.5 14.5 8 14.5C10.5 14.5 12 16 12 18" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M14 9H19" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M14 13H18" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Rect height="16" rx="2" stroke={color} strokeWidth={strokeWidth} width="20" x="2" y="4" />
-        <Circle cx="8" cy="11" r="2.5" stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M4 18C4 16 5.5 14.5 8 14.5C10.5 14.5 12 16 12 18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M14 9H19" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M14 13H18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Rect height="16" rx="2" stroke={color} strokeWidth={resolvedStrokeWidth} width="20" x="2" y="4" />
+        <Circle cx="8" cy="11" r="2.5" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M4 18C4 16 5.5 14.5 8 14.5C10.5 14.5 12 16 12 18" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M14 9H19" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M14 13H18" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1871,29 +1957,31 @@ export function IconIdCard({
  */
 export function IconLicense({
   color = '#0B1E42',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-license',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <rect height="16" rx="2" stroke={color} strokeWidth={strokeWidth} width="20" x="2" y="4" />
-        <path d="M6 8H10" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M6 12H9" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <circle cx="16" cy="10" r="3" stroke={color} strokeWidth={strokeWidth} />
-        <path d="M6 16H18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <rect height="16" rx="2" stroke={color} strokeWidth={resolvedStrokeWidth} width="20" x="2" y="4" />
+        <path d="M6 8H10" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M6 12H9" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <circle cx="16" cy="10" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M6 16H18" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Rect height="16" rx="2" stroke={color} strokeWidth={strokeWidth} width="20" x="2" y="4" />
-        <Path d="M6 8H10" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M6 12H9" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Circle cx="16" cy="10" r="3" stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M6 16H18" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Rect height="16" rx="2" stroke={color} strokeWidth={resolvedStrokeWidth} width="20" x="2" y="4" />
+        <Path d="M6 8H10" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M6 12H9" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Circle cx="16" cy="10" r="3" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M6 16H18" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1903,25 +1991,27 @@ export function IconLicense({
  */
 export function IconInsuranceDoc({
   color = '#0B1E42',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-insurance-doc',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M14 2V8H20" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M12 11L10 15H14L12 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M14 2V8H20" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M12 11L10 15H14L12 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M14 2V8H20" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M12 11L10 15H14L12 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M14 2V8H20" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M12 11L10 15H14L12 19" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1931,23 +2021,25 @@ export function IconInsuranceDoc({
  */
 export function IconClock({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-clock',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth={strokeWidth} />
-        <path d="M12 6V12L16 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <path d="M12 6V12L16 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M12 6V12L16 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M12 6V12L16 14" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1957,23 +2049,34 @@ export function IconClock({
  */
 export function IconEarnings({
   color = '#0F172A',
-  size = 24,
-  strokeWidth = 1.75,
+  filled = false,
+  secondaryColor = '#FFFFFF',
+  size = iconSize.lg,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-earnings',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
+  // A banknote keeps the glyph currency-neutral: LEOPARD settles in VND, so a
+  // "$" would be wrong. The "filled" variant paints a coin badge behind it.
+  const glyphColor = filled ? secondaryColor : color;
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2V22" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        {filled ? <circle cx="12" cy="12" fill={color} r="11" /> : null}
+        <circle cx="12" cy="12" r="2.5" stroke={glyphColor} strokeWidth={resolvedStrokeWidth} />
+        <path d="M2.5 7H21.5C21.7761 7 22 7.22386 22 7.5V16.5C22 16.7761 21.7761 17 21.5 17H2.5C2.22386 17 2 16.7761 2 16.5V7.5C2 7.22386 2.22386 7 2.5 7Z" stroke={glyphColor} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M5.5 10V14M18.5 10V14" stroke={glyphColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M12 2V22" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        {filled ? <Circle cx="12" cy="12" fill={color} r="11" /> : null}
+        <Circle cx="12" cy="12" fill="none" r="2.5" stroke={glyphColor} strokeWidth={resolvedStrokeWidth} />
+        <Path d="M2.5 7H21.5C21.7761 7 22 7.22386 22 7.5V16.5C22 16.7761 21.7761 17 21.5 17H2.5C2.22386 17 2 16.7761 2 16.5V7.5C2 7.22386 2.22386 7 2.5 7Z" stroke={glyphColor} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M5.5 10V14M18.5 10V14" stroke={glyphColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -1983,26 +2086,28 @@ export function IconEarnings({
  */
 export function IconChevronLeft({
   color = '#0B1E42',
-  size = 20,
-  strokeWidth = 2.25,
+  size = iconSize.md,
+  strokeWidth = iconStroke.bold,
   testID = 'icon-chevron-left',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
-          d="M15 18L9 12L15 6"
+          d="M15.5 19L8.5 12L15.5 5"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -2012,16 +2117,16 @@ export function IconChevronLeft({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
-          d="M15 18L9 12L15 6"
+          d="M15.5 19L8.5 12L15.5 5"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -2069,19 +2174,21 @@ export function StarRating({
  * ☰ Vector Icon: Menu điều hướng (Hamburger Menu)
  */
 export function IconMenu({
-  color = '#FFFFFF',
-  size = 24,
-  strokeWidth = 2,
+  color = '#0F172A',
+  size = iconSize.lg,
+  strokeWidth = iconStroke.bold,
   testID = 'icon-menu',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -2089,7 +2196,7 @@ export function IconMenu({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -2099,16 +2206,16 @@ export function IconMenu({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M4 6H20M4 12H20M4 18H20"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -2118,19 +2225,21 @@ export function IconMenu({
  * ✕ Vector Icon: Đóng / Tắt (Close / Dismiss)
  */
 export function IconClose({
-  color = '#FFFFFF',
-  size = 24,
-  strokeWidth = 2,
+  color = '#0F172A',
+  size = iconSize.lg,
+  strokeWidth = iconStroke.bold,
   testID = 'icon-close',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -2138,7 +2247,7 @@ export function IconClose({
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -2148,16 +2257,16 @@ export function IconClose({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
           d="M18 6L6 18M6 6L18 18"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -2168,26 +2277,28 @@ export function IconClose({
  */
 export function IconChevronRight({
   color = '#94A3B8',
-  size = 20,
-  strokeWidth = 2,
+  size = iconSize.md,
+  strokeWidth = iconStroke.bold,
   testID = 'icon-chevron-right',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
       <svg
         data-testid={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
-          d="M9 18L15 12L9 6"
+          d="M8.5 19L15.5 12L8.5 5"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </svg>
     );
@@ -2197,16 +2308,16 @@ export function IconChevronRight({
       <Svg
         testID={testID}
         fill="none"
-        height={size}
+        height={resolvedSize}
         viewBox="0 0 24 24"
-        width={size}
+        width={resolvedSize}
       >
         <Path
-          d="M9 18L15 12L9 6"
+          d="M8.5 19L15.5 12L8.5 5"
           stroke={color}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
         />
       </Svg>
   );
@@ -2217,27 +2328,29 @@ export function IconChevronRight({
  */
 export function IconFuelPump({
   color = '#0B1E42',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-fuel-pump',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 21H13V5C13 3.89543 12.1046 3 11 3H5C3.89543 3 3 3.89543 3 5V21Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M6 7H10V10H6V7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M13 9H16C17.1046 9 18 9.89543 18 11V16C18 17.1046 18.8954 18 20 18C21.1046 18 22 17.1046 22 16V9L19.5 6.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M2 21H14" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 21H13V5C13 3.89543 12.1046 3 11 3H5C3.89543 3 3 3.89543 3 5V21Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M6 7H10V10H6V7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M13 9H16C17.1046 9 18 9.89543 18 11V16C18 17.1046 18.8954 18 20 18C21.1046 18 22 17.1046 22 16V9L19.5 6.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M2 21H14" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M3 21H13V5C13 3.89543 12.1046 3 11 3H5C3.89543 3 3 3.89543 3 5V21Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M6 7H10V10H6V7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M13 9H16C17.1046 9 18 9.89543 18 11V16C18 17.1046 18.8954 18 20 18C21.1046 18 22 17.1046 22 16V9L19.5 6.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M2 21H14" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M3 21H13V5C13 3.89543 12.1046 3 11 3H5C3.89543 3 3 3.89543 3 5V21Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M6 7H10V10H6V7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M13 9H16C17.1046 9 18 9.89543 18 11V16C18 17.1046 18.8954 18 20 18C21.1046 18 22 17.1046 22 16V9L19.5 6.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M2 21H14" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -2247,23 +2360,25 @@ export function IconFuelPump({
  */
 export function IconScaleWeight({
   color = '#0B1E42',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-scale-weight',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 3V21M6 21H18M3 7L12 5L21 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M6 7L3 13H9L6 7ZM18 7L15 13H21L18 7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3V21M6 21H18M3 7L12 5L21 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M6 7L3 13H9L6 7ZM18 7L15 13H21L18 7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M12 3V21M6 21H18M3 7L12 5L21 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M6 7L3 13H9L6 7ZM18 7L15 13H21L18 7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M12 3V21M6 21H18M3 7L12 5L21 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M6 7L3 13H9L6 7ZM18 7L15 13H21L18 7Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -2273,23 +2388,25 @@ export function IconScaleWeight({
  */
 export function IconCoffeeRest({
   color = '#0B1E42',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-coffee-rest',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M17 8H4V16C4 18.2091 5.79086 20 8 20H13C15.2091 20 17 18.2091 17 16V8ZM17 9H19C20.1046 9 21 9.89543 21 11C21 12.1046 20.1046 13 19 13H17" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <path d="M7 2V5M11 2V5M15 2V5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 8H4V16C4 18.2091 5.79086 20 8 20H13C15.2091 20 17 18.2091 17 16V8ZM17 9H19C20.1046 9 21 9.89543 21 11C21 12.1046 20.1046 13 19 13H17" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M7 2V5M11 2V5M15 2V5" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M17 8H4V16C4 18.2091 5.79086 20 8 20H13C15.2091 20 17 18.2091 17 16V8ZM17 9H19C20.1046 9 21 9.89543 21 11C21 12.1046 20.1046 13 19 13H17" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Path d="M7 2V5M11 2V5M15 2V5" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M17 8H4V16C4 18.2091 5.79086 20 8 20H13C15.2091 20 17 18.2091 17 16V8ZM17 9H19C20.1046 9 21 9.89543 21 11C21 12.1046 20.1046 13 19 13H17" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M7 2V5M11 2V5M15 2V5" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -2299,25 +2416,27 @@ export function IconCoffeeRest({
  */
 export function IconRadarPulse({
   color = '#0B1E42',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-radar-pulse',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
         <circle cx="12" cy="12" fill={color} r="2.5" />
-        <path d="M16.24 7.76C18.58 10.1 18.58 13.9 16.24 16.24M7.76 7.76C5.42 10.1 5.42 13.9 7.76 16.24" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <path d="M19.07 4.93C22.98 8.84 22.98 15.16 19.07 19.07M4.93 4.93C1.02 8.84 1.02 15.16 4.93 19.07" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <path d="M16.24 7.76C18.58 10.1 18.58 13.9 16.24 16.24M7.76 7.76C5.42 10.1 5.42 13.9 7.76 16.24" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <path d="M19.07 4.93C22.98 8.84 22.98 15.16 19.07 19.07M4.93 4.93C1.02 8.84 1.02 15.16 4.93 19.07" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
         <Circle cx="12" cy="12" fill={color} r="2.5" />
-        <Path d="M16.24 7.76C18.58 10.1 18.58 13.9 16.24 16.24M7.76 7.76C5.42 10.1 5.42 13.9 7.76 16.24" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
-        <Path d="M19.07 4.93C22.98 8.84 22.98 15.16 19.07 19.07M4.93 4.93C1.02 8.84 1.02 15.16 4.93 19.07" stroke={color} strokeLinecap="round" strokeWidth={strokeWidth} />
+        <Path d="M16.24 7.76C18.58 10.1 18.58 13.9 16.24 16.24M7.76 7.76C5.42 10.1 5.42 13.9 7.76 16.24" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
+        <Path d="M19.07 4.93C22.98 8.84 22.98 15.16 19.07 19.07M4.93 4.93C1.02 8.84 1.02 15.16 4.93 19.07" stroke={color} strokeLinecap="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -2327,21 +2446,23 @@ export function IconRadarPulse({
  */
 export function IconCrown({
   color = '#F59E0B',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-crown',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M2 19H22M5 19L2 7L8 11L12 3L16 11L22 7L19 19H5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 19H22M5 19L2 7L8 11L12 3L16 11L22 7L19 19H5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M2 19H22M5 19L2 7L8 11L12 3L16 11L22 7L19 19H5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M2 19H22M5 19L2 7L8 11L12 3L16 11L22 7L19 19H5Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -2351,21 +2472,23 @@ export function IconCrown({
  */
 export function IconCheck({
   color = '#10B981',
-  size = 18,
-  strokeWidth = 2,
+  size = iconSize.md,
+  strokeWidth = iconStroke.bold,
   testID = 'icon-check',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <polyline points="20 6 9 17 4 12" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <polyline points="20 6 9 17 4 12" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Polyline points="20 6 9 17 4 12" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Polyline points="20 6 9 17 4 12" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -2375,25 +2498,27 @@ export function IconCheck({
  */
 export function IconExternalLink({
   color = '#0B1E42',
-  size = 16,
-  strokeWidth = 1.75,
+  size = iconSize.sm,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-external-link',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <polyline points="15 3 21 3 21 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="10" x2="21" y1="14" y2="3" />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <polyline points="15 3 21 3 21 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="10" x2="21" y1="14" y2="3" />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Polyline points="15 3 21 3 21 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="10" x2="21" y1="14" y2="3" />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Polyline points="15 3 21 3 21 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="10" x2="21" y1="14" y2="3" />
       </Svg>
   );
 }
@@ -2403,29 +2528,31 @@ export function IconExternalLink({
  */
 export function IconFileText({
   color = '#D97706',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-file-text',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <polyline points="14 2 14 8 20 8" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="16" x2="8" y1="13" y2="13" />
-        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="16" x2="8" y1="17" y2="17" />
-        <polyline points="10 9 9 9 8 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <polyline points="14 2 14 8 20 8" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="16" x2="8" y1="13" y2="13" />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="16" x2="8" y1="17" y2="17" />
+        <polyline points="10 9 9 9 8 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Polyline points="14 2 14 8 20 8" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="16" x2="8" y1="13" y2="13" />
-        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="16" x2="8" y1="17" y2="17" />
-        <Polyline points="10 9 9 9 8 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Polyline points="14 2 14 8 20 8" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="16" x2="8" y1="13" y2="13" />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="16" x2="8" y1="17" y2="17" />
+        <Polyline points="10 9 9 9 8 9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
       </Svg>
   );
 }
@@ -2435,23 +2562,25 @@ export function IconFileText({
  */
 export function IconCreditCard({
   color = '#059669',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-credit-card',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <rect height="16" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} width="22" x="1" y="4" />
-        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="1" x2="23" y1="10" y2="10" />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <rect height="16" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} width="22" x="1" y="4" />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="1" x2="23" y1="10" y2="10" />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Rect height="16" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} width="22" x="1" y="4" />
-        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="1" x2="23" y1="10" y2="10" />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Rect height="16" rx="2" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} width="22" x="1" y="4" />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="1" x2="23" y1="10" y2="10" />
       </Svg>
   );
 }
@@ -2461,25 +2590,27 @@ export function IconCreditCard({
  */
 export function IconShieldAlert({
   color = '#D97706',
-  size = 20,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-shield-alert',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 22S4 18 4 12V5L12 2L20 5V12C20 18 12 22 12 22Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="12" x2="12" y1="8" y2="12" />
-        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="12" x2="12.01" y1="16" y2="16" />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 22S4 18 4 12V5L12 2L20 5V12C20 18 12 22 12 22Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="12" x2="12" y1="8" y2="12" />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="12" x2="12.01" y1="16" y2="16" />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M12 22S4 18 4 12V5L12 2L20 5V12C20 18 12 22 12 22Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="12" x2="12" y1="8" y2="12" />
-        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="12" x2="12.01" y1="16" y2="16" />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M12 22S4 18 4 12V5L12 2L20 5V12C20 18 12 22 12 22Z" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="12" x2="12" y1="8" y2="12" />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="12" x2="12.01" y1="16" y2="16" />
       </Svg>
   );
 }
@@ -2489,25 +2620,27 @@ export function IconShieldAlert({
  */
 export function IconLogOut({
   color = '#DC2626',
-  size = 18,
-  strokeWidth = 1.75,
+  size = iconSize.md,
+  strokeWidth = iconStroke.medium,
   testID = 'icon-log-out',
 }: VectorIconProps) {
+  const resolvedStrokeWidth = resolveIconStroke(strokeWidth);
+  const resolvedSize = resolveIconSize(size);
   if (Platform.OS === 'web') {
     return (
-      <svg data-testid={testID} fill="none" height={size} viewBox="0 0 24 24" width={size} xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <polyline points="16 17 21 12 16 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="21" x2="9" y1="12" y2="12" />
+      <svg data-testid={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize} xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <polyline points="16 17 21 12 16 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="21" x2="9" y1="12" y2="12" />
       </svg>
     );
   }
 
   return (
-      <Svg testID={testID} fill="none" height={size} viewBox="0 0 24 24" width={size}>
-        <Path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Polyline points="16 17 21 12 16 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} />
-        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} x1="21" x2="9" y1="12" y2="12" />
+      <Svg testID={testID} fill="none" height={resolvedSize} viewBox="0 0 24 24" width={resolvedSize}>
+        <Path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Polyline points="16 17 21 12 16 7" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} />
+        <Line stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={resolvedStrokeWidth} x1="21" x2="9" y1="12" y2="12" />
       </Svg>
   );
 }
@@ -2658,7 +2791,7 @@ const styles = StyleSheet.create({
   },
   phoneVerifiedCheck: {
     color: '#FFFFFF',
-    fontSize: 26,
+    fontSize: typeScale.title1.fontSize,
     fontWeight: '900',
   },
 });

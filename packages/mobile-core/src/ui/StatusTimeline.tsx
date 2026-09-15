@@ -2,7 +2,7 @@ import type { OrderStatus } from '@leopard/shared';
 import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
+import { colors, leopardPalette, leopardRadius, spacing, typography, typeScale } from '../theme/tokens';
 import { SectionHeading } from './ScreenScaffold';
 import { getOrderStatusPresentation } from './StatusBadge';
 
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statusText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     color: '#334155',
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontFamily: 'monospace',
     color: '#94A3B8',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
   },
   description: {
     ...typography.body,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   empty: {
     ...typography.body,
     color: leopardPalette.textMutedSlate,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     flexShrink: 1,
     paddingVertical: spacing.sm,
     textAlign: 'center',

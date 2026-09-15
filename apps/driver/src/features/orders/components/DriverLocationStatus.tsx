@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 3,
     flexDirection: 'row',
-    marginTop: 8,
+    marginBottom: 12,
     minHeight: 32,
     paddingHorizontal: 10,
     paddingVertical: 6,

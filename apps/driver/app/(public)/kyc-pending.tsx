@@ -15,8 +15,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { leopardPalette, radius } from '@leopard/mobile-core/src/theme/tokens';
-import { IconClock, IconShield, IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
-import { IconChevron, IconPhone } from '@leopard/mobile-core';
+import { IconShield, IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
+import { typeScale, IconChevron, IconClock, IconPhone } from '@leopard/mobile-core';
 
 interface ApplicationStatusResponse {
   status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoutBtnText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     color: leopardPalette.textMutedSlate,
   },
@@ -281,13 +281,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   heroTitle: {
-    fontSize: 19,
+    fontSize: typeScale.title3.fontSize,
     fontWeight: '800',
     color: '#0B1E42',
     textAlign: 'center',
   },
   heroSubtitle: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 20,
     color: leopardPalette.textMutedSlate,
     textAlign: 'center',
@@ -340,12 +340,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fieldLabel: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     color: leopardPalette.textMutedSlate,
     fontWeight: '500',
   },
   fieldValue: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#0B1E42',
     fontWeight: '700',
   },
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   },
   secondaryActionBtnText: {
     color: DRIVER_BLUE,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   actionBtnDisabled: {

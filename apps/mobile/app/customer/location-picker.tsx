@@ -24,6 +24,7 @@ import {
   typography,
   VIETNAM_LOCATION_DICT,
   type MapCoordinate,
+  typeScale,
 } from '@leopard/mobile-core';
 
 import { addressStore } from '../../src/features/customer/addresses/address-store';
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clearSearchText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#94A3B8',
     fontWeight: '600',
   },
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
   },
   suggestionText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#0B1E42',
     marginLeft: 10,
     flex: 1,
@@ -482,7 +483,7 @@ const styles = StyleSheet.create({
   },
   coordsLabel: {
     fontFamily: systemFontFamily,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     color: '#94A3B8',
     marginRight: 6,
   },

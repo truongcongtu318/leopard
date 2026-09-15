@@ -5,9 +5,7 @@ import {
   colors,
   radius,
   spacing,
-  IconClock,
   IconRoute,
-  IconScaleWeight,
   IconSpeedTruck,
   StatusBadge,
   iosContinuousCurve,
@@ -20,6 +18,12 @@ export type DriverNearbyOrderCardProps = Readonly<{
   onDecline?: (orderId: string) => void;
 }>;
 
+/**
+ * Grab/Lalamove-style compact job list row.
+ *
+ * Prioritizes high information density, fast scanning while on the road, and
+ * eliminates bloated vertical padding so drivers see 3-4 orders per screen.
+ */
 export function DriverNearbyOrderCard({
   item,
   onDecline,
@@ -36,7 +40,7 @@ export function DriverNearbyOrderCard({
     'Điểm giao hàng';
 
   const distanceEtaText = item.distanceLabel
-    ? `${item.distanceLabel} · ${item.etaLabel}`
+    ? `${item.distanceLabel} (${item.etaLabel?.replace(/Thời gian dự kiến\s*·?\s*/i, '') || ''})`
     : item.etaLabel;
 
   const rawCargoSummary = item.cargoSummary?.trim() || '';
@@ -55,7 +59,6 @@ export function DriverNearbyOrderCard({
     if (match) cargoWeight = match[1];
   }
 
-  const cargoDimensions = item.cargoDimensions?.trim() || null;
   const loadingFee = item.loadingFee ?? null;
   const loadingDesc = item.loadingDescription?.trim() || null;
   const hasLoadingFee = typeof loadingFee === 'number' && loadingFee > 0;
@@ -66,439 +69,293 @@ export function DriverNearbyOrderCard({
     : loadingDesc;
 
   return (
-    <View style={styles.orderCardOuter}>
-      <View style={styles.orderCardInner}>
-        <Pressable
-          accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
-          accessibilityRole="button"
-          onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-          style={({ pressed }) => [styles.cardBody, pressed ? styles.pressed : null]}
-        >
-          {/* Top Meta: Ref, Proximity, and Status */}
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderLeft}>
-              <Text style={styles.cardOrderRef}>{item.reference}</Text>
-              <View style={styles.proximityDot} />
-              <Text style={styles.proximityText}>
-                {item.pickupDistanceLabel || 'Cách bạn 1.2 km'}
-              </Text>
+    <View style={styles.cardContainer}>
+      <Pressable
+        accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
+        accessibilityRole="button"
+        onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+        style={({ pressed }) => [styles.cardPressable, pressed ? styles.pressed : null]}
+      >
+        {/* Row 1: Vehicle Badge + Proximity | Price */}
+        <View style={styles.topRow}>
+          <View style={styles.tagGroup}>
+            <View style={styles.vehicleBadge}>
+              <IconSpeedTruck color="#0B1E42" size={12} />
+              <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
             </View>
-            <StatusBadge domain="order" status={item.status} />
+            <Text style={styles.proximityText}>
+              {item.pickupDistanceLabel || 'Cách 1.2 km'}
+            </Text>
           </View>
-
-          {/* Fare & Route Distance Strip */}
-          <View style={styles.cardFareBanner}>
-            <View style={styles.cardFareLeft}>
-              <Text style={styles.cardFareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
-              <Text style={styles.cardFareAmount}>{item.priceLabel || '285.000 ₫'}</Text>
-            </View>
-            <View style={styles.cardDistanceBadge}>
-              <IconRoute color="#0B1E42" size={13} />
-              <Text style={styles.cardDistanceText}>{distanceEtaText}</Text>
-            </View>
+          <View style={styles.priceWrap}>
+            <Text style={styles.priceAmount}>{item.priceLabel || '285.000 ₫'}</Text>
           </View>
+        </View>
 
-          {/* Route Spine: Point A -> Point B */}
-          <View style={styles.cardRouteBlock}>
-            <View style={styles.cardRouteSpineMini}>
-              <View style={styles.spinePointDotA} />
-              <View style={styles.spineDottedTrackMini} />
-              <View style={styles.spinePointDotB} />
-            </View>
-            <View style={styles.cardRouteAddresses}>
-              <Text numberOfLines={1} style={styles.cardPickupAddr}>
-                {pickupLabel}
-              </Text>
-              <Text numberOfLines={1} style={styles.cardDropoffAddr}>
-                {dropoffLabel}
-              </Text>
-            </View>
+        {/* Row 2: Route Spine (Compact 2-line vertical spine) */}
+        <View style={styles.routeRow}>
+          <View style={styles.spineCol}>
+            <View style={styles.dotPickup} />
+            <View style={styles.spineLine} />
+            <View style={styles.dotDropoff} />
           </View>
+          <View style={styles.addressCol}>
+            <Text numberOfLines={1} style={styles.addressText}>
+              {pickupLabel}
+            </Text>
+            <Text numberOfLines={1} style={styles.addressText}>
+              {dropoffLabel}
+            </Text>
+          </View>
+          <View style={styles.distanceBadge}>
+            <IconRoute color="#64748B" size={11} />
+            <Text style={styles.distanceText}>{distanceEtaText}</Text>
+          </View>
+        </View>
 
-          {/* Public route full label */}
-          <Text numberOfLines={1} style={styles.cardPublicRouteSub}>
-            {item.publicRouteLabel}
+        {/* Row 3: Cargo & Reference snippet */}
+        <View style={styles.metaRow}>
+          <Text numberOfLines={1} style={styles.cargoNameText} testID="nearby-order-cargo-name">
+            {cargoName}
           </Text>
+          {cargoWeight ? (
+            <Text style={styles.cargoWeightText} testID="nearby-order-cargo-weight">
+              · {cargoWeight}
+            </Text>
+          ) : null}
+          {loadingFeeBadge ? (
+            <Text numberOfLines={1} style={styles.loadingText}>
+              · {loadingFeeBadge}
+            </Text>
+          ) : null}
+          <Text style={styles.refDot}>·</Text>
+          <Text style={styles.refText}>{item.reference}</Text>
+        </View>
+      </Pressable>
 
-          {/* Cargo Specifications Bento Tag Grid */}
-          <View style={styles.cargoBentoContainer} testID="nearby-order-cargo-bento">
-            <View style={styles.cargoRow}>
-              <View style={styles.cargoNameBadge} testID="nearby-order-cargo-name">
-                <Text numberOfLines={1} style={styles.cargoNameText}>
-                  {cargoName}
-                </Text>
-              </View>
-              {cargoWeight ? (
-                <View style={styles.cargoWeightBadge} testID="nearby-order-cargo-weight">
-                  <IconScaleWeight color="#0B1E42" size={12} />
-                  <Text style={styles.cargoWeightText}>{cargoWeight}</Text>
-                </View>
-              ) : null}
-            </View>
-
-            <View style={styles.cargoSubRow}>
-              <View style={styles.vehicleTag}>
-                <IconSpeedTruck color="#475569" size={12} />
-                <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
-              </View>
-              {cargoDimensions ? (
-                <View style={styles.specBadge} testID="nearby-order-cargo-dimensions">
-                  <Text style={styles.specBadgeText}>{cargoDimensions}</Text>
-                </View>
-              ) : null}
-              {loadingFeeBadge ? (
-                <View style={styles.loadingBadge} testID="nearby-order-loading-fee">
-                  <Text style={styles.loadingBadgeText}>{loadingFeeBadge}</Text>
-                </View>
-              ) : null}
-            </View>
-          </View>
-
-          {/* Card Footer: ETA and updated timestamp */}
-          <View style={styles.cardFooter}>
-            <View style={styles.priceEtaRow}>
-              <IconClock color="#0B1E42" size={13} />
-              <Text style={styles.priceText}>{item.etaLabel}</Text>
-            </View>
-            {item.updatedAtLabel ? (
-              <Text style={styles.updatedText}>{item.updatedAtLabel}</Text>
-            ) : null}
-          </View>
+      {/* Row 4: Compact Grab-style Action Buttons */}
+      <View style={styles.actionBar}>
+        <Pressable
+          accessibilityLabel="Bỏ qua đơn này"
+          accessibilityRole="button"
+          onPress={onDecline ? () => onDecline(item.id) : undefined}
+          style={({ pressed }) => [styles.declineBtn, pressed ? styles.pressed : null]}
+        >
+          <Text style={styles.declineText}>Bỏ qua</Text>
         </Pressable>
 
-        {/* Action Buttons Row: [ Bỏ qua ] & [ NHẬN ĐƠN ] */}
-        <View style={styles.cardActionRow}>
-          <Pressable
-            accessibilityLabel="Bỏ qua đơn này"
-            accessibilityRole="button"
-            onPress={onDecline ? () => onDecline(item.id) : undefined}
-            style={({ pressed }) => [styles.cardDeclineBtn, pressed ? styles.pressed : null]}
-          >
-            <Text style={styles.cardDeclineText}>Bỏ qua</Text>
-          </Pressable>
-          <Pressable
-            accessibilityLabel={`Nhận đơn ${item.reference}`}
-            accessibilityRole="button"
-            onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-            style={({ pressed }) => [styles.cardAcceptBtn, pressed ? styles.pressed : null]}
-          >
-            <Text style={styles.cardAcceptText}>
-              NHẬN ĐƠN · {item.priceLabel || '285.000 ₫'}
-            </Text>
-          </Pressable>
-        </View>
+        <Pressable
+          accessibilityLabel={`Nhận đơn ${item.reference}`}
+          accessibilityRole="button"
+          onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+          style={({ pressed }) => [styles.acceptBtn, pressed ? styles.pressed : null]}
+        >
+          <Text style={styles.acceptText}>Nhận đơn</Text>
+        </Pressable>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  orderCardOuter: {
+  cardContainer: {
     backgroundColor: '#FFFFFF',
     borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 22,
+    borderRadius: 14,
     ...iosContinuousCurve,
     borderWidth: 1,
-    elevation: 2,
-    marginBottom: 14,
-    padding: 6,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-  },
-  orderCardInner: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#F1F5F9',
-    borderRadius: 18,
-    ...iosContinuousCurve,
-    borderWidth: 1,
+    elevation: 1,
+    marginBottom: 8,
     padding: 12,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
   },
-  cardBody: {
-    borderRadius: 12,
-  },
-  cardHeader: {
+  cardPressable: {},
+  // Row 1: Top metadata + Price
+  topRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  cardHeaderLeft: {
+  tagGroup: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 6,
   },
-  cardOrderRef: {
-    color: '#0B1E42',
-    fontSize: 14,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  proximityDot: {
-    backgroundColor: '#CBD5E1',
-    borderRadius: 3,
-    height: 4,
-    width: 4,
-  },
-  proximityText: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  // Fare Banner
-  cardFareBanner: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  cardFareLeft: {
-    flex: 1,
-  },
-  cardFareCaption: {
-    color: '#64748B',
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  cardFareAmount: {
-    color: '#0B1E42',
-    fontSize: 17,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-    marginTop: 1,
-  },
-  cardDistanceBadge: {
+  vehicleBadge: {
     alignItems: 'center',
     backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: 6,
+    ...iosContinuousCurve,
     flexDirection: 'row',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
   },
-  cardDistanceText: {
+  vehicleTagText: {
     color: '#0B1E42',
     fontSize: 11.5,
     fontWeight: '700',
   },
+  proximityText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  priceWrap: {
+    alignItems: 'flex-end',
+  },
+  priceAmount: {
+    color: '#0B1E42',
+    fontSize: 18,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.2,
+  },
 
-  // Route Block
-  cardRouteBlock: {
-    flexDirection: 'row',
-    marginBottom: 6,
-  },
-  cardRouteSpineMini: {
+  // Row 2: Route Spine
+  routeRow: {
     alignItems: 'center',
-    marginRight: 8,
-    paddingVertical: 3,
-    width: 14,
+    flexDirection: 'row',
+    marginBottom: 8,
   },
-  spinePointDotA: {
-    backgroundColor: '#0B1E42',
-    borderRadius: 5,
-    height: 8,
+  spineCol: {
+    alignItems: 'center',
+    height: 32,
+    justifyContent: 'space-between',
+    marginRight: 8,
+    paddingVertical: 2,
     width: 8,
   },
-  spineDottedTrackMini: {
+  dotPickup: {
+    backgroundColor: '#0B1E42',
+    borderRadius: 3,
+    height: 6,
+    width: 6,
+  },
+  spineLine: {
     backgroundColor: '#CBD5E1',
     flex: 1,
     marginVertical: 2,
     width: 1.5,
   },
-  spinePointDotB: {
-    backgroundColor: '#F97316',
-    borderRadius: 5,
-    height: 8,
-    width: 8,
+  dotDropoff: {
+    backgroundColor: '#EA580C',
+    borderRadius: 3,
+    height: 6,
+    width: 6,
   },
-  cardRouteAddresses: {
+  addressCol: {
     flex: 1,
-    gap: 4,
+    gap: 3,
+    justifyContent: 'center',
   },
-  cardPickupAddr: {
+  addressText: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '600',
   },
-  cardDropoffAddr: {
-    color: '#0F172A',
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-  cardPublicRouteSub: {
-    color: '#64748B',
-    fontSize: 11,
-    marginBottom: 8,
-  },
-
-  // Cargo Bento Grid
-  cargoBentoContainer: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 6,
-    marginBottom: 8,
-    padding: 8,
-  },
-  cargoRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  cargoNameBadge: {
-    backgroundColor: 'rgba(11, 30, 66, 0.04)',
-    borderRadius: 8,
-    flex: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  cargoNameText: {
-    color: '#0B1E42',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  cargoWeightBadge: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(249, 115, 22, 0.1)',
-    borderRadius: 8,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  cargoWeightText: {
-    color: '#C2410C',
-    fontSize: 11.5,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  cargoSubRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  specBadge: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  specBadgeText: {
-    color: '#475569',
-    fontSize: 11,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-  },
-  loadingBadge: {
-    backgroundColor: 'rgba(22, 163, 74, 0.1)',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  loadingBadgeText: {
-    color: '#15803D',
-    fontSize: 11,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  vehicleTag: {
+  distanceBadge: {
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
     borderColor: '#E2E8F0',
     borderRadius: 6,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
+    marginLeft: 8,
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 3,
   },
-  vehicleTagText: {
+  distanceText: {
     color: '#475569',
     fontSize: 11,
     fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
 
-  // Footer
-  cardFooter: {
-    alignItems: 'center',
-    borderTopColor: '#E2E8F0',
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-  },
-  priceEtaRow: {
+  // Row 3: Metadata snippet
+  metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 4,
+    marginBottom: 10,
+    paddingHorizontal: 2,
   },
-  priceText: {
-    color: '#0B1E42',
+  cargoNameText: {
+    color: '#64748B',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
   },
-  updatedText: {
+  cargoWeightText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  loadingText: {
+    color: '#D97706',
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  refDot: {
+    color: '#CBD5E1',
+    fontSize: 12,
+  },
+  refText: {
     color: '#94A3B8',
     fontSize: 11,
+    fontVariant: ['tabular-nums'],
   },
 
-  // Action Buttons
-  cardActionRow: {
+  // Row 4: Compact Actions
+  actionBar: {
+    alignItems: 'center',
+    borderTopColor: '#F1F5F9',
+    borderTopWidth: 1,
     flexDirection: 'row',
     gap: 8,
-    marginTop: 10,
+    paddingTop: 8,
   },
-  cardDeclineBtn: {
+  declineBtn: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    borderWidth: 1,
-    height: 44,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
+    ...iosContinuousCurve,
+    height: 36,
     justifyContent: 'center',
-    minWidth: 76,
     paddingHorizontal: 12,
   },
-  cardDeclineText: {
+  declineText: {
     color: '#64748B',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  cardAcceptBtn: {
+  acceptBtn: {
     alignItems: 'center',
     backgroundColor: '#0B1E42',
-    borderRadius: 12,
+    borderRadius: 8,
+    ...iosContinuousCurve,
     flex: 1,
-    height: 44,
+    height: 36,
     justifyContent: 'center',
-    paddingHorizontal: 12,
     shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  cardAcceptText: {
+  acceptText: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.2,
+    fontSize: 14,
+    fontWeight: '700',
   },
   pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.985 }],
+    opacity: 0.8,
   },
 });

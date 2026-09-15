@@ -23,6 +23,7 @@ import {
   ScreenScaffold,
   sessionStore,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 import { openDriverContractPdf } from './contract-pdf';
 
@@ -369,13 +370,13 @@ const styles = StyleSheet.create({
   },
   contractCodeLabel: {
     color: '#64748B',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   contractCodeValue: {
     color: '#0B1E42',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '900',
     letterSpacing: 0.5,
     fontVariant: ['tabular-nums'],
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
   },
   statusPillText: {
     color: '#15803D',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
   },
   overviewDivider: {
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     color: '#64748B',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     lineHeight: 14,
   },
   termBox: {
@@ -478,19 +479,19 @@ const styles = StyleSheet.create({
   },
   ratePillText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '900',
     fontVariant: ['tabular-nums'],
   },
   termNumber: {
     color: '#64748B',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   termNumberHighlight: {
     color: '#15803D',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
   },
   termContent: {
     color: '#334155',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     lineHeight: 17,
   },
   boldText: {
@@ -529,7 +530,7 @@ const styles = StyleSheet.create({
   },
   downloadPdfText: {
     color: '#1D4ED8',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '800',
   },
   downloadSuccessNotice: {
@@ -577,7 +578,7 @@ const styles = StyleSheet.create({
   },
   badgeSuccessText: {
     color: '#059669',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
   },
   badgeRequired: {
@@ -590,7 +591,7 @@ const styles = StyleSheet.create({
   },
   badgeRequiredText: {
     color: '#D97706',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
   },
   signerIdentityBox: {
@@ -606,12 +607,12 @@ const styles = StyleSheet.create({
   },
   signerIdentityLabel: {
     color: '#64748B',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
   },
   signerIdentityName: {
     color: '#0B1E42',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
   },
   signaturePadArea: {
@@ -643,7 +644,7 @@ const styles = StyleSheet.create({
   },
   signaturePromptDesc: {
     color: '#64748B',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     textAlign: 'center',
   },
   signatureContentPreview: {
@@ -678,7 +679,7 @@ const styles = StyleSheet.create({
   },
   signatureMetaText: {
     color: '#059669',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   signatureActionsRow: {
@@ -700,12 +701,12 @@ const styles = StyleSheet.create({
   },
   clearSignBtnText: {
     color: '#DC2626',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   signatureSecurityNotice: {
     color: '#94A3B8',
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     flex: 1,
     textAlign: 'right',
     marginLeft: 8,

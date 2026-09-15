@@ -1,6 +1,7 @@
 // apps/driver/src/features/earnings/DriverEarningsScreen.test.tsx
-import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render } from '@testing-library/react-native';
+import { describe, expect, it } from '@jest/globals';
+import { render } from '@testing-library/react-native';
+import { jest } from '@jest/globals';
 
 import { DriverEarningsScreen, type DriverEarningsScreenProps } from './DriverEarningsScreen';
 
@@ -25,7 +26,7 @@ describe('DriverEarningsScreen', () => {
     expect(screen.getAllByText('Thu nhập').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId('driver-bottom-navigation')).toBeTruthy();
     expect(screen.getByText(/18.450.000/)).toBeTruthy();
-    expect(screen.getByText('128')).toBeTruthy();
+    expect(screen.getByText('128 cuốc xe')).toBeTruthy();
     expect(screen.queryByText(/Chiết khấu nền tảng/)).toBeNull();
     expect(screen.queryByText(/Rút tiền 24\/7/)).toBeNull();
 
@@ -38,47 +39,31 @@ describe('DriverEarningsScreen', () => {
     await screen.unmount();
   });
 
-  it('marks the not-yet-built KPIs as "Sắp ra mắt" instead of a fabricated number', async () => {
+  it('shows 0đ on the today/week/month cards instead of a fabricated per-period number', async () => {
+    // The API only reports a lifetime total — no real per-period breakdown yet.
     const screen = await render(<DriverEarningsScreen {...baseProps} />);
-    expect(screen.getAllByText('Sắp ra mắt').length).toBeGreaterThanOrEqual(2); // hours online + rating (OTD folded into completion rate)
-    expect(screen.queryByText('99.4%')).toBeNull();
-    expect(screen.queryByText('5.0')).toBeNull();
+    expect(screen.getByTestId('kpi-period-today')).toBeTruthy();
+    expect(screen.getByTestId('kpi-period-week')).toBeTruthy();
+    expect(screen.getByTestId('kpi-period-month')).toBeTruthy();
+    expect(screen.getAllByText('0 ₫').length).toBe(3);
     await screen.unmount();
   });
 
-  it('renders 3 bento KPI cards: net payout, completed trips, and online hours', async () => {
+  it('renders the real-totals rows: lifetime earnings, completed trips, available balance', async () => {
     const screen = await render(<DriverEarningsScreen {...baseProps} />);
     expect(screen.getByTestId('kpi-net-payout')).toBeTruthy();
     expect(screen.getByTestId('kpi-completed-trips')).toBeTruthy();
-    expect(screen.getByTestId('kpi-online-hours')).toBeTruthy();
-    expect(screen.getByText('Tổng thu nhập thực nhận')).toBeTruthy();
-    expect(screen.getByText('Số chuyến hoàn thành')).toBeTruthy();
-    expect(screen.getByText('Số giờ trực tuyến')).toBeTruthy();
+    expect(screen.getByText('Tổng thu nhập (trọn đời)')).toBeTruthy();
+    expect(screen.getByText('Cuốc xe đã hoàn tất')).toBeTruthy();
+    expect(screen.getByText('Số dư khả dụng để rút')).toBeTruthy();
     await screen.unmount();
   });
 
-  it('renders date range filter tabs (Hôm nay / Tuần này / Tháng này) and allows switching', async () => {
+  it('renders a horizontal carousel of period cards (Hôm nay / Tuần này / Tháng này)', async () => {
     const screen = await render(<DriverEarningsScreen {...baseProps} />);
-    const todayBtn = screen.getByRole('button', { name: 'Hôm nay' });
-    const weekBtn = screen.getByRole('button', { name: 'Tuần này' });
-    const monthBtn = screen.getByRole('button', { name: 'Tháng này' });
-
-    expect(todayBtn).toBeTruthy();
-    expect(weekBtn).toBeTruthy();
-    expect(monthBtn).toBeTruthy();
-
-    await fireEvent.press(weekBtn);
-    expect(weekBtn).toBeTruthy();
-    await fireEvent.press(monthBtn);
-    expect(monthBtn).toBeTruthy();
-
-    await screen.unmount();
-  });
-
-  it('renders daily income breakdown section', async () => {
-    const screen = await render(<DriverEarningsScreen {...baseProps} />);
-    expect(screen.getByTestId('daily-income-breakdown')).toBeTruthy();
-    expect(screen.getByText('Chi tiết thu nhập theo ngày')).toBeTruthy();
+    expect(screen.getByText('Thu nhập hôm nay')).toBeTruthy();
+    expect(screen.getByText('Thu nhập tuần này')).toBeTruthy();
+    expect(screen.getByText('Thu nhập tháng này')).toBeTruthy();
     await screen.unmount();
   });
 });

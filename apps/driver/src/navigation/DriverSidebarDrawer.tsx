@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconChevronRight, IconClock, IconClose, IconEarnings, IconOrders, IconSecurityShield, IconSettings, IconSpeedTruck, IconStar, IconSupport247, IconUser, StatusBadge } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typeScale, typography, Button, IconChevronRight, IconClock, IconClose, IconOrders, IconSecurityShield, IconSettings, IconSpeedTruck, IconStar, IconSupport247, IconUser, IconWallet, StatusBadge } from '@leopard/mobile-core';
 import type { DriverAvailabilityView } from '../features/orders/model';
 
 export type DriverSidebarDrawerProps = Readonly<{
@@ -36,7 +36,7 @@ const MENU_ITEMS = [
     label: 'Doanh thu & Ví',
     description: 'Thực nhận, thưởng & quyết toán',
     icon: (active: boolean) => (
-      <IconEarnings color={active ? '#38BDF8' : '#94A3B8'} size={20} />
+      <IconWallet color={active ? '#38BDF8' : '#94A3B8'} size={20} />
     ),
   },
   {
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
   tierText: {
     color: '#FBBF24',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   vehicleStrip: {
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   vehiclePlate: {
     color: '#F8FAFC',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   vehicleDivider: {
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   },
   availabilitySectionSub: {
     color: '#94A3B8',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     marginTop: 1,
   },
   errorBanner: {
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     color: '#64748B',
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   },
   menuHeading: {
     color: '#64748B',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.8,
     marginBottom: 4,
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   },
   menuItemLabel: {
     color: '#CBD5E1',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   menuItemLabelActive: {
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   },
   menuItemDesc: {
     color: '#64748B',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
   },
 
   /* Footer */
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   },
   supportTitle: {
     color: '#CBD5E1',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   supportHotline: {
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   },
   versionText: {
     color: '#475569',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     textAlign: 'center',
   },
 });

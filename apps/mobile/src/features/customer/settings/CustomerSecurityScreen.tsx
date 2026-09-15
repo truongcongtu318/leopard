@@ -23,6 +23,7 @@ import {
   IconChevron,
   IconSecurityShield,
   IconShield,
+  typeScale,
 } from '@leopard/mobile-core';
 import { getDefaultHttpClient } from '../orders/adapter';
 
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
   },
   cardSubtext: {
     color: colors.neutral.subtleText,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 18,
     marginTop: 2,
   },
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     color: colors.neutral.titleText,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   pinInput: {
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   alertError: {
@@ -331,7 +332,7 @@ const styles = StyleSheet.create({
   alertErrorText: {
     color: '#DC2626',
     flex: 1,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
   },
   alertSuccess: {
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
   alertSuccessText: {
     color: '#059669',
     flex: 1,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   /* Biometrics */
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
   },
   switchTitle: {
     color: colors.neutral.titleText,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
   },
   switchSubtext: {
@@ -395,7 +396,7 @@ const styles = StyleSheet.create({
   },
   dangerHeading: {
     color: '#B91C1C',
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   dangerLegalNotice: {
@@ -422,7 +423,7 @@ const styles = StyleSheet.create({
   },
   deleteAccountButtonText: {
     color: '#FFFFFF',
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   /* Confirmation Modal */
@@ -489,7 +490,7 @@ const styles = StyleSheet.create({
   },
   modalCancelButtonText: {
     color: '#334155',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
   },
   modalConfirmButton: {

@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Role } from '@leopard/shared';
-import { sessionStore, IconAlertTriangle } from '@leopard/mobile-core';
+import { typeScale, sessionStore, IconAlertTriangle } from '@leopard/mobile-core';
 import { resolveDriverLogin } from '../../src/navigation/driver-session';
 import { DriverLoginScreen } from '../../src/auth/DriverLoginScreen';
 
@@ -108,13 +108,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     color: '#0B1F3A',
     textAlign: 'center',
   },
   description: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
     color: '#5B6B80',
     textAlign: 'center',
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: '#5B6B80',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
   },
   pressed: {

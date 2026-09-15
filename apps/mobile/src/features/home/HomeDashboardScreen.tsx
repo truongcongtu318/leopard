@@ -40,6 +40,7 @@ import {
   sessionStore,
   type TabKey,
   type VehicleCategory,
+  typeScale,
 } from '@leopard/mobile-core';
 
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
@@ -1147,7 +1148,7 @@ const styles = StyleSheet.create({
   roleSwitchText: { fontSize: 12, fontWeight: '700', color: '#0B1E42' },
   iconBtn: { width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 22, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', position: 'relative' },
   badgePill: { position: 'absolute', top: -2, right: -2, backgroundColor: '#EF4444', minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  badgePillText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800' },
+  badgePillText: { color: '#FFFFFF', fontSize: typeScale.caption2.fontSize, fontWeight: '800' },
 
   /* Layer 2: Gesture Bottom Sheet & Scroll Content */
   layer2BottomSheet: { zIndex: 40 },
@@ -1174,7 +1175,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0F2FE', borderWidth: 1.5, borderColor: '#0284C7',
     alignItems: 'center', justifyContent: 'center',
   },
-  stopPinText: { fontSize: 9, fontWeight: '700', color: '#0284C7', lineHeight: 11 },
+  stopPinText: { fontSize: typeScale.caption2.fontSize, fontWeight: '700', color: '#0284C7', lineHeight: 11 },
   addStopBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     paddingVertical: 8, paddingHorizontal: 12, marginTop: 8,
@@ -1192,11 +1193,11 @@ const styles = StyleSheet.create({
   routeInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
   inputInnerWrap: { flex: 1 },
   locationHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
-  inputMicroLabel: { fontSize: 9, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
+  inputMicroLabel: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
   pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
-  pickupLabelBadgeText: { fontSize: 10, fontWeight: '700', color: '#166534' },
+  pickupLabelBadgeText: { fontSize: typeScale.caption2.fontSize, fontWeight: '700', color: '#166534' },
   locationNoticeText: { fontSize: 11, lineHeight: 16, color: '#92400E', marginTop: 4 },
-  locationTextInput: { fontSize: 14, fontWeight: '600', color: '#0F172A', padding: 0, minHeight: 22 },
+  locationTextInput: { fontSize: typeScale.subheadline.fontSize, fontWeight: '600', color: '#0F172A', padding: 0, minHeight: 22 },
   inputDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 4 },
   inputActionBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
 
@@ -1254,7 +1255,7 @@ const styles = StyleSheet.create({
   vehicleNameSelected: { color: '#0B1E42' },
   vehicleBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   vehicleBadgeSelected: { backgroundColor: '#0B1E42' },
-  vehicleBadgeText: { fontSize: 10, fontWeight: '800', color: '#64748B' },
+  vehicleBadgeText: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: '#64748B' },
   vehicleBadgeTextSelected: { color: '#FFFFFF' },
   vehicleSpecRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 4 },
   dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
@@ -1272,27 +1273,27 @@ const styles = StyleSheet.create({
   fareCtaCard: { backgroundColor: '#F8FAFC', borderRadius: 16, ...iosContinuousCurve, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E8F0' },
   fareInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   fareLeftCol: { flex: 1 },
-  fareLabel: { fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
+  fareLabel: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
   fareVehicleTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  fareVehicleName: { fontSize: 14, fontWeight: '800', color: '#0F172A' },
+  fareVehicleName: { fontSize: typeScale.subheadline.fontSize, fontWeight: '800', color: '#0F172A' },
   fareDimensionChip: { backgroundColor: '#E2E8F0', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 },
-  fareDimensionChipText: { fontSize: 10, fontWeight: '600', color: '#334155' },
+  fareDimensionChipText: { fontSize: typeScale.caption2.fontSize, fontWeight: '600', color: '#334155' },
   fareRightCol: { alignItems: 'flex-end' },
   fareAmount: { fontSize: 16, fontWeight: '800', color: '#0B1E42', fontVariant: ['tabular-nums'] },
-  fareNote: { fontSize: 10, color: '#64748B' },
+  fareNote: { fontSize: typeScale.caption2.fontSize, color: '#64748B' },
   bigCtaBtn: {
     minHeight: 44, height: 46, borderRadius: 14, ...iosContinuousCurve, backgroundColor: '#0B1E42',
     alignItems: 'center', justifyContent: 'center', shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3,
   },
   bigCtaBtnPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
-  bigCtaBtnText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4, fontVariant: ['tabular-nums'] },
+  bigCtaBtnText: { fontSize: typeScale.subheadline.fontSize, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4, fontVariant: ['tabular-nums'] },
 
   /* Section Containers */
   section: { marginBottom: 10 },
   sectionTitleWithBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   liveIndicatorDotActive: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' },
   liveTagBadge: { backgroundColor: '#ECFDF5', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  liveTagText: { fontSize: 10, fontWeight: '800', color: '#059669' },
+  liveTagText: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: '#059669' },
 
   /* Active Shipment Card */
   activeCard: {

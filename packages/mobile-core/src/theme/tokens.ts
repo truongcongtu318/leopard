@@ -6,25 +6,75 @@ export const systemFontFamily = Platform.select({
   default: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif',
 });
 
+/**
+ * San Francisco carries optical tracking in its `trak` table and the iOS text
+ * system applies it per point size. Setting our own `letterSpacing` on top
+ * would replace Apple's value with one derived from a table whose unit we
+ * cannot verify in this environment, so iOS omits it and lets the platform
+ * decide. Roboto and the web stacks have no optical tracking, so they do
+ * receive the HIG value.
+ */
+export const platformAppliesOpticalTracking = Platform.OS === 'ios';
+
+/**
+ * Apple publishes tracking in 1/1000 em. React Native expresses
+ * `letterSpacing` in points, so the value is derived here instead of guessed.
+ */
+export const trackingToLetterSpacing = (trackingPerMille: number, fontSize: number): number => {
+  const points = Math.round((trackingPerMille / 1000) * fontSize * 100) / 100;
+  // Collapse IEEE-754 negative zero so tokens compare cleanly.
+  return points === 0 ? 0 : points;
+};
+
+/**
+ * HIG tracking for a text style, or `undefined` where the platform already
+ * applies its own optical tracking.
+ */
+export const opticalLetterSpacing = (
+  trackingPerMille: number,
+  fontSize: number,
+): number | undefined =>
+  platformAppliesOpticalTracking ? undefined : trackingToLetterSpacing(trackingPerMille, fontSize);
+
+/**
+ * Uppercase micro-labels are the one place manual tracking stays correct:
+ * optical tracking is size-based, not case-based, and uppercase letterforms
+ * need looser spacing to stay legible.
+ */
+export const letterSpacing = {
+  uppercaseLabel: 0.5,
+} as const;
+
 export const spacing = {
+  none: 0,
+  /** Tight icon-to-label gaps only; see `spacingScale`. */
+  hairline: 2,
   xxs: 4,
   xs: 8,
   sm: 12,
   md: 16,
   lg: 24,
   xl: 32,
+  xxl: 40,
+  xxxl: 48,
 } as const;
 
+/**
+ * Real iOS inset-grouped cards/rows sit around 10–14pt, not 20–28pt — Apple
+ * favors restrained, continuous curvature over "bubble" corners. Pill and
+ * tab-bar shapes stay fully round (that IS the native look for those), and
+ * `modal` stays larger since sheet-top corners are genuinely bigger in HIG.
+ */
 export const radius = {
   control: 12,
-  card: 20,
-  cardSm: 14,
-  cardLg: 24,
-  cardXl: 28,
-  bezelOuter: 24,
-  bezelInner: 18,
+  card: 14,
+  cardSm: 10,
+  cardLg: 16,
+  cardXl: 20,
+  bezelOuter: 18,
+  bezelInner: 14,
   tabBar: 9999,
-  modal: 26,
+  modal: 24,
   pill: 9999,
 } as const;
 
@@ -72,6 +122,7 @@ export const layout = {
 } as const;
 
 const sectionTitle = {
+  fontFamily: systemFontFamily,
   fontSize: 20,
   fontWeight: '600' as const,
   lineHeight: 28,
@@ -83,30 +134,31 @@ export const typography = {
     fontSize: 34,
     fontWeight: '800' as const,
     lineHeight: 41,
-    letterSpacing: -0.8,
+    letterSpacing: opticalLetterSpacing(0.4, 34),
   },
   title1: {
     fontFamily: systemFontFamily,
     fontSize: 28,
     fontWeight: '700' as const,
     lineHeight: 34,
-    letterSpacing: -0.5,
+    letterSpacing: opticalLetterSpacing(0.38, 28),
   },
   title2: {
     fontFamily: systemFontFamily,
     fontSize: 22,
     fontWeight: '700' as const,
     lineHeight: 28,
-    letterSpacing: -0.3,
+    letterSpacing: opticalLetterSpacing(0.34, 22),
   },
   headline: {
     fontFamily: systemFontFamily,
     fontSize: 17,
     fontWeight: '600' as const,
     lineHeight: 22,
-    letterSpacing: -0.4,
+    letterSpacing: opticalLetterSpacing(-0.41, 17),
   },
   body: {
+    fontFamily: systemFontFamily,
     fontSize: 16,
     lineHeight: 22,
   },
@@ -114,7 +166,7 @@ export const typography = {
     fontFamily: systemFontFamily,
     fontSize: 15,
     lineHeight: 20,
-    letterSpacing: -0.2,
+    letterSpacing: opticalLetterSpacing(-0.24, 15),
   },
   subheadline: {
     fontFamily: systemFontFamily,
@@ -123,20 +175,24 @@ export const typography = {
     lineHeight: 18,
   },
   caption: {
+    fontFamily: systemFontFamily,
     fontSize: 12,
     lineHeight: 16,
   },
   label: {
+    fontFamily: systemFontFamily,
     fontSize: 14,
     fontWeight: '600' as const,
     lineHeight: 20,
   },
   bodyCompact: {
+    fontFamily: systemFontFamily,
     fontSize: 14,
     lineHeight: 20,
   },
   sectionTitle,
   pageTitle: {
+    fontFamily: systemFontFamily,
     fontSize: 24,
     fontWeight: '700' as const,
     lineHeight: 32,
@@ -147,6 +203,213 @@ export const typography = {
   // Compatibility alias for existing primitives; new code should name the hierarchy.
   title: sectionTitle,
 } as const;
+
+/* ------------------------------------------------------------------------- *
+ * Apple Human Interface Guidelines — iOS 18 layout & type contract
+ *
+ * Reference: https://developer.apple.com/design/human-interface-guidelines/typography
+ *            https://developer.apple.com/design/human-interface-guidelines/layout
+ *            https://developer.apple.com/design/human-interface-guidelines/accessibility
+ *
+ * `typeScale` below is the canonical text contract for LEOPARD mobile.
+ * `typography` above is the legacy token set: it stays for backward
+ * compatibility and is migrated to `typeScale` + `AppText` incrementally.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * HIG text styles at the default (Large) Dynamic Type size.
+ *
+ * `fontSize`, `lineHeight` and `tracking` are Apple's published values and are
+ * pinned by `hig-contract.test.ts`. HIG also publishes a weight per style —
+ * Regular for every title, Semibold only for Headline. LEOPARD raises the four
+ * title styles because an operational cockpit needs a stronger hierarchy and
+ * iOS system navigation already renders large titles bold. This is the one
+ * deliberate deviation from the HIG table, and it is emphasis, not metrics.
+ */
+const higStyles = {
+  largeTitle: { fontSize: 34, lineHeight: 41, fontWeight: '700', tracking: 0.4 },
+  title1: { fontSize: 28, lineHeight: 34, fontWeight: '700', tracking: 0.38 },
+  title2: { fontSize: 22, lineHeight: 28, fontWeight: '600', tracking: 0.34 },
+  title3: { fontSize: 20, lineHeight: 25, fontWeight: '600', tracking: 0.38 },
+  headline: { fontSize: 17, lineHeight: 22, fontWeight: '600', tracking: -0.41 },
+  body: { fontSize: 17, lineHeight: 22, fontWeight: '400', tracking: -0.41 },
+  callout: { fontSize: 16, lineHeight: 21, fontWeight: '400', tracking: -0.32 },
+  subheadline: { fontSize: 15, lineHeight: 20, fontWeight: '400', tracking: -0.24 },
+  footnote: { fontSize: 13, lineHeight: 18, fontWeight: '400', tracking: -0.08 },
+  caption1: { fontSize: 12, lineHeight: 16, fontWeight: '400', tracking: 0 },
+  caption2: { fontSize: 11, lineHeight: 13, fontWeight: '400', tracking: 0.07 },
+} as const;
+
+export type HigTextStyleName = keyof typeof higStyles;
+
+const buildHigStyle = ({ fontSize, lineHeight, fontWeight, tracking }: {
+  fontSize: number;
+  lineHeight: number;
+  fontWeight: string;
+  tracking: number;
+}) => ({
+  fontFamily: systemFontFamily,
+  fontSize,
+  lineHeight,
+  fontWeight: fontWeight as '400' | '600' | '700',
+  letterSpacing: opticalLetterSpacing(tracking, fontSize),
+});
+
+/**
+ * Canonical HIG text styles, ready to spread into a React Native `Text` style.
+ * Prefer `<AppText variant="body" />` so Dynamic Type and the font family are
+ * applied together.
+ */
+export const typeScale = {
+  largeTitle: buildHigStyle(higStyles.largeTitle),
+  title1: buildHigStyle(higStyles.title1),
+  title2: buildHigStyle(higStyles.title2),
+  title3: buildHigStyle(higStyles.title3),
+  headline: buildHigStyle(higStyles.headline),
+  body: buildHigStyle(higStyles.body),
+  callout: buildHigStyle(higStyles.callout),
+  subheadline: buildHigStyle(higStyles.subheadline),
+  footnote: buildHigStyle(higStyles.footnote),
+  caption1: buildHigStyle(higStyles.caption1),
+  caption2: buildHigStyle(higStyles.caption2),
+} as const;
+
+export type TypeScaleName = keyof typeof typeScale;
+
+/** The lexical names Driver screens already use in docs/ui/08. */
+export const typeScaleAliases = {
+  caption: 'caption1',
+  label: 'subheadline',
+  body: 'body',
+  sectionTitle: 'title3',
+  pageTitle: 'title2',
+} as const satisfies Record<string, TypeScaleName>;
+
+export type TypeScaleAliasName = keyof typeof typeScaleAliases;
+
+/** Every text style name `AppText` accepts. */
+export type TextVariant = TypeScaleName | TypeScaleAliasName;
+
+export const resolveTextVariant = (variant: TextVariant) =>
+  typeScale[(typeScaleAliases as Record<string, TypeScaleName>)[variant] ?? (variant as TypeScaleName)];
+
+/**
+ * The HIG text style name behind a variant, which is exactly the value React
+ * Native's iOS `dynamicTypeRamp` prop expects.
+ *
+ * Source: `Libraries/Text/TextProps.js` in React Native 0.86 — `dynamicTypeRamp`
+ * accepts caption2…largeTitle. Native then derives the scale factor from
+ * `UIFontMetrics(forTextStyle:).scaledValueForValue(...)`, so iOS applies
+ * Apple's real per-style Dynamic Type curve instead of a single linear
+ * `fontScale` multiplier.
+ */
+export const resolveHigTextStyleName = (variant: TextVariant): HigTextStyleName =>
+  ((typeScaleAliases as Record<string, HigTextStyleName>)[variant] ??
+    (variant as HigTextStyleName));
+
+/** Every ramp React Native accepts on iOS, ascending. */
+export const higTextStyleOrder = [
+  'caption2',
+  'caption1',
+  'footnote',
+  'subheadline',
+  'callout',
+  'body',
+  'headline',
+  'title3',
+  'title2',
+  'title1',
+  'largeTitle',
+] as const satisfies readonly HigTextStyleName[];
+
+/**
+ * Dynamic Type contract.
+ *
+ * Apple's philosophy is that text scales with the reader's preferred size and
+ * the layout reflows around it. Dynamic Type therefore carries content past the
+ * WCAG 1.4.4 bar — Body reaches 53pt at AX5 — so content is deliberately **not**
+ * capped. Only fixed-geometry chrome may cap, and only because it has no room
+ * to reflow.
+ *
+ * Never cap content to make a layout fit. Let it wrap, scroll or grow.
+ */
+export const dynamicType = {
+  /** WCAG 1.4.4 floor content must survive: resize text to 200% without loss. */
+  wcagMinimumScale: 2,
+  /** Fixed-geometry chrome only (tab bar, dock, badge). Never content. */
+  chromeMaxScale: 1.6,
+  /** HIG Caption 2 is the smallest sanctioned size; nothing readable may be smaller. */
+  minimumReadableSize: 11,
+} as const;
+
+/**
+ * Layout rhythm. Apple lays out on a 4pt grid; `hairline` (2) exists only for
+ * tight icon-to-label gaps. Any other value is drift — see `spacingScale`.
+ */
+export const spacingScale = [0, 2, 4, 8, 12, 16, 24, 32, 40, 48] as const;
+
+export const isOnSpacingScale = (value: number): boolean =>
+  (spacingScale as readonly number[]).includes(value);
+
+/**
+ * Icon sizing. HIG expects icons to align with the text they sit beside, so
+ * each step pairs with a text style instead of being an arbitrary point value:
+ *
+ *   xs 12 ↔ caption1 · sm 16 ↔ callout · md 20 ↔ body · lg 24 ↔ title3
+ *   xl 28 ↔ title2    · xxl 32 ↔ title1  · display 56 ↔ empty/hero state
+ */
+export const iconSize = {
+  xs: 12,
+  sm: 16,
+  md: 20,
+  lg: 24,
+  xl: 28,
+  xxl: 32,
+  display: 56,
+} as const;
+
+export type IconSizeToken = keyof typeof iconSize;
+
+export const iconStroke = {
+  /** Decorative or dense inline icons. */
+  regular: 1.5,
+  /** Default interface weight; matches SF Symbols Regular. */
+  medium: 1.75,
+  /** Emphasis, selected state and standalone actionable icons. */
+  bold: 2,
+} as const;
+
+export type IconStrokeToken = keyof typeof iconStroke;
+
+export const iconDefaults = {
+  size: 'lg',
+  stroke: 'medium',
+} as const satisfies { size: IconSizeToken; stroke: IconStrokeToken };
+
+/**
+ * Single resolver shared by every icon module, so a token like `size="sm"`
+ * always resolves to the same number regardless of which set an icon lives in.
+ */
+export const resolveIconSize = (size?: number | IconSizeToken): number => {
+  if (typeof size === 'number') return size;
+  if (size && size in iconSize) return iconSize[size];
+  return iconSize[iconDefaults.size];
+};
+
+export const resolveIconStroke = (stroke?: number | IconStrokeToken): number => {
+  if (typeof stroke === 'number') return stroke;
+  if (stroke && stroke in iconStroke) return iconStroke[stroke];
+  return iconStroke[iconDefaults.stroke];
+};
+
+/**
+ * HIG requires a >=44x44pt target on iOS (48dp on Android) even when the glyph
+ * is smaller. Spread this into `hitSlop` for icon-only controls.
+ */
+export const hitSlop = (visualSize: number, minimum: number = 44) => {
+  const inset = Math.max(0, Math.ceil((minimum - visualSize) / 2));
+  return { top: inset, bottom: inset, left: inset, right: inset };
+};
 
 export const colors = {
   neutral: {

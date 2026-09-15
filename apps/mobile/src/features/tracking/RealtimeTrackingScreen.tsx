@@ -24,6 +24,7 @@ import {
   IconSpeedTruck,
   IconStar,
   RealInteractiveMap,
+  typeScale,
 } from '@leopard/mobile-core';
 import { VietQRPaymentModal } from '../customer/orders/components/VietQRPaymentModal';
 
@@ -804,7 +805,7 @@ const styles = StyleSheet.create({
   },
   driverPhoneMasked: {
     color: '#0284C7',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
     backgroundColor: '#F0F9FF',
     paddingHorizontal: 6,
@@ -901,7 +902,7 @@ const styles = StyleSheet.create({
   },
   etaBadgeText: {
     color: '#0B1E42',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
@@ -929,19 +930,19 @@ const styles = StyleSheet.create({
   },
   progressStatSub: {
     color: '#94A3B8',
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.4,
   },
   progressLabelLeft: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   progressLabelRight: {
     color: '#0B1E42',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
@@ -977,7 +978,7 @@ const styles = StyleSheet.create({
   },
   routeCompactText: {
     color: '#334155',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
     flex: 1,
   },
@@ -1007,7 +1008,7 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     flexShrink: 1,
     textAlign: 'right',
@@ -1029,7 +1030,7 @@ const styles = StyleSheet.create({
   },
   pricingValue: {
     color: '#0B1E42',
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -1114,7 +1115,7 @@ const styles = StyleSheet.create({
   },
   invoicePdfIconText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '900',
   },
   invoiceDownloadTextWrap: {

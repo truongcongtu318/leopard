@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { iosContinuousCurve, IconRadarPulse } from '@leopard/mobile-core';
+import { colors, IconRadarPulse, spacing } from '@leopard/mobile-core';
 
 export type DriverOrderFiltersProps = Readonly<{
   /** How many compatible orders the radar is currently offering. */
@@ -15,11 +15,10 @@ export type DriverOrderFiltersProps = Readonly<{
 }>;
 
 /**
- * One compact load-board header.
+ * Apple HIG Inset Grouped Section Header for the load board.
  *
- * Deliberately a single row: the previous version stacked a radar scan strip and
- * a section header that both repeated the same order count, plus a settings
- * button that duplicated the map control stack.
+ * Sits cleanly directly on the canvas without an unnecessary heavy card enclosure.
+ * Features an active radar pulse pill and clear scannable counter.
  */
 export function DriverOrderFilters({
   hasActiveTrip = false,
@@ -35,15 +34,17 @@ export function DriverOrderFilters({
       : `Đang quét bán kính ${radiusKm} km`;
 
   return (
-    <View style={styles.row} testID="driver-load-board-header">
-      <View style={styles.iconDisc}>
-        <IconRadarPulse color="#0B1E42" size={16} />
-      </View>
-
-      <View style={styles.textWrap}>
-        <Text accessibilityRole="header" style={styles.title}>
-          Đơn có thể nhận
-        </Text>
+    <View style={styles.sectionHeader} testID="driver-load-board-header">
+      <View style={styles.headerInfo}>
+        <View style={styles.titleRow}>
+          <Text accessibilityRole="header" style={styles.title}>
+            Đơn có thể nhận
+          </Text>
+          <View style={styles.radarPill}>
+            <View style={styles.radarDot} />
+            <IconRadarPulse color="#16A34A" size={12} />
+          </View>
+        </View>
         <Text numberOfLines={1} style={styles.status}>
           {statusLine}
         </Text>
@@ -65,59 +66,66 @@ export function DriverOrderFilters({
 }
 
 const styles = StyleSheet.create({
-  row: {
+  sectionHeader: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 16,
-    ...iosContinuousCurve,
-    borderWidth: 1,
     flexDirection: 'row',
-    marginBottom: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xxs,
+    paddingHorizontal: spacing.xxs,
   },
-  iconDisc: {
-    alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderRadius: 15,
-    height: 30,
-    justifyContent: 'center',
-    marginRight: 10,
-    width: 30,
-  },
-  textWrap: {
+  headerInfo: {
     flex: 1,
+    gap: 3,
+  },
+  titleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   title: {
-    color: '#0B1E42',
-    fontSize: 14,
-    fontWeight: '800',
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  radarPill: {
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  radarDot: {
+    backgroundColor: '#16A34A',
+    borderRadius: 3,
+    height: 6,
+    width: 6,
   },
   status: {
     color: '#64748B',
-    fontSize: 11.5,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
     fontVariant: ['tabular-nums'],
-    marginTop: 1,
   },
   debugBtn: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
-    ...iosContinuousCurve,
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: 10,
+    minHeight: 32,
+    paddingHorizontal: 8,
   },
   debugBtnText: {
-    color: '#0B1E42',
+    color: colors.brand.primary,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.8,
   },
 });

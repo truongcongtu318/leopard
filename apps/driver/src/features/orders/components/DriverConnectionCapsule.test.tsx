@@ -18,10 +18,10 @@ describe('DriverConnectionCapsule', () => {
     await screen.unmount();
   });
 
-  it('renders the receiving state when availability is ONLINE', async () => {
+  it('renders an icon-only pill (no label) when availability is ONLINE', async () => {
     const screen = await render(<DriverConnectionCapsule isOnline onToggle={() => {}} />);
 
-    expect(screen.getByText('Đang nhận cuốc')).toBeTruthy();
+    expect(screen.queryByText('Đang nhận cuốc')).toBeNull();
 
     const toggle = screen.getByTestId('driver-connection-toggle');
     expect(toggle.props.accessibilityState).toMatchObject({ selected: true });

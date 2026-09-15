@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { httpClient } from '@leopard/mobile-core';
+import { typeScale, httpClient } from '@leopard/mobile-core';
 import { IconLocationPin, RealInteractiveMap, resolveLocationCoords, VIETNAM_LOCATION_DICT, type MapCoordinate, describeGeolocationFailure } from '@leopard/mobile-core';
 
 function formatVietnamesePhone(phone?: string | null): string {
@@ -1078,7 +1078,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   mapOverlayCloseBtnText: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -1098,7 +1098,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   mapAddressSectionTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     color: '#0F172A',
   },
@@ -1122,7 +1122,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   mapChangeAddrBtnText: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
   },
@@ -1144,7 +1144,7 @@ const styles = StyleSheet.create({
     borderColor: '#BBF7D0',
   },
   searchingBadgeText: {
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#16A34A',
   },
@@ -1171,7 +1171,7 @@ const styles = StyleSheet.create({
   gpsNoticeText: { fontSize: 11, lineHeight: 16, color: '#92400E', marginTop: 6, paddingHorizontal: 2 },
   mapTextInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#0F172A',
     fontWeight: '600',
     padding: 0,
@@ -1255,12 +1255,12 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   suggestionAddress: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#64748B',
     marginTop: 1,
   },
   suggestionActionApply: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
   },
@@ -1290,12 +1290,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   noSuggestionsTitle: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#334155',
   },
   noSuggestionsSubtitle: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#64748B',
     lineHeight: 16,
   },
@@ -1309,7 +1309,7 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   pinnedNoticeText: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#15803D',
     fontWeight: '600',
   },
@@ -1330,7 +1330,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mapSenderSectionTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     color: '#0F172A',
   },
@@ -1364,7 +1364,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   mapCancelBtnText: {
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#475569',
   },
@@ -1386,7 +1386,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   mapSaveBtnText: {
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.2,

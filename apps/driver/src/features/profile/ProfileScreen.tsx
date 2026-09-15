@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, ScreenState, StatusBadge, IconCheck, IconChevron, IconClock, IconIdCard, IconInsuranceDoc, IconLicense, IconPhone, IconSecurityShield, IconSpeedTruck, IconStar, IconSupport247, IconTrophy, IconUser, IconWallet } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, ScreenState, StatusBadge, IconCheck, IconChevron, IconClock, IconIdCard, IconInsuranceDoc, IconLicense, IconOrders, IconPhone, IconSecurityShield, IconSpeedTruck, IconStar, IconSupport247, IconTrophy, IconUser, IconWallet } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
@@ -425,6 +425,12 @@ export function DriverProfileScreen({
                   label="Ví tài xế & Quyết toán"
                   onPress={() => router.push('/wallet')}
                   sublabel="Số dư khả dụng 1.450.000 ₫ · MB Bank"
+                />
+                <MenuRow
+                  icon={<IconOrders color="#0B1E42" size={18} />}
+                  label="Lịch sử chuyến xe"
+                  onPress={() => router.push('/history')}
+                  sublabel="Xem lại các chuyến đã hoàn tất"
                 />
                 <MenuRow
                   icon={<IconTrophy color="#F59E0B" size={18} />}

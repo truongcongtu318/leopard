@@ -29,6 +29,7 @@ import {
   IconCheck,
   isLikelyVnPhone,
   toE164Vn,
+  typeScale,
 } from '@leopard/mobile-core';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import {
@@ -1626,7 +1627,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  backBtnText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '700' },
+  backBtnText: { color: '#FFFFFF', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
   headline: { color: '#FFFFFF', fontSize: 22, fontWeight: '800', marginTop: 4, zIndex: 2 },
   subline: { color: '#CBD5E1', fontSize: 13, fontWeight: '500', lineHeight: 18, zIndex: 2 },
   body: {
@@ -1656,7 +1657,7 @@ const styles = StyleSheet.create({
   },
   field: { gap: spacing.xs },
   inputLabel: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  fieldHint: { color: '#94A3B8', fontSize: 11.5, marginTop: 2, lineHeight: 16 },
+  fieldHint: { color: '#94A3B8', fontSize: typeScale.caption1.fontSize, marginTop: 2, lineHeight: 16 },
   inputWrap: {
     backgroundColor: '#132B52',
     borderColor: 'rgba(255, 255, 255, 0.16)',
@@ -1688,7 +1689,7 @@ const styles = StyleSheet.create({
   },
   flagCode: {
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   phoneInput: {
@@ -1697,7 +1698,7 @@ const styles = StyleSheet.create({
   },
   input: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     padding: 0,
   },
@@ -1757,7 +1758,7 @@ const styles = StyleSheet.create({
   },
   vehicleCardSub: {
     color: '#94A3B8',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
   },
   vehicleCardSubSelected: {
     color: '#CBD5E1',
@@ -1865,7 +1866,7 @@ const styles = StyleSheet.create({
   },
   stepperArrow: {
     color: 'rgba(255, 255, 255, 0.25)',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     marginBottom: 16,
   },
@@ -1932,7 +1933,7 @@ const styles = StyleSheet.create({
   },
   stepTitleText: {
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   stepNavRow: {
@@ -1953,7 +1954,7 @@ const styles = StyleSheet.create({
   },
   outlineNavBtnText: {
     color: '#CBD5E1',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   primaryNavBtn: {
@@ -1989,7 +1990,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   kycGuideCopy: { flex: 1, gap: 2 },
-  kycGuideTitle: { color: '#FFFFFF', fontSize: 13.5, fontWeight: '700' },
+  kycGuideTitle: { color: '#FFFFFF', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
   kycGuideText: { color: '#CBD5E1', fontSize: 12, lineHeight: 17 },
   kycList: { gap: spacing.md },
   docSlot: {
@@ -2022,8 +2023,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   docInfo: { flex: 1, gap: 2 },
-  docLabel: { color: '#FFFFFF', fontSize: 13.5, fontWeight: '700' },
-  docHint: { color: '#94A3B8', fontSize: 11.5 },
+  docLabel: { color: '#FFFFFF', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
+  docHint: { color: '#94A3B8', fontSize: typeScale.caption1.fontSize },
   docStatusPill: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: radius.pill,
@@ -2096,7 +2097,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     color: '#38BDF8',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '800',
     letterSpacing: 0.8,
     marginBottom: 2,
@@ -2110,7 +2111,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   summaryLabel: { color: '#CBD5E1', fontSize: 13, fontWeight: '500' },
-  summaryValue: { color: '#FFFFFF', fontSize: 13.5, fontWeight: '700' },
+  summaryValue: { color: '#FFFFFF', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
   errorBox: {
     backgroundColor: 'rgba(239, 68, 68, 0.14)',
     borderColor: 'rgba(248, 113, 113, 0.46)',
@@ -2138,13 +2139,13 @@ const styles = StyleSheet.create({
   },
   successText: {
     color: '#CBD5E1',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
     textAlign: 'center',
   },
   contractMetaText: {
     color: '#38BDF8',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -2176,13 +2177,13 @@ const styles = StyleSheet.create({
   },
   otpTitle: {
     color: '#FFFFFF',
-    fontSize: 19,
+    fontSize: typeScale.title3.fontSize,
     fontWeight: '800',
     textAlign: 'center',
   },
   otpSubtitle: {
     color: '#CBD5E1',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 19,
     textAlign: 'center',
     marginBottom: 4,
@@ -2213,7 +2214,7 @@ const styles = StyleSheet.create({
   },
   verifyingText: {
     color: '#38BDF8',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   otpFooterRow: {
@@ -2250,7 +2251,7 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     color: '#CBD5E1',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   confirmBtn: {
@@ -2273,7 +2274,7 @@ const styles = StyleSheet.create({
   },
   confirmBtnText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   controlPressed: {

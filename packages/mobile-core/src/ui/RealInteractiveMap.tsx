@@ -11,7 +11,7 @@ import type { WebViewMessageEvent, WebViewProps } from 'react-native-webview';
 
 import type { RouteCoordinate } from '@leopard/shared';
 
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography, typeScale } from '../theme/tokens';
 import { IconLocationPin, IconSpeedTruck } from './icons/CoreIcons';
 
 export type MapCoordinate = {
@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
   truckEtaText: {
     ...typography.caption,
     color: '#FFFFFF',
-    fontSize: 9,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   liveOverlayBadge: {
@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
   liveBadgeText: {
     ...typography.caption,
     color: '#FFFFFF',
-    fontSize: 9,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
   },

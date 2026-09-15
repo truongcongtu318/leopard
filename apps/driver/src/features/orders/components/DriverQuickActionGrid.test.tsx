@@ -7,16 +7,16 @@ import { DriverQuickActionGrid } from './DriverQuickActionGrid';
 describe('DriverQuickActionGrid', () => {
   it('renders the 4 Grab-style shortcuts and routes each press', async () => {
     const onOpenVehicle = jest.fn();
-    const onOpenTrips = jest.fn();
+    const onTriggerSos = jest.fn();
     const onOpenWallet = jest.fn();
     const onOpenSettings = jest.fn();
 
     const screen = await render(
       <DriverQuickActionGrid
         onOpenSettings={onOpenSettings}
-        onOpenTrips={onOpenTrips}
         onOpenVehicle={onOpenVehicle}
         onOpenWallet={onOpenWallet}
+        onTriggerSos={onTriggerSos}
       />,
     );
 
@@ -25,8 +25,8 @@ describe('DriverQuickActionGrid', () => {
     await fireEvent.press(screen.getByTestId('quick-action-vehicle'));
     expect(onOpenVehicle).toHaveBeenCalledTimes(1);
 
-    await fireEvent.press(screen.getByTestId('quick-action-trips'));
-    expect(onOpenTrips).toHaveBeenCalledTimes(1);
+    await fireEvent.press(screen.getByTestId('quick-action-sos'));
+    expect(onTriggerSos).toHaveBeenCalledTimes(1);
 
     await fireEvent.press(screen.getByTestId('quick-action-wallet'));
     expect(onOpenWallet).toHaveBeenCalledTimes(1);
@@ -41,16 +41,16 @@ describe('DriverQuickActionGrid', () => {
     const screen = await render(
       <DriverQuickActionGrid
         onOpenSettings={() => {}}
-        onOpenTrips={() => {}}
         onOpenVehicle={() => {}}
         onOpenWallet={() => {}}
+        onTriggerSos={() => {}}
       />,
     );
 
     expect(screen.getByLabelText('Thông tin xe vận chuyển')).toBeTruthy();
-    expect(screen.getByLabelText('Lịch sử chuyến xe')).toBeTruthy();
+    expect(screen.getByLabelText('Gọi cứu hộ khẩn cấp SOS')).toBeTruthy();
     expect(screen.getByLabelText('Ví tài xế')).toBeTruthy();
-    expect(screen.getByLabelText('Thiết lập nhận đơn và hỗ trợ')).toBeTruthy();
+    expect(screen.getByLabelText('Thiết lập bán kính nhận đơn')).toBeTruthy();
 
     await screen.unmount();
   });

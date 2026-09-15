@@ -16,6 +16,7 @@ import {
   iosContinuousCurve,
   pickDeviceImage,
   systemFontFamily,
+  typeScale,
 } from '@leopard/mobile-core';
 import { haptic } from '@leopard/mobile-core/src/ui/haptics';
 
@@ -583,7 +584,7 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontFamily: systemFontFamily,
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -651,7 +652,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   routeBadgeStopCountText: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#0284C7',
   },
@@ -672,7 +673,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#334155',
     textTransform: 'uppercase',
@@ -685,7 +686,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   badgeRequiredText: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     color: '#B91C1C',
     letterSpacing: 0.4,
@@ -719,7 +720,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   photoPickerTitle: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
   },
@@ -786,7 +787,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     paddingHorizontal: 14,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#0F172A',
   },
   noteInput: {
@@ -872,12 +873,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toggleTitle: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     color: '#0F172A',
   },
   toggleFee: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#16A34A',
     fontVariant: ['tabular-nums'],
@@ -925,12 +926,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   radioTitle: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
   radioSubtitle: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '500',
     color: '#64748B',
     marginTop: 1,

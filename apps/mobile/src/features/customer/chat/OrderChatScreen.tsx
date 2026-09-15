@@ -23,6 +23,7 @@ import {
   IconStar,
   ScreenScaffold,
   httpClient,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export interface OrderChatScreenProps {
@@ -354,7 +355,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   driverName: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   plateText: {
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#0F172A',
     fontVariant: ['tabular-nums'],
@@ -389,13 +390,13 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   ratingText: {
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#B45309',
     fontVariant: ['tabular-nums'],
   },
   driverPhone: {
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     color: '#64748B',
     fontVariant: ['tabular-nums'],
   },
@@ -414,7 +415,7 @@ const styles = StyleSheet.create({
   },
   callBtnText: {
     color: '#FFFFFF',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
 
@@ -434,7 +435,7 @@ const styles = StyleSheet.create({
   },
   systemMsgText: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
@@ -458,7 +459,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   bubbleText: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 19,
   },
   bubbleTextCustomer: {
@@ -468,7 +469,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   bubbleTime: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontVariant: ['tabular-nums'],
   },
   bubbleTimeCustomer: {
@@ -498,7 +499,7 @@ const styles = StyleSheet.create({
   },
   quickChipText: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
 
@@ -532,7 +533,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     color: '#0F172A',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     paddingHorizontal: 8,
     paddingVertical: 8,
     minHeight: 44,

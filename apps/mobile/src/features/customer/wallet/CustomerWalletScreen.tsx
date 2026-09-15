@@ -21,6 +21,7 @@ import {
   IconTxRefund,
   IconWallet,
   ScreenScaffold,
+  typeScale,
 } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter, formatOrderReference, formatVndPrice } from '../orders/adapter';
 import type { CustomerOrderListItemView } from '../orders/model';
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
   },
   securityBadgeText: {
     color: '#10B981',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   balanceBody: {
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: typeScale.title1.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
     fontVariant: ['tabular-nums'],
@@ -531,7 +532,7 @@ const styles = StyleSheet.create({
   },
   cardFooterNapas: {
     color: '#94A3B8',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
     letterSpacing: 0.4,
   },
@@ -628,7 +629,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   emptyTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
   },
@@ -710,7 +711,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   orderRefBadgeText: {
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
     color: '#475569',
     fontVariant: ['tabular-nums'],
@@ -720,7 +721,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   txAmount: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     color: '#0F172A',
     fontVariant: ['tabular-nums'],
@@ -732,7 +733,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusBadgeText: {
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.2,
   },

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { iosContinuousCurve } from '@leopard/mobile-core';
 
@@ -38,14 +38,22 @@ const styles = StyleSheet.create({
   row: {
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderColor: 'rgba(11, 30, 66, 0.06)',
     borderRadius: 16,
     ...iosContinuousCurve,
     borderWidth: 1,
+    elevation: 6,
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    ...Platform.select({
+      web: { boxShadow: '0 6px 14px rgba(11, 30, 66, 0.14)' } as object,
+    }),
   },
   dot: {
     borderRadius: 5,

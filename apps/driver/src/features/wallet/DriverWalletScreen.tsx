@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, Button, IconBank, IconTxPayment, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typeScale, Button, IconBank, IconTxPayment, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { WalletSummary, WithdrawalHistoryItem, WithdrawalRequestInput } from './adapter';
 
 export type DriverWalletScreenProps = Readonly<{
@@ -257,14 +257,14 @@ const styles = StyleSheet.create({
   balanceHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   balanceHeaderLeft: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   walletIconChip: { alignItems: 'center', backgroundColor: '#ECFDF5', borderColor: '#A7F3D0', borderWidth: 1, borderRadius: radius.card, height: 34, justifyContent: 'center', width: 34 },
-  balanceLabel: { color: '#0B1E42', fontSize: 12.5, fontWeight: '700' },
-  balanceSubLabel: { color: leopardPalette.textMutedSlate, fontSize: 10.5, marginTop: 2, maxWidth: 220 },
-  balanceAmount: { color: '#0B1E42', fontSize: 32, fontWeight: '800', fontVariant: ['tabular-nums'], marginVertical: 2 },
+  balanceLabel: { color: '#0B1E42', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
+  balanceSubLabel: { color: leopardPalette.textMutedSlate, fontSize: typeScale.caption2.fontSize, marginTop: 2, maxWidth: 220 },
+  balanceAmount: { color: '#0B1E42', fontSize: typeScale.largeTitle.fontSize, fontWeight: '800', fontVariant: ['tabular-nums'], marginVertical: 2 },
   balanceFooter: { borderBottomColor: colors.neutral.rowDivider, borderTopColor: colors.neutral.rowDivider, borderBottomWidth: 1, borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.xs, marginBottom: spacing.xxs },
   balanceStat: { alignItems: 'center', gap: 2 },
   balanceStatDivider: { backgroundColor: colors.neutral.rowDivider, width: 1 },
   balanceStatLabel: { color: colors.neutral.subtleText, fontSize: 11 },
-  balanceStatValue: { color: '#0F172A', fontSize: 12.5, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  balanceStatValue: { color: '#0F172A', fontSize: typeScale.footnote.fontSize, fontWeight: '700', fontVariant: ['tabular-nums'] },
   bentoCard: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
@@ -282,11 +282,11 @@ const styles = StyleSheet.create({
   cardHeaderLeft: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   bankIconChip: { alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: radius.card, height: 32, justifyContent: 'center', width: 32 },
   bentoCardTitle: { color: '#0B1E42', fontSize: 13, fontWeight: '700' },
-  bentoCardSub: { color: leopardPalette.textMutedSlate, fontSize: 10.5, marginTop: 1 },
+  bentoCardSub: { color: leopardPalette.textMutedSlate, fontSize: typeScale.caption2.fontSize, marginTop: 1 },
   bankDetailRow: { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0', borderRadius: radius.card, borderWidth: 1, padding: spacing.sm },
   bankInfoCol: { gap: 2 },
   bankNameText: { color: '#0B1E42', fontSize: 13, fontWeight: '700' },
-  bankAccountNumText: { color: colors.neutral.text, fontSize: 14, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  bankAccountNumText: { color: colors.neutral.text, fontSize: typeScale.subheadline.fontSize, fontWeight: '800', fontVariant: ['tabular-nums'] },
   bankHolderText: { color: leopardPalette.textMutedSlate, fontSize: 11, fontWeight: '600', letterSpacing: 0.5 },
   unlinkedText: { color: leopardPalette.textMutedSlate, fontSize: 12, fontStyle: 'italic' },
   historySection: { gap: spacing.xs },
@@ -304,22 +304,22 @@ const styles = StyleSheet.create({
   badgePayout: { backgroundColor: '#DCFCE7' },
   badgeFee: { backgroundColor: '#FEF3C7' },
   badgeWithdrawal: { backgroundColor: '#F1F5F9' },
-  txIndicatorText: { fontSize: 10, fontWeight: '700' },
+  txIndicatorText: { fontSize: typeScale.caption2.fontSize, fontWeight: '700' },
   badgeTextPayout: { color: '#166534' },
   badgeTextFee: { color: '#B45309' },
   badgeTextWithdrawal: { color: '#475569' },
   txTime: { color: colors.neutral.subtleText, fontSize: 11, fontVariant: ['tabular-nums'] },
   txRight: { alignItems: 'flex-end', gap: 2 },
-  txAmount: { fontSize: 13.5, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  txAmount: { fontSize: typeScale.footnote.fontSize, fontWeight: '700', fontVariant: ['tabular-nums'] },
   txAmountPositive: { color: colors.success.text },
   txAmountNegative: { color: colors.neutral.titleText },
-  txStatus: { color: colors.neutral.subtleText, fontSize: 10.5 },
+  txStatus: { color: colors.neutral.subtleText, fontSize: typeScale.caption2.fontSize },
   modalBackdrop: { alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.6)', flex: 1, justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: colors.neutral.background, borderTopLeftRadius: radius.control, borderTopRightRadius: radius.control, gap: spacing.sm, maxWidth: 480, padding: spacing.lg, width: '100%' },
   modalDragHandle: { alignSelf: 'center', backgroundColor: colors.neutral.subtleBorder, borderRadius: 2, height: 4, marginBottom: spacing.xs, width: 40 },
   modalTitle: { color: colors.neutral.titleText, fontSize: 17, fontWeight: '800' },
-  modalSub: { color: colors.neutral.mutedText, fontSize: 12.5, lineHeight: 18 },
-  errorText: { color: '#DC2626', fontSize: 12.5, fontWeight: '600' },
+  modalSub: { color: colors.neutral.mutedText, fontSize: typeScale.footnote.fontSize, lineHeight: 18 },
+  errorText: { color: '#DC2626', fontSize: typeScale.footnote.fontSize, fontWeight: '600' },
   modalBalanceInfo: {
     backgroundColor: '#F8FAFC',
     borderColor: '#E2E8F0',
@@ -338,12 +338,12 @@ const styles = StyleSheet.create({
   },
   modalBalanceValue: {
     color: '#0B1E42',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   inputLabel: { color: colors.neutral.titleText, fontSize: 12, fontWeight: '700', marginTop: spacing.xs },
   amountInput: { borderColor: colors.neutral.subtleBorder, borderRadius: radius.card, borderWidth: 1, color: colors.neutral.titleText, fontSize: 20, fontWeight: '700', fontVariant: ['tabular-nums'], paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  textInput: { borderColor: colors.neutral.subtleBorder, borderRadius: radius.card, borderWidth: 1, color: colors.neutral.titleText, fontSize: 14, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  textInput: { borderColor: colors.neutral.subtleBorder, borderRadius: radius.card, borderWidth: 1, color: colors.neutral.titleText, fontSize: typeScale.subheadline.fontSize, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   modalBtnRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
 });

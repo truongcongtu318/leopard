@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, typography, IconLocationPin } from '@leopard/mobile-core';
+import { typeScale, colors, leopardPalette, radius, spacing, typography, IconLocationPin } from '@leopard/mobile-core';
 import type { AddressCandidate } from './model';
 
 const DEBOUNCE_MS = 300;
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   locationFieldLabel: {
     color: '#64748B',
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.3,
     textTransform: 'uppercase',
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     borderColor: '#FECACA',
   },
   contactBadgeText: {
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   contactBadgeTextPickup: {
@@ -355,12 +355,12 @@ const styles = StyleSheet.create({
   },
   removeStopInlineBtnText: {
     color: '#DC2626',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   locationTextInput: {
     color: '#0F172A',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     padding: 0,
     marginTop: 1,
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   resultAddress: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#64748B',
   },
   pressed: {

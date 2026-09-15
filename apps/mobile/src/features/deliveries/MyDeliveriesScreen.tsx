@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { customerPalette, haptic, iosContinuousCurve, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
+import { typeScale, customerPalette, haptic, iosContinuousCurve, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -499,12 +499,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   searchIcon: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
   },
   searchInput: {
     flex: 1,
     color: leopardPalette.textSlateDark,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
   },
   clearSearchBtn: {
@@ -605,19 +605,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cargoIcon: {
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
   },
   cargoMeta: {
     gap: 1,
   },
   cargoLabel: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   bookingCode: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   routeRow: {
@@ -643,13 +643,13 @@ const styles = StyleSheet.create({
   },
   routeOriginText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     flex: 1,
   },
   routeDestText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     flex: 1,
   },
@@ -661,12 +661,12 @@ const styles = StyleSheet.create({
   },
   metaText: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '500',
   },
   metaDot: {
     color: leopardPalette.cardBorder,
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
   },
   rightCol: {
     alignItems: 'flex-end',
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
   },
   vehicleText: {
@@ -736,12 +736,12 @@ const styles = StyleSheet.create({
   },
   stepNumber: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   stepLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
   },
   stepLabelCompleted: {

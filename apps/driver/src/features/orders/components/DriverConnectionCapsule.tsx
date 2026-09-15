@@ -57,24 +57,24 @@ export function DriverConnectionCapsule({
       onPress={onToggle}
       style={({ pressed }) => [
         styles.capsule,
+        {
+          backgroundColor: isOnline ? '#16A34A' : '#0B1E42',
+          paddingHorizontal: isOnline ? 0 : 20,
+          width: isOnline ? 48 : undefined,
+        },
         pressed && !isBusy ? styles.pressed : null,
         isBusy ? styles.busy : null,
       ]}
       testID="driver-connection-toggle"
     >
-      <View
-        style={[
-          styles.glyphDisc,
-          { backgroundColor: isOnline ? '#16A34A' : 'rgba(148, 163, 184, 0.32)' },
-        ]}
-      >
+      <View style={styles.glyphDisc}>
         {isPending ? (
           <ActivityIndicator color="#FFFFFF" size="small" testID="driver-connection-spinner" />
         ) : (
           <PowerGlyph color="#FFFFFF" />
         )}
       </View>
-      <Text style={styles.label}>{isOnline ? 'Đang nhận cuốc' : 'Bật kết nối'}</Text>
+      {isOnline ? null : <Text style={styles.label}>Bật kết nối</Text>}
     </Pressable>
   );
 }
@@ -82,16 +82,15 @@ export function DriverConnectionCapsule({
 const styles = StyleSheet.create({
   capsule: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
     borderColor: 'rgba(255, 255, 255, 0.16)',
     borderRadius: 999,
     ...iosContinuousCurve,
     borderWidth: 1,
     elevation: 8,
     flexDirection: 'row',
+    gap: 8,
     height: 48,
-    paddingLeft: 6,
-    paddingRight: 20,
+    justifyContent: 'center',
     shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
@@ -102,11 +101,9 @@ const styles = StyleSheet.create({
   },
   glyphDisc: {
     alignItems: 'center',
-    borderRadius: 19,
-    height: 38,
+    height: 20,
     justifyContent: 'center',
-    marginRight: 10,
-    width: 38,
+    width: 20,
   },
   label: {
     color: '#FFFFFF',

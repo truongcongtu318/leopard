@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconCamera, IconIdCard, IconSecurityShield, IconSupport247, IconUser } from '@leopard/mobile-core';
+import { typeScale, colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconCamera, IconIdCard, IconSecurityShield, IconSupport247, IconUser } from '@leopard/mobile-core';
 
 export type EditProfileScreenProps = Readonly<{
   eyebrow?: string;
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   avatarInitial: {
     color: colors.brand.background,
-    fontSize: 32,
+    fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
   },
   cameraIconPill: {
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   avatarActionBtnText: {
     color: colors.brand.background,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
 
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '800',
     letterSpacing: 0.6,
     marginLeft: 4,
@@ -385,12 +385,12 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   textInput: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     padding: 0,
   },
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   },
   errorTextRow: {
     color: '#DC2626',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
     marginLeft: 62,
     marginTop: -6,
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   errorBannerText: {
     color: '#DC2626',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   securityNoticeText: {
     color: '#065F46',
     flex: 1,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     lineHeight: 16,
   },
   pressed: {

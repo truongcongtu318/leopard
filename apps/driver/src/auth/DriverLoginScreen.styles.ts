@@ -1,5 +1,7 @@
 import { Platform, StyleSheet } from 'react-native';
 
+import { spacing, typeScale } from '@leopard/mobile-core';
+
 export const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
@@ -105,14 +107,14 @@ export const styles = StyleSheet.create({
   },
   eyebrow: {
     color: '#FDBA74',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 1.25,
     marginBottom: 7,
   },
   mainTitle: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: typeScale.title2.fontSize,
     fontWeight: '800',
     letterSpacing: -0.3,
     textAlign: 'center',
@@ -120,7 +122,7 @@ export const styles = StyleSheet.create({
   },
   subTitle: {
     color: '#CBD5E1',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
     marginTop: 5,
     textAlign: 'center',
@@ -180,33 +182,28 @@ export const styles = StyleSheet.create({
   },
   fieldLabel: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
   },
   validBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: spacing.xxs,
     backgroundColor: '#DCFCE7',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
     borderRadius: 999,
   },
-  validCheckIcon: {
-    fontSize: 10,
-    color: '#15803D',
-    fontWeight: '800',
-  },
   validText: {
-    fontSize: 11,
+    fontSize: typeScale.caption2.fontSize,
     color: '#15803D',
     fontWeight: '700',
   },
   fieldHint: {
     color: '#CBD5E1',
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 8,
+    fontSize: typeScale.caption1.fontSize,
+    lineHeight: typeScale.caption1.lineHeight,
+    marginTop: spacing.xs,
     fontWeight: '500',
   },
   inputRow: {
@@ -248,13 +245,13 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
   },
   countryCode: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#FFFFFF',
     fontVariant: ['tabular-nums'],
   },
   countryChevron: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     color: '#94A3B8',
     fontWeight: '700',
     marginTop: -1,
@@ -283,15 +280,10 @@ export const styles = StyleSheet.create({
     }),
   },
   clearBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  clearBtnText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    fontWeight: '800',
   },
   primaryBtn: {
     alignItems: 'center',
@@ -424,7 +416,7 @@ export const styles = StyleSheet.create({
   },
   footerLinkAction: {
     color: '#38BDF8',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     textDecorationLine: 'underline',
   },
@@ -499,11 +491,11 @@ export const styles = StyleSheet.create({
     borderColor: '#6FCF97',
   },
   otpBadgeIcon: {
-    fontSize: 26,
+    fontSize: typeScale.title1.fontSize,
   },
   otpModalTitle: {
     color: '#102A43',
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '900',
     marginBottom: 6,
     textAlign: 'center',
@@ -541,17 +533,21 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   otpSuccessBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     backgroundColor: '#E8F7EF',
     borderColor: '#9FE1B7',
     borderRadius: 12,
     borderWidth: 1,
-    marginTop: 12,
-    padding: 10,
+    marginTop: spacing.sm,
+    padding: spacing.sm,
   },
   otpSuccessText: {
+    flex: 1,
     color: '#167A3A',
-    fontSize: 13,
-    textAlign: 'center',
+    fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
   },
   otpFooter: {
     marginTop: 18,

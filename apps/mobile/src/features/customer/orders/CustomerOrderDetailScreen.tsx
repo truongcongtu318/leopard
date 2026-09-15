@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { colors, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import { typeScale, colors, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
 import { MediaImage } from '@leopard/mobile-core';
 import type {
   CustomerDetailContentView,
@@ -864,7 +864,7 @@ function CustomerDetailContent({
             <View style={styles.heroDivider} />
 
             <View style={[styles.paymentTopRow, { marginTop: 10 }]}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#0B1E42' }}>
+              <Text style={{ fontSize: typeScale.subheadline.fontSize, fontWeight: '700', color: '#0B1E42' }}>
                 Tổng cước vận chuyển
               </Text>
               <Text style={styles.paymentAmount}>{order.priceLabel}</Text>
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   heroSectionTitle: {
-    fontSize: 15.5,
+    fontSize: typeScale.callout.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -1060,7 +1060,7 @@ const styles = StyleSheet.create({
   },
   liveTagText: {
     color: '#15803D',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   heroPrice: {
@@ -1085,7 +1085,7 @@ const styles = StyleSheet.create({
   },
   heroStatLabel: {
     color: '#64748B',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -1116,7 +1116,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: '#0F172A',
-    fontSize: 15.5,
+    fontSize: typeScale.callout.fontSize,
     fontWeight: '700',
   },
   cardSubtitle: {
@@ -1254,17 +1254,17 @@ const styles = StyleSheet.create({
   },
   urgentPaymentTitle: {
     color: '#92400E',
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
   },
   urgentPaymentSub: {
     color: '#B45309',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '500',
   },
   urgentPaymentAmount: {
     color: '#0B1E42',
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '900',
     fontFamily: 'monospace',
   },
@@ -1303,13 +1303,13 @@ const styles = StyleSheet.create({
   },
   cargoGridLabel: {
     color: '#64748B',
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   cargoGridValue: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   driverMainRow: {
@@ -1330,7 +1330,7 @@ const styles = StyleSheet.create({
   },
   driverRatingText: {
     color: '#D97706',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   driverVehicleText: {
@@ -1377,7 +1377,7 @@ const styles = StyleSheet.create({
   },
   driverEtaSub: {
     color: '#64748B',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '500',
   },
   driverEtaMain: {
@@ -1396,7 +1396,7 @@ const styles = StyleSheet.create({
   },
   driverGpsLinkText: {
     color: '#0B1E42',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   driverCard: {
@@ -1417,7 +1417,7 @@ const styles = StyleSheet.create({
   },
   driverAvatarText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
   },
   driverInfo: {
@@ -1426,7 +1426,7 @@ const styles = StyleSheet.create({
   },
   driverName: {
     color: '#0F172A',
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   driverStatusText: {
@@ -1455,7 +1455,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   body: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     color: '#334155',
     lineHeight: 19,
     flexShrink: 1,
@@ -1516,7 +1516,7 @@ const styles = StyleSheet.create({
   },
   cargoSpecValue: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     flex: 1,
   },
@@ -1541,7 +1541,7 @@ const styles = StyleSheet.create({
   },
   mediaLabel: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   paymentCardContent: {
@@ -1580,7 +1580,7 @@ const styles = StyleSheet.create({
   },
   paymentDetailValue: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   paymentNoticeBox: {
@@ -1646,12 +1646,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   cancelledReasonContent: {
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     color: '#7F1D1D',
   },
   cancelledReasonTime: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#991B1B',
     opacity: 0.8,
   },
@@ -1687,7 +1687,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   cancelSheetTitle: {
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     color: '#0F172A',
   },
@@ -1730,7 +1730,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B1E42',
   },
   cancelOptionText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '500',
     color: '#334155',
     flex: 1,
@@ -1745,7 +1745,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     padding: 12,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     color: '#0F172A',
     minHeight: 70,
     textAlignVertical: 'top',
