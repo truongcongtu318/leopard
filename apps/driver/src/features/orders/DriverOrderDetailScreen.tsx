@@ -631,15 +631,19 @@ function CargoAndContactCard({
 
 function MissionMapCanvas({
   originLabel,
+  originCoords,
   destinationLabel,
+  destinationCoords,
   stops,
   tracking,
   distanceLabel,
   etaLabel,
 }: Readonly<{
   originLabel: string;
+  originCoords?: { lat: number; lng: number };
   destinationLabel: string;
-  stops?: readonly { id: string; label: string }[];
+  destinationCoords?: { lat: number; lng: number };
+  stops?: readonly { id: string; label: string; coords?: { lat: number; lng: number } }[];
   tracking: DriverTrackingView;
   distanceLabel: string;
   etaLabel?: string;
@@ -653,11 +657,11 @@ function MissionMapCanvas({
   return (
     <View style={styles.mapCanvasContainer} testID="route-map-schematic">
       <RealInteractiveMap
-        destination={{ label: destinationLabel }}
+        destination={{ label: destinationLabel, coords: destinationCoords }}
         height="100%"
         mode="tracking"
-        origin={{ label: originLabel }}
-        stops={stops?.map((s) => ({ id: s.id, label: s.label }))}
+        origin={{ label: originLabel, coords: originCoords }}
+        stops={stops?.map((s) => ({ id: s.id, label: s.label, coords: s.coords }))}
         truckEtaLabel={tracking.label}
       />
 
@@ -984,6 +988,7 @@ function AssignedDetail({
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 1. Full Interactive Map Canvas at Top */}
         <MissionMapCanvas
+          destinationCoords={view.order.route.destination.coords}
           destinationLabel={view.order.route.destination.label}
           distanceLabel={view.order.route.distanceLabel}
           etaLabel={
@@ -991,6 +996,7 @@ function AssignedDetail({
               ? `${Math.round(view.order.route.etaDurationSeconds / 60)} phút`
               : undefined
           }
+          originCoords={view.order.route.origin.coords}
           originLabel={view.order.route.origin.label}
           stops={view.order.route.stops}
           tracking={view.tracking}

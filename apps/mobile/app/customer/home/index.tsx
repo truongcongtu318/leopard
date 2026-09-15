@@ -65,7 +65,13 @@ export default function CustomerHomePage() {
               orderId: detail.order.id,
               status: detail.order.status,
               origin: detail.order.route.origin.label,
+              originCoords: detail.order.route.origin.coords
+                ? { lat: detail.order.route.origin.coords.lat, lng: detail.order.route.origin.coords.lng }
+                : undefined,
               destination: detail.order.route.destination.label,
+              destinationCoords: detail.order.route.destination.coords
+                ? { lat: detail.order.route.destination.coords.lat, lng: detail.order.route.destination.coords.lng }
+                : undefined,
               cargoNote: detail.order.cargo.note ?? undefined,
               etaMinutes: isFinished
                 ? undefined

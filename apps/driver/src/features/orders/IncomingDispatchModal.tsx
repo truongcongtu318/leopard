@@ -26,7 +26,9 @@ export type IncomingDispatchOffer = Readonly<{
   reference: string;
   pickupDistanceLabel: string;
   pickupAddress: string;
+  pickupCoords?: { lat: number; lng: number };
   dropoffAddress: string;
+  dropoffCoords?: { lat: number; lng: number };
   tripDistanceLabel: string;
   etaLabel: string;
   priceLabel: string;
@@ -147,10 +149,10 @@ export function IncomingDispatchModal({
           {/* 3. Hero Mini Route Map */}
           <View style={styles.modalMapCanvas} testID="dispatch-modal-map">
             <RealInteractiveMap
-              destination={{ label: offer.dropoffAddress }}
+              destination={{ label: offer.dropoffAddress, coords: offer.dropoffCoords }}
               height="100%"
               mode="route"
-              origin={{ label: offer.pickupAddress }}
+              origin={{ label: offer.pickupAddress, coords: offer.pickupCoords }}
             />
             <View style={styles.mapFloatingDistancePill}>
               <IconLocationPin color="#0B1E42" size={12} />

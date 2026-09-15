@@ -690,7 +690,9 @@ export function DriverOrdersScreen({
           destination={
             activeTrip
               ? {
-                  coords: resolveLocationCoords(activeTrip.route.destination.label),
+                  coords:
+                    activeTrip.route.destination.coords ||
+                    resolveLocationCoords(activeTrip.route.destination.label),
                   label: activeTrip.route.destination.label,
                 }
               : undefined
@@ -702,7 +704,9 @@ export function DriverOrdersScreen({
           origin={
             activeTrip
               ? {
-                  coords: resolveLocationCoords(activeTrip.route.origin.label),
+                  coords:
+                    activeTrip.route.origin.coords ||
+                    resolveLocationCoords(activeTrip.route.origin.label),
                   label: activeTrip.route.origin.label,
                 }
               : undefined

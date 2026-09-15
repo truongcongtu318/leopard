@@ -24,10 +24,8 @@ describe('RealInteractiveMap', () => {
     expect(nguHanhSon.lat).not.toBeCloseTo(16.054, 3);
 
     const fallback = resolveLocationCoords('Địa chỉ bất kỳ chưa biết');
-    expect(fallback.lat).toBeGreaterThan(10.0);
-    expect(fallback.lat).toBeLessThan(11.5);
-    expect(fallback.lng).toBeGreaterThan(106.0);
-    expect(fallback.lng).toBeLessThan(107.5);
+    expect(fallback.lat).toBeCloseTo(10.7769, 4);
+    expect(fallback.lng).toBeCloseTo(106.7009, 4);
   });
 
   it('renders route mode with origin and destination', async () => {
@@ -73,10 +71,10 @@ describe('RealInteractiveMap', () => {
     await screen.unmount();
   });
 
-  it('anchors destination coordinates around origin when destination is not in dictionary', () => {
+  it('anchors destination coordinates exactly at reference origin when destination is not in dictionary', () => {
     const daNangOriginCoords = { lat: 16.035, lng: 108.243 };
     const resolved = resolveLocationCoords('400 Đường Chưa Biết Tên ABC', daNangOriginCoords);
-    expect(Math.abs(resolved.lat - daNangOriginCoords.lat)).toBeLessThan(0.05);
-    expect(Math.abs(resolved.lng - daNangOriginCoords.lng)).toBeLessThan(0.05);
+    expect(resolved.lat).toBe(daNangOriginCoords.lat);
+    expect(resolved.lng).toBe(daNangOriginCoords.lng);
   });
 });

@@ -55,7 +55,9 @@ export type ActiveShipment = Readonly<{
   orderId: string;
   status: OrderStatus;
   origin: string;
+  originCoords?: { lat: number; lng: number };
   destination: string;
+  destinationCoords?: { lat: number; lng: number };
   cargoNote?: string;
   driverName?: string;
   plate?: string;
@@ -559,7 +561,10 @@ export function HomeDashboardScreen({
         <RealInteractiveMap
           destination={
             activeShipment
-              ? { label: activeShipment.destination }
+              ? {
+                  label: activeShipment.destination,
+                  coords: activeShipment.destinationCoords,
+                }
               : hasSelectedDropoff
                 ? { label: dropoffText, coords: dropoffCoords || undefined }
                 : undefined
@@ -568,7 +573,10 @@ export function HomeDashboardScreen({
           mode={activeShipment ? 'tracking' : hasSelectedDropoff ? 'route' : 'preview'}
           origin={
             activeShipment
-              ? { label: activeShipment.origin }
+              ? {
+                  label: activeShipment.origin,
+                  coords: activeShipment.originCoords,
+                }
               : pickupText
                 ? { label: pickupText, coords: pickupCoords || undefined }
                 : undefined

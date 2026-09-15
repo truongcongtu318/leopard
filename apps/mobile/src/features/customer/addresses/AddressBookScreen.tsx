@@ -28,6 +28,8 @@ export type SavedAddress = Readonly<{
   contactName: string;
   contactPhone: string;
   isDefault: boolean;
+  latitude?: number;
+  longitude?: number;
   category?: AddressCategory;
 }>;
 
@@ -54,6 +56,8 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       contactName: s.contactName || 'Người nhận',
       contactPhone: s.contactPhone || '0900000000',
       isDefault: s.isDefault,
+      latitude: s.latitude,
+      longitude: s.longitude,
       category: s.category || 'OTHER',
     }));
   });
@@ -74,6 +78,8 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
             contactName: s.contactName || 'Người nhận',
             contactPhone: s.contactPhone || '0900000000',
             isDefault: s.isDefault,
+            latitude: s.latitude,
+            longitude: s.longitude,
             category: s.category || 'OTHER',
           })),
         );
@@ -817,7 +823,13 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       <RealInteractiveMap
                         height={140}
                         mode="preview"
-                        origin={{ label: item.label, coords: resolveLocationCoords(item.address) }}
+                        origin={{
+                          label: item.label,
+                          coords:
+                            typeof item.latitude === 'number' && typeof item.longitude === 'number'
+                              ? { lat: item.latitude, lng: item.longitude }
+                              : resolveLocationCoords(item.address),
+                        }}
                         title={`Bản đồ ${item.label}`}
                       />
                     </View>

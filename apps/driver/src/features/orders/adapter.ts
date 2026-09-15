@@ -340,14 +340,17 @@ export function mapOrderToRouteView(
   const origin: DriverRoutePoint = {
     id: pickupStop?.id ?? 'driver-pickup',
     label: pickupStop?.address ?? 'Điểm lấy hàng',
+    coords: pickupStop ? { lat: pickupStop.lat, lng: pickupStop.lng } : undefined,
   };
   const destination: DriverRoutePoint = {
     id: dropoffStop?.id ?? 'driver-dropoff',
     label: dropoffStop?.address ?? 'Điểm giao hàng',
+    coords: dropoffStop ? { lat: dropoffStop.lat, lng: dropoffStop.lng } : undefined,
   };
   const stops: readonly DriverRoutePoint[] = intermediateStops.map((s) => ({
     id: s.id,
     label: s.address,
+    coords: { lat: s.lat, lng: s.lng },
   }));
 
   const distanceLabel = formatDistance(order.distanceMeters);

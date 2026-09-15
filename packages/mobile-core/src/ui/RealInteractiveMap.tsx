@@ -104,21 +104,13 @@ export function resolveLocationCoords(
     }
   }
 
-  // Anchor fallback around reference coordinate (e.g. Origin / Destination) if available
-  const baseLat = referenceCoords ? referenceCoords.lat : 10.78;
-  const baseLng = referenceCoords ? referenceCoords.lng : 106.68;
-
-  let hash = 0;
-  for (let i = 0; i < query.length; i++) {
-    hash = (hash << 5) - hash + query.charCodeAt(i);
-    hash |= 0;
+  // Strict real-GPS fallback: never invent nearby jitter.
+  // Anchors exactly at the given reference (e.g. current origin) when available,
+  // otherwise at central HCMC as the explicit unknown-location anchor.
+  if (referenceCoords) {
+    return { lat: referenceCoords.lat, lng: referenceCoords.lng };
   }
-  const latOffset = ((Math.abs(hash) % 100) / 100) * 0.03 - 0.015;
-  const lngOffset = ((Math.abs(hash >> 3) % 100) / 100) * 0.03 - 0.015;
-  return {
-    lat: Number((baseLat + latOffset).toFixed(5)),
-    lng: Number((baseLng + lngOffset).toFixed(5)),
-  };
+  return { lat: 10.7769, lng: 106.7009 }; // Central HCMC
 }
 
 /**
