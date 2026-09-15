@@ -253,6 +253,16 @@ env_set CORS_ORIGINS "http://${HOST},http://${HOST}:${GATEWAY_PORT_VALUE},http:/
 
 echo "  ✅ Public host: http://${HOST}"
 
+# An .env.prod written before the demo-auth acknowledgement existed would boot
+# the API with AUTH_DEMO_LOGIN_ENABLED=true and no ALLOW_DEMO_AUTH_PROVIDER, and
+# the env schema rejects that combination. Backfill it so an existing file keeps
+# working instead of failing at container start.
+if [ "$(env_value AUTH_DEMO_LOGIN_ENABLED false)" = "true" ] &&
+  ! grep -q '^ALLOW_DEMO_AUTH_PROVIDER=' "$ENV_FILE"; then
+  env_set ALLOW_DEMO_AUTH_PROVIDER true
+  echo "  ✅ Added ALLOW_DEMO_AUTH_PROVIDER=true (required for demo login in production)"
+fi
+
 # ── Step 3: Build images ────────────────────────────────────────
 echo ""
 echo "📦 Step 3/6 — Building images (first run takes several minutes)..."

@@ -55,6 +55,32 @@ describe('OTP provider boundary', () => {
     });
   });
 
+  it('accepts the demo provider in production once it is explicitly acknowledged', async () => {
+    const { DemoOtpProvider } = await import('./demo-otp.provider.js');
+    const provider = new DemoOtpProvider({
+      enabled: true,
+      nodeEnv: 'production',
+      allowInProduction: true,
+    });
+
+    await expect(provider.verify('customer')).resolves.toMatchObject({
+      phoneNumber: '+840000000001',
+    });
+  });
+
+  it('still rejects the acknowledged demo provider when the flag itself is off', async () => {
+    const { DemoOtpProvider } = await import('./demo-otp.provider.js');
+    const provider = new DemoOtpProvider({
+      enabled: false,
+      nodeEnv: 'production',
+      allowInProduction: true,
+    });
+
+    await expect(provider.verify('customer')).rejects.toMatchObject({
+      code: 'OTP_PROVIDER_DISABLED',
+    });
+  });
+
   it('maps Firebase decoded tokens without exposing the raw id token', async () => {
     const { FirebaseOtpProvider } = await import('./firebase-otp.provider.js');
     verifyIdToken.mockResolvedValue({

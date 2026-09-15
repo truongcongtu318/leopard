@@ -120,6 +120,50 @@ describe('production environment schema', () => {
     ).toMatchObject({ MAP_PROVIDER: 'demo', VIETMAP_API_KEY: undefined });
   });
 
+  it('refuses demo auth in production unless it is explicitly acknowledged', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: undefined,
+      }),
+    ).toThrow(/ALLOW_DEMO_AUTH_PROVIDER/);
+  });
+
+  it('accepts demo auth in production once acknowledged', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+      }),
+    ).toMatchObject({
+      AUTH_DEMO_LOGIN_ENABLED: true,
+      ALLOW_DEMO_AUTH_PROVIDER: true,
+    });
+  });
+
+  it('does not demand the demo auth acknowledgement when demo login is off', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'false',
+        ALLOW_DEMO_AUTH_PROVIDER: undefined,
+      }),
+    ).toMatchObject({ AUTH_DEMO_LOGIN_ENABLED: false });
+  });
+
+  it('does not demand the demo auth acknowledgement outside production', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        NODE_ENV: 'development',
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: undefined,
+      }),
+    ).toMatchObject({ AUTH_DEMO_LOGIN_ENABLED: true });
+  });
+
   it('still requires VIETMAP_API_KEY when MAP_PROVIDER=vietmap', () => {
     expect(() =>
       parseEnv({ ...validProductionEnv, VIETMAP_API_KEY: '' }),

@@ -7,6 +7,17 @@ import {
 export interface DemoOtpProviderOptions {
   readonly enabled: boolean;
   readonly nodeEnv: string;
+  /**
+   * Explicit production opt-in.
+   *
+   * Demo credentials are meant for local and staging environments, so a
+   * production deployment has to acknowledge them with
+   * `ALLOW_DEMO_AUTH_PROVIDER=true` — the same shape every other demo provider
+   * in this codebase already uses (`ALLOW_DEMO_PROVIDER`,
+   * `ALLOW_DEMO_PAYMENT_PROVIDER`, `ALLOW_LOCAL_STORAGE_PROVIDER`, ...). The env
+   * schema requires that acknowledgement in production.
+   */
+  readonly allowInProduction?: boolean;
 }
 
 export const DEMO_IDENTITIES = new Map<string, OtpIdentity>([
@@ -45,7 +56,11 @@ export class DemoOtpProvider implements OtpProvider {
   constructor(private readonly options: DemoOtpProviderOptions) {}
 
   public async verify(idToken: string): Promise<OtpIdentity> {
-    if (!this.options.enabled || !ALLOWED_DEMO_ENVS.has(this.options.nodeEnv)) {
+    const envAllowed =
+      ALLOWED_DEMO_ENVS.has(this.options.nodeEnv) ||
+      this.options.allowInProduction === true;
+
+    if (!this.options.enabled || !envAllowed) {
       throw new OtpProviderError(
         'OTP_PROVIDER_DISABLED',
         'Demo OTP provider is disabled',

@@ -130,9 +130,12 @@ export class AuthService {
       (altPhone ? this.otpStore.get(altPhone) : undefined);
 
     const isStoredMatch = stored && stored.code === otp && stored.expiresAt > Date.now();
+    // Outside production the demo path stays available for local runs; in
+    // production it additionally needs the explicit acknowledgement, so a real
+    // deployment cannot accept the universal test code by accident.
     const isDemoAllowed =
-      process.env.AUTH_DEMO_LOGIN_ENABLED === 'true' ||
-      (process.env.NODE_ENV ?? 'development') !== 'production';
+      process.env.AUTH_DEMO_LOGIN_ENABLED === 'true' &&
+      (!this.isProduction() || this.isDemoAuthAcknowledged());
     const isUniversalTestCode = isDemoAllowed && (otp === '123456' || otp === '654321');
 
     if (!isStoredMatch && !isUniversalTestCode) {
@@ -163,6 +166,7 @@ export class AuthService {
     const provider = new DemoOtpProvider({
       enabled: process.env.AUTH_DEMO_LOGIN_ENABLED === 'true',
       nodeEnv: process.env.NODE_ENV ?? 'development',
+      allowInProduction: this.isDemoAuthAcknowledged(),
     });
     const identity = await this.verifyProviderToken(() => provider.verify(accountId), {
       disabledCode: 'DEMO_LOGIN_DISABLED',
@@ -382,6 +386,20 @@ export class AuthService {
     }
 
     return null;
+  }
+
+  private isProduction(): boolean {
+    return (process.env.NODE_ENV ?? 'development') === 'production';
+  }
+
+  /**
+   * Whether a production deployment has explicitly opted in to demo auth.
+   * The env schema refuses to start without this when
+   * `AUTH_DEMO_LOGIN_ENABLED=true`, so the provider check here is the second
+   * line of defence rather than the only one.
+   */
+  private isDemoAuthAcknowledged(): boolean {
+    return process.env.ALLOW_DEMO_AUTH_PROVIDER === 'true';
   }
 
   private normalizePhone(phone: string): string {

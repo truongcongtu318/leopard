@@ -70,6 +70,8 @@ const envSchema = z
     CORS_ORIGINS: corsOriginsSchema,
     AUTH_ACCESS_TOKEN_SECRET: secretSchema.optional(),
     AUTH_REFRESH_TOKEN_SECRET: secretSchema.optional(),
+    AUTH_DEMO_LOGIN_ENABLED: booleanFlagSchema.optional(),
+    ALLOW_DEMO_AUTH_PROVIDER: booleanFlagSchema.optional(),
     ESTIMATE_TOKEN_HMAC_SECRET: secretSchema.optional(),
     PRICING_MINIMUM_FARE_VND: nonNegativeIntegerSchema.optional(),
     PRICING_STOP_SURCHARGE_VND: nonNegativeIntegerSchema.optional(),
@@ -184,6 +186,18 @@ const envSchema = z
         code: 'custom',
         path: ['ALLOW_DEMO_PROVIDER'],
         message: 'ALLOW_DEMO_PROVIDER=true is required when MAP_PROVIDER=demo',
+      });
+    }
+
+    // Demo credentials must never reach a production deployment by momentum.
+    // Every other demo provider in this schema already demands its own
+    // acknowledgement; auth was the one exception, and a demo box needs it.
+    if (env.AUTH_DEMO_LOGIN_ENABLED === true && env.ALLOW_DEMO_AUTH_PROVIDER !== true) {
+      context.addIssue({
+        code: 'custom',
+        path: ['ALLOW_DEMO_AUTH_PROVIDER'],
+        message:
+          'ALLOW_DEMO_AUTH_PROVIDER=true is required when AUTH_DEMO_LOGIN_ENABLED=true',
       });
     }
 
@@ -307,6 +321,8 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     CORS_ORIGINS: source.CORS_ORIGINS,
     AUTH_ACCESS_TOKEN_SECRET: source.AUTH_ACCESS_TOKEN_SECRET,
     AUTH_REFRESH_TOKEN_SECRET: source.AUTH_REFRESH_TOKEN_SECRET,
+    AUTH_DEMO_LOGIN_ENABLED: source.AUTH_DEMO_LOGIN_ENABLED,
+    ALLOW_DEMO_AUTH_PROVIDER: source.ALLOW_DEMO_AUTH_PROVIDER,
     ESTIMATE_TOKEN_HMAC_SECRET: source.ESTIMATE_TOKEN_HMAC_SECRET,
     PRICING_MINIMUM_FARE_VND: source.PRICING_MINIMUM_FARE_VND,
     PRICING_STOP_SURCHARGE_VND: source.PRICING_STOP_SURCHARGE_VND,
