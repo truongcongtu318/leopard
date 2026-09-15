@@ -42,6 +42,7 @@ import {
 
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
 import { tabBarVisibilityStore } from '../../navigation/tabBarVisibilityStore';
+import { searchVietmapWithCoords } from './services/vietmap-search';
 import {
   BookingDetailsModal,
   reverseGeocodeCoords,
@@ -218,34 +219,12 @@ export function searchPlacesDirect(query: string): readonly LocationSuggestionIt
 
 export async function searchPlacesLive(
   query: string,
-  apiKey: string = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'c5a816dc04e0e2ad232a6bc91da9ae183a11b6e4b61cc646'
+  apiKey?: string,
 ): Promise<readonly LocationSuggestionItem[]> {
   const trimmed = query.trim();
-  if (!trimmed || trimmed.length < 2) {
-    return [];
-  }
-
-  // 1. Live Vietmap Autocomplete Places API v4
-  if (apiKey) {
-    try {
-      const url = `https://maps.vietmap.vn/api/autocomplete/v4?apikey=${encodeURIComponent(apiKey)}&text=${encodeURIComponent(trimmed)}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return data.slice(0, 6).map((item: any, idx: number) => ({
-            id: item.ref_id || `vm-${idx}-${Date.now()}`,
-            title: item.name || item.display || trimmed,
-            subtitle: item.display || item.address || '',
-            address: item.display || item.address || item.name || trimmed,
-          }));
-        }
-      }
-    } catch {
-      // network fallback
-    }
-  }
-
+  if (!trimmed || trimmed.length < 2) return [];
+  const liveResults = await searchVietmapWithCoords(trimmed, apiKey);
+  if (liveResults.length > 0) return liveResults;
   return searchPlacesDirect(trimmed);
 }
 

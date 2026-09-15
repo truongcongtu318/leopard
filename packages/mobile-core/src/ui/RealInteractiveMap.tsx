@@ -97,7 +97,8 @@ export function resolveLocationCoords(
   }
 
   const query = nameOrAddress.toLowerCase().trim();
-  for (const [key, coords] of Object.entries(VIETNAM_LOCATION_DICT)) {
+  const sortedEntries = Object.entries(VIETNAM_LOCATION_DICT).sort((a, b) => b[0].length - a[0].length);
+  for (const [key, coords] of sortedEntries) {
     if (query.includes(key)) {
       return coords;
     }
