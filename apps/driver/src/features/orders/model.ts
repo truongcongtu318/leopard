@@ -18,6 +18,7 @@ export type DriverRoutePoint = Readonly<{
   label: string;
   lat?: number;
   lng?: number;
+  coords?: { lat: number; lng: number };
 }>;
 
 export type DriverRoutePointView = Readonly<{
@@ -41,6 +42,7 @@ export type DriverRouteStopView = Readonly<{
   lng?: number;
   latitude?: number;
   longitude?: number;
+  coords?: { lat: number; lng: number };
   progress: DriverStopProgressStatus;
   contactName?: string | null;
   contactPhone?: string | null;
@@ -66,7 +68,6 @@ export type DriverRouteEtaView = Readonly<{
   polylineCoords: readonly RouteCoordinate[];
   polylineSegments?: readonly RoutePolylineSegment[];
 }>;
-
 export type DriverRouteView = Readonly<{
   origin: DriverRoutePoint;
   stops: readonly DriverRouteStopView[];

@@ -9,7 +9,9 @@ const activeShipment = {
   orderId: 'ord-active-1',
   status: 'IN_TRANSIT' as const,
   origin: 'Kho Tân Bình',
+  originCoords: { lat: 10.795, lng: 106.652 },
   destination: 'KCN Tân Tạo',
+  destinationCoords: { lat: 10.75, lng: 106.58 },
   cargoNote: '1.2 tấn xi măng',
   driverName: 'Nguyễn Văn Hùng',
   plate: '59C-882.14',
@@ -89,7 +91,7 @@ describe('HomeDashboardScreen', () => {
     // Active shipment sits below booking: status + route + ETA, opens on press
     expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
     expect(screen.getByText('Kho Tân Bình')).toBeTruthy();
-    expect(screen.getByText(/18 phút/)).toBeTruthy();
+    expect(screen.getAllByText(/18 phút/)[0]).toBeTruthy();
     expect(screen.getByText(/59C-882\.14/)).toBeTruthy();
     await fireEvent.press(screen.getByLabelText(/Chuyến đang vận chuyển/));
     expect(onOpenActiveOrder).toHaveBeenCalledWith('ord-active-1');
@@ -121,19 +123,51 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it('renders the floating nav bar when enabled', async () => {
-    const onNavigateTab = jest.fn();
+  it('hides home tab bar while booking flow is active and restores on unmount', async () => {
+    const { tabBarVisibilityStore } = require('../../navigation/tabBarVisibilityStore');
+    expect(tabBarVisibilityStore.isHidden()).toBe(false);
+
+    const screen = await render(<HomeDashboardScreen />);
+
+    // Typing dropoff (>= 3 chars) reveals fleet matrix and hides tab bar
+    await fireEvent.changeText(screen.getByTestId('cr-dropoff-input'), 'KCN Tân Tạo');
+    expect(screen.getByTestId('home-fleet-matrix')).toBeTruthy();
+    expect(tabBarVisibilityStore.isHidden()).toBe(true);
+
+    // Clearing dropoff restores tab bar
+    await fireEvent.changeText(screen.getByTestId('cr-dropoff-input'), '');
+    expect(tabBarVisibilityStore.isHidden()).toBe(false);
+
+    // Re-activating booking then unmounting restores tab bar
+    await fireEvent.changeText(screen.getByTestId('cr-dropoff-input'), 'KCN Tân Tạo');
+    expect(tabBarVisibilityStore.isHidden()).toBe(true);
+    await screen.unmount();
+    expect(tabBarVisibilityStore.isHidden()).toBe(false);
+  }, 60000);
+
+  it('exposes iOS 18 Inset Grouped vertical vehicle list with single CTA (no horizontal carousel)', async () => {
     const screen = await render(
-      <HomeDashboardScreen onNavigateTab={onNavigateTab} showFloatingNavBar />,
+      <HomeDashboardScreen defaultDropoffLocation="KCN Tân Tạo" />,
     );
 
-    const walletTab = screen.getByLabelText('Ví');
-    expect(walletTab).toBeTruthy();
-    await fireEvent.press(walletTab);
-    expect(onNavigateTab).toHaveBeenCalledWith('wallet');
+    for (const id of ['VAN_500KG', 'TRUCK_125T', 'TRUCK_25T', 'BIKE_3W']) {
+      expect(screen.getByTestId(`vehicle-row-${id}`)).toBeTruthy();
+    }
+
+    // Exactly one primary CTA, showing fare inside
+    const ctas = await screen.findAllByTestId('home-main-cta-btn');
+    expect(ctas).toHaveLength(1);
+    expect(screen.getByText(/TIẾP TỤC ĐẶT XE · 200\.000 ₫/)).toBeTruthy();
+
+    // No horizontal-carousel-only styles: full-width rows, all price strings visible
+    expect(screen.getByText('130.000 ₫')).toBeTruthy();
+    expect(screen.getAllByText('200.000 ₫').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('320.000 ₫')).toBeTruthy();
+    expect(screen.getByText('70.000 ₫')).toBeTruthy();
 
     await screen.unmount();
-  });
+  }, 60000);
+
 
   it('renders time-of-day greeting correctly', () => {
     expect(getTimeOfDayGreeting(new Date(2026, 8, 3, 8, 0))).toBe('Chào buổi sáng');
@@ -177,6 +211,8 @@ describe('HomeDashboardScreen', () => {
     expect(onQuickBook).toHaveBeenCalledWith(
       'Kho Tân Bình, TP. Hồ Chí Minh',
       'KCN Sóng Thần, Bình Dương',
+      undefined,
+      undefined,
     );
 
     await screen.unmount();
@@ -380,6 +416,8 @@ describe('HomeDashboardScreen', () => {
     expect(onQuickBook).toHaveBeenCalledWith(
       'Kho Tân Bình, TP. Hồ Chí Minh',
       'KCN Amata, Đồng Nai',
+      undefined,
+      undefined,
     );
 
     await screen.unmount();
@@ -443,7 +481,26 @@ describe('HomeDashboardScreen', () => {
     const navStyle = [navBar.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
     expect(navStyle.zIndex).toBe(60);
 
+    // Bottom sheet spacer provides floating nav clearance
+    const spacer = screen.getByTestId('home-sheet-bottom-spacer');
+    const spacerStyle = [spacer.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(spacerStyle.height).toBeGreaterThanOrEqual(104);
+
     await screen.unmount();
+  });
+
+  it('provides bottom nav clearance by default and collapses when hasFloatingNavBar is false', async () => {
+    const screenWithDock = await render(<HomeDashboardScreen />);
+    const spacerDefault = screenWithDock.getByTestId('home-sheet-bottom-spacer');
+    const defaultStyle = [spacerDefault.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(defaultStyle.height).toBeGreaterThanOrEqual(104);
+    await screenWithDock.unmount();
+
+    const screenWithoutDock = await render(<HomeDashboardScreen hasFloatingNavBar={false} />);
+    const spacerCollapsed = screenWithoutDock.getByTestId('home-sheet-bottom-spacer');
+    const collapsedStyle = [spacerCollapsed.props.style].flat().reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    expect(collapsedStyle.height).toBe(24);
+    await screenWithoutDock.unmount();
   });
 
   describe('progressive disclosure for route and fleet selection', () => {
@@ -488,7 +545,7 @@ describe('HomeDashboardScreen', () => {
       // Fleet matrix, fare estimate, and CTA button are revealed
       expect(screen.getByText('CHỌN LOẠI XE PHÙ HỢP')).toBeTruthy();
       expect(screen.getByText('ƯỚC TÍNH CƯỚC CHUYẾN')).toBeTruthy();
-      expect(screen.getByText('TIẾP TỤC ĐẶT XE · 280.000 ₫ ➔')).toBeTruthy();
+      expect(screen.getByText('TIẾP TỤC ĐẶT XE · 200.000 ₫ ➔')).toBeTruthy();
 
       await screen.unmount();
     });
@@ -559,7 +616,7 @@ describe('HomeDashboardScreen', () => {
           receiverPhone: '0912345678',
           vehicleCategory: 'LIGHT_TRUCK',
           vehicleName: 'Xe Tải 1.25T',
-          totalFare: 280000,
+          totalFare: 200000,
         }),
       );
 

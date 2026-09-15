@@ -35,12 +35,15 @@ import {
   haptic,
   httpClient,
   iosContinuousCurve,
+  layout,
   sessionStore,
   type TabKey,
   type VehicleCategory,
 } from '@leopard/mobile-core';
 
 import { addressStore, type SavedAddress } from '../customer/addresses/address-store';
+import { tabBarVisibilityStore } from '../../navigation/tabBarVisibilityStore';
+import { searchVietmapWithCoords } from './services/vietmap-search';
 import {
   BookingDetailsModal,
   reverseGeocodeCoords,
@@ -53,7 +56,9 @@ export type ActiveShipment = Readonly<{
   orderId: string;
   status: OrderStatus;
   origin: string;
+  originCoords?: { lat: number; lng: number };
   destination: string;
+  destinationCoords?: { lat: number; lng: number };
   cargoNote?: string;
   driverName?: string;
   plate?: string;
@@ -98,26 +103,28 @@ export const FLEET_LOADING_FEES: Record<FleetVehicleCategory, number> = {
   TRUCK_25T: 250000,
 };
 
+// Giá mở cửa chuẩn — khớp PR business model (Task 4):
+// Ba gác 70k · Van 500kg 130k · Tải 1.25T 200k · Tải 2.5T 320k.
 export const FLEET_VEHICLES: readonly FleetVehicleItem[] = [
   {
     id: 'VAN_500KG', name: 'Van 500kg', subName: 'Chở hàng phố cấm',
     weightCapacity: '500 kg', dimensions: '2.1 x 1.3 x 1.2m', dimensionLabel: '2.1 x 1.3 x 1.2m',
-    estimatedPrice: '160.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0284C7', badge: 'Đô thị',
+    estimatedPrice: '130.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0284C7', badge: 'Đô thị',
   },
   {
     id: 'TRUCK_125T', name: 'Xe Tải 1.25T', subName: 'Chuyển nhà & xưởng',
     weightCapacity: '1.250 kg', dimensions: '3.2 x 1.6 x 1.7m', dimensionLabel: '3.2 x 1.6 x 1.7m',
-    estimatedPrice: '280.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0B1E42', badge: 'Phổ biến',
+    estimatedPrice: '200.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0B1E42', badge: 'Phổ biến',
   },
   {
     id: 'TRUCK_25T', name: 'Xe Tải 2.5T', subName: 'Hàng nặng liên tỉnh',
     weightCapacity: '2.500 kg', dimensions: '4.3 x 1.8 x 1.9m', dimensionLabel: '4.3 x 1.8 x 1.9m',
-    estimatedPrice: '450.000 ₫', vehicleCategory: 'HEAVY_TRUCK', accentColor: '#0B1E42', badge: 'Tải lớn',
+    estimatedPrice: '320.000 ₫', vehicleCategory: 'HEAVY_TRUCK', accentColor: '#0B1E42', badge: 'Tải lớn',
   },
   {
     id: 'BIKE_3W', name: 'Xe Ba Gác', subName: 'Ngõ nhỏ linh hoạt',
     weightCapacity: '400 kg', dimensions: '1.8 x 1.1m', dimensionLabel: '1.8 x 1.1m',
-    estimatedPrice: '120.000 ₫', vehicleCategory: '3_WHEEL_BIKE', accentColor: '#F59E0B', badge: 'Tiết kiệm',
+    estimatedPrice: '70.000 ₫', vehicleCategory: '3_WHEEL_BIKE', accentColor: '#F59E0B', badge: 'Tiết kiệm',
   },
 ];
 
@@ -217,34 +224,12 @@ export function searchPlacesDirect(query: string): readonly LocationSuggestionIt
 
 export async function searchPlacesLive(
   query: string,
-  apiKey: string = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'c5a816dc04e0e2ad232a6bc91da9ae183a11b6e4b61cc646'
+  apiKey?: string,
 ): Promise<readonly LocationSuggestionItem[]> {
   const trimmed = query.trim();
-  if (!trimmed || trimmed.length < 2) {
-    return [];
-  }
-
-  // 1. Live Vietmap Autocomplete Places API v4
-  if (apiKey) {
-    try {
-      const url = `https://maps.vietmap.vn/api/autocomplete/v4?apikey=${encodeURIComponent(apiKey)}&text=${encodeURIComponent(trimmed)}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return data.slice(0, 6).map((item: any, idx: number) => ({
-            id: item.ref_id || `vm-${idx}-${Date.now()}`,
-            title: item.name || item.display || trimmed,
-            subtitle: item.display || item.address || '',
-            address: item.display || item.address || item.name || trimmed,
-          }));
-        }
-      }
-    } catch {
-      // network fallback
-    }
-  }
-
+  if (!trimmed || trimmed.length < 2) return [];
+  const liveResults = await searchVietmapWithCoords(trimmed, apiKey);
+  if (liveResults.length > 0) return liveResults;
   return searchPlacesDirect(trimmed);
 }
 
@@ -285,37 +270,48 @@ export type HomeDashboardScreenProps = Readonly<{
   onOpenProfile?: () => void;
   onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
   onRegisterDriver?: () => void;
-  onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }) => void;
+  onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }, pickupCoords?: { lat: number; lng: number }) => void;
   onConfirmBooking?: (details: BookingDetails & { pickup: string; dropoff: string; stops?: readonly StopItem[]; vehicleCategory: VehicleCategory; vehicleName: string }) => void;
   onOpenSavedAddresses?: () => void;
   onNavigateTab?: (tab: TabKey) => void;
   onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
   onTopUpWallet?: () => void;
   onOpenQrScan?: () => void;
+  hasFloatingNavBar?: boolean;
   showFloatingNavBar?: boolean;
   initialCargoImageUri?: string;
 }>;
 
 export function HomeDashboardScreen({
-  activeShipment = DEFAULT_ACTIVE_SHIPMENT, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
+  activeShipment = null, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
   initialCargoImageUri,
   onConfirmBooking, onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
   onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
-  onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = DEFAULT_RECENT_ORDERS,
-  savedAddresses, showFloatingNavBar = false, smeName = 'Cửa hàng VLXD Đại Phát',
+  onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = [],
+  savedAddresses, hasFloatingNavBar = true, showFloatingNavBar = false, smeName = 'Cửa hàng VLXD Đại Phát',
   unreadMessages = 0, unreadNotifications = 3, userName = 'Anh Hoàng', userPhone,
 }: HomeDashboardScreenProps) {
   const insets = React.useContext(SafeAreaInsetsContext);
   const topInset = insets?.top ?? 0;
+  const bottomInset = insets?.bottom ?? 0;
+  const bottomNavPadding = hasFloatingNavBar || showFloatingNavBar
+    ? layout.bottomNavClearance + bottomInset
+    : 24;
   const [activeTab, setActiveTab] = useState<TabKey>('home');
 
   const initialSaved = addressStore.getDefaultAddress();
   const initialAddress = defaultPickupLocation ?? initialSaved?.address ?? 'Kho Tân Bình, TP. Hồ Chí Minh';
   const initialLabel = defaultPickupLabel ?? initialSaved?.label ?? null;
+  const initialPickupCoords =
+    initialSaved?.latitude && initialSaved?.longitude
+      ? { lat: initialSaved.latitude, lng: initialSaved.longitude }
+      : null;
 
   const [pickupText, setPickupText] = useState(initialAddress);
   const [pickupLabel, setPickupLabel] = useState<string | null>(initialLabel);
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | null>(initialPickupCoords);
   const [dropoffText, setDropoffText] = useState(defaultDropoffLocation ?? '');
+  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [stops, setStops] = useState<readonly StopItem[]>([]);
   const [selectedFleetId, setSelectedFleetId] = useState<FleetVehicleCategory>('TRUCK_125T');
   const [focusedField, setFocusedField] = useState<'pickup' | 'dropoff' | `stop:${string}` | null>(null);
@@ -355,14 +351,19 @@ export function HomeDashboardScreen({
       if (navigationTimeoutRef.current) clearTimeout(navigationTimeoutRef.current);
       navigationTimeoutRef.current = setTimeout(() => {
         if (onQuickBook) {
-          dropoffCoords ? onQuickBook(pickup, dropoff, dropoffCoords) : onQuickBook(pickup, dropoff);
+          onQuickBook(
+            pickup,
+            dropoff,
+            dropoffCoords || undefined,
+            pickupCoords || undefined,
+          );
         } else {
           onCreateOrder?.();
         }
         setTimeout(() => { setIsAutoNavigating(false); hasNavigatedRef.current = false; }, 1500);
       }, 400);
     },
-    [onQuickBook, onCreateOrder],
+    [onQuickBook, onCreateOrder, pickupCoords],
   );
 
   useEffect(() => {
@@ -374,6 +375,9 @@ export function HomeDashboardScreen({
       if (saved?.address) {
         setPickupText(saved.address);
         setPickupLabel(saved.label || null);
+        if (saved.latitude && saved.longitude) {
+          setPickupCoords({ lat: saved.latitude, lng: saved.longitude });
+        }
       }
     }
   }, [defaultPickupLocation, defaultPickupLabel]);
@@ -435,7 +439,16 @@ export function HomeDashboardScreen({
     () => FLEET_VEHICLES.find((v) => v.id === selectedFleetId) || FLEET_VEHICLES[1],
     [selectedFleetId],
   );
-  const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
+  const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 200000;
+
+  // Hide the home tab bar while the booking flow is active (dropoff picked).
+  // Single bottom action (action bar CTA) owns the thumb zone per iOS HIG.
+  useEffect(() => {
+    tabBarVisibilityStore.setHidden(hasSelectedDropoff && !activeShipment);
+    return () => {
+      tabBarVisibilityStore.setHidden(false);
+    };
+  }, [hasSelectedDropoff, activeShipment]);
 
   const handleAddStop = useCallback(() => {
     if (stops.length >= 3) return;
@@ -528,7 +541,12 @@ export function HomeDashboardScreen({
         vehicleName: currentFleetVehicle.name,
       });
     } else if (onQuickBook) {
-      onQuickBook(pickupText, dropoffText);
+      onQuickBook(
+        pickupText,
+        dropoffText,
+        dropoffCoords || undefined,
+        pickupCoords || undefined,
+      );
     } else {
       onCreateOrder?.();
     }
@@ -549,11 +567,30 @@ export function HomeDashboardScreen({
       {/* ================= LAYER 0 (z-index 0): 100% FULL-BLEED MAP ================= */}
       <View pointerEvents="box-none" style={styles.layer0Map} testID="home-map-layer">
         <RealInteractiveMap
-          destination={dropoffText ? { label: dropoffText } : undefined}
+          destination={
+            activeShipment
+              ? {
+                  label: activeShipment.destination,
+                  coords: activeShipment.destinationCoords,
+                }
+              : hasSelectedDropoff
+                ? { label: dropoffText, coords: dropoffCoords || undefined }
+                : undefined
+          }
           height="100%" interactive
-          mode={activeShipment ? 'tracking' : dropoffText ? 'route' : 'preview'}
-          origin={pickupText ? { label: pickupText } : undefined}
-          stops={mapStops}
+          mode={activeShipment ? 'tracking' : hasSelectedDropoff ? 'route' : 'preview'}
+          origin={
+            activeShipment
+              ? {
+                  label: activeShipment.origin,
+                  coords: activeShipment.originCoords,
+                }
+              : pickupText
+                ? { label: pickupText, coords: pickupCoords || undefined }
+                : undefined
+          }
+          stops={activeShipment ? [] : mapStops}
+          truckEtaMinutes={activeShipment?.etaMinutes}
           testID="home-interactive-map"
         />
       </View>
@@ -644,7 +681,7 @@ export function HomeDashboardScreen({
                   />
                 </View>
                 {pickupText.length > 0 ? (
-                  <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); }} style={styles.inputActionBtn}>
+                  <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); setPickupCoords(null); }} style={styles.inputActionBtn}>
                     <IconClose color="#94A3B8" size={14} />
                   </Pressable>
                 ) : null}
@@ -693,7 +730,7 @@ export function HomeDashboardScreen({
                   />
                 </View>
                 {dropoffText.length > 0 ? (
-                  <Pressable accessibilityLabel="Xóa điểm giao hàng" accessibilityRole="button" hitSlop={8} onPress={() => setDropoffText('')} style={styles.inputActionBtn}>
+                  <Pressable accessibilityLabel="Xóa điểm giao hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setDropoffText(''); setDropoffCoords(null); }} style={styles.inputActionBtn}>
                     <IconClose color="#94A3B8" size={14} />
                   </Pressable>
                 ) : null}
@@ -755,8 +792,10 @@ export function HomeDashboardScreen({
                           if (focusedField === 'pickup') {
                             setPickupText(item.address);
                             setPickupLabel(item.title);
+                            setPickupCoords(item.coords || null);
                           } else if (focusedField === 'dropoff') {
                             setDropoffText(item.address);
+                            setDropoffCoords(item.coords || null);
                           } else if (focusedField?.startsWith('stop:')) {
                             const stopId = focusedField.slice('stop:'.length);
                             handleUpdateStop(stopId, item.address, item.coords);
@@ -844,38 +883,64 @@ export function HomeDashboardScreen({
                   <Text style={styles.sectionSubLabel}>Kích thước thùng chuẩn xác</Text>
                 </View>
 
-                <ScrollView contentContainerStyle={styles.fleetScrollContent} horizontal showsHorizontalScrollIndicator={false}>
+                {/* iOS 18 Inset Grouped vertical vehicle list — full row, no truncation */}
+                <View style={styles.vehicleList}>
                   {FLEET_VEHICLES.map((vehicle) => {
                     const isSelected = vehicle.id === selectedFleetId;
                     return (
                       <Pressable
                         accessibilityLabel={`Chọn xe ${vehicle.name}, kích thước ${vehicle.dimensions}, giá dự kiến ${vehicle.estimatedPrice}`}
-                        accessibilityRole="button" key={vehicle.id} onPress={() => handleFleetSelectAndBook(vehicle)}
-                        style={[styles.fleetCard, isSelected && styles.fleetCardSelected]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: isSelected }}
+                        key={vehicle.id}
+                        onPress={() => handleFleetSelectAndBook(vehicle)}
+                        style={({ pressed }) => [
+                          styles.vehicleRow,
+                          isSelected && styles.vehicleRowSelected,
+                          pressed && styles.vehicleRowPressed,
+                        ]}
+                        testID={`vehicle-row-${vehicle.id}`}
                       >
-                        {vehicle.badge ? (
-                          <View style={[styles.fleetBadge, isSelected && styles.fleetBadgeSelected]}>
-                            <Text style={[styles.fleetBadgeText, isSelected && styles.fleetBadgeTextSelected]}>{vehicle.badge}</Text>
+                        <View style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}>
+                          {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? '#F59E0B' : '#64748B'} size={28} />}
+                          {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? '#0284C7' : '#64748B'} size={28} />}
+                          {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={28} />}
+                          {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={30} />}
+                        </View>
+                        <View style={styles.vehicleMeta}>
+                          <View style={styles.vehicleNameRow}>
+                            <Text numberOfLines={1} style={[styles.vehicleName, isSelected && styles.vehicleNameSelected]}>
+                              {vehicle.name}
+                            </Text>
+                            {vehicle.badge ? (
+                              <View style={[styles.vehicleBadge, isSelected && styles.vehicleBadgeSelected]}>
+                                <Text style={[styles.vehicleBadgeText, isSelected && styles.vehicleBadgeTextSelected]}>
+                                  {vehicle.badge}
+                                </Text>
+                              </View>
+                            ) : null}
                           </View>
-                        ) : null}
-                        <View style={styles.fleetIconContainer}>
-                          {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? '#F59E0B' : '#64748B'} size={32} />}
-                          {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? '#0284C7' : '#64748B'} size={34} />}
-                          {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={34} />}
-                          {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={36} />}
+                          <View style={styles.vehicleSpecRow}>
+                            <View style={[styles.dimensionBadge, isSelected && styles.dimensionBadgeSelected]}>
+                              <Text style={[styles.dimensionText, isSelected && styles.dimensionTextSelected]}>
+                                {vehicle.dimensions}
+                              </Text>
+                            </View>
+                            <Text style={styles.fleetCapacityText}> · Tải trọng: {vehicle.weightCapacity}</Text>
+                          </View>
                         </View>
-                        <Text numberOfLines={1} style={[styles.fleetVehicleName, isSelected && styles.fleetVehicleNameSelected]}>{vehicle.name}</Text>
-                        <View style={[styles.dimensionBadge, isSelected && styles.dimensionBadgeSelected]}>
-                          <Text style={[styles.dimensionText, isSelected && styles.dimensionTextSelected]}>{vehicle.dimensions}</Text>
+                        <View style={styles.vehiclePriceCol}>
+                          <Text numberOfLines={1} style={[styles.vehiclePrice, isSelected && styles.vehiclePriceSelected]}>
+                            {vehicle.estimatedPrice}
+                          </Text>
+                          <View style={[styles.selectionDot, isSelected && styles.selectionDotSelected]} />
                         </View>
-                        <Text style={styles.fleetCapacityText}>Tải trọng: {vehicle.weightCapacity}</Text>
-                        <Text style={[styles.fleetPriceText, isSelected && styles.fleetPriceTextSelected]}>{vehicle.estimatedPrice}</Text>
                       </Pressable>
                     );
                   })}
-                </ScrollView>
+                </View>
 
-                {/* Fare Estimation & Big Sticky Bottom CTA */}
+                {/* Unified iOS 18 sticky bottom action bar: Fare estimation + Primary CTA */}
                 <View style={styles.fareCtaCard}>
                   <View style={styles.fareInfoRow}>
                     <View style={styles.fareLeftCol}>
@@ -895,7 +960,8 @@ export function HomeDashboardScreen({
 
                   <Pressable
                     accessibilityLabel={`Tiếp tục đặt xe ${currentFleetVehicle.name}, giá ${currentFleetVehicle.estimatedPrice}`}
-                    accessibilityRole="button" onPress={handleMainCtaBook}
+                    accessibilityRole="button"
+                    onPress={handleMainCtaBook}
                     style={({ pressed }) => [styles.bigCtaBtn, pressed && styles.bigCtaBtnPressed]}
                     testID="home-main-cta-btn"
                   >
@@ -953,7 +1019,7 @@ export function HomeDashboardScreen({
             </View>
           ) : null}
 
-          <View style={{ height: showFloatingNavBar ? 76 : 24 }} />
+          <View style={{ height: bottomNavPadding }} testID="home-sheet-bottom-spacer" />
         </ScrollView>
       </GestureBottomSheet>
 
@@ -982,9 +1048,19 @@ export function HomeDashboardScreen({
           if (savedAddressModalTarget === 'pickup') {
             setPickupText(addr.address);
             setPickupLabel(addr.label);
+            if (addr.latitude && addr.longitude) {
+              setPickupCoords({ lat: addr.latitude, lng: addr.longitude });
+            } else {
+              setPickupCoords(null);
+            }
             addressStore.setDefaultAddress(addr.id);
           } else if (savedAddressModalTarget === 'dropoff') {
             setDropoffText(addr.address);
+            if (addr.latitude && addr.longitude) {
+              setDropoffCoords({ lat: addr.latitude, lng: addr.longitude });
+            } else {
+              setDropoffCoords(null);
+            }
           } else if (savedAddressModalTarget.startsWith('stop:')) {
             const stopId = savedAddressModalTarget.slice('stop:'.length);
             handleUpdateStop(
@@ -1136,28 +1212,36 @@ const styles = StyleSheet.create({
   autoNavigatingBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', borderRadius: 10, padding: 8, marginTop: 8, gap: 8 },
   autoNavigatingText: { fontSize: 12, fontWeight: '700', color: '#059669' },
 
-  /* Fleet Matrix Section */
+  /* Fleet Matrix Section: iOS 18 Inset Grouped vertical list + unified action bar */
   fleetMatrixSection: { marginTop: 10 },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   sectionLabel: { fontSize: 12, fontWeight: '800', color: '#0B1E42', letterSpacing: 0.5 },
   sectionSubLabel: { fontSize: 11, fontWeight: '600', color: '#64748B' },
-  fleetScrollContent: { paddingVertical: 2 },
-  fleetCard: { width: 126, backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, padding: 9, marginRight: 8, borderWidth: 1.5, borderColor: '#E2E8F0', position: 'relative' },
-  fleetCardSelected: { borderColor: '#0B1E42', backgroundColor: '#F8FAFC' },
-  fleetBadge: { position: 'absolute', top: 6, right: 6, backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  fleetBadgeSelected: { backgroundColor: '#0B1E42' },
-  fleetBadgeText: { fontSize: 9, fontWeight: '800', color: '#64748B' },
-  fleetBadgeTextSelected: { color: '#FFFFFF' },
-  fleetIconContainer: { height: 34, justifyContent: 'center', marginBottom: 2 },
-  fleetVehicleName: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
-  fleetVehicleNameSelected: { color: '#0B1E42' },
-  dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start', marginVertical: 2 },
+  vehicleList: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', minHeight: 60 },
+  vehicleRowSelected: { backgroundColor: '#F2F6FC' },
+  vehicleRowPressed: { opacity: 0.85 },
+  vehicleIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center' },
+  vehicleIconBoxSelected: { backgroundColor: '#EAF0FA' },
+  vehicleMeta: { flex: 1, minWidth: 0 },
+  vehicleNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  vehicleName: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  vehicleNameSelected: { color: '#0B1E42' },
+  vehicleBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  vehicleBadgeSelected: { backgroundColor: '#0B1E42' },
+  vehicleBadgeText: { fontSize: 10, fontWeight: '800', color: '#64748B' },
+  vehicleBadgeTextSelected: { color: '#FFFFFF' },
+  vehicleSpecRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 4 },
+  dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   dimensionBadgeSelected: { backgroundColor: '#E2E8F0' },
   dimensionText: { fontSize: 11, fontWeight: '700', color: '#334155', fontVariant: ['tabular-nums'] },
   dimensionTextSelected: { color: '#0B1E42' },
-  fleetCapacityText: { fontSize: 10, color: '#64748B', marginBottom: 2 },
-  fleetPriceText: { fontSize: 13, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'] },
-  fleetPriceTextSelected: { color: '#0B1E42' },
+  fleetCapacityText: { fontSize: 11, color: '#64748B' },
+  vehiclePriceCol: { alignItems: 'flex-end', gap: 4 },
+  vehiclePrice: { fontSize: 15, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'], marginLeft: 8 },
+  vehiclePriceSelected: { color: '#0B1E42' },
+  selectionDot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: '#CBD5E1', backgroundColor: '#FFFFFF' },
+  selectionDotSelected: { borderColor: '#0B1E42', backgroundColor: '#0B1E42' },
 
   /* Fare Estimation Card & Big CTA Button */
   fareCtaCard: { backgroundColor: '#F8FAFC', borderRadius: 16, ...iosContinuousCurve, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E8F0' },

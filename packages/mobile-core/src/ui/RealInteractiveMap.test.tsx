@@ -20,11 +20,16 @@ describe('RealInteractiveMap', () => {
     expect(catLai.lat).toBeCloseTo(10.764, 2);
     expect(catLai.lng).toBeCloseTo(106.796, 2);
 
+    const nguHanhSon = resolveLocationCoords(
+      '12 Đường Hoàng Công Chất, Phường Ngũ Hành Sơn, Thành phố Đà Nẵng',
+    );
+    expect([16.035, 16.033]).toContainEqual(Number(nguHanhSon.lat.toFixed(3)));
+    expect([108.243, 108.245]).toContainEqual(Number(nguHanhSon.lng.toFixed(3)));
+    expect(nguHanhSon.lat).not.toBeCloseTo(16.054, 3);
+
     const fallback = resolveLocationCoords('Địa chỉ bất kỳ chưa biết');
-    expect(fallback.lat).toBeGreaterThan(10.0);
-    expect(fallback.lat).toBeLessThan(11.5);
-    expect(fallback.lng).toBeGreaterThan(106.0);
-    expect(fallback.lng).toBeLessThan(107.5);
+    expect(fallback.lat).toBeCloseTo(10.7769, 4);
+    expect(fallback.lng).toBeCloseTo(106.7009, 4);
   });
 
   it('renders route mode with origin and destination', async () => {
@@ -108,6 +113,13 @@ describe('RealInteractiveMap', () => {
 
     expect(screen.queryByText(/10\.\d+,\s*106\.\d+/)).toBeNull();
     await screen.unmount();
+  });
+
+  it('anchors destination coordinates exactly at reference origin when destination is not in dictionary', () => {
+    const daNangOriginCoords = { lat: 16.035, lng: 108.243 };
+    const resolved = resolveLocationCoords('400 Đường Chưa Biết Tên ABC', daNangOriginCoords);
+    expect(resolved.lat).toBe(daNangOriginCoords.lat);
+    expect(resolved.lng).toBe(daNangOriginCoords.lng);
   });
 });
 

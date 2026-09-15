@@ -74,15 +74,15 @@ describe('BookingDetailsModal', () => {
       screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(350000)} ➔`),
     ).toBeTruthy();
 
-    // Toggle VAT (8% of 200,000 = 16,000) -> 366,000
+    // Toggle VAT (8% of (200,000 + 150,000) = 28,000) -> 378,000
     const vatToggle = screen.getByLabelText('Xuất hóa đơn VAT điện tử (8%)');
     await fireEvent.press(vatToggle);
 
     expect(
-      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(366000)} ➔`),
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(378000)} ➔`),
     ).toBeTruthy();
 
-    // Untoggle bốc xếp -> 200,000 + 16,000 = 216,000
+    // Untoggle bốc xếp -> 200,000 + 16,000 (8% VAT trên 200,000) = 216,000
     await fireEvent.press(loadingToggle);
 
     expect(
@@ -108,7 +108,7 @@ describe('BookingDetailsModal', () => {
     expect(screen.getByText('+2 điểm dừng')).toBeTruthy();
 
     expect(
-      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(300000)} ➔`),
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(310000)} ➔`),
     ).toBeTruthy();
 
     await screen.unmount();

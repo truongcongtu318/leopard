@@ -47,6 +47,7 @@ describe('mapDispatchOfferEvent', () => {
       reference: expect.stringMatching(/^LP-/),
       pickupDistanceLabel: 'Cách bạn 0,2 km',
       pickupAddress: 'Kho Sao Mai, Q.7',
+      pickupCoords: { lat: 10.7326, lng: 106.7168 },
       dropoffAddress: 'Thủ Đức',
       tripDistanceLabel: '12,0 km',
       etaLabel: 'Thời gian dự kiến · 25 phút',

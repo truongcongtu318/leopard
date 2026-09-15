@@ -4,12 +4,14 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useNotificationsBootstrap } from '../../src/features/customer/notifications/useNotificationsBootstrap';
 import { useProtectedLayout } from '../../src/navigation/role-router';
+import { useTabBarHidden } from '../../src/navigation/tabBarVisibilityStore';
 import { spacing, typography, customerPalette, FloatingNavBar, type TabKey, TruckLoader } from '@leopard/mobile-core';
 
 export default function CustomerLayout() {
   const decision = useProtectedLayout('customer');
   const router = useRouter();
   const pathname = usePathname();
+  const isBookingFlowTabBarHidden = useTabBarHidden();
   const redirectTo = decision.kind === 'denied' ? decision.redirectTo : null;
 
   useNotificationsBootstrap(decision.kind === 'authorized');
@@ -96,7 +98,7 @@ export default function CustomerLayout() {
       <View style={styles.flex}>
         <Slot />
       </View>
-      {!isSubScreenWithoutNav ? (
+      {!isSubScreenWithoutNav && !isBookingFlowTabBarHidden ? (
         <FloatingNavBar
           accentBg={customerPalette.tabActiveBg}
           accentColor={customerPalette.tabActive}

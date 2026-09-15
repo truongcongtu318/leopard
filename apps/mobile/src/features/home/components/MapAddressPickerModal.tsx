@@ -66,7 +66,11 @@ export async function searchVietmapDirect(
       top.map(async (item, idx): Promise<AddressSuggestion | null> => {
         const placeId = item.ref_id || `sugg-${idx}`;
         const label = item.display || item.name || 'Địa điểm';
-        const addr = item.address || item.display || item.name || q;
+        const addr =
+          item.display ||
+          (item.name && item.address ? `${item.name}, ${item.address}` : item.name) ||
+          item.address ||
+          q;
         const itemLat = typeof item.lat === 'number' ? item.lat : null;
         const itemLng = typeof item.lng === 'number' ? item.lng : null;
 
@@ -94,10 +98,16 @@ export async function searchVietmapDirect(
               const pLat = typeof pData.lat === 'number' ? pData.lat : null;
               const pLng = typeof pData.lng === 'number' ? pData.lng : null;
               if (pLat !== null && pLng !== null) {
+                const fullLabel = pData.display || label;
+                const streetName = fullLabel.split(',')[0]?.trim() || fullLabel;
+                const wardPart =
+                  pData.address && pData.address.trim().length > 0
+                    ? pData.address
+                    : addr;
                 return {
                   id: placeId,
-                  label: pData.display || label,
-                  address: pData.address || addr,
+                  label: fullLabel,
+                  address: `${streetName}, ${wardPart}`,
                   lat: pLat,
                   lng: pLng,
                 };

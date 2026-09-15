@@ -388,31 +388,52 @@ export function mapOrderToRouteView(
       (s) => s.type === 'STOP' && s !== pickupStop && s !== dropoffStop,
     ) ?? [];
 
+  const originLat = pickupStop?.lat ?? pickupStop?.latitude;
+  const originLng = pickupStop?.lng ?? pickupStop?.longitude;
+  const originCoords =
+    originLat != null && originLng != null ? { lat: originLat, lng: originLng } : undefined;
+
   const origin: DriverRoutePoint = {
     id: pickupStop?.id ?? 'driver-pickup',
     label: pickupStop?.address ?? 'Điểm lấy hàng',
-    lat: pickupStop?.lat ?? pickupStop?.latitude,
-    lng: pickupStop?.lng ?? pickupStop?.longitude,
+    lat: originLat,
+    lng: originLng,
+    coords: originCoords,
   };
+
+  const destLat = dropoffStop?.lat ?? dropoffStop?.latitude;
+  const destLng = dropoffStop?.lng ?? dropoffStop?.longitude;
+  const destCoords =
+    destLat != null && destLng != null ? { lat: destLat, lng: destLng } : undefined;
+
   const destination: DriverRoutePoint = {
     id: dropoffStop?.id ?? 'driver-dropoff',
     label: dropoffStop?.address ?? 'Điểm giao hàng',
-    lat: dropoffStop?.lat ?? dropoffStop?.latitude,
-    lng: dropoffStop?.lng ?? dropoffStop?.longitude,
+    lat: destLat,
+    lng: destLng,
+    coords: destCoords,
   };
+
   const stops: readonly DriverRouteStopView[] = intermediateStops.map(
-    (s, idx) => ({
-      id: s.id,
-      stopId: s.id,
-      sequence: s.sequence ?? idx + 1,
-      address: s.address,
-      label: s.address,
-      lat: s.lat ?? s.latitude,
-      lng: s.lng ?? s.longitude,
-      progress: s.progress ?? 'PENDING',
-      contactName: s.contactName,
-      contactPhone: s.contactPhone,
-    }),
+    (s, idx) => {
+      const lat = s.lat ?? s.latitude;
+      const lng = s.lng ?? s.longitude;
+      return {
+        id: s.id,
+        stopId: s.id,
+        sequence: s.sequence ?? idx + 1,
+        address: s.address,
+        label: s.address,
+        lat,
+        lng,
+        latitude: lat,
+        longitude: lng,
+        coords: lat != null && lng != null ? { lat, lng } : undefined,
+        progress: s.progress ?? 'PENDING',
+        contactName: s.contactName,
+        contactPhone: s.contactPhone,
+      };
+    },
   );
 
   const distanceLabel = formatDistance(order.distanceMeters);

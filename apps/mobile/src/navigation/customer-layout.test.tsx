@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
@@ -25,7 +25,13 @@ jest.mock('@leopard/mobile-core/src/auth/firebase', () => ({
   getFirebaseWebConfig: () => ({}),
 }));
 
+import { tabBarVisibilityStore } from './tabBarVisibilityStore';
+
 describe('Customer layout', () => {
+  beforeEach(() => {
+    tabBarVisibilityStore.setHidden(false);
+  });
+
   it('renders tabs for Home, Orders, Wallet and Account', async () => {
     const { default: CustomerLayout } = require('../../app/customer/_layout');
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -39,6 +45,21 @@ describe('Customer layout', () => {
     expect(view.getByRole('tab', { name: 'Đơn hàng' })).toBeTruthy();
     expect(view.getByRole('tab', { name: 'Ví' })).toBeTruthy();
     expect(view.getByRole('tab', { name: 'Tài khoản' })).toBeTruthy();
+    await view.unmount();
+  });
+
+  it('hides FloatingNavBar when tabBarVisibilityStore is set to hidden during booking', async () => {
+    const { default: CustomerLayout } = require('../../app/customer/_layout');
+    tabBarVisibilityStore.setHidden(true);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = await render(
+      <QueryClientProvider client={queryClient}>
+        <CustomerLayout />
+      </QueryClientProvider>,
+    );
+
+    expect(view.queryByRole('tab', { name: 'Trang chủ' })).toBeNull();
+    expect(view.queryByRole('tab', { name: 'Đơn hàng' })).toBeNull();
     await view.unmount();
   });
 });

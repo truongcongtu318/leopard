@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
-import { sessionStore, httpClient, appendFileToFormData } from '@leopard/mobile-core';
+import { sessionStore, httpClient, appendFileToFormData, resolveLocationCoords } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../../src/features/customer/addresses/address-store';
 import { createCustomerHttpAdapter } from '../../../src/features/customer/orders/adapter';
 import {
@@ -65,7 +65,13 @@ export default function CustomerHomePage() {
               orderId: detail.order.id,
               status: detail.order.status,
               origin: detail.order.route.origin.label,
+              originCoords: detail.order.route.origin.coords
+                ? { lat: detail.order.route.origin.coords.lat, lng: detail.order.route.origin.coords.lng }
+                : undefined,
               destination: detail.order.route.destination.label,
+              destinationCoords: detail.order.route.destination.coords
+                ? { lat: detail.order.route.destination.coords.lat, lng: detail.order.route.destination.coords.lng }
+                : undefined,
               cargoNote: detail.order.cargo.note ?? undefined,
               etaMinutes: isFinished
                 ? undefined
@@ -187,12 +193,12 @@ export default function CustomerHomePage() {
   const getAmountForVehicle = (cat: VehicleCategory) => {
     switch (cat) {
       case '3_WHEEL_BIKE':
-        return '120000';
+        return '70000';
       case 'HEAVY_TRUCK':
-        return '450000';
+        return '320000';
       case 'LIGHT_TRUCK':
       default:
-        return '280000';
+        return '200000';
     }
   };
 
@@ -206,14 +212,22 @@ export default function CustomerHomePage() {
       userPhone={customerUser?.phone}
       onConfirmBooking={async (booking) => {
         let orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+        let finalAmount = booking.totalFare;
         try {
           const port = createCustomerHttpAdapter();
           const pickupCoords =
             defaultAddress?.latitude && defaultAddress?.longitude
               ? { lat: defaultAddress.latitude, lng: defaultAddress.longitude }
-              : { lat: 10.8012, lng: 106.6544 };
-          const dropoffCoords = { lat: 10.7769, lng: 106.7009 };
+              : resolveLocationCoords(booking.pickup);
+          const dropoffCoords = resolveLocationCoords(booking.dropoff, pickupCoords);
           const vehicleType = vehicleCategoryToOrderType(booking.vehicleCategory);
+
+          const cargoWeight =
+            booking.vehicleCategory === 'HEAVY_TRUCK'
+              ? '2500'
+              : vehicleType === 'TRUCK'
+                ? '1250'
+                : '300';
 
           const formPayload = {
             pickup: booking.pickup,
@@ -225,8 +239,10 @@ export default function CustomerHomePage() {
             dropoffCoords,
             vehicleType,
             cargoNote: [booking.cargoCategory, booking.cargoNote].filter(Boolean).join(' · '),
-            cargoWeight: vehicleType === 'TRUCK' ? '1250' : '300',
+            cargoWeight,
             requiresLoadingSupport: booking.hasLoadingSupport,
+            hasLoadingSupport: booking.hasLoadingSupport,
+            hasVatInvoice: booking.hasVatInvoice,
             paymentMethod: booking.paymentMethod,
             fieldErrors: {},
           };
@@ -237,10 +253,29 @@ export default function CustomerHomePage() {
               ? estimateView.estimate.routes[0]?.estimateToken
               : undefined;
 
+          if (
+            estimateView.kind === 'form' &&
+            estimateView.estimate.kind === 'ready' &&
+            estimateView.estimate.routes[0]?.priceLabel
+          ) {
+            const rawDigits = estimateView.estimate.routes[0].priceLabel.replace(/[^0-9]/g, '');
+            const parsed = Number(rawDigits);
+            if (Number.isFinite(parsed) && parsed > 0) {
+              finalAmount = parsed;
+            }
+          }
+
           if (estimateToken) {
             const created = await port.createOrder(formPayload, estimateToken);
             if (created.kind === 'content') {
               orderId = created.order.id;
+              if (created.order.priceLabel) {
+                const rawDigits = created.order.priceLabel.replace(/[^0-9]/g, '');
+                const parsed = Number(rawDigits);
+                if (Number.isFinite(parsed) && parsed > 0) {
+                  finalAmount = parsed;
+                }
+              }
 
               if (booking.cargoImageUri) {
                 try {
@@ -266,7 +301,7 @@ export default function CustomerHomePage() {
           router.push({
             pathname: `/customer/orders/searching/${orderId}`,
             params: {
-              amount: String(booking.totalFare),
+              amount: String(finalAmount),
               pickup: booking.pickup,
               dropoff: booking.dropoff,
               origin: booking.pickup,
@@ -279,7 +314,7 @@ export default function CustomerHomePage() {
           router.push({
             pathname: `/customer/orders/checkout/${orderId}`,
             params: {
-              amount: String(booking.totalFare),
+              amount: String(finalAmount),
               pickup: booking.pickup,
               dropoff: booking.dropoff,
               origin: booking.pickup,
@@ -322,14 +357,18 @@ export default function CustomerHomePage() {
       onOpenProfile={() => router.push('/customer/profile')}
       onOpenQrScan={() => router.push('/customer/wallet')}
       onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
-      onQuickBook={(pickup, dropoff, dropoffCoords) => {
-        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+      onQuickBook={(pickup, dropoff, dropoffCoords, pickupCoords) => {
         router.push({
-          pathname: `/customer/orders/checkout/${orderId}`,
+          pathname: '/customer/orders/new',
           params: {
-            amount: getAmountForVehicle(selectedVehicleCategory),
             pickup,
             dropoff,
+            ...(pickupCoords
+              ? {
+                  pickupLat: String(pickupCoords.lat),
+                  pickupLng: String(pickupCoords.lng),
+                }
+              : {}),
             ...(dropoffCoords
               ? {
                   dropoffLat: String(dropoffCoords.lat),

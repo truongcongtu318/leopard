@@ -20,6 +20,7 @@ export function mapDispatchOfferEvent(event: DispatchOfferEvent): IncomingDispat
     reference: formatOrderReference({ id: event.orderId }),
     pickupDistanceLabel: `Cách bạn ${formatDistance(event.driverDistanceM)}`,
     pickupAddress: event.pickupAddress,
+    pickupCoords: event.pickup ? { lat: event.pickup.lat, lng: event.pickup.lng } : undefined,
     dropoffAddress: event.dropoffAddress,
     tripDistanceLabel: formatDistance(event.distanceMeters),
     etaLabel: formatDriverEtaLabel(event.durationSeconds),
