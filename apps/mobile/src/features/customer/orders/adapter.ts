@@ -25,6 +25,7 @@ import type {
   CongestionLevel,
   CustomerRouteOptionView,
   InvoiceView,
+  PriceBreakdown,
 } from './model';
 import type { CustomerOrdersPort } from './port';
 
@@ -677,6 +678,8 @@ export function mapOrderToDetail(
   const etaDurationSeconds = order.durationSeconds ?? order.etaSeconds ?? 0;
   const etaSource = (order.providerSource as ProviderSource) ?? 'VIETMAP';
   const cargo = extractCargoFromRouteSnapshot(order.routeSnapshot);
+  const priceBreakdown = extractPriceBreakdown(order.routeSnapshot, order.priceVnd);
+  const requestedVehicleLabel = resolveVehicleDisplayLabel(order.routeSnapshot, order.assignedDriver);
 
   const tracking = mapTrackingToView(order, trackingData ?? order.tracking);
   const payment = mapPaymentToView(
@@ -730,6 +733,10 @@ export function mapOrderToDetail(
     status,
     route,
     priceLabel: formatVndPrice(order.priceVnd),
+    priceBreakdown,
+    requestedVehicleLabel,
+    hasLoadingSupport: cargo.hasLoadingSupport,
+    hasVatInvoice: cargo.hasVatInvoice,
     etaDurationSeconds,
     etaSource,
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
@@ -755,15 +762,82 @@ export function mapOrderToDetail(
 
 export function extractCargoFromRouteSnapshot(
   routeSnapshot: unknown,
-): Readonly<{ note: string | null; weightKg: number | null }> {
+): Readonly<{
+  note: string | null;
+  weightKg: number | null;
+  hasLoadingSupport: boolean;
+  hasVatInvoice: boolean;
+}> {
   if (routeSnapshot && typeof routeSnapshot === 'object') {
     const snapshot = routeSnapshot as Record<string, unknown>;
     return {
       note: typeof snapshot.cargoNote === 'string' ? snapshot.cargoNote : null,
       weightKg: typeof snapshot.cargoWeightKg === 'number' ? snapshot.cargoWeightKg : null,
+      hasLoadingSupport: Boolean(snapshot.hasLoadingSupport),
+      hasVatInvoice: Boolean(snapshot.hasVatInvoice),
     };
   }
-  return { note: null, weightKg: null };
+  return { note: null, weightKg: null, hasLoadingSupport: false, hasVatInvoice: false };
+}
+
+export function extractPriceBreakdown(
+  routeSnapshot: unknown,
+  totalPriceVnd: number | null,
+): PriceBreakdown | null {
+  if (!routeSnapshot || typeof routeSnapshot !== 'object') return null;
+  const s = routeSnapshot as Record<string, unknown>;
+  const baseFareVnd = typeof s.baseFareVnd === 'number' ? s.baseFareVnd : null;
+  if (baseFareVnd === null) return null;
+
+  const loadingFeeVnd = typeof s.loadingFeeVnd === 'number' ? s.loadingFeeVnd : 0;
+  const vatFeeVnd = typeof s.vatFeeVnd === 'number' ? s.vatFeeVnd : 0;
+  const stopSurchargeVnd = typeof s.stopFareVnd === 'number' ? s.stopFareVnd : 0;
+  const distanceFareVnd =
+    typeof s.distanceFareVnd === 'number'
+      ? s.distanceFareVnd
+      : Math.max(0, (totalPriceVnd ?? 0) - baseFareVnd - loadingFeeVnd - vatFeeVnd - stopSurchargeVnd);
+
+  return {
+    baseFareVnd,
+    distanceFareVnd,
+    stopSurchargeVnd,
+    loadingFeeVnd,
+    vatFeeVnd,
+    totalVnd: totalPriceVnd ?? (baseFareVnd + distanceFareVnd + stopSurchargeVnd + loadingFeeVnd + vatFeeVnd),
+  };
+}
+
+export function resolveVehicleDisplayLabel(
+  routeSnapshot: unknown,
+  assignedDriver?: { vehicleType?: string | null } | null,
+): string {
+  if (assignedDriver?.vehicleType) {
+    const v = assignedDriver.vehicleType.toUpperCase();
+    if (v === 'MOTORBIKE') return 'Xe Ba Gác';
+    if (v === 'VAN') return 'Xe Van 500kg';
+    if (v === 'TRUCK') return 'Xe Tải';
+    return assignedDriver.vehicleType;
+  }
+  if (routeSnapshot && typeof routeSnapshot === 'object') {
+    const s = routeSnapshot as Record<string, unknown>;
+    const cargoWeight = typeof s.cargoWeightKg === 'number' ? s.cargoWeightKg : null;
+    const vType = typeof s.vehicleType === 'string' ? s.vehicleType.toUpperCase() : null;
+    const baseFare = typeof s.baseFareVnd === 'number' ? s.baseFareVnd : null;
+
+    if ((cargoWeight && cargoWeight > 1250) || baseFare === 320000) {
+      return 'Xe Tải 2.5T';
+    }
+    if (vType === 'TRUCK' || baseFare === 200000 || (cargoWeight && cargoWeight > 500)) {
+      return 'Xe Tải 1.25T';
+    }
+    if (vType === 'VAN' || baseFare === 130000 || (cargoWeight && cargoWeight === 500)) {
+      return 'Xe Van 500kg';
+    }
+    if (vType === 'MOTORBIKE' || baseFare === 70000) {
+      return 'Xe Ba Gác';
+    }
+  }
+  return 'Xe Tải';
 }
 
 export function buildConsolidatedCargoNote(form: CustomerCreateFormView): string | undefined {
@@ -1034,6 +1108,8 @@ export function createCustomerHttpAdapter(
             lng: form.dropoffCoords!.lng,
           },
           vehicleType: form.vehicleType as VehicleType,
+          hasLoadingSupport: Boolean(form.hasLoadingSupport || form.requiresLoadingSupport),
+          hasVatInvoice: Boolean(form.hasVatInvoice),
           ...(form.vehicleType === 'TRUCK'
             ? { cargoWeightKg: Number(form.cargoWeight) }
             : {}),
@@ -1157,6 +1233,8 @@ export function createCustomerHttpAdapter(
           vehicleType: form.vehicleType as VehicleType,
           cargoNote: buildConsolidatedCargoNote(form) || form.cargoNote?.trim() || undefined,
           cargoWeightKg: form.cargoWeight ? Number(form.cargoWeight) : undefined,
+          hasLoadingSupport: Boolean(form.hasLoadingSupport || form.requiresLoadingSupport),
+          hasVatInvoice: Boolean(form.hasVatInvoice),
           estimateToken,
         };
 

@@ -271,7 +271,16 @@ export type HomeDashboardScreenProps = Readonly<{
   onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
   onRegisterDriver?: () => void;
   onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }, pickupCoords?: { lat: number; lng: number }) => void;
-  onConfirmBooking?: (details: BookingDetails & { pickup: string; dropoff: string; stops?: readonly StopItem[]; vehicleCategory: VehicleCategory; vehicleName: string }) => void;
+  onConfirmBooking?: (details: BookingDetails & {
+    pickup: string;
+    dropoff: string;
+    pickupCoords?: { lat: number; lng: number };
+    dropoffCoords?: { lat: number; lng: number };
+    stops?: readonly StopItem[];
+    vehicleCategory: VehicleCategory;
+    vehicleName: string;
+    fleetVehicleId?: FleetVehicleCategory;
+  }) => void;
   onOpenSavedAddresses?: () => void;
   onNavigateTab?: (tab: TabKey) => void;
   onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
@@ -536,9 +545,12 @@ export function HomeDashboardScreen({
         ...details,
         pickup: pickupText,
         dropoff: dropoffText,
+        pickupCoords: pickupCoords || undefined,
+        dropoffCoords: dropoffCoords || undefined,
         stops,
         vehicleCategory: currentFleetVehicle.vehicleCategory,
         vehicleName: currentFleetVehicle.name,
+        fleetVehicleId: currentFleetVehicle.id,
       });
     } else if (onQuickBook) {
       onQuickBook(

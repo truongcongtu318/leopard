@@ -83,6 +83,7 @@ export type PriceBreakdown = Readonly<{
   distanceFareVnd: number;
   stopSurchargeVnd: number;
   loadingFeeVnd: number;
+  vatFeeVnd?: number;
   totalVnd: number;
 }>;
 
@@ -102,6 +103,8 @@ export type CustomerCreateFormView = Readonly<{
   cargoDimensions?: CargoDimensions;
   cargoImageUri?: string | null;
   requiresLoadingSupport?: boolean;
+  hasLoadingSupport?: boolean;
+  hasVatInvoice?: boolean;
   paymentMethod?: 'VIETQR' | 'CASH';
   createdOrderReference?: string;
   priceBreakdown?: PriceBreakdown;
@@ -225,6 +228,10 @@ export type CustomerOrderDetailDataView = Readonly<{
   status: OrderStatus;
   route: CustomerRouteView;
   priceLabel: string;
+  priceBreakdown?: PriceBreakdown | null;
+  requestedVehicleLabel?: string | null;
+  hasLoadingSupport?: boolean;
+  hasVatInvoice?: boolean;
   etaDurationSeconds: number;
   etaSource: ProviderSource;
   updatedAtLabel: string;

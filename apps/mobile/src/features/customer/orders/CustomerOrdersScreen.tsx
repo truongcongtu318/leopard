@@ -57,7 +57,6 @@ const ACTIVE_STATUSES: readonly OrderStatus[] = [
   'REQUESTED',
   'ACCEPTED',
   'PICKING_UP',
-  'PICKED_UP',
   'IN_TRANSIT',
 ];
 
@@ -72,7 +71,6 @@ function getActiveOrderStatusLabel(status: OrderStatus): string {
     case 'REQUESTED': return 'Đang tìm tài xế';
     case 'ACCEPTED': return 'Tài xế đã nhận';
     case 'PICKING_UP': return 'Đang đến lấy hàng';
-    case 'PICKED_UP': return 'Đã lấy hàng';
     case 'IN_TRANSIT': return 'Đang vận chuyển';
     default: return status;
   }
@@ -83,7 +81,6 @@ function getActiveStatusAccentColor(status: OrderStatus): string {
     case 'REQUESTED': return '#F59E0B';
     case 'ACCEPTED': return '#0B1E42';
     case 'PICKING_UP': return '#0B1E42';
-    case 'PICKED_UP': return '#0B1E42';
     case 'IN_TRANSIT': return '#16A34A';
     default: return '#0B1E42';
   }

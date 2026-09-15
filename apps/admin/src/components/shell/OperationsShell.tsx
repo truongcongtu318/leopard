@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Bell, LogOut, Menu, ShieldCheck, X } from 'lucide-react';
+import { Bell, LogOut, Menu, Search, ShieldCheck, X } from 'lucide-react';
 import { LiveRefreshBridge } from '../live/LiveOrderRefresher';
 import { RoleNavigation, type NavItem } from './RoleNavigation';
 
@@ -23,16 +23,10 @@ interface RoleContext {
 
 const ROLE_CONTEXT: Readonly<Record<string, RoleContext>> = {
   admin: {
-    contextLabel: 'Quản trị vận hành',
+    contextLabel: 'Admin Dispatch Console',
     roleLabel: 'Quản trị viên',
     navigationLabel: 'Điều hướng quản trị',
     drawerLabel: 'Điều hướng quản trị vận hành',
-  },
-  fleet_owner: {
-    contextLabel: 'Quản lý đội xe',
-    roleLabel: 'Chủ đội xe',
-    navigationLabel: 'Điều hướng đội xe',
-    drawerLabel: 'Điều hướng quản lý đội xe',
   },
 };
 
@@ -49,9 +43,7 @@ const NAVIGATION_LABELS: Readonly<Record<string, string>> = {
   '/admin/fleets': 'Đội xe',
   '/admin/drivers': 'Tài xế',
   '/admin/orders': 'Đơn hàng',
-  '/fleet': 'Tổng quan',
-  '/fleet/drivers': 'Tài xế',
-  '/fleet/orders': 'Đơn hàng',
+  '/admin/driver-applications': 'Duyệt hồ sơ',
 };
 
 const FOCUSABLE_SELECTOR = [
@@ -135,7 +127,7 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
 
   return (
     <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <div className="min-h-screen bg-[#F4F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
+      <div className="min-h-screen bg-[#F5F5F7] text-neutral-text p-2 sm:p-4 flex flex-col antialiased">
         <LiveRefreshBridge />
         <a
           href="#noi-dung-chinh"
@@ -145,18 +137,23 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
         </a>
 
       {/* Top Application Header Bar */}
-      <header className="bg-white rounded-2xl sm:rounded-3xl px-4 sm:px-6 py-3 mb-3 flex items-center justify-between shadow-xs border border-slate-100/90 shrink-0">
+      <header className="bg-white/80 backdrop-blur-xl border border-black/[0.06] rounded-2xl sm:rounded-3xl px-4 sm:px-6 py-3 mb-3 flex items-center justify-between shadow-[0_2px_12px_rgba(0,0,0,0.03)] shrink-0">
         {/* Left: Brand Logo & Horizontal Tabs */}
-        <div className="flex items-center gap-6 lg:gap-8">
+        <div className="flex items-center gap-5 lg:gap-7">
           <Link
-            href={role === 'admin' ? '/admin' : '/fleet'}
+            href="/admin"
             className="flex items-center gap-2.5 transition-opacity motion-reduce:transition-none"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white shadow-2xs">
               <ShieldCheck className="w-[18px] h-[18px]" strokeWidth={2.2} aria-hidden="true" />
             </div>
             <div>
-              <span className="font-extrabold text-base tracking-tight text-slate-900">LEOPARD</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-base tracking-tight text-slate-900">LEOPARD</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200/60">
+                  Admin Console
+                </span>
+              </div>
               <p className="text-[10px] font-semibold text-slate-400 leading-none">{roleContext.contextLabel}</p>
             </div>
           </Link>
@@ -170,8 +167,19 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
           />
         </div>
 
-        {/* Right: Notifications, Profile & Mobile Trigger */}
+        {/* Right: Spotlight Search, Notifications, Profile & Mobile Trigger */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Spotlight Search Pill */}
+          <button
+            type="button"
+            aria-label="Tìm kiếm nhanh (⌘K)"
+            className="hidden md:flex items-center gap-2 bg-slate-100 hover:bg-slate-200/70 border border-slate-200/60 rounded-full px-3 py-1.5 text-xs text-slate-500 transition-colors cursor-pointer motion-reduce:transition-none"
+          >
+            <Search className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+            <span>Tìm kiếm...</span>
+            <kbd className="rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 shadow-2xs border border-slate-200/80">⌘K</kbd>
+          </button>
+
           {/* Notification Bell */}
           <button
             type="button"
@@ -184,14 +192,14 @@ export function OperationsShell({ children, role, navItems }: OperationsShellPro
           {/* User Profile Capsule */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-700 ring-1 ring-slate-300">
-              {role === 'admin' ? 'QTV' : 'CĐX'}
+              QTV
             </span>
             <div className="hidden text-left sm:block">
               <p className="text-xs font-bold text-slate-800 leading-tight">
-                {role === 'admin' ? 'Nguyễn Hoài Nam' : 'Trần Quốc Tuấn'}
+                Nguyễn Hoài Nam
               </p>
               <p className="text-[10px] font-medium text-slate-400 leading-none">
-                {role === 'admin' ? 'Quản trị viên điều phối' : 'Chủ đội xe Sao Mai'}
+                Quản trị viên điều phối
               </p>
             </div>
           </div>

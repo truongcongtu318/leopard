@@ -10,14 +10,14 @@ export interface LoginFormProps {
   allowDemo?: boolean;
   sessionExpired?: boolean;
   onSuccess?: (role: string) => void;
-  onRoleChange?: (role: "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN") => void;
+  onRoleChange?: (role: "CUSTOMER" | "DRIVER" | "ADMIN") => void;
 }
 
 interface AuthResponse {
   user: {
     id: string;
     phone: string;
-    role: "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN";
+    role: "CUSTOMER" | "DRIVER" | "ADMIN";
     status: string;
   };
   session: {
@@ -27,15 +27,12 @@ interface AuthResponse {
 
 const DEMO_ACCOUNT_MAP: Record<string, string> = {
   admin: "admin",
-  "fleet-owner": "fleet-owner",
   driver: "driver",
   customer: "customer",
   "+840000000004": "admin",
-  "+840000000003": "fleet-owner",
   "+840000000002": "driver",
   "+840000000001": "customer",
   "0900000004": "admin",
-  "0900000003": "fleet-owner",
   "0900000002": "driver",
   "0900000001": "customer",
 };
@@ -97,7 +94,7 @@ export function LoginForm({
   const handleDemoLogin = async (accountId: string, defaultRole: string) => {
     if (isSubmitting) return;
 
-    onRoleChange?.(defaultRole as "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN");
+    onRoleChange?.(defaultRole as "CUSTOMER" | "DRIVER" | "ADMIN");
     setIsSubmitting(true);
     setErrorMessage(null);
 
@@ -212,7 +209,6 @@ export function LoginForm({
           <div className="grid grid-cols-2 gap-2.5">
             {[
                 { id: "admin", role: "ADMIN", title: "Quản trị viên", testLabel: "Demo Admin", desc: "Hệ thống LEOPARD", phone: "+840000000004", icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z", testId: "demo-admin-button" },
-                { id: "fleet-owner", role: "FLEET_OWNER", title: "Chủ đội xe", testLabel: "Demo Fleet Owner", desc: "Đội xe Sao Mai", phone: "+840000000003", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M16 3.13a4 4 0 0 1 0 7.74", testId: "demo-fleet-owner-button" },
                 { id: "driver", role: "DRIVER", title: "Tài xế", testLabel: "Demo Driver", desc: "Đội xe Sao Mai", phone: "+840000000002", icon: "M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2h-2 M14 5h5v5", testId: undefined },
                 { id: "customer", role: "CUSTOMER", title: "Khách hàng", testLabel: "Demo Customer", desc: "DN Minh Phát", phone: "+840000000001", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M22 11v6", testId: undefined },
               ].map((acc) => (
@@ -222,8 +218,8 @@ export function LoginForm({
                   data-testid={acc.testId}
                   disabled={isSubmitting}
                   onClick={() => handleDemoLogin(acc.id, acc.role)}
-                  onMouseEnter={() => onRoleChange?.(acc.role as "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN")}
-                  onFocus={() => onRoleChange?.(acc.role as "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN")}
+                  onMouseEnter={() => onRoleChange?.(acc.role as "CUSTOMER" | "DRIVER" | "ADMIN")}
+                  onFocus={() => onRoleChange?.(acc.role as "CUSTOMER" | "DRIVER" | "ADMIN")}
                   className="group flex flex-col items-start gap-1.5 rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-3 text-left transition-all hover:border-brand/40 hover:bg-white hover:shadow-xs active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
                 >
                   <div className="flex w-full items-center justify-between">
@@ -231,7 +227,7 @@ export function LoginForm({
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={acc.icon} /></svg>
                     </div>
                     <span className="rounded-full border border-slate-200/80 bg-white px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
-                      {acc.role === 'ADMIN' ? 'Admin' : acc.role === 'FLEET_OWNER' ? 'Fleet' : acc.role === 'DRIVER' ? 'Tài xế' : 'Khách'}
+                      {acc.role === 'ADMIN' ? 'Admin' : acc.role === 'DRIVER' ? 'Tài xế' : 'Khách'}
                     </span>
                   </div>
                   <div>

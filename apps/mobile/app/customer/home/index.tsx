@@ -19,16 +19,31 @@ const ACTIVE_ORDER_STATUSES = [
   'IN_TRANSIT',
 ] as const;
 
-function vehicleCategoryToOrderType(vehicleId: VehicleCategory): 'MOTORBIKE' | 'VAN' | 'TRUCK' {
-  switch (vehicleId) {
-    case '3_WHEEL_BIKE':
-      return 'MOTORBIKE';
-    case 'LIGHT_TRUCK':
-      return 'VAN';
-    case 'HEAVY_TRUCK':
-    default:
-      return 'TRUCK';
+function resolveVehicleOrderType(
+  fleetVehicleId?: string,
+  vehicleName?: string,
+  vehicleCategory?: VehicleCategory,
+): {
+  vehicleType: 'MOTORBIKE' | 'VAN' | 'TRUCK';
+  cargoWeight: string;
+} {
+  if (fleetVehicleId === 'TRUCK_25T' || vehicleName?.includes('2.5') || vehicleCategory === 'HEAVY_TRUCK') {
+    return { vehicleType: 'TRUCK', cargoWeight: '2500' };
   }
+  if (
+    fleetVehicleId === 'TRUCK_125T' ||
+    vehicleName?.includes('1.25') ||
+    vehicleName?.toLowerCase().includes('tải')
+  ) {
+    return { vehicleType: 'TRUCK', cargoWeight: '1250' };
+  }
+  if (fleetVehicleId === 'VAN_500KG' || vehicleName?.toLowerCase().includes('van')) {
+    return { vehicleType: 'VAN', cargoWeight: '500' };
+  }
+  if (fleetVehicleId === 'BIKE_3W' || vehicleName?.toLowerCase().includes('gác') || vehicleCategory === '3_WHEEL_BIKE') {
+    return { vehicleType: 'MOTORBIKE', cargoWeight: '300' };
+  }
+  return { vehicleType: 'TRUCK', cargoWeight: '1250' };
 }
 
 export default function CustomerHomePage() {
@@ -216,18 +231,17 @@ export default function CustomerHomePage() {
         try {
           const port = createCustomerHttpAdapter();
           const pickupCoords =
-            defaultAddress?.latitude && defaultAddress?.longitude
+            booking.pickupCoords ||
+            (defaultAddress?.latitude && defaultAddress?.longitude
               ? { lat: defaultAddress.latitude, lng: defaultAddress.longitude }
-              : resolveLocationCoords(booking.pickup);
-          const dropoffCoords = resolveLocationCoords(booking.dropoff, pickupCoords);
-          const vehicleType = vehicleCategoryToOrderType(booking.vehicleCategory);
-
-          const cargoWeight =
-            booking.vehicleCategory === 'HEAVY_TRUCK'
-              ? '2500'
-              : vehicleType === 'TRUCK'
-                ? '1250'
-                : '300';
+              : resolveLocationCoords(booking.pickup));
+          const dropoffCoords =
+            booking.dropoffCoords || resolveLocationCoords(booking.dropoff, pickupCoords);
+          const { vehicleType, cargoWeight } = resolveVehicleOrderType(
+            booking.fleetVehicleId,
+            booking.vehicleName,
+            booking.vehicleCategory,
+          );
 
           const formPayload = {
             pickup: booking.pickup,
@@ -238,7 +252,12 @@ export default function CustomerHomePage() {
             dropoff: booking.dropoff,
             dropoffCoords,
             vehicleType,
-            cargoNote: [booking.cargoCategory, booking.cargoNote].filter(Boolean).join(' · '),
+            cargoNote: [
+              booking.vehicleName ? `Loại xe: ${booking.vehicleName}` : null,
+              booking.hasLoadingSupport ? 'Bốc xếp: Có' : null,
+              booking.cargoCategory,
+              booking.cargoNote,
+            ].filter(Boolean).join(' · '),
             cargoWeight,
             requiresLoadingSupport: booking.hasLoadingSupport,
             hasLoadingSupport: booking.hasLoadingSupport,

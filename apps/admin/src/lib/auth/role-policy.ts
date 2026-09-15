@@ -3,7 +3,7 @@ import { ApiError } from '../api/api-error';
 /**
  * Mirror of the shared Role type to avoid dependency on @leopard/shared.
  */
-export type Role = 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
+export type Role = 'CUSTOMER' | 'DRIVER' | 'ADMIN';
 
 /**
  * Allowed roles for a given route or resource.
@@ -12,8 +12,7 @@ export type AllowedRoles = readonly Role[];
 
 /**
  * Operations routes use an explicit allow-list. Roles are separate security
- * boundaries: ADMIN does not inherit FLEET_OWNER routes and FLEET_OWNER does
- * not inherit DRIVER routes.
+ * boundaries: ADMIN does not inherit DRIVER routes.
  */
 
 /**

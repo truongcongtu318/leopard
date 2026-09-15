@@ -35,8 +35,7 @@ export async function POST(request: Request): Promise<Response> {
   } catch {
     // Upstream backend is unreachable. If we have a demo refresh token, renew it.
     if (refreshToken.startsWith("refresh-qa-") || refreshToken.startsWith("refresh-demo-")) {
-      const isFleet = refreshToken.includes("fleet");
-      const accessToken = isFleet ? "qa-fleet" : "qa-admin";
+      const accessToken = "qa-admin";
       const now = Date.now();
       const session: BackendAuthSession = {
         accessToken,

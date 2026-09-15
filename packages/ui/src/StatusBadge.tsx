@@ -144,14 +144,14 @@ function StatusBadgeView({
   return (
     <span
       className={cn(
-        'inline-flex max-w-full items-center rounded-pill border px-2.5 py-0.5 text-xs font-bold tracking-tight break-words shadow-2xs transition-all',
+        'inline-flex max-w-full items-center rounded-pill rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide break-words shadow-2xs transition-all gap-1.5',
         toneClasses[canonicalStatus.tone],
         className,
       )}
     >
       <span
         className={cn(
-          'mr-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0 ring-1 ring-white/50',
+          'inline-block h-1.5 w-1.5 rounded-full shrink-0 ring-1 ring-white/50',
           dotClasses[canonicalStatus.tone],
         )}
         aria-hidden="true"

@@ -6,7 +6,6 @@ jest.mock('../lib/auth/server-session', () => ({
 }));
 
 import AdminLayout from './(admin)/admin/layout';
-import FleetLayout from './(fleet)/fleet/layout';
 import { OperationsShell } from '../components/shell/OperationsShell';
 import { getVerifiedOperationsUser } from '../lib/auth/server-session';
 
@@ -14,12 +13,10 @@ const child = <div data-testid="private-child">Private data</div>;
 type OperationsLayout = (props: { children: React.ReactNode }) => Promise<React.JSX.Element>;
 
 const guardedLayouts: Array<[string, OperationsLayout]> = [
-  ['fleet', FleetLayout],
   ['admin', AdminLayout],
 ];
 
-const exactRoleLayouts: Array<['FLEET_OWNER' | 'ADMIN', OperationsLayout]> = [
-  ['FLEET_OWNER', FleetLayout],
+const exactRoleLayouts: Array<['ADMIN', OperationsLayout]> = [
   ['ADMIN', AdminLayout],
 ];
 
@@ -49,25 +46,14 @@ describe('operations route guards', () => {
     },
   );
 
-  it('redirects ADMIN away from the Fleet Owner surface', async () => {
+  it('redirects non-ADMIN users away from the Admin surface', async () => {
     jest.mocked(getVerifiedOperationsUser).mockResolvedValueOnce({
-      id: 'usr-admin-1',
-      role: 'ADMIN',
-    });
-
-    await expect(redirectDestination(() => FleetLayout({ children: child }))).resolves.toBe(
-      '/admin',
-    );
-  });
-
-  it('redirects FLEET_OWNER away from the Admin surface', async () => {
-    jest.mocked(getVerifiedOperationsUser).mockResolvedValueOnce({
-      id: 'usr-fleet-1',
-      role: 'FLEET_OWNER',
+      id: 'usr-driver-1',
+      role: 'DRIVER',
     });
 
     await expect(redirectDestination(() => AdminLayout({ children: child }))).resolves.toBe(
-      '/fleet',
+      '/login?forbidden=true',
     );
   });
 

@@ -38,7 +38,7 @@ import type {
 } from './model';
 
 const fieldClass =
-  'min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3.5 py-2 text-xs text-slate-800 transition-colors focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900';
+  'min-h-10 w-full rounded-full border border-slate-200/60 bg-slate-100/80 hover:bg-white focus:bg-white px-4 py-2 text-xs text-slate-800 transition-colors focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900';
 
 const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
   orders: 'Đơn hàng',
@@ -146,7 +146,7 @@ function orderColumns(previewContext?: AdminPreviewContext): DataTableColumn[] {
         return (
           <a
             aria-label={`Xem đơn ${order.reference}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs text-brand bg-brand/5 hover:bg-brand/10 border border-brand/20 transition-all shadow-2xs hover:shadow-xs group focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-xs text-brand bg-brand/5 hover:bg-brand/10 border border-brand/20 transition-all shadow-2xs hover:shadow-xs group focus-visible:rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             href={createAdminPreviewHref(order.href, 'order-detail', previewContext)}
           >
             <span>Chi tiết</span>
@@ -197,7 +197,7 @@ function userColumns(onSelectCommand?: (command: AdminCommandView) => void): Dat
                 key={`${command.kind}-${command.targetId}`}
                 variant={command.buttonVariant}
                 size="sm"
-                className="h-8 min-h-[32px] px-2.5 text-xs font-semibold rounded-lg shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98]"
                 onPress={() => onSelectCommand?.(command)}
               >
                 {command.commandLabel}
@@ -305,7 +305,7 @@ function mobileItem(
       actions: (
         <a
           aria-label={`Xem đơn ${item.reference}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs text-brand bg-brand/5 hover:bg-brand/10 border border-brand/20 transition-all shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-xs text-brand bg-brand/5 hover:bg-brand/10 border border-brand/20 transition-all shadow-2xs"
           href={createAdminPreviewHref(item.href, 'order-detail', previewContext)}
         >
           <span>Chi tiết</span>
@@ -332,7 +332,7 @@ function mobileItem(
               key={`${command.kind}-${command.targetId}`}
               variant={command.buttonVariant}
               size="sm"
-              className="h-8 min-h-[32px] px-2.5 text-xs font-semibold rounded-lg shadow-2xs"
+              className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs"
               onPress={() => onSelectCommand?.(command)}
             >
               {command.commandLabel}
@@ -542,7 +542,7 @@ function AdminFilters({
   return (
     <section
       aria-label={`Phạm vi điều tra ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-      className="rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm text-neutral-text"
+      className="rounded-3xl border border-black/[0.06] bg-white/80 backdrop-blur-xl p-5 sm:p-6 shadow-sm shadow-[0_2px_12px_rgba(0,0,0,0.03)] text-neutral-text"
     >
       <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <h2 className="text-sm font-bold text-slate-800">Bộ lọc tìm kiếm</h2>
@@ -565,13 +565,13 @@ function AdminFilters({
         <input name="pageSize" type="hidden" value={view.filters.pageSize} />
         <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-3 xl:col-span-4 pt-2">
           <button
-            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-900 px-5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-slate-900 px-5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
             type="submit"
           >
             Áp dụng bộ lọc
           </button>
           <a
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+            className="inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/90 px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
             href={`/admin/${screen}?${resetQuery}`}
           >
             Xóa bộ lọc
@@ -644,7 +644,7 @@ export function AdminListScreen({
           ) : (
             <div className="flex min-w-0 flex-col gap-md">
               {screen === 'orders' ? (
-                <div className="flex items-center gap-1 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
                   {[
                     { id: 'ALL', label: 'Tất cả' },
                     { id: 'REQUESTED', label: 'Chờ tài xế' },
@@ -660,10 +660,10 @@ export function AdminListScreen({
                       <Link
                         key={f.id}
                         href={href}
-                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
                           isActive
-                            ? 'bg-slate-900 text-white shadow-sm'
-                            : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
                         }`}
                       >
                         {f.label}
@@ -672,7 +672,7 @@ export function AdminListScreen({
                   })}
                 </div>
               ) : screen === 'users' ? (
-                <div className="flex items-center gap-1 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
                   {[
                     { id: 'ALL', label: 'Tất cả' },
                     { id: 'CUSTOMER', label: 'Khách hàng' },
@@ -686,10 +686,10 @@ export function AdminListScreen({
                       <Link
                         key={f.id}
                         href={href}
-                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
                           isActive
-                            ? 'bg-slate-900 text-white shadow-sm'
-                            : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
                         }`}
                       >
                         {f.label}

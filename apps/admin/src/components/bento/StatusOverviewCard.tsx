@@ -20,7 +20,7 @@ export function StatusOverviewCard({
   deliveredPercent = 38,
 }: StatusOverviewCardProps) {
   return (
-    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-1 flex-col justify-between gap-4">
+    <div className="rounded-3xl border border-black/[0.06] bg-white/80 backdrop-blur-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 sm:p-6 flex flex-1 flex-col justify-between gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>
@@ -69,29 +69,29 @@ export function StatusOverviewCard({
       </div>
 
       {/* Continuous Segmented Progress Bar */}
-      <div className="flex h-3.5 w-full items-stretch gap-1 rounded-full bg-slate-100 p-0.5 overflow-hidden" aria-hidden="true">
+      <div className="flex h-3.5 w-full items-stretch gap-0.5 rounded-full bg-slate-100/80 p-0.5 overflow-hidden border border-black/[0.04]" aria-hidden="true">
         {/* Đang lấy hàng (Amber) */}
         <div
           style={{ width: `${loadingPercent}%` }}
-          className="rounded-full bg-amber-400 transition-all"
+          className="rounded-full bg-amber-400 transition-all duration-300"
           title={`Đang lấy hàng: ${loadingPercent}%`}
         />
         {/* Đang vận chuyển (Sky Blue) */}
         <div
           style={{ width: `${inTransitPercent}%` }}
-          className="rounded-full bg-sky-500 transition-all"
+          className="rounded-full bg-sky-500 transition-all duration-300"
           title={`Đang vận chuyển: ${inTransitPercent}%`}
         />
         {/* Đang dỡ hàng (Indigo) */}
         <div
           style={{ width: `${unloadingPercent}%` }}
-          className="rounded-full bg-indigo-500 transition-all"
+          className="rounded-full bg-indigo-500 transition-all duration-300"
           title={`Đang dỡ hàng: ${unloadingPercent}%`}
         />
         {/* Đã giao hàng (Emerald) */}
         <div
           style={{ width: `${deliveredPercent}%` }}
-          className="rounded-full bg-emerald-500 transition-all"
+          className="rounded-full bg-emerald-500 transition-all duration-300"
           title={`Đã giao hàng: ${deliveredPercent}%`}
         />
       </div>
