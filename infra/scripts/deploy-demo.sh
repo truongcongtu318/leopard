@@ -330,16 +330,44 @@ elif [ "$REBUILD" = true ]; then
   compose build --pull
   echo "  ✅ Images rebuilt"
 else
-  # Below 8GB, build one service at a time: concurrent builds are what pushes a
-  # small VPS into the OOM killer, and the images are independent anyway.
-  if [ "$TOTAL_MB" -lt 8000 ]; then
-    echo "  ℹ️  ${TOTAL_MB}MB RAM — building one service at a time"
-    for service in api migrate admin customer driver gateway; do
-      echo "     ▶ ${service}"
-      compose build "$service"
-    done
-  else
-    compose build
+  # Builds are independent, so run two at a time rather than one. A rolling
+  # window keeps a slow image (customer/driver run a Metro export) from blocking
+  # a fast one, which a plain "pairs" split would do. Two is the limit that fits
+  # this VPS: concurrent BuildKit frontends are what tripped the OOM killer
+  # before, and the 4GB swap on top of 3.8GB RAM is the margin that makes 2 safe.
+  # Measure per service so a slow one is visible instead of hidden in the total.
+  BUILD_CONCURRENCY="${BUILD_CONCURRENCY:-2}"
+  SERVICES=(api migrate admin customer driver gateway)
+
+  echo "  ℹ️  ${TOTAL_MB}MB RAM + swap — building ${BUILD_CONCURRENCY} at a time"
+  BUILD_FAILED=0
+  declare -A BUILD_PID_OF=()
+
+  build_one() {
+    local service=$1 started elapsed
+    started=$(date +%s)
+    if compose build "$service" >"/tmp/leopard-build-${service}.log" 2>&1; then
+      elapsed=$(( $(date +%s) - started ))
+      echo "     ✅ ${service} (${elapsed}s)"
+    else
+      elapsed=$(( $(date +%s) - started ))
+      echo "     ❌ ${service} (${elapsed}s) — xem /tmp/leopard-build-${service}.log"
+      BUILD_FAILED=1
+    fi
+  }
+
+  for service in "${SERVICES[@]}"; do
+    echo "     ▶ ${service}"
+    build_one "$service" &
+    BUILD_PID_OF[$service]=$!
+    # Wait for the oldest build once the window is full.
+    while [ "$(jobs -pr | wc -l)" -ge "$BUILD_CONCURRENCY" ]; do sleep 2; done
+  done
+  wait
+
+  if [ "$BUILD_FAILED" != 0 ]; then
+    echo "  ❌ At least one image failed to build"
+    exit 1
   fi
   echo "  ✅ Images ready (cached layers reused)"
 fi
