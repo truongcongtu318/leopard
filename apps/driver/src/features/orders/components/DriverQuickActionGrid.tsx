@@ -3,8 +3,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   IconOrders,
+  IconRadarPulse,
   IconScaleWeight,
-  IconSupport247,
   IconWallet,
   iosContinuousCurve,
 } from '@leopard/mobile-core';
@@ -65,7 +65,7 @@ export function DriverQuickActionGrid({
       label: 'Thiết lập',
       accessibilityLabel: 'Thiết lập nhận đơn và hỗ trợ',
       onPress: onOpenSettings,
-      icon: <IconSupport247 color="#0B1E42" size={20} />,
+      icon: <IconRadarPulse color="#0B1E42" size={20} />,
       testID: 'quick-action-settings',
     },
   ];
@@ -93,10 +93,16 @@ export function DriverQuickActionGrid({
 
 const styles = StyleSheet.create({
   grid: {
+    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: 20,
+    ...iosContinuousCurve,
+    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    marginTop: 4,
+    marginBottom: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 14,
   },
   item: {
     alignItems: 'center',
@@ -104,25 +110,19 @@ const styles = StyleSheet.create({
   },
   circle: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
+    backgroundColor: '#F0F4F9',
     borderRadius: 25,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    elevation: 2,
     height: 50,
     justifyContent: 'center',
-    marginBottom: 6,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    marginBottom: 8,
     width: 50,
   },
   label: {
     color: '#334155',
     fontSize: 11,
     fontWeight: '700',
+    lineHeight: 15,
+    textAlign: 'center',
   },
   pressed: {
     opacity: 0.85,

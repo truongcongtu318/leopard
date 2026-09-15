@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { GestureBottomSheet, RealInteractiveMap, ScreenState, SkeletonCard, resolveLocationCoords } from '@leopard/mobile-core';
 
@@ -8,8 +7,9 @@ import { IncomingDispatchModal } from './IncomingDispatchModal';
 import type { IncomingDispatchOffer } from './IncomingDispatchModal';
 import type { DriverListView } from './model';
 
-import { DriverGlassTopbar } from './components/DriverGlassTopbar';
 import { DriverConnectionCapsule } from './components/DriverConnectionCapsule';
+import { DriverConnectionStatusRow } from './components/DriverConnectionStatusRow';
+import { DriverMapControlStack } from './components/DriverMapControlStack';
 import { DriverQuickActionGrid } from './components/DriverQuickActionGrid';
 import { DriverEmptyBoard } from './components/DriverEmptyBoard';
 import { DriverLocationStatus } from './components/DriverLocationStatus';
@@ -31,7 +31,8 @@ const IDLE_SNAP_POINTS: number[] = [0.18, 0.52, 0.92];
 /** Active trip keeps a taller collapsed position: the mission card must stay readable. */
 const ACTIVE_TRIP_SNAP_POINTS: number[] = [0.32, 0.62, 0.92];
 
-const DRIVER_GREETING = 'Chào bác tài';
+/** Vertical gap between the connection pill and the sheet's top edge. */
+const CAPSULE_GAP = 14;
 
 export type DriverOrdersScreenProps = Readonly<{
   view: DriverListView;
@@ -69,8 +70,7 @@ export function DriverOrdersScreen({
   showDebugActions = false,
   view,
 }: DriverOrdersScreenProps) {
-  const insets = React.useContext(SafeAreaInsetsContext);
-  const topInset = insets?.top ?? 0;
+  const { height: viewportHeight } = useWindowDimensions();
 
   const [dismissedOfferId, setDismissedOfferId] = useState<string | null>(null);
   const [simulatedOffer, setSimulatedOffer] = useState<IncomingDispatchOffer | null>(null);
@@ -79,6 +79,8 @@ export function DriverOrdersScreen({
   const [dismissedOrderIds, setDismissedOrderIds] = useState<readonly string[]>([]);
   const [locationRequestKey, setLocationRequestKey] = useState(0);
   const [driverLocation, setDriverLocation] = useState<DriverLocationState>({ kind: 'loading' });
+  /** Fraction of the viewport currently covered by the bottom sheet. */
+  const [sheetFraction, setSheetFraction] = useState(IDLE_SNAP_POINTS[1]);
   const idlePingHealth = useDriverIdlePingHealth();
 
   useEffect(() => {
@@ -162,6 +164,15 @@ export function DriverOrdersScreen({
     ? view.requestedOrders.filter((item) => !dismissedOrderIds.includes(item.id))
     : [];
 
+  /** Secondary line under the connection status: what dispatch can send right now. */
+  const vehicleLine = [driverIdentity?.vehiclePlate?.trim(), driverIdentity?.vehicleType?.trim()]
+    .filter((part): part is string => Boolean(part))
+    .join(' · ');
+  const vehicleSubtitle =
+    pendingOfferCount > 0
+      ? `${pendingOfferCount} đơn đang chờ bạn nhận`
+      : vehicleLine;
+
   const snapPoints = activeTrip ? ACTIVE_TRIP_SNAP_POINTS : IDLE_SNAP_POINTS;
   const initialSnapIndex = 1;
 
@@ -209,26 +220,22 @@ export function DriverOrdersScreen({
         />
       </View>
 
-      {/* ── Layer 1: floating glass top bar + GPS pill ── */}
-      <View style={[styles.topBarLayer, { top: Math.max(topInset, 12) }]}>
+      {/* ── Layer 1: right-edge map control stack (Grab-style) ── */}
+      <View pointerEvents="box-none" style={styles.mapControlLayer}>
         <Text style={styles.srOnly}>Trạng thái nhận đơn</Text>
-        <DriverGlassTopbar
-          driverName={driverIdentity?.name}
-          greeting={DRIVER_GREETING}
-          onOpenNotifications={onNoticeAction ? () => onNoticeAction() : undefined}
-          onOpenProfile={() => onNavigate?.('/profile')}
-          pendingOfferCount={pendingOfferCount}
-          vehiclePlate={driverIdentity?.vehiclePlate}
-          vehicleType={driverIdentity?.vehicleType}
+        <DriverMapControlStack
+          isLocating={driverLocation.kind === 'loading'}
+          onOpenRadiusSettings={() => setIsSettingsOpen(true)}
+          onRecenter={retryCurrentLocation}
+          onRefreshOffers={onRetry}
         />
-        <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
       </View>
 
-      {/* ── Layer 2: duty capsule floating over the map (single availability control) ── */}
+      {/* ── Layer 2: duty pill pinned just above the sheet's top edge ── */}
       {isContent && !activeTrip ? (
         <View
           pointerEvents="box-none"
-          style={[styles.capsuleLayer, { top: Math.max(topInset, 12) + 92 }]}
+          style={[styles.capsuleLayer, { bottom: sheetFraction * viewportHeight + CAPSULE_GAP }]}
         >
           <DriverConnectionCapsule
             disabled={Boolean(view.availability.action?.disabled)}
@@ -242,6 +249,7 @@ export function DriverOrdersScreen({
       {/* ── Layer 3: gesture bottom sheet — mission cockpit or idle load board ── */}
       <GestureBottomSheet
         initialSnapIndex={initialSnapIndex}
+        onSnapChange={(_index, snapPoint) => setSheetFraction(snapPoint)}
         snapPoints={snapPoints}
         testID="driver-load-board-sheet"
       >
@@ -284,12 +292,24 @@ export function DriverOrdersScreen({
                   trip={activeTrip}
                 />
               ) : (
-                <DriverQuickActionGrid
-                  onOpenSettings={() => setIsSettingsOpen(true)}
-                  onOpenTrips={() => onNavigate?.('/history')}
-                  onOpenVehicle={() => onNavigate?.('/profile')}
-                  onOpenWallet={() => onNavigate?.('/wallet')}
-                />
+                <>
+                  <DriverConnectionStatusRow
+                    isOnline={isOnline}
+                    subtitle={vehicleSubtitle || null}
+                  />
+
+                  <DriverQuickActionGrid
+                    onOpenSettings={() => setIsSettingsOpen(true)}
+                    onOpenTrips={() => onNavigate?.('/history')}
+                    onOpenVehicle={() => onNavigate?.('/profile')}
+                    onOpenWallet={() => onNavigate?.('/wallet')}
+                  />
+
+                  <DriverLocationStatus
+                    location={driverLocation}
+                    onRetry={retryCurrentLocation}
+                  />
+                </>
               )}
 
               <DriverSystemBanner
@@ -385,10 +405,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     zIndex: 0,
   },
-  topBarLayer: {
-    left: 16,
+  mapControlLayer: {
     position: 'absolute',
     right: 16,
+    top: '34%',
     zIndex: 20,
   },
   capsuleLayer: {

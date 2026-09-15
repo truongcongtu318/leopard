@@ -22,7 +22,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('renders the Liquid Glass topbar with driver identity and profile navigation', async () => {
+  it('keeps the map full-bleed at Layer 0 with the Grab-style control stack over it', async () => {
     const onNavigate = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
@@ -36,12 +36,13 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
       />,
     );
 
-    expect(screen.getByTestId('driver-glass-topbar')).toBeTruthy();
-    expect(screen.getByText('Trần Minh')).toBeTruthy();
-    expect(screen.getByText('29H-123.45 · Xe tải 1.25T')).toBeTruthy();
+    // No greeting top bar: the reference layout is a pure full-bleed map.
+    expect(screen.queryByTestId('driver-glass-topbar')).toBeNull();
 
-    await fireEvent.press(screen.getByTestId('driver-topbar-profile'));
-    expect(onNavigate).toHaveBeenCalledWith('/profile');
+    // Vertical map control stack performs real actions.
+    expect(screen.getByTestId('driver-map-control-stack')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('driver-map-radius'));
+    expect(screen.getByTestId('driver-receiving-settings')).toBeTruthy();
 
     await screen.unmount();
   });
@@ -50,14 +51,18 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     const onSetAvailability = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
+        driverIdentity={{ name: 'Trần Minh', vehiclePlate: '29H-123.45', vehicleType: 'Xe tải 1.25T' }}
         onSetAvailability={onSetAvailability}
         view={createDriverListFixture('D-LIST-REQUESTED')}
       />,
     );
 
-    // Online fixture: QR capsule reads ĐANG KẾT NỐI and toggles back to OFFLINE.
-    expect(screen.getByTestId('driver-connection-capsule')).toBeTruthy();
-    expect(screen.getByText('ĐANG KẾT NỐI')).toBeTruthy();
+    // Online fixture: the status row confirms dispatch can see the driver, and
+    // the subtitle prioritises how many offer are waiting over vehicle identity.
+    expect(screen.getByTestId('driver-connection-status')).toBeTruthy();
+    expect(screen.getByText('Bạn đang bật kết nối.')).toBeTruthy();
+    expect(screen.getByText('Đang nhận cuốc')).toBeTruthy();
+    expect(screen.getByText('2 đơn đang chờ bạn nhận')).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('driver-connection-toggle'));
     expect(onSetAvailability).toHaveBeenCalledWith('set-availability-demo');
@@ -76,9 +81,8 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
       />,
     );
 
-    expect(screen.getByTestId('driver-connection-capsule')).toBeTruthy();
-    expect(screen.getByText('BẬT KẾT NỐI')).toBeTruthy();
-    expect(screen.getByText('Bạn đang ngoại tuyến')).toBeTruthy();
+    expect(screen.getByText('Bạn đang tắt kết nối.')).toBeTruthy();
+    expect(screen.getByText('Bật kết nối')).toBeTruthy();
     expect(screen.getByTestId('driver-offline-board')).toBeTruthy();
     expect(screen.getByText('Radar đang tạm dừng')).toBeTruthy();
 

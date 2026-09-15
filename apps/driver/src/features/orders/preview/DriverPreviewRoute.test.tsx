@@ -33,7 +33,7 @@ describe('DriverPreviewRoute', () => {
         screen="list"
       />,
     );
-    await waitFor(() => expect(screen.getByText('Tài xế LEOPARD')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('driver-load-board-sheet')).toBeTruthy());
     expect(loadCatalogue).not.toHaveBeenCalled();
     expect(screen.queryByText('Kho riêng tư mô phỏng tại Quận 7')).toBeNull();
     await screen.unmount();

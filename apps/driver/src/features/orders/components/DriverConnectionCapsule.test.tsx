@@ -9,9 +9,8 @@ describe('DriverConnectionCapsule', () => {
     const onToggle = jest.fn();
     const screen = await render(<DriverConnectionCapsule isOnline={false} onToggle={onToggle} />);
 
-    expect(screen.getByTestId('driver-connection-capsule')).toBeTruthy();
-    expect(screen.getByText('BẬT KẾT NỐI')).toBeTruthy();
-    expect(screen.getByText('Bạn đang ngoại tuyến')).toBeTruthy();
+    expect(screen.getByText('Bật kết nối')).toBeTruthy();
+    expect(screen.getByTestId('driver-connection-toggle')).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('driver-connection-toggle'));
     expect(onToggle).toHaveBeenCalledTimes(1);
@@ -19,11 +18,10 @@ describe('DriverConnectionCapsule', () => {
     await screen.unmount();
   });
 
-  it('renders the online state when availability is ONLINE', async () => {
+  it('renders the receiving state when availability is ONLINE', async () => {
     const screen = await render(<DriverConnectionCapsule isOnline onToggle={() => {}} />);
 
-    expect(screen.getByText('ĐANG KẾT NỐI')).toBeTruthy();
-    expect(screen.getByText('Bạn đang trực tuyến')).toBeTruthy();
+    expect(screen.getByText('Đang nhận cuốc')).toBeTruthy();
 
     const toggle = screen.getByTestId('driver-connection-toggle');
     expect(toggle.props.accessibilityState).toMatchObject({ selected: true });

@@ -16,7 +16,6 @@ describe('DriverOrdersScreen', () => {
       />,
     );
 
-    expect(screen.getByText('Nguyễn Văn Tuấn')).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Đơn có thể nhận' })).toBeTruthy();
     expect(screen.getByTestId('driver-active-trip-slab')).toBeTruthy();
     expect(screen.getByText('Trạng thái nhận đơn')).toBeTruthy();
