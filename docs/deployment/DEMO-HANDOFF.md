@@ -47,7 +47,8 @@ sudo ufw allow 80,3000,3002,8081,8082/tcp
 ## 2. Deploy
 
 ```bash
-git clone <repo-url> leopard && cd leopard
+# Nhánh mặc định của repo là `main`, KHÔNG chứa phần deploy này — phải chỉ định develop.
+git clone -b develop <repo-url> leopard && cd leopard
 ./infra/scripts/deploy-demo.sh
 ```
 
