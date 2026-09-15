@@ -9,7 +9,7 @@ const adminNavItems = [
   { label: 'Người dùng', href: '/admin/users' },
   { label: 'Đội xe', href: '/admin/fleets' },
   { label: 'Tài xế', href: '/admin/drivers' },
-  { label: 'Duyệt tài xế', href: '/admin/driver-applications' },
+  { label: 'Duyệt hồ sơ', href: '/admin/driver-applications' },
   { label: 'Rút tiền', href: '/admin/withdrawals' },
 ];
 
@@ -17,7 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await getVerifiedOperationsUser();
   if (!user) redirect('/login?expired=true');
   if (!canAccess(user.role, ['ADMIN'])) {
-    redirect(user.role === 'FLEET_OWNER' ? '/fleet' : '/login?forbidden=true');
+    redirect('/login?forbidden=true');
   }
 
   return (

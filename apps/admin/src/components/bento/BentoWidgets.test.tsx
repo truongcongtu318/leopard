@@ -55,9 +55,54 @@ describe('NexaFleet Bento Widgets', () => {
     expect(screen.getByText('Kho A')).toBeTruthy();
     expect(screen.getByText('Kho B')).toBeTruthy();
 
-    const pendingBtn = screen.getByRole('button', { name: 'Chờ tiếp nhận' });
+    const pendingBtn = screen.getByRole('button', { name: 'Chờ tài xế' });
     fireEvent.click(pendingBtn);
     expect(onFilterChange).toHaveBeenCalledWith('pending');
+
+    const card = screen.getByText('Sổ điều phối đơn hàng').closest('.rounded-3xl');
+    expect(card?.className).toContain('rounded-3xl');
+    expect(card?.className).toContain('border-black/[0.06]');
+  });
+
+  it('filters in_transit to include PICKING_UP and LOADING orders', () => {
+    render(
+      <BentoOrdersCard
+        title="Sổ điều phối đơn hàng"
+        orders={[
+          {
+            id: 'LP-PICKING',
+            customer: 'Khách A',
+            route: { from: 'Kho 1', to: 'Kho 2' },
+            weight: '50.000 ₫',
+            eta: '10:00',
+            status: 'PICKING_UP',
+          },
+          {
+            id: 'LP-LOADING',
+            customer: 'Khách B',
+            route: { from: 'Kho 3', to: 'Kho 4' },
+            weight: '80.000 ₫',
+            eta: '11:00',
+            status: 'LOADING',
+          },
+          {
+            id: 'LP-DONE',
+            customer: 'Khách C',
+            route: { from: 'Kho 5', to: 'Kho 6' },
+            weight: '120.000 ₫',
+            eta: '12:00',
+            status: 'DELIVERED',
+          },
+        ]}
+      />,
+    );
+
+    const inTransitBtn = screen.getByRole('button', { name: 'Đang giao' });
+    fireEvent.click(inTransitBtn);
+
+    expect(screen.getByText('LP-PICKING')).toBeTruthy();
+    expect(screen.getByText('LP-LOADING')).toBeTruthy();
+    expect(screen.queryByText('LP-DONE')).toBeNull();
   });
 
   it('renders empty state when BE returns no orders', () => {
@@ -85,6 +130,10 @@ describe('NexaFleet Bento Widgets', () => {
     expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
     expect(screen.getByText('Đang dỡ hàng')).toBeTruthy();
     expect(screen.getByText('Đã giao hàng')).toBeTruthy();
+
+    const card = screen.getByText('Cơ cấu trạng thái đơn').closest('.rounded-3xl');
+    expect(card?.className).toContain('rounded-3xl');
+    expect(card?.className).toContain('border-black/[0.06]');
   });
 
   it('renders FulfillmentPerformanceCard with KPI rate and subtitle', () => {
@@ -99,6 +148,10 @@ describe('NexaFleet Bento Widgets', () => {
     expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)')).toBeTruthy();
     expect(screen.getByText('89%')).toBeTruthy();
     expect(screen.getByText('trung bình ca trực')).toBeTruthy();
+
+    const card = screen.getByText('Hiệu suất giao đúng hạn (OTD)').closest('.rounded-3xl');
+    expect(card?.className).toContain('rounded-3xl');
+    expect(card?.className).toContain('border-black/[0.06]');
   });
 
   it('renders RevenueOverTimeCard with BE amount only', () => {
@@ -116,13 +169,21 @@ describe('NexaFleet Bento Widgets', () => {
     expect(screen.getByText('184.000 ₫')).toBeTruthy();
     expect(screen.getByText('Tổng giá trị đơn DELIVERED')).toBeTruthy();
 
+    const card = screen.getByText('Doanh thu cước vận chuyển').closest('.rounded-3xl');
+    expect(card?.className).toContain('rounded-3xl');
+    expect(card?.className).toContain('border-black/[0.06]');
+
     const monthBtn = screen.getByRole('button', { name: 'Tháng' });
     fireEvent.click(monthBtn);
     expect(onPeriodChange).toHaveBeenCalledWith('month');
   });
 
   it('renders zero-revenue state from BE', () => {
-    render(<RevenueOverTimeCard title="Doanh thu cước vận chuyển" amount="0 ₫" />);
+    const { container } = render(<RevenueOverTimeCard title="Doanh thu cước vận chuyển" amount="0 ₫" />);
     expect(screen.getByText('Chưa phát sinh doanh thu')).toBeTruthy();
+    const className = (container.firstChild as HTMLElement).className;
+    expect(className).toContain('from-amber-500');
+    expect(className).toContain('via-orange-500');
+    expect(className).toContain('to-rose-600');
   });
 });

@@ -12,7 +12,7 @@ import {
 const DEMO_ACCOUNTS: Record<
   string,
   {
-    readonly role: "ADMIN" | "FLEET_OWNER" | "DRIVER" | "CUSTOMER";
+    readonly role: "ADMIN" | "DRIVER" | "CUSTOMER";
     readonly id: string;
     readonly phone: string;
   }
@@ -21,11 +21,6 @@ const DEMO_ACCOUNTS: Record<
     role: "ADMIN",
     id: "usr-admin-1",
     phone: "+840000000004",
-  },
-  "fleet-owner": {
-    role: "FLEET_OWNER",
-    id: "usr-fleet-1",
-    phone: "+840000000003",
   },
   driver: {
     role: "DRIVER",
@@ -41,11 +36,6 @@ const DEMO_ACCOUNTS: Record<
     role: "ADMIN",
     id: "usr-admin-1",
     phone: "+840000000004",
-  },
-  "+840000000003": {
-    role: "FLEET_OWNER",
-    id: "usr-fleet-1",
-    phone: "+840000000003",
   },
   "+840000000002": {
     role: "DRIVER",
@@ -67,9 +57,7 @@ function createOfflineDemoResponse(accountId: string): Response | null {
   const accessHandle =
     demoAccount.role === "ADMIN"
       ? "qa-admin"
-      : demoAccount.role === "FLEET_OWNER"
-        ? "qa-fleet"
-        : `qa-${normalizedKey}`;
+      : `qa-${normalizedKey}`;
   const refreshHandle = `refresh-${accessHandle}`;
 
   const now = Date.now();

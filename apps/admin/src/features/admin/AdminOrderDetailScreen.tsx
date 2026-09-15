@@ -82,8 +82,9 @@ export function AdminOrderDetailScreen({
         </div>
       </AdminDispatchSlab>
 
-      <div className="grid min-w-0 gap-lg lg:grid-cols-12">
-        <div className="flex min-w-0 flex-col gap-lg lg:col-span-8">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-12">
+        {/* Left Column: Route Spine + Realtime Map + e-POD Media */}
+        <div className="flex min-w-0 flex-col gap-5 lg:col-span-7 xl:col-span-8">
           <AdminSurface title="Ngữ cảnh đơn và phân công">
             <ReadOnlyDetailList
               ariaLabel="Ngữ cảnh đơn, Khách hàng và Tài xế"
@@ -111,7 +112,7 @@ export function AdminOrderDetailScreen({
           </AdminSurface>
 
           <MapPanel
-            className="rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
+            className="rounded-3xl border border-black/[0.06] bg-white/80 backdrop-blur-xl shadow-sm shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden"
             height="large"
             lastUpdated={order.tracking.lastUpdatedLabel}
             state={order.tracking.state}
@@ -164,38 +165,6 @@ export function AdminOrderDetailScreen({
             </div>
           </MapPanel>
 
-          <AdminSurface title="Thao tác điều phối khả dụng">
-            {view.availableCommands.length > 0 ? (
-              <AdminCommandLauncher
-                commands={view.availableCommands}
-                dialogPreview={view.dialogPreview}
-                runtime={commandRuntime === true}
-              />
-            ) : (
-              <p className="text-sm text-slate-500 italic py-2">
-                Không có thao tác nào khả dụng cho đơn hàng ở trạng thái này.
-              </p>
-            )}
-          </AdminSurface>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-lg lg:col-span-4">
-          <AdminAuditRail audit={view.audit} />
-
-          <AdminSurface title="Lịch sử trạng thái">
-            <StatusTimeline
-              ariaLabel="Lịch sử lifecycle của đơn"
-              items={order.history.map((item) => ({
-                id: item.id,
-                label: item.label,
-                description: item.description,
-                timestamp: item.timestampLabel,
-                dateTime: item.dateTime,
-                isCurrent: item.isCurrent,
-              }))}
-            />
-          </AdminSurface>
-
           <AdminSurface title="Hình ảnh xác nhận giao nhận">
             {order.media.state === 'error' ? (
               <OperationalAlert title="Không thể tải ảnh" tone="danger">
@@ -206,30 +175,37 @@ export function AdminOrderDetailScreen({
                 Chưa có hình ảnh xác nhận được phép hiển thị.
               </p>
             ) : (
-              <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-1">
+              <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
                 {order.media.items.map((item, index) => (
                   <li
                     key={item.id}
-                    className="rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-4 shadow-2xs hover:shadow-xs transition-shadow"
+                    className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 p-4 shadow-2xs hover:shadow-xs transition-all backdrop-blur-xs hover:border-slate-300"
                   >
-                    <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="flex items-center justify-between gap-2 mb-2">
                       <span className="text-xs font-bold text-brand uppercase tracking-wider" aria-hidden="true">
                         Tệp #{String(index + 1).padStart(2, '0')}
                       </span>
-                      <span className="rounded-full bg-slate-200/70 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-700 border border-slate-200/60">
                         {item.mediaType}
                       </span>
                     </div>
                     <p className="font-bold text-slate-800 break-words text-sm">{item.label}</p>
-                    <p className="mt-1 text-xs text-neutral-muted tabular-nums">
+                    <p className="mt-1 text-xs text-slate-400 font-mono tabular-nums">
                       {item.capturedAtLabel}
                     </p>
+                    <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[11px] text-slate-500 font-medium">
+                      <span>Chứng từ số hóa e-POD</span>
+                      <span className="text-brand font-semibold group-hover:underline">Đã lưu trữ</span>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </AdminSurface>
+        </div>
 
+        {/* Right Column: Payment/VietQR + Timeline + Audit Actions + Audit Rail */}
+        <div className="flex min-w-0 flex-col gap-5 lg:col-span-5 xl:col-span-4">
           <AdminSurface title="Thanh toán">
             <ReadOnlyDetailList
               ariaLabel="Trạng thái và metadata thanh toán"
@@ -250,6 +226,36 @@ export function AdminOrderDetailScreen({
               ]}
             />
           </AdminSurface>
+
+          <AdminSurface title="Lịch sử trạng thái">
+            <StatusTimeline
+              ariaLabel="Lịch sử lifecycle của đơn"
+              items={order.history.map((item) => ({
+                id: item.id,
+                label: item.label,
+                description: item.description,
+                timestamp: item.timestampLabel,
+                dateTime: item.dateTime,
+                isCurrent: item.isCurrent,
+              }))}
+            />
+          </AdminSurface>
+
+          <AdminSurface title="Thao tác điều phối khả dụng">
+            {view.availableCommands.length > 0 ? (
+              <AdminCommandLauncher
+                commands={view.availableCommands}
+                dialogPreview={view.dialogPreview}
+                runtime={commandRuntime === true}
+              />
+            ) : (
+              <p className="text-sm text-slate-500 italic py-2">
+                Không có thao tác nào khả dụng cho đơn hàng ở trạng thái này.
+              </p>
+            )}
+          </AdminSurface>
+
+          <AdminAuditRail audit={view.audit} />
         </div>
       </div>
     </div>

@@ -23,6 +23,13 @@ describe('Admin static operations screens', () => {
     expect(strip.textContent).toContain('Đơn đang chạy');
     expect(strip.textContent).toContain('Đội xe');
     expect(strip.textContent).toContain('Doanh thu');
+
+    const kpiCards = strip.querySelectorAll('.rounded-3xl');
+    expect(kpiCards.length).toBe(4);
+    for (const card of kpiCards) {
+      expect(card.className).toContain('border-black/[0.06]');
+      expect(card.className).toContain('rounded-3xl');
+    }
   });
 
   it('renders Bento map, orders table, status, OTD and revenue cards', () => {
@@ -39,6 +46,11 @@ describe('Admin static operations screens', () => {
     expect(screen.getByText('Cơ cấu trạng thái đơn')).toBeTruthy();
     expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)')).toBeTruthy();
     expect(screen.getByText('Doanh thu cước vận chuyển')).toBeTruthy();
+
+    expect(screen.getByText('Sổ điều phối đơn hàng').closest('.rounded-3xl')?.className).toContain('border-black/[0.06]');
+    expect(screen.getByText('Cơ cấu trạng thái đơn').closest('.rounded-3xl')?.className).toContain('border-black/[0.06]');
+    expect(screen.getByText('Hiệu suất giao đúng hạn (OTD)').closest('.rounded-3xl')?.className).toContain('border-black/[0.06]');
+    expect(screen.getByText('Doanh thu cước vận chuyển').closest('.rounded-3xl')?.className).toContain('border-black/[0.06]');
   });
 
   it('keeps operational context for readiness and offline overview scenarios', () => {
@@ -194,5 +206,29 @@ describe('Admin static operations screens', () => {
     expect(screen.getByText('req-admin-demo-009')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Đóng' }));
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('aligns AdminListScreen and AdminShared with Apple 2026 glass card and pill filters', () => {
+    render(<AdminListScreen screen="orders" view={createAdminPreviewView('orders', 'ADM-ORD-DENSE')} />);
+
+    const searchInput = screen.getByRole('searchbox', { name: /Tìm nhanh trong phiên/ });
+    expect(searchInput.className).toContain('rounded-full');
+
+    const filterScope = screen.getByLabelText('Phạm vi điều tra đơn hàng');
+    expect(filterScope.className).toContain('rounded-3xl');
+    expect(filterScope.className).toContain('backdrop-blur-xl');
+
+    const allPill = screen.getByRole('link', { name: 'Tất cả' });
+    expect(allPill.className).toContain('rounded-full');
+  });
+
+  it('renders AdminOrderDetailScreen in Apple 2026 2-column Bento with e-POD evidence card', () => {
+    render(<AdminOrderDetailScreen view={createAdminPreviewView('order-detail', 'ADM-ORD-DETAIL')} />);
+
+    expect(screen.getByText('Chứng từ số hóa e-POD')).toBeTruthy();
+    expect(screen.getByText('Đã lưu trữ')).toBeTruthy();
+
+    const paymentCard = screen.getByRole('heading', { name: 'Thanh toán' });
+    expect(paymentCard).toBeTruthy();
   });
 });

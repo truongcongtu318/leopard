@@ -25,7 +25,7 @@ export function FulfillmentPerformanceCard({
     [effectiveBars],
   );
   return (
-    <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-1 flex-col justify-between gap-4">
+    <div className="rounded-3xl border border-black/[0.06] bg-white/80 backdrop-blur-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 sm:p-6 flex flex-1 flex-col justify-between gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>
@@ -36,13 +36,13 @@ export function FulfillmentPerformanceCard({
 
       {/* KPI Metric */}
       <div className="flex items-baseline gap-2">
-        <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 tabular-nums">
+        <span className="text-3xl sm:text-4xl font-bold font-mono tracking-tight text-slate-900 tabular-nums">
           {rate}%
         </span>
         <span className="text-xs font-medium text-slate-400">{subtitle}</span>
       </div>
 
-      {/* Vertical Bar Chart (Emerald Green Bars via Recharts) */}
+      {/* OTD bars (emerald) */}
       <div className="h-20 w-full pt-2" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 260, height: 80 }}>
           <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>

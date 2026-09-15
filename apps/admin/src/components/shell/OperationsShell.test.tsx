@@ -18,10 +18,11 @@ beforeEach(async () => {
 
 const adminItems = [
   { label: 'Dashboard', href: '/admin' },
+  { label: 'Orders', href: '/admin/orders' },
   { label: 'Users', href: '/admin/users' },
   { label: 'Fleets', href: '/admin/fleets' },
   { label: 'Drivers', href: '/admin/drivers' },
-  { label: 'Orders', href: '/admin/orders' },
+  { label: 'Driver Applications', href: '/admin/driver-applications' },
 ] as const;
 
 function renderShell(role = 'admin') {
@@ -40,8 +41,30 @@ describe('OperationsShell', () => {
       screen.getByRole('link', { name: 'Bỏ qua đến nội dung chính' }).getAttribute('href'),
     ).toBe('#noi-dung-chinh');
     expect(screen.getByRole('main').getAttribute('id')).toBe('noi-dung-chinh');
-    expect(screen.getAllByText('Quản trị vận hành').length).toBeGreaterThan(0);
+    expect(screen.getByText('LEOPARD')).toBeTruthy();
+    expect(screen.getByText('Admin Console')).toBeTruthy();
+    expect(screen.getAllByText('Admin Dispatch Console').length).toBeGreaterThan(0);
     expect(screen.getByRole('navigation', { name: 'Điều hướng quản trị' })).toBeTruthy();
+  });
+
+  it('renders the Apple 2026 floating glass header with spotlight search and admin avatar', () => {
+    renderShell();
+
+    const header = screen
+      .getByText('LEOPARD')
+      .closest('header');
+    expect(header?.className).toContain('bg-white/80');
+    expect(header?.className).toContain('backdrop-blur-xl');
+    expect(header?.className).toContain('rounded-3xl');
+    expect(header?.className).toContain('border-black/[0.06]');
+
+    expect(
+      screen.getByRole('button', { name: /Tìm kiếm nhanh/ }),
+    ).toBeTruthy();
+    expect(screen.getByText('⌘K')).toBeTruthy();
+
+    expect(screen.getByText('Nguyễn Hoài Nam')).toBeTruthy();
+    expect(screen.getByText('Quản trị viên điều phối')).toBeTruthy();
   });
 
   it('localizes navigation copy without changing hrefs or mutating caller data', () => {
@@ -50,10 +73,11 @@ describe('OperationsShell', () => {
 
     const expectedLinks = [
       ['Tổng quan', '/admin'],
+      ['Đơn hàng', '/admin/orders'],
       ['Người dùng', '/admin/users'],
       ['Đội xe', '/admin/fleets'],
       ['Tài xế', '/admin/drivers'],
-      ['Đơn hàng', '/admin/orders'],
+      ['Duyệt hồ sơ', '/admin/driver-applications'],
     ] as const;
 
     expectedLinks.forEach(([label, href]) => {
@@ -101,7 +125,7 @@ describe('OperationsShell', () => {
     const close = within(drawer).getByRole('button', {
       name: 'Đóng điều hướng',
     });
-    const lastLink = within(drawer).getByRole('link', { name: 'Đơn hàng' });
+    const lastLink = within(drawer).getByRole('link', { name: 'Duyệt hồ sơ' });
 
     lastLink.focus();
     fireEvent.keyDown(drawer, { key: 'Tab' });
