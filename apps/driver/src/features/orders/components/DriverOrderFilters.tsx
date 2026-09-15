@@ -39,13 +39,16 @@ export function DriverOrderFilters({
             <View style={styles.radarIconOuter}>
               <IconRadarPulse color="#0B1E42" size={15} />
             </View>
-            <Text style={styles.radarLiveText}>
-              Radar đang quét bán kính{' '}
-              <Text style={styles.radarLiveHighlight}>{radiusKm} km</Text> ·{' '}
-              <Text style={styles.radarLiveHighlight}>
-                {waitingCount > 0 ? `${waitingCount} đơn phù hợp` : '0 đơn phù hợp'}
+            <View style={styles.radarTextGroup}>
+              <Text style={styles.radarSubtitleText}>Đang tìm cuốc xe gần bạn...</Text>
+              <Text style={styles.radarLiveText}>
+                Radar đang quét bán kính{' '}
+                <Text style={styles.radarLiveHighlight}>{radiusKm} km</Text> ·{' '}
+                <Text style={styles.radarLiveHighlight}>
+                  {waitingCount > 0 ? `${waitingCount} đơn phù hợp` : '0 đơn phù hợp'}
+                </Text>
               </Text>
-            </Text>
+            </View>
           </View>
           {showDebugActions && onSimulateOffer ? (
             <Pressable
@@ -149,6 +152,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     marginRight: 8,
+  },
+  radarTextGroup: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  radarSubtitleText: {
+    color: '#0B1E42',
+    fontSize: 12.5,
+    fontWeight: '700',
+    marginBottom: 2,
   },
   radarIconOuter: {
     alignItems: 'center',

@@ -22,42 +22,57 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('renders a compact HUD with live driver identity and no demo KPI values', async () => {
+  it('renders DriverTopHud with driver identity, duty toggle, and earnings pill', async () => {
     const onSetAvailability = jest.fn();
+    const onNavigate = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
         driverIdentity={{ name: 'Trần Minh', vehicleLabel: 'Xe tải · 29H-123.45' }}
+        onNavigate={onNavigate}
         onSetAvailability={onSetAvailability}
         view={createDriverListFixture('D-LIST-REQUESTED')}
       />,
     );
 
-    // Menu button
-    expect(screen.getByTestId('driver-menu-button')).toBeTruthy();
-
+    // DriverTopHud root and pills
+    expect(screen.getByTestId('driver-top-hud')).toBeTruthy();
+    expect(screen.getByTestId('driver-profile-pill')).toBeTruthy();
     expect(screen.getByText('Trần Minh')).toBeTruthy();
-    expect(screen.getByText('Xe tải · 29H-123.45')).toBeTruthy();
-    expect(screen.queryByText('Nguyễn Văn Tuấn')).toBeNull();
-    expect(screen.queryByText('51C-889.24 (2.5T)')).toBeNull();
+    expect(screen.getByTestId('driver-duty-toggle')).toBeTruthy();
+    expect(screen.getByText('TRỰC TUYẾN')).toBeTruthy();
+    expect(screen.getByTestId('driver-earnings-pill')).toBeTruthy();
 
-    expect(screen.getByText('Trực tuyến')).toBeTruthy();
-    expect(screen.queryByText('4 chuyến · 620.000 ₫ · 5.5h')).toBeNull();
-    expect(screen.queryByText('Thu nhập hôm nay')).toBeNull();
+    // Navigate to profile and earnings on pill tap
+    await fireEvent.press(screen.getByTestId('driver-profile-pill'));
+    expect(onNavigate).toHaveBeenCalledWith('/profile');
+
+    await fireEvent.press(screen.getByTestId('driver-earnings-pill'));
+    expect(onNavigate).toHaveBeenCalledWith('/earnings');
 
     // Toggle duty availability
-    const toggle = screen.getByTestId('driver-availability-toggle');
+    const toggle = screen.getByTestId('driver-duty-toggle');
     await fireEvent.press(toggle);
     expect(onSetAvailability).toHaveBeenCalledWith('set-availability-demo');
 
     await screen.unmount();
   });
 
-  it('renders offline hero duty state when driver is offline', async () => {
+  it('renders offline hero duty state with prominent offline banner prompting driver to go online', async () => {
+    const onSetAvailability = jest.fn();
     const screen = await render(
-      <DriverOrdersScreen view={createDriverListFixture('D-LIST-OFFLINE')} />,
+      <DriverOrdersScreen
+        onSetAvailability={onSetAvailability}
+        view={createDriverListFixture('D-LIST-OFFLINE')}
+      />,
     );
 
+    expect(screen.getByTestId('driver-offline-banner')).toBeTruthy();
     expect(screen.getByText('Ngoại tuyến')).toBeTruthy();
+    const goOnlineBtn = screen.getByRole('button', { name: 'Bật trực tuyến' });
+    expect(goOnlineBtn).toBeTruthy();
+
+    await fireEvent.press(goOnlineBtn);
+    expect(onSetAvailability).toHaveBeenCalled();
 
     await screen.unmount();
   });
@@ -74,8 +89,9 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     // GestureBottomSheet container
     expect(screen.getByTestId('driver-load-board-sheet')).toBeTruthy();
 
-    // Radar strip is the single place that communicates the scan radius.
+    // Radar strip is the single place that communicates the scan radius and scanning status.
     expect(screen.getByText(/Radar đang quét bán kính/)).toBeTruthy();
+    expect(screen.getByText(/Đang tìm cuốc xe gần bạn/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Mô phỏng nổ đơn' })).toBeNull();
 
     // Load-board section header
@@ -85,9 +101,12 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     expect(screen.queryByText('1.25T')).toBeNull();
     expect(screen.queryByText('2.5T')).toBeNull();
 
-    // Double-Bezel order cards
+    // Double-Bezel order cards with cargo bento tags
     expect(screen.getByText('LP-D-260815-101')).toBeTruthy();
     expect(screen.getByText('285.000 ₫')).toBeTruthy();
+    expect(screen.getAllByTestId('nearby-order-cargo-bento').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('nearby-order-cargo-name').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('nearby-order-cargo-weight').length).toBeGreaterThan(0);
 
     await screen.unmount();
   });

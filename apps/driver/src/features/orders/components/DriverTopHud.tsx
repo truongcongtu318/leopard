@@ -13,6 +13,10 @@ export type DriverTopHudProps = Readonly<{
   todayTripsCount?: number;
   onOpenProfile?: () => void;
   onOpenEarnings?: () => void;
+  isPending?: boolean;
+  disabled?: boolean;
+  toggleAccessibilityLabel?: string;
+  dutyTestID?: string;
 }>;
 
 export function DriverTopHud({
@@ -24,8 +28,13 @@ export function DriverTopHud({
   todayTripsCount,
   onOpenProfile,
   onOpenEarnings,
+  isPending = false,
+  disabled = false,
+  toggleAccessibilityLabel,
+  dutyTestID,
 }: DriverTopHudProps): React.JSX.Element {
   const profileLabel = vehiclePlate?.trim() || driverName?.trim() || 'Tài xế';
+  const isButtonDisabled = disabled || isPending;
 
   return (
     <View style={styles.container} testID="driver-top-hud">
@@ -47,16 +56,25 @@ export function DriverTopHud({
 
       {/* Center Pill: Duty Status Toggle */}
       <Pressable
-        accessibilityLabel={isOnline ? 'Chuyển sang nghỉ' : 'Chuyển sang trực tuyến'}
+        accessibilityLabel={
+          toggleAccessibilityLabel ||
+          (isPending
+            ? 'Đang cập nhật trạng thái nhận đơn'
+            : isOnline
+              ? 'Chuyển sang nghỉ'
+              : 'Chuyển sang trực tuyến')
+        }
         accessibilityRole="button"
+        accessibilityState={{ busy: isPending, disabled: isButtonDisabled }}
+        disabled={isButtonDisabled}
         onPress={onToggleAvailability}
         style={({ pressed }) => [
           styles.pill,
           styles.dutyPill,
           isOnline ? styles.dutyOnline : styles.dutyOffline,
-          pressed && styles.pressed,
+          pressed && !isButtonDisabled && styles.pressed,
         ]}
-        testID="driver-duty-toggle"
+        testID={dutyTestID || 'driver-duty-toggle'}
       >
         <View
           style={[

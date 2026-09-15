@@ -7,6 +7,7 @@ import {
   spacing,
   IconClock,
   IconRoute,
+  IconScaleWeight,
   IconSpeedTruck,
   StatusBadge,
 } from '@leopard/mobile-core';
@@ -36,6 +37,32 @@ export function DriverNearbyOrderCard({
   const distanceEtaText = item.distanceLabel
     ? `${item.distanceLabel} · ${item.etaLabel}`
     : item.etaLabel;
+
+  const rawCargoSummary = item.cargoSummary?.trim() || '';
+  const cargoParts = rawCargoSummary ? rawCargoSummary.split('·').map((s) => s.trim()) : [];
+  const cargoName =
+    (item as any).cargoName ||
+    (cargoParts.length > 0 && cargoParts[0] ? cargoParts[0] : 'Hàng hóa tiêu chuẩn');
+
+  let cargoWeight = (item as any).cargoWeightKg
+    ? `${(item as any).cargoWeightKg.toLocaleString('vi-VN')} kg`
+    : null;
+  if (!cargoWeight && cargoParts.length > 1) {
+    cargoWeight = cargoParts[1].replace(/^khoảng\s*/i, '');
+  } else if (!cargoWeight && rawCargoSummary.includes('kg')) {
+    const match = rawCargoSummary.match(/([0-9.,]+\s*(?:kg|tấn))/i);
+    if (match) cargoWeight = match[1];
+  }
+
+  const cargoDimensions = (item as any).cargoDimensions || null;
+  const loadingFee = (item as any).loadingFee;
+  const loadingDesc = (item as any).loadingDescription;
+  const hasLoadingFee = Boolean(loadingFee && loadingFee > 0);
+  const loadingFeeBadge = hasLoadingFee
+    ? loadingDesc
+      ? `${loadingDesc} (+${loadingFee.toLocaleString('vi-VN')} ₫)`
+      : `Bốc xếp (+${loadingFee.toLocaleString('vi-VN')} ₫)`
+    : loadingDesc || null;
 
   return (
     <View style={styles.orderCardOuter}>
@@ -92,19 +119,38 @@ export function DriverNearbyOrderCard({
             {item.publicRouteLabel}
           </Text>
 
-          {/* Vehicle & Cargo Tags */}
-          <View style={styles.tagsContainer}>
-            <View style={styles.vehicleTag}>
-              <IconSpeedTruck color="#475569" size={13} />
-              <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
-            </View>
-            {item.cargoSummary ? (
-              <View style={styles.cargoTag}>
-                <Text numberOfLines={1} style={styles.cargoTagText}>
-                  {item.cargoSummary}
+          {/* Cargo Specifications Bento Tag Grid */}
+          <View style={styles.cargoBentoContainer} testID="nearby-order-cargo-bento">
+            <View style={styles.cargoRow}>
+              <View style={styles.cargoNameBadge} testID="nearby-order-cargo-name">
+                <Text numberOfLines={1} style={styles.cargoNameText}>
+                  {cargoName}
                 </Text>
               </View>
-            ) : null}
+              {cargoWeight ? (
+                <View style={styles.cargoWeightBadge} testID="nearby-order-cargo-weight">
+                  <IconScaleWeight color="#0B1E42" size={12} />
+                  <Text style={styles.cargoWeightText}>{cargoWeight}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={styles.cargoSubRow}>
+              <View style={styles.vehicleTag}>
+                <IconSpeedTruck color="#475569" size={12} />
+                <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
+              </View>
+              {cargoDimensions ? (
+                <View style={styles.specBadge} testID="nearby-order-cargo-dimensions">
+                  <Text style={styles.specBadgeText}>{cargoDimensions}</Text>
+                </View>
+              ) : null}
+              {loadingFeeBadge ? (
+                <View style={styles.loadingBadge} testID="nearby-order-loading-fee">
+                  <Text style={styles.loadingBadgeText}>{loadingFeeBadge}</Text>
+                </View>
+              ) : null}
+            </View>
           </View>
 
           {/* Card Footer: ETA and updated timestamp */}
@@ -293,42 +339,93 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  // Tags
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 8,
-  },
-  vehicleTag: {
-    alignItems: 'center',
+  // Cargo Bento Grid
+  cargoBentoContainer: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
+    gap: 6,
+    marginBottom: 8,
+    padding: 8,
+  },
+  cargoRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  cargoNameBadge: {
+    backgroundColor: 'rgba(11, 30, 66, 0.04)',
+    borderRadius: 8,
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  cargoNameText: {
+    color: '#0B1E42',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cargoWeightBadge: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+    borderRadius: 8,
     flexDirection: 'row',
     gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
+  },
+  cargoWeightText: {
+    color: '#C2410C',
+    fontSize: 11.5,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  cargoSubRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  specBadge: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  specBadgeText: {
+    color: '#475569',
+    fontSize: 11,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  loadingBadge: {
+    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  loadingBadgeText: {
+    color: '#15803D',
+    fontSize: 11,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  vehicleTag: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 6,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   vehicleTagText: {
     color: '#475569',
     fontSize: 11,
     fontWeight: '600',
-  },
-  cargoTag: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    borderWidth: 1,
-    maxWidth: 200,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  cargoTagText: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '500',
   },
 
   // Footer

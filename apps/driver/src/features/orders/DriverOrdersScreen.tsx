@@ -34,8 +34,7 @@ import type {
   DriverPublicOrderView,
 } from './model';
 
-import { DriverHomeHeader } from './components/DriverHomeHeader';
-import { DriverAvailabilityCard } from './components/DriverAvailabilityCard';
+import { DriverTopHud } from './components/DriverTopHud';
 import { DriverSystemBanner } from './components/DriverSystemBanner';
 import { DriverActiveTripCard } from './components/DriverActiveTripCard';
 import { DriverOrderFilters } from './components/DriverOrderFilters';
@@ -62,7 +61,12 @@ export type DriverOrdersScreenProps = Readonly<{
   isAcceptingIncomingOffer?: boolean;
   onNavigate?: (route: string) => void;
   networkError?: string | null;
-  driverIdentity?: { name?: string | null; vehicleLabel?: string | null };
+  driverIdentity?: {
+    name?: string | null;
+    vehicleLabel?: string | null;
+    vehiclePlate?: string | null;
+    vehicleType?: string | null;
+  };
   showDebugActions?: boolean;
 }>;
 
@@ -325,24 +329,17 @@ export function DriverOrdersScreen({
 
         {/* Layer 1: Top HUD */}
         <View style={styles.topHudContainer}>
-          <View style={styles.topHudGlass}>
-            <DriverHomeHeader
-              availabilityControl={
-                <View style={styles.hudDutyWrap}>
-                  <Text style={styles.hudDutyLabel}>Trạng thái nhận đơn</Text>
-                  <View style={[styles.capsuleBtn, styles.capsuleOffline]}>
-                    <View style={[styles.statusDot, styles.statusDotOffline]} />
-                    <Text style={[styles.statusText, styles.statusTextOffline]}>
-                      Ngoại tuyến
-                    </Text>
-                  </View>
-                </View>
-              }
-              driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
-              onOpenMenu={handleOpenMenu}
-              vehicleLabel={driverIdentity?.vehicleLabel ?? 'Đang tải dữ liệu...'}
-            />
-          </View>
+          <Text style={styles.srOnly}>Trạng thái nhận đơn</Text>
+          <DriverTopHud
+            disabled={true}
+            driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
+            isOnline={false}
+            onOpenEarnings={() => onNavigate?.('/earnings')}
+            onOpenProfile={() => onNavigate?.('/profile')}
+            onToggleAvailability={() => {}}
+            vehiclePlate={driverIdentity?.vehiclePlate ?? undefined}
+            vehicleType={driverIdentity?.vehicleType ?? undefined}
+          />
           <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
         </View>
 
@@ -389,24 +386,17 @@ export function DriverOrdersScreen({
 
         {/* Layer 1: Top HUD */}
         <View style={styles.topHudContainer}>
-          <View style={styles.topHudGlass}>
-            <DriverHomeHeader
-              availabilityControl={
-                <View style={styles.hudDutyWrap}>
-                  <Text style={styles.hudDutyLabel}>Trạng thái nhận đơn</Text>
-                  <View style={[styles.capsuleBtn, styles.capsuleOffline]}>
-                    <View style={[styles.statusDot, styles.statusDotOffline]} />
-                    <Text style={[styles.statusText, styles.statusTextOffline]}>
-                      Ngoại tuyến
-                    </Text>
-                  </View>
-                </View>
-              }
-              driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
-              onOpenMenu={handleOpenMenu}
-              vehicleLabel={driverIdentity?.vehicleLabel ?? 'Đang cập nhật phương tiện'}
-            />
-          </View>
+          <Text style={styles.srOnly}>Trạng thái nhận đơn</Text>
+          <DriverTopHud
+            disabled={true}
+            driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
+            isOnline={false}
+            onOpenEarnings={() => onNavigate?.('/earnings')}
+            onOpenProfile={() => onNavigate?.('/profile')}
+            onToggleAvailability={() => {}}
+            vehiclePlate={driverIdentity?.vehiclePlate ?? undefined}
+            vehicleType={driverIdentity?.vehicleType ?? undefined}
+          />
           <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
         </View>
 
@@ -429,7 +419,16 @@ export function DriverOrdersScreen({
   // ── Content State ──────────────────────────────────────────────────────────
   const activeTrip = view.activeTrip;
   const waitingCount = view.requestedOrders.length;
-  const isOnline = view.availability.status === 'AVAILABLE';
+  const isOnline =
+    view.availability.status === 'AVAILABLE' ||
+    (view.availability.status as string) === 'ONLINE';
+
+  const handleToggleAvailability = () => {
+    if (view.availability.action?.isPending) return;
+    if (onSetAvailability) {
+      onSetAvailability(view.availability.action?.id ?? (isOnline ? 'OFFLINE' : 'ONLINE'));
+    }
+  };
 
   const filteredOrders = view.requestedOrders.filter(
     (item) => !dismissedOrderIds.includes(item.id),
@@ -487,21 +486,26 @@ export function DriverOrdersScreen({
         />
       </View>
 
-      {/* ── Layer 1: Clean Top Header & Availability Card HUD ── */}
+      {/* ── Layer 1: Clean Top Header HUD ── */}
       <View style={styles.topHudContainer}>
-        <View style={styles.topHudGlass}>
-          <DriverHomeHeader
-            availabilityControl={
-              <DriverAvailabilityCard
-                availability={view.availability}
-                onSetAvailability={onSetAvailability}
-              />
-            }
-            driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
-            onOpenMenu={handleOpenMenu}
-            vehicleLabel={driverIdentity?.vehicleLabel ?? 'Đang cập nhật phương tiện'}
-          />
-        </View>
+        <Text style={styles.srOnly}>Trạng thái nhận đơn</Text>
+        <DriverTopHud
+          disabled={Boolean(view.availability.action?.disabled)}
+          driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
+          isOnline={isOnline}
+          isPending={Boolean(view.availability.action?.isPending)}
+          onOpenEarnings={() => onNavigate?.('/earnings')}
+          onOpenProfile={() => onNavigate?.('/profile')}
+          onToggleAvailability={handleToggleAvailability}
+          todayEarningsLabel="0 ₫"
+          toggleAccessibilityLabel={
+            view.availability.action?.isPending
+              ? 'Đang cập nhật trạng thái nhận đơn'
+              : undefined
+          }
+          vehiclePlate={driverIdentity?.vehiclePlate ?? undefined}
+          vehicleType={driverIdentity?.vehicleType ?? undefined}
+        />
         <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
       </View>
 
@@ -523,6 +527,28 @@ export function DriverOrdersScreen({
               onOpenOrder={onOpenOrder}
               trip={activeTrip}
             />
+          ) : null}
+
+          {/* Prominent Offline Banner when not active and offline */}
+          {!activeTrip && !isOnline ? (
+            <View style={styles.offlineBanner} testID="driver-offline-banner">
+              <View style={styles.offlineBannerHeader}>
+                <View style={styles.offlineDot} />
+                <Text style={styles.offlineBannerTitle}>Ngoại tuyến</Text>
+              </View>
+              <Text style={styles.offlineBannerMessage}>
+                Bật trực tuyến để kích hoạt radar và nhận các đơn hàng gần bạn.
+              </Text>
+              <Pressable
+                accessibilityLabel="Bật trực tuyến"
+                accessibilityRole="button"
+                onPress={handleToggleAvailability}
+                style={({ pressed }) => [styles.goOnlineBtn, pressed ? styles.pressed : null]}
+                testID="driver-go-online-btn"
+              >
+                <Text style={styles.goOnlineBtnText}>BẬT TRỰC TUYẾN</Text>
+              </Pressable>
+            </View>
           ) : null}
 
           {/* System & Connection Banner (radar health or network retry) */}
@@ -1009,5 +1035,64 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+  },
+
+  // Offline banner
+  offlineBanner: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 14,
+    padding: 14,
+    shadowColor: '#0B1E42',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  offlineBannerHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 6,
+  },
+  offlineDot: {
+    backgroundColor: '#64748B',
+    borderRadius: 5,
+    height: 10,
+    width: 10,
+  },
+  offlineBannerTitle: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  offlineBannerMessage: {
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  goOnlineBtn: {
+    alignItems: 'center',
+    backgroundColor: '#16A34A',
+    borderRadius: 12,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  goOnlineBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  srOnly: {
+    height: 0,
+    opacity: 0,
+    position: 'absolute',
+    width: 0,
   },
 });
