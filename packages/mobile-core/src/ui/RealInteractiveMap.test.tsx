@@ -16,6 +16,13 @@ describe('RealInteractiveMap', () => {
     expect(catLai.lat).toBeCloseTo(10.764, 2);
     expect(catLai.lng).toBeCloseTo(106.796, 2);
 
+    const nguHanhSon = resolveLocationCoords(
+      '12 Đường Hoàng Công Chất, Phường Ngũ Hành Sơn, Thành phố Đà Nẵng',
+    );
+    expect([16.035, 16.033]).toContainEqual(Number(nguHanhSon.lat.toFixed(3)));
+    expect([108.243, 108.245]).toContainEqual(Number(nguHanhSon.lng.toFixed(3)));
+    expect(nguHanhSon.lat).not.toBeCloseTo(16.054, 3);
+
     const fallback = resolveLocationCoords('Địa chỉ bất kỳ chưa biết');
     expect(fallback.lat).toBeGreaterThan(10.0);
     expect(fallback.lat).toBeLessThan(11.5);
