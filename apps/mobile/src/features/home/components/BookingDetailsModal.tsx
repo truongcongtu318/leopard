@@ -50,6 +50,8 @@ export interface BookingDetailsModalProps {
   testID?: string;
 }
 
+// Phí bốc xếp theo business model — khớp PricingService backend:
+// Ba gác 60k · Van 100k · Tải 1.25T 150k · Tải 2.5T 250k.
 export function resolveDefaultLoadingFee(vehicleName: string): number {
   if (vehicleName.includes('2.5')) return 250000;
   if (vehicleName.includes('1.25') || vehicleName.toLowerCase().includes('tải')) return 150000;
@@ -111,10 +113,10 @@ export function BookingDetailsModal({
 
   const safeBasePrice = Math.max(0, basePrice || 0);
   const stopCount = stops.length;
-  const stopSurcharge = stopCount * 25000;
+  const stopSurcharge = stopCount * 30000;
   const unitLoadingFee = loadingFeeProp !== undefined ? loadingFeeProp : resolveDefaultLoadingFee(vehicleName);
   const loadingFee = hasLoadingSupport ? unitLoadingFee : 0;
-  const vatAmount = Math.round((safeBasePrice + stopSurcharge) * 0.08);
+  const vatAmount = Math.round((safeBasePrice + stopSurcharge + loadingFee) * 0.08);
   const vatFee = hasVatInvoice ? vatAmount : 0;
   const totalFare = safeBasePrice + stopSurcharge + loadingFee + vatFee;
 

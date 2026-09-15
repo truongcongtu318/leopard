@@ -35,6 +35,7 @@ import {
   haptic,
   httpClient,
   iosContinuousCurve,
+  layout,
   sessionStore,
   type TabKey,
   type VehicleCategory,
@@ -102,26 +103,28 @@ export const FLEET_LOADING_FEES: Record<FleetVehicleCategory, number> = {
   TRUCK_25T: 250000,
 };
 
+// Giá mở cửa chuẩn — khớp PR business model (Task 4):
+// Ba gác 70k · Van 500kg 130k · Tải 1.25T 200k · Tải 2.5T 320k.
 export const FLEET_VEHICLES: readonly FleetVehicleItem[] = [
   {
     id: 'VAN_500KG', name: 'Van 500kg', subName: 'Chở hàng phố cấm',
     weightCapacity: '500 kg', dimensions: '2.1 x 1.3 x 1.2m', dimensionLabel: '2.1 x 1.3 x 1.2m',
-    estimatedPrice: '160.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0284C7', badge: 'Đô thị',
+    estimatedPrice: '130.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0284C7', badge: 'Đô thị',
   },
   {
     id: 'TRUCK_125T', name: 'Xe Tải 1.25T', subName: 'Chuyển nhà & xưởng',
     weightCapacity: '1.250 kg', dimensions: '3.2 x 1.6 x 1.7m', dimensionLabel: '3.2 x 1.6 x 1.7m',
-    estimatedPrice: '280.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0B1E42', badge: 'Phổ biến',
+    estimatedPrice: '200.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0B1E42', badge: 'Phổ biến',
   },
   {
     id: 'TRUCK_25T', name: 'Xe Tải 2.5T', subName: 'Hàng nặng liên tỉnh',
     weightCapacity: '2.500 kg', dimensions: '4.3 x 1.8 x 1.9m', dimensionLabel: '4.3 x 1.8 x 1.9m',
-    estimatedPrice: '450.000 ₫', vehicleCategory: 'HEAVY_TRUCK', accentColor: '#0B1E42', badge: 'Tải lớn',
+    estimatedPrice: '320.000 ₫', vehicleCategory: 'HEAVY_TRUCK', accentColor: '#0B1E42', badge: 'Tải lớn',
   },
   {
     id: 'BIKE_3W', name: 'Xe Ba Gác', subName: 'Ngõ nhỏ linh hoạt',
     weightCapacity: '400 kg', dimensions: '1.8 x 1.1m', dimensionLabel: '1.8 x 1.1m',
-    estimatedPrice: '120.000 ₫', vehicleCategory: '3_WHEEL_BIKE', accentColor: '#F59E0B', badge: 'Tiết kiệm',
+    estimatedPrice: '70.000 ₫', vehicleCategory: '3_WHEEL_BIKE', accentColor: '#F59E0B', badge: 'Tiết kiệm',
   },
 ];
 
@@ -274,6 +277,7 @@ export type HomeDashboardScreenProps = Readonly<{
   onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
   onTopUpWallet?: () => void;
   onOpenQrScan?: () => void;
+  hasFloatingNavBar?: boolean;
   showFloatingNavBar?: boolean;
   initialCargoImageUri?: string;
 }>;
@@ -284,11 +288,15 @@ export function HomeDashboardScreen({
   onConfirmBooking, onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
   onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
   onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = [],
-  savedAddresses, showFloatingNavBar = false, smeName = 'Cửa hàng VLXD Đại Phát',
+  savedAddresses, hasFloatingNavBar = true, showFloatingNavBar = false, smeName = 'Cửa hàng VLXD Đại Phát',
   unreadMessages = 0, unreadNotifications = 3, userName = 'Anh Hoàng', userPhone,
 }: HomeDashboardScreenProps) {
   const insets = React.useContext(SafeAreaInsetsContext);
   const topInset = insets?.top ?? 0;
+  const bottomInset = insets?.bottom ?? 0;
+  const bottomNavPadding = hasFloatingNavBar || showFloatingNavBar
+    ? layout.bottomNavClearance + bottomInset
+    : 24;
   const [activeTab, setActiveTab] = useState<TabKey>('home');
 
   const initialSaved = addressStore.getDefaultAddress();
@@ -431,7 +439,7 @@ export function HomeDashboardScreen({
     () => FLEET_VEHICLES.find((v) => v.id === selectedFleetId) || FLEET_VEHICLES[1],
     [selectedFleetId],
   );
-  const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 280000;
+  const currentBasePrice = Number(currentFleetVehicle.estimatedPrice.replace(/[^0-9]/g, '')) || 200000;
 
   // Hide the home tab bar while the booking flow is active (dropoff picked).
   // Single bottom action (action bar CTA) owns the thumb zone per iOS HIG.
@@ -1011,7 +1019,7 @@ export function HomeDashboardScreen({
             </View>
           ) : null}
 
-          <View style={{ height: showFloatingNavBar ? 76 : 24 }} />
+          <View style={{ height: bottomNavPadding }} testID="home-sheet-bottom-spacer" />
         </ScrollView>
       </GestureBottomSheet>
 
