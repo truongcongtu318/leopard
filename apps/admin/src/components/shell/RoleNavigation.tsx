@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, LayoutGrid, Package, ShieldCheck, Users } from 'lucide-react';
+import { Building2, ClipboardCheck, LayoutGrid, Package, ShieldCheck, Users } from 'lucide-react';
 
 export interface NavItem {
   label: string;
@@ -37,6 +37,7 @@ function getNavIcon(href: string) {
   if (href.endsWith('/users')) return <Users className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/fleets')) return <Building2 className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/drivers')) return <ShieldCheck className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/driver-applications')) return <ClipboardCheck className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   return <LayoutGrid className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
 }
 
@@ -52,7 +53,7 @@ export function RoleNavigation({
   if (orientation === 'horizontal') {
     return (
       <nav aria-label={ariaLabel} className="hidden md:flex items-center">
-        <ul className="m-0 list-none flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100/70 rounded-full text-xs font-medium text-slate-600">
+        <ul className="m-0 list-none bg-slate-200/50 p-1 rounded-full backdrop-blur-md border border-black/[0.04] flex items-center gap-1">
           {items.map((item) => {
             const isActive = currentHref === item.href;
             return (
@@ -60,10 +61,10 @@ export function RoleNavigation({
                 <Link
                   href={item.href}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`flex min-h-8 items-center px-3.5 py-1.5 rounded-full transition-all motion-reduce:transition-none ${
+                  className={`flex min-h-8 items-center rounded-full transition-colors motion-reduce:transition-none ${
                     isActive
-                      ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                      ? 'bg-slate-900 text-white shadow-xs px-4 py-1.5 text-xs font-semibold'
+                      : 'text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-xs font-medium'
                   }`}
                 >
                   <span>{item.label}</span>

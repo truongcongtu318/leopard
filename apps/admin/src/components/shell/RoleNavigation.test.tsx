@@ -3,28 +3,37 @@ import { render, screen } from '@testing-library/react';
 import { RoleNavigation } from './RoleNavigation';
 
 const navItems = [
-  { label: 'Dashboard', href: '/admin' },
-  { label: 'Drivers', href: '/admin/drivers' },
-  { label: 'Orders', href: '/admin/orders' },
+  { label: 'Tổng quan', href: '/admin' },
+  { label: 'Tài xế', href: '/admin/drivers' },
+  { label: 'Đơn hàng', href: '/admin/orders' },
+  { label: 'Duyệt hồ sơ', href: '/admin/driver-applications' },
 ];
 
 describe('RoleNavigation', () => {
   it('renders all nav items', () => {
-    render(<RoleNavigation items={navItems} currentPath="/admin" />);
+    render(<RoleNavigation items={navItems} currentPath="/admin" orientation="horizontal" />);
     for (const item of navItems) {
       expect(screen.getByText(item.label)).toBeDefined();
     }
   });
 
   it('highlights current route with aria-current="page"', () => {
-    render(<RoleNavigation items={navItems} currentPath="/admin/drivers" />);
-    const driversLink = screen.getByText('Drivers').closest('a');
+    render(
+      <RoleNavigation
+        items={navItems}
+        currentPath="/admin/drivers"
+        orientation="horizontal"
+      />,
+    );
+    const driversLink = screen.getByText('Tài xế').closest('a');
     expect(driversLink?.getAttribute('aria-current')).toBe('page');
   });
 
   it('does not set aria-current on inactive items', () => {
-    render(<RoleNavigation items={navItems} currentPath="/admin/drivers" />);
-    const dashboardLink = screen.getByText('Dashboard').closest('a');
+    render(
+      <RoleNavigation items={navItems} currentPath="/admin/drivers" />,
+    );
+    const dashboardLink = screen.getByText('Tổng quan').closest('a');
     expect(dashboardLink?.getAttribute('aria-current')).toBeNull();
   });
 
@@ -32,8 +41,8 @@ describe('RoleNavigation', () => {
     {
       items: navItems,
       currentPath: '/admin/orders/order-123',
-      activeLabel: 'Orders',
-      rootLabel: 'Dashboard',
+      activeLabel: 'Đơn hàng',
+      rootLabel: 'Tổng quan',
     },
     {
       items: [
@@ -86,6 +95,29 @@ describe('RoleNavigation', () => {
       const link = screen.getByText(item.label).closest('a');
       expect(link?.getAttribute('href')).toBe(item.href);
     }
+  });
+
+  it('applies macOS segmented control pill styles in horizontal mode', () => {
+    const { container } = render(
+      <RoleNavigation
+        items={navItems}
+        currentPath="/admin"
+        orientation="horizontal"
+      />,
+    );
+
+    const ul = container.querySelector('ul');
+    expect(ul?.className).toContain('bg-slate-200/50');
+    expect(ul?.className).toContain('rounded-full');
+    expect(ul?.className).toContain('backdrop-blur-md');
+
+    const activeLink = screen.getByText('Tổng quan').closest('a');
+    expect(activeLink?.className).toContain('bg-slate-900');
+    expect(activeLink?.className).toContain('text-white');
+    expect(activeLink?.className).toContain('rounded-full');
+
+    const inactiveLink = screen.getByText('Tài xế').closest('a');
+    expect(inactiveLink?.className).toContain('text-slate-600');
   });
 
   it('has accessible navigation role', () => {
