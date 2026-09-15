@@ -31,6 +31,8 @@ services:
     build:
       context: .
       dockerfile: infra/docker/api.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -60,6 +62,8 @@ services:
     build:
       context: .
       dockerfile: infra/docker/api.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
       target: builder
     profiles: ["tools"]
     depends_on:
@@ -84,6 +88,8 @@ services:
     build:
       context: .
       dockerfile: infra/docker/admin.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
     restart: unless-stopped
     depends_on:
       api:
@@ -100,6 +106,8 @@ services:
     build:
       context: .
       dockerfile: infra/docker/customer.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
     restart: unless-stopped
     depends_on:
       api:
@@ -114,6 +122,8 @@ services:
     build:
       context: .
       dockerfile: infra/docker/driver.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
     restart: unless-stopped
     depends_on:
       api:

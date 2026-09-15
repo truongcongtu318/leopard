@@ -1,33 +1,10 @@
 # ---- builder stage ----
-# Pinned to an exact Node and Alpine release. A floating `node:24-alpine` tag
-# would let a Node 24 minor release change the toolchain under a build that
-# previously passed.
-FROM node:24.21.0-alpine3.24 AS builder
-RUN corepack enable && corepack prepare pnpm@11.11.0 --activate
-WORKDIR /app
-
-COPY pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
-# Root package.json is required because `typescript` (the `tsc` binary used by
-# `pnpm --filter api run build`) is a root devDependency, not an api one.
-COPY package.json ./
-COPY packages/config/package.json packages/config/
-COPY packages/config/tsconfig/ packages/config/tsconfig/
-COPY packages/shared/package.json packages/shared/
-COPY packages/shared/tsconfig.json packages/shared/
-COPY packages/validators/package.json packages/validators/
-COPY packages/validators/tsconfig.json packages/validators/
-COPY apps/api/package.json apps/api/
-COPY apps/api/tsconfig.json apps/api/
-
-# Route pnpm's content-addressed store into the BuildKit cache mount used below,
-# so a rebuild reuses already-downloaded packages (and Prisma engines) instead of
-# re-fetching them. pnpm 10+ reads this from pnpm-workspace.yaml; putting it in
-# .npmrc has no effect. Written into the image's copy of the file, so local
-# development keeps its own store.
-RUN printf '\nstoreDir: /pnpm/store\n' >> pnpm-workspace.yaml
-
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+# Starts from the shared dependency image (see deps.Dockerfile), which already
+# holds the installed workspace. This stage therefore only copies sources and
+# compiles — no install runs on a per-commit rebuild. DEPS_IMAGE is supplied by
+# docker-compose.prod.yml, which deploy-demo.sh points at the hashed tag.
+ARG DEPS_IMAGE=leopard-deps:dev
+FROM ${DEPS_IMAGE} AS builder
 
 COPY packages/shared/src/ packages/shared/src/
 COPY packages/validators/src/ packages/validators/src/

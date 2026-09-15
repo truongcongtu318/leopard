@@ -1,28 +1,7 @@
 # ---- builder stage ----
-# Pinned base image — see the note in api.Dockerfile.
-FROM node:24.21.0-alpine3.24 AS builder
-RUN corepack enable && corepack prepare pnpm@11.11.0 --activate
-WORKDIR /app
-
-COPY pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
-COPY packages/config/package.json packages/config/
-COPY packages/config/tsconfig/ packages/config/tsconfig/
-COPY packages/shared/package.json packages/shared/
-COPY packages/shared/tsconfig.json packages/shared/
-COPY packages/validators/package.json packages/validators/
-COPY packages/validators/tsconfig.json packages/validators/
-COPY packages/mobile-core/package.json packages/mobile-core/
-COPY packages/mobile-core/tsconfig.json packages/mobile-core/
-COPY apps/driver/package.json apps/driver/
-COPY apps/driver/tsconfig.json apps/driver/
-COPY apps/driver/metro.config.js apps/driver/
-COPY apps/driver/app.json apps/driver/
-
-# Route pnpm's store into the BuildKit cache mount below — see api.Dockerfile.
-RUN printf '\nstoreDir: /pnpm/store\n' >> pnpm-workspace.yaml
-
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+# Starts from the shared dependency image — see the note in api.Dockerfile.
+ARG DEPS_IMAGE=leopard-deps:dev
+FROM ${DEPS_IMAGE} AS builder
 
 COPY packages/shared/src/ packages/shared/src/
 COPY packages/validators/src/ packages/validators/src/
@@ -41,8 +20,10 @@ ENV EXPO_PUBLIC_API_URL=/api/v1
 # cannot override it.
 ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=false
 
-RUN --mount=type=cache,id=metro-cache-driver,target=/tmp/metro-cache \
-    TMPDIR=/tmp/metro-cache pnpm --filter driver export --platform web
+# --clear is required — see the note in customer.Dockerfile: Metro's transform
+# cache does not key on the EXPO_PUBLIC_* values, so a warm cache mixes old and
+# new inlined config into one bundle.
+RUN pnpm --filter driver export --platform web --clear
 
 # ---- runner stage ----
 # nginx-unprivileged — see the note in customer.Dockerfile. Listens on 8080

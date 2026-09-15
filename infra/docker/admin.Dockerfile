@@ -1,24 +1,7 @@
 # ---- builder stage ----
-# Pinned base image — see the note in api.Dockerfile.
-FROM node:24.21.0-alpine3.24 AS builder
-RUN corepack enable && corepack prepare pnpm@11.11.0 --activate
-WORKDIR /app
-
-COPY pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
-COPY packages/config/package.json packages/config/
-COPY packages/config/tsconfig/ packages/config/tsconfig/
-COPY packages/ui/package.json packages/ui/
-COPY packages/ui/tsconfig.json packages/ui/
-COPY apps/admin/package.json apps/admin/
-COPY apps/admin/tsconfig.json apps/admin/
-COPY apps/admin/next.config.mjs apps/admin/
-COPY apps/admin/postcss.config.mjs apps/admin/
-
-# Route pnpm's store into the BuildKit cache mount below — see api.Dockerfile.
-RUN printf '\nstoreDir: /pnpm/store\n' >> pnpm-workspace.yaml
-
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+# Starts from the shared dependency image — see the note in api.Dockerfile.
+ARG DEPS_IMAGE=leopard-deps:dev
+FROM ${DEPS_IMAGE} AS builder
 
 COPY packages/ui/src/ packages/ui/src/
 COPY apps/admin/src/ apps/admin/src/

@@ -278,6 +278,32 @@ fi
 echo ""
 echo "📦 Step 3/6 — Building images (first run takes several minutes)..."
 
+# The app images derive from a shared dependency image, which compose cannot
+# build in the right order. It is tagged with a hash of the manifests that feed
+# its install step, so a lockfile change builds a new one and every other deploy
+# reuses it — which is what keeps `pnpm install` out of the per-commit path.
+if [ "$NO_BUILD" = false ]; then
+  DEPS_TAG=$(
+    cat pnpm-lock.yaml pnpm-workspace.yaml package.json \
+      packages/*/package.json apps/*/package.json 2>/dev/null | sha256sum | cut -c1-12
+  )
+  export DEPS_IMAGE="leopard-deps:${DEPS_TAG}"
+  echo "  ℹ️  Shared dependency image: ${DEPS_IMAGE}"
+
+  if docker image inspect "$DEPS_IMAGE" >/dev/null 2>&1; then
+    echo "  ✅ Reusing the installed-dependency layer"
+  else
+    echo "  ⏳ Building it once (installs every workspace)"
+    DOCKER_BUILDKIT=1 docker build \
+      -f "$PROJECT_ROOT/infra/docker/deps.Dockerfile" \
+      -t "$DEPS_IMAGE" \
+      "$PROJECT_ROOT" || {
+      echo "  ❌ Could not build the shared dependency image"
+      exit 1
+    }
+  fi
+fi
+
 if [ "$NO_BUILD" = true ]; then
   echo "  ⏭️  --no-build given, skipping"
 elif [ "$REBUILD" = true ]; then

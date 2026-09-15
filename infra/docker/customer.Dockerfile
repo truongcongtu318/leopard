@@ -1,28 +1,7 @@
 # ---- builder stage ----
-# Pinned base image — see the note in api.Dockerfile.
-FROM node:24.21.0-alpine3.24 AS builder
-RUN corepack enable && corepack prepare pnpm@11.11.0 --activate
-WORKDIR /app
-
-COPY pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
-COPY packages/config/package.json packages/config/
-COPY packages/config/tsconfig/ packages/config/tsconfig/
-COPY packages/shared/package.json packages/shared/
-COPY packages/shared/tsconfig.json packages/shared/
-COPY packages/validators/package.json packages/validators/
-COPY packages/validators/tsconfig.json packages/validators/
-COPY packages/mobile-core/package.json packages/mobile-core/
-COPY packages/mobile-core/tsconfig.json packages/mobile-core/
-COPY apps/mobile/package.json apps/mobile/
-COPY apps/mobile/tsconfig.json apps/mobile/
-COPY apps/mobile/metro.config.js apps/mobile/
-COPY apps/mobile/app.json apps/mobile/
-
-# Route pnpm's store into the BuildKit cache mount below — see api.Dockerfile.
-RUN printf '\nstoreDir: /pnpm/store\n' >> pnpm-workspace.yaml
-
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+# Starts from the shared dependency image — see the note in api.Dockerfile.
+ARG DEPS_IMAGE=leopard-deps:dev
+FROM ${DEPS_IMAGE} AS builder
 
 COPY packages/shared/src/ packages/shared/src/
 COPY packages/validators/src/ packages/validators/src/
@@ -46,10 +25,15 @@ ENV EXPO_PUBLIC_API_URL=/api/v1
 # at build time by Expo — it cannot be changed by an env file on the server.
 ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=false
 
-# Metro caches transforms under TMPDIR; pointing it at a cache mount keeps that
-# cache across builds instead of re-transforming every module.
-RUN --mount=type=cache,id=metro-cache-mobile,target=/tmp/metro-cache \
-    TMPDIR=/tmp/metro-cache pnpm --filter mobile export --platform web
+# --clear is required, not optional. Metro caches each module's transformed
+# output, and Expo inlines the EXPO_PUBLIC_* values during that transform — but
+# the cache key does not include those values. Reusing a warm cache after an env
+# change therefore produced a bundle where edited modules carried the new value
+# and untouched ones kept the old one, which is how a deployed build ended up
+# calling localhost from some modules and /api/v1 from others. A cold transform
+# every time is the price of a bundle whose inlined config is internally
+# consistent.
+RUN pnpm --filter mobile export --platform web --clear
 
 # ---- runner stage ----
 # nginx-unprivileged runs as uid 101 and its configs already write to the paths a
