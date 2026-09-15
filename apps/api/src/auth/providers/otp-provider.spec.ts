@@ -23,6 +23,26 @@ describe('OTP provider boundary', () => {
     });
   });
 
+  it('maps every seeded driver alias to its own seeded phone', async () => {
+    const { DEMO_IDENTITIES } = await import('./demo-otp.provider.js');
+
+    // A missing alias makes the login endpoint treat the phone as unknown and
+    // create a fresh CUSTOMER account instead of signing the driver in.
+    const expected: ReadonlyArray<readonly [string, string]> = [
+      ['0900000002', '+840000000002'],
+      ['0900000005', '+840000000005'],
+      ['0900000006', '+840000000006'],
+      ['0900000007', '+840000000007'],
+      ['0900000008', '+840000000008'],
+      ['0987324561', '+84987324561'],
+    ];
+
+    for (const [alias, phoneNumber] of expected) {
+      expect(DEMO_IDENTITIES.get(alias)?.phoneNumber).toBe(phoneNumber);
+      expect(DEMO_IDENTITIES.get(phoneNumber)?.phoneNumber).toBe(phoneNumber);
+    }
+  });
+
   it('rejects the demo provider outside local or test environments', async () => {
     const { DemoOtpProvider } = await import('./demo-otp.provider.js');
     const provider = new DemoOtpProvider({

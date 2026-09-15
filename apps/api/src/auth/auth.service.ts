@@ -65,6 +65,17 @@ const DEMO_ROLES = new Map<string, Role>([
   ['0900000004', 'ADMIN'],
   ['+84900000001', 'CUSTOMER'],
   ['+84900000002', 'DRIVER'],
+  // Remaining seeded drivers, mirroring DEMO_IDENTITIES.
+  ['+840000000005', 'DRIVER'],
+  ['+840000000006', 'DRIVER'],
+  ['+840000000007', 'DRIVER'],
+  ['+840000000008', 'DRIVER'],
+  ['0900000005', 'DRIVER'],
+  ['0900000006', 'DRIVER'],
+  ['0900000007', 'DRIVER'],
+  ['0900000008', 'DRIVER'],
+  ['0987324561', 'DRIVER'],
+  ['+84987324561', 'DRIVER'],
 ]);
 
 @Injectable()
