@@ -39,8 +39,63 @@ async function api(origin, path, { method = 'GET', token, body } = {}) {
   return { status: res.status, body: parsed };
 }
 
-async function login(origin, phone) {
-  const res = await api(origin, '/auth/verify-otp', {
+/**
+ * DELIVERED is refused with 409 until a proof of delivery exists, so the e-POD
+ * has to be uploaded first. Multipart, because the endpoint takes a file.
+ */
+async function uploadDeliveryProof(origin, orderId, token) {
+  // Smallest valid PNG — the media service sniffs the real content type.
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  );
+  const form = new FormData();
+  form.append('file', new Blob([png], { type: 'image/png' }), 'pod.png');
+  form.append('clientRequestId', `verify-${Date.now()}`);
+
+  const res = await fetch(`${origin}/api/v1/orders/${orderId}/media/delivery-proof`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const text = await res.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = text.slice(0, 300);
+  }
+  return { status: res.status, body: parsed };
+}
+
+/**
+ * A driver carrying an unfinished trip is BUSY and cannot go back on duty —
+ * PATCH /driver/availability answers 409 DRIVER_HAS_ACTIVE_ORDER. That is the
+ * intended rule, so a repeatable check has to finish whatever trip it left
+ * behind before it starts a new one.
+ */
+async function settleActiveTrip(origin, token) {
+  const active = (await api(origin, '/driver/orders/active', { token })).body;
+  const order = active?.id ? active : active?.order;
+  if (!order?.id) return null;
+
+  const id = order.id;
+  let status = order.status;
+  for (const next of ['PICKING_UP', 'IN_TRANSIT']) {
+    if (status === 'ACCEPTED' || (status === 'REQUESTED' && next === 'IN_TRANSIT')) {
+      const res = await api(origin, `/driver/orders/${id}/status`, { method: 'POST', token, body: { status: next } });
+      if (res.status < 300) status = next;
+    }
+  }
+  if (status === 'IN_TRANSIT' || status === 'PICKING_UP') {
+    await uploadDeliveryProof(origin, id, token);
+    const res = await api(origin, `/driver/orders/${id}/status`, { method: 'POST', token, body: { status: 'DELIVERED' } });
+    if (res.status < 300) status = 'DELIVERED';
+  }
+  return { id, status };
+}
+
+async function login(origin, phone) {  const res = await api(origin, '/auth/verify-otp', {
     method: 'POST',
     body: { phone, otp: OTP },
   });
@@ -58,8 +113,75 @@ const ROUTE = {
 
 console.log(`\n═══ LEOPARD flow verification against ${base} ═══\n`);
 
+// ── Driver comes online first ──────────────────────────────────────────────
+// Dispatch only offers an order to a driver who was already AVAILABLE and
+// listening when the order was created, so this has to run before the customer
+// books. Doing it the other way round is what made the first run report "no
+// offer" — the order had been placed before anyone was on duty.
+console.log('🚛 Driver app (:8082) — lên ca trước');
+const driverLogin = await login(DRIVER, '0900000002');
+record('đăng nhập bằng SĐT + OTP', driverLogin.ok, driverLogin.role ?? '');
+const driverToken = driverLogin.token;
+
+let availability = await api(DRIVER, '/driver/availability', {
+  method: 'PATCH',
+  token: driverToken,
+  body: { availability: 'AVAILABLE' },
+});
+if (availability.status === 409 && availability.body?.code === 'DRIVER_HAS_ACTIVE_ORDER') {
+  const settled = await settleActiveTrip(DRIVER, driverToken);
+  console.log(`  ℹ️  dọn chuyến còn dở từ lần chạy trước: ${settled?.id} → ${settled?.status}`);
+  availability = await api(DRIVER, '/driver/availability', {
+    method: 'PATCH',
+    token: driverToken,
+    body: { availability: 'AVAILABLE' },
+  });
+}
+record('bật nhận đơn (PATCH /driver/availability)', availability.status < 300, `availability=${availability.body?.availability ?? JSON.stringify(availability.body).slice(0, 120)}`);
+
+// Being AVAILABLE is not enough: the candidate query also demands a location
+// seen within the last 90 seconds, so the driver app pings while on duty (see
+// useDriverIdlePing). Without this ping dispatch finds nobody and no offer is
+// sent — the order is simply never pushed to anyone.
+const ping = await api(DRIVER, '/driver/location', {
+  method: 'PATCH',
+  token: driverToken,
+  body: { lat: ROUTE.pickup.lat, lng: ROUTE.pickup.lng, isStationaryHeartbeat: true },
+});
+record('gửi vị trí khi lên ca (PATCH /driver/location)', ping.status < 300, `HTTP ${ping.status}`);
+
+// Socket.IO through the app's own origin: this is what the namespace strip fix
+// has to make work, and it is how dispatch offers reach the driver.
+const { createRequire } = await import('node:module');
+const requireFromDriver = createRequire(new URL('../../apps/driver/package.json', import.meta.url));
+let offerPromise = Promise.resolve(null);
+let dispatchSocket = null;
+try {
+  const { io } = requireFromDriver('socket.io-client');
+  dispatchSocket = io(`${DRIVER}/dispatch`, {
+    auth: { token: driverToken },
+    transports: ['websocket'],
+    reconnection: false,
+  });
+  const connected = await new Promise((resolve) => {
+    dispatchSocket.on('connect', () => resolve(true));
+    dispatchSocket.on('connect_error', (error) => resolve(error?.message ?? false));
+    setTimeout(() => resolve(false), 8000);
+  });
+  record('kết nối Socket.IO namespace /dispatch', connected === true, connected === true ? `id=${dispatchSocket.id}` : String(connected));
+
+  if (connected === true) {
+    offerPromise = new Promise((resolve) => {
+      dispatchSocket.on('dispatch:offer', (payload) => resolve(payload));
+      setTimeout(() => resolve(null), 25000);
+    });
+  }
+} catch (error) {
+  record('kết nối Socket.IO namespace /dispatch', false, `không nạp được socket.io-client: ${error.message}`);
+}
+
 // ── Customer ───────────────────────────────────────────────────────────────
-console.log('👤 Customer app (:8081)');
+console.log('\n👤 Customer app (:8081)');
 const customerLogin = await login(CUSTOMER, '0900000001');
 record('đăng nhập bằng SĐT + OTP', customerLogin.ok, customerLogin.role ?? JSON.stringify(customerLogin.raw.body).slice(0, 120));
 if (!customerLogin.ok) process.exit(1);
@@ -90,71 +212,21 @@ if (estimateToken) {
     body: { ...ROUTE, stops: [], estimateToken },
   });
   orderId = created.body?.id ?? created.body?.order?.id;
-  record('tạo đơn (POST /orders)', Boolean(orderId), orderId ? `id=${orderId} status=${created.body?.status}` : JSON.stringify(created.body).slice(0, 200));
+  record('tạo đơn (POST /orders)', Boolean(orderId), orderId ? `id=${orderId} status=${created.body?.status} vehicleType=${created.body?.vehicleType}` : JSON.stringify(created.body).slice(0, 200));
 }
 
 const orders = await api(CUSTOMER, '/orders', { token: customerToken });
 const orderCount = Array.isArray(orders.body) ? orders.body.length : orders.body?.results?.length;
 record('danh sách đơn của tôi (GET /orders)', orders.status === 200, `${orderCount ?? '?'} đơn`);
 
-// ── Driver ─────────────────────────────────────────────────────────────────
-console.log('\n🚛 Driver app (:8082)');
-const driverLogin = await login(DRIVER, '0900000002');
-record('đăng nhập bằng SĐT + OTP', driverLogin.ok, driverLogin.role ?? '');
-const driverToken = driverLogin.token;
-
-const availability = await api(DRIVER, '/driver/availability', {
-  method: 'PATCH',
-  token: driverToken,
-  body: { availability: 'AVAILABLE' },
-});
-record('bật nhận đơn (PATCH /driver/availability)', availability.status < 300, `availability=${availability.body?.availability}`);
-
-// Socket.IO through the app's own origin: this is what the namespace strip fix
-// has to make work, and it is how dispatch offers reach the driver.
-let socketOffer = null;
-if (driverToken) {
-  // Resolved from the driver app rather than by package name, because this
-  // script lives outside any package that declares socket.io-client.
-  const { createRequire } = await import('node:module');
-  const requireFromDriver = createRequire(
-    new URL('../../apps/driver/package.json', import.meta.url),
-  );
-  let io = null;
-  try {
-    ({ io } = requireFromDriver('socket.io-client'));
-  } catch (error) {
-    record('kết nối Socket.IO namespace /dispatch', false, `không nạp được socket.io-client: ${error.message}`);
-  }
-
-  if (io) {
-    const socket = io(`${DRIVER}/dispatch`, {
-      auth: { token: driverToken },
-      transports: ['websocket'],
-      reconnection: false,
-    });
-    const connected = await new Promise((resolve) => {
-      socket.on('connect', () => resolve(true));
-      socket.on('connect_error', (error) => resolve(error?.message ?? false));
-      setTimeout(() => resolve(false), 8000);
-    });
-    record('kết nối Socket.IO namespace /dispatch', connected === true, connected === true ? `id=${socket.id}` : String(connected));
-
-    if (connected === true) {
-      // The offer for the order created above should arrive on this channel.
-      socketOffer = await new Promise((resolve) => {
-        socket.on('dispatch:offer', (payload) => resolve(payload));
-        setTimeout(() => resolve(null), 12000);
-      });
-      record(
-        'nhận được dispatch offer qua socket',
-        Boolean(socketOffer),
-        socketOffer ? `orderId=${socketOffer.orderId}` : 'không nhận được trong 12s',
-      );
-    }
-    socket.close();
-  }
-}
+// ── Dispatch offer, then the delivery lifecycle ────────────────────────────
+console.log('\n📦 Vòng đời đơn');
+const socketOffer = await offerPromise;
+record(
+  'nhận dispatch offer qua socket',
+  Boolean(socketOffer),
+  socketOffer ? `orderId=${socketOffer.orderId}` : 'không nhận được trong 25s',
+);
 
 const dispatchOrderId = socketOffer?.orderId ?? orderId;
 if (dispatchOrderId) {
@@ -165,7 +237,7 @@ if (dispatchOrderId) {
   });
   record('nhận đơn (POST /driver/orders/:id/accept)', accepted.status < 300, `status=${accepted.body?.status ?? accepted.status}`);
 
-  for (const status of ['PICKING_UP', 'IN_TRANSIT', 'DELIVERED']) {
+  for (const status of ['PICKING_UP', 'IN_TRANSIT']) {
     const upd = await api(DRIVER, `/driver/orders/${dispatchOrderId}/status`, {
       method: 'POST',
       token: driverToken,
@@ -174,12 +246,26 @@ if (dispatchOrderId) {
     record(`cập nhật trạng thái → ${status}`, upd.status < 300, `status=${upd.body?.status ?? upd.status}`);
   }
 
+  // DELIVERED is refused without a proof of delivery (409), so the e-POD has to
+  // be uploaded first — the rule lives in assertOrderTransition.
+  const proof = await uploadDeliveryProof(DRIVER, dispatchOrderId, driverToken);
+  record('tải e-POD (POST /orders/:id/media/delivery-proof)', proof.status < 300, `HTTP ${proof.status}`);
+
+  const delivered = await api(DRIVER, `/driver/orders/${dispatchOrderId}/status`, {
+    method: 'POST',
+    token: driverToken,
+    body: { status: 'DELIVERED' },
+  });
+  record('cập nhật trạng thái → DELIVERED', delivered.status < 300, `status=${delivered.body?.status ?? JSON.stringify(delivered.body).slice(0, 120)}`);
+
   const finalOrder = await api(CUSTOMER, `/orders/${dispatchOrderId}`, { token: customerToken });
   const finalStatus = finalOrder.body?.status ?? finalOrder.body?.order?.status;
   record('Customer thấy trạng thái cuối', finalStatus === 'DELIVERED', `status=${finalStatus}`);
 } else {
   record('nhận đơn', false, 'không có orderId để test');
 }
+
+if (dispatchSocket) dispatchSocket.close();
 
 // ── Summary ────────────────────────────────────────────────────────────────
 const failed = results.filter((r) => !r.ok);
