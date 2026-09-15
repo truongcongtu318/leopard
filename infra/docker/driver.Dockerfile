@@ -1,5 +1,6 @@
 # ---- builder stage ----
-FROM node:24-alpine AS builder
+# Pinned base image — see the note in api.Dockerfile.
+FROM node:24.21.0-alpine3.24 AS builder
 RUN corepack enable && corepack prepare pnpm@11.11.0 --activate
 WORKDIR /app
 
@@ -17,7 +18,11 @@ COPY apps/driver/tsconfig.json apps/driver/
 COPY apps/driver/metro.config.js apps/driver/
 COPY apps/driver/app.json apps/driver/
 
-RUN pnpm install --frozen-lockfile
+# Route pnpm's store into the BuildKit cache mount below — see api.Dockerfile.
+RUN printf '\nstoreDir: /pnpm/store\n' >> pnpm-workspace.yaml
+
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 COPY packages/shared/src/ packages/shared/src/
 COPY packages/validators/src/ packages/validators/src/
@@ -30,11 +35,14 @@ COPY apps/driver/assets/ apps/driver/assets/
 ENV CI=true
 ENV EXPO_PUBLIC_API_URL=""
 ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=true
-RUN pnpm --filter driver export --platform web
+
+RUN --mount=type=cache,id=metro-cache-driver,target=/tmp/metro-cache \
+    TMPDIR=/tmp/metro-cache pnpm --filter driver export --platform web
 
 # ---- runner stage ----
-FROM nginx:alpine AS runner
+# nginx-unprivileged — see the note in customer.Dockerfile. Listens on 8080
+# internally; the host port comes from the compose mapping.
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS runner
 COPY --from=builder /app/apps/driver/dist/ /usr/share/nginx/html/
 COPY infra/docker/nginx-expo.conf /etc/nginx/conf.d/default.conf
-RUN sed -i 's/listen 8080/listen 8082/' /etc/nginx/conf.d/default.conf
-EXPOSE 8082
+EXPOSE 8080
