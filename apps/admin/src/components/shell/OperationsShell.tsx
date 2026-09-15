@@ -40,7 +40,6 @@ const FALLBACK_CONTEXT: RoleContext = {
 const NAVIGATION_LABELS: Readonly<Record<string, string>> = {
   '/admin': 'Tổng quan',
   '/admin/users': 'Người dùng',
-  '/admin/fleets': 'Đội xe',
   '/admin/drivers': 'Tài xế',
   '/admin/orders': 'Đơn hàng',
   '/admin/driver-applications': 'Duyệt hồ sơ',

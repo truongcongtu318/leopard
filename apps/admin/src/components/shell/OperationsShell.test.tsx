@@ -20,7 +20,6 @@ const adminItems = [
   { label: 'Dashboard', href: '/admin' },
   { label: 'Orders', href: '/admin/orders' },
   { label: 'Users', href: '/admin/users' },
-  { label: 'Fleets', href: '/admin/fleets' },
   { label: 'Drivers', href: '/admin/drivers' },
   { label: 'Driver Applications', href: '/admin/driver-applications' },
 ] as const;
@@ -75,7 +74,6 @@ describe('OperationsShell', () => {
       ['Tổng quan', '/admin'],
       ['Đơn hàng', '/admin/orders'],
       ['Người dùng', '/admin/users'],
-      ['Đội xe', '/admin/fleets'],
       ['Tài xế', '/admin/drivers'],
       ['Duyệt hồ sơ', '/admin/driver-applications'],
     ] as const;

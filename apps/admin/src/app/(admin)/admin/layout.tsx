@@ -7,7 +7,6 @@ const adminNavItems = [
   { label: 'Tổng quan', href: '/admin' },
   { label: 'Đơn hàng', href: '/admin/orders' },
   { label: 'Người dùng', href: '/admin/users' },
-  { label: 'Đội xe', href: '/admin/fleets' },
   { label: 'Tài xế', href: '/admin/drivers' },
   { label: 'Duyệt hồ sơ', href: '/admin/driver-applications' },
   { label: 'Rút tiền', href: '/admin/withdrawals' },
