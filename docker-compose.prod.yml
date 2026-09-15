@@ -12,6 +12,15 @@ services:
   postgres:
     image: postgis/postgis:17-3.5
     restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-leopard}
       POSTGRES_USER: ${POSTGRES_USER:-leopard}
@@ -34,6 +43,15 @@ services:
       args:
         DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
     restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       postgres:
         condition: service_healthy
@@ -119,6 +137,15 @@ services:
       args:
         DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
     restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       api:
         condition: service_healthy
@@ -137,6 +164,15 @@ services:
       args:
         DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
     restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       api:
         condition: service_healthy
@@ -153,6 +189,15 @@ services:
       args:
         DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
     restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       api:
         condition: service_healthy
@@ -166,6 +211,15 @@ services:
       context: infra/docker/gateway
       dockerfile: Dockerfile
     restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - api
       - admin
