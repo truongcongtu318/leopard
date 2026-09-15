@@ -89,7 +89,7 @@ describe('HomeDashboardScreen', () => {
     // Active shipment sits below booking: status + route + ETA, opens on press
     expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
     expect(screen.getByText('Kho Tân Bình')).toBeTruthy();
-    expect(screen.getByText(/18 phút/)).toBeTruthy();
+    expect(screen.getAllByText(/18 phút/)[0]).toBeTruthy();
     expect(screen.getByText(/59C-882\.14/)).toBeTruthy();
     await fireEvent.press(screen.getByLabelText(/Chuyến đang vận chuyển/));
     expect(onOpenActiveOrder).toHaveBeenCalledWith('ord-active-1');

@@ -297,11 +297,11 @@ export type HomeDashboardScreenProps = Readonly<{
 }>;
 
 export function HomeDashboardScreen({
-  activeShipment = DEFAULT_ACTIVE_SHIPMENT, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
+  activeShipment = null, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
   initialCargoImageUri,
   onConfirmBooking, onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
   onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
-  onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = DEFAULT_RECENT_ORDERS,
+  onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = [],
   savedAddresses, showFloatingNavBar = false, smeName = 'Cửa hàng VLXD Đại Phát',
   unreadMessages = 0, unreadNotifications = 3, userName = 'Anh Hoàng', userPhone,
 }: HomeDashboardScreenProps) {
@@ -549,11 +549,24 @@ export function HomeDashboardScreen({
       {/* ================= LAYER 0 (z-index 0): 100% FULL-BLEED MAP ================= */}
       <View pointerEvents="box-none" style={styles.layer0Map} testID="home-map-layer">
         <RealInteractiveMap
-          destination={dropoffText ? { label: dropoffText } : undefined}
+          destination={
+            activeShipment
+              ? { label: activeShipment.destination }
+              : hasSelectedDropoff
+                ? { label: dropoffText }
+                : undefined
+          }
           height="100%" interactive
-          mode={activeShipment ? 'tracking' : dropoffText ? 'route' : 'preview'}
-          origin={pickupText ? { label: pickupText } : undefined}
-          stops={mapStops}
+          mode={activeShipment ? 'tracking' : hasSelectedDropoff ? 'route' : 'preview'}
+          origin={
+            activeShipment
+              ? { label: activeShipment.origin }
+              : pickupText
+                ? { label: pickupText }
+                : undefined
+          }
+          stops={activeShipment ? [] : mapStops}
+          truckEtaMinutes={activeShipment?.etaMinutes}
           testID="home-interactive-map"
         />
       </View>

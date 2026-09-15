@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 
-import { sessionStore, httpClient, appendFileToFormData } from '@leopard/mobile-core';
+import { sessionStore, httpClient, appendFileToFormData, resolveLocationCoords } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../../src/features/customer/addresses/address-store';
 import { createCustomerHttpAdapter } from '../../../src/features/customer/orders/adapter';
 import {
@@ -211,8 +211,8 @@ export default function CustomerHomePage() {
           const pickupCoords =
             defaultAddress?.latitude && defaultAddress?.longitude
               ? { lat: defaultAddress.latitude, lng: defaultAddress.longitude }
-              : { lat: 10.8012, lng: 106.6544 };
-          const dropoffCoords = { lat: 10.7769, lng: 106.7009 };
+              : resolveLocationCoords(booking.pickup);
+          const dropoffCoords = resolveLocationCoords(booking.dropoff, pickupCoords);
           const vehicleType = vehicleCategoryToOrderType(booking.vehicleCategory);
 
           const formPayload = {
@@ -323,11 +323,9 @@ export default function CustomerHomePage() {
       onOpenQrScan={() => router.push('/customer/wallet')}
       onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
       onQuickBook={(pickup, dropoff, dropoffCoords) => {
-        const orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
         router.push({
-          pathname: `/customer/orders/checkout/${orderId}`,
+          pathname: '/customer/orders/new',
           params: {
-            amount: getAmountForVehicle(selectedVehicleCategory),
             pickup,
             dropoff,
             ...(dropoffCoords

@@ -189,7 +189,12 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       return;
     }
 
-    setNewAddress(item.address);
+    const chosenAddress = item.label.includes(item.address)
+      ? item.label
+      : item.address.includes(item.label)
+        ? item.address
+        : `${item.label}, ${item.address}`;
+    setNewAddress(chosenAddress);
     if (item.lat && item.lng) {
       setNewPinCoords({ lat: item.lat, lng: item.lng });
     }
@@ -578,11 +583,11 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       nestedScrollEnabled
                       style={styles.suggestionsListScroll}
                     >
-                      {addressSuggestions.map((item) => {
+                      {addressSuggestions.map((item, index) => {
                         const isGpsItem = item.id === 'popular-gps';
                         return (
                           <Pressable
-                            key={item.id}
+                            key={`${item.id}-${index}`}
                             onPress={() => handleSelectAddressSuggestion(item)}
                             style={({ pressed }) => [
                               styles.suggestionItem,

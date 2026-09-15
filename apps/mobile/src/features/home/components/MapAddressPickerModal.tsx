@@ -94,10 +94,16 @@ export async function searchVietmapDirect(
               const pLat = typeof pData.lat === 'number' ? pData.lat : null;
               const pLng = typeof pData.lng === 'number' ? pData.lng : null;
               if (pLat !== null && pLng !== null) {
+                const fullLabel = pData.display || label;
+                const streetName = fullLabel.split(',')[0]?.trim() || fullLabel;
+                const wardPart =
+                  pData.address && pData.address.trim().length > 0
+                    ? pData.address
+                    : addr;
                 return {
                   id: placeId,
-                  label: pData.display || label,
-                  address: pData.address || addr,
+                  label: fullLabel,
+                  address: `${streetName}, ${wardPart}`,
                   lat: pLat,
                   lng: pLng,
                 };
