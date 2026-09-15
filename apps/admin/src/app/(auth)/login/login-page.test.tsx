@@ -57,24 +57,6 @@ describe('LoginPage (Admin)', () => {
     });
   });
 
-  it('redirects FLEET_OWNER to /fleet upon successful login', async () => {
-    postSpy.mockResolvedValueOnce({
-      user: { id: 'fleet-1', role: 'FLEET_OWNER' },
-      session: {
-        accessTokenExpiresAt: '2026-12-31T23:59:59Z',
-      },
-    } as any);
-
-    renderWithRouter(<LoginPage />);
-    const input = screen.getByLabelText('Số điện thoại hoặc Token');
-    fireEvent.change(input, { target: { value: 'fleet-token' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/fleet');
-    });
-  });
-
   it('redirects CUSTOMER to /customer/orders upon successful login', async () => {
     postSpy.mockResolvedValueOnce({
       user: { id: 'cust-1', role: 'CUSTOMER' },

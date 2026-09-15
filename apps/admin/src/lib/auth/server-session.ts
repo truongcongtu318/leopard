@@ -11,7 +11,7 @@ export type VerifiedOperationsUser = Readonly<{
   role: Role;
 }>;
 
-const OPERATIONS_ROLES: ReadonlySet<Role> = new Set(['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN']);
+const OPERATIONS_ROLES: ReadonlySet<Role> = new Set(['CUSTOMER', 'DRIVER', 'ADMIN']);
 
 function isVerifiedProfile(value: unknown): value is {
   readonly id: string;
@@ -58,9 +58,6 @@ export async function fetchVerifiedOperationsUser(
     // If backend is unreachable, check for preview/demo tokens in dev or UI preview mode
     if (accessToken === 'qa-admin' || accessToken === 'demo-admin') {
       return { id: 'usr-admin-1', role: 'ADMIN' };
-    }
-    if (accessToken === 'qa-fleet' || accessToken === 'demo-fleet') {
-      return { id: 'usr-fleet-1', role: 'FLEET_OWNER' };
     }
     throw new ApiError(0, 'AUTH_SERVICE_UNAVAILABLE', 'Authentication service is unavailable');
   }

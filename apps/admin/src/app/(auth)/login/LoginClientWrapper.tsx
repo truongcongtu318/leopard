@@ -9,19 +9,17 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isExpired = searchParams?.get("expired") === "true";
-  const [activeRole, setActiveRole] = useState<"CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN">("CUSTOMER");
+  const [activeRole, setActiveRole] = useState<"CUSTOMER" | "DRIVER" | "ADMIN">("ADMIN");
 
   const handleSuccess = (role: string) => {
     const target =
       role === "ADMIN"
         ? "/admin"
-        : role === "FLEET_OWNER"
-          ? "/fleet"
-          : role === "CUSTOMER"
-            ? "/customer/orders"
-            : role === "DRIVER"
-              ? "/driver/orders"
-              : "/admin";
+        : role === "CUSTOMER"
+          ? "/customer/orders"
+          : role === "DRIVER"
+            ? "/driver/orders"
+            : "/admin";
     router.push(target);
   };
 

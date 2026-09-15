@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await getVerifiedOperationsUser();
   if (!user) redirect('/login?expired=true');
   if (!canAccess(user.role, ['ADMIN'])) {
-    redirect(user.role === 'FLEET_OWNER' ? '/fleet' : '/login?forbidden=true');
+    redirect('/login?forbidden=true');
   }
 
   return (

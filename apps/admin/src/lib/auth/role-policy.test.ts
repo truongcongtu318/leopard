@@ -8,40 +8,16 @@ describe('canAccess', () => {
     expect(canAccess('ADMIN', ['ADMIN'])).toBe(true);
   });
 
-  it('ADMIN cannot inherit Fleet Owner routes', () => {
-    expect(canAccess('ADMIN', ['FLEET_OWNER'])).toBe(false);
-  });
-
   it('ADMIN cannot inherit Driver routes', () => {
     expect(canAccess('ADMIN', ['DRIVER'])).toBe(false);
   });
 
   it('ADMIN can access mixed-role routes', () => {
-    expect(canAccess('ADMIN', ['ADMIN', 'FLEET_OWNER', 'DRIVER'])).toBe(true);
-  });
-
-  it('FLEET_OWNER can access fleet routes', () => {
-    expect(canAccess('FLEET_OWNER', ['FLEET_OWNER'])).toBe(true);
-  });
-
-  it('FLEET_OWNER cannot access admin routes', () => {
-    expect(canAccess('FLEET_OWNER', ['ADMIN'])).toBe(false);
-  });
-
-  it('FLEET_OWNER can access fleet+driver routes (mixed)', () => {
-    expect(canAccess('FLEET_OWNER', ['FLEET_OWNER', 'DRIVER'])).toBe(true);
-  });
-
-  it('FLEET_OWNER cannot inherit Driver-only routes', () => {
-    expect(canAccess('FLEET_OWNER', ['DRIVER'])).toBe(false);
+    expect(canAccess('ADMIN', ['ADMIN', 'DRIVER'])).toBe(true);
   });
 
   it('DRIVER can access driver routes', () => {
     expect(canAccess('DRIVER', ['DRIVER'])).toBe(true);
-  });
-
-  it('DRIVER cannot access fleet routes', () => {
-    expect(canAccess('DRIVER', ['FLEET_OWNER'])).toBe(false);
   });
 
   it('DRIVER cannot access admin routes', () => {
@@ -50,20 +26,19 @@ describe('canAccess', () => {
 
   it('CUSTOMER gets nothing in admin', () => {
     expect(canAccess('CUSTOMER', ['ADMIN'])).toBe(false);
-    expect(canAccess('CUSTOMER', ['FLEET_OWNER'])).toBe(false);
     expect(canAccess('CUSTOMER', ['DRIVER'])).toBe(false);
   });
 
   it('returns false for empty allowedRoles', () => {
     expect(canAccess('ADMIN', [])).toBe(false);
-    expect(canAccess('FLEET_OWNER', [])).toBe(false);
+    expect(canAccess('DRIVER', [])).toBe(false);
   });
 });
 
 describe('requireRole', () => {
   it('does not throw when role is allowed', () => {
     expect(() => requireRole('ADMIN', ['ADMIN'])).not.toThrow();
-    expect(() => requireRole('FLEET_OWNER', ['FLEET_OWNER', 'DRIVER'])).not.toThrow();
+    expect(() => requireRole('DRIVER', ['ADMIN', 'DRIVER'])).not.toThrow();
   });
 
   it('throws ApiError FORBIDDEN when role is not allowed', () => {
@@ -80,9 +55,8 @@ describe('requireRole', () => {
   });
 
   it('throws FORBIDDEN for CUSTOMER on all admin routes', () => {
-    const routes: Array<['ADMIN' | 'FLEET_OWNER' | 'DRIVER']> = [
+    const routes: Array<['ADMIN' | 'DRIVER']> = [
       ['ADMIN'],
-      ['FLEET_OWNER'],
       ['DRIVER'],
     ];
     for (const [role] of routes) {
@@ -98,8 +72,7 @@ describe('requireRole', () => {
 
   it('enforces exact roles through requireRole', () => {
     expect(() => requireRole('ADMIN', ['ADMIN'])).not.toThrow();
-    expect(() => requireRole('ADMIN', ['FLEET_OWNER'])).toThrow(ApiError);
     expect(() => requireRole('ADMIN', ['DRIVER'])).toThrow(ApiError);
-    expect(() => requireRole('ADMIN', ['ADMIN', 'FLEET_OWNER', 'DRIVER'])).not.toThrow();
+    expect(() => requireRole('ADMIN', ['ADMIN', 'DRIVER'])).not.toThrow();
   });
 });

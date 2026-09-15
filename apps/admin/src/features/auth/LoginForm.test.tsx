@@ -31,12 +31,12 @@ describe('LoginForm (Admin)', () => {
     render(<LoginForm allowDemo={true} />);
     expect(screen.getByText(/Tài khoản demo/)).toBeTruthy();
     expect(screen.getByText('Demo Admin')).toBeTruthy();
-    expect(screen.getByText(/Fleet Owner/)).toBeTruthy();
+    expect(screen.queryByText(/Fleet Owner/)).toBeNull();
   });
 
   it('uses BFF firebase login response without exposing bearer tokens', async () => {
     postSpy.mockResolvedValueOnce({
-      user: { id: 'usr-fleet-1', phone: '0900000001', role: 'FLEET_OWNER', status: 'ACTIVE' },
+      user: { id: 'usr-admin-1', phone: '0900000004', role: 'ADMIN', status: 'ACTIVE' },
       session: { accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
     });
 
@@ -51,11 +51,11 @@ describe('LoginForm (Admin)', () => {
       expect(postSpy).toHaveBeenCalledWith('/auth/firebase', { idToken: 'firebase-admin-id-token' });
       const session = await getSession();
       expect(session).toEqual({
-        userId: 'usr-fleet-1',
-        role: 'FLEET_OWNER',
+        userId: 'usr-admin-1',
+        role: 'ADMIN',
         expiresAt: '2026-12-31T23:59:59Z',
       });
-      expect(onSuccess).toHaveBeenCalledWith('FLEET_OWNER');
+      expect(onSuccess).toHaveBeenCalledWith('ADMIN');
     });
   });
 
@@ -88,17 +88,7 @@ describe('LoginForm (Admin)', () => {
       session: { accessTokenExpiresAt: '2026-12-31T23:59:59Z' },
     });
 
-    // fleet-owner
-    postSpy.mockResolvedValueOnce(makeResponse('usr-fleet', 'FLEET_OWNER'));
-    render(<LoginForm allowDemo={true} />);
-    fireEvent.click(screen.getByText('Demo Fleet Owner'));
-    await waitFor(() => {
-      expect(postSpy).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'fleet-owner' });
-    });
-
     // driver
-    jest.clearAllMocks();
-    postSpy = jest.spyOn(browserClient, 'post') as jest.SpiedFunction<typeof browserClient.post>;
     postSpy.mockResolvedValueOnce(makeResponse('usr-driver', 'DRIVER'));
     const { unmount } = render(<LoginForm allowDemo={true} />);
     fireEvent.click(screen.getAllByText('Demo Driver')[0]!);

@@ -36,16 +36,16 @@ describe('server operations session', () => {
   it('verifies the access token through /me without caching', async () => {
     fetchMock.mockResolvedValue(
       response(200, {
-        id: 'usr-fleet-1',
+        id: 'usr-admin-1',
         phone: '0900000000',
-        role: 'FLEET_OWNER',
+        role: 'ADMIN',
         status: 'ACTIVE',
       }),
     );
 
     await expect(fetchVerifiedOperationsUser('trusted-token')).resolves.toEqual({
-      id: 'usr-fleet-1',
-      role: 'FLEET_OWNER',
+      id: 'usr-admin-1',
+      role: 'ADMIN',
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -88,10 +88,6 @@ describe('server operations session', () => {
     await expect(fetchVerifiedOperationsUser('qa-admin')).resolves.toEqual({
       id: 'usr-admin-1',
       role: 'ADMIN',
-    });
-    await expect(fetchVerifiedOperationsUser('qa-fleet')).resolves.toEqual({
-      id: 'usr-fleet-1',
-      role: 'FLEET_OWNER',
     });
   });
 

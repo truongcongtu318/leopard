@@ -3,27 +3,27 @@ import { render, screen } from '@testing-library/react';
 import { RoleNavigation } from './RoleNavigation';
 
 const navItems = [
-  { label: 'Dashboard', href: '/fleet' },
-  { label: 'Drivers', href: '/fleet/drivers' },
-  { label: 'Orders', href: '/fleet/orders' },
+  { label: 'Dashboard', href: '/admin' },
+  { label: 'Drivers', href: '/admin/drivers' },
+  { label: 'Orders', href: '/admin/orders' },
 ];
 
 describe('RoleNavigation', () => {
   it('renders all nav items', () => {
-    render(<RoleNavigation items={navItems} currentPath="/fleet" />);
+    render(<RoleNavigation items={navItems} currentPath="/admin" />);
     for (const item of navItems) {
       expect(screen.getByText(item.label)).toBeDefined();
     }
   });
 
   it('highlights current route with aria-current="page"', () => {
-    render(<RoleNavigation items={navItems} currentPath="/fleet/drivers" />);
+    render(<RoleNavigation items={navItems} currentPath="/admin/drivers" />);
     const driversLink = screen.getByText('Drivers').closest('a');
     expect(driversLink?.getAttribute('aria-current')).toBe('page');
   });
 
   it('does not set aria-current on inactive items', () => {
-    render(<RoleNavigation items={navItems} currentPath="/fleet/drivers" />);
+    render(<RoleNavigation items={navItems} currentPath="/admin/drivers" />);
     const dashboardLink = screen.getByText('Dashboard').closest('a');
     expect(dashboardLink?.getAttribute('aria-current')).toBeNull();
   });
@@ -31,7 +31,7 @@ describe('RoleNavigation', () => {
   it.each([
     {
       items: navItems,
-      currentPath: '/fleet/orders/order-123',
+      currentPath: '/admin/orders/order-123',
       activeLabel: 'Orders',
       rootLabel: 'Dashboard',
     },
@@ -71,7 +71,7 @@ describe('RoleNavigation', () => {
     expect(screen.getByText('Admin dashboard').closest('a')?.getAttribute('aria-current')).toBeNull();
   });
 
-  it.each(['/fleet/unlisted', '/fleet/orders-archive/order-123'])(
+  it.each(['/admin/unlisted', '/admin/orders-archive/order-123'])(
     'does not treat the dashboard or a partial segment as current for %s',
     (currentPath) => {
       const { container } = render(<RoleNavigation items={navItems} currentPath={currentPath} />);
@@ -81,7 +81,7 @@ describe('RoleNavigation', () => {
   );
 
   it('renders links with correct hrefs', () => {
-    render(<RoleNavigation items={navItems} currentPath="/fleet" />);
+    render(<RoleNavigation items={navItems} currentPath="/admin" />);
     for (const item of navItems) {
       const link = screen.getByText(item.label).closest('a');
       expect(link?.getAttribute('href')).toBe(item.href);
@@ -89,7 +89,7 @@ describe('RoleNavigation', () => {
   });
 
   it('has accessible navigation role', () => {
-    render(<RoleNavigation items={navItems} currentPath="/fleet" />);
+    render(<RoleNavigation items={navItems} currentPath="/admin" />);
     const nav = screen.getByRole('navigation');
     expect(nav).toBeDefined();
   });
