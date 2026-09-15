@@ -53,6 +53,7 @@ export class OrdersService {
           longitude: stop.longitude ?? stop.lng!,
         })) ?? [],
         vehicleType: dto.vehicleType,
+        cargoWeightKg: dto.cargoWeightKg,
         hasLoadingSupport: dto.hasLoadingSupport,
         hasVatInvoice: dto.hasVatInvoice,
       };
@@ -134,7 +135,10 @@ export class OrdersService {
         calculatedAt: verifiedEstimate.calculatedAt,
         cargoNote: dto.cargoNote ?? null,
         cargoWeightKg: dto.cargoWeightKg ?? null,
+        vehicleType: dto.vehicleType,
         baseFareVnd: verifiedEstimate.quote?.baseFareVnd,
+        distanceFareVnd: verifiedEstimate.quote?.distanceFareVnd,
+        stopFareVnd: verifiedEstimate.quote?.stopFareVnd,
         loadingFeeVnd: verifiedEstimate.quote?.loadingFeeVnd,
         vatFeeVnd: verifiedEstimate.quote?.vatFeeVnd,
         platformFeeVnd: verifiedEstimate.quote?.platformFeeVnd,

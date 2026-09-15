@@ -245,13 +245,17 @@ function InvoiceSection({
 function DriverCard({
   distanceMeters,
   driverLabel,
+  driverPhone,
   etaDurationSeconds,
   onOpenTracking,
   orderId,
   status = 'Tài xế nhận chuyến',
+  vehicleLabel,
 }: Readonly<{
   driverLabel: string;
+  driverPhone?: string | null;
   status?: string;
+  vehicleLabel?: string | null;
   onOpenTracking?: (orderId: string) => void;
   etaDurationSeconds?: number | null;
   distanceMeters?: number | null;
@@ -260,8 +264,9 @@ function DriverCard({
   const initial = driverLabel.replace(/^Tài xế\s*/i, '').trim().charAt(0) || 'T';
 
   const handleCall = () => {
-    void Linking.openURL('tel:0901234567').catch(() => {
-      Alert.alert('Gọi tài xế', 'Số điện thoại liên hệ: 0901 234 567');
+    const phoneToCall = driverPhone || '0901234567';
+    void Linking.openURL(`tel:${phoneToCall}`).catch(() => {
+      Alert.alert('Gọi tài xế', `Số điện thoại liên hệ: ${phoneToCall}`);
     });
   };
 
@@ -282,7 +287,7 @@ function DriverCard({
               <Text style={styles.driverRatingText}>★ 4.9</Text>
             </View>
           </View>
-          <Text style={styles.driverVehicleText}>Xe tải 1.25T · {status}</Text>
+          <Text style={styles.driverVehicleText}>{vehicleLabel || 'Xe vận chuyển'} · {status}</Text>
         </View>
         <View style={styles.driverActions}>
           <Pressable
@@ -340,6 +345,7 @@ function TrackingPanel({
   destinationLabel,
   destinationCoords,
   distanceMeters,
+  driverPhone,
   etaDurationSeconds,
   onOpenTracking,
   onRetry,
@@ -348,6 +354,7 @@ function TrackingPanel({
   originCoords,
   stops,
   tracking,
+  vehicleLabel,
 }: Readonly<{
   tracking: CustomerTrackingView;
   onRetry?: () => void;
@@ -360,6 +367,8 @@ function TrackingPanel({
   etaDurationSeconds?: number | null;
   distanceMeters?: number | null;
   orderId?: string;
+  driverPhone?: string | null;
+  vehicleLabel?: string | null;
 }>) {
   if (tracking.kind === 'loading') {
     return <MapPanel state="loading" summary="Bản đồ lộ trình đang tải" />;
@@ -401,10 +410,12 @@ function TrackingPanel({
         <DriverCard
           distanceMeters={distanceMeters}
           driverLabel={tracking.driverLabel}
+          driverPhone={driverPhone}
           etaDurationSeconds={etaDurationSeconds}
           onOpenTracking={onOpenTracking}
           orderId={orderId}
           status="Đang định vị"
+          vehicleLabel={vehicleLabel}
         />
         <View style={styles.infoBanner}>
           <Text style={styles.body}>{tracking.message}</Text>
@@ -437,10 +448,12 @@ function TrackingPanel({
         <DriverCard
           distanceMeters={distanceMeters}
           driverLabel={tracking.driverLabel}
+          driverPhone={driverPhone}
           etaDurationSeconds={etaDurationSeconds}
           onOpenTracking={onOpenTracking}
           orderId={orderId}
           status="Đang di chuyển"
+          vehicleLabel={vehicleLabel}
         />
         <View style={styles.freshnessRow}>
           <View style={styles.pulseDotGreen} />
@@ -457,10 +470,12 @@ function TrackingPanel({
       <DriverCard
         distanceMeters={distanceMeters}
         driverLabel={tracking.driverLabel}
+        driverPhone={driverPhone}
         etaDurationSeconds={etaDurationSeconds}
         onOpenTracking={onOpenTracking}
         orderId={orderId}
         status="Vị trí chưa cập nhật"
+        vehicleLabel={vehicleLabel}
       />
       <View style={styles.warningBanner}>
         <Text style={styles.body}>{tracking.message}</Text>
@@ -632,6 +647,10 @@ function CustomerDetailContent({
               <Text style={styles.heroStatLabel}>CẬP NHẬT</Text>
               <Text style={styles.heroStatValue}>{order.updatedAtLabel}</Text>
             </View>
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatLabel}>LOẠI XE</Text>
+              <Text style={styles.heroStatValue}>{order.requestedVehicleLabel || 'Xe Tải'}</Text>
+            </View>
             {order.distanceMeters ? (
               <View style={styles.heroStatItem}>
                 <Text style={styles.heroStatLabel}>QUÃNG ĐƯỜNG</Text>
@@ -679,6 +698,7 @@ function CustomerDetailContent({
             destinationCoords={order.route.destination.coords}
             destinationLabel={order.route.destination.label}
             distanceMeters={order.distanceMeters}
+            driverPhone={order.assignedDriver?.phone}
             etaDurationSeconds={order.etaDurationSeconds}
             onOpenTracking={onOpenTracking}
             onRetry={onRetry}
@@ -687,6 +707,7 @@ function CustomerDetailContent({
             originLabel={order.route.origin.label}
             stops={order.route.stops}
             tracking={order.tracking}
+            vehicleLabel={order.requestedVehicleLabel}
           />
 
           {/* 🚀 Nút liên kết chuyển tiếp sang trang Tracking toàn màn hình */}
@@ -742,17 +763,19 @@ function CustomerDetailContent({
           <View style={styles.cargoSpecsGrid}>
             <View style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>MẶT HÀNG</Text>
-              <Text style={styles.cargoGridValue}>{order.cargo.note || 'Xi măng (VLXD)'}</Text>
+              <Text style={styles.cargoGridValue}>{order.cargo.note || 'Hàng tổng hợp'}</Text>
             </View>
             <View style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>KHỐI LƯỢNG</Text>
               <Text style={styles.cargoGridValue}>
-                {order.cargo.weightKg ? `${order.cargo.weightKg} kg` : '250 kg'}
+                {order.cargo.weightKg ? `${order.cargo.weightKg} kg` : '—'}
               </Text>
             </View>
             <View style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>DỊCH VỤ ĐI KÈM</Text>
-              <Text style={[styles.cargoGridValue, { color: '#0B1E42' }]}>Có bốc xếp 2 đầu</Text>
+              <Text style={[styles.cargoGridValue, { color: '#0B1E42' }]}>
+                {order.hasLoadingSupport ? 'Có bốc xếp 2 đầu' : 'Tự bốc xếp'}
+              </Text>
             </View>
             <View style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>NGƯỜI NHẬN</Text>
@@ -773,6 +796,78 @@ function CustomerDetailContent({
               ) : (
                 <Text style={styles.helper}>Chưa có ảnh</Text>
               )}
+            </View>
+          </View>
+        </View>
+
+        {/* 6b. Section: Chi tiết cước phí (Price Breakdown) */}
+        <View style={styles.modernCard}>
+          <View style={styles.cardHeader}>
+            <Text accessibilityRole="header" style={styles.cardTitle}>
+              Chi tiết cước phí
+            </Text>
+            <Text style={styles.cardSubtitle}>
+              Cơ cấu tính giá: {order.requestedVehicleLabel || 'Xe vận chuyển'}
+            </Text>
+          </View>
+
+          <View style={styles.paymentCardContent}>
+            <View style={styles.paymentDetailsBox}>
+              <View style={styles.paymentDetailRow}>
+                <Text style={styles.paymentDetailLabel}>
+                  Cước mở cửa ({order.requestedVehicleLabel || 'Xe vận chuyển'})
+                </Text>
+                <Text style={styles.paymentDetailValue}>
+                  {order.priceBreakdown?.baseFareVnd ? `${order.priceBreakdown.baseFareVnd.toLocaleString('vi-VN')} ₫` : '—'}
+                </Text>
+              </View>
+
+              <View style={styles.paymentDetailRow}>
+                <Text style={styles.paymentDetailLabel}>
+                  Cước quãng đường {order.distanceMeters ? `(${(order.distanceMeters / 1000).toFixed(1)} km)` : ''}
+                </Text>
+                <Text style={styles.paymentDetailValue}>
+                  {order.priceBreakdown?.distanceFareVnd !== undefined
+                    ? `${order.priceBreakdown.distanceFareVnd.toLocaleString('vi-VN')} ₫`
+                    : '—'}
+                </Text>
+              </View>
+
+              {order.priceBreakdown?.stopSurchargeVnd ? (
+                <View style={styles.paymentDetailRow}>
+                  <Text style={styles.paymentDetailLabel}>Phụ phí điểm dừng</Text>
+                  <Text style={styles.paymentDetailValue}>
+                    +{order.priceBreakdown.stopSurchargeVnd.toLocaleString('vi-VN')} ₫
+                  </Text>
+                </View>
+              ) : null}
+
+              {order.priceBreakdown?.loadingFeeVnd ? (
+                <View style={styles.paymentDetailRow}>
+                  <Text style={styles.paymentDetailLabel}>Phí bốc xếp 2 đầu</Text>
+                  <Text style={styles.paymentDetailValue}>
+                    +{order.priceBreakdown.loadingFeeVnd.toLocaleString('vi-VN')} ₫
+                  </Text>
+                </View>
+              ) : null}
+
+              {order.priceBreakdown?.vatFeeVnd ? (
+                <View style={styles.paymentDetailRow}>
+                  <Text style={styles.paymentDetailLabel}>Thuế GTGT (VAT 8%)</Text>
+                  <Text style={styles.paymentDetailValue}>
+                    +{order.priceBreakdown.vatFeeVnd.toLocaleString('vi-VN')} ₫
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={styles.heroDivider} />
+
+            <View style={[styles.paymentTopRow, { marginTop: 10 }]}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#0B1E42' }}>
+                Tổng cước vận chuyển
+              </Text>
+              <Text style={styles.paymentAmount}>{order.priceLabel}</Text>
             </View>
           </View>
         </View>

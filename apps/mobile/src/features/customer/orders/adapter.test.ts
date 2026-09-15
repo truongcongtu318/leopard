@@ -4,6 +4,7 @@ import { ApiError } from '@leopard/mobile-core';
 import {
   createCustomerHttpAdapter,
   describeStatus,
+  extractPriceBreakdown,
   formatDateTime,
   formatDistance,
   formatOrderReference,
@@ -17,6 +18,7 @@ import {
   normalizeRouteParam,
   parseCustomerOrderId,
   resolveCancelView,
+  resolveVehicleDisplayLabel,
   type CustomerHttpClient,
   type MappedInvoiceResponse,
   type MappedOrderResponse,
@@ -98,6 +100,47 @@ describe('Customer route adapter helpers', () => {
     expect(describeStatus('CANCELLED')).toBe(
       'Đã nhận snapshot phản hồi với trạng thái Đã hủy.',
     );
+  });
+
+  describe('extractPriceBreakdown', () => {
+    it('returns null when routeSnapshot is missing or invalid', () => {
+      expect(extractPriceBreakdown(null, 100000)).toBeNull();
+      expect(extractPriceBreakdown({}, 100000)).toBeNull();
+    });
+
+    it('extracts complete breakdown from routeSnapshot correctly', () => {
+      const snapshot = {
+        baseFareVnd: 200000,
+        distanceFareVnd: 55000,
+        stopFareVnd: 30000,
+        loadingFeeVnd: 150000,
+        vatFeeVnd: 34800,
+      };
+      const breakdown = extractPriceBreakdown(snapshot, 469800);
+      expect(breakdown).toEqual({
+        baseFareVnd: 200000,
+        distanceFareVnd: 55000,
+        stopSurchargeVnd: 30000,
+        loadingFeeVnd: 150000,
+        vatFeeVnd: 34800,
+        totalVnd: 469800,
+      });
+    });
+  });
+
+  describe('resolveVehicleDisplayLabel', () => {
+    it('uses assigned driver vehicle type when available', () => {
+      expect(resolveVehicleDisplayLabel(null, { vehicleType: 'MOTORBIKE' })).toBe('Xe Ba Gác');
+      expect(resolveVehicleDisplayLabel(null, { vehicleType: 'VAN' })).toBe('Xe Van 500kg');
+      expect(resolveVehicleDisplayLabel(null, { vehicleType: 'TRUCK' })).toBe('Xe Tải');
+    });
+
+    it('infers vehicle label from routeSnapshot correctly', () => {
+      expect(resolveVehicleDisplayLabel({ vehicleType: 'TRUCK', cargoWeightKg: 1250, baseFareVnd: 200000 })).toBe('Xe Tải 1.25T');
+      expect(resolveVehicleDisplayLabel({ vehicleType: 'TRUCK', cargoWeightKg: 2500, baseFareVnd: 320000 })).toBe('Xe Tải 2.5T');
+      expect(resolveVehicleDisplayLabel({ vehicleType: 'VAN', cargoWeightKg: 500, baseFareVnd: 130000 })).toBe('Xe Van 500kg');
+      expect(resolveVehicleDisplayLabel({ vehicleType: 'MOTORBIKE', baseFareVnd: 70000 })).toBe('Xe Ba Gác');
+    });
   });
 
   describe('mapPaymentToView', () => {
