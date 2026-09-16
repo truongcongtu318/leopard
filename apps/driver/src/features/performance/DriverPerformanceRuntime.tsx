@@ -15,8 +15,8 @@ export function DriverPerformanceRuntime() {
 
   return (
     <DriverPerformanceScreen
-      acceptancePct={query.data?.acceptancePct ?? 0}
-      cancellationPct={query.data?.cancellationPct ?? 0}
+      acceptancePct={query.data?.acceptancePct ?? null}
+      cancellationPct={query.data?.cancellationPct ?? null}
       isError={query.isError}
       isLoading={query.isLoading}
       onRetry={() => void query.refetch()}

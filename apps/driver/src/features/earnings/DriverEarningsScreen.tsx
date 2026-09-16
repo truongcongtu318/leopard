@@ -155,6 +155,7 @@ export function DriverEarningsScreen({
                   <Text style={styles.periodAmount}>
                     {card.amount === 0 ? '0 ₫' : formatCurrency(card.amount)}
                   </Text>
+                  <Text style={styles.periodScopeNote}>Tính từ danh sách đã tải</Text>
 
                   <Pressable
                     accessibilityLabel={`Xem chi tiết ${card.title}`}
@@ -297,6 +298,11 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
+  },
+  periodScopeNote: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
+    fontWeight: '500',
   },
   detailLinkText: {
     color: driverPrimitives.colors.blue500,

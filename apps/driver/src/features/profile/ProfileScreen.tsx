@@ -165,7 +165,7 @@ export function DriverProfileScreen({
     );
   }
 
-  const driverName = view.name ?? 'Trần Văn Nam';
+  const driverName = view.name?.trim() ? view.name : (view.phone ?? 'Tài xế');
 
   return (
     <View style={styles.screenContainer}>
