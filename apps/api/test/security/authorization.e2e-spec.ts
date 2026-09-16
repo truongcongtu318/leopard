@@ -67,7 +67,7 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
       .useValue(prismaMock)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({

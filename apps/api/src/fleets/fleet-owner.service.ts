@@ -153,7 +153,7 @@ export class FleetOwnerService {
       driver: User | null;
       customer: { phone: string | null };
       stops: Array<{ type: string; sequence: number; address: string }>;
-      paymentIntents: Array<{ status: string }>;
+      paymentIntents?: Array<{ status: string }>;
     };
     const items = orders.map((o: OrderWithRelations) => ({
        id: o.id,
@@ -165,7 +165,7 @@ export class FleetOwnerService {
        pickupLabel: o.stops.find((s) => s.type === 'PICKUP')?.address ?? '',
        dropoffLabel:
          [...o.stops].reverse().find((s) => s.type === 'DROPOFF')?.address ?? '',
-       paymentStatus: o.paymentIntents[0]?.status ?? 'UNPAID',
+       paymentStatus: o.paymentIntents?.[0]?.status ?? 'UNPAID',
        priceVnd: o.priceVnd ?? 0,
        createdAt: o.createdAt.toISOString(),
        updatedAt: o.updatedAt.toISOString(),

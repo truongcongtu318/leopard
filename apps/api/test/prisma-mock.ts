@@ -658,12 +658,18 @@ export class InMemoryPrismaService {
 
       const stops = Array.from(this.orderStops.values()).filter((s) => s.orderId === order.id);
       const statusHistory = Array.from(this.orderStatusHistories.values()).filter((h) => h.orderId === order.id);
+      const driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
+      const customer = order.customerId ? this.users.get(order.customerId) ?? null : null;
+      const paymentIntents = Array.from(this.paymentIntents.values()).filter((p) => p.orderId === order.id);
 
       if (include) {
         return {
           ...order,
           ...(include.stops ? { stops } : {}),
           ...(include.statusHistory ? { statusHistory } : {}),
+          ...(include.driver ? { driver } : {}),
+          ...(include.customer ? { customer } : {}),
+          ...(include.paymentIntents ? { paymentIntents } : {}),
         };
       }
       return order;
@@ -685,6 +691,7 @@ export class InMemoryPrismaService {
           const statusHistory = Array.from(this.orderStatusHistories.values()).filter((h) => h.orderId === order.id);
           const driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
           const customer = order.customerId ? this.users.get(order.customerId) ?? null : null;
+          const paymentIntents = Array.from(this.paymentIntents.values()).filter((p) => p.orderId === order.id);
           const orderMessages = Array.from(this.orderMessages.values())
             .filter((m) => m.orderId === order.id)
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -692,6 +699,7 @@ export class InMemoryPrismaService {
             ...order,
             ...(include.driver ? { driver } : {}),
             ...(include.customer ? { customer } : {}),
+            ...(include.paymentIntents ? { paymentIntents } : {}),
             ...(include.orderMessages ? { orderMessages } : {}),
             ...(include.messages ? { messages: orderMessages } : {}),
             ...(include.stops ? { stops } : {}),
@@ -708,13 +716,31 @@ export class InMemoryPrismaService {
     aggregate: jest.fn(async () => {
       return { _sum: { priceVnd: 0 } };
     }),
-    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+    findFirst: jest.fn(async ({ where, include }: { where?: any; include?: any } = {}) => {
       let filtered = Array.from(this.orders.values());
       if (where) {
         if (where.customerId) filtered = filtered.filter((o) => o.customerId === where.customerId);
         if (where.clientRequestId) filtered = filtered.filter((o: any) => o.clientRequestId === where.clientRequestId);
+        if (where.id) filtered = filtered.filter((o: any) => o.id === where.id);
       }
-      return filtered[0] ?? null;
+      const order = filtered[0] ?? null;
+      if (!order) return null;
+      if (include) {
+        const stops = Array.from(this.orderStops.values()).filter((s) => s.orderId === order.id).sort((a, b) => a.sequence - b.sequence);
+        const statusHistory = Array.from(this.orderStatusHistories.values()).filter((h) => h.orderId === order.id);
+        const driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
+        const customer = order.customerId ? this.users.get(order.customerId) ?? null : null;
+        const paymentIntents = Array.from(this.paymentIntents.values()).filter((p) => p.orderId === order.id);
+        return {
+          ...order,
+          ...(include.driver ? { driver } : {}),
+          ...(include.customer ? { customer } : {}),
+          ...(include.paymentIntents ? { paymentIntents } : {}),
+          ...(include.stops ? { stops } : {}),
+          ...(include.statusHistory ? { statusHistory } : {}),
+        };
+      }
+      return order;
     }),
     create: jest.fn(async ({ data }: { data: any }) => {
       const id = data.id ?? `order-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;

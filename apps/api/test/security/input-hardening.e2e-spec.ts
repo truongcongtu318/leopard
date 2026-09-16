@@ -51,7 +51,7 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
       .useValue(prismaMock)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication({ bodyParser: false });
     app.useGlobalFilters(new ApiExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
