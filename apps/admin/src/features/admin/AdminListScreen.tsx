@@ -1500,7 +1500,7 @@ function FilterFields({
       ) : screen === 'users' ? (
         <>
           <FilterField id={`${idPrefix}-role`} label="Vai trò">
-            <select id={`${idPrefix}-role`} className={fieldClass} defaultValue={filters.role} name="role"><option value="ALL">Tất cả</option><option value="CUSTOMER">Khách hàng</option><option value="DRIVER">Tài xế</option><option value="FLEET_OWNER">Chủ đội xe</option><option value="ADMIN">Quản trị viên</option></select>
+            <select id={`${idPrefix}-role`} className={fieldClass} defaultValue={filters.role} name="role"><option value="ALL">Tất cả</option><option value="CUSTOMER">Khách hàng</option><option value="DRIVER">Tài xế</option><option value="ADMIN">Quản trị viên</option></select>
           </FilterField>
           <FilterField id={`${idPrefix}-account`} label="Tài khoản">
             <select id={`${idPrefix}-account`} className={fieldClass} defaultValue={filters.userStatus} name="userStatus"><option value="ALL">Tất cả</option><option value="ACTIVE">Đang hoạt động</option><option value="DISABLED">Đã vô hiệu hóa</option></select>
@@ -1838,7 +1838,6 @@ export function AdminListScreen({
                     { id: 'ALL', label: 'Tất cả' },
                     { id: 'CUSTOMER', label: 'Khách hàng' },
                     { id: 'DRIVER', label: 'Tài xế' },
-                    { id: 'FLEET_OWNER', label: 'Chủ đội xe' },
                     { id: 'ADMIN', label: 'Quản trị viên' }
                   ].map((f) => {
                     const isActive = view.filters.role === f.id;

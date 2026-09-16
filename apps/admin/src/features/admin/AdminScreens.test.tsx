@@ -21,7 +21,7 @@ describe('Admin static operations screens', () => {
     expect(strip).toBeTruthy();
     expect(strip.textContent).toContain('Người dùng');
     expect(strip.textContent).toContain('Đơn đang chạy');
-    expect(strip.textContent).toContain('Đội xe');
+    expect(strip.textContent).toContain('Tài xế');
     expect(strip.textContent).toContain('Doanh thu');
 
     const kpiCards = strip.querySelectorAll('.rounded-3xl');

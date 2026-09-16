@@ -125,7 +125,7 @@ export const adminReassignOrderCommandSchema = z.object({
 export type AdminReassignOrderCommandInput = z.infer<typeof adminReassignOrderCommandSchema>;
 
 export const adminBroadcastCommandSchema = z.object({
-  audience: z.enum(['ALL', 'CUSTOMER', 'DRIVER', 'FLEET_OWNER']),
+  audience: z.enum(['ALL', 'CUSTOMER', 'DRIVER']),
   title: z.string().min(5).max(200),
   body: z.string().min(10).max(2000),
   type: z.enum(['SYSTEM', 'PROMO', 'ORDER']).optional(),

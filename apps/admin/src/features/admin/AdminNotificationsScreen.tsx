@@ -40,10 +40,9 @@ const AUDIENCE_CONFIG: Record<
   AdminBroadcastAudience,
   { label: string; count: number; desc: string }
 > = {
-  ALL: { label: 'Tất cả', count: 3200, desc: 'Toàn bộ khách hàng, tài xế và chủ đội xe' },
+  ALL: { label: 'Tất cả', count: 3192, desc: 'Toàn bộ khách hàng và đối tác tài xế' },
   DRIVER: { label: 'Tài xế', count: 1842, desc: 'Tất cả đối tác tài xế đang hoạt động' },
   CUSTOMER: { label: 'Khách hàng', count: 1350, desc: 'Tất cả khách hàng đã đăng ký' },
-  FLEET_OWNER: { label: 'Chủ đội xe', count: 8, desc: 'Ban quản lý các đội xe đối tác' },
 };
 
 const TYPE_CONFIG: Record<AdminBroadcastType, { label: string; tone: string }> = {

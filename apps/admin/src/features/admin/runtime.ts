@@ -86,7 +86,8 @@ interface PageEnvelope<T> {
 interface AdminDashboardDto {
   readonly totalUsers: number;
   readonly totalOrders: number;
-  readonly activeFleets: number;
+  readonly activeFleets?: number;
+  readonly activeDrivers?: number;
   readonly revenueVnd: number;
 }
 
@@ -370,7 +371,7 @@ const ORDER_STATUSES: readonly OrderStatus[] = [
 ];
 const NON_TERMINAL_ORDER_STATUSES = ['REQUESTED', 'ACCEPTED', 'PICKING_UP', 'PICKED_UP', 'IN_TRANSIT'];
 const PAYMENT_STATUSES: readonly PaymentStatus[] = ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'];
-const USER_ROLES = ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const;
+const USER_ROLES = ['CUSTOMER', 'DRIVER', 'ADMIN'] as const;
 
 const ORDER_STATUS_LABEL: Readonly<Record<OrderStatus, string>> = {
   REQUESTED: 'Chờ tài xế',
@@ -390,7 +391,6 @@ const PAYMENT_STATUS_LABEL: Readonly<Record<PaymentStatus, string>> = {
 const ROLE_LABEL: Readonly<Record<(typeof USER_ROLES)[number], string>> = {
   CUSTOMER: 'Khách hàng',
   DRIVER: 'Tài xế',
-  FLEET_OWNER: 'Chủ đội xe',
   ADMIN: 'Quản trị viên',
 };
 
@@ -696,11 +696,11 @@ async function loadAdminRuntimeOverview(): Promise<AdminRouteView> {
         href: '/admin/users',
       },
       {
-        id: 'fleets',
-        label: 'Đội xe',
-        value: dashboard.activeFleets,
-        detail: 'Đội xe đang hoạt động',
-        href: '/admin/fleets',
+        id: 'drivers',
+        label: 'Tài xế',
+        value: dashboard.activeDrivers ?? dashboard.activeFleets ?? 0,
+        detail: 'Đối tác tài xế',
+        href: '/admin/drivers',
       },
       {
         id: 'active-orders',
@@ -2130,9 +2130,7 @@ async function loadNotificationsView(
           ? 'Tài xế'
           : item.audience === 'CUSTOMER'
             ? 'Khách hàng'
-            : item.audience === 'FLEET_OWNER'
-              ? 'Chủ đội xe'
-              : 'Tất cả',
+            : 'Tất cả',
       type: 'SYSTEM' as const,
       typeLabel: 'Hệ thống',
       title: item.title,
@@ -2150,10 +2148,9 @@ async function loadNotificationsView(
       totalSentBroadcasts: page.total,
       totalAudienceReach: broadcastLogs.reduce((sum, b) => sum + (b.sentCount || 0), 0),
       audienceCounts: {
-        ALL: 3200,
+        ALL: 3192,
         CUSTOMER: 1350,
         DRIVER: 1842,
-        FLEET_OWNER: 8,
       },
       broadcastLogs,
       notice: null,

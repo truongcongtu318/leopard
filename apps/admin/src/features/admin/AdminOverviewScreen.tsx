@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Building2, CircleDollarSign, Truck, Users } from 'lucide-react';
+import { CircleDollarSign, Truck, UserCheck, Users } from 'lucide-react';
 
 import {
   AdminBoundaryState,
@@ -147,8 +147,8 @@ export function AdminOverviewScreen({
   });
 
   const usersMetric = view.metrics.find((m) => m.id === 'users');
-  const fleetsMetric = view.metrics.find((m) => m.id === 'fleets');
   const activeOrdersMetric = view.metrics.find((m) => m.id === 'active-orders');
+  const driversMetric = view.metrics.find((m) => m.id === 'active-drivers' || m.id === 'drivers' || m.id === 'fleets');
   const kpis = [
     {
       id: 'users',
@@ -165,10 +165,10 @@ export function AdminOverviewScreen({
       iconClass: 'bg-emerald-50 text-emerald-600',
     },
     {
-      id: 'fleets',
-      label: 'Đội xe',
-      value: fleetsMetric?.value ?? 0,
-      icon: Building2,
+      id: 'drivers',
+      label: 'Tài xế',
+      value: driversMetric?.value ?? 0,
+      icon: UserCheck,
       iconClass: 'bg-amber-50 text-amber-600',
     },
     {

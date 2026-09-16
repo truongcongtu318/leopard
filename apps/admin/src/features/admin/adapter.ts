@@ -65,7 +65,7 @@ const REPORT_CATEGORIES = [
   'BILLING',
   'OTHER',
 ] as const;
-const USER_ROLES = ['ALL', 'CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const;
+const USER_ROLES = ['ALL', 'CUSTOMER', 'DRIVER', 'ADMIN'] as const;
 const USER_STATUSES = ['ALL', 'ACTIVE', 'DISABLED'] as const;
 const AVAILABILITIES = ['ALL', 'OFFLINE', 'AVAILABLE', 'BUSY'] as const;
 const MEMBERSHIP_STATUSES = ['ALL', 'INVITED', 'ACTIVE', 'REMOVED'] as const;

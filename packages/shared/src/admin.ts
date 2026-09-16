@@ -296,7 +296,7 @@ export interface AdminReassignOrderCommand {
   clientRequestId?: string | undefined;
 }
 
-export type AdminBroadcastAudience = 'ALL' | 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER';
+export type AdminBroadcastAudience = 'ALL' | 'CUSTOMER' | 'DRIVER';
 export type AdminBroadcastType = 'SYSTEM' | 'PROMO' | 'ORDER';
 
 export interface AdminBroadcastCommand {

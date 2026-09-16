@@ -124,7 +124,7 @@ export type AdminListFilters = Readonly<{
     | 'IN_PROGRESS'
     | 'RESOLVED'
     | 'CLOSED';
-  role: 'ALL' | 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
+  role: 'ALL' | 'CUSTOMER' | 'DRIVER' | 'ADMIN';
   userStatus: 'ALL' | UserStatus;
   availability: 'ALL' | DriverAvailability;
   membershipStatus: 'ALL' | FleetMemberStatus;
@@ -225,7 +225,7 @@ export type AdminUserListItemView = Readonly<{
   id: string;
   displayName: string;
   maskedPhone: string;
-  role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
+  role: 'CUSTOMER' | 'DRIVER' | 'ADMIN';
   status: UserStatus;
   updatedAtLabel: string;
   exceptionLabel: string | null;
@@ -606,7 +606,7 @@ export type AdminReportDetailRouteView = AdminBoundaryView | AdminReportDetailVi
 export type AdminDispatchRouteView = AdminBoundaryView | AdminDispatchView;
 
 // Wave 3 Views
-export type AdminBroadcastAudience = 'ALL' | 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER';
+export type AdminBroadcastAudience = 'ALL' | 'CUSTOMER' | 'DRIVER';
 export type AdminBroadcastType = 'SYSTEM' | 'PROMO' | 'ORDER';
 
 export type AdminBroadcastLogItemView = Readonly<{
@@ -633,7 +633,6 @@ export type AdminNotificationsView = Readonly<{
     ALL: number;
     CUSTOMER: number;
     DRIVER: number;
-    FLEET_OWNER: number;
   }>;
   broadcastLogs: readonly AdminBroadcastLogItemView[];
   notice: AdminNoticeView | null;

@@ -77,15 +77,6 @@ async function setup() {
     },
   });
 
-  const fleetOwnerUser = await prisma.user.create({
-    data: {
-      phone: '+84909000007',
-      name: 'Vũ Chủ Đội Xe',
-      role: 'FLEET_OWNER',
-      status: 'ACTIVE',
-    },
-  });
-
   const actor: AuthenticatedActor = {
     userId: adminUser.id,
     role: 'ADMIN',
@@ -104,7 +95,6 @@ async function setup() {
     disabledCustomer,
     driverUser1,
     driverUser2,
-    fleetOwnerUser,
     actor,
   };
 }
@@ -123,14 +113,14 @@ describe('AdminBroadcastNotification', () => {
 
       const result = await commandService.broadcastNotification(cmd, actor);
 
-      // Total active users: admin(1) + customer1(1) + customer2(1) + driver1(1) + driver2(1) + fleetOwner(1) = 6
+      // Total active users: admin(1) + customer1(1) + customer2(1) + driver1(1) + driver2(1) = 5
       expect(result.success).toBe(true);
-      expect(result.count).toBe(6);
+      expect(result.count).toBe(5);
       expect(result.audience).toBe('ALL');
 
       // Check notifications created in database
       const notifs = Array.from(prisma.notifications.values());
-      expect(notifs).toHaveLength(6);
+      expect(notifs).toHaveLength(5);
       expect(notifs.every((n) => n.title === 'Bảo trì hệ thống toàn diện')).toBe(true);
       expect(notifs.every((n) => n.type === 'SYSTEM')).toBe(true);
 
@@ -141,7 +131,7 @@ describe('AdminBroadcastNotification', () => {
       expect(audits).toHaveLength(1);
       expect(audits[0].actorId).toBe(actor.userId);
       expect(audits[0].resourceType).toBe('NOTIFICATION');
-      expect((audits[0].metadata as any).count).toBe(6);
+      expect((audits[0].metadata as any).count).toBe(5);
       expect((audits[0].metadata as any).audience).toBe('ALL');
     });
 
@@ -194,25 +184,17 @@ describe('AdminBroadcastNotification', () => {
       expect(notifs[0].type).toBe('SYSTEM'); // default fallback
     });
 
-    it('broadcasts to FLEET_OWNER audience only', async () => {
-      const { commandService, prisma, actor, fleetOwnerUser } = await setup();
+    it('rejects unsupported FLEET_OWNER audience with VALIDATION_ERROR', async () => {
+      const { commandService, actor } = await setup();
 
       const cmd: AdminBroadcastCommand = {
-        audience: 'FLEET_OWNER',
+        audience: 'FLEET_OWNER' as any,
         title: 'Cập nhật đối soát hoa hồng đội xe',
         body: 'Bảng đối soát hoa hồng kỳ này đã được cập nhật trên cổng quản trị đối tác.',
         type: 'ORDER',
       };
 
-      const result = await commandService.broadcastNotification(cmd, actor);
-
-      expect(result.success).toBe(true);
-      expect(result.count).toBe(1);
-      expect(result.audience).toBe('FLEET_OWNER');
-
-      const notifs = Array.from(prisma.notifications.values());
-      expect(notifs).toHaveLength(1);
-      expect(notifs[0].userId).toBe(fleetOwnerUser.id);
+      await expect(commandService.broadcastNotification(cmd, actor)).rejects.toThrow(DomainError);
     });
 
     it('enforces idempotency with clientRequestId', async () => {

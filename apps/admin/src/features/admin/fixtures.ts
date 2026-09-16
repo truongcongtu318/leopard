@@ -406,7 +406,7 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
     },
     metrics: [
       { id: 'users', label: 'Người dùng', value: 100, detail: '100 tài khoản đang quản lý', href: '/admin/users' },
-      { id: 'fleets', label: 'Đội xe', value: 6, detail: '6 đội xe đang liên kết', href: '/admin/fleets' },
+      { id: 'drivers', label: 'Tài xế', value: 30, detail: '30 tài xế đang liên kết', href: '/admin/drivers' },
       { id: 'active-orders', label: 'Đơn đang hoạt động', value: 18, detail: 'Chưa terminal', href: '/admin/orders' },
       { id: 'media-errors', label: 'Media lỗi', value: 0, detail: '0 là dữ liệu hợp lệ' },
     ],
@@ -662,11 +662,9 @@ function userItems(): readonly AdminUserListItemView[] {
     const phoneSuffix = String(1000 + (i * 37) % 9000);
     const maskedPhone = `••• ••• ${phoneSuffix}`;
     
-    let role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN' = 'CUSTOMER';
-    if (i < 25) {
+    let role: 'CUSTOMER' | 'DRIVER' | 'ADMIN' = 'CUSTOMER';
+    if (i < 30) {
       role = 'DRIVER';
-    } else if (i < 33) {
-      role = 'FLEET_OWNER';
     } else if (i === 99) {
       role = 'ADMIN';
     } else {
@@ -2047,13 +2045,13 @@ function notificationsView(scenarioId: AdminPreviewScenarioId): AdminNotificatio
         },
         {
           id: 'ntf-004',
-          audience: 'FLEET_OWNER',
-          audienceLabel: 'Chủ đội xe',
+          audience: 'DRIVER',
+          audienceLabel: 'Tài xế',
           type: 'ORDER',
           typeLabel: 'Vận hành',
           title: 'Nhắc nhở đối soát chu kỳ tuần 32/2026',
-          body: 'Bảng đối soát doanh thu và rút tiền đội xe đã sẵn sàng trên cổng Fleet Console.',
-          sentCount: 8,
+          body: 'Bảng đối soát doanh thu và rút tiền tài xế đã sẵn sàng trên ứng dụng LEOPARD Driver.',
+          sentCount: 1842,
           createdAtLabel: '10:00 · 11/08/2026',
           createdByName: 'Trần Tài Chính',
         },
@@ -2068,10 +2066,9 @@ function notificationsView(scenarioId: AdminPreviewScenarioId): AdminNotificatio
     totalSentBroadcasts: broadcastLogs.length,
     totalAudienceReach: isDense ? 6400 : 0,
     audienceCounts: {
-      ALL: 3200,
+      ALL: 3192,
       CUSTOMER: 1350,
       DRIVER: 1842,
-      FLEET_OWNER: 8,
     },
     broadcastLogs,
     notice: null,

@@ -397,7 +397,7 @@ export class AdminCommandService {
       throw new DomainError('VALIDATION_ERROR', 422, 'Nội dung thông báo phải từ 10 đến 2000 ký tự');
     }
 
-    const validAudiences = ['ALL', 'CUSTOMER', 'DRIVER', 'FLEET_OWNER'];
+    const validAudiences = ['ALL', 'CUSTOMER', 'DRIVER'];
     if (!validAudiences.includes(command.audience)) {
       throw new DomainError('VALIDATION_ERROR', 422, 'Đối tượng nhận thông báo không hợp lệ');
     }
@@ -423,8 +423,6 @@ export class AdminCommandService {
       where.role = 'CUSTOMER';
     } else if (command.audience === 'DRIVER') {
       where.role = 'DRIVER';
-    } else if (command.audience === 'FLEET_OWNER') {
-      where.role = 'FLEET_OWNER';
     }
 
     const targetUsers = await this.prisma.user.findMany({
