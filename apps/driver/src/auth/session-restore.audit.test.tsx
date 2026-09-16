@@ -7,12 +7,27 @@ import { render, waitFor, cleanup, fireEvent, act } from '@testing-library/react
 const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace }) }));
 
+jest.mock('react-native-safe-area-context', () => {
+  const actual =
+    jest.requireActual<typeof import('react-native-safe-area-context')>(
+      'react-native-safe-area-context',
+    );
+  return {
+    ...actual,
+    useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+  };
+});
+
 jest.mock('@leopard/mobile-core', () => ({
   __esModule: true,
-  // The real token module is light (it only needs react-native), so keep its
-  // exports: screens that read typeScale from the barrel still render.
+  // The real token modules are light (they only need react-native), so keep
+  // their exports: screens that read typeScale/driverPrimitives from the
+  // barrel still render.
   ...(jest.requireActual(
     '@leopard/mobile-core/src/theme/tokens',
+  ) as Record<string, unknown>),
+  ...(jest.requireActual(
+    '@leopard/mobile-core/src/theme/driver-tokens',
   ) as Record<string, unknown>),
   sessionStore: {
     hydrate: jest.fn(),
