@@ -1227,7 +1227,7 @@ export function createDriverHttpAdapter(
           ) {
             try {
               const currentOrder = await activeClient.get<MappedDriverOrderResponse>(
-                `/driver/orders/${orderId}`,
+                `/orders/${orderId}`,
               );
               const fetchedView = mapOrderToDriverDetailView(currentOrder);
               if (fetchedView.kind === 'content' && fetchedView.accessScope === 'ASSIGNED_FULL') {

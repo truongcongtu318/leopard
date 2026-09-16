@@ -91,6 +91,10 @@ Desktop.ini
 .codex/cache/
 .worktrees/
 
+# Local agent/skill caches (Claude Code / Codex) — machine-local, not source
+.claude/skills/
+agent/
+
 # Test artifacts
 playwright-report/
 test-results/
