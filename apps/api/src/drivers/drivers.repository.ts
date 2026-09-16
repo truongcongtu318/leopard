@@ -214,6 +214,7 @@ export class DriversRepository {
     radiusM: number,
     limit = 50,
     vehicleType?: VehicleType,
+    excludeDriverIds: string[] = [],
   ): Promise<Array<{ userId: string; distanceM: number }>> {
     const rows = vehicleType
       ? await this.prisma.$queryRaw<Array<{ userId: string; distance_m: number }>>`
@@ -225,6 +226,7 @@ export class DriversRepository {
             AND "vehicleType"::text = ${vehicleType}
             AND "lastKnownAt" > NOW() - INTERVAL '90 seconds'
             AND ST_DWithin("lastKnownLocation", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusM})
+            AND NOT ("userId" = ANY(${excludeDriverIds}::uuid[]))
           ORDER BY distance_m ASC
           LIMIT ${limit}
         `
@@ -236,6 +238,7 @@ export class DriversRepository {
           WHERE availability = 'AVAILABLE'
             AND "lastKnownAt" > NOW() - INTERVAL '90 seconds'
             AND ST_DWithin("lastKnownLocation", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusM})
+            AND NOT ("userId" = ANY(${excludeDriverIds}::uuid[]))
           ORDER BY distance_m ASC
           LIMIT ${limit}
         `;

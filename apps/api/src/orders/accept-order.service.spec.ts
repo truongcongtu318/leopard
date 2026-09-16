@@ -7,6 +7,7 @@ describe('AcceptOrderService', () => {
   let prisma: any;
   let ordersRepository: any;
   let eventsPublisher: any;
+  let offers: any;
   let service: AcceptOrderService;
   const driverActor = { userId: 'driver-1', role: 'DRIVER' as const };
 
@@ -26,7 +27,8 @@ describe('AcceptOrderService', () => {
     prisma.orderStatusHistory = { create: jest.fn(), findFirst: jest.fn() };
     ordersRepository = { findById: jest.fn() };
     eventsPublisher = { publishStatusChanged: jest.fn() };
-    service = new AcceptOrderService(prisma, ordersRepository, eventsPublisher);
+    offers = { markAccepted: jest.fn() };
+    service = new AcceptOrderService(prisma, ordersRepository, eventsPublisher, offers);
   });
 
   test('publishes exactly one canonical status-changed event on a successful accept', async () => {
@@ -61,6 +63,7 @@ describe('AcceptOrderService', () => {
       eventId: 'hist-1',
       occurredAt: '2026-09-05T00:00:00.000Z',
     });
+    expect(offers.markAccepted).toHaveBeenCalledWith(prisma, 'order-1', 'driver-1');
   });
 
   test('does not publish when the driver is not approved', async () => {

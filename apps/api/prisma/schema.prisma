@@ -208,6 +208,7 @@ model User {
   customerOrders                 Order[]                 @relation("CustomerOrders")
   driverOrders                   Order[]                 @relation("DriverOrders")
   statusChanges                  OrderStatusHistory[]    @relation("OrderStatusActor")
+  dispatchOffersReceived         OrderDispatchOffer[]    @relation("OrderDispatchOfferDriver")
   trackingPoints                 TrackingPoint[]         @relation("TrackingDriver")
   mediaObjects                   MediaObject[]           @relation("MediaUploader")
   confirmedPayments              PaymentIntent[]         @relation("PaymentConfirmer")
@@ -439,9 +440,32 @@ model Order {
   stopProgressEvents StopProgressEvent[]
   stopProgressStates StopProgressState[]
 
+  dispatchOffers OrderDispatchOffer[]
+
   @@unique([customerId, clientRequestId])
   @@index([customerId, createdAt(sort: Desc)])
   @@index([status, vehicleType, createdAt(sort: Desc)])
+}
+
+enum OrderDispatchOfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model OrderDispatchOffer {
+  id          String                    @id @default(uuid()) @db.Uuid
+  orderId     String                    @db.Uuid
+  driverId    String                    @db.Uuid
+  status      OrderDispatchOfferStatus  @default(PENDING)
+  offeredAt   DateTime                  @default(now()) @db.Timestamptz(3)
+  respondedAt DateTime?                 @db.Timestamptz(3)
+  order       Order                     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  driver      User                      @relation("OrderDispatchOfferDriver", fields: [driverId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, driverId])
+  @@index([orderId, status])
 }
 
 model OrderStop {
