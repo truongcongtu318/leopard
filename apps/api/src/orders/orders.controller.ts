@@ -19,6 +19,7 @@ import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { CancelOrderService } from './cancel-order.service.js';
 import { CancelOrderDto } from './dto/cancel-order.dto.js';
 import { CreateOrderDto } from './dto/create-order.dto.js';
+import { DeclineOrderOfferService } from './decline-order-offer.service.js';
 import type { MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersService } from './orders.service.js';
 
@@ -29,6 +30,7 @@ export class OrdersController {
   constructor(
     private readonly ordersService: OrdersService,
     private readonly cancelOrderService: CancelOrderService,
+    private readonly declineOrderOfferService: DeclineOrderOfferService,
   ) {}
 
   @Post()
@@ -72,5 +74,15 @@ export class OrdersController {
     @Headers('x-request-id') requestId?: string,
   ): Promise<MappedOrderResponse> {
     return this.cancelOrderService.cancelOrder(actor, id, dto, requestId);
+  }
+
+  @Post(':id/decline')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  declineOrder(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+  ): Promise<void> {
+    return this.declineOrderOfferService.declineOffer(actor, id);
   }
 }

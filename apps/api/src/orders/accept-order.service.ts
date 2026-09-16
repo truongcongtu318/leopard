@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { OrderDispatchOffersRepository } from './order-dispatch-offers.repository.js';
 import { OrderEventsPublisher, type OrderStatusChangedEvent } from './order-events.publisher.js';
 import { mapOrderResponse, type MappedOrderResponse } from './order-response.mapper.js';
 import { OrdersRepository } from './orders.repository.js';
@@ -12,6 +13,7 @@ export class AcceptOrderService {
     private readonly prisma: PrismaService,
     private readonly ordersRepository: OrdersRepository,
     private readonly eventsPublisher: OrderEventsPublisher,
+    private readonly offers: OrderDispatchOffersRepository,
   ) {}
 
   async acceptOrder(
@@ -126,6 +128,8 @@ export class AcceptOrderService {
           clientRequestId: clientRequestId ?? null,
         },
       });
+
+      await this.offers.markAccepted(tx, orderId, actor.userId);
 
       return {
         order: await this.ordersRepository.findById(orderId, tx),

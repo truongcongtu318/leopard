@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { AppModule } from './app.module.js';
+import { RedisIoAdapter } from './common/redis-io.adapter.js';
 import { DocsModule } from './docs/docs.module.js';
 import { parseEnv } from './config/env.schema.js';
 import type { AppEnv } from './config/env.schema.js';
@@ -71,6 +72,14 @@ export async function createApplication(env: AppEnv): Promise<INestApplication> 
   });
 
   DocsModule.setupSwagger(app);
+
+  // Optional: only attached when REDIS_URL is configured, so a single
+  // instance keeps using the default in-process Socket.IO adapter unchanged.
+  if (env.REDIS_URL) {
+    const redisIoAdapter = new RedisIoAdapter(app, env.REDIS_URL);
+    await redisIoAdapter.connectToRedis();
+    app.useWebSocketAdapter(redisIoAdapter);
+  }
 
   return app;
 }

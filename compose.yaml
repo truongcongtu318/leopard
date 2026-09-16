@@ -20,6 +20,22 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
 
+  # Optional: only needed to fan Socket.IO room broadcasts out across
+  # multiple API instances (REDIS_URL). A single instance runs fine without it.
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
   api:
     build:
       context: .

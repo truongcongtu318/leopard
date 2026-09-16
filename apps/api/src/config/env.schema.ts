@@ -118,6 +118,10 @@ const envSchema = z
     SMTP_PASS: optionalProviderValue(),
     SMTP_SECURE: booleanFlagSchema.optional(),
     MAIL_FROM: optionalProviderValue(),
+    // Optional even in production: single-instance stays a fully supported
+    // deployment shape. When set, Socket.IO fans room broadcasts out across
+    // instances via Redis pub/sub instead of the local in-process server.
+    REDIS_URL: optionalProviderUrl,
   })
   .superRefine((env, context) => {
     if (env.STORAGE_PROVIDER === 's3') {
@@ -406,5 +410,6 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     SMTP_PASS: source.SMTP_PASS,
     SMTP_SECURE: source.SMTP_SECURE,
     MAIL_FROM: source.MAIL_FROM,
+    REDIS_URL: source.REDIS_URL,
   });
 }

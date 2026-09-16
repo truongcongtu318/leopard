@@ -4,14 +4,15 @@ import { DISPATCH_NAMESPACE, DispatchSocketEvent, type DispatchOfferEvent } from
 
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
+import { OrderDispatchOffersRepository } from '../orders/order-dispatch-offers.repository.js';
 import { OrderEventsPublisher } from '../orders/order-events.publisher.js';
 import type { OrderRequestedEvent } from '../orders/order-events.publisher.js';
 import { readToken } from '../tracking/tracking.gateway.js';
 import { SocketAuthAdapter } from '../tracking/socket-auth.adapter.js';
+import { OFFER_TIMEOUT_SECONDS } from './dispatch.constants.js';
 import { DispatchService } from './dispatch.service.js';
 
 type DispatchSocket = Socket & { data: { actor?: AuthenticatedActor } };
-const DEFAULT_OFFER_TIMEOUT_SECONDS = 25;
 const driverRoom = (userId: string) => `driver:${userId}`;
 
 @WebSocketGateway({ namespace: DISPATCH_NAMESPACE })
@@ -23,6 +24,7 @@ export class DispatchGateway implements OnGatewayConnection {
     private readonly auth: SocketAuthAdapter,
     private readonly dispatch: DispatchService,
     private readonly orderEvents: OrderEventsPublisher,
+    private readonly offers: OrderDispatchOffersRepository,
   ) {
     this.orderEvents.subscribeRequested((event) => {
       void this.dispatchOrder(event);
@@ -51,6 +53,24 @@ export class DispatchGateway implements OnGatewayConnection {
       event.vehicleType,
     );
 
+    if (candidates.length === 0) return;
+
+    await this.offers.createPending(
+      event.orderId,
+      candidates.map((candidate) => candidate.userId),
+    );
+    this.emitOffersToCandidates(event, candidates);
+  }
+
+  /**
+   * Shared by the initial synchronous dispatch above and DispatchSweepService's
+   * redispatch rounds — both already have a candidate list and an
+   * OrderRequestedEvent-shaped payload, they only differ in radius/exclusions.
+   */
+  public emitOffersToCandidates(
+    event: Omit<OrderRequestedEvent, 'occurredAt'>,
+    candidates: Array<{ userId: string; distanceM: number }>,
+  ): void {
     const payload: DispatchOfferEvent = {
       orderId: event.orderId,
       pickup: event.pickup,
@@ -62,7 +82,7 @@ export class DispatchGateway implements OnGatewayConnection {
       durationSeconds: event.durationSeconds,
       cargoNote: event.cargoNote,
       driverDistanceM: 0,
-      timeoutSeconds: DEFAULT_OFFER_TIMEOUT_SECONDS,
+      timeoutSeconds: OFFER_TIMEOUT_SECONDS,
     };
 
     for (const candidate of candidates) {
