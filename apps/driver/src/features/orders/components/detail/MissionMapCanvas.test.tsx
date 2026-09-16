@@ -340,4 +340,22 @@ describe('MissionMapCanvas (Task 18)', () => {
     openURLSpy.mockRestore();
     await screen.unmount();
   });
+
+  it('renders as an absolute full-bleed layer when fillContainer is true', async () => {
+    const screen = await render(
+      <MissionMapCanvas
+        destination={{ label: 'B' }}
+        fillContainer
+        origin={{ label: 'A' }}
+        tracking={{ kind: 'not-started', label: 'Chưa bắt đầu' }}
+      />,
+    );
+    const canvas = screen.getByTestId('route-map-schematic');
+    const flatStyle = Array.isArray(canvas.props.style)
+      ? Object.assign({}, ...canvas.props.style)
+      : canvas.props.style;
+    expect(flatStyle.position).toBe('absolute');
+    expect(flatStyle.borderRadius).toBe(0);
+    await screen.unmount();
+  });
 });
