@@ -18,6 +18,7 @@ import {
   OtpSixCellInput,
   IconCamera,
   IconCheck,
+  IconShieldAlert,
   toE164Vn,
   typeScale,
   iosContinuousCurve,
@@ -100,7 +101,6 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
     setConsentChecked,
     signatureName,
     setSignatureName,
-    signatureTouched,
     setSignatureTouched,
     handleMastheadBack,
     handleNextToStep2,
@@ -118,7 +118,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
     step2Valid,
     step3Valid,
     canSubmit,
-  } = registration as any;
+  } = registration;
 
   const selectedVehicleDef =
     VEHICLE_OPTIONS.find((v) => v.id === selectedVehicle) ?? VEHICLE_OPTIONS[0];
@@ -144,12 +144,12 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
           <Defs>
             <LinearGradient id="registerAuraGradient" x1="0" x2="0" y1="0" y2="1">
               <Stop offset="0%" stopColor="#0F2754" stopOpacity={1} />
-              <Stop offset="100%" stopColor="#0B1E42" stopOpacity={0} />
+              <Stop offset="100%" stopColor={scene.canvasDark} stopOpacity={0} />
             </LinearGradient>
             <RadialGradient id="registerAuraGlow" cx="50%" cy="20%" r="60%">
-              <Stop offset="0%" stopColor="#0284C7" stopOpacity={0.25} />
-              <Stop offset="70%" stopColor="#0284C7" stopOpacity={0.06} />
-              <Stop offset="100%" stopColor="#0284C7" stopOpacity={0} />
+              <Stop offset="0%" stopColor={scene.ctaTop} stopOpacity={0.25} />
+              <Stop offset="70%" stopColor={scene.ctaTop} stopOpacity={0.06} />
+              <Stop offset="100%" stopColor={scene.ctaTop} stopOpacity={0} />
             </RadialGradient>
           </Defs>
           <Rect fill="url(#registerAuraGradient)" height="100%" width="100%" />
@@ -256,7 +256,9 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
           <View style={[styles.card, styles.successCard]} testID="register-success">
             {appStatus === 'ACTIVE' ? (
               <>
-                <Text style={styles.successIcon}>✅</Text>
+                <View style={styles.successIconBadge}>
+                  <IconCheck color={scene.successLight} size={36} strokeWidth="bold" />
+                </View>
                 <Text style={styles.successTitle}>Hồ sơ đã được duyệt!</Text>
                 <Text style={styles.successText}>Bạn có thể bắt đầu nhận đơn ngay bây giờ.</Text>
                 <Pressable
@@ -276,7 +278,9 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
               </>
             ) : appStatus === 'REJECTED' ? (
               <>
-                <Text style={styles.successIcon}>⚠️</Text>
+                <View style={styles.warningIconBadge}>
+                  <IconShieldAlert color={scene.warning} size={36} strokeWidth="bold" />
+                </View>
                 <Text style={styles.successTitle}>Hồ sơ bị từ chối</Text>
                 <Text style={styles.successText}>
                   {rejectionReason ?? 'Vui lòng kiểm tra lại giấy tờ và nộp lại.'}
@@ -300,6 +304,9 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
               </>
             ) : (
               <>
+                <View style={styles.successIconBadge}>
+                  <IconCheck color={scene.ctaCyan} size={36} strokeWidth="bold" />
+                </View>
                 <Text style={styles.successTitle}>Đã gửi hồ sơ!</Text>
                 <Text style={styles.successText}>
                   Hồ sơ tài xế đang chờ LEOPARD duyệt. Nhấn "Kiểm tra lại" để cập nhật kết quả.
@@ -364,7 +371,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onChangeText={setName}
                         onFocus={() => setFocusedField('name')}
                         placeholder="VD: Nguyễn Văn A"
-                        placeholderTextColor="#64748B"
+                        placeholderTextColor={scene.placeholder}
                         style={styles.input}
                         value={name}
                       />
@@ -392,7 +399,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onChangeText={setPhone}
                         onFocus={() => setFocusedField('phone')}
                         placeholder="VD: 0912345678"
-                        placeholderTextColor="#64748B"
+                        placeholderTextColor={scene.placeholder}
                         style={[styles.input, styles.phoneInput]}
                         value={phone}
                       />
@@ -417,8 +424,8 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onChangeText={setBirthDate}
                         onFocus={() => setFocusedField('birthDate')}
                         placeholder="DD/MM/YYYY"
-                        placeholderTextColor="#64748B"
-                        style={styles.input}
+                        placeholderTextColor={scene.placeholder}
+                        style={[styles.input, styles.dateInput]}
                         value={birthDate}
                       />
                     </View>
@@ -439,7 +446,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onChangeText={setAddress}
                         onFocus={() => setFocusedField('address')}
                         placeholder="Số nhà, tên đường, phường/xã..."
-                        placeholderTextColor="#64748B"
+                        placeholderTextColor={scene.placeholder}
                         style={styles.input}
                         value={address}
                       />
@@ -464,7 +471,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                             onPress={() => void captureSelfie()}
                             style={[styles.docBtn, styles.docBtnDone]}
                           >
-                            <IconCamera color="#4ADE80" secondaryColor="transparent" size={18} />
+                            <IconCamera color={scene.successLight} secondaryColor="transparent" size={18} />
                             <Text style={[styles.docBtnText, styles.docBtnTextDone]}>
                               Chụp lại
                             </Text>
@@ -488,7 +495,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onPress={() => void captureSelfie()}
                         style={styles.docBtn}
                       >
-                        <IconCamera color="#FFFFFF" secondaryColor="transparent" size={18} />
+                        <IconCamera color={scene.ink} secondaryColor="transparent" size={18} />
                         <Text style={styles.docBtnText}>Chụp ảnh chân dung</Text>
                       </Pressable>
                     )}
@@ -532,7 +539,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onChangeText={setFleetCode}
                         onFocus={() => setFocusedField('fleet')}
                         placeholder="VD: FLEET-HCM-01 (tùy chọn)"
-                        placeholderTextColor="#64748B"
+                        placeholderTextColor={scene.placeholder}
                         style={styles.input}
                         value={fleetCode}
                       />
@@ -639,8 +646,8 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onChangeText={setLicensePlate}
                         onFocus={() => setFocusedField('plate')}
                         placeholder="VD: 59D-123.45"
-                        placeholderTextColor="#64748B"
-                        style={styles.input}
+                        placeholderTextColor={scene.placeholder}
+                        style={[styles.input, styles.licensePlateInput]}
                         value={licensePlate}
                       />
                     </View>
@@ -665,8 +672,8 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onChangeText={setPayloadKg}
                         onFocus={() => setFocusedField('payload')}
                         placeholder="VD: 500"
-                        placeholderTextColor="#64748B"
-                        style={styles.input}
+                        placeholderTextColor={scene.placeholder}
+                        style={[styles.input, styles.tabularNumberInput]}
                         value={payloadKg}
                       />
                     </View>
@@ -688,8 +695,8 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         onChangeText={setLicenseNumber}
                         onFocus={() => setFocusedField('gplx')}
                         placeholder="VD: 590123456789"
-                        placeholderTextColor="#64748B"
-                        style={styles.input}
+                        placeholderTextColor={scene.placeholder}
+                        style={[styles.input, styles.tabularNumberInput]}
                         value={licenseNumber}
                       />
                     </View>
@@ -732,7 +739,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
               <>
                 <View style={styles.kycGuideCard}>
                   <View style={styles.kycGuideIcon}>
-                    <IconCamera color="#38BDF8" secondaryColor="#0F2347" size={22} />
+                    <IconCamera color={scene.ctaCyan} secondaryColor={scene.surfaceDark} size={22} />
                   </View>
                   <View style={styles.kycGuideCopy}>
                     <Text style={styles.kycGuideTitle}>Chụp đủ 4 góc, không lóa và rõ chữ</Text>
@@ -750,7 +757,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                         <View style={styles.docTopRow}>
                           <View style={[styles.docStatusIcon, asset ? styles.docStatusIconDone : null]}>
                             {asset ? (
-                              <IconCheck color="#4ADE80" size={18} />
+                              <IconCheck color={scene.successLight} size={18} />
                             ) : (
                               <Text style={styles.docStatusNumber}>
                                 {DOC_SLOTS.findIndex((item) => item.type === slot.type) + 1}
@@ -785,7 +792,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                               onPress={() => void captureDoc(slot.type)}
                               style={[styles.docBtn, styles.docBtnHalf, styles.docBtnDone]}
                             >
-                              <IconCamera color="#4ADE80" secondaryColor="transparent" size={18} />
+                              <IconCamera color={scene.successLight} secondaryColor="transparent" size={18} />
                               <Text style={[styles.docBtnText, styles.docBtnTextDone]}>
                                 {capturingDocType === slot.type ? 'Đang mở camera…' : 'Chụp lại'}
                               </Text>
@@ -814,7 +821,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                             onPress={() => void captureDoc(slot.type)}
                             style={styles.docBtn}
                           >
-                            <IconCamera color="#FFFFFF" secondaryColor="transparent" size={18} />
+                            <IconCamera color={scene.ink} secondaryColor="transparent" size={18} />
                             <Text style={styles.docBtnText}>
                               {capturingDocType === slot.type ? 'Đang mở camera…' : 'Chụp ảnh'}
                             </Text>
@@ -867,14 +874,14 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                   </View>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Số điện thoại:</Text>
-                    <Text style={styles.summaryValue}>
+                    <Text style={[styles.summaryValue, styles.tabularText]}>
                       {toE164Vn(phone.trim()) || phone || (isAuthenticated ? 'Tài khoản hiện tại' : '—')}
                     </Text>
                   </View>
                   {birthDate ? (
                     <View style={styles.summaryRow}>
                       <Text style={styles.summaryLabel}>Ngày sinh:</Text>
-                      <Text style={styles.summaryValue}>{birthDate}</Text>
+                      <Text style={[styles.summaryValue, styles.tabularText]}>{birthDate}</Text>
                     </View>
                   ) : null}
                   {address ? (
@@ -1053,8 +1060,8 @@ const styles = StyleSheet.create({
   },
   container: { flexGrow: 1 },
   masthead: {
-    backgroundColor: '#0B1E42',
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: scene.canvasDark,
+    borderBottomColor: scene.borderSubtle,
     borderBottomWidth: 1,
     gap: 6,
     paddingHorizontal: spacing.lg,
@@ -1079,16 +1086,16 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    borderColor: 'rgba(255, 255, 255, 0.20)',
+    borderColor: scene.borderLight,
     borderRadius: radius.pill,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
     ...iosContinuousCurve,
   },
-  backBtnText: { color: '#FFFFFF', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
-  headline: { color: '#FFFFFF', fontSize: 22, fontWeight: '800', marginTop: 4, zIndex: 2 },
-  subline: { color: '#CBD5E1', fontSize: 13, fontWeight: '500', lineHeight: 18, zIndex: 2 },
+  backBtnText: { color: scene.ink, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
+  headline: { color: scene.ink, fontSize: 22, fontWeight: '800', marginTop: 4, zIndex: 2 },
+  subline: { color: scene.mutedLight, fontSize: 13, fontWeight: '500', lineHeight: 18, zIndex: 2 },
   body: {
     flex: 1,
     gap: spacing.md,
@@ -1096,8 +1103,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   card: {
-    backgroundColor: '#0F2347',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: scene.surfaceDark,
+    borderColor: scene.borderDark,
     borderRadius: 20,
     borderWidth: 1,
     gap: spacing.sm,
@@ -1110,17 +1117,17 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   sectionLabel: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
   field: { gap: spacing.xs },
-  inputLabel: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  fieldHint: { color: '#94A3B8', fontSize: typeScale.caption1.fontSize, marginTop: 2, lineHeight: 16 },
+  inputLabel: { color: scene.ink, fontSize: 13, fontWeight: '700' },
+  fieldHint: { color: scene.muted, fontSize: typeScale.caption1.fontSize, marginTop: 2, lineHeight: 16 },
   inputWrap: {
-    backgroundColor: '#132B52',
-    borderColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: scene.fieldBg,
+    borderColor: scene.inputBorder,
     borderRadius: 14,
     borderWidth: 1.5,
     height: 48,
@@ -1149,16 +1156,30 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   flagCode: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   phoneInput: {
     flex: 1,
     paddingLeft: 10,
+    fontVariant: ['tabular-nums'],
+  },
+  dateInput: {
+    fontVariant: ['tabular-nums'],
+  },
+  licensePlateInput: {
+    fontVariant: ['tabular-nums'],
+  },
+  tabularNumberInput: {
+    fontVariant: ['tabular-nums'],
+  },
+  tabularText: {
+    fontVariant: ['tabular-nums'],
   },
   input: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     padding: 0,
@@ -1169,7 +1190,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: scene.fieldBgSoft,
     borderColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: radius.pill,
     borderWidth: 1,
@@ -1179,22 +1200,22 @@ const styles = StyleSheet.create({
   },
   chipActive: {
     backgroundColor: 'rgba(56, 189, 248, 0.18)',
-    borderColor: '#38BDF8',
+    borderColor: scene.ctaCyan,
   },
   chipText: {
-    color: '#94A3B8',
+    color: scene.muted,
     fontSize: 13,
     fontWeight: '600',
   },
   chipTextActive: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontWeight: '700',
   },
   vehicleGrid: {
     gap: 10,
   },
   vehicleCard: {
-    backgroundColor: '#132B52',
+    backgroundColor: scene.fieldBg,
     borderColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: 14,
     borderWidth: 1.5,
@@ -1203,8 +1224,8 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   vehicleCardSelected: {
-    borderColor: '#38BDF8',
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderColor: scene.ctaCyan,
+    backgroundColor: scene.badgeBg,
   },
   vehicleCardHeader: {
     flexDirection: 'row',
@@ -1212,19 +1233,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   vehicleCardTitle: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: 15,
     fontWeight: '700',
   },
   vehicleCardTitleSelected: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
   },
   vehicleCardSub: {
-    color: '#94A3B8',
+    color: scene.muted,
     fontSize: typeScale.footnote.fontSize,
   },
   vehicleCardSubSelected: {
-    color: '#CBD5E1',
+    color: scene.mutedLight,
   },
   radioCircle: {
     width: 20,
@@ -1236,13 +1257,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioCircleSelected: {
-    borderColor: '#38BDF8',
+    borderColor: scene.ctaCyan,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#38BDF8',
+    backgroundColor: scene.ctaCyan,
   },
   selfieContainer: {
     gap: 10,
@@ -1252,17 +1273,17 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#38BDF8',
+    borderColor: scene.ctaCyan,
     ...iosContinuousCurve,
   },
   primaryBtn: {
     alignItems: 'center',
-    backgroundColor: '#0284C7',
+    backgroundColor: scene.ctaTop,
     borderRadius: radius.pill,
     height: 50,
     justifyContent: 'center',
     overflow: 'hidden',
-    shadowColor: '#0284C7',
+    shadowColor: scene.ctaTop,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -1275,7 +1296,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: 15,
     fontWeight: '800',
   },
@@ -1294,17 +1315,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   loginHelper: {
-    color: '#94A3B8',
+    color: scene.muted,
     fontSize: 13,
   },
   loginLink: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontSize: 13,
     fontWeight: '700',
   },
   stepperWrap: {
-    backgroundColor: '#0B1E42',
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: scene.canvasDark,
+    borderBottomColor: scene.borderSubtle,
     borderBottomWidth: 1,
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
@@ -1317,7 +1338,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   stepperBarFill: {
-    backgroundColor: '#38BDF8',
+    backgroundColor: scene.ctaCyan,
     height: '100%',
   },
   stepperSegments: {
@@ -1338,7 +1359,7 @@ const styles = StyleSheet.create({
   stepCircle: {
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.20)',
+    borderColor: scene.borderLight,
     borderRadius: 14,
     borderWidth: 1.5,
     height: 28,
@@ -1347,36 +1368,37 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   stepCircleActive: {
-    backgroundColor: '#38BDF8',
-    borderColor: '#38BDF8',
+    backgroundColor: scene.ctaCyan,
+    borderColor: scene.ctaCyan,
   },
   stepCirclePassed: {
     backgroundColor: 'rgba(74, 222, 128, 0.2)',
-    borderColor: '#4ADE80',
+    borderColor: scene.successLight,
   },
   stepCircleText: {
-    color: '#94A3B8',
+    color: scene.muted,
     fontSize: 12,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   stepCircleTextActive: {
-    color: '#0B1E42',
+    color: scene.canvasDark,
     fontWeight: '800',
   },
   stepCircleTextPassed: {
-    color: '#4ADE80',
+    color: scene.successLight,
   },
   stepLabel: {
-    color: '#94A3B8',
+    color: scene.muted,
     fontSize: 12,
     fontWeight: '600',
   },
   stepLabelActive: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontWeight: '700',
   },
   stepLabelPassed: {
-    color: '#CBD5E1',
+    color: scene.mutedLight,
   },
   stepHeadlineRow: {
     alignItems: 'center',
@@ -1385,8 +1407,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   stepBadge: {
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: scene.badgeBg,
+    borderColor: scene.badgeBorder,
     borderRadius: 6,
     borderWidth: 1,
     paddingHorizontal: 6,
@@ -1394,12 +1416,13 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   stepBadgeText: {
-    color: '#38BDF8',
+    color: scene.badgeText,
     fontSize: 11,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   stepTitleText: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -1415,13 +1438,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderColor: 'rgba(255, 255, 255, 0.18)',
     borderWidth: 1.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: scene.fieldBgSoft,
     alignItems: 'center',
     justifyContent: 'center',
     ...iosContinuousCurve,
   },
   outlineNavBtnText: {
-    color: '#CBD5E1',
+    color: scene.mutedLight,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
@@ -1429,11 +1452,11 @@ const styles = StyleSheet.create({
     flex: 1.8,
     height: 50,
     borderRadius: radius.pill,
-    backgroundColor: '#0284C7',
+    backgroundColor: scene.ctaTop,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    shadowColor: '#0284C7',
+    shadowColor: scene.ctaTop,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -1461,12 +1484,12 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   kycGuideCopy: { flex: 1, gap: 2 },
-  kycGuideTitle: { color: '#FFFFFF', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
-  kycGuideText: { color: '#CBD5E1', fontSize: 12, lineHeight: 17 },
+  kycGuideTitle: { color: scene.ink, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
+  kycGuideText: { color: scene.mutedLight, fontSize: 12, lineHeight: 17 },
   kycList: { gap: spacing.md },
   docSlot: {
-    backgroundColor: '#0F2347',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: scene.surfaceDark,
+    borderColor: scene.borderDark,
     borderRadius: 16,
     borderWidth: 1,
     gap: 12,
@@ -1491,13 +1514,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(74, 222, 128, 0.18)',
   },
   docStatusNumber: {
-    color: '#94A3B8',
+    color: scene.muted,
     fontSize: 12,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   docInfo: { flex: 1, gap: 2 },
-  docLabel: { color: '#FFFFFF', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
-  docHint: { color: '#94A3B8', fontSize: typeScale.caption1.fontSize },
+  docLabel: { color: scene.ink, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
+  docHint: { color: scene.muted, fontSize: typeScale.caption1.fontSize },
   docStatusPill: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: radius.pill,
@@ -1506,15 +1530,15 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   docStatusPillDone: {
-    backgroundColor: 'rgba(74, 222, 128, 0.16)',
+    backgroundColor: scene.successBg,
   },
-  docStatusText: { color: '#94A3B8', fontSize: 11, fontWeight: '700' },
-  docStatusTextDone: { color: '#4ADE80' },
+  docStatusText: { color: scene.muted, fontSize: 11, fontWeight: '700' },
+  docStatusTextDone: { color: scene.successLight },
   docThumb: {
     height: 140,
     width: '100%',
     borderRadius: 10,
-    backgroundColor: '#132B52',
+    backgroundColor: scene.fieldBg,
     ...iosContinuousCurve,
   },
   docActionRow: {
@@ -1527,7 +1551,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.16)',
+    borderColor: scene.inputBorder,
     borderRadius: 12,
     borderWidth: 1,
     height: 42,
@@ -1537,16 +1561,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   docBtnDone: {
-    borderColor: 'rgba(74, 222, 128, 0.35)',
+    borderColor: scene.successBorder,
     backgroundColor: 'rgba(74, 222, 128, 0.12)',
   },
   docBtnText: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: 13,
     fontWeight: '700',
   },
   docBtnTextDone: {
-    color: '#4ADE80',
+    color: scene.successLight,
   },
   deleteDocBtn: {
     width: 60,
@@ -1554,19 +1578,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(248, 113, 113, 0.35)',
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    backgroundColor: scene.dangerBg,
     alignItems: 'center',
     justifyContent: 'center',
     ...iosContinuousCurve,
   },
   deleteDocBtnText: {
-    color: '#F87171',
+    color: scene.dangerLight,
     fontSize: 13,
     fontWeight: '700',
   },
   summaryCard: {
-    backgroundColor: '#0F2347',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: scene.surfaceDark,
+    borderColor: scene.borderDark,
     borderRadius: 20,
     borderWidth: 1,
     padding: spacing.md,
@@ -1574,7 +1598,7 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   summaryTitle: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '800',
     letterSpacing: 0.8,
@@ -1586,20 +1610,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 4,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    borderBottomColor: scene.borderDivider,
   },
-  summaryLabel: { color: '#CBD5E1', fontSize: 13, fontWeight: '500' },
-  summaryValue: { color: '#FFFFFF', fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
+  summaryLabel: { color: scene.mutedLight, fontSize: 13, fontWeight: '500' },
+  summaryValue: { color: scene.ink, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
   errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.14)',
-    borderColor: 'rgba(248, 113, 113, 0.46)',
+    backgroundColor: scene.dangerBg,
+    borderColor: scene.dangerBorder,
     borderRadius: 12,
     borderWidth: 1,
     padding: spacing.md,
     ...iosContinuousCurve,
   },
   errorText: {
-    color: '#FECACA',
+    color: scene.dangerText,
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,
@@ -1609,24 +1633,48 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     gap: 12,
   },
-  successIcon: { fontSize: 48 },
+  successIconBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: scene.successBg,
+    borderColor: scene.successBorder,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+    ...iosContinuousCurve,
+  },
+  warningIconBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(245, 158, 11, 0.16)',
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+    ...iosContinuousCurve,
+  },
   successTitle: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: 20,
     fontWeight: '800',
     textAlign: 'center',
   },
   successText: {
-    color: '#CBD5E1',
+    color: scene.mutedLight,
     fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
     textAlign: 'center',
   },
   contractMetaText: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
   otpModalOverlay: {
     ...StyleSheet.absoluteFill,
@@ -1640,8 +1688,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(6, 22, 47, 0.82)',
   },
   otpCard: {
-    backgroundColor: '#0F2347',
-    borderColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: scene.surfaceDark,
+    borderColor: scene.inputBorder,
     borderRadius: 24,
     borderWidth: 1,
     padding: 24,
@@ -1656,32 +1704,33 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   otpTitle: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: typeScale.title3.fontSize,
     fontWeight: '800',
     textAlign: 'center',
   },
   otpSubtitle: {
-    color: '#CBD5E1',
+    color: scene.mutedLight,
     fontSize: typeScale.footnote.fontSize,
     lineHeight: 19,
     textAlign: 'center',
     marginBottom: 4,
   },
   phoneHighlight: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   otpErrorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.14)',
-    borderColor: 'rgba(248, 113, 113, 0.46)',
+    backgroundColor: scene.dangerBg,
+    borderColor: scene.dangerBorder,
     borderRadius: 8,
     borderWidth: 1,
     padding: 8,
     ...iosContinuousCurve,
   },
   otpErrorText: {
-    color: '#FECACA',
+    color: scene.dangerText,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
@@ -1694,7 +1743,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   verifyingText: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
@@ -1707,12 +1756,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   resendText: {
-    color: '#38BDF8',
+    color: scene.ctaCyan,
     fontSize: 13,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   resendDisabledText: {
-    color: '#94A3B8',
+    color: scene.muted,
     fontWeight: '500',
   },
   otpActionRow: {
@@ -1728,11 +1778,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: scene.fieldBgSoft,
     ...iosContinuousCurve,
   },
   cancelBtnText: {
-    color: '#CBD5E1',
+    color: scene.mutedLight,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
@@ -1740,10 +1790,10 @@ const styles = StyleSheet.create({
     flex: 1.4,
     height: 46,
     borderRadius: radius.pill,
-    backgroundColor: '#0284C7',
+    backgroundColor: scene.ctaTop,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#0284C7',
+    shadowColor: scene.ctaTop,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 6,
@@ -1756,7 +1806,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   confirmBtnText: {
-    color: '#FFFFFF',
+    color: scene.ink,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },

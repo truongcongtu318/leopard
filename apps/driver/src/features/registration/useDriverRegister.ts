@@ -496,6 +496,7 @@ export function useDriverRegister(options?: UseDriverRegisterOptions) {
     setOtpCode,
     otpCountdown,
     otpError,
+    setOtpError,
     isVerifyingOtp,
     contract,
     contractLoading,
