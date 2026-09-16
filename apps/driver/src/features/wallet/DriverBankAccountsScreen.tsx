@@ -1,12 +1,9 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import {
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -18,12 +15,7 @@ import {
   leopardPalette,
   radius,
   spacing,
-  Button,
   IconBank,
-  IconCheck,
-  IconChevron,
-  IconClose,
-  IconPlus,
   IconSecurityShield,
   typeScale,
 } from '@leopard/mobile-core';
@@ -39,89 +31,22 @@ function BackArrowIcon({ size = 20, color = driverPrimitives.colors.gray900 }: {
   );
 }
 
-export type BankAccountItem = Readonly<{
-  id: string;
-  bankName: string;
-  bankCode: string;
-  accountNumber: string;
-  holderName: string;
-  isDefault: boolean;
+export type DriverBankAccountsScreenProps = Readonly<{
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  bankAccountName: string | null;
 }>;
 
-const INITIAL_ACCOUNTS: readonly BankAccountItem[] = [
-  {
-    id: 'bank-mb',
-    bankName: 'MB Bank',
-    bankCode: 'MB',
-    accountNumber: '0987654321',
-    holderName: 'NGUYEN VAN A',
-    isDefault: true,
-  },
-  {
-    id: 'bank-vcb',
-    bankName: 'Vietcombank',
-    bankCode: 'VCB',
-    accountNumber: '1012345678',
-    holderName: 'NGUYEN VAN A',
-    isDefault: false,
-  },
-];
-
-const SUPPORTED_BANKS = [
-  { id: 'MB', name: 'MB Bank' },
-  { id: 'VCB', name: 'Vietcombank' },
-  { id: 'TCB', name: 'Techcombank' },
-  { id: 'VPB', name: 'VPBank' },
-] as const;
-
-export function DriverBankAccountsScreen() {
+// Single linked bank account from GET /driver/wallet (bankName,
+// bankAccountNumber, bankAccountName). No local multi-account management:
+// the backend stores exactly one payout account per driver profile.
+export function DriverBankAccountsScreen({
+  bankAccountName,
+  bankAccountNumber,
+  bankName,
+}: DriverBankAccountsScreenProps) {
   const router = useRouter();
-  const [accounts, setAccounts] = useState<BankAccountItem[]>([...INITIAL_ACCOUNTS]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedBank, setSelectedBank] = useState<(typeof SUPPORTED_BANKS)[number]>(
-    SUPPORTED_BANKS[0],
-  );
-  const [accountNumber, setAccountNumber] = useState('');
-  const [holderName, setHolderName] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const handleSetDefault = (id: string) => {
-    setAccounts((prev) =>
-      prev.map((acc) => ({
-        ...acc,
-        isDefault: acc.id === id,
-      })),
-    );
-  };
-
-  const handleAddAccount = () => {
-    const trimmedNum = accountNumber.trim();
-    const trimmedHolder = holderName.trim().toUpperCase();
-
-    if (!trimmedNum) {
-      setFormError('Vui lòng nhập số tài khoản');
-      return;
-    }
-    if (!trimmedHolder) {
-      setFormError('Vui lòng nhập tên chủ tài khoản');
-      return;
-    }
-
-    const newAcc: BankAccountItem = {
-      id: `bank-${Date.now()}`,
-      bankName: selectedBank.name,
-      bankCode: selectedBank.id,
-      accountNumber: trimmedNum,
-      holderName: trimmedHolder,
-      isDefault: accounts.length === 0,
-    };
-
-    setAccounts((prev) => [...prev, newAcc]);
-    setAccountNumber('');
-    setHolderName('');
-    setFormError(null);
-    setShowAddModal(false);
-  };
+  const hasLinkedAccount = Boolean(bankName && bankAccountNumber);
 
   return (
     <View style={styles.screenContainer}>
@@ -163,198 +88,48 @@ export function DriverBankAccountsScreen() {
           </View>
         </View>
 
-        {/* Bank Account List */}
+        {/* Linked Bank Account (BE) */}
         <View style={styles.accountSection}>
           <Text style={styles.sectionTitle}>
-            Tài khoản đã liên kết ({accounts.length})
+            Tài khoản đã liên kết ({hasLinkedAccount ? 1 : 0})
           </Text>
 
-          {accounts.map((item) => (
-            <View key={item.id} style={styles.bankCard}>
+          {hasLinkedAccount ? (
+            <View style={styles.bankCard}>
               <View style={styles.cardHeader}>
-                  <View style={styles.cardHeaderLeft}>
-                    <View
-                      style={[
-                        styles.bankIconWrap,
-                        item.isDefault ? styles.bankIconWrapDefault : null,
-                      ]}
-                    >
-                      <IconBank
-                        color={item.isDefault ? '#10B981' : colors.brand.background}
-                        size={22}
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.bankName}>{item.bankName}</Text>
-                      <Text style={styles.accountNumber}>{item.accountNumber}</Text>
-                    </View>
+                <View style={styles.cardHeaderLeft}>
+                  <View style={[styles.bankIconWrap, styles.bankIconWrapDefault]}>
+                    <IconBank color="#10B981" size={22} />
                   </View>
-
-                  {item.isDefault ? (
-                    <View style={styles.defaultBadge}>
-                      <IconCheck color="#059669" size={12} />
-                      <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                    </View>
-                  ) : (
-                    <Pressable
-                      accessibilityLabel={`Đặt làm mặc định cho ${item.bankName}`}
-                      accessibilityRole="button"
-                      hitSlop={8}
-                      onPress={() => handleSetDefault(item.id)}
-                      style={styles.setDefaultButton}
-                    >
-                      <Text style={styles.setDefaultText}>Đặt mặc định</Text>
-                    </Pressable>
-                  )}
-                </View>
-
-                <View style={styles.cardDivider} />
-
-                <View style={styles.cardFooter}>
                   <View>
-                    <Text style={styles.holderLabel}>Chủ tài khoản</Text>
-                    <Text style={styles.holderName}>{item.holderName}</Text>
-                  </View>
-                  <View style={styles.napasBadge}>
-                    <Text style={styles.napasBadgeText}>Napas247</Text>
+                    <Text style={styles.bankName}>{bankName}</Text>
+                    <Text style={styles.accountNumber}>{bankAccountNumber}</Text>
                   </View>
                 </View>
+              </View>
+
+              <View style={styles.cardDivider} />
+
+              <View style={styles.cardFooter}>
+                <View>
+                  <Text style={styles.holderLabel}>Chủ tài khoản</Text>
+                  <Text style={styles.holderName}>{bankAccountName ?? '—'}</Text>
+                </View>
+                <View style={styles.napasBadge}>
+                  <Text style={styles.napasBadgeText}>Napas247</Text>
+                </View>
+              </View>
             </View>
-          ))}
+          ) : (
+            <View style={styles.bankCard}>
+              <Text style={styles.emptyText}>Chưa liên kết tài khoản ngân hàng</Text>
+              <Text style={styles.emptySub}>
+                Tài khoản thụ hưởng được lưu trong hồ sơ ví của bạn. Liên hệ điều hành để cập nhật.
+              </Text>
+            </View>
+          )}
         </View>
-
-        {/* Add Bank Account CTA */}
-        <Pressable
-          accessibilityLabel="Thêm tài khoản ngân hàng"
-          accessibilityRole="button"
-          onPress={() => {
-            setFormError(null);
-            setShowAddModal(true);
-          }}
-          style={({ pressed }) => [
-            styles.addAccountBtn,
-            pressed ? styles.pressed : null,
-          ]}
-        >
-          <IconPlus color="#FFFFFF" size={18} />
-          <Text style={styles.addAccountBtnText}>Thêm tài khoản ngân hàng</Text>
-        </Pressable>
       </ScrollView>
-
-      {/* Modal Thêm Tài Khoản Ngân Hàng */}
-      <Modal
-        animationType="slide"
-        onRequestClose={() => setShowAddModal(false)}
-        transparent
-        visible={showAddModal}
-      >
-        <Pressable
-          onPress={() => setShowAddModal(false)}
-          style={styles.modalBackdrop}
-        >
-          <Pressable onPress={(e) => e.stopPropagation()} style={styles.modalSheet}>
-            <View style={styles.modalDragHandle} />
-
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderLeft}>
-                <IconBank color={colors.brand.background} size={20} />
-                <Text style={styles.modalTitle}>Thêm tài khoản thụ hưởng mới</Text>
-              </View>
-              <Pressable
-                accessibilityLabel="Đóng modal"
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={() => setShowAddModal(false)}
-                style={styles.modalCloseBtn}
-              >
-                <IconClose color="#64748B" size={18} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              contentContainerStyle={styles.modalFormContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Select Bank */}
-              <Text style={styles.fieldLabel}>Chọn ngân hàng thụ hưởng</Text>
-              <View style={styles.bankGrid}>
-                {SUPPORTED_BANKS.map((b) => {
-                  const isSelected = selectedBank.id === b.id;
-                  return (
-                    <Pressable
-                      accessibilityLabel={`Chọn ngân hàng ${b.name}`}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: isSelected }}
-                      key={b.id}
-                      onPress={() => setSelectedBank(b)}
-                      style={[
-                        styles.bankSelectChip,
-                        isSelected ? styles.bankSelectChipActive : null,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.bankSelectChipText,
-                          isSelected ? styles.bankSelectChipTextActive : null,
-                        ]}
-                      >
-                        {b.name}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              {/* Account Number */}
-              <Text style={styles.fieldLabel}>Số tài khoản ngân hàng</Text>
-              <TextInput
-                accessibilityLabel="Nhập số tài khoản ngân hàng"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="numeric"
-                onChangeText={setAccountNumber}
-                placeholder="Nhập số tài khoản"
-                placeholderTextColor={leopardPalette.textSubtle}
-                style={styles.textInput}
-                value={accountNumber}
-              />
-
-              {/* Account Holder Name */}
-              <Text style={styles.fieldLabel}>Tên chủ tài khoản (In hoa, không dấu)</Text>
-              <TextInput
-                accessibilityLabel="Nhập tên chủ tài khoản"
-                autoCapitalize="characters"
-                autoCorrect={false}
-                onChangeText={(val) => setHolderName(val.toUpperCase())}
-                placeholder="Nhập tên chủ tài khoản (không dấu)"
-                placeholderTextColor={leopardPalette.textSubtle}
-                style={styles.textInput}
-                value={holderName}
-              />
-
-              {formError ? (
-                <View style={styles.formErrorBox}>
-                  <Text style={styles.formErrorText}>{formError}</Text>
-                </View>
-              ) : null}
-
-              <View style={styles.modalActions}>
-                <Button
-                  label="Hủy"
-                  onPress={() => setShowAddModal(false)}
-                  variant="secondary"
-                />
-                <Button
-                  label="Xác nhận liên kết"
-                  onPress={handleAddAccount}
-                  variant="primary"
-                />
-              </View>
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
@@ -715,5 +490,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     marginTop: spacing.sm,
+  },
+  emptyText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  emptySub: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 12.5,
+    lineHeight: 17,
   },
 });
