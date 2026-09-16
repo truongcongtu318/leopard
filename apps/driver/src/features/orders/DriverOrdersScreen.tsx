@@ -122,41 +122,27 @@ export function DriverOrdersScreen({
     ]);
   };
 
+  // Debug-only: replay the first real BE offer to exercise the incoming-offer
+  // modal UI. Never fabricates order data — returns silently in production.
   const handleSimulateIncomingOffer = () => {
+    if (!__DEV__) return;
     const first =
       view.kind === 'content' && view.requestedOrders.length > 0 ? view.requestedOrders[0] : null;
+    if (!first) return;
     setDismissedOfferId(null);
-    if (first) {
-      setSimulatedOffer({
-        id: first.id,
-        reference: first.reference,
-        pickupDistanceLabel: first.pickupDistanceLabel ?? 'Cách bạn 1.2 km · 4 phút',
-        pickupAddress: first.pickupLocationLabel ?? 'Kho Tân Bình, Q. Tân Bình, TP.HCM',
-        dropoffAddress: first.dropoffLocationLabel ?? 'KCN Sóng Thần 1, Dĩ An, Bình Dương',
-        tripDistanceLabel: first.distanceLabel ?? '24.5 km',
-        etaLabel: first.etaLabel ?? '45 phút (ước tính)',
-        priceLabel: first.priceLabel ?? '485.000 ₫',
-        vehicleLabel: first.vehicleLabel ?? 'Xe tải 2.5T mui bạt',
-        cargoSummary: first.cargoSummary ?? 'Thiết bị phụ tùng công nghiệp (1.800 kg)',
-        notes: 'Bốc dỡ nhanh tại cổng số 2 kho tổng',
-        timeoutSeconds: 30,
-      });
-    } else {
-      setSimulatedOffer({
-        id: 'sim-offer-999',
-        reference: 'ORD-DEMO-999',
-        pickupDistanceLabel: 'Cách bạn 0.8 km · 3 phút',
-        pickupAddress: 'Kho Tân Bình, Q. Tân Bình, TP.HCM',
-        dropoffAddress: 'KCN Sóng Thần 1, Dĩ An, Bình Dương',
-        tripDistanceLabel: '24.5 km',
-        etaLabel: '45 phút (ước tính)',
-        priceLabel: '485.000 ₫',
-        vehicleLabel: 'Xe tải 2.5T mui bạt',
-        cargoSummary: 'Kiện pallet linh kiện điện tử (1.8 tấn)',
-        notes: 'Giao trong giờ hành chính, có xe nâng hạ hàng',
-        timeoutSeconds: 30,
-      });
-    }
+    setSimulatedOffer({
+      id: first.id,
+      reference: first.reference,
+      pickupDistanceLabel: first.pickupDistanceLabel ?? 'Đang cập nhật',
+      pickupAddress: first.pickupLocationLabel ?? 'Điểm lấy hàng',
+      dropoffAddress: first.dropoffLocationLabel ?? 'Điểm giao hàng',
+      tripDistanceLabel: first.distanceLabel ?? 'Đang cập nhật',
+      etaLabel: first.etaLabel ?? 'ETA dự kiến: đang cập nhật',
+      priceLabel: first.priceLabel ?? 'Đang cập nhật',
+      vehicleLabel: first.vehicleLabel ?? '—',
+      cargoSummary: first.cargoSummary ?? '—',
+      timeoutSeconds: 30,
+    });
   };
 
   const activeIncomingOffer =

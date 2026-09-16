@@ -84,11 +84,11 @@ export function DriverNearbyOrderCard({
               <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
             </View>
             <Text style={styles.proximityText}>
-              {item.pickupDistanceLabel || 'Cách 1.2 km'}
+              {item.pickupDistanceLabel ?? 'Đang cập nhật'}
             </Text>
           </View>
           <View style={styles.priceWrap}>
-            <Text style={styles.priceAmount}>{item.priceLabel || '285.000 ₫'}</Text>
+            <Text style={styles.priceAmount}>{item.priceLabel ?? 'Đang cập nhật'}</Text>
           </View>
         </View>
 

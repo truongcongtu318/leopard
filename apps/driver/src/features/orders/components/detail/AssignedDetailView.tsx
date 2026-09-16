@@ -402,8 +402,8 @@ export function AssignedDetailView({
                 <View style={styles.cashAmountRow}>
                   <Text style={styles.cashAmountLabel}>Số tiền cước cần thu:</Text>
                   <Text style={styles.cashAmountValue} testID="cash-amount-to-collect">
-                    {view.order.priceLabel ||
-                      (view.order.priceVnd ? formatVndPrice(view.order.priceVnd) : '285.000 ₫')}
+                    {view.order.priceLabel ??
+                      (view.order.priceVnd ? formatVndPrice(view.order.priceVnd) : 'Đang cập nhật')}
                   </Text>
                 </View>
 
