@@ -1,160 +1,108 @@
-# LEOPARD Codex Instructions
+# AGENTS.md
 
-## Project Context
+Hướng dẫn chuẩn hóa dành cho Codex & AI Agents khi làm việc trong repository LEOPARD.
 
-LEOPARD là hệ thống kết nối logistics ở mức mini-production pilot với bốn role:
+## 1. Kiến trúc hệ thống (System Architecture)
 
-- Customer tạo và theo dõi shipment order.
-- Driver nhận order, cập nhật delivery status và gửi tracking point.
-- Fleet Owner quản lý fleet pilot, drivers thuộc fleet và orders của fleet ở chế độ chủ yếu read-only.
-- Admin giám sát users, fleets, drivers, orders, tracking, media và payment state.
+LEOPARD là nền tảng kết nối vận tải hàng hóa (Freight Logistics) dạng monorepo quản lý bằng `pnpm` + `turbo`:
 
-Approved stack:
+### Ứng dụng (`apps/`)
+- **`apps/api` (package: `api`)**: NestJS REST API, Socket.IO realtime, Prisma ORM với PostgreSQL + PostGIS. Nắm toàn bộ quy tắc nghiệp vụ: tính giá, ước tính ETA, máy trạng thái đơn hàng và phân quyền API.
+- **`apps/admin` (package: `web`)**: Next.js 16+ (App Router với React 19) Dashboard điều phối dành cho Admin theo giao diện NexaFleet Modern Bento.
+- **`apps/mobile` (package: `mobile`)**: Expo (v57) / React Native (v0.86) app dành cho Khách hàng (Customer booking & tracking).
+- **`apps/driver` (package: `driver`)**: Expo (v57) / React Native (v0.86) standalone app dành cho Tài xế (Driver cockpit & POD).
 
-- Mobile: Expo (v57) / React Native (v0.86) với TypeScript (`apps/mobile` cho Customer, `apps/driver` cho Driver).
-- Mobile Core: `@leopard/mobile-core` (thư viện dùng chung foundation, brand theme tokens, Apple HIG layout, 2026 Liquid Glass floating dock, UI primitives).
-- Operations Web: Next.js (App Router, Next 16+ với React 19), TypeScript, Tailwind CSS (`apps/admin`, filter: `web`).
-- Backend: NestJS, Prisma, TypeScript (`apps/api`, filter: `api`).
-- Database: PostgreSQL + PostGIS.
-- Realtime: Socket.IO/WebSocket.
-- Integrations: Vietmap, Firebase Phone Auth, S3-compatible storage, VietQR/payOS.
+### Gói dùng chung (`packages/`)
+- **`packages/mobile-core` (`@leopard/mobile-core`)**: Nền tảng dùng chung cho Mobile, Design Tokens, Apple HIG components, 2026 Liquid Glass floating dock.
+- **`packages/shared` (`@leopard/shared`)**: Pure TypeScript contracts, enums (`Role`, `OrderStatus`, `PaymentStatus`), DTO interfaces.
+- **`packages/validators` (`@leopard/validators`)**: Shared Zod schemas xác thực dữ liệu.
+- **`packages/ui` (`@leopard/ui`)**: Shared web UI components dành cho Admin/Web.
 
-## Source Of Truth
+---
 
-Đọc trước implementation:
+## 2. Quy tắc nghiệp vụ bất biến (Business Invariants)
 
-1. `docs/product/01-vision-and-scope.md`
-2. `docs/requirements/01-srs.md`
-3. `docs/requirements/02-user-stories.md`
-4. `docs/requirements/03-acceptance-criteria.md`
-5. `docs/architecture/01-system-architecture.md`
-6. `docs/data/01-database-design.md`
-7. `docs/api/01-rest-api-spec.md`
-8. `docs/ui/03-screen-specs.md`
-9. `docs/development/05-definition-of-done.md`
-10. `docs/testing/01-test-strategy.md`
-11. `CONTRIBUTING.md`
+- **Phân quyền & Sở hữu**: API bắt buộc kiểm tra cả quyền Role và tính sở hữu/phân công (Customer sở hữu đơn hàng, Driver được gán đơn).
+- **Giao dịch an toàn (Transactions)**: Bắt buộc dùng Database Transaction khi Driver nhận đơn, ghi lịch sử trạng thái đơn và xác nhận thanh toán thủ công.
+- **Nhãn hiển thị**: ETA luôn ghi rõ "ETA dự kiến"; Dữ liệu demo/mô phỏng phải hiển thị rõ "Dữ liệu mô phỏng".
+- **Phạm vi Pilot**: Nghiêm cấm đưa các tính năng ngoài scope vào code (Multi-tenancy, AI XGBoost ETA, đối soát ngân hàng tự động).
 
-Nếu tài liệu xung đột, ưu tiên: SRS, Product/Requirements, Architecture/Data/API, UI, Development/Testing, rồi existing code behavior. Khi code cố ý thay đổi behavior, cập nhật tài liệu trong cùng task.
+---
 
-## Prompt Contract
+## 3. Quy chuẩn UI & Design Tokens chuẩn Apple HIG
 
-Mỗi implementation task cần có:
+### 3.1. Bảng màu thương hiệu (Brand Palette)
+- **Màu chủ đạo (Primary)**: **Midnight Navy (`#0B2545`)** (`customerPalette.primary` / `leopardPalette.primary`) — Nút CTA chính, TabBar Active, Header/Topbar, Input Focus Ring.
+- **Màu điểm nhấn (Accent)**: **Cheetah Golden Amber (`#F59E0B`)** (`customerPalette.accent` / `leopardPalette.accentYellow`) — Voucher, Badge VIP, Điểm thưởng, Star rating.
+- **Màu nền Canvas & Card**: Nền `#FFFFFF` / `#F8FAFC` (`canvas`). Thẻ Inset Grouped `#FFFFFF` viền mỏng `#E2E8F0`, bo góc `radius.card` (14pt) hoặc `radius.cardLg` (16pt).
+- **Màu tín hiệu (Functional Only)**: Online/Thành công `#34C759`, Huỷ/Cảnh báo `#FF3B30`, Liên kết `#0284C7`.
 
-- Goal: behavior cần xây dựng hoặc sửa.
-- Context: story, acceptance criteria, file hoặc lỗi liên quan.
-- Constraints: stack, scope, security, architecture và UI rules.
-- Done when: test, build và manual verification cần đạt.
+### 3.2. Quy chuẩn Typography (`typeScale`)
+- **Nghiêm cấm gõ cứng `fontSize`**: Luôn dùng trực tiếp `...typeScale.<name>`:
+  - `largeTitle` (34pt, weight 700)
+  - `title1` (28pt, weight 700)
+  - `title2` (22pt, weight 600)
+  - `title3` (20pt, weight 600)
+  - `headline` (17pt, weight 600)
+  - `body` (17pt, weight 400)
+  - `callout` (16pt, weight 400)
+  - `subheadline` (15pt, weight 600 - dùng cho labels, item title)
+  - `footnote` (13pt, weight 400/600 - dùng cho caption, badge, chip)
+  - `caption1` (12pt, weight 400/600)
+  - `caption2` (11pt, weight 400/700 - dùng cho timestamp, micro-tag)
 
-Nếu thiếu thông tin làm thay đổi đáng kể solution, đọc tài liệu liên quan trước rồi lập kế hoạch ngắn.
+### 3.3. Lưới khoảng cách 4pt (`spacing`)
+- Luôn dùng `spacing`: `hairline: 2`, `xxs: 4`, `xs: 8`, `sm: 12`, `md: 16`, `lg: 24`, `xl: 32`. Tuyệt đối không gõ khoảng cách tùy tiện ngoài thang đo (`gap: 3, 6, 7`, `padding: 10, 14, 18`).
 
-## Implementation Rules
+### 3.4. Bo góc Squircle (`radius` + `iosContinuousCurve`)
+- Luôn dùng `radius`: `cardSm: 10`, `control: 12`, `card: 14`, `cardLg: 16`, `cardXl: 20`, `modal: 24`, `pill: 9999` đi kèm `...iosContinuousCurve` (`borderCurve: 'continuous'`).
 
-- Giữ task nhỏ: một story hoặc một vertical slice.
-- Không thêm feature nằm trong `docs/product/05-out-of-scope.md` nếu chưa có change request.
-- Backend sở hữu business rules, pricing, ETA, lifecycle và authorization.
-- Kiểm tra cả role lẫn ownership/assignment ở API.
-- Fleet Owner chỉ truy cập dữ liệu qua `FleetMember` hợp lệ; không được kế thừa quyền Admin.
-- Dùng provider interfaces cho map/ETA, storage, OTP và payment.
-- Demo provider chỉ bật theo config; dữ liệu ETA demo phải deterministic và được ghi nhãn.
-- Dùng transaction cho accept order, status history và manual payment confirmation.
-- Giữ PostGIS vừa đủ cho point/index/query của pilot.
-- Ưu tiên code dễ đọc và module boundary rõ.
+### 3.5. Nút bấm CTA & Điều khiển tương tác
+- Nút CTA chính: Chiều cao 52-54pt, góc bo 16pt continuous squircle, hiệu ứng nhấn vật lý (`scale: 0.985`), đổ bóng đa tầng.
+- Thanh trượt nhận đơn (`SlideToAction`): Apple Floating Capsule Glass viền kính mờ 1px và phản hồi xúc giác (Haptic).
 
-## Git Workflow
+---
 
-- Không làm việc trực tiếp trên `main` hoặc `develop`.
-- Tạo `feature/*`, `fix/*`, `docs/*`, `refactor/*` hoặc `codex/*` từ `develop`.
-- PR thông thường nhắm vào `develop`; chỉ release/hotfix PR mới nhắm vào `main`.
-- `release/*` tách từ `develop`; `hotfix/*` tách từ `main` và phải đồng bộ trở lại `develop`.
-- Tuân thủ commit convention, review gate và verification trong `CONTRIBUTING.md`.
+## 4. Quy trình Git & Quyền Push trực tiếp (Git Workflow & Direct Push Policy)
 
-## UI & Design Token Rules
+- **Nhánh tích hợp chính**: `develop`.
+- **Direct Push Policy**: Cho phép commit và push trực tiếp lên nhánh `develop` **khi có sự đồng ý hoặc được yêu cầu trực tiếp từ người dùng**, không bắt buộc phải tách nhánh con tạo PR.
+- **Commit Format**: Tuân thủ Conventional Commits (`feat(scope): ...`, `fix(scope): ...`, `refactor(scope): ...`).
 
-LEOPARD là hệ thống vận hành logistics thông minh, kết hợp tính chính xác trong điều phối với giao diện người dùng hiện đại, chuẩn **Apple Human Interface Guidelines (HIG)**:
+---
 
-### 1. Brand Palette & Semantic Colors
-- **Primary Brand Color**: **Midnight Navy (`#0B2545`)** - Trích xuất từ chữ `L` và đường viền quyền lực của logo Báo LEOPARD. Dùng cho nút CTA chính, Header/Topbar, Active Tab, Focus Ring.
-- **Secondary Accent Color**: **Cheetah Golden Amber (`#F59E0B` / `#D97706`)** - Trích xuất từ màu lông báo gấm. Dùng cho Voucher, Badge VIP, Điểm thưởng, Star rating và Slogan.
-- **Màu nền Canvas**: Trắng tuyết `#FFFFFF` và xám sáng `#F8FAFC` (`canvas`).
-- **Màu thẻ (Card)**: `#FFFFFF`, viền mỏng `#E2E8F0`, bo góc `radius.card` (14pt) / `radius.cardLg` (16pt) kèm đường cong liên tục `...iosContinuousCurve`.
-- **Màu chữ & Typography**: Chữ chính `#0F172A` (Slate 900), chữ phụ `#475569` / `#64748B` (`mutedText`/`subtleText`). Số liệu KPI dùng `tabular-nums`.
-- **Màu trạng thái (Functional Only)**: Xanh lá online/giao thành công (`#34C759` / `#16A34A`), Đỏ hủy/cảnh báo (`#FF3B30` / `#EF4444`), Vàng cảnh báo (`#F59E0B`), Xanh dương liên kết (`#0284C7` / `#007AFF`).
+## 5. Lệnh kiểm thử & Phát triển (Commands & Verification)
 
-### 2. Typography & Dynamic Type Contract (`typeScale`)
-- **Bắt buộc dùng `typeScale`**: Không được gõ cứng `fontSize: 11, 12, 13, 15...`. Phải dùng trực tiếp:
-  - `...typeScale.largeTitle` (34pt, weight 700)
-  - `...typeScale.title1` (28pt, weight 700)
-  - `...typeScale.title2` (22pt, weight 600)
-  - `...typeScale.title3` (20pt, weight 600)
-  - `...typeScale.headline` (17pt, weight 600)
-  - `...typeScale.body` (17pt, weight 400)
-  - `...typeScale.callout` (16pt, weight 400)
-  - `...typeScale.subheadline` (15pt, weight 600 - dùng cho label, item title)
-  - `...typeScale.footnote` (13pt, weight 400/600 - dùng cho caption, badge, chip)
-  - `...typeScale.caption1` (12pt, weight 400/600)
-  - `...typeScale.caption2` (11pt, weight 400/700 - dùng cho timestamp, micro-tag)
+### Monorepo
+- Khởi động full local stack: `./scripts/start-all.sh` hoặc `pnpm start:all`
+- Chạy dev server: `pnpm dev`
+- Build / Lint / Typecheck toàn bộ: `pnpm build` | `pnpm lint` | `pnpm typecheck`
+- Chạy toàn bộ tests: `pnpm test`
 
-### 3. Spacing & Layout Rhythm (4pt Apple Grid)
-- **Bắt buộc dùng `spacing`**:
-  - `spacing.hairline` (2pt), `spacing.xxs` (4pt), `spacing.xs` (8pt), `spacing.sm` (12pt), `spacing.md` (16pt), `spacing.lg` (24pt), `spacing.xl` (32pt).
-  - Không gõ khoảng cách tùy tiện (`gap: 3, 6, 7`, `padding: 10, 14, 18`).
+### Backend (`apps/api`)
+- Dev: `pnpm --filter api dev`
+- Typecheck / Lint: `pnpm --filter api typecheck` | `pnpm --filter api lint`
+- Chạy toàn bộ tests: `pnpm --filter api test`
+- Chạy 1 test đơn lẻ: `pnpm --filter api test -- src/orders/accept-order.service.spec.ts`
 
-### 4. Border Radius & Continuous Squircle (`radius`)
-- **Bắt buộc dùng `radius`**:
-  - `radius.cardSm` (10pt), `radius.control` (12pt), `radius.card` (14pt), `radius.cardLg` (16pt), `radius.cardXl` (20pt), `radius.modal` (24pt), `radius.pill` (9999pt).
-  - Luôn đi kèm `...iosContinuousCurve` (`borderCurve: 'continuous'`).
+### Admin Web (`apps/admin`, filter: `web`)
+- Dev: `pnpm --filter web dev`
+- Typecheck / Lint: `pnpm --filter web typecheck` | `pnpm --filter web lint`
+- Chạy toàn bộ tests: `pnpm --filter web test`
+- Chạy 1 test đơn lẻ: `pnpm --filter web test -- src/components/bento/BentoWidgets.test.tsx`
 
-### 5. Primary CTA Buttons & Interactive Controls
-- **Nút CTA chính**: Chiều cao tiêu chuẩn 52-54pt, góc bo `16pt` continuous squircle, hiệu ứng phản hồi vật lý khi nhấn (`scale: 0.985`), đổ bóng đa tầng mềm mại.
-- **Thanh trượt nhận đơn (Slide to Action)**: Thiết kế chuẩn Apple Floating Capsule Glass viền kính mờ 1px và phản hồi xúc giác (Haptic).
+### Customer Mobile (`apps/mobile`, filter: `mobile`)
+- Dev: `pnpm --filter mobile start`
+- Typecheck / Lint: `pnpm --filter mobile typecheck` | `pnpm --filter mobile lint`
+- Chạy toàn bộ tests: `pnpm --filter mobile test`
+- Chạy 1 test đơn lẻ: `pnpm --filter mobile test -- src/features/home/HomeDashboardScreen.test.tsx`
 
-## Verification
+### Driver Mobile (`apps/driver`, filter: `driver`)
+- Dev: `pnpm --filter driver start`
+- Typecheck / Lint: `pnpm --filter driver typecheck` | `pnpm --filter driver lint`
+- Chạy toàn bộ tests: `pnpm --filter driver test`
+- Chạy 1 test đơn lẻ: `pnpm --filter driver test -- src/features/orders/IncomingDispatchModal.test.tsx`
 
-Chạy bộ kiểm tra hẹp nhất phù hợp sau mỗi task.
-
-Backend:
-
-```bash
-pnpm --filter api test
-pnpm --filter api typecheck
-pnpm --filter api lint
-```
-
-Frontend / Admin Web:
-
-```bash
-pnpm --filter web test
-pnpm --filter web typecheck
-pnpm --filter web lint
-```
-
-Mobile (`apps/mobile`, `apps/driver`, `packages/mobile-core`):
-
-```bash
-pnpm --filter mobile test
-pnpm --filter mobile typecheck
-pnpm --filter driver test
-pnpm --filter driver typecheck
-pnpm --filter @leopard/mobile-core test
-```
-
-Trước release:
-
-```bash
-pnpm test
-pnpm typecheck
-pnpm lint
-pnpm build
-```
-
-## Review Expectations
-
-Trước khi báo hoàn tất, xác nhận:
-
-- Acceptance criteria và test scenario liên quan đạt.
-- Không còn P0/P1 issue thuộc phạm vi.
-- Không hardcode mã màu hex, cỡ chữ hay khoảng cách ngoài bộ token.
-- Không role nào truy cập dữ liệu riêng tư ngoài quyền.
-- Dữ liệu persist sau refresh khi liên quan.
-- Diff không chứa refactor hoặc generated file không liên quan.
+### Mobile Core (`packages/mobile-core`)
+- Typecheck / Test: `pnpm --filter @leopard/mobile-core typecheck` | `pnpm --filter @leopard/mobile-core test`
+- Chạy 1 test đơn lẻ: `pnpm --filter @leopard/mobile-core test -- src/ui/Button.tsx`

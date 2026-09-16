@@ -7,138 +7,88 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 LEOPARD is a mini-production freight logistics pilot platform connecting Customers, Drivers, and Admins. It is organized as a `pnpm` monorepo managed with `turbo`.
 
 ### Applications (`apps/`)
-
-- **`apps/api` (package: `api`)**:
-  - NestJS REST API, Socket.IO realtime gateway, Prisma ORM against PostgreSQL + PostGIS.
-  - Owns business rules: pricing, ETA estimation, order lifecycle state machine, payments, and authorization.
-  - Integration providers (maps/routing, phone OTP, storage, payment) use provider interfaces with deterministic demo fallbacks controlled via `ALLOW_DEMO_PROVIDER`.
-- **`apps/admin` (package: `web`)**:
-  - Next.js (App Router, Next 16+ with React 19) operations dashboard for Admins.
-  - Follows the NexaFleet Modern Bento layout with real-time tracking map and operational statistics.
-- **`apps/mobile` (package: `mobile`)**:
-  - Expo (v57) / React Native (v0.86) app with Expo Router for Customer flows.
-  - Map-first booking, Fleet Matrix (Van 500kg, Truck 1.25T, 2.5T, Ba gác), Route Spine, VietQR payOS, and VAT e-invoicing.
-  - TanStack React Query for caching, React Hook Form for input handling.
-- **`apps/driver` (package: `driver`)**:
-  - Expo (v57) / React Native (v0.86) standalone app with Expo Router for Driver flows.
-  - Field Cockpit, hero duty control switch, 15s push dispatch offers, 4-stage lifecycle (`ACCEPTED ➔ PICKING_UP ➔ IN_TRANSIT ➔ DELIVERED`), electronic POD with signature capture.
+- **`apps/api` (package: `api`)**: NestJS REST API, Socket.IO realtime gateway, Prisma ORM against PostgreSQL + PostGIS. Owns pricing, ETA estimation, order lifecycle state machine, and authorization.
+- **`apps/admin` (package: `web`)**: Next.js 16+ (App Router with React 19) operations dashboard for Admins (NexaFleet Modern Bento layout).
+- **`apps/mobile` (package: `mobile`)**: Expo (v57) / React Native (v0.86) app with Expo Router for Customer booking flows.
+- **`apps/driver` (package: `driver`)**: Expo (v57) / React Native (v0.86) standalone app with Expo Router for Driver dispatch and execution.
 
 ### Shared Packages (`packages/`)
-
-- **`packages/mobile-core` (`@leopard/mobile-core`)**: Shared mobile foundation, brand theme tokens, Apple HIG layout, 2026 Liquid Glass floating dock, and UI primitives for Customer and Driver apps.
-- **`packages/shared` (`@leopard/shared`)**: Pure TypeScript contracts, enums (`Role`, `OrderStatus`, `PaymentStatus`), and DTO interfaces (no framework dependencies).
+- **`packages/mobile-core` (`@leopard/mobile-core`)**: Shared mobile foundation, brand tokens, Apple HIG layout, and UI primitives.
+- **`packages/shared` (`@leopard/shared`)**: Pure TypeScript contracts, enums (`Role`, `OrderStatus`, `PaymentStatus`), and DTO interfaces.
 - **`packages/validators` (`@leopard/validators`)**: Shared Zod schemas for request validation.
-- **`packages/ui` (`@leopard/ui`)**: Shared web UI primitives for Admin/Web (Tailwind CSS based, presentation only, no business logic).
+- **`packages/ui` (`@leopard/ui`)**: Shared web UI primitives for Admin/Web (Tailwind CSS based).
 - **`packages/config` (`@leopard/config`)**: Shared ESLint configs and TSConfig bases.
-
-### Key Architectural Invariants
-
-- **Authorization**: API enforces role and ownership/assignment checks (Customer owns the order, Driver is assigned to it).
-- **Transactions**: Database transactions are mandatory for accepting orders, recording status transition history, and manual payment confirmations.
-- **ETA & Labels**: ETA must always be labeled as "ETA dự kiến"; simulated/demo data must explicitly display "Dữ liệu mô phỏng".
-- **Dispatch**: Includes automated single-order dispatch (nearest available driver).
-- **Out of Scope**: Multi-tenancy, multi-tier fleets, multi-order routing optimization, AI XGBoost ETA, and automated bank reconciliation are explicitly excluded.
 
 ---
 
-## UI Component Development Workflow
+## Architectural & Business Invariants
 
-When asked to build or refactor a UI component:
+- **Authorization**: API strictly enforces role and ownership/assignment checks (Customer owns order, Driver assigned to order).
+- **Transactions**: Database transactions are mandatory for accepting orders, recording status history, and confirming payments.
+- **ETA & Labels**: ETA must always be labeled as "ETA dự kiến"; simulated data must display "Dữ liệu mô phỏng".
+- **Out of Scope**: Multi-tenancy, multi-tier fleets, multi-order routing optimization, and automated bank reconciliation are strictly excluded.
 
-1. **FIRST**:
-   - Search the repository for an existing equivalent in `@leopard/mobile-core`, `@leopard/ui`, or app workspaces.
-   - If no suitable component exists, query the UI MCP (`shadcn-ui-mcp-server`) for structural and state references.
+---
 
-2. **THEN**:
-   - Analyze the MCP result for accessibility contracts and component anatomy.
-   - Adapt it to the repository conventions.
-   - **Never copy NativeWind styling directly** into React Native workspaces.
+## Mobile UI & Design Token Rules (Apple HIG Standard)
 
-3. **FINALLY**:
-   - Implement for Mobile using `StyleSheet.create` + `@leopard/mobile-core` (Apple HIG tokens, `iosContinuousCurve`, `typeScale`, `spacing`, `radius`).
-   - Implement for Web using Tailwind CSS + `@leopard/ui` primitives.
-
-### Mobile UI & Design Token Rules (Apple HIG Standard)
-
-1. **Brand Colors & Palette**:
-   - **Primary Action & Brand**: **Midnight Navy (`#0B2545`)** (`customerPalette.primary` / `leopardPalette.primary`) — Trích xuất từ chữ `L` và viền Báo của Logo. Dùng cho Nút CTA chính, TabBar Active, Header/Topbar, Input Focus Ring.
-   - **Secondary Accent**: **Cheetah Golden Amber (`#F59E0B` / `#D97706`)** (`customerPalette.accent` / `leopardPalette.accentYellow`) — Trích xuất từ lông Báo gấm. Dùng cho Voucher, Badge VIP, Điểm thưởng, Star rating và Slogan.
-   - **Canvas & Cards**: Nền `#FFFFFF` / `#F8FAFC` (`canvas`). Thẻ Inset Grouped màu `#FFFFFF`, viền mỏng `#E2E8F0`, bo góc `radius.card` (14pt) hoặc `radius.cardLg` (16pt) kèm `...iosContinuousCurve`.
-   - **Neutral Typography**: Chữ chính `#0F172A` (Slate 900), chữ phụ `#475569` / `#64748B`. Số liệu KPI dùng fontVariant `['tabular-nums']`.
-   - **Functional Colors Only**: Chỉ dùng màu cho tín hiệu thực: Xanh lá online/thành công (`#34C759` / `#16A34A`), Đỏ hủy/cảnh báo (`#FF3B30` / `#EF4444`), Vàng cảnh báo (`#F59E0B`), Xanh dương liên kết (`#0284C7` / `#007AFF`).
-
-2. **Typography & Dynamic Type Contract (`typeScale`)**:
-   - **Không được gõ cứng `fontSize` lẻ**: Luôn dùng trực tiếp `...typeScale.<style>`:
-     - `largeTitle` (34pt/41pt, weight 700)
-     - `title1` (28pt/34pt, weight 700)
-     - `title2` (22pt/28pt, weight 600)
-     - `title3` (20pt/25pt, weight 600)
-     - `headline` (17pt/22pt, weight 600)
-     - `body` (17pt/22pt, weight 400)
-     - `callout` (16pt/21pt, weight 400)
-     - `subheadline` (15pt/20pt, weight 600 - dùng cho labels, form field titles)
-     - `footnote` (13pt/18pt, weight 400/600 - dùng cho captions, meta chips)
-     - `caption1` (12pt/16pt, weight 400/600)
-     - `caption2` (11pt/13pt, weight 400/700 - dùng cho timestamps, badges)
-
+1. **Brand Palette**:
+   - Primary: **Midnight Navy (`#0B2545`)** (`customerPalette.primary` / `leopardPalette.primary`) — Main action CTA, TabBar Active, Header, Focus ring.
+   - Secondary: **Cheetah Golden Amber (`#F59E0B`)** (`customerPalette.accent` / `leopardPalette.accentYellow`) — Vouchers, Badges, Star rating.
+   - Canvas: `#FFFFFF` / `#F8FAFC`. Card: `#FFFFFF`, border `#E2E8F0`, `radius.card` (14pt) / `radius.cardLg` (16pt).
+   - Functional signals only: Online/Success `#34C759`, Alert/Cancel `#FF3B30`, Link `#0284C7`.
+2. **Typography (`typeScale`)**:
+   - Never hardcode `fontSize`. Always use `...typeScale.<name>` (`largeTitle`, `title1`, `title2`, `title3`, `headline`, `body`, `callout`, `subheadline`, `footnote`, `caption1`, `caption2`).
 3. **Spacing & 4pt Grid (`spacing`)**:
-   - `spacing.hairline` (2pt), `spacing.xxs` (4pt), `spacing.xs` (8pt), `spacing.sm` (12pt), `spacing.md` (16pt), `spacing.lg` (24pt), `spacing.xl` (32pt).
-   - Tuyệt đối không gõ khoảng cách tùy tiện ngoài thang đo (`gap: 3, 6, 7`, `padding: 10, 14, 18`).
+   - Always use `spacing`: `hairline: 2`, `xxs: 4`, `xs: 8`, `sm: 12`, `md: 16`, `lg: 24`, `xl: 32`.
+4. **Border Radius (`radius` + `iosContinuousCurve`)**:
+   - Always use `radius`: `cardSm: 10`, `control: 12`, `card: 14`, `cardLg: 16`, `cardXl: 20`, `modal: 24`, `pill: 9999` with `...iosContinuousCurve`.
+5. **CTA Buttons**:
+   - Height 52-54pt, 16pt continuous squircle, physical press feedback (`scale: 0.985`), multi-layer shadow.
 
-4. **Border Radius & Continuous Squircle (`radius`)**:
-   - `radius.cardSm` (10pt), `radius.control` (12pt), `radius.card` (14pt), `radius.cardLg` (16pt), `radius.cardXl` (20pt), `radius.modal` (24pt), `radius.pill` (9999pt).
-   - Luôn áp dụng `...iosContinuousCurve` (`borderCurve: 'continuous'`).
+---
 
-5. **Primary CTA Buttons & Controls**:
-   - Nút hành động chính (Primary CTA): Chiều cao 52-54pt, góc bo 16pt continuous squircle, hiệu ứng nhấn vật lý (`scale: 0.985`), đổ bóng đa tầng.
-   - Thanh trượt nhận đơn (`SlideToAction`): Kiểu dáng Apple Floating Capsule Glass viền kính mờ 1px và phản hồi xúc giác (Haptic).
+## Git Workflow & Direct Push Policy
+
+- **Integration Branch**: `develop`.
+- **Direct Push Policy**: Cho phép commit và push trực tiếp lên nhánh `develop` **khi có sự đồng ý hoặc được yêu cầu trực tiếp từ người dùng**, không bắt buộc phải tách nhánh con tạo PR.
+- **Commit Format**: Tuân thủ Conventional Commits (`feat(scope): ...`, `fix(scope): ...`, `refactor(scope): ...`).
 
 ---
 
 ## Development & Test Commands
 
 ### Monorepo (Root)
-
-- Install dependencies: `pnpm install`
-- Start full local dev stack (Docker DB + local API, Driver Web, Admin Web): `pnpm start:all` or `./scripts/start-all.sh`
-- Start all dev services: `pnpm dev`
-- Build all packages/apps: `pnpm build`
-- Lint all: `pnpm lint`
-- Typecheck all: `pnpm typecheck`
+- Full local stack: `./scripts/start-all.sh` or `pnpm start:all`
+- Run dev services: `pnpm dev`
+- Build / Lint / Typecheck: `pnpm build` | `pnpm lint` | `pnpm typecheck`
 - Run all tests: `pnpm test`
 
 ### Backend (`apps/api`)
-
-- Dev server: `pnpm --filter api dev`
-- Build: `pnpm --filter api build`
-- Typecheck: `pnpm --filter api typecheck`
-- Lint: `pnpm --filter api lint`
+- Dev: `pnpm --filter api dev`
+- Typecheck / Lint: `pnpm --filter api typecheck` | `pnpm --filter api lint`
 - Run all unit tests: `pnpm --filter api test`
+- Run single test: `pnpm --filter api test -- src/orders/accept-order.service.spec.ts`
+- Run E2E test: `pnpm --filter api test:e2e -- src/orders/order-lifecycle.e2e-spec.ts`
 
-### Operations Web / Admin (`apps/admin`, filter: `web`)
+### Admin Web (`apps/admin`, filter: `web`)
+- Dev: `pnpm --filter web dev`
+- Typecheck / Lint: `pnpm --filter web typecheck` | `pnpm --filter web lint`
+- Run all tests: `pnpm --filter web test`
+- Run single test: `pnpm --filter web test -- src/components/bento/BentoWidgets.test.tsx`
 
-- Dev server: `pnpm --filter web dev`
-- Build: `pnpm --filter web build`
-- Typecheck: `pnpm --filter web typecheck`
-- Lint: `pnpm --filter web lint`
-- Run all unit tests: `pnpm --filter web test`
-
-### Customer Mobile App (`apps/mobile`, filter: `mobile`)
-
-- Start Expo dev server: `pnpm --filter mobile start`
-- Typecheck: `pnpm --filter mobile typecheck`
-- Lint: `pnpm --filter mobile lint`
+### Customer Mobile (`apps/mobile`, filter: `mobile`)
+- Dev: `pnpm --filter mobile start`
+- Typecheck / Lint: `pnpm --filter mobile typecheck` | `pnpm --filter mobile lint`
 - Run all tests: `pnpm --filter mobile test`
+- Run single test: `pnpm --filter mobile test -- src/features/home/HomeDashboardScreen.test.tsx`
 
-### Driver Mobile App (`apps/driver`, filter: `driver`)
-
-- Start Expo dev server: `pnpm --filter driver start`
-- Typecheck: `pnpm --filter driver typecheck`
-- Lint: `pnpm --filter driver lint`
+### Driver Mobile (`apps/driver`, filter: `driver`)
+- Dev: `pnpm --filter driver start`
+- Typecheck / Lint: `pnpm --filter driver typecheck` | `pnpm --filter driver lint`
 - Run all tests: `pnpm --filter driver test`
+- Run single test: `pnpm --filter driver test -- src/features/orders/IncomingDispatchModal.test.tsx`
 
-### Shared Mobile Core (`packages/mobile-core`)
-
-- Typecheck: `pnpm --filter @leopard/mobile-core typecheck`
-- Lint: `pnpm --filter @leopard/mobile-core lint`
-- Run all tests: `pnpm --filter @leopard/mobile-core test`
+### Mobile Core (`packages/mobile-core`)
+- Typecheck / Test: `pnpm --filter @leopard/mobile-core typecheck` | `pnpm --filter @leopard/mobile-core test`
+- Run single test: `pnpm --filter @leopard/mobile-core test -- src/ui/Button.tsx`
