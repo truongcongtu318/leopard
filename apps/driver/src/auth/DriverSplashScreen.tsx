@@ -1,4 +1,4 @@
-import { typeScale } from '@leopard/mobile-core';
+import { driverPrimitives, iosContinuousCurve, typeScale } from '@leopard/mobile-core';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -13,7 +13,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 const leopardEmblemSource = require('../../assets/brand/leopard-emblem.png');
@@ -96,6 +96,12 @@ interface SlideButtonProps {
 
 const THUMB_SIZE = 48;
 const PADDING = 5;
+
+// ponytail: driverSemantics.surface.splash + driverPrimitives.colors.orange500
+// do not exist in mobile-core; hex lives here until those keys land.
+const splashScene = {
+  accent: '#F97316',
+} as const;
 
 function SlideToGetStarted({ label, onAction, testID = 'splash-get-started-btn' }: SlideButtonProps) {
   const [trackWidth, setTrackWidth] = useState(0);
@@ -211,6 +217,7 @@ export function DriverSplashScreen({
   testID = 'driver-splash-screen',
 }: DriverSplashScreenProps) {
   const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   // Hero image spans the upper 58% of the screen height, seamlessly dissolving downwards
   const heroHeight = Math.max(windowHeight * 0.58, 380);
@@ -273,7 +280,9 @@ export function DriverSplashScreen({
       </View>
 
       {/* Bottom Content Area */}
-      <SafeAreaView edges={['bottom']} style={styles.bottomContent}>
+      <View
+        style={[styles.bottomContent, { paddingBottom: Math.max(insets.bottom, 16) }]}
+      >
         <View style={styles.contentWrapper}>
           {/* Pagination Indicators (two muted dots + one orange pill) */}
           <View style={styles.indicatorsRow} testID="splash-indicators">
@@ -301,7 +310,7 @@ export function DriverSplashScreen({
             />
           </View>
         </View>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -309,7 +318,7 @@ export function DriverSplashScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1E42',
+    backgroundColor: driverPrimitives.colors.dark900,
   },
   imageContainer: {
     width: '100%',
@@ -395,7 +404,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F97316',
+    backgroundColor: splashScene.accent,
   },
   title: {
     fontSize: typeScale.largeTitle.fontSize,
@@ -418,6 +427,7 @@ const styles = StyleSheet.create({
   track: {
     height: 60,
     borderRadius: 30,
+    ...iosContinuousCurve,
     backgroundColor: '#12274E',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.14)',
@@ -453,10 +463,10 @@ const styles = StyleSheet.create({
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
-    backgroundColor: '#F97316',
+    backgroundColor: splashScene.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#F97316',
+    shadowColor: splashScene.accent,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.45,
     shadowRadius: 8,

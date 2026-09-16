@@ -4,6 +4,17 @@ import React from 'react';
 
 import { DriverSplashScreen } from './DriverSplashScreen';
 
+jest.mock('react-native-safe-area-context', () => {
+  const actual =
+    jest.requireActual<typeof import('react-native-safe-area-context')>(
+      'react-native-safe-area-context',
+    );
+  return {
+    ...actual,
+    useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+  };
+});
+
 describe('DriverSplashScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
