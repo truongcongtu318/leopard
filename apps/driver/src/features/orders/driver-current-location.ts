@@ -10,7 +10,7 @@ export type DriverLocationState =
 
 export type DriverLocationProvider = Readonly<{
   requestForegroundPermissionsAsync: () => Promise<{ status: string }>;
-  getCurrentPositionAsync: (options?: { accuracy?: number }) => Promise<{
+  getCurrentPositionAsync: (options?: { accuracy?: number; maximumAge?: number }) => Promise<{
     coords: { latitude: number; longitude: number };
   }>;
 }>;
@@ -42,6 +42,10 @@ export async function getDriverCurrentLocation(
 
     const position = await provider.getCurrentPositionAsync({
       accuracy: Location.Accuracy.High,
+      // expo-location's web shim defaults maximumAge to Infinity, so once a
+      // stale/coarse fix is cached in this tab it gets served forever —
+      // force a fresh read every time this is called.
+      maximumAge: 0,
     });
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;

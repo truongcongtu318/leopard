@@ -1232,7 +1232,8 @@ export function createCustomerHttpAdapter(
           },
           vehicleType: form.vehicleType as VehicleType,
           cargoNote: buildConsolidatedCargoNote(form) || form.cargoNote?.trim() || undefined,
-          cargoWeightKg: form.cargoWeight ? Number(form.cargoWeight) : undefined,
+          cargoWeightKg:
+            form.vehicleType === 'TRUCK' && form.cargoWeight ? Number(form.cargoWeight) : undefined,
           hasLoadingSupport: Boolean(form.hasLoadingSupport || form.requiresLoadingSupport),
           hasVatInvoice: Boolean(form.hasVatInvoice),
           estimateToken,

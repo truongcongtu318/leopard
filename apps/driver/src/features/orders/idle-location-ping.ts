@@ -16,6 +16,7 @@ export type LocationProvider = {
   requestForegroundPermissionsAsync: () => Promise<{ status: string }>;
   getCurrentPositionAsync: (options?: {
     accuracy?: number;
+    maximumAge?: number;
   }) => Promise<{ coords: { latitude: number; longitude: number } }>;
 };
 
@@ -105,7 +106,15 @@ export class DriverIdleLocationPing {
       }
 
       const position = await this.location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+        // expo-location's web shim only sets enableHighAccuracy when
+        // accuracy > Balanced, so Balanced silently falls back to coarse
+        // IP-based geolocation — use High so web picks up real GPS like the
+        // customer app's location button does. It also defaults
+        // maximumAge to Infinity on web regardless of accuracy, so a single
+        // stale/coarse fix gets served forever after — force maximumAge: 0
+        // so every tick asks the browser for a fresh position.
+        accuracy: Location.Accuracy.High,
+        maximumAge: 0,
       });
       const next: LatLng = {
         lat: position.coords.latitude,

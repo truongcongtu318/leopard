@@ -803,7 +803,10 @@ describe('createCustomerHttpAdapter', () => {
       client.post.mockResolvedValueOnce(mockOrderResponse);
 
       const adapter = createCustomerHttpAdapter(client);
-      const view = await adapter.createOrder(validForm, 'token-xyz-123');
+      const view = await adapter.createOrder(
+        { ...validForm, vehicleType: 'TRUCK' },
+        'token-xyz-123',
+      );
 
       expect(view.kind).toBe('content');
       if (view.kind === 'content') {
@@ -817,12 +820,25 @@ describe('createCustomerHttpAdapter', () => {
         '/orders',
         expect.objectContaining({
           estimateToken: 'token-xyz-123',
-          vehicleType: 'VAN',
+          vehicleType: 'TRUCK',
           cargoNote: 'Thùng carton',
           cargoWeightKg: 50,
           pickup: expect.objectContaining({ lat: 10.7326, lng: 106.7168 }),
           dropoff: expect.objectContaining({ lat: 10.8498, lng: 106.7725 }),
         }),
+      );
+    });
+
+    it('omits cargoWeightKg for non-TRUCK vehicle types, matching estimateOrder', async () => {
+      const client = createMockClient();
+      client.post.mockResolvedValueOnce(mockOrderResponse);
+
+      const adapter = createCustomerHttpAdapter(client);
+      await adapter.createOrder(validForm, 'token-xyz-123');
+
+      expect(client.post).toHaveBeenCalledWith(
+        '/orders',
+        expect.objectContaining({ vehicleType: 'VAN', cargoWeightKg: undefined }),
       );
     });
 
