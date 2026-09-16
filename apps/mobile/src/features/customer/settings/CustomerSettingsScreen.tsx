@@ -4,8 +4,10 @@ import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 
 
 import {
   colors,
+  customerPalette,
   iosContinuousCurve,
   layout,
+  leopardPalette,
   radius,
   spacing,
   systemFontFamily,
@@ -39,8 +41,8 @@ export function CustomerSettingsScreen() {
             <Switch
               accessibilityLabel="Bật hoặc tắt thông báo đẩy"
               onValueChange={setPushEnabled}
-              thumbColor={Platform.OS === 'android' ? (pushEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
-              trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
+              thumbColor={Platform.OS === 'android' ? (pushEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+              trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={pushEnabled}
             />
           </View>
@@ -53,8 +55,8 @@ export function CustomerSettingsScreen() {
             <Switch
               accessibilityLabel="Bật hoặc tắt tin nhắn SMS cập nhật"
               onValueChange={setSmsEnabled}
-              thumbColor={Platform.OS === 'android' ? (smsEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
-              trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
+              thumbColor={Platform.OS === 'android' ? (smsEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+              trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={smsEnabled}
             />
           </View>
@@ -67,8 +69,8 @@ export function CustomerSettingsScreen() {
             <Switch
               accessibilityLabel="Bật hoặc tắt âm thanh thông báo"
               onValueChange={setSoundEnabled}
-              thumbColor={Platform.OS === 'android' ? (soundEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
-              trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
+              thumbColor={Platform.OS === 'android' ? (soundEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+              trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={soundEnabled}
             />
           </View>
@@ -81,8 +83,8 @@ export function CustomerSettingsScreen() {
             <Switch
               accessibilityLabel="Bật hoặc tắt tin tức và khuyến mãi"
               onValueChange={setPromoEnabled}
-              thumbColor={Platform.OS === 'android' ? (promoEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
-              trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
+              thumbColor={Platform.OS === 'android' ? (promoEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+              trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={promoEnabled}
             />
           </View>
@@ -96,7 +98,7 @@ export function CustomerSettingsScreen() {
               <Text style={styles.settingTitle}>Ngôn ngữ hiển thị</Text>
               <Text style={styles.settingDesc}>Tiếng Việt (Mặc định)</Text>
             </View>
-            <IconChevron color="#94A3B8" direction="right" size="md" />
+            <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
           </View>
         </View>
 
@@ -113,7 +115,7 @@ export function CustomerSettingsScreen() {
               <Text style={styles.settingTitle}>Bảo mật tài khoản & PIN</Text>
               <Text style={styles.settingDesc}>Sinh trắc học FaceID và xóa tài khoản vĩnh viễn</Text>
             </View>
-            <IconChevron color="#94A3B8" direction="right" size="md" />
+            <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
           </Pressable>
 
           <Pressable
@@ -123,7 +125,7 @@ export function CustomerSettingsScreen() {
             style={({ pressed }) => [styles.settingRow, pressed ? styles.rowPressed : null]}
           >
             <Text style={styles.settingTitle}>Điều khoản dịch vụ</Text>
-            <IconChevron color="#94A3B8" direction="right" size="md" />
+            <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
           </Pressable>
 
           <Pressable
@@ -133,7 +135,7 @@ export function CustomerSettingsScreen() {
             style={({ pressed }) => [styles.settingRow, pressed ? styles.rowPressed : null]}
           >
             <Text style={styles.settingTitle}>Chính sách bảo mật dữ liệu</Text>
-            <IconChevron color="#94A3B8" direction="right" size="md" />
+            <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
           </Pressable>
 
           <View style={[styles.settingRow, styles.settingRowLast]}>
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontFamily: systemFontFamily,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -162,13 +164,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   groupedCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 16,
     ...iosContinuousCurve,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     paddingHorizontal: spacing.md,
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 4,
@@ -176,7 +178,7 @@ const styles = StyleSheet.create({
   },
   settingRow: {
     alignItems: 'center',
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -195,20 +197,20 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontFamily: systemFontFamily,
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: 15,
     fontWeight: '600',
   },
   settingDesc: {
     fontFamily: systemFontFamily,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: typeScale.footnote.fontSize,
     marginTop: 2,
     lineHeight: 16,
   },
   versionText: {
     fontFamily: systemFontFamily,
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontSize: 13,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],

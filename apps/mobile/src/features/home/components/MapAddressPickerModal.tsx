@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { typeScale, httpClient } from '@leopard/mobile-core';
+import { typeScale, httpClient, colors, customerPalette, leopardPalette } from '@leopard/mobile-core';
 import { IconLocationPin, RealInteractiveMap, resolveLocationCoords, VIETNAM_LOCATION_DICT, type MapCoordinate } from '@leopard/mobile-core';
 
 function formatVietnamesePhone(phone?: string | null): string {
@@ -691,7 +691,7 @@ export function MapAddressPickerModal({
               >
                 <View style={styles.mapInputLeadingIcon}>
                   <IconLocationPin
-                    color={target === 'pickup' ? '#16A34A' : '#0B1E42'}
+                    color={target === 'pickup' ? leopardPalette.ecoGreen : customerPalette.textSlateDark}
                     size={20}
                   />
                 </View>
@@ -718,7 +718,7 @@ export function MapAddressPickerModal({
                       ? 'Nhập địa chỉ lấy hàng (số nhà, đường, quận...)'
                       : 'Nhập địa chỉ giao hàng (số nhà, đường, quận...)'
                   }
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={leopardPalette.inputPlaceholder}
                   ref={modalAddressInputRef}
                   style={styles.mapTextInput}
                   value={modalAddress}
@@ -803,7 +803,7 @@ export function MapAddressPickerModal({
                             ]}
                           >
                             <IconLocationPin
-                              color={isGpsItem ? '#16A34A' : '#0B1E42'}
+                              color={isGpsItem ? leopardPalette.ecoGreen : customerPalette.textSlateDark}
                               size={16}
                             />
                           </View>
@@ -868,7 +868,7 @@ export function MapAddressPickerModal({
                   onChangeText={setMapAddressNote}
                   onFocus={() => setFocusedModalInput('note')}
                   placeholder="Thêm ghi chú địa chỉ (tòa nhà, số tầng, chỉ dẫn...)"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={leopardPalette.inputPlaceholder}
                   style={styles.mapTextInput}
                   value={mapAddressNote}
                 />
@@ -919,7 +919,7 @@ export function MapAddressPickerModal({
                       onChangeText={setSenderName}
                       onFocus={() => setFocusedModalInput('name')}
                       placeholder={target === 'pickup' ? 'Tên người gửi' : 'Tên người nhận'}
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor={leopardPalette.inputPlaceholder}
                       style={styles.mapTextInput}
                       value={senderName}
                     />
@@ -949,7 +949,7 @@ export function MapAddressPickerModal({
                       onChangeText={setSenderPhone}
                       onFocus={() => setFocusedModalInput('phone')}
                       placeholder="Số điện thoại liên hệ"
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor={leopardPalette.inputPlaceholder}
                       style={styles.mapTextInput}
                       value={senderPhone}
                     />
@@ -1004,7 +1004,7 @@ export function MapAddressPickerModal({
 const styles = StyleSheet.create({
   mapModalOverlay: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     ...Platform.select({
       web: {
         position: 'fixed',
@@ -1018,7 +1018,7 @@ const styles = StyleSheet.create({
   },
   mapModalSafeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
   },
   topBarSpacer: {
     width: 32,
@@ -1030,8 +1030,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: colors.neutral.surfaceMuted,
+    backgroundColor: customerPalette.surfaceWhite,
   },
   mapModalCloseBtn: {
     width: 32,
@@ -1039,17 +1039,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
   },
   mapModalCloseBtnText: {
     fontSize: 16,
-    color: '#334155',
+    color: customerPalette.textSlateDark,
     fontWeight: '700',
   },
   mapModalTopBarTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     letterSpacing: -0.2,
   },
   mapModalScrollContent: {
@@ -1057,7 +1057,7 @@ const styles = StyleSheet.create({
   },
   mapStageContainer: {
     height: 260,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -1070,8 +1070,8 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: customerPalette.cardBorder,
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 6,
@@ -1081,11 +1081,11 @@ const styles = StyleSheet.create({
   mapOverlayCloseBtnText: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   mapAddressCard: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     gap: 12,
   },
   mapAddressHeaderRow: {
@@ -1101,7 +1101,7 @@ const styles = StyleSheet.create({
   mapAddressSectionTitle: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   mapAddressTypeDot: {
     width: 8,
@@ -1109,15 +1109,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   mapAddressTypeDotPickup: {
-    backgroundColor: '#16A34A',
+    backgroundColor: leopardPalette.ecoGreen,
   },
   mapAddressTypeDotDropoff: {
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
   },
   mapChangeAddrBtn: {
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: colors.neutral.subtleBorder,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 8,
@@ -1125,10 +1125,10 @@ const styles = StyleSheet.create({
   mapChangeAddrBtnText: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   mapAddressInputWrapper: {
-    borderColor: '#94A3B8',
+    borderColor: leopardPalette.inputPlaceholder,
   },
   mapInputLeadingIcon: {
     marginRight: 8,
@@ -1136,44 +1136,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   searchingBadge: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: leopardPalette.ecoGreenBg,
     paddingHorizontal: 7,
     paddingVertical: 4,
     borderRadius: 6,
     marginLeft: 6,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: leopardPalette.ecoGreenBorder,
   },
   searchingBadgeText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
-    color: '#16A34A',
+    color: leopardPalette.ecoGreen,
   },
   mapInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: colors.neutral.subtleBorder,
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 50,
     minHeight: 50,
   },
   mapInputWrapperFocused: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0B1E42',
+    borderColor: customerPalette.primary,
+    backgroundColor: customerPalette.surfaceWhite,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 2,
   },
-  gpsNoticeText: { fontSize: 11, lineHeight: 16, color: '#92400E', marginTop: 6, paddingHorizontal: 2 },
+  gpsNoticeText: { fontSize: 11, lineHeight: 16, color: colors.warning.text, marginTop: 6, paddingHorizontal: 2 },
   mapTextInput: {
     flex: 1,
     fontSize: typeScale.subheadline.fontSize,
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontWeight: '600',
     padding: 0,
     ...Platform.select({
@@ -1184,14 +1184,14 @@ const styles = StyleSheet.create({
     }),
   },
   suggestionsContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: colors.neutral.subtleBorder,
     marginTop: -4,
     marginBottom: 4,
     overflow: 'hidden',
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 10,
@@ -1203,25 +1203,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F4F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
   },
   suggestionsHeaderTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#061226',
+    color: customerPalette.textSlateDark,
     letterSpacing: 0.3,
   },
   suggestionsCloseBtn: {
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 4,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   suggestionsCloseBtnText: {
     fontSize: 11,
-    color: '#061226',
+    color: customerPalette.textSlateDark,
     fontWeight: '700',
   },
   suggestionsListScroll: {
@@ -1233,17 +1233,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
     gap: 10,
   },
   suggestionItemPressed: {
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   suggestionIconSquircle: {
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1253,38 +1253,38 @@ const styles = StyleSheet.create({
   suggestionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   suggestionAddress: {
     fontSize: typeScale.caption1.fontSize,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     marginTop: 1,
   },
   suggestionActionApply: {
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   suggestionItemGps: {
-    backgroundColor: '#F0FDF4',
-    borderBottomColor: '#DCFCE7',
+    backgroundColor: leopardPalette.ecoGreenBg,
+    borderBottomColor: colors.success.background,
   },
   suggestionIconSquircleGps: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
   },
   suggestionTitleGps: {
-    color: '#15803D',
+    color: leopardPalette.ecoGreen,
     fontWeight: '800',
   },
   suggestionActionGps: {
-    color: '#16A34A',
+    color: leopardPalette.ecoGreen,
     fontWeight: '800',
   },
   noSuggestionsContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     padding: 14,
     marginTop: -4,
     marginBottom: 4,
@@ -1293,33 +1293,33 @@ const styles = StyleSheet.create({
   noSuggestionsTitle: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#334155',
+    color: customerPalette.textSlateDark,
   },
   noSuggestionsSubtitle: {
     fontSize: typeScale.caption1.fontSize,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     lineHeight: 16,
   },
   pinnedNotice: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: leopardPalette.ecoGreenBg,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: leopardPalette.ecoGreenBorder,
     marginTop: -4,
   },
   pinnedNoticeText: {
     fontSize: typeScale.caption1.fontSize,
-    color: '#15803D',
+    color: leopardPalette.ecoGreen,
     fontWeight: '600',
   },
   mapSectionSeparator: {
     height: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: colors.neutral.surfaceMuted,
   },
   mapSenderSection: {
     padding: 16,
@@ -1333,7 +1333,7 @@ const styles = StyleSheet.create({
   mapSenderSectionTitle: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   mapSenderMeBtn: {
     paddingVertical: 4,
@@ -1342,7 +1342,7 @@ const styles = StyleSheet.create({
   mapSenderMeBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   mapModalBottomBar: {
     flexDirection: 'row',
@@ -1351,59 +1351,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: colors.neutral.surfaceMuted,
+    backgroundColor: customerPalette.surfaceWhite,
   },
   mapCancelBtn: {
     flex: 1,
     height: 50,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   mapCancelBtnText: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
   },
   mapSaveBtn: {
     flex: 1,
     height: 50,
     borderRadius: 14,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.28,
     shadowRadius: 8,
     elevation: 3,
   },
   mapSaveBtnPressed: {
-    backgroundColor: '#061226',
+    backgroundColor: customerPalette.primaryDark,
     transform: [{ scale: 0.98 }],
   },
   mapSaveBtnText: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     letterSpacing: 0.2,
   },
   clearBtn: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 6,
   },
   clearBtnText: {
     fontSize: 11,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontWeight: '700',
     lineHeight: 13,
   },

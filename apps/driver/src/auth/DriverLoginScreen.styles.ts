@@ -1,11 +1,17 @@
 import { Platform, StyleSheet } from 'react-native';
 
-import { iosContinuousCurve, spacing, typeScale } from '@leopard/mobile-core';
+import {
+  colors,
+  iosContinuousCurve,
+  leopardPalette,
+  spacing,
+  typeScale,
+} from '@leopard/mobile-core';
 
 export const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     ...(Platform.OS === 'web' ? { minHeight: '100dvh' as any } : {}),
   },
   keyboardWrap: {
@@ -70,7 +76,7 @@ export const styles = StyleSheet.create({
   brandWordmark: {
     height: 40,
     width: 210,
-    shadowColor: '#FFFFFF',
+    shadowColor: colors.neutral.surface,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -113,7 +119,7 @@ export const styles = StyleSheet.create({
     marginBottom: 7,
   },
   mainTitle: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.title2.fontSize,
     fontWeight: '800',
     letterSpacing: -0.3,
@@ -121,7 +127,7 @@ export const styles = StyleSheet.create({
     lineHeight: 30,
   },
   subTitle: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
     marginTop: 5,
@@ -181,7 +187,7 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   fieldLabel: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
   },
@@ -200,7 +206,7 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
   },
   fieldHint: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: typeScale.caption1.fontSize,
     lineHeight: typeScale.caption1.lineHeight,
     marginTop: spacing.xs,
@@ -247,7 +253,7 @@ export const styles = StyleSheet.create({
   countryCode: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontVariant: ['tabular-nums'],
   },
   countryChevron: {
@@ -263,7 +269,7 @@ export const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   textInput: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     flex: 1,
     fontSize: 16,
     fontWeight: '700',
@@ -307,7 +313,7 @@ export const styles = StyleSheet.create({
     elevation: 0,
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.3,
@@ -336,7 +342,7 @@ export const styles = StyleSheet.create({
     height: 1,
   },
   orText: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -355,7 +361,7 @@ export const styles = StyleSheet.create({
   },
   googleIconWrap: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderColor: '#E3E8EF',
     borderRadius: 999,
     borderWidth: 1,
@@ -368,7 +374,7 @@ export const styles = StyleSheet.create({
     width: 18,
   },
   googleBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     flexShrink: 1,
     fontSize: 15,
     fontWeight: '700',
@@ -379,7 +385,7 @@ export const styles = StyleSheet.create({
     opacity: 0.58,
   },
   firebaseNote: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 8,
@@ -402,7 +408,7 @@ export const styles = StyleSheet.create({
     paddingTop: 16,
   },
   footerPrompt: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -435,7 +441,7 @@ export const styles = StyleSheet.create({
   },
   otpModalCard: {
     ...iosContinuousCurve,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderColor: '#DCE4EC',
     borderRadius: 24,
     borderWidth: 1,
@@ -465,7 +471,7 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
   },
   otpNavStatus: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.7,

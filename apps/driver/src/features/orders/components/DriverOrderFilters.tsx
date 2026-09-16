@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   title: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.2,
@@ -105,15 +105,15 @@ const styles = StyleSheet.create({
     width: 6,
   },
   status: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 13,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
   debugBtn: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: 'center',

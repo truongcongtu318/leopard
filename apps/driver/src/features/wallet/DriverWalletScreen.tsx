@@ -4,17 +4,18 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useRouter } from 'expo-router';
 
 import {
-  driverPrimitives,
-  iosContinuousCurve,
   Button,
   IconBank,
   IconChevronRight,
+  IconSupport247,
   IconTxPayment,
   IconWallet,
   NavigableMetricCard,
-  ScreenState,
   ScreenScaffold,
-  IconSupport247,
+  ScreenState,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 import { FinanceBottomBar } from '../finance/FinanceBottomBar';
 import type { WalletSummary, WithdrawalHistoryItem, WithdrawalRequestInput } from './adapter';
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   scrollWrap: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
   },
   scrollContent: {
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
   /* Balance Card */
   walletCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -391,8 +392,8 @@ const styles = StyleSheet.create({
   },
   walletIconBox: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     height: 36,
@@ -422,8 +423,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   balanceFooter: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
@@ -448,7 +449,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   balanceStatDivider: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     height: '100%',
     width: 1,
   },
@@ -473,7 +474,7 @@ const styles = StyleSheet.create({
   /* Linked Bank Account Card */
   bentoCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -492,8 +493,8 @@ const styles = StyleSheet.create({
   },
   bankIconChip: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     height: 36,
@@ -511,8 +512,8 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
   },
   bankDetailRow: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     padding: 12,
@@ -558,7 +559,7 @@ const styles = StyleSheet.create({
   emptyHistoryCard: {
     alignItems: 'center',
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     borderWidth: 1,
     paddingVertical: 32,
@@ -571,7 +572,7 @@ const styles = StyleSheet.create({
   },
   txGroupCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -593,8 +594,8 @@ const styles = StyleSheet.create({
   },
   txIconChip: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 8,
     borderWidth: 1,
     height: 32,
@@ -617,15 +618,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   txIndicatorBadge: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderRadius: 4,
     borderWidth: 1,
     paddingHorizontal: 5,
     paddingVertical: 1,
   },
   txIndicatorText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -708,8 +709,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   textInput: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     color: driverPrimitives.colors.gray900,

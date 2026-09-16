@@ -33,10 +33,14 @@ import {
   RealInteractiveMap,
   RouteSpine,
   StatusBadge,
+  colors,
+  customerPalette,
   haptic,
   httpClient,
   iosContinuousCurve,
   layout,
+  leopardPalette,
+  pastelTheme,
   sessionStore,
   type TabKey,
   type VehicleCategory,
@@ -111,22 +115,22 @@ export const FLEET_VEHICLES: readonly FleetVehicleItem[] = [
   {
     id: 'VAN_500KG', name: 'Van 500kg', subName: 'Chở hàng phố cấm',
     weightCapacity: '500 kg', dimensions: '2.1 x 1.3 x 1.2m', dimensionLabel: '2.1 x 1.3 x 1.2m',
-    estimatedPrice: '130.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0284C7', badge: 'Đô thị',
+    estimatedPrice: '130.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: colors.brand.blue, badge: 'Đô thị',
   },
   {
     id: 'TRUCK_125T', name: 'Xe Tải 1.25T', subName: 'Chuyển nhà & xưởng',
     weightCapacity: '1.250 kg', dimensions: '3.2 x 1.6 x 1.7m', dimensionLabel: '3.2 x 1.6 x 1.7m',
-    estimatedPrice: '200.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: '#0B1E42', badge: 'Phổ biến',
+    estimatedPrice: '200.000 ₫', vehicleCategory: 'LIGHT_TRUCK', accentColor: customerPalette.primary, badge: 'Phổ biến',
   },
   {
     id: 'TRUCK_25T', name: 'Xe Tải 2.5T', subName: 'Hàng nặng liên tỉnh',
     weightCapacity: '2.500 kg', dimensions: '4.3 x 1.8 x 1.9m', dimensionLabel: '4.3 x 1.8 x 1.9m',
-    estimatedPrice: '320.000 ₫', vehicleCategory: 'HEAVY_TRUCK', accentColor: '#0B1E42', badge: 'Tải lớn',
+    estimatedPrice: '320.000 ₫', vehicleCategory: 'HEAVY_TRUCK', accentColor: customerPalette.primary, badge: 'Tải lớn',
   },
   {
     id: 'BIKE_3W', name: 'Xe Ba Gác', subName: 'Ngõ nhỏ linh hoạt',
     weightCapacity: '400 kg', dimensions: '1.8 x 1.1m', dimensionLabel: '1.8 x 1.1m',
-    estimatedPrice: '70.000 ₫', vehicleCategory: '3_WHEEL_BIKE', accentColor: '#F59E0B', badge: 'Tiết kiệm',
+    estimatedPrice: '70.000 ₫', vehicleCategory: '3_WHEEL_BIKE', accentColor: leopardPalette.accentYellow, badge: 'Tiết kiệm',
   },
 ];
 
@@ -252,7 +256,7 @@ export function getTimeOfDayGreeting(date: Date = new Date()): string {
 }
 
 export function AnimatedGreetingIcon({ size = 20 }: { timeOfDay?: TimeOfDay; size?: number }) {
-  return <IconClock color="#F59E0B" size={size} />;
+  return <IconClock color={leopardPalette.accentYellow} size={size} />;
 }
 
 export type HomeDashboardScreenProps = Readonly<{
@@ -630,7 +634,7 @@ export function HomeDashboardScreen({
               accessibilityLabel={`Thông báo (${unreadNotifications} chưa đọc)`} accessibilityRole="button"
               onPress={onOpenNotifications} style={styles.iconBtn}
             >
-              <IconBell color="#0B1E42" size={18} />
+              <IconBell color={customerPalette.primary} size={18} />
               {unreadNotifications > 0 ? (
                 <View style={styles.badgePill}><Text style={styles.badgePillText}>{unreadNotifications}</Text></View>
               ) : null}
@@ -642,7 +646,7 @@ export function HomeDashboardScreen({
               accessibilityLabel={unreadMessages > 0 ? `Tin nhắn (${unreadMessages} chưa đọc)` : 'Tin nhắn'} accessibilityRole="button"
               onPress={onOpenChat} style={styles.iconBtn}
             >
-              <IconMessage color="#0B1E42" size={18} />
+              <IconMessage color={customerPalette.primary} size={18} />
               {unreadMessages > 0 ? (
                 <View style={styles.badgePill}><Text style={styles.badgePillText}>{unreadMessages}</Text></View>
               ) : null}
@@ -678,7 +682,7 @@ export function HomeDashboardScreen({
                     <Text style={styles.inputMicroLabel}>ĐIỂM LẤY HÀNG</Text>
                     {pickupLabel ? (
                       <View style={styles.pickupLabelBadge} testID="pickup-label-badge">
-                        <IconWarehouse color="#166534" size={12} />
+                        <IconWarehouse color={colors.success.text} size={12} />
                         <Text style={styles.pickupLabelBadgeText} testID="pickup-label-badge-text">{pickupLabel}</Text>
                       </View>
                     ) : null}
@@ -687,7 +691,7 @@ export function HomeDashboardScreen({
                     accessibilityLabel="Địa điểm lấy hàng" autoCapitalize="none" autoCorrect={false}
                     onChangeText={(t) => { setPickupText(t); if (pickupLabel) setPickupLabel(null); }}
                     onFocus={() => setFocusedField('pickup')} placeholder="Nhập địa chỉ lấy hàng..."
-                    placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID="cr-pickup-input" value={pickupText}
+                    placeholderTextColor={leopardPalette.inputPlaceholder} style={styles.locationTextInput} testID="cr-pickup-input" value={pickupText}
                   />
                   {locationNotice ? (
                     <Text
@@ -701,7 +705,7 @@ export function HomeDashboardScreen({
                 </View>
                 {pickupText.length > 0 ? (
                   <Pressable accessibilityLabel="Xóa điểm lấy hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setPickupText(''); setPickupLabel(null); setPickupCoords(null); }} style={styles.inputActionBtn}>
-                    <IconClose color="#94A3B8" size={14} />
+                    <IconClose color={leopardPalette.inputPlaceholder} size={14} />
                   </Pressable>
                 ) : null}
               </View>
@@ -723,11 +727,11 @@ export function HomeDashboardScreen({
                       onChangeText={(t) => handleUpdateStop(stop.id, t)}
                       onFocus={() => setFocusedField(`stop:${stop.id}`)}
                       placeholder="Nhập địa chỉ điểm dừng..."
-                      placeholderTextColor="#94A3B8" style={styles.locationTextInput} testID={`cr-stop-input-${idx}`} value={stop.address}
+                      placeholderTextColor={leopardPalette.inputPlaceholder} style={styles.locationTextInput} testID={`cr-stop-input-${idx}`} value={stop.address}
                     />
                   </View>
                   <Pressable accessibilityLabel={`Xóa điểm dừng ${idx + 1}`} accessibilityRole="button" hitSlop={8} onPress={() => handleRemoveStop(stop.id)} style={styles.inputActionBtn} testID={`cr-stop-remove-${idx}`}>
-                    <IconClose color="#DC2626" size={14} />
+                    <IconClose color={colors.danger.text} size={14} />
                   </Pressable>
                 </View>
               ))}
@@ -744,13 +748,13 @@ export function HomeDashboardScreen({
                     accessibilityLabel="Địa điểm giao hàng" autoCapitalize="none" autoCorrect={false}
                     onChangeText={setDropoffText} onFocus={() => setFocusedField('dropoff')}
                     onSubmitEditing={() => { if (pickupText.trim().length >= 3 && dropoffText.trim().length >= 3) triggerNavigation(pickupText, dropoffText); }}
-                    placeholder="Bạn muốn giao hàng đến đâu?..." placeholderTextColor="#94A3B8"
+                    placeholder="Bạn muốn giao hàng đến đâu?..." placeholderTextColor={leopardPalette.inputPlaceholder}
                     style={styles.locationTextInput} testID="cr-dropoff-input" value={dropoffText}
                   />
                 </View>
                 {dropoffText.length > 0 ? (
                   <Pressable accessibilityLabel="Xóa điểm giao hàng" accessibilityRole="button" hitSlop={8} onPress={() => { setDropoffText(''); setDropoffCoords(null); }} style={styles.inputActionBtn}>
-                    <IconClose color="#94A3B8" size={14} />
+                    <IconClose color={leopardPalette.inputPlaceholder} size={14} />
                   </Pressable>
                 ) : null}
               </View>
@@ -765,7 +769,7 @@ export function HomeDashboardScreen({
                 style={({ pressed }) => [styles.addStopBtn, pressed && styles.addStopBtnPressed]}
                 testID="cr-add-stop"
               >
-                <IconPlus color="#0B1E42" size={16} />
+                <IconPlus color={customerPalette.primary} size={16} />
                 <Text style={styles.addStopBtnText}>
                   {stops.length === 0 ? 'Thêm điểm dừng' : `Thêm điểm dừng (${stops.length}/3)`}
                 </Text>
@@ -790,11 +794,11 @@ export function HomeDashboardScreen({
                       · GỢI Ý VỊ TRÍ
                     </Text>
                     {isSearchingLocation ? (
-                      <ActivityIndicator color="#0B1E42" size="small" style={{ marginLeft: 6 }} />
+                      <ActivityIndicator color={customerPalette.primary} size="small" style={{ marginLeft: 6 }} />
                     ) : null}
                   </View>
                   <Pressable accessibilityLabel="Đóng gợi ý" hitSlop={8} onPress={() => setFocusedField(null)} style={styles.dropdownCloseBtn}>
-                    <IconClose color="#64748B" size={14} />
+                    <IconClose color={customerPalette.textSubtle} size={14} />
                   </Pressable>
                 </View>
 
@@ -824,13 +828,13 @@ export function HomeDashboardScreen({
                         style={({ pressed }) => [styles.suggestionRowItem, pressed && styles.dropdownItemPressed]}
                       >
                         <View style={styles.suggestionIconBox}>
-                          <IconPin color="#0B1E42" size={16} />
+                          <IconPin color={customerPalette.primary} size={16} />
                         </View>
                         <View style={styles.dropdownItemTextWrap}>
                           <Text numberOfLines={1} style={styles.dropdownItemTitle}>{item.title}</Text>
                           <Text numberOfLines={1} style={styles.dropdownItemSub}>{item.subtitle}</Text>
                         </View>
-                        <IconChevron color="#CBD5E1" direction="right" size={14} />
+                        <IconChevron color={leopardPalette.inputBorder} direction="right" size={14} />
                       </Pressable>
                     ))}
                   </View>
@@ -851,12 +855,12 @@ export function HomeDashboardScreen({
                   onPress={() => { const t = focusedField || 'pickup'; setSavedAddressModalTarget(t); setFocusedField(null); setShowSavedAddressModal(true); }}
                   style={({ pressed }) => [styles.dropdownItem, pressed && styles.dropdownItemPressed]}
                 >
-                  <View style={styles.dropdownIconCircle}><IconWarehouse color="#0B1E42" size={16} /></View>
+                  <View style={styles.dropdownIconCircle}><IconWarehouse color={customerPalette.primary} size={16} /></View>
                   <View style={styles.dropdownItemTextWrap}>
                     <Text style={styles.dropdownItemTitle}>Chọn từ sổ địa chỉ</Text>
                     <Text style={styles.dropdownItemSub}>Kho hàng, nhà riêng & điểm giao đã lưu</Text>
                   </View>
-                  <IconChevron color="#94A3B8" direction="right" size={16} />
+                  <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size={16} />
                 </Pressable>
               </View>
             ) : null}
@@ -888,7 +892,7 @@ export function HomeDashboardScreen({
                         style={({ pressed }) => [styles.hubChip, pressed && styles.hubChipPressed]}
                         testID={`hub-chip-${addr.label || addr.id}`}
                       >
-                        <IconWarehouse color="#0B1E42" size={16} />
+                        <IconWarehouse color={customerPalette.primary} size={16} />
                         <Text style={styles.hubChipText}>{addr.label || addr.address}</Text>
                       </Pressable>
                     ))}
@@ -921,10 +925,10 @@ export function HomeDashboardScreen({
                         testID={`vehicle-row-${vehicle.id}`}
                       >
                         <View style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}>
-                          {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? '#F59E0B' : '#64748B'} size={28} />}
-                          {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? '#0284C7' : '#64748B'} size={28} />}
-                          {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={28} />}
-                          {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? '#0B1E42' : '#64748B'} size={30} />}
+                          {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? leopardPalette.accentYellow : customerPalette.textSubtle} size={28} />}
+                          {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? colors.brand.blue : customerPalette.textSubtle} size={28} />}
+                          {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={28} />}
+                          {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={30} />}
                         </View>
                         <View style={styles.vehicleMeta}>
                           <View style={styles.vehicleNameRow}>
@@ -1012,7 +1016,7 @@ export function HomeDashboardScreen({
                   <StatusBadge domain="order" status={activeShipment.status} />
                   {activeShipment.etaMinutes !== undefined ? (
                     <View style={styles.etaPill} testID="active-shipment-eta-pill">
-                      <IconClock color="#0B1E42" size={14} />
+                      <IconClock color={customerPalette.primary} size={14} />
                       <Text style={styles.etaText}>ETA dự kiến {activeShipment.etaMinutes} phút</Text>
                     </View>
                   ) : null}
@@ -1025,7 +1029,7 @@ export function HomeDashboardScreen({
                 </View>
                 <View style={styles.activeMeta}>
                   <View style={styles.activeDriverBox}>
-                    <IconRoleDriver color="#0B1E42" size={16} />
+                    <IconRoleDriver color={customerPalette.primary} size={16} />
                     <Text numberOfLines={1} style={styles.driverText}>
                       {activeShipment.cargoNote ? `${activeShipment.cargoNote} · ` : ''}
                       {activeShipment.driverName ?? 'Chưa có tài xế'}
@@ -1117,7 +1121,7 @@ export function HomeDashboardScreen({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F8FAFC', position: 'relative', overflow: 'hidden' },
+  root: { flex: 1, backgroundColor: customerPalette.canvas, position: 'relative', overflow: 'hidden' },
 
   /* Layer 0: Full-bleed Map */
   layer0Map: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 },
@@ -1129,20 +1133,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.85)', borderRadius: 20,
     paddingHorizontal: 14, paddingVertical: 10,
     borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
-    shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
+    shadowColor: customerPalette.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
     ...Platform.select({ web: { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any }),
   },
   topBarIdentity: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 },
   topBarLogoPill: { paddingRight: 10, borderRightWidth: 1, borderRightColor: 'rgba(11, 30, 66, 0.08)', marginRight: 10 },
   topBarTextWrap: { flex: 1 },
-  topBarGreeting: { fontSize: 12, fontWeight: '700', color: '#0B1E42' },
-  topBarSmeName: { fontSize: 11, fontWeight: '500', color: '#64748B', marginTop: 1 },
+  topBarGreeting: { fontSize: 12, fontWeight: '700', color: customerPalette.primary },
+  topBarSmeName: { fontSize: 11, fontWeight: '500', color: customerPalette.textSubtle, marginTop: 1 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  roleSwitchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44, backgroundColor: '#F1F5F9', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6, gap: 4 },
-  roleSwitchText: { fontSize: 12, fontWeight: '700', color: '#0B1E42' },
-  iconBtn: { width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 22, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  badgePill: { position: 'absolute', top: -2, right: -2, backgroundColor: '#EF4444', minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  badgePillText: { color: '#FFFFFF', fontSize: typeScale.caption2.fontSize, fontWeight: '800' },
+  roleSwitchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44, backgroundColor: colors.neutral.surfaceMuted, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6, gap: 4 },
+  roleSwitchText: { fontSize: 12, fontWeight: '700', color: customerPalette.primary },
+  iconBtn: { width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 22, backgroundColor: colors.neutral.surfaceMuted, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  badgePill: { position: 'absolute', top: -2, right: -2, backgroundColor: colors.danger.text, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  badgePillText: { color: customerPalette.surfaceWhite, fontSize: typeScale.caption2.fontSize, fontWeight: '800' },
 
   /* Layer 2: Gesture Bottom Sheet & Scroll Content */
   layer2BottomSheet: { zIndex: 40 },
@@ -1151,160 +1155,160 @@ const styles = StyleSheet.create({
 
   /* Route Booking Card */
   routeBookingCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, ...iosContinuousCurve, padding: 12,
+    backgroundColor: customerPalette.surfaceWhite, borderRadius: 20, ...iosContinuousCurve, padding: 12,
     borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
-    shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2, marginBottom: 10,
+    shadowColor: customerPalette.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2, marginBottom: 10,
   },
-  routeBox: { backgroundColor: '#F8FAFC', borderRadius: 14, ...iosContinuousCurve, padding: 10, borderWidth: 1, borderColor: '#E2E8F0' },
-  unifiedRouteRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40, paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  routeBox: { backgroundColor: customerPalette.canvas, borderRadius: 14, ...iosContinuousCurve, padding: 10, borderWidth: 1, borderColor: customerPalette.cardBorder },
+  unifiedRouteRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40, paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: customerPalette.cardBorder },
   lastRouteRow: { borderBottomWidth: 0 },
   nodeRail: { width: 24, alignItems: 'center', alignSelf: 'stretch', marginRight: 10 },
-  nodeConnectorTop: { width: 2, height: 6, backgroundColor: '#CBD5E1' },
-  nodeConnector: { flex: 1, width: 2, backgroundColor: '#CBD5E1', marginTop: 2 },
+  nodeConnectorTop: { width: 2, height: 6, backgroundColor: leopardPalette.inputBorder },
+  nodeConnector: { flex: 1, width: 2, backgroundColor: leopardPalette.inputBorder, marginTop: 2 },
   pickupPinCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(22, 163, 74, 0.15)', alignItems: 'center', justifyContent: 'center', marginTop: 6 },
-  pickupPinInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A' },
-  dropoffPinSquare: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#DC2626', marginTop: 2 },
+  pickupPinInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.brand.green },
+  dropoffPinSquare: { width: 12, height: 12, borderRadius: 3, backgroundColor: colors.danger.text, marginTop: 2 },
   stopPinCircle: {
     width: 16, height: 16, borderRadius: 8,
-    backgroundColor: '#E0F2FE', borderWidth: 1.5, borderColor: '#0284C7',
+    backgroundColor: colors.info.background, borderWidth: 1.5, borderColor: colors.brand.blue,
     alignItems: 'center', justifyContent: 'center',
   },
-  stopPinText: { fontSize: typeScale.caption2.fontSize, fontWeight: '700', color: '#0284C7', lineHeight: 11 },
+  stopPinText: { fontSize: typeScale.caption2.fontSize, fontWeight: '700', color: colors.brand.blue, lineHeight: 11 },
   addStopBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     paddingVertical: 8, paddingHorizontal: 12, marginTop: 8,
-    backgroundColor: '#F8FAFC', borderRadius: 12, ...iosContinuousCurve,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.canvas, borderRadius: 12, ...iosContinuousCurve,
+    borderWidth: 1, borderColor: customerPalette.cardBorder,
   },
-  addStopBtnPressed: { backgroundColor: '#F1F5F9', opacity: 0.8 },
-  addStopBtnText: { fontSize: 13, fontWeight: '700', color: '#0B1E42' },
+  addStopBtnPressed: { backgroundColor: colors.neutral.surfaceMuted, opacity: 0.8 },
+  addStopBtnText: { fontSize: 13, fontWeight: '700', color: customerPalette.primary },
   maxStopHint: {
     alignItems: 'center', justifyContent: 'center',
     paddingVertical: 6, paddingHorizontal: 12, marginTop: 8,
-    backgroundColor: '#F1F5F9', borderRadius: 10,
+    backgroundColor: colors.neutral.surfaceMuted, borderRadius: 10,
   },
-  maxStopHintText: { fontSize: 12, fontWeight: '600', color: '#64748B' },
+  maxStopHintText: { fontSize: 12, fontWeight: '600', color: customerPalette.textSubtle },
   routeInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
   inputInnerWrap: { flex: 1 },
   locationHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
-  inputMicroLabel: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
-  pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
-  pickupLabelBadgeText: { fontSize: typeScale.caption2.fontSize, fontWeight: '700', color: '#166534' },
-  locationNoticeText: { fontSize: 11, lineHeight: 16, color: '#92400E', marginTop: 4 },
-  locationTextInput: { fontSize: typeScale.subheadline.fontSize, fontWeight: '600', color: '#0F172A', padding: 0, minHeight: 22 },
-  inputDivider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 4 },
+  inputMicroLabel: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: customerPalette.textSubtle, letterSpacing: 0.5 },
+  pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: leopardPalette.ecoGreenBg, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
+  pickupLabelBadgeText: { fontSize: typeScale.caption2.fontSize, fontWeight: '700', color: colors.success.text },
+  locationNoticeText: { fontSize: 11, lineHeight: 16, color: pastelTheme.yellowCard.text, marginTop: 4 },
+  locationTextInput: { fontSize: typeScale.subheadline.fontSize, fontWeight: '600', color: customerPalette.textSlateDark, padding: 0, minHeight: 22 },
+  inputDivider: { height: 1, backgroundColor: customerPalette.cardBorder, marginVertical: 4 },
   inputActionBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
 
   /* Progressive Disclosure Prompt & Quick Destination Hubs */
   progressivePromptSection: { marginTop: 12 },
-  guidingPromptText: { fontSize: 12, fontWeight: '600', color: '#64748B', marginBottom: 8 },
+  guidingPromptText: { fontSize: 12, fontWeight: '600', color: customerPalette.textSubtle, marginBottom: 8 },
   quickHubsScrollContent: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2 },
   hubChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     minHeight: 44, minWidth: 44, paddingHorizontal: 12, paddingVertical: 10,
-    backgroundColor: '#F8FAFC', borderRadius: 12, ...iosContinuousCurve,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.canvas, borderRadius: 12, ...iosContinuousCurve,
+    borderWidth: 1, borderColor: customerPalette.cardBorder,
   },
-  hubChipPressed: { backgroundColor: '#E2E8F0', opacity: 0.85 },
-  hubChipText: { fontSize: 12, fontWeight: '700', color: '#0B1E42' },
+  hubChipPressed: { backgroundColor: customerPalette.cardBorder, opacity: 0.85 },
+  hubChipText: { fontSize: 12, fontWeight: '700', color: customerPalette.primary },
 
   /* Dropdown Suggestions */
   addressDropdown: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: '#E2E8F0', padding: 10, marginTop: 8,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
+    backgroundColor: customerPalette.surfaceWhite, borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: customerPalette.cardBorder, padding: 10, marginTop: 8,
+    shadowColor: customerPalette.textSlateDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
   },
   dropdownHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   dropdownHeaderLeft: { flexDirection: 'row', alignItems: 'center' },
-  dropdownHeaderTitle: { fontSize: 11, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
+  dropdownHeaderTitle: { fontSize: 11, fontWeight: '800', color: customerPalette.textSubtle, letterSpacing: 0.5 },
   dropdownCloseBtn: { padding: 4 },
   suggestionsList: { gap: 2, marginBottom: 4 },
   emptySearchHintBox: { paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center' },
-  emptySearchHintText: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
+  emptySearchHintText: { fontSize: 12, color: leopardPalette.inputPlaceholder, fontWeight: '600' },
   suggestionRowItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, paddingHorizontal: 4, borderRadius: 10 },
-  suggestionIconBox: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  suggestionIconBox: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.neutral.surfaceMuted, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
   dropdownItemPressed: { opacity: 0.7 },
-  dropdownIconCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  dropdownIconCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.neutral.surfaceMuted, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   dropdownItemTextWrap: { flex: 1 },
-  dropdownItemTitle: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
-  dropdownItemSub: { fontSize: 11, color: '#64748B', marginTop: 1 },
-  dropdownDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 4 },
-  autoNavigatingBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', borderRadius: 10, padding: 8, marginTop: 8, gap: 8 },
-  autoNavigatingText: { fontSize: 12, fontWeight: '700', color: '#059669' },
+  dropdownItemTitle: { fontSize: 13, fontWeight: '700', color: customerPalette.textSlateDark },
+  dropdownItemSub: { fontSize: 11, color: customerPalette.textSubtle, marginTop: 1 },
+  dropdownDivider: { height: 1, backgroundColor: colors.neutral.surfaceMuted, marginVertical: 4 },
+  autoNavigatingBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.success.background, borderRadius: 10, padding: 8, marginTop: 8, gap: 8 },
+  autoNavigatingText: { fontSize: 12, fontWeight: '700', color: colors.success.text },
 
   /* Fleet Matrix Section: iOS 18 Inset Grouped vertical list + unified action bar */
   fleetMatrixSection: { marginTop: 10 },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  sectionLabel: { fontSize: 12, fontWeight: '800', color: '#0B1E42', letterSpacing: 0.5 },
-  sectionSubLabel: { fontSize: 11, fontWeight: '600', color: '#64748B' },
-  vehicleList: { backgroundColor: '#FFFFFF', borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
-  vehicleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', minHeight: 60 },
+  sectionLabel: { fontSize: 12, fontWeight: '800', color: customerPalette.primary, letterSpacing: 0.5 },
+  sectionSubLabel: { fontSize: 11, fontWeight: '600', color: customerPalette.textSubtle },
+  vehicleList: { backgroundColor: customerPalette.surfaceWhite, borderRadius: 16, ...iosContinuousCurve, borderWidth: 1, borderColor: customerPalette.cardBorder, overflow: 'hidden' },
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: colors.neutral.surfaceMuted, minHeight: 60 },
   vehicleRowSelected: { backgroundColor: '#F2F6FC' },
   vehicleRowPressed: { opacity: 0.85 },
-  vehicleIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center' },
+  vehicleIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: customerPalette.canvas, alignItems: 'center', justifyContent: 'center' },
   vehicleIconBoxSelected: { backgroundColor: '#EAF0FA' },
   vehicleMeta: { flex: 1, minWidth: 0 },
   vehicleNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  vehicleName: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  vehicleNameSelected: { color: '#0B1E42' },
-  vehicleBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  vehicleBadgeSelected: { backgroundColor: '#0B1E42' },
-  vehicleBadgeText: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: '#64748B' },
-  vehicleBadgeTextSelected: { color: '#FFFFFF' },
+  vehicleName: { fontSize: 15, fontWeight: '700', color: customerPalette.textSlateDark },
+  vehicleNameSelected: { color: customerPalette.primary },
+  vehicleBadge: { backgroundColor: colors.neutral.surfaceMuted, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  vehicleBadgeSelected: { backgroundColor: customerPalette.primary },
+  vehicleBadgeText: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: customerPalette.textSubtle },
+  vehicleBadgeTextSelected: { color: customerPalette.surfaceWhite },
   vehicleSpecRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 4 },
-  dimensionBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  dimensionBadgeSelected: { backgroundColor: '#E2E8F0' },
+  dimensionBadge: { backgroundColor: colors.neutral.surfaceMuted, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  dimensionBadgeSelected: { backgroundColor: customerPalette.cardBorder },
   dimensionText: { fontSize: 11, fontWeight: '700', color: '#334155', fontVariant: ['tabular-nums'] },
-  dimensionTextSelected: { color: '#0B1E42' },
-  fleetCapacityText: { fontSize: 11, color: '#64748B' },
+  dimensionTextSelected: { color: customerPalette.primary },
+  fleetCapacityText: { fontSize: 11, color: customerPalette.textSubtle },
   vehiclePriceCol: { alignItems: 'flex-end', gap: 4 },
-  vehiclePrice: { fontSize: 15, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'], marginLeft: 8 },
-  vehiclePriceSelected: { color: '#0B1E42' },
-  selectionDot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: '#CBD5E1', backgroundColor: '#FFFFFF' },
-  selectionDotSelected: { borderColor: '#0B1E42', backgroundColor: '#0B1E42' },
+  vehiclePrice: { fontSize: 15, fontWeight: '800', color: customerPalette.textSlateDark, fontVariant: ['tabular-nums'], marginLeft: 8 },
+  vehiclePriceSelected: { color: customerPalette.primary },
+  selectionDot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: leopardPalette.inputBorder, backgroundColor: customerPalette.surfaceWhite },
+  selectionDotSelected: { borderColor: customerPalette.primary, backgroundColor: customerPalette.primary },
 
   /* Fare Estimation Card & Big CTA Button */
-  fareCtaCard: { backgroundColor: '#F8FAFC', borderRadius: 16, ...iosContinuousCurve, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+  fareCtaCard: { backgroundColor: customerPalette.canvas, borderRadius: 16, ...iosContinuousCurve, padding: 10, marginTop: 8, borderWidth: 1, borderColor: customerPalette.cardBorder },
   fareInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   fareLeftCol: { flex: 1 },
-  fareLabel: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 },
+  fareLabel: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: customerPalette.textSubtle, letterSpacing: 0.5 },
   fareVehicleTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  fareVehicleName: { fontSize: typeScale.subheadline.fontSize, fontWeight: '800', color: '#0F172A' },
-  fareDimensionChip: { backgroundColor: '#E2E8F0', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 },
+  fareVehicleName: { fontSize: typeScale.subheadline.fontSize, fontWeight: '800', color: customerPalette.textSlateDark },
+  fareDimensionChip: { backgroundColor: customerPalette.cardBorder, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 },
   fareDimensionChipText: { fontSize: typeScale.caption2.fontSize, fontWeight: '600', color: '#334155' },
   fareRightCol: { alignItems: 'flex-end' },
-  fareAmount: { fontSize: 16, fontWeight: '800', color: '#0B1E42', fontVariant: ['tabular-nums'] },
-  fareNote: { fontSize: typeScale.caption2.fontSize, color: '#64748B' },
+  fareAmount: { fontSize: 16, fontWeight: '800', color: customerPalette.primary, fontVariant: ['tabular-nums'] },
+  fareNote: { fontSize: typeScale.caption2.fontSize, color: customerPalette.textSubtle },
   bigCtaBtn: {
-    minHeight: 44, height: 46, borderRadius: 14, ...iosContinuousCurve, backgroundColor: '#0B1E42',
-    alignItems: 'center', justifyContent: 'center', shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3,
+    minHeight: 44, height: 46, borderRadius: 14, ...iosContinuousCurve, backgroundColor: customerPalette.primary,
+    alignItems: 'center', justifyContent: 'center', shadowColor: customerPalette.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3,
   },
   bigCtaBtnPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
-  bigCtaBtnText: { fontSize: typeScale.subheadline.fontSize, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4, fontVariant: ['tabular-nums'] },
+  bigCtaBtnText: { fontSize: typeScale.subheadline.fontSize, fontWeight: '800', color: customerPalette.surfaceWhite, letterSpacing: 0.4, fontVariant: ['tabular-nums'] },
 
   /* Section Containers */
   section: { marginBottom: 10 },
   sectionTitleWithBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  liveIndicatorDotActive: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' },
-  liveTagBadge: { backgroundColor: '#ECFDF5', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  liveTagText: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: '#059669' },
+  liveIndicatorDotActive: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success.text },
+  liveTagBadge: { backgroundColor: colors.success.background, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  liveTagText: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: colors.success.text },
 
   /* Active Shipment Card */
   activeCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 18, ...iosContinuousCurve, padding: 12, borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
-    shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
+    backgroundColor: customerPalette.surfaceWhite, borderRadius: 18, ...iosContinuousCurve, padding: 12, borderWidth: 1, borderColor: 'rgba(11, 30, 66, 0.08)',
+    shadowColor: customerPalette.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
   },
   activeCardPressed: { opacity: 0.85 },
   activeTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  etaPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0F4F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
-  etaText: { fontSize: 11, fontWeight: '700', color: '#0B1E42', fontVariant: ['tabular-nums'] },
+  etaPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.neutral.surfaceMuted, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
+  etaText: { fontSize: 11, fontWeight: '700', color: customerPalette.primary, fontVariant: ['tabular-nums'] },
   activeRouteContainer: { marginVertical: 2 },
-  activeMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  activeMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.neutral.surfaceMuted },
   activeDriverBox: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, gap: 6 },
   driverText: { fontSize: 12, fontWeight: '600', color: '#334155', flex: 1 },
-  plateText: { fontWeight: '700', color: '#0B1E42', fontVariant: ['tabular-nums'] },
-  activeTrackPill: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  trackText: { fontSize: 11, fontWeight: '700', color: '#0B1E42' },
+  plateText: { fontWeight: '700', color: customerPalette.primary, fontVariant: ['tabular-nums'] },
+  activeTrackPill: { backgroundColor: colors.neutral.surfaceMuted, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  trackText: { fontSize: 11, fontWeight: '700', color: customerPalette.primary },
 
   /* Layer 3: Floating Navigation Dock */
   layer3FloatingNav: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 60 },

@@ -10,11 +10,13 @@ import {
   IconRoute,
   IconShieldAlert,
   IconTxPayment,
-  radius,
   ScreenScaffold,
-  spacing,
   StatusBadge,
   StatusTimeline,
+  colors,
+  leopardPalette,
+  radius,
+  spacing,
 } from '@leopard/mobile-core';
 import type { DriverAssignedDetailView, DriverPrimaryTaskView } from '../../model';
 import { formatVndPrice } from '../../adapter';
@@ -94,7 +96,7 @@ export function AssignedDetailView({
                 onPress={() => callPhoneNumber(view.order.customerContact)}
                 style={({ pressed }) => [styles.stickyRoundBtn, pressed ? styles.pressed : null]}
               >
-                <IconPhone color="#0B1E42" size={20} />
+                <IconPhone color={leopardPalette.primary} size={20} />
               </Pressable>
 
               <Pressable
@@ -105,7 +107,7 @@ export function AssignedDetailView({
                 style={({ pressed }) => [styles.stickyRoundBtn, pressed ? styles.pressed : null]}
                 testID="btn-navigate-active-leg"
               >
-                <IconRoute color="#0B1E42" size={20} />
+                <IconRoute color={leopardPalette.primary} size={20} />
               </Pressable>
 
               {onOpenIncidentModal && isMissionActive ? (
@@ -121,7 +123,7 @@ export function AssignedDetailView({
                   ]}
                   testID="btn-open-incident-modal"
                 >
-                  <IconShieldAlert color="#DC2626" size={20} />
+                  <IconShieldAlert color={colors.danger.text} size={20} />
                 </Pressable>
               ) : null}
             </>
@@ -242,7 +244,7 @@ export function AssignedDetailView({
                       style={({ pressed }) => [styles.incidentBannerBtn, pressed ? styles.pressed : null]}
                       testID="btn-report-incident"
                     >
-                      <IconShieldAlert color="#DC2626" size={13} />
+                      <IconShieldAlert color={colors.danger.text} size={13} />
                       <Text style={styles.incidentBannerBtnText}>Báo sự cố chuyến đi</Text>
                     </Pressable>
                   ) : null}
@@ -287,7 +289,7 @@ export function AssignedDetailView({
             <View style={styles.pickingChecklistCard} testID="cargo-specs-checklist">
               <View style={styles.pickingChecklistHeader}>
                 <View style={styles.pickingChecklistIconBadge}>
-                  <IconOrders color="#0B1E42" size={18} />
+                  <IconOrders color={leopardPalette.primary} size={18} />
                 </View>
                 <View style={styles.pickingChecklistTitleCol}>
                   <Text style={styles.pickingChecklistTitle}>DANH SÁCH KIỂM HÀNG & BỐC HÀNG</Text>
@@ -345,7 +347,7 @@ export function AssignedDetailView({
                   </View>
                 ) : (
                   <View style={styles.preloadingCaptureInner}>
-                    <IconCamera color="#0B1E42" size={16} />
+                    <IconCamera color={leopardPalette.primary} size={16} />
                     <Text style={styles.preloadingCaptureText}>
                       Chụp ảnh hàng trước khi bốc (tránh khiếu nại)
                     </Text>
@@ -481,7 +483,7 @@ export function AssignedDetailView({
               style={({ pressed }) => [styles.timelineToggleBtn, pressed ? styles.pressed : null]}
             >
               <View style={styles.timelineToggleLeft}>
-                <IconClock color="#0B1E42" size={15} />
+                <IconClock color={leopardPalette.primary} size={15} />
                 <Text style={styles.timelineToggleText}>
                   Nhật ký trạng thái ({view.order.history.length} mốc)
                 </Text>
@@ -519,13 +521,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   missionEyebrow: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.3,
   },
   missionLegTitle: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -543,7 +545,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   incidentBannerBtnText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: 10.5,
     fontWeight: '700',
   },
@@ -578,14 +580,14 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   timelineSection: {
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     overflow: 'hidden',
   },
   timelineToggleBtn: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
@@ -597,17 +599,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   timelineToggleText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 12,
     fontWeight: '700',
   },
   timelineToggleArrow: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     fontWeight: '700',
   },
   timelineContentWrap: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     padding: 12,
   },
 
@@ -620,8 +622,8 @@ const styles = StyleSheet.create({
   },
   stickyRoundBtn: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 24,
     borderWidth: 1,
     elevation: 2,
@@ -662,14 +664,14 @@ const styles = StyleSheet.create({
 
   /* Cash on Delivery Card */
   cashCardOuter: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     borderWidth: 1,
     padding: 3,
   },
   cashCardInner: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 17,
     gap: spacing.sm,
     padding: spacing.md,
@@ -694,13 +696,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cashSectionTitle: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   cashSectionSubtitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     marginTop: 2,
   },
@@ -732,8 +734,8 @@ const styles = StyleSheet.create({
   },
   cashAmountRow: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
@@ -742,12 +744,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   cashAmountLabel: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 12,
     fontWeight: '600',
   },
   cashAmountValue: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 18,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
@@ -773,13 +775,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   cashActionHint: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10.5,
     textAlign: 'center',
   },
   pickingChecklistCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     borderWidth: 1,
     gap: spacing.sm + 2,
@@ -803,18 +805,18 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   pickingChecklistTitle: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   pickingChecklistSubtitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10.5,
   },
   checklistItemsCol: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     gap: 8,
@@ -826,21 +828,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   checklistItemLabel: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 11.5,
     fontWeight: '600',
     width: 90,
   },
   checklistItemValue: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     flex: 1,
     fontSize: 11.5,
     fontWeight: '700',
   },
   preloadingCaptureBtn: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 12,
     borderStyle: 'dashed',
     borderWidth: 1.5,
@@ -858,7 +860,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   preloadingCaptureText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 11.5,
     fontWeight: '700',
   },

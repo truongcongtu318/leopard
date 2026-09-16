@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { IconClose, iosContinuousCurve } from '@leopard/mobile-core';
+import {
+  IconClose,
+  colors,
+  iosContinuousCurve,
+  leopardPalette,
+} from '@leopard/mobile-core';
 
 export const DRIVER_RADIUS_OPTIONS: readonly string[] = ['3', '5', '10', '15'];
 
@@ -43,7 +48,7 @@ export function DriverReceivingSettingsModal({
               onPress={onClose}
               style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressed : null]}
             >
-              <IconClose color="#64748B" size={18} />
+              <IconClose color={colors.neutral.subtleText} size={18} />
             </Pressable>
           </View>
 
@@ -104,7 +109,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     ...iosContinuousCurve,
@@ -119,13 +124,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 18,
     fontWeight: '800',
   },
   closeBtn: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 16,
     height: 32,
     justifyContent: 'center',
@@ -135,7 +140,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -146,8 +151,8 @@ const styles = StyleSheet.create({
   },
   optionPill: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 14,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -156,34 +161,34 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   optionPillActive: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
+    borderColor: leopardPalette.primary,
   },
   optionPillText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 13,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   optionPillTextActive: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
   },
   saveBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderRadius: 14,
     ...iosContinuousCurve,
     elevation: 3,
     height: 48,
     justifyContent: 'center',
     marginTop: 8,
-    shadowColor: '#0B1E42',
+    shadowColor: leopardPalette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
   },
   saveBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: 0.4,

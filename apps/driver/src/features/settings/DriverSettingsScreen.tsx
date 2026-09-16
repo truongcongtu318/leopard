@@ -13,9 +13,6 @@ import { useRouter } from 'expo-router';
 import appJson from '../../../app.json';
 
 import {
-  driverPrimitives,
-  iosContinuousCurve,
-  ScreenScaffold,
   IconBell,
   IconCheck,
   IconChevronRight,
@@ -28,6 +25,10 @@ import {
   IconSupport247,
   IconTrash,
   IconWarningShield,
+  ScreenScaffold,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 
 // Same source as profile adapter: real bundled version, never a hardcoded pilot tag.
@@ -179,7 +180,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Bật tắt tự động nhận đơn"
                 onValueChange={setAutoAccept}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={autoAccept}
               />
@@ -234,7 +235,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Đề xuất giá cước"
                 onValueChange={setPriceProposal}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={priceProposal}
               />
@@ -254,7 +255,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Bật tắt chuông báo chuyến mới âm lượng lớn"
                 onValueChange={setHighAlertSound}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={highAlertSound}
               />
@@ -325,7 +326,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Bật tắt rung cường độ cao"
                 onValueChange={setVibrateOnOffer}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={vibrateOnOffer}
               />
@@ -345,7 +346,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Bật tắt giọng nói đọc đơn hàng"
                 onValueChange={setVoiceAnnouncement}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={voiceAnnouncement}
               />
@@ -365,7 +366,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Tự động nghỉ sau chuyến này"
                 onValueChange={setAutoOfflineOnComplete}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={autoOfflineOnComplete}
               />
@@ -445,7 +446,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Tự động mở dẫn đường"
                 onValueChange={setAutoOpenNav}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={autoOpenNav}
               />
@@ -465,7 +466,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Cảnh báo đường cấm tải"
                 onValueChange={setAvoidTruckRestrictions}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={avoidTruckRestrictions}
               />
@@ -492,7 +493,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Giữ màn hình luôn sáng"
                 onValueChange={setKeepScreenAwake}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={keepScreenAwake}
               />
@@ -512,7 +513,7 @@ export function DriverSettingsScreen() {
               <Switch
                 accessibilityLabel="Chế độ tiết kiệm pin"
                 onValueChange={setBatterySaver}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.neutral.surface}
                 trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={batterySaver}
               />
@@ -602,7 +603,7 @@ export function DriverSettingsScreen() {
               }}
               style={({ pressed }) => [styles.sosButton, pressed ? styles.pressed : null]}
             >
-              <IconWarningShield color="#DC2626" size={18} />
+              <IconWarningShield color={colors.danger.text} size={18} />
               <Text style={styles.sosButtonText}>GỌI CỨU HỘ KHẨN CẤP SOS (24/7)</Text>
             </Pressable>
           </View>
@@ -620,7 +621,7 @@ export function DriverSettingsScreen() {
 
 const styles = StyleSheet.create({
   scrollWrap: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
   },
   scrollContent: {
@@ -655,7 +656,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -701,15 +702,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   newPill: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderRadius: 4,
     borderWidth: 1,
     paddingHorizontal: 5,
     paddingVertical: 1,
   },
   newPillText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 9.5,
     fontWeight: '700',
   },
@@ -725,7 +726,7 @@ const styles = StyleSheet.create({
   },
 
   subConfigBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     borderBottomColor: driverPrimitives.colors.gray100,
     borderBottomWidth: 1,
     gap: 8,
@@ -740,7 +741,7 @@ const styles = StyleSheet.create({
 
   /* Apple Segmented Controls */
   segmentedControl: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     borderRadius: 10,
     flexDirection: 'row',
     gap: 2,
@@ -767,7 +768,7 @@ const styles = StyleSheet.create({
   },
 
   segmentedControlCompact: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     borderRadius: 8,
     flexDirection: 'row',
     gap: 2,
@@ -794,8 +795,8 @@ const styles = StyleSheet.create({
 
   statusPillGreen: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 9999,
     borderWidth: 1,
     flexDirection: 'row',
@@ -822,7 +823,7 @@ const styles = StyleSheet.create({
     margin: 14,
   },
   sosButtonText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.2,

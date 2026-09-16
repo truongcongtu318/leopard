@@ -11,9 +11,6 @@ import {
 import { DriverModalSurface } from '../../navigation/DriverModalSurface';
 
 import {
-  leopardPalette,
-  radius,
-  spacing,
   IconClock,
   IconClose,
   IconLocationPin,
@@ -22,6 +19,10 @@ import {
   IconSpeedTruck,
   RealInteractiveMap,
   SlideToAction,
+  colors,
+  leopardPalette,
+  radius,
+  spacing,
 } from '@leopard/mobile-core';
 
 export function formatPublicArea(address?: string | null): string {
@@ -215,7 +216,7 @@ export function IncomingDispatchModal({
                   isUrgent ? styles.timerBadgeUrgent : isWarning ? styles.timerBadgeWarning : null,
                 ]}
               >
-                <IconClock color={isUrgent ? '#DC2626' : isWarning ? '#D97706' : '#0B1E42'} size={14} />
+                <IconClock color={isUrgent ? colors.danger.text : isWarning ? '#D97706' : leopardPalette.primary} size={14} />
                 <Text
                   style={[
                     styles.timerText,
@@ -234,7 +235,7 @@ export function IncomingDispatchModal({
                 style={styles.modalCloseBtn}
                 testID="dispatch-modal-decline-top"
               >
-                <IconClose color="#64748B" size={16} />
+                <IconClose color={colors.neutral.subtleText} size={16} />
               </Pressable>
             </View>
           </View>
@@ -264,7 +265,7 @@ export function IncomingDispatchModal({
             />
             {pickupDistText ? (
               <View style={styles.mapFloatingDistancePill}>
-                <IconLocationPin color="#0B1E42" size={12} />
+                <IconLocationPin color={leopardPalette.primary} size={12} />
                 <Text style={styles.mapFloatingDistanceText}>
                   Điểm đón · {pickupDistText}
                 </Text>
@@ -306,7 +307,7 @@ export function IncomingDispatchModal({
                     <Text style={styles.addressTypeLabel}>ĐIỂM LẤY HÀNG</Text>
                     {pickupBadgeText ? (
                       <View style={styles.pickupDistBadge}>
-                        <IconLocationPin color="#0B1E42" size={12} />
+                        <IconLocationPin color={leopardPalette.primary} size={12} />
                         <Text style={styles.pickupDistText}>
                           {pickupBadgeText}
                         </Text>
@@ -321,7 +322,7 @@ export function IncomingDispatchModal({
                 {/* Transit Indicator */}
                 {tripDistText ? (
                   <View style={styles.transitMetaRow}>
-                    <IconRoute color="#64748B" size={13} />
+                    <IconRoute color={colors.neutral.subtleText} size={13} />
                     <Text style={styles.transitMetaText}>
                       {offer.etaLabel
                         ? `Lộ trình ${tripDistText} · Khoảng ${offer.etaLabel}`
@@ -346,12 +347,12 @@ export function IncomingDispatchModal({
             <View style={styles.cargoBentoInner}>
               <View style={styles.cargoHeaderRow}>
                 <View style={styles.cargoTitleRow}>
-                  <IconOrders color="#0B1E42" size={15} />
+                  <IconOrders color={leopardPalette.primary} size={15} />
                   <Text style={styles.cargoHeaderTitle}>THÔNG TIN HÀNG HÓA</Text>
                 </View>
                 {offer.vehicleLabel ? (
                   <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
-                    <IconSpeedTruck color="#0B1E42" size={14} />
+                    <IconSpeedTruck color={leopardPalette.primary} size={14} />
                     <Text style={styles.specChipText}>{offer.vehicleLabel}</Text>
                   </View>
                 ) : null}
@@ -466,7 +467,7 @@ export function IncomingDispatchModal({
                 style={styles.previewCloseBtn}
                 testID="cargo-photo-preview-close"
               >
-                <IconClose color="#FFFFFF" size={18} />
+                <IconClose color={colors.neutral.surface} size={18} />
               </Pressable>
             </View>
             <View style={styles.previewImageContainer}>
@@ -491,7 +492,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     elevation: 24,
@@ -517,7 +518,7 @@ const styles = StyleSheet.create({
   },
   modalCloseBtn: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: radius.pill,
     height: 32,
     justifyContent: 'center',
@@ -546,7 +547,7 @@ const styles = StyleSheet.create({
     width: 10,
   },
   radarPulseCoreUrgent: {
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
   },
   modalBadgeText: {
     color: leopardPalette.primaryDark,
@@ -555,12 +556,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   modalBadgeTextUrgent: {
-    color: '#DC2626',
+    color: colors.danger.text,
   },
   timerBadge: {
     alignItems: 'center',
     backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     flexDirection: 'row',
@@ -586,10 +587,10 @@ const styles = StyleSheet.create({
     color: '#D97706',
   },
   timerUrgent: {
-    color: '#DC2626',
+    color: colors.danger.text,
   },
   progressTrack: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     borderRadius: 3,
     height: 6,
     overflow: 'hidden',
@@ -603,13 +604,13 @@ const styles = StyleSheet.create({
     backgroundColor: leopardPalette.primary,
   },
   progressBarWarning: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: leopardPalette.accentYellow,
   },
   progressBarUrgent: {
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
   },
   modalMapCanvas: {
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.neutral.text,
     borderRadius: 14,
     height: 160,
     overflow: 'hidden',
@@ -618,8 +619,8 @@ const styles = StyleSheet.create({
   },
   mapFloatingDistancePill: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: radius.pill,
     borderWidth: 1,
     bottom: 8,
@@ -698,13 +699,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   routeBezelOuter: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     borderRadius: radius.bezelOuter,
     padding: 2.5,
   },
   routeBezelInner: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.surfaceMuted,
     borderRadius: radius.bezelInner,
     borderWidth: 1,
     flexDirection: 'row',
@@ -725,13 +726,13 @@ const styles = StyleSheet.create({
     width: 16,
   },
   spinePointTextA: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 9,
     fontWeight: '900',
     textAlign: 'center',
   },
   spineTrackDotted: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: leopardPalette.inputBorder,
     flex: 1,
     marginVertical: 4,
     minHeight: 28,
@@ -739,14 +740,14 @@ const styles = StyleSheet.create({
   },
   spineDestSquare: {
     alignItems: 'center',
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.danger.text,
     borderRadius: 3,
     height: 16,
     justifyContent: 'center',
     width: 16,
   },
   spinePointTextB: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 9,
     fontWeight: '900',
     textAlign: 'center',
@@ -772,7 +773,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   addressTypeLabelDropoff: {
-    color: '#EF4444',
+    color: colors.danger.text,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.4,
@@ -780,7 +781,7 @@ const styles = StyleSheet.create({
   pickupDistBadge: {
     alignItems: 'center',
     backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
@@ -811,13 +812,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cargoBentoOuter: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     borderRadius: radius.bezelOuter,
     padding: 2.5,
   },
   cargoBentoInner: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.surfaceMuted,
     borderRadius: radius.bezelInner,
     borderWidth: 1,
     gap: 8,
@@ -835,7 +836,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   cargoHeaderTitle: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -851,7 +852,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   cargoNameText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 15,
     fontWeight: '800',
     lineHeight: 20,
@@ -863,15 +864,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   cargoSpecPill: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 6,
     borderWidth: 1,
     paddingHorizontal: 7,
     paddingVertical: 2.5,
   },
   cargoSpecValue: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 12,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
@@ -891,8 +892,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   cargoThumbnailWrapper: {
-    backgroundColor: '#0F172A',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.text,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 10,
     borderWidth: 1.5,
     height: 56,
@@ -921,7 +922,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   previewTitle: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -945,8 +946,8 @@ const styles = StyleSheet.create({
   },
   specChip: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -979,8 +980,8 @@ const styles = StyleSheet.create({
   },
   declineButton: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: radius.pill,
     borderWidth: 1,
     height: 48,
@@ -989,14 +990,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   declineButtonPressed: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     opacity: 0.8,
   },
   declineButtonDisabled: {
     opacity: 0.5,
   },
   declineButtonText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 15,
     fontWeight: '700',
   },

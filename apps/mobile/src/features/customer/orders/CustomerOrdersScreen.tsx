@@ -20,6 +20,7 @@ import {
   IconSpeedTruck,
   iosContinuousCurve,
   layout,
+  leopardPalette,
   radius,
   ScreenScaffold,
   ScreenState,
@@ -79,11 +80,11 @@ function getActiveOrderStatusLabel(status: OrderStatus): string {
 
 function getActiveStatusAccentColor(status: OrderStatus): string {
   switch (status) {
-    case 'REQUESTED': return '#F59E0B';
-    case 'ACCEPTED': return '#0B1E42';
-    case 'PICKING_UP': return '#0B1E42';
-    case 'IN_TRANSIT': return '#16A34A';
-    default: return '#0B1E42';
+    case 'REQUESTED': return colors.warning.text;
+    case 'ACCEPTED': return customerPalette.primary;
+    case 'PICKING_UP': return customerPalette.primary;
+    case 'IN_TRANSIT': return colors.success.text;
+    default: return customerPalette.primary;
   }
 }
 
@@ -141,7 +142,7 @@ function AppleSegmentedControl({
         onPress={() => { haptic.selection(); onSegmentChange('active'); }}
         style={[s.segmentTab, activeSegment === 'active' && s.segmentTabActive]}
       >
-        {activeCount > 0 ? <PulseDot color="#16A34A" size={5} /> : null}
+        {activeCount > 0 ? <PulseDot color={customerPalette.onlineGreen} size={5} /> : null}
         <Text style={[s.segmentLabel, activeSegment === 'active' && s.segmentLabelActive]}>
           Đang giao
         </Text>
@@ -241,15 +242,15 @@ function ActiveOrderHeroCard({
         <View style={s.heroMapGradient} />
         {/* Route line overlay */}
         <View style={s.heroRouteLine}>
-          <View style={[s.heroRouteEndpoint, { backgroundColor: '#16A34A' }]} />
+          <View style={[s.heroRouteEndpoint, { backgroundColor: colors.success.text }]} />
           <View style={s.heroRouteDash} />
           <View style={s.heroRouteDash} />
           <View style={s.heroRouteDash} />
-          <View style={[s.heroRouteEndpoint, { backgroundColor: '#DC2626' }]} />
+          <View style={[s.heroRouteEndpoint, { backgroundColor: colors.danger.text }]} />
         </View>
         {/* Status overlay pill */}
         <View style={[s.heroStatusPill, { backgroundColor: accentColor }]}>
-          <PulseDot color="#FFFFFF" size={4} />
+          <PulseDot color={colors.neutral.surface} size={4} />
           <Text style={s.heroStatusText}>{statusLabel}</Text>
         </View>
       </View>
@@ -278,13 +279,13 @@ function ActiveOrderHeroCard({
         {/* Footer: Reference + ETA + Price */}
         <View style={s.heroFooter}>
           <View style={s.heroRefWrap}>
-            <IconSpeedTruck color="#64748B" size={14} />
+            <IconSpeedTruck color={colors.neutral.subtleText} size={14} />
             <Text style={s.heroRef}>{order.reference}</Text>
           </View>
           <View style={s.heroMetaRight}>
             {order.etaLabel ? (
               <View style={s.heroEtaPill}>
-                <IconClock color="#64748B" size={12} />
+                <IconClock color={colors.neutral.subtleText} size={12} />
                 <Text style={s.heroEtaText}>{order.etaLabel}</Text>
               </View>
             ) : null}
@@ -297,7 +298,7 @@ function ActiveOrderHeroCard({
 
       {/* Track CTA strip */}
       <View style={s.heroTrackStrip}>
-        <IconRoute color="#FFFFFF" size={14} />
+        <IconRoute color={colors.neutral.surface} size={14} />
         <Text style={s.heroTrackText}>Theo dõi chuyến hàng</Text>
         <Text style={s.heroTrackArrow}>→</Text>
       </View>
@@ -328,7 +329,7 @@ function CompletedOrderCard({
       {/* Header: icon + reference + status */}
       <View style={s.completedHeader}>
         <View style={s.completedIconBox}>
-          <IconSpeedTruck color={isDelivered ? '#16A34A' : isCancelled ? '#DC2626' : '#0B1E42'} size={18} />
+          <IconSpeedTruck color={isDelivered ? colors.success.text : isCancelled ? colors.danger.text : customerPalette.primary} size={18} />
         </View>
         <View style={s.completedTitleWrap}>
           <Text numberOfLines={1} style={s.completedRef}>Đơn {order.reference}</Text>
@@ -340,7 +341,7 @@ function CompletedOrderCard({
       {/* Route: horizontal compact */}
       <View style={s.completedRoute}>
         <View style={s.completedRouteFlow}>
-          <View style={[s.completedDot, { backgroundColor: '#16A34A' }]} />
+          <View style={[s.completedDot, { backgroundColor: colors.success.text }]} />
           <Text numberOfLines={1} style={s.completedRouteText}>{order.route.origin.label}</Text>
         </View>
         <View style={s.completedArrow}>
@@ -348,7 +349,7 @@ function CompletedOrderCard({
           <Text style={s.completedArrowHead}>›</Text>
         </View>
         <View style={s.completedRouteFlow}>
-          <View style={[s.completedDot, { backgroundColor: '#DC2626' }]} />
+          <View style={[s.completedDot, { backgroundColor: colors.danger.text }]} />
           <Text numberOfLines={1} style={s.completedRouteText}>{order.route.destination.label}</Text>
         </View>
       </View>
@@ -374,7 +375,7 @@ function EmptyActiveState() {
     <View style={s.emptyActive}>
       <View style={s.emptyIconOuter}>
         <View style={s.emptyIconInner}>
-          <IconSpeedTruck color="#94A3B8" size={32} />
+          <IconSpeedTruck color={leopardPalette.offlineGray} size={32} />
         </View>
       </View>
       <Text style={s.emptyTitle}>Không có chuyến đang giao</Text>
@@ -528,7 +529,7 @@ export function CustomerOrdersScreen({
             onPress={() => { haptic.light(); onCreate(); }}
             style={({ pressed }) => [s.floatingCta, pressed && s.floatingCtaPressed]}
           >
-            <IconSpeedTruck color="#FFFFFF" size={18} />
+            <IconSpeedTruck color={colors.neutral.surface} size={18} />
             <Text style={s.floatingCtaText}>Đặt chuyến mới</Text>
           </Pressable>
         ) : undefined
@@ -607,7 +608,7 @@ const s = StyleSheet.create({
   // ─── iOS 18 Segmented Control ──────────────────────────────────
   segmentedBar: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 12,
     ...iosContinuousCurve,
     padding: 3,
@@ -625,8 +626,8 @@ const s = StyleSheet.create({
     ...iosContinuousCurve,
   },
   segmentTabActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: colors.neutral.surface,
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.12,
     shadowRadius: 3,
@@ -635,14 +636,14 @@ const s = StyleSheet.create({
   segmentLabel: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '500',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   segmentLabelActive: {
     fontWeight: '600',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   segmentBadge: {
-    backgroundColor: '#16A34A',
+    backgroundColor: customerPalette.onlineGreen,
     borderRadius: 999,
     minWidth: 20,
     height: 20,
@@ -651,7 +652,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   segmentBadgeText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 11,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -670,25 +671,25 @@ const s = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 10,
     ...iosContinuousCurve,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   filterChipActive: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   filterChipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   filterChipTextActive: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontWeight: '600',
   },
   filterBadge: {
     minWidth: 20,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
@@ -701,21 +702,21 @@ const s = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    color: '#475569',
+    color: colors.neutral.mutedText,
   },
   filterBadgeTextActive: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
   },
 
   // ─── Hero Active Order Card ───────────────────────────────────
   heroCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 20,
     ...iosContinuousCurve,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0B1E42',
+    borderColor: colors.neutral.border,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -729,13 +730,13 @@ const s = StyleSheet.create({
   // Map strip
   heroMapStrip: {
     height: 72,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.neutral.text,
     position: 'relative',
     overflow: 'hidden',
   },
   heroMapGradient: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.neutral.text,
     opacity: 0.9,
   },
   heroRouteLine: {
@@ -773,7 +774,7 @@ const s = StyleSheet.create({
     borderRadius: 999,
   },
   heroStatusText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -796,13 +797,13 @@ const s = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#16A34A',
+    backgroundColor: colors.success.text,
   },
   heroDestDot: {
     width: 10,
     height: 10,
     borderRadius: 3,
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
   },
   heroRouteTextWrap: {
     flex: 1,
@@ -810,20 +811,20 @@ const s = StyleSheet.create({
   heroRouteLabel: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     letterSpacing: 0.5,
   },
   heroRouteAddress: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
-    color: '#0F172A',
+    color: colors.neutral.text,
     marginTop: 1,
   },
   heroRouteSeparator: {
     marginLeft: 4,
     width: 2,
     height: 8,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     borderRadius: 1,
   },
 
@@ -833,7 +834,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: colors.neutral.surfaceMuted,
     paddingTop: 10,
   },
   heroRefWrap: {
@@ -844,7 +845,7 @@ const s = StyleSheet.create({
   heroRef: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontVariant: ['tabular-nums'],
   },
   heroMetaRight: {
@@ -864,13 +865,13 @@ const s = StyleSheet.create({
   heroEtaText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
   heroPrice: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
 
@@ -880,11 +881,11 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     paddingVertical: 12,
   },
   heroTrackText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -896,14 +897,14 @@ const s = StyleSheet.create({
 
   // ─── Completed Order Card ─────────────────────────────────────
   completedCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 16,
     ...iosContinuousCurve,
     padding: 14,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#0F172A',
+    borderColor: colors.neutral.surfaceMuted,
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -923,7 +924,7 @@ const s = StyleSheet.create({
     height: 36,
     borderRadius: 10,
     ...iosContinuousCurve,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.bgMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -934,11 +935,11 @@ const s = StyleSheet.create({
   completedRef: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   completedUpdated: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     marginTop: 1,
   },
 
@@ -946,7 +947,7 @@ const s = StyleSheet.create({
   completedRoute: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.bgMuted,
     borderRadius: 10,
     ...iosContinuousCurve,
     padding: 10,
@@ -980,12 +981,12 @@ const s = StyleSheet.create({
   completedArrowLine: {
     width: 12,
     height: 1.5,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: colors.neutral.subtleBorder,
     borderRadius: 1,
   },
   completedArrowHead: {
     fontSize: typeScale.subheadline.fontSize,
-    color: '#CBD5E1',
+    color: colors.neutral.subtleBorder,
     fontWeight: '700',
     lineHeight: 14,
   },
@@ -1000,18 +1001,18 @@ const s = StyleSheet.create({
   completedPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
   completedDistance: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   completedEta: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
 
   // ─── Empty State ──────────────────────────────────────────────
@@ -1025,7 +1026,7 @@ const s = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
@@ -1034,20 +1035,20 @@ const s = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyTitle: {
     fontSize: typeScale.body.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
     textAlign: 'center',
   },
   emptyBody: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '400',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -1084,7 +1085,7 @@ const s = StyleSheet.create({
   timeGroupText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     letterSpacing: 0.3,
   },
 
@@ -1094,13 +1095,13 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderRadius: 14,
     ...iosContinuousCurve,
     paddingHorizontal: 20,
     paddingVertical: 14,
     minHeight: 48,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
@@ -1111,7 +1112,7 @@ const s = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   floatingCtaText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 15,
     fontWeight: '700',
   },

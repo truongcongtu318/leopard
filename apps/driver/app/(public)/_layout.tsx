@@ -1,18 +1,19 @@
 import { Stack } from 'expo-router';
+import { colors, leopardPalette } from '@leopard/mobile-core';
 
 export default function DriverPublicLayout() {
   return (
     <Stack
       screenOptions={{
         animation: 'fade',
-        contentStyle: { backgroundColor: '#F8FAFC' },
+        contentStyle: { backgroundColor: colors.neutral.canvas },
         headerShown: false,
       }}
     >
       <Stack.Screen
         name="login"
         options={{
-          contentStyle: { backgroundColor: '#0B1E42' },
+          contentStyle: { backgroundColor: leopardPalette.primary },
           gestureEnabled: false,
         }}
       />
@@ -21,7 +22,7 @@ export default function DriverPublicLayout() {
         options={{
           animation: 'slide_from_right',
           animationDuration: 280,
-          contentStyle: { backgroundColor: '#0B1E42' },
+          contentStyle: { backgroundColor: leopardPalette.primary },
           gestureEnabled: true,
         }}
       />
@@ -30,7 +31,7 @@ export default function DriverPublicLayout() {
         options={{
           animation: 'slide_from_right',
           animationDuration: 280,
-          contentStyle: { backgroundColor: '#F8FAFC' },
+          contentStyle: { backgroundColor: colors.neutral.canvas },
           gestureEnabled: true,
         }}
       />

@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { typeScale, colors, leopardPalette, radius, spacing, typography, IconLocationPin } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, leopardPalette, radius, spacing, typography, IconLocationPin } from '@leopard/mobile-core';
 import type { AddressCandidate } from './model';
 
 const DEBOUNCE_MS = 300;
@@ -43,7 +43,7 @@ export function AddressSearchField({
   onOpenMapModal,
   onRemove,
   onSelect,
-  pinColor = '#0B1E42',
+  pinColor = customerPalette.primary,
   placeholder,
   removeLabel,
   search,
@@ -103,7 +103,7 @@ export function AddressSearchField({
     setResults([]);
   }
 
-  const isDropoff = pinColor === '#DC2626';
+  const isDropoff = pinColor === colors.danger.text;
 
   return (
     <View style={styles.container}>
@@ -176,7 +176,7 @@ export function AddressSearchField({
               }
             }}
             placeholder={placeholder || `Nhập ${label.toLowerCase()}...`}
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={leopardPalette.inputPlaceholder}
             pointerEvents={onOpenMapModal ? 'none' : 'auto'}
             showSoftInputOnFocus={!onOpenMapModal}
             style={[
@@ -250,7 +250,7 @@ export function AddressSearchField({
               style={({ pressed }) => [styles.resultRow, pressed ? styles.resultRowPressed : null]}
             >
               <View style={styles.resultIconWrap}>
-                <IconLocationPin color="#0B1E42" size={14} />
+                <IconLocationPin color={customerPalette.primary} size={14} />
               </View>
               <View style={styles.resultTextCol}>
                 <Text numberOfLines={1} style={styles.resultLabel}>
@@ -278,23 +278,23 @@ const styles = StyleSheet.create({
   routeInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.subtleBorder,
     borderWidth: 1.5,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 7,
     minHeight: 52,
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 1,
   },
   routeInputWrapperFocused: {
-    borderColor: '#F59E0B',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#F59E0B',
+    borderColor: customerPalette.inputFocusBorder,
+    backgroundColor: colors.neutral.surface,
+    shadowColor: customerPalette.inputFocusBorder,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 8,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   routeInputWrapperError: {
     borderColor: colors.danger.border,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.danger.background,
   },
   inputInnerColumn: {
     flex: 1,
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   locationFieldLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -330,36 +330,36 @@ const styles = StyleSheet.create({
     maxWidth: '65%',
   },
   contactBadgePickup: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#BBF7D0',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
   },
   contactBadgeDropoff: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#FECACA',
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
   },
   contactBadgeText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   contactBadgeTextPickup: {
-    color: '#15803D',
+    color: colors.success.text,
   },
   contactBadgeTextDropoff: {
-    color: '#B91C1C',
+    color: colors.danger.text,
   },
   removeStopInlineBtn: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.danger.background,
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 1,
   },
   removeStopInlineBtnText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   locationTextInput: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     padding: 0,
@@ -372,21 +372,21 @@ const styles = StyleSheet.create({
     }),
   },
   locationTextInputPlaceholder: {
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontWeight: '400',
   },
   clearBtn: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 6,
   },
   clearBtnText: {
     fontSize: 11,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontWeight: '700',
     lineHeight: 13,
   },
@@ -400,12 +400,12 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   inputMapPinBtnPickup: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.subtleBorder,
   },
   inputMapPinBtnDropoff: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
   },
   errorArea: {
     minHeight: 16,
@@ -430,13 +430,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   dropdown: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     marginTop: 4,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -449,17 +449,17 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
     borderBottomWidth: 1,
   },
   resultRowPressed: {
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   resultIconWrap: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -469,12 +469,12 @@ const styles = StyleSheet.create({
   },
   resultLabel: {
     fontSize: 13,
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontWeight: '600',
   },
   resultAddress: {
     fontSize: typeScale.caption1.fontSize,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   pressed: {
     opacity: 0.85,

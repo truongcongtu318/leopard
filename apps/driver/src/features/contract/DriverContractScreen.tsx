@@ -8,6 +8,8 @@ import {
   IconFileText,
   ScreenScaffold,
   ScreenState,
+  colors,
+  leopardPalette,
   radius,
   spacing,
   typeScale,
@@ -127,12 +129,12 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   cardOuter: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     borderRadius: radius.bezelOuter,
     borderWidth: 1.5,
     padding: 4,
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
@@ -140,7 +142,7 @@ const styles = StyleSheet.create({
   },
   cardInner: {
     backgroundColor: '#FAFCFF',
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: radius.bezelInner,
     borderWidth: 1,
     gap: 12,
@@ -166,13 +168,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   contractCodeLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   contractCodeValue: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '900',
     letterSpacing: 0.5,
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   overviewDivider: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     height: 1,
   },
   metaRow: {
@@ -206,12 +208,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metaLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     fontWeight: '600',
   },
   metaValue: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 11,
     fontWeight: '800',
   },

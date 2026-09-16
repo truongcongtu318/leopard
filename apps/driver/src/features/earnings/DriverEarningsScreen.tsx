@@ -4,8 +4,6 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
-  driverPrimitives,
-  iosContinuousCurve,
   IconCheck,
   IconChevronRight,
   IconEarnings,
@@ -15,6 +13,9 @@ import {
   ScreenScaffold,
   ScreenState,
   SkeletonCard,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 import { FinanceBottomBar } from '../finance/FinanceBottomBar';
 
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   scrollWrap: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
   },
   scrollContent: {
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   /* Hero Card */
   heroCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -267,8 +268,8 @@ const styles = StyleSheet.create({
   },
   heroIconBox: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 8,
     borderWidth: 1,
     height: 32,
@@ -282,15 +283,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   jobsBadge: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderRadius: 9999,
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
   jobsBadgeText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 11.5,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -331,7 +332,7 @@ const styles = StyleSheet.create({
   },
   groupedCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,

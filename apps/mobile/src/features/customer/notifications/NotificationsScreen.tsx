@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
-import { typeScale, colors, haptic, iosContinuousCurve, layout, radius, spacing, typography, IconBell, IconOrders, IconTag, IconTxPayment, ScreenScaffold } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, leopardPalette, haptic, iosContinuousCurve, layout, radius, spacing, typography, IconBell, IconOrders, IconTag, IconTxPayment, ScreenScaffold } from '@leopard/mobile-core';
 import { isOlderThanOneDay } from './adapter';
 import type { NotificationFilter, NotificationItemView, NotificationsContentView } from './model';
 
@@ -26,32 +26,32 @@ function getItemMeta(type: NotificationItemView['type']) {
   switch (type) {
     case 'order':
       return {
-        icon: <IconOrders color="#0B1E42" size={18} />,
-        bg: '#F0F4F9',
+        icon: <IconOrders color={customerPalette.primary} size={18} />,
+        bg: colors.neutral.surfaceMuted,
         badgeText: 'Đơn hàng',
-        badgeColor: '#0B1E42',
+        badgeColor: customerPalette.primary,
       };
     case 'payment':
       return {
-        icon: <IconTxPayment color="#16A34A" size={18} />,
-        bg: '#DCFCE7',
+        icon: <IconTxPayment color={colors.brand.green} size={18} />,
+        bg: colors.success.background,
         badgeText: 'Thanh toán',
-        badgeColor: '#16A34A',
+        badgeColor: colors.brand.green,
       };
     case 'promo':
       return {
-        icon: <IconTag color="#D97706" size={18} />,
-        bg: '#FEF3C7',
+        icon: <IconTag color={colors.warning.text} size={18} />,
+        bg: colors.warning.background,
         badgeText: 'Ưu đãi',
-        badgeColor: '#D97706',
+        badgeColor: colors.warning.text,
       };
     case 'system':
     default:
       return {
-        icon: <IconBell color="#475569" size={18} />,
-        bg: '#F1F5F9',
+        icon: <IconBell color={colors.neutral.mutedText} size={18} />,
+        bg: colors.neutral.surfaceMuted,
         badgeText: 'Hệ thống',
-        badgeColor: '#475569',
+        badgeColor: colors.neutral.mutedText,
       };
   }
 }
@@ -164,7 +164,7 @@ export function NotificationsScreen({
           ListEmptyComponent={
             <View style={styles.emptyBox}>
               <View style={styles.emptyIconCircle}>
-                <IconBell color="#94A3B8" size={32} />
+                <IconBell color={colors.neutral.subtleText} size={32} />
               </View>
               <Text style={styles.emptyTitle}>Không có thông báo nào</Text>
               <Text style={styles.emptyMessage}>
@@ -289,13 +289,13 @@ const styles = StyleSheet.create({
   },
   markAllBtn: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   markAllBtnText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -315,25 +315,25 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 10,
     ...iosContinuousCurve,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   filterChipActive: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   filterChipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   filterChipTextActive: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontWeight: '600',
   },
   filterBadge: {
     minWidth: 20,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
@@ -346,10 +346,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    color: '#475569',
+    color: colors.neutral.mutedText,
   },
   filterBadgeTextActive: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
   },
   listContent: {
     gap: spacing.sm,
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   sectionHeader: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -373,22 +373,22 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
   },
   cardUnread: {
-    backgroundColor: '#FAFCFF',
-    borderColor: '#CBD5E1',
-    borderLeftColor: '#0B1E42',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.subtleBorder,
+    borderLeftColor: customerPalette.primary,
     borderLeftWidth: 3.5,
   },
   cardHeader: {
@@ -423,31 +423,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardTitle: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   cardTime: {
-    color: '#94A3B8',
+    color: customerPalette.offlineGray,
     fontSize: typeScale.caption1.fontSize,
   },
   unreadDot: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: leopardPalette.accentYellow,
     borderRadius: 4,
     height: 8,
     width: 8,
     alignSelf: 'center',
   },
   cardBody: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: typeScale.footnote.fontSize,
     lineHeight: 18,
     paddingLeft: 46,
   },
   emptyBox: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     borderWidth: 1,
     gap: 6,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   },
   emptyIconCircle: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 30,
     height: 60,
     justifyContent: 'center',
@@ -465,13 +465,13 @@ const styles = StyleSheet.create({
     width: 60,
   },
   emptyTitle: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
   },
   emptyMessage: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.footnote.fontSize,
     lineHeight: 18,
     textAlign: 'center',
@@ -481,22 +481,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   resetFilterBtnText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   loadMoreBtn: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 999,
     marginTop: spacing.sm,
     paddingVertical: 10,
   },
   loadMoreBtnText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },

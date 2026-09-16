@@ -3,7 +3,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
-import { driverPrimitives, iosContinuousCurve } from '@leopard/mobile-core';
+import {
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
+} from '@leopard/mobile-core';
 
 export type FinanceTabKey = 'earnings' | 'wallet';
 
@@ -97,7 +101,7 @@ export function FinanceBottomBar({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     bottom: 0,
     left: 0,
     position: 'absolute',
@@ -105,7 +109,7 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
   topBorder: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     height: StyleSheet.hairlineWidth || 1,
     width: '100%',
   },

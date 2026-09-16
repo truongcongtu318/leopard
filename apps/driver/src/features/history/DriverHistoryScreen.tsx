@@ -3,8 +3,6 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useRouter } from 'expo-router';
 
 import {
-  driverPrimitives,
-  iosContinuousCurve,
   IconCameraProof,
   IconCheck,
   IconClose,
@@ -14,6 +12,9 @@ import {
   IconTrophy,
   ScreenScaffold,
   ScreenState,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 
 export type HistoryTripItem = Readonly<{
@@ -252,7 +253,7 @@ export function DriverHistoryScreen({
                 hitSlop={12}
                 onPress={() => setSelectedEpodTrip(null)}
               >
-                <IconClose color="#64748B" size={20} />
+                <IconClose color={colors.neutral.subtleText} size={20} />
               </Pressable>
             </View>
 
@@ -290,7 +291,7 @@ export function DriverHistoryScreen({
 
 const styles = StyleSheet.create({
   scrollWrap: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
   },
   scrollContent: {
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
   /* 1. KPI Bento Card */
   kpiCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -336,14 +337,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   kpiDividerVertical: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     height: '100%',
     width: 1,
   },
 
   /* 2. Date Filter Segmented Control */
   segmentedControl: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     borderRadius: 10,
     flexDirection: 'row',
     gap: 2,
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   },
   tripCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -470,7 +471,7 @@ const styles = StyleSheet.create({
   emptyBox: {
     alignItems: 'center',
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     borderWidth: 1,
     gap: 6,
@@ -528,8 +529,8 @@ const styles = StyleSheet.create({
   },
   proofPlaceholderImage: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     gap: 6,
@@ -546,8 +547,8 @@ const styles = StyleSheet.create({
   },
   signatureCanvasPreview: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     height: 60,

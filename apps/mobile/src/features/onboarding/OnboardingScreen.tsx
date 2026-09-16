@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
-import { typeScale, spacing, LeopardEmblem } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, leopardPalette, spacing, LeopardEmblem } from '@leopard/mobile-core';
 
 const onboarding1 = require('../../../assets/brand/onboarding-1.jpg');
 const onboarding2 = require('../../../assets/brand/onboarding-2.jpg');
@@ -424,7 +424,7 @@ export function OnboardingScreen({
               ]}
             >
               <ArrowRightIcon
-                color={isLastSlide ? '#0B1E42' : '#FFFFFF'}
+                color={isLastSlide ? customerPalette.textSlateDark : customerPalette.surfaceWhite}
                 size={24}
               />
             </Pressable>
@@ -457,7 +457,7 @@ export function OnboardingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.textSlateDark,
   },
   backgroundLayer: {
     ...StyleSheet.absoluteFill,
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   brandTitleText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 15,
     fontWeight: '900',
     fontStyle: 'italic',
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.96 }],
   },
   skipBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#0284C7',
+    backgroundColor: colors.info.text,
     marginRight: 8,
   },
   badgeText: {
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: typeScale.title1.fontSize,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     lineHeight: 35,
     marginBottom: 12,
     letterSpacing: -0.3,
@@ -628,8 +628,8 @@ const styles = StyleSheet.create({
   },
   dotActive: {
     width: 28,
-    backgroundColor: '#F59E0B',
-    shadowColor: '#F59E0B',
+    backgroundColor: leopardPalette.accentYellow,
+    shadowColor: leopardPalette.accentYellow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
     shadowRadius: 4,
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.textSlateDark,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -655,8 +655,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   actionBtnLast: {
-    backgroundColor: '#F59E0B',
-    shadowColor: '#F59E0B',
+    backgroundColor: leopardPalette.accentYellow,
+    shadowColor: leopardPalette.accentYellow,
     shadowOpacity: 0.5,
   },
   actionBtnPressed: {

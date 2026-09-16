@@ -146,7 +146,7 @@ describe('MyDeliveriesScreen', () => {
     await screen.unmount();
   });
 
-  it('renders IN_TRANSIT and ACCEPTED badges with Midnight Navy #0B1E42 and #F0F4F9', async () => {
+  it('renders IN_TRANSIT and ACCEPTED badges with neutral ink #0F172A on muted background', async () => {
     const ordersWithAccepted: DeliveryOrder[] = [
       ...mockOrders,
       {
@@ -168,7 +168,7 @@ describe('MyDeliveriesScreen', () => {
     const inTransitText = screen.getByText('Đang vận chuyển');
     expect(inTransitText.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ color: '#0B1E42' }),
+        expect.objectContaining({ color: '#0F172A' }),
       ]),
     );
 
@@ -177,20 +177,20 @@ describe('MyDeliveriesScreen', () => {
     const acceptedText = screen.getAllByText('Đã nhận').find((el) => {
       const style = Array.isArray(el.props.style) ? el.props.style : [el.props.style];
       return style.some(
-        (s: Record<string, unknown> | undefined) => s?.color === '#0B1E42',
+        (s: Record<string, unknown> | undefined) => s?.color === '#0F172A',
       );
     });
     expect(acceptedText).toBeTruthy();
     expect(acceptedText?.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ color: '#0B1E42' }),
+        expect.objectContaining({ color: '#0F172A' }),
       ]),
     );
 
     await screen.unmount();
   });
 
-  it('applies Midnight Navy #0B1E42 border to search bar on focus', async () => {
+  it('applies Trackly orange #F86E3F border to search bar on focus', async () => {
     const screen = await render(<MyDeliveriesScreen orders={mockOrders} />);
 
     const searchInput = screen.getByLabelText('Tìm kiếm đơn hàng');
@@ -199,7 +199,7 @@ describe('MyDeliveriesScreen', () => {
     const searchBar = screen.getByTestId('search-bar');
     expect(searchBar.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ borderColor: '#0B1E42' }),
+        expect.objectContaining({ borderColor: '#F86E3F' }),
       ]),
     );
 

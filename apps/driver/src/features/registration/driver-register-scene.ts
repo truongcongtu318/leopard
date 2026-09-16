@@ -1,4 +1,5 @@
 import {
+  colors,
   driverPrimitives,
   driverSemantics,
   leopardPalette,
@@ -17,16 +18,16 @@ import {
  */
 export const scene = {
   canvas: driverSemantics.surface.canvas,
-  canvasDark: '#0B1E42',
+  canvasDark: leopardPalette.primary,
   surface: driverSemantics.surface.card,
   surfaceDark: '#0F2347',
   fieldBg: '#132B52',
   fieldBgSoft: 'rgba(255, 255, 255, 0.06)',
   ink: driverSemantics.text.inverse,
   muted: driverSemantics.text.muted,
-  mutedLight: '#CBD5E1',
+  mutedLight: leopardPalette.inputBorder,
   subtle: driverSemantics.text.muted,
-  placeholder: '#64748B',
+  placeholder: colors.neutral.subtleText,
   border: driverPrimitives.colors.gray200,
   borderDark: 'rgba(255, 255, 255, 0.12)',
   borderLight: 'rgba(255, 255, 255, 0.20)',

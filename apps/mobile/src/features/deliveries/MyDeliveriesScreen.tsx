@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { typeScale, customerPalette, haptic, iosContinuousCurve, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, haptic, iosContinuousCurve, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -89,13 +89,13 @@ type StatusPresentation = Readonly<{
 }>;
 
 const STATUS_PRESENTATION: Record<DeliveryStatus, StatusPresentation> = {
-  REQUESTED: { label: 'Chờ xác nhận', bg: '#FFF7ED', text: '#9A3412', dot: '#F97316' },
-  ACCEPTED: { label: 'Đã nhận', bg: '#F0F4F9', text: '#0B1E42', dot: '#0B1E42' },
-  LOADING: { label: 'Đang bốc hàng', bg: leopardPalette.accentYellowBg, text: '#854D0E', dot: leopardPalette.accentYellow },
-  IN_TRANSIT: { label: 'Đang vận chuyển', bg: '#F0F4F9', text: '#0B1E42', dot: '#0B1E42' },
-  ARRIVED: { label: 'Đã đến', bg: leopardPalette.ecoGreenBg, text: '#166534', dot: leopardPalette.ecoGreen },
-  DELIVERED: { label: 'Hoàn thành', bg: leopardPalette.ecoGreenBg, text: '#166534', dot: leopardPalette.ecoGreen },
-  CANCELLED: { label: 'Đã hủy', bg: '#FEE2E2', text: '#991B1B', dot: '#EF4444' },
+  REQUESTED: { label: 'Chờ xác nhận', bg: colors.warning.background, text: colors.warning.text, dot: leopardPalette.accentYellow },
+  ACCEPTED: { label: 'Đã nhận', bg: leopardPalette.bgMuted, text: leopardPalette.textSlateDark, dot: leopardPalette.textSlateDark },
+  LOADING: { label: 'Đang bốc hàng', bg: leopardPalette.accentYellowBg, text: colors.warning.text, dot: leopardPalette.accentYellow },
+  IN_TRANSIT: { label: 'Đang vận chuyển', bg: leopardPalette.bgMuted, text: leopardPalette.textSlateDark, dot: leopardPalette.textSlateDark },
+  ARRIVED: { label: 'Đã đến', bg: leopardPalette.ecoGreenBg, text: colors.success.text, dot: leopardPalette.ecoGreen },
+  DELIVERED: { label: 'Hoàn thành', bg: leopardPalette.ecoGreenBg, text: colors.success.text, dot: leopardPalette.ecoGreen },
+  CANCELLED: { label: 'Đã hủy', bg: colors.danger.background, text: colors.danger.text, dot: colors.danger.text },
 };
 
 const FILTER_CHIPS: readonly { key: FilterChip; label: string }[] = [
@@ -345,7 +345,7 @@ export function MyDeliveriesScreen({
           style={[styles.searchBar, isSearchFocused ? styles.searchBarFocused : null]}
           testID="search-bar"
         >
-          <IconSearch color={isSearchFocused ? '#0B1E42' : leopardPalette.textMutedSlate} size={18} />
+          <IconSearch color={isSearchFocused ? customerPalette.primary : leopardPalette.textMutedSlate} size={18} />
           <TextInput
             accessibilityLabel="Tìm kiếm đơn hàng"
             onBlur={() => setIsSearchFocused(false)}
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   newOrderBtnText: {
-    color: '#FFFFFF',
+    color: leopardPalette.surfaceWhite,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -490,9 +490,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   searchBarFocused: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0B1E42',
+    borderColor: customerPalette.primary,
+    backgroundColor: leopardPalette.surfaceWhite,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 4,
@@ -522,29 +522,29 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: leopardPalette.bgMuted,
     borderRadius: 10,
     ...iosContinuousCurve,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
   chipActive: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   chipLabel: {
-    color: '#64748B',
+    color: leopardPalette.textSubtle,
     fontSize: 13,
     fontWeight: '500',
   },
   chipLabelActive: {
-    color: '#FFFFFF',
+    color: leopardPalette.surfaceWhite,
     fontWeight: '600',
   },
   filterBadge: {
     minWidth: 20,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: leopardPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
@@ -557,10 +557,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    color: '#475569',
+    color: leopardPalette.textMutedSlate,
   },
   filterBadgeTextActive: {
-    color: '#FFFFFF',
+    color: leopardPalette.surfaceWhite,
   },
   listContent: {
     padding: spacing.md,

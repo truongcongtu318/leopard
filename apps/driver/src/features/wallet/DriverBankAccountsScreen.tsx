@@ -223,18 +223,18 @@ const styles = StyleSheet.create({
   },
   /* Double-Bezel Card: 24px outer, 18px inner */
   doubleBezelOuter: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderRadius: radius.bezelOuter,
     elevation: 3,
     padding: 3,
-    shadowColor: '#0B1E42',
+    shadowColor: leopardPalette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
   doubleBezelInner: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: radius.bezelInner,
     borderWidth: 1,
     gap: spacing.xs,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   },
   bankIconWrap: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: radius.card,
     height: 42,
     justifyContent: 'center',
@@ -262,12 +262,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#DCFCE7',
   },
   bankName: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 15,
     fontWeight: '700',
   },
   accountNumber: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 13,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
@@ -290,8 +290,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   setDefaultButton: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderRadius: radius.pill,
     borderWidth: 1,
     minHeight: 44,
@@ -300,12 +300,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   setDefaultText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   cardDivider: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     height: 1,
     marginVertical: 2,
   },
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   holderName: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   addAccountBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   modalCloseBtn: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 22,
     justifyContent: 'center',
     minHeight: 44,
@@ -425,8 +425,8 @@ const styles = StyleSheet.create({
   },
   bankSelectChip: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderRadius: radius.card,
     borderWidth: 1,
     minHeight: 44,
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   bankSelectChipText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   formErrorText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',

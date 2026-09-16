@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { typeScale, httpClient } from '@leopard/mobile-core';
+import { typeScale, httpClient, colors, customerPalette, leopardPalette } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../src/features/customer/addresses/address-store';
 import {
   BrandLoginLogo,
@@ -455,7 +455,7 @@ export default function CustomerAddAddressScreen() {
               onChangeText={setAddressLabel}
               onFocus={() => setFocusedField('label')}
               placeholder="VD: Kho tổng Tân Bình, Cửa hàng Q1, Xưởng may..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={leopardPalette.inputPlaceholder}
               style={[
                 styles.input,
                 focusedField === 'label' && styles.inputFocused,
@@ -471,14 +471,14 @@ export default function CustomerAddAddressScreen() {
             <View style={styles.contactRow}>
               <View style={styles.contactCol}>
                 <View style={styles.contactInputWrap}>
-                  <IconUser color="#64748B" size={16} />
+                  <IconUser color={customerPalette.textSubtle} size={16} />
                   <TextInput
                     accessibilityLabel="Tên người liên hệ"
                     onBlur={() => setFocusedField(null)}
                     onChangeText={setContactName}
                     onFocus={() => setFocusedField('contactName')}
                     placeholder="Tên người liên hệ"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={leopardPalette.inputPlaceholder}
                     style={styles.contactTextInput}
                     testID="ca-contact-name"
                     value={contactName}
@@ -488,7 +488,7 @@ export default function CustomerAddAddressScreen() {
 
               <View style={styles.contactCol}>
                 <View style={styles.contactInputWrap}>
-                  <IconPhone color="#64748B" size={16} />
+                  <IconPhone color={customerPalette.textSubtle} size={16} />
                   <TextInput
                     accessibilityLabel="Số điện thoại"
                     keyboardType="phone-pad"
@@ -496,7 +496,7 @@ export default function CustomerAddAddressScreen() {
                     onChangeText={setContactPhone}
                     onFocus={() => setFocusedField('contactPhone')}
                     placeholder="Số điện thoại"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={leopardPalette.inputPlaceholder}
                     style={styles.contactTextInput}
                     testID="ca-contact-phone"
                     value={contactPhone}
@@ -519,7 +519,7 @@ export default function CustomerAddAddressScreen() {
           >
             <View style={styles.gpsLeft}>
               <View style={styles.gpsIconCircle}>
-                <IconLocationPin color="#2563EB" size={20} strokeWidth={2} />
+                <IconLocationPin color={customerPalette.primary} size={20} strokeWidth={2} />
               </View>
               <View style={styles.gpsTextCol}>
                 <Text style={styles.gpsBtnTitle}>Sử dụng vị trí hiện tại</Text>
@@ -527,7 +527,7 @@ export default function CustomerAddAddressScreen() {
               </View>
             </View>
             {isLocating ? (
-              <ActivityIndicator color="#2563EB" size="small" />
+              <ActivityIndicator color={customerPalette.primary} size="small" />
             ) : (
               <Text style={styles.gpsArrow}>›</Text>
             )}
@@ -559,7 +559,7 @@ export default function CustomerAddAddressScreen() {
                   <View style={styles.mapRoadV} />
                   <View style={styles.mapPinPulse} />
                   <View style={styles.mapPinWrap}>
-                    <IconLocationPin color="#DC2626" secondaryColor="#FEE2E2" size={32} strokeWidth={2} />
+                    <IconLocationPin color={colors.danger.text} secondaryColor={colors.danger.background} size={32} strokeWidth={2} />
                   </View>
                 </View>
               )}
@@ -576,7 +576,7 @@ export default function CustomerAddAddressScreen() {
             {/* Address Banner on Map */}
             <View style={styles.selectedAddressBanner}>
               <View style={styles.selectedPinIcon}>
-                <IconLocationPin color="#2563EB" size={18} strokeWidth={2} />
+                <IconLocationPin color={customerPalette.primary} size={18} strokeWidth={2} />
               </View>
               <View style={styles.selectedAddressCol}>
                 <Text numberOfLines={2} style={styles.selectedAddressText}>
@@ -601,7 +601,7 @@ export default function CustomerAddAddressScreen() {
                 focusedField === 'search' && styles.inputFocused,
               ]}
             >
-              <IconSearch color="#64748B" size={18} />
+              <IconSearch color={customerPalette.textSubtle} size={18} />
               <TextInput
                 accessibilityLabel="Tìm kiếm địa chỉ"
                 autoCapitalize="none"
@@ -610,12 +610,12 @@ export default function CustomerAddAddressScreen() {
                 onChangeText={setSearchQuery}
                 onFocus={() => setFocusedField('search')}
                 placeholder="Tìm đường, tòa nhà, khu công nghiệp..."
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={styles.searchInput}
                 testID="ca-search-input"
                 value={searchQuery}
               />
-              {isSearching ? <ActivityIndicator color="#2563EB" size="small" /> : null}
+              {isSearching ? <ActivityIndicator color={customerPalette.primary} size="small" /> : null}
             </View>
 
             {/* Autocomplete suggestions list */}
@@ -632,7 +632,7 @@ export default function CustomerAddAddressScreen() {
                     ]}
                   >
                     <View style={styles.suggestionPin}>
-                      <IconLocationPin color="#2563EB" size={16} />
+                      <IconLocationPin color={customerPalette.primary} size={16} />
                     </View>
                     <View style={styles.suggestionTextWrap}>
                       <Text numberOfLines={1} style={styles.suggestionName}>
@@ -656,7 +656,7 @@ export default function CustomerAddAddressScreen() {
                 onChangeText={setAddressDetail}
                 onFocus={() => setFocusedField('detail')}
                 placeholder="VD: Cổng số 2, Kho A3 hoặc Tầng 4, Phòng 402"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={[
                   styles.input,
                   focusedField === 'detail' && styles.inputFocused,
@@ -695,7 +695,7 @@ export default function CustomerAddAddressScreen() {
                     testID={chip.testID}
                   >
                     <IconComp
-                      color={active ? '#D97706' : '#64748B'}
+                      color={active ? leopardPalette.accentYellow : customerPalette.textSubtle}
                       size={15}
                       strokeWidth={2}
                     />
@@ -745,7 +745,7 @@ export const CustomerAddressSetupScreen = CustomerAddAddressScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
   },
   scrollContent: {
     paddingVertical: 16,
@@ -769,26 +769,26 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
     elevation: 2,
   },
   backBtnPressed: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     transform: [{ scale: 0.94 }],
   },
   backChevron: {
     fontSize: typeScale.title1.fontSize,
     lineHeight: 28,
     fontWeight: '600',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     marginLeft: -2,
     marginTop: -2,
   },
@@ -797,15 +797,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     paddingLeft: 8,
     paddingRight: 10,
     paddingVertical: 2,
     height: 42,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: customerPalette.cardBorder,
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -818,12 +818,12 @@ const styles = StyleSheet.create({
 
   /* Main Card */
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: customerPalette.cardBorder,
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -837,18 +837,18 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     letterSpacing: -0.4,
   },
   subline: {
     fontSize: typeScale.subheadline.fontSize,
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     lineHeight: 20,
   },
 
   sectionDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     marginVertical: 4,
   },
 
@@ -865,17 +865,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 14,
     paddingHorizontal: 12,
     height: 46,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
   },
   contactTextInput: {
     flex: 1,
     minWidth: 0,
     fontSize: typeScale.footnote.fontSize,
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontWeight: '500',
     ...Platform.select({
       web: {
@@ -890,9 +890,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 14,
     padding: 12,
   },
@@ -906,11 +906,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
   },
   gpsTextCol: {
     flex: 1,
@@ -919,22 +919,22 @@ const styles = StyleSheet.create({
   gpsBtnTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.primary,
   },
   gpsBtnDesc: {
     fontSize: 12,
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
   },
   gpsArrow: {
     fontSize: 22,
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontWeight: '700',
     marginLeft: 8,
   },
   successToast: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: colors.success.background,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: colors.success.border,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -942,7 +942,7 @@ const styles = StyleSheet.create({
   successToastText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#15803D',
+    color: colors.success.text,
   },
 
   /* Real Map Graphic Card */
@@ -950,12 +950,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: customerPalette.cardBorder,
+    backgroundColor: customerPalette.canvas,
   },
   mapGraphic: {
     height: 230,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -963,14 +963,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
   },
   mapRoadH: {
     position: 'absolute',
     left: 0,
     right: 0,
     height: 22,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: leopardPalette.inputBorder,
     top: '44%',
   },
   mapRoadV: {
@@ -978,7 +978,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 22,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: leopardPalette.inputBorder,
     left: '52%',
   },
   mapPinPulse: {
@@ -990,7 +990,7 @@ const styles = StyleSheet.create({
   },
   mapPinWrap: {
     zIndex: 5,
-    shadowColor: '#000000',
+    shadowColor: customerPalette.accentDark,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -1008,8 +1008,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    shadowColor: '#0F172A',
+    borderColor: leopardPalette.inputBorder,
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -1019,31 +1019,31 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#16A34A',
+    backgroundColor: leopardPalette.ecoGreen,
   },
   telemetryText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#334155',
+    color: customerPalette.textMutedSlate,
   },
   selectedAddressBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: customerPalette.cardBorder,
   },
   selectedPinIcon: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: colors.info.background,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: colors.info.border,
   },
   selectedAddressCol: {
     flex: 1,
@@ -1052,12 +1052,12 @@ const styles = StyleSheet.create({
   selectedAddressText: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     lineHeight: 18,
   },
   selectedCoordsText: {
     fontSize: 11,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontWeight: '500',
   },
 
@@ -1068,15 +1068,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 14,
     paddingHorizontal: 12,
     height: 48,
@@ -1085,7 +1085,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     fontSize: typeScale.subheadline.fontSize,
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontWeight: '500',
     height: '100%',
     ...Platform.select({
@@ -1096,9 +1096,9 @@ const styles = StyleSheet.create({
     }),
   },
   inputFocused: {
-    borderColor: '#2563EB',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#2563EB',
+    borderColor: customerPalette.inputFocusBorder,
+    backgroundColor: customerPalette.surfaceWhite,
+    shadowColor: customerPalette.inputFocusBorder,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.22,
     shadowRadius: 8,
@@ -1107,12 +1107,12 @@ const styles = StyleSheet.create({
 
   /* Autocomplete Suggestions */
   suggestionsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
@@ -1126,17 +1126,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   suggestionItemPressed: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   suggestionDivider: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
   },
   suggestionPin: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: colors.info.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1147,11 +1147,11 @@ const styles = StyleSheet.create({
   suggestionName: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   suggestionAddress: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
   },
 
   /* Field Item */
@@ -1162,18 +1162,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#334155',
+    color: customerPalette.textMutedSlate,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 14,
     paddingHorizontal: 14,
     height: 48,
     fontSize: typeScale.subheadline.fontSize,
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontWeight: '500',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     ...Platform.select({
       web: {
         outlineStyle: 'none',
@@ -1195,21 +1195,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     paddingVertical: 9,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
   },
   chipActive: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
+    borderColor: customerPalette.primary,
   },
   chipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
   },
   chipTextActive: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontWeight: '700',
   },
 
@@ -1225,43 +1225,43 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
   },
   checkboxOn: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
+    borderColor: customerPalette.primary,
   },
   checkboxTick: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 13,
     fontWeight: '800',
   },
   checkboxLabel: {
     flex: 1,
     fontSize: 13,
-    color: '#334155',
+    color: customerPalette.textMutedSlate,
     fontWeight: '500',
   },
 
   /* Action Buttons */
   primaryBtn: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderRadius: 16,
     paddingVertical: 15,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 10,
     elevation: 3,
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.2,

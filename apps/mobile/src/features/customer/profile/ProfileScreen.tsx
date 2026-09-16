@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { typeScale, colors, layout, radius, spacing, IconChevron, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, layout, leopardPalette, radius, spacing, IconChevron, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import type { CustomerProfileView } from './model';
 
 export type CustomerProfileScreenProps = Readonly<{
@@ -57,7 +57,7 @@ function MenuRow({
         </View>
         {subtitle ? <Text style={styles.menuSubtitle}>{subtitle}</Text> : null}
       </View>
-      <IconChevron color="#94A3B8" direction="right" size="md" />
+      <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
     </Pressable>
   );
 }
@@ -121,7 +121,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               </View>
               {/* Verified Shield Badge */}
               <View style={styles.verifiedDot}>
-                <IconSecurityShield color="#FFFFFF" size={10} />
+                <IconSecurityShield color={customerPalette.surfaceWhite} size={10} />
               </View>
             </View>
 
@@ -134,7 +134,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 
               {/* Role Pill */}
               <View style={styles.membershipPill}>
-                <IconCrown color="#F59E0B" size={13} />
+                <IconCrown color={leopardPalette.accentYellow} size={13} />
                 <Text style={styles.membershipText}>{view.roleLabel}</Text>
               </View>
             </View>
@@ -179,12 +179,12 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <View style={[styles.bentoIconBadge, { backgroundColor: '#F1F5F9' }]}>
-                  <IconWallet color="#0B1E42" size={14} />
+                <View style={[styles.bentoIconBadge, { backgroundColor: colors.neutral.surfaceMuted }]}>
+                  <IconWallet color={customerPalette.textSlateDark} size={14} />
                 </View>
                 <Text style={styles.bentoEyebrow}>KÝ QUỸ & ĐƠN</Text>
               </Pressable>
-              <IconChevron color="#94A3B8" direction="right" size="sm" />
+              <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="sm" />
             </View>
 
             <Pressable
@@ -212,12 +212,12 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           >
             <View style={styles.bentoHeaderRow}>
               <View style={styles.bentoLabelWithIcon}>
-                <View style={[styles.bentoIconBadge, { backgroundColor: '#F1F5F9' }]}>
-                  <IconTag color="#0B1E42" size={14} />
+                <View style={[styles.bentoIconBadge, { backgroundColor: colors.neutral.surfaceMuted }]}>
+                  <IconTag color={customerPalette.textSlateDark} size={14} />
                 </View>
                 <Text style={styles.bentoEyebrow}>MÃ ƯU ĐÃI</Text>
               </View>
-              <IconChevron color="#94A3B8" direction="right" size="sm" />
+              <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="sm" />
             </View>
 
             <Text style={styles.bentoPromoText}>
@@ -237,15 +237,15 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                   ? `${view.activeOrdersLabel} đang giao`
                   : undefined
               }
-              icon={<IconOrders color="#0B1E42" size={19} />}
-              iconBg="#F1F5F9"
+              icon={<IconOrders color={customerPalette.textSlateDark} size={19} />}
+              iconBg={colors.neutral.surfaceMuted}
               label="Đơn hàng của tôi"
               onPress={() => router.push('/customer/orders')}
               subtitle="Xem lộ trình & lịch sử các chuyến xe"
             />
             <MenuRow
-              icon={<IconLocationPin color="#0B1E42" size={19} />}
-              iconBg="#F1F5F9"
+              icon={<IconLocationPin color={customerPalette.textSlateDark} size={19} />}
+              iconBg={colors.neutral.surfaceMuted}
               isLast
               label="Sổ địa chỉ"
               onPress={() => router.push('/customer/addresses')}
@@ -259,8 +259,8 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <SectionHeader title="TÀI CHÍNH & DOANH NGHIỆP" />
           <View style={styles.insetCard}>
             <MenuRow
-              icon={<IconFileText color="#0B1E42" size={19} />}
-              iconBg="#F1F5F9"
+              icon={<IconFileText color={customerPalette.textSlateDark} size={19} />}
+              iconBg={colors.neutral.surfaceMuted}
               isLast
               label="Thông tin xuất hóa đơn VAT"
               onPress={() => router.push('/customer/settings')}
@@ -274,15 +274,15 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <SectionHeader title="HỖ TRỢ & HỆ THỐNG" />
           <View style={styles.insetCard}>
             <MenuRow
-              icon={<IconSupport247 color="#DC2626" size={19} />}
-              iconBg="#FEE2E2"
+              icon={<IconSupport247 color={colors.danger.text} size={19} />}
+              iconBg={colors.danger.background}
               label="Trợ giúp & SOS"
               onPress={() => router.push('/customer/support')}
               subtitle="Hỗ trợ trực tuyến 24/7 và giải quyết sự cố"
             />
             <MenuRow
-              icon={<IconSettings color="#0B1E42" size={19} />}
-              iconBg="#F1F5F9"
+              icon={<IconSettings color={customerPalette.textSlateDark} size={19} />}
+              iconBg={colors.neutral.surfaceMuted}
               isLast
               label="Cài đặt"
               onPress={() => router.push('/customer/settings')}
@@ -303,7 +303,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               pressed ? styles.pressed : null,
             ]}
           >
-            <IconLogOut color="#DC2626" size={17} />
+            <IconLogOut color={colors.danger.text} size={17} />
             <Text style={styles.logoutBtnText}>
               {view.isLoggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
             </Text>
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   /* HERO CARD STYLES */
   heroCard: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.darkHeroBg,
     borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 24,
     borderWidth: 1,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     padding: 18,
     paddingBottom: 26,
     position: 'relative',
-    shadowColor: '#0B1E42',
+    shadowColor: leopardPalette.darkHeroBg,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 16,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   leopardIdBadge: {
-    backgroundColor: '#1E293B',
+    backgroundColor: customerPalette.textSlateDark,
     borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 999,
     borderWidth: 1,
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   leopardIdText: {
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   editHeroBtnText: {
-    color: '#CBD5E1',
+    color: colors.neutral.subtleBorder,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   },
   avatarSquircle: {
     alignItems: 'center',
-    backgroundColor: '#0F172A',
+    backgroundColor: customerPalette.textSlateDark,
     borderColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 18,
     borderWidth: 2,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     width: 62,
   },
   avatarText: {
-    color: '#F1F5F9',
+    color: colors.neutral.surfaceMuted,
     fontSize: typeScale.title1.fontSize,
     fontWeight: '800',
   },
@@ -417,8 +417,8 @@ const styles = StyleSheet.create({
   },
   verifiedDot: {
     alignItems: 'center',
-    backgroundColor: '#F59E0B',
-    borderColor: '#0B1E42',
+    backgroundColor: leopardPalette.accentYellow,
+    borderColor: leopardPalette.darkHeroBg,
     borderRadius: 10,
     borderWidth: 2,
     bottom: -2,
@@ -433,13 +433,13 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   heroName: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: -0.2,
   },
   heroPhone: {
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
     fontWeight: '500',
@@ -458,12 +458,12 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   membershipText: {
-    color: '#FCD34D',
+    color: leopardPalette.accentYellow,
     fontSize: 11,
     fontWeight: '600',
   },
   membershipRole: {
-    color: '#FBBF24',
+    color: leopardPalette.accentYellow,
     fontWeight: '800',
   },
   quickStatsRow: {
@@ -487,24 +487,24 @@ const styles = StyleSheet.create({
     width: 1,
   },
   statLabel: {
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontSize: 11,
     fontWeight: '500',
   },
   statValueWhite: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
   statValueGold: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
   statValueGreen: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
@@ -512,15 +512,15 @@ const styles = StyleSheet.create({
 
   /* FLOATING BENTO WALLET */
   bentoWalletCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.cardBorder,
     borderRadius: 20,
     borderWidth: 1,
     elevation: 4,
     flexDirection: 'row',
     marginTop: -16,
     padding: 14,
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 10,
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bentoColDivider: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     marginHorizontal: 12,
     width: 1,
   },
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     width: 22,
   },
   bentoEyebrow: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -566,31 +566,31 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   bentoChevron: {
-    color: '#CBD5E1',
+    color: colors.neutral.subtleBorder,
     fontSize: 16,
     fontWeight: '600',
   },
   bentoAmountText: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
     marginTop: 2,
   },
   bentoSubGreen: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 11,
     fontWeight: '500',
   },
   bentoPromoText: {
-    color: '#D97706',
+    color: customerPalette.primaryDark,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
     marginTop: 2,
   },
   bentoSubMuted: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 11,
     fontWeight: '500',
   },
@@ -600,27 +600,27 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   sectionHeader: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
     marginLeft: 4,
   },
   insetCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.cardBorder,
     borderRadius: radius.card,
     borderWidth: 1,
     elevation: 1,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 4,
   },
   menuRow: {
     alignItems: 'center',
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
     borderBottomWidth: 1,
     flexDirection: 'row',
     gap: 12,
@@ -647,27 +647,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   menuLabel: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
   },
   menuBadgePill: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 999,
     paddingHorizontal: 7,
     paddingVertical: 1.5,
   },
   menuBadgeText: {
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   menuSubtitle: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 12,
   },
   menuChevron: {
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontSize: typeScale.body.fontSize,
     fontWeight: '400',
   },
@@ -678,8 +678,8 @@ const styles = StyleSheet.create({
   },
   logoutBtn: {
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FEE2E2',
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
     borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
   },
   logoutBtnText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
@@ -701,15 +701,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   footerVersionText: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 12,
   },
   footerVersionBold: {
-    color: '#334155',
+    color: customerPalette.textSlateDark,
     fontWeight: '700',
   },
   footerCopyrightText: {
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontSize: 11,
     textAlign: 'center',
   },

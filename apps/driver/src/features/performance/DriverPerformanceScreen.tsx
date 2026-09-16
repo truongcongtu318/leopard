@@ -3,14 +3,15 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
-  driverPrimitives,
-  iosContinuousCurve,
   IconSecurityShield,
   IconSpeedTruck,
   IconStar,
   ScreenScaffold,
   ScreenState,
   StarRating,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 import type { DriverPerformanceReviewResponse } from './adapter';
 
@@ -170,7 +171,7 @@ export function DriverPerformanceScreen({
 
 const styles = StyleSheet.create({
   scrollWrap: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
   },
   scrollContent: {
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   ratingHeroCard: {
     alignItems: 'center',
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -217,8 +218,8 @@ const styles = StyleSheet.create({
   },
   ratingBadgePill: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 9999,
     borderWidth: 1,
     flexDirection: 'row',
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
   },
   kpiCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
   /* 3. Reviews Feed - Apple Grouped */
   reviewsGroupCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
   emptyCard: {
     alignItems: 'center',
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     borderWidth: 1,
     paddingVertical: 32,

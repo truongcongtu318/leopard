@@ -12,7 +12,9 @@ import {
 
 import {
   colors,
+  customerPalette,
   layout,
+  leopardPalette,
   radius,
   spacing,
   typography,
@@ -103,7 +105,7 @@ export function SupportSosScreen() {
           <View style={styles.hotlineCardInner}>
             <View style={styles.hotlineLeft}>
               <View style={styles.hotlineIconBox}>
-                <IconPhone color="#FFFFFF" size={22} />
+                <IconPhone color={customerPalette.surfaceWhite} size={22} />
               </View>
               <View>
                 <Text style={styles.hotlineLabel}>TỔNG ĐÀI HỖ TRỢ 24/7</Text>
@@ -126,7 +128,7 @@ export function SupportSosScreen() {
           <View style={styles.sosCardInner}>
             <View style={styles.sosHeaderRow}>
               <View style={styles.sosIconBox}>
-                <IconAlertTriangle color="#DC2626" size="md" />
+                <IconAlertTriangle color={colors.danger.text} size="md" />
               </View>
               <Text style={styles.sosTitle}>Báo cáo khẩn cấp (SOS)</Text>
             </View>
@@ -219,7 +221,7 @@ export function SupportSosScreen() {
           <View style={styles.feedbackCardInner}>
             {feedbackSent ? (
               <View style={styles.feedbackSuccess}>
-                <IconSecurityShield color="#059669" size={20} />
+                <IconSecurityShield color={colors.success.text} size={20} />
                 <Text style={styles.feedbackSuccessText}>Cảm ơn bạn đã gửi đóng góp ý kiến!</Text>
               </View>
             ) : (
@@ -263,7 +265,7 @@ export function SupportSosScreen() {
                   onPress={() => setLegalModalTitle(null)}
                   style={styles.modalCloseBtn}
                 >
-                  <IconClose color="#475569" size="md" />
+                  <IconClose color={customerPalette.textMutedSlate} size="md" />
                 </Pressable>
               </View>
 
@@ -349,7 +351,7 @@ const styles = StyleSheet.create({
   },
   callBtn: {
     alignItems: 'center',
-    backgroundColor: '#16A34A',
+    backgroundColor: leopardPalette.ecoGreen,
     borderRadius: 12,
     height: 44,
     justifyContent: 'center',
@@ -358,7 +360,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   callBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -372,7 +374,7 @@ const styles = StyleSheet.create({
   },
   sosCardInner: {
     backgroundColor: colors.neutral.background,
-    borderColor: '#FECACA',
+    borderColor: colors.danger.border,
     borderRadius: 18,
     borderWidth: 1,
     gap: spacing.xs,
@@ -385,14 +387,14 @@ const styles = StyleSheet.create({
   },
   sosIconBox: {
     alignItems: 'center',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.danger.background,
     borderRadius: 8,
     height: 32,
     justifyContent: 'center',
     width: 32,
   },
   sosTitle: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: 15,
     fontWeight: '800',
   },
@@ -485,8 +487,8 @@ const styles = StyleSheet.create({
   },
   feedbackSuccess: {
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderColor: '#6EE7B7',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
@@ -494,7 +496,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   feedbackSuccessText: {
-    color: '#059669',
+    color: colors.success.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -517,7 +519,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modalCardInner: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 18,
     gap: spacing.md,
     padding: spacing.md,
@@ -547,7 +549,7 @@ const styles = StyleSheet.create({
     maxHeight: 300,
   },
   modalContentText: {
-    color: '#334155',
+    color: customerPalette.textSlateDark,
     fontSize: 13,
     lineHeight: 20,
   },

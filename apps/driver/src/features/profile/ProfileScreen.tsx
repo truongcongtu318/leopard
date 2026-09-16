@@ -3,22 +3,23 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useRouter } from 'expo-router';
 
 import {
-  driverPrimitives,
-  iosContinuousCurve,
   Button,
+  IconCheck,
+  IconChevronRight,
+  IconEarnings,
+  IconMessage,
+  IconRoute,
+  IconSettings,
+  IconStar,
+  IconSupport247,
+  IconTrophy,
+  IconUser,
+  IconWallet,
   ScreenScaffold,
   ScreenState,
-  IconChevronRight,
-  IconSettings,
-  IconSupport247,
-  IconWallet,
-  IconEarnings,
-  IconTrophy,
-  IconRoute,
-  IconMessage,
-  IconStar,
-  IconCheck,
-  IconUser,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 import type { DriverProfileView } from './model';
 
@@ -149,7 +150,7 @@ export function DriverProfileScreen({
                       {driverName.charAt(0).toUpperCase()}
                     </Text>
                   ) : (
-                    <IconUser color="#FFFFFF" size={26} />
+                    <IconUser color={colors.neutral.surface} size={26} />
                   )}
                 </View>
               )}
@@ -379,7 +380,7 @@ export function DriverProfileScreen({
 
 const styles = StyleSheet.create({
   scrollWrap: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
   },
   scrollContent: {
@@ -409,7 +410,7 @@ const styles = StyleSheet.create({
   /* Hero Driver Card */
   heroCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -442,7 +443,7 @@ const styles = StyleSheet.create({
     width: 56,
   },
   avatarInitial: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 22,
     fontWeight: '700',
   },
@@ -484,7 +485,7 @@ const styles = StyleSheet.create({
   },
   statusPill: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 9999,
     flexDirection: 'row',
     gap: 5,
@@ -503,7 +504,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   vehiclePill: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 9999,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -525,7 +526,7 @@ const styles = StyleSheet.create({
   /* KPI Card */
   kpiCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -597,7 +598,7 @@ const styles = StyleSheet.create({
   },
   bentoTile: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -614,8 +615,8 @@ const styles = StyleSheet.create({
   },
   bentoIconBox: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     height: 36,
@@ -647,7 +648,7 @@ const styles = StyleSheet.create({
   },
   groupedMenuCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,

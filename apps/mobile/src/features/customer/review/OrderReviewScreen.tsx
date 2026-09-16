@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
   colors,
+  customerPalette,
+  leopardPalette,
   spacing,
   Button,
   FormField,
@@ -112,7 +114,7 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
           <View style={styles.successOuter}>
             <View style={styles.successInner}>
               <View style={styles.successIconBox}>
-                <IconCheck color="#16A34A" size={32} strokeWidth={2.5} />
+                <IconCheck color={leopardPalette.ecoGreen} size={32} strokeWidth={2.5} />
               </View>
               <Text style={styles.successTitle}>Cảm ơn bạn đã đánh giá!</Text>
               <Text style={styles.successMessage}>
@@ -130,7 +132,7 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
             <View style={styles.driverCardOuter}>
               <View style={styles.driverCardInner}>
                 <View style={styles.avatarBox}>
-                  <IconRoleDriver color="#0B1E42" size={26} />
+                  <IconRoleDriver color={customerPalette.textSlateDark} size={26} />
                 </View>
                 <Text style={styles.driverName}>{driverName}</Text>
                 {vehicleBadgeText ? (
@@ -150,8 +152,8 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
                       style={styles.starTouchTarget}
                     >
                       <IconStar
-                        color={star <= rating ? '#F59E0B' : '#CBD5E1'}
-                        fill={star <= rating ? '#F59E0B' : 'none'}
+                        color={star <= rating ? leopardPalette.accentYellow : colors.neutral.subtleBorder}
+                        fill={star <= rating ? leopardPalette.accentYellow : 'none'}
                         size={32}
                         strokeWidth={1.8}
                       />
@@ -233,7 +235,7 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
 
             {/* ── Submit Review Button (>= 48px) ───────────────── */}
             {errorMessage ? (
-              <Text style={{ color: '#DC2626', fontSize: typeScale.subheadline.fontSize }}>{errorMessage}</Text>
+              <Text style={{ color: colors.danger.text, fontSize: typeScale.subheadline.fontSize }}>{errorMessage}</Text>
             ) : null}
             <Button
               disabled={submitting}
@@ -261,12 +263,12 @@ const styles = StyleSheet.create({
 
   // ── Driver Card (Double-Bezel: 24px outer, 18px inner) ──
   driverCardOuter: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     padding: 10,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
@@ -274,10 +276,10 @@ const styles = StyleSheet.create({
   },
   driverCardInner: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     padding: spacing.md,
     gap: 6,
   },
@@ -285,27 +287,27 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
   },
   driverName: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: 16,
     fontWeight: '700',
   },
   plateBadge: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: colors.neutral.subtleBorder,
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   plateText: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 12,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
@@ -326,7 +328,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ratingLabel: {
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     marginTop: 2,
@@ -334,7 +336,7 @@ const styles = StyleSheet.create({
 
   // ── Section Label ─────────────────────────────────
   sectionLabel: {
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -347,8 +349,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tagChip: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.cardBorder,
     borderRadius: 22,
     borderWidth: 1,
     minHeight: 44,
@@ -358,16 +360,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   tagChipSelected: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
+    borderColor: customerPalette.primary,
   },
   tagText: {
-    color: '#334155',
+    color: customerPalette.textSlateDark,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   tagTextSelected: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
   },
 
   // ── Tip Grid (>= 44px, Tabular Nums) ──────────────
@@ -377,8 +379,8 @@ const styles = StyleSheet.create({
   },
   tipChip: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.cardBorder,
     borderRadius: 14,
     borderWidth: 1,
     minHeight: 44,
@@ -388,22 +390,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   tipChipSelected: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
+    borderColor: customerPalette.primary,
   },
   tipText: {
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontSize: 13,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   tipTextSelected: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
   },
 
   // ── Success Card (Double-Bezel) ───────────────────
   successOuter: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
@@ -411,10 +413,10 @@ const styles = StyleSheet.create({
   },
   successInner: {
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: leopardPalette.ecoGreenBg,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: leopardPalette.ecoGreenBorder,
     padding: spacing.xl,
     gap: spacing.sm,
   },
@@ -422,17 +424,17 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   successTitle: {
-    color: '#15803D',
+    color: leopardPalette.ecoGreen,
     fontSize: 16,
     fontWeight: '800',
   },
   successMessage: {
-    color: '#166534',
+    color: colors.success.text,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,

@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
   colors,
+  customerPalette,
   spacing,
   Button,
   FormField,
@@ -78,7 +79,7 @@ export function ReportIssueScreen(props?: ReportIssueScreenProps) {
           <View style={styles.successOuter}>
             <View style={styles.successInner}>
               <View style={styles.successIconBox}>
-                <IconSecurityShield color="#16A34A" size={32} strokeWidth={2} />
+                <IconSecurityShield color={colors.success.text} size={32} strokeWidth={2} />
               </View>
               <Text style={styles.successTitle}>Đã tiếp nhận sự cố</Text>
               <Text style={styles.ticketCode}>{ticketCode ?? '#TK-PENDING'}</Text>
@@ -140,9 +141,9 @@ export function ReportIssueScreen(props?: ReportIssueScreenProps) {
             >
               <View style={styles.photoUploadIconBox}>
                 {hasPhoto ? (
-                  <IconCheck color="#16A34A" size={24} strokeWidth={2.5} />
+                  <IconCheck color={colors.success.text} size={24} strokeWidth={2.5} />
                 ) : (
-                  <IconCamera color="#0B1E42" size={24} strokeWidth={2} />
+                  <IconCamera color={customerPalette.textSlateDark} size={24} strokeWidth={2} />
                 )}
               </View>
               <Text style={styles.photoUploadText}>
@@ -164,7 +165,7 @@ export function ReportIssueScreen(props?: ReportIssueScreenProps) {
 
             {/* ── Submit Button (>= 48px) ───────────────────────── */}
             {errorMessage ? (
-              <Text style={{ color: '#DC2626', fontSize: typeScale.subheadline.fontSize }}>{errorMessage}</Text>
+              <Text style={{ color: colors.danger.text, fontSize: typeScale.subheadline.fontSize }}>{errorMessage}</Text>
             ) : null}
             <Button
               disabled={!description.trim() || submitting}
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   sectionLabel: {
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -193,22 +194,22 @@ const styles = StyleSheet.create({
 
   // ── Category Card (Double-Bezel: 24px outer, 18px inner) ──
   categoryCardOuter: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     padding: 8,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
   categoryCardInner: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     overflow: 'hidden',
   },
   categoryItem: {
@@ -219,40 +220,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: colors.neutral.border,
   },
   categoryItemLast: {
     borderBottomWidth: 0,
   },
   categoryItemSelected: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: colors.info.background,
   },
   radioCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: colors.neutral.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
   },
   radioCircleSelected: {
-    borderColor: '#0B1E42',
+    borderColor: customerPalette.primary,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   categoryText: {
-    color: '#334155',
+    color: customerPalette.textSlateDark,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
   },
   categoryTextSelected: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontWeight: '700',
   },
 
@@ -260,8 +261,8 @@ const styles = StyleSheet.create({
   photoUploadBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.subtleBorder,
     borderRadius: 24,
     borderStyle: 'dashed',
     borderWidth: 1.5,
@@ -270,32 +271,32 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   photoUploadBoxAttached: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#86EFAC',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
     borderStyle: 'solid',
   },
   photoUploadIconBox: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   photoUploadText: {
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
   },
   photoUploadSub: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
   },
 
   // ── Success State (Double-Bezel) ──────────────────
   successOuter: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
@@ -303,10 +304,10 @@ const styles = StyleSheet.create({
   },
   successInner: {
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: colors.success.background,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: colors.success.border,
     padding: spacing.xl,
     gap: spacing.sm,
   },
@@ -314,27 +315,27 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   successTitle: {
-    color: '#15803D',
+    color: colors.success.text,
     fontSize: 16,
     fontWeight: '800',
   },
   ticketCode: {
-    color: '#166534',
+    color: colors.success.text,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 8,
   },
   successMessage: {
-    color: '#166534',
+    color: colors.success.text,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,

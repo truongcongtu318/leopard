@@ -5,10 +5,12 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import {
   colors,
+  customerPalette,
   haptic,
   httpClient,
   iosContinuousCurve,
   layout,
+  leopardPalette,
   radius,
   spacing,
   IconCheck,
@@ -199,16 +201,19 @@ export function CustomerWalletScreen({
   const getStatusBadgeStyle = (status: EscrowStatus) => {
     switch (status) {
       case 'HELD':
-        return { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' };
+        return { bg: colors.success.background, text: colors.success.text, border: colors.success.border };
       case 'SETTLED':
+        // ponytail-noted gap: no blue token in colors; leave hardcoded (see report)
         return { bg: '#EFF6FF', text: '#2563EB', border: '#BFDBFE' };
       case 'PENDING':
+        // ponytail-noted gap: no amber token matching this exact trio; leave hardcoded (see report)
         return { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' };
       case 'REFUNDED':
+        // ponytail-noted gap: no purple token exists; leave hardcoded (see report)
         return { bg: '#F5F3FF', text: '#7C3AED', border: '#DDD6FE' };
       case 'FAILED':
       default:
-        return { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA' };
+        return { bg: colors.danger.background, text: colors.danger.text, border: colors.danger.border };
     }
   };
 
@@ -228,7 +233,7 @@ export function CustomerWalletScreen({
           <View style={styles.cardTopRow}>
             <View style={styles.brandPill}>
               <View style={styles.pulseDot} />
-              <IconWallet color="#F1F5F9" size={16} />
+              <IconWallet color={colors.neutral.surfaceMuted} size={16} />
               <Text style={styles.brandPillText}>Ký quỹ đảm bảo LEOPARD</Text>
             </View>
             <View style={styles.securityBadge}>
@@ -250,9 +255,9 @@ export function CustomerWalletScreen({
                 style={styles.eyeToggleBtn}
               >
                 {showBalance ? (
-                  <IconEye color="#94A3B8" size={20} />
+                  <IconEye color={customerPalette.offlineGray} size={20} />
                 ) : (
-                  <IconEyeOff color="#94A3B8" size={20} />
+                  <IconEyeOff color={customerPalette.offlineGray} size={20} />
                 )}
               </Pressable>
             </View>
@@ -366,9 +371,9 @@ export function CustomerWalletScreen({
                           ]}
                         >
                           {isRefund ? (
-                            <IconTxRefund color="#16A34A" size={18} />
+                            <IconTxRefund color={leopardPalette.ecoGreen} size={18} />
                           ) : (
-                            <IconTxPayment color="#475569" size={18} />
+                            <IconTxPayment color={customerPalette.textMutedSlate} size={18} />
                           )}
                         </View>
 
@@ -419,7 +424,7 @@ export function CustomerWalletScreen({
                             onPress={() => router.push(`/customer/orders/checkout/${item.orderId}`)}
                             style={styles.payNowBtn}
                           >
-                            <IconQrPayment color="#FFFFFF" size={14} />
+                            <IconQrPayment color={customerPalette.surfaceWhite} size={14} />
                             <Text style={styles.payNowBtnText}>Thanh toán ngay</Text>
                           </Pressable>
                         </View>
@@ -446,13 +451,13 @@ const styles = StyleSheet.create({
     paddingBottom: layout.bottomNavClearance + 32,
   },
   balanceCard: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 24,
     borderWidth: 1,
     gap: spacing.md,
     padding: spacing.lg,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
     shadowRadius: 16,
@@ -483,7 +488,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   brandPillText: {
-    color: '#F1F5F9',
+    color: colors.neutral.surfaceMuted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -502,7 +507,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   balanceEyebrow: {
-    color: '#94A3B8',
+    color: customerPalette.offlineGray,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
@@ -513,7 +518,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   balanceAmount: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: typeScale.title1.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -531,13 +536,13 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   cardFooterNapas: {
-    color: '#94A3B8',
+    color: customerPalette.offlineGray,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
     letterSpacing: 0.4,
   },
   cardFooterNumber: {
-    color: '#E2E8F0',
+    color: customerPalette.cardBorder,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -554,7 +559,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   sectionLabel: {
-    color: '#0B1E42',
+    color: colors.neutral.text,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.6,
@@ -572,25 +577,25 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 10,
     ...iosContinuousCurve,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   filterChipActive: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   filterChipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#64748B',
+    color: customerPalette.textSubtle,
   },
   filterChipTextActive: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontWeight: '600',
   },
   filterBadge: {
     minWidth: 20,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
@@ -603,10 +608,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
   },
   filterBadgeTextActive: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
   },
   loadingContainer: {
     padding: 32,
@@ -616,37 +621,37 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 13,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
   },
   emptyContainer: {
     padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     gap: 6,
   },
   emptyTitle: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: colors.neutral.text,
   },
   emptySubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textAlign: 'center',
   },
   retryBtn: {
     marginTop: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderRadius: 8,
   },
   retryBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -654,11 +659,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   txRow: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -681,7 +686,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   txIconBoxPayment: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   txIconBoxRefund: {
     backgroundColor: '#DCFCE7',
@@ -693,7 +698,7 @@ const styles = StyleSheet.create({
   txTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   txSubRow: {
     flexDirection: 'row',
@@ -702,10 +707,10 @@ const styles = StyleSheet.create({
   },
   txDate: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: customerPalette.offlineGray,
   },
   orderRefBadge: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -713,7 +718,7 @@ const styles = StyleSheet.create({
   orderRefBadgeText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     fontVariant: ['tabular-nums'],
   },
   txAmountCol: {
@@ -723,7 +728,7 @@ const styles = StyleSheet.create({
   txAmount: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontVariant: ['tabular-nums'],
   },
   statusBadge: {
@@ -739,7 +744,7 @@ const styles = StyleSheet.create({
   },
   txActionRow: {
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: colors.neutral.surfaceMuted,
     paddingTop: 8,
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -748,13 +753,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
   },
   payNowBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 12,
     fontWeight: '700',
   },

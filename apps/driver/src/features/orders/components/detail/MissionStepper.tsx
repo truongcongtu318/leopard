@@ -1,6 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { IconCheck, leopardPalette, spacing } from '@leopard/mobile-core';
+import {
+  IconCheck,
+  colors,
+  leopardPalette,
+  spacing,
+} from '@leopard/mobile-core';
 
 export type MissionStepperProps = Readonly<{
   status: string;
@@ -41,7 +46,7 @@ export function MissionStepper({ status }: MissionStepperProps) {
                 ]}
               >
                 {isPast ? (
-                  <IconCheck color="#FFFFFF" size={12} strokeWidth={2.5} />
+                  <IconCheck color={colors.neutral.surface} size={12} strokeWidth={2.5} />
                 ) : (
                   <Text
                     style={[
@@ -86,8 +91,8 @@ export function MissionStepper({ status }: MissionStepperProps) {
 const styles = StyleSheet.create({
   stepperContainer: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
@@ -107,7 +112,7 @@ const styles = StyleSheet.create({
     width: 22,
   },
   stepDotCurrent: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderColor: '#F97316',
     borderWidth: 2,
   },
@@ -115,17 +120,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
   },
   stepDotFuture: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
   },
   stepDotNumber: {
     fontSize: 10,
     fontWeight: '800',
   },
   stepDotNumberActive: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
   },
   stepDotNumberFuture: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   stepLabel: {
     fontSize: 9.5,
@@ -133,7 +138,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   stepLabelCurrent: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontWeight: '800',
   },
   stepLabelPast: {
@@ -152,6 +157,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
   },
   stepLineFuture: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
   },
 });

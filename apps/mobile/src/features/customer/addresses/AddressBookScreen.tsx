@@ -11,7 +11,7 @@ import {
 
 import { typeScale, httpClient } from '@leopard/mobile-core';
 import { addressStore } from './address-store';
-import { colors, haptic, iosContinuousCurve, layout, radius, spacing, typography, Button, FormField, IconCheck, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
+import { colors, customerPalette, leopardPalette, haptic, iosContinuousCurve, layout, radius, spacing, typography, Button, FormField, IconCheck, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
 import {
   POPULAR_MAP_SUGGESTIONS,
   reverseGeocodeCoords,
@@ -36,10 +36,10 @@ export type SavedAddress = Readonly<{
 type FilterCategory = 'ALL' | AddressCategory;
 
 const categoryOptions = [
-  { id: 'WAREHOUSE' as const, label: 'Kho hàng', color: '#0B1E42', bg: '#F0F4F9' },
-  { id: 'OFFICE' as const, label: 'Văn phòng', color: '#0B1E42', bg: '#F0F4F9' },
-  { id: 'HOME' as const, label: 'Nhà riêng', color: '#0B1E42', bg: '#F0F4F9' },
-  { id: 'OTHER' as const, label: 'Khác', color: '#64748B', bg: '#F1F5F9' },
+  { id: 'WAREHOUSE' as const, label: 'Kho hàng', color: customerPalette.primary, bg: colors.neutral.surfaceMuted },
+  { id: 'OFFICE' as const, label: 'Văn phòng', color: customerPalette.primary, bg: colors.neutral.surfaceMuted },
+  { id: 'HOME' as const, label: 'Nhà riêng', color: customerPalette.primary, bg: colors.neutral.surfaceMuted },
+  { id: 'OTHER' as const, label: 'Khác', color: customerPalette.textSubtle, bg: colors.neutral.surfaceMuted },
 ] as const;
 
 export type AddressBookScreenProps = Readonly<{
@@ -343,30 +343,30 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       case 'WAREHOUSE':
         return {
           label: 'Kho hàng',
-          icon: <IconWarehouse color="#0B1E42" size={20} />,
-          color: '#0B1E42',
-          bg: '#F0F4F9',
+          icon: <IconWarehouse color={customerPalette.primary} size={20} />,
+          color: customerPalette.primary,
+          bg: colors.neutral.surfaceMuted,
         };
       case 'OFFICE':
         return {
           label: 'Văn phòng',
-          icon: <IconOffice color="#0B1E42" size={20} />,
-          color: '#0B1E42',
-          bg: '#F0F4F9',
+          icon: <IconOffice color={customerPalette.primary} size={20} />,
+          color: customerPalette.primary,
+          bg: colors.neutral.surfaceMuted,
         };
       case 'HOME':
         return {
           label: 'Nhà riêng',
-          icon: <IconHome color="#0B1E42" size={20} />,
-          color: '#0B1E42',
-          bg: '#F0F4F9',
+          icon: <IconHome color={customerPalette.primary} size={20} />,
+          color: customerPalette.primary,
+          bg: colors.neutral.surfaceMuted,
         };
       default:
         return {
           label: 'Khác',
-          icon: <IconPin color="#64748B" size={20} />,
-          color: '#64748B',
-          bg: '#F1F5F9',
+          icon: <IconPin color={customerPalette.textSubtle} size={20} />,
+          color: customerPalette.textSubtle,
+          bg: colors.neutral.surfaceMuted,
         };
     }
   };
@@ -383,9 +383,9 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       ]}
     >
       {isAdding ? (
-        <IconClose color="#0B1E42" size="sm" />
+        <IconClose color={customerPalette.primary} size="sm" />
       ) : (
-        <IconPlus color="#0B1E42" size={20} strokeWidth={2.5} />
+        <IconPlus color={customerPalette.primary} size={20} strokeWidth={2.5} />
       )}
     </Pressable>
   );
@@ -415,12 +415,12 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
         {!isAdding ? (
           <View style={styles.searchWrap}>
             <View style={styles.searchBar}>
-              <IconSearch color="#64748B" size={18} />
+              <IconSearch color={customerPalette.textSubtle} size={18} />
               <TextInput
                 accessibilityLabel="Tìm kiếm địa chỉ"
                 onChangeText={setSearchQuery}
                 placeholder="Tìm theo tên kho, địa chỉ, người nhận..."
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={styles.searchInput}
                 value={searchQuery}
               />
@@ -432,7 +432,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   onPress={() => setSearchQuery('')}
                   style={styles.clearSearchBtn}
                 >
-                  <IconClose color="#94A3B8" size="sm" />
+                  <IconClose color={leopardPalette.inputPlaceholder} size="sm" />
                 </Pressable>
               ) : null}
             </View>
@@ -607,7 +607,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                               ]}
                             >
                               <IconLocationPin
-                                color={isGpsItem ? '#16A34A' : '#0B1E42'}
+                                color={isGpsItem ? colors.brand.green : customerPalette.primary}
                                 size={16}
                               />
                             </View>
@@ -634,7 +634,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
               <View style={styles.mapPinSection}>
                 <View style={styles.mapPinHeader}>
                   <View style={styles.mapPinTitleRow}>
-                    <IconLocationPin color="#0B1E42" size={15} />
+                    <IconLocationPin color={customerPalette.primary} size={15} />
                     <Text style={styles.mapPinTitle}>Định vị trên bản đồ</Text>
                   </View>
                   <Text style={styles.mapPinHint}>Chạm hoặc kéo ghim để chỉnh</Text>
@@ -651,7 +651,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                 </View>
                 {newAddress.trim() || newPinCoords ? (
                   <View style={styles.pinnedNotice}>
-                    <IconLocationPin color="#15803D" size={13} />
+                    <IconLocationPin color={colors.success.text} size={13} />
                     <Text numberOfLines={2} style={styles.pinnedNoticeText}>
                       {isReverseGeocoding ? 'Đang cập nhật địa chỉ…' : `Đã ghim: ${newAddress || 'Vị trí đã chọn'}`}
                     </Text>
@@ -696,7 +696,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                 </View>
                 <View style={[styles.switchTrack, newIsDefault ? styles.switchTrackActive : null]}>
                   <View style={[styles.switchThumb, newIsDefault ? styles.switchThumbActive : null]}>
-                    {newIsDefault ? <IconCheck color="#0B1E42" size={10} strokeWidth={3} /> : null}
+                    {newIsDefault ? <IconCheck color={customerPalette.primary} size={10} strokeWidth={3} /> : null}
                   </View>
                 </View>
               </Pressable>
@@ -724,7 +724,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
             ListEmptyComponent={
               <View style={styles.emptyBox}>
                 <View style={styles.emptyIconCircle}>
-                  <IconLocationPin color="#94A3B8" size={32} />
+                  <IconLocationPin color={leopardPalette.inputPlaceholder} size={32} />
                 </View>
                 <Text style={styles.emptyTitle}>
                   {searchQuery || selectedFilter !== 'ALL'
@@ -785,8 +785,8 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         {item.isDefault ? (
                           <View style={styles.defaultBadge}>
                             <IconStar
-                              color="#0B1E42"
-                              fill="#0B1E42"
+                              color={customerPalette.primary}
+                              fill={customerPalette.primary}
                               size={11}
                               strokeWidth={2}
                             />
@@ -796,7 +796,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       </View>
 
                       <View style={styles.addressLineWrap}>
-                        <IconLocationPin color="#64748B" size={13} />
+                        <IconLocationPin color={customerPalette.textSubtle} size={13} />
                         <Text numberOfLines={2} style={styles.addressText}>
                           {item.address}
                         </Text>
@@ -805,12 +805,12 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       {/* Thông tin liên hệ dạng Pill mềm mại (100% Vector Icons) */}
                       <View style={styles.contactPill}>
                         <View style={styles.contactItem}>
-                          <IconUser color="#475569" size={12} />
+                          <IconUser color={customerPalette.textMutedSlate} size={12} />
                           <Text style={styles.contactNameText}>{item.contactName}</Text>
                         </View>
                         <Text style={styles.contactDivider}>•</Text>
                         <View style={styles.contactItem}>
-                          <IconPhone color="#0B1E42" size={12} />
+                          <IconPhone color={customerPalette.primary} size={12} />
                           <Text style={styles.contactPhoneText}>{item.contactPhone}</Text>
                         </View>
                       </View>
@@ -848,12 +848,12 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                             pressed ? styles.pressed : null,
                           ]}
                         >
-                          <IconStar color="#0B1E42" size={13} strokeWidth={2} />
+                          <IconStar color={customerPalette.primary} size={13} strokeWidth={2} />
                           <Text style={styles.setDefaultText}>Đặt làm mặc định</Text>
                         </Pressable>
                       ) : (
                         <View style={styles.defaultActiveNote}>
-                          <IconCheck color="#059669" size={12} strokeWidth={2.5} />
+                          <IconCheck color={colors.success.text} size={12} strokeWidth={2.5} />
                           <Text style={styles.defaultActiveNoteText}>
                             Đang áp dụng cho đơn mới
                           </Text>
@@ -871,7 +871,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                           pressed ? styles.pressed : null,
                         ]}
                       >
-                        <IconLocationPin color="#0B1E42" size={13} />
+                        <IconLocationPin color={customerPalette.primary} size={13} />
                         <Text style={styles.toggleMapText}>
                           {expandedMapId === item.id ? 'Ẩn bản đồ' : 'Bản đồ'}
                         </Text>
@@ -887,7 +887,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         pressed ? styles.pressed : null,
                       ]}
                     >
-                      <IconTrash color="#EF4444" size={13} />
+                      <IconTrash color={colors.danger.text} size={13} />
                       <Text style={styles.deleteText}>Xóa</Text>
                     </Pressable>
                   </View>
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   addHeaderBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -928,7 +928,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   cancelHeaderBtnText: {
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
@@ -939,8 +939,8 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.cardBorder,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
@@ -949,7 +949,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   searchInput: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     flex: 1,
     fontSize: typeScale.footnote.fontSize,
     padding: 0,
@@ -962,7 +962,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   clearSearchText: {
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
@@ -979,7 +979,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 10,
     ...iosContinuousCurve,
     minHeight: 36,
@@ -987,23 +987,23 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   filterChipActive: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   filterChipText: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
   },
   filterChipTextActive: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontWeight: '600',
   },
   filterBadge: {
     minWidth: 20,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
@@ -1016,10 +1016,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
   },
   filterBadgeTextActive: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
   },
 
   // 3. Form (Apple HIG Grouped, không box lồng)
@@ -1040,14 +1040,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   categoryPickerLabel: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   segmentedControl: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 10,
     ...iosContinuousCurve,
     flexDirection: 'row',
@@ -1064,21 +1064,21 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   segmentItemSelected: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
+    backgroundColor: customerPalette.surfaceWhite,
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1.5 },
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
   },
   segmentText: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
     textAlign: 'center',
   },
   segmentTextSelected: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontWeight: '700',
   },
 
@@ -1094,8 +1094,8 @@ const styles = StyleSheet.create({
   // Apple HIG iOS Switch Row
   switchRow: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.canvas,
+    borderColor: customerPalette.cardBorder,
     borderRadius: 14,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -1110,16 +1110,16 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   switchLabel: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: 13,
     fontWeight: '600',
   },
   switchSublabel: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: typeScale.caption1.fontSize,
   },
   switchTrack: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     borderRadius: 16,
     height: 28,
     justifyContent: 'center',
@@ -1127,15 +1127,15 @@ const styles = StyleSheet.create({
     width: 48,
   },
   switchTrackActive: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   switchThumb: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 12,
     height: 24,
     justifyContent: 'center',
-    shadowColor: '#000000',
+    shadowColor: customerPalette.accentDark,
     shadowOffset: { width: 0, height: 1.5 },
     shadowOpacity: 0.2,
     shadowRadius: 2.5,
@@ -1152,20 +1152,20 @@ const styles = StyleSheet.create({
     paddingBottom: layout.bottomNavClearance,
   },
   addressCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.cardBorder,
     borderRadius: 18,
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 1,
   },
   addressCardDefault: {
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     backgroundColor: '#FAFCFF',
     borderWidth: 1.5,
   },
@@ -1190,7 +1190,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   addressLabel: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     flex: 1,
@@ -1198,7 +1198,7 @@ const styles = StyleSheet.create({
   },
   defaultBadge: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 999,
     flexDirection: 'row',
     gap: 3,
@@ -1206,7 +1206,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   defaultBadgeText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
@@ -1225,8 +1225,8 @@ const styles = StyleSheet.create({
   contactPill: {
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#F1F5F9',
+    backgroundColor: customerPalette.canvas,
+    borderColor: colors.neutral.surfaceMuted,
     borderRadius: 6,
     borderWidth: 1,
     flexDirection: 'row',
@@ -1241,16 +1241,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   contactNameText: {
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   contactDivider: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: typeScale.caption2.fontSize,
   },
   contactPhoneText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
@@ -1258,7 +1258,7 @@ const styles = StyleSheet.create({
   // Actions Footer
   cardActionFooter: {
     alignItems: 'center',
-    borderTopColor: '#F1F5F9',
+    borderTopColor: colors.neutral.surfaceMuted,
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1277,7 +1277,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   toggleMapText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1286,11 +1286,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
   },
   mapPinSection: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.canvas,
+    borderColor: customerPalette.cardBorder,
     borderRadius: 14,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -1308,19 +1308,19 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   mapPinTitle: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: 13,
     fontWeight: '700',
   },
   mapPinHint: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: typeScale.caption1.fontSize,
   },
   mapPinBox: {
     borderRadius: 10,
     ...iosContinuousCurve,
     overflow: 'hidden',
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderWidth: 1,
   },
   actionBtn: {
@@ -1330,7 +1330,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   setDefaultText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1341,7 +1341,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   defaultActiveNoteText: {
-    color: '#059669',
+    color: colors.success.text,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
@@ -1353,7 +1353,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   deleteText: {
-    color: '#EF4444',
+    color: colors.danger.text,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1361,8 +1361,8 @@ const styles = StyleSheet.create({
   // Empty State
   emptyBox: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.cardBorder,
     borderRadius: 16,
     borderWidth: 1,
     gap: 6,
@@ -1372,7 +1372,7 @@ const styles = StyleSheet.create({
   },
   emptyIconCircle: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 30,
     height: 60,
     justifyContent: 'center',
@@ -1380,13 +1380,13 @@ const styles = StyleSheet.create({
     width: 60,
   },
   emptyTitle: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
   },
   emptyMessage: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: typeScale.footnote.fontSize,
     lineHeight: 18,
     textAlign: 'center',
@@ -1396,22 +1396,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   resetFilterBtnText: {
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   firstAddBtn: {
     marginTop: 8,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
   },
   firstAddBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1420,13 +1420,13 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   suggestionsContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 12,
     marginTop: -8,
     marginBottom: 12,
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -1439,19 +1439,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: customerPalette.cardBorder,
   },
   suggestionsHeaderTitle: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     letterSpacing: 0.5,
   },
   suggestionsCloseText: {
     fontSize: 11,
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontWeight: '600',
   },
   suggestionsListScroll: {
@@ -1463,22 +1463,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
     gap: 10,
   },
   suggestionItemPressed: {
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   suggestionIconBox: {
     width: 28,
     height: 28,
     borderRadius: 6,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   suggestionIconBoxGps: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
   },
   suggestionTextCol: {
     flex: 1,
@@ -1487,21 +1487,21 @@ const styles = StyleSheet.create({
   suggestionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   suggestionSubtitle: {
     fontSize: 11,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
   },
   suggestionActionText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#0B1E42',
+    color: customerPalette.primary,
   },
   pinnedNotice: {
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: leopardPalette.ecoGreenBg,
+    borderColor: leopardPalette.ecoGreenBorder,
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -1511,7 +1511,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   pinnedNoticeText: {
-    color: '#15803D',
+    color: colors.success.text,
     flex: 1,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',

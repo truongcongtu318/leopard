@@ -1,11 +1,12 @@
 import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
-  driverPrimitives,
-  iosContinuousCurve,
   IconOrders,
   IconPhone,
   IconSpeedTruck,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 
 export type CargoAndContactCardProps = Readonly<{
@@ -97,7 +98,7 @@ export function CargoAndContactCard({
           onPress={() => callPhoneNumber(customerContact)}
           style={({ pressed }) => [styles.contactCallBtn, pressed ? styles.pressed : null]}
         >
-          <IconPhone color="#FFFFFF" size={13} />
+          <IconPhone color={colors.neutral.surface} size={13} />
           <Text style={styles.contactCallBtnText}>Gọi</Text>
         </Pressable>
       </View>
@@ -108,7 +109,7 @@ export function CargoAndContactCard({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -129,8 +130,8 @@ const styles = StyleSheet.create({
   },
   specChip: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   },
   contactIconCircle: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 20,
     height: 38,
     justifyContent: 'center',
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   contactCallBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 12.5,
     fontWeight: '700',
   },

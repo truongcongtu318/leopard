@@ -769,7 +769,7 @@ describe('HomeDashboardScreen', () => {
     const badgeContainer = screen.getByTestId('pickup-label-badge');
     expect(StyleSheet.flatten(badgeContainer.props.style).backgroundColor).toBe('#F0FDF4');
     const badgeText = screen.getByTestId('pickup-label-badge-text');
-    expect(StyleSheet.flatten(badgeText.props.style).color).toBe('#166534');
+    expect(StyleSheet.flatten(badgeText.props.style).color).toBe('#34C759');
 
     // Hub chip style and text color
     const hubChip = screen.getByTestId('hub-chip-Kho Thủ Đức');
@@ -779,9 +779,9 @@ describe('HomeDashboardScreen', () => {
 
     // Active shipment ETA pill
     const etaPill = screen.getByTestId('active-shipment-eta-pill');
-    expect(StyleSheet.flatten(etaPill.props.style).backgroundColor).toBe('#F0F4F9');
+    expect(StyleSheet.flatten(etaPill.props.style).backgroundColor).toBe('#F1F5F9');
     const etaText = screen.getByText(/ETA dự kiến 18 phút/);
-    expect(StyleSheet.flatten(etaText.props.style).color).toBe('#0B1E42');
+    expect(StyleSheet.flatten(etaText.props.style).color).toBe('#F86E3F');
 
     await screen.unmount();
   });

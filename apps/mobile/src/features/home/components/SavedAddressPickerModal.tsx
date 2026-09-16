@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { typeScale, IconLocationPin, IconTrash } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, leopardPalette, IconLocationPin, IconTrash } from '@leopard/mobile-core';
 import type { SavedAddress } from '../../customer/addresses/address-store';
 
 export type SavedAddressPickerModalProps = Readonly<{
@@ -107,7 +107,7 @@ export function SavedAddressPickerModal({
                         ]}
                       >
                         <IconLocationPin
-                          color={isSelected ? '#2563EB' : '#64748B'}
+                          color={isSelected ? colors.info.text : customerPalette.textSubtle}
                           size={18}
                         />
                       </View>
@@ -142,7 +142,7 @@ export function SavedAddressPickerModal({
                         ]}
                         testID={`delete-addr-${addr.id}`}
                       >
-                        <IconTrash color="#94A3B8" size={15} />
+                        <IconTrash color={leopardPalette.inputPlaceholder} size={15} />
                       </Pressable>
                     ) : null}
                   </View>
@@ -158,7 +158,7 @@ export function SavedAddressPickerModal({
               onPress={() => onOpenMapPicker(target)}
               style={styles.bottomSheetMapBtn}
             >
-              <IconLocationPin color="#EA580C" size={15} />
+              <IconLocationPin color={customerPalette.primaryDark} size={15} />
               <Text style={styles.bottomSheetMapBtnText}>Ghim vị trí trên bản đồ</Text>
             </Pressable>
 
@@ -202,14 +202,14 @@ const styles = StyleSheet.create({
   bottomSheetCard: {
     position: 'relative',
     zIndex: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 24,
     maxHeight: '80%',
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.14,
     shadowRadius: 16,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: colors.neutral.subtleBorder,
     alignSelf: 'center',
     marginBottom: 16,
   },
@@ -232,24 +232,24 @@ const styles = StyleSheet.create({
   bottomSheetTitle: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   bottomSheetSub: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     marginTop: 2,
   },
   modalCloseBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCloseBtnText: {
     fontSize: typeScale.subheadline.fontSize,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontWeight: '700',
   },
   savedAddressListScroll: {
@@ -264,14 +264,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     gap: 8,
   },
   savedAddressItemRowActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#93C5FD',
+    backgroundColor: colors.info.background,
+    borderColor: colors.info.border,
   },
   savedAddressSelectArea: {
     flex: 1,
@@ -283,15 +283,15 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   savedAddrIconSquircleActive: {
-    backgroundColor: '#DBEAFE',
-    borderColor: '#BFDBFE',
+    backgroundColor: colors.info.background,
+    borderColor: colors.info.border,
   },
   savedAddrTextCol: {
     flex: 1,
@@ -305,10 +305,10 @@ const styles = StyleSheet.create({
   savedAddrLabelTitle: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   defaultBadge: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
@@ -316,23 +316,23 @@ const styles = StyleSheet.create({
   defaultBadgeText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
-    color: '#15803D',
+    color: leopardPalette.ecoGreen,
   },
   savedAddrFullText: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     lineHeight: 16,
   },
   checkCircle: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.info.text,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkCircleText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: colors.neutral.surfaceMuted,
   },
   bottomSheetMapBtn: {
     flex: 1,
@@ -351,29 +351,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: colors.neutral.subtleBorder,
     borderRadius: 12,
     height: 44,
   },
   bottomSheetMapBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   bottomSheetManageBtn: {
     paddingHorizontal: 14,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 12,
   },
   bottomSheetManageBtnText: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
   },
   pressed: {
     opacity: 0.8,
@@ -384,14 +384,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     marginLeft: 4,
   },
   deleteBtnPressed: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#FECACA',
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
   },
   emptyContainer: {
     paddingVertical: 24,
@@ -402,11 +402,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   emptySubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textAlign: 'center',
   },
 });

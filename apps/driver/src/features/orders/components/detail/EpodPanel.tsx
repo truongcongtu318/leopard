@@ -10,8 +10,6 @@ import {
 import Svg, { Path } from 'react-native-svg';
 
 import {
-  driverPrimitives,
-  iosContinuousCurve,
   IconCamera,
   IconCameraProof,
   IconCheck,
@@ -22,6 +20,10 @@ import {
   IconTrash,
   IconTxPayment,
   SlideToAction,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
+  leopardPalette,
 } from '@leopard/mobile-core';
 import type { DriverProofView } from '../../model';
 import { getDriverCurrentLocation } from '../../driver-current-location';
@@ -223,7 +225,7 @@ export function EpodPanel({
       {/* Validation alert banner */}
       {errorMsg ? (
         <View style={styles.validationAlert} testID="epod-validation-error">
-          <IconShieldAlert color="#DC2626" size={15} />
+          <IconShieldAlert color={colors.danger.text} size={15} />
           <Text accessibilityRole="alert" style={styles.validationAlertText}>
             {errorMsg}
           </Text>
@@ -278,7 +280,7 @@ export function EpodPanel({
             {/* Clean Camera Watermark Overlay */}
             <View style={styles.watermarkContainer} testID="camera-watermark-overlay">
               <View style={styles.watermarkRow}>
-                <IconLocationPin color="#F59E0B" size={12} strokeWidth={2} />
+                <IconLocationPin color={leopardPalette.accentYellow} size={12} strokeWidth={2} />
                 <Text style={styles.watermarkText}>
                   {photoWatermark?.coords || EPOD_GPS_UNAVAILABLE}
                 </Text>
@@ -311,7 +313,7 @@ export function EpodPanel({
             testID="btn-capture-cargo-photo"
           >
             <View style={styles.captureIconCircle}>
-              <IconCamera color="#FFFFFF" size={18} />
+              <IconCamera color={colors.neutral.surface} size={18} />
             </View>
             <View style={styles.captureTextCol}>
               <Text style={styles.captureTitle}>
@@ -440,7 +442,7 @@ export function EpodPanel({
 const styles = StyleSheet.create({
   epodCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -457,7 +459,7 @@ const styles = StyleSheet.create({
   },
   iconBox: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 10,
     height: 36,
     justifyContent: 'center',
@@ -489,8 +491,8 @@ const styles = StyleSheet.create({
     borderColor: '#A7F3D0',
   },
   statusPillPending: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
   },
   statusPillText: {
     fontSize: 10,
@@ -505,8 +507,8 @@ const styles = StyleSheet.create({
 
   /* Proof notice */
   proofNoticeBox: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     gap: 2,
@@ -544,7 +546,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   validationAlertText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     flex: 1,
     fontSize: 11.5,
     fontWeight: '600',
@@ -553,8 +555,8 @@ const styles = StyleSheet.create({
   /* Payment Card */
   paymentCard: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
@@ -563,7 +565,7 @@ const styles = StyleSheet.create({
   },
   paymentIconWrap: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 8,
     height: 32,
     justifyContent: 'center',
@@ -585,15 +587,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   paymentBadge: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderRadius: 6,
     borderWidth: 1,
     paddingHorizontal: 7,
     paddingVertical: 3,
   },
   paymentBadgeText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -625,7 +627,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   clearHeaderBtnText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: 11.5,
     fontWeight: '600',
   },
@@ -636,8 +638,8 @@ const styles = StyleSheet.create({
   },
   photoPlaceholder: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     gap: 6,
@@ -661,15 +663,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   watermarkText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 10.5,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   retakeBtn: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
@@ -684,8 +686,8 @@ const styles = StyleSheet.create({
   },
   captureBtn: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 12,
     borderStyle: 'dashed',
     borderWidth: 1.5,
@@ -718,8 +720,8 @@ const styles = StyleSheet.create({
   /* Receiver Input */
   receiverNameRow: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
@@ -743,8 +745,8 @@ const styles = StyleSheet.create({
 
   /* Signature Pad */
   signaturePad: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surface,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 14,
     borderStyle: 'dashed',
     borderWidth: 1.5,
@@ -753,7 +755,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   signaturePadSigned: {
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderStyle: 'solid',
     borderWidth: 1,
   },
@@ -786,7 +788,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   signatureUnderline: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     height: 1,
     marginTop: 2,
     width: 140,
@@ -805,7 +807,7 @@ const styles = StyleSheet.create({
   signatureVerifiedFooter: {
     alignItems: 'center',
     backgroundColor: 'rgba(248, 250, 252, 0.9)',
-    borderTopColor: '#F1F5F9',
+    borderTopColor: colors.neutral.surfaceMuted,
     borderTopWidth: 1,
     bottom: 0,
     flexDirection: 'row',

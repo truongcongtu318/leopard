@@ -1,7 +1,12 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { IconOrders, NavigableMetricCard, spacing } from '@leopard/mobile-core';
+import {
+  IconOrders,
+  NavigableMetricCard,
+  leopardPalette,
+  spacing,
+} from '@leopard/mobile-core';
 
 export type DriverEmptyBoardProps = Readonly<{
   isOnline: boolean;
@@ -25,7 +30,7 @@ export function DriverEmptyBoard({ isOnline, onGoHome }: DriverEmptyBoardProps):
         }
         hasChevron={!isOnline}
         layout="stack"
-        leadingIcon={<IconOrders color="#0B1E42" size={20} />}
+        leadingIcon={<IconOrders color={leopardPalette.primary} size={20} />}
         onPress={isOnline ? undefined : onGoHome}
         subtitle={
           isOnline

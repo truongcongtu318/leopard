@@ -16,7 +16,7 @@ import { typeScale, IconChevron, IconClock } from '@leopard/mobile-core';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { toE164Vn } from '@leopard/mobile-core/src/auth/phone';
-import { leopardPalette } from '@leopard/mobile-core/src/theme/tokens';
+import { colors, customerPalette, leopardPalette } from '@leopard/mobile-core/src/theme/tokens';
 
 interface AuthResponse {
   user: {
@@ -155,7 +155,7 @@ export default function VerifyOtpRoute() {
             style={styles.backBtn}
             testID="btn-back"
           >
-            <IconChevron color="#0B1E42" direction="left" size={20} />
+            <IconChevron color={customerPalette.textSlateDark} direction="left" size={20} />
           </Pressable>
           <Text accessibilityRole="header" style={styles.headerTitle}>
             Xác nhận mã OTP
@@ -250,7 +250,7 @@ export default function VerifyOtpRoute() {
 
           {isSubmitting ? (
             <View style={styles.submittingIndicator}>
-              <ActivityIndicator color="#0B1E42" size="small" />
+              <ActivityIndicator color={customerPalette.textSlateDark} size="small" />
               <Text style={styles.submittingText}>Đang xác thực mã OTP...</Text>
             </View>
           ) : null}
@@ -330,12 +330,12 @@ export default function VerifyOtpRoute() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
   },
   container: {
     flex: 1,
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
   },
   header: {
     flexDirection: 'row',
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 56,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
   },
   backBtn: {
     minWidth: 44,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   headerPlaceholder: {
     width: 44,
@@ -373,21 +373,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   phoneHighlight: {
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   errorBox: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.danger.background,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: colors.danger.border,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 16,
     width: '100%',
   },
   errorText: {
-    color: '#B91C1C',
+    color: colors.danger.text,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -410,37 +410,37 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
+    borderColor: leopardPalette.inputBorder,
+    backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
   },
   cellFilled: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#FFFFFF',
+    borderColor: customerPalette.primary,
+    backgroundColor: customerPalette.surfaceWhite,
   },
   cellActive: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0B1E42',
+    borderColor: customerPalette.primary,
+    backgroundColor: customerPalette.surfaceWhite,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 3,
   },
   cellError: {
-    borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
+    borderColor: colors.danger.text,
+    backgroundColor: colors.danger.background,
   },
   cellText: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   },
   countdownTime: {
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   resendBtnText: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.primary,
     textDecorationLine: 'underline',
   },
   submittingIndicator: {
@@ -503,14 +503,14 @@ const styles = StyleSheet.create({
     minHeight: 48,
     height: 52,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.bgMuted,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   numpadKeyPressed: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
   },
   numpadKeyEmpty: {
     flex: 1,
@@ -520,12 +520,12 @@ const styles = StyleSheet.create({
   numpadKeyText: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
   },
   numpadKeyActionText: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#64748B',
+    color: customerPalette.textMutedSlate,
   },
 });
