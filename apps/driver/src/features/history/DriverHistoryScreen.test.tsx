@@ -92,7 +92,7 @@ describe('DriverHistoryScreen', () => {
     await fireEvent.press(viewEpodBtn);
 
     expect(screen.getByText('Chứng từ điện tử e-POD')).toBeTruthy();
-    expect(screen.getByText('GPS: 10.8231° N, 106.6297° E')).toBeTruthy();
+    expect(screen.queryByText(/GPS:/)).toBeNull();
     expect(screen.getByText('Người ký nhận: Thủ kho Nguyễn Văn Bình')).toBeTruthy();
 
     await screen.unmount();
@@ -139,6 +139,23 @@ describe('DriverHistoryScreen', () => {
     expect(screen.getByText('Ảnh hạ tải tại điểm giao')).toBeTruthy();
     expect(screen.getByText('Chữ ký xác nhận nhận hàng')).toBeTruthy();
     expect(screen.getByText('Người ký nhận: Thủ kho Nguyễn Văn Bình')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('hides the signer row when BE provides no signer name', async () => {
+    const itemsWithoutSigner: readonly HistoryTripItem[] = [
+      { ...fixtureItems[0], signerName: undefined },
+    ];
+    const screen = await render(<DriverHistoryScreen items={itemsWithoutSigner} total={1} />);
+
+    const viewEpodBtn = screen.getByRole('button', {
+      name: 'Xem ảnh e-POD của chuyến LP-D-260815-001',
+    });
+    await fireEvent.press(viewEpodBtn);
+
+    expect(screen.queryByText(/Người ký nhận/)).toBeNull();
+    expect(screen.queryByText(/Thủ kho nhận hàng/)).toBeNull();
 
     await screen.unmount();
   });
