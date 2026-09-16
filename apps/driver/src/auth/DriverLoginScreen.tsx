@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { styles } from './DriverLoginScreen.styles';
 import type { Role } from '@leopard/shared';
@@ -24,11 +24,32 @@ import {
   signInWithGoogle,
   type OtpChallenge,
 } from '@leopard/mobile-core/src/auth/firebase-auth';
-import { isLikelyVnPhone, toE164Vn, VietnamFlagIcon } from '@leopard/mobile-core';
+import { isLikelyVnPhone, VietnamFlagIcon } from '@leopard/mobile-core';
 import { hitSlop, IconCheck, IconClose, iconSize } from '@leopard/mobile-core';
-import { OtpSixCellInput } from '@leopard/mobile-core';
-import { TruckLoader } from '@leopard/mobile-core';
-import { OtpPhoneHeroIcon } from '@leopard/mobile-core';
+import { DriverOtpModal } from './DriverOtpModal';
+
+function GoogleMark() {
+  return (
+    <Svg height={18} viewBox="0 0 24 24" width={18} style={styles.googleMark}>
+      <Path
+        d="M23.5 12.3c0-.9-.1-1.5-.3-2.3H12v4.5h6.5c-.1 1.1-.8 2.7-2.4 3.8l-.1.1 3.5 2.7.2.1c2.2-2 3.6-5 3.6-8.9z"
+        fill="#4285F4"
+      />
+      <Path
+        d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.8-2.9c-1 .7-2.4 1.2-4.1 1.2-3.1 0-5.8-2.1-6.8-5l-.1.1-3.5 2.7v.1C3.5 21.3 7.4 24 12 24z"
+        fill="#34A853"
+      />
+      <Path
+        d="M5.2 14.4c-.2-.7-.4-1.5-.4-2.4s.1-1.7.4-2.4l-.1-.1-3.5-2.7-.1.1C.6 8.6 0 10.2 0 12s.6 3.4 1.5 4.9l3.7-2.5z"
+        fill="#FBBC05"
+      />
+      <Path
+        d="M12 4.6c1.8 0 3 .8 3.7 1.4l3.3-3.2.1-.1C17.9 1.1 15.2 0 12 0 7.4 0 3.5 2.7 1.5 6.9l3.7 2.7c1-2.9 3.7-5 6.8-5z"
+        fill="#EA4335"
+      />
+    </Svg>
+  );
+}
 
 const leopardEmblem = require('../../assets/brand/leopard-emblem.png');
 const brandLogin = require('../../assets/brand/brand_login.png');
@@ -328,12 +349,14 @@ export function DriverLoginScreen({
               </View>
             ) : null}
 
-            {errorMsg && authPhase === 'phone' ? (
-              <View style={styles.errorBox} testID="login-error-banner">
-                <Text accessibilityRole="alert" style={styles.errorText}>
-                  {errorMsg}
-                </Text>
-              </View>
+            {errorMsg !== null ? (
+              authPhase === 'phone' ? (
+                <View style={styles.errorBox} testID="login-error-banner">
+                  <Text accessibilityRole="alert" style={styles.errorText}>
+                    {errorMsg}
+                  </Text>
+                </View>
+              ) : null
             ) : null}
 
             <View style={styles.fieldSection}>
@@ -350,8 +373,8 @@ export function DriverLoginScreen({
               <View
                 style={[
                   styles.inputRow,
-                  isInputFocused && styles.inputRowFocused,
-                  !isInputFocused && isPhoneValid && styles.inputRowValid,
+                  isInputFocused ? styles.inputRowFocused : null,
+                  !isInputFocused ? (isPhoneValid ? styles.inputRowValid : null) : null,
                 ]}
               >
                 <View style={styles.countryBadge}>
@@ -380,16 +403,18 @@ export function DriverLoginScreen({
                   style={styles.textInput}
                   value={phone}
                 />
-                {phone.length > 0 && !isSubmitting ? (
-                  <Pressable
-                    accessibilityLabel="Xóa số điện thoại"
-                    accessibilityRole="button"
-                    hitSlop={hitSlop(iconSize.sm)}
-                    onPress={() => setPhone('')}
-                    style={styles.clearBtn}
-                  >
-                    <IconClose color="#94A3B8" size={iconSize.sm} />
-                  </Pressable>
+                {phone.length > 0 ? (
+                  !isSubmitting ? (
+                    <Pressable
+                      accessibilityLabel="Xóa số điện thoại"
+                      accessibilityRole="button"
+                      hitSlop={hitSlop(iconSize.sm)}
+                      onPress={() => setPhone('')}
+                      style={styles.clearBtn}
+                    >
+                      <IconClose color="#94A3B8" size={iconSize.sm} />
+                    </Pressable>
+                  ) : null
                 ) : null}
               </View>
               <Text style={styles.fieldHint}>Mã xác thực được gửi qua SMS.</Text>
@@ -407,8 +432,8 @@ export function DriverLoginScreen({
               onPress={handleSendOtp}
               style={({ pressed }) => [
                 styles.primaryBtn,
-                isBtnDisabled && styles.primaryBtnDisabled,
-                pressed && !isBtnDisabled && styles.pressed,
+                isBtnDisabled ? styles.primaryBtnDisabled : null,
+                pressed ? (!isBtnDisabled ? styles.pressed : null) : null,
               ]}
             >
               {isSubmitting ? (
@@ -420,7 +445,7 @@ export function DriverLoginScreen({
                 <Text
                   style={[
                     styles.primaryBtnText,
-                    isBtnDisabled && styles.primaryBtnDisabledText,
+                    isBtnDisabled ? styles.primaryBtnDisabledText : null,
                   ]}
                 >
                   Nhận mã OTP
@@ -444,12 +469,12 @@ export function DriverLoginScreen({
               onPress={handleGoogleLogin}
               style={({ pressed }) => [
                 styles.googleBtn,
-                (isSubmitting || !firebaseReady) && styles.btnDisabled,
-                pressed && styles.pressed,
+                (isSubmitting || !firebaseReady) ? styles.btnDisabled : null,
+                pressed ? styles.pressed : null,
               ]}
             >
               <View style={styles.googleIconWrap}>
-                <Text style={styles.googleG}>G</Text>
+                <GoogleMark />
               </View>
               <Text style={styles.googleBtnText}>Đăng nhập với Google</Text>
             </Pressable>
@@ -480,108 +505,29 @@ export function DriverLoginScreen({
       </KeyboardAvoidingView>
 
       {/* OTP Modal Overlay */}
-      {authPhase === 'otp' && (
-        <View style={styles.otpModalOverlay}>
-          <Pressable
-            accessibilityLabel="Đóng modal xác thực"
-            onPress={handleChangePhone}
-            style={styles.otpBackdrop}
-          />
-
-          <View style={styles.otpModalCard}>
-            <View style={styles.otpHeaderNav}>
-              <Pressable
-                accessibilityLabel="Đổi số điện thoại"
-                accessibilityRole="button"
-                disabled={isSubmitting}
-                hitSlop={8}
-                onPress={handleChangePhone}
-                style={styles.otpNavBack}
-              >
-                <Text style={styles.otpNavBackText}>← Quay lại</Text>
-              </Pressable>
-              <Text style={styles.otpNavStatus}>Bảo mật 2 lớp</Text>
-            </View>
-
-            <View style={styles.otpCenterHero}>
-              <View style={[styles.otpBadge, isVerified && styles.otpBadgeSuccess]}>
-                <OtpPhoneHeroIcon isVerified={isVerified} size={36} />
-              </View>
-              <Text style={styles.otpModalTitle}>
-                {isVerified ? 'Xác thực thành công' : 'Nhập mã xác nhận OTP'}
-              </Text>
-              <Text style={styles.otpModalDesc}>
-                {isVerified
-                  ? `Số điện thoại ${toE164Vn(phone)} đã được xác minh.`
-                  : 'Nhập mã 6 chữ số đã gửi tới số điện thoại '}
-                {!isVerified ? <Text style={styles.phoneHighlight}>{toE164Vn(phone)}</Text> : null}
-              </Text>
-            </View>
-
-            <OtpSixCellInput
-              autoFocus
-              editable={!isSubmitting && !isVerified}
-              hasError={Boolean(errorMsg)}
-              isSubmitting={isSubmitting}
-              onChangeText={(text) => {
-                setOtpCode(text);
-                if (errorMsg) setErrorMsg(null);
-                if (resendSuccessMsg) setResendSuccessMsg(null);
-              }}
-              onComplete={(code) => {
-                void handleVerifyOtp(code);
-              }}
-              value={otpCode}
-            />
-
-            {isSubmitting ? (
-              <View style={styles.verifyingWrap}>
-                <TruckLoader showRoad={true} showText={false} size="sm" />
-                <Text style={styles.verifyingText}>Đang xác nhận mã OTP...</Text>
-              </View>
-            ) : null}
-
-            {errorMsg ? (
-              <View style={styles.otpErrorBox} testID="otp-error-banner">
-                <Text accessibilityRole="alert" style={styles.otpErrorText}>
-                  {errorMsg}
-                </Text>
-              </View>
-            ) : null}
-
-            {resendSuccessMsg ? (
-              <View
-                accessibilityLiveRegion="polite"
-                accessibilityRole="alert"
-                style={styles.otpSuccessBox}
-              >
-                <IconCheck color="#167A3A" size={iconSize.sm} />
-                <Text style={styles.otpSuccessText}>{resendSuccessMsg}</Text>
-              </View>
-            ) : null}
-
-            {!isVerified ? (
-              <View style={styles.otpFooter}>
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={isSubmitting || resendSeconds > 0}
-                  onPress={handleResendOtp}
-                  style={styles.resendBtn}
-                >
-                  <Text
-                    style={[
-                      styles.resendBtnText,
-                      resendSeconds > 0 && styles.resendBtnDisabledText,
-                    ]}
-                  >
-                    {resendSeconds > 0 ? `Gửi lại mã sau (${resendSeconds}s)` : 'Gửi lại mã OTP'}
-                  </Text>
-                </Pressable>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      )}
+      {authPhase === 'otp' ? (
+        <DriverOtpModal
+          errorMsg={errorMsg}
+          isSubmitting={isSubmitting}
+          isVerified={isVerified}
+          onChangeCode={(code) => {
+            setOtpCode(code);
+            if (errorMsg) setErrorMsg(null);
+            if (resendSuccessMsg) setResendSuccessMsg(null);
+          }}
+          onClose={handleChangePhone}
+          onResend={() => {
+            void handleResendOtp();
+          }}
+          onVerify={(code) => {
+            void handleVerifyOtp(code);
+          }}
+          otpCode={otpCode}
+          phone={phone}
+          resendSeconds={resendSeconds}
+          resendSuccessMsg={resendSuccessMsg}
+        />
+      ) : null}
     </View>
   );
 }

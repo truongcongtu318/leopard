@@ -1,6 +1,6 @@
 import { Platform, StyleSheet } from 'react-native';
 
-import { spacing, typeScale } from '@leopard/mobile-core';
+import { iosContinuousCurve, spacing, typeScale } from '@leopard/mobile-core';
 
 export const styles = StyleSheet.create({
   rootContainer: {
@@ -363,11 +363,9 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 28,
   },
-  googleG: {
-    color: '#4285F4',
-    fontSize: 20,
-    fontWeight: '800',
-    lineHeight: 23,
+  googleMark: {
+    height: 18,
+    width: 18,
   },
   googleBtnText: {
     color: '#FFFFFF',
@@ -436,6 +434,7 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(16, 42, 67, 0.58)',
   },
   otpModalCard: {
+    ...iosContinuousCurve,
     backgroundColor: '#FFFFFF',
     borderColor: '#DCE4EC',
     borderRadius: 24,
