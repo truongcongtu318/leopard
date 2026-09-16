@@ -1,4 +1,5 @@
 import type { OrderStatus } from '@leopard/shared';
+import * as Location from 'expo-location';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -32,7 +33,6 @@ import {
   RealInteractiveMap,
   RouteSpine,
   StatusBadge,
-  describeGeolocationFailure,
   haptic,
   httpClient,
   iosContinuousCurve,
@@ -406,35 +406,29 @@ export function HomeDashboardScreen({
   useEffect(() => {
     const saved = addressStore.getDefaultAddress();
     if (defaultPickupLocation || saved?.address) return;
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setLocationNotice('Thiết bị không hỗ trợ định vị — vui lòng nhập điểm lấy hàng thủ công.');
-      return;
-    }
     const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+    (async () => {
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (permission.status !== 'granted') {
+          setLocationNotice('Chưa cấp quyền vị trí — vui lòng nhập điểm lấy hàng thủ công.');
+          return;
+        }
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        try {
-          const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
-          if (resolved && resolved.trim().length > 0) {
-            setPickupText(resolved);
-            setPickupLabel('Vị trí hiện tại');
-            setLocationNotice(null);
-            addressStore.saveAddress({ label: 'Vị trí hiện tại', address: resolved, category: 'OTHER', latitude: lat, longitude: lng, isDefault: true });
-            setAddressStoreVersion((v) => v + 1);
-          }
-        } catch {
-          // Keep default
+        const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
+        if (resolved && resolved.trim().length > 0) {
+          setPickupText(resolved);
+          setPickupLabel('Vị trí hiện tại');
+          setLocationNotice(null);
+          addressStore.saveAddress({ label: 'Vị trí hiện tại', address: resolved, category: 'OTHER', latitude: lat, longitude: lng, isDefault: true });
+          setAddressStoreVersion((v) => v + 1);
         }
-      },
-      (error) => {
-        // PositionUnavailable (2) and Timeout (3) are ordinary outdoors, so the
-        // wording stays about what to do next rather than blaming the device.
-        setLocationNotice(describeGeolocationFailure(error));
-      },
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
+      } catch {
+        setLocationNotice('Không lấy được vị trí hiện tại. Vui lòng nhập điểm lấy hàng thủ công.');
+      }
+    })();
   }, [defaultPickupLocation]);
 
   const addressList = useMemo(() => savedAddresses ?? addressStore.getAddresses(), [savedAddresses, addressStoreVersion]);
