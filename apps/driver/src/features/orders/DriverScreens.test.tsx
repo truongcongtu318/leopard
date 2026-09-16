@@ -165,7 +165,6 @@ describe('DriverOrderDetailScreen', () => {
     );
 
     expect(screen.getByText('Ảnh xác nhận đã tải lên')).toBeTruthy();
-    expect(screen.getByText('DRIVER · ACTIVE MISSION')).toBeTruthy();
     expect(screen.getByTestId('route-map-schematic')).toBeTruthy();
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },

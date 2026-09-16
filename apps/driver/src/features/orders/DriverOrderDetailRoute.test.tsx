@@ -75,7 +75,8 @@ describe('Driver order detail route', () => {
     // Section labeled XÁC THỰC BÀN GIAO (POD)
     expect(screen.getByText('XÁC THỰC BÀN GIAO (POD)')).toBeTruthy();
 
-    // 4-step state machine transition labels
+    // 4-step state machine transition labels inside extras drawer
+    await fireEvent.press(screen.getByTestId('btn-toggle-mission-extras'));
     expect(screen.getByText('Nhận đơn (ACCEPTED)')).toBeTruthy();
     expect(screen.getByText('Lấy hàng (PICKING_UP)')).toBeTruthy();
     expect(screen.getByText('Vận chuyển (IN_TRANSIT)')).toBeTruthy();

@@ -30,6 +30,7 @@ export type MissionMapCanvasProps = Readonly<{
   vehicleType?: VehicleType | string | null;
   navigationTarget?: { lat?: number; lng?: number; label?: string } | null;
   onNavigationWarning?: (proceed: () => void) => void;
+  fillContainer?: boolean;
   testID?: string;
   // Legacy string labels for backward compatibility
   originLabel?: string;
@@ -135,6 +136,7 @@ export function MissionMapCanvas({
   vehicleType,
   navigationTarget,
   onNavigationWarning,
+  fillContainer = false,
   testID = 'route-map-schematic',
   originLabel,
   destinationLabel,
@@ -288,7 +290,10 @@ export function MissionMapCanvas({
   const showLiveOverlays = !isTripEnded;
 
   return (
-    <View style={styles.mapCanvasContainer} testID={testID}>
+    <View
+      style={[styles.mapCanvasContainer, fillContainer ? styles.mapCanvasContainerFill : null]}
+      testID={testID}
+    >
       <RealInteractiveMap
         destination={resolvedDestination}
         height="100%"
@@ -401,6 +406,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     width: '100%',
+  },
+  mapCanvasContainerFill: {
+    borderRadius: 0,
+    height: undefined,
+    position: 'absolute',
+    inset: 0,
   },
   mapFloatingTopLeftGroup: {
     flexDirection: 'row',
