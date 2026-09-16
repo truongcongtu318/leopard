@@ -347,7 +347,7 @@ describe('MissionMapCanvas (Task 18)', () => {
         destination={{ label: 'B' }}
         fillContainer
         origin={{ label: 'A' }}
-        tracking={{ kind: 'not-started', label: 'Chưa bắt đầu' }}
+        tracking={defaultTracking}
       />,
     );
     const canvas = screen.getByTestId('route-map-schematic');

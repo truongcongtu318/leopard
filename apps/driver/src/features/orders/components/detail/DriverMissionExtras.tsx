@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { IconClock, StatusTimeline, colors, leopardPalette, spacing } from '@leopard/mobile-core';
+import type { DriverAssignedDetailView } from '../../model';
 import { MissionStepper } from './MissionStepper';
 import { CargoAndContactCard } from './CargoAndContactCard';
 
@@ -11,7 +12,7 @@ export type DriverMissionExtrasProps = Readonly<{
   contactRoleLabel: string;
   customerContact: string;
   vehicleLabel: string;
-  history: readonly { label: string; timestampLabel: string }[];
+  history: DriverAssignedDetailView['order']['history'];
 }>;
 
 export function DriverMissionExtras({
