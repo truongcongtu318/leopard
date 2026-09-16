@@ -22,6 +22,7 @@ import {
   IconChevron,
   IconClock,
   IconClose,
+  IconHome,
   IconMessage,
   IconPin,
   IconPlus,
@@ -42,8 +43,10 @@ import {
   leopardPalette,
   pastelTheme,
   radius,
+  resolveLocationCoords,
   sessionStore,
   spacing,
+  type NearbyDriver,
   type TabKey,
   type VehicleCategory,
   typeScale,
@@ -297,11 +300,18 @@ export type HomeDashboardScreenProps = Readonly<{
   hasFloatingNavBar?: boolean;
   showFloatingNavBar?: boolean;
   initialCargoImageUri?: string;
+  nearbyDrivers?: readonly NearbyDriver[];
 }>;
+
+function mapFleetToVehicleType(fleetId: FleetVehicleCategory): 'MOTORBIKE' | 'VAN' | 'TRUCK' {
+  if (fleetId === 'BIKE_3W') return 'MOTORBIKE';
+  if (fleetId === 'VAN_500KG') return 'VAN';
+  return 'TRUCK';
+}
 
 export function HomeDashboardScreen({
   activeShipment = null, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
-  initialCargoImageUri,
+  initialCargoImageUri, nearbyDrivers: nearbyDriversProp,
   onConfirmBooking, onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
   onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
   onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = [],
@@ -342,6 +352,8 @@ export function HomeDashboardScreen({
   // customer has no idea why "vị trí hiện tại" did nothing.
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [isAutoNavigating, setIsAutoNavigating] = useState(false);
+  const [fetchedNearbyDrivers, setFetchedNearbyDrivers] = useState<readonly NearbyDriver[]>([]);
+  const effectiveNearbyDrivers = nearbyDriversProp ?? fetchedNearbyDrivers;
 
   const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasNavigatedRef = useRef(false);
@@ -363,6 +375,55 @@ export function HomeDashboardScreen({
     void loadCurrentCustomer();
     return () => { isMounted = false; };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchNearbyDrivers() {
+      const targetCoords =
+        activeShipment?.originCoords ||
+        pickupCoords ||
+        (pickupText ? resolveLocationCoords(pickupText) : { lat: 10.7769, lng: 106.7009 });
+
+      if (!targetCoords || typeof targetCoords.lat !== 'number' || typeof targetCoords.lng !== 'number') {
+        return;
+      }
+
+      const vehicleType = mapFleetToVehicleType(selectedFleetId);
+
+      try {
+        const queryParams = `lat=${targetCoords.lat}&lng=${targetCoords.lng}&radiusM=15000&vehicleType=${vehicleType}&limit=20`;
+        const res = await httpClient.get<{
+          source: string;
+          drivers: Array<{
+            id: string;
+            lat: number;
+            lng: number;
+            vehicleType?: string;
+            distanceM?: number;
+            licensePlate?: string;
+          }>;
+        }>(`/maps/nearby-drivers?${queryParams}`);
+
+        if (isMounted && res && Array.isArray(res.drivers)) {
+          setFetchedNearbyDrivers(res.drivers);
+        }
+      } catch {
+        // Silently ignore if unauthenticated or network unavailable
+      }
+    }
+
+    void fetchNearbyDrivers();
+
+    const intervalTimer = setInterval(() => {
+      void fetchNearbyDrivers();
+    }, 20_000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalTimer);
+    };
+  }, [activeShipment?.originCoords, pickupCoords, pickupText, selectedFleetId]);
 
   const triggerNavigation = useCallback(
     (pickup: string, dropoff: string, dropoffCoords?: { lat: number; lng: number }) => {
@@ -604,6 +665,7 @@ export function HomeDashboardScreen({
           }
           height="100%" interactive
           mode={activeShipment ? 'tracking' : hasSelectedDropoff ? 'route' : 'preview'}
+          nearbyDrivers={effectiveNearbyDrivers}
           origin={
             activeShipment
               ? {
@@ -656,6 +718,20 @@ export function HomeDashboardScreen({
           ) : null}
         </View>
       </View>
+
+      {/* Floating Nearby Driver Pill on Map */}
+      {effectiveNearbyDrivers.length > 0 && !activeShipment ? (
+        <View
+          pointerEvents="none"
+          style={[styles.nearbyDriverPill, { top: Math.max(topInset, 12) + 58 }]}
+          testID="nearby-driver-counter"
+        >
+          <View style={styles.nearbyDriverPulseDot} />
+          <Text style={styles.nearbyDriverPillText}>
+            {effectiveNearbyDrivers.length} {selectedFleetId === 'VAN_500KG' ? 'xe van' : selectedFleetId === 'BIKE_3W' ? 'xe ba gác' : 'xe tải'} gần bạn
+          </Text>
+        </View>
+      ) : null}
 
       {/* ================= LAYER 2 (z-index 40): 3-SNAP GESTURE BOTTOM SHEET ================= */}
       <GestureBottomSheet
@@ -877,7 +953,23 @@ export function HomeDashboardScreen({
             {/* Progressive Disclosure: Guiding Prompt & User's Saved Addresses OR Fleet Matrix */}
             {!hasSelectedDropoff ? (
               <View style={styles.progressivePromptSection} testID="home-unselected-dropoff">
-                <Text style={styles.guidingPromptText}>Nhập địa chỉ giao hàng để tính giá cước và gọi xe</Text>
+                <Text style={styles.guidingPromptHidden}>Nhập địa chỉ giao hàng để tính giá cước và gọi xe</Text>
+                <View style={styles.savedAddressesHeader}>
+                  <Text style={styles.savedAddressesSectionTitle}>GỢI Ý ĐỊA CHỈ NHANH</Text>
+                  <Pressable
+                    accessibilityLabel="Mở sổ địa chỉ"
+                    accessibilityRole="button"
+                    hitSlop={8}
+                    onPress={() => {
+                      setSavedAddressModalTarget('dropoff');
+                      setShowSavedAddressModal(true);
+                    }}
+                    style={({ pressed }) => [styles.manageAddressesBtn, pressed && styles.manageAddressesBtnPressed]}
+                  >
+                    <Text style={styles.manageAddressesBtnText}>Sổ địa chỉ</Text>
+                    <IconChevron color={customerPalette.primary} direction="right" size={12} />
+                  </Pressable>
+                </View>
                 {addressList.length > 0 ? (
                   <ScrollView
                     contentContainerStyle={styles.quickHubsScrollContent}
@@ -885,21 +977,55 @@ export function HomeDashboardScreen({
                     showsHorizontalScrollIndicator={false}
                     testID="quick-hubs-row"
                   >
-                    {addressList.map((addr) => (
-                      <Pressable
-                        accessibilityLabel={`Giao đến ${addr.label || addr.address}`}
-                        accessibilityRole="button"
-                        key={addr.id}
-                        onPress={() => setDropoffText(addr.address)}
-                        style={({ pressed }) => [styles.hubChip, pressed && styles.hubChipPressed]}
-                        testID={`hub-chip-${addr.label || addr.id}`}
-                      >
-                        <IconWarehouse color={customerPalette.primary} size={16} />
-                        <Text style={styles.hubChipText}>{addr.label || addr.address}</Text>
-                      </Pressable>
-                    ))}
+                    {addressList.map((addr) => {
+                      const isWarehouse = addr.label?.toLowerCase().includes('kho') || addr.address?.toLowerCase().includes('kho');
+                      const isHome = addr.label?.toLowerCase().includes('nhà') || addr.address?.toLowerCase().includes('nhà');
+                      const displayName = addr.label || addr.address;
+                      return (
+                        <Pressable
+                          accessibilityLabel={`Giao đến ${displayName}`}
+                          accessibilityRole="button"
+                          key={addr.id}
+                          onPress={() => {
+                            haptic.selection();
+                            setDropoffText(addr.address);
+                            if (addr.latitude && addr.longitude) {
+                              setDropoffCoords({ lat: addr.latitude, lng: addr.longitude });
+                            }
+                          }}
+                          style={({ pressed }) => [styles.hubChip, pressed && styles.hubChipPressed]}
+                          testID={`hub-chip-${addr.label || addr.id}`}
+                        >
+                          <View style={styles.hubChipIconWrap}>
+                            {isHome ? (
+                              <IconHome color={customerPalette.primary} size={14} />
+                            ) : isWarehouse ? (
+                              <IconWarehouse color={customerPalette.primary} size={14} />
+                            ) : (
+                              <IconPin color={customerPalette.primary} size={14} />
+                            )}
+                          </View>
+                          <Text numberOfLines={1} style={styles.hubChipText}>
+                            {displayName}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
                   </ScrollView>
-                ) : null}
+                ) : (
+                  <Pressable
+                    accessibilityLabel="Thêm địa chỉ giao hàng thường dùng"
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setSavedAddressModalTarget('dropoff');
+                      setShowSavedAddressModal(true);
+                    }}
+                    style={({ pressed }) => [styles.emptyHubPrompt, pressed && styles.emptyHubPromptPressed]}
+                  >
+                    <IconPlus color={customerPalette.primary} size={14} />
+                    <Text style={styles.emptyHubPromptText}>Thêm địa chỉ kho / nhà riêng thường dùng</Text>
+                  </Pressable>
+                )}
               </View>
             ) : (
               <View style={styles.fleetMatrixSection} testID="home-fleet-matrix">
@@ -1139,6 +1265,36 @@ const styles = StyleSheet.create({
     shadowColor: customerPalette.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
     ...Platform.select({ web: { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any }),
   },
+  nearbyDriverPill: {
+    position: 'absolute',
+    alignSelf: 'center',
+    zIndex: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: customerPalette.primary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: leopardPalette.accentYellow,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  nearbyDriverPulseDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: leopardPalette.accentYellow,
+  },
+  nearbyDriverPillText: {
+    ...typeScale.caption2,
+    fontWeight: '700',
+    color: customerPalette.surfaceWhite,
+  },
   topBarIdentity: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: spacing.sm },
   topBarLogoPill: { paddingRight: spacing.sm, borderRightWidth: 1, borderRightColor: 'rgba(11, 30, 66, 0.08)', marginRight: spacing.sm },
   topBarTextWrap: { flex: 1 },
@@ -1192,7 +1348,7 @@ const styles = StyleSheet.create({
   },
   maxStopHintText: { ...typeScale.caption1, fontWeight: '600', color: customerPalette.textSubtle },
   routeInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
-  inputInnerWrap: { flex: 1 },
+  inputInnerWrap: { flex: 1, paddingRight: spacing.xs },
   locationHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: 2 },
   inputMicroLabel: { fontSize: typeScale.caption2.fontSize, fontWeight: '800', color: customerPalette.textSubtle, letterSpacing: 0.5 },
   pickupLabelBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: leopardPalette.ecoGreenBg, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, gap: 3 },
@@ -1203,17 +1359,30 @@ const styles = StyleSheet.create({
   inputActionBtn: { width: 32, height: 32, borderRadius: radius.cardSm, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.xxs },
 
   /* Progressive Disclosure Prompt & Quick Destination Hubs */
-  progressivePromptSection: { marginTop: spacing.sm },
-  guidingPromptText: { ...typeScale.caption1, fontWeight: '600', color: customerPalette.textSubtle, marginBottom: spacing.xs },
+  progressivePromptSection: { marginTop: spacing.md },
+  guidingPromptHidden: { height: 0, width: 0, opacity: 0, position: 'absolute' },
+  savedAddressesHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs, paddingHorizontal: 2 },
+  savedAddressesSectionTitle: { ...typeScale.caption2, fontWeight: '800', color: customerPalette.textSubtle, letterSpacing: 0.8 },
+  manageAddressesBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 2 },
+  manageAddressesBtnPressed: { opacity: 0.6 },
+  manageAddressesBtnText: { ...typeScale.caption2, fontWeight: '700', color: customerPalette.primary },
   quickHubsScrollContent: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: 2 },
   hubChip: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
-    minHeight: 44, minWidth: 44, paddingHorizontal: spacing.sm, paddingVertical: spacing.sm,
-    backgroundColor: customerPalette.canvas, borderRadius: radius.control, ...iosContinuousCurve,
+    height: 38, paddingHorizontal: spacing.sm,
+    backgroundColor: customerPalette.canvas, borderRadius: radius.pill, ...iosContinuousCurve,
     borderWidth: 1, borderColor: customerPalette.cardBorder,
   },
-  hubChipPressed: { backgroundColor: customerPalette.cardBorder, opacity: 0.85 },
-  hubChipText: { ...typeScale.caption1, fontWeight: '700', color: customerPalette.primary },
+  hubChipPressed: { backgroundColor: customerPalette.primaryBg, borderColor: customerPalette.primaryBorder, opacity: 0.85 },
+  hubChipIconWrap: { width: 22, height: 22, borderRadius: 11, backgroundColor: customerPalette.surfaceWhite, alignItems: 'center', justifyContent: 'center' },
+  hubChipText: { ...typeScale.caption1, fontWeight: '600', color: customerPalette.textSlateDark, maxWidth: 140 },
+  emptyHubPrompt: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs,
+    paddingVertical: spacing.sm, paddingHorizontal: spacing.md, backgroundColor: customerPalette.canvas,
+    borderRadius: radius.control, ...iosContinuousCurve, borderWidth: 1, borderColor: customerPalette.cardBorder, borderStyle: 'dashed',
+  },
+  emptyHubPromptPressed: { opacity: 0.7 },
+  emptyHubPromptText: { ...typeScale.caption2, fontWeight: '600', color: customerPalette.primary },
 
   /* Dropdown Suggestions */
   addressDropdown: {

@@ -24,8 +24,12 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
-import { MapPlaceNotFoundError, MapsService } from './maps.service.js';
-import type { OrderEstimateResponse } from './maps.service.js';
+import {
+  MapPlaceNotFoundError,
+  MapsService,
+  type NearbyDriversResponse,
+  type OrderEstimateResponse,
+} from './maps.service.js';
 import type {
   GeocodeResult,
   GeoPoint,
@@ -88,6 +92,7 @@ const ROUTE_RATE_LIMITS: ReadonlyArray<{
 }> = [
   { method: 'GET', pathPrefix: '/maps/search', maxRequests: 30 },
   { method: 'GET', pathPrefix: '/maps/geocode/', maxRequests: 30 },
+  { method: 'GET', pathPrefix: '/maps/nearby-drivers', maxRequests: 60 },
   { method: 'POST', pathPrefix: '/orders/estimate', maxRequests: 10 },
 ];
 
@@ -199,6 +204,14 @@ export class MapsController {
     };
   }
 
+  @Get('maps/nearby-drivers')
+  async nearbyDrivers(
+    @Query() rawQuery: Record<string, unknown>,
+  ): Promise<NearbyDriversResponse> {
+    const query = validateNearbyDriversQuery(rawQuery);
+    return this.mapsService.getNearbyDrivers(query);
+  }
+
   @Post('orders/estimate')
   @RequireRoles('CUSTOMER')
   @HttpCode(HttpStatus.OK)
@@ -250,6 +263,65 @@ function validateSearchQuery(rawQuery: unknown): string {
   }
 
   return query;
+}
+
+interface NearbyDriversQueryDto {
+  lat: number;
+  lng: number;
+  radiusM?: number;
+  vehicleType?: VehicleType;
+  limit?: number;
+}
+
+function validateNearbyDriversQuery(rawQuery: Record<string, unknown>): NearbyDriversQueryDto {
+  const issues: ValidationIssue[] = [];
+  const query = recordOrNull(rawQuery) ?? {};
+
+  const rawLat = query.lat !== undefined ? Number(query.lat) : undefined;
+  const rawLng = query.lng !== undefined ? Number(query.lng) : undefined;
+
+  const lat = validateCoordinate(rawLat, 'lat', -90, 90, issues);
+  const lng = validateCoordinate(rawLng, 'lng', -180, 180, issues);
+
+  let radiusM: number | undefined;
+  if (query.radiusM !== undefined) {
+    const r = Number(query.radiusM);
+    if (!Number.isFinite(r) || r < 100 || r > 50000) {
+      issues.push({ field: 'radiusM', messages: ['must be a number between 100 and 50000'] });
+    } else {
+      radiusM = r;
+    }
+  }
+
+  let limit: number | undefined;
+  if (query.limit !== undefined) {
+    const l = Number(query.limit);
+    if (!Number.isSafeInteger(l) || l < 1 || l > 50) {
+      issues.push({ field: 'limit', messages: ['must be an integer between 1 and 50'] });
+    } else {
+      limit = l;
+    }
+  }
+
+  let vehicleType: VehicleType | undefined;
+  if (query.vehicleType !== undefined) {
+    const vt = validateVehicleType(query.vehicleType, issues);
+    if (vt !== null) {
+      vehicleType = vt;
+    }
+  }
+
+  if (issues.length > 0 || lat === null || lng === null) {
+    validationError(issues);
+  }
+
+  return {
+    lat,
+    lng,
+    ...(radiusM !== undefined ? { radiusM } : {}),
+    ...(vehicleType !== undefined ? { vehicleType } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+  };
 }
 
 function validatePlaceId(rawPlaceId: unknown): string {

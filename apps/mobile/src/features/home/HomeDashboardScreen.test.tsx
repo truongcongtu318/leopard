@@ -785,4 +785,34 @@ describe('HomeDashboardScreen', () => {
 
     await screen.unmount();
   });
+
+  describe('Nearby Drivers on Customer Map', () => {
+    it('renders nearby drivers counter pill and markers when nearbyDrivers prop is provided', async () => {
+      const mockDrivers = [
+        { id: 'driver-1', lat: 10.7769, lng: 106.7009, vehicleType: 'TRUCK' },
+        { id: 'driver-2', lat: 10.778, lng: 106.702, vehicleType: 'TRUCK' },
+        { id: 'driver-3', lat: 10.78, lng: 106.705, vehicleType: 'TRUCK' },
+      ];
+
+      const screen = await render(
+        <HomeDashboardScreen
+          activeShipment={null}
+          nearbyDrivers={mockDrivers}
+        />,
+      );
+
+      // Nearby driver counter pill
+      const counterPill = screen.getByTestId('nearby-driver-counter');
+      expect(counterPill).toBeTruthy();
+      expect(screen.getByText(/3 xe tải gần bạn/)).toBeTruthy();
+
+      // Map layer should have markers
+      expect(screen.getByTestId('nearby-drivers-layer')).toBeTruthy();
+      expect(screen.getByTestId('nearby-driver-driver-1')).toBeTruthy();
+      expect(screen.getByTestId('nearby-driver-driver-2')).toBeTruthy();
+      expect(screen.getByTestId('nearby-driver-driver-3')).toBeTruthy();
+
+      await screen.unmount();
+    });
+  });
 });

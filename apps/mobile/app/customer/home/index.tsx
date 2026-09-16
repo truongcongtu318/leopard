@@ -228,6 +228,11 @@ export default function CustomerHomePage() {
       onConfirmBooking={async (booking) => {
         let orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
         let finalAmount = booking.totalFare;
+        const { vehicleType, cargoWeight } = resolveVehicleOrderType(
+          booking.fleetVehicleId,
+          booking.vehicleName,
+          booking.vehicleCategory,
+        );
         try {
           const port = createCustomerHttpAdapter();
           const pickupCoords =
@@ -237,11 +242,6 @@ export default function CustomerHomePage() {
               : resolveLocationCoords(booking.pickup));
           const dropoffCoords =
             booking.dropoffCoords || resolveLocationCoords(booking.dropoff, pickupCoords);
-          const { vehicleType, cargoWeight } = resolveVehicleOrderType(
-            booking.fleetVehicleId,
-            booking.vehicleName,
-            booking.vehicleCategory,
-          );
 
           const formPayload = {
             pickup: booking.pickup,
@@ -312,8 +312,8 @@ export default function CustomerHomePage() {
               }
             }
           }
-        } catch {
-          // Keep offline fallback orderId if network unavailable
+        } catch (err) {
+          console.warn('[CustomerBooking] Order creation failed, falling back to mock:', err);
         }
 
         if (booking.paymentMethod === 'CASH') {
@@ -326,6 +326,7 @@ export default function CustomerHomePage() {
               origin: booking.pickup,
               destination: booking.dropoff,
               vehicleName: booking.vehicleName,
+              vehicleType,
               paymentMethod: 'CASH',
             },
           });
@@ -339,6 +340,7 @@ export default function CustomerHomePage() {
               origin: booking.pickup,
               destination: booking.dropoff,
               vehicleName: booking.vehicleName,
+              vehicleType,
               paymentMethod: 'VIETQR',
             },
           });

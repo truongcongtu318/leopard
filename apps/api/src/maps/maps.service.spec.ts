@@ -112,3 +112,58 @@ describe('MapsService.estimate', () => {
     });
   });
 });
+
+describe('MapsService.getNearbyDrivers', () => {
+  it('returns nearby drivers query results properly', async () => {
+    const mockPrisma = {
+      $queryRaw: jest.fn().mockResolvedValue([
+        {
+          id: 'profile-1',
+          userId: 'driver-1',
+          vehicleType: 'TRUCK',
+          licensePlate: '59C-12345',
+          lat: 10.7769,
+          lng: 106.7009,
+          distance_m: 1200,
+          lastKnownAt: new Date('2026-09-17T03:00:00.000Z'),
+        },
+      ]),
+    };
+
+    const service = new MapsService({} as any, {} as any, {} as any, mockPrisma as any);
+    const result = await service.getNearbyDrivers({
+      lat: 10.77,
+      lng: 106.7,
+      radiusM: 5000,
+      vehicleType: 'TRUCK',
+      limit: 10,
+    });
+
+    expect(result.source).toBe('LIVE');
+    expect(result.drivers).toHaveLength(1);
+    expect(result.drivers[0]).toEqual({
+      id: 'driver-1',
+      lat: 10.7769,
+      lng: 106.7009,
+      vehicleType: 'TRUCK',
+      distanceM: 1200,
+      updatedAt: '2026-09-17T03:00:00.000Z',
+      licensePlate: '59C-12345',
+    });
+  });
+
+  it('handles empty database response safely', async () => {
+    const mockPrisma = {
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+
+    const service = new MapsService({} as any, {} as any, {} as any, mockPrisma as any);
+    const result = await service.getNearbyDrivers({
+      lat: 10.77,
+      lng: 106.7,
+    });
+
+    expect(result.source).toBe('LIVE');
+    expect(result.drivers).toEqual([]);
+  });
+});

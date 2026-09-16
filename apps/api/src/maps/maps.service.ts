@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { VehicleType } from '@prisma/client';
 
 import { DomainError } from '../common/domain-error.js';
+import { PrismaService } from '../database/prisma.service.js';
 import { EstimateTokenService } from './domain/estimate-token.service.js';
 import { PricingService } from './domain/pricing.service.js';
 import { DemoMapProvider } from './providers/demo-map.provider.js';
@@ -27,6 +29,21 @@ export interface OrderEstimateResponse {
   routes: RouteOptionResponse[];
 }
 
+export interface NearbyDriverResponseItem {
+  id: string;
+  lat: number;
+  lng: number;
+  vehicleType: VehicleType;
+  distanceM: number;
+  updatedAt?: string;
+  licensePlate?: string;
+}
+
+export interface NearbyDriversResponse {
+  source: 'LIVE' | 'DEMO';
+  drivers: NearbyDriverResponseItem[];
+}
+
 export class MapPlaceNotFoundError extends Error {
   constructor() {
     super('Map place not found');
@@ -41,6 +58,7 @@ export class MapsService {
     @Inject(MAP_PROVIDER) private readonly mapProvider: MapProvider,
     private readonly pricingService: PricingService,
     private readonly estimateTokenService: EstimateTokenService,
+    private readonly prisma?: PrismaService,
   ) {}
 
   async search(query: string): Promise<PlaceCandidate[]> {
@@ -101,6 +119,97 @@ export class MapsService {
 
   defaultSource(): MapProviderSource {
     return this.mapProvider instanceof DemoMapProvider ? 'DEMO' : 'VIETMAP';
+  }
+
+  async getNearbyDrivers(query: {
+    lat: number;
+    lng: number;
+    radiusM?: number;
+    vehicleType?: VehicleType;
+    limit?: number;
+  }): Promise<NearbyDriversResponse> {
+    if (!this.prisma) {
+      return { source: 'LIVE', drivers: [] };
+    }
+
+    const radiusM = query.radiusM ?? 10_000;
+    const limit = query.limit ?? 20;
+
+    const rows = query.vehicleType
+      ? await this.prisma.$queryRaw<
+          Array<{
+            id: string;
+            userId: string;
+            vehicleType: string;
+            licensePlate: string | null;
+            lat: number;
+            lng: number;
+            distance_m: number;
+            lastKnownAt: Date | null;
+          }>
+        >`
+          SELECT
+            dp.id,
+            dp."userId",
+            dp."vehicleType"::text AS "vehicleType",
+            dp."licensePlate",
+            ST_Y(dp."lastKnownLocation"::geometry) AS lat,
+            ST_X(dp."lastKnownLocation"::geometry) AS lng,
+            ST_Distance(dp."lastKnownLocation", ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography) AS distance_m,
+            dp."lastKnownAt"
+          FROM "DriverProfile" dp
+          WHERE dp.availability = 'AVAILABLE'
+            AND dp."vehicleType"::text = ${query.vehicleType}
+            AND dp."lastKnownLocation" IS NOT NULL
+            AND dp."lastKnownAt" > NOW() - INTERVAL '30 minutes'
+            AND ST_DWithin(dp."lastKnownLocation", ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography, ${radiusM})
+          ORDER BY distance_m ASC
+          LIMIT ${limit}
+        `
+      : await this.prisma.$queryRaw<
+          Array<{
+            id: string;
+            userId: string;
+            vehicleType: string;
+            licensePlate: string | null;
+            lat: number;
+            lng: number;
+            distance_m: number;
+            lastKnownAt: Date | null;
+          }>
+        >`
+          SELECT
+            dp.id,
+            dp."userId",
+            dp."vehicleType"::text AS "vehicleType",
+            dp."licensePlate",
+            ST_Y(dp."lastKnownLocation"::geometry) AS lat,
+            ST_X(dp."lastKnownLocation"::geometry) AS lng,
+            ST_Distance(dp."lastKnownLocation", ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography) AS distance_m,
+            dp."lastKnownAt"
+          FROM "DriverProfile" dp
+          WHERE dp.availability = 'AVAILABLE'
+            AND dp."lastKnownLocation" IS NOT NULL
+            AND dp."lastKnownAt" > NOW() - INTERVAL '30 minutes'
+            AND ST_DWithin(dp."lastKnownLocation", ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography, ${radiusM})
+          ORDER BY distance_m ASC
+          LIMIT ${limit}
+        `;
+
+    const drivers: NearbyDriverResponseItem[] = rows.map((r) => ({
+      id: r.userId,
+      lat: Number(r.lat),
+      lng: Number(r.lng),
+      vehicleType: r.vehicleType as VehicleType,
+      distanceM: Math.round(Number(r.distance_m)),
+      ...(r.lastKnownAt ? { updatedAt: r.lastKnownAt instanceof Date ? r.lastKnownAt.toISOString() : new Date(r.lastKnownAt).toISOString() } : {}),
+      ...(r.licensePlate ? { licensePlate: r.licensePlate } : {}),
+    }));
+
+    return {
+      source: 'LIVE',
+      drivers,
+    };
   }
 
   private async withProvider<T>(operation: () => Promise<T>): Promise<T> {

@@ -5,6 +5,7 @@ jest.mock('react-native-webview', () => ({ WebView: () => null }));
 
 import {
   postTruckLocationToMapFrame,
+  postNearbyDriversToMapFrame,
   RealInteractiveMap,
   buildLeafletHtml,
   resolveLocationCoords,
@@ -236,5 +237,68 @@ describe('RealInteractiveMap — PROVIDED_ONLY route policy', () => {
     expect(html).toContain('"progress":"IN_SERVICE"');
     expect(html).toContain('"progress":"COMPLETED"');
     expect(html).toContain("s.progress === 'COMPLETED' ? '✓' : seq.toString()");
+  });
+
+  it('renders nearby driver markers in fallback view', async () => {
+    const screen = await render(
+      <RealInteractiveMap
+        destination={{ label: 'Cảng Cát Lái' }}
+        mode="preview"
+        nearbyDrivers={[
+          { id: 'driver-1', lat: 10.7769, lng: 106.7009, vehicleType: 'TRUCK' },
+          { id: 'driver-2', lat: 10.778, lng: 106.702, vehicleType: 'VAN' },
+        ]}
+        origin={{ label: 'Quận 1' }}
+      />,
+    );
+
+    expect(screen.getByTestId('nearby-drivers-layer')).toBeTruthy();
+    expect(screen.getByTestId('nearby-driver-driver-1')).toBeTruthy();
+    expect(screen.getByTestId('nearby-driver-driver-2')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('includes nearby driver configuration and rendering script in HTML output', () => {
+    const html = buildLeafletHtml({
+      destinationCoords: { lat: 10.76, lng: 106.8 },
+      destinationLabel: 'Điểm giao',
+      interactive: true,
+      mapInstanceId: 'test-drivers',
+      mode: 'preview',
+      originCoords: { lat: 10.79, lng: 106.65 },
+      originLabel: 'Điểm lấy',
+      pinCoords: { lat: 0, lng: 0 },
+      stopsCoords: [],
+      truckCoords: { lat: 0, lng: 0 },
+      truckEtaLabel: '',
+      nearbyDrivers: [
+        { id: 'd-1', lat: 10.775, lng: 106.7, vehicleType: 'TRUCK', licensePlate: '59C-111.22' },
+      ],
+    });
+
+    expect(html).toContain('nearbyDriversLayer');
+    expect(html).toContain('custom-nearby-driver-icon');
+    expect(html).toContain('"licensePlate":"59C-111.22"');
+    expect(html).toContain('LEOPARD_UPDATE_NEARBY_DRIVERS');
+  });
+
+  it('posts nearby drivers update to map frame window', () => {
+    const mockPostMessage = jest.fn();
+    const mapFrame = { contentWindow: { postMessage: mockPostMessage } };
+
+    postNearbyDriversToMapFrame(mapFrame as any, {
+      type: 'LEOPARD_UPDATE_NEARBY_DRIVERS',
+      mapInstanceId: 'map-1',
+      drivers: [{ id: 'd-1', lat: 10.77, lng: 106.7 }],
+    });
+
+    expect(mockPostMessage).toHaveBeenCalledWith(
+      {
+        type: 'LEOPARD_UPDATE_NEARBY_DRIVERS',
+        mapInstanceId: 'map-1',
+        drivers: [{ id: 'd-1', lat: 10.77, lng: 106.7 }],
+      },
+      '*',
+    );
   });
 });

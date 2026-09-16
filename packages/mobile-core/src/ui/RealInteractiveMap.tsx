@@ -36,6 +36,15 @@ export type RealInteractiveMapMode = 'route' | 'tracking' | 'location' | 'pin' |
 
 export type RouteResolutionPolicy = 'PROVIDED_ONLY' | 'ALLOW_CLIENT_PREVIEW';
 
+export type NearbyDriver = Readonly<{
+  id: string;
+  lat: number;
+  lng: number;
+  vehicleType?: string;
+  distanceM?: number;
+  licensePlate?: string;
+}>;
+
 export type RealInteractiveMapProps = Readonly<{
   mode?: RealInteractiveMapMode;
   origin?: { label: string; coords?: MapCoordinate };
@@ -55,6 +64,7 @@ export type RealInteractiveMapProps = Readonly<{
   routeResolutionPolicy?: RouteResolutionPolicy;
   routeCoords?: readonly RouteCoordinate[];
   routeSegments?: readonly RoutePolylineSegment[];
+  nearbyDrivers?: readonly NearbyDriver[];
 }>;
 
 type TruckLocationMessage = Readonly<{
@@ -68,6 +78,19 @@ type TruckLocationMessage = Readonly<{
 export function postTruckLocationToMapFrame(
   mapFrame: Pick<HTMLIFrameElement, 'contentWindow'> | null,
   message: TruckLocationMessage,
+): void {
+  mapFrame?.contentWindow?.postMessage(message, '*');
+}
+
+type NearbyDriversUpdateMessage = Readonly<{
+  type: 'LEOPARD_UPDATE_NEARBY_DRIVERS';
+  mapInstanceId: string;
+  drivers: readonly NearbyDriver[];
+}>;
+
+export function postNearbyDriversToMapFrame(
+  mapFrame: Pick<HTMLIFrameElement, 'contentWindow'> | null,
+  message: NearbyDriversUpdateMessage,
 ): void {
   mapFrame?.contentWindow?.postMessage(message, '*');
 }
@@ -100,6 +123,9 @@ export const VIETNAM_LOCATION_DICT: Record<string, MapCoordinate> = {
   'đồng nai': { lat: 10.957, lng: 106.828 },
   'biên hòa': { lat: 10.957, lng: 106.828 },
   'hà nội': { lat: 21.0285, lng: 105.854 },
+  'tôn đức thắng': { lat: 21.0278, lng: 105.834 },
+  'đống đa': { lat: 21.0185, lng: 105.829 },
+  'quốc tử giám': { lat: 21.0278, lng: 105.834 },
   'hoàn kiếm': { lat: 21.0285, lng: 105.854 },
   'đà nẵng': { lat: 16.054, lng: 108.202 },
   'ngũ hành sơn': { lat: 16.033, lng: 108.245 },
@@ -113,6 +139,11 @@ export const VIETNAM_LOCATION_DICT: Record<string, MapCoordinate> = {
   'quận 3': { lat: 10.784, lng: 106.684 },
   'quận 5': { lat: 10.755, lng: 106.666 },
   'chợ lớn': { lat: 10.755, lng: 106.666 },
+  'quận 6': { lat: 10.748, lng: 106.635 },
+  'bình phú': { lat: 10.748, lng: 106.635 },
+  'hồ chí minh': { lat: 10.7769, lng: 106.7009 },
+  'tp.hcm': { lat: 10.7769, lng: 106.7009 },
+  'tphcm': { lat: 10.7769, lng: 106.7009 },
 };
 
 /**
@@ -172,6 +203,7 @@ export function buildLeafletHtml({
   routeResolutionPolicy = 'ALLOW_CLIENT_PREVIEW',
   routeCoords = [],
   routeSegments = [],
+  nearbyDrivers = [],
 }: {
   destinationCoords: MapCoordinate;
   destinationLabel: string;
@@ -194,6 +226,7 @@ export function buildLeafletHtml({
   routeResolutionPolicy?: RouteResolutionPolicy;
   routeCoords?: readonly RouteCoordinate[];
   routeSegments?: readonly RoutePolylineSegment[];
+  nearbyDrivers?: readonly NearbyDriver[];
 }): string {
   const pointsJson = JSON.stringify({
     mode,
@@ -206,6 +239,7 @@ export function buildLeafletHtml({
     hasTruckLocation,
     mapInstanceId,
     routeResolutionPolicy,
+    nearbyDrivers: nearbyDrivers || [],
     // Never include the Vietmap API key in the generated config when the caller
     // requires provided-only geometry — it must be structurally absent from the
     // WebView HTML, not merely unused at runtime.
@@ -344,6 +378,12 @@ export function buildLeafletHtml({
     .truck-badge { position: relative; width: 34px; height: 34px; border-radius: 50%; background: #0B1E42; border: 3px solid #FFFFFF; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.45); display: flex; align-items: center; justify-content: center; z-index: 3; color: #FFFFFF; font-size: 16px; font-weight: bold; }
     .truck-eta { margin-top: 4px; background: #0F172A; color: #FFFFFF; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 12px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
 
+    /* Nearby Driver Marker Styles */
+    .nearby-driver-wrap { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .nearby-driver-pulse { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: rgba(245, 158, 11, 0.28); animation: pinPulse 2s ease-out infinite; }
+    .nearby-driver-badge { position: relative; width: 32px; height: 32px; border-radius: 50%; background: #0B2545; border: 2.5px solid #F59E0B; box-shadow: 0 4px 10px rgba(11, 37, 69, 0.4); display: flex; align-items: center; justify-content: center; z-index: 2; font-size: 15px; }
+    .nearby-driver-tag { margin-top: 3px; background: #0B2545; color: #F59E0B; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 8px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+
     /* Map Controls */
     .map-action-bar { position: absolute; right: 12px; bottom: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; }
     .map-btn { width: 34px; height: 34px; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; font-size: 16px; color: #0F172A; font-weight: bold; user-select: none; }
@@ -415,6 +455,24 @@ export function buildLeafletHtml({
       });
     }
 
+    function createNearbyDriverIcon(vehicleType, plate) {
+      var emoji = '🚚';
+      var vType = (vehicleType || '').toUpperCase();
+      if (vType === 'VAN' || vType.indexOf('VAN') !== -1) {
+        emoji = '🚐';
+      } else if (vType === 'MOTORBIKE' || vType.indexOf('BIKE') !== -1) {
+        emoji = '🛵';
+      } else if (vType === 'TRUCK' || vType.indexOf('TRUCK') !== -1) {
+        emoji = '🚛';
+      }
+      return L.divIcon({
+        className: 'custom-nearby-driver-icon',
+        html: '<div class="nearby-driver-wrap"><div class="nearby-driver-pulse"></div><div class="nearby-driver-badge">' + emoji + '</div>' + (plate ? '<div class="nearby-driver-tag">' + plate + '</div>' : '') + '</div>',
+        iconSize: [42, 50],
+        iconAnchor: [21, 25]
+      });
+    }
+
     function notify(lat, lng) {
       try {
         var payload = {
@@ -461,7 +519,7 @@ export function buildLeafletHtml({
       var previewMarker = L.marker([pLat, pLng], {
         icon: createPulseIcon('dest')
       }).addTo(map);
-      previewMarker.bindPopup('<b>' + pLabel + '</b>').openPopup();
+      if (pLabel) previewMarker.bindPopup('<b>' + pLabel + '</b>');
     } else if (config.mode === 'location') {
       if (config.hasTruckLocation) {
         var current = config.truck.coords;
@@ -626,27 +684,53 @@ export function buildLeafletHtml({
         truckMarker.bindPopup('<b>Tài xế đang vận chuyển</b><br>ETA: ' + (config.truck.eta || 'Đang cập nhật'));
       }
 
-      // Smooth real-time truck position updates via message
+      // Nearby drivers layer
+      var nearbyDriversLayer = L.layerGroup().addTo(map);
+
+      function renderNearbyDrivers(drivers) {
+        nearbyDriversLayer.clearLayers();
+        if (!drivers || !drivers.length) return;
+        drivers.forEach(function(d) {
+          if (typeof d.lat === 'number' && typeof d.lng === 'number') {
+            var icon = createNearbyDriverIcon(d.vehicleType, d.licensePlate);
+            var m = L.marker([d.lat, d.lng], { icon: icon }).addTo(nearbyDriversLayer);
+            var typeLabel = 'Tài xế sẵn sàng';
+            var vType = (d.vehicleType || '').toUpperCase();
+            if (vType === 'VAN' || vType.indexOf('VAN') !== -1) typeLabel = 'Xe Van (Sẵn sàng)';
+            else if (vType === 'MOTORBIKE' || vType.indexOf('BIKE') !== -1) typeLabel = 'Xe Ba Gác / Máy (Sẵn sàng)';
+            else if (vType === 'TRUCK' || vType.indexOf('TRUCK') !== -1) typeLabel = 'Xe Tải (Sẵn sàng)';
+            var distText = d.distanceM ? '<br>Cách bạn: ' + (d.distanceM >= 1000 ? (d.distanceM / 1000).toFixed(1) + ' km' : d.distanceM + ' m') : '';
+            var plateText = d.licensePlate ? '<br>Biển số: ' + d.licensePlate : '';
+            m.bindPopup('<b>' + typeLabel + '</b>' + distText + plateText);
+          }
+        });
+      }
+
+      if (config.nearbyDrivers && config.nearbyDrivers.length > 0) {
+        renderNearbyDrivers(config.nearbyDrivers);
+      }
+
+      // Smooth real-time updates via message
       window.addEventListener('message', function(event) {
-        if (
-          event.data &&
-          event.data.type === 'LEOPARD_UPDATE_TRUCK_LOCATION' &&
-          event.data.mapInstanceId === config.mapInstanceId
-        ) {
-          var nLat = event.data.lat;
-          var nLng = event.data.lng;
-          var nEta = event.data.eta;
-          if (typeof nLat === 'number' && typeof nLng === 'number') {
-            if (truckMarker) {
-              truckMarker.setLatLng([nLat, nLng]);
-              if (nEta) {
-                truckMarker.setPopupContent('<b>Tài xế đang vận chuyển</b><br>ETA: ' + nEta);
+        if (event.data && event.data.mapInstanceId === config.mapInstanceId) {
+          if (event.data.type === 'LEOPARD_UPDATE_TRUCK_LOCATION') {
+            var nLat = event.data.lat;
+            var nLng = event.data.lng;
+            var nEta = event.data.eta;
+            if (typeof nLat === 'number' && typeof nLng === 'number') {
+              if (truckMarker) {
+                truckMarker.setLatLng([nLat, nLng]);
+                if (nEta) {
+                  truckMarker.setPopupContent('<b>Tài xế đang vận chuyển</b><br>ETA: ' + nEta);
+                }
+              } else {
+                truckMarker = L.marker([nLat, nLng], {
+                  icon: createTruckIcon(nEta || '')
+                }).addTo(map);
               }
-            } else {
-              truckMarker = L.marker([nLat, nLng], {
-                icon: createTruckIcon(nEta || '')
-              }).addTo(map);
             }
+          } else if (event.data.type === 'LEOPARD_UPDATE_NEARBY_DRIVERS') {
+            renderNearbyDrivers(event.data.drivers || []);
           }
         }
       });
@@ -686,6 +770,7 @@ export function RealInteractiveMap({
   routeResolutionPolicy,
   routeCoords,
   routeSegments,
+  nearbyDrivers = [],
 }: RealInteractiveMapProps) {
   const mapInstanceId = useId();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -776,6 +861,23 @@ export function RealInteractiveMap({
     }
   }, [displayEta, mapInstanceId, truckLocation?.lat, truckLocation?.lng]);
 
+  // Send nearby drivers update to map frame when nearbyDrivers changes
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const mapFrame = iframeRef.current;
+    if (!mapFrame?.contentWindow) return;
+
+    try {
+      postNearbyDriversToMapFrame(mapFrame, {
+        type: 'LEOPARD_UPDATE_NEARBY_DRIVERS',
+        mapInstanceId,
+        drivers: nearbyDrivers ?? [],
+      });
+    } catch {
+      // Ignore postMessage communication errors on unmounted iframe
+    }
+  }, [mapInstanceId, nearbyDrivers]);
+
   const mapHtml = useMemo(() => {
     const resolvedVietmapKey =
       vietmapApiKey || process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
@@ -796,6 +898,7 @@ export function RealInteractiveMap({
       routeResolutionPolicy: routeResolutionPolicy ?? 'ALLOW_CLIENT_PREVIEW',
       routeCoords: routeCoords ?? [],
       routeSegments: routeSegments ?? [],
+      nearbyDrivers: nearbyDrivers ?? [],
     });
   }, [
     destination?.label,
@@ -813,6 +916,7 @@ export function RealInteractiveMap({
     routeResolutionPolicy,
     routeCoords,
     routeSegments,
+    nearbyDrivers,
   ]);
 
   const isFullScreen = height === '100%';
@@ -921,6 +1025,30 @@ export function RealInteractiveMap({
             </View>
           ) : null}
 
+          {/* Nearby Driver Markers in Fallback */}
+          {nearbyDrivers && nearbyDrivers.length > 0 ? (
+            <View pointerEvents="none" style={styles.nearbyDriversContainer} testID="nearby-drivers-layer">
+              {nearbyDrivers.map((driver, index) => (
+                <View
+                  key={driver.id}
+                  accessibilityLabel={`Tài xế gần đây ${driver.vehicleType || ''}`}
+                  style={[
+                    styles.nearbyDriverPin,
+                    {
+                      top: `${25 + (index % 4) * 15}%`,
+                      left: `${20 + (index % 5) * 15}%`,
+                    },
+                  ]}
+                  testID={`nearby-driver-${driver.id}`}
+                >
+                  <Text style={styles.nearbyDriverEmoji}>
+                    {driver.vehicleType === 'VAN' ? '🚐' : driver.vehicleType === 'MOTORBIKE' ? '🛵' : '🚛'}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           <View style={styles.liveOverlayBadge}>
             <View style={styles.liveDot} />
             <Text style={styles.liveBadgeText}>BẢN ĐỒ THỰC TẾ</Text>
@@ -938,6 +1066,32 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
+  },
+  nearbyDriversContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  nearbyDriverPin: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#0B2545',
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  nearbyDriverEmoji: {
+    fontSize: 13,
   },
   nativeFallback: {
     flex: 1,

@@ -102,6 +102,10 @@ export default function OrderCheckoutScreen({
   const params = useLocalSearchParams<{
     id?: string;
     amount?: string;
+    origin?: string;
+    destination?: string;
+    vehicleType?: string;
+    vehicleName?: string;
   }>();
 
   const id = propOrderId || params.id || '11111111-1111-4111-8111-111111111001';
@@ -241,7 +245,26 @@ export default function OrderCheckoutScreen({
           if (onSuccess) {
             onSuccess();
           } else {
-            router.replace(`/customer/orders/searching/${id}`);
+            const hasExtraParams =
+              params.origin ||
+              params.destination ||
+              params.vehicleType ||
+              params.vehicleName;
+
+            if (hasExtraParams) {
+              router.replace({
+                pathname: `/customer/orders/searching/${id}`,
+                params: {
+                  amount: params.amount,
+                  origin: params.origin,
+                  destination: params.destination,
+                  vehicleType: params.vehicleType,
+                  vehicleName: params.vehicleName,
+                },
+              });
+            } else {
+              router.replace(`/customer/orders/searching/${id}`);
+            }
           }
           return;
         }

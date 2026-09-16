@@ -287,7 +287,22 @@ function toTokenHash(seedKey: string): string {
 }
 
 async function loadExistingDemoBoundary(client: SeedClient, manifest: DemoManifest): Promise<DemoBoundary> {
-  const userIds = manifest.users.map((user) => user.id);
+  const manifestUserIds = manifest.users.map((user) => user.id);
+  const manifestPhones = manifest.users.map((user) => user.phone);
+
+  const matchedUsers = await client.user.findMany({
+    where: {
+      OR: [
+        { id: { in: manifestUserIds } },
+        { phone: { in: manifestPhones } },
+      ],
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const userIds = Array.from(new Set([...manifestUserIds, ...matchedUsers.map((u) => u.id)]));
 
   // Orders created at runtime by a manifest user are still demo data: they hold
   // Restrict references to the users and driver profiles we are about to

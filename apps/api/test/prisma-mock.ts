@@ -143,6 +143,50 @@ export class InMemoryPrismaService {
       return [];
     }
 
+    if (rawSql.includes('FROM "DriverProfile"') && rawSql.includes('ST_DWithin')) {
+      const isVehicleFiltered = rawSql.includes('"vehicleType"::text =');
+      const targetLng = Number(values[0]);
+      const targetLat = Number(values[1]);
+      const vehicleType = isVehicleFiltered ? String(values[2]) : null;
+      const radiusM = Number(isVehicleFiltered ? values[5] : values[4]);
+      const limit = Number(isVehicleFiltered ? values[6] : values[5]);
+
+      const results: Array<{
+        id: string;
+        userId: string;
+        vehicleType: string;
+        licensePlate: string | null;
+        lat: number;
+        lng: number;
+        distance_m: number;
+        lastKnownAt: Date;
+      }> = [];
+
+      for (const profile of this.driverProfiles.values()) {
+        if (profile.availability !== 'AVAILABLE') continue;
+        if (vehicleType && profile.vehicleType !== vehicleType) continue;
+        const loc = this.driverLocations.get(profile.userId);
+        if (!loc) continue;
+
+        const distanceM = haversineMeters(targetLat, targetLng, loc.lat, loc.lng);
+        if (distanceM <= radiusM) {
+          results.push({
+            id: profile.id,
+            userId: profile.userId,
+            vehicleType: profile.vehicleType,
+            licensePlate: profile.licensePlate ?? null,
+            lat: loc.lat,
+            lng: loc.lng,
+            distance_m: distanceM,
+            lastKnownAt: profile.lastKnownAt ?? new Date(),
+          });
+        }
+      }
+
+      results.sort((a, b) => a.distance_m - b.distance_m);
+      return results.slice(0, limit);
+    }
+
     if (rawSql.includes('FROM "DriverProfile"') && rawSql.includes('lastKnownLocation')) {
       const userId = String(values[0] ?? '');
       const location = this.driverLocations.get(userId);
@@ -338,6 +382,7 @@ export class InMemoryPrismaService {
         userId: data.userId!,
         availability: data.availability ?? 'OFFLINE',
         vehicleType: data.vehicleType ?? 'MOTORBIKE',
+        licensePlate: data.licensePlate ?? null,
         lastKnownAt: data.lastKnownAt ?? null,
         createdAt: new Date(),
         updatedAt: new Date(),
