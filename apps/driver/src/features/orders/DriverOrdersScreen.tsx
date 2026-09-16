@@ -102,24 +102,12 @@ export function DriverOrdersScreen({
   const truckCoords = driverLocation.kind === 'ready' ? driverLocation.coords : undefined;
   const retryCurrentLocation = () => setLocationRequestKey((current) => current + 1);
 
-  /** Demo hotline for LEOPARD's own emergency dispatch desk (fictional, dialable digits). */
-  const SOS_HOTLINE_DIAL = '19001919';
-  const SOS_HOTLINE_LABEL = '1900 1919';
-
+  // No backend-configured emergency line exists: surface a placeholder instead
+  // of dialing a fabricated hotline number.
   const handleTriggerSos = () => {
     const title = 'Cuộc gọi khẩn cấp SOS';
-    const message = `Gọi Đội cứu hộ khẩn cấp LEOPARD 24/7 (${SOS_HOTLINE_LABEL})? Tọa độ GPS của bạn sẽ được chuyển tiếp tức thì.`;
-    const dial = () => void Linking.openURL(`tel:${SOS_HOTLINE_DIAL}`);
-    // react-native-web's Alert.alert is a no-op (no dialog implementation) —
-    // fall back to window.confirm so the action still dials while testing on web.
-    if (Platform.OS === 'web') {
-      if (window.confirm(`${title}\n\n${message}`)) dial();
-      return;
-    }
-    Alert.alert(title, message, [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Gọi ngay', style: 'destructive', onPress: dial },
-    ]);
+    const message = 'Đường dây nóng khẩn cấp sẽ hiển thị khi BE cấu hình. Hiện chưa có số liên hệ.';
+    Alert.alert(title, message, [{ text: 'Đã hiểu', style: 'cancel' }]);
   };
 
   // Debug-only: replay the first real BE offer to exercise the incoming-offer

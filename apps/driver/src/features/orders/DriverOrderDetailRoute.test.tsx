@@ -68,7 +68,7 @@ describe('Driver order detail route', () => {
     const screen = await render(
       <DriverOrderDetailScreen
         onExecuteTask={onExecuteTask}
-        orderId="order-1"
+        view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')}
       />,
     );
 
@@ -107,7 +107,7 @@ describe('Driver order detail route', () => {
     await fireEvent(screen.getByTestId('btn-epod-complete-delivery'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
-    expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-order-1');
+    expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-22222222-2222-4222-8222-222222222001');
 
     await screen.unmount();
   });
@@ -115,7 +115,9 @@ describe('Driver order detail route', () => {
   it('says the position is unavailable instead of inventing coordinates when GPS is blocked', async () => {
     mockRequestForegroundPermissionsAsync.mockResolvedValue({ status: 'denied' });
 
-    const screen = await render(<DriverOrderDetailScreen orderId="order-1" />);
+    const screen = await render(
+      <DriverOrderDetailScreen view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')} />,
+    );
 
     await fireEvent.press(screen.getByTestId('btn-capture-cargo-photo'));
 
@@ -145,7 +147,7 @@ describe('Driver order detail route', () => {
     const screen = await render(
       <DriverOrderDetailScreen
         onExecuteTask={onExecuteTask}
-        orderId="order-slide-1"
+        view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')}
       />,
     );
 
@@ -192,7 +194,7 @@ describe('Driver order detail route', () => {
       panConfig.onPanResponderRelease?.(mockEvent, { dx: 240, dy: 0 } as any);
     });
 
-    expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-order-slide-1');
+    expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-22222222-2222-4222-8222-222222222001');
     await screen.unmount();
   });
 

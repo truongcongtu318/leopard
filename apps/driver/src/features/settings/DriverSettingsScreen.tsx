@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import appJson from '../../../app.json';
+
 import {
   colors,
   driverPrimitives,
@@ -43,6 +45,11 @@ function TrendingUpIcon({ size = 16, color = driverPrimitives.colors.green600 }:
   );
 }
 
+// Same source as profile adapter: real bundled version, never a hardcoded pilot tag.
+const APP_VERSION: string = (appJson as { expo?: { version?: unknown } })?.expo?.version
+  ? String((appJson as { expo: { version: unknown } }).expo.version)
+  : '—';
+
 export function DriverSettingsScreen() {
   // 1. Alerts & Dispatch offers state
   const [highAlertSound, setHighAlertSound] = useState(true);
@@ -65,8 +72,12 @@ export function DriverSettingsScreen() {
 
   // 4. Testing alert feedback & Cache storage
   const [isTestingAlert, setIsTestingAlert] = useState(false);
-  const [cacheSize, setCacheSize] = useState('142 MB');
+  // No cache-size API wired: null until a real measurement exists — never a fake '142 MB'.
+  const [cacheSize, setCacheSize] = useState<string | null>(null);
   const [isClearingCache, setIsClearingCache] = useState(false);
+  // Real GPS accuracy from expo-location, measured on demand. Null = chưa đo.
+  const [gpsAccuracyLabel, setGpsAccuracyLabel] = useState<string | null>(null);
+  const [isMeasuringGps, setIsMeasuringGps] = useState(false);
 
   const testTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cacheTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,18 +99,45 @@ export function DriverSettingsScreen() {
       setIsTestingAlert(false);
       Alert.alert(
         'Thử âm báo thành công',
-        'Âm thanh chuông báo nổ đơn và rung phản hồi hoạt động bình thường ở mức âm lượng 100%.',
+        `Âm thanh chuông báo nổ đơn và rung phản hồi hoạt động bình thường ở mức âm lượng ${ringtoneVolume}%.`,
         [{ text: 'Đã hiểu' }],
       );
     }, 1200);
   };
 
+  const handleMeasureGps = async () => {
+    if (isMeasuringGps) return;
+    setIsMeasuringGps(true);
+    try {
+      const Location = require('expo-location') as {
+        requestForegroundPermissionsAsync: () => Promise<{ status: string }>;
+        getCurrentPositionAsync: (opts?: { accuracy?: number }) => Promise<{ coords: { accuracy?: number | null } }>;
+        Accuracy?: { Balanced?: number };
+      };
+      const perm = await Location.requestForegroundPermissionsAsync();
+      if (perm.status !== 'granted') {
+        Alert.alert('Chưa có quyền vị trí', 'Cấp quyền vị trí để đo độ chính xác GPS thực địa.');
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy?.Balanced ?? 3,
+      });
+      const acc = pos.coords.accuracy;
+      setGpsAccuracyLabel(
+        typeof acc === 'number' && Number.isFinite(acc) ? `±${Math.round(acc)}m` : 'Đã đo · không rõ độ chính xác',
+      );
+    } catch {
+      Alert.alert('Không đo được GPS', 'Thử lại khi thiết bị có tín hiệu vị trí.');
+    } finally {
+      setIsMeasuringGps(false);
+    }
+  };
+
   const handleClearCache = () => {
     Alert.alert(
       'Dọn dẹp bộ nhớ đệm?',
-      'Hành động này sẽ xóa dữ liệu tạm của bản đồ và ảnh biên bản giao hàng POD đã đồng bộ lên máy chủ, giải phóng ' +
-        cacheSize +
-        '.',
+      'Hành động này sẽ xóa dữ liệu tạm của bản đồ và ảnh biên bản giao hàng POD đã đồng bộ lên máy chủ' +
+        (cacheSize ? `, giải phóng ${cacheSize}.` : '.'),
       [
         { text: 'Hủy', style: 'cancel' },
         {
@@ -108,7 +146,7 @@ export function DriverSettingsScreen() {
           onPress: () => {
             setIsClearingCache(true);
             cacheTimerRef.current = setTimeout(() => {
-              setCacheSize('0 MB');
+              setCacheSize(null);
               setIsClearingCache(false);
               Alert.alert('Hoàn tất', 'Bộ nhớ đệm đã được giải phóng thành công.');
             }, 800);
@@ -181,30 +219,33 @@ export function DriverSettingsScreen() {
           <View style={styles.metricsGrid}>
             <View style={styles.metricItem}>
               <Text style={styles.metricLabel}>GPS thực địa</Text>
-              <Text style={styles.metricValueGreen}>±3m · Cao</Text>
+              <Text style={styles.metricValueGreen}>{gpsAccuracyLabel ?? '—'}</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricItem}>
               <Text style={styles.metricLabel}>Server Ping</Text>
-              <Text style={styles.metricValueGreen}>24 ms</Text>
+              <Text style={styles.metricValueGreen}>—</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricItem}>
               <Text style={styles.metricLabel}>Âm lượng chuông</Text>
-              <Text style={styles.metricValue}>100% Max</Text>
+              <Text style={styles.metricValue}>{ringtoneVolume}%</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricItem}>
               <Text style={styles.metricLabel}>Tối ưu pin</Text>
-              <Text style={styles.metricValue}>Chạy nền tốt</Text>
+              <Text style={styles.metricValue}>{batterySaver ? 'Tiết kiệm pin: Bật' : 'Tiết kiệm pin: Tắt'}</Text>
             </View>
           </View>
 
           <Pressable
             accessibilityLabel="Thử nghiệm âm thanh chuông báo và độ nhạy"
             accessibilityRole="button"
-            disabled={isTestingAlert}
-            onPress={handleTestAlert}
+            disabled={isTestingAlert || isMeasuringGps}
+            onPress={() => {
+              handleTestAlert();
+              void handleMeasureGps();
+            }}
             style={({ pressed }) => [
               styles.testAlertBtn,
               isTestingAlert ? styles.testAlertBtnActive : null,
@@ -218,7 +259,7 @@ export function DriverSettingsScreen() {
                 isTestingAlert ? styles.testAlertBtnTextActive : null,
               ]}
             >
-              {isTestingAlert ? 'Đang phát thử chuông nổ đơn…' : 'Nghe thử chuông nổ đơn & Test GPS'}
+              {isTestingAlert || isMeasuringGps ? 'Đang phát thử chuông nổ đơn…' : 'Nghe thử chuông nổ đơn & Test GPS'}
             </Text>
           </Pressable>
         </View>
@@ -607,7 +648,7 @@ export function DriverSettingsScreen() {
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitleDanger}>Dọn dẹp bộ nhớ đệm (Cache)</Text>
-                <Text style={styles.settingDesc}>Dung lượng tạm hiện tại: {cacheSize}</Text>
+                <Text style={styles.settingDesc}>Dung lượng tạm hiện tại: {cacheSize ?? 'Chưa đo'}</Text>
               </View>
               <IconChevronRight color="#94A3B8" size={16} />
             </Pressable>
@@ -624,7 +665,7 @@ export function DriverSettingsScreen() {
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Tổng đài điều hành LEOPARD Pilot</Text>
-                <Text style={styles.settingDesc}>Hỗ trợ trực tiếp tài xế: 1900 1919 (Nhánh 1)</Text>
+                <Text style={styles.settingDesc}>Liên hệ điều hành — thông tin hiển thị khi BE cấu hình</Text>
               </View>
               <IconChevronRight color="#94A3B8" size={16} />
             </View>
@@ -636,10 +677,9 @@ export function DriverSettingsScreen() {
               onPress={() => {
                 Alert.alert(
                   'GỌI CỨU HỘ KHẨN CẤP SOS (24/7)',
-                  'Bạn đang kích hoạt đường dây nóng khẩn cấp cho tài xế gặp sự cố trên đường. Tiếp tục gọi 1900 1919?',
+                  'Đường dây nóng khẩn cấp sẽ hiển thị khi BE cấu hình. Hiện chưa có số liên hệ.',
                   [
-                    { text: 'Hủy', style: 'cancel' },
-                    { text: 'Gọi ngay', style: 'destructive' },
+                    { text: 'Đã hiểu', style: 'cancel' },
                   ],
                 );
               }}
@@ -653,7 +693,7 @@ export function DriverSettingsScreen() {
 
         {/* Footer Build info */}
         <View style={styles.footerSection}>
-          <Text style={styles.footerVersion}>LEOPARD Driver Cockpit · v2.4.0-pilot</Text>
+          <Text style={styles.footerVersion}>LEOPARD Driver Cockpit · v{APP_VERSION}</Text>
           <Text style={styles.footerCopyright}>Bản quyền thuộc LEOPARD Freight Logistics Platform</Text>
         </View>
       </ScrollView>
