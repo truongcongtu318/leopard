@@ -27,6 +27,7 @@ import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
 import { AcceptOrderService } from '../orders/accept-order.service.js';
+import { DeclineOrderOfferService } from '../orders/decline-order-offer.service.js';
 import { ReportOrderIncidentService } from '../orders/report-order-incident.service.js';
 import { UpdateOrderStatusService } from '../orders/update-order-status.service.js';
 import { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto.js';
@@ -68,6 +69,7 @@ export class DriversController {
     private readonly driverDocumentService: DriverDocumentService,
     private readonly driverContractService: DriverContractService,
     private readonly acceptOrderService: AcceptOrderService,
+    private readonly declineOrderOfferService: DeclineOrderOfferService,
     private readonly updateOrderStatusService: UpdateOrderStatusService,
     private readonly reportOrderIncidentService: ReportOrderIncidentService,
   ) {}
@@ -242,6 +244,16 @@ export class DriversController {
     @Body() dto: AcceptOrderDto,
   ) {
     return this.acceptOrderService.acceptOrder(actor, id, dto.clientRequestId);
+  }
+
+  @Post('orders/:id/decline')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  declineOrder(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+  ): Promise<void> {
+    return this.declineOrderOfferService.declineOffer(actor, id);
   }
 
   @Post('orders/:id/status')
