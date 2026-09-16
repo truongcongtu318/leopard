@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   },
   brandPillText: {
     color: colors.neutral.surfaceMuted,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '700',
     letterSpacing: 0.4,
   },
@@ -499,8 +499,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   securityBadgeText: {
-    color: '#10B981',
-    fontSize: typeScale.caption1.fontSize,
+    color: colors.success.text,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
   balanceBody: {
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   },
   balanceEyebrow: {
     color: customerPalette.offlineGray,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '700',
     letterSpacing: 0.8,
   },

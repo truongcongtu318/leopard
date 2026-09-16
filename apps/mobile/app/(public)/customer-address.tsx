@@ -11,10 +11,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { typeScale, httpClient, colors, customerPalette, leopardPalette } from '@leopard/mobile-core';
-import { addressStore, type SavedAddress } from '../../src/features/customer/addresses/address-store';
 import {
   BrandLoginLogo,
+  IconCheck,
   IconHome,
   IconLocationPin,
   IconOffice,
@@ -24,8 +23,18 @@ import {
   IconUser,
   IconWarehouse,
   LeopardEmblem,
-  LeopardMobileLogo,
+  colors,
+  customerPalette,
+  httpClient,
+  iosContinuousCurve,
+  layout,
+  leopardPalette,
+  leopardRadius,
+  radius,
+  spacing,
+  typeScale,
 } from '@leopard/mobile-core';
+import { addressStore, type SavedAddress } from '../../src/features/customer/addresses/address-store';
 import {
   POPULAR_MAP_SUGGESTIONS,
   reverseGeocodeCoords,
@@ -49,6 +58,13 @@ const POPULAR_SUGGESTIONS: readonly SearchResultItem[] = POPULAR_MAP_SUGGESTIONS
 }));
 
 type AddressCategory = 'WAREHOUSE' | 'HOME' | 'OFFICE' | 'OTHER';
+
+const CATEGORY_CHIPS = [
+  { key: 'WAREHOUSE' as const, label: 'Kho chính', Icon: IconWarehouse, testID: 'ca-chip-warehouse' },
+  { key: 'OFFICE' as const, label: 'Văn phòng', Icon: IconOffice, testID: 'ca-chip-office' },
+  { key: 'HOME' as const, label: 'Kho phụ', Icon: IconHome, testID: 'ca-chip-home' },
+  { key: 'OTHER' as const, label: 'Khác', Icon: IconTag, testID: 'ca-chip-other' },
+] as const;
 
 export default function CustomerAddAddressScreen() {
   const router = useRouter();
@@ -174,10 +190,10 @@ export default function CustomerAddAddressScreen() {
           try {
             const resolved = await reverseGeocodeCoords({ lat, lng }, vietmapApiKey);
             setSelectedAddress(resolved || 'Vị trí đã chọn');
-            setLocationSuccessMsg(`Đã chọn vị trí: ${resolved || 'Vị trí đã chọn'}`);
+            setLocationSuccessMsg(`Đã xác định vị trí: ${resolved || 'Vị trí đã chọn'}`);
           } catch {
             setSelectedAddress('Vị trí đã chọn');
-            setLocationSuccessMsg('Đã chọn vị trí trên bản đồ');
+            setLocationSuccessMsg('Đã xác định vị trí trên bản đồ');
           }
         }
       }
@@ -224,7 +240,7 @@ export default function CustomerAddAddressScreen() {
           const fallbackLng = 106.698;
           setCoords({ lat: fallbackLat, lng: fallbackLng });
           setSelectedAddress('135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
-          setLocationSuccessMsg('Đã xác định vị trí hiện tại của bạn');
+          setLocationSuccessMsg('Đã xác định vị trí: 135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
         },
         { timeout: 8000, enableHighAccuracy: true },
       );
@@ -235,7 +251,7 @@ export default function CustomerAddAddressScreen() {
         const fallbackLng = 106.698;
         setCoords({ lat: fallbackLat, lng: fallbackLng });
         setSelectedAddress('135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
-        setLocationSuccessMsg('Đã xác định vị trí hiện tại của bạn');
+        setLocationSuccessMsg('Đã xác định vị trí: 135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
       }, 500);
     }
   };
@@ -250,7 +266,7 @@ export default function CustomerAddAddressScreen() {
     setSelectedAddress(item.address);
     if (item.lat && item.lng) {
       setCoords({ lat: item.lat, lng: item.lng });
-      setLocationSuccessMsg(`Đã chọn: ${item.name}`);
+      setLocationSuccessMsg(`Đã xác định vị trí: ${item.name}`);
     }
     setSearchQuery('');
     setSearchResults([]);
@@ -290,7 +306,7 @@ export default function CustomerAddAddressScreen() {
     }
   };
 
-  // Real interactive Leaflet/OpenStreetMap HTML template
+  // Interactive Leaflet/OpenStreetMap HTML template
   const mapHtml = useMemo(() => {
     return `<!DOCTYPE html>
 <html>
@@ -314,7 +330,7 @@ export default function CustomerAddAddressScreen() {
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: rgba(37, 99, 235, 0.28);
+      background: rgba(11, 37, 69, 0.2);
       animation: pinPulse 1.8s ease-out infinite;
     }
     .pulse-pin-core {
@@ -322,7 +338,7 @@ export default function CustomerAddAddressScreen() {
       width: 26px;
       height: 26px;
       border-radius: 50%;
-      background: #EF4444;
+      background: ${customerPalette.primary};
       border: 3px solid #FFFFFF;
       box-shadow: 0 3px 8px rgba(0,0,0,0.35);
       display: flex;
@@ -414,9 +430,9 @@ export default function CustomerAddAddressScreen() {
           <Pressable
             accessibilityLabel="Quay lại"
             accessibilityRole="button"
-            hitSlop={10}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             onPress={handleBack}
-            style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
+            style={({ pressed }) => [styles.backBtn, pressed && styles.pressed]}
             testID="ca-back-btn"
           >
             <Text style={styles.backChevron}>‹</Text>
@@ -428,7 +444,6 @@ export default function CustomerAddAddressScreen() {
             <BrandLoginLogo height={34} testID="address-brand-logo" />
           </View>
 
-          {/* Invisible 44px spacer balancing back button */}
           <View style={styles.navSpacer} />
         </View>
 
@@ -455,7 +470,7 @@ export default function CustomerAddAddressScreen() {
               onChangeText={setAddressLabel}
               onFocus={() => setFocusedField('label')}
               placeholder="VD: Kho tổng Tân Bình, Cửa hàng Q1, Xưởng may..."
-              placeholderTextColor={leopardPalette.inputPlaceholder}
+              placeholderTextColor={customerPalette.offlineGray}
               style={[
                 styles.input,
                 focusedField === 'label' && styles.inputFocused,
@@ -470,7 +485,12 @@ export default function CustomerAddAddressScreen() {
             <Text style={styles.sectionTitle}>Thủ kho giao nhận</Text>
             <View style={styles.contactRow}>
               <View style={styles.contactCol}>
-                <View style={styles.contactInputWrap}>
+                <View
+                  style={[
+                    styles.contactInputWrap,
+                    focusedField === 'contactName' && styles.inputFocused,
+                  ]}
+                >
                   <IconUser color={customerPalette.textSubtle} size={16} />
                   <TextInput
                     accessibilityLabel="Tên người liên hệ"
@@ -478,7 +498,7 @@ export default function CustomerAddAddressScreen() {
                     onChangeText={setContactName}
                     onFocus={() => setFocusedField('contactName')}
                     placeholder="Tên người liên hệ"
-                    placeholderTextColor={leopardPalette.inputPlaceholder}
+                    placeholderTextColor={customerPalette.offlineGray}
                     style={styles.contactTextInput}
                     testID="ca-contact-name"
                     value={contactName}
@@ -487,7 +507,12 @@ export default function CustomerAddAddressScreen() {
               </View>
 
               <View style={styles.contactCol}>
-                <View style={styles.contactInputWrap}>
+                <View
+                  style={[
+                    styles.contactInputWrap,
+                    focusedField === 'contactPhone' && styles.inputFocused,
+                  ]}
+                >
                   <IconPhone color={customerPalette.textSubtle} size={16} />
                   <TextInput
                     accessibilityLabel="Số điện thoại"
@@ -496,7 +521,7 @@ export default function CustomerAddAddressScreen() {
                     onChangeText={setContactPhone}
                     onFocus={() => setFocusedField('contactPhone')}
                     placeholder="Số điện thoại"
-                    placeholderTextColor={leopardPalette.inputPlaceholder}
+                    placeholderTextColor={customerPalette.offlineGray}
                     style={styles.contactTextInput}
                     testID="ca-contact-phone"
                     value={contactPhone}
@@ -519,7 +544,7 @@ export default function CustomerAddAddressScreen() {
           >
             <View style={styles.gpsLeft}>
               <View style={styles.gpsIconCircle}>
-                <IconLocationPin color={customerPalette.primary} size={20} strokeWidth={2} />
+                <IconLocationPin color={customerPalette.primary} size={18} strokeWidth={2} />
               </View>
               <View style={styles.gpsTextCol}>
                 <Text style={styles.gpsBtnTitle}>Sử dụng vị trí hiện tại</Text>
@@ -533,13 +558,17 @@ export default function CustomerAddAddressScreen() {
             )}
           </Pressable>
 
+          {/* Location Feedback Pill */}
           {locationSuccessMsg ? (
-            <View style={styles.successToast}>
-              <Text style={styles.successToastText}>✓ {locationSuccessMsg}</Text>
+            <View style={styles.locationFeedbackRow}>
+              <View style={styles.locationFeedbackDot} />
+              <Text numberOfLines={2} style={styles.locationFeedbackText}>
+                {locationSuccessMsg}
+              </Text>
             </View>
           ) : null}
 
-          {/* Real Interactive Map Card */}
+          {/* Interactive Map Card */}
           <View style={styles.mapCard}>
             <View style={styles.mapGraphic}>
               {Platform.OS === 'web' ? (
@@ -559,12 +588,12 @@ export default function CustomerAddAddressScreen() {
                   <View style={styles.mapRoadV} />
                   <View style={styles.mapPinPulse} />
                   <View style={styles.mapPinWrap}>
-                    <IconLocationPin color={colors.danger.text} secondaryColor={colors.danger.background} size={32} strokeWidth={2} />
+                    <IconLocationPin color={customerPalette.primary} size={32} strokeWidth={2} />
                   </View>
                 </View>
               )}
 
-              {/* Real Map Telemetry Badge */}
+              {/* Map Telemetry Badge */}
               <View style={styles.mapTelemetryBadge}>
                 <View style={styles.telemetryDot} />
                 <Text style={styles.telemetryText}>
@@ -610,7 +639,7 @@ export default function CustomerAddAddressScreen() {
                 onChangeText={setSearchQuery}
                 onFocus={() => setFocusedField('search')}
                 placeholder="Tìm đường, tòa nhà, khu công nghiệp..."
-                placeholderTextColor={leopardPalette.inputPlaceholder}
+                placeholderTextColor={customerPalette.offlineGray}
                 style={styles.searchInput}
                 testID="ca-search-input"
                 value={searchQuery}
@@ -656,7 +685,7 @@ export default function CustomerAddAddressScreen() {
                 onChangeText={setAddressDetail}
                 onFocus={() => setFocusedField('detail')}
                 placeholder="VD: Cổng số 2, Kho A3 hoặc Tầng 4, Phòng 402"
-                placeholderTextColor={leopardPalette.inputPlaceholder}
+                placeholderTextColor={customerPalette.offlineGray}
                 style={[
                   styles.input,
                   focusedField === 'detail' && styles.inputFocused,
@@ -673,14 +702,7 @@ export default function CustomerAddAddressScreen() {
           <View style={styles.sectionGroup}>
             <Text style={styles.sectionTitle}>Loại địa chỉ</Text>
             <View style={styles.categoryChipsRow}>
-              {(
-                [
-                  { key: 'WAREHOUSE', label: 'Kho chính', Icon: IconWarehouse, testID: 'ca-chip-warehouse' },
-                  { key: 'OFFICE', label: 'Văn phòng', Icon: IconOffice, testID: 'ca-chip-office' },
-                  { key: 'HOME', label: 'Kho phụ', Icon: IconHome, testID: 'ca-chip-home' },
-                  { key: 'OTHER', label: 'Khác', Icon: IconTag, testID: 'ca-chip-other' },
-                ] as const
-              ).map((chip) => {
+              {CATEGORY_CHIPS.map((chip) => {
                 const active = category === chip.key;
                 const IconComp = chip.Icon;
                 return (
@@ -695,7 +717,7 @@ export default function CustomerAddAddressScreen() {
                     testID={chip.testID}
                   >
                     <IconComp
-                      color={active ? leopardPalette.accentYellow : customerPalette.textSubtle}
+                      color={active ? customerPalette.surfaceWhite : customerPalette.textSubtle}
                       size={15}
                       strokeWidth={2}
                     />
@@ -717,7 +739,7 @@ export default function CustomerAddAddressScreen() {
             testID="ca-default-checkbox"
           >
             <View style={[styles.checkbox, isDefault && styles.checkboxOn]}>
-              {isDefault ? <Text style={styles.checkboxTick}>✓</Text> : null}
+              {isDefault ? <IconCheck color={customerPalette.surfaceWhite} size={14} strokeWidth={3} /> : null}
             </View>
             <Text style={styles.checkboxLabel}>
               Đặt làm địa chỉ mặc định khi tạo đơn vận chuyển
@@ -748,14 +770,14 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.canvas,
   },
   scrollContent: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
   },
   innerWrapper: {
     width: '100%',
-    maxWidth: 520,
-    gap: 16,
+    maxWidth: layout.contentMaxWidth,
+    gap: spacing.md,
   },
 
   /* Top Navigation */
@@ -763,12 +785,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: spacing.xs,
   },
   backBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
@@ -779,14 +801,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 3,
     elevation: 2,
-  },
-  backBtnPressed: {
-    backgroundColor: colors.neutral.surfaceMuted,
-    transform: [{ scale: 0.94 }],
+    ...iosContinuousCurve,
   },
   backChevron: {
     fontSize: typeScale.title1.fontSize,
-    lineHeight: 28,
+    lineHeight: typeScale.title1.lineHeight,
     fontWeight: '600',
     color: customerPalette.textSlateDark,
     marginLeft: -2,
@@ -796,13 +815,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: spacing.xxs,
     backgroundColor: customerPalette.surfaceWhite,
-    paddingLeft: 8,
-    paddingRight: 10,
-    paddingVertical: 2,
-    height: 42,
-    borderRadius: 999,
+    paddingHorizontal: spacing.sm,
+    height: 44,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     shadowColor: customerPalette.textSlateDark,
@@ -819,8 +836,8 @@ const styles = StyleSheet.create({
   /* Main Card */
   card: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 18,
-    padding: 20,
+    borderRadius: radius.bezelOuter,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     shadowColor: customerPalette.textSlateDark,
@@ -828,34 +845,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 1,
-    gap: 14,
+    gap: spacing.md,
+    ...iosContinuousCurve,
   },
   cardMasthead: {
-    gap: 6,
-    paddingBottom: 2,
+    gap: spacing.xxs,
+    paddingBottom: spacing.hairline,
   },
   headline: {
-    fontSize: 22,
+    fontSize: typeScale.title2.fontSize,
+    lineHeight: typeScale.title2.lineHeight,
     fontWeight: '800',
     color: customerPalette.textSlateDark,
     letterSpacing: -0.4,
   },
   subline: {
     fontSize: typeScale.subheadline.fontSize,
+    lineHeight: typeScale.subheadline.lineHeight,
     color: customerPalette.textMutedSlate,
-    lineHeight: 20,
   },
 
   sectionDivider: {
     height: 1,
-    backgroundColor: colors.neutral.surfaceMuted,
-    marginVertical: 4,
+    backgroundColor: customerPalette.cardBorder,
+    marginVertical: spacing.xxs,
   },
 
   /* Contact Person & Phone Row */
   contactRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: spacing.sm,
   },
   contactCol: {
     flex: 1,
@@ -863,18 +882,20 @@ const styles = StyleSheet.create({
   contactInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    height: 46,
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.sm,
+    height: 48,
     backgroundColor: customerPalette.surfaceWhite,
+    ...iosContinuousCurve,
   },
   contactTextInput: {
     flex: 1,
     minWidth: 0,
     fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
     color: customerPalette.textSlateDark,
     fontWeight: '500',
     ...Platform.select({
@@ -890,71 +911,88 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderWidth: 1.5,
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: customerPalette.canvas,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    borderRadius: radius.control,
+    padding: spacing.sm,
+    ...iosContinuousCurve,
   },
   gpsLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.sm,
     flex: 1,
   },
   gpsIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
     backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: leopardPalette.inputBorder,
+    borderColor: customerPalette.cardBorder,
   },
   gpsTextCol: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   gpsBtnTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: typeScale.subheadline.fontSize,
+    lineHeight: typeScale.subheadline.lineHeight,
+    fontWeight: '600',
     color: customerPalette.primary,
   },
   gpsBtnDesc: {
-    fontSize: 12,
+    fontSize: typeScale.caption1.fontSize,
+    lineHeight: typeScale.caption1.lineHeight,
     color: customerPalette.textMutedSlate,
   },
   gpsArrow: {
-    fontSize: 22,
-    color: customerPalette.primary,
-    fontWeight: '700',
-    marginLeft: 8,
-  },
-  successToast: {
-    backgroundColor: colors.success.background,
-    borderWidth: 1,
-    borderColor: colors.success.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  successToastText: {
-    fontSize: 12,
+    fontSize: typeScale.title2.fontSize,
+    color: customerPalette.textSubtle,
     fontWeight: '600',
-    color: colors.success.text,
+    marginLeft: spacing.xs,
   },
 
-  /* Real Map Graphic Card */
+  /* Location Feedback Pill */
+  locationFeedbackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: customerPalette.primaryBg,
+    borderWidth: 1,
+    borderColor: customerPalette.primaryBorder,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  locationFeedbackDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.primary,
+  },
+  locationFeedbackText: {
+    flex: 1,
+    fontSize: typeScale.caption1.fontSize,
+    lineHeight: typeScale.caption1.lineHeight,
+    fontWeight: '600',
+    color: customerPalette.primary,
+  },
+
+  /* Map Graphic Card */
   mapCard: {
-    borderRadius: 14,
+    borderRadius: radius.card,
     overflow: 'hidden',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     backgroundColor: customerPalette.canvas,
+    ...iosContinuousCurve,
   },
   mapGraphic: {
-    height: 230,
+    height: 220,
     backgroundColor: customerPalette.cardBorder,
     position: 'relative',
     overflow: 'hidden',
@@ -970,7 +1008,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 22,
-    backgroundColor: leopardPalette.inputBorder,
+    backgroundColor: customerPalette.cardBorder,
     top: '44%',
   },
   mapRoadV: {
@@ -978,19 +1016,19 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 22,
-    backgroundColor: leopardPalette.inputBorder,
+    backgroundColor: customerPalette.cardBorder,
     left: '52%',
   },
   mapPinPulse: {
     position: 'absolute',
     width: 54,
     height: 54,
-    borderRadius: 27,
-    backgroundColor: 'rgba(220, 38, 38, 0.18)',
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.primaryBg,
   },
   mapPinWrap: {
     zIndex: 5,
-    shadowColor: customerPalette.accentDark,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -998,93 +1036,98 @@ const styles = StyleSheet.create({
   },
   mapTelemetryBadge: {
     position: 'absolute',
-    left: 8,
-    top: 8,
+    left: spacing.xs,
+    top: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
+    gap: spacing.xxs,
+    backgroundColor: customerPalette.surfaceWhite,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: leopardPalette.inputBorder,
+    borderColor: customerPalette.cardBorder,
     shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
   telemetryDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
-    backgroundColor: leopardPalette.ecoGreen,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.onlineGreen,
   },
   telemetryText: {
-    fontSize: 11,
+    fontSize: typeScale.caption2.fontSize,
+    lineHeight: typeScale.caption2.lineHeight,
     fontWeight: '600',
     color: customerPalette.textMutedSlate,
   },
   selectedAddressBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.sm,
     backgroundColor: customerPalette.surfaceWhite,
-    padding: 12,
+    padding: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: customerPalette.cardBorder,
   },
   selectedPinIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.info.background,
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.info.border,
+    borderColor: customerPalette.primaryBorder,
   },
   selectedAddressCol: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   selectedAddressText: {
     fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
-    lineHeight: 18,
   },
   selectedCoordsText: {
-    fontSize: 11,
+    fontSize: typeScale.caption2.fontSize,
+    lineHeight: typeScale.caption2.lineHeight,
     color: customerPalette.textSubtle,
     fontWeight: '500',
   },
 
   /* Search Section */
   sectionGroup: {
-    gap: 8,
+    gap: spacing.xs,
   },
   sectionTitle: {
-    fontSize: typeScale.subheadline.fontSize,
+    fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.xs,
     backgroundColor: customerPalette.surfaceWhite,
-    borderWidth: 1.5,
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: 14,
-    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.sm,
     height: 48,
+    ...iosContinuousCurve,
   },
   searchInput: {
     flex: 1,
     minWidth: 0,
     fontSize: typeScale.subheadline.fontSize,
+    lineHeight: typeScale.subheadline.lineHeight,
     color: customerPalette.textSlateDark,
     fontWeight: '500',
     height: '100%',
@@ -1096,84 +1139,90 @@ const styles = StyleSheet.create({
     }),
   },
   inputFocused: {
-    borderColor: customerPalette.inputFocusBorder,
+    borderColor: customerPalette.primary,
     backgroundColor: customerPalette.surfaceWhite,
-    shadowColor: customerPalette.inputFocusBorder,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
   },
 
   /* Autocomplete Suggestions */
   suggestionsCard: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    borderRadius: 14,
+    borderRadius: radius.card,
     overflow: 'hidden',
     shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
     elevation: 2,
+    ...iosContinuousCurve,
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   suggestionItemPressed: {
-    backgroundColor: colors.neutral.surfaceMuted,
+    backgroundColor: customerPalette.canvas,
   },
   suggestionDivider: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.neutral.surfaceMuted,
+    borderBottomColor: customerPalette.cardBorder,
   },
   suggestionPin: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.info.background,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   suggestionTextWrap: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   suggestionName: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    lineHeight: typeScale.subheadline.lineHeight,
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   suggestionAddress: {
-    fontSize: 12,
+    fontSize: typeScale.caption1.fontSize,
+    lineHeight: typeScale.caption1.lineHeight,
     color: customerPalette.textSubtle,
   },
 
   /* Field Item */
   fieldItem: {
-    gap: 6,
-    marginTop: 4,
+    gap: spacing.xxs,
+    marginTop: spacing.xxs,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: typeScale.caption1.fontSize,
+    lineHeight: typeScale.caption1.lineHeight,
+    fontWeight: '500',
     color: customerPalette.textMutedSlate,
   },
   input: {
-    borderWidth: 1.5,
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: 14,
-    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.sm,
     height: 48,
     fontSize: typeScale.subheadline.fontSize,
+    lineHeight: typeScale.subheadline.lineHeight,
     color: customerPalette.textSlateDark,
     fontWeight: '500',
     backgroundColor: customerPalette.surfaceWhite,
+    ...iosContinuousCurve,
     ...Platform.select({
       web: {
         outlineStyle: 'none',
@@ -1186,17 +1235,17 @@ const styles = StyleSheet.create({
   categoryChipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.xs,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 13,
-    paddingVertical: 9,
-    borderRadius: 10,
-    backgroundColor: customerPalette.canvas,
-    borderWidth: 1.5,
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderWidth: 1,
     borderColor: customerPalette.cardBorder,
   },
   chipActive: {
@@ -1204,28 +1253,29 @@ const styles = StyleSheet.create({
     borderColor: customerPalette.primary,
   },
   chipText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
+    fontWeight: '500',
     color: customerPalette.textMutedSlate,
   },
   chipTextActive: {
     color: customerPalette.surfaceWhite,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   /* Checkbox */
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
+    gap: spacing.sm,
+    paddingVertical: spacing.xxs,
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 20,
+    height: 20,
+    borderRadius: leopardRadius.md,
     borderWidth: 1.5,
-    borderColor: leopardPalette.inputBorder,
+    borderColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: customerPalette.surfaceWhite,
@@ -1234,14 +1284,10 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primary,
     borderColor: customerPalette.primary,
   },
-  checkboxTick: {
-    color: customerPalette.surfaceWhite,
-    fontSize: 13,
-    fontWeight: '800',
-  },
   checkboxLabel: {
     flex: 1,
-    fontSize: 13,
+    fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
     color: customerPalette.textMutedSlate,
     fontWeight: '500',
   },
@@ -1249,20 +1295,21 @@ const styles = StyleSheet.create({
   /* Action Buttons */
   primaryBtn: {
     backgroundColor: customerPalette.primary,
-    borderRadius: 16,
-    paddingVertical: 15,
-    height: 52,
+    borderRadius: radius.card,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
     elevation: 3,
+    ...iosContinuousCurve,
   },
   primaryBtnText: {
     color: customerPalette.surfaceWhite,
-    fontSize: 16,
+    fontSize: typeScale.callout.fontSize,
+    lineHeight: typeScale.callout.lineHeight,
     fontWeight: '700',
     letterSpacing: 0.2,
   },

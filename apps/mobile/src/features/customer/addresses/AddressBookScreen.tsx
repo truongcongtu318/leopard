@@ -1217,7 +1217,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   addressText: {
-    color: '#334155',
+    color: colors.neutral.mutedText,
     flex: 1,
     fontSize: 13,
     lineHeight: 18,

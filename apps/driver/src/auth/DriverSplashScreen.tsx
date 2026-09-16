@@ -103,11 +103,9 @@ interface SlideButtonProps {
 const THUMB_SIZE = 48;
 const PADDING = 5;
 
-// ponytail: driverSemantics.surface.splash + driverPrimitives.colors.orange500
-// do not exist in mobile-core; hex lives here until those keys land.
 const splashScene = {
-  accent: '#F97316',
-  base: driverPrimitives.colors.dark900,
+  accent: leopardPalette.primary,
+  base: leopardPalette.primary,
 } as const;
 
 function SlideToGetStarted({ label, onAction, testID = 'splash-get-started-btn' }: SlideButtonProps) {

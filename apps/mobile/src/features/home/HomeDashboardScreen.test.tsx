@@ -781,7 +781,7 @@ describe('HomeDashboardScreen', () => {
     const etaPill = screen.getByTestId('active-shipment-eta-pill');
     expect(StyleSheet.flatten(etaPill.props.style).backgroundColor).toBe('#F1F5F9');
     const etaText = screen.getByText(/ETA dự kiến 18 phút/);
-    expect(StyleSheet.flatten(etaText.props.style).color).toBe('#F86E3F');
+    expect(StyleSheet.flatten(etaText.props.style).color).toBe('#0B2545');
 
     await screen.unmount();
   });

@@ -980,7 +980,7 @@ const styles = StyleSheet.create({
     marginLeft: 3.25,
   },
   routeCompactText: {
-    color: '#334155',
+    color: colors.neutral.mutedText,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
     flex: 1,

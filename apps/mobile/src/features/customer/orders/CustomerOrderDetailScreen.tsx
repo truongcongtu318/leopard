@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { typeScale, colors, customerPalette, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, iosContinuousCurve, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
 import { MediaImage } from '@leopard/mobile-core';
 import type {
   CustomerDetailContentView,
@@ -1065,7 +1065,7 @@ const styles = StyleSheet.create({
   },
   heroPrice: {
     color: customerPalette.primary,
-    fontSize: 20,
+    ...typeScale.title3,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -1077,11 +1077,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.xs,
   },
   heroStatItem: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   heroStatLabel: {
     color: colors.neutral.subtleText,
@@ -1091,16 +1091,17 @@ const styles = StyleSheet.create({
   },
   heroStatValue: {
     color: colors.neutral.text,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '700',
   },
   etaIndicatorBox: {
-    marginTop: 2,
+    marginTop: spacing.hairline,
   },
   modernCard: {
     backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
-    borderRadius: 16,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
@@ -1111,7 +1112,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardHeader: {
-    gap: 2,
+    gap: spacing.hairline,
     marginBottom: spacing.xxs,
   },
   cardTitle: {
@@ -1121,7 +1122,7 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     color: colors.neutral.subtleText,
-    fontSize: 12,
+    ...typeScale.caption1,
   },
   trackingLinkBtn: {
     flexDirection: 'row',
@@ -1129,11 +1130,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 10,
-    marginTop: 4,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: spacing.xs,
+    marginTop: spacing.xxs,
   },
   trackingLinkIconBox: {
     width: 34,
@@ -1456,7 +1458,7 @@ const styles = StyleSheet.create({
   },
   body: {
     fontSize: typeScale.footnote.fontSize,
-    color: '#334155',
+    color: colors.neutral.mutedText,
     lineHeight: 19,
     flexShrink: 1,
   },
@@ -1732,7 +1734,7 @@ const styles = StyleSheet.create({
   cancelOptionText: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '500',
-    color: '#334155',
+    color: colors.neutral.mutedText,
     flex: 1,
   },
   cancelOptionTextSelected: {

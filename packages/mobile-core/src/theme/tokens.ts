@@ -434,17 +434,17 @@ export const colors = {
     mapLand: '#F8FAFC',
   },
   brand: {
-    primary: '#F86E3F',
-    accent: '#F86E3F',
+    primary: '#0B2545',          // Midnight Navy (Chữ L & Viền Báo của Logo)
+    accent: '#F59E0B',           // Cheetah Golden Amber (Màu Báo Gấm)
     blue: '#0284C7',
     green: '#16A34A',
-    background: '#1F1F1F',
+    background: '#0B2545',
     text: '#FFFFFF',
-    softBackground: '#FFF1E9',
-    softText: '#1F1F1F',
-    border: '#1F1F1F',
-    accentSoft: '#FFF1E9',
-    accentText: '#C2410C',
+    softBackground: '#FFFBEB',
+    softText: '#0B2545',
+    border: '#0B2545',
+    accentSoft: '#FEF3C7',
+    accentText: '#D97706',
   },
   // Apple system-color semantics (light mode values).
   info: {
@@ -453,14 +453,14 @@ export const colors = {
     border: '#B8D6FF',
   },
   warning: {
-    background: '#FFF4E5',
-    text: '#FF9500',
-    border: '#FFD8A8',
+    background: '#FFFBEB',
+    text: '#F59E0B',
+    border: '#FDE68A',
   },
   active: {
-    background: '#FFF1E9',
-    text: '#C2410C',
-    border: '#F86E3F',
+    background: '#FFFBEB',
+    text: '#D97706',
+    border: '#F59E0B',
   },
   success: {
     background: '#E7F9EC',
@@ -506,19 +506,19 @@ export const pastelTheme = {
 } as const;
 
 export const leopardPalette = {
-  // Brand — Trackly Orange
-  primary: '#F86E3F',
-  primaryDark: '#D9541F',
-  primarySoft: '#FC913F',
-  primaryBg: '#FFF1E9',
-  primaryBorder: '#FBD3B8',
+  // Brand — Midnight Navy & Cheetah Golden Amber
+  primary: '#0B2545',
+  primaryDark: '#071A30',
+  primarySoft: '#133560',
+  primaryBg: '#F0F4FA',
+  primaryBorder: '#CBD9EB',
 
-  // Accent — orange soft tier (Trackly system has no separate accent hue)
-  accentYellow: '#FC913F',
-  accentYellowDark: '#D9541F',
-  accentYellowSoft: '#FDCBA8',
-  accentYellowBg: '#FFF4ED',
-  accentYellowBorder: '#FBD3B8',
+  // Accent — Cheetah Golden Amber
+  accentYellow: '#F59E0B',
+  accentYellowDark: '#D97706',
+  accentYellowSoft: '#FDE68A',
+  accentYellowBg: '#FFFBEB',
+  accentYellowBorder: '#FDE68A',
 
   // Eco — Calm Green
   ecoGreen: '#16A34A',
@@ -541,7 +541,7 @@ export const leopardPalette = {
   subtleDivider: '#E2E8F0',
 
   // Tab bar
-  tabActive: '#F86E3F',
+  tabActive: '#0B2545',
   tabInactive: '#64748B',
   tabBarBg: '#FFFFFF',
   tabBarBorder: '#E2E8F0',
@@ -549,13 +549,13 @@ export const leopardPalette = {
   // Input fields
   inputBg: '#FFFFFF',
   inputBorder: '#CBD5E1',
-  inputFocusBorder: '#F86E3F',
-  inputFocusRing: 'rgba(248, 110, 63, 0.12)',
+  inputFocusBorder: '#0B2545',
+  inputFocusRing: 'rgba(11, 37, 69, 0.12)',
   inputPlaceholder: '#94A3B8',
 
   // Vehicle card accents
-  vehicleBaGac: '#FC913F',
-  vehicleTruck500: '#F86E3F',
+  vehicleBaGac: '#F59E0B',
+  vehicleTruck500: '#0B2545',
   vehicleTruck1T: '#1D4ED8',
   vehicleTruck2T: '#4338CA',
 
@@ -564,37 +564,37 @@ export const leopardPalette = {
   offlineGray: '#94A3B8',
 
   // Legacy — kept for backward compatibility
-  darkHeroBg: '#1F1F1F',
+  darkHeroBg: '#0B2545',
 } as const;
 
 /**
  * Customer-role colour palette.
- * Midnight Navy (#0B1E42) is primary action colour; Leopard Amber (#F59E0B) is accent/badges/points.
+ * Midnight Navy (#0B2545) is primary action colour; Leopard Amber (#F59E0B) is accent/badges/points.
  * Use this in every customer-specific screen instead of leopardPalette.
  */
 export const customerPalette = {
-  // Primary — Trackly Orange (Chủ đạo thương hiệu & Hành động)
-  primary: '#F86E3F',
-  primaryDark: '#D9541F',
-  primaryBg: '#FFF1E9',
-  primaryBorder: '#FBD3B8',
-  primaryText: '#C2410C',   // readable text on orange-tint bg
+  // Primary — Midnight Navy (Chủ đạo thương hiệu & Hành động)
+  primary: '#0B2545',
+  primaryDark: '#071A30',
+  primaryBg: '#F0F4FA',
+  primaryBorder: '#CBD9EB',
+  primaryText: '#0B2545',
 
-  // Brand Secondary — Black (Huy hiệu, điểm thưởng, voucher)
-  accent: '#1F1F1F',
-  accentDark: '#000000',
-  accentBg: '#F1F1F1',
-  accentBorder: '#D4D4D4',
-  accentText: '#1F1F1F',
+  // Brand Secondary — Cheetah Golden Amber (Huy hiệu, điểm thưởng, voucher, CTA highlight)
+  accent: '#F59E0B',
+  accentDark: '#D97706',
+  accentBg: '#FFFBEB',
+  accentBorder: '#FDE68A',
+  accentText: '#B45309',
 
   // Tab / nav (Active state)
-  tabActive: '#F86E3F',
-  tabActiveBg: '#FFF1E9',
+  tabActive: '#0B2545',
+  tabActiveBg: '#F0F4FA',
   tabInactive: '#64748B',
 
   // Input focus
-  inputFocusBorder: '#F86E3F',
-  inputFocusRing: 'rgba(248, 110, 63, 0.12)',
+  inputFocusBorder: '#0B2545',
+  inputFocusRing: 'rgba(11, 37, 69, 0.12)',
 
   // Shared neutrals
   textSlateDark: '#0F172A',
