@@ -7,6 +7,7 @@ import { OrdersRepository } from '../orders/orders.repository.js';
 import { DriversRepository } from './drivers.repository.js';
 import { WithdrawalsRepository } from './withdrawals.repository.js';
 import type { RequestWithdrawalDto } from './dto/request-withdrawal.dto.js';
+import type { UpdateBankAccountDto } from './dto/update-bank-account.dto.js';
 import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import type { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
 
@@ -170,6 +171,14 @@ export class DriversService {
       bankAccountNumber: dto.bankAccountNumber,
       bankAccountName: dto.bankAccountName,
       ...(dto.clientRequestId ? { clientRequestId: dto.clientRequestId } : {}),
+    });
+  }
+
+  async updateBankAccount(actor: AuthenticatedActor, dto: UpdateBankAccountDto) {
+    return this.withdrawalsRepository.updateBankAccount(actor.userId, {
+      bankName: dto.bankName.trim(),
+      bankAccountNumber: dto.bankAccountNumber.trim(),
+      bankAccountName: dto.bankAccountName.trim().toUpperCase(),
     });
   }
 

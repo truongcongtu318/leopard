@@ -37,6 +37,7 @@ import { DriverApplicationService } from './driver-application.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
 import { ApplyDriverDto } from './dto/apply-driver.dto.js';
 import { RequestWithdrawalDto } from './dto/request-withdrawal.dto.js';
+import { UpdateBankAccountDto } from './dto/update-bank-account.dto.js';
 import { ReportOrderIncidentDto } from './dto/report-order-incident.dto.js';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
@@ -256,6 +257,16 @@ export class DriversController {
     const pageNum = page ? Math.max(1, parseInt(page, 10) || 1) : 1;
     const limitNum = pageSize ? Math.max(1, Math.min(100, parseInt(pageSize, 10) || 20)) : 20;
     return this.driversService.getWithdrawalHistory(actor, pageNum, limitNum);
+  }
+
+  @Patch('wallet/bank')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  updateBankAccount(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Body() dto: UpdateBankAccountDto,
+  ) {
+    return this.driversService.updateBankAccount(actor, dto);
   }
 
   @Post('orders/:id/accept')
