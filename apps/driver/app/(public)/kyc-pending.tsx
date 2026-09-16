@@ -12,11 +12,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
-import { leopardPalette, radius } from '@leopard/mobile-core/src/theme/tokens';
-import { IconShield, IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
-import { typeScale, IconChevron, IconClock, IconPhone } from '@leopard/mobile-core';
+import {
+  httpClient,
+  sessionStore,
+  leopardPalette,
+  radius,
+  IconShield,
+  IconTruck,
+  typeScale,
+  IconChevron,
+  IconClock,
+  IconPhone,
+} from '@leopard/mobile-core';
 
 interface ApplicationStatusResponse {
   status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';

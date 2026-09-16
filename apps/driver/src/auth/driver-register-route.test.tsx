@@ -3,10 +3,8 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 import RegisterScreen, { draftStorage, DRAFT_STORAGE_KEY } from '../../app/(public)/driver-register';
-import { httpClient } from '@leopard/mobile-core/src/api/http-client';
+import { httpClient, sessionStore, captureDeviceImage } from '@leopard/mobile-core';
 import { openDriverContractPdf } from '../features/contract/contract-pdf';
-import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
-import { captureDeviceImage } from '@leopard/mobile-core';
 
 const mockReplace = jest.fn();
 

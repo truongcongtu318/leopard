@@ -3,8 +3,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 import DriverLoginRoute from '../../app/(public)/login';
-import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { sessionStore } from '@leopard/mobile-core';
+import { httpClient, sessionStore } from '@leopard/mobile-core';
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();

@@ -4,8 +4,7 @@ import React from 'react';
 import { Linking } from 'react-native';
 
 import KycPendingRoute from '../../app/(public)/kyc-pending';
-import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
+import { httpClient, sessionStore } from '@leopard/mobile-core';
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
