@@ -1,5 +1,5 @@
-import { DriverContractScreen } from '../src/features/contract/DriverContractScreen';
+import { DriverContractRuntime } from '../src/features/contract/DriverContractRuntime';
 
 export default function DriverContractRoute() {
-  return <DriverContractScreen />;
+  return <DriverContractRuntime />;
 }

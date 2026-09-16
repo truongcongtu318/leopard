@@ -24,6 +24,8 @@ export type DriverEarningsScreenProps = Readonly<{
   availableBalanceVnd: number;
   deliveredOrderCount: number;
   totalOrderCount: number;
+  todayEarningsVnd: number;
+  todayJobCount: number;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -75,6 +77,8 @@ export function DriverEarningsScreen({
   lifetimeDeliveredVnd,
   onNavigate,
   onRetry,
+  todayEarningsVnd,
+  todayJobCount,
   totalOrderCount,
 }: DriverEarningsScreenProps) {
   const router = useRouter();
@@ -86,9 +90,7 @@ export function DriverEarningsScreen({
   );
 
   const periodCards = [
-    { key: 'today', title: 'Thu nhập hôm nay', jobs: 0, amount: 0 },
-    { key: 'week', title: 'Thu nhập tuần này', jobs: 0, amount: 0 },
-    { key: 'month', title: 'Thu nhập tháng này', jobs: 0, amount: 0 },
+    { key: 'today', title: 'Thu nhập hôm nay', jobs: todayJobCount, amount: todayEarningsVnd },
   ];
 
   return (

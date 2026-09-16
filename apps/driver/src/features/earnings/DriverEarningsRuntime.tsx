@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { createDriverWalletHttpAdapter } from '../wallet/adapter';
-import { createDriverHistoryHttpAdapter } from '../history/adapter';
+import { createDriverHistoryHttpAdapter, sumTodayEarnings } from '../history/adapter';
 import { DriverEarningsScreen } from './DriverEarningsScreen';
 
 export function DriverEarningsRuntime({
@@ -22,6 +22,7 @@ export function DriverEarningsRuntime({
   });
 
   const deliveredCount = (historyQuery.data?.items ?? []).filter((i) => i.status === 'DELIVERED').length;
+  const todayEarnings = sumTodayEarnings(historyQuery.data?.items ?? []);
 
   return (
     <DriverEarningsScreen
@@ -35,6 +36,8 @@ export function DriverEarningsRuntime({
         void walletQuery.refetch();
         void historyQuery.refetch();
       }}
+      todayEarningsVnd={todayEarnings.amountVnd}
+      todayJobCount={todayEarnings.jobCount}
       totalOrderCount={historyQuery.data?.total ?? deliveredCount}
     />
   );

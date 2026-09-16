@@ -7,6 +7,7 @@ import { DriverOrderBoardScreen } from './DriverOrderBoardScreen';
 export type DriverOrderBoardRuntimeProps = Readonly<{
   onOpenOrder: (orderId: string) => void;
   onNavigate?: (route: string) => void;
+  onBack?: () => void;
 }>;
 
 /**
@@ -14,7 +15,7 @@ export type DriverOrderBoardRuntimeProps = Readonly<{
  * with `DriverOrdersListRuntime` (Home) so both screens read the same
  * React Query cache instead of double-fetching.
  */
-export function DriverOrderBoardRuntime({ onNavigate, onOpenOrder }: DriverOrderBoardRuntimeProps) {
+export function DriverOrderBoardRuntime({ onBack, onNavigate, onOpenOrder }: DriverOrderBoardRuntimeProps) {
   const port = useMemo(() => createDriverHttpAdapter(), []);
 
   const query = useQuery({
@@ -25,6 +26,7 @@ export function DriverOrderBoardRuntime({ onNavigate, onOpenOrder }: DriverOrder
   if (query.isPending) {
     return (
       <DriverOrderBoardScreen
+        onBack={onBack}
         onNavigate={onNavigate}
         onOpenOrder={onOpenOrder}
         onRetry={() => void query.refetch()}
@@ -41,6 +43,7 @@ export function DriverOrderBoardRuntime({ onNavigate, onOpenOrder }: DriverOrder
   if (query.isError && !query.data) {
     return (
       <DriverOrderBoardScreen
+        onBack={onBack}
         onNavigate={onNavigate}
         onOpenOrder={onOpenOrder}
         onRetry={() => void query.refetch()}
@@ -60,6 +63,7 @@ export function DriverOrderBoardRuntime({ onNavigate, onOpenOrder }: DriverOrder
 
   return (
     <DriverOrderBoardScreen
+      onBack={onBack}
       onNavigate={onNavigate}
       onOpenOrder={onOpenOrder}
       onRetry={() => void query.refetch()}

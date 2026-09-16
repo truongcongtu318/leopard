@@ -186,10 +186,8 @@ export function AssignedDetailView({
           vehicleType={view.order.vehicleType}
         />
 
-        {/* 2. Floating Bottom Sheet: Task Sheet overlapping map */}
+        {/* 2. Nội dung chi tiết: phẳng 1 tầng, không box lồng box */}
         <View style={styles.sheetContainer}>
-          <View style={styles.sheetGrabHandle} />
-
           {isTerminal ? (
             /* ── Trạng thái đã hoàn tất: Chỉ hiển thị thẻ tóm tắt hoàn tất & tiền cước, ẩn các tiến trình thừa ── */
             <>
@@ -512,22 +510,9 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     borderRadius: 14,
     borderWidth: 1,
-    elevation: 3,
-    gap: spacing.sm + 2,
+    gap: spacing.md,
     marginTop: -8,
     padding: spacing.md,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  sheetGrabHandle: {
-    alignSelf: 'center',
-    backgroundColor: '#CBD5E1',
-    borderRadius: 2,
-    height: 4,
-    marginBottom: 4,
-    width: 36,
   },
   missionHeaderRow: {
     alignItems: 'center',

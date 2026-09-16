@@ -100,12 +100,9 @@ export function CargoAndContactCard({
 
 const styles = StyleSheet.create({
   cargoContactCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: spacing.sm + 2,
-    padding: spacing.md,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs,
   },
   cardSectionTitle: {
     color: '#0B1E42',

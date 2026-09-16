@@ -20,29 +20,29 @@ export type DriverQuickAction = Readonly<{
 }>;
 
 export type DriverQuickActionGridProps = Readonly<{
-  onOpenVehicle: () => void;
+  onOpenOrderList: () => void;
   onTriggerSos: () => void;
   onOpenWallet: () => void;
   onOpenSettings: () => void;
 }>;
 
 /**
- * Grab-style 4-button shortcut row: vehicle, SOS, wallet, radius settings.
+ * Grab-style 4-button shortcut row: order list, SOS, wallet, radius settings.
  */
 export function DriverQuickActionGrid({
+  onOpenOrderList,
   onOpenSettings,
-  onOpenVehicle,
   onOpenWallet,
   onTriggerSos,
 }: DriverQuickActionGridProps): React.JSX.Element {
   const actions: readonly DriverQuickAction[] = [
     {
-      key: 'vehicle',
-      label: 'Xe của tôi',
-      accessibilityLabel: 'Thông tin xe vận chuyển',
-      onPress: onOpenVehicle,
+      key: 'order-list',
+      label: 'Đơn',
+      accessibilityLabel: 'Danh sách đơn hàng',
+      onPress: onOpenOrderList,
       icon: <IconSpeedTruck color={driverPrimitives.colors.gray900} size={20} />,
-      testID: 'quick-action-vehicle',
+      testID: 'quick-action-order-list',
     },
     {
       key: 'sos',

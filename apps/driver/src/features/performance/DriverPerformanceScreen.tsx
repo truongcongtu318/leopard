@@ -6,58 +6,48 @@ import {
   leopardPalette,
   radius,
   spacing,
-  IconCheck,
   IconChevron,
-  IconClock,
   IconSecurityShield,
   IconSpeedTruck,
   IconStar,
-  IconTrophy,
   ScreenScaffold,
+  ScreenState,
   StarRating,
   typeScale,
 } from '@leopard/mobile-core';
+import type { DriverPerformanceReviewResponse } from './adapter';
 
-type ReviewFeedItem = {
-  id: string;
-  rating: number;
-  tags: string[];
-  comment: string;
-  createdAtLabel: string;
-};
+function formatReviewDate(createdAt: string): string {
+  const date = new Date(createdAt);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 
-const mockReviews: ReviewFeedItem[] = [
-  {
-    id: 'r-1',
-    rating: 5,
-    tags: ['Đúng giờ', 'Cẩn thận'],
-    comment: 'Tài xế giao hàng rất nhanh và hỗ trợ bưng kiện hàng lên lầu.',
-    createdAtLabel: 'Hôm nay, 14:40',
-  },
-  {
-    id: 'r-2',
-    rating: 5,
-    tags: ['Thân thiện', 'Xe sạch sẽ'],
-    comment: 'Bảo quản thùng hoa quả rất tốt, không bị dập.',
-    createdAtLabel: 'Hôm qua, 11:30',
-  },
-  {
-    id: 'r-3',
-    rating: 5,
-    tags: ['Đúng giờ', 'Chuyên nghiệp'],
-    comment: 'Giao đúng giờ hẹn, chữ ký thủ kho POD đầy đủ.',
-    createdAtLabel: '18/08/2026',
-  },
-];
+function formatPct(value: number): string {
+  return `${value.toFixed(1)}%`;
+}
 
-const TIERS = [
-  { id: 'standard', label: 'Chuẩn', active: false },
-  { id: 'silver', label: 'Bạc', active: false },
-  { id: 'gold', label: 'Vàng', active: true },
-  { id: 'diamond', label: 'Kim Cương', active: false },
-] as const;
+export type DriverPerformanceScreenProps = Readonly<{
+  ratingAvg: number;
+  ratingCount: number;
+  acceptancePct: number;
+  cancellationPct: number;
+  recentReviews: readonly DriverPerformanceReviewResponse[];
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
+}>;
 
-export function DriverPerformanceScreen() {
+export function DriverPerformanceScreen({
+  ratingAvg,
+  ratingCount,
+  acceptancePct,
+  cancellationPct,
+  recentReviews,
+  isLoading,
+  isError,
+  onRetry,
+}: DriverPerformanceScreenProps) {
   const router = useRouter();
 
   return (
@@ -83,58 +73,22 @@ export function DriverPerformanceScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* 1. Executive Rating & Tier Card (Double-Bezel) */}
+        {isLoading ? (
+          <ScreenState state="loading" />
+        ) : isError ? (
+          <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
+        ) : (
+          <>
+        {/* 1. Executive Rating Card (Double-Bezel) */}
         <View style={styles.doubleBezelOuter}>
           <View style={styles.doubleBezelInner}>
             <View style={styles.overviewTopRow}>
-              <View style={styles.ratingBox}>
+              <View style={styles.ratingBoxFull}>
                 <View style={styles.ratingRow}>
-                  <Text style={styles.ratingNumber}>4.98</Text>
+                  <Text style={styles.ratingNumber}>{ratingAvg.toFixed(2)}</Text>
                   <IconStar color="#F59E0B" fill="#F59E0B" size={22} />
                 </View>
-                <Text style={styles.ratingCount}>128 đánh giá</Text>
-              </View>
-
-              <View style={styles.tierBox}>
-                <View style={styles.tierBadge}>
-                  <IconTrophy color="#B45309" size={14} />
-                  <Text style={styles.tierBadgeText}>HẠNG VÀNG</Text>
-                </View>
-                <Text style={styles.tierDesc}>Ưu tiên phân phối các chuyến hàng cước cao.</Text>
-                <Text style={styles.tierProgressLabel}>Còn 22 chuyến để lên hạng Kim Cương</Text>
-              </View>
-            </View>
-
-            {/* Tier Steps Progression (Chuẩn ➔ Bạc ➔ Vàng ➔ Kim Cương) */}
-            <View style={styles.tierProgressContainer}>
-              <Text style={styles.tierProgressionLabel}>CẤP BẬC ĐỐI TÁC</Text>
-              <View style={styles.tierStepsRow}>
-                {TIERS.map((t, idx) => (
-                  <View key={t.id} style={styles.tierStepCol}>
-                    <View
-                      style={[
-                        styles.tierStepCircle,
-                        t.active ? styles.tierStepCircleActive : idx < 2 ? styles.tierStepCircleDone : null,
-                      ]}
-                    >
-                      {idx < 2 ? (
-                        <IconCheck color="#FFFFFF" size={12} strokeWidth={2.5} />
-                      ) : t.active ? (
-                        <IconTrophy color="#FFFFFF" size={12} />
-                      ) : (
-                        <Text style={styles.tierStepDotNumber}>{idx + 1}</Text>
-                      )}
-                    </View>
-                    <Text
-                      style={[
-                        styles.tierStepText,
-                        t.active ? styles.tierStepTextActive : null,
-                      ]}
-                    >
-                      {t.label}
-                    </Text>
-                  </View>
-                ))}
+                <Text style={styles.ratingCount}>{ratingCount} đánh giá</Text>
               </View>
             </View>
           </View>
@@ -144,20 +98,6 @@ export function DriverPerformanceScreen() {
         <Text style={styles.sectionLabel}>Chỉ số vận hành cốt lõi</Text>
         <View style={styles.doubleBezelOuterMuted}>
           <View style={styles.doubleBezelInnerMuted}>
-            {/* OTD KPI */}
-            <View style={styles.metricRow}>
-              <View style={styles.metricIconWrap}>
-                <IconClock color="#0EA5E9" size={18} />
-              </View>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricTitle}>Tỷ lệ đúng giờ (OTD)</Text>
-                <Text style={styles.metricSub}>Chuẩn hệ thống: &gt; 90%</Text>
-              </View>
-              <Text style={[styles.metricValue, styles.metricValueEmerald]}>99.4%</Text>
-            </View>
-
-            <View style={styles.rowDivider} />
-
             {/* Acceptance Rate KPI */}
             <View style={styles.metricRow}>
               <View style={styles.metricIconWrap}>
@@ -167,13 +107,13 @@ export function DriverPerformanceScreen() {
                 <Text style={styles.metricTitle}>Tỷ lệ nhận cuốc</Text>
                 <Text style={styles.metricSub}>Chuẩn hệ thống: &gt; 95%</Text>
               </View>
-              <Text style={[styles.metricValue, styles.metricValueEmerald]}>96.5%</Text>
+              <Text style={[styles.metricValue, styles.metricValueEmerald]}>{formatPct(acceptancePct)}</Text>
             </View>
 
             <View style={styles.rowDivider} />
 
             {/* Cancellation Rate KPI */}
-            <View style={styles.metricRow}>
+            <View style={[styles.metricRow, styles.metricRowLast]}>
               <View style={styles.metricIconWrap}>
                 <IconSecurityShield color="#10B981" size={18} />
               </View>
@@ -181,45 +121,26 @@ export function DriverPerformanceScreen() {
                 <Text style={styles.metricTitle}>Tỷ lệ hủy cuốc</Text>
                 <Text style={styles.metricSub}>Chuẩn hệ thống: &lt; 1%</Text>
               </View>
-              <Text style={[styles.metricValue, styles.metricValueEmerald]}>0.8%</Text>
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* POD Compliance KPI */}
-            <View style={[styles.metricRow, styles.metricRowLast]}>
-              <View style={styles.metricIconWrap}>
-                <IconCheck color="#059669" size={18} strokeWidth={2.5} />
-              </View>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricTitle}>Tỷ lệ nộp e-POD hợp lệ</Text>
-                <Text style={styles.metricSub}>Chuẩn hệ thống: 100%</Text>
-              </View>
-              <Text style={[styles.metricValue, styles.metricValueEmerald]}>100%</Text>
+              <Text style={[styles.metricValue, styles.metricValueEmerald]}>{formatPct(cancellationPct)}</Text>
             </View>
           </View>
         </View>
 
         {/* 3. Customer Reviews Feed */}
-        <Text style={styles.sectionLabel}>Đánh giá từ khách hàng ({mockReviews.length})</Text>
+        <Text style={styles.sectionLabel}>Đánh giá từ khách hàng ({recentReviews.length})</Text>
         <View style={styles.reviewList}>
-          {mockReviews.map((item) => (
+          {recentReviews.map((item) => (
             <View key={item.id} style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
                 <StarRating rating={item.rating} size={14} />
-                <Text style={styles.reviewTime}>{item.createdAtLabel}</Text>
-              </View>
-              <View style={styles.tagRow}>
-                {item.tags.map((t) => (
-                  <View key={t} style={styles.tagBadge}>
-                    <Text style={styles.tagBadgeText}>{t}</Text>
-                  </View>
-                ))}
+                <Text style={styles.reviewTime}>{formatReviewDate(item.createdAt)}</Text>
               </View>
               <Text style={styles.reviewComment}>{item.comment}</Text>
             </View>
           ))}
         </View>
+        </>
+        )}
       </ScrollView>
     </ScreenScaffold>
   );
@@ -292,6 +213,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontVariant: ['tabular-nums'],
     marginTop: 2,
+  },
+  ratingBoxFull: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
   tierBox: {
     flex: 1,

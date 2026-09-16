@@ -10,24 +10,48 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
+const baseProps = {
+  acceptancePct: 96.5,
+  cancellationPct: 0.8,
+  isError: false,
+  isLoading: false,
+  onRetry: jest.fn(),
+  ratingAvg: 4.98,
+  ratingCount: 128,
+  recentReviews: [
+    { id: 'r-1', orderId: 'o-1', rating: 5, comment: 'Giao hàng nhanh.', createdAt: '2026-09-01T00:00:00.000Z' },
+  ],
+};
+
 describe('DriverPerformanceScreen', () => {
-  it('renders rating 4.98, tier progression, and operational KPI metrics', async () => {
-    const screen = await render(<DriverPerformanceScreen />);
+  it('renders real rating and operational KPI metrics from props', async () => {
+    const screen = await render(<DriverPerformanceScreen {...baseProps} />);
 
     expect(screen.getByText('Điểm hiệu suất')).toBeTruthy();
     expect(screen.getByText('4.98')).toBeTruthy();
-    expect(screen.getByText('HẠNG VÀNG')).toBeTruthy();
-    expect(screen.getByText('99.4%')).toBeTruthy();
-    expect(screen.getByText('Tỷ lệ đúng giờ (OTD)')).toBeTruthy();
+    expect(screen.getByText('128 đánh giá')).toBeTruthy();
     expect(screen.getByText('96.5%')).toBeTruthy();
     expect(screen.getByText('Tỷ lệ nhận cuốc')).toBeTruthy();
     expect(screen.getByText('0.8%')).toBeTruthy();
     expect(screen.getByText('Tỷ lệ hủy cuốc')).toBeTruthy();
-    expect(screen.getByText('100%')).toBeTruthy();
-    expect(screen.getByText('Chuẩn')).toBeTruthy();
-    expect(screen.getByText('Bạc')).toBeTruthy();
-    expect(screen.getByText('Vàng')).toBeTruthy();
-    expect(screen.getByText('Kim Cương')).toBeTruthy();
+    expect(screen.getByText('Giao hàng nhanh.')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('shows a loading state while the summary query is pending', async () => {
+    const screen = await render(<DriverPerformanceScreen {...baseProps} isLoading={true} />);
+
+    expect(screen.queryByText('4.98')).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('shows a retry action when the summary query fails', async () => {
+    const onRetry = jest.fn();
+    const screen = await render(<DriverPerformanceScreen {...baseProps} isError={true} onRetry={onRetry} />);
+
+    expect(screen.getByText('Thử lại')).toBeTruthy();
 
     await screen.unmount();
   });

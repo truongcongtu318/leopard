@@ -141,6 +141,10 @@ export class DriversService {
     return this.withdrawalsRepository.getWalletSummary(actor.userId);
   }
 
+  async getPerformanceSummary(actor: AuthenticatedActor) {
+    return this.driversRepository.getPerformanceStats(actor.userId);
+  }
+
   async requestWithdrawal(actor: AuthenticatedActor, dto: RequestWithdrawalDto) {
     if (dto.clientRequestId) {
       const existing = await this.withdrawalsRepository.findWithdrawalRequestByClientRequestId(

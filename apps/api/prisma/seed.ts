@@ -49,6 +49,16 @@ type DriverDocumentManifest = {
   createdAt?: string;
 };
 
+type DriverContractManifest = {
+  id: string;
+  version: string;
+  pdfStorageKey: string;
+  signatureStorageKey?: string | null;
+  signedByName: string;
+  signedAt: string;
+  ipAddress?: string | null;
+};
+
 type DriverProfileManifest = TimestampedManifest & {
   id: string;
   userId: string;
@@ -74,6 +84,7 @@ type DriverProfileManifest = TimestampedManifest & {
   bankAccountName?: string;
   balanceVnd?: number;
   documents?: DriverDocumentManifest[];
+  contracts?: DriverContractManifest[];
 };
 
 type FleetManifest = TimestampedManifest & {
@@ -145,6 +156,30 @@ type PaymentIntentManifest = TimestampedManifest & {
   expiresAt: string | null;
 };
 
+type OrderReviewManifest = {
+  id: string;
+  customerId: string;
+  rating: number;
+  comment?: string | null;
+  tipVnd?: number;
+  createdAt: string;
+};
+
+type OrderDispatchOfferManifest = {
+  id: string;
+  driverId: string;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
+  offeredAt: string;
+  respondedAt?: string | null;
+};
+
+type OrderMessageManifest = {
+  id: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+};
+
 type OrderManifest = TimestampedManifest & {
   id: string;
   customerId: string;
@@ -174,6 +209,9 @@ type OrderManifest = TimestampedManifest & {
   trackingPoints: TrackingPointManifest[];
   mediaObjects: MediaObjectManifest[];
   paymentIntents: PaymentIntentManifest[];
+  reviews?: OrderReviewManifest[];
+  dispatchOffers?: OrderDispatchOfferManifest[];
+  messages?: OrderMessageManifest[];
 };
 
 type DemoManifest = {
@@ -340,12 +378,14 @@ async function deleteDemoRuntimeChildren(
     await client.invoice.deleteMany({ where: { orderId: { in: orderIds } } });
     await client.orderMessage.deleteMany({ where: { orderId: { in: orderIds } } });
     await client.orderReview.deleteMany({ where: { orderId: { in: orderIds } } });
+    await client.orderDispatchOffer.deleteMany({ where: { orderId: { in: orderIds } } });
   }
 
   if (userIds.length > 0) {
     await client.supportTicket.deleteMany({ where: { customerId: { in: userIds } } });
     await client.orderMessage.deleteMany({ where: { senderId: { in: userIds } } });
     await client.orderReview.deleteMany({ where: { customerId: { in: userIds } } });
+    await client.orderDispatchOffer.deleteMany({ where: { driverId: { in: userIds } } });
     await client.withdrawalRequest.deleteMany({
       where: { OR: [{ driverId: { in: userIds } }, { reviewedById: { in: userIds } }] },
     });
@@ -649,6 +689,7 @@ async function insertDriverProfiles(client: SeedClient, manifest: DemoManifest):
   });
 
   await insertDriverDocuments(client, manifest);
+  await insertDriverContracts(client, manifest);
 
   for (const profile of manifest.driverProfiles) {
     if (!profile.location) {
@@ -702,6 +743,32 @@ async function insertDriverDocuments(
   }
 
   await client.driverDocument.createMany({ data: rows });
+}
+
+/**
+ * Signed contract evidence for a driver profile — what `DriverContractService`
+ * reads back for the admin/self "view my signed contract" projection. Rows
+ * are cascade-deleted with their DriverProfile, so no extra boundary cleanup.
+ */
+async function insertDriverContracts(client: SeedClient, manifest: DemoManifest): Promise<void> {
+  const rows = manifest.driverProfiles.flatMap((profile) =>
+    (profile.contracts ?? []).map((contract) => ({
+      id: contract.id,
+      driverProfileId: profile.id,
+      version: contract.version,
+      pdfStorageKey: contract.pdfStorageKey,
+      signatureStorageKey: contract.signatureStorageKey ?? null,
+      signedByName: contract.signedByName,
+      signedAt: new Date(contract.signedAt),
+      ipAddress: contract.ipAddress ?? null,
+    })),
+  );
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  await client.driverContract.createMany({ data: rows });
 }
 
 async function insertFleets(client: SeedClient, manifest: DemoManifest): Promise<void> {
@@ -913,6 +980,45 @@ async function insertOrderChildren(client: SeedClient, manifest: DemoManifest): 
             updatedAt: createdAt,
           };
         }),
+      });
+    }
+
+    if (order.reviews && order.reviews.length > 0) {
+      await client.orderReview.createMany({
+        data: order.reviews.map((review) => ({
+          id: review.id,
+          orderId: order.id,
+          customerId: review.customerId,
+          rating: review.rating,
+          comment: review.comment ?? null,
+          tipVnd: review.tipVnd ?? 0,
+          createdAt: new Date(review.createdAt),
+        })),
+      });
+    }
+
+    if (order.dispatchOffers && order.dispatchOffers.length > 0) {
+      await client.orderDispatchOffer.createMany({
+        data: order.dispatchOffers.map((offer) => ({
+          id: offer.id,
+          orderId: order.id,
+          driverId: offer.driverId,
+          status: offer.status,
+          offeredAt: new Date(offer.offeredAt),
+          respondedAt: toDate(offer.respondedAt ?? null),
+        })),
+      });
+    }
+
+    if (order.messages && order.messages.length > 0) {
+      await client.orderMessage.createMany({
+        data: order.messages.map((message) => ({
+          id: message.id,
+          orderId: order.id,
+          senderId: message.senderId,
+          body: message.body,
+          createdAt: new Date(message.createdAt),
+        })),
       });
     }
   }

@@ -39,7 +39,8 @@ export function DriverActiveTripCard({
 
   const handleChat = () => {
     if (onNavigate) {
-      onNavigate('/chat');
+      const contact = trip.customerContact ? `?customerContact=${encodeURIComponent(trip.customerContact)}` : '';
+      onNavigate(`/chat/${trip.id}${contact}`);
     } else if (onOpenOrder) {
       onOpenOrder(trip.id);
     }

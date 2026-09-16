@@ -20,6 +20,9 @@ export type DriverProfileScreenProps = Readonly<{
   onLogout?: () => void;
   onRetry?: () => void;
   onNavigate?: (route: string) => void;
+  ratingAvg?: number;
+  acceptancePct?: number;
+  cancellationPct?: number;
 }>;
 
 const DRIVER_AVATAR_IMG = require('../../../assets/brand/driver-avatar.png');
@@ -122,9 +125,12 @@ function MoreDotsIcon({ size = 22, color = driverPrimitives.colors.gray900 }: { 
 }
 
 export function DriverProfileScreen({
+  acceptancePct = 0,
+  cancellationPct = 0,
   onLogout,
   onNavigate,
   onRetry,
+  ratingAvg = 0,
   view,
 }: DriverProfileScreenProps) {
   const router = useRouter();
@@ -233,7 +239,7 @@ export function DriverProfileScreen({
             <Text style={styles.driverFullName}>{driverName}</Text>
             <View style={styles.starRatingRow}>
               <Text style={styles.goldStar}>★</Text>
-              <Text style={styles.ratingNumber}>5.0</Text>
+              <Text style={styles.ratingNumber}>{ratingAvg.toFixed(1)}</Text>
             </View>
           </View>
 
@@ -245,12 +251,12 @@ export function DriverProfileScreen({
           <Text style={styles.kpiHeading}>Hàng ngày</Text>
           <View style={styles.kpiColumns}>
             <View style={styles.kpiCol}>
-              <Text style={styles.kpiPercent}>0.0%</Text>
+              <Text style={styles.kpiPercent}>{acceptancePct.toFixed(1)}%</Text>
               <Text style={styles.kpiLabel}>Chấp nhận</Text>
             </View>
             <View style={styles.kpiColDivider} />
             <View style={styles.kpiCol}>
-              <Text style={styles.kpiPercent}>0.0%</Text>
+              <Text style={styles.kpiPercent}>{cancellationPct.toFixed(1)}%</Text>
               <Text style={styles.kpiLabel}>Huỷ bỏ</Text>
             </View>
           </View>

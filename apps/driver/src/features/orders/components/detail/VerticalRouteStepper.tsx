@@ -272,11 +272,9 @@ export function VerticalRouteStepper({
 
 const styles = StyleSheet.create({
   verticalRouteCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: spacing.md,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs,
   },
   rowBetween: {
     alignItems: 'center',

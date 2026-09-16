@@ -202,6 +202,44 @@ describe('MissionMapCanvas (Task 18)', () => {
     await screen.unmount();
   });
 
+  it('draws straight origin→destination fallback when no route geometry', async () => {
+    const screen = await render(
+      <MissionMapCanvas
+        destination={{ label: 'Điểm giao', coords: { lat: 10.76, lng: 106.8 } }}
+        origin={{ label: 'Điểm lấy', coords: { lat: 10.79, lng: 106.65 } }}
+        tracking={defaultTracking}
+      />,
+    );
+
+    // Đường nối thẳng = dữ liệu mô phỏng, phải ghi nhãn rõ ràng
+    expect(screen.getByTestId('badge-demo-data')).toBeTruthy();
+    expect(screen.getByText('Dữ liệu mô phỏng')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('hides live tracking pills when trip has ended (unavailable)', async () => {
+    const endedTracking: DriverTrackingView = {
+      kind: 'unavailable',
+      label: 'Tracking của chuyến đã kết thúc',
+      lastUpdatedLabel: '14:32 · 15/08/2026',
+      queuedPointCount: null,
+    };
+
+    const screen = await render(
+      <MissionMapCanvas
+        destination={{ label: 'Điểm giao' }}
+        origin={{ label: 'Điểm lấy' }}
+        tracking={endedTracking}
+      />,
+    );
+
+    expect(screen.queryByTestId('pill-tracking-status')).toBeNull();
+    expect(screen.queryByTestId('card-waypoint-guidance')).toBeNull();
+    expect(screen.queryByTestId('btn-navigate-next-stop')).toBeNull();
+    expect(screen.getByTestId('pill-eta-estimate')).toBeTruthy();
+    await screen.unmount();
+  });
+
   it('disables external navigation button when next stop has no coordinates', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 

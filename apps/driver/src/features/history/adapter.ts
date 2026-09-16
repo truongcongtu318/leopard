@@ -80,6 +80,17 @@ function mapHistoryItem(order: MappedDriverOrderResponse): HistoryTripItem {
   };
 }
 
+export function sumTodayEarnings(items: readonly HistoryTripItem[]): {
+  amountVnd: number;
+  jobCount: number;
+} {
+  const todayDelivered = items.filter((i) => i.datePeriod === 'today' && i.status === 'DELIVERED');
+  return {
+    amountVnd: todayDelivered.reduce((sum, i) => sum + i.payoutAmount, 0),
+    jobCount: todayDelivered.length,
+  };
+}
+
 export function createDriverHistoryHttpAdapter(client?: DriverHistoryHttpClient) {
   const getClient = (): DriverHistoryHttpClient => client ?? getDefaultHttpClient();
 

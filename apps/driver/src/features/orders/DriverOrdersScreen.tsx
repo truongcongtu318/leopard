@@ -50,11 +50,19 @@ export type DriverOrdersScreenProps = Readonly<{
     vehiclePlate?: string | null;
     vehicleType?: string | null;
   };
+  earningsTodayVnd?: number;
+  walletBalanceVnd?: number;
+  ratingAvg?: number;
   showDebugActions?: boolean;
 }>;
 
+function formatDongLabel(value: number): string {
+  return `đ ${Math.round(value).toLocaleString('vi-VN')}`;
+}
+
 export function DriverOrdersScreen({
   driverIdentity,
+  earningsTodayVnd,
   incomingOffer = null,
   isAcceptingIncomingOffer = false,
   networkError = null,
@@ -65,8 +73,10 @@ export function DriverOrdersScreen({
   onOpenOrder,
   onRetry,
   onSetAvailability,
+  ratingAvg,
   showDebugActions = false,
   view,
+  walletBalanceVnd,
 }: DriverOrdersScreenProps) {
   const [dismissedOfferId, setDismissedOfferId] = useState<string | null>(null);
   const [simulatedOffer, setSimulatedOffer] = useState<IncomingDispatchOffer | null>(null);
@@ -325,8 +335,8 @@ export function DriverOrdersScreen({
               <DriverConnectionStatusRow isOnline={isOnline} subtitle={vehicleSubtitle || null} />
 
               <DriverQuickActionGrid
+                onOpenOrderList={() => onNavigate?.('/board')}
                 onOpenSettings={() => setIsSettingsOpen(true)}
-                onOpenVehicle={() => onNavigate?.('/profile')}
                 onOpenWallet={() => onNavigate?.('/wallet')}
                 onTriggerSos={handleTriggerSos}
               />
@@ -361,7 +371,14 @@ export function DriverOrdersScreen({
 
       {/* ── Layer 4: Grab-style floating quick-nav (pill + avatar) ── */}
       {!activeTrip ? (
-        <DriverQuickNavOverlay driverName={driverIdentity?.name} onNavigate={onNavigate} />
+        <DriverQuickNavOverlay
+          driverName={driverIdentity?.name}
+          earningsTodayLabel={earningsTodayVnd !== undefined ? formatDongLabel(earningsTodayVnd) : undefined}
+          isOnline={isOnline}
+          onNavigate={onNavigate}
+          rating={ratingAvg !== undefined ? ratingAvg.toFixed(2) : undefined}
+          walletBalanceLabel={walletBalanceVnd !== undefined ? formatDongLabel(walletBalanceVnd) : undefined}
+        />
       ) : null}
 
       {/* ── Layer 5: overlays ── */}

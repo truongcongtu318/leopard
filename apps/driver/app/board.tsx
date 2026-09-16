@@ -7,6 +7,7 @@ export default function DriverBoardPage() {
 
   return (
     <DriverOrderBoardRuntime
+      onBack={() => router.replace('/orders')}
       onNavigate={(route) => router.push(route)}
       onOpenOrder={(orderId) => router.push(`/orders/${orderId}`)}
     />

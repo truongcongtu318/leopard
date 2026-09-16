@@ -118,6 +118,23 @@ export class DriversController {
     res.status(HttpStatus.OK).send(buffer);
   }
 
+  // Self-service view of the driver's own SIGNED contract (version, signer,
+  // signed-at, short-lived PDF link) — signing itself happens once during
+  // onboarding (`DriverApplicationService`), this route is read-only.
+  @Get('contract/status')
+  @RequireRoles('DRIVER')
+  async getContractStatus(@CurrentUser() actor: AuthenticatedActor) {
+    try {
+      const contract = await this.driverContractService.getSignedContractForAdmin(actor.userId);
+      return { signed: true as const, ...contract };
+    } catch (error) {
+      if (error instanceof DomainError && error.code === 'RESOURCE_NOT_FOUND') {
+        return { signed: false as const };
+      }
+      throw error;
+    }
+  }
+
   // KYC document upload (GPLX / cà-vẹt / CCCD / ảnh xe) — multipart/form-data.
   @Post('documents')
   @AllowUserStatuses('ACTIVE', 'PENDING_APPROVAL', 'REJECTED')
@@ -211,6 +228,12 @@ export class DriversController {
   @RequireRoles('DRIVER')
   getWalletSummary(@CurrentUser() actor: AuthenticatedActor) {
     return this.driversService.getWalletSummary(actor);
+  }
+
+  @Get('performance')
+  @RequireRoles('DRIVER')
+  getPerformanceSummary(@CurrentUser() actor: AuthenticatedActor) {
+    return this.driversService.getPerformanceSummary(actor);
   }
 
   @Post('wallet/withdrawals')
