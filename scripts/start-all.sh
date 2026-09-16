@@ -24,10 +24,11 @@ DATABASE_URL="postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=p
 # 4. Bật toàn bộ dịch vụ local qua Turbo (Hot-Reload / Fast Refresh)
 echo ""
 echo "Các dịch vụ đang chạy trực tiếp trên máy (Hot-Reload bật):"
-echo "  - Driver App (Web): http://localhost:8082"
-echo "  - Backend API:      http://localhost:3000"
-echo "  - Admin Console:    http://localhost:3002"
-echo "  - PostgreSQL DB:    localhost:5432"
+echo "  - Customer App (Web): http://localhost:8081"
+echo "  - Driver App (Web):   http://localhost:8082"
+echo "  - Backend API:        http://localhost:3000"
+echo "  - Admin Console:      http://localhost:3002"
+echo "  - PostgreSQL DB:      localhost:5432"
 echo ""
 
 pnpm dev
