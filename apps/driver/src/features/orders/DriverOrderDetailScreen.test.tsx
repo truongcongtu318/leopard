@@ -304,4 +304,31 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
 
     await screen.unmount();
   });
+
+  it('renders CompletedOrderDetailView when order is DELIVERED and has no pending command', async () => {
+    const base = createDriverDetailFixture('D-DETAIL-ACCEPTED') as DriverAssignedDetailView;
+    const view: DriverAssignedDetailView = {
+      ...base,
+      order: {
+        ...base.order,
+        status: 'DELIVERED',
+        reference: 'ORD-TERM-123',
+        priceLabel: '420.000 ₫',
+      },
+      primaryTask: null,
+    };
+
+    const screen = await render(<DriverOrderDetailScreen view={view} />);
+
+    // Should show the title for receipt
+    expect(screen.getByText('Biên bản đơn ORD-TERM-123')).toBeTruthy();
+    expect(screen.getByText('420.000 ₫')).toBeTruthy();
+
+    // Should NOT render driver active bottom controls
+    expect(screen.queryByTestId('btn-navigate-active-leg')).toBeNull();
+    expect(screen.queryByTestId('btn-open-incident-modal')).toBeNull();
+    expect(screen.queryByTestId('btn-advance-leg-slide')).toBeNull();
+
+    await screen.unmount();
+  });
 });
