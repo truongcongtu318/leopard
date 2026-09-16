@@ -3,7 +3,6 @@ import {
   ScreenState,
   type OperationalAlertTone,
 } from '@leopard/ui';
-import { LayoutGrid } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import type {
@@ -14,7 +13,6 @@ import type {
   AdminPreviewContext,
   AdminPreviewScreen,
 } from './model';
-import { createAdminPreviewHref } from './adapter';
 
 export function AdminBoundaryState({ view }: Readonly<{ view: AdminBoundaryView }>) {
   return <ScreenState message={view.message} state={view.kind} title={view.title} />;
@@ -49,93 +47,17 @@ const listLabel: Readonly<Record<AdminListScreen, string>> = {
   audit: 'Nhật ký kiểm toán',
 };
 
-export function AdminBreadcrumbs({
-  screen,
-  orderReference,
-  reportTicketNumber,
-  previewContext,
-}: Readonly<{
+export function AdminBreadcrumbs({}: Readonly<{
   screen: AdminPreviewScreen;
   orderReference?: string;
   reportTicketNumber?: string;
   previewContext?: AdminPreviewContext | undefined;
 }>) {
-  return (
-    <nav aria-label="Đường dẫn" className="text-xs text-neutral-muted">
-      <ol className="m-0 flex flex-wrap items-center gap-1.5 p-0">
-        <li className="list-none">
-          <a
-            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-slate-600 hover:text-brand hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand font-medium motion-reduce:transition-none"
-            href={createAdminPreviewHref('/admin', 'overview', previewContext)}
-          >
-            <LayoutGrid className="w-3 h-3" strokeWidth={2} aria-hidden="true" />
-            Tổng quan
-          </a>
-        </li>
-        <li aria-hidden="true" className="list-none text-slate-300">/</li>
-        {screen === 'order-detail' ? (
-          <>
-            <li className="list-none">
-              <a
-                className="inline-flex items-center rounded-lg px-2.5 py-1 text-slate-600 hover:text-brand hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand font-medium motion-reduce:transition-none"
-                href={createAdminPreviewHref('/admin/orders', 'orders', previewContext)}
-              >
-                Đơn hàng
-              </a>
-            </li>
-            <li aria-hidden="true" className="list-none text-slate-300">/</li>
-            <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 break-all bg-white/70 rounded-lg shadow-2xs border border-white/60">
-              {orderReference}
-            </li>
-          </>
-        ) : screen === 'report-detail' ? (
-          <>
-            <li className="list-none">
-              <a
-                className="inline-flex items-center rounded-lg px-2.5 py-1 text-slate-600 hover:text-brand hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand font-medium motion-reduce:transition-none"
-                href={createAdminPreviewHref('/admin/reports', 'reports', previewContext)}
-              >
-                Khiếu nại
-              </a>
-            </li>
-            <li aria-hidden="true" className="list-none text-slate-300">/</li>
-            <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 break-all bg-white/70 rounded-lg shadow-2xs border border-white/60">
-              {reportTicketNumber ?? 'Chi tiết khiếu nại'}
-            </li>
-          </>
-        ) : screen === 'dispatch' ? (
-          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
-            Điều phối vận hành
-          </li>
-        ) : screen === 'notifications' ? (
-          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
-            Thông báo & Broadcast
-          </li>
-        ) : screen === 'pricing' ? (
-          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
-            Cấu hình giá linh hoạt
-          </li>
-        ) : screen === 'live-map' ? (
-          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
-            Bản đồ giám sát trực tiếp
-          </li>
-        ) : screen === 'settings' ? (
-          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
-            Cài đặt hệ thống & Đối tác
-          </li>
-        ) : screen === 'support' ? (
-          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
-            Hỗ trợ khách hàng & CSKH
-          </li>
-        ) : (
-          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
-            {listLabel[screen as AdminListScreen]}
-          </li>
-        )}
-      </ol>
-    </nav>
-  );
+  // Breadcrumb is now displayed in the topbar of OperationsShell.
+  // This component is kept for backward compatibility but renders nothing.
+  return null;
 }
+
 
 export function AdminSurface({
   title,

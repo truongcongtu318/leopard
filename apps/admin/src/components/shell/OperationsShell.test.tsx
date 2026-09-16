@@ -41,6 +41,7 @@ describe('OperationsShell', () => {
     ).toBe('#noi-dung-chinh');
     expect(screen.getByRole('main').getAttribute('id')).toBe('noi-dung-chinh');
     expect(screen.getByText('LEOPARD')).toBeTruthy();
+    // Fallback layout: horizontal topbar shows 'Admin Console' badge
     expect(screen.getByText('Admin Console')).toBeTruthy();
     expect(screen.getAllByText('Admin Dispatch Console').length).toBeGreaterThan(0);
     expect(screen.getByRole('navigation', { name: 'Điều hướng quản trị' })).toBeTruthy();
@@ -158,7 +159,98 @@ describe('OperationsShell', () => {
   it('uses a safe generic Vietnamese context for an unknown role', () => {
     renderShell('support_observer');
 
+    // Unknown roles fall through to the fallback horizontal nav layout.
+    // FALLBACK_CONTEXT.contextLabel is shown in the header subtitle.
     expect(screen.getAllByText('Khu vực vận hành').length).toBeGreaterThan(0);
     expect(screen.getByRole('navigation', { name: 'Điều hướng vận hành' })).toBeTruthy();
+  });
+
+  describe('Grouped Dispatch Console layout (with navGroups)', () => {
+    const testGroups = [
+      {
+        groupLabel: 'Tổng quan',
+        items: [{ label: 'Dashboard', href: '/admin' }],
+      },
+      {
+        groupLabel: 'Vận hành',
+        items: [
+          { label: 'Điều phối', href: '/admin/dispatch' },
+          { label: 'Khiếu nại', href: '/admin/reports', badge: 3 },
+        ],
+      },
+    ];
+
+    function renderGroupedShell() {
+      return render(
+        <OperationsShell role="admin" navItems={[...adminItems]} navGroups={testGroups}>
+          <h1>Nội dung console</h1>
+        </OperationsShell>,
+      );
+    }
+
+    it('renders search icon-only button and opens spotlight search dialog when clicked', () => {
+      renderGroupedShell();
+
+      const searchBtn = screen.getByRole('button', { name: /Tìm kiếm nhanh/i });
+      expect(searchBtn).toBeTruthy();
+
+      fireEvent.click(searchBtn);
+
+      expect(screen.getByPlaceholderText(/Tìm kiếm nhanh chức năng/i)).toBeTruthy();
+      expect(screen.getByText('LEOPARD Dispatch Console')).toBeTruthy();
+    });
+
+    it('renders user profile capsule and opens dropdown menu with action links and logout', () => {
+      renderGroupedShell();
+
+      const userBtn = screen.getByRole('button', { name: 'Menu tài khoản quản trị viên' });
+      expect(userBtn).toBeTruthy();
+      expect(screen.getAllByText('Nguyễn Hoài Nam').length).toBeGreaterThan(0);
+
+      // Open dropdown
+      fireEvent.click(userBtn);
+
+      const menu = screen.getByRole('menu');
+      expect(menu.className).toContain('animate-dropdown');
+      expect(menu.className).toContain('w-full');
+      expect(screen.getByText('Cài đặt hệ thống')).toBeTruthy();
+      expect(screen.getByText('Nhật ký hoạt động')).toBeTruthy();
+      expect(screen.getByText('Thông báo hệ thống')).toBeTruthy();
+      expect(screen.getAllByRole('button', { name: /Đăng xuất/ }).length).toBeGreaterThan(0);
+    });
+
+    it('renders sidebar group header without deceptive item counts and shows item notification badge', () => {
+      renderGroupedShell();
+
+      expect(screen.getAllByText('Tổng quan').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Vận hành').length).toBeGreaterThan(0);
+
+      // Real notification badge on Khiếu nại item
+      const badge = screen.getByLabelText('3 thông báo');
+      expect(badge).toBeTruthy();
+      expect(badge.textContent).toBe('3');
+    });
+
+    it('toggles sidebar collapse mode when collapse button is clicked', () => {
+      renderGroupedShell();
+
+      // Only one single collapse button centered on the vertical divider
+      const collapseBtn = screen.getByRole('button', { name: 'Thu gọn thanh bên' });
+      expect(collapseBtn).toBeTruthy();
+
+      // Click to collapse
+      fireEvent.click(collapseBtn);
+
+      // Should now show single button to expand
+      const expandBtn = screen.getByRole('button', { name: 'Mở rộng thanh bên' });
+      expect(expandBtn).toBeTruthy();
+      expect(screen.getByRole('navigation', { name: 'Menu điều hướng thu gọn' })).toBeTruthy();
+
+      // Click expand button to restore
+      fireEvent.click(expandBtn);
+
+      expect(screen.getByRole('button', { name: 'Thu gọn thanh bên' })).toBeTruthy();
+      expect(screen.getByRole('navigation', { name: 'Menu điều hướng' })).toBeTruthy();
+    });
   });
 });
