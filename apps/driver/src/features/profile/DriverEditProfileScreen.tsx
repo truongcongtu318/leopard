@@ -11,15 +11,13 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, leopardPalette, radius, spacing, typeScale, Button, ScreenScaffold, IconCamera, IconCheck, IconClock, IconIdCard, IconPhone, IconSecurityShield, IconSpeedTruck, IconSupport247, IconUser, IconWarningShield, iconSize } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typeScale, Button, ScreenScaffold, IconCamera, IconCheck, IconIdCard, IconPhone, IconSecurityShield, IconSpeedTruck, IconSupport247, IconUser, iconSize } from '@leopard/mobile-core';
 
 export type DriverEditProfileScreenProps = Readonly<{
   initialName: string;
   initialEmail: string;
-  phone?: string;
+  phone?: string | null;
   vehicleLabel?: string | null;
-  fleetLabel?: string | null;
-  driverCode?: string;
   avatarUrl: string | null;
   isSaving: boolean;
   errorMessage?: string;
@@ -30,21 +28,18 @@ export type DriverEditProfileScreenProps = Readonly<{
 
 export function DriverEditProfileScreen({
   avatarUrl,
-  driverCode = 'DRV-88924',
   errorMessage,
-  fleetLabel = 'Fleet Tân Bình (Pilot)',
   initialEmail,
   initialName,
   isSaving,
   onBack,
   onPickAvatar,
   onSave,
-  phone = '0987 *** 892',
-  vehicleLabel = '51C-889.24 · Xe tải 2.5T',
+  phone = null,
+  vehicleLabel = null,
 }: DriverEditProfileScreenProps) {
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
-  const [emergencyPhone, setEmergencyPhone] = useState('0909 113 115');
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
 
@@ -262,29 +257,6 @@ export function DriverEditProfileScreen({
               </View>
             </View>
             {emailError && <Text style={styles.errorTextRow}>{emailError}</Text>}
-
-            <View style={styles.rowDivider} />
-
-            {/* Field: Emergency Phone */}
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconPhone color={colors.brand.background} size={18} />
-              </View>
-              <View style={styles.fieldInputCol}>
-                <Text style={styles.fieldLabel}>Số điện thoại liên hệ khẩn cấp</Text>
-                <TextInput
-                  accessibilityLabel="Nhập số điện thoại liên hệ khẩn cấp"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="phone-pad"
-                  onChangeText={setEmergencyPhone}
-                  placeholder="09xx xxx xxx (Người thân)"
-                  placeholderTextColor={leopardPalette.textSubtle}
-                  style={styles.textInput}
-                  value={emergencyPhone}
-                />
-              </View>
-            </View>
           </View>
 
           {errorMessage ? (
@@ -294,18 +266,18 @@ export function DriverEditProfileScreen({
           ) : null}
         </View>
 
-        {/* 3. Protected Identity Section (Read-Only) */}
+        {/* 3. Protected Identity Section (Read-Only, BE only) */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionLabel}>ĐỊNH DANH BUỒNG LÁI & ĐỘI XE (FLEET)</Text>
+          <Text style={styles.sectionLabel}>THÔNG TIN ĐỊNH DANH (CHỈ ĐỌC)</Text>
           <View style={styles.card}>
-            {/* Registered Phone */}
+            {/* Registered Phone — GET /me */}
             <View style={styles.readonlyRow}>
               <View style={styles.fieldIconWrap}>
                 <IconPhone color="#64748B" size={18} />
               </View>
               <View style={styles.readonlyTextCol}>
                 <Text style={styles.readonlyLabel}>Số điện thoại đăng ký</Text>
-                <Text style={styles.readonlyValue}>{phone}</Text>
+                <Text style={styles.readonlyValue}>{phone ?? '—'}</Text>
               </View>
               <View style={styles.verifiedBadge}>
                 <IconCheck color="#059669" size={iconSize.xs} />
@@ -315,81 +287,16 @@ export function DriverEditProfileScreen({
 
             <View style={styles.rowDivider} />
 
-            {/* Driver Code */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconIdCard color="#64748B" size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
-                <Text style={styles.readonlyLabel}>Mã số tài xế đối tác</Text>
-                <Text style={styles.readonlyValue}>{driverCode}</Text>
-              </View>
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* Assigned Vehicle */}
+            {/* Assigned Vehicle — GET /driver/application */}
             <View style={styles.readonlyRow}>
               <View style={styles.fieldIconWrap}>
                 <IconSpeedTruck color="#64748B" size={18} />
               </View>
               <View style={styles.readonlyTextCol}>
                 <Text style={styles.readonlyLabel}>Phương tiện phân công</Text>
-                <Text style={styles.readonlyValue}>{vehicleLabel}</Text>
+                <Text style={styles.readonlyValue}>{vehicleLabel ?? '—'}</Text>
               </View>
             </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* Fleet Name */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconClock color="#64748B" size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
-                <Text style={styles.readonlyLabel}>Đội xe chủ quản</Text>
-                <Text style={styles.readonlyValue}>{fleetLabel}</Text>
-              </View>
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* Fleet Owner Support Contact */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconSupport247 color="#64748B" size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
-                <Text style={styles.readonlyLabel}>Hotline hỗ trợ đội xe (Fleet Owner)</Text>
-                <Text style={styles.readonlyValue}>0912 345 678 (Chủ xe Tân Bình)</Text>
-              </View>
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* KYC Status */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconSecurityShield color="#059669" size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
-                <Text style={styles.readonlyLabel}>Hồ sơ pháp lý vận tải</Text>
-                <Text style={styles.readonlyValue}>4/4 Giấy tờ kiểm duyệt</Text>
-              </View>
-              <View style={styles.verifiedBadge}>
-                <IconCheck color="#059669" size={iconSize.xs} />
-                <Text style={styles.verifiedBadgeText}>Đã duyệt</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Security Notice Box */}
-          <View style={styles.securityNoticeCard}>
-            <IconWarningShield color="#D97706" size={18} />
-            <Text style={styles.securityNoticeText}>
-              Các thông tin định danh (SĐT, biển số xe, đội xe) được khóa để đảm bảo an toàn pháp
-              lý vận tải. Để cập nhật, vui lòng liên hệ quản lý Fleet hoặc Hotline 1900-LEOPARD.
-            </Text>
           </View>
         </View>
       </ScrollView>

@@ -39,9 +39,7 @@ export default function DriverProfileEditRoute() {
   return (
     <DriverEditProfileScreen
       avatarUrl={avatarUrl}
-      driverCode="DRV-88924"
       errorMessage={errorMessage}
-      fleetLabel="Fleet Tân Bình (Pilot)"
       initialEmail={initialEmail}
       initialName={initialName}
       isSaving={saveMutation.isPending}
