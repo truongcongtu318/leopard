@@ -67,6 +67,9 @@ describe('Driver Wallet API (E2E)', () => {
       lifetimeDeliveredVnd: 0,
       pendingWithdrawalVnd: 0,
       deliveredOrderCount: 0,
+      bankName: null,
+      bankAccountNumber: null,
+      bankAccountName: null,
     });
   });
 
@@ -176,6 +179,9 @@ describe('Driver Wallet API (E2E)', () => {
       lifetimeDeliveredVnd: 0,
       pendingWithdrawalVnd: 0,
       deliveredOrderCount: 0,
+      bankName: null,
+      bankAccountNumber: null,
+      bankAccountName: null,
     });
   });
 
