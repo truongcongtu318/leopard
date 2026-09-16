@@ -84,14 +84,4 @@ describe('DriverOrderBoardScreen', () => {
     expect(screen.getByTestId('driver-offline-board')).toBeTruthy();
     await screen.unmount();
   });
-
-  it('renders the 4-tab bottom navigation with the board tab active', async () => {
-    const screen = await render(
-      <DriverOrderBoardScreen view={createDriverListFixture('D-LIST-REQUESTED')} />,
-    );
-
-    const boardTab = screen.getByLabelText('Đơn');
-    expect(boardTab.props.accessibilityState).toEqual({ selected: true });
-    await screen.unmount();
-  });
 });

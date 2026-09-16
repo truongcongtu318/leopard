@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   verticalRouteCard: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     padding: spacing.md,
   },

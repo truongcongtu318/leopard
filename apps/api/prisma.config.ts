@@ -6,7 +6,7 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: process.env.DATABASE_URL || 'postgresql://leopard:leopard_local@127.0.0.1:5433/leopard?schema=public',
+    url: process.env.DATABASE_URL || 'postgresql://leopard:leopard_local@127.0.0.1:5432/leopard?schema=public',
   },
 });
 

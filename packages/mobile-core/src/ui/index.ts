@@ -10,6 +10,7 @@ export * from './haptics';
 export * from './LedgerSection';
 export * from './MapPanel';
 export * from './MediaImage';
+export * from './NavigableMetricCard';
 export * from './OrderSummary';
 export * from './PaymentSummary';
 export * from './ProcessingModal';

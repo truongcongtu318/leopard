@@ -81,7 +81,7 @@ export function AssignedDetailView({
 
   return (
     <ScreenScaffold
-      headerTone="ink"
+      headerTone="plain"
       onBack={onBack}
       stickyFooter={
         <View style={styles.stickyActionRow}>
@@ -190,79 +190,99 @@ export function AssignedDetailView({
         <View style={styles.sheetContainer}>
           <View style={styles.sheetGrabHandle} />
 
-          {/* Current Leg Header */}
-          <View style={styles.missionHeaderRow}>
-            <View style={styles.missionTitleCol}>
-              <Text style={styles.missionEyebrow}>DRIVER · ACTIVE MISSION</Text>
-              <Text style={styles.missionLegTitle}>
-                {view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP'
-                  ? 'ĐẾN ĐIỂM LẤY HÀNG'
-                  : view.order.status === 'IN_TRANSIT'
-                    ? 'VẬN CHUYỂN ĐẾN ĐIỂM GIAO'
-                    : view.order.status === 'RETURNING'
-                      ? 'HOÀN HÀNG VỀ ĐIỂM GỬI'
-                      : 'HOÀN TẤT ĐƠN HÀNG'}
-              </Text>
-              {onOpenIncidentModal && isMissionActive ? (
-                <Pressable
-                  accessibilityHint="Báo cáo sự cố khẩn cấp để huỷ chuyến và giải phóng tài xế"
-                  accessibilityLabel="Báo sự cố chuyến đi"
-                  accessibilityRole="button"
-                  onPress={onOpenIncidentModal}
-                  style={({ pressed }) => [styles.incidentBannerBtn, pressed ? styles.pressed : null]}
-                  testID="btn-report-incident"
-                >
-                  <IconShieldAlert color="#DC2626" size={13} />
-                  <Text style={styles.incidentBannerBtnText}>Báo sự cố chuyến đi</Text>
-                </Pressable>
+          {isTerminal ? (
+            /* ── Trạng thái đã hoàn tất: Chỉ hiển thị thẻ tóm tắt hoàn tất & tiền cước, ẩn các tiến trình thừa ── */
+            <>
+              <CompletionSummaryCard
+                deliveredAtLabel={view.order.updatedAtLabel}
+                priceLabel={view.order.priceLabel}
+                reference={view.order.reference}
+                status={view.order.status}
+              />
+
+              <VerticalRouteStepper
+                destination={view.order.route.destination}
+                destinationLabel={view.order.route.destination.label}
+                distanceLabel={view.order.route.distanceLabel}
+                inFlightCommand={inFlightStopCommand}
+                onRecordProgress={onRecordStopProgress}
+                origin={view.order.route.origin}
+                originLabel={view.order.route.origin.label}
+                status={view.order.status}
+                stops={view.order.route.stops}
+              />
+
+              <CargoAndContactCard
+                cargoSummary={view.order.cargoSummary}
+                cargoWeightKg={view.order.cargoWeightKg}
+                contactRoleLabel={view.order.contactRoleLabel}
+                customerContact={view.order.customerContact}
+                vehicleLabel={view.order.vehicleLabel}
+              />
+            </>
+          ) : (
+            /* ── Trạng thái đang chạy: Hiển thị tiến trình & tác vụ chặng ── */
+            <>
+              <View style={styles.missionHeaderRow}>
+                <View style={styles.missionTitleCol}>
+                  <Text style={styles.missionEyebrow}>DRIVER · ACTIVE MISSION</Text>
+                  <Text style={styles.missionLegTitle}>
+                    {view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP'
+                      ? 'ĐẾN ĐIỂM LẤY HÀNG'
+                      : view.order.status === 'IN_TRANSIT'
+                        ? 'VẬN CHUYỂN ĐẾN ĐIỂM GIAO'
+                        : view.order.status === 'RETURNING'
+                          ? 'HOÀN HÀNG VỀ ĐIỂM GỬI'
+                          : 'TIẾN ĐỘ CHUYẾN ĐI'}
+                  </Text>
+                  {onOpenIncidentModal && isMissionActive ? (
+                    <Pressable
+                      accessibilityHint="Báo cáo sự cố khẩn cấp để huỷ chuyến và giải phóng tài xế"
+                      accessibilityLabel="Báo sự cố chuyến đi"
+                      accessibilityRole="button"
+                      onPress={onOpenIncidentModal}
+                      style={({ pressed }) => [styles.incidentBannerBtn, pressed ? styles.pressed : null]}
+                      testID="btn-report-incident"
+                    >
+                      <IconShieldAlert color="#DC2626" size={13} />
+                      <Text style={styles.incidentBannerBtnText}>Báo sự cố chuyến đi</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+                <StatusBadge domain="order" status={view.order.status} />
+              </View>
+
+              <MissionStepper status={view.order.status} />
+
+              {view.notice ? (
+                <View style={styles.notice}>
+                  <Text accessibilityLiveRegion="polite" style={styles.warningText}>
+                    {view.notice}
+                  </Text>
+                </View>
               ) : null}
-            </View>
-            <StatusBadge domain="order" status={view.order.status} />
-          </View>
 
-          {/* Stepper Progress */}
-          <MissionStepper status={view.order.status} />
+              <VerticalRouteStepper
+                destination={view.order.route.destination}
+                destinationLabel={view.order.route.destination.label}
+                distanceLabel={view.order.route.distanceLabel}
+                inFlightCommand={inFlightStopCommand}
+                onRecordProgress={onRecordStopProgress}
+                origin={view.order.route.origin}
+                originLabel={view.order.route.origin.label}
+                status={view.order.status}
+                stops={view.order.route.stops}
+              />
 
-          {/* Completion Summary Card for Terminal States */}
-          {(view.order.status === 'DELIVERED' || view.order.status === 'RETURNED') && (
-            <CompletionSummaryCard
-              deliveredAtLabel={view.order.updatedAtLabel}
-              priceLabel={view.order.priceLabel}
-              reference={view.order.reference}
-              status={view.order.status}
-            />
+              <CargoAndContactCard
+                cargoSummary={view.order.cargoSummary}
+                cargoWeightKg={view.order.cargoWeightKg}
+                contactRoleLabel={view.order.contactRoleLabel}
+                customerContact={view.order.customerContact}
+                vehicleLabel={view.order.vehicleLabel}
+              />
+            </>
           )}
-
-          {/* Notice Banner if any */}
-          {view.notice ? (
-            <View style={styles.notice}>
-              <Text accessibilityLiveRegion="polite" style={styles.warningText}>
-                {view.notice}
-              </Text>
-            </View>
-          ) : null}
-
-          {/* 3. Vertical Route Stepper (A -> B) */}
-          <VerticalRouteStepper
-            destination={view.order.route.destination}
-            destinationLabel={view.order.route.destination.label}
-            distanceLabel={view.order.route.distanceLabel}
-            inFlightCommand={inFlightStopCommand}
-            onRecordProgress={onRecordStopProgress}
-            origin={view.order.route.origin}
-            originLabel={view.order.route.origin.label}
-            status={view.order.status}
-            stops={view.order.route.stops}
-          />
-
-          {/* 4. Cargo and Customer Contact Card */}
-          <CargoAndContactCard
-            cargoSummary={view.order.cargoSummary}
-            cargoWeightKg={view.order.cargoWeightKg}
-            contactRoleLabel={view.order.contactRoleLabel}
-            customerContact={view.order.customerContact}
-            vehicleLabel={view.order.vehicleLabel}
-          />
 
           {/* Stage 2 Checklist: Kiểm hàng & Bốc hàng */}
           {view.order.status === 'PICKING_UP' && (
@@ -490,7 +510,7 @@ const styles = StyleSheet.create({
   sheetContainer: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 20,
+    borderRadius: 14,
     borderWidth: 1,
     elevation: 3,
     gap: spacing.sm + 2,
@@ -519,16 +539,15 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   missionEyebrow: {
-    color: '#0B1E42',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   missionLegTitle: {
     color: '#0F172A',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: -0.2,
+    fontSize: 16,
+    fontWeight: '700',
   },
   incidentBannerBtn: {
     alignItems: 'center',

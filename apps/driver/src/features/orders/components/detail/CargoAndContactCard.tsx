@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   cargoContactCard: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     gap: spacing.sm + 2,
     padding: spacing.md,

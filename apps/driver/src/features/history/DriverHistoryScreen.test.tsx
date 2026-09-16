@@ -66,7 +66,6 @@ describe('DriverHistoryScreen', () => {
     expect(screen.getByText('Kho Tân Bình, TP.HCM')).toBeTruthy();
     expect(screen.getByText('14.2 km')).toBeTruthy();
     expect(screen.getByText('128')).toBeTruthy();
-    expect(screen.getByTestId('driver-bottom-navigation')).toBeTruthy();
 
     await screen.unmount();
   });
@@ -116,24 +115,13 @@ describe('DriverHistoryScreen', () => {
     await screen.unmount();
   });
 
-  it('filters trips by status (Tất cả / Đã giao / Đã hủy)', async () => {
+  it('only displays delivered trips and excludes cancelled trips with no payout', async () => {
     const screen = await render(<DriverHistoryScreen items={fixtureItems} total={128} />);
 
-    const deliveredFilter = screen.getByRole('button', { name: 'Lọc Đã giao' });
-    await fireEvent.press(deliveredFilter);
     expect(screen.getByText('LP-D-260815-001')).toBeTruthy();
     expect(screen.getByText('LP-D-260815-002')).toBeTruthy();
+    // Cancelled trip LP-D-260814-009 is filtered out
     expect(screen.queryByText('LP-D-260814-009')).toBeNull();
-
-    const cancelledFilter = screen.getByRole('button', { name: 'Lọc Đã hủy' });
-    await fireEvent.press(cancelledFilter);
-    expect(screen.getByText('LP-D-260814-009')).toBeTruthy();
-    expect(screen.queryByText('LP-D-260815-001')).toBeNull();
-
-    const allFilter = screen.getByRole('button', { name: 'Lọc Tất cả' });
-    await fireEvent.press(allFilter);
-    expect(screen.getByText('LP-D-260815-001')).toBeTruthy();
-    expect(screen.getByText('LP-D-260814-009')).toBeTruthy();
 
     await screen.unmount();
   });

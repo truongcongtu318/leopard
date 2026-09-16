@@ -1,6 +1,14 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { IconCheck, IconOrders, IconWallet, spacing } from '@leopard/mobile-core';
+import {
+  driverPrimitives,
+  iosContinuousCurve,
+  IconCheck,
+  IconOrders,
+  IconWallet,
+  NavigableMetricCard,
+  spacing,
+} from '@leopard/mobile-core';
 
 export type CompletionSummaryCardProps = Readonly<{
   reference: string;
@@ -10,10 +18,10 @@ export type CompletionSummaryCardProps = Readonly<{
 }>;
 
 export function CompletionSummaryCard({
-  reference,
-  priceLabel,
-  status,
   deliveredAtLabel,
+  priceLabel,
+  reference,
+  status,
 }: CompletionSummaryCardProps) {
   const isDelivered = status === 'DELIVERED';
 
@@ -33,20 +41,16 @@ export function CompletionSummaryCard({
         </View>
       </View>
 
-      <View style={styles.earningsBox}>
-        <View style={styles.earningsRow}>
-          <View style={styles.earningsLeft}>
-            <View style={styles.walletIcon}>
-              <IconWallet color="#10B981" size={16} />
-            </View>
-            <View>
-              <Text style={styles.earningsCaption}>CƯỚC THỰC NHẬN CHUYẾN ĐI</Text>
-              <Text style={styles.earningsSub}>Cộng trực tiếp vào ví khả dụng</Text>
-            </View>
-          </View>
-          <Text style={styles.earningsAmount}>{priceLabel || '285.000 ₫'}</Text>
-        </View>
-      </View>
+      {/* Shared NavigableMetricCard for payout */}
+      <NavigableMetricCard
+        hasChevron={false}
+        layout="row"
+        leadingIcon={<IconWallet color={driverPrimitives.colors.green500} size={20} />}
+        subtitle="Cộng trực tiếp vào ví khả dụng"
+        title="Cước thực nhận chuyến đi"
+        value={priceLabel || '0 ₫'}
+        valueTone="success"
+      />
 
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
@@ -65,10 +69,12 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 18,
+    borderRadius: 12,
+    ...iosContinuousCurve,
     borderWidth: 1,
     gap: spacing.sm + 2,
     padding: spacing.md,
+    ...driverPrimitives.shadows.sm,
   },
   headerRow: {
     alignItems: 'center',
@@ -83,71 +89,33 @@ const styles = StyleSheet.create({
     width: 44,
   },
   iconSuccess: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#16A34A',
   },
   iconReturned: {
-    backgroundColor: '#64748B',
+    backgroundColor: '#0284C7',
   },
   headerTextCol: {
     flex: 1,
     gap: 2,
   },
   eyebrow: {
-    color: '#10B981',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   title: {
-    color: '#0B1E42',
+    color: '#0F172A',
     fontSize: 16,
-    fontWeight: '800',
-  },
-  earningsBox: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 12,
-  },
-  earningsRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  earningsLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  walletIcon: {
-    alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  earningsCaption: {
-    color: '#15803D',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  earningsSub: {
-    color: '#475569',
-    fontSize: 10.5,
-  },
-  earningsAmount: {
-    color: '#15803D',
-    fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   metaRow: {
     alignItems: 'center',
+    borderTopColor: '#F1F5F9',
+    borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 4,
+    paddingTop: 10,
   },
   metaItem: {
     alignItems: 'center',
@@ -156,11 +124,11 @@ const styles = StyleSheet.create({
   },
   metaText: {
     color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
   },
   metaTimestamp: {
     color: '#94A3B8',
-    fontSize: 11,
+    fontSize: 11.5,
   },
 });

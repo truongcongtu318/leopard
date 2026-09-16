@@ -1,105 +1,163 @@
-import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 
 import {
   AppText,
-  colors,
-  radius,
-  spacing,
-  IconChevronRight,
-  IconClose,
-  IconEarnings,
-  IconOrders,
-  IconUser,
-  IconWallet,
+  driverPrimitives,
+  driverSemantics,
+  iosContinuousCurve,
+  NavigableMetricCard,
 } from '@leopard/mobile-core';
 
 export type DriverQuickNavOverlayProps = Readonly<{
   driverName?: string | null;
+  rating?: string | number;
+  isOnline?: boolean;
+  earningsTodayLabel?: string;
+  bonusCount?: number;
+  walletBalanceLabel?: string;
   onNavigate?: (route: string) => void;
 }>;
 
-const MENU_ITEMS = [
-  { key: 'earnings', label: 'Thu nhập', route: '/earnings', icon: IconEarnings },
-  { key: 'board', label: 'Đơn', route: '/board', icon: IconOrders },
-  { key: 'wallet', label: 'Ví', route: '/wallet', icon: IconWallet },
-] as const;
+function BarChartIcon({ size = 18, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
+  return (
+    <Svg height={size} viewBox="0 0 24 24" width={size}>
+      <Path
+        d="M5 9.5a1.5 1.5 0 0 1 3 0V18a1.5 1.5 0 0 1-3 0V9.5zm5.5-4a1.5 1.5 0 0 1 3 0V18a1.5 1.5 0 0 1-3 0V5.5zm5.5 7a1.5 1.5 0 0 1 3 0V18a1.5 1.5 0 0 1-3 0v-5.5z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
 
-/**
- * Grab's own driver Home has no persistent bottom tab bar — a floating pill
- * opens an overlay menu instead, so the map keeps the full viewport. Applied
- * here only to Home; other screens keep the standard tab bar until we have a
- * matching reference for them.
- */
-export function DriverQuickNavOverlay({ driverName, onNavigate }: DriverQuickNavOverlayProps) {
+function CloseCrossIcon({ size = 18, color = '#1E293B' }: { size?: number; color?: string }) {
+  return (
+    <Svg height={size} viewBox="0 0 24 24" width={size}>
+      <Path
+        d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+// Local avatar asset extracted from Grab driver reference
+const DRIVER_AVATAR_IMG = require('../../../../assets/brand/driver-avatar.png');
+
+export function DriverQuickNavOverlay({
+  driverName,
+  earningsTodayLabel = 'đ 0',
+  isOnline = false,
+  onNavigate,
+  rating = '5.00',
+  walletBalanceLabel = 'đ 0',
+}: DriverQuickNavOverlayProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const initial = driverName?.trim()?.[0]?.toUpperCase();
+  const insets = useContext(SafeAreaInsetsContext);
+  // Safe clearance below phone status bar / notch
+  const topOffset = Math.max(insets?.top ?? 0, 16) + 12;
 
   return (
     <>
-      <View pointerEvents="box-none" style={styles.topLayer}>
-        <Pressable
-          accessibilityLabel="Mở menu Thu nhập, Đơn, Ví"
-          accessibilityRole="button"
-          onPress={() => setIsOpen(true)}
-          style={({ pressed }) => [styles.pill, pressed ? styles.pressed : null]}
-          testID="driver-quick-nav-pill"
-        >
-          <IconEarnings color={colors.brand.primary} size={18} />
-          <AppText style={styles.pillText} variant="footnote">
-            Thu nhập
-          </AppText>
-        </Pressable>
-
-        <Pressable
-          accessibilityLabel="Mở hồ sơ"
-          accessibilityRole="button"
-          onPress={() => onNavigate?.('/profile')}
-          style={({ pressed }) => [styles.avatar, pressed ? styles.pressed : null]}
-          testID="driver-quick-nav-avatar"
-        >
-          {initial ? (
-            <AppText style={styles.avatarInitial} variant="callout">
-              {initial}
+      {/* ── Top HUD Layer (Image 1 & Image 2) ── */}
+      <View pointerEvents="box-none" style={[styles.topLayer, { top: topOffset }]}>
+        {/* Left: "Thu nhập" capsule - HIDDEN when popup is open so it does not collide with ✕ */}
+        {!isOpen ? (
+          <Pressable
+            accessibilityLabel="Mở menu nhanh Thu nhập, Thưởng, Ví"
+            accessibilityRole="button"
+            onPress={() => setIsOpen(true)}
+            style={({ pressed }) => [styles.earningsCapsule, pressed ? styles.pressed : null]}
+            testID="driver-quick-nav-pill"
+          >
+            <View style={styles.chartIconWrap}>
+              <BarChartIcon color={driverPrimitives.colors.gray900} size={18} />
+            </View>
+            <AppText style={styles.earningsCapsuleText} variant="footnote">
+              Thu nhập
             </AppText>
-          ) : (
-            <IconUser color={colors.brand.primary} size={20} />
-          )}
-        </Pressable>
+          </Pressable>
+        ) : (
+          <View style={styles.hiddenPillPlaceholder} />
+        )}
+
+        {/* Right: Driver Avatar with overlay rating pill (Image 2) */}
+        <View style={styles.avatarGroup}>
+          <Pressable
+            accessibilityLabel={`Hồ sơ tài xế ${driverName || ''}`}
+            accessibilityRole="button"
+            onPress={() => onNavigate?.('/profile')}
+            style={({ pressed }) => [styles.avatarButton, pressed ? styles.pressed : null]}
+            testID="driver-quick-nav-avatar"
+          >
+            {/* Real driver portrait image */}
+            <Image
+              resizeMode="cover"
+              source={DRIVER_AVATAR_IMG}
+              style={styles.avatarPhoto}
+            />
+
+            {/* Status dot (Red when offline, Green when online) */}
+            <View
+              style={[
+                styles.statusDot,
+                {
+                  backgroundColor: isOnline
+                    ? driverPrimitives.colors.green500
+                    : driverPrimitives.colors.red500,
+                },
+              ]}
+            />
+
+            {/* Rating Pill (★ 5.00) overlapping bottom center */}
+            <View style={styles.ratingPillOverlay}>
+              <Text style={styles.starGlyph}>★</Text>
+              <Text style={styles.ratingText}>{typeof rating === 'number' ? rating.toFixed(2) : rating}</Text>
+            </View>
+          </Pressable>
+        </View>
       </View>
 
-      <Modal animationType="fade" onRequestClose={() => setIsOpen(false)} transparent visible={isOpen}>
+      {/* ── Popover Modal (Exact Grab Driver Overlay Image 1) ── */}
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setIsOpen(false)}
+        transparent
+        visible={isOpen}
+      >
         <Pressable onPress={() => setIsOpen(false)} style={styles.scrim}>
-          <View style={styles.menuLayer}>
+          <View style={[styles.popoverContainer, { top: topOffset }]}>
+            {/* Circular Close Button at top left */}
             <Pressable
-              accessibilityLabel="Đóng menu"
+              accessibilityLabel="Đóng menu thu nhập"
               accessibilityRole="button"
               onPress={() => setIsOpen(false)}
-              style={styles.closeBtn}
+              style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressed : null]}
               testID="driver-quick-nav-close"
             >
-              <IconClose color={colors.neutral.titleText} size={18} />
+              <CloseCrossIcon color="#1E293B" size={18} />
             </Pressable>
 
-            <View style={styles.menuList}>
-              {MENU_ITEMS.map((item) => (
-                <Pressable
-                  accessibilityLabel={item.label}
-                  accessibilityRole="button"
-                  key={item.key}
-                  onPress={() => {
-                    setIsOpen(false);
-                    onNavigate?.(item.route);
-                  }}
-                  style={({ pressed }) => [styles.menuCard, pressed ? styles.pressed : null]}
-                >
-                  <item.icon color={colors.brand.primary} size={20} />
-                  <AppText style={styles.menuLabel} variant="body">
-                    {item.label}
-                  </AppText>
-                  <IconChevronRight color={colors.neutral.subtleText} size={18} />
-                </Pressable>
-              ))}
+            {/* Stacked 2 Cards: Thu nhập, Ví tài khoản (dùng chung NavigableMetricCard) */}
+            <View style={styles.popoverCardStack}>
+              <NavigableMetricCard
+                onPress={() => {
+                  setIsOpen(false);
+                  onNavigate?.('/earnings');
+                }}
+                title="Thu nhập"
+                value={earningsTodayLabel}
+              />
+              <NavigableMetricCard
+                onPress={() => {
+                  setIsOpen(false);
+                  onNavigate?.('/wallet');
+                }}
+                title="Ví tài khoản"
+                value={walletBalanceLabel}
+              />
             </View>
           </View>
         </Pressable>
@@ -107,14 +165,6 @@ export function DriverQuickNavOverlay({ driverName, onNavigate }: DriverQuickNav
     </>
   );
 }
-
-const cardShadow = {
-  shadowColor: colors.neutral.text,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 8,
-  elevation: 3,
-} as const;
 
 const styles = StyleSheet.create({
   topLayer: {
@@ -124,74 +174,141 @@ const styles = StyleSheet.create({
     left: 16,
     position: 'absolute',
     right: 16,
-    top: 16,
     zIndex: 30,
   },
-  pill: {
+  earningsCapsule: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
-    borderRadius: radius.pill,
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: 'rgba(226, 232, 240, 0.9)',
+    borderRadius: 9999,
+    ...iosContinuousCurve,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: spacing.xs,
-    height: 44,
-    paddingHorizontal: spacing.md,
-    ...cardShadow,
+    gap: 8,
+    height: 42,
+    paddingHorizontal: 16,
+    ...driverPrimitives.shadows.md,
   },
-  pillText: {
-    color: colors.neutral.titleText,
+  hiddenPillPlaceholder: {
+    height: 42,
+    width: 120,
+  },
+  chartIconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  earningsCapsuleText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 15,
     fontWeight: '700',
   },
-  avatar: {
+  avatarGroup: {
     alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: radius.pill,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-    ...cardShadow,
   },
-  avatarInitial: {
-    color: colors.brand.primary,
-    fontWeight: '800',
+  avatarButton: {
+    alignItems: 'center',
+    borderRadius: 9999,
+    height: 52,
+    justifyContent: 'center',
+    position: 'relative',
+    width: 52,
+  },
+  avatarPhoto: {
+    backgroundColor: '#E2E8F0',
+    borderColor: driverPrimitives.colors.green500,
+    borderRadius: 9999,
+    borderWidth: 2,
+    height: 48,
+    width: 48,
+  },
+  statusDot: {
+    borderColor: driverPrimitives.colors.white,
+    borderRadius: 9999,
+    borderWidth: 2,
+    height: 13,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 13,
+    zIndex: 2,
+  },
+  ratingPillOverlay: {
+    alignItems: 'center',
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: 9999,
+    borderWidth: 1,
+    bottom: -6,
+    flexDirection: 'row',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 1.5,
+    position: 'absolute',
+    zIndex: 3,
+    ...driverPrimitives.shadows.sm,
+  },
+  starGlyph: {
+    color: driverPrimitives.colors.amber500,
+    fontSize: 11,
+  },
+  ratingText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 11.5,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   scrim: {
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     flex: 1,
   },
-  menuLayer: {
+  popoverContainer: {
     left: 16,
     position: 'absolute',
-    top: 16,
-    width: 260,
+    width: 175,
   },
   closeBtn: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
-    borderRadius: radius.pill,
+    backgroundColor: driverPrimitives.colors.white,
+    borderRadius: 9999,
     height: 44,
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 10,
     width: 44,
-    ...cardShadow,
+    ...driverPrimitives.shadows.md,
   },
-  menuList: {
-    gap: spacing.sm,
+  popoverCardStack: {
+    gap: 8,
   },
-  menuCard: {
+  popoverCard: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
-    borderRadius: radius.card,
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    borderRadius: 14,
+    ...iosContinuousCurve,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.md,
-    ...cardShadow,
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    ...driverPrimitives.shadows.md,
   },
-  menuLabel: {
-    color: colors.neutral.titleText,
+  cardContent: {
     flex: 1,
+    gap: 4,
+  },
+  cardTitle: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  cardValue: {
+    color: '#0F172A',
+    fontSize: 22,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
 });

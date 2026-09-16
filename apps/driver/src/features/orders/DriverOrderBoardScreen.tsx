@@ -14,7 +14,6 @@ import {
 
 import type { DriverListView } from './model';
 
-import { DriverBottomNavigation } from './components/DriverBottomNavigation';
 import { DriverEmptyBoard } from './components/DriverEmptyBoard';
 import { DriverNearbyOrderCard } from './components/DriverNearbyOrderCard';
 import { DriverOrderFilters } from './components/DriverOrderFilters';
@@ -157,8 +156,6 @@ export function DriverOrderBoardScreen({
           </>
         ) : null}
       </Animated.ScrollView>
-
-      <DriverBottomNavigation activeTab="board" onNavigate={onNavigate} />
     </View>
   );
 }

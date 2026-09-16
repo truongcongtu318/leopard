@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import Svg, { Path } from 'react-native-svg';
 
 import {
   colors,
+  driverPrimitives,
+  iosContinuousCurve,
   leopardPalette,
   radius,
   spacing,
@@ -16,14 +19,22 @@ import {
   IconSecurityShield,
   IconSpeedTruck,
   IconTrophy,
-  ScreenScaffold,
+  NavigableMetricCard,
   ScreenState,
   StatusBadge,
   typeScale,
 } from '@leopard/mobile-core';
-import { useDriverDrawer } from '../navigation/DriverDrawerContext';
-import { DriverMenuButton } from '../navigation/DriverMenuButton';
-import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
+
+function BackArrowIcon({ size = 20, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
+  return (
+    <Svg height={size} viewBox="0 0 24 24" width={size}>
+      <Path
+        d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
 
 export type HistoryTripItem = Readonly<{
   id: string;
@@ -51,7 +62,6 @@ export type DriverHistoryScreenProps = Readonly<{
   onNavigate?: (route: string) => void;
 }>;
 
-type StatusFilterType = 'ALL' | 'DELIVERED' | 'CANCELLED';
 type DateFilterType = 'ALL' | 'today' | 'week';
 
 export function DriverHistoryScreen({
@@ -63,19 +73,12 @@ export function DriverHistoryScreen({
   onNavigate,
 }: DriverHistoryScreenProps) {
   const router = useRouter();
-  const [statusFilter, setStatusFilter] = useState<StatusFilterType>('ALL');
   const [dateFilter, setDateFilter] = useState<DateFilterType>('ALL');
   const [selectedEpodTrip, setSelectedEpodTrip] = useState<HistoryTripItem | null>(null);
-  const { openDrawer } = useDriverDrawer();
 
-  const displayedList = items.filter((item) => {
-    if (statusFilter === 'DELIVERED' && item.status !== 'DELIVERED') return false;
-    if (
-      statusFilter === 'CANCELLED' &&
-      item.status !== 'CANCELLED' &&
-      item.status !== 'INCIDENT_CANCELLED'
-    )
-      return false;
+  // Chỉ hiển thị các đơn đã hoàn tất/đã giao thành công (có tiền cước)
+  const deliveredItems = items.filter((item) => item.status === 'DELIVERED');
+  const displayedList = deliveredItems.filter((item) => {
     if (dateFilter !== 'ALL' && item.datePeriod !== dateFilter) return false;
     return true;
   });
@@ -97,12 +100,25 @@ export function DriverHistoryScreen({
 
   return (
     <View style={styles.screenContainer}>
-      <ScreenScaffold
-        eyebrow="DRIVER · TRIP LOG"
-        headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-        headerTone="plain"
-        title="Lịch sử chuyến"
-      >
+      {/* ── Top Header Bar ── */}
+      <View style={styles.headerBar}>
+        <Pressable
+          accessibilityLabel="Quay lại"
+          accessibilityRole="button"
+          hitSlop={12}
+          onPress={() => (router.canGoBack() ? router.back() : router.push('/earnings'))}
+          style={styles.headerActionBtn}
+        >
+          <BackArrowIcon />
+        </Pressable>
+
+        <Text accessibilityRole="header" style={styles.headerTitle}>
+          Lịch sử chuyến
+        </Text>
+
+        <View style={styles.headerActionBtn} />
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -141,46 +157,7 @@ export function DriverHistoryScreen({
           <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
         ) : null}
 
-        {/* 2. Status Filter Segmented Toolbar */}
-        <View accessibilityRole="toolbar" style={styles.filterRow}>
-          <Pressable
-            accessibilityLabel="Lọc Tất cả"
-            accessibilityRole="button"
-            accessibilityState={{ selected: statusFilter === 'ALL' }}
-            onPress={() => setStatusFilter('ALL')}
-            style={[styles.filterChip, statusFilter === 'ALL' ? styles.filterChipActive : null]}
-          >
-            <Text style={[styles.filterText, statusFilter === 'ALL' ? styles.filterTextActive : null]}>
-              Tất cả ({items.length})
-            </Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityLabel="Lọc Đã giao"
-            accessibilityRole="button"
-            accessibilityState={{ selected: statusFilter === 'DELIVERED' }}
-            onPress={() => setStatusFilter('DELIVERED')}
-            style={[styles.filterChip, statusFilter === 'DELIVERED' ? styles.filterChipActive : null]}
-          >
-            <Text style={[styles.filterText, statusFilter === 'DELIVERED' ? styles.filterTextActive : null]}>
-              Đã giao ({items.filter((i) => i.status === 'DELIVERED').length})
-            </Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityLabel="Lọc Đã hủy"
-            accessibilityRole="button"
-            accessibilityState={{ selected: statusFilter === 'CANCELLED' }}
-            onPress={() => setStatusFilter('CANCELLED')}
-            style={[styles.filterChip, statusFilter === 'CANCELLED' ? styles.filterChipActive : null]}
-          >
-            <Text style={[styles.filterText, statusFilter === 'CANCELLED' ? styles.filterTextActive : null]}>
-              Đã hủy ({items.filter((i) => i.status === 'CANCELLED' || i.status === 'INCIDENT_CANCELLED').length})
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* 3. Date Filter Toolbar (Mọi lúc / Hôm nay / Tuần này) */}
+        {/* Date Filter Toolbar (Mọi lúc / Hôm nay / Tuần này) */}
         <View accessibilityRole="toolbar" style={styles.dateFilterRow}>
           <Pressable
             accessibilityLabel="Lọc tất cả chuyến xe"
@@ -229,96 +206,50 @@ export function DriverHistoryScreen({
         ) : (
           <View style={styles.listContent}>
             {displayedList.map((item) => (
-              <View key={item.id} style={styles.doubleBezelOuter}>
-                <View style={styles.doubleBezelInner}>
-                  {/* Card Header: Ref + Status + Payout Amount */}
-                  <View style={styles.cardHeader}>
-                    <View style={styles.cardHeaderLeft}>
-                      <View style={styles.refIconWrap}>
-                        <IconSpeedTruck color={colors.brand.background} size={15} />
-                      </View>
-                      <View>
-                        <Text style={styles.referenceText}>{item.reference}</Text>
-                        <View style={styles.statusRow}>
-                          <StatusBadge domain="order" status={item.status} />
-                        </View>
-                      </View>
-                    </View>
-
-                    <View style={styles.cardHeaderRight}>
-                      <Text
-                        style={[
-                          styles.payoutAmountText,
-                          item.payoutAmount > 0 ? styles.payoutPositive : styles.payoutZero,
-                        ]}
-                      >
-                        {item.payoutAmount > 0 ? `+${formatCurrency(item.payoutAmount)}` : '0 ₫'}
-                      </Text>
-                      <Text style={styles.paymentMethodLabel}>{item.vehicleLabel}</Text>
-                    </View>
-                  </View>
-
-                  {/* Route Spine Box */}
-                  <View style={styles.routeSpineBox}>
-                    <View style={styles.routeSpineCol}>
-                      <View style={styles.originDot} />
-                      <View style={styles.routeConnector} />
-                      <View style={styles.destSquare} />
-                    </View>
-                    <View style={styles.routeLabelsCol}>
+              <NavigableMetricCard
+                key={item.id}
+                layout="row"
+                title={item.reference}
+                value={item.payoutAmount > 0 ? `+${formatCurrency(item.payoutAmount)}` : '0 ₫'}
+                valueTone="success"
+                subtitle={
+                  <View style={styles.tripSubtitleWrap}>
+                    <View style={styles.routeRow}>
                       <Text numberOfLines={1} style={styles.routeOriginText}>
                         {item.origin}
                       </Text>
-                      <View style={styles.distanceEtaRow}>
-                        <IconClock color={colors.brand.background} size={11} />
-                        <Text style={styles.distanceEtaText}>{item.distanceLabel}</Text>
-                      </View>
+                      <Text style={styles.routeArrowText}> → </Text>
                       <Text numberOfLines={1} style={styles.routeDestText}>
                         {item.destination}
                       </Text>
                     </View>
-                  </View>
-
-                  {/* Cargo Summary Tag */}
-                  <View style={styles.cargoPill}>
-                    <Text numberOfLines={1} style={styles.cargoPillText}>
-                      {item.cargoSummary}
-                    </Text>
-                  </View>
-
-                  {/* Footer: Completed time, e-POD preview button */}
-                  <View style={styles.cardFooter}>
-                    <View style={styles.footerLeft}>
+                    <View style={styles.tripMetaRow}>
+                      <Text style={styles.distanceEtaText}>{item.distanceLabel}</Text>
+                      <Text style={styles.metaDot}> · </Text>
                       <Text style={styles.timeText}>{item.completedAtLabel}</Text>
-                      {item.hasProof ? (
-                        <Pressable
-                          testID={`btn-view-epod-${item.id}`}
-                          accessibilityLabel={`Xem ảnh e-POD của chuyến ${item.reference}`}
-                          accessibilityRole="button"
-                          hitSlop={8}
-                          onPress={() => setSelectedEpodTrip(item)}
-                          style={styles.proofBadgeBtn}
-                        >
-                          <IconCheck color="#059669" size={11} strokeWidth={2.5} />
-                          <IconCameraProof color="#059669" size={12} />
-                          <Text style={styles.proofBadgeText}>Xem e-POD</Text>
-                        </Pressable>
-                      ) : null}
+                      <Text style={styles.metaDot}> · </Text>
+                      <Text style={styles.paymentMethodLabel}>{item.vehicleLabel}</Text>
                     </View>
-
+                  </View>
+                }
+                footer={
+                  item.hasProof ? (
                     <Pressable
-                      accessibilityLabel={`Xem chi tiết đơn ${item.reference}`}
+                      testID={`btn-view-epod-${item.id}`}
+                      accessibilityLabel={`Xem ảnh e-POD của chuyến ${item.reference}`}
                       accessibilityRole="button"
                       hitSlop={8}
-                      onPress={() => router.push(`/orders/${item.id}`)}
-                      style={styles.detailLink}
+                      onPress={() => setSelectedEpodTrip(item)}
+                      style={styles.proofBadgeBtn}
                     >
-                      <Text style={styles.viewDetailCta}>Chi tiết</Text>
-                      <IconChevron color={leopardPalette.primary} direction="right" size={13} />
+                      <IconCheck color="#059669" size={11} strokeWidth={2.5} />
+                      <IconCameraProof color="#059669" size={12} />
+                      <Text style={styles.proofBadgeText}>Xem e-POD</Text>
                     </Pressable>
-                  </View>
-                </View>
-              </View>
+                  ) : null
+                }
+                onPress={() => router.push(`/orders/${item.id}`)}
+              />
             ))}
           </View>
         )}
@@ -393,27 +324,54 @@ export function DriverHistoryScreen({
           </Pressable>
         </Pressable>
       </Modal>
-    </ScreenScaffold>
-
-    <DriverBottomNavigation
-      activeTab="orders"
-      onNavigate={onNavigate ?? ((route) => router.push(route))}
-    />
   </View>
   );
 }
 
 const styles = StyleSheet.create({
   screenContainer: {
+    backgroundColor: driverPrimitives.colors.gray50,
     flex: 1,
-    position: 'relative',
+  },
+  headerBar: {
+    alignItems: 'center',
+    backgroundColor: driverPrimitives.colors.white,
+    borderBottomColor: driverPrimitives.colors.gray200,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    height: 52,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    zIndex: 10,
+  },
+  headerActionBtn: {
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  headerTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  tripCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: 12,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    gap: 12,
+    padding: 14,
+    ...driverPrimitives.shadows.sm,
   },
   scrollWrap: {
     flex: 1,
   },
   scrollContent: {
     gap: spacing.sm,
-    paddingBottom: 100,
+    padding: 16,
+    paddingBottom: 40,
   },
   /* Cumulative KPI Strip */
   kpiStripRow: {
@@ -422,18 +380,15 @@ const styles = StyleSheet.create({
   },
   kpiBox: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderRadius: 14,
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: 12,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flex: 1,
     gap: 3,
     paddingVertical: 10,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...driverPrimitives.shadows.sm,
   },
   kpiIconChip: {
     alignItems: 'center',
@@ -444,79 +399,129 @@ const styles = StyleSheet.create({
     width: 24,
   },
   kpiValue: {
-    color: leopardPalette.textSlateDark,
-    fontSize: typeScale.subheadline.fontSize,
+    color: driverPrimitives.colors.gray900,
+    fontSize: 16,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   kpiValueGreen: {
-    color: '#16A34A',
+    color: driverPrimitives.colors.green500,
   },
   kpiLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '600',
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11,
+    fontWeight: '500',
   },
 
-  /* Filter Toolbar */
+  /* Filter Toolbar (iOS Segmented Control Style) */
   filterRow: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    borderRadius: 10,
     flexDirection: 'row',
-    gap: spacing.xs,
+    padding: 3,
   },
   filterChip: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderRadius: radius.pill,
-    borderWidth: 1,
+    borderRadius: 8,
     flex: 1,
-    minHeight: 44,
+    minHeight: 36,
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   filterChipActive: {
-    backgroundColor: colors.brand.background,
-    borderColor: colors.brand.background,
+    backgroundColor: driverPrimitives.colors.white,
+    ...driverPrimitives.shadows.sm,
   },
   filterText: {
-    color: leopardPalette.textMutedSlate,
+    color: driverPrimitives.colors.gray500,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: driverPrimitives.colors.gray900,
+    fontWeight: '700',
   },
 
   /* Date Filter Toolbar */
   dateFilterRow: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    borderRadius: 10,
     flexDirection: 'row',
-    gap: spacing.xxs,
+    padding: 3,
   },
   dateFilterChip: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: radius.pill,
+    borderRadius: 8,
     flex: 1,
     minHeight: 36,
     justifyContent: 'center',
     paddingVertical: 6,
   },
   dateFilterChipActive: {
-    backgroundColor: '#0F172A',
+    backgroundColor: driverPrimitives.colors.white,
+    ...driverPrimitives.shadows.sm,
   },
   dateFilterText: {
-    color: '#64748B',
-    fontSize: typeScale.caption1.fontSize,
+    color: driverPrimitives.colors.gray500,
+    fontSize: 12,
     fontWeight: '600',
   },
   dateFilterTextActive: {
-    color: '#FFFFFF',
+    color: driverPrimitives.colors.gray900,
+    fontWeight: '700',
   },
 
   /* List Feed */
   listContent: {
     gap: spacing.sm,
+  },
+  tripSubtitleWrap: {
+    gap: 3,
+    marginTop: 4,
+  },
+  routeRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  routeOriginText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 13,
+    fontWeight: '600',
+    maxWidth: '45%',
+  },
+  routeArrowText: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 12,
+  },
+  routeDestText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 13,
+    fontWeight: '600',
+    maxWidth: '45%',
+  },
+  tripMetaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginTop: 2,
+  },
+  metaDot: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 12,
+  },
+  proofBadgeBtn: {
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    borderRadius: 6,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  proofBadgeText: {
+    color: '#15803D',
+    fontSize: 11.5,
+    fontWeight: '700',
   },
   /* Double-Bezel Card: 24px outer hairline, 18px inner */
   doubleBezelOuter: {
@@ -622,11 +627,6 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  routeOriginText: {
-    color: leopardPalette.textSlateDark,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '600',
-  },
   distanceEtaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -637,11 +637,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
-  },
-  routeDestText: {
-    color: leopardPalette.textSlateDark,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '600',
   },
 
   /* Cargo Pill */
@@ -676,23 +671,6 @@ const styles = StyleSheet.create({
     color: leopardPalette.textSubtle,
     fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
-  },
-  proofBadgeBtn: {
-    alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderColor: '#86EFAC',
-    borderRadius: 6,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 4,
-    minHeight: 44,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  proofBadgeText: {
-    color: '#166534',
-    fontSize: 11,
-    fontWeight: '700',
   },
   detailLink: {
     alignItems: 'center',

@@ -47,6 +47,7 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 ### Monorepo (Root)
 
 - Install dependencies: `pnpm install`
+- Start full local dev stack (Docker DB + local API, Driver Web, Admin Web): `pnpm start:all` or `./scripts/start-all.sh`
 - Start all dev services: `pnpm dev`
 - Build all packages/apps: `pnpm build`
 - Lint all: `pnpm lint`

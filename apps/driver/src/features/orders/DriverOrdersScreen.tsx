@@ -359,8 +359,7 @@ export function DriverOrdersScreen({
         </View>
       )}
 
-      {/* ── Layer 4: Grab-style floating quick-nav (pill + avatar), not a docked tab bar.
-          Hidden during an active trip — the mission cockpit owns the full screen then. ── */}
+      {/* ── Layer 4: Grab-style floating quick-nav (pill + avatar) ── */}
       {!activeTrip ? (
         <DriverQuickNavOverlay driverName={driverIdentity?.name} onNavigate={onNavigate} />
       ) : null}
@@ -425,7 +424,7 @@ const styles = StyleSheet.create({
   idlePanel: {
     bottom: 0,
     left: 0,
-    paddingBottom: 28,
+    paddingBottom: 20,
     paddingHorizontal: 16,
     paddingTop: 12,
     position: 'absolute',
@@ -433,9 +432,8 @@ const styles = StyleSheet.create({
     zIndex: 40,
   },
   capsuleLayer: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     left: 0,
-    paddingLeft: 16,
     position: 'absolute',
     right: 0,
     zIndex: 25,

@@ -9,9 +9,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import {
   colors,
+  driverPrimitives,
+  iosContinuousCurve,
   leopardPalette,
   radius,
   spacing,
@@ -22,9 +25,19 @@ import {
   IconClose,
   IconPlus,
   IconSecurityShield,
-  ScreenScaffold,
   typeScale,
 } from '@leopard/mobile-core';
+
+function BackArrowIcon({ size = 20, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
+  return (
+    <Svg height={size} viewBox="0 0 24 24" width={size}>
+      <Path
+        d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
 
 export type BankAccountItem = Readonly<{
   id: string;
@@ -111,23 +124,26 @@ export function DriverBankAccountsScreen() {
   };
 
   return (
-    <ScreenScaffold
-      eyebrow="DRIVER · WALLET & PAYOUT"
-      headerLeading={
+    <View style={styles.screenContainer}>
+      {/* ── Top Header Bar ── */}
+      <View style={styles.headerBar}>
         <Pressable
           accessibilityLabel="Quay lại"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={12}
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={styles.headerActionBtn}
         >
-          <IconChevron color={colors.brand.background} direction="left" size={20} />
-          <Text style={styles.backButtonText}>Quay lại</Text>
+          <BackArrowIcon />
         </Pressable>
-      }
-      headerTone="plain"
-      title="Tài khoản thụ hưởng"
-    >
+
+        <Text accessibilityRole="header" style={styles.headerTitle}>
+          Tài khoản thụ hưởng
+        </Text>
+
+        <View style={styles.headerActionBtn} />
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -154,9 +170,8 @@ export function DriverBankAccountsScreen() {
           </Text>
 
           {accounts.map((item) => (
-            <View key={item.id} style={styles.doubleBezelOuter}>
-              <View style={styles.doubleBezelInner}>
-                <View style={styles.cardHeader}>
+            <View key={item.id} style={styles.bankCard}>
+              <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
                     <View
                       style={[
@@ -204,7 +219,6 @@ export function DriverBankAccountsScreen() {
                     <Text style={styles.napasBadgeText}>Napas247</Text>
                   </View>
                 </View>
-              </View>
             </View>
           ))}
         </View>
@@ -341,18 +355,56 @@ export function DriverBankAccountsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </ScreenScaffold>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    backgroundColor: driverPrimitives.colors.gray50,
+    flex: 1,
+  },
+  headerBar: {
+    alignItems: 'center',
+    backgroundColor: driverPrimitives.colors.white,
+    borderBottomColor: driverPrimitives.colors.gray200,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    height: 52,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    zIndex: 10,
+  },
+  headerActionBtn: {
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  headerTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  bankCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: 12,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+    ...driverPrimitives.shadows.sm,
+  },
   scrollWrap: {
+    backgroundColor: driverPrimitives.colors.gray50,
     flex: 1,
     minHeight: 0,
   },
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: spacing.xl + 20,
+    padding: 16,
+    paddingBottom: 40,
   },
   backButton: {
     alignItems: 'center',

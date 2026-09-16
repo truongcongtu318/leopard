@@ -1,7 +1,7 @@
 import React from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { iosContinuousCurve } from '@leopard/mobile-core';
+import { driverPrimitives, iosContinuousCurve } from '@leopard/mobile-core';
 
 export type DriverConnectionStatusRowProps = Readonly<{
   isOnline: boolean;
@@ -10,8 +10,7 @@ export type DriverConnectionStatusRowProps = Readonly<{
 }>;
 
 /**
- * Grab-style status row pinned at the top of the idle sheet: a coloured dot plus
- * one plain sentence telling the driver whether dispatch can see them.
+ * Grab-style status row: clean white pill with glowing status dot.
  */
 export function DriverConnectionStatusRow({
   isOnline,
@@ -19,7 +18,16 @@ export function DriverConnectionStatusRow({
 }: DriverConnectionStatusRowProps): React.JSX.Element {
   return (
     <View style={styles.row} testID="driver-connection-status">
-      <View style={[styles.dot, { backgroundColor: isOnline ? '#16A34A' : '#EF4444' }]} />
+      <View
+        style={[
+          styles.dot,
+          {
+            backgroundColor: isOnline
+              ? driverPrimitives.colors.green500
+              : driverPrimitives.colors.red500,
+          },
+        ]}
+      />
       <View style={styles.textWrap}>
         <Text style={styles.title}>
           {isOnline ? 'Bạn đang bật kết nối.' : 'Bạn đang tắt kết nối.'}
@@ -37,26 +45,19 @@ export function DriverConnectionStatusRow({
 const styles = StyleSheet.create({
   row: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(11, 30, 66, 0.06)',
-    borderRadius: 16,
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: 9999,
     ...iosContinuousCurve,
     borderWidth: 1,
-    elevation: 6,
     flexDirection: 'row',
     marginBottom: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    ...Platform.select({
-      web: { boxShadow: '0 6px 14px rgba(11, 30, 66, 0.14)' } as object,
-    }),
+    ...driverPrimitives.shadows.sm,
   },
   dot: {
-    borderRadius: 5,
+    borderRadius: 9999,
     height: 10,
     marginRight: 10,
     width: 10,
@@ -65,14 +66,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#0F172A',
-    fontSize: 15,
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14.5,
     fontWeight: '700',
   },
   subtitle: {
-    color: '#64748B',
+    color: driverPrimitives.colors.gray500,
     fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
+    fontWeight: '500',
+    marginTop: 1,
   },
 });
