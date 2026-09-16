@@ -17,7 +17,33 @@ const screenByScenario: Readonly<Record<string, AdminPreviewScreen>> = {
   'ADM-TRK-STALE': 'order-detail',
   'ADM-MEDIA-ERROR': 'order-detail',
   'ADM-PAY-FAILED': 'order-detail',
+  'ADM-PAY-DENSE': 'payments',
+  'ADM-PAY-NORESULT': 'payments',
+  'ADM-INV-DENSE': 'invoices',
+  'ADM-INV-NORESULT': 'invoices',
+  'ADM-AUD-DENSE': 'audit',
+  'ADM-AUD-NORESULT': 'audit',
+  'ADM-PRM-DENSE': 'promotions',
+  'ADM-PRM-NORESULT': 'promotions',
+  'ADM-REV-DENSE': 'reviews',
+  'ADM-REV-NORESULT': 'reviews',
+  'ADM-REP-DENSE': 'reports',
+  'ADM-REP-NORESULT': 'reports',
+  'ADM-REP-DETAIL': 'report-detail',
+  'ADM-DSP-DENSE': 'dispatch',
+  'ADM-DSP-EMPTY': 'dispatch',
+  'ADM-NTF-COMPOSE': 'notifications',
+  'ADM-NTF-EMPTY': 'notifications',
+  'ADM-PRC-CURRENT': 'pricing',
+  'ADM-PRC-PREVIEW': 'pricing',
+  'ADM-MAP-LIVE': 'live-map',
+  'ADM-MAP-SIM': 'live-map',
+  'ADM-SET-HEALTHY': 'settings',
+  'ADM-SET-DEMO': 'settings',
+  'ADM-SUP-ACTIVE': 'support',
+  'ADM-SUP-EMPTY': 'support',
   'ADM-USR-DENSE': 'users',
+  'ADM-FLT-EMPTY': 'fleets',
   'ADM-DRV-MIXED': 'drivers',
   'ADM-CMD-INVALID': 'order-detail',
   'ADM-CMD-PENDING': 'order-detail',
@@ -29,8 +55,8 @@ const screenByScenario: Readonly<Record<string, AdminPreviewScreen>> = {
 };
 
 describe('Admin immutable scenario catalogue', () => {
-  it('contains the 18 approved Admin scenarios', () => {
-    expect(ADMIN_PREVIEW_SCENARIOS).toHaveLength(18);
+  it('contains the 44 approved Admin scenarios', () => {
+    expect(ADMIN_PREVIEW_SCENARIOS).toHaveLength(44);
     expect(ADMIN_PREVIEW_SCENARIOS).toEqual(Object.keys(screenByScenario));
   });
 
@@ -57,16 +83,31 @@ describe('Admin immutable scenario catalogue', () => {
     }
   });
 
-  it('keeps mutations capability-driven', () => {
+  it('keeps mutations capability-driven and excludes Fleet lifecycle commands', () => {
     expect(ADMIN_OPERATIONS_CAPABILITIES).toEqual([
       'readOverview',
       'readOrders',
       'readOrderDetail',
       'readUsers',
       'readDrivers',
+      'readPayments',
+      'readInvoices',
+      'readAudit',
+      'readPromotions',
+      'readReviews',
+      'readReports',
+      'readReportDetail',
+      'readDispatch',
+      'readNotifications',
+      'readPricing',
+      'readLiveMap',
+      'readSettings',
+      'readSupport',
       'executeAuditedCommand',
       'subscribeToReadEvents',
     ]);
+    const fleets = createAdminPreviewView('fleets', 'ADM-FLT-EMPTY');
+    expect(JSON.stringify(fleets)).not.toMatch(/create|disable|remove|invite/i);
     expect(() => createAdminPreviewView('drivers', 'ADM-ORD-DENSE')).toThrow(
       'Unsupported Admin preview scenario',
     );

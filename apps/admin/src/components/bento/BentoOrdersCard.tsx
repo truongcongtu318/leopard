@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
 export interface BentoOrderItem {
   id: string;
@@ -251,7 +252,7 @@ export function BentoOrdersCard({
                     <td className="py-3 text-slate-600">
                       <div className="flex items-center gap-1.5">
                         <span className="font-medium text-slate-800">{order.route.from}</span>
-                        <span className="text-slate-400 font-sans text-xs" aria-hidden="true">➔</span>
+                        <ArrowRight className="h-3 w-3 text-slate-400 flex-none" aria-hidden="true" />
                         <span className="font-medium text-slate-800">{order.route.to}</span>
                       </div>
                     </td>

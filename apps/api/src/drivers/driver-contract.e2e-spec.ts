@@ -148,12 +148,12 @@ describe('Driver Contract Signing (E2E)', () => {
   };
 
   describe('auth guards', () => {
-    it('rejects GET /driver/contract with 401 when unauthenticated', async () => {
-      await request(app.getHttpServer()).get('/driver/contract').expect(401);
+    it('allows GET /driver/contract when unauthenticated (public preview)', async () => {
+      await request(app.getHttpServer()).get('/driver/contract').expect(200);
     });
 
-    it('rejects GET /driver/contract/pdf with 401 when unauthenticated', async () => {
-      await request(app.getHttpServer()).get('/driver/contract/pdf').expect(401);
+    it('allows GET /driver/contract/pdf when unauthenticated (public preview)', async () => {
+      await request(app.getHttpServer()).get('/driver/contract/pdf').expect(200);
     });
 
     it('rejects POST /driver/apply with 401 when unauthenticated', async () => {

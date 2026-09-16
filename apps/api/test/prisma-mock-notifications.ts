@@ -74,6 +74,24 @@ export function createNotificationMock(notifications: Map<string, Notification>)
         return { count };
       },
     ),
+    createMany: jest.fn(async ({ data }: { data: any[] }) => {
+      for (const item of data) {
+        const id = item.id ?? `notif-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        const notification: Notification = {
+          id,
+          userId: item.userId,
+          type: item.type,
+          title: item.title,
+          body: item.body,
+          data: item.data ?? null,
+          isRead: false,
+          readAt: null,
+          createdAt: new Date(),
+        };
+        notifications.set(id, notification);
+      }
+      return { count: data.length };
+    }),
   };
 }
 

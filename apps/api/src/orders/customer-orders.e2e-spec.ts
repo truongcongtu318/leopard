@@ -90,6 +90,7 @@ describe('Customer Orders REST API (E2E)', () => {
         stops: [],
         dropoff,
         vehicleType: 'MOTORBIKE',
+        cargoWeightKg: 5,
       },
       estimate: {
         polyline: 'encoded_polyline',

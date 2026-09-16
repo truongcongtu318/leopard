@@ -32,12 +32,12 @@ export function TruckDrivebyScene({
   const getRoleBadge = () => {
     switch (role) {
       case 'DRIVER':
-        return { text: '🚚 TÀI XẾ ĐỐI TÁC', color: '#15803D', bg: '#DCFCE7', border: '#86EFAC' };
+        return { text: 'TÀI XẾ ĐỐI TÁC', color: '#15803D', bg: '#DCFCE7', border: '#86EFAC' };
       case 'ADMIN':
-        return { text: '🛡️ QUẢN TRỊ VIÊN', color: '#7E22CE', bg: '#F3E8FF', border: '#D8B4FE' };
+        return { text: 'QUẢN TRỊ VIÊN', color: '#7E22CE', bg: '#F3E8FF', border: '#D8B4FE' };
       case 'CUSTOMER':
       default:
-        return { text: '📦 KHÁCH HÀNG SME', color: '#0369A1', bg: '#E0F2FE', border: '#BAE6FD' };
+        return { text: 'KHÁCH HÀNG SME', color: '#0369A1', bg: '#E0F2FE', border: '#BAE6FD' };
     }
   };
 
@@ -60,11 +60,11 @@ export function TruckDrivebyScene({
           </span>
         </div>
         <div className="anim-float-slow-delay px-3 py-1.5 rounded-xl bg-white/90 border border-[#D5E1F0] shadow-sm backdrop-blur flex items-center gap-2">
-          <span className="text-sky-600 font-bold text-xs">⚡ Vietmap AI:</span>
+          <span className="text-sky-600 font-bold text-xs">Vietmap AI:</span>
           <span className="text-xs font-semibold text-[#5B6B80]">Tránh cấm tải & cầu thấp</span>
         </div>
         <div className="hidden sm:flex px-3 py-1.5 rounded-xl bg-white/90 border border-[#D5E1F0] shadow-sm backdrop-blur items-center gap-2">
-          <span className="text-emerald-600 font-bold text-xs">✓ Thanh toán:</span>
+          <span className="text-emerald-600 font-bold text-xs">Thanh toán:</span>
           <span className="text-xs font-semibold text-[#5B6B80]">VietQR Tự Động</span>
         </div>
       </div>

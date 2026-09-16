@@ -5,6 +5,7 @@ export { ExternalStatusBadge, StatusBadge } from './StatusBadge';
 export type {
   DriverAvailability,
   ExternalStatusBadgeProps,
+  InvoiceStatus,
   OrderStatus,
   PaymentStatus,
   StatusBadgeProps,

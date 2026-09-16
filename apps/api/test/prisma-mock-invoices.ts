@@ -5,7 +5,66 @@ import { Prisma, type Invoice, type InvoiceSequence } from '@prisma/client';
 // unrelated in-progress hunks. Mirrors the same in-memory-Map-backed
 // per-model mock pattern as prisma-mock-notifications.ts.
 
-export function createInvoiceMock(invoices: Map<string, Invoice>) {
+function matchesInvoiceWhere(inv: Invoice, where?: any): boolean {
+  if (!where) return true;
+
+  if (where.AND && Array.isArray(where.AND)) {
+    return where.AND.every((cond: any) => matchesInvoiceWhere(inv, cond));
+  }
+
+  if (where.OR && Array.isArray(where.OR)) {
+    return where.OR.some((cond: any) => matchesInvoiceWhere(inv, cond));
+  }
+
+  if (where.status && inv.status !== where.status) {
+    return false;
+  }
+
+  if (where.issuedAt) {
+    if (where.issuedAt.gte && inv.issuedAt < where.issuedAt.gte) return false;
+    if (where.issuedAt.lte && inv.issuedAt > where.issuedAt.lte) return false;
+  }
+
+  if (where.createdAt) {
+    if (where.createdAt.gte && inv.createdAt < where.createdAt.gte) return false;
+    if (where.createdAt.lte && inv.createdAt > where.createdAt.lte) return false;
+  }
+
+  if ('customerEmail' in where) {
+    if (where.customerEmail === null) {
+      if (inv.customerEmail !== null) return false;
+    } else if (where.customerEmail === '') {
+      if (inv.customerEmail !== '') return false;
+    } else if (typeof where.customerEmail === 'object' && where.customerEmail?.contains) {
+      const needle = where.customerEmail.contains.toLowerCase();
+      if (!inv.customerEmail?.toLowerCase().includes(needle)) return false;
+    } else if (typeof where.customerEmail === 'string') {
+      if (inv.customerEmail !== where.customerEmail) return false;
+    }
+  }
+
+  if (where.invoiceNumber) {
+    if (typeof where.invoiceNumber === 'object' && where.invoiceNumber?.contains) {
+      const needle = where.invoiceNumber.contains.toLowerCase();
+      if (!inv.invoiceNumber.toLowerCase().includes(needle)) return false;
+    } else if (inv.invoiceNumber !== where.invoiceNumber) {
+      return false;
+    }
+  }
+
+  if (where.customerName) {
+    if (typeof where.customerName === 'object' && where.customerName?.contains) {
+      const needle = where.customerName.contains.toLowerCase();
+      if (!inv.customerName.toLowerCase().includes(needle)) return false;
+    } else if (inv.customerName !== where.customerName) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function createInvoiceMock(invoices: Map<string, Invoice>, orders?: Map<string, any>) {
   return {
     findUnique: jest.fn(
       async ({ where }: { where: { id?: string; orderId?: string; paymentIntentId?: string } }) => {
@@ -40,7 +99,7 @@ export function createInvoiceMock(invoices: Map<string, Invoice>) {
       }
 
       const id = data.id ?? `invoice-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const now = new Date();
+      const now = data.issuedAt ?? data.createdAt ?? new Date();
       const invoice: Invoice = {
         id,
         orderId: data.orderId,
@@ -53,12 +112,12 @@ export function createInvoiceMock(invoices: Map<string, Invoice>) {
         amountVnd: data.amountVnd,
         vatRateVnd: data.vatRateVnd,
         totalVnd: data.totalVnd,
-        pdfStorageKey: data.pdfStorageKey,
+        pdfStorageKey: data.pdfStorageKey ?? `pdf-${id}`,
         status: data.status ?? 'ISSUED',
         emailSentAt: data.emailSentAt ?? null,
-        issuedAt: now,
-        createdAt: now,
-        updatedAt: now,
+        issuedAt: data.issuedAt ?? now,
+        createdAt: data.createdAt ?? now,
+        updatedAt: data.updatedAt ?? now,
       };
       invoices.set(id, invoice);
       return invoice;
@@ -70,6 +129,39 @@ export function createInvoiceMock(invoices: Map<string, Invoice>) {
       invoices.set(where.id, updated);
       return updated;
     }),
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      const list = Array.from(invoices.values()).filter((inv) => matchesInvoiceWhere(inv, where));
+      return list.length;
+    }),
+    findMany: jest.fn(
+      async ({
+        where,
+        skip = 0,
+        take,
+        include,
+        orderBy,
+      }: { where?: any; skip?: number; take?: number; include?: any; orderBy?: any } = {}) => {
+        let list = Array.from(invoices.values()).filter((inv) => matchesInvoiceWhere(inv, where));
+
+        if (orderBy?.issuedAt === 'desc') {
+          list.sort((a, b) => b.issuedAt.getTime() - a.issuedAt.getTime());
+        } else if (orderBy?.createdAt === 'desc') {
+          list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }
+
+        if (skip) list = list.slice(skip);
+        if (take !== undefined) list = list.slice(0, take);
+
+        return list.map((inv) => {
+          const item: any = { ...inv };
+          if (include?.order) {
+            const order = orders?.get(inv.orderId);
+            item.order = order ? { ...order } : { id: inv.orderId };
+          }
+          return item;
+        });
+      },
+    ),
   };
 }
 

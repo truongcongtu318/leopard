@@ -1,6 +1,3 @@
-/**
- * Mirror of the backend Role enum to avoid dependency on @leopard/shared.
- */
 export type Role = "CUSTOMER" | "DRIVER" | "ADMIN";
 
 /**

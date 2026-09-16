@@ -31,6 +31,17 @@ export interface PricingConfig {
   vehicleRates: Record<string, VehiclePricingRate>;
 }
 
+export const DEFAULT_PRICING_CONFIG: PricingConfig = {
+  minimumFareVnd: 10_000,
+  stopSurchargeVnd: 2_500,
+  vehicleRates: {
+    MOTORBIKE: { baseFareVnd: 10_000, perKmVnd: 3_500 },
+    VAN: { baseFareVnd: 20_000, perKmVnd: 8_000 },
+    TRUCK: { baseFareVnd: 35_000, perKmVnd: 12_000 },
+  },
+};
+
+
 export class PricingService {
   private readonly config: NormalizedPricingConfig;
 

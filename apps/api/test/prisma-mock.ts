@@ -16,6 +16,9 @@ import type {
   InvoiceSequence,
   WithdrawalRequest,
   WithdrawalStatus,
+  SupportTicket,
+  SupportTicketStatus,
+  OrderReview,
 } from '@prisma/client';
 import { createNotificationMock, createDeviceTokenMock } from './prisma-mock-notifications';
 import { createInvoiceMock, createInvoiceSequenceMock } from './prisma-mock-invoices';
@@ -49,6 +52,10 @@ export class InMemoryPrismaService {
   public invoices = new Map<string, Invoice>();
   public invoiceSequences = new Map<number, InvoiceSequence>();
   public withdrawalRequests = new Map<string, WithdrawalRequest>();
+  public supportTickets = new Map<string, SupportTicket>();
+  public orderReviews = new Map<string, OrderReview>();
+  public orderMessages = new Map<string, any>();
+  private _auditSeq = 0;
 
   async $transaction<T>(fn: (tx: InMemoryPrismaService) => Promise<T>): Promise<T> {
     return fn(this);
@@ -172,17 +179,36 @@ export class InMemoryPrismaService {
         return user;
       },
     ),
-    findMany: jest.fn(async ({ where }: { where?: { phone?: { in?: string[] } } } = {}) => {
-      let list = Array.from(this.users.values());
-      if (where?.phone?.in) {
-        list = list.filter((u) => where.phone!.in!.includes(u.phone));
-      }
-      return list;
-    }),
+    findMany: jest.fn(
+      async ({
+        where,
+        skip,
+        take,
+        orderBy,
+      }: { where?: any; skip?: number; take?: number; orderBy?: any } = {}) => {
+        let list = Array.from(this.users.values());
+        if (where?.phone?.in) {
+          list = list.filter((u) => where.phone!.in!.includes(u.phone));
+        }
+        if (where?.role) {
+          list = list.filter((u) => u.role === where.role);
+        }
+        if (where?.status) {
+          list = list.filter((u) => u.status === where.status);
+        }
+        if (orderBy?.createdAt === 'desc') {
+          list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }
+        if (skip) list = list.slice(skip);
+        if (take !== undefined) list = list.slice(0, take);
+        return list;
+      },
+    ),
     create: jest.fn(async ({ data }: { data: Partial<User> }) => {
       const id = data.id ?? `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const user: User = {
         id,
+        name: data.name ?? null,
         phone: data.phone ?? '',
         role: data.role ?? 'CUSTOMER',
         status: data.status ?? 'ACTIVE',
@@ -306,7 +332,7 @@ export class InMemoryPrismaService {
       return null;
     }),
     create: jest.fn(async ({ data }: { data: Partial<DriverProfile> }) => {
-      const id = data.id ?? `profile-${Date.now()}`;
+      const id = data.id ?? `profile-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const profile: DriverProfile = {
         id,
         userId: data.userId!,
@@ -339,6 +365,29 @@ export class InMemoryPrismaService {
         }
       }
       return { count };
+    }),
+    findMany: jest.fn(async ({ where, include }: { where?: any; include?: any } = {}) => {
+      let list = Array.from(this.driverProfiles.values());
+      if (where) {
+        if (where.availability) list = list.filter((p) => p.availability === where.availability);
+        if (where.vehicleType) list = list.filter((p) => p.vehicleType === where.vehicleType);
+        if (where.user) {
+          list = list.filter((p) => {
+            const user = this.users.get(p.userId);
+            if (!user) return false;
+            if (where.user.status && user.status !== where.user.status) return false;
+            if (where.user.role && user.role !== where.user.role) return false;
+            return true;
+          });
+        }
+      }
+      return list.map((p) => {
+        const item: any = { ...p };
+        if (include?.user) {
+          item.user = this.users.get(p.userId) ?? null;
+        }
+        return item;
+      });
     }),
     // Driver-contract onboarding flow (`DriverApplicationService.commitApplication`)
     // upserts by `userId` — one profile per user, created on first apply.
@@ -435,6 +484,55 @@ export class InMemoryPrismaService {
     ),
   };
 
+  private filterOrders(where?: any): Order[] {
+    let list = Array.from(this.orders.values());
+    if (!where) return list;
+
+    const matchesCondition = (o: Order, cond: any): boolean => {
+      if (cond.id && typeof cond.id === 'string' && o.id !== cond.id) return false;
+      if (cond.id?.in && !cond.id.in.includes(o.id)) return false;
+      if (cond.customerId && o.customerId !== cond.customerId) return false;
+      if ('driverId' in cond) {
+        if (cond.driverId === null && o.driverId !== null) return false;
+        if (cond.driverId !== null && o.driverId !== cond.driverId) return false;
+      }
+      if (cond.status) {
+        if (typeof cond.status === 'string' && o.status !== cond.status) return false;
+        if (cond.status.in && !cond.status.in.includes(o.status)) return false;
+      }
+      if (cond.vehicleType && o.vehicleType !== cond.vehicleType) return false;
+      if (cond.createdAt) {
+        if (cond.createdAt.gte && o.createdAt < cond.createdAt.gte) return false;
+        if (cond.createdAt.lte && o.createdAt > cond.createdAt.lte) return false;
+      }
+      if (cond.customer?.name?.contains) {
+        const customer = this.users.get(o.customerId);
+        if (!customer?.name?.toLowerCase().includes(cond.customer.name.contains.toLowerCase())) return false;
+      }
+      if (cond.customer?.phone?.contains) {
+        const customer = this.users.get(o.customerId);
+        if (!customer?.phone?.toLowerCase().includes(cond.customer.phone.contains.toLowerCase())) return false;
+      }
+      if (cond.stops?.some?.address?.contains) {
+        const stops = Array.from(this.orderStops.values()).filter((s) => s.orderId === o.id);
+        const needle = cond.stops.some.address.contains.toLowerCase();
+        if (!stops.some((s) => s.address.toLowerCase().includes(needle))) return false;
+      }
+      if (cond.clientRequestId?.contains) {
+        const needle = cond.clientRequestId.contains.toLowerCase();
+        if (!o.clientRequestId?.toLowerCase().includes(needle)) return false;
+      }
+      if (cond.AND && Array.isArray(cond.AND)) {
+        if (!cond.AND.every((c: any) => matchesCondition(o, c))) return false;
+      }
+      if (cond.OR && Array.isArray(cond.OR)) {
+        if (!cond.OR.some((c: any) => matchesCondition(o, c))) return false;
+      }
+      return true;
+    };
+
+    return list.filter((o) => matchesCondition(o, where));
+  }
   order = {
     findUnique: jest.fn(async ({ where, include }: { where: { id: string }; include?: any }) => {
       const order = this.orders.get(where.id);
@@ -442,52 +540,50 @@ export class InMemoryPrismaService {
 
       const stops = Array.from(this.orderStops.values()).filter((s) => s.orderId === order.id);
       const statusHistory = Array.from(this.orderStatusHistories.values()).filter((h) => h.orderId === order.id);
+      const driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
+      const customer = order.customerId ? this.users.get(order.customerId) ?? null : null;
+      const paymentIntents = Array.from(this.paymentIntents.values()).filter((p) => p.orderId === order.id);
 
       if (include) {
         return {
           ...order,
           ...(include.stops ? { stops } : {}),
           ...(include.statusHistory ? { statusHistory } : {}),
+          ...(include.driver ? { driver } : {}),
+          ...(include.customer ? { customer } : {}),
+          ...(include.paymentIntents ? { paymentIntents } : {}),
         };
       }
       return order;
     }),
-    findMany: jest.fn(async ({ where, skip = 0, take = 20, include }: { where?: any; skip?: number; take?: number; include?: any }) => {
-      let filtered = Array.from(this.orders.values());
+    findMany: jest.fn(async ({ where, skip = 0, take = 20, include, orderBy }: { where?: any; skip?: number; take?: number; include?: any; orderBy?: any } = {}) => {
+      let filtered = this.filterOrders(where);
 
-      if (where) {
-        if (where.customerId) {
-          filtered = filtered.filter((o) => o.customerId === where.customerId);
-        }
-        if (where.driverId) {
-          filtered = filtered.filter((o) => o.driverId === where.driverId);
-        }
-        if (where.id?.in) {
-          filtered = filtered.filter((o) => where.id.in.includes(o.id));
-        }
-        if (where.status) {
-          if (typeof where.status === 'string') {
-            filtered = filtered.filter((o) => o.status === where.status);
-          } else if (where.status.in) {
-            filtered = filtered.filter((o) => where.status.in.includes(o.status));
-          }
-        }
+      if (orderBy?.createdAt === 'asc') {
+        filtered.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      } else {
+        filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       }
 
-      filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      // An id.in lookup (used to hydrate a specific, already-ranked page of
-      // ids — see the radius-ranked branch of findAvailableOrders) must not
-      // be re-paginated by skip/take; the caller already sliced the ids.
-      const pageItems = where?.id?.in ? filtered : filtered.slice(skip, skip + take);
+      const pageItems = where?.id?.in ? filtered : (take !== undefined ? filtered.slice(skip, skip + take) : filtered.slice(skip));
 
       if (include) {
         return pageItems.map((order) => {
-          const stops = Array.from(this.orderStops.values()).filter((s) => s.orderId === order.id);
+          const stops = Array.from(this.orderStops.values()).filter((s) => s.orderId === order.id).sort((a, b) => a.sequence - b.sequence);
           const statusHistory = Array.from(this.orderStatusHistories.values()).filter((h) => h.orderId === order.id);
           const driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
+          const customer = order.customerId ? this.users.get(order.customerId) ?? null : null;
+          const paymentIntents = Array.from(this.paymentIntents.values()).filter((p) => p.orderId === order.id);
+          const orderMessages = Array.from(this.orderMessages.values())
+            .filter((m) => m.orderId === order.id)
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
           return {
             ...order,
             ...(include.driver ? { driver } : {}),
+            ...(include.customer ? { customer } : {}),
+            ...(include.paymentIntents ? { paymentIntents } : {}),
+            ...(include.orderMessages ? { orderMessages } : {}),
+            ...(include.messages ? { messages: orderMessages } : {}),
             ...(include.stops ? { stops } : {}),
             ...(include.statusHistory ? { statusHistory } : {}),
           };
@@ -497,30 +593,36 @@ export class InMemoryPrismaService {
       return pageItems;
     }),
     count: jest.fn(async ({ where }: { where?: any } = {}) => {
-      let filtered = Array.from(this.orders.values());
-      if (where) {
-        if (where.customerId) filtered = filtered.filter((o) => o.customerId === where.customerId);
-        if (where.driverId) filtered = filtered.filter((o) => o.driverId === where.driverId);
-        if (where.status) {
-          if (typeof where.status === 'string') {
-            filtered = filtered.filter((o) => o.status === where.status);
-          } else if (where.status.in) {
-            filtered = filtered.filter((o) => where.status.in.includes(o.status));
-          }
-        }
-      }
-      return filtered.length;
+      return this.filterOrders(where).length;
     }),
     aggregate: jest.fn(async () => {
       return { _sum: { priceVnd: 0 } };
     }),
-    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+    findFirst: jest.fn(async ({ where, include }: { where?: any; include?: any } = {}) => {
       let filtered = Array.from(this.orders.values());
       if (where) {
         if (where.customerId) filtered = filtered.filter((o) => o.customerId === where.customerId);
         if (where.clientRequestId) filtered = filtered.filter((o: any) => o.clientRequestId === where.clientRequestId);
+        if (where.id) filtered = filtered.filter((o: any) => o.id === where.id);
       }
-      return filtered[0] ?? null;
+      const order = filtered[0] ?? null;
+      if (!order) return null;
+      if (include) {
+        const stops = Array.from(this.orderStops.values()).filter((s) => s.orderId === order.id).sort((a, b) => a.sequence - b.sequence);
+        const statusHistory = Array.from(this.orderStatusHistories.values()).filter((h) => h.orderId === order.id);
+        const driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
+        const customer = order.customerId ? this.users.get(order.customerId) ?? null : null;
+        const paymentIntents = Array.from(this.paymentIntents.values()).filter((p) => p.orderId === order.id);
+        return {
+          ...order,
+          ...(include.driver ? { driver } : {}),
+          ...(include.customer ? { customer } : {}),
+          ...(include.paymentIntents ? { paymentIntents } : {}),
+          ...(include.stops ? { stops } : {}),
+          ...(include.statusHistory ? { statusHistory } : {}),
+        };
+      }
+      return order;
     }),
     create: jest.fn(async ({ data }: { data: any }) => {
       const id = data.id ?? `order-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -705,21 +807,95 @@ export class InMemoryPrismaService {
       this.paymentIntents.set(where.id, updated);
       return updated;
     }),
-    findMany: jest.fn(async ({ where }: { where?: any } = {}) => {
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
       let list = Array.from(this.paymentIntents.values());
+      if (where?.status) list = list.filter((p) => p.status === where.status);
+      if (where?.provider) list = list.filter((p) => p.provider === where.provider);
       if (where?.orderId) list = list.filter((p) => p.orderId === where.orderId);
-      return list;
+      if (where?.createdAt?.gte) list = list.filter((p) => p.createdAt >= where.createdAt.gte);
+      if (where?.createdAt?.lte) list = list.filter((p) => p.createdAt <= where.createdAt.lte);
+      return list.length;
     }),
+    findMany: jest.fn(
+      async ({
+        where,
+        skip = 0,
+        take,
+        include,
+        orderBy,
+      }: { where?: any; skip?: number; take?: number; include?: any; orderBy?: any } = {}) => {
+        let list = Array.from(this.paymentIntents.values());
+        if (where?.status) list = list.filter((p) => p.status === where.status);
+        if (where?.provider) list = list.filter((p) => p.provider === where.provider);
+        if (where?.orderId) list = list.filter((p) => p.orderId === where.orderId);
+        if (where?.createdAt?.gte) list = list.filter((p) => p.createdAt >= where.createdAt.gte);
+        if (where?.createdAt?.lte) list = list.filter((p) => p.createdAt <= where.createdAt.lte);
+
+        if (orderBy?.createdAt === 'desc') {
+          list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }
+        if (skip) list = list.slice(skip);
+        if (take !== undefined) list = list.slice(0, take);
+
+        return list.map((p) => {
+          const item: any = { ...p };
+          if (include?.order) {
+            const order = this.orders.get(p.orderId);
+            item.order = order ? { ...order } : null;
+            if (item.order && include.order?.include?.customer) {
+              const customer = order?.customerId ? this.users.get(order.customerId) : null;
+              item.order.customer = customer
+                ? { id: customer.id, name: customer.name, phone: customer.phone }
+                : null;
+            }
+          }
+          if (include?.confirmedBy) {
+            const confirmer = p.confirmedById ? this.users.get(p.confirmedById) : null;
+            item.confirmedBy = confirmer
+              ? { id: confirmer.id, name: confirmer.name, phone: confirmer.phone }
+              : null;
+          }
+          return item;
+        });
+      },
+    ),
   };
 
   auditLog = {
-    findFirst: jest.fn(async ({ where }: { where?: any } = {}) => {
-      let list = Array.from(this.auditLogs.values());
-      if (where?.idempotencyRequestId) {
-        list = list.filter((a: any) => a.idempotencyRequestId === where.idempotencyRequestId);
-      }
-      return list[0] ?? null;
-    }),
+    findFirst: jest.fn(
+      async ({
+        where,
+        orderBy,
+        include,
+      }: { where?: any; orderBy?: any; include?: any } = {}) => {
+        let list = Array.from(this.auditLogs.values());
+        if (where?.idempotencyRequestId) {
+          list = list.filter((a: any) => a.idempotencyRequestId === where.idempotencyRequestId);
+        }
+        if (where?.actorId) list = list.filter((a) => a.actorId === where.actorId);
+        if (where?.action) list = list.filter((a) => a.action === where.action);
+        if (where?.resourceType) list = list.filter((a) => a.resourceType === where.resourceType);
+        if (where?.resourceId) list = list.filter((a) => a.resourceId === where.resourceId);
+
+        if (orderBy?.createdAt === 'desc') {
+          list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        } else if (orderBy?.createdAt === 'asc') {
+          list.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        }
+
+        const found = list[0];
+        if (!found) return null;
+
+        const item: any = { ...found };
+        if (include?.actor) {
+          const actor = found.actorId ? this.users.get(found.actorId) : null;
+          item.actor = actor
+            ? { id: actor.id, name: actor.name, phone: actor.phone, role: actor.role }
+            : null;
+        }
+        return item;
+      },
+    ),
     create: jest.fn(async ({ data }: { data: Partial<AuditLog> }) => {
       const id = data.id ?? `audit-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const audit: AuditLog = {
@@ -731,13 +907,57 @@ export class InMemoryPrismaService {
         requestId: (data as any).requestId ?? null,
         idempotencyRequestId: (data as any).idempotencyRequestId ?? null,
         metadata: data.metadata ?? null,
-        createdAt: new Date(),
+        createdAt: (data as any).createdAt ?? new Date(Date.now() + (++this._auditSeq)),
       };
       this.auditLogs.set(id, audit);
       return audit;
     }),
-    findMany: jest.fn(async () => {
-      return Array.from(this.auditLogs.values());
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.auditLogs.values());
+      if (where?.actorId) list = list.filter((a) => a.actorId === where.actorId);
+      if (where?.action) list = list.filter((a) => a.action === where.action);
+      if (where?.resourceType) list = list.filter((a) => a.resourceType === where.resourceType);
+      if (where?.resourceId) list = list.filter((a) => a.resourceId === where.resourceId);
+      if (where?.createdAt?.gte) list = list.filter((a) => a.createdAt >= where.createdAt.gte);
+      if (where?.createdAt?.lte) list = list.filter((a) => a.createdAt <= where.createdAt.lte);
+      return list.length;
+    }),
+    findMany: jest.fn(
+      async ({
+        where,
+        skip = 0,
+        take,
+        include,
+        orderBy,
+      }: { where?: any; skip?: number; take?: number; include?: any; orderBy?: any } = {}) => {
+        let list = Array.from(this.auditLogs.values());
+        if (where?.actorId) list = list.filter((a) => a.actorId === where.actorId);
+        if (where?.action) list = list.filter((a) => a.action === where.action);
+        if (where?.resourceType) list = list.filter((a) => a.resourceType === where.resourceType);
+        if (where?.resourceId) list = list.filter((a) => a.resourceId === where.resourceId);
+        if (where?.createdAt?.gte) list = list.filter((a) => a.createdAt >= where.createdAt.gte);
+        if (where?.createdAt?.lte) list = list.filter((a) => a.createdAt <= where.createdAt.lte);
+
+        if (orderBy?.createdAt === 'desc') {
+          list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }
+        if (skip) list = list.slice(skip);
+        if (take !== undefined) list = list.slice(0, take);
+
+        return list.map((a) => {
+          const item: any = { ...a };
+          if (include?.actor) {
+            const actor = a.actorId ? this.users.get(a.actorId) : null;
+            item.actor = actor
+              ? { id: actor.id, name: actor.name, phone: actor.phone, role: actor.role }
+              : null;
+          }
+          return item;
+        });
+      },
+    ),
+    deleteMany: jest.fn(async () => {
+      this.auditLogs.clear();
     }),
   };
 
@@ -745,31 +965,129 @@ export class InMemoryPrismaService {
 
   deviceToken = createDeviceTokenMock(this.deviceTokens);
 
-  invoice = createInvoiceMock(this.invoices);
+  invoice = createInvoiceMock(this.invoices, this.orders);
 
   invoiceSequence = createInvoiceSequenceMock(this.invoiceSequences);
 
   promotionVouchers = new Map<string, any>();
 
   promotionVoucher = {
-    count: jest.fn(async () => this.promotionVouchers.size),
-    upsert: jest.fn(async ({ where, create, update }: any) => {
-      const existing = this.promotionVouchers.get(where.code);
-      if (existing) {
-        const updated = { ...existing, ...update };
-        this.promotionVouchers.set(where.code, updated);
-        return updated;
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.promotionVouchers.values());
+      if (where?.isActive !== undefined) list = list.filter((v) => v.isActive === where.isActive);
+      if (where?.discountType) list = list.filter((v) => v.discountType === where.discountType);
+      if (where?.OR) {
+        list = list.filter((v) =>
+          where.OR.some((cond: any) => {
+            if (cond.code?.contains) {
+              return v.code.toLowerCase().includes(cond.code.contains.toLowerCase());
+            }
+            if (cond.title?.contains) {
+              return v.title.toLowerCase().includes(cond.title.contains.toLowerCase());
+            }
+            return false;
+          }),
+        );
       }
-      const created = { id: `voucher-${Date.now()}`, ...create, usageCount: 0, createdAt: new Date(), updatedAt: new Date() };
-      this.promotionVouchers.set(where.code, created);
-      return created;
+      return list.length;
     }),
     findUnique: jest.fn(async ({ where }: any) => {
-      return this.promotionVouchers.get(where.code) ?? null;
+      if (where?.id) {
+        return Array.from(this.promotionVouchers.values()).find((v) => v.id === where.id) ?? null;
+      }
+      if (where?.code) {
+        return Array.from(this.promotionVouchers.values()).find((v) => v.code === where.code) ?? null;
+      }
+      return null;
     }),
-    findMany: jest.fn(async () => {
-      return Array.from(this.promotionVouchers.values());
+    create: jest.fn(async ({ data }: any) => {
+      const id = data.id ?? `voucher-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const now = data.createdAt ?? new Date();
+      const voucher = {
+        id,
+        code: data.code,
+        title: data.title,
+        description: data.description ?? null,
+        discountType: data.discountType,
+        discountValue: data.discountValue,
+        maxDiscountVnd: data.maxDiscountVnd ?? null,
+        minOrderAmountVnd: data.minOrderAmountVnd ?? 0,
+        usageLimit: data.usageLimit ?? null,
+        usageCount: data.usageCount ?? 0,
+        expiresAt: data.expiresAt ?? null,
+        isActive: data.isActive ?? true,
+        createdAt: now,
+        updatedAt: data.updatedAt ?? now,
+      };
+      this.promotionVouchers.set(id, voucher);
+      return voucher;
     }),
+    update: jest.fn(async ({ where, data }: any) => {
+      const voucher = Array.from(this.promotionVouchers.values()).find(
+        (v) => (where.id && v.id === where.id) || (where.code && v.code === where.code),
+      );
+      if (!voucher) throw new Error('PromotionVoucher not found');
+      const updated = {
+        ...voucher,
+        ...data,
+        updatedAt: new Date(),
+      };
+      this.promotionVouchers.set(voucher.id, updated);
+      return updated;
+    }),
+    upsert: jest.fn(async ({ where, create, update }: any) => {
+      const existing = Array.from(this.promotionVouchers.values()).find(
+        (v) => (where.id && v.id === where.id) || (where.code && v.code === where.code),
+      );
+      if (existing) {
+        const updated = { ...existing, ...update, updatedAt: new Date() };
+        this.promotionVouchers.set(existing.id, updated);
+        return updated;
+      }
+      const id = create.id ?? `voucher-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const now = new Date();
+      const created = {
+        id,
+        usageCount: 0,
+        createdAt: now,
+        updatedAt: now,
+        ...create,
+      };
+      this.promotionVouchers.set(id, created);
+      return created;
+    }),
+    findMany: jest.fn(
+      async ({
+        where,
+        skip = 0,
+        take,
+        orderBy,
+      }: { where?: any; skip?: number; take?: number; orderBy?: any } = {}) => {
+        let list = Array.from(this.promotionVouchers.values());
+        if (where?.isActive !== undefined) list = list.filter((v) => v.isActive === where.isActive);
+        if (where?.discountType) list = list.filter((v) => v.discountType === where.discountType);
+        if (where?.OR) {
+          list = list.filter((v) =>
+            where.OR.some((cond: any) => {
+              if (cond.code?.contains) {
+                return v.code.toLowerCase().includes(cond.code.contains.toLowerCase());
+              }
+              if (cond.title?.contains) {
+                return v.title.toLowerCase().includes(cond.title.contains.toLowerCase());
+              }
+              return false;
+            }),
+          );
+        }
+
+        if (orderBy?.createdAt === 'desc') {
+          list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }
+        if (skip) list = list.slice(skip);
+        if (take !== undefined) list = list.slice(0, take);
+        return list;
+      },
+    ),
   };
 
   withdrawalRequest = {
@@ -834,6 +1152,313 @@ export class InMemoryPrismaService {
         else if (where.status.in) list = list.filter((r) => where.status.in.includes(r.status));
       }
       return list.length;
+    }),
+  };
+
+  private attachSupportTicketRelations(ticket: SupportTicket, include?: any) {
+    if (!include) return ticket;
+    const result: any = { ...ticket };
+    if (include.customer) {
+      result.customer = this.users.get(ticket.customerId) ?? null;
+    }
+    if (include.order) {
+      const order = ticket.orderId ? this.orders.get(ticket.orderId) : null;
+      if (order) {
+        const orderResult: any = { ...order };
+        if (include.order.include?.driver) {
+          orderResult.driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
+        }
+        if (include.order.include?.stops) {
+          const stops = Array.from(this.orderStops.values())
+            .filter((s) => s.orderId === order.id)
+            .sort((a, b) => a.sequence - b.sequence);
+          orderResult.stops = stops;
+        }
+        if (include.order.include?.trackingPoints) {
+          orderResult.trackingPoints = [];
+        }
+        result.order = orderResult;
+      } else {
+        result.order = null;
+      }
+    }
+    return result;
+  }
+
+  private filterSupportTickets(where?: any): SupportTicket[] {
+    let list = Array.from(this.supportTickets.values());
+    if (!where) return list;
+
+    const matchesCondition = (t: SupportTicket, cond: any): boolean => {
+      if (cond.id && t.id !== cond.id) return false;
+      if (cond.orderId && t.orderId !== cond.orderId) return false;
+      if (cond.customerId && t.customerId !== cond.customerId) return false;
+      if (cond.status) {
+        if (typeof cond.status === 'string' && t.status !== cond.status) return false;
+        if (cond.status.in && !cond.status.in.includes(t.status)) return false;
+      }
+      if (cond.category && t.category !== cond.category) return false;
+      if (cond.createdAt) {
+        if (cond.createdAt.gte && t.createdAt < cond.createdAt.gte) return false;
+        if (cond.createdAt.lte && t.createdAt > cond.createdAt.lte) return false;
+      }
+      if (cond.description?.contains) {
+        if (!t.description.toLowerCase().includes(cond.description.contains.toLowerCase())) return false;
+      }
+      if (cond.customer?.name?.contains) {
+        const customer = this.users.get(t.customerId);
+        if (!customer?.name?.toLowerCase().includes(cond.customer.name.contains.toLowerCase())) return false;
+      }
+      if (cond.customer?.phone?.contains) {
+        const customer = this.users.get(t.customerId);
+        if (!customer?.phone?.toLowerCase().includes(cond.customer.phone.contains.toLowerCase())) return false;
+      }
+      if (cond.AND && Array.isArray(cond.AND)) {
+        if (!cond.AND.every((c: any) => matchesCondition(t, c))) return false;
+      }
+      if (cond.OR && Array.isArray(cond.OR)) {
+        const matched = cond.OR.some((c: any) => {
+          if (matchesCondition(t, c)) return true;
+          const qNeedle = (c.description?.contains || c.customer?.name?.contains || c.customer?.phone?.contains)?.toLowerCase();
+          if (qNeedle) {
+            const orderCode = t.orderId ? `lp-${t.orderId.replace(/-/g, '').slice(-4).toLowerCase()}` : '';
+            const ticketNum = `tk-${t.id.replace(/-/g, '').slice(-6).toLowerCase()}`;
+            if (orderCode && orderCode.includes(qNeedle)) return true;
+            if (ticketNum && ticketNum.includes(qNeedle)) return true;
+          }
+          return false;
+        });
+        if (!matched) return false;
+      }
+      return true;
+    };
+
+    return list.filter((t) => matchesCondition(t, where));
+  }
+
+  supportTicket = {
+    create: jest.fn(async ({ data }: { data: any }) => {
+      const id = data.id ?? `ticket-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const now = data.createdAt ?? new Date();
+      const ticket: SupportTicket = {
+        id,
+        orderId: data.orderId ?? null,
+        customerId: data.customerId,
+        category: data.category,
+        description: data.description,
+        hasPhoto: data.hasPhoto ?? false,
+        status: (data.status ?? 'OPEN') as SupportTicketStatus,
+        createdAt: now,
+        updatedAt: data.updatedAt ?? now,
+      };
+      this.supportTickets.set(id, ticket);
+      return ticket;
+    }),
+    findUnique: jest.fn(async ({ where, include }: { where: { id: string }; include?: any }) => {
+      const ticket = this.supportTickets.get(where.id);
+      if (!ticket) return null;
+      return this.attachSupportTicketRelations(ticket, include);
+    }),
+    findMany: jest.fn(
+      async ({
+        where,
+        skip = 0,
+        take,
+        orderBy,
+        include,
+      }: { where?: any; skip?: number; take?: number; orderBy?: any; include?: any } = {}) => {
+        let list = this.filterSupportTickets(where);
+
+        if (orderBy?.createdAt === 'desc') {
+          list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        } else if (orderBy?.createdAt === 'asc') {
+          list.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        }
+
+        const paginated = take !== undefined ? list.slice(skip, skip + take) : list.slice(skip);
+        return paginated.map((t) => this.attachSupportTicketRelations(t, include));
+      },
+    ),
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      return this.filterSupportTickets(where).length;
+    }),
+    update: jest.fn(async ({ where, data }: { where: { id: string }; data: Partial<SupportTicket> }) => {
+      const existing = this.supportTickets.get(where.id);
+      if (!existing) throw new Error('SupportTicket not found');
+      const updated: SupportTicket = {
+        ...existing,
+        ...data,
+        updatedAt: new Date(),
+      };
+      this.supportTickets.set(where.id, updated);
+      return updated;
+    }),
+  };
+
+  private filterOrderReviews(where?: any): OrderReview[] {
+    let list = Array.from(this.orderReviews.values());
+    if (!where) return list;
+
+    const matchesCondition = (r: OrderReview, cond: any): boolean => {
+      if (cond.id && r.id !== cond.id) return false;
+      if (cond.orderId && r.orderId !== cond.orderId) return false;
+      if (cond.customerId && r.customerId !== cond.customerId) return false;
+      if (cond.rating) {
+        if (typeof cond.rating === 'number' && r.rating !== cond.rating) return false;
+        if (cond.rating.gte !== undefined && r.rating < cond.rating.gte) return false;
+        if (cond.rating.lte !== undefined && r.rating > cond.rating.lte) return false;
+      }
+      if (cond.order?.driverId) {
+        const order = this.orders.get(r.orderId);
+        if (order?.driverId !== cond.order.driverId) return false;
+      }
+      if (cond.createdAt) {
+        if (cond.createdAt.gte && r.createdAt < cond.createdAt.gte) return false;
+        if (cond.createdAt.lte && r.createdAt > cond.createdAt.lte) return false;
+      }
+      if (cond.comment?.contains) {
+        if (!r.comment?.toLowerCase().includes(cond.comment.contains.toLowerCase())) return false;
+      }
+      if (cond.customer?.name?.contains) {
+        const customer = this.users.get(r.customerId);
+        if (!customer?.name?.toLowerCase().includes(cond.customer.name.contains.toLowerCase())) return false;
+      }
+      if (cond.customer?.phone?.contains) {
+        const customer = this.users.get(r.customerId);
+        if (!customer?.phone?.toLowerCase().includes(cond.customer.phone.contains.toLowerCase())) return false;
+      }
+      if (cond.order?.clientRequestId?.contains) {
+        const order = this.orders.get(r.orderId);
+        if (!order?.clientRequestId?.toLowerCase().includes(cond.order.clientRequestId.contains.toLowerCase())) return false;
+      }
+      if (cond.AND && Array.isArray(cond.AND)) {
+        if (!cond.AND.every((c: any) => matchesCondition(r, c))) return false;
+      }
+      if (cond.OR && Array.isArray(cond.OR)) {
+        if (!cond.OR.some((c: any) => matchesCondition(r, c))) return false;
+      }
+      return true;
+    };
+
+    return list.filter((r) => matchesCondition(r, where));
+  }
+
+  private attachOrderReviewRelations(review: OrderReview, include?: any) {
+    if (!include) return review;
+    const result: any = { ...review };
+    if (include.customer) {
+      result.customer = this.users.get(review.customerId) ?? null;
+    }
+    if (include.order) {
+      const order = this.orders.get(review.orderId);
+      if (order) {
+        const orderResult: any = { ...order };
+        if (include.order.include?.driver) {
+          orderResult.driver = order.driverId ? this.users.get(order.driverId) ?? null : null;
+        }
+        result.order = orderResult;
+      } else {
+        result.order = null;
+      }
+    }
+    return result;
+  }
+
+  orderMessage = {
+    create: jest.fn(async ({ data, include }: { data: any; include?: any }) => {
+      const id = data.id ?? `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const now = data.createdAt ?? new Date();
+      const msg = {
+        id,
+        orderId: data.orderId,
+        senderId: data.senderId,
+        body: data.body,
+        createdAt: now,
+      };
+      this.orderMessages.set(id, msg);
+      if (include?.sender) {
+        return {
+          ...msg,
+          sender: this.users.get(data.senderId) ?? null,
+        };
+      }
+      return msg;
+    }),
+    findMany: jest.fn(async ({ where, orderBy, include }: { where?: any; orderBy?: any; include?: any } = {}) => {
+      let list = Array.from(this.orderMessages.values());
+      if (where?.orderId) {
+        list = list.filter((m) => m.orderId === where.orderId);
+      }
+      if (orderBy?.createdAt === 'desc') {
+        list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      } else if (orderBy?.createdAt === 'asc') {
+        list.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      }
+      return list.map((m) => {
+        if (include?.sender) {
+          return {
+            ...m,
+            sender: this.users.get(m.senderId) ?? null,
+          };
+        }
+        return m;
+      });
+    }),
+  };
+
+  orderReview = {
+    create: jest.fn(async ({ data }: { data: any }) => {
+      const id = data.id ?? `review-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const now = data.createdAt ?? new Date();
+      const review: OrderReview = {
+        id,
+        orderId: data.orderId,
+        customerId: data.customerId,
+        rating: data.rating,
+        comment: data.comment ?? null,
+        tipVnd: data.tipVnd ?? 0,
+        createdAt: now,
+      };
+      this.orderReviews.set(id, review);
+      return review;
+    }),
+    findUnique: jest.fn(async ({ where, include }: { where: { id: string }; include?: any }) => {
+      const review = this.orderReviews.get(where.id);
+      if (!review) return null;
+      return this.attachOrderReviewRelations(review, include);
+    }),
+    findMany: jest.fn(
+      async ({
+        where,
+        skip = 0,
+        take,
+        orderBy,
+        include,
+      }: { where?: any; skip?: number; take?: number; orderBy?: any; include?: any } = {}) => {
+        let list = this.filterOrderReviews(where);
+
+        if (orderBy?.createdAt === 'desc') {
+          list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        } else if (orderBy?.createdAt === 'asc') {
+          list.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        }
+
+        const paginated = take !== undefined ? list.slice(skip, skip + take) : list.slice(skip);
+        return paginated.map((r) => this.attachOrderReviewRelations(r, include));
+      },
+    ),
+    count: jest.fn(async ({ where }: { where?: any } = {}) => {
+      return this.filterOrderReviews(where).length;
+    }),
+    update: jest.fn(async ({ where, data }: { where: { id: string }; data: Partial<OrderReview> }) => {
+      const existing = this.orderReviews.get(where.id);
+      if (!existing) throw new Error('OrderReview not found');
+      const updated: OrderReview = {
+        ...existing,
+        ...data,
+      };
+      this.orderReviews.set(where.id, updated);
+      return updated;
     }),
   };
 }

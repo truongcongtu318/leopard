@@ -65,6 +65,13 @@ export class AdminDriverReviewService {
     userId: string,
     clientRequestId?: string,
   ): Promise<void> {
+    if (clientRequestId) {
+      const existing = await this.prisma.auditLog.findFirst({
+        where: { idempotencyRequestId: clientRequestId },
+      });
+      if (existing) return;
+    }
+
     const driver = await this.requirePendingDriver(userId);
 
     // Enforce KYC documents gate: LICENSE, VEHICLE_REGISTRATION, ID_CARD
@@ -88,6 +95,13 @@ export class AdminDriverReviewService {
     const now = new Date();
 
     await this.prisma.$transaction(async (tx) => {
+      if (clientRequestId) {
+        const existing = await tx.auditLog.findFirst({
+          where: { idempotencyRequestId: clientRequestId },
+        });
+        if (existing) return;
+      }
+
       await tx.user.update({
         where: { id: userId },
         data: { status: 'ACTIVE' },
@@ -125,10 +139,24 @@ export class AdminDriverReviewService {
       );
     }
 
+    if (clientRequestId) {
+      const existing = await this.prisma.auditLog.findFirst({
+        where: { idempotencyRequestId: clientRequestId },
+      });
+      if (existing) return;
+    }
+
     await this.requirePendingDriver(userId);
     const now = new Date();
 
     await this.prisma.$transaction(async (tx) => {
+      if (clientRequestId) {
+        const existing = await tx.auditLog.findFirst({
+          where: { idempotencyRequestId: clientRequestId },
+        });
+        if (existing) return;
+      }
+
       await tx.user.update({
         where: { id: userId },
         data: { status: 'REJECTED' },
@@ -172,10 +200,24 @@ export class AdminDriverReviewService {
       );
     }
 
+    if (clientRequestId) {
+      const existing = await this.prisma.auditLog.findFirst({
+        where: { idempotencyRequestId: clientRequestId },
+      });
+      if (existing) return;
+    }
+
     const driver = await this.requirePendingDriver(userId);
     const now = new Date();
 
     await this.prisma.$transaction(async (tx) => {
+      if (clientRequestId) {
+        const existing = await tx.auditLog.findFirst({
+          where: { idempotencyRequestId: clientRequestId },
+        });
+        if (existing) return;
+      }
+
       await tx.driverProfile.update({
         where: { userId },
         data: {

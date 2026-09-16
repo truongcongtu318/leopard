@@ -21,10 +21,11 @@ describe('Admin static operations screens', () => {
     expect(strip).toBeTruthy();
     expect(strip.textContent).toContain('Người dùng');
     expect(strip.textContent).toContain('Đơn đang chạy');
+    expect(strip.textContent).toContain('Tài xế');
     expect(strip.textContent).toContain('Doanh thu');
 
     const kpiCards = strip.querySelectorAll('.rounded-3xl');
-    expect(kpiCards.length).toBe(3);
+    expect(kpiCards.length).toBe(4);
     for (const card of kpiCards) {
       expect(card.className).toContain('border-black/[0.06]');
       expect(card.className).toContain('rounded-3xl');
@@ -121,6 +122,145 @@ describe('Admin static operations screens', () => {
     expect(screen.getByRole('link', { name: 'Xóa bộ lọc' })).toBeTruthy();
   });
 
+  it('renders Payments list screen with Bento metric strip, table columns and confirm command', () => {
+    render(
+      <AdminListScreen
+        screen="payments"
+        view={createAdminPreviewView('payments', 'ADM-PAY-DENSE')}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Quản lý thanh toán', hidden: true })).toBeTruthy();
+
+    // Bento KPI strip for payments
+    const strip = screen.getByLabelText('Chỉ số vận hành');
+    expect(strip).toBeTruthy();
+    expect(strip.textContent).toContain('Tổng giao dịch');
+    expect(strip.textContent).toContain('Chờ xử lý');
+    expect(strip.textContent).toContain('Đã xác nhận');
+    expect(strip.textContent).toContain('Thất bại');
+    expect(strip.textContent).toContain('Doanh thu ghi nhận');
+
+    // Table columns
+    expect(screen.getByRole('columnheader', { name: 'Mã đơn' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Khách hàng' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Số tiền' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Nguồn' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Trạng thái' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Ngày tạo' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Thao tác' })).toBeTruthy();
+
+    // Action button for unpaid / qr_created payments
+    expect(screen.getAllByRole('button', { name: 'Xác nhận thanh toán thủ công' }).length).toBeGreaterThan(0);
+
+    // Responsive mobile cards list
+    expect(screen.getByLabelText('Kết quả thanh toán dạng hàng responsive')).toBeTruthy();
+  });
+
+  it('keeps filter recovery visible when Payments return no results', () => {
+    render(
+      <AdminListScreen
+        screen="payments"
+        view={createAdminPreviewView('payments', 'ADM-PAY-NORESULT')}
+      />,
+    );
+    expect(screen.getByText(/Không tìm thấy.*thanh toán/i)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Xóa bộ lọc' })).toBeTruthy();
+  });
+
+  it('renders Promotions list screen with Bento metric strip, table columns and toggle status command', () => {
+    render(
+      <AdminListScreen
+        screen="promotions"
+        view={createAdminPreviewView('promotions', 'ADM-PRM-DENSE')}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Quản lý khuyến mãi', hidden: true })).toBeTruthy();
+
+    // Bento KPI strip for promotions
+    const strip = screen.getByLabelText('Chỉ số vận hành');
+    expect(strip).toBeTruthy();
+    expect(strip.textContent).toContain('Tổng mã voucher');
+    expect(strip.textContent).toContain('Đang hoạt động');
+    expect(strip.textContent).toContain('Tạm dừng');
+    expect(strip.textContent).toContain('Tổng lượt dùng');
+
+    // Table columns
+    expect(screen.getByRole('columnheader', { name: 'Mã voucher' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Tiêu đề & Mô tả' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Mức giảm' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Đơn tối thiểu' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Lượt dùng' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Hạn sử dụng' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Trạng thái' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Thao tác' })).toBeTruthy();
+
+    // Verify voucher items rendered
+    expect(screen.getAllByText('GIAM10').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Giảm 10%/).length).toBeGreaterThan(0);
+
+    // Responsive mobile cards list
+    expect(screen.getByLabelText('Kết quả khuyến mãi dạng hàng responsive')).toBeTruthy();
+  });
+
+  it('keeps filter recovery visible when Promotions return no results', () => {
+    render(
+      <AdminListScreen
+        screen="promotions"
+        view={createAdminPreviewView('promotions', 'ADM-PRM-NORESULT')}
+      />,
+    );
+    expect(screen.getByText(/Không tìm thấy.*khuyến mãi/i)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Xóa bộ lọc' })).toBeTruthy();
+  });
+
+  it('renders Reviews list screen with Bento metric strip, table columns and hide command', () => {
+    render(
+      <AdminListScreen
+        screen="reviews"
+        view={createAdminPreviewView('reviews', 'ADM-REV-DENSE')}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Đánh giá tài xế', hidden: true })).toBeTruthy();
+
+    // Bento KPI strip for reviews
+    const strip = screen.getByLabelText('Chỉ số vận hành');
+    expect(strip).toBeTruthy();
+    expect(strip.textContent).toContain('Tổng đánh giá');
+    expect(strip.textContent).toContain('Điểm trung bình');
+    expect(strip.textContent).toContain('5 sao');
+    expect(strip.textContent).toContain('1–2 sao');
+    expect(strip.textContent).toContain('Tổng tiền tip');
+
+    // Table columns
+    expect(screen.getByRole('columnheader', { name: 'Điểm số' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Đơn hàng' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Khách hàng' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Tài xế' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Nội dung nhận xét' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Thao tác' })).toBeTruthy();
+
+    // Verify review comments and actions
+    expect(screen.getAllByText(/Tài xế rất đúng giờ/).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Ẩn nhận xét' }).length).toBeGreaterThan(0);
+
+    // Responsive mobile cards list
+    expect(screen.getByLabelText('Kết quả đánh giá dạng hàng responsive')).toBeTruthy();
+  });
+
+  it('keeps filter recovery visible when Reviews return no results', () => {
+    render(
+      <AdminListScreen
+        screen="reviews"
+        view={createAdminPreviewView('reviews', 'ADM-REV-NORESULT')}
+      />,
+    );
+    expect(screen.getByText(/Không tìm thấy.*đánh giá/i)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Xóa bộ lọc' })).toBeTruthy();
+  });
+
   it('renders masked Users and only capability-provided commands', () => {
     render(<AdminListScreen screen="users" view={createAdminPreviewView('users', 'ADM-USR-DENSE')} />);
 
@@ -146,12 +286,23 @@ describe('Admin static operations screens', () => {
     ).toBe('abc');
   });
 
-  it('keeps Driver account and availability states distinct', () => {
+  it('keeps Fleets read-only and distinguishes empty membership from an error', () => {
+    render(<AdminListScreen screen="fleets" view={createAdminPreviewView('fleets', 'ADM-FLT-EMPTY')} />);
+    expect(screen.getAllByText('Chưa có thành viên đang tham gia; đây không phải lỗi tải dữ liệu.').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /mời|gỡ|vô hiệu hóa/i })).toBeNull();
+    expect(screen.queryByText(/Fleet đang hoạt động/i)).toBeNull();
+  });
+
+  it('keeps Driver account, availability and membership states distinct', () => {
     render(<AdminListScreen screen="drivers" view={createAdminPreviewView('drivers', 'ADM-DRV-MIXED')} />);
     expect(screen.getAllByText('Đang hoạt động').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Đang bận').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Đang tham gia').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: /Xem đơn LP-A-260815-104/ }).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /availability|nhận đơn|cập nhật trạng thái/i })).toBeNull();
+    expect(
+      screen.getByRole('columnheader', { name: 'Thành viên đội xe' }).className,
+    ).toContain('hidden lg:table-cell');
   });
 
   it('renders the investigation workspace, demo ETA, media metadata and Audit Rail', () => {

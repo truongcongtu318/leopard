@@ -174,6 +174,14 @@ describe('Maps REST API', () => {
             isEstimate: true,
             calculatedAt: expect.any(String) as string,
             congestionLevel: 'unknown',
+            legs: [
+              {
+                distanceM: 0,
+                durationS: 0,
+                geometryStartIndex: 0,
+                geometryEndIndex: 1,
+              },
+            ],
           },
         ],
       });
@@ -657,7 +665,7 @@ async function createApp(
     .useValue(prismaMock)
     .compile();
 
-  const app = moduleFixture.createNestApplication();
+  const app = moduleFixture.createNestApplication({ bodyParser: false });
   app.useGlobalFilters(new ApiExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({

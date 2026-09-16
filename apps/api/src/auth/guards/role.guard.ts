@@ -28,7 +28,7 @@ export class RoleGuard implements CanActivate {
       throw new DomainError('UNAUTHORIZED', 401, 'Bạn cần đăng nhập để tiếp tục');
     }
 
-    if (requiredRoles.includes(actor.role)) {
+    if ((requiredRoles as readonly string[]).includes(actor.role)) {
       return true;
     }
 
