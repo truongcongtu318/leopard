@@ -8,12 +8,15 @@ import {
   IconClock,
   IconMessage,
   IconPhone,
+  IconRoute,
   IconShieldAlert,
   IconSpeedTruck,
   StatusBadge,
 } from '@leopard/mobile-core';
 import type { DriverActiveTripView } from '../model';
 import { callPhoneNumber } from './detail/CargoAndContactCard';
+import { MissionStepper } from './detail/MissionStepper';
+import { openExternalNavigation } from './detail/MissionMapCanvas';
 
 export type DriverActiveTripCardProps = Readonly<{
   trip: DriverActiveTripView;
@@ -46,6 +49,15 @@ export function DriverActiveTripCard({
     }
   };
 
+  const handleNavigateLeg = () => {
+    const isPickupLeg = trip.status === 'ACCEPTED' || trip.status === 'PICKING_UP';
+    const target = isPickupLeg ? trip.route.origin : trip.route.destination;
+    openExternalNavigation(target);
+  };
+
+  const isPickup = trip.status === 'ACCEPTED' || trip.status === 'PICKING_UP';
+  const navHint = isPickup ? 'Chỉ đường tới điểm lấy' : 'Chỉ đường tới điểm giao';
+
   return (
     <View style={styles.outerContainer} testID="driver-active-trip-slab">
       <View style={styles.cardHeader}>
@@ -67,6 +79,11 @@ export function DriverActiveTripCard({
           </View>
           <StatusBadge domain="order" status={trip.status} />
         </View>
+      </View>
+
+      {/* 4-Stage Mission Progress Stepper */}
+      <View style={styles.missionProgressSection}>
+        <MissionStepper status={trip.status} />
       </View>
 
       {/* Route Spine: Point A -> Track -> Point B */}
@@ -130,6 +147,17 @@ export function DriverActiveTripCard({
           <Text style={styles.contactPhone}>0988 ••• 128 (Bảo mật)</Text>
         </View>
         <View style={styles.contactButtons}>
+          <Pressable
+            accessibilityHint={navHint}
+            accessibilityLabel="Mở Google Maps chỉ đường chặng này"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={handleNavigateLeg}
+            style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.pressed : null]}
+            testID="driver-nav-leg-btn"
+          >
+            <IconRoute color="#0B1E42" size={18} />
+          </Pressable>
           <Pressable
             accessibilityLabel="Gọi cho khách hàng"
             accessibilityRole="button"
@@ -218,6 +246,9 @@ const styles = StyleSheet.create({
   headerRight: {
     alignItems: 'flex-end',
     gap: 4,
+  },
+  missionProgressSection: {
+    marginBottom: 12,
   },
   liveBadge: {
     alignItems: 'center',

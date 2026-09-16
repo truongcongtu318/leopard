@@ -161,6 +161,10 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     // Customer contact actions
     expect(screen.getByTestId('driver-call-btn')).toBeTruthy();
     expect(screen.getByTestId('driver-chat-btn')).toBeTruthy();
+    expect(screen.getByTestId('driver-nav-leg-btn')).toBeTruthy();
+
+    // 4-stage stepper
+    expect(screen.getByText('Nhận đơn (ACCEPTED)')).toBeTruthy();
 
     // Route spine A -> B
     expect(screen.getByText('Kho VLXD Minh Khang — Tân Phú')).toBeTruthy();
