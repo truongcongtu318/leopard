@@ -69,7 +69,6 @@ function screenTitle(screen: AdminPreviewScreen): string {
   if (screen === 'orders') return 'Đơn hàng';
   if (screen === 'order-detail') return 'Chi tiết đơn';
   if (screen === 'users') return 'Người dùng';
-  if (screen === 'fleets') return 'Đội xe';
   return 'Tài xế';
 }
 

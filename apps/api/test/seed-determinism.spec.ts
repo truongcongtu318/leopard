@@ -17,7 +17,7 @@ type TimestampedManifest = {
 type ManifestUser = TimestampedManifest & {
   id: string;
   phone: string;
-  role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
+  role: 'CUSTOMER' | 'DRIVER' | 'ADMIN';
   status: 'ACTIVE' | 'DISABLED';
   name?: string;
   onboardedAt?: string;
@@ -42,22 +42,6 @@ type DriverProfileManifest = TimestampedManifest & {
   rejectionReason?: string;
   contractSignedAt?: string;
   documents?: DriverDocumentManifest[];
-};
-
-type FleetManifest = TimestampedManifest & {
-  id: string;
-  name: string;
-};
-
-type FleetMemberManifest = TimestampedManifest & {
-  id: string;
-  fleetId: string;
-  userId: string;
-  role: 'OWNER' | 'DRIVER';
-  status: 'INVITED' | 'ACTIVE' | 'REMOVED';
-  invitedAt: string;
-  joinedAt: string | null;
-  removedAt: string | null;
 };
 
 type RefreshSessionManifest = TimestampedManifest & {
@@ -140,8 +124,6 @@ type OrderManifest = TimestampedManifest & {
 type DemoManifest = {
   users: ManifestUser[];
   driverProfiles: DriverProfileManifest[];
-  fleets: FleetManifest[];
-  fleetMembers: FleetMemberManifest[];
   refreshSessions: RefreshSessionManifest[];
   orders: OrderManifest[];
 };
@@ -163,26 +145,6 @@ type DriverProfileRow = {
   updatedAt: string;
   userId: string;
   vehicleType: string;
-};
-
-type FleetRow = {
-  createdAt: string;
-  id: string;
-  name: string;
-  updatedAt: string;
-};
-
-type FleetMemberRow = {
-  createdAt: string;
-  fleetId: string;
-  id: string;
-  invitedAt: string;
-  joinedAt: string | null;
-  removedAt: string | null;
-  role: string;
-  status: string;
-  updatedAt: string;
-  userId: string;
 };
 
 type RefreshSessionRow = {
@@ -268,14 +230,9 @@ type PaymentIntentRow = {
 };
 
 type SeedSnapshot = {
-  activeFleetMembers: number;
   deliveredOrders: number;
   driverProfiles: DriverProfileRow[];
-  fleets: string[];
-  fleetMembers: FleetMemberRow[];
-  fleetsDetailed: FleetRow[];
   mediaObjects: MediaObjectRow[];
-  membershipsByStatus: Record<string, number>;
   orderStatusHistory: OrderStatusHistoryRow[];
   orderStops: OrderStopRow[];
   orders: OrderRow[];
@@ -298,17 +255,14 @@ const ORDER_STATUSES = [
   'CANCELLED',
 ] as const;
 
-const MEMBERSHIP_STATUSES = ['INVITED', 'ACTIVE', 'REMOVED'] as const;
 const PAYMENT_STATUSES = ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'] as const;
-const USER_ROLES = ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const;
+const USER_ROLES = ['CUSTOMER', 'DRIVER', 'ADMIN'] as const;
 
-// Non-demo fixture deliberately matching the retired phone and fleet-name prefixes.
+// Non-demo fixture deliberately matching the retired phone prefixes.
 const STALE_DEMO = {
   actorLinkedHistoryId: 'cccccccc-cccc-4ccc-8ccc-cccccccccc13',
   auditLogId: 'cccccccc-cccc-4ccc-8ccc-cccccccccc12',
   driverProfileId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
-  fleetId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc3',
-  fleetMemberId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc4',
   mediaObjectId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc8',
   orderId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc5',
   orderStatusHistoryId: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc9',
@@ -374,18 +328,12 @@ function trackingCreatedAt(point: TrackingPointManifest): string {
   return point.createdAt ?? point.capturedAt;
 }
 
-function fleetMemberCreatedAt(member: FleetMemberManifest): string {
-  return member.createdAt ?? member.invitedAt;
-}
-
 function sortById<T extends { id: string }>(rows: T[]): T[] {
   return [...rows].sort((left, right) => left.id.localeCompare(right.id));
 }
 
 function collectIds(manifest: DemoManifest): {
   driverProfileIds: string[];
-  fleetIds: string[];
-  fleetMemberIds: string[];
   mediaObjectIds: string[];
   orderIds: string[];
   orderStatusHistoryIds: string[];
@@ -397,8 +345,6 @@ function collectIds(manifest: DemoManifest): {
 } {
   return {
     driverProfileIds: manifest.driverProfiles.map((profile) => profile.id),
-    fleetIds: manifest.fleets.map((fleet) => fleet.id),
-    fleetMemberIds: manifest.fleetMembers.map((member) => member.id),
     mediaObjectIds: manifest.orders.flatMap((order) => order.mediaObjects.map((mediaObject) => mediaObject.id)),
     orderIds: manifest.orders.map((order) => order.id),
     orderStatusHistoryIds: manifest.orders.flatMap((order) =>
@@ -422,13 +368,6 @@ function expectedSeedState(manifest: DemoManifest): SeedSnapshot {
         .filter((user) => user.role === role)
         .map((user) => user.phone)
         .sort(),
-    ]),
-  );
-
-  const membershipsByStatus = Object.fromEntries(
-    MEMBERSHIP_STATUSES.map((status) => [
-      status,
-      manifest.fleetMembers.filter((member) => member.status === status).length,
     ]),
   );
 
@@ -456,7 +395,6 @@ function expectedSeedState(manifest: DemoManifest): SeedSnapshot {
   );
 
   return {
-    activeFleetMembers: manifest.fleetMembers.filter((member) => member.status === 'ACTIVE').length,
     deliveredOrders: manifest.orders.filter((order) => order.status === 'DELIVERED').length,
     driverProfiles: sortById(
       manifest.driverProfiles.map((profile) => ({
@@ -468,33 +406,6 @@ function expectedSeedState(manifest: DemoManifest): SeedSnapshot {
         updatedAt: requireCreatedAt(profile.createdAt, `driverProfiles[${profile.id}]`),
         userId: profile.userId,
         vehicleType: profile.vehicleType,
-      })),
-    ),
-    fleetMembers: sortById(
-      manifest.fleetMembers.map((member) => {
-        const createdAt = fleetMemberCreatedAt(member);
-
-        return {
-          createdAt,
-          fleetId: member.fleetId,
-          id: member.id,
-          invitedAt: member.invitedAt,
-          joinedAt: member.joinedAt,
-          removedAt: member.removedAt,
-          role: member.role,
-          status: member.status,
-          updatedAt: createdAt,
-          userId: member.userId,
-        };
-      }),
-    ),
-    fleets: manifest.fleets.map((fleet) => fleet.name).sort(),
-    fleetsDetailed: sortById(
-      manifest.fleets.map((fleet) => ({
-        createdAt: requireCreatedAt(fleet.createdAt, `fleets[${fleet.id}]`),
-        id: fleet.id,
-        name: fleet.name,
-        updatedAt: requireCreatedAt(fleet.createdAt, `fleets[${fleet.id}]`),
       })),
     ),
     mediaObjects: sortById(
@@ -512,7 +423,6 @@ function expectedSeedState(manifest: DemoManifest): SeedSnapshot {
         })),
       ),
     ),
-    membershipsByStatus,
     orders: sortById(
       manifest.orders.map((order) => {
         const createdAt = orderCreatedAt(order);
@@ -674,34 +584,6 @@ async function snapshotSeedState(client: Client, manifest: DemoManifest): Promis
        ORDER BY id`,
     [ids.driverProfileIds],
   );
-  const fleetsDetailed = await client.query<FleetRow>(
-    `SELECT
-         id,
-         name,
-         to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
-         to_char("updatedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "updatedAt"
-       FROM "Fleet"
-       WHERE id = ANY($1::uuid[])
-       ORDER BY id`,
-    [ids.fleetIds],
-  );
-  const fleetMembers = await client.query<FleetMemberRow>(
-    `SELECT
-         id,
-         "fleetId",
-         "userId",
-         role,
-         status,
-         to_char("invitedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "invitedAt",
-         to_char("joinedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "joinedAt",
-         to_char("removedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "removedAt",
-         to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
-         to_char("updatedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "updatedAt"
-       FROM "FleetMember"
-       WHERE id = ANY($1::uuid[])
-       ORDER BY id`,
-    [ids.fleetMemberIds],
-  );
   const refreshSessions = await client.query<RefreshSessionRow>(
     `SELECT
          id,
@@ -814,19 +696,9 @@ async function snapshotSeedState(client: Client, manifest: DemoManifest): Promis
   );
 
   return {
-    activeFleetMembers: fleetMembers.rows.filter((member) => member.status === 'ACTIVE').length,
     deliveredOrders: orders.rows.filter((order) => order.status === 'DELIVERED').length,
     driverProfiles: driverProfiles.rows,
-    fleetMembers: fleetMembers.rows,
-    fleets: fleetsDetailed.rows.map((fleet) => fleet.name).sort(),
-    fleetsDetailed: fleetsDetailed.rows,
     mediaObjects: mediaObjects.rows,
-    membershipsByStatus: Object.fromEntries(
-      MEMBERSHIP_STATUSES.map((status) => [
-        status,
-        fleetMembers.rows.filter((member) => member.status === status).length,
-      ]),
-    ),
     orderStatusHistory: orderStatusHistory.rows,
     orderStops: orderStops.rows,
     orders: orders.rows,
@@ -888,9 +760,7 @@ async function deleteStaleFixtureIfPresent(client: Client): Promise<void> {
   await client.query('DELETE FROM "Order" WHERE id = $1::uuid', [STALE_DEMO.orderId]);
   await client.query('DELETE FROM "Order" WHERE id = $1::uuid', [NON_DEMO.orderId]);
   await client.query('DELETE FROM "RefreshSession" WHERE id = $1::uuid', [STALE_DEMO.refreshSessionId]);
-  await client.query('DELETE FROM "FleetMember" WHERE id = $1::uuid', [STALE_DEMO.fleetMemberId]);
   await client.query('DELETE FROM "DriverProfile" WHERE id = $1::uuid', [STALE_DEMO.driverProfileId]);
-  await client.query('DELETE FROM "Fleet" WHERE id = $1::uuid', [STALE_DEMO.fleetId]);
   await client.query('DELETE FROM "User" WHERE id = $1::uuid', [STALE_DEMO.userId]);
   await client.query('DELETE FROM "User" WHERE id = $1::uuid', [NON_DEMO.userId]);
 }
@@ -927,34 +797,6 @@ async function insertStaleFixture(client: Client): Promise<void> {
     `INSERT INTO "RefreshSession" (id, "userId", "tokenHash", "expiresAt")
      VALUES ($1::uuid, $2::uuid, 'stale-demo-token-hash', '2026-08-08T14:00:00.000Z'::timestamptz)`,
     [STALE_DEMO.refreshSessionId, STALE_DEMO.userId],
-  );
-
-  await client.query(
-    `INSERT INTO "Fleet" (id, name)
-     VALUES ($1::uuid, 'Demo Fleet Gamma')`,
-    [STALE_DEMO.fleetId],
-  );
-
-  await client.query(
-    `INSERT INTO "FleetMember" (
-       id,
-       "fleetId",
-       "userId",
-       role,
-       status,
-       "invitedAt",
-       "joinedAt"
-     )
-     VALUES (
-       $1::uuid,
-       $2::uuid,
-       $3::uuid,
-       'DRIVER',
-       'ACTIVE',
-       '2026-08-01T14:00:00.000Z'::timestamptz,
-       '2026-08-01T14:02:00.000Z'::timestamptz
-     )`,
-    [STALE_DEMO.fleetMemberId, STALE_DEMO.fleetId, STALE_DEMO.userId],
   );
 
   await client.query(
@@ -1227,14 +1069,6 @@ async function countStaleFixtureRows(client: Client): Promise<Record<string, num
     'SELECT COUNT(*)::text AS count FROM "RefreshSession" WHERE id = $1::uuid',
     [STALE_DEMO.refreshSessionId],
   );
-  const fleet = await client.query<{ count: string }>(
-    'SELECT COUNT(*)::text AS count FROM "Fleet" WHERE id = $1::uuid',
-    [STALE_DEMO.fleetId],
-  );
-  const fleetMember = await client.query<{ count: string }>(
-    'SELECT COUNT(*)::text AS count FROM "FleetMember" WHERE id = $1::uuid',
-    [STALE_DEMO.fleetMemberId],
-  );
   const order = await client.query<{ count: string }>(
     'SELECT COUNT(*)::text AS count FROM "Order" WHERE id = $1::uuid',
     [STALE_DEMO.orderId],
@@ -1264,8 +1098,6 @@ async function countStaleFixtureRows(client: Client): Promise<Record<string, num
     actorLinkedHistory: Number(actorLinkedHistory.rows[0]?.count ?? '0'),
     auditLog: Number(auditLog.rows[0]?.count ?? '0'),
     driverProfile: Number(driverProfile.rows[0]?.count ?? '0'),
-    fleet: Number(fleet.rows[0]?.count ?? '0'),
-    fleetMember: Number(fleetMember.rows[0]?.count ?? '0'),
     mediaObject: Number(mediaObject.rows[0]?.count ?? '0'),
     order: Number(order.rows[0]?.count ?? '0'),
     orderStatusHistory: Number(orderStatusHistory.rows[0]?.count ?? '0'),
@@ -1305,7 +1137,7 @@ async function countNonDemoFixtureRows(client: Client): Promise<Record<string, n
 
 async function installSeedFailureTrigger(client: Client): Promise<void> {
   await client.query(`
-    CREATE OR REPLACE FUNCTION seed_test_fail_on_fleet()
+    CREATE OR REPLACE FUNCTION seed_test_fail_on_order()
     RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1314,18 +1146,18 @@ async function installSeedFailureTrigger(client: Client): Promise<void> {
     END;
     $$;
   `);
-  await client.query('DROP TRIGGER IF EXISTS seed_test_fail_on_fleet ON "Fleet"');
+  await client.query('DROP TRIGGER IF EXISTS seed_test_fail_on_order ON "Order"');
   await client.query(`
-    CREATE TRIGGER seed_test_fail_on_fleet
-    BEFORE INSERT ON "Fleet"
+    CREATE TRIGGER seed_test_fail_on_order
+    BEFORE INSERT ON "Order"
     FOR EACH ROW
-    EXECUTE FUNCTION seed_test_fail_on_fleet();
+    EXECUTE FUNCTION seed_test_fail_on_order();
   `);
 }
 
 async function removeSeedFailureTrigger(client: Client): Promise<void> {
-  await client.query('DROP TRIGGER IF EXISTS seed_test_fail_on_fleet ON "Fleet"');
-  await client.query('DROP FUNCTION IF EXISTS seed_test_fail_on_fleet()');
+  await client.query('DROP TRIGGER IF EXISTS seed_test_fail_on_order ON "Order"');
+  await client.query('DROP FUNCTION IF EXISTS seed_test_fail_on_order()');
 }
 
 const seedDescribe = process.env.DATABASE_URL ? describe : describe.skip;
@@ -1399,8 +1231,6 @@ seedDescribe('pilot seed determinism', () => {
       actorLinkedHistory: 1,
       auditLog: 1,
       driverProfile: 1,
-      fleet: 1,
-      fleetMember: 1,
       mediaObject: 1,
       order: 1,
       orderStatusHistory: 1,

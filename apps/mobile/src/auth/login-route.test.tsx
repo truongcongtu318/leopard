@@ -143,7 +143,7 @@ describe('LoginRoute (Mobile)', () => {
     await screen.unmount();
   });
 
-  it.each([{ role: 'DRIVER' }, { role: 'FLEET_OWNER' }, { role: 'ADMIN' }] as const)(
+  it.each([{ role: 'DRIVER' }, { role: 'ADMIN' }] as const)(
     'returns unsupported $role sessions to the mobile login route',
     async ({ role }) => {
       const screen = await loginWithGoogleAs(role);

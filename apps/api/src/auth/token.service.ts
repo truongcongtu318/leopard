@@ -11,7 +11,7 @@ import {
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const JWT_ALGORITHM = 'HS256';
 const JWT_TYPE = 'JWT';
-const TOKEN_ROLES = new Set<Role>(['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN']);
+const TOKEN_ROLES = new Set<Role>(['CUSTOMER', 'DRIVER', 'ADMIN']);
 
 export interface AccessTokenClaims {
   readonly sub: string;

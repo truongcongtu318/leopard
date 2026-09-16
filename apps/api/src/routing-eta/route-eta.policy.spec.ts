@@ -7,8 +7,6 @@ describe('assertCanViewRouteEta', () => {
   const baseOrder = {
     customerId: 'cust-1',
     driverId: 'driver-1',
-    activeOwnerFleetIds: [],
-    activeDriverFleetIds: [],
   };
 
   it('allows the owning customer', () => {
@@ -31,12 +29,5 @@ describe('assertCanViewRouteEta', () => {
       expect(error).toBeInstanceOf(DomainError);
       expect((error as DomainError).status).toBe(404);
     }
-  });
-
-  it('allows a fleet owner sharing an active fleet with the driver', () => {
-    const order = { ...baseOrder, activeOwnerFleetIds: ['fleet-1'], activeDriverFleetIds: ['fleet-1'] };
-    expect(() =>
-      assertCanViewRouteEta({ userId: 'owner-1', role: Role.FLEET_OWNER } as any, order),
-    ).not.toThrow();
   });
 });

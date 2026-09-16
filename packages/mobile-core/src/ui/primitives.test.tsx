@@ -20,10 +20,6 @@ import { StatusBadge, type StatusBadgeProps } from './StatusBadge';
 
 function statusBadgeTypeContract() {
   const userActive = { domain: 'user', status: 'ACTIVE' } satisfies StatusBadgeProps;
-  const fleetMemberActive = {
-    domain: 'fleet-member',
-    status: 'ACTIVE',
-  } satisfies StatusBadgeProps;
   const safeLegacy = { status: 'AVAILABLE' } satisfies StatusBadgeProps;
 
   // @ts-expect-error ACTIVE is ambiguous and requires an explicit domain.
@@ -33,7 +29,6 @@ function statusBadgeTypeContract() {
 
   return {
     ambiguousLegacyActive,
-    fleetMemberActive,
     invalidDomainPair,
     safeLegacy,
     userActive,
@@ -179,27 +174,6 @@ describe('StatusBadge', () => {
     expect(screen.getByText('Đã giao')).toBeTruthy();
     expect(screen.queryByText('DELIVERED')).toBeNull();
     expect(StyleSheet.flatten(badge.props.style).backgroundColor).toBe(colors.success.background);
-
-    await screen.unmount();
-  });
-
-  it('disambiguates ACTIVE between User and FleetMember domains', async () => {
-    const screen = await render(
-      <>
-        <StatusBadge domain="user" status="ACTIVE" />
-        <StatusBadge domain="fleet-member" status="ACTIVE" />
-      </>,
-    );
-
-    expect(screen.getByText('Đang hoạt động')).toBeTruthy();
-    expect(
-      screen.getByLabelText('Trạng thái tài khoản: Đang hoạt động. Mã trạng thái: ACTIVE'),
-    ).toBeTruthy();
-    expect(screen.getByText('Đang tham gia')).toBeTruthy();
-    expect(
-      screen.getByLabelText('Trạng thái thành viên đội xe: Đang tham gia. Mã trạng thái: ACTIVE'),
-    ).toBeTruthy();
-    expect(screen.queryByText('ACTIVE')).toBeNull();
 
     await screen.unmount();
   });

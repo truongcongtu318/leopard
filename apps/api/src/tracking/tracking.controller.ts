@@ -9,7 +9,6 @@ import {
 import { parseTrackingPointQuery, type TrackingPointPage } from '@leopard/shared';
 
 import { CurrentUser, type AuthenticatedActor } from '../auth/decorators/current-user.js';
-import { RequireRoles } from '../auth/decorators/require-roles.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
@@ -26,16 +25,6 @@ export class TrackingController {
 
   @Get('orders/:id/tracking')
   public getOrderHistory(
-    @CurrentUser() actor: AuthenticatedActor,
-    @Param('id') orderId: string,
-    @Query() query: TrackingQueryStrings,
-  ): Promise<TrackingPointPage> {
-    return this.trackingService.getHistory(actor, orderId, parseQuery(query));
-  }
-
-  @Get('fleet/orders/:id/tracking')
-  @RequireRoles('FLEET_OWNER')
-  public getFleetOrderHistory(
     @CurrentUser() actor: AuthenticatedActor,
     @Param('id') orderId: string,
     @Query() query: TrackingQueryStrings,

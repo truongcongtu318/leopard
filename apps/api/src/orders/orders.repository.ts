@@ -380,30 +380,4 @@ export class OrdersRepository {
     };
   }
 
-  async isDriverInFleetOwnerFleets(fleetOwnerUserId: string, driverUserId: string): Promise<boolean> {
-    const ownerFleets = await this.prisma.fleetMember.findMany({
-      where: {
-        userId: fleetOwnerUserId,
-        status: 'ACTIVE',
-        role: 'OWNER',
-      },
-      select: { fleetId: true },
-    });
-
-    if (ownerFleets.length === 0) {
-      return false;
-    }
-
-    const fleetIds = ownerFleets.map((f) => f.fleetId);
-
-    const driverMembership = await this.prisma.fleetMember.findFirst({
-      where: {
-        userId: driverUserId,
-        fleetId: { in: fleetIds },
-        status: 'ACTIVE',
-      },
-    });
-
-    return !!driverMembership;
-  }
 }

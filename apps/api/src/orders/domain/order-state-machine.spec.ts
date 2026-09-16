@@ -144,17 +144,6 @@ describe('Order State Machine', () => {
       ).toThrow(DomainError);
     });
 
-    it('rejects FLEET_OWNER performing transitions', () => {
-      expect(() =>
-        assertOrderTransition({
-          from: OrderStatus.REQUESTED,
-          to: OrderStatus.ACCEPTED,
-          actorRole: Role.FLEET_OWNER,
-          hasDeliveryProof: false,
-        }),
-      ).toThrow(DomainError);
-    });
-
     it('rejects skipping states (e.g. REQUESTED -> IN_TRANSIT)', () => {
       expect(() =>
         assertOrderTransition({

@@ -1,6 +1,5 @@
 import type {
   DriverAvailability,
-  FleetMemberStatus,
   OrderStatus,
   PaymentStatus,
   UserStatus,
@@ -39,14 +38,12 @@ const ORDER_STATUSES = [
   'DELIVERED',
   'CANCELLED',
 ] as const;
-const USER_ROLES = ['ALL', 'CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const;
+const USER_ROLES = ['ALL', 'CUSTOMER', 'DRIVER', 'ADMIN'] as const;
 const USER_STATUSES = ['ALL', 'ACTIVE', 'DISABLED'] as const;
 const AVAILABILITIES = ['ALL', 'OFFLINE', 'AVAILABLE', 'BUSY'] as const;
-const MEMBERSHIP_STATUSES = ['ALL', 'INVITED', 'ACTIVE', 'REMOVED'] as const;
 const SORTS_BY_SCREEN = {
   orders: ['updated-desc', 'updated-asc', 'reference-asc'],
   users: ['updated-desc', 'updated-asc', 'name-asc', 'name-desc'],
-  fleets: ['name-asc', 'name-desc', 'updated-desc'],
   drivers: ['name-asc', 'name-desc', 'updated-desc'],
 } as const;
 const PREVIEW_SCENARIOS_BY_SCREEN: Readonly<Record<AdminPreviewScreen, readonly string[]>> = {
@@ -81,7 +78,6 @@ const PREVIEW_SCENARIOS_BY_SCREEN: Readonly<Record<AdminPreviewScreen, readonly 
     'ADM-DENIED',
     'ADM-EXPIRED',
   ],
-  fleets: ['ADM-FLT-EMPTY', 'ADM-DENIED', 'ADM-EXPIRED'],
   drivers: ['ADM-DRV-MIXED', 'ADM-DENIED', 'ADM-EXPIRED'],
 };
 const DEFAULT_PREVIEW_SCENARIO: Readonly<Record<AdminPreviewScreen, string>> = {
@@ -89,7 +85,6 @@ const DEFAULT_PREVIEW_SCENARIO: Readonly<Record<AdminPreviewScreen, string>> = {
   orders: 'ADM-ORD-DENSE',
   'order-detail': 'ADM-ORD-DETAIL',
   users: 'ADM-USR-DENSE',
-  fleets: 'ADM-FLT-EMPTY',
   drivers: 'ADM-DRV-MIXED',
 };
 const COMMAND_PREVIEW_SCENARIOS = new Set([
@@ -175,8 +170,6 @@ export function parseAdminListFilters(
     role: allow(first(search.role), USER_ROLES, 'ALL'),
     userStatus: allow(first(search.userStatus), USER_STATUSES, 'ALL'),
     availability: allow(first(search.availability), AVAILABILITIES, 'ALL'),
-    membershipStatus: allow(first(search.membershipStatus), MEMBERSHIP_STATUSES, 'ALL'),
-    fleetId: validId(search.fleetId),
     customerId: validId(search.customerId),
     driverId: validId(search.driverId),
     from: validDate(search.from),
@@ -248,8 +241,6 @@ export function serializeAdminListFilters(
   } else if (screen === 'drivers') {
     append(params, 'availability', filters.availability, 'ALL');
     append(params, 'userStatus', filters.userStatus, 'ALL');
-    append(params, 'membershipStatus', filters.membershipStatus, 'ALL');
-    append(params, 'fleetId', filters.fleetId);
   }
   params.set('sort', filters.sort);
   params.set('page', String(filters.page));
@@ -383,12 +374,6 @@ export function formatOrderReference(order: {
   if (order.id.startsWith('LP-')) return order.id;
   const shortId = order.id.replace(/-/g, '').slice(0, 8).toUpperCase();
   return `LP-A-260815-${shortId.slice(0, 3)}`;
-}
-
-export function formatFleetDisplayId(fleet: { id: string; displayId?: string }): string {
-  if (fleet.displayId) return fleet.displayId;
-  const shortId = fleet.id.replace(/-/g, '').slice(0, 4).toUpperCase();
-  return `FLEET-${shortId}`;
 }
 
 export function formatDriverDisplayId(driver: { id: string; displayId?: string }): string {

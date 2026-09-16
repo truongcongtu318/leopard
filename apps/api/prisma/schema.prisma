@@ -9,7 +9,6 @@ datasource db {
 enum Role {
   CUSTOMER
   DRIVER
-  FLEET_OWNER
   ADMIN
 }
 
@@ -19,17 +18,6 @@ enum UserStatus {
   PENDING_APPROVAL
   REJECTED
   SUSPENDED
-}
-
-enum FleetMemberRole {
-  OWNER
-  DRIVER
-}
-
-enum FleetMemberStatus {
-  INVITED
-  ACTIVE
-  REMOVED
 }
 
 enum DriverAvailability {
@@ -203,7 +191,6 @@ model User {
   createdAt                      DateTime                @default(now()) @db.Timestamptz(3)
   updatedAt                      DateTime                @default(now()) @updatedAt @db.Timestamptz(3)
   refreshSessions                RefreshSession[]
-  fleetMemberships               FleetMember[]
   driverProfile                  DriverProfile?
   customerOrders                 Order[]                 @relation("CustomerOrders")
   driverOrders                   Order[]                 @relation("DriverOrders")
@@ -239,33 +226,6 @@ model RefreshSession {
   @@index([userId, expiresAt(sort: Desc)])
 }
 
-model Fleet {
-  id          String        @id @default(uuid()) @db.Uuid
-  name        String
-  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime      @default(now()) @updatedAt @db.Timestamptz(3)
-  memberships FleetMember[]
-  driverAffiliations DriverAffiliation[]
-}
-
-model FleetMember {
-  id        String            @id @default(uuid()) @db.Uuid
-  fleetId   String            @db.Uuid
-  userId    String            @db.Uuid
-  role      FleetMemberRole
-  status    FleetMemberStatus @default(INVITED)
-  invitedAt DateTime          @default(now()) @db.Timestamptz(3)
-  joinedAt  DateTime?         @db.Timestamptz(3)
-  removedAt DateTime?         @db.Timestamptz(3)
-  createdAt DateTime          @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime          @default(now()) @updatedAt @db.Timestamptz(3)
-  fleet     Fleet             @relation(fields: [fleetId], references: [id], onDelete: Restrict)
-  user      User              @relation(fields: [userId], references: [id], onDelete: Restrict)
-
-  @@unique([fleetId, userId])
-  @@index([fleetId, role, status])
-}
-
 model DriverProfile {
   id                    String                                @id @default(uuid()) @db.Uuid
   userId                String                                @unique @db.Uuid
@@ -294,7 +254,6 @@ model DriverProfile {
   documents             DriverDocument[]
   contracts             DriverContract[]
   payoutRequests        PayoutRequest[]
-  affiliations          DriverAffiliation[]
   routingProfiles       VehicleRoutingProfile[]
 
   @@index([availability, vehicleType, lastKnownAt])
@@ -786,30 +745,6 @@ model DriverApplication {
   @@index([status, submittedAt(sort: Desc)])
 }
 
-enum DriverAffiliationStatus {
-  PENDING
-  ACTIVE
-  SUSPENDED
-  TERMINATED
-}
-
-model DriverAffiliation {
-  id               String                  @id @default(uuid()) @db.Uuid
-  driverProfileId  String                  @db.Uuid
-  fleetId          String                  @db.Uuid
-  relationshipType String                  @default("FLEET_MEMBER")
-  status           DriverAffiliationStatus @default(PENDING)
-  validFrom        DateTime                @default(now()) @db.Timestamptz(3)
-  validTo          DateTime?               @db.Timestamptz(3)
-  verifiedById     String?                 @db.Uuid
-  createdAt        DateTime                @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime                @default(now()) @updatedAt @db.Timestamptz(3)
-  driverProfile    DriverProfile           @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
-  fleet            Fleet                   @relation(fields: [fleetId], references: [id], onDelete: Cascade)
-
-  @@unique([driverProfileId, fleetId])
-  @@index([fleetId, status])
-}
 
 model ContractAcceptance {
   id              String    @id @default(uuid()) @db.Uuid

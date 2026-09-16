@@ -14,10 +14,6 @@ export interface TrackingOrderAccess {
   readonly status: OrderStatus;
   readonly customerId: string;
   readonly driverId: string | null;
-  /** Fleet IDs for which the actor has an active OWNER membership. */
-  readonly activeOwnerFleetIds: readonly string[];
-  /** Fleet IDs for which the assigned Driver has an active DRIVER membership. */
-  readonly activeDriverFleetIds: readonly string[];
 }
 
 export function assertCanSendTracking(
@@ -53,23 +49,7 @@ export function assertCanViewTracking(
     return;
   }
 
-  if (
-    actor.role === Role.FLEET_OWNER &&
-    hasSharedActiveFleet(order.activeOwnerFleetIds, order.activeDriverFleetIds)
-  ) {
-    return;
-  }
-
   throw forbidden();
-}
-
-function hasSharedActiveFleet(
-  ownerFleetIds: readonly string[],
-  driverFleetIds: readonly string[],
-): boolean {
-  const driverFleets = new Set(driverFleetIds);
-
-  return ownerFleetIds.some((fleetId) => driverFleets.has(fleetId));
 }
 
 function forbidden(): DomainError {

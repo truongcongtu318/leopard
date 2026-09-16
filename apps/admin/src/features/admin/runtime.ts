@@ -2,7 +2,6 @@ import 'server-only';
 
 import type {
   DriverAvailability,
-  FleetMemberStatus,
   OrderStatus,
   PaymentStatus,
   UserStatus,
@@ -51,7 +50,6 @@ interface PageEnvelope<T> {
 interface AdminDashboardDto {
   readonly totalUsers: number;
   readonly totalOrders: number;
-  readonly activeFleets: number;
   readonly revenueVnd: number;
 }
 
@@ -81,22 +79,12 @@ interface UserSummaryDto {
   readonly createdAt: string;
 }
 
-interface FleetSummaryDto {
-  readonly id: string;
-  readonly name: string;
-  readonly createdAt: string;
-  readonly driversCount: number;
-  readonly activeOrdersCount: number;
-}
-
 interface DriverSummaryDto {
   readonly id: string;
   readonly phone: string;
   readonly status: string;
   readonly availability: string;
   readonly lastKnownAt?: string | null;
-  readonly membershipStatus: string | null;
-  readonly fleetName: string | null;
 }
 
 interface MappedStopDto {
@@ -157,7 +145,7 @@ const ORDER_STATUSES: readonly OrderStatus[] = [
 ];
 const NON_TERMINAL_ORDER_STATUSES = ['REQUESTED', 'ACCEPTED', 'PICKING_UP', 'PICKED_UP', 'IN_TRANSIT'];
 const PAYMENT_STATUSES: readonly PaymentStatus[] = ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'];
-const USER_ROLES = ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const;
+const USER_ROLES = ['CUSTOMER', 'DRIVER', 'ADMIN'] as const;
 
 const ORDER_STATUS_LABEL: Readonly<Record<OrderStatus, string>> = {
   REQUESTED: 'Chờ tài xế',
@@ -177,7 +165,6 @@ const PAYMENT_STATUS_LABEL: Readonly<Record<PaymentStatus, string>> = {
 const ROLE_LABEL: Readonly<Record<(typeof USER_ROLES)[number], string>> = {
   CUSTOMER: 'Khách hàng',
   DRIVER: 'Tài xế',
-  FLEET_OWNER: 'Chủ đội xe',
   ADMIN: 'Quản trị viên',
 };
 
@@ -222,11 +209,6 @@ function toUserStatus(raw: string): UserStatus {
 
 function toAvailability(raw: string): DriverAvailability {
   return raw === 'AVAILABLE' || raw === 'BUSY' ? raw : 'OFFLINE';
-}
-
-function toMembershipStatus(raw: string | null): FleetMemberStatus | null {
-  if (raw === 'INVITED' || raw === 'ACTIVE' || raw === 'REMOVED') return raw;
-  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -444,13 +426,6 @@ async function loadAdminRuntimeOverview(): Promise<AdminRouteView> {
         href: '/admin/users',
       },
       {
-        id: 'fleets',
-        label: 'Đội xe',
-        value: dashboard.activeFleets,
-        detail: 'Đội xe đang hoạt động',
-        href: '/admin/fleets',
-      },
-      {
         id: 'active-orders',
         label: 'Đơn đang hoạt động',
         value: distribution
@@ -633,56 +608,6 @@ async function loadUsersList(filters: AdminListFilters): Promise<AdminRouteView>
   }
 }
 
-async function loadFleetsList(filters: AdminListFilters): Promise<AdminRouteView> {
-  try {
-    const page = await operationsServerGet<PageEnvelope<FleetSummaryDto>>(
-      '/admin/fleets',
-      listQueryFromFilters(filters),
-    );
-
-    const items: readonly AdminListItemView[] = page.items.map((fleet) => ({
-      entity: 'fleet' as const,
-      id: fleet.id,
-      displayId: fleet.id.slice(0, 8).toUpperCase(),
-      displayName: fleet.name,
-      ownerSummary: 'Chủ đội xe hiển thị qua membership trong pilot',
-      activeMembershipCount: fleet.driversCount,
-      driverCount: fleet.driversCount,
-      orderCount: fleet.activeOrdersCount,
-      membershipState: fleet.driversCount > 0 ? ('success' as const) : ('empty' as const),
-      membershipMessage:
-        fleet.driversCount > 0
-          ? `${fleet.driversCount} tài xế đang tham gia`
-          : 'Chưa có tài xế nào đang tham gia đội xe.',
-      updatedAtLabel: formatDateTime(fleet.createdAt),
-    }));
-
-    const view: AdminListView = {
-      scenarioId: `${SCENARIO_PREFIX}-FLEETS`,
-      kind: 'list',
-      entity: 'fleets',
-      state: page.total === 0 ? 'no-results' : 'success',
-      title: 'Đội xe',
-      checkedAtLabel: formatDateTime(new Date().toISOString()),
-      filters,
-      result: {
-        items,
-        page: page.page,
-        pageSize: page.pageSize,
-        totalPages: page.totalPages,
-        totalItems: page.total,
-        filterSummary: describeFilters('Đội xe', filters, page.total),
-        revision: new Date().toISOString(),
-      },
-      notice: null,
-      dialogPreview: null,
-    };
-    return view;
-  } catch (error) {
-    return adminBoundaryFromError(error, 'FLEETS');
-  }
-}
-
 async function loadDriversList(filters: AdminListFilters): Promise<AdminRouteView> {
   try {
     const query = listQueryFromFilters(filters);
@@ -693,7 +618,6 @@ async function loadDriversList(filters: AdminListFilters): Promise<AdminRouteVie
     );
 
     const items: readonly AdminListItemView[] = page.items.map((driver) => {
-      const membership = toMembershipStatus(driver.membershipStatus);
       return {
         entity: 'driver' as const,
         id: driver.id,
@@ -701,8 +625,6 @@ async function loadDriversList(filters: AdminListFilters): Promise<AdminRouteVie
         maskedPhone: maskPhone(driver.phone),
         accountStatus: toUserStatus(driver.status),
         availability: toAvailability(driver.availability),
-        membershipStatus: membership ?? ('REMOVED' as FleetMemberStatus),
-        fleetLabel: driver.fleetName ?? 'Chưa thuộc đội xe',
         activeOrder: null,
         locationLabel:
           driver.lastKnownAt && Date.now() - new Date(driver.lastKnownAt).getTime() < 15 * 60000
@@ -993,8 +915,6 @@ export async function loadAdminRuntimeView(
       role: 'ALL',
       userStatus: 'ALL',
       availability: 'ALL',
-      membershipStatus: 'ALL',
-      fleetId: '',
       customerId: '',
       driverId: '',
       from: '',
@@ -1004,7 +924,6 @@ export async function loadAdminRuntimeView(
       pageSize: 20,
     } as const satisfies AdminListFilters);
   if (screen === 'users') return loadUsersList(filters);
-  if (screen === 'fleets') return loadFleetsList(filters);
   if (screen === 'drivers') return loadDriversList(filters);
   return loadOrdersList(filters);
 }

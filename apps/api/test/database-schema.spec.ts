@@ -5,8 +5,6 @@ const expectedTables = [
   'AuditLog',
   'DeviceToken',
   'DriverProfile',
-  'Fleet',
-  'FleetMember',
   'MediaObject',
   'Notification',
   'Order',
@@ -20,8 +18,6 @@ const expectedTables = [
 
 const expectedEnums = {
   DriverAvailability: ['OFFLINE', 'AVAILABLE', 'BUSY'],
-  FleetMemberRole: ['OWNER', 'DRIVER'],
-  FleetMemberStatus: ['INVITED', 'ACTIVE', 'REMOVED'],
   MediaType: ['CARGO', 'DELIVERY_PROOF'],
   NotificationType: ['ORDER', 'PAYMENT', 'PROMO', 'SYSTEM'],
   OrderStatus: [
@@ -34,7 +30,7 @@ const expectedEnums = {
   ],
   PaymentStatus: ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'],
   ProviderSource: ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'],
-  Role: ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'],
+  Role: ['CUSTOMER', 'DRIVER', 'ADMIN'],
   StopType: ['PICKUP', 'STOP', 'DROPOFF'],
   UserStatus: [
     'ACTIVE',
@@ -302,7 +298,6 @@ describe('canonical pilot database schema', () => {
        WHERE schemaname = 'public'
          AND tablename = ANY($1::text[])`,
       [[
-        'FleetMember',
         'Order',
         'OrderStatusHistory',
         'OrderStop',
@@ -328,12 +323,6 @@ describe('canonical pilot database schema', () => {
         ),
         expect.stringMatching(
           /UNIQUE INDEX.*ON public\."Order".*\("driverId"\).*WHERE.*status.*ACCEPTED.*PICKING_UP.*IN_TRANSIT/,
-        ),
-        expect.stringMatching(
-          /ON public\."FleetMember".*\("fleetId", role, status\)/,
-        ),
-        expect.stringMatching(
-          /UNIQUE INDEX.*ON public\."FleetMember".*\("userId"\).*WHERE.*role.*DRIVER.*status.*ACTIVE/,
         ),
         expect.stringMatching(
           /ON public\."TrackingPoint".*\("orderId", "capturedAt" DESC\)/,

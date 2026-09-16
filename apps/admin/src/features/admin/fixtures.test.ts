@@ -18,7 +18,6 @@ const screenByScenario: Readonly<Record<string, AdminPreviewScreen>> = {
   'ADM-MEDIA-ERROR': 'order-detail',
   'ADM-PAY-FAILED': 'order-detail',
   'ADM-USR-DENSE': 'users',
-  'ADM-FLT-EMPTY': 'fleets',
   'ADM-DRV-MIXED': 'drivers',
   'ADM-CMD-INVALID': 'order-detail',
   'ADM-CMD-PENDING': 'order-detail',
@@ -30,8 +29,8 @@ const screenByScenario: Readonly<Record<string, AdminPreviewScreen>> = {
 };
 
 describe('Admin immutable scenario catalogue', () => {
-  it('contains the 19 approved Admin scenarios', () => {
-    expect(ADMIN_PREVIEW_SCENARIOS).toHaveLength(19);
+  it('contains the 18 approved Admin scenarios', () => {
+    expect(ADMIN_PREVIEW_SCENARIOS).toHaveLength(18);
     expect(ADMIN_PREVIEW_SCENARIOS).toEqual(Object.keys(screenByScenario));
   });
 
@@ -58,19 +57,16 @@ describe('Admin immutable scenario catalogue', () => {
     }
   });
 
-  it('keeps mutations capability-driven and excludes Fleet lifecycle commands', () => {
+  it('keeps mutations capability-driven', () => {
     expect(ADMIN_OPERATIONS_CAPABILITIES).toEqual([
       'readOverview',
       'readOrders',
       'readOrderDetail',
       'readUsers',
-      'readFleets',
       'readDrivers',
       'executeAuditedCommand',
       'subscribeToReadEvents',
     ]);
-    const fleets = createAdminPreviewView('fleets', 'ADM-FLT-EMPTY');
-    expect(JSON.stringify(fleets)).not.toMatch(/create|disable|remove|invite/i);
     expect(() => createAdminPreviewView('drivers', 'ADM-ORD-DENSE')).toThrow(
       'Unsupported Admin preview scenario',
     );

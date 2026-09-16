@@ -21,11 +21,10 @@ describe('Admin static operations screens', () => {
     expect(strip).toBeTruthy();
     expect(strip.textContent).toContain('Người dùng');
     expect(strip.textContent).toContain('Đơn đang chạy');
-    expect(strip.textContent).toContain('Đội xe');
     expect(strip.textContent).toContain('Doanh thu');
 
     const kpiCards = strip.querySelectorAll('.rounded-3xl');
-    expect(kpiCards.length).toBe(4);
+    expect(kpiCards.length).toBe(3);
     for (const card of kpiCards) {
       expect(card.className).toContain('border-black/[0.06]');
       expect(card.className).toContain('rounded-3xl');
@@ -147,23 +146,12 @@ describe('Admin static operations screens', () => {
     ).toBe('abc');
   });
 
-  it('keeps Fleets read-only and distinguishes empty membership from an error', () => {
-    render(<AdminListScreen screen="fleets" view={createAdminPreviewView('fleets', 'ADM-FLT-EMPTY')} />);
-    expect(screen.getAllByText('Chưa có thành viên đang tham gia; đây không phải lỗi tải dữ liệu.').length).toBeGreaterThan(0);
-    expect(screen.queryByRole('button', { name: /mời|gỡ|vô hiệu hóa/i })).toBeNull();
-    expect(screen.queryByText(/Fleet đang hoạt động/i)).toBeNull();
-  });
-
-  it('keeps Driver account, availability and membership states distinct', () => {
+  it('keeps Driver account and availability states distinct', () => {
     render(<AdminListScreen screen="drivers" view={createAdminPreviewView('drivers', 'ADM-DRV-MIXED')} />);
     expect(screen.getAllByText('Đang hoạt động').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Đang bận').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Đang tham gia').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: /Xem đơn LP-A-260815-104/ }).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /availability|nhận đơn|cập nhật trạng thái/i })).toBeNull();
-    expect(
-      screen.getByRole('columnheader', { name: 'Thành viên đội xe' }).className,
-    ).toContain('hidden lg:table-cell');
   });
 
   it('renders the investigation workspace, demo ETA, media metadata and Audit Rail', () => {

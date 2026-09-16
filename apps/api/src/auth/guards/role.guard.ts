@@ -15,7 +15,7 @@ export class RoleGuard implements CanActivate {
 
   public canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<
-      readonly ('CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN')[]
+      readonly ('CUSTOMER' | 'DRIVER' | 'ADMIN')[]
     >(REQUIRED_ROLES_METADATA_KEY, [context.getHandler(), context.getClass()]);
 
     if (!requiredRoles || requiredRoles.length === 0) {

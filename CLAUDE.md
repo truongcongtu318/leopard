@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## System Architecture
 
-LEOPARD is a mini-production freight logistics pilot platform connecting Customers, Drivers, Fleet Owners, and Admins. It is organized as a `pnpm` monorepo managed with `turbo`.
+LEOPARD is a mini-production freight logistics pilot platform connecting Customers, Drivers, and Admins. It is organized as a `pnpm` monorepo managed with `turbo`.
 
 ### Applications (`apps/`)
 
@@ -13,7 +13,7 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
   - Owns business rules: pricing, ETA estimation, order lifecycle state machine, payments, and authorization.
   - Integration providers (maps/routing, phone OTP, storage, payment) use provider interfaces with deterministic demo fallbacks controlled via `ALLOW_DEMO_PROVIDER`.
 - **`apps/admin` (package: `web`)**:
-  - Next.js (App Router, Next 16+ with React 19) operations dashboard for Fleet Owners and Admins.
+  - Next.js (App Router, Next 16+ with React 19) operations dashboard for Admins.
   - Follows the NexaFleet Modern Bento layout with real-time tracking map and operational statistics.
   - *Note:* Refer to Next.js guides in `node_modules/next/dist/docs/` for breaking conventions in this version.
 - **`apps/mobile` (package: `mobile`)**:
@@ -34,7 +34,7 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 
 ### Key Architectural Invariants
 
-- **Authorization**: API enforces role, ownership, assignment, and fleet membership. Fleet Owners access fleet data via valid `FleetMember` records (read-only for most fleet entities) and do not inherit Admin privileges.
+- **Authorization**: API enforces role and ownership/assignment checks (Customer owns the order, Driver is assigned to it).
 - **Transactions**: Database transactions are mandatory for accepting orders, recording status transition history, and manual payment confirmations.
 - **ETA & Labels**: ETA must always be labeled as "ETA dự kiến"; simulated/demo data must explicitly display "Dữ liệu mô phỏng".
 - **Dispatch**: Includes automated single-order dispatch (nearest available driver).

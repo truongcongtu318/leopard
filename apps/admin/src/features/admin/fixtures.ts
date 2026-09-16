@@ -7,7 +7,6 @@ import type {
   AdminCommandView,
   AdminDialogPreviewView,
   AdminDriverListItemView,
-  AdminFleetListItemView,
   AdminListFilters,
   AdminListItemView,
   AdminListRouteView,
@@ -35,7 +34,6 @@ export const ADMIN_PREVIEW_SCENARIOS = [
   'ADM-MEDIA-ERROR',
   'ADM-PAY-FAILED',
   'ADM-USR-DENSE',
-  'ADM-FLT-EMPTY',
   'ADM-DRV-MIXED',
   'ADM-CMD-INVALID',
   'ADM-CMD-PENDING',
@@ -70,7 +68,6 @@ const SCENARIOS_BY_SCREEN: Readonly<Record<AdminPreviewScreen, readonly AdminPre
     'ADM-EXPIRED',
   ],
   users: ['ADM-USR-DENSE', ...COMMAND_SCENARIOS, 'ADM-DENIED', 'ADM-EXPIRED'],
-  fleets: ['ADM-FLT-EMPTY', 'ADM-DENIED', 'ADM-EXPIRED'],
   drivers: ['ADM-DRV-MIXED', 'ADM-DENIED', 'ADM-EXPIRED'],
 };
 
@@ -79,7 +76,6 @@ const DEFAULT_SCENARIO: Readonly<Record<AdminPreviewScreen, AdminPreviewScenario
   orders: 'ADM-ORD-DENSE',
   'order-detail': 'ADM-ORD-DETAIL',
   users: 'ADM-USR-DENSE',
-  fleets: 'ADM-FLT-EMPTY',
   drivers: 'ADM-DRV-MIXED',
 };
 
@@ -306,7 +302,6 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
     },
     metrics: [
       { id: 'users', label: 'Người dùng', value: 100, detail: '100 tài khoản đang quản lý', href: '/admin/users' },
-      { id: 'fleets', label: 'Đội xe', value: 6, detail: '6 đội xe đang liên kết', href: '/admin/fleets' },
       { id: 'active-orders', label: 'Đơn đang hoạt động', value: 18, detail: 'Chưa terminal', href: '/admin/orders' },
       { id: 'media-errors', label: 'Media lỗi', value: 0, detail: '0 là dữ liệu hợp lệ' },
     ],
@@ -370,20 +365,16 @@ function overview(scenarioId: AdminPreviewScenarioId): AdminOverviewView {
 
 const defaultFilters: Readonly<Record<AdminListScreen, AdminListFilters>> = {
   orders: {
-    status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL',
-    fleetId: '', customerId: '', driverId: '', from: '', to: '', sort: 'updated-desc', page: 1, pageSize: 20,
+    status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL',
+    customerId: '', driverId: '', from: '', to: '', sort: 'updated-desc', page: 1, pageSize: 20,
   },
   users: {
-    status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL',
-    fleetId: '', customerId: '', driverId: '', from: '', to: '', sort: 'updated-desc', page: 1, pageSize: 20,
-  },
-  fleets: {
-    status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL',
-    fleetId: '', customerId: '', driverId: '', from: '', to: '', sort: 'name-asc', page: 1, pageSize: 20,
+    status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL',
+    customerId: '', driverId: '', from: '', to: '', sort: 'updated-desc', page: 1, pageSize: 20,
   },
   drivers: {
-    status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL',
-    fleetId: '', customerId: '', driverId: '', from: '', to: '', sort: 'name-asc', page: 1, pageSize: 20,
+    status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL',
+    customerId: '', driverId: '', from: '', to: '', sort: 'name-asc', page: 1, pageSize: 20,
   },
 };
 
@@ -412,15 +403,6 @@ const DANANG_DISTRICTS = [
   'Sơn Trà (Cảng Tiên Sa)', 'Sơn Trà (Ngô Quyền)', 'Ngũ Hành Sơn (Lê Văn Hiến)', 'Ngũ Hành Sơn (Non Nước)',
   'Cẩm Lệ (Kho Cẩm Lệ)', 'Cẩm Lệ (Hòa Xuân)', 'Liên Chiểu (KCN Hòa Khánh)', 'Liên Chiểu (Nguyễn Lương Bằng)',
   'Hòa Vang (Hòa Nhơn)', 'Hòa Vang (KCN Hòa Cầm)'
-];
-
-const FLEET_NAMES = [
-  'Đội xe Sao Mai Mô Phỏng',
-  'Vận Tải Miền Trung Logistics',
-  'Đội xe Hoàng Long Đà Nẵng',
-  'Vận Tải Cảng Tiên Sa Fleet',
-  'Vận Tải Sông Hàn Express',
-  'Đội xe Hải Vân Trans'
 ];
 
 function orderItems(): readonly AdminOrderListItemView[] {
@@ -534,11 +516,9 @@ function userItems(): readonly AdminUserListItemView[] {
     const phoneSuffix = String(1000 + (i * 37) % 9000);
     const maskedPhone = `••• ••• ${phoneSuffix}`;
     
-    let role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN' = 'CUSTOMER';
+    let role: 'CUSTOMER' | 'DRIVER' | 'ADMIN' = 'CUSTOMER';
     if (i < 25) {
       role = 'DRIVER';
-    } else if (i < 33) {
-      role = 'FLEET_OWNER';
     } else if (i === 99) {
       role = 'ADMIN';
     } else {
@@ -574,49 +554,24 @@ function userItems(): readonly AdminUserListItemView[] {
   return users;
 }
 
-function fleetItems(): readonly AdminFleetListItemView[] {
-  const fleetsData = [
-    { idSuffix: '001', displayId: 'FLEET-OPS-001', name: 'Đội xe Sao Mai Mô Phỏng', owner: 'Trần Văn Sơn (Chủ xe)', activeMembers: 12, drivers: 12, orders: 48, state: 'empty' as const },
-    { idSuffix: '002', displayId: 'FLEET-OPS-002', name: 'Vận Tải Đông Nam Logistics', owner: 'Lê Hoàng Nam (Chủ xe)', activeMembers: 8, drivers: 8, orders: 32, state: 'success' as const },
-    { idSuffix: '003', displayId: 'FLEET-OPS-003', name: 'Đội xe Hoàng Gia Express', owner: 'Phạm Quốc Cường (Chủ xe)', activeMembers: 6, drivers: 6, orders: 24, state: 'success' as const },
-    { idSuffix: '004', displayId: 'FLEET-OPS-004', name: 'Giao Hàng Siêu Tốc Sài Gòn', owner: 'Đỗ Minh Vương (Chủ xe)', activeMembers: 10, drivers: 10, orders: 50, state: 'success' as const },
-    { idSuffix: '005', displayId: 'FLEET-OPS-005', name: 'Vận Tải Tân Cảng Fleet', owner: 'Vũ Đình Trọng (Chủ xe)', activeMembers: 5, drivers: 5, orders: 18, state: 'success' as const },
-    { idSuffix: '006', displayId: 'FLEET-OPS-006', name: 'Vận Tải Miền Nam Fleet', owner: 'Nguyễn Văn Long (Chủ xe)', activeMembers: 4, drivers: 4, orders: 14, state: 'success' as const },
-  ];
-
-  return fleetsData.map((f, index) => ({
-    entity: 'fleet',
-    id: `11111111-1111-4111-8111-111111111${f.idSuffix}`,
-    displayId: f.displayId,
-    displayName: f.name,
-    ownerSummary: `${f.owner} · membership ACTIVE`,
-    activeMembershipCount: index === 0 ? 0 : f.activeMembers,
-    driverCount: f.drivers,
-    orderCount: f.orders,
-    membershipState: index === 0 ? ('empty' as const) : ('success' as const),
-    membershipMessage: index === 0 ? 'Chưa có thành viên đang tham gia; đây không phải lỗi tải dữ liệu.' : `${f.activeMembers} thành viên đang hoạt động trong đội xe.`,
-    updatedAtLabel: `14:${String(30 - index * 2).padStart(2, '0')} · 15/08/2026`,
-  }));
-}
-
 function driverItems(): readonly AdminDriverListItemView[] {
   const baseDrivers: AdminDriverListItemView[] = [
     {
       entity: 'driver', id: '22222222-2222-4222-8222-222222222001', displayName: 'Tài xế An Mô Phỏng',
-      maskedPhone: '••• ••• 1201', accountStatus: 'ACTIVE', availability: 'BUSY', membershipStatus: 'ACTIVE',
-      fleetLabel: 'Đội xe Sao Mai Mô Phỏng', activeOrder: { reference: 'LP-A-260815-104', href: '/admin/orders/33333333-3333-4333-8333-333333333104' },
+      maskedPhone: '••• ••• 1201', accountStatus: 'ACTIVE', availability: 'BUSY',
+      activeOrder: { reference: 'LP-A-260815-104', href: '/admin/orders/33333333-3333-4333-8333-333333333104' },
       locationLabel: 'Khu vực Hải Châu, Đà Nẵng', locationUpdatedAtLabel: '14:22 · 15/08/2026', locationCondition: 'stale',
     },
     {
       entity: 'driver', id: '22222222-2222-4222-8222-222222222002', displayName: 'Tài xế Bình Mô Phỏng',
-      maskedPhone: '••• ••• 1202', accountStatus: 'ACTIVE', availability: 'AVAILABLE', membershipStatus: 'INVITED',
-      fleetLabel: 'Đội xe Sao Mai Mô Phỏng', activeOrder: null, locationLabel: 'Khu vực Cẩm Lệ, Đà Nẵng',
+      maskedPhone: '••• ••• 1202', accountStatus: 'ACTIVE', availability: 'AVAILABLE',
+      activeOrder: null, locationLabel: 'Khu vực Cẩm Lệ, Đà Nẵng',
       locationUpdatedAtLabel: '14:31 · 15/08/2026', locationCondition: 'current',
     },
     {
       entity: 'driver', id: '22222222-2222-4222-8222-222222222003', displayName: 'Tài xế Chi Mô Phỏng',
-      maskedPhone: '••• ••• 1203', accountStatus: 'DISABLED', availability: 'OFFLINE', membershipStatus: 'REMOVED',
-      fleetLabel: 'Không còn membership hoạt động', activeOrder: null, locationLabel: 'Chưa có vị trí',
+      maskedPhone: '••• ••• 1203', accountStatus: 'DISABLED', availability: 'OFFLINE',
+      activeOrder: null, locationLabel: 'Chưa có vị trí',
       locationUpdatedAtLabel: 'Chưa có dữ liệu', locationCondition: 'unavailable',
     },
   ];
@@ -633,7 +588,6 @@ function driverItems(): readonly AdminDriverListItemView[] {
   extraDriverNames.forEach((name, i) => {
     const num = i + 4;
     const idSuffix = String(num).padStart(3, '0');
-    const fleet = FLEET_NAMES[i % FLEET_NAMES.length] ?? 'Đội xe Sao Mai';
     const location = DANANG_DISTRICTS[(i * 3) % DANANG_DISTRICTS.length] ?? 'Hải Châu';
     const availabilities: ('AVAILABLE' | 'BUSY' | 'OFFLINE')[] = ['AVAILABLE', 'BUSY', 'AVAILABLE', 'OFFLINE', 'BUSY'];
     const availability = availabilities[i % availabilities.length] ?? 'AVAILABLE';
@@ -647,8 +601,6 @@ function driverItems(): readonly AdminDriverListItemView[] {
       maskedPhone: `••• ••• ${String(3000 + i * 43)}`,
       accountStatus: 'ACTIVE',
       availability,
-      membershipStatus: 'ACTIVE',
-      fleetLabel: fleet,
       activeOrder: isBusy ? { reference: `LP-A-260815-${orderNum}`, href: `/admin/orders/33333333-3333-4333-8333-333333333${orderNum}` } : null,
       locationLabel: availability === 'OFFLINE' ? 'Ngoại tuyến' : location,
       locationUpdatedAtLabel: availability === 'OFFLINE' ? 'Hơn 2 giờ trước' : `14:${String(30 - (i % 25)).padStart(2, '0')} · 15/08/2026`,
@@ -668,9 +620,8 @@ function listView(
   let items: readonly AdminListItemView[];
   if (screen === 'orders') items = noResults ? [] : orderItems();
   else if (screen === 'users') items = userItems();
-  else if (screen === 'fleets') items = fleetItems();
   else items = driverItems();
-  const title = screen === 'orders' ? 'Đơn hàng' : screen === 'users' ? 'Người dùng' : screen === 'fleets' ? 'Đội xe' : 'Tài xế';
+  const title = screen === 'orders' ? 'Đơn hàng' : screen === 'users' ? 'Người dùng' : 'Tài xế';
   const isCommandScenario = COMMAND_SCENARIOS.includes(scenarioId as (typeof COMMAND_SCENARIOS)[number]);
   const selectedCommand = isCommandScenario ? commandKind ?? 'DISABLE_USER' : null;
   if (selectedCommand && !['DISABLE_USER', 'ENABLE_USER'].includes(selectedCommand)) {

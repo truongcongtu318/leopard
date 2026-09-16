@@ -24,7 +24,6 @@ export default function LoginRoute() {
         router.replace('/customer/home');
         break;
       case 'DRIVER':
-      case 'FLEET_OWNER':
       case 'ADMIN':
         router.replace('/(public)/login');
         break;

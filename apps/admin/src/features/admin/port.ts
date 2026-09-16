@@ -12,7 +12,6 @@ export const ADMIN_OPERATIONS_CAPABILITIES = Object.freeze([
   'readOrders',
   'readOrderDetail',
   'readUsers',
-  'readFleets',
   'readDrivers',
   'executeAuditedCommand',
   'subscribeToReadEvents',
@@ -39,7 +38,6 @@ export type AdminPort = Readonly<{
   readOrders: (filters: AdminListFilters) => Promise<AdminListRouteView>;
   readOrderDetail: (orderId: string) => Promise<AdminOrderDetailRouteView>;
   readUsers: (filters: AdminListFilters) => Promise<AdminListRouteView>;
-  readFleets: (filters: AdminListFilters) => Promise<AdminListRouteView>;
   readDrivers: (filters: AdminListFilters) => Promise<AdminListRouteView>;
   readList: (resource: AdminListScreen, filters: AdminListFilters) => Promise<AdminListRouteView>;
   executeAuditedCommand: (input: AdminCommandInput) => Promise<AdminCommandResult>;
