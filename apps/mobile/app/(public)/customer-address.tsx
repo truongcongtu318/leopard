@@ -23,7 +23,6 @@ import {
   IconTag,
   IconUser,
   IconWarehouse,
-  LeopardEmblem,
   ScreenScaffold,
   colors,
   customerPalette,
@@ -329,20 +328,20 @@ export default function CustomerAddAddressScreen() {
     }
     .pulse-pin-pulse {
       position: absolute;
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: rgba(11, 37, 69, 0.2);
       animation: pinPulse 1.8s ease-out infinite;
     }
     .pulse-pin-core {
       position: relative;
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       background: ${customerPalette.primary};
       border: 3px solid #FFFFFF;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -368,7 +367,7 @@ export default function CustomerAddAddressScreen() {
     var map = L.map('map', {
       center: [lat, lng],
       zoom: 16,
-      zoomControl: true
+      zoomControl: false
     });
 
     var primaryTiles = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=vi', {
@@ -391,8 +390,8 @@ export default function CustomerAddAddressScreen() {
     var customIcon = L.divIcon({
       className: 'custom-pin',
       html: '<div class="pulse-pin-wrap"><div class="pulse-pin-pulse"></div><div class="pulse-pin-core"><div class="pulse-pin-dot"></div></div></div>',
-      iconSize: [26, 26],
-      iconAnchor: [13, 13]
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
     });
 
     var marker = L.marker([lat, lng], {
@@ -434,7 +433,6 @@ export default function CustomerAddAddressScreen() {
           <IconChevronLeft color={customerPalette.primary} size={22} />
         </Pressable>
       }
-      headerRight={<LeopardEmblem testID="address-brand-emblem" width={42} />}
       stickyFooter={
         <View style={styles.footerWrap}>
           <Pressable
@@ -448,7 +446,6 @@ export default function CustomerAddAddressScreen() {
           </Pressable>
         </View>
       }
-      subtitle="Lưu kho bãi hoặc điểm giao nhận vào sổ địa chỉ"
       title="Thêm địa chỉ mới"
     >
       <ScrollView
@@ -457,117 +454,81 @@ export default function CustomerAddAddressScreen() {
         style={styles.container}
       >
         <View style={styles.innerWrapper}>
-          {/* ================= 1. MAP & GPS CARD ================= */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionCardHeader}>
-              <Text style={styles.sectionCardTitle}>Vị trí trên bản đồ</Text>
-              <Text style={styles.sectionCardSubtitle}>
-                Chạm hoặc kéo ghim để tinh chỉnh tọa độ chính xác
+          {/* ================= 1. COMPACT MAP & LOCATION CARD ================= */}
+          <View style={styles.mapContainerCard}>
+            <View style={styles.mapGraphic}>
+              {Platform.OS === 'web' ? (
+                React.createElement('iframe', {
+                  key: `osm-map-${coords.lat.toFixed(5)}-${coords.lng.toFixed(5)}`,
+                  srcDoc: mapHtml,
+                  style: {
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                  },
+                  title: 'Bản đồ thực tế OpenStreetMap',
+                })
+              ) : (
+                <View style={styles.nativeMapFallback}>
+                  <View style={styles.mapRoadH} />
+                  <View style={styles.mapRoadV} />
+                  <View style={styles.mapPinPulse} />
+                  <View style={styles.mapPinWrap}>
+                    <IconLocationPin color={customerPalette.primary} size={28} strokeWidth={2} />
+                  </View>
+                </View>
+              )}
+
+              {/* Floating GPS button */}
+              <Pressable
+                accessibilityLabel="Sử dụng vị trí hiện tại"
+                accessibilityRole="button"
+                disabled={isLocating}
+                onPress={handleGetCurrentLocation}
+                style={({ pressed }) => [styles.mapGpsFloatingBtn, pressed && styles.pressed]}
+                testID="ca-use-current-location"
+              >
+                {isLocating ? (
+                  <ActivityIndicator color={customerPalette.primary} size="small" />
+                ) : (
+                  <>
+                    <IconLocationPin color={customerPalette.primary} size={15} strokeWidth={2.2} />
+                    <Text style={styles.mapGpsFloatingText}>Vị trí hiện tại</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+
+            {/* Address bar under map */}
+            <View style={styles.addressBar}>
+              <View style={styles.pinIconWrap}>
+                <IconLocationPin color={customerPalette.primary} size={16} strokeWidth={2} />
+              </View>
+              <Text numberOfLines={2} style={styles.addressBarText}>
+                {selectedAddress}
               </Text>
             </View>
 
-            {/* Interactive Map */}
-            <View style={styles.mapCard}>
-              <View style={styles.mapGraphic}>
-                {Platform.OS === 'web' ? (
-                  React.createElement('iframe', {
-                    key: `osm-map-${coords.lat.toFixed(5)}-${coords.lng.toFixed(5)}`,
-                    srcDoc: mapHtml,
-                    style: {
-                      width: '100%',
-                      height: '100%',
-                      border: 'none',
-                    },
-                    title: 'Bản đồ thực tế OpenStreetMap',
-                  })
-                ) : (
-                  <View style={styles.nativeMapFallback}>
-                    <View style={styles.mapRoadH} />
-                    <View style={styles.mapRoadV} />
-                    <View style={styles.mapPinPulse} />
-                    <View style={styles.mapPinWrap}>
-                      <IconLocationPin color={customerPalette.primary} size={32} strokeWidth={2} />
-                    </View>
-                  </View>
-                )}
-
-                {/* Map Telemetry Badge */}
-                <View style={styles.mapTelemetryBadge}>
-                  <View style={styles.telemetryDot} />
-                  <Text style={styles.telemetryText}>
-                    Bản đồ trực tuyến · Kéo ghim hoặc chạm để đổi vị trí
-                  </Text>
-                </View>
-              </View>
-
-              {/* Address Banner on Map */}
-              <View style={styles.selectedAddressBanner}>
-                <View style={styles.selectedPinIcon}>
-                  <IconLocationPin color={customerPalette.primary} size={18} strokeWidth={2} />
-                </View>
-                <View style={styles.selectedAddressCol}>
-                  <Text numberOfLines={2} style={styles.selectedAddressText}>
-                    {selectedAddress}
-                  </Text>
-                  <Text style={styles.selectedCoordsText}>
-                    Đã ghim vị trí chính xác trên bản đồ
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* GPS Quick Action */}
-            <Pressable
-              accessibilityLabel="Sử dụng vị trí hiện tại"
-              accessibilityRole="button"
-              disabled={isLocating}
-              onPress={handleGetCurrentLocation}
-              style={({ pressed }) => [styles.gpsActionBtn, pressed && styles.pressed]}
-              testID="ca-use-current-location"
-            >
-              <View style={styles.gpsLeft}>
-                <View style={styles.gpsIconCircle}>
-                  <IconLocationPin color={customerPalette.primary} size={18} strokeWidth={2} />
-                </View>
-                <View style={styles.gpsTextCol}>
-                  <Text style={styles.gpsBtnTitle}>Sử dụng vị trí hiện tại</Text>
-                  <Text style={styles.gpsBtnDesc}>Tự động nhận diện tọa độ qua GPS thiết bị</Text>
-                </View>
-              </View>
-              {isLocating ? (
-                <ActivityIndicator color={customerPalette.primary} size="small" />
-              ) : (
-                <Text style={styles.gpsArrow}>›</Text>
-              )}
-            </Pressable>
-
-            {/* Location Feedback Pill */}
+            {/* Location Feedback Toast */}
             {locationSuccessMsg ? (
               <View style={styles.locationFeedbackRow}>
                 <View style={styles.locationFeedbackDot} />
-                <Text numberOfLines={2} style={styles.locationFeedbackText}>
+                <Text numberOfLines={1} style={styles.locationFeedbackText}>
                   {locationSuccessMsg}
                 </Text>
               </View>
             ) : null}
           </View>
 
-          {/* ================= 2. SEARCH OR PICK OTHER ADDRESS ================= */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionCardHeader}>
-              <Text style={styles.sectionCardTitle}>Tìm kiếm địa chỉ</Text>
-              <Text style={styles.sectionCardSubtitle}>
-                Nhập tên đường, tòa nhà hoặc khu công nghiệp
-              </Text>
-            </View>
-
+          {/* ================= 2. COMPACT SEARCH BAR ================= */}
+          <View style={styles.searchSection}>
             <View
               style={[
                 styles.searchInputContainer,
                 focusedField === 'search' && styles.inputFocused,
               ]}
             >
-              <IconSearch color={customerPalette.textSubtle} size={18} />
+              <IconSearch color={customerPalette.textSubtle} size={16} />
               <TextInput
                 accessibilityLabel="Tìm kiếm địa chỉ"
                 autoCapitalize="none"
@@ -575,7 +536,7 @@ export default function CustomerAddAddressScreen() {
                 onBlur={() => setFocusedField(null)}
                 onChangeText={setSearchQuery}
                 onFocus={() => setFocusedField('search')}
-                placeholder="Tìm đường, tòa nhà, khu công nghiệp..."
+                placeholder="Tìm kiếm địa chỉ khác..."
                 placeholderTextColor={customerPalette.offlineGray}
                 style={styles.searchInput}
                 testID="ca-search-input"
@@ -584,7 +545,7 @@ export default function CustomerAddAddressScreen() {
               {isSearching ? <ActivityIndicator color={customerPalette.primary} size="small" /> : null}
             </View>
 
-            {/* Autocomplete suggestions list */}
+            {/* Suggestions list */}
             {searchResults.length > 0 ? (
               <View style={styles.suggestionsCard}>
                 {searchResults.map((item, idx) => (
@@ -597,9 +558,7 @@ export default function CustomerAddAddressScreen() {
                       idx < searchResults.length - 1 && styles.suggestionDivider,
                     ]}
                   >
-                    <View style={styles.suggestionPin}>
-                      <IconLocationPin color={customerPalette.primary} size={16} />
-                    </View>
+                    <IconLocationPin color={customerPalette.primary} size={15} />
                     <View style={styles.suggestionTextWrap}>
                       <Text numberOfLines={1} style={styles.suggestionName}>
                         {item.name}
@@ -614,26 +573,20 @@ export default function CustomerAddAddressScreen() {
             ) : null}
           </View>
 
-          {/* ================= 3. ADDRESS DETAILS & CATEGORY ================= */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionCardHeader}>
-              <Text style={styles.sectionCardTitle}>Thông tin gợi nhớ</Text>
-              <Text style={styles.sectionCardSubtitle}>
-                Giúp bạn dễ dàng nhận diện địa chỉ này khi tạo đơn
-              </Text>
-            </View>
-
-            <View style={styles.fieldItem}>
-              <Text style={styles.label}>Tên gợi nhớ địa chỉ</Text>
+          {/* ================= 3. COMPACT FORM CARD ================= */}
+          <View style={styles.formCard}>
+            {/* Tên gợi nhớ */}
+            <View style={styles.formRow}>
+              <Text style={styles.fieldLabel}>Tên gợi nhớ</Text>
               <TextInput
                 accessibilityLabel="Tên gợi nhớ địa chỉ"
                 onBlur={() => setFocusedField(null)}
                 onChangeText={setAddressLabel}
                 onFocus={() => setFocusedField('label')}
-                placeholder="VD: Kho tổng Tân Bình, Cửa hàng Q1, Xưởng may..."
+                placeholder="Kho Tân Bình, Cửa hàng Q1..."
                 placeholderTextColor={customerPalette.offlineGray}
                 style={[
-                  styles.input,
+                  styles.compactInput,
                   focusedField === 'label' && styles.inputFocused,
                 ]}
                 testID="ca-label-input"
@@ -641,17 +594,18 @@ export default function CustomerAddAddressScreen() {
               />
             </View>
 
-            <View style={styles.fieldItem}>
-              <Text style={styles.label}>Chi tiết số nhà, số kho hoặc phòng (tùy chọn)</Text>
+            {/* Chi tiết số nhà, số kho */}
+            <View style={styles.formRow}>
+              <Text style={styles.fieldLabel}>Chi tiết số kho / phòng</Text>
               <TextInput
                 accessibilityLabel="Chi tiết địa chỉ"
                 onBlur={() => setFocusedField(null)}
                 onChangeText={setAddressDetail}
                 onFocus={() => setFocusedField('detail')}
-                placeholder="VD: Cổng số 2, Kho A3 hoặc Tầng 4, Phòng 402"
+                placeholder="Cổng 2, Kho A3, Tầng 4..."
                 placeholderTextColor={customerPalette.offlineGray}
                 style={[
-                  styles.input,
+                  styles.compactInput,
                   focusedField === 'detail' && styles.inputFocused,
                 ]}
                 testID="ca-detail-input"
@@ -659,9 +613,10 @@ export default function CustomerAddAddressScreen() {
               />
             </View>
 
-            <View style={styles.fieldItem}>
-              <Text style={styles.label}>Loại địa chỉ</Text>
-              <View style={styles.categoryChipsRow}>
+            {/* Phân loại địa chỉ */}
+            <View style={styles.formRow}>
+              <Text style={styles.fieldLabel}>Loại địa chỉ</Text>
+              <View style={styles.chipsRow}>
                 {CATEGORY_CHIPS.map((chip) => {
                   const active = category === chip.key;
                   const IconComp = chip.Icon;
@@ -678,7 +633,7 @@ export default function CustomerAddAddressScreen() {
                     >
                       <IconComp
                         color={active ? customerPalette.surfaceWhite : customerPalette.textSubtle}
-                        size={15}
+                        size={13}
                         strokeWidth={2}
                       />
                       <Text style={[styles.chipText, active && styles.chipTextActive]}>
@@ -689,26 +644,20 @@ export default function CustomerAddAddressScreen() {
                 })}
               </View>
             </View>
-          </View>
 
-          {/* ================= 4. CONTACT AT LOCATION ================= */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionCardHeader}>
-              <Text style={styles.sectionCardTitle}>Thủ kho giao nhận</Text>
-              <Text style={styles.sectionCardSubtitle}>
-                Người đại diện giao nhận hàng trực tiếp tại địa chỉ này
-              </Text>
-            </View>
+            <View style={styles.cardDivider} />
 
-            <View style={styles.contactRow}>
-              <View style={styles.contactCol}>
+            {/* Thủ kho giao nhận */}
+            <View style={styles.formRow}>
+              <Text style={styles.fieldLabel}>Thủ kho giao nhận</Text>
+              <View style={styles.contactTwoCols}>
                 <View
                   style={[
                     styles.contactInputWrap,
                     focusedField === 'contactName' && styles.inputFocused,
                   ]}
                 >
-                  <IconUser color={customerPalette.textSubtle} size={16} />
+                  <IconUser color={customerPalette.textSubtle} size={15} />
                   <TextInput
                     accessibilityLabel="Tên người liên hệ"
                     onBlur={() => setFocusedField(null)}
@@ -716,21 +665,19 @@ export default function CustomerAddAddressScreen() {
                     onFocus={() => setFocusedField('contactName')}
                     placeholder="Tên người liên hệ"
                     placeholderTextColor={customerPalette.offlineGray}
-                    style={styles.contactTextInput}
+                    style={styles.contactInput}
                     testID="ca-contact-name"
                     value={contactName}
                   />
                 </View>
-              </View>
 
-              <View style={styles.contactCol}>
                 <View
                   style={[
                     styles.contactInputWrap,
                     focusedField === 'contactPhone' && styles.inputFocused,
                   ]}
                 >
-                  <IconPhone color={customerPalette.textSubtle} size={16} />
+                  <IconPhone color={customerPalette.textSubtle} size={15} />
                   <TextInput
                     accessibilityLabel="Số điện thoại"
                     keyboardType="phone-pad"
@@ -739,17 +686,17 @@ export default function CustomerAddAddressScreen() {
                     onFocus={() => setFocusedField('contactPhone')}
                     placeholder="Số điện thoại"
                     placeholderTextColor={customerPalette.offlineGray}
-                    style={styles.contactTextInput}
+                    style={styles.contactInput}
                     testID="ca-contact-phone"
                     value={contactPhone}
                   />
                 </View>
               </View>
             </View>
-          </View>
 
-          {/* ================= 5. DEFAULT SETTING ================= */}
-          <View style={styles.sectionCard}>
+            <View style={styles.cardDivider} />
+
+            {/* Checkbox mặc định */}
             <Pressable
               accessibilityRole="checkbox"
               accessibilityState={{ checked: isDefault }}
@@ -758,16 +705,11 @@ export default function CustomerAddAddressScreen() {
               testID="ca-default-checkbox"
             >
               <View style={[styles.checkbox, isDefault && styles.checkboxOn]}>
-                {isDefault ? <IconCheck color={customerPalette.surfaceWhite} size={14} strokeWidth={3} /> : null}
+                {isDefault ? <IconCheck color={customerPalette.surfaceWhite} size={13} strokeWidth={3} /> : null}
               </View>
-              <View style={styles.checkboxTextWrap}>
-                <Text style={styles.checkboxLabel}>
-                  Đặt làm địa chỉ mặc định khi tạo đơn vận chuyển
-                </Text>
-                <Text style={styles.checkboxSubtext}>
-                  Hệ thống sẽ tự động chọn địa chỉ này làm điểm lấy/gửi hàng đầu tiên
-                </Text>
-              </View>
+              <Text style={styles.checkboxLabel}>
+                Đặt làm địa chỉ mặc định khi tạo đơn vận chuyển
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -784,18 +726,18 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.canvas,
   },
   scrollContent: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
     paddingBottom: spacing.xxxl,
     alignItems: 'center',
   },
   innerWrapper: {
     width: '100%',
     maxWidth: layout.contentMaxWidth,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
 
-  /* Header Controls */
+  /* Header */
   backBtn: {
     width: 44,
     height: 44,
@@ -808,48 +750,17 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
 
-  /* Inset Grouped Section Cards */
-  sectionCard: {
+  /* Map Card */
+  mapContainerCard: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: radius.cardLg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: customerPalette.cardBorder,
-    shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-    gap: spacing.sm,
-    ...iosContinuousCurve,
-  },
-  sectionCardHeader: {
-    gap: spacing.hairline,
-    marginBottom: spacing.xxs,
-  },
-  sectionCardTitle: {
-    fontSize: typeScale.subheadline.fontSize,
-    lineHeight: typeScale.subheadline.lineHeight,
-    fontWeight: '700',
-    color: customerPalette.textSlateDark,
-  },
-  sectionCardSubtitle: {
-    fontSize: typeScale.caption1.fontSize,
-    lineHeight: typeScale.caption1.lineHeight,
-    color: customerPalette.textMutedSlate,
-  },
-
-  /* Map Graphic Card */
-  mapCard: {
     borderRadius: radius.card,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    backgroundColor: customerPalette.canvas,
     ...iosContinuousCurve,
   },
   mapGraphic: {
-    height: 200,
+    height: 155,
     backgroundColor: customerPalette.cardBorder,
     position: 'relative',
     overflow: 'hidden',
@@ -864,7 +775,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    height: 22,
+    height: 20,
     backgroundColor: customerPalette.cardBorder,
     top: '44%',
   },
@@ -872,186 +783,114 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 22,
+    width: 20,
     backgroundColor: customerPalette.cardBorder,
     left: '52%',
   },
   mapPinPulse: {
     position: 'absolute',
-    width: 54,
-    height: 54,
+    width: 46,
+    height: 46,
     borderRadius: radius.pill,
     backgroundColor: customerPalette.primaryBg,
   },
   mapPinWrap: {
     zIndex: 5,
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
   },
-  mapTelemetryBadge: {
+  mapGpsFloatingBtn: {
     position: 'absolute',
-    left: spacing.xs,
-    top: spacing.xs,
+    right: spacing.xs,
+    bottom: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xxs,
+    gap: 4,
     backgroundColor: customerPalette.surfaceWhite,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  telemetryDot: {
-    width: 6,
-    height: 6,
-    borderRadius: radius.pill,
-    backgroundColor: customerPalette.onlineGreen,
-  },
-  telemetryText: {
+  mapGpsFloatingText: {
     fontSize: typeScale.caption2.fontSize,
     lineHeight: typeScale.caption2.lineHeight,
-    fontWeight: '600',
-    color: customerPalette.textMutedSlate,
+    fontWeight: '700',
+    color: customerPalette.primary,
   },
-  selectedAddressBanner: {
+  addressBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     backgroundColor: customerPalette.surfaceWhite,
-    padding: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: customerPalette.cardBorder,
   },
-  selectedPinIcon: {
-    width: 32,
-    height: 32,
+  pinIconWrap: {
+    width: 26,
+    height: 26,
     borderRadius: radius.pill,
     backgroundColor: customerPalette.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: customerPalette.primaryBorder,
   },
-  selectedAddressCol: {
+  addressBarText: {
     flex: 1,
-    gap: spacing.hairline,
-  },
-  selectedAddressText: {
     fontSize: typeScale.footnote.fontSize,
     lineHeight: typeScale.footnote.lineHeight,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
-  selectedCoordsText: {
-    fontSize: typeScale.caption2.fontSize,
-    lineHeight: typeScale.caption2.lineHeight,
-    color: customerPalette.textSubtle,
-    fontWeight: '500',
-  },
-
-  /* GPS Action Button */
-  gpsActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: customerPalette.canvas,
-    borderWidth: 1,
-    borderColor: customerPalette.cardBorder,
-    borderRadius: radius.control,
-    padding: spacing.sm,
-    ...iosContinuousCurve,
-  },
-  gpsLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
-  },
-  gpsIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.pill,
-    backgroundColor: customerPalette.surfaceWhite,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: customerPalette.cardBorder,
-  },
-  gpsTextCol: {
-    flex: 1,
-    gap: spacing.hairline,
-  },
-  gpsBtnTitle: {
-    fontSize: typeScale.subheadline.fontSize,
-    lineHeight: typeScale.subheadline.lineHeight,
-    fontWeight: '600',
-    color: customerPalette.primary,
-  },
-  gpsBtnDesc: {
-    fontSize: typeScale.caption1.fontSize,
-    lineHeight: typeScale.caption1.lineHeight,
-    color: customerPalette.textMutedSlate,
-  },
-  gpsArrow: {
-    fontSize: typeScale.title2.fontSize,
-    color: customerPalette.textSubtle,
-    fontWeight: '600',
-    marginLeft: spacing.xs,
-  },
-
-  /* Location Feedback Pill */
   locationFeedbackRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     backgroundColor: customerPalette.primaryBg,
-    borderWidth: 1,
-    borderColor: customerPalette.primaryBorder,
-    borderRadius: radius.control,
+    borderTopWidth: 1,
+    borderTopColor: customerPalette.primaryBorder,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingVertical: 5,
   },
   locationFeedbackDot: {
-    width: 6,
-    height: 6,
+    width: 5,
+    height: 5,
     borderRadius: radius.pill,
     backgroundColor: customerPalette.primary,
   },
   locationFeedbackText: {
     flex: 1,
-    fontSize: typeScale.caption1.fontSize,
-    lineHeight: typeScale.caption1.lineHeight,
+    fontSize: typeScale.caption2.fontSize,
+    lineHeight: typeScale.caption2.lineHeight,
     fontWeight: '600',
     color: customerPalette.primary,
   },
 
-  /* Search Input */
+  /* Search */
+  searchSection: {
+    position: 'relative',
+    zIndex: 10,
+  },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: customerPalette.canvas,
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     borderRadius: radius.control,
     paddingHorizontal: spacing.sm,
-    height: 46,
+    height: 42,
     ...iosContinuousCurve,
   },
   searchInput: {
     flex: 1,
     minWidth: 0,
-    fontSize: typeScale.subheadline.fontSize,
-    lineHeight: typeScale.subheadline.lineHeight,
+    fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
     color: customerPalette.textSlateDark,
     fontWeight: '500',
     height: '100%',
@@ -1062,34 +901,28 @@ const styles = StyleSheet.create({
       } as any,
     }),
   },
-  inputFocused: {
-    borderColor: customerPalette.primary,
-    backgroundColor: customerPalette.surfaceWhite,
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-
-  /* Suggestions */
   suggestionsCard: {
+    position: 'absolute',
+    top: 46,
+    left: 0,
+    right: 0,
     backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     borderRadius: radius.card,
     overflow: 'hidden',
     shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    zIndex: 20,
     ...iosContinuousCurve,
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },
@@ -1100,48 +933,49 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: customerPalette.cardBorder,
   },
-  suggestionPin: {
-    width: 24,
-    height: 24,
-    borderRadius: radius.pill,
-    backgroundColor: customerPalette.primaryBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   suggestionTextWrap: {
     flex: 1,
-    gap: spacing.hairline,
+    gap: 1,
   },
   suggestionName: {
-    fontSize: typeScale.subheadline.fontSize,
-    lineHeight: typeScale.subheadline.lineHeight,
+    fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
     fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   suggestionAddress: {
-    fontSize: typeScale.caption1.fontSize,
-    lineHeight: typeScale.caption1.lineHeight,
+    fontSize: typeScale.caption2.fontSize,
+    lineHeight: typeScale.caption2.lineHeight,
     color: customerPalette.textSubtle,
   },
 
-  /* Form Fields */
-  fieldItem: {
+  /* Form Card */
+  formCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.cardLg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    gap: spacing.sm,
+    ...iosContinuousCurve,
+  },
+  formRow: {
     gap: spacing.xxs,
   },
-  label: {
+  fieldLabel: {
     fontSize: typeScale.caption1.fontSize,
     lineHeight: typeScale.caption1.lineHeight,
     fontWeight: '600',
     color: customerPalette.textMutedSlate,
   },
-  input: {
+  compactInput: {
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     borderRadius: radius.control,
     paddingHorizontal: spacing.sm,
-    height: 46,
-    fontSize: typeScale.subheadline.fontSize,
-    lineHeight: typeScale.subheadline.lineHeight,
+    height: 42,
+    fontSize: typeScale.footnote.fontSize,
+    lineHeight: typeScale.footnote.lineHeight,
     color: customerPalette.textSlateDark,
     fontWeight: '500',
     backgroundColor: customerPalette.canvas,
@@ -1153,20 +987,17 @@ const styles = StyleSheet.create({
       } as any,
     }),
   },
-
-  /* Category Chips */
-  categoryChipsRow: {
+  chipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
-    marginTop: spacing.xxs,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xxs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: radius.pill,
     backgroundColor: customerPalette.canvas,
     borderWidth: 1,
@@ -1177,8 +1008,8 @@ const styles = StyleSheet.create({
     borderColor: customerPalette.primary,
   },
   chipText: {
-    fontSize: typeScale.footnote.fontSize,
-    lineHeight: typeScale.footnote.lineHeight,
+    fontSize: typeScale.caption1.fontSize,
+    lineHeight: typeScale.caption1.lineHeight,
     fontWeight: '500',
     color: customerPalette.textMutedSlate,
   },
@@ -1186,16 +1017,17 @@ const styles = StyleSheet.create({
     color: customerPalette.surfaceWhite,
     fontWeight: '600',
   },
-
-  /* Contact Row */
-  contactRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  cardDivider: {
+    height: 1,
+    backgroundColor: customerPalette.cardBorder,
+    marginVertical: spacing.hairline,
   },
-  contactCol: {
-    flex: 1,
+  contactTwoCols: {
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   contactInputWrap: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
@@ -1203,11 +1035,11 @@ const styles = StyleSheet.create({
     borderColor: customerPalette.cardBorder,
     borderRadius: radius.control,
     paddingHorizontal: spacing.sm,
-    height: 46,
+    height: 42,
     backgroundColor: customerPalette.canvas,
     ...iosContinuousCurve,
   },
-  contactTextInput: {
+  contactInput: {
     flex: 1,
     minWidth: 0,
     fontSize: typeScale.footnote.fontSize,
@@ -1221,16 +1053,15 @@ const styles = StyleSheet.create({
       } as any,
     }),
   },
-
-  /* Checkbox Row */
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   checkbox: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     borderRadius: leopardRadius.md,
     borderWidth: 1.5,
     borderColor: customerPalette.cardBorder,
@@ -1242,20 +1073,18 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primary,
     borderColor: customerPalette.primary,
   },
-  checkboxTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
   checkboxLabel: {
-    fontSize: typeScale.subheadline.fontSize,
-    lineHeight: typeScale.subheadline.lineHeight,
+    flex: 1,
+    fontSize: typeScale.caption1.fontSize,
+    lineHeight: typeScale.caption1.lineHeight,
     color: customerPalette.textSlateDark,
-    fontWeight: '600',
+    fontWeight: '500',
   },
-  checkboxSubtext: {
-    fontSize: typeScale.caption2.fontSize,
-    lineHeight: typeScale.caption2.lineHeight,
-    color: customerPalette.textMutedSlate,
+
+  /* Input Focus */
+  inputFocused: {
+    borderColor: customerPalette.primary,
+    backgroundColor: customerPalette.surfaceWhite,
   },
 
   /* Sticky Footer */
@@ -1264,25 +1093,25 @@ const styles = StyleSheet.create({
     maxWidth: layout.contentMaxWidth,
     alignSelf: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   primaryBtn: {
     backgroundColor: customerPalette.primary,
     borderRadius: radius.card,
-    height: 52,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 3,
     ...iosContinuousCurve,
   },
   primaryBtnText: {
     color: customerPalette.surfaceWhite,
-    fontSize: typeScale.callout.fontSize,
-    lineHeight: typeScale.callout.lineHeight,
+    fontSize: typeScale.subheadline.fontSize,
+    lineHeight: typeScale.subheadline.lineHeight,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
