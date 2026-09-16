@@ -3,8 +3,6 @@ import { PaymentErrorCode, MediaErrorCode } from './errors.js';
 
 import {
   DriverAvailability,
-  FleetMemberRole,
-  FleetMemberStatus,
   MediaType,
   OrderStatus,
   parsePageQuery,
@@ -23,8 +21,6 @@ describe('shared domain contracts', () => {
     expect({
       Role,
       UserStatus,
-      FleetMemberRole,
-      FleetMemberStatus,
       DriverAvailability,
       OrderStatus,
       StopType,
@@ -34,10 +30,8 @@ describe('shared domain contracts', () => {
       VehicleType,
       WithdrawalStatus,
     }).toEqual({
-      Role: ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'],
+      Role: ['CUSTOMER', 'DRIVER', 'ADMIN'],
       UserStatus: ['ACTIVE', 'DISABLED'],
-      FleetMemberRole: ['OWNER', 'DRIVER'],
-      FleetMemberStatus: ['INVITED', 'ACTIVE', 'REMOVED'],
       DriverAvailability: ['OFFLINE', 'AVAILABLE', 'BUSY'],
       OrderStatus: [
         'REQUESTED',

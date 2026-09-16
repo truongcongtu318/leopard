@@ -51,7 +51,6 @@ describe('getMobileHome', () => {
   const cases = [
     ['CUSTOMER', '/customer/home'],
     ['DRIVER', '/(public)/login'],
-    ['FLEET_OWNER', '/(public)/login'],
     ['ADMIN', '/(public)/login'],
   ] as const;
 
@@ -63,7 +62,7 @@ describe('getMobileHome', () => {
 });
 
 describe('getMobileRouteDecision', () => {
-  it.each(['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const)(
+  it.each(['CUSTOMER', 'DRIVER', 'ADMIN'] as const)(
     'never permits protected content for %s before hydration',
     (role) => {
       expect(
@@ -94,7 +93,7 @@ describe('getMobileRouteDecision', () => {
     });
   });
 
-  it.each(['FLEET_OWNER', 'ADMIN', 'DRIVER'] as const)(
+  it.each(['ADMIN', 'DRIVER'] as const)(
     'denies unsupported mobile role %s explicitly',
     (role) => {
       expect(

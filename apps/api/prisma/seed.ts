@@ -18,7 +18,7 @@ type TimestampedManifest = {
 type ManifestUser = TimestampedManifest & {
   id: string;
   phone: string;
-  role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
+  role: 'CUSTOMER' | 'DRIVER' | 'ADMIN';
   status: 'ACTIVE' | 'DISABLED';
   /**
    * Onboarding fields. `onboardedAt` is what the API exposes as
@@ -85,22 +85,6 @@ type DriverProfileManifest = TimestampedManifest & {
   balanceVnd?: number;
   documents?: DriverDocumentManifest[];
   contracts?: DriverContractManifest[];
-};
-
-type FleetManifest = TimestampedManifest & {
-  id: string;
-  name: string;
-};
-
-type FleetMemberManifest = TimestampedManifest & {
-  id: string;
-  fleetId: string;
-  userId: string;
-  role: 'OWNER' | 'DRIVER';
-  status: 'INVITED' | 'ACTIVE' | 'REMOVED';
-  invitedAt: string;
-  joinedAt: string | null;
-  removedAt: string | null;
 };
 
 type RefreshSessionManifest = TimestampedManifest & {
@@ -217,16 +201,12 @@ type OrderManifest = TimestampedManifest & {
 type DemoManifest = {
   users: ManifestUser[];
   driverProfiles: DriverProfileManifest[];
-  fleets: FleetManifest[];
-  fleetMembers: FleetMemberManifest[];
   refreshSessions: RefreshSessionManifest[];
   orders: OrderManifest[];
 };
 
 type DemoBoundary = {
   driverProfileIds: string[];
-  fleetIds: string[];
-  fleetMemberIds: string[];
   mediaObjectIds: string[];
   orderIds: string[];
   orderStatusHistoryIds: string[];
@@ -285,10 +265,6 @@ function requiredCreatedAt(value: string | undefined, label: string): Date {
   return new Date(value);
 }
 
-function createdAtForFleetMember(member: FleetMemberManifest): Date {
-  return member.createdAt ? new Date(member.createdAt) : new Date(member.invitedAt);
-}
-
 function createdAtForOrder(order: OrderManifest): Date {
   if (order.createdAt) {
     return new Date(order.createdAt);
@@ -332,8 +308,6 @@ async function loadExistingDemoBoundary(client: SeedClient, manifest: DemoManife
 
   return {
     driverProfileIds: manifest.driverProfiles.map((profile) => profile.id),
-    fleetIds: manifest.fleets.map((fleet) => fleet.id),
-    fleetMemberIds: manifest.fleetMembers.map((member) => member.id),
     mediaObjectIds: manifest.orders.flatMap((order) =>
       order.mediaObjects.map((mediaObject) => mediaObject.id),
     ),
@@ -565,34 +539,13 @@ async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoun
     });
   }
 
-  if (boundary.userIds.length > 0 || boundary.fleetIds.length > 0) {
+  if (boundary.userIds.length > 0) {
     await client.refreshSession.deleteMany({
       where: {
         OR: [
           {
             id: {
               in: boundary.refreshSessionIds,
-            },
-          },
-          {
-            userId: {
-              in: boundary.userIds,
-            },
-          },
-        ],
-      },
-    });
-    await client.fleetMember.deleteMany({
-      where: {
-        OR: [
-          {
-            id: {
-              in: boundary.fleetMemberIds,
-            },
-          },
-          {
-            fleetId: {
-              in: boundary.fleetIds,
             },
           },
           {
@@ -617,13 +570,6 @@ async function deleteExistingDemoBoundary(client: SeedClient, boundary: DemoBoun
             },
           },
         ],
-      },
-    });
-    await client.fleet.deleteMany({
-      where: {
-        id: {
-          in: boundary.fleetIds,
-        },
       },
     });
     await client.user.deleteMany({
@@ -771,41 +717,6 @@ async function insertDriverContracts(client: SeedClient, manifest: DemoManifest)
   await client.driverContract.createMany({ data: rows });
 }
 
-async function insertFleets(client: SeedClient, manifest: DemoManifest): Promise<void> {
-  await client.fleet.createMany({
-    data: manifest.fleets.map((fleet) => {
-      const createdAt = requiredCreatedAt(fleet.createdAt, `fleets[${fleet.id}]`);
-
-      return {
-        id: fleet.id,
-        name: fleet.name,
-        createdAt,
-        updatedAt: createdAt,
-      };
-    }),
-  });
-}
-
-async function insertFleetMembers(client: SeedClient, manifest: DemoManifest): Promise<void> {
-  await client.fleetMember.createMany({
-    data: manifest.fleetMembers.map((member) => {
-      const createdAt = createdAtForFleetMember(member);
-
-      return {
-        id: member.id,
-        fleetId: member.fleetId,
-        userId: member.userId,
-        role: member.role,
-        status: member.status,
-        invitedAt: new Date(member.invitedAt),
-        joinedAt: toDate(member.joinedAt),
-        removedAt: toDate(member.removedAt),
-        createdAt,
-        updatedAt: createdAt,
-      };
-    }),
-  });
-}
 
 async function insertRefreshSessions(client: SeedClient, manifest: DemoManifest): Promise<void> {
   await client.refreshSession.createMany({
@@ -1034,8 +945,6 @@ export async function seedPilotData(): Promise<void> {
       await deleteExistingDemoBoundary(client, boundary);
       await insertUsers(client, manifest);
       await insertDriverProfiles(client, manifest);
-      await insertFleets(client, manifest);
-      await insertFleetMembers(client, manifest);
       await insertOrders(client, manifest);
       await insertOrderChildren(client, manifest);
       await insertRefreshSessions(client, manifest);
@@ -1047,7 +956,7 @@ export async function seedPilotData(): Promise<void> {
   );
 
   process.stdout.write(
-    `Seeded ${manifest.users.length} users, ${manifest.fleets.length} fleets and ${manifest.orders.length} orders.\n`,
+    `Seeded ${manifest.users.length} users and ${manifest.orders.length} orders.\n`,
   );
 }
 

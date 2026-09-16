@@ -38,7 +38,6 @@ export function AdminNotice({ notice }: Readonly<{ notice: AdminNoticeView }>) {
 const listLabel: Readonly<Record<AdminListScreen, string>> = {
   orders: 'Đơn hàng',
   users: 'Người dùng',
-  fleets: 'Đội xe',
   drivers: 'Tài xế',
 };
 

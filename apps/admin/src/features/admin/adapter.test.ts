@@ -7,7 +7,6 @@ import {
   deepFreeze,
   formatDateTime,
   formatDriverDisplayId,
-  formatFleetDisplayId,
   formatMaskedPhone,
   formatOrderReference,
   formatTimeOnly,
@@ -37,8 +36,6 @@ describe('Admin URL and privacy boundary', () => {
       role: 'ALL',
       userStatus: 'ALL',
       availability: 'ALL',
-      membershipStatus: 'ALL',
-      fleetId: '',
       customerId: '44444444-4444-4444-8444-444444444001',
       driverId: '',
       from: '2026-08-01',
@@ -57,8 +54,6 @@ describe('Admin URL and privacy boundary', () => {
         role: 'DRIVER',
         userStatus: 'DISABLED',
         availability: 'ALL',
-        membershipStatus: 'ALL',
-        fleetId: '',
         customerId: '',
         driverId: '',
         from: '',
@@ -125,7 +120,6 @@ describe('Admin URL and privacy boundary', () => {
       page: 1,
       pageSize: 20,
     });
-    expect(parseAdminListFilters('fleets', {})).toMatchObject({ sort: 'name-asc' });
     expect(parseAdminListFilters('users', { role: 'ADMIN', userStatus: 'ACTIVE' })).toMatchObject({
       role: 'ADMIN',
       userStatus: 'ACTIVE',
@@ -164,7 +158,7 @@ describe('Formatters and Utility Helpers', () => {
     expect(formatTimeOnly('invalid-date')).toBe('');
   });
 
-  it('formats order reference, fleet display ID, and driver display ID', () => {
+  it('formats order reference and driver display ID', () => {
     expect(
       formatOrderReference({
         id: '33333333-3333-4333-8333-333333333101',
@@ -176,17 +170,6 @@ describe('Formatters and Utility Helpers', () => {
         id: '33333333-3333-4333-8333-333333333101',
       }),
     ).toBe('LP-A-260815-333');
-    expect(
-      formatFleetDisplayId({
-        id: '11111111-1111-4111-8111-111111111001',
-        displayId: 'FLEET-OPS-001',
-      }),
-    ).toBe('FLEET-OPS-001');
-    expect(
-      formatFleetDisplayId({
-        id: '11111111-1111-4111-8111-111111111001',
-      }),
-    ).toBe('FLEET-1111');
     expect(
       formatDriverDisplayId({
         id: '22222222-2222-4222-8222-222222222001',

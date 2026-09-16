@@ -41,9 +41,6 @@ describe('TrackingRepository.recordPointAtomically', () => {
           driverId: 'driver-1',
         }),
       },
-      fleetMember: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       $queryRaw: jest.fn(),
     };
     prisma = {

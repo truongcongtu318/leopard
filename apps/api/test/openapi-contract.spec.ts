@@ -6,10 +6,8 @@ import yaml from 'js-yaml';
 // ── Canonical enum values from packages/shared/src/enums.ts ──────────────
 
 const SHARED_ENUMS: Record<string, readonly string[]> = {
-  Role: ['CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'],
+  Role: ['CUSTOMER', 'DRIVER', 'ADMIN'],
   UserStatus: ['ACTIVE', 'DISABLED'],
-  FleetMemberRole: ['OWNER', 'DRIVER'],
-  FleetMemberStatus: ['INVITED', 'ACTIVE', 'REMOVED'],
   DriverAvailability: ['OFFLINE', 'AVAILABLE', 'BUSY'],
   VehicleType: ['MOTORBIKE', 'VAN', 'TRUCK'],
   OrderStatus: ['REQUESTED', 'ACCEPTED', 'PICKING_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'],
@@ -372,10 +370,7 @@ describe('OpenAPI 3.1 Contract', () => {
   });
 
   describe('Wave 3 tracking contract', () => {
-    const trackingPaths = [
-      '/orders/{id}/tracking',
-      '/fleet/orders/{id}/tracking',
-    ];
+    const trackingPaths = ['/orders/{id}/tracking'];
 
     it.each(trackingPaths)(
       'should expose the shared tracking query and page projection on %s',

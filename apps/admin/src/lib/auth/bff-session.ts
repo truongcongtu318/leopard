@@ -12,9 +12,7 @@ export interface BackendAuthResponse {
   user: {
     id: string;
     phone: string;
-    // Intent: mirror backend Role enum (still includes FLEET_OWNER upstream);
-    // admin web itself only grants ADMIN via role-policy guard.
-    role: "CUSTOMER" | "DRIVER" | "FLEET_OWNER" | "ADMIN";
+    role: "CUSTOMER" | "DRIVER" | "ADMIN";
     status: string;
   };
   session: BackendAuthSession;

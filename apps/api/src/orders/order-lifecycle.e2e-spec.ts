@@ -33,7 +33,6 @@ class TransactionVisibilityPrismaService extends InMemoryPrismaService {
     tx.users = new Map(this.users);
     tx.refreshSessions = new Map(this.refreshSessions);
     tx.driverProfiles = new Map(this.driverProfiles);
-    tx.fleetMembers = new Map(this.fleetMembers);
     tx.orders = new Map(this.orders);
     tx.orderStops = new Map(this.orderStops);
     tx.orderStatusHistories = new Map(this.orderStatusHistories);
@@ -48,7 +47,6 @@ class TransactionVisibilityPrismaService extends InMemoryPrismaService {
     this.users = tx.users;
     this.refreshSessions = tx.refreshSessions;
     this.driverProfiles = tx.driverProfiles;
-    this.fleetMembers = tx.fleetMembers;
     this.orders = tx.orders;
     this.orderStops = tx.orderStops;
     this.orderStatusHistories = tx.orderStatusHistories;

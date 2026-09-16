@@ -21,11 +21,8 @@ describe('Order & Driver Domain Authorization Matrix', () => {
   let customerSession: AuthSessionBody;
   let customer2Session: AuthSessionBody;
   let driverSession: AuthSessionBody;
-  let fleetOwnerSession: AuthSessionBody;
   let adminSession: AuthSessionBody;
   let customerUserId: string;
-  let driverUserId: string;
-  let fleetOwnerUserId: string;
   let prismaMock: InMemoryPrismaService;
 
   beforeEach(async () => {
@@ -80,20 +77,11 @@ describe('Order & Driver Domain Authorization Matrix', () => {
     const d = await prismaMock.user.create({
       data: { phone: '+84910000003', role: 'DRIVER', status: 'ACTIVE' },
     });
-    driverUserId = d.id;
     await prismaMock.driverProfile.create({
       data: { userId: d.id, availability: 'AVAILABLE', vehicleType: 'MOTORBIKE' },
     });
     const ds = await refreshSessions.create(d.id);
     driverSession = tokenService.createAuthSession(d, ds);
-
-    // FLEET OWNER
-    const fo = await prismaMock.user.create({
-      data: { phone: '+84910000004', role: 'FLEET_OWNER', status: 'ACTIVE' },
-    });
-    fleetOwnerUserId = fo.id;
-    const fos = await refreshSessions.create(fo.id);
-    fleetOwnerSession = tokenService.createAuthSession(fo, fos);
 
     // ADMIN
     const adm = await prismaMock.user.create({
@@ -114,12 +102,6 @@ describe('Order & Driver Domain Authorization Matrix', () => {
       await request(app.getHttpServer())
         .post('/orders')
         .set('Authorization', `Bearer ${driverSession.accessToken}`)
-        .send({})
-        .expect(403);
-
-      await request(app.getHttpServer())
-        .post('/orders')
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
         .send({})
         .expect(403);
 
@@ -150,68 +132,6 @@ describe('Order & Driver Domain Authorization Matrix', () => {
         .expect(404);
     });
 
-    it('returns 403 for fleet owner querying order assigned to driver not in their fleet', async () => {
-      const order = await prismaMock.order.create({
-        data: { customerId: customerUserId, driverId: driverUserId, status: 'ACCEPTED', distanceMeters: 1000, durationSeconds: 300, priceVnd: 20000 },
-      });
-
-      // Fleet Owner with no fleet relationship to driver -> 403
-      await request(app.getHttpServer())
-        .get(`/orders/${order.id}`)
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
-        .expect(403);
-    });
-
-    it('returns 403 for fleet owner who is only a member (not OWNER) of the fleet', async () => {
-      const fleetId = 'fleet-1';
-      // Fleet Owner is only a DRIVER/MEMBER in the fleet
-      await prismaMock.fleetMember.create({
-        data: { fleetId, userId: fleetOwnerUserId, role: 'DRIVER', status: 'ACTIVE' },
-      });
-      
-      // Let's create an order and driver
-      const driver = await prismaMock.user.create({
-        data: { phone: '+84910000010', role: 'DRIVER', status: 'ACTIVE' },
-      });
-      await prismaMock.fleetMember.create({
-        data: { fleetId, userId: driver.id, role: 'DRIVER', status: 'ACTIVE' },
-      });
-
-      const order = await prismaMock.order.create({
-        data: { customerId: customerUserId, driverId: driver.id, status: 'ACCEPTED', distanceMeters: 1000, durationSeconds: 300, priceVnd: 20000 },
-      });
-
-      // Fleet Owner is not OWNER in the fleet -> 403
-      await request(app.getHttpServer())
-        .get(`/orders/${order.id}`)
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
-        .expect(403);
-    });
-
-    it('returns 200 for fleet owner who is OWNER of the fleet', async () => {
-      const fleetId = 'fleet-2';
-      await prismaMock.fleetMember.create({
-        data: { fleetId, userId: fleetOwnerUserId, role: 'OWNER', status: 'ACTIVE' },
-      });
-      
-      const driver = await prismaMock.user.create({
-        data: { phone: '+84910000011', role: 'DRIVER', status: 'ACTIVE' },
-      });
-      await prismaMock.fleetMember.create({
-        data: { fleetId, userId: driver.id, role: 'DRIVER', status: 'ACTIVE' },
-      });
-
-      const order = await prismaMock.order.create({
-        data: { customerId: customerUserId, driverId: driver.id, status: 'ACCEPTED', distanceMeters: 1000, durationSeconds: 300, priceVnd: 20000 },
-      });
-
-      // Fleet Owner is OWNER in the fleet -> 200
-      await request(app.getHttpServer())
-        .get(`/orders/${order.id}`)
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
-        .expect(200);
-    });
-
   });
 
   describe('PATCH /driver/availability', () => {
@@ -219,12 +139,6 @@ describe('Order & Driver Domain Authorization Matrix', () => {
       await request(app.getHttpServer())
         .patch('/driver/availability')
         .set('Authorization', `Bearer ${customerSession.accessToken}`)
-        .send({ availability: 'AVAILABLE' })
-        .expect(403);
-
-      await request(app.getHttpServer())
-        .patch('/driver/availability')
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
         .send({ availability: 'AVAILABLE' })
         .expect(403);
 
@@ -248,18 +162,11 @@ describe('Order & Driver Domain Authorization Matrix', () => {
         .set('Authorization', `Bearer ${driverSession.accessToken}`)
         .send({ status: 'PICKING_UP', clientRequestId: 'req-1' })
         .expect(403);
-
-      // Fleet Owner -> 403
-      await request(app.getHttpServer())
-        .post(`/driver/orders/${order.id}/status`)
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
-        .send({ status: 'PICKING_UP', clientRequestId: 'req-2' })
-        .expect(403);
     });
   });
 
   describe('POST /orders/:id/cancel', () => {
-    it('allows CUSTOMER (owner) and ADMIN, blocks DRIVER and FLEET_OWNER', async () => {
+    it('allows CUSTOMER (owner) and ADMIN, blocks DRIVER', async () => {
       const order = await prismaMock.order.create({
         data: { customerId: customerUserId, status: 'REQUESTED', distanceMeters: 1000, durationSeconds: 300, priceVnd: 20000 },
       });
@@ -267,12 +174,6 @@ describe('Order & Driver Domain Authorization Matrix', () => {
       await request(app.getHttpServer())
         .post(`/orders/${order.id}/cancel`)
         .set('Authorization', `Bearer ${driverSession.accessToken}`)
-        .send({})
-        .expect(403);
-
-      await request(app.getHttpServer())
-        .post(`/orders/${order.id}/cancel`)
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
         .send({})
         .expect(403);
     });

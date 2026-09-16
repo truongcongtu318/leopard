@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, ClipboardCheck, LayoutGrid, Package, ShieldCheck, Users } from 'lucide-react';
+import { ClipboardCheck, LayoutGrid, Package, ShieldCheck, Users } from 'lucide-react';
 
 export interface NavItem {
   label: string;
@@ -35,7 +35,6 @@ const iconClass = 'h-5 w-5 shrink-0';
 function getNavIcon(href: string) {
   if (href.endsWith('/orders')) return <Package className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/users')) return <Users className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
-  if (href.endsWith('/fleets')) return <Building2 className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/drivers')) return <ShieldCheck className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/driver-applications')) return <ClipboardCheck className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   return <LayoutGrid className={iconClass} strokeWidth={1.75} aria-hidden="true" />;

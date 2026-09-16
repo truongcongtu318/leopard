@@ -130,8 +130,6 @@ describe('Admin guarded preview route', () => {
           role: 'ALL',
           userStatus: 'ALL',
           availability: 'ALL',
-          membershipStatus: 'ALL',
-          fleetId: '',
           customerId: '',
           driverId: '',
           from: '2026-08-01',

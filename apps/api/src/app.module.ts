@@ -11,7 +11,6 @@ import { MapsModule } from './maps/maps.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { RoutingEtaModule } from './routing-eta/routing-eta.module.js';
 import { TrackingModule } from './tracking/tracking.module.js';
-import { FleetsModule } from './fleets/fleets.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { MediaModule } from './media/media.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
@@ -27,7 +26,7 @@ import { ChatModule } from './chat/chat.module.js';
 import { DispatchModule } from './dispatch/dispatch.module.js';
 
 @Module({
-  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, RoutingEtaModule, MediaModule, NotificationsModule, InvoicesModule, PaymentsModule, FleetsModule, AdminModule, UsersModule, PromotionsModule, AddressesModule, ReviewsModule, ReportsModule, ChatModule, DispatchModule],
+  imports: [AuditModule, AuthModule, DocsModule, DriversModule, HealthModule, MapsModule, OrdersModule, TrackingModule, RoutingEtaModule, MediaModule, NotificationsModule, InvoicesModule, PaymentsModule, AdminModule, UsersModule, PromotionsModule, AddressesModule, ReviewsModule, ReportsModule, ChatModule, DispatchModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

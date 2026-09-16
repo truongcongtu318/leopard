@@ -27,7 +27,6 @@ import {
 import type {
   AdminCommandView,
   AdminDriverListItemView,
-  AdminFleetListItemView,
   AdminListItemView,
   AdminListRouteView,
   AdminListScreen as AdminListScreenName,
@@ -43,7 +42,6 @@ const fieldClass =
 const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
   orders: 'Đơn hàng',
   users: 'Người dùng',
-  fleets: 'Đội xe',
   drivers: 'Tài xế',
 };
 
@@ -51,8 +49,6 @@ function formatUserRole(role: string): string {
   switch (role) {
     case 'ADMIN':
       return 'Quản trị viên';
-    case 'FLEET_OWNER':
-      return 'Chủ đội xe';
     case 'DRIVER':
       return 'Tài xế';
     case 'CUSTOMER':
@@ -210,31 +206,6 @@ function userColumns(onSelectCommand?: (command: AdminCommandView) => void): Dat
   ];
 }
 
-function fleetColumns(): DataTableColumn[] {
-  return [
-    {
-      key: 'fleet', header: 'Đội xe', render: (row) => {
-        const fleet = row.item as AdminFleetListItemView;
-        return <div className="min-w-48"><p className="font-semibold break-words">{fleet.displayName}</p><p className="mt-xxs font-mono text-xs text-neutral-muted break-all">{fleet.displayId}</p></div>;
-      },
-    },
-    { key: 'owner', header: 'Chủ sở hữu & Liên kết', className: 'hidden xl:table-cell', render: (row) => <p className="min-w-48 break-words">{(row.item as AdminFleetListItemView).ownerSummary}</p> },
-    {
-      key: 'counts', header: 'Quy mô', render: (row) => {
-        const fleet = row.item as AdminFleetListItemView;
-        return <dl className="min-w-40 text-body-compact"><div className="flex justify-between gap-sm"><dt>Thành viên</dt><dd className="tabular-nums">{fleet.activeMembershipCount}</dd></div><div className="flex justify-between gap-sm"><dt>Tài xế</dt><dd className="tabular-nums">{fleet.driverCount}</dd></div><div className="flex justify-between gap-sm"><dt>Đơn hàng</dt><dd className="tabular-nums">{fleet.orderCount}</dd></div></dl>;
-      },
-    },
-    {
-      key: 'membership', header: 'Tình trạng thành viên', render: (row) => {
-        const fleet = row.item as AdminFleetListItemView;
-        return <p className={`min-w-56 break-words ${fleet.membershipState === 'error' ? 'text-danger-text' : 'text-neutral-muted'}`}>{fleet.membershipMessage}</p>;
-      },
-    },
-    { key: 'updated', header: 'Cập nhật', className: 'hidden lg:table-cell', render: (row) => <span className="tabular-nums">{(row.item as AdminFleetListItemView).updatedAtLabel}</span> },
-  ];
-}
-
 function DriverOrderLink({
   driver,
   previewContext,
@@ -263,7 +234,6 @@ function driverColumns(previewContext?: AdminPreviewContext): DataTableColumn[] 
     },
     { key: 'account', header: 'Tài khoản', render: (row) => <StatusBadge domain="userStatus" status={(row.item as AdminDriverListItemView).accountStatus} /> },
     { key: 'availability', header: 'Trạng thái tài xế', render: (row) => <StatusBadge domain="driverAvailability" status={(row.item as AdminDriverListItemView).availability} /> },
-    { key: 'membership', header: 'Thành viên đội xe', className: 'hidden lg:table-cell', render: (row) => <div className="min-w-44"><StatusBadge domain="fleetMemberStatus" status={(row.item as AdminDriverListItemView).membershipStatus} /><p className="mt-xxs text-xs text-neutral-muted break-words">{(row.item as AdminDriverListItemView).fleetLabel}</p></div> },
     { key: 'order', header: 'Đơn đang chạy', render: (row) => <DriverOrderLink driver={row.item as AdminDriverListItemView} previewContext={previewContext} /> },
     {
       key: 'location', header: 'Vị trí gần nhất', className: 'hidden xl:table-cell', render: (row) => {
@@ -281,7 +251,6 @@ function columnsFor(
 ): DataTableColumn[] {
   if (screen === 'orders') return orderColumns(previewContext);
   if (screen === 'users') return userColumns(onSelectCommand);
-  if (screen === 'fleets') return fleetColumns();
   return driverColumns(previewContext);
 }
 
@@ -342,19 +311,6 @@ function mobileItem(
       ) : undefined,
     };
   }
-  if (item.entity === 'fleet') {
-    return {
-      id: item.id,
-      heading: <span className="block border-l-4 border-brand pl-sm">{item.displayName}</span>,
-      details: [
-        { id: 'id', label: 'Mã đội xe', value: item.displayId },
-        { id: 'owner', label: 'Chủ sở hữu & Liên kết', value: item.ownerSummary },
-        { id: 'drivers', label: 'Tài xế', value: String(item.driverCount) },
-        { id: 'orders', label: 'Đơn hàng', value: String(item.orderCount) },
-        { id: 'membership', label: 'Tình trạng thành viên', value: item.membershipMessage },
-      ],
-    };
-  }
   return {
     id: item.id,
     heading: <span className={`block border-l-4 pl-sm ${item.locationCondition === 'stale' ? 'border-warning-border' : 'border-brand'}`}>{item.displayName}</span>,
@@ -362,8 +318,6 @@ function mobileItem(
     details: [
       { id: 'phone', label: 'Số điện thoại', value: item.maskedPhone },
       { id: 'account', label: 'Tài khoản', value: <StatusBadge domain="userStatus" status={item.accountStatus} /> },
-      { id: 'membership', label: 'Thành viên đội xe', value: <StatusBadge domain="fleetMemberStatus" status={item.membershipStatus} /> },
-      { id: 'fleet', label: 'Đội xe', value: item.fleetLabel },
       { id: 'order', label: 'Đơn đang chạy', value: <DriverOrderLink driver={item} previewContext={previewContext} /> },
       { id: 'location', label: 'Vị trí gần nhất', value: `${item.locationLabel} · ${item.locationUpdatedAtLabel}` },
     ],
@@ -429,17 +383,9 @@ function matchesSessionSearch(item: AdminListItemView, query: string): boolean {
       item.role.toLowerCase().includes(q)
     );
   }
-  if (item.entity === 'fleet') {
-    return (
-      item.displayName.toLowerCase().includes(q) ||
-      item.displayId.toLowerCase().includes(q) ||
-      item.ownerSummary.toLowerCase().includes(q)
-    );
-  }
   return (
     item.displayName.toLowerCase().includes(q) ||
-    item.maskedPhone.toLowerCase().includes(q) ||
-    item.fleetLabel.toLowerCase().includes(q)
+    item.maskedPhone.toLowerCase().includes(q)
   );
 }
 
@@ -494,7 +440,7 @@ function FilterFields({
       ) : screen === 'users' ? (
         <>
           <FilterField id={`${idPrefix}-role`} label="Vai trò">
-            <select id={`${idPrefix}-role`} className={fieldClass} defaultValue={filters.role} name="role"><option value="ALL">Tất cả</option><option value="CUSTOMER">Khách hàng</option><option value="DRIVER">Tài xế</option><option value="FLEET_OWNER">Chủ đội xe</option><option value="ADMIN">Quản trị viên</option></select>
+            <select id={`${idPrefix}-role`} className={fieldClass} defaultValue={filters.role} name="role"><option value="ALL">Tất cả</option><option value="CUSTOMER">Khách hàng</option><option value="DRIVER">Tài xế</option><option value="ADMIN">Quản trị viên</option></select>
           </FilterField>
           <FilterField id={`${idPrefix}-account`} label="Tài khoản">
             <select id={`${idPrefix}-account`} className={fieldClass} defaultValue={filters.userStatus} name="userStatus"><option value="ALL">Tất cả</option><option value="ACTIVE">Đang hoạt động</option><option value="DISABLED">Đã vô hiệu hóa</option></select>
@@ -507,12 +453,6 @@ function FilterFields({
           </FilterField>
           <FilterField id={`${idPrefix}-account`} label="Tài khoản">
             <select id={`${idPrefix}-account`} className={fieldClass} defaultValue={filters.userStatus} name="userStatus"><option value="ALL">Tất cả</option><option value="ACTIVE">Đang hoạt động</option><option value="DISABLED">Đã vô hiệu hóa</option></select>
-          </FilterField>
-          <FilterField id={`${idPrefix}-membership`} label="Liên kết đội xe">
-            <select id={`${idPrefix}-membership`} className={fieldClass} defaultValue={filters.membershipStatus} name="membershipStatus"><option value="ALL">Tất cả</option><option value="INVITED">Đã mời</option><option value="ACTIVE">Đang tham gia</option><option value="REMOVED">Đã gỡ khỏi đội xe</option></select>
-          </FilterField>
-          <FilterField id={`${idPrefix}-fleet`} label="Mã đội xe">
-            <input id={`${idPrefix}-fleet`} className={fieldClass} defaultValue={filters.fleetId} name="fleetId" placeholder="Mã hoặc ID đội xe" />
           </FilterField>
         </>
       ) : null}
@@ -538,7 +478,7 @@ function AdminFilters({
   sessionSearch?: string | undefined;
   onSessionSearchChange?: ((value: string) => void) | undefined;
 }>) {
-  const resetQuery = serializeAdminListFilters(screen, { ...view.filters, status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL', fleetId: '', customerId: '', driverId: '', from: '', to: '', page: 1 }, previewContext);
+  const resetQuery = serializeAdminListFilters(screen, { ...view.filters, status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', customerId: '', driverId: '', from: '', to: '', page: 1 }, previewContext);
   return (
     <section
       aria-label={`Phạm vi điều tra ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
@@ -677,7 +617,6 @@ export function AdminListScreen({
                     { id: 'ALL', label: 'Tất cả' },
                     { id: 'CUSTOMER', label: 'Khách hàng' },
                     { id: 'DRIVER', label: 'Tài xế' },
-                    { id: 'FLEET_OWNER', label: 'Chủ đội xe' },
                     { id: 'ADMIN', label: 'Quản trị viên' }
                   ].map((f) => {
                     const isActive = view.filters.role === f.id;

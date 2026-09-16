@@ -32,7 +32,6 @@ function decodeRoleFromToken(token: string): Role | null {
     if (
       role === 'CUSTOMER' ||
       role === 'DRIVER' ||
-      role === 'FLEET_OWNER' ||
       role === 'ADMIN'
     ) {
       return role;

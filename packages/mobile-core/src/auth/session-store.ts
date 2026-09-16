@@ -122,7 +122,6 @@ function isRole(value: string | null): value is Role {
   return (
     value === 'CUSTOMER' ||
     value === 'DRIVER' ||
-    value === 'FLEET_OWNER' ||
     value === 'ADMIN'
   );
 }

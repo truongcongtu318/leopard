@@ -1,7 +1,6 @@
 import type {
   CommandDialogState,
   DriverAvailability,
-  FleetMemberStatus,
   OrderStatus,
   PaymentStatus,
   UserStatus,
@@ -12,7 +11,6 @@ export type AdminPreviewScreen =
   | 'orders'
   | 'order-detail'
   | 'users'
-  | 'fleets'
   | 'drivers';
 
 export type AdminListScreen = Exclude<AdminPreviewScreen, 'overview' | 'order-detail'>;
@@ -33,7 +31,7 @@ export type AdminNoticeView = Readonly<{
 
 export type AdminOperationalCondition = Readonly<{
   id: string;
-  domain: 'health' | 'tracking' | 'media' | 'payment' | 'order' | 'user' | 'fleet' | 'driver';
+  domain: 'health' | 'tracking' | 'media' | 'payment' | 'order' | 'user' | 'driver';
   label: string;
   detail: string;
   tone: 'neutral' | 'info' | 'warning' | 'success' | 'danger';
@@ -89,11 +87,9 @@ export type AdminOverviewView = Readonly<{
 
 export type AdminListFilters = Readonly<{
   status: 'ALL' | OrderStatus;
-  role: 'ALL' | 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
+  role: 'ALL' | 'CUSTOMER' | 'DRIVER' | 'ADMIN';
   userStatus: 'ALL' | UserStatus;
   availability: 'ALL' | DriverAvailability;
-  membershipStatus: 'ALL' | FleetMemberStatus;
-  fleetId: string;
   customerId: string;
   driverId: string;
   from: string;
@@ -163,25 +159,11 @@ export type AdminUserListItemView = Readonly<{
   id: string;
   displayName: string;
   maskedPhone: string;
-  role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
+  role: 'CUSTOMER' | 'DRIVER' | 'ADMIN';
   status: UserStatus;
   updatedAtLabel: string;
   exceptionLabel: string | null;
   availableCommands: readonly AdminCommandView[];
-}>;
-
-export type AdminFleetListItemView = Readonly<{
-  entity: 'fleet';
-  id: string;
-  displayId: string;
-  displayName: string;
-  ownerSummary: string;
-  activeMembershipCount: number;
-  driverCount: number;
-  orderCount: number;
-  membershipState: 'success' | 'empty' | 'error';
-  membershipMessage: string;
-  updatedAtLabel: string;
 }>;
 
 export type AdminDriverListItemView = Readonly<{
@@ -191,8 +173,6 @@ export type AdminDriverListItemView = Readonly<{
   maskedPhone: string;
   accountStatus: UserStatus;
   availability: DriverAvailability;
-  membershipStatus: FleetMemberStatus;
-  fleetLabel: string;
   activeOrder: Readonly<{ reference: string; href: string }> | null;
   locationLabel: string;
   locationUpdatedAtLabel: string;
@@ -202,7 +182,6 @@ export type AdminDriverListItemView = Readonly<{
 export type AdminListItemView =
   | AdminOrderListItemView
   | AdminUserListItemView
-  | AdminFleetListItemView
   | AdminDriverListItemView;
 
 export type AdminListView = Readonly<{

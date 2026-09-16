@@ -27,9 +27,6 @@ describe('TruckDrivebyScene', () => {
     const { rerender } = render(<TruckDrivebyScene role="DRIVER" />);
     expect(screen.getByText(/TÀI XẾ ĐỐI TÁC/i)).toBeTruthy();
 
-    rerender(<TruckDrivebyScene role="FLEET_OWNER" />);
-    expect(screen.getByText(/CHỦ ĐỘI XE/i)).toBeTruthy();
-
     rerender(<TruckDrivebyScene role="ADMIN" />);
     expect(screen.getByText(/QUẢN TRỊ VIÊN/i)).toBeTruthy();
   });

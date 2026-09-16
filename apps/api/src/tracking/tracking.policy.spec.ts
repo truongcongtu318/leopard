@@ -17,8 +17,6 @@ function order(overrides: Partial<TrackingOrderAccess> = {}): TrackingOrderAcces
     status: OrderStatus.IN_TRANSIT,
     customerId: CUSTOMER_ID,
     driverId: DRIVER_ID,
-    activeOwnerFleetIds: [],
-    activeDriverFleetIds: [],
     ...overrides,
   };
 }
@@ -59,7 +57,7 @@ describe('tracking policy', () => {
       );
     });
 
-    it.each([Role.CUSTOMER, Role.FLEET_OWNER, Role.ADMIN])(
+    it.each([Role.CUSTOMER, Role.ADMIN])(
       'rejects role %s even when it otherwise has view access',
       (role) => {
         expectDomainCode(
@@ -97,41 +95,6 @@ describe('tracking policy', () => {
           ),
         'TRACKING_FORBIDDEN',
       );
-    });
-
-    it('allows an active Fleet Owner only when the assigned Driver is active in the same fleet', () => {
-      const scopedOrder = order({
-        activeOwnerFleetIds: ['fleet-a'],
-        activeDriverFleetIds: ['fleet-b', 'fleet-a'],
-      });
-
-      expect(() =>
-        assertCanViewTracking(actor(Role.FLEET_OWNER, 'owner-id'), scopedOrder),
-      ).not.toThrow();
-
-      expectDomainCode(
-        () =>
-          assertCanViewTracking(
-            actor(Role.FLEET_OWNER, 'owner-id'),
-            order({
-              activeOwnerFleetIds: ['fleet-a'],
-              activeDriverFleetIds: ['fleet-b'],
-            }),
-          ),
-        'TRACKING_FORBIDDEN',
-      );
-    });
-
-    it('rejects Fleet Owner access when either membership is inactive or absent', () => {
-      for (const access of [
-        order({ activeOwnerFleetIds: [], activeDriverFleetIds: ['fleet-a'] }),
-        order({ activeOwnerFleetIds: ['fleet-a'], activeDriverFleetIds: [] }),
-      ]) {
-        expectDomainCode(
-          () => assertCanViewTracking(actor(Role.FLEET_OWNER, 'owner-id'), access),
-          'TRACKING_FORBIDDEN',
-        );
-      }
     });
 
     it('allows Admin to view', () => {

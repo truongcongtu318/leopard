@@ -251,7 +251,7 @@ describe('Maps REST API', () => {
     }
   });
 
-  it.each(['driver', 'fleet-owner', 'admin'] as const)(
+  it.each(['driver', 'admin'] as const)(
     'rejects %s route estimates with 403',
     async (accountId) => {
       const app = await createApp();
@@ -558,7 +558,7 @@ describe('Maps REST API', () => {
 
 async function loginDemo(
   app: INestApplication,
-  accountId: 'customer' | 'driver' | 'fleet-owner' | 'admin' = 'customer',
+  accountId: 'customer' | 'driver' | 'admin' = 'customer',
 ): Promise<AuthSessionBody> {
   const response = await request(app.getHttpServer())
     .post('/auth/login/demo')

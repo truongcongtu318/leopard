@@ -8,18 +8,6 @@ import { Pagination } from './Pagination';
 import { ExternalStatusBadge, StatusBadge, type StatusBadgeProps } from './StatusBadge';
 
 describe('domain-discriminated StatusBadge', () => {
-  it('maps the same ACTIVE value to distinct canonical Vietnamese domain labels', () => {
-    const { rerender } = render(<StatusBadge domain="userStatus" status="ACTIVE" />);
-
-    expect(screen.getByText('Đang hoạt động')).toBeInTheDocument();
-    expect(screen.queryByText('Đang tham gia')).not.toBeInTheDocument();
-
-    rerender(<StatusBadge domain="fleetMemberStatus" status="ACTIVE" />);
-
-    expect(screen.getByText('Đang tham gia')).toBeInTheDocument();
-    expect(screen.queryByText('Đang hoạt động')).not.toBeInTheDocument();
-  });
-
   it('fails safely to a neutral visible label for unknown domain values', () => {
     render(<ExternalStatusBadge domain="userStatus" status="SUSPENDED_BY_PROVIDER" />);
 

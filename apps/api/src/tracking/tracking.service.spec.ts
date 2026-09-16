@@ -61,8 +61,6 @@ describe('TrackingService.recordPoint — GPS coalescing', () => {
           status: 'IN_TRANSIT',
           customerId: 'customer-1',
           driverId: 'driver-1',
-          activeOwnerFleetIds: [],
-          activeDriverFleetIds: [],
         } as any);
         consumeRateLimit();
         const previousPoint = (tx as any).__previousPoint ?? null;

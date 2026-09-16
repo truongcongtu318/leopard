@@ -1,6 +1,5 @@
 import type {
   DriverAvailability,
-  FleetMemberStatus,
   OrderStatus,
   PaymentStatus,
   UserStatus,
@@ -12,10 +11,10 @@ import { AppText } from './AppText';
 
 export type KycStatus = 'VERIFIED' | 'PENDING' | 'REJECTED' | 'EXPIRED';
 
-export type StatusDomain = 'order' | 'payment' | 'driver-availability' | 'fleet-member' | 'user' | 'kyc';
+export type StatusDomain = 'order' | 'payment' | 'driver-availability' | 'user' | 'kyc';
 
 type LegacyStatus = Exclude<
-  DriverAvailability | FleetMemberStatus | OrderStatus | PaymentStatus | UserStatus,
+  DriverAvailability | OrderStatus | PaymentStatus | UserStatus,
   'ACTIVE'
 >;
 
@@ -23,7 +22,6 @@ type DomainStatusBadgeProps =
   | Readonly<{ domain: 'order'; status: OrderStatus }>
   | Readonly<{ domain: 'payment'; status: PaymentStatus }>
   | Readonly<{ domain: 'driver-availability'; status: DriverAvailability }>
-  | Readonly<{ domain: 'fleet-member'; status: FleetMemberStatus }>
   | Readonly<{ domain: 'user'; status: UserStatus }>
   | Readonly<{ domain: 'kyc'; status: KycStatus }>;
 
@@ -43,7 +41,6 @@ type StatusPresentationCatalog = Readonly<{
   order: Readonly<Record<OrderStatus, StatusPresentation>>;
   payment: Readonly<Record<PaymentStatus, StatusPresentation>>;
   'driver-availability': Readonly<Record<DriverAvailability, StatusPresentation>>;
-  'fleet-member': Readonly<Record<FleetMemberStatus, StatusPresentation>>;
   user: Readonly<Record<UserStatus, StatusPresentation>>;
   kyc: Readonly<Record<KycStatus, StatusPresentation>>;
 }>;
@@ -135,23 +132,6 @@ const statusPresentations: StatusPresentationCatalog = {
       label: 'Đang bận',
     },
   },
-  'fleet-member': {
-    INVITED: {
-      accessibilityPrefix: 'Trạng thái thành viên đội xe',
-      colorRole: 'info',
-      label: 'Đã mời',
-    },
-    ACTIVE: {
-      accessibilityPrefix: 'Trạng thái thành viên đội xe',
-      colorRole: 'active',
-      label: 'Đang tham gia',
-    },
-    REMOVED: {
-      accessibilityPrefix: 'Trạng thái thành viên đội xe',
-      colorRole: 'neutral',
-      label: 'Đã gỡ khỏi đội xe',
-    },
-  },
   user: {
     ACTIVE: {
       accessibilityPrefix: 'Trạng thái tài khoản',
@@ -205,8 +185,6 @@ const legacyStatusDomains: Readonly<Record<LegacyStatus, StatusDomain>> = {
   OFFLINE: 'driver-availability',
   AVAILABLE: 'driver-availability',
   BUSY: 'driver-availability',
-  INVITED: 'fleet-member',
-  REMOVED: 'fleet-member',
   DISABLED: 'user',
 };
 

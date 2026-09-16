@@ -125,7 +125,7 @@ export class MediaService {
       throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
     }
 
-    // Authorization: Customer owner, assigned Driver, Fleet Owner (via fleet policy upstream), Admin
+    // Authorization: Customer owner, assigned Driver, Admin
     if (actor.role === 'CUSTOMER' && order.customerId !== actor.userId) {
       throw new DomainError('FORBIDDEN', 403, 'Không có quyền truy cập media này');
     }
