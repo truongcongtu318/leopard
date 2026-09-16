@@ -28,30 +28,6 @@ describe('createDriverWalletHttpAdapter', () => {
     expect(get).toHaveBeenCalledWith('/driver/wallet');
   });
 
-  it('getWalletSummary falls back to legacy balanceVnd+recentPayouts shape', async () => {
-    const get = jest.fn(async () => ({
-      balanceVnd: 200000,
-      bankName: 'MB Bank',
-      bankAccountNumber: '0987654321',
-      bankAccountName: 'NGUYEN VAN A',
-      recentPayouts: [
-        { status: 'PENDING', amountVnd: 50000 },
-        { status: 'APPROVED', amountVnd: 100000 },
-      ],
-    }));
-    const adapter = createDriverWalletHttpAdapter({ get: get as any, post: jest.fn() as any });
-
-    expect(await adapter.getWalletSummary()).toEqual({
-      availableBalanceVnd: 200000,
-      lifetimeDeliveredVnd: 300000,
-      pendingWithdrawalVnd: 50000,
-      deliveredOrderCount: 0,
-      bankName: 'MB Bank',
-      bankAccountNumber: '0987654321',
-      bankAccountName: 'NGUYEN VAN A',
-    });
-  });
-
   it('requestWithdrawal sends bank fields to POST /driver/wallet/withdrawals', async () => {
     const post = jest.fn(async () => ({ id: 'w1', status: 'PENDING' }));
     const adapter = createDriverWalletHttpAdapter({ get: jest.fn() as any, post: post as any });

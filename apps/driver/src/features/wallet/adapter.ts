@@ -12,13 +12,6 @@ export interface DriverWalletSummaryResponse {
   bankName?: string | null;
   bankAccountNumber?: string | null;
   bankAccountName?: string | null;
-  // Legacy shape (WalletController GET /driver/wallet — registered before the
-  // canonical DriversController route, so it wins on a real backend).
-  balanceVnd?: number;
-  recentPayouts?: readonly {
-    status: WithdrawalStatusValue;
-    amountVnd: number;
-  }[];
 }
 
 export interface WalletSummary {
@@ -85,18 +78,10 @@ export function createDriverWalletHttpAdapter(client?: DriverWalletHttpClient) {
   return {
     async getWalletSummary(): Promise<WalletSummary> {
       const data = await getClient().get<DriverWalletSummaryResponse>('/driver/wallet');
-      const recent = data.recentPayouts ?? [];
-      const pendingFromRecent = recent
-        .filter((p) => p.status === 'PENDING')
-        .reduce((sum, p) => sum + (p.amountVnd || 0), 0);
-      const approvedFromRecent = recent
-        .filter((p) => p.status === 'APPROVED')
-        .reduce((sum, p) => sum + (p.amountVnd || 0), 0);
-      const balance = data.availableBalanceVnd ?? data.balanceVnd ?? 0;
       return {
-        availableBalanceVnd: balance,
-        lifetimeDeliveredVnd: data.lifetimeDeliveredVnd ?? balance + approvedFromRecent,
-        pendingWithdrawalVnd: data.pendingWithdrawalVnd ?? pendingFromRecent,
+        availableBalanceVnd: data.availableBalanceVnd ?? 0,
+        lifetimeDeliveredVnd: data.lifetimeDeliveredVnd ?? 0,
+        pendingWithdrawalVnd: data.pendingWithdrawalVnd ?? 0,
         deliveredOrderCount: data.deliveredOrderCount ?? 0,
         bankName: data.bankName ?? null,
         bankAccountNumber: data.bankAccountNumber ?? null,

@@ -69,7 +69,7 @@ describe('Driver Bank Account API (E2E)', () => {
     expect(summary.body.bankAccountName).toBe('NGUYEN VAN A');
   });
 
-  it('rejects a bank update with a missing account number via 400', async () => {
+  it('rejects a bank update with a missing account number via 422', async () => {
     await request(app.getHttpServer())
       .patch('/driver/wallet/bank')
       .set('Authorization', `Bearer ${accessToken}`)
