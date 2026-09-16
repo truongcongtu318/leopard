@@ -109,4 +109,11 @@ describe('KycPendingRoute (Driver)', () => {
 
     await screen.unmount();
   });
+
+  it('gives the back button a 12pt touch slop', async () => {
+    const screen = await render(<KycPendingRoute />);
+    const backBtn = screen.getByTestId('btn-back');
+    expect(backBtn.props.hitSlop).toMatchObject({ top: 12, bottom: 12, left: 12, right: 12 });
+    await screen.unmount();
+  });
 });
