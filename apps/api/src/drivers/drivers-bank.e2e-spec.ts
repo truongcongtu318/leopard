@@ -78,4 +78,23 @@ describe('Driver Bank Account API (E2E)', () => {
       // (repo convention, cf. update-location / driver-contract / invoices specs).
       .expect(422);
   });
+
+  it('rejects Customer access to PATCH /driver/wallet/bank with 403', async () => {
+    const prismaMock = (app.get(PrismaService) as unknown as InMemoryPrismaService);
+    const customer = await prismaMock.user.create({ data: { phone: '+84933334444', role: 'CUSTOMER', status: 'ACTIVE' } });
+    const tokenService = app.get(TokenService);
+    const refreshSessions = app.get(RefreshSessionRepository);
+    const session = await refreshSessions.create(customer.id);
+    const customerSession = tokenService.createAuthSession(customer, session);
+
+    await request(app.getHttpServer())
+      .patch('/driver/wallet/bank')
+      .set('Authorization', `Bearer ${customerSession.accessToken}`)
+      .send({
+        bankName: 'MB Bank',
+        bankAccountNumber: '0987654321',
+        bankAccountName: 'NGUYEN VAN A',
+      })
+      .expect(403);
+  });
 });

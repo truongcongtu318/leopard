@@ -1,6 +1,7 @@
 // apps/api/src/drivers/withdrawals.repository.ts
 import { Injectable } from '@nestjs/common';
 import type { WithdrawalRequest } from '@prisma/client';
+import { DomainError } from '../common/domain-error.js';
 import { PrismaService } from '../database/prisma.service.js';
 
 export interface WalletSummary {
@@ -71,7 +72,14 @@ export class WithdrawalsRepository {
     };
   }
 
-  updateBankAccount(driverId: string, input: UpdateBankAccountInput) {
+  async updateBankAccount(driverId: string, input: UpdateBankAccountInput) {
+    const profile = await this.prisma.driverProfile.findUnique({
+      where: { userId: driverId },
+      select: { id: true },
+    });
+    if (!profile) {
+      throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy hồ sơ tài xế');
+    }
     return this.prisma.driverProfile.update({
       where: { userId: driverId },
       data: {

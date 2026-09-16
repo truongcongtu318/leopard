@@ -66,7 +66,7 @@ Chi tiết thiết lập và quy tắc cải tiến: xem [05-driver-backend-api-
 | GET | `/driver/wallet/withdrawals` | Driver | Lịch sử rút tiền phân trang |
 | PATCH | `/driver/wallet/bank` | Driver | Cập nhật tài khoản ngân hàng liên kết |
 
-`GET /driver/wallet` → `{ availableBalanceVnd, lifetimeDeliveredVnd, pendingWithdrawalVnd, deliveredOrderCount, bankName: string|null, bankAccountName: string|null, bankAccountNumber: string|null }`.
+`GET /driver/wallet` → `{ availableBalanceVnd, lifetimeDeliveredVnd, pendingWithdrawalVnd, deliveredOrderCount, bankName: string|null, bankAccountNumber: string|null, bankAccountName: string|null }`.
 
 `POST /driver/wallet/withdrawals` body `{ amountVnd, bankName, bankAccountNumber, bankAccountName, clientRequestId? }` → 201 withdrawal; request lặp với cùng `clientRequestId` trả kết quả cũ; số tiền vượt số dư khả dụng trả `409 INSUFFICIENT_BALANCE`.
 

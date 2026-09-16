@@ -8,7 +8,7 @@ export class UpdateBankAccountDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(50)
+  @MaxLength(32)
   bankAccountNumber!: string;
 
   @IsString()

@@ -135,4 +135,16 @@ describe('WithdrawalsRepository', () => {
     expect(updated.bankAccountNumber).toBe('1012345678');
     expect(updated.bankAccountName).toBe('NGUYEN VAN A');
   });
+
+  it('throws 404 RESOURCE_NOT_FOUND when the driver has no profile', async () => {
+    const { repo, driverId } = await setup();
+
+    await expect(
+      repo.updateBankAccount(driverId, {
+        bankName: 'MB Bank',
+        bankAccountNumber: '0987654321',
+        bankAccountName: 'NGUYEN VAN A',
+      }),
+    ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND', status: 404 });
+  });
 });
