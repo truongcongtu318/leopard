@@ -10,25 +10,22 @@ import { StorageProvider } from '../media/storage.provider.js';
 import { OrdersModule } from '../orders/orders.module.js';
 import { PdfModule } from '../pdf/pdf.module.js';
 import { DriversController } from './drivers.controller.js';
-import { WalletController } from './wallet.controller.js';
 import { DriversRepository } from './drivers.repository.js';
 import { WithdrawalsRepository } from './withdrawals.repository.js';
 import { DriversService } from './drivers.service.js';
 import { DriverApplicationService } from './driver-application.service.js';
 import { DriverContractService } from './driver-contract.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
-import { WalletService } from './wallet.service.js';
 
 @Module({
   imports: [AuthModule, DatabaseModule, OrdersModule, MediaModule, PdfModule],
-  controllers: [WalletController, DriversController],
+  controllers: [DriversController],
   providers: [
     AccountStatusCache,
     DriversService,
     DriverApplicationService,
     DriverContractService,
     DriversRepository,
-    WalletService,
     WithdrawalsRepository,
     {
       provide: DriverDocumentService,
@@ -48,7 +45,6 @@ import { WalletService } from './wallet.service.js';
     WithdrawalsRepository,
     DriverDocumentService,
     DriverContractService,
-    WalletService,
   ],
 
 })
