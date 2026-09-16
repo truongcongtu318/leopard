@@ -502,17 +502,12 @@ export function AssignedDetailView({
 
 const styles = StyleSheet.create({
   scrollContent: {
-    gap: spacing.sm,
+    gap: 12,
     paddingBottom: 110,
+    paddingTop: 8,
   },
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: spacing.md,
-    marginTop: -8,
-    padding: spacing.md,
+    gap: 12,
   },
   missionHeaderRow: {
     alignItems: 'center',

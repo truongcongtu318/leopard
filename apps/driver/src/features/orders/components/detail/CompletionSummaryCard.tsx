@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { IconCheck, spacing } from '@leopard/mobile-core';
+import { driverPrimitives, iosContinuousCurve, IconCheck } from '@leopard/mobile-core';
 
 export type CompletionSummaryCardProps = Readonly<{
   reference: string;
@@ -18,66 +18,115 @@ export function CompletionSummaryCard({
   const isDelivered = status === 'DELIVERED';
 
   return (
-    <View style={styles.container}>
+    <View style={styles.cardContainer}>
+      {/* Top row: Status pill on left, reference code on right */}
       <View style={styles.headerRow}>
-        <View style={[styles.iconCircle, isDelivered ? styles.iconSuccess : styles.iconReturned]}>
-          <IconCheck color="#FFFFFF" size={20} strokeWidth={2.5} />
-        </View>
-        <View style={styles.headerTextCol}>
-          <Text style={styles.title}>
+        <View style={styles.statusPill}>
+          <View style={styles.statusDot}>
+            <IconCheck color="#059669" size={11} strokeWidth={2.5} />
+          </View>
+          <Text style={styles.statusText}>
             {isDelivered ? 'Giao hàng thành công' : 'Đã hoàn trả về điểm xuất phát'}
           </Text>
-          <Text style={styles.metaTimestamp}>
-            {deliveredAtLabel ? `${deliveredAtLabel} · ` : ''}Mã vận đơn: {reference}
-          </Text>
         </View>
+
+        <View style={styles.referencePill}>
+          <Text style={styles.referenceText}>{reference}</Text>
+        </View>
+      </View>
+
+      {/* Hero Payout Amount */}
+      <View style={styles.payoutBlock}>
+        <Text style={styles.payoutLabel}>TIỀN CƯỚC THỰC NHẬN</Text>
         <Text style={styles.priceValue}>{priceLabel || '0 ₫'}</Text>
       </View>
+
+      {/* Footer: Delivered timestamp */}
+      {deliveredAtLabel ? (
+        <View style={styles.footerRow}>
+          <Text style={styles.metaTimestamp}>Hoàn tất lúc: {deliveredAtLabel}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+  cardContainer: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    gap: 12,
+    padding: 18,
+    ...driverPrimitives.shadows.sm,
   },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
   },
-  iconCircle: {
+  statusPill: {
     alignItems: 'center',
-    borderRadius: 22,
-    height: 44,
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderRadius: 9999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  statusDot: {
+    alignItems: 'center',
     justifyContent: 'center',
-    width: 44,
   },
-  iconSuccess: {
-    backgroundColor: '#16A34A',
-  },
-  iconReturned: {
-    backgroundColor: '#0284C7',
-  },
-  headerTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    color: '#0F172A',
-    fontSize: 16,
+  statusText: {
+    color: driverPrimitives.colors.green700,
+    fontSize: 12,
     fontWeight: '700',
   },
+  referencePill: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  referenceText: {
+    color: '#475569',
+    fontSize: 11,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.3,
+  },
+  payoutBlock: {
+    gap: 2,
+    paddingTop: 2,
+  },
+  payoutLabel: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
   priceValue: {
-    color: '#16A34A',
-    fontSize: 19,
+    color: driverPrimitives.colors.gray900,
+    fontSize: 32,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.5,
+  },
+  footerRow: {
+    borderTopColor: driverPrimitives.colors.gray100,
+    borderTopWidth: 1,
+    paddingTop: 10,
   },
   metaTimestamp: {
-    color: '#64748B',
+    color: driverPrimitives.colors.gray400,
     fontSize: 12,
+    fontWeight: '500',
   },
 });

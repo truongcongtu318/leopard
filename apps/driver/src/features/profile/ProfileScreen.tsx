@@ -1,17 +1,24 @@
 import React from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import Svg, { Circle, Path } from 'react-native-svg';
 
 import {
   driverPrimitives,
   iosContinuousCurve,
   Button,
+  ScreenScaffold,
   ScreenState,
-  IconChevron,
-  IconClock,
-  IconSecurityShield,
-  IconSpeedTruck,
+  IconChevronRight,
+  IconSettings,
+  IconSupport247,
+  IconWallet,
+  IconEarnings,
+  IconTrophy,
+  IconRoute,
+  IconMessage,
+  IconStar,
+  IconCheck,
+  IconUser,
 } from '@leopard/mobile-core';
 import type { DriverProfileView } from './model';
 
@@ -25,103 +32,31 @@ export type DriverProfileScreenProps = Readonly<{
   cancellationPct?: number;
 }>;
 
-const DRIVER_AVATAR_IMG = require('../../../assets/brand/driver-avatar.png');
+export function formatPhoneNumber(phone: string | null | undefined): string {
+  if (!phone) return '';
+  const trimmed = phone.trim();
 
-/* SVG Icons for Profile Header & Actions */
-function BackArrowIcon({ size = 20, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill={color} />
-    </Svg>
-  );
-}
+  // Match +84 with 9 or 10 digits
+  const vnE164Match = trimmed.match(/^\+84(\d{9,10})$/);
+  if (vnE164Match) {
+    const digits = vnE164Match[1];
+    return `+84 ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  }
 
-function GearIcon({ size = 20, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
+  // Match 10-digit local starting with 0: e.g. 0901234567 -> 0901 234 567
+  if (/^0\d{9}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 4)} ${trimmed.slice(4, 7)} ${trimmed.slice(7)}`;
+  }
 
-function HelpIcon({ size = 20, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
+  // Fallback if starts with +84 but other formatting
+  if (trimmed.startsWith('+84')) {
+    const rest = trimmed.slice(3).replace(/\D/g, '');
+    if (rest.length >= 9) {
+      return `+84 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
+    }
+  }
 
-function SparkleIcon({ size = 20, color = driverPrimitives.colors.blue500 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M9 21.5l1.5-4.5L15 15.5l-4.5-1.5L9 9.5l-1.5 4.5L3 15.5l4.5 1.5L9 21.5zm10-7l.9-2.6L22.5 11l-2.6-.9L19 7.5l-.9 2.6L15.5 11l2.6.9.9 2.6zm-2-10l.6-1.9L19.5 2l-1.9-.6L17 0l-.6 1.9L14.5 2l1.9.6.6 1.9z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
-
-function ChatBubbleIcon({ size = 22, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
-
-function CalendarIcon({ size = 22, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
-
-function LightbulbIcon({ size = 22, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-1.3l-.85-.6C7.8 13.16 7 11.18 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.18-.8 4.16-2.15 5.1z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
-
-function DiamondIcon({ size = 22, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M19 3H5L2 9l10 12L22 9l-3-6zM9.62 8l1.5-3h1.76l1.5 3H9.62zM11 10v6.68L5.44 10H11zm2 0h5.56L13 16.68V10zm3.8-2l-1.5-3h2.64l1.5 3H16.8zM4.06 8l1.5-3h2.64l-1.5 3H4.06z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
-
-function MoreDotsIcon({ size = 22, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-        fill={color}
-      />
-    </Svg>
-  );
+  return trimmed;
 }
 
 export function DriverProfileScreen({
@@ -137,21 +72,11 @@ export function DriverProfileScreen({
 
   if (view.kind !== 'content') {
     return (
-      <View style={styles.screenContainer}>
-        <View style={styles.headerBar}>
-          <Pressable
-            accessibilityLabel="Quay lại"
-            accessibilityRole="button"
-            hitSlop={12}
-            onPress={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
-            style={styles.headerBtn}
-          >
-            <BackArrowIcon />
-          </Pressable>
-          <Text style={styles.headerTitle}>Hồ sơ tài xế</Text>
-          <View style={styles.headerRightSpacer} />
-        </View>
-
+      <ScreenScaffold
+        headerTone="plain"
+        onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
+        title="Hồ sơ tài xế"
+      >
         <View style={styles.errorBody}>
           <ScreenState
             actionLabel={view.kind === 'error' ? 'Thử lại' : undefined}
@@ -161,293 +86,319 @@ export function DriverProfileScreen({
             title={view.title}
           />
         </View>
-      </View>
+      </ScreenScaffold>
     );
   }
 
-  const driverName = view.name?.trim() ? view.name : (view.phone ?? 'Tài xế');
+  const formattedPhone = formatPhoneNumber(view.phone);
+  const driverName = view.name?.trim() ? view.name : (formattedPhone || 'Tài xế');
 
   return (
-    <View style={styles.screenContainer}>
-      {/* ── Single Clean Top Header (Image 5) ── */}
-      <View style={styles.headerBar}>
-        <Pressable
-          accessibilityLabel="Quay lại"
-          accessibilityRole="button"
-          hitSlop={12}
-          onPress={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
-          style={styles.headerBtn}
-        >
-          <BackArrowIcon />
-        </Pressable>
-
-        <Text accessibilityRole="header" style={styles.headerTitle}>
-          Hồ sơ tài xế
-        </Text>
-
+    <ScreenScaffold
+      headerRight={
         <View style={styles.headerRightCluster}>
-          <View style={styles.gearTooltipWrap}>
-            <Pressable
-              accessibilityLabel="Cài đặt"
-              accessibilityRole="button"
-              hitSlop={12}
-              onPress={() => router.push('/settings')}
-              style={styles.headerBtn}
-            >
-              <GearIcon />
-            </Pressable>
-
-            {/* Blue "Cài đặt" Speech Bubble Tooltip pointing UP to Gear */}
-            <View pointerEvents="none" style={styles.gearTooltip}>
-              <View style={styles.tooltipArrowUp} />
-              <View style={styles.tooltipBody}>
-                <Text style={styles.tooltipBodyText}>Cài đặt</Text>
-              </View>
-            </View>
-          </View>
-
-          <Pressable accessibilityLabel="Trợ giúp" accessibilityRole="button" hitSlop={12} style={styles.headerBtn}>
-            <HelpIcon />
+          <Pressable
+            accessibilityLabel="Trợ giúp & Hỗ trợ"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => router.push('/chat')}
+            style={styles.headerBtn}
+          >
+            <IconSupport247 color={driverPrimitives.colors.gray700} size={20} />
           </Pressable>
-          <Pressable accessibilityLabel="Tính năng mới" accessibilityRole="button" hitSlop={12} style={styles.headerBtn}>
-            <SparkleIcon />
+
+          <Pressable
+            accessibilityLabel="Cài đặt"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => router.push('/settings')}
+            style={styles.headerBtn}
+          >
+            <IconSettings color={driverPrimitives.colors.gray700} size={20} />
           </Pressable>
         </View>
-      </View>
-
+      }
+      headerTone="plain"
+      onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
+      title="Hồ sơ tài xế"
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* ── 1. Driver Profile Card (Image 5) ── */}
+        {/* ── 1. Hero Driver Bento Card (Apple Monochrome Minimal) ── */}
         <Pressable
           accessibilityLabel={`Chỉnh sửa hồ sơ ${driverName}`}
           accessibilityRole="button"
           onPress={() => router.push('/profile-edit')}
-          style={({ pressed }) => [styles.driverSummaryCard, pressed ? styles.pressed : null]}
+          style={({ pressed }) => [styles.heroCard, pressed ? styles.pressed : null]}
         >
-          <View style={styles.avatarWrap}>
-            <Image
-              resizeMode="cover"
-              source={DRIVER_AVATAR_IMG}
-              style={styles.avatarPhoto}
-            />
-          </View>
+          <View style={styles.heroMainRow}>
+            <View style={styles.avatarContainer}>
+              {view.avatarUrl ? (
+                <Image
+                  resizeMode="cover"
+                  source={{ uri: view.avatarUrl }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  {driverName && driverName !== 'Tài xế' ? (
+                    <Text style={styles.avatarInitial}>
+                      {driverName.charAt(0).toUpperCase()}
+                    </Text>
+                  ) : (
+                    <IconUser color="#FFFFFF" size={26} />
+                  )}
+                </View>
+              )}
+            </View>
 
-          <View style={styles.driverMeta}>
-            <Text style={styles.driverFullName}>{driverName}</Text>
-            <View style={styles.starRatingRow}>
-              <Text style={styles.goldStar}>★</Text>
-              <Text style={styles.ratingNumber}>{ratingAvg.toFixed(1)}</Text>
+            <View style={styles.driverInfoBlock}>
+              <View style={styles.driverNameRow}>
+                <Text numberOfLines={1} style={styles.driverNameText}>
+                  {driverName}
+                </Text>
+                <View style={styles.verifiedCheckBadge}>
+                  <IconCheck color={driverPrimitives.colors.white} size={10} strokeWidth={3} />
+                </View>
+              </View>
+
+              {view.name ? <Text style={styles.driverPhoneText}>{formattedPhone}</Text> : null}
+
+              <View style={styles.badgeRow}>
+                <View style={styles.statusPill}>
+                  <View style={styles.statusDotInner} />
+                  <Text style={styles.statusPillText}>{view.statusLabel || 'Đang hoạt động'}</Text>
+                </View>
+
+                {view.vehicleLabel ? (
+                  <View style={styles.vehiclePill}>
+                    <Text numberOfLines={1} style={styles.vehiclePillText}>
+                      {view.vehicleLabel}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+
+            <View style={styles.editChevronButton}>
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={18} />
             </View>
           </View>
-
-          <IconChevron color={driverPrimitives.colors.gray400} direction="right" size={18} />
         </Pressable>
 
-        {/* ── 2. Daily Performance KPI Card ("Hàng ngày" - Image 5) ── */}
-        <View style={styles.kpiContainer}>
-          <Text style={styles.kpiHeading}>Hàng ngày</Text>
-          <View style={styles.kpiColumns}>
-            <View style={styles.kpiCol}>
-              <Text style={styles.kpiPercent}>{acceptancePct.toFixed(1)}%</Text>
-              <Text style={styles.kpiLabel}>Chấp nhận</Text>
-            </View>
-            <View style={styles.kpiColDivider} />
-            <View style={styles.kpiCol}>
-              <Text style={styles.kpiPercent}>{cancellationPct.toFixed(1)}%</Text>
-              <Text style={styles.kpiLabel}>Huỷ bỏ</Text>
+        {/* ── 2. Daily Performance Bento Card (Neutral Typography) ── */}
+        <Pressable
+          accessibilityLabel="Xem báo cáo hiệu suất chi tiết"
+          accessibilityRole="button"
+          onPress={() => router.push('/performance')}
+          style={({ pressed }) => [styles.kpiCard, pressed ? styles.pressed : null]}
+        >
+          <View style={styles.kpiCardHeader}>
+            <Text style={styles.kpiSectionTitle}>Hiệu suất hàng ngày</Text>
+            <View style={styles.kpiDetailLink}>
+              <Text style={styles.kpiDetailLinkText}>Chi tiết</Text>
+              <IconChevronRight color={driverPrimitives.colors.blue600} size={13} />
             </View>
           </View>
-        </View>
 
-        {/* ── 3. "Tài khoản của tôi" (Image 5) ── */}
-        <View style={styles.myAccountSection}>
-          <Text style={styles.sectionTitleText}>Tài khoản của tôi</Text>
-          <View style={styles.actionGridRow}>
-            {/* 1. Hộp thư đến */}
-            <Pressable
-              accessibilityLabel="Hộp thư đến"
-              accessibilityRole="button"
-              onPress={() => router.push('/chat')}
-              style={styles.actionGridBtn}
-            >
-              <View style={styles.circleBtn}>
-                <ChatBubbleIcon />
-                <View style={styles.redBadgeDot} />
+          <View style={styles.kpiColumns}>
+            {/* Rating */}
+            <View style={styles.kpiCol}>
+              <View style={styles.kpiValueRow}>
+                <IconStar color={driverPrimitives.colors.amber500} filled size={16} />
+                <Text style={styles.kpiValueMain}>{ratingAvg.toFixed(1)}</Text>
               </View>
-              <Text style={styles.actionBtnLabel}>Hộp thư đến</Text>
+              <Text style={styles.kpiLabelSub}>Đánh giá sao</Text>
+            </View>
+
+            <View style={styles.kpiDividerVertical} />
+
+            {/* Acceptance - Clean neutral dark text */}
+            <View style={styles.kpiCol}>
+              <Text style={styles.kpiValueMain}>
+                {acceptancePct.toFixed(1)}%
+              </Text>
+              <Text style={styles.kpiLabelSub}>Chấp nhận</Text>
+            </View>
+
+            <View style={styles.kpiDividerVertical} />
+
+            {/* Cancellation - Clean neutral dark text */}
+            <View style={styles.kpiCol}>
+              <Text style={styles.kpiValueMain}>
+                {cancellationPct.toFixed(1)}%
+              </Text>
+              <Text style={styles.kpiLabelSub}>Huỷ chuyến</Text>
+            </View>
+          </View>
+        </Pressable>
+
+        {/* ── 3. Quick Bento Grid: Hoạt động & Tài chính (Monochrome Icons) ── */}
+        <View style={styles.bentoSection}>
+          <Text style={styles.sectionHeaderTitle}>Hoạt động & Tài chính</Text>
+
+          <View style={styles.bentoGridRow}>
+            {/* Tile 1: Ví tài xế */}
+            <Pressable
+              accessibilityLabel="Ví tài xế và rút tiền"
+              accessibilityRole="button"
+              onPress={() => router.push('/wallet')}
+              style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.bentoTopRow}>
+                <View style={styles.bentoIconBox}>
+                  <IconWallet color={driverPrimitives.colors.gray700} size={20} />
+                </View>
+                <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
+              </View>
+              <Text style={styles.bentoTileTitle}>Ví tài xế</Text>
+              <Text style={styles.bentoTileSub}>Số dư & rút tiền</Text>
             </Pressable>
 
-            {/* 2. Lịch nhận cuốc */}
+            {/* Tile 2: Thu nhập */}
             <Pressable
-              accessibilityLabel="Lịch nhận cuốc"
-              accessibilityRole="button"
-              onPress={() => router.push('/board')}
-              style={styles.actionGridBtn}
-            >
-              <View style={styles.circleBtn}>
-                <CalendarIcon />
-              </View>
-              <Text style={styles.actionBtnLabel}>Lịch nhận cuốc</Text>
-            </Pressable>
-
-            {/* 3. Khám phá */}
-            <Pressable
-              accessibilityLabel="Khám phá"
-              accessibilityRole="button"
-              onPress={() => router.push('/performance')}
-              style={styles.actionGridBtn}
-            >
-              <View style={styles.circleBtn}>
-                <LightbulbIcon />
-              </View>
-              <Text style={styles.actionBtnLabel}>Khám phá</Text>
-            </Pressable>
-
-            {/* 4. Thưởng */}
-            <Pressable
-              accessibilityLabel="Thưởng"
+              accessibilityLabel="Báo cáo thu nhập và thưởng"
               accessibilityRole="button"
               onPress={() => router.push('/earnings')}
-              style={styles.actionGridBtn}
+              style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
             >
-              <View style={styles.circleBtn}>
-                <DiamondIcon />
+              <View style={styles.bentoTopRow}>
+                <View style={styles.bentoIconBox}>
+                  <IconEarnings color={driverPrimitives.colors.gray700} size={20} />
+                </View>
+                <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
               </View>
-              <Text style={styles.actionBtnLabel}>Thưởng</Text>
+              <Text style={styles.bentoTileTitle}>Thu nhập & Thưởng</Text>
+              <Text style={styles.bentoTileSub}>Doanh thu & tiền cước</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.bentoGridRow}>
+            {/* Tile 3: Lịch nhận cuốc */}
+            <Pressable
+              accessibilityLabel="Bảng tin và lịch nhận cuốc"
+              accessibilityRole="button"
+              onPress={() => router.push('/board')}
+              style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.bentoTopRow}>
+                <View style={styles.bentoIconBox}>
+                  <IconRoute color={driverPrimitives.colors.gray700} size={20} />
+                </View>
+                <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
+              </View>
+              <Text style={styles.bentoTileTitle}>Lịch nhận cuốc</Text>
+              <Text style={styles.bentoTileSub}>Lịch trình & đơn mới</Text>
             </Pressable>
 
-            {/* 5. Xem thêm */}
+            {/* Tile 4: Hiệu suất */}
             <Pressable
-              accessibilityLabel="Xem thêm"
+              accessibilityLabel="Báo cáo hiệu suất tài xế"
+              accessibilityRole="button"
+              onPress={() => router.push('/performance')}
+              style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.bentoTopRow}>
+                <View style={styles.bentoIconBox}>
+                  <IconTrophy color={driverPrimitives.colors.gray700} size={20} />
+                </View>
+                <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
+              </View>
+              <Text style={styles.bentoTileTitle}>Hiệu suất tài xế</Text>
+              <Text style={styles.bentoTileSub}>Tỷ lệ nhận & huỷ chuyến</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* ── 4. Grouped Settings & Support (Apple Inset Grouped) ── */}
+        <View style={styles.menuGroupSection}>
+          <Text style={styles.sectionHeaderTitle}>Cài đặt & Hỗ trợ</Text>
+
+          <View style={styles.groupedMenuCard}>
+            {/* Hộp thư đến */}
+            <Pressable
+              accessibilityLabel="Hộp thư đến và tin nhắn"
+              accessibilityRole="button"
+              onPress={() => router.push('/chat')}
+              style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
+            >
+              <View style={styles.iconBox}>
+                <IconMessage color={driverPrimitives.colors.gray700} size={20} />
+                <View style={styles.notificationDot} />
+              </View>
+              <View style={styles.menuItemTextCol}>
+                <Text style={styles.menuItemTitle}>Hộp thư đến & Thông báo</Text>
+                <Text style={styles.menuItemSub}>Tin nhắn điều phối và thông báo hệ thống</Text>
+              </View>
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
+            </Pressable>
+
+            <View style={styles.menuItemSeparator} />
+
+            {/* Cài đặt ứng dụng */}
+            <Pressable
+              accessibilityLabel="Cài đặt ứng dụng"
               accessibilityRole="button"
               onPress={() => router.push('/settings')}
-              style={styles.actionGridBtn}
+              style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
             >
-              <View style={styles.circleBtn}>
-                <MoreDotsIcon />
+              <View style={styles.iconBox}>
+                <IconSettings color={driverPrimitives.colors.gray700} size={20} />
               </View>
-              <Text style={styles.actionBtnLabel}>Xem thêm</Text>
+              <View style={styles.menuItemTextCol}>
+                <Text style={styles.menuItemTitle}>Cài đặt & Pháp lý</Text>
+                <Text style={styles.menuItemSub}>Định vị GPS, thông tin ứng dụng & bảo mật</Text>
+              </View>
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
             </Pressable>
           </View>
         </View>
 
-        {/* ── 4. Promo Card ("Chỉ có tại LEOPARD" - Image 5) ── */}
-        <View style={styles.promoCardContainer}>
-          <Text style={styles.sectionTitleText}>Chỉ có tại LEOPARD</Text>
-          <View style={styles.promoBannerCard}>
-            <View style={styles.promoTextCol}>
-              <Text style={styles.promoBannerTitle}>Bảo vệ bạn mọi lúc</Text>
-              <Pressable style={styles.promoPillBtn}>
-                <Text style={styles.promoPillText}>Khám phá ngay →</Text>
-              </Pressable>
-            </View>
+        {/* ── 5. App Version & Logout ── */}
+        <View style={styles.footerSection}>
+          <Text style={styles.versionLabel}>LEOPARD Driver · Phiên bản: {view.appVersion}</Text>
+
+          <View style={styles.logoutBtnWrap}>
+            <Button
+              disabledLabel="Đăng xuất"
+              isLoading={view.isLoggingOut}
+              label="Đăng xuất tài khoản"
+              loadingLabel="Đang đăng xuất…"
+              onPress={onLogout}
+              variant="destructive"
+            />
           </View>
-        </View>
-
-        {/* ── 5. Guide Card ("Tìm hiểu cách thức" - Image 5) ── */}
-        <View style={styles.guideCardContainer}>
-          <Text style={styles.sectionTitleText}>Tìm hiểu cách thức</Text>
-          <View style={styles.guideCard}>
-            <View style={styles.guideIconWrap}>
-              <IconSpeedTruck color={driverPrimitives.colors.green500} size={28} />
-            </View>
-            <View style={styles.guideTextCol}>
-              <Text style={styles.guideTitle}>Cải thiện kỹ năng vận tải & an toàn</Text>
-              <Pressable style={styles.guidePillBtn}>
-                <Text style={styles.guidePillText}>Tìm hiểu thêm</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-
-        {/* ── 6. App Info & Logout (Bottom) ── */}
-        <View style={styles.appInfoRow}>
-          <Text style={styles.appVersionText}>Phiên bản: {view.appVersion}</Text>
-        </View>
-
-        <View style={styles.logoutWrapper}>
-          <Button
-            disabledLabel="Đăng xuất"
-            isLoading={view.isLoggingOut}
-            label="Đăng xuất tài khoản"
-            loadingLabel="Đang đăng xuất…"
-            onPress={onLogout}
-            variant="destructive"
-          />
         </View>
       </ScrollView>
-    </View>
+    </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  screenContainer: {
-    backgroundColor: driverPrimitives.colors.gray50,
+  scrollWrap: {
+    backgroundColor: '#F8FAFC',
     flex: 1,
   },
-  headerBar: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.white,
-    borderBottomColor: driverPrimitives.colors.gray200,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    height: 52,
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    zIndex: 10,
-  },
-  headerBtn: {
-    alignItems: 'center',
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
-  },
-  headerTitle: {
-    color: driverPrimitives.colors.gray900,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  headerRightSpacer: {
-    width: 40,
+  scrollContent: {
+    gap: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    paddingBottom: 44,
   },
   headerRightCluster: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
   },
-  gearTooltipWrap: {
+  headerBtn: {
     alignItems: 'center',
-    position: 'relative',
-  },
-  gearTooltip: {
-    alignItems: 'center',
-    position: 'absolute',
-    top: 40,
-    zIndex: 20,
-  },
-  tooltipArrowUp: {
-    borderBottomColor: driverPrimitives.colors.blue500,
-    borderBottomWidth: 5,
-    borderLeftColor: 'transparent',
-    borderLeftWidth: 5,
-    borderRightColor: 'transparent',
-    borderRightWidth: 5,
-    height: 0,
-    width: 0,
-  },
-  tooltipBody: {
-    backgroundColor: driverPrimitives.colors.blue500,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  tooltipBodyText: {
-    color: driverPrimitives.colors.white,
-    fontSize: 12,
-    fontWeight: '700',
+    borderRadius: 20,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   errorBody: {
     flex: 1,
@@ -455,237 +406,316 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  scrollWrap: {
-    backgroundColor: driverPrimitives.colors.gray50,
-    flex: 1,
-  },
-  scrollContent: {
-    gap: 16,
-    padding: 16,
-    paddingBottom: 40,
-  },
-
-  driverSummaryCard: {
-    alignItems: 'center',
+  /* Hero Driver Card */
+  heroCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: driverPrimitives.radius.card,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: 14,
     padding: 16,
     ...driverPrimitives.shadows.sm,
   },
-  avatarWrap: {
+  heroMainRow: {
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 14,
+  },
+  avatarContainer: {
+    position: 'relative',
+  },
+  avatarImage: {
+    borderColor: driverPrimitives.colors.gray200,
     borderRadius: 9999,
+    borderWidth: 1.5,
+    height: 56,
+    width: 56,
+  },
+  avatarPlaceholder: {
+    alignItems: 'center',
+    backgroundColor: '#1E293B',
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: 9999,
+    borderWidth: 1.5,
     height: 56,
     justifyContent: 'center',
     width: 56,
   },
-  avatarPhoto: {
-    borderColor: driverPrimitives.colors.green500,
-    borderRadius: 9999,
-    borderWidth: 2,
-    height: 54,
-    width: 54,
+  avatarInitial: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '700',
   },
-  driverMeta: {
+  driverInfoBlock: {
     flex: 1,
     gap: 4,
   },
-  driverFullName: {
-    color: driverPrimitives.colors.gray900,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  starRatingRow: {
+  driverNameRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
+    gap: 6,
   },
-  goldStar: {
-    color: driverPrimitives.colors.amber500,
-    fontSize: 14,
+  driverNameText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
-  ratingNumber: {
-    color: driverPrimitives.colors.gray700,
-    fontSize: 14,
-    fontWeight: '600',
+  verifiedCheckBadge: {
+    alignItems: 'center',
+    backgroundColor: driverPrimitives.colors.blue600,
+    borderRadius: 9999,
+    height: 16,
+    justifyContent: 'center',
+    width: 16,
+  },
+  driverPhoneText: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 13,
+    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
+  badgeRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 2,
+  },
+  statusPill: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 9999,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  statusDotInner: {
+    backgroundColor: driverPrimitives.colors.green500,
+    borderRadius: 9999,
+    height: 6,
+    width: 6,
+  },
+  statusPillText: {
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  vehiclePill: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 9999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  vehiclePillText: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  editChevronButton: {
+    alignItems: 'center',
+    backgroundColor: driverPrimitives.colors.gray50,
+    borderRadius: 9999,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
 
-  kpiContainer: {
+  /* KPI Card */
+  kpiCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: driverPrimitives.radius.card,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 10,
     padding: 16,
     ...driverPrimitives.shadows.sm,
   },
-  kpiHeading: {
-    color: driverPrimitives.colors.gray500,
+  kpiCardHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  kpiSectionTitle: {
+    color: driverPrimitives.colors.gray700,
     fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  kpiDetailLink: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 3,
+  },
+  kpiDetailLinkText: {
+    color: driverPrimitives.colors.blue600,
+    fontSize: 12,
     fontWeight: '600',
   },
   kpiColumns: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
   kpiCol: {
     alignItems: 'center',
-    gap: 2,
+    flex: 1,
+    gap: 3,
   },
-  kpiPercent: {
+  kpiValueRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
+  kpiValueMain: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.3,
   },
-  kpiLabel: {
+  kpiLabelSub: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12.5,
+    fontSize: 11.5,
+    fontWeight: '500',
   },
-  kpiColDivider: {
-    backgroundColor: driverPrimitives.colors.gray200,
+  kpiDividerVertical: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 30,
     width: 1,
   },
 
-  myAccountSection: {
+  /* Bento 2x2 Hub - Clean Monochrome */
+  bentoSection: {
+    gap: 8,
+  },
+  bentoGridRow: {
+    flexDirection: 'row',
     gap: 12,
   },
-  sectionTitleText: {
-    color: driverPrimitives.colors.gray900,
-    fontSize: 16,
-    fontWeight: '700',
+  bentoTile: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    flex: 1,
+    gap: 4,
+    padding: 14,
+    ...driverPrimitives.shadows.sm,
   },
-  actionGridRow: {
+  bentoTopRow: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 4,
   },
-  actionGridBtn: {
+  bentoIconBox: {
     alignItems: 'center',
-    gap: 6,
-    width: 62,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
   },
-  circleBtn: {
+  bentoTileTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  bentoTileSub: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
+    fontWeight: '400',
+  },
+
+  /* Grouped Menu */
+  menuGroupSection: {
+    gap: 8,
+  },
+  sectionHeaderTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    paddingHorizontal: 4,
+  },
+  groupedMenuCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...driverPrimitives.shadows.sm,
+  },
+  menuItemRow: {
     alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.gray100,
-    borderRadius: 9999,
-    height: 52,
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  menuItemPressed: {
+    backgroundColor: driverPrimitives.colors.gray50,
+  },
+  iconBox: {
+    alignItems: 'center',
+    height: 28,
     justifyContent: 'center',
     position: 'relative',
-    width: 52,
+    width: 28,
   },
-  redBadgeDot: {
+  notificationDot: {
     backgroundColor: driverPrimitives.colors.red500,
     borderColor: driverPrimitives.colors.white,
     borderRadius: 9999,
     borderWidth: 1.5,
-    height: 10,
+    height: 8,
     position: 'absolute',
-    right: 2,
-    top: 2,
-    width: 10,
+    right: 0,
+    top: 0,
+    width: 8,
   },
-  actionBtnLabel: {
-    color: driverPrimitives.colors.gray700,
-    fontSize: 11,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-
-  promoCardContainer: {
-    gap: 10,
-  },
-  promoBannerCard: {
-    backgroundColor: '#0F172A',
-    borderRadius: driverPrimitives.radius.card,
-    ...iosContinuousCurve,
-    overflow: 'hidden',
-    padding: 18,
-    ...driverPrimitives.shadows.sm,
-  },
-  promoTextCol: {
-    gap: 10,
-  },
-  promoBannerTitle: {
-    color: driverPrimitives.colors.white,
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  promoPillBtn: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 9999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  promoPillText: {
-    color: driverPrimitives.colors.white,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  guideCardContainer: {
-    gap: 10,
-  },
-  guideCard: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: driverPrimitives.radius.card,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 14,
-    padding: 16,
-    ...driverPrimitives.shadows.sm,
-  },
-  guideIconWrap: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.green50,
-    borderRadius: 9999,
-    height: 48,
-    justifyContent: 'center',
-    width: 48,
-  },
-  guideTextCol: {
+  menuItemTextCol: {
     flex: 1,
-    gap: 6,
+    gap: 2,
   },
-  guideTitle: {
+  menuItemTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '600',
-    lineHeight: 19,
+    letterSpacing: -0.2,
   },
-  guidePillBtn: {
-    alignSelf: 'flex-start',
-    backgroundColor: driverPrimitives.colors.gray100,
-    borderRadius: 9999,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-  },
-  guidePillText: {
-    color: driverPrimitives.colors.gray700,
+  menuItemSub: {
+    color: driverPrimitives.colors.gray400,
     fontSize: 11.5,
-    fontWeight: '600',
+    fontWeight: '400',
+  },
+  menuItemSeparator: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    marginLeft: 56,
   },
 
-  appInfoRow: {
+  /* Footer */
+  footerSection: {
     alignItems: 'center',
-    paddingVertical: 4,
+    gap: 12,
+    marginTop: 8,
   },
-  appVersionText: {
+  versionLabel: {
     color: driverPrimitives.colors.gray400,
     fontSize: 12,
+    fontWeight: '500',
   },
-  logoutWrapper: {
-    paddingVertical: 8,
+  logoutBtnWrap: {
+    alignSelf: 'stretch',
   },
   pressed: {
     opacity: 0.85,

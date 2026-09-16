@@ -8,19 +8,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { useRouter } from 'expo-router';
 
 import appJson from '../../../app.json';
 
 import {
-  colors,
   driverPrimitives,
-  driverSemantics,
   iosContinuousCurve,
-  leopardPalette,
-  radius,
-  spacing,
-  typeScale,
   ScreenScaffold,
   IconBell,
   IconCheck,
@@ -30,20 +24,11 @@ import {
   IconRadarPulse,
   IconRoute,
   IconSecurityShield,
-  IconSettings,
   IconSpeedTruck,
   IconSupport247,
   IconTrash,
   IconWarningShield,
 } from '@leopard/mobile-core';
-
-function TrendingUpIcon({ size = 16, color = driverPrimitives.colors.green600 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" fill={color} />
-    </Svg>
-  );
-}
 
 // Same source as profile adapter: real bundled version, never a hardcoded pilot tag.
 const APP_VERSION: string = (appJson as { expo?: { version?: unknown } })?.expo?.version
@@ -51,6 +36,8 @@ const APP_VERSION: string = (appJson as { expo?: { version?: unknown } })?.expo?
   : '—';
 
 export function DriverSettingsScreen() {
+  const router = useRouter();
+
   // 1. Alerts & Dispatch offers state
   const [highAlertSound, setHighAlertSound] = useState(true);
   const [ringtoneVolume, setRingtoneVolume] = useState<50 | 75 | 100>(100);
@@ -72,12 +59,8 @@ export function DriverSettingsScreen() {
 
   // 4. Testing alert feedback & Cache storage
   const [isTestingAlert, setIsTestingAlert] = useState(false);
-  // No cache-size API wired: null until a real measurement exists — never a fake '142 MB'.
   const [cacheSize, setCacheSize] = useState<string | null>(null);
   const [isClearingCache, setIsClearingCache] = useState(false);
-  // Real GPS accuracy from expo-location, measured on demand. Null = chưa đo.
-  const [gpsAccuracyLabel, setGpsAccuracyLabel] = useState<string | null>(null);
-  const [isMeasuringGps, setIsMeasuringGps] = useState(false);
 
   const testTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cacheTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -103,34 +86,6 @@ export function DriverSettingsScreen() {
         [{ text: 'Đã hiểu' }],
       );
     }, 1200);
-  };
-
-  const handleMeasureGps = async () => {
-    if (isMeasuringGps) return;
-    setIsMeasuringGps(true);
-    try {
-      const Location = require('expo-location') as {
-        requestForegroundPermissionsAsync: () => Promise<{ status: string }>;
-        getCurrentPositionAsync: (opts?: { accuracy?: number }) => Promise<{ coords: { accuracy?: number | null } }>;
-        Accuracy?: { Balanced?: number };
-      };
-      const perm = await Location.requestForegroundPermissionsAsync();
-      if (perm.status !== 'granted') {
-        Alert.alert('Chưa có quyền vị trí', 'Cấp quyền vị trí để đo độ chính xác GPS thực địa.');
-        return;
-      }
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy?.Balanced ?? 3,
-      });
-      const acc = pos.coords.accuracy;
-      setGpsAccuracyLabel(
-        typeof acc === 'number' && Number.isFinite(acc) ? `±${Math.round(acc)}m` : 'Đã đo · không rõ độ chính xác',
-      );
-    } catch {
-      Alert.alert('Không đo được GPS', 'Thử lại khi thiết bị có tín hiệu vị trí.');
-    } finally {
-      setIsMeasuringGps(false);
-    }
   };
 
   const handleClearCache = () => {
@@ -189,13 +144,17 @@ export function DriverSettingsScreen() {
         <Pressable
           accessibilityLabel="Khôi phục cài đặt gốc"
           accessibilityRole="button"
+          hitSlop={8}
           onPress={handleResetDefaults}
           style={styles.resetBtn}
         >
-          <Text style={styles.resetBtnText}>Đặt lại</Text>
+          <Text numberOfLines={1} style={styles.resetBtnText}>
+            Đặt lại
+          </Text>
         </Pressable>
       }
       headerTone="plain"
+      onBack={() => router.back()}
       title="Tất cả cài đặt"
     >
       <ScrollView
@@ -203,81 +162,15 @@ export function DriverSettingsScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* ── 1. Cockpit System Diagnostics Hero Card ── */}
-        <View style={styles.diagnosticsCard}>
-          <View style={styles.diagnosticsHeader}>
-            <View style={styles.diagnosticsBrandChip}>
-              <IconRadarPulse color="#38BDF8" size={14} />
-              <Text style={styles.diagnosticsBrandText}>CHẨN ĐOÁN BUỒNG LÁI</Text>
-            </View>
-            <View style={styles.readyBadge}>
-              <View style={styles.readyDot} />
-              <Text style={styles.readyBadgeText}>SẴN SÀNG NHẬN ĐƠN</Text>
-            </View>
-          </View>
-
-          <View style={styles.metricsGrid}>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>GPS thực địa</Text>
-              <Text style={styles.metricValueGreen}>{gpsAccuracyLabel ?? '—'}</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Server Ping</Text>
-              <Text style={styles.metricValueGreen}>—</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Âm lượng chuông</Text>
-              <Text style={styles.metricValue}>{ringtoneVolume}%</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Tối ưu pin</Text>
-              <Text style={styles.metricValue}>{batterySaver ? 'Tiết kiệm pin: Bật' : 'Tiết kiệm pin: Tắt'}</Text>
-            </View>
-          </View>
-
-          <Pressable
-            accessibilityLabel="Thử nghiệm âm thanh chuông báo và độ nhạy"
-            accessibilityRole="button"
-            disabled={isTestingAlert || isMeasuringGps}
-            onPress={() => {
-              handleTestAlert();
-              void handleMeasureGps();
-            }}
-            style={({ pressed }) => [
-              styles.testAlertBtn,
-              isTestingAlert ? styles.testAlertBtnActive : null,
-              pressed ? styles.pressed : null,
-            ]}
-          >
-            <IconBell color={isTestingAlert ? '#FFFFFF' : '#38BDF8'} size={16} />
-            <Text
-              style={[
-                styles.testAlertBtnText,
-                isTestingAlert ? styles.testAlertBtnTextActive : null,
-              ]}
-            >
-              {isTestingAlert || isMeasuringGps ? 'Đang phát thử chuông nổ đơn…' : 'Nghe thử chuông nổ đơn & Test GPS'}
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* ── 2. BÁO HIỆU & ĐIỀU PHỐI ĐƠN HÀNG (Image 6: Cài đặt yêu cầu) ── */}
+        {/* ── 1. BÁO HIỆU & ĐIỀU PHỐI ĐƠN HÀNG (Apple Inset Grouped) ── */}
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>BÁO HIỆU & ĐIỀU PHỐI ĐƠN HÀNG</Text>
-          <View style={styles.card}>
-            {/* Highlight Banner (Image 6) */}
-            <View style={styles.highlightBanner}>
-              <TrendingUpIcon />
-              <Text style={styles.highlightBannerText}>Tăng cơ hội nhận cuốc của bạn</Text>
-            </View>
 
-            {/* Tự động nhận cuốc (Auto-accept) */}
+          <View style={styles.card}>
+            {/* Tự động nhận đơn */}
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconSpeedTruck color={driverPrimitives.colors.green500} size={18} />
+                <IconSpeedTruck color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Tự động nhận đơn</Text>
@@ -287,7 +180,7 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Bật tắt tự động nhận đơn"
                 onValueChange={setAutoAccept}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={autoAccept}
               />
             </View>
@@ -296,7 +189,7 @@ export function DriverSettingsScreen() {
             {autoAccept && (
               <View style={styles.subConfigBox}>
                 <Text style={styles.subConfigLabel}>Bán kính tự động quét cuốc:</Text>
-                <View style={styles.radiusButtonGroup}>
+                <View style={styles.segmentedControl}>
                   {[2, 5, 10].map((radiusKm) => (
                     <Pressable
                       accessibilityLabel={`Bán kính ${radiusKm} kilômét`}
@@ -304,14 +197,14 @@ export function DriverSettingsScreen() {
                       key={radiusKm}
                       onPress={() => setAutoAcceptRadius(radiusKm)}
                       style={[
-                        styles.radiusBtn,
-                        autoAcceptRadius === radiusKm ? styles.radiusBtnActive : null,
+                        styles.segmentBtn,
+                        autoAcceptRadius === radiusKm ? styles.segmentBtnActive : null,
                       ]}
                     >
                       <Text
                         style={[
-                          styles.radiusBtnText,
-                          autoAcceptRadius === radiusKm ? styles.radiusBtnTextActive : null,
+                          styles.segmentBtnText,
+                          autoAcceptRadius === radiusKm ? styles.segmentBtnTextActive : null,
                         ]}
                       >
                         {radiusKm} km
@@ -322,10 +215,10 @@ export function DriverSettingsScreen() {
               </View>
             )}
 
-            {/* Đề xuất giá cước (MỚI - Image 6) */}
+            {/* Đề xuất giá cước */}
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconRadarPulse color={driverPrimitives.colors.green500} size={18} />
+                <IconRadarPulse color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <View style={styles.newBadgeRow}>
@@ -342,7 +235,7 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Đề xuất giá cước"
                 onValueChange={setPriceProposal}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={priceProposal}
               />
             </View>
@@ -350,7 +243,7 @@ export function DriverSettingsScreen() {
             {/* Chuông lớn */}
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconBell color={driverPrimitives.colors.gray700} size={18} />
+                <IconBell color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Chuông báo chuyến mới âm lượng lớn</Text>
@@ -362,7 +255,7 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Bật tắt chuông báo chuyến mới âm lượng lớn"
                 onValueChange={setHighAlertSound}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={highAlertSound}
               />
             </View>
@@ -370,7 +263,7 @@ export function DriverSettingsScreen() {
             {/* Âm lượng chuông báo */}
             <View style={styles.subConfigBox}>
               <Text style={styles.subConfigLabel}>Mức âm lượng chuông điều phối:</Text>
-              <View style={styles.radiusButtonGroup}>
+              <View style={styles.segmentedControl}>
                 {([50, 75, 100] as const).map((vol) => (
                   <Pressable
                     accessibilityLabel={`Âm lượng ${vol}%`}
@@ -379,14 +272,14 @@ export function DriverSettingsScreen() {
                     key={vol}
                     onPress={() => setRingtoneVolume(vol)}
                     style={[
-                      styles.radiusBtn,
-                      ringtoneVolume === vol ? styles.radiusBtnActive : null,
+                      styles.segmentBtn,
+                      ringtoneVolume === vol ? styles.segmentBtnActive : null,
                     ]}
                   >
                     <Text
                       style={[
-                        styles.radiusBtnText,
-                        ringtoneVolume === vol ? styles.radiusBtnTextActive : null,
+                        styles.segmentBtnText,
+                        ringtoneVolume === vol ? styles.segmentBtnTextActive : null,
                       ]}
                     >
                       {vol}% {vol === 100 ? '(Tối đa)' : ''}
@@ -396,10 +289,32 @@ export function DriverSettingsScreen() {
               </View>
             </View>
 
+            {/* Test alert row */}
+            <Pressable
+              accessibilityLabel="Thử nghiệm âm thanh chuông báo và độ nhạy"
+              accessibilityRole="button"
+              disabled={isTestingAlert}
+              onPress={handleTestAlert}
+              style={({ pressed }) => [styles.settingRowAction, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.iconWrap}>
+                <IconBell color={driverPrimitives.colors.gray500} size={20} />
+              </View>
+              <View style={styles.textWrap}>
+                <Text style={styles.settingTitle}>
+                  {isTestingAlert ? 'Đang phát thử chuông nổ đơn…' : 'Nghe thử chuông nổ đơn'}
+                </Text>
+                <Text style={styles.settingDesc}>
+                  Phát thử âm báo ở mức âm lượng {ringtoneVolume}%
+                </Text>
+              </View>
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
+            </Pressable>
+
             {/* Rung cường độ cao */}
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconRadarPulse color={driverPrimitives.colors.gray700} size={18} />
+                <IconRadarPulse color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Rung cường độ cao khi có đơn</Text>
@@ -411,7 +326,7 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Bật tắt rung cường độ cao"
                 onValueChange={setVibrateOnOffer}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={vibrateOnOffer}
               />
             </View>
@@ -419,7 +334,7 @@ export function DriverSettingsScreen() {
             {/* Giọng nói đọc tóm tắt đơn (TTS) */}
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconSupport247 color={driverPrimitives.colors.gray700} size={18} />
+                <IconSupport247 color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Giọng nói đọc tóm tắt đơn hàng</Text>
@@ -431,7 +346,7 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Bật tắt giọng nói đọc đơn hàng"
                 onValueChange={setVoiceAnnouncement}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={voiceAnnouncement}
               />
             </View>
@@ -439,7 +354,7 @@ export function DriverSettingsScreen() {
             {/* Tự động nghỉ sau chuyến này */}
             <View style={[styles.settingRow, styles.settingRowLast]}>
               <View style={styles.iconWrap}>
-                <IconClock color={driverPrimitives.colors.gray700} size={18} />
+                <IconClock color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Tự động nghỉ sau chuyến này</Text>
@@ -451,21 +366,22 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Tự động nghỉ sau chuyến này"
                 onValueChange={setAutoOfflineOnComplete}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={autoOfflineOnComplete}
               />
             </View>
           </View>
         </View>
 
-        {/* ── 3. BẢN ĐỒ & DẪN ĐƯỜNG XE TẢI ── */}
+        {/* ── 2. BẢN ĐỒ & DẪN ĐƯỜNG XE TẢI ── */}
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>BẢN ĐỒ & DẪN ĐƯỜNG XE TẢI</Text>
+
           <View style={styles.card}>
             {/* Lựa chọn app bản đồ */}
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconRoute color="#0B1E42" size={18} />
+                <IconRoute color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Ứng dụng dẫn đường mặc định</Text>
@@ -475,20 +391,20 @@ export function DriverSettingsScreen() {
                     : 'Google Maps Navigation'}
                 </Text>
               </View>
-              <View style={styles.navSelectorGroup}>
+              <View style={styles.segmentedControlCompact}>
                 <Pressable
                   accessibilityLabel="Chọn bản đồ Vietmap"
                   accessibilityRole="button"
                   onPress={() => setDefaultNav('vietmap')}
                   style={[
-                    styles.navSelectorPill,
-                    defaultNav === 'vietmap' ? styles.navSelectorPillActive : null,
+                    styles.segmentCompactBtn,
+                    defaultNav === 'vietmap' ? styles.segmentCompactBtnActive : null,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.navSelectorText,
-                      defaultNav === 'vietmap' ? styles.navSelectorTextActive : null,
+                      styles.segmentCompactText,
+                      defaultNav === 'vietmap' ? styles.segmentCompactTextActive : null,
                     ]}
                   >
                     Vietmap
@@ -499,14 +415,14 @@ export function DriverSettingsScreen() {
                   accessibilityRole="button"
                   onPress={() => setDefaultNav('google')}
                   style={[
-                    styles.navSelectorPill,
-                    defaultNav === 'google' ? styles.navSelectorPillActive : null,
+                    styles.segmentCompactBtn,
+                    defaultNav === 'google' ? styles.segmentCompactBtnActive : null,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.navSelectorText,
-                      defaultNav === 'google' ? styles.navSelectorTextActive : null,
+                      styles.segmentCompactText,
+                      defaultNav === 'google' ? styles.segmentCompactTextActive : null,
                     ]}
                   >
                     Google
@@ -518,7 +434,7 @@ export function DriverSettingsScreen() {
             {/* Tự động mở dẫn đường */}
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconLocationPin color="#0B1E42" size={18} />
+                <IconLocationPin color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Tự động mở dẫn đường khi bắt đầu di chuyển</Text>
@@ -530,7 +446,7 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Tự động mở dẫn đường"
                 onValueChange={setAutoOpenNav}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={autoOpenNav}
               />
             </View>
@@ -538,7 +454,7 @@ export function DriverSettingsScreen() {
             {/* Tránh đường cấm tải trọng */}
             <View style={[styles.settingRow, styles.settingRowLast]}>
               <View style={styles.iconWrap}>
-                <IconWarningShield color="#10B981" size={18} />
+                <IconWarningShield color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Cảnh báo đường cấm tải trọng & giờ giới nghiêm</Text>
@@ -550,21 +466,22 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Cảnh báo đường cấm tải"
                 onValueChange={setAvoidTruckRestrictions}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={avoidTruckRestrictions}
               />
             </View>
           </View>
         </View>
 
-        {/* ── 4. MÀN HÌNH LÁI XE & TỐI ƯU PIN ── */}
+        {/* ── 3. MÀN HÌNH LÁI XE & TỐI ƯU PIN ── */}
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>MÀN HÌNH LÁI XE & TỐI ƯU PIN</Text>
+
           <View style={styles.card}>
             {/* Giữ màn hình luôn sáng */}
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconSecurityShield color="#0B1E42" size={18} />
+                <IconSecurityShield color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Giữ màn hình luôn sáng khi online</Text>
@@ -576,7 +493,7 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Giữ màn hình luôn sáng"
                 onValueChange={setKeepScreenAwake}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={keepScreenAwake}
               />
             </View>
@@ -584,7 +501,7 @@ export function DriverSettingsScreen() {
             {/* Chế độ tiết kiệm pin */}
             <View style={[styles.settingRow, styles.settingRowLast]}>
               <View style={styles.iconWrap}>
-                <IconClock color="#0B1E42" size={18} />
+                <IconClock color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Chế độ tiết kiệm pin thực địa</Text>
@@ -596,41 +513,42 @@ export function DriverSettingsScreen() {
                 accessibilityLabel="Chế độ tiết kiệm pin"
                 onValueChange={setBatterySaver}
                 thumbColor="#FFFFFF"
-                trackColor={{ false: '#CBD5E1', true: driverPrimitives.colors.green500 }}
+                trackColor={{ false: '#E2E8F0', true: driverPrimitives.colors.green500 }}
                 value={batterySaver}
               />
             </View>
           </View>
         </View>
 
-        {/* ── 5. QUYỀN THIẾT BỊ & DỌN DẸP DỮ LIỆU ── */}
+        {/* ── 4. QUYỀN THIẾT BỊ & DỌN DẸP DỮ LIỆU ── */}
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>QUYỀN THIẾT BỊ & DỌN DẸP DỮ LIỆU</Text>
+
           <View style={styles.card}>
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconLocationPin color="#10B981" size={18} />
+                <IconLocationPin color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Quyền vị trí chính xác (Background GPS)</Text>
                 <Text style={styles.settingDesc}>Đã cấp quyền "Luôn cho phép" · Tọa độ thời gian thực</Text>
               </View>
               <View style={styles.statusPillGreen}>
-                <IconCheck color="#10B981" size={12} />
+                <IconCheck color={driverPrimitives.colors.gray500} size={12} strokeWidth={2.5} />
                 <Text style={styles.statusPillGreenText}>Hợp lệ</Text>
               </View>
             </View>
 
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconSecurityShield color="#10B981" size={18} />
+                <IconSecurityShield color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Quyền camera & chụp ảnh bằng chứng POD</Text>
                 <Text style={styles.settingDesc}>Dùng để chụp ảnh hàng hóa tại điểm nhận và điểm giao</Text>
               </View>
               <View style={styles.statusPillGreen}>
-                <IconCheck color="#10B981" size={12} />
+                <IconCheck color={driverPrimitives.colors.gray500} size={12} strokeWidth={2.5} />
                 <Text style={styles.statusPillGreenText}>Hợp lệ</Text>
               </View>
             </View>
@@ -644,33 +562,34 @@ export function DriverSettingsScreen() {
               style={({ pressed }) => [styles.settingRowAction, pressed ? styles.pressed : null]}
             >
               <View style={styles.iconWrap}>
-                <IconTrash color="#EF4444" size={18} />
+                <IconTrash color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
-                <Text style={styles.settingTitleDanger}>Dọn dẹp bộ nhớ đệm (Cache)</Text>
+                <Text style={styles.settingTitle}>Dọn dẹp bộ nhớ đệm (Cache)</Text>
                 <Text style={styles.settingDesc}>Dung lượng tạm hiện tại: {cacheSize ?? 'Chưa đo'}</Text>
               </View>
-              <IconChevronRight color="#94A3B8" size={16} />
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
             </Pressable>
           </View>
         </View>
 
-        {/* ── 6. TRỢ GIÚP KỸ THUẬT & PHÁP LÝ ── */}
+        {/* ── 5. TRỢ GIÚP KỸ THUẬT & PHÁP LÝ ── */}
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>TRỢ GIÚP KỸ THUẬT & PHÁP LÝ</Text>
+
           <View style={styles.card}>
             <View style={styles.settingRow}>
               <View style={styles.iconWrap}>
-                <IconSupport247 color="#0B1E42" size={18} />
+                <IconSupport247 color={driverPrimitives.colors.gray500} size={20} />
               </View>
               <View style={styles.textWrap}>
                 <Text style={styles.settingTitle}>Tổng đài điều hành LEOPARD Pilot</Text>
                 <Text style={styles.settingDesc}>Liên hệ điều hành — thông tin hiển thị khi BE cấu hình</Text>
               </View>
-              <IconChevronRight color="#94A3B8" size={16} />
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
             </View>
 
-            {/* Nút gọi khẩn cấp SOS */}
+            {/* SOS Button */}
             <Pressable
               accessibilityLabel="Nút gọi khẩn cấp SOS"
               accessibilityRole="button"
@@ -678,14 +597,12 @@ export function DriverSettingsScreen() {
                 Alert.alert(
                   'GỌI CỨU HỘ KHẨN CẤP SOS (24/7)',
                   'Đường dây nóng khẩn cấp sẽ hiển thị khi BE cấu hình. Hiện chưa có số liên hệ.',
-                  [
-                    { text: 'Đã hiểu', style: 'cancel' },
-                  ],
+                  [{ text: 'Đã hiểu', style: 'cancel' }],
                 );
               }}
               style={({ pressed }) => [styles.sosButton, pressed ? styles.pressed : null]}
             >
-              <IconWarningShield color="#FFFFFF" size={18} />
+              <IconWarningShield color="#DC2626" size={18} />
               <Text style={styles.sosButtonText}>GỌI CỨU HỘ KHẨN CẤP SOS (24/7)</Text>
             </Pressable>
           </View>
@@ -703,161 +620,47 @@ export function DriverSettingsScreen() {
 
 const styles = StyleSheet.create({
   scrollWrap: {
-    backgroundColor: driverPrimitives.colors.gray50,
+    backgroundColor: '#F8FAFC',
     flex: 1,
   },
   scrollContent: {
     gap: 16,
-    padding: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
     paddingBottom: 60,
   },
   resetBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingRight: 4,
+    width: 65,
   },
   resetBtnText: {
     color: driverPrimitives.colors.blue500,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
+    textAlign: 'right',
   },
 
-  diagnosticsCard: {
-    backgroundColor: '#0F172A',
-    borderColor: '#334155',
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-    ...driverPrimitives.shadows.sm,
-  },
-  diagnosticsHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  diagnosticsBrandChip: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderRadius: 6,
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  diagnosticsBrandText: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  readyBadge: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderRadius: 9999,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  readyDot: {
-    backgroundColor: '#10B981',
-    borderRadius: 9999,
-    height: 6,
-    width: 6,
-  },
-  readyBadgeText: {
-    color: '#10B981',
-    fontSize: 10.5,
-    fontWeight: '700',
-  },
-
-  metricsGrid: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-  },
-  metricItem: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  metricLabel: {
-    color: '#94A3B8',
-    fontSize: 10.5,
-  },
-  metricValue: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  metricValueGreen: {
-    color: '#34D399',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  metricDivider: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    width: 1,
-  },
-  testAlertBtn: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-    borderColor: 'rgba(56, 189, 248, 0.3)',
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    marginTop: 12,
-    paddingVertical: 10,
-  },
-  testAlertBtnActive: {
-    backgroundColor: '#0284C7',
-    borderColor: '#0284C7',
-  },
-  testAlertBtnText: {
-    color: '#38BDF8',
-    fontSize: 12.5,
-    fontWeight: '700',
-  },
-  testAlertBtnTextActive: {
-    color: '#FFFFFF',
-  },
-
+  /* Sections */
   sectionBlock: {
     gap: 8,
   },
   sectionLabel: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
     letterSpacing: 0.5,
+    paddingHorizontal: 4,
   },
   card: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: driverPrimitives.radius.card,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
     overflow: 'hidden',
     ...driverPrimitives.shadows.sm,
-  },
-
-  highlightBanner: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.green50,
-    borderBottomColor: driverPrimitives.colors.green100,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  highlightBannerText: {
-    color: driverPrimitives.colors.green700,
-    fontSize: 13.5,
-    fontWeight: '600',
   },
 
   settingRow: {
@@ -875,6 +678,8 @@ const styles = StyleSheet.create({
   },
   settingRowAction: {
     alignItems: 'center',
+    borderBottomColor: driverPrimitives.colors.gray100,
+    borderBottomWidth: 1,
     flexDirection: 'row',
     gap: 12,
     minHeight: 56,
@@ -896,23 +701,20 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   newPill: {
-    backgroundColor: driverPrimitives.colors.red500,
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
     borderRadius: 4,
+    borderWidth: 1,
     paddingHorizontal: 5,
     paddingVertical: 1,
   },
   newPillText: {
-    color: driverPrimitives.colors.white,
+    color: '#475569',
     fontSize: 9.5,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   settingTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
-    fontWeight: '600',
-  },
-  settingTitleDanger: {
-    color: driverPrimitives.colors.red600,
     fontSize: 14.5,
     fontWeight: '600',
   },
@@ -923,7 +725,7 @@ const styles = StyleSheet.create({
   },
 
   subConfigBox: {
-    backgroundColor: driverPrimitives.colors.gray50,
+    backgroundColor: '#F8FAFC',
     borderBottomColor: driverPrimitives.colors.gray100,
     borderBottomWidth: 1,
     gap: 8,
@@ -932,90 +734,98 @@ const styles = StyleSheet.create({
   },
   subConfigLabel: {
     color: driverPrimitives.colors.gray700,
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-  radiusButtonGroup: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  radiusBtn: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 8,
-    borderWidth: 1,
-    flex: 1,
-    paddingVertical: 8,
-  },
-  radiusBtnActive: {
-    backgroundColor: driverPrimitives.colors.green50,
-    borderColor: driverPrimitives.colors.green500,
-  },
-  radiusBtnText: {
-    color: driverPrimitives.colors.gray700,
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-  radiusBtnTextActive: {
-    color: driverPrimitives.colors.green700,
-    fontWeight: '700',
-  },
-
-  navSelectorGroup: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  navSelectorPill: {
-    backgroundColor: driverPrimitives.colors.gray100,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  navSelectorPillActive: {
-    backgroundColor: driverPrimitives.colors.green50,
-    borderColor: driverPrimitives.colors.green500,
-    borderWidth: 1,
-  },
-  navSelectorText: {
-    color: driverPrimitives.colors.gray500,
     fontSize: 12,
     fontWeight: '600',
   },
-  navSelectorTextActive: {
-    color: driverPrimitives.colors.green700,
+
+  /* Apple Segmented Controls */
+  segmentedControl: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 2,
+    padding: 2,
+  },
+  segmentBtn: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flex: 1,
+    paddingVertical: 7,
+  },
+  segmentBtnActive: {
+    backgroundColor: driverPrimitives.colors.white,
+    ...driverPrimitives.shadows.sm,
+  },
+  segmentBtnText: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  segmentBtnTextActive: {
+    color: driverPrimitives.colors.gray900,
+    fontWeight: '700',
+  },
+
+  segmentedControlCompact: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 2,
+    padding: 2,
+  },
+  segmentCompactBtn: {
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  segmentCompactBtnActive: {
+    backgroundColor: driverPrimitives.colors.white,
+    ...driverPrimitives.shadows.sm,
+  },
+  segmentCompactText: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  segmentCompactTextActive: {
+    color: driverPrimitives.colors.gray900,
     fontWeight: '700',
   },
 
   statusPillGreen: {
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
     borderRadius: 9999,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   statusPillGreenText: {
-    color: '#15803D',
+    color: driverPrimitives.colors.gray500,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   sosButton: {
     alignItems: 'center',
-    backgroundColor: '#DC2626',
-    borderRadius: 10,
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: 14,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: 8,
+    height: 46,
     justifyContent: 'center',
-    margin: 12,
-    paddingVertical: 12,
+    margin: 14,
   },
   sosButtonText: {
-    color: '#FFFFFF',
+    color: '#DC2626',
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 
   footerSection: {

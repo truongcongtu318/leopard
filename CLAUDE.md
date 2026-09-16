@@ -42,6 +42,47 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 
 ---
 
+## UI Component Development Workflow
+
+When asked to build or refactor a UI component:
+
+1. **FIRST**:
+   - Search the repository for an existing equivalent in `@leopard/mobile-core`, `@leopard/ui`, or app workspaces.
+   - If no suitable component exists, query the UI MCP (`shadcn-ui-mcp-server`) for structural and state references.
+
+2. **THEN**:
+   - Analyze the MCP result for accessibility contracts and component anatomy.
+   - Adapt it to the repository conventions.
+   - **Never copy NativeWind styling directly** into React Native workspaces.
+
+3. **FINALLY**:
+   - Implement for Mobile using `StyleSheet.create` + `@leopard/mobile-core` (Apple HIG tokens, `driverPrimitives`, `iosContinuousCurve`).
+   - Implement for Web using Tailwind CSS + `@leopard/ui` primitives.
+
+### Mobile UI & Color Design Rules (Apple HIG Standard)
+
+1. **Standard Navigation Bar (Header)**:
+   - Always use `ScreenScaffold` with `onBack` and `title` for screen headers across all mobile apps (`apps/driver`, `apps/mobile`).
+   - Fixed 44pt bar height, centered 17pt Semibold title, standard chevron back button `<` with minimum 44x44pt hit target (`hitSlop`).
+   - Never create custom `headerBar` implementations with ad-hoc heights (e.g. 52pt) or raw SVG arrows.
+
+2. **Color Restraint (Content-First)**:
+   - **No rainbow/pastel icon background boxes**: Do not wrap icons in arbitrary green, amber, blue, purple squares (`#ECFDF5`, `#FFFBEB`, `#EFF6FF`).
+   - **Monochrome SF Symbols Style**: Setting, menu, and action icons must be neutral monochrome (`gray500` or `gray700`), placed directly beside labels.
+   - **Neutral Data & KPI Typography**: Normal statistics, percentages, and metrics must use high-contrast neutral dark typography (`driverPrimitives.colors.gray900`, bold, `fontVariant: ['tabular-nums']`). Never color numbers green or red unless indicating a specific delta/trend.
+   - **Functional Colors Only**: Reserve color strictly for active business signals:
+     - Rating stars: `amber500`
+     - Critical alerts / destructive actions: `red500` / `red600`
+     - Online status indicator / confirmed toggle: `green500`
+     - Unread notifications dot: `red500`
+
+3. **Surfaces & Cards (Apple Inset Grouped & Nexa Bento)**:
+   - Base canvas: `#F8FAFC` (`gray50`).
+   - Cards: Pure white `#FFFFFF`, thin border `#E2E8F0` (`border-slate-200`), rounded-2xl (18-20px, `iosContinuousCurve`), soft shadow (`shadow-sm`).
+   - Avoid aggressive pitch-black container boxes (`#0F172A`) that clash with the light iOS theme.
+
+---
+
 ## Development & Test Commands
 
 ### Monorepo (Root)

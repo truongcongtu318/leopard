@@ -2,12 +2,10 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import Svg, { Circle, Path } from 'react-native-svg';
 
 import {
   driverPrimitives,
   iosContinuousCurve,
-  typeScale,
   Button,
   IconBank,
   IconChevronRight,
@@ -15,6 +13,8 @@ import {
   IconWallet,
   NavigableMetricCard,
   ScreenState,
+  ScreenScaffold,
+  IconSupport247,
 } from '@leopard/mobile-core';
 import { FinanceBottomBar } from '../finance/FinanceBottomBar';
 import type { WalletSummary, WithdrawalHistoryItem, WithdrawalRequestInput } from './adapter';
@@ -38,44 +38,6 @@ const STATUS_LABELS: Readonly<Record<WithdrawalHistoryItem['status'], string>> =
 
 function formatCurrency(val: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
-}
-
-function CashIcon() {
-  return (
-    <View style={styles.cashIconCircle}>
-      <Text style={styles.cashIconText}>$</Text>
-    </View>
-  );
-}
-
-function CreditIcon() {
-  return (
-    <View style={styles.creditIconCircle}>
-      <Text style={styles.creditIconText}>G</Text>
-    </View>
-  );
-}
-
-function BackArrowIcon({ size = 20, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
-
-function HelpCircleIcon({ size = 20, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"
-        fill={color}
-      />
-    </Svg>
-  );
 }
 
 export function DriverWalletScreen({
@@ -127,43 +89,48 @@ export function DriverWalletScreen({
   };
 
   return (
-    <View style={styles.screenRoot}>
-      {/* ── Top Header (Image 3) ── */}
-      <View style={styles.headerBar}>
+    <ScreenScaffold
+      headerRight={
         <Pressable
-          accessibilityLabel="Quay lại"
+          accessibilityLabel="Trợ giúp"
           accessibilityRole="button"
-          hitSlop={12}
-          onPress={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
+          hitSlop={8}
+          onPress={() => router.push('/chat')}
           style={styles.headerActionBtn}
         >
-          <BackArrowIcon />
+          <IconSupport247 color={driverPrimitives.colors.gray700} size={20} />
         </Pressable>
-
-        <Text accessibilityRole="header" style={styles.headerTitle}>
-          Ví tài xế
-        </Text>
-
-        <Pressable accessibilityLabel="Trợ giúp" accessibilityRole="button" hitSlop={12} style={styles.headerActionBtn}>
-          <HelpCircleIcon />
-        </Pressable>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} style={styles.scrollWrap}>
+      }
+      headerTone="plain"
+      onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
+      stickyFooter={
+        <FinanceBottomBar activeTab="wallet" onNavigate={(r) => router.push(r as never)} />
+      }
+      title="Ví tài xế"
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollWrap}
+      >
         {isLoading ? (
           <ScreenState state="loading" />
         ) : isError ? (
           <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
         ) : (
           <>
-            {/* ── Balance Card (Image 3) ── */}
+            {/* ── 1. Balance Bento Card (Apple White Minimal) ── */}
             <View style={styles.walletCard} testID="driver-wallet-balance-card">
               <View style={styles.walletHeader}>
                 <View style={styles.walletHeaderLeft}>
-                  <CashIcon />
+                  <View style={styles.walletIconBox}>
+                    <IconWallet color={driverPrimitives.colors.gray700} size={20} />
+                  </View>
                   <View style={styles.walletTitleCol}>
                     <Text style={styles.balanceLabel}>Ví tiền mặt (Số dư khả dụng)</Text>
-                    <Text style={styles.balanceSubLabel}>Yêu cầu rút tiền — Admin xác nhận trong giờ hành chính</Text>
+                    <Text style={styles.balanceSubLabel}>
+                      Yêu cầu rút tiền — Admin xác nhận trong giờ hành chính
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -173,12 +140,16 @@ export function DriverWalletScreen({
               <View style={styles.balanceFooter}>
                 <View style={styles.balanceStat}>
                   <Text style={styles.balanceStatLabel}>Đang chờ duyệt</Text>
-                  <Text style={styles.balanceStatValue}>{formatCurrency(summary.pendingWithdrawalVnd)}</Text>
+                  <Text style={styles.balanceStatValue}>
+                    {formatCurrency(summary.pendingWithdrawalVnd)}
+                  </Text>
                 </View>
                 <View style={styles.balanceStatDivider} />
                 <View style={styles.balanceStat}>
                   <Text style={styles.balanceStatLabel}>Tổng đã kiếm</Text>
-                  <Text style={styles.balanceStatValue}>{formatCurrency(summary.lifetimeDeliveredVnd)}</Text>
+                  <Text style={styles.balanceStatValue}>
+                    {formatCurrency(summary.lifetimeDeliveredVnd)}
+                  </Text>
                 </View>
               </View>
 
@@ -193,12 +164,12 @@ export function DriverWalletScreen({
               </Pressable>
             </View>
 
-            {/* ── Linked Bank Accounts Card ── */}
+            {/* ── 2. Linked Bank Account Card (Apple Inset Grouped) ── */}
             <View style={styles.bentoCard} testID="driver-linked-bank-card">
               <View style={styles.cardHeaderRow}>
                 <View style={styles.cardHeaderLeft}>
                   <View style={styles.bankIconChip}>
-                    <IconBank color={driverPrimitives.colors.gray900} size={16} />
+                    <IconBank color={driverPrimitives.colors.gray700} size={18} />
                   </View>
                   <View>
                     <Text style={styles.bentoCardTitle}>Tài khoản liên kết</Text>
@@ -206,6 +177,7 @@ export function DriverWalletScreen({
                   </View>
                 </View>
               </View>
+
               {summary.bankAccountNumber ? (
                 <View style={styles.bankDetailRow}>
                   <View style={styles.bankInfoCol}>
@@ -221,62 +193,88 @@ export function DriverWalletScreen({
               )}
             </View>
 
-            {/* ── Transaction History Section ── */}
+            {/* ── 3. Transaction History Section ── */}
             <View style={styles.historySection}>
               <Text style={styles.sectionHeading}>Lịch sử giao dịch</Text>
-              <View style={styles.txList}>
-                {history.map((item) => {
-                  const isPayout = item.type === 'ORDER_PAYOUT';
-                  const isFee = item.type === 'PLATFORM_FEE';
-                  const badgeLabel = isPayout ? '+cước' : isFee ? '-phí sàn' : '-rút tiền';
-                  const badgeStyle = isPayout ? styles.badgePayout : isFee ? styles.badgeFee : styles.badgeWithdrawal;
-                  const badgeTextStyle = isPayout ? styles.badgeTextPayout : isFee ? styles.badgeTextFee : styles.badgeTextWithdrawal;
-                  const amountPrefix = isPayout ? '+' : '-';
-                  const amountStyle = isPayout ? styles.txAmountPositive : styles.txAmountNegative;
-                  const itemTitle = item.title ?? (isPayout ? 'Cước chuyến hoàn thành' : isFee ? 'Phí sàn nền tảng' : `Rút tiền về ${item.bankName ?? 'ngân hàng'}`);
 
-                  return (
-                    <View key={item.id} style={styles.txCard}>
-                      <View style={styles.txLeft}>
-                        <View style={[styles.txIconChip, isPayout ? styles.txIconPositive : styles.txIconNegative]}>
-                          {isPayout ? (
-                            <IconWallet color={driverPrimitives.colors.green500} size={18} />
-                          ) : (
-                            <IconTxPayment color={driverPrimitives.colors.gray500} size={18} />
-                          )}
-                        </View>
-                        <View style={styles.txInfo}>
-                          <View style={styles.txTitleRow}>
-                            <Text style={styles.txTitle}>{itemTitle}</Text>
-                            <View style={[styles.txIndicatorBadge, badgeStyle]}>
-                              <Text style={[styles.txIndicatorText, badgeTextStyle]}>{badgeLabel}</Text>
+              {history.length === 0 ? (
+                <View style={styles.emptyHistoryCard}>
+                  <Text style={styles.emptyHistoryText}>Chưa có giao dịch rút tiền nào</Text>
+                </View>
+              ) : (
+                <View style={styles.txGroupCard}>
+                  {history.map((item, index) => {
+                    const isPayout = item.type === 'ORDER_PAYOUT';
+                    const isFee = item.type === 'PLATFORM_FEE';
+                    const badgeLabel = isPayout ? '+cước' : isFee ? '-phí sàn' : '-rút tiền';
+                    const amountPrefix = isPayout ? '+' : '-';
+                    const itemTitle =
+                      item.title ??
+                      (isPayout
+                        ? 'Cước chuyến hoàn thành'
+                        : isFee
+                        ? 'Phí sàn nền tảng'
+                        : `Rút tiền về ${item.bankName ?? 'ngân hàng'}`);
+
+                    return (
+                      <React.Fragment key={item.id}>
+                        <View style={styles.txItemRow}>
+                          <View style={styles.txLeft}>
+                            <View style={styles.txIconChip}>
+                              {isPayout ? (
+                                <IconWallet color={driverPrimitives.colors.gray700} size={18} />
+                              ) : (
+                                <IconTxPayment color={driverPrimitives.colors.gray700} size={18} />
+                              )}
+                            </View>
+                            <View style={styles.txInfo}>
+                              <View style={styles.txTitleRow}>
+                                <Text style={styles.txTitle}>{itemTitle}</Text>
+                                <View style={styles.txIndicatorBadge}>
+                                  <Text style={styles.txIndicatorText}>{badgeLabel}</Text>
+                                </View>
+                              </View>
+                              <Text style={styles.txTime}>
+                                {new Date(item.createdAt).toLocaleString('vi-VN')}
+                              </Text>
                             </View>
                           </View>
-                          <Text style={styles.txTime}>{new Date(item.createdAt).toLocaleString('vi-VN')}</Text>
+
+                          <View style={styles.txRight}>
+                            <Text style={styles.txAmount}>
+                              {amountPrefix}
+                              {formatCurrency(item.amountVnd)}
+                            </Text>
+                            <Text style={styles.txStatus}>
+                              {STATUS_LABELS[item.status] ?? item.status}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                      <View style={styles.txRight}>
-                        <Text style={[styles.txAmount, amountStyle]}>
-                          {amountPrefix}{formatCurrency(item.amountVnd)}
-                        </Text>
-                        <Text style={styles.txStatus}>{STATUS_LABELS[item.status] ?? item.status}</Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
+                        {index < history.length - 1 ? <View style={styles.txDivider} /> : null}
+                      </React.Fragment>
+                    );
+                  })}
+                </View>
+              )}
             </View>
           </>
         )}
       </ScrollView>
 
       {/* ── Withdrawal Modal ── */}
-      <Modal animationType="slide" onRequestClose={() => setShowWithdrawModal(false)} transparent visible={showWithdrawModal}>
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setShowWithdrawModal(false)}
+        transparent
+        visible={showWithdrawModal}
+      >
         <Pressable onPress={() => setShowWithdrawModal(false)} style={styles.modalBackdrop}>
           <Pressable onPress={(e) => e.stopPropagation()} style={styles.modalSheet}>
             <View style={styles.modalDragHandle} />
             <Text style={styles.modalTitle}>Yêu cầu rút tiền</Text>
-            <Text style={styles.modalSubtitle}>Số dư khả dụng: {formatCurrency(summary.availableBalanceVnd)}</Text>
+            <Text style={styles.modalSubtitle}>
+              Số dư khả dụng: {formatCurrency(summary.availableBalanceVnd)}
+            </Text>
 
             {validationError ? <Text style={styles.errorText}>{validationError}</Text> : null}
             {withdrawalError ? <Text style={styles.errorText}>{withdrawalError}</Text> : null}
@@ -317,7 +315,7 @@ export function DriverWalletScreen({
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Tên chủ tài khoản</Text>
+              <Text style={styles.inputLabel}>Tên chủ tài khoản (viết hoa không dấu)</Text>
               <TextInput
                 autoCapitalize="characters"
                 onChangeText={setBankAccountName}
@@ -328,9 +326,10 @@ export function DriverWalletScreen({
               />
             </View>
 
-            <View style={styles.modalActions}>
+            <View style={styles.modalActionButtons}>
               <Button
                 disabled={isSubmittingWithdrawal}
+                isLoading={isSubmittingWithdrawal}
                 label={isSubmittingWithdrawal ? 'Đang gửi...' : 'Gửi yêu cầu rút tiền'}
                 onPress={handleSubmit}
                 size="driver-primary"
@@ -347,182 +346,120 @@ export function DriverWalletScreen({
           </Pressable>
         </Pressable>
       </Modal>
-
-      <FinanceBottomBar activeTab="wallet" onNavigate={(r) => router.push(r as never)} />
-    </View>
+    </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  screenRoot: {
-    backgroundColor: driverPrimitives.colors.gray50,
-    flex: 1,
-  },
-  headerBar: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.white,
-    borderBottomColor: driverPrimitives.colors.gray200,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    height: 52,
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    zIndex: 10,
-  },
   headerActionBtn: {
     alignItems: 'center',
     height: 40,
     justifyContent: 'center',
     width: 40,
   },
-  headerTitle: {
-    color: driverPrimitives.colors.gray900,
-    fontSize: 18,
-    fontWeight: '700',
-  },
   scrollWrap: {
-    backgroundColor: driverPrimitives.colors.gray50,
+    backgroundColor: '#F8FAFC',
     flex: 1,
   },
   scrollContent: {
-    gap: 14,
-    padding: 16,
-    paddingBottom: 88,
+    gap: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    paddingBottom: 48,
   },
 
+  /* Balance Card */
   walletCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 12,
+    gap: 14,
     padding: 16,
     ...driverPrimitives.shadows.sm,
   },
   walletHeader: {
-    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   walletHeaderLeft: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
-  },
-  walletTitleCol: {
+    gap: 10,
     flex: 1,
   },
-  cashIconCircle: {
+  walletIconBox: {
     alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.green500,
-    borderRadius: 9999,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    borderWidth: 1,
     height: 36,
     justifyContent: 'center',
     width: 36,
   },
-  cashIconText: {
-    color: driverPrimitives.colors.white,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  creditIconCircle: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.green50,
-    borderRadius: 9999,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
-  },
-  creditIconText: {
-    color: driverPrimitives.colors.green500,
-    fontSize: 16,
-    fontWeight: '800',
+  walletTitleCol: {
+    flex: 1,
+    gap: 2,
   },
   balanceLabel: {
-    color: driverPrimitives.colors.gray700,
-    fontSize: 13.5,
-    fontWeight: '600',
-  },
-  balanceSubLabel: {
-    color: driverPrimitives.colors.gray400,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  balanceAmount: {
-    color: driverPrimitives.colors.gray900,
-    fontSize: 30,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-
-  assetList: {
-    backgroundColor: '#F8FAFC',
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  assetItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  assetLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  assetTitle: {
-    color: driverPrimitives.colors.gray900,
-    fontSize: 13.5,
-    fontWeight: '600',
-  },
-  assetDesc: {
-    color: driverPrimitives.colors.gray500,
-    fontSize: 11,
-  },
-  assetValue: {
     color: driverPrimitives.colors.gray900,
     fontSize: 14.5,
     fontWeight: '700',
-    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.2,
   },
-
+  balanceSubLabel: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  balanceAmount: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 32,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.5,
+  },
   balanceFooter: {
-    borderTopColor: driverPrimitives.colors.gray200,
-    borderTopWidth: 1,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
   balanceStat: {
     alignItems: 'center',
+    flex: 1,
     gap: 2,
   },
   balanceStatLabel: {
     color: driverPrimitives.colors.gray500,
     fontSize: 11.5,
+    fontWeight: '500',
   },
   balanceStatValue: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    fontSize: 14,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   balanceStatDivider: {
-    backgroundColor: driverPrimitives.colors.gray200,
+    backgroundColor: '#E2E8F0',
+    height: '100%',
     width: 1,
   },
-
   withdrawBtn: {
     alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.dark900,
-    borderRadius: 10,
+    backgroundColor: driverPrimitives.colors.dark950,
+    borderRadius: 14,
+    ...iosContinuousCurve,
     height: 48,
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
   withdrawBtnPressed: {
     opacity: 0.85,
@@ -533,20 +470,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
+  /* Linked Bank Account Card */
   bentoCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
     padding: 16,
+    gap: 12,
     ...driverPrimitives.shadows.sm,
   },
   cardHeaderRow: {
-    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
   },
   cardHeaderLeft: {
     alignItems: 'center',
@@ -555,135 +492,114 @@ const styles = StyleSheet.create({
   },
   bankIconChip: {
     alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.gray100,
-    borderRadius: 6,
-    height: 30,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 36,
     justifyContent: 'center',
-    width: 30,
+    width: 36,
   },
   bentoCardTitle: {
     color: driverPrimitives.colors.gray900,
     fontSize: 14.5,
     fontWeight: '700',
+    letterSpacing: -0.2,
   },
   bentoCardSub: {
     color: driverPrimitives.colors.gray500,
     fontSize: 11.5,
   },
   bankDetailRow: {
-    marginTop: 4,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
   },
   bankInfoCol: {
-    gap: 2,
+    gap: 3,
   },
   bankNameText: {
-    color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    color: driverPrimitives.colors.gray500,
+    fontSize: 12,
     fontWeight: '600',
   },
   bankAccountNumText: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 15.5,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 17,
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
+    letterSpacing: 0.5,
   },
   bankHolderText: {
-    color: driverPrimitives.colors.gray500,
-    fontSize: 11.5,
+    color: driverPrimitives.colors.gray700,
+    fontSize: 12,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   unlinkedText: {
     color: driverPrimitives.colors.gray400,
     fontSize: 13,
+    paddingVertical: 4,
   },
 
-  utilitiesSection: {
-    gap: 10,
+  /* Transaction History */
+  historySection: {
+    gap: 8,
   },
   sectionHeading: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 15.5,
+    fontSize: 14,
     fontWeight: '700',
+    letterSpacing: -0.2,
+    paddingHorizontal: 4,
   },
-  utilityCard: {
+  emptyHistoryCard: {
     alignItems: 'center',
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingVertical: 32,
+    paddingHorizontal: 16,
+  },
+  emptyHistoryText: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  txGroupCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    padding: 14,
+    overflow: 'hidden',
     ...driverPrimitives.shadows.sm,
   },
-  utilityIconWrap: {
+  txItemRow: {
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shieldIconWrap: {
-    alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    borderRadius: 9999,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
-  },
-  shieldEmoji: {
-    fontSize: 16,
-  },
-  utilityInfo: {
-    flex: 1,
-    gap: 3,
-  },
-  utilityTitle: {
-    color: driverPrimitives.colors.gray900,
-    fontSize: 13.5,
-    fontWeight: '600',
-    lineHeight: 18,
-  },
-  utilityLink: {
-    color: driverPrimitives.colors.green500,
-    fontSize: 12.5,
-    fontWeight: '700',
-  },
-
-  historySection: {
-    gap: 10,
-  },
-  txList: {
-    gap: 8,
-  },
-  txCard: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 10,
-    ...iosContinuousCurve,
-    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
   },
   txLeft: {
     alignItems: 'center',
     flexDirection: 'row',
-    flex: 1,
     gap: 10,
+    flex: 1,
   },
   txIconChip: {
     alignItems: 'center',
-    borderRadius: 6,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    borderWidth: 1,
     height: 32,
     justifyContent: 'center',
     width: 32,
-  },
-  txIconPositive: {
-    backgroundColor: driverPrimitives.colors.green50,
-  },
-  txIconNegative: {
-    backgroundColor: driverPrimitives.colors.gray100,
   },
   txInfo: {
     flex: 1,
@@ -692,40 +608,26 @@ const styles = StyleSheet.create({
   txTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 6,
   },
   txTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '600',
+    letterSpacing: -0.2,
   },
   txIndicatorBadge: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
     borderRadius: 4,
-    paddingHorizontal: 4,
+    borderWidth: 1,
+    paddingHorizontal: 5,
     paddingVertical: 1,
   },
-  badgePayout: {
-    backgroundColor: '#DCFCE7',
-  },
-  badgeFee: {
-    backgroundColor: '#F1F5F9',
-  },
-  badgeWithdrawal: {
-    backgroundColor: '#FEE2E2',
-  },
   txIndicatorText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  badgeTextPayout: {
-    color: '#15803D',
-  },
-  badgeTextFee: {
     color: '#475569',
-  },
-  badgeTextWithdrawal: {
-    color: '#B91C1C',
+    fontSize: 10,
+    fontWeight: '600',
   },
   txTime: {
     color: driverPrimitives.colors.gray400,
@@ -734,75 +636,90 @@ const styles = StyleSheet.create({
   txRight: {
     alignItems: 'flex-end',
     gap: 2,
+    paddingLeft: 8,
   },
   txAmount: {
-    fontSize: 14,
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14.5,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  txAmountPositive: {
-    color: driverPrimitives.colors.green500,
-  },
-  txAmountNegative: {
-    color: driverPrimitives.colors.gray900,
-  },
   txStatus: {
-    color: driverPrimitives.colors.gray400,
+    color: driverPrimitives.colors.gray500,
     fontSize: 11,
+    fontWeight: '500',
+  },
+  txDivider: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    marginLeft: 58,
   },
 
+  /* Modal Sheet */
   modalBackdrop: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     flex: 1,
     justifyContent: 'flex-end',
   },
   modalSheet: {
     backgroundColor: driverPrimitives.colors.white,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     gap: 12,
+    maxHeight: '90%',
     padding: 20,
+    paddingBottom: 36,
   },
   modalDragHandle: {
     alignSelf: 'center',
     backgroundColor: driverPrimitives.colors.gray300,
-    borderRadius: 2,
+    borderRadius: 3,
     height: 4,
     marginBottom: 4,
     width: 36,
   },
   modalTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
+    letterSpacing: -0.3,
   },
   modalSubtitle: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12.5,
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  errorText: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: 8,
+    borderWidth: 1,
+    color: driverPrimitives.colors.red600,
+    fontSize: 12,
+    fontWeight: '500',
+    padding: 8,
   },
   inputGroup: {
-    gap: 5,
+    gap: 4,
   },
   inputLabel: {
     color: driverPrimitives.colors.gray700,
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
   },
   textInput: {
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
     borderWidth: 1,
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    fontSize: 14,
+    fontWeight: '500',
+    height: 44,
     paddingHorizontal: 12,
-    paddingVertical: 9,
   },
-  errorText: {
-    color: driverPrimitives.colors.red500,
-    fontSize: 12.5,
-  },
-  modalActions: {
+  modalActionButtons: {
     gap: 8,
-    marginTop: 6,
+    marginTop: 8,
   },
 });
