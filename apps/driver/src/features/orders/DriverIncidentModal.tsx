@@ -81,7 +81,7 @@ export function DriverIncidentModal({
 
           <View style={styles.headerRow}>
             <View style={styles.iconCircle}>
-              <IconShieldAlert color="#DC2626" size={22} />
+              <IconShieldAlert color={colors.danger.text} size={22} />
             </View>
             <View style={styles.headerTextCol}>
               <Text style={styles.title}>Báo cáo sự cố chuyến đi</Text>
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     alignSelf: 'center',
     marginBottom: 16,
   },
@@ -222,11 +222,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     marginTop: 2,
   },
   scrollArea: {
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#475569',
+    color: colors.neutral.mutedText,
     letterSpacing: 0.6,
     marginBottom: 8,
     marginTop: 8,
@@ -250,12 +250,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: colors.neutral.border,
+    backgroundColor: colors.neutral.canvas,
     gap: 10,
   },
   reasonOptionSelected: {
-    borderColor: '#DC2626',
+    borderColor: colors.danger.text,
     backgroundColor: '#FEF2F2',
   },
   radioDotOuter: {
@@ -268,13 +268,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioDotOuterSelected: {
-    borderColor: '#DC2626',
+    borderColor: colors.danger.text,
   },
   radioDotInner: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
   },
   reasonText: {
     fontSize: 14,
@@ -287,17 +287,17 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     padding: 12,
     fontSize: 14,
-    color: '#0F172A',
-    backgroundColor: '#F8FAFC',
+    color: colors.neutral.text,
+    backgroundColor: colors.neutral.canvas,
     minHeight: 80,
     textAlignVertical: 'top',
   },
   errorText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: 13,
     marginTop: 8,
   },
@@ -310,20 +310,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#475569',
+    color: colors.neutral.mutedText,
   },
   submitBtn: {
     flex: 2,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -333,6 +333,6 @@ const styles = StyleSheet.create({
   submitBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
   },
 });

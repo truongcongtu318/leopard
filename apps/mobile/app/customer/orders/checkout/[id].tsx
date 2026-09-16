@@ -14,10 +14,13 @@ import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
+  colors,
+  customerPalette,
   IconChevron,
   IconCopy,
   IconSecurityShield,
   iosContinuousCurve,
+  leopardPalette,
   systemFontFamily,
   typeScale,
 } from '@leopard/mobile-core';
@@ -325,7 +328,7 @@ export default function OrderCheckoutScreen({
           onPress={handleBack}
           style={styles.backBtn}
         >
-          <IconChevron color="#0B1E42" direction="left" size={22} />
+          <IconChevron color={customerPalette.textSlateDark} direction="left" size={22} />
         </Pressable>
         <View style={styles.headerTitleWrap}>
           <Text style={styles.headerTitle}>Thanh toán VietQR & Ký quỹ</Text>
@@ -370,7 +373,7 @@ export default function OrderCheckoutScreen({
             </Text>
           </View>
           <View style={styles.escrowNoticeRow}>
-            <IconSecurityShield color="#10B981" size={16} />
+            <IconSecurityShield color={colors.success.text} size={16} />
             <Text style={styles.escrowNoticeText}>
               Bảo chứng 100% · Hoàn cọc tức thì nếu tài xế không nhận cuốc
             </Text>
@@ -394,7 +397,7 @@ export default function OrderCheckoutScreen({
               {/* QR Code Container */}
               <View style={styles.qrCodeWrapper}>
                 {isLoadingPayment ? (
-                  <ActivityIndicator color="#0B1E42" size="large" />
+                  <ActivityIndicator color={customerPalette.textSlateDark} size="large" />
                 ) : (
                   <QRCode
                     size={190}
@@ -430,7 +433,7 @@ export default function OrderCheckoutScreen({
                     onPress={() => handleCopy('accountNumber', accountNumber)}
                     style={styles.copyBtn}
                   >
-                    <IconCopy color="#0B1E42" size={16} />
+                    <IconCopy color={customerPalette.textSlateDark} size={16} />
                     <Text style={styles.copyBtnText}>
                       {copiedField === 'accountNumber' ? 'Đã sao chép' : 'Sao chép'}
                     </Text>
@@ -452,7 +455,7 @@ export default function OrderCheckoutScreen({
                   onPress={() => handleCopy('accountName', accountName)}
                   style={styles.copyBtn}
                 >
-                  <IconCopy color="#0B1E42" size={16} />
+                  <IconCopy color={customerPalette.textSlateDark} size={16} />
                   <Text style={styles.copyBtnText}>
                     {copiedField === 'accountName' ? 'Đã sao chép' : 'Sao chép'}
                   </Text>
@@ -471,7 +474,7 @@ export default function OrderCheckoutScreen({
                   onPress={() => handleCopy('memo', orderReference)}
                   style={styles.copyBtn}
                 >
-                  <IconCopy color="#0B1E42" size={16} />
+                  <IconCopy color={customerPalette.textSlateDark} size={16} />
                   <Text style={styles.copyBtnText}>
                     {copiedField === 'memo' ? 'Đã sao chép' : 'Sao chép'}
                   </Text>
@@ -496,7 +499,7 @@ export default function OrderCheckoutScreen({
       <View style={styles.stickyBottomBar}>
         {isReconciling ? (
           <View style={styles.reconcileBox}>
-            <ActivityIndicator color="#0B1E42" size="small" />
+            <ActivityIndicator color={customerPalette.textSlateDark} size="small" />
             <Text style={styles.reconcileText}>
               Đang đối soát tự động... Gạch nợ trong vài giây
             </Text>
@@ -568,16 +571,16 @@ export default function OrderCheckoutScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
   },
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: customerPalette.cardBorder,
   },
   backBtn: {
     width: 44,
@@ -593,11 +596,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     marginTop: 1,
   },
   headerPlaceholder: {
@@ -608,14 +611,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   priceCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     padding: 16,
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
@@ -623,7 +626,7 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     fontSize: 13,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     fontWeight: '600',
@@ -631,14 +634,14 @@ const styles = StyleSheet.create({
   priceAmount: {
     fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
     marginVertical: 6,
   },
   escrowNoticeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: leopardPalette.ecoGreenBg,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -647,7 +650,7 @@ const styles = StyleSheet.create({
   escrowNoticeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#166534',
+    color: colors.success.text,
     marginLeft: 6,
   },
   sectionHeader: {
@@ -656,7 +659,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -664,10 +667,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -675,7 +678,7 @@ const styles = StyleSheet.create({
   },
   qrDoubleBezelInner: {
     borderRadius: 18,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.04)',
     padding: 16,
@@ -691,7 +694,7 @@ const styles = StyleSheet.create({
   napasBankTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   napasBadge: {
     backgroundColor: '#1E40AF',
@@ -702,11 +705,11 @@ const styles = StyleSheet.create({
   napasBadgeText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     letterSpacing: 0.5,
   },
   qrCodeWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 16,
     padding: 12,
     shadowColor: '#000',
@@ -722,7 +725,7 @@ const styles = StyleSheet.create({
   },
   qrInstruction: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 16,
@@ -743,19 +746,19 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     textTransform: 'uppercase',
   },
   detailValueBold: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     marginTop: 2,
   },
   detailValueMono: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
     marginTop: 2,
   },
@@ -766,22 +769,22 @@ const styles = StyleSheet.create({
     minWidth: 44,
     paddingHorizontal: 12,
     borderRadius: 10,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   copyBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     marginLeft: 6,
   },
   stickyBottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: Platform.select({ ios: 16, default: 14 }),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderTopColor: customerPalette.cardBorder,
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -792,18 +795,18 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 16,
     ...iosContinuousCurve,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 3,
   },
   confirmPaidText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontFamily: systemFontFamily,
     fontSize: 16,
     fontWeight: '700',
@@ -821,15 +824,15 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 16,
     ...iosContinuousCurve,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: colors.warning.background,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: colors.warning.border,
     paddingHorizontal: 16,
   },
   reconcileText: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
-    color: '#92400E',
+    color: colors.warning.text,
     marginLeft: 10,
   },
   countdownPill: {
@@ -837,31 +840,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     alignSelf: 'center',
   },
   countdownPillWarning: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
   },
   countdownPillUrgent: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#FECACA',
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
   },
   countdownText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#334155',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.2,
   },
   countdownTextWarning: {
-    color: '#92400E',
+    color: colors.warning.text,
   },
   countdownTextUrgent: {
-    color: '#DC2626',
+    color: colors.danger.text,
   },
   timeoutBanner: {
     marginHorizontal: 16,
@@ -870,19 +873,19 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 16,
     ...iosContinuousCurve,
-    backgroundColor: '#FFFBEB',
+    backgroundColor: colors.warning.background,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: colors.warning.border,
   },
   timeoutTitle: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#92400E',
+    color: colors.warning.text,
   },
   timeoutDesc: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#78350F',
+    color: colors.warning.text,
     marginTop: 4,
   },
   retryRow: {
@@ -895,9 +898,9 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 16,
     ...iosContinuousCurve,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
-    borderColor: '#FCA5A5',
+    borderColor: colors.danger.border,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -905,7 +908,7 @@ const styles = StyleSheet.create({
   cancelOrderText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#DC2626',
+    color: colors.danger.text,
   },
   expiredOverlay: {
     position: 'absolute',
@@ -921,13 +924,13 @@ const styles = StyleSheet.create({
   expiredCard: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 24,
     ...iosContinuousCurve,
     paddingHorizontal: 24,
     paddingVertical: 28,
     alignItems: 'center',
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.28,
     shadowRadius: 24,
@@ -936,13 +939,13 @@ const styles = StyleSheet.create({
   expiredTitle: {
     fontSize: typeScale.body.fontSize,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     textAlign: 'center',
   },
   expiredDesc: {
     fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     textAlign: 'center',
     marginTop: 10,
   },
@@ -953,13 +956,13 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 16,
     ...iosContinuousCurve,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   expiredBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
   },
 });

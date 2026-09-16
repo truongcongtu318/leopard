@@ -13,6 +13,9 @@ import type { CustomerOrdersPort } from '../../src/features/customer/orders/port
 
 import {
   colors,
+  customerPalette,
+  leopardPalette,
+  pastelTheme,
   spacing,
   IconChevronLeft,
   IconClose,
@@ -135,12 +138,12 @@ export default function CustomerDeliveriesScreen({
       <View style={styles.container}>
         {/* ── Search Input (>= 44px) ───────────────────────── */}
         <View style={styles.searchBar}>
-          <IconSearch color="#64748B" size={18} strokeWidth={2} />
+          <IconSearch color={colors.neutral.subtleText} size={18} strokeWidth={2} />
           <TextInput
             accessibilityLabel="Tìm kiếm chuyến xe"
             onChangeText={setSearchQuery}
             placeholder="Tìm theo mã đơn, biển số, điểm giao..."
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={customerPalette.offlineGray}
             style={styles.searchInput}
             value={searchQuery}
           />
@@ -152,7 +155,7 @@ export default function CustomerDeliveriesScreen({
               onPress={() => setSearchQuery('')}
               style={styles.clearSearchBtn}
             >
-              <IconClose color="#64748B" size={16} strokeWidth={2} />
+              <IconClose color={colors.neutral.subtleText} size={16} strokeWidth={2} />
             </Pressable>
           ) : null}
         </View>
@@ -200,7 +203,7 @@ export default function CustomerDeliveriesScreen({
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <IconSearch color="#94A3B8" size={36} strokeWidth={1.5} />
+              <IconSearch color={customerPalette.offlineGray} size={36} strokeWidth={1.5} />
               <Text style={styles.emptyTitle}>Không tìm thấy chuyến xe</Text>
               <Text style={styles.emptySubtitle}>
                 Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc trạng thái.
@@ -248,7 +251,7 @@ export default function CustomerDeliveriesScreen({
 
                   {/* ETA Status Bar: Strictly "ETA dự kiến", Tabular Nums */}
                   <View style={styles.etaStatusBar}>
-                    <IconSpeedTruck color="#0B1E42" size={16} strokeWidth={2} />
+                    <IconSpeedTruck color={customerPalette.primary} size={16} strokeWidth={2} />
                     <Text style={styles.etaStatusText}>{etaText}</Text>
                   </View>
 
@@ -256,13 +259,13 @@ export default function CustomerDeliveriesScreen({
                   <View style={styles.metaRow}>
                     <View style={styles.driverCol}>
                       <View style={styles.driverInfoInline}>
-                        <IconRoleDriver color="#0B1E42" size={16} />
+                        <IconRoleDriver color={customerPalette.primary} size={16} />
                         <Text style={styles.driverNameText}>
                           {item.driverName || 'Đang tìm tài xế'}
                         </Text>
                         {typeof item.driverRating === 'number' ? (
                           <View style={styles.ratingBadge}>
-                            <IconStar color="#F59E0B" fill="#F59E0B" size={12} strokeWidth={1.8} />
+                            <IconStar color={pastelTheme.yellowCard.accent} fill={pastelTheme.yellowCard.accent} size={12} strokeWidth={1.8} />
                             <Text style={styles.ratingText}>{item.driverRating.toFixed(2)}</Text>
                           </View>
                         ) : null}
@@ -286,7 +289,7 @@ export default function CustomerDeliveriesScreen({
                       onPress={() => router.push('/customer/tracking')}
                       style={({ pressed }) => [styles.actionBtn, styles.trackingBtn, pressed ? styles.pressed : null]}
                     >
-                      <IconLocationPin color="#FFFFFF" size={16} strokeWidth={2} />
+                      <IconLocationPin color={customerPalette.surfaceWhite} size={16} strokeWidth={2} />
                       <Text style={styles.trackingBtnText}>Theo dõi trực tiếp</Text>
                     </Pressable>
 
@@ -296,7 +299,7 @@ export default function CustomerDeliveriesScreen({
                       onPress={() => router.push(`/customer/chat/${item.id}`)}
                       style={({ pressed }) => [styles.actionBtn, styles.chatBtn, pressed ? styles.pressed : null]}
                     >
-                      <IconMessage color="#0F172A" size={16} strokeWidth={2} />
+                      <IconMessage color={colors.neutral.text} size={16} strokeWidth={2} />
                       <Text style={styles.chatBtnText}>Nhắn tin</Text>
                     </Pressable>
                   </View>
@@ -321,14 +324,14 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     minHeight: 46,
     paddingHorizontal: 14,
     gap: 10,
-    shadowColor: '#0B1E42',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -337,7 +340,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: typeScale.footnote.fontSize,
-    color: '#0F172A',
+    color: colors.neutral.text,
     paddingVertical: 8,
   },
   clearSearchBtn: {
@@ -361,23 +364,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 22,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: customerPalette.bgMuted,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'transparent',
   },
   filterPillActive: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
+    borderColor: customerPalette.primary,
   },
   filterPillText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 13,
     fontWeight: '700',
   },
   filterPillTextActive: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
   },
 
   // ── List ──────────────────────────────────────────
@@ -391,9 +394,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     padding: 12,
-    shadowColor: '#0B1E42',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
@@ -401,9 +404,9 @@ const styles = StyleSheet.create({
   },
   shipmentCardInner: {
     borderRadius: 18,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.bgMuted,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     padding: 14,
     gap: 12,
   },
@@ -419,21 +422,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   bookingCodeText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   plateBadge: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: customerPalette.bgMuted,
+    borderColor: colors.neutral.subtleBorder,
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   plateText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 11,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -449,12 +452,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusBadgeActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: colors.info.background,
+    borderColor: colors.info.border,
   },
   statusBadgeDelivered: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#86EFAC',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
   },
   statusDot: {
     width: 6,
@@ -462,28 +465,28 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusDotActive: {
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.info.text,
   },
   statusDotDelivered: {
-    backgroundColor: '#16A34A',
+    backgroundColor: leopardPalette.ecoGreen,
   },
   statusText: {
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   statusTextActive: {
-    color: '#1D4ED8',
+    color: colors.info.text,
   },
   statusTextDelivered: {
-    color: '#15803D',
+    color: colors.success.text,
   },
 
   // Route Spine
   routeContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     padding: 10,
     gap: 4,
   },
@@ -498,19 +501,19 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   originDot: {
-    backgroundColor: '#10B981',
+    backgroundColor: colors.success.text,
   },
   destDot: {
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.danger.text,
   },
   routeSpineLine: {
     width: 1.5,
     height: 10,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: colors.neutral.subtleBorder,
     marginLeft: 3.25,
   },
   routeLabel: {
-    color: '#334155',
+    color: colors.neutral.mutedText,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
     flex: 1,
@@ -521,15 +524,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: colors.info.background,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: colors.info.border,
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
   etaStatusText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 12,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -552,7 +555,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   driverNameText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -560,21 +563,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: leopardPalette.accentYellowBg,
+    borderColor: pastelTheme.yellowCard.border,
     borderWidth: 1,
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 1,
   },
   ratingText: {
-    color: '#B45309',
+    color: pastelTheme.yellowCard.text,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   cargoText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
   },
@@ -583,12 +586,12 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   priceLabel: {
-    color: '#94A3B8',
+    color: customerPalette.offlineGray,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
   },
   priceText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
@@ -614,20 +617,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   trackingBtn: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
+    borderColor: customerPalette.primary,
   },
   trackingBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   chatBtn: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: colors.neutral.subtleBorder,
   },
   chatBtnText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -643,12 +646,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emptyTitle: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 15,
     fontWeight: '700',
   },
   emptySubtitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.footnote.fontSize,
   },
 });

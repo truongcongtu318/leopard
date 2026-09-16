@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
-import { typeScale, colors, radius, spacing, typography, Button, IconCopy, IconQrPayment, IconSecurityShield } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, radius, spacing, typography, Button, IconCopy, IconQrPayment, IconSecurityShield } from '@leopard/mobile-core';
 
 export type VietQRPaymentModalProps = Readonly<{
   visible: boolean;
@@ -117,7 +117,7 @@ export function VietQRPaymentModal({
           <View style={styles.modalHeader}>
             <View style={styles.modalTitleRow}>
               <View style={styles.headerIconBox}>
-                <IconQrPayment color="#0B1E42" size={20} />
+                <IconQrPayment color={customerPalette.primary} size={20} />
               </View>
               <View>
                 <Text style={styles.modalTitle}>
@@ -234,7 +234,7 @@ export function VietQRPaymentModal({
                       ]}
                     >
                       <IconCopy
-                        color={copiedField === 'accountNumber' ? '#16A34A' : '#0B1E42'}
+                        color={copiedField === 'accountNumber' ? colors.success.text : customerPalette.primary}
                         size={14}
                       />
                       <Text
@@ -275,7 +275,7 @@ export function VietQRPaymentModal({
                       ]}
                     >
                       <IconCopy
-                        color={copiedField === 'amount' ? '#16A34A' : '#0B1E42'}
+                        color={copiedField === 'amount' ? colors.success.text : customerPalette.primary}
                         size={14}
                       />
                       <Text
@@ -307,7 +307,7 @@ export function VietQRPaymentModal({
                       ]}
                     >
                       <IconCopy
-                        color={copiedField === 'reference' ? '#16A34A' : '#0B1E42'}
+                        color={copiedField === 'reference' ? colors.success.text : customerPalette.primary}
                         size={14}
                       />
                       <Text
@@ -324,7 +324,7 @@ export function VietQRPaymentModal({
 
                 {/* Safety notice */}
                 <View style={styles.trustBanner}>
-                  <IconSecurityShield color="#16A34A" size={16} />
+                  <IconSecurityShield color={colors.success.text} size={16} />
                   <Text style={styles.trustBannerText}>
                     Hệ thống tự động xác nhận trong vòng 5–15 giây sau khi ngân hàng xử lý thành công.
                   </Text>
@@ -365,12 +365,12 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   modalCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 20,
     width: '100%',
     maxWidth: 420,
     maxHeight: '90%',
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 25,
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
   },
   modalTitleRow: {
     flexDirection: 'row',
@@ -396,30 +396,30 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   modalSubtitle: {
     fontSize: typeScale.caption1.fontSize,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeBtnText: {
     fontSize: typeScale.subheadline.fontSize,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontWeight: '700',
   },
   scrollContent: {
@@ -430,8 +430,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   qrCodeCard: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.subtleBorder,
     borderWidth: 1.5,
     borderRadius: 16,
     padding: 14,
@@ -448,25 +448,25 @@ const styles = StyleSheet.create({
   qrBankName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#061226',
+    color: colors.neutral.text,
   },
   napasBadge: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   napasBadgeText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   qrCodeBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 12,
     padding: 12,
-    shadowColor: '#000000',
+    shadowColor: customerPalette.accentDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   },
   qrHint: {
     fontSize: typeScale.caption1.fontSize,
-    color: '#0C4A6E',
+    color: colors.info.text,
     textAlign: 'center',
     lineHeight: 16,
     paddingHorizontal: 10,
@@ -487,20 +487,20 @@ const styles = StyleSheet.create({
   },
   timerLabel: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   timerClock: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#DC2626',
-    backgroundColor: '#FEE2E2',
+    color: colors.danger.text,
+    backgroundColor: colors.danger.background,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   infoTableCard: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderWidth: 1,
     borderRadius: 14,
     padding: 12,
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
   infoTableTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#475569',
+    color: colors.neutral.mutedText,
     letterSpacing: 0.5,
     marginBottom: 2,
   },
@@ -525,64 +525,64 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 11,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   infoVal: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   infoValHighlight: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
-    color: '#061226',
+    color: colors.neutral.text,
     letterSpacing: 0.5,
   },
   infoValPrice: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#0B1E42',
+    color: customerPalette.primary,
   },
   infoRowDivider: {
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
   },
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.subtleBorder,
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
   },
   copyBtnSuccess: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#BBF7D0',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
   },
   copyBtnText: {
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.primary,
   },
   copyBtnTextSuccess: {
-    color: '#16A34A',
+    color: colors.success.text,
   },
   trustBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,
   },
   trustBannerText: {
     fontSize: typeScale.caption1.fontSize,
-    color: '#166534',
+    color: colors.success.text,
     flex: 1,
     lineHeight: 16,
   },
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   btnLaterText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
   /* Success Styles */
   successWrapper: {
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -617,29 +617,29 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#16A34A',
+    backgroundColor: colors.success.text,
     alignItems: 'center',
     justifyContent: 'center',
   },
   successCheckIcon: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '900',
   },
   successHeading: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: colors.neutral.text,
     textAlign: 'center',
   },
   successAmount: {
     fontSize: typeScale.title2.fontSize,
     fontWeight: '900',
-    color: '#16A34A',
+    color: colors.success.text,
   },
   successDetailBox: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderWidth: 1,
     borderRadius: 12,
     padding: 14,
@@ -648,11 +648,11 @@ const styles = StyleSheet.create({
   },
   successDetailRow: {
     fontSize: 13,
-    color: '#475569',
+    color: colors.neutral.mutedText,
   },
   boldText: {
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   autoAdvanceRow: {
     flexDirection: 'row',
@@ -664,11 +664,11 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   autoAdvanceText: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
-    color: '#0B1E42',
+    color: customerPalette.primary,
   },
 });

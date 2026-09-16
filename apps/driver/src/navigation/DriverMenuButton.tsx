@@ -1,7 +1,10 @@
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { IconMenu } from '@leopard/mobile-core';
+import {
+  IconMenu,
+  colors,
+} from '@leopard/mobile-core';
 
 export type DriverMenuButtonProps = Readonly<{
   color?: string;
@@ -16,7 +19,7 @@ export function DriverMenuButton({
   testID = 'driver-menu-button',
   variant = 'glass',
 }: DriverMenuButtonProps) {
-  const iconColor = color ?? (variant === 'plain' ? '#0F172A' : '#FFFFFF');
+  const iconColor = color ?? (variant === 'plain' ? colors.neutral.text : colors.neutral.surface);
 
   return (
     <Pressable
@@ -55,9 +58,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   plain: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
   },
   pressed: {
     opacity: 0.75,

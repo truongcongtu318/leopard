@@ -2,7 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
-import { GestureBottomSheet, RealInteractiveMap, ScreenState, SkeletonCard, resolveLocationCoords } from '@leopard/mobile-core';
+import {
+  GestureBottomSheet,
+  RealInteractiveMap,
+  ScreenState,
+  SkeletonCard,
+  colors,
+  leopardPalette,
+  resolveLocationCoords,
+} from '@leopard/mobile-core';
 
 import { IncomingDispatchModal } from './IncomingDispatchModal';
 import type { IncomingDispatchOffer } from './IncomingDispatchModal';
@@ -271,9 +279,9 @@ export function DriverOrdersScreen({
           <Svg height="100%" style={[StyleSheet.absoluteFill, styles.idlePanelFadeSvg]} width="100%">
             <Defs>
               <LinearGradient id="idlePanelFade" x1="0" x2="0" y1="0" y2="1">
-                <Stop offset="0" stopColor="#F8FAFC" stopOpacity={0} />
-                <Stop offset="0.35" stopColor="#F8FAFC" stopOpacity={0.8} />
-                <Stop offset="1" stopColor="#F8FAFC" stopOpacity={0.97} />
+                <Stop offset="0" stopColor={colors.neutral.canvas} stopOpacity={0} />
+                <Stop offset="0.35" stopColor={colors.neutral.canvas} stopOpacity={0.8} />
+                <Stop offset="1" stopColor={colors.neutral.canvas} stopOpacity={0.97} />
               </LinearGradient>
             </Defs>
             <Rect fill="url(#idlePanelFade)" height="100%" width="100%" />
@@ -389,12 +397,12 @@ export function DriverOrdersScreen({
 
 const styles = StyleSheet.create({
   sheetSurface: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     shadowOpacity: 0,
     elevation: 0,
   },
   screenRoot: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
     overflow: 'hidden',
     position: 'relative',
@@ -441,12 +449,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   sheetTitle: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 17,
     fontWeight: '800',
   },
   sheetSubtitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '500',
     marginTop: 2,
@@ -457,7 +465,7 @@ const styles = StyleSheet.create({
   debugBtn: {
     alignItems: 'center',
     backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 10,
     borderWidth: 1,
     marginTop: 10,
@@ -469,7 +477,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   debugBtnText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 11,
     fontWeight: '700',
   },

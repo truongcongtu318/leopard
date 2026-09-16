@@ -58,7 +58,7 @@ export function DriverSystemBanner({
           style={styles.radarWarningBanner}
           testID="radar-health-warning"
         >
-          <IconShieldAlert color="#DC2626" size={16} />
+          <IconShieldAlert color={colors.danger.text} size={16} />
           <Text style={styles.radarWarningText}>
             {idlePingHealth === 'permission-denied'
               ? 'Chưa cấp quyền vị trí — bạn đang ẩn khỏi radar. Chạm để mở cài đặt.'
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   retryBtn: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderColor: '#FDE68A',
     borderRadius: 8,
     borderWidth: 1,

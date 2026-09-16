@@ -2,7 +2,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Role } from '@leopard/shared';
-import { typeScale, sessionStore, IconAlertTriangle } from '@leopard/mobile-core';
+import {
+  IconAlertTriangle,
+  colors,
+  sessionStore,
+  typeScale,
+} from '@leopard/mobile-core';
 import { resolveDriverLogin } from '../../src/navigation/driver-session';
 import { DriverLoginScreen } from '../../src/auth/DriverLoginScreen';
 
@@ -88,7 +93,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderColor: '#CAD9EB',
     borderRadius: 20,
     borderWidth: 1,
@@ -129,7 +134,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 15,
     fontWeight: '700',
   },

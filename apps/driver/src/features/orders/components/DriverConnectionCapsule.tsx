@@ -2,7 +2,11 @@ import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { driverPrimitives, iosContinuousCurve } from '@leopard/mobile-core';
+import {
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
+} from '@leopard/mobile-core';
 
 /**
  * Standby / online power glyph drawn as a vector path so the capsule never
@@ -69,9 +73,9 @@ export function DriverConnectionCapsule({
     >
       <View style={styles.glyphDisc}>
         {isPending ? (
-          <ActivityIndicator color="#FFFFFF" size="small" testID="driver-connection-spinner" />
+          <ActivityIndicator color={colors.neutral.surface} size="small" testID="driver-connection-spinner" />
         ) : (
-          <PowerGlyph color="#FFFFFF" size={18} />
+          <PowerGlyph color={colors.neutral.surface} size={18} />
         )}
       </View>
       {isOnline ? null : <Text style={styles.label}>Bật kết nối</Text>}
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
     width: 22,
   },
   label: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.2,

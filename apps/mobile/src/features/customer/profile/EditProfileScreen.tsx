@@ -140,7 +140,7 @@ export function EditProfileScreen({
                 </View>
               )}
               <View style={styles.cameraIconPill}>
-                <IconCamera color="#FFFFFF" size={15} />
+                <IconCamera color={colors.brand.text} size={15} />
               </View>
             </View>
 
@@ -231,7 +231,7 @@ export function EditProfileScreen({
 
         {/* Security / Trust Notice */}
         <View style={styles.securityNoticeCard}>
-          <IconSecurityShield color="#059669" size={16} />
+          <IconSecurityShield color={colors.success.text} size={16} />
           <Text style={styles.securityNoticeText}>
             Thông tin của bạn được bảo mật an toàn theo tiêu chuẩn bảo mật dữ liệu khách hàng LEOPARD.
           </Text>
@@ -265,8 +265,8 @@ const styles = StyleSheet.create({
   },
 
   doubleBezelOuter: {
-    backgroundColor: 'rgba(11, 30, 66, 0.04)',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
+    backgroundColor: 'rgba(11, 30, 66, 0.04)', // gap: no 0.04-opacity ink tint token exists (colors.operational.inkPillBg is 0.08)
+    borderColor: colors.operational.inkPillBg,
     borderRadius: 24,
     borderWidth: 1,
     padding: 6,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   cameraIconPill: {
     alignItems: 'center',
     backgroundColor: colors.brand.background,
-    borderColor: '#FFFFFF',
+    borderColor: colors.neutral.surface,
     borderRadius: 14,
     borderWidth: 2,
     bottom: 0,
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     marginLeft: 62,
   },
   errorTextRow: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
     marginLeft: 62,
@@ -408,14 +408,14 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   errorBanner: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
     borderRadius: 8,
     borderWidth: 1,
     padding: 10,
   },
   errorBannerText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     textAlign: 'center',
@@ -423,8 +423,8 @@ const styles = StyleSheet.create({
 
   // Notice
   securityNoticeCard: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
     borderRadius: radius.card,
     borderWidth: 1,
     flexDirection: 'row',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   securityNoticeText: {
-    color: '#065F46',
+    color: colors.success.text,
     flex: 1,
     fontSize: typeScale.caption1.fontSize,
     lineHeight: 16,

@@ -6,6 +6,7 @@ import {
   colors,
   httpClient,
   layout,
+  leopardPalette,
   radius,
   spacing,
   typography,
@@ -280,10 +281,10 @@ const styles = StyleSheet.create({
     marginTop: -spacing.xxs,
   },
   feedbackSuccess: {
-    color: '#059669',
+    color: colors.success.text,
   },
   feedbackError: {
-    color: '#DC2626',
+    color: colors.danger.text,
   },
   sectionLabel: {
     color: colors.brand.background,
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   promoCardApplied: {
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderColor: colors.brand.background,
     borderWidth: 1.5,
   },
@@ -331,7 +332,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   discountText: {
-    color: '#D97706',
+    color: leopardPalette.accentYellowDark,
     fontSize: typeScale.subheadline.fontSize,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',

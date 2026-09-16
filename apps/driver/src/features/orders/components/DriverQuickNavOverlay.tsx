@@ -5,10 +5,11 @@ import Svg, { Path } from 'react-native-svg';
 
 import {
   AppText,
+  NavigableMetricCard,
+  colors,
   driverPrimitives,
   driverSemantics,
   iosContinuousCurve,
-  NavigableMetricCard,
 } from '@leopard/mobile-core';
 
 export type DriverQuickNavOverlayProps = Readonly<{
@@ -214,7 +215,7 @@ const styles = StyleSheet.create({
     width: 52,
   },
   avatarPhoto: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
     borderColor: driverPrimitives.colors.green500,
     borderRadius: 9999,
     borderWidth: 2,
@@ -301,12 +302,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   cardTitle: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 13,
     fontWeight: '400',
   },
   cardValue: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 22,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],

@@ -2,13 +2,14 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
-  colors,
-  radius,
-  spacing,
   IconRoute,
   IconSpeedTruck,
   StatusBadge,
+  colors,
   iosContinuousCurve,
+  leopardPalette,
+  radius,
+  spacing,
 } from '@leopard/mobile-core';
 import type { DriverPublicOrderView } from '../model';
 
@@ -80,7 +81,7 @@ export function DriverNearbyOrderCard({
         <View style={styles.topRow}>
           <View style={styles.tagGroup}>
             <View style={styles.vehicleBadge}>
-              <IconSpeedTruck color="#0B1E42" size={12} />
+              <IconSpeedTruck color={leopardPalette.primary} size={12} />
               <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
             </View>
             <Text style={styles.proximityText}>
@@ -108,7 +109,7 @@ export function DriverNearbyOrderCard({
             </Text>
           </View>
           <View style={styles.distanceBadge}>
-            <IconRoute color="#64748B" size={11} />
+            <IconRoute color={colors.neutral.subtleText} size={11} />
             <Text style={styles.distanceText}>{distanceEtaText}</Text>
           </View>
         </View>
@@ -159,7 +160,7 @@ export function DriverNearbyOrderCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     borderRadius: 14,
     ...iosContinuousCurve,
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     elevation: 1,
     marginBottom: 8,
     padding: 12,
-    shadowColor: '#0B1E42',
+    shadowColor: leopardPalette.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -196,12 +197,12 @@ const styles = StyleSheet.create({
     paddingVertical: 2.5,
   },
   vehicleTagText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 11.5,
     fontWeight: '700',
   },
   proximityText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   priceAmount: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 18,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
@@ -231,13 +232,13 @@ const styles = StyleSheet.create({
     width: 8,
   },
   dotPickup: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderRadius: 3,
     height: 6,
     width: 6,
   },
   spineLine: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: leopardPalette.inputBorder,
     flex: 1,
     marginVertical: 2,
     width: 1.5,
@@ -254,14 +255,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addressText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 13,
     fontWeight: '600',
   },
   distanceBadge: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 6,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   distanceText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 11,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
@@ -288,12 +289,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   cargoNameText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '500',
   },
   cargoWeightText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
@@ -304,7 +305,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   refDot: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: 12,
   },
   refText: {
@@ -316,7 +317,7 @@ const styles = StyleSheet.create({
   // Row 4: Compact Actions
   actionBar: {
     alignItems: 'center',
-    borderTopColor: '#F1F5F9',
+    borderTopColor: colors.neutral.surfaceMuted,
     borderTopWidth: 1,
     flexDirection: 'row',
     gap: 8,
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
   },
   declineBtn: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 8,
     ...iosContinuousCurve,
     height: 36,
@@ -332,26 +333,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   declineText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 13,
     fontWeight: '600',
   },
   acceptBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderRadius: 8,
     ...iosContinuousCurve,
     flex: 1,
     height: 36,
     justifyContent: 'center',
-    shadowColor: '#0B1E42',
+    shadowColor: leopardPalette.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 1,
   },
   acceptText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 14,
     fontWeight: '700',
   },

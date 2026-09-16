@@ -1,14 +1,20 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { radius, spacing, typeScale } from '@leopard/mobile-core';
+import {
+  colors,
+  leopardPalette,
+  radius,
+  spacing,
+  typeScale,
+} from '@leopard/mobile-core';
 import { IconCheck, iconSize } from '@leopard/mobile-core';
 
 /** Palette mirrored from `app/(public)/driver-register.tsx` for visual continuity. */
 const scene = {
   surface: '#0F2347',
   fieldBg: '#132B52',
-  ink: '#FFFFFF',
-  muted: '#CBD5E1',
+  ink: colors.neutral.surface,
+  muted: leopardPalette.inputBorder,
   subtle: '#94A3B8',
   border: 'rgba(255, 255, 255, 0.12)',
   ctaTop: '#0284C7',
@@ -101,7 +107,7 @@ export function DriverContractSection({
         testID="driver-contract-consent"
       >
         <View style={[styles.checkbox, consentChecked && styles.checkboxOn]}>
-          {consentChecked ? <IconCheck color="#FFFFFF" size={iconSize.sm} /> : null}
+          {consentChecked ? <IconCheck color={colors.neutral.surface} size={iconSize.sm} /> : null}
         </View>
         <Text style={styles.consentText}>
           Tôi đã đọc và đồng ý với hợp đồng tài xế của LEOPARD.
@@ -121,7 +127,7 @@ export function DriverContractSection({
             onChangeText={onChangeSignature}
             onFocus={onFocusSignature}
             placeholder="Nhập họ tên để xác nhận chữ ký"
-            placeholderTextColor="#64748B"
+            placeholderTextColor={colors.neutral.subtleText}
             style={styles.input}
             value={signatureName}
           />
@@ -187,7 +193,7 @@ const styles = StyleSheet.create({
   },
   checkboxOn: { backgroundColor: scene.ctaBottom, borderColor: scene.ctaCyan },
   consentText: {
-    color: '#E2E8F0',
+    color: colors.neutral.border,
     flex: 1,
     fontSize: typeScale.footnote.fontSize,
     lineHeight: typeScale.footnote.lineHeight,

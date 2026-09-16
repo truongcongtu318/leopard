@@ -13,6 +13,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
+  colors,
+  customerPalette,
   IconCheck,
   IconChevron,
   IconClose,
@@ -22,6 +24,7 @@ import {
   IconSecurityShield,
   IconSpeedTruck,
   iosContinuousCurve,
+  leopardPalette,
   systemFontFamily,
   typeScale,
 } from '@leopard/mobile-core';
@@ -81,16 +84,16 @@ export default function OrderSearchingScreen({
     return (
       <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0B1E42', textAlign: 'center' }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: customerPalette.textSlateDark, textAlign: 'center' }}>
             Không tìm thấy mã đơn hàng cần điều phối.
           </Text>
           <Pressable
             accessibilityLabel="Quay lại"
             accessibilityRole="button"
             onPress={() => router.replace('/customer/orders')}
-            style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#0B1E42', borderRadius: 12 }}
+            style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 12, backgroundColor: customerPalette.primary, borderRadius: 12 }}
           >
-            <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Về danh sách đơn</Text>
+            <Text style={{ color: customerPalette.surfaceWhite, fontWeight: '700' }}>Về danh sách đơn</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -249,7 +252,7 @@ export default function OrderSearchingScreen({
               onPress={handleBack}
               style={({ pressed }) => [styles.backBtn, pressed ? styles.backBtnPressed : null]}
             >
-              <IconChevron color="#0B1E42" direction="left" size={22} />
+              <IconChevron color={customerPalette.textSlateDark} direction="left" size={22} />
             </Pressable>
             <View style={styles.headerTitleWrap}>
               <Text style={styles.headerTitle}>Tìm tài xế nhận chuyến</Text>
@@ -275,7 +278,7 @@ export default function OrderSearchingScreen({
             />
             <View style={styles.radarRingMid}>
               <View style={styles.radarCenterCircle}>
-                <IconRadarPulse color="#F59E0B" size={40} />
+                <IconRadarPulse color={leopardPalette.accentYellow} size={40} />
               </View>
             </View>
           </View>
@@ -316,7 +319,7 @@ export default function OrderSearchingScreen({
                 <Text style={styles.orderIdValue}>{formatOrderRef(id)}</Text>
               </View>
               <View style={styles.vehicleBadge}>
-                <IconSpeedTruck color="#0B1E42" size={16} />
+                <IconSpeedTruck color={customerPalette.textSlateDark} size={16} />
                 <Text style={styles.vehicleBadgeText}>{vehicleLabel}</Text>
               </View>
             </View>
@@ -376,7 +379,7 @@ export default function OrderSearchingScreen({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContentCard}>
             <View style={styles.modalIconWrap}>
-              <IconSecurityShield color="#10B981" size={32} />
+              <IconSecurityShield color={colors.success.text} size={32} />
             </View>
 
             <Text style={styles.modalTitle}>Xác nhận hủy tìm xe?</Text>
@@ -428,7 +431,7 @@ export default function OrderSearchingScreen({
         <View style={styles.modalOverlay}>
           <View style={styles.matchedModalCard}>
             <View style={styles.matchedIconWrap}>
-              <IconCheck color="#16A34A" size={32} />
+              <IconCheck color={leopardPalette.ecoGreen} size={32} />
             </View>
             <Text style={styles.matchedTitle}>Tài xế đã nhận đơn!</Text>
             <Text style={styles.matchedSubtitle}>
@@ -464,7 +467,7 @@ export default function OrderSearchingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -487,11 +490,11 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   backBtnPressed: {
     opacity: 0.7,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
   },
   headerTitleWrap: {
     flex: 1,
@@ -503,12 +506,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: typeScale.body.fontSize,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     letterSpacing: -0.3,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     marginTop: 1,
   },
   radarSection: {
@@ -548,10 +551,10 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#F59E0B',
+    shadowColor: leopardPalette.accentYellow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -560,18 +563,18 @@ const styles = StyleSheet.create({
   radarStatusText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     textAlign: 'center',
     marginBottom: 4,
   },
   radarNoticeText: {
     fontSize: 13,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textAlign: 'center',
     paddingHorizontal: 20,
   },
   timerCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
@@ -580,7 +583,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     marginVertical: 12,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -589,7 +592,7 @@ const styles = StyleSheet.create({
   timerLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 4,
@@ -597,7 +600,7 @@ const styles = StyleSheet.create({
   timerValue: {
     fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
-    color: '#F59E0B',
+    color: leopardPalette.accentYellow,
     fontVariant: ['tabular-nums'],
     marginBottom: 8,
   },
@@ -605,12 +608,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     overflow: 'hidden',
   },
   timerProgressBarFill: {
     height: '100%',
-    backgroundColor: '#F59E0B',
+    backgroundColor: leopardPalette.accentYellow,
     borderRadius: 3,
   },
   orderOuterCard: {
@@ -618,11 +621,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     padding: 16,
     marginTop: 8,
     marginBottom: 24,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -630,7 +633,7 @@ const styles = StyleSheet.create({
   },
   orderInnerCard: {
     borderRadius: 18,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.04)',
     padding: 14,
@@ -643,19 +646,19 @@ const styles = StyleSheet.create({
   },
   orderLabelSmall: {
     fontSize: 11,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textTransform: 'uppercase',
   },
   orderIdValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
   },
   vehicleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -663,12 +666,12 @@ const styles = StyleSheet.create({
   vehicleBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     marginLeft: 6,
   },
   dividerLine: {
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     marginVertical: 12,
   },
   routeTimeline: {
@@ -682,7 +685,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#F59E0B',
+    backgroundColor: leopardPalette.accentYellow,
     marginTop: 5,
     marginRight: 10,
   },
@@ -690,14 +693,14 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#10B981',
+    backgroundColor: colors.success.text,
     marginTop: 5,
     marginRight: 10,
   },
   routeDottedConnector: {
     width: 2,
     height: 20,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: colors.neutral.subtleBorder,
     marginLeft: 4,
     marginVertical: 3,
   },
@@ -706,21 +709,21 @@ const styles = StyleSheet.create({
   },
   routeTypeLabel: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
   },
   routeAddressText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1E293B',
+    color: customerPalette.textSlateDark,
   },
   fixedBottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: Platform.select({ ios: 16, default: 14 }),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderTopColor: customerPalette.cardBorder,
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -732,13 +735,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     ...iosContinuousCurve,
     borderWidth: 1.5,
-    borderColor: '#FCA5A5',
+    borderColor: colors.danger.border,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.danger.background,
   },
   cancelBtnPressed: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.danger.background,
     opacity: 0.88,
     transform: [{ scale: 0.99 }],
   },
@@ -746,7 +749,7 @@ const styles = StyleSheet.create({
     fontFamily: systemFontFamily,
     fontSize: 16,
     fontWeight: '700',
-    color: '#DC2626',
+    color: colors.danger.text,
     letterSpacing: -0.2,
   },
   modalOverlay: {
@@ -757,7 +760,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContentCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 24,
     padding: 24,
     width: '100%',
@@ -773,7 +776,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.success.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -781,15 +784,15 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: typeScale.body.fontSize,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     textAlign: 'center',
     marginBottom: 12,
   },
   refundHighlightBox: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: leopardPalette.ecoGreenBg,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: leopardPalette.ecoGreenBorder,
     padding: 12,
     marginBottom: 12,
     width: '100%',
@@ -797,13 +800,13 @@ const styles = StyleSheet.create({
   refundHighlightText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#166534',
+    color: colors.success.text,
     lineHeight: 18,
     textAlign: 'center',
   },
   modalDescription: {
     fontSize: 13,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 20,
@@ -815,29 +818,29 @@ const styles = StyleSheet.create({
   modalConfirmCancelBtn: {
     minHeight: 48,
     borderRadius: 16,
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.danger.text,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalConfirmCancelText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 15,
     fontWeight: '700',
   },
   modalKeepWaitingBtn: {
     minHeight: 48,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalKeepWaitingText: {
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     fontSize: 15,
     fontWeight: '600',
   },
   matchedModalCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 24,
     padding: 24,
     width: '100%',
@@ -854,7 +857,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
@@ -862,21 +865,21 @@ const styles = StyleSheet.create({
   matchedTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     textAlign: 'center',
   },
   matchedSubtitle: {
     fontSize: typeScale.footnote.fontSize,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textAlign: 'center',
     lineHeight: 19,
   },
   matchedOrderBox: {
     width: '100%',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     padding: 12,
     gap: 4,
     marginVertical: 4,
@@ -884,23 +887,23 @@ const styles = StyleSheet.create({
   matchedOrderRef: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   matchedOrderRoute: {
     fontSize: typeScale.footnote.fontSize,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
   },
   matchedActionBtn: {
     width: '100%',
     minHeight: 48,
     borderRadius: 16,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
   },
   matchedActionText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 15,
     fontWeight: '700',
   },

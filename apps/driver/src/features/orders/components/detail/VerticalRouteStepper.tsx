@@ -6,7 +6,15 @@ import {
   Text,
   View,
 } from 'react-native';
-import { driverPrimitives, iosContinuousCurve, IconCheck, radius, spacing } from '@leopard/mobile-core';
+import {
+  IconCheck,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
+  leopardPalette,
+  radius,
+  spacing,
+} from '@leopard/mobile-core';
 import type { OrderStatus } from '@leopard/shared';
 import type { DriverRouteStopView, DriverStopProgressStatus } from '../../model';
 
@@ -217,7 +225,7 @@ export function VerticalRouteStepper({
                       testID={`btn-stop-progress-${stop.sequence}`}
                     >
                       {isBusy ? (
-                        <ActivityIndicator color="#FFFFFF" size="small" />
+                        <ActivityIndicator color={colors.neutral.surface} size="small" />
                       ) : (
                         <Text style={styles.stopActionBtnText}>
                           {nextAction.label}
@@ -273,7 +281,7 @@ export function VerticalRouteStepper({
 const styles = StyleSheet.create({
   verticalRouteCard: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -325,7 +333,7 @@ const styles = StyleSheet.create({
   },
   badgeA: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderRadius: 14,
     height: 28,
     justifyContent: 'center',
@@ -333,12 +341,12 @@ const styles = StyleSheet.create({
     width: 28,
   },
   badgeTextA: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 12,
     fontWeight: '800',
   },
   routeNodeTitleAExpanded: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 20,
@@ -379,8 +387,8 @@ const styles = StyleSheet.create({
   },
   stopPendingBadge: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 12,
     borderWidth: 1.5,
     height: 24,
@@ -389,23 +397,23 @@ const styles = StyleSheet.create({
     width: 24,
   },
   stopBadgeText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 11,
     fontWeight: '800',
   },
   stopPendingBadgeText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     fontWeight: '800',
   },
   stopSubTitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   stopTitle: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,
@@ -415,7 +423,7 @@ const styles = StyleSheet.create({
   },
   stopActionBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderRadius: 8,
     flexDirection: 'row',
     height: 36,
@@ -423,7 +431,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   stopActionBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -495,13 +503,13 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
   },
   spineDashedLine: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: leopardPalette.inputBorder,
     height: 20,
     width: 2,
   },
   spineDistancePill: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 9999,
     borderWidth: 1,
     paddingHorizontal: 10,
@@ -529,7 +537,7 @@ const styles = StyleSheet.create({
     width: 28,
   },
   badgeTextB: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 12,
     fontWeight: '800',
   },

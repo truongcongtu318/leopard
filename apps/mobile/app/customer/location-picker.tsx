@@ -13,11 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   colors,
+  customerPalette,
   iosContinuousCurve,
   IconChevron,
   IconClose,
   IconPin,
   IconSearch,
+  leopardPalette,
   RealInteractiveMap,
   resolveLocationCoords,
   systemFontFamily,
@@ -201,7 +203,7 @@ export default function LocationPickerScreen({
       {/* Layer 1: Fixed Center Pin Marker */}
       <View pointerEvents="none" style={styles.centerPinAnchor}>
         <View style={styles.centerPinWrapper} testID="fixed-center-pin">
-          <IconPin color="#F59E0B" size={40} strokeWidth={2} />
+          <IconPin color={leopardPalette.accentYellow} size={40} strokeWidth={2} />
           <View style={styles.centerPinShadow} />
         </View>
       </View>
@@ -216,11 +218,11 @@ export default function LocationPickerScreen({
             style={styles.backBtn}
             testID="btn-location-back"
           >
-            <IconChevron color="#0B1E42" direction="left" size={22} />
+            <IconChevron color={customerPalette.textSlateDark} direction="left" size={22} />
           </Pressable>
 
           <View style={styles.searchInputWrap}>
-            <IconSearch color="#64748B" size={18} />
+            <IconSearch color={customerPalette.textSubtle} size={18} />
             <TextInput
               accessibilityLabel="Tìm kiếm địa chỉ"
               autoCapitalize="none"
@@ -230,7 +232,7 @@ export default function LocationPickerScreen({
               }}
               onFocus={() => setIsSearching(searchQuery.trim().length > 0)}
               placeholder="Tìm kiếm địa chỉ, kho bãi..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={leopardPalette.inputPlaceholder}
               style={styles.searchInput}
               value={searchQuery}
             />
@@ -245,7 +247,7 @@ export default function LocationPickerScreen({
                 style={styles.clearSearchBtn}
                 testID="btn-clear-search"
               >
-                <IconClose color="#64748B" size={16} />
+                <IconClose color={customerPalette.textSubtle} size={16} />
               </Pressable>
             ) : null}
           </View>
@@ -263,7 +265,7 @@ export default function LocationPickerScreen({
                   onPress={() => handleSelectSuggestion(item)}
                   style={styles.suggestionItem}
                 >
-                  <IconPin color="#0B1E42" size={16} />
+                  <IconPin color={customerPalette.textSlateDark} size={16} />
                   <Text numberOfLines={1} style={styles.suggestionText}>
                     {item.label}
                   </Text>
@@ -314,7 +316,7 @@ export default function LocationPickerScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
   },
   mapContainer: {
     ...StyleSheet.absoluteFill,
@@ -354,7 +356,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(11, 30, 66, 0.08)',
     paddingHorizontal: 8,
     paddingVertical: 6,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -371,7 +373,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 14,
     paddingHorizontal: 12,
     height: 44,
@@ -380,7 +382,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     marginLeft: 8,
     paddingVertical: 0,
   },
@@ -392,17 +394,17 @@ const styles = StyleSheet.create({
   },
   clearSearchText: {
     fontSize: typeScale.subheadline.fontSize,
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     fontWeight: '600',
   },
   suggestionsCard: {
     marginTop: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     maxHeight: 220,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 14,
@@ -418,11 +420,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 46,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
   },
   suggestionText: {
     fontSize: typeScale.subheadline.fontSize,
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
     marginLeft: 10,
     flex: 1,
   },
@@ -439,10 +441,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     ...iosContinuousCurve,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: customerPalette.cardBorder,
+    backgroundColor: customerPalette.surfaceWhite,
     padding: 20,
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
@@ -457,14 +459,14 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     marginRight: 6,
   },
   addressHeaderLabel: {
     fontFamily: systemFontFamily,
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -472,7 +474,7 @@ const styles = StyleSheet.create({
     fontFamily: systemFontFamily,
     fontSize: 17,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     lineHeight: 23,
     marginBottom: 8,
   },
@@ -484,18 +486,18 @@ const styles = StyleSheet.create({
   coordsLabel: {
     fontFamily: systemFontFamily,
     fontSize: typeScale.footnote.fontSize,
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
     marginRight: 6,
   },
   coordsValue: {
     fontFamily: systemFontFamily,
     fontSize: 13,
     fontWeight: '600',
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     fontVariant: ['tabular-nums'],
   },
   confirmBtn: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderRadius: 16,
     ...iosContinuousCurve,
     height: 52,
@@ -503,7 +505,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 8,
@@ -514,7 +516,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }],
   },
   confirmBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontFamily: systemFontFamily,
     fontSize: 16,
     fontWeight: '700',

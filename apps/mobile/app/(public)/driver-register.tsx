@@ -1,6 +1,6 @@
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { typeScale, BrandLoginLogo, LeopardEmblem, radius, spacing } from '@leopard/mobile-core';
+import { colors, typeScale, BrandLoginLogo, LeopardEmblem, radius, spacing } from '@leopard/mobile-core';
 
 export default function DriverRegisterGuideRoute() {
   const router = useRouter();
@@ -51,14 +51,14 @@ export default function DriverRegisterGuideRoute() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EEF3F9',
+    backgroundColor: colors.neutral.canvas,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CAD9EB',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     borderWidth: 1,
     padding: 24,
@@ -79,11 +79,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   badge: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
     borderRadius: radius.pill,
     borderWidth: 1,
-    color: '#B45309',
+    color: colors.warning.text,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -91,20 +91,20 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   headline: {
-    color: '#0B1F3A',
+    color: colors.neutral.text,
     fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     textAlign: 'center',
   },
   subline: {
-    color: '#5B6B80',
+    color: colors.neutral.mutedText,
     fontSize: typeScale.footnote.fontSize,
     lineHeight: 19,
     textAlign: 'center',
     marginBottom: 8,
   },
   primaryBtn: {
-    backgroundColor: '#1E5BB8',
+    backgroundColor: colors.info.text,
     borderRadius: radius.pill,
     height: 48,
     width: '100%',
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   backBtnText: {
-    color: '#5B6B80',
+    color: colors.neutral.mutedText,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },

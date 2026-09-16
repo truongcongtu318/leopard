@@ -1,4 +1,10 @@
-import { driverPrimitives, iosContinuousCurve, typeScale } from '@leopard/mobile-core';
+import {
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
+  leopardPalette,
+  typeScale,
+} from '@leopard/mobile-core';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -33,7 +39,7 @@ function IsometricBoxIcon({ size = 22 }: { size?: number }) {
       {/* Top Diamond Face */}
       <Path
         d="M12 2.5L20.5 7.4L12 12.3L3.5 7.4L12 2.5Z"
-        fill="#FFFFFF"
+        fill={colors.neutral.surface}
       />
       {/* Left Shaded Face */}
       <Path
@@ -62,7 +68,7 @@ function TripleChevronIcon() {
     <Svg width={24} height={16} viewBox="0 0 24 16" fill="none">
       <Path
         d="M5 2.5L10 8L5 13.5"
-        stroke="#64748B"
+        stroke={colors.neutral.subtleText}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -70,7 +76,7 @@ function TripleChevronIcon() {
       />
       <Path
         d="M11 2.5L16 8L11 13.5"
-        stroke="#64748B"
+        stroke={colors.neutral.subtleText}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -78,7 +84,7 @@ function TripleChevronIcon() {
       />
       <Path
         d="M17 2.5L22 8L17 13.5"
-        stroke="#64748B"
+        stroke={colors.neutral.subtleText}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -410,7 +416,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     letterSpacing: -0.5,
     lineHeight: 40,
     marginBottom: 12,
@@ -418,7 +424,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '400',
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     lineHeight: 22,
     marginBottom: 34,
   },
@@ -449,7 +455,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 60,
   },
   btnLabel: {
-    color: '#F1F5F9',
+    color: colors.neutral.surfaceMuted,
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.3,

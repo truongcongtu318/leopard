@@ -14,6 +14,7 @@ import {
 
 import {
   colors,
+  customerPalette,
   layout,
   radius,
   sessionStore,
@@ -89,8 +90,8 @@ export function CustomerSecurityScreen() {
                 accessibilityLabel="Bật hoặc tắt FaceID hoặc Vân tay"
                 onValueChange={setBiometricEnabled}
                 testID="switch-biometric"
-                thumbColor={Platform.OS === 'android' ? (biometricEnabled ? '#0B1E42' : '#F4F3F4') : undefined}
-                trackColor={{ false: '#CBD5E1', true: '#0B1E42' }}
+                thumbColor={Platform.OS === 'android' ? (biometricEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+                trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
                 value={biometricEnabled}
               />
             </View>
@@ -103,7 +104,7 @@ export function CustomerSecurityScreen() {
           <View style={styles.doubleBezelInner}>
             <View style={styles.dangerHeaderRow}>
               <View style={styles.dangerIconBadge}>
-                <IconAlertTriangle color="#DC2626" size="md" />
+                <IconAlertTriangle color={colors.danger.text} size="md" />
               </View>
               <View style={styles.dangerHeaderWrap}>
                 <Text style={styles.dangerHeading}>Quyền riêng tư & Xóa tài khoản</Text>
@@ -142,7 +143,7 @@ export function CustomerSecurityScreen() {
           <View style={styles.modalCardOuter}>
             <View style={styles.modalCardInner}>
               <View style={styles.modalWarningIconBox}>
-                <IconAlertTriangle color="#DC2626" size="xl" />
+                <IconAlertTriangle color={colors.danger.text} size="xl" />
               </View>
 
               <Text style={styles.modalTitle}>Xác nhận xóa tài khoản vĩnh viễn?</Text>
@@ -191,12 +192,12 @@ export function CustomerSecurityScreen() {
 // ponytail: simplified in-memory PIN state, add backend API verification when auth microservice is wired.
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     flex: 1,
   },
   header: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderBottomColor: 'rgba(11, 30, 66, 0.08)',
     borderBottomWidth: 1,
     flexDirection: 'row',
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   sectionLabelDanger: {
-    color: '#DC2626',
+    color: colors.danger.text,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   doubleBezelInner: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 18,
     gap: spacing.sm,
     padding: spacing.md,
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   pinInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderColor: 'rgba(11, 30, 66, 0.12)',
     borderRadius: radius.control,
     borderWidth: 1,
@@ -314,14 +315,14 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   alertError: {
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FCA5A5',
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -330,15 +331,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   alertErrorText: {
-    color: '#DC2626',
+    color: colors.danger.text,
     flex: 1,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
   },
   alertSuccess: {
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderColor: '#6EE7B7',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   alertSuccessText: {
-    color: '#059669',
+    color: colors.success.text,
     flex: 1,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
   },
   dangerIconBadge: {
     alignItems: 'center',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.danger.background,
     borderRadius: 10,
     height: 36,
     justifyContent: 'center',
@@ -395,12 +396,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dangerHeading: {
-    color: '#B91C1C',
+    color: colors.danger.text,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   dangerLegalNotice: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 2,
@@ -412,7 +413,7 @@ const styles = StyleSheet.create({
   },
   deleteAccountButton: {
     alignItems: 'center',
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
     borderRadius: 12,
     height: 48,
     justifyContent: 'center',
@@ -422,7 +423,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   deleteAccountButtonText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
@@ -445,27 +446,27 @@ const styles = StyleSheet.create({
   },
   modalCardInner: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 18,
     gap: spacing.sm,
     padding: spacing.md,
   },
   modalWarningIconBox: {
     alignItems: 'center',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.danger.background,
     borderRadius: 24,
     height: 48,
     justifyContent: 'center',
     width: 48,
   },
   modalTitle: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
   },
   modalDescription: {
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
@@ -478,7 +479,7 @@ const styles = StyleSheet.create({
   },
   modalCancelButton: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 12,
     flex: 1,
     height: 44,
@@ -486,7 +487,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   modalCancelButtonPressed: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.neutral.border,
   },
   modalCancelButtonText: {
     color: '#334155',
@@ -495,7 +496,7 @@ const styles = StyleSheet.create({
   },
   modalConfirmButton: {
     alignItems: 'center',
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
     borderRadius: 12,
     flex: 1,
     height: 44,
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   modalConfirmButtonText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',

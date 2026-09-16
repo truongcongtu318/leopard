@@ -8,10 +8,12 @@ import {
   IconRoute,
   IconSpeedTruck,
   RealInteractiveMap,
-  radius,
   ScreenScaffold,
-  spacing,
   StatusBadge,
+  colors,
+  leopardPalette,
+  radius,
+  spacing,
 } from '@leopard/mobile-core';
 import type { DriverDetailContentView } from '../../model';
 
@@ -61,7 +63,7 @@ export function PublicDetailView({
 
           {/* Floating Pill Bottom Left: ETA & Distance */}
           <View style={styles.mapFloatingEtaPill}>
-            <IconClock color="#0B1E42" size={13} />
+            <IconClock color={leopardPalette.primary} size={13} />
             <Text style={styles.mapFloatingEtaText}>
               {view.order.distanceLabel ? `${view.order.distanceLabel} · ` : ''}{view.order.etaLabel}
             </Text>
@@ -88,7 +90,7 @@ export function PublicDetailView({
           <View style={styles.fareSlab}>
             <View style={styles.fareSlabTopRow}>
               <View style={styles.fareIconBadge}>
-                <IconOrders color="#0B1E42" size={16} />
+                <IconOrders color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.fareTitleCol}>
                 <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
@@ -130,7 +132,7 @@ export function PublicDetailView({
                   <View style={styles.rowBetween}>
                     <Text style={styles.publicPointSubA}>ĐIỂM LẤY HÀNG (A)</Text>
                     <View style={styles.publicDistanceChip}>
-                      <IconLocationPin color="#0B1E42" size={10} />
+                      <IconLocationPin color={leopardPalette.primary} size={10} />
                       <Text style={styles.publicDistanceChipText}>
                         {view.order.pickupDistanceLabel ?? 'Đang cập nhật'}
                       </Text>
@@ -140,7 +142,7 @@ export function PublicDetailView({
                 </View>
 
                 <View style={styles.publicDistanceBetweenRow}>
-                  <IconRoute color="#0B1E42" size={12} />
+                  <IconRoute color={leopardPalette.primary} size={12} />
                   <Text style={styles.publicDistanceBetweenText}>
                     Khoảng cách chặng · {view.order.distanceLabel ?? 'Đang cập nhật'}
                   </Text>
@@ -165,7 +167,7 @@ export function PublicDetailView({
           <View style={styles.publicSpecsGrid}>
             <View style={styles.publicSpecCell}>
               <View style={styles.specCellIconOuter}>
-                <IconSpeedTruck color="#0B1E42" size={16} />
+                <IconSpeedTruck color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.specCellTextCol}>
                 <Text style={styles.specCellLabel}>LOẠI XE YÊU CẦU</Text>
@@ -175,7 +177,7 @@ export function PublicDetailView({
 
             <View style={styles.publicSpecCell}>
               <View style={styles.specCellIconOuter}>
-                <IconOrders color="#0B1E42" size={16} />
+                <IconOrders color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.specCellTextCol}>
                 <Text style={styles.specCellLabel}>QUY CÁCH HÀNG HÓA</Text>
@@ -185,7 +187,7 @@ export function PublicDetailView({
 
             <View style={styles.publicSpecCell}>
               <View style={styles.specCellIconOuter}>
-                <IconClock color="#0B1E42" size={16} />
+                <IconClock color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.specCellTextCol}>
                 <Text style={styles.specCellLabel}>THỜI GIAN DỰ KIẾN</Text>
@@ -195,7 +197,7 @@ export function PublicDetailView({
 
             <View style={styles.publicSpecCell}>
               <View style={styles.specCellIconOuter}>
-                <IconLocationPin color="#0B1E42" size={16} />
+                <IconLocationPin color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.specCellTextCol}>
                 <Text style={styles.specCellLabel}>CẬP NHẬT ĐƠN</Text>
@@ -207,7 +209,7 @@ export function PublicDetailView({
           {/* 6. Dispatch Notice: Open offer to nearby drivers */}
           <View style={styles.publicDispatchNotice}>
             <View style={styles.noticeIconCircle}>
-              <IconRadarPulse color="#0B1E42" size={16} />
+              <IconRadarPulse color={leopardPalette.primary} size={16} />
             </View>
             <View style={styles.noticeTextCol}>
               <Text style={styles.noticeHeader}>Đơn đang mở cho tài xế khu vực</Text>
@@ -236,7 +238,7 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
   },
   mapCanvasContainer: {
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.neutral.text,
     borderRadius: 20,
     height: 270,
     overflow: 'hidden',
@@ -265,15 +267,15 @@ const styles = StyleSheet.create({
     width: 7,
   },
   publicMapTopTagText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 10.5,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   mapFloatingEtaPill: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: radius.pill,
     borderWidth: 1,
     bottom: 14,
@@ -291,7 +293,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   mapFloatingEtaText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -311,8 +313,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   publicSheetContainer: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     borderWidth: 1,
     gap: spacing.sm + 2,
@@ -329,20 +331,20 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   missionEyebrow: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.6,
   },
   missionLegTitle: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: -0.2,
   },
   fareSlab: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     borderWidth: 1,
     gap: 8,
@@ -365,7 +367,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fareCaption: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.4,
@@ -389,7 +391,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   fareAmountText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 26,
     fontWeight: '900',
     letterSpacing: -0.5,
@@ -413,20 +415,20 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   fareTermsText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     flex: 1,
     fontSize: 10.5,
   },
   publicRouteCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     borderWidth: 1,
     gap: 12,
     padding: spacing.md,
   },
   cardSectionTitle: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -442,19 +444,19 @@ const styles = StyleSheet.create({
   },
   publicSpinePointA: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderRadius: 14,
     height: 28,
     justifyContent: 'center',
     width: 28,
   },
   publicSpinePointTextA: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 12,
     fontWeight: '800',
   },
   publicSpineDashedLine: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: leopardPalette.inputBorder,
     flex: 1,
     marginVertical: 4,
     minHeight: 40,
@@ -469,7 +471,7 @@ const styles = StyleSheet.create({
     width: 28,
   },
   publicSpinePointTextB: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -486,13 +488,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   publicPointSubA: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10,
     fontWeight: '800',
   },
   publicDistanceChip: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 6,
     flexDirection: 'row',
     gap: 4,
@@ -500,12 +502,12 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   publicDistanceChipText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 10,
     fontWeight: '700',
   },
   publicPointTitleA: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 13.5,
     fontWeight: '700',
   },
@@ -516,27 +518,27 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   publicDistanceBetweenText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     fontWeight: '600',
   },
   publicPointSubB: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10,
     fontWeight: '800',
   },
   publicPointTitleB: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 13.5,
     fontWeight: '700',
   },
   publicRouteMetaFooter: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     borderRadius: 8,
     padding: 8,
   },
   publicRouteMetaText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -547,8 +549,8 @@ const styles = StyleSheet.create({
   },
   publicSpecCell: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
@@ -558,7 +560,7 @@ const styles = StyleSheet.create({
   },
   specCellIconOuter: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 16,
     height: 32,
     justifyContent: 'center',
@@ -569,12 +571,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   specCellLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 9,
     fontWeight: '800',
   },
   specCellValue: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 11.5,
     fontWeight: '700',
   },
@@ -611,13 +613,13 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   publicPrivacyCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     borderRadius: 10,
     gap: 3,
     padding: 10,
   },
   publicPrivacyTitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10,
     fontWeight: '800',
   },

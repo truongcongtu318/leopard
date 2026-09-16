@@ -2,9 +2,6 @@ import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
-  colors,
-  radius,
-  spacing,
   IconClock,
   IconMessage,
   IconPhone,
@@ -12,6 +9,10 @@ import {
   IconShieldAlert,
   IconSpeedTruck,
   StatusBadge,
+  colors,
+  leopardPalette,
+  radius,
+  spacing,
 } from '@leopard/mobile-core';
 import type { DriverActiveTripView } from '../model';
 import { callPhoneNumber } from './detail/CargoAndContactCard';
@@ -63,7 +64,7 @@ export function DriverActiveTripCard({
       <View style={styles.cardHeader}>
         <View style={styles.headerLeft}>
           <View style={styles.tripIconChip}>
-            <IconSpeedTruck color="#0B1E42" size={16} />
+            <IconSpeedTruck color={leopardPalette.primary} size={16} />
           </View>
           <View>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
@@ -107,7 +108,7 @@ export function DriverActiveTripCard({
           </View>
 
           <View style={styles.etaRow}>
-            <IconClock color="#0B1E42" size={12} />
+            <IconClock color={leopardPalette.primary} size={12} />
             <Text style={styles.etaText}>
               Lộ trình · ETA {trip.route.distanceLabel}
             </Text>
@@ -197,14 +198,14 @@ export function DriverActiveTripCard({
 
 const styles = StyleSheet.create({
   outerContainer: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#0B1E42',
+    backgroundColor: colors.neutral.surface,
+    borderColor: leopardPalette.primary,
     borderRadius: 22,
     borderWidth: 1.5,
     elevation: 3,
     marginBottom: 16,
     padding: 16,
-    shadowColor: '#0B1E42',
+    shadowColor: leopardPalette.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 10,
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
   tripIconChip: {
     alignItems: 'center',
     backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 10,
     borderWidth: 1,
     height: 36,
@@ -231,14 +232,14 @@ const styles = StyleSheet.create({
     width: 36,
   },
   sectionTitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
   activeReference: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 15,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
@@ -276,8 +277,8 @@ const styles = StyleSheet.create({
 
   // Route Spine
   routeSpineBox: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
@@ -292,19 +293,19 @@ const styles = StyleSheet.create({
   },
   spinePointA: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     borderRadius: 10,
     height: 20,
     justifyContent: 'center',
     width: 20,
   },
   spinePointTextA: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 11,
     fontWeight: '800',
   },
   spineTrack: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: leopardPalette.inputBorder,
     flex: 1,
     marginVertical: 4,
     width: 2,
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
     width: 20,
   },
   spinePointTextB: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 11,
     fontWeight: '800',
   },
@@ -328,13 +329,13 @@ const styles = StyleSheet.create({
   },
   locationGroup: {},
   pointTypeA: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
   originAddress: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 13,
     fontWeight: '700',
     lineHeight: 18,
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   destAddress: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 13,
     fontWeight: '700',
     lineHeight: 18,
@@ -360,7 +361,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   etaText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 11.5,
     fontWeight: '700',
   },
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
     width: 7,
   },
   trackingText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 11.5,
     fontWeight: '500',
   },
@@ -407,8 +408,8 @@ const styles = StyleSheet.create({
   // Customer contact bar
   contactBar: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
@@ -421,12 +422,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contactTitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 10.5,
     fontWeight: '600',
   },
   contactPhone: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 12.5,
     fontWeight: '700',
     marginTop: 1,
@@ -437,14 +438,14 @@ const styles = StyleSheet.create({
   },
   contactIconBtn: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surface,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 10,
     borderWidth: 1,
     height: 40,
     justifyContent: 'center',
     width: 40,
-    shadowColor: '#0B1E42',
+    shadowColor: leopardPalette.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -465,7 +466,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primaryActionText: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.3,

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { iosContinuousCurve } from '@leopard/mobile-core';
+import {
+  iosContinuousCurve,
+  leopardPalette,
+} from '@leopard/mobile-core';
 import type { DriverLocationState } from '../driver-current-location';
 
 export type DriverLocationStatusProps = Readonly<{
@@ -68,7 +71,7 @@ const styles = StyleSheet.create({
     minHeight: 32,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    shadowColor: '#0B1E42',
+    shadowColor: leopardPalette.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
@@ -90,7 +93,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#D97706',
   },
   text: {
-    color: '#0B1E42',
+    color: leopardPalette.primary,
     fontSize: 11,
     fontWeight: '700',
   },

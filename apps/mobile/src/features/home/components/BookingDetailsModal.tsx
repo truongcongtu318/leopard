@@ -12,8 +12,11 @@ import {
 } from 'react-native';
 
 import {
+  colors,
+  customerPalette,
   IconCamera,
   iosContinuousCurve,
+  leopardPalette,
   pickDeviceImage,
   systemFontFamily,
   typeScale,
@@ -219,7 +222,7 @@ export function BookingDetailsModal({
                   accessibilityLabel="Tên người nhận hàng"
                   onChangeText={setReceiverName}
                   placeholder="Tên người nhận"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={leopardPalette.inputPlaceholder}
                   style={styles.textInput}
                   value={receiverName}
                 />
@@ -228,7 +231,7 @@ export function BookingDetailsModal({
                   keyboardType="phone-pad"
                   onChangeText={setReceiverPhone}
                   placeholder="Số điện thoại người nhận"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={leopardPalette.inputPlaceholder}
                   style={styles.textInput}
                   value={receiverPhone}
                 />
@@ -273,7 +276,7 @@ export function BookingDetailsModal({
                 accessibilityLabel="Ghi chú cho tài xế"
                 onChangeText={setCargoNote}
                 placeholder="Ghi chú cho tài xế (VD: Hàng dễ vỡ, tầng 3...)"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={[styles.textInput, styles.noteInput]}
                 value={cargoNote}
               />
@@ -338,7 +341,7 @@ export function BookingDetailsModal({
                   testID="btn-pick-cargo-image"
                 >
                   <View style={styles.photoPickerIconCircle}>
-                    <IconCamera color="#0B1E42" size={20} />
+                    <IconCamera color={customerPalette.textSlateDark} size={20} />
                   </View>
                   <View style={styles.photoPickerTextCol}>
                     <Text style={styles.photoPickerTitle}>
@@ -551,13 +554,13 @@ const styles = StyleSheet.create({
   sheetContainer: {
     position: 'relative',
     zIndex: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     ...iosContinuousCurve,
     maxHeight: '90%',
     paddingTop: 8,
-    shadowColor: '#0F172A',
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.16,
     shadowRadius: 20,
@@ -567,7 +570,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: colors.neutral.subtleBorder,
     alignSelf: 'center',
     marginBottom: 8,
   },
@@ -586,13 +589,13 @@ const styles = StyleSheet.create({
     fontFamily: systemFontFamily,
     fontSize: typeScale.body.fontSize,
     fontWeight: '800',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     letterSpacing: -0.3,
   },
   sheetSubtitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     marginTop: 2,
   },
   closeBtn: {
@@ -601,52 +604,52 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#64748B',
+    color: customerPalette.textSubtle,
   },
   routeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     marginHorizontal: 20,
     marginBottom: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     gap: 6,
   },
   routeBadgeDotOrigin: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.info.text,
   },
   routeBadgeDotDest: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
   },
   routeBadgeText: {
     flex: 1,
     fontSize: 12,
     fontWeight: '600',
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
   },
   routeBadgeArrow: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: leopardPalette.inputPlaceholder,
   },
   routeBadgeStopCountPill: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: colors.info.background,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -654,7 +657,7 @@ const styles = StyleSheet.create({
   routeBadgeStopCountText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
-    color: '#0284C7',
+    color: colors.info.text,
   },
   scrollArea: {
     maxHeight: 440,
@@ -675,12 +678,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#334155',
+    color: customerPalette.textSlateDark,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   badgeRequired: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.danger.background,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
@@ -688,7 +691,7 @@ const styles = StyleSheet.create({
   badgeRequiredText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
-    color: '#B91C1C',
+    color: colors.danger.text,
     letterSpacing: 0.4,
   },
   photoPickerBox: {
@@ -696,22 +699,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderRadius: 14,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#CBD5E1',
+    borderColor: colors.neutral.subtleBorder,
     gap: 12,
   },
   photoPickerBoxError: {
-    borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
+    borderColor: colors.danger.text,
+    backgroundColor: colors.danger.background,
   },
   photoPickerIconCircle: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -722,27 +725,27 @@ const styles = StyleSheet.create({
   photoPickerTitle: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.textSlateDark,
   },
   photoPickerSubtitle: {
     fontSize: 11,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
   },
   imagePreviewRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     gap: 12,
   },
   imageThumbnail: {
     width: 48,
     height: 48,
     borderRadius: 8,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: colors.neutral.subtleBorder,
   },
   imageInfoCol: {
     flex: 1,
@@ -751,28 +754,28 @@ const styles = StyleSheet.create({
   imageFileName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   imageReadyText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#16A34A',
+    color: leopardPalette.ecoGreen,
   },
   removePhotoBtn: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.danger.background,
   },
   removePhotoBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#B91C1C',
+    color: colors.danger.text,
   },
   errorFeedbackText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#DC2626',
+    color: colors.danger.text,
     marginTop: 2,
   },
   inputStack: {
@@ -783,12 +786,12 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     ...iosContinuousCurve,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     paddingHorizontal: 14,
     fontSize: typeScale.subheadline.fontSize,
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   noteInput: {
     marginTop: 4,
@@ -809,25 +812,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipSelected: {
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderWidth: 1,
-    borderColor: '#0B1E42',
+    borderColor: customerPalette.primary,
   },
   chipUnselected: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
   },
   chipText: {
     fontSize: 13,
     letterSpacing: -0.1,
   },
   chipTextSelected: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontWeight: '700',
   },
   chipTextUnselected: {
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
     fontWeight: '600',
   },
   toggleStack: {
@@ -841,31 +844,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 14,
     ...iosContinuousCurve,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     gap: 10,
   },
   toggleRowActive: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: leopardPalette.ecoGreenBg,
+    borderColor: leopardPalette.ecoGreenBorder,
   },
   checkbox: {
     width: 22,
     height: 22,
     borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: '#94A3B8',
-    backgroundColor: '#FFFFFF',
+    borderColor: leopardPalette.inputPlaceholder,
+    backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxActive: {
-    borderColor: '#16A34A',
-    backgroundColor: '#16A34A',
+    borderColor: leopardPalette.ecoGreen,
+    backgroundColor: leopardPalette.ecoGreen,
   },
   checkmark: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -875,12 +878,12 @@ const styles = StyleSheet.create({
   toggleTitle: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   toggleFee: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#16A34A',
+    color: leopardPalette.ecoGreen,
     fontVariant: ['tabular-nums'],
   },
   radioStack: {
@@ -894,33 +897,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 14,
     ...iosContinuousCurve,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     gap: 12,
   },
   radioRowActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: colors.info.background,
+    borderColor: colors.info.border,
   },
   radioCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#94A3B8',
+    borderColor: leopardPalette.inputPlaceholder,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
   },
   radioCircleActive: {
-    borderColor: '#2563EB',
+    borderColor: colors.info.text,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.info.text,
   },
   radioTextCol: {
     flex: 1,
@@ -928,12 +931,12 @@ const styles = StyleSheet.create({
   radioTitle: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
   },
   radioSubtitle: {
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '500',
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     marginTop: 1,
   },
   footer: {
@@ -941,25 +944,25 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: Platform.select({ ios: 34, default: 20 }),
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: colors.neutral.surfaceMuted,
+    backgroundColor: customerPalette.surfaceWhite,
   },
   confirmBtn: {
     minHeight: 48,
     height: 48,
     borderRadius: 16,
     ...iosContinuousCurve,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0B1E42',
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   confirmBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontFamily: systemFontFamily,
     fontSize: 15,
     fontWeight: '800',

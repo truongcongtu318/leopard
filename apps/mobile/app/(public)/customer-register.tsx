@@ -22,7 +22,10 @@ import {
   isLikelyVnPhone,
   toE164Vn,
   OtpSixCellInput,
+  colors,
+  customerPalette,
   leopardPalette,
+  pastelTheme,
   IconPhone,
   IconSecurityShield,
   IconUser,
@@ -37,8 +40,8 @@ import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '@leopard/mobile
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-recaptcha-register';
 
-/** Midnight Navy brand color for Apple HIG components. */
-const brandNavy = '#0B1E42';
+/** Trackly brand primary color for Apple HIG components. */
+const brandNavy = customerPalette.primary;
 
 interface MeResponse {
   phone: string | null;
@@ -345,7 +348,7 @@ export default function CustomerRegisterScreen() {
             style={styles.backBtn}
             testID="cr-back-btn"
           >
-            <IconChevron color="#0B1E42" direction="left" size={20} />
+            <IconChevron color={customerPalette.textSlateDark} direction="left" size={20} />
           </Pressable>
           <BrandLoginLogo height={30} />
           <View style={styles.navSpacer} />
@@ -365,7 +368,7 @@ export default function CustomerRegisterScreen() {
           {/* ================= ERROR BANNER ================= */}
           {errorMsg && !showOtpModal ? (
             <View style={styles.errorBox} testID="cr-error">
-              <IconAlertTriangle color="#B91C1C" size={18} />
+              <IconAlertTriangle color={colors.danger.text} size={18} />
               <Text accessibilityRole="alert" style={styles.errorText}>
                 {errorMsg}
               </Text>
@@ -378,7 +381,7 @@ export default function CustomerRegisterScreen() {
             <View style={styles.sectionGroup}>
               <View style={styles.sectionHeader}>
                 <View style={styles.sectionTitleWrap}>
-                  <IconPhone color="#475569" size={16} strokeWidth={2} />
+                  <IconPhone color={customerPalette.textMutedSlate} size={16} strokeWidth={2} />
                   <Text style={styles.sectionTitle}>Số điện thoại</Text>
                 </View>
                 {phoneReady ? (
@@ -432,7 +435,7 @@ export default function CustomerRegisterScreen() {
                       }}
                       onFocus={() => setFocusedField('phone')}
                       placeholder="Số điện thoại..."
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor={leopardPalette.inputPlaceholder}
                       style={styles.phoneTextInput}
                       testID="cr-phone-input"
                       value={phoneInput}
@@ -474,7 +477,7 @@ export default function CustomerRegisterScreen() {
                       testID="cr-send-otp"
                     >
                       {phoneBusy ? (
-                        <ActivityIndicator color="#FFFFFF" size="small" />
+                        <ActivityIndicator color={customerPalette.surfaceWhite} size="small" />
                       ) : (
                         <Text
                           style={[
@@ -499,7 +502,7 @@ export default function CustomerRegisterScreen() {
           <View style={styles.sectionGroup}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleWrap}>
-                <IconOffice color="#0B1E42" size={16} strokeWidth={2} />
+                <IconOffice color={customerPalette.textSlateDark} size={16} strokeWidth={2} />
                 <Text style={styles.sectionTitle}>Thông tin doanh nghiệp & cá nhân</Text>
               </View>
             </View>
@@ -518,7 +521,7 @@ export default function CustomerRegisterScreen() {
                 onChangeText={setName}
                 onFocus={() => setFocusedField('name')}
                 placeholder="VD: Nguyễn Văn An"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={[
                   styles.input,
                   focusedField === 'name' && styles.inputFocused,
@@ -541,7 +544,7 @@ export default function CustomerRegisterScreen() {
                 onChangeText={setCompanyName}
                 onFocus={() => setFocusedField('companyName')}
                 placeholder="VD: Công ty TNHH Logistics Vận Tải An Phát"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={[
                   styles.input,
                   focusedField === 'companyName' && styles.inputFocused,
@@ -566,7 +569,7 @@ export default function CustomerRegisterScreen() {
                 onChangeText={setTaxCode}
                 onFocus={() => setFocusedField('taxCode')}
                 placeholder="VD: 0312345678 hoặc 0312345678-001"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={[
                   styles.input,
                   styles.monoInput,
@@ -592,7 +595,7 @@ export default function CustomerRegisterScreen() {
                 onChangeText={setEmail}
                 onFocus={() => setFocusedField('email')}
                 placeholder="VD: ketoan@anphatlogistics.vn"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={[
                   styles.input,
                   focusedField === 'email' && styles.inputFocused,
@@ -608,7 +611,7 @@ export default function CustomerRegisterScreen() {
         <View style={styles.card}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleWrap}>
-              <IconSecurityShield color="#475569" size={16} strokeWidth={2} />
+              <IconSecurityShield color={customerPalette.textMutedSlate} size={16} strokeWidth={2} />
               <Text style={styles.sectionTitle}>Điều khoản & Chính sách</Text>
             </View>
           </View>
@@ -668,7 +671,7 @@ export default function CustomerRegisterScreen() {
         >
           {isSubmitting ? (
             <View style={styles.btnLoadingRow}>
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color={customerPalette.surfaceWhite} size="small" />
               <Text style={styles.primaryBtnText}>Đang lưu...</Text>
             </View>
           ) : (
@@ -847,12 +850,12 @@ export default function CustomerRegisterScreen() {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
     position: 'relative',
   },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.canvas,
   },
   scrollContent: {
     flexGrow: 1,
@@ -870,9 +873,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -888,14 +891,14 @@ const styles = StyleSheet.create({
     fontFamily: systemFontFamily,
     fontSize: 28,
     fontWeight: '800',
-    color: '#0F172A',
+    color: customerPalette.textSlateDark,
     letterSpacing: -0.6,
     lineHeight: 34,
   },
   largeSubtitle: {
     fontFamily: systemFontFamily,
     fontSize: 15,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     lineHeight: 21,
     marginTop: 4,
   },
@@ -911,9 +914,9 @@ const styles = StyleSheet.create({
 
   /* Error Banner */
   errorBox: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.danger.background,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: colors.danger.border,
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
@@ -924,7 +927,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   errorText: {
-    color: '#B91C1C',
+    color: colors.danger.text,
     fontSize: 13,
     fontWeight: '500',
     flex: 1,
@@ -933,12 +936,12 @@ const styles = StyleSheet.create({
 
   /* Cards */
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: customerPalette.cardBorder,
+    shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -948,7 +951,7 @@ const styles = StyleSheet.create({
   /* Dividers & Section Groups */
   sectionDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     marginVertical: 16,
   },
   sectionGroup: {
@@ -967,16 +970,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
 
   statusPillSuccess: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: leopardPalette.ecoGreenBg,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: leopardPalette.ecoGreenBorder,
   },
   statusPillSuccessText: {
     fontSize: 11,
@@ -989,7 +992,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: pastelTheme.yellowCard.border,
   },
   statusPillWarnText: {
     fontSize: 11,
@@ -1000,7 +1003,7 @@ const styles = StyleSheet.create({
   /* Locked Phone State */
   inputWrap: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -1009,8 +1012,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   inputLocked: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.bgMuted,
+    borderColor: customerPalette.cardBorder,
   },
   lockedRow: {
     flexDirection: 'row',
@@ -1020,11 +1023,11 @@ const styles = StyleSheet.create({
   lockedText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   lockedTag: {
     fontSize: 12,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontWeight: '500',
   },
 
@@ -1035,8 +1038,8 @@ const styles = StyleSheet.create({
   phoneInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 14,
     borderWidth: 1.5,
     paddingLeft: 8,
@@ -1048,7 +1051,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 6,
@@ -1056,25 +1059,25 @@ const styles = StyleSheet.create({
   countryCode: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   countryChevron: {
     fontSize: typeScale.caption2.fontSize,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontWeight: '700',
     marginTop: -1,
   },
   badgeDivider: {
     width: 1,
     height: 22,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     marginHorizontal: 4,
   },
   phoneTextInput: {
     flex: 1,
     minWidth: 0,
     fontSize: 15,
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontWeight: '600',
     paddingVertical: 0,
     height: '100%',
@@ -1094,15 +1097,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendOtpBtnDisabled: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
   },
   sendOtpBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 13,
     fontWeight: '700',
   },
   sendOtpBtnTextDisabled: {
-    color: '#94A3B8',
+    color: customerPalette.offlineGray,
   },
   clearBtn: {
     paddingHorizontal: 6,
@@ -1111,7 +1114,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clearBtnText: {
-    color: '#94A3B8',
+    color: customerPalette.offlineGray,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -1145,14 +1148,14 @@ const styles = StyleSheet.create({
   modalContentCard: {
     width: '100%',
     maxWidth: 390,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     padding: 24,
     gap: 16,
     alignItems: 'center',
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.28,
     shadowRadius: 28,
@@ -1184,12 +1187,12 @@ const styles = StyleSheet.create({
     width: 74,
     height: 74,
     borderRadius: 37,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: customerPalette.bgMuted,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: customerPalette.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0B1E42',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 10,
@@ -1198,7 +1201,7 @@ const styles = StyleSheet.create({
   otpHeroBadgeSuccess: {
     backgroundColor: '#DCFCE7',
     borderColor: '#86EFAC',
-    shadowColor: '#16A34A',
+    shadowColor: leopardPalette.ecoGreen,
   },
   submittingTruckWrap: {
     alignItems: 'center',
@@ -1213,20 +1216,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   otpHeadline: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 20,
     fontWeight: '800',
     textAlign: 'center',
   },
   otpSubline: {
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '500',
     textAlign: 'center',
   },
   otpPhoneHighlight: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontWeight: '700',
   },
   modalSubmitBtn: {
@@ -1244,29 +1247,29 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   modalSubmitBtnDisabled: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     shadowOpacity: 0,
     elevation: 0,
   },
   modalSubmitBtnVerified: {
-    backgroundColor: '#16A34A',
-    shadowColor: '#16A34A',
+    backgroundColor: leopardPalette.ecoGreen,
+    shadowColor: leopardPalette.ecoGreen,
   },
   modalSubmitBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 15,
     fontWeight: '700',
   },
   modalErrorBox: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.danger.background,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: colors.danger.border,
     borderRadius: 12,
     padding: 10,
     width: '100%',
   },
   modalErrorText: {
-    color: '#B91C1C',
+    color: colors.danger.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     textAlign: 'center',
@@ -1275,9 +1278,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: leopardPalette.ecoGreenBg,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: leopardPalette.ecoGreenBorder,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -1288,7 +1291,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#16A34A',
+    backgroundColor: leopardPalette.ecoGreen,
   },
   verifiedSuccessText: {
     fontSize: 13,
@@ -1302,12 +1305,12 @@ const styles = StyleSheet.create({
   },
   resendCountdownText: {
     fontSize: 13,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
     fontWeight: '500',
   },
   resendCountdownTime: {
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   resendBtn: {
@@ -1336,20 +1339,20 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   requiredStar: {
-    color: '#EF4444',
+    color: colors.danger.text,
     fontWeight: '700',
     fontSize: typeScale.subheadline.fontSize,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     borderRadius: 14,
     paddingHorizontal: 14,
     height: 50,
     fontSize: 15,
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontWeight: '500',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     ...Platform.select({
       web: {
         outlineStyle: 'none',
@@ -1365,7 +1368,7 @@ const styles = StyleSheet.create({
   },
   inputFocused: {
     borderColor: brandNavy,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
     shadowColor: brandNavy,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.12,
@@ -1387,25 +1390,25 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   consentRowPressed: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   checkbox: {
     width: 22,
     height: 22,
     borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: leopardPalette.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: customerPalette.surfaceWhite,
   },
   checkboxOn: {
     backgroundColor: brandNavy,
     borderColor: brandNavy,
   },
   checkboxTick: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -1419,7 +1422,7 @@ const styles = StyleSheet.create({
   },
   consentDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     marginVertical: 2,
   },
 
@@ -1438,19 +1441,19 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primaryBtnDisabled: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: customerPalette.cardBorder,
     shadowOpacity: 0,
     elevation: 0,
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontFamily: systemFontFamily,
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
   primaryBtnTextDisabled: {
-    color: '#94A3B8',
+    color: customerPalette.offlineGray,
   },
   btnLoadingRow: {
     flexDirection: 'row',
@@ -1471,7 +1474,7 @@ const styles = StyleSheet.create({
   },
   driverCardHelper: {
     fontSize: 13,
-    color: '#64748B',
+    color: customerPalette.textSubtle,
   },
   driverLink: {
     paddingVertical: 4,

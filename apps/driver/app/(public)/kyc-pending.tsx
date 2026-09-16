@@ -13,19 +13,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
-  httpClient,
-  sessionStore,
-  leopardPalette,
-  radius,
-  driverPrimitives,
-  driverSemantics,
-  iosContinuousCurve,
-  IconShield,
-  IconTruck,
-  typeScale,
   IconChevron,
   IconClock,
   IconPhone,
+  IconShield,
+  IconTruck,
+  colors,
+  driverPrimitives,
+  driverSemantics,
+  httpClient,
+  iosContinuousCurve,
+  leopardPalette,
+  radius,
+  sessionStore,
+  typeScale,
 } from '@leopard/mobile-core';
 
 interface ApplicationStatusResponse {
@@ -192,7 +193,7 @@ export default function KycPendingRoute() {
             testID="btn-refresh-status"
           >
             {isRefreshing ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color={colors.neutral.surface} size="small" />
             ) : (
               <Text style={styles.primaryActionBtnText}>Kiểm tra lại trạng thái</Text>
             )}
@@ -221,7 +222,7 @@ export default function KycPendingRoute() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
   },
   header: {
     flexDirection: 'row',
@@ -229,9 +230,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     height: 56,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.neutral.surfaceMuted,
   },
   backBtn: {
     minWidth: 44,
@@ -265,10 +266,10 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: radius.bezelOuter,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     padding: 24,
     alignItems: 'center',
     gap: 12,
@@ -322,10 +323,10 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: radius.bezelInner,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     padding: 18,
     gap: 12,
   },
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   fieldRow: {
     flexDirection: 'row',
@@ -414,13 +415,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primaryActionBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 15,
     fontWeight: '700',
   },
   secondaryActionBtn: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderColor: driverPrimitives.colors.gray200,
     borderWidth: 1,
     borderRadius: 12,

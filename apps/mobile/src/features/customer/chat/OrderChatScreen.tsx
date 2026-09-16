@@ -15,6 +15,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
   colors,
+  customerPalette,
+  leopardPalette,
   spacing,
   IconCamera,
   IconChevronRight,
@@ -175,7 +177,7 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
       onPress={handleCall}
       style={({ pressed }) => [styles.callBtn, pressed ? styles.pressed : null]}
     >
-      <IconPhone color="#FFFFFF" size={15} strokeWidth={2} />
+      <IconPhone color={colors.neutral.surface} size={15} strokeWidth={2} />
       <Text style={styles.callBtnText}>Gọi</Text>
     </Pressable>
   );
@@ -196,7 +198,7 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
         <View style={styles.driverHeaderOuter}>
           <View style={styles.driverHeaderInner}>
             <View style={styles.driverAvatarBox}>
-              <IconRoleDriver color="#0B1E42" size={20} />
+              <IconRoleDriver color={customerPalette.primary} size={20} />
             </View>
             <View style={styles.driverTextWrap}>
               <Text style={styles.driverName}>{driverName}</Text>
@@ -205,7 +207,7 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
                   <Text style={styles.plateText}>{licensePlate}</Text>
                 </View>
                 <View style={styles.ratingBadge}>
-                  <IconStar color="#F59E0B" fill="#F59E0B" size={12} strokeWidth={1.8} />
+                  <IconStar color={leopardPalette.accentYellow} fill={leopardPalette.accentYellow} size={12} strokeWidth={1.8} />
                   <Text style={styles.ratingText}>{ratingText}</Text>
                 </View>
                 <Text style={styles.driverPhone}>{displayPhone}</Text>
@@ -275,7 +277,7 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
             onPress={handleAttach}
             style={({ pressed }) => [styles.attachBtn, pressed ? styles.pressed : null]}
           >
-            <IconCamera color="#0B1E42" size={20} strokeWidth={2} />
+            <IconCamera color={customerPalette.primary} size={20} strokeWidth={2} />
           </Pressable>
 
           <TextInput
@@ -299,7 +301,7 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
             ]}
           >
             <IconChevronRight
-              color={inputText.trim() ? '#FFFFFF' : '#94A3B8'}
+              color={inputText.trim() ? colors.neutral.surface : customerPalette.offlineGray}
               size={18}
               strokeWidth={2.5}
             />
@@ -318,12 +320,12 @@ const styles = StyleSheet.create({
 
   // Driver Header (Double-Bezel: 24px outer, 18px inner)
   driverHeaderOuter: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     padding: 8,
-    shadowColor: '#0B1E42',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
@@ -333,10 +335,10 @@ const styles = StyleSheet.create({
   driverHeaderInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     padding: 10,
     gap: 10,
   },
@@ -344,11 +346,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
   },
   driverTextWrap: {
     flex: 1,
@@ -357,7 +359,7 @@ const styles = StyleSheet.create({
   driverName: {
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   driverMetaRow: {
     flexDirection: 'row',
@@ -365,8 +367,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   plateBadge: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.subtleBorder,
     borderWidth: 1,
     borderRadius: 4,
     paddingHorizontal: 5,
@@ -375,15 +377,15 @@ const styles = StyleSheet.create({
   plateText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontVariant: ['tabular-nums'],
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
     borderWidth: 1,
     borderRadius: 4,
     paddingHorizontal: 4,
@@ -392,12 +394,12 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
-    color: '#B45309',
+    color: colors.warning.text,
     fontVariant: ['tabular-nums'],
   },
   driverPhone: {
     fontSize: typeScale.caption2.fontSize,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontVariant: ['tabular-nums'],
   },
 
@@ -406,7 +408,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderRadius: 14,
     minHeight: 44,
     minWidth: 44,
@@ -414,7 +416,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   callBtnText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -427,14 +429,14 @@ const styles = StyleSheet.create({
   },
   systemMsgWrap: {
     alignSelf: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 6,
     maxWidth: '90%',
   },
   systemMsgText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.caption1.fontSize,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
@@ -448,14 +450,14 @@ const styles = StyleSheet.create({
   },
   bubbleCustomer: {
     alignSelf: 'flex-end',
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     borderBottomRightRadius: 4,
   },
   bubbleDriver: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderBottomLeftRadius: 4,
   },
   bubbleText: {
@@ -463,10 +465,10 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   bubbleTextCustomer: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
   },
   bubbleTextDriver: {
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   bubbleTime: {
     fontSize: typeScale.caption2.fontSize,
@@ -478,7 +480,7 @@ const styles = StyleSheet.create({
   },
   bubbleTimeDriver: {
     alignSelf: 'flex-start',
-    color: '#64748B',
+    color: colors.neutral.subtleText,
   },
 
   // Quick replies
@@ -486,8 +488,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   quickChip: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 22,
     borderWidth: 1,
     minHeight: 44,
@@ -498,7 +500,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   quickChipText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
@@ -507,14 +509,14 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     borderRadius: 24,
     borderWidth: 1,
     gap: 8,
     paddingHorizontal: 8,
     paddingVertical: 6,
-    shadowColor: '#0B1E42',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -526,13 +528,13 @@ const styles = StyleSheet.create({
     minWidth: 44,
     minHeight: 44,
     borderRadius: 22,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   textInput: {
     flex: 1,
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     paddingHorizontal: 8,
     paddingVertical: 8,
@@ -544,12 +546,12 @@ const styles = StyleSheet.create({
     minWidth: 44,
     minHeight: 44,
     borderRadius: 22,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendBtnDisabled: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   pressed: {
     opacity: 0.85,

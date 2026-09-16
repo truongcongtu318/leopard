@@ -16,7 +16,11 @@ import { styles } from './DriverLoginScreen.styles';
 import type { Role } from '@leopard/shared';
 
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { sessionStore } from '@leopard/mobile-core';
+import {
+  colors,
+  leopardPalette,
+  sessionStore,
+} from '@leopard/mobile-core';
 import { isFirebaseConfigured } from '@leopard/mobile-core/src/auth/firebase';
 import {
   resetRecaptcha,
@@ -298,8 +302,8 @@ export function DriverLoginScreen({
               <Defs>
                 <LinearGradient id="driverLoginGradient" x1="0" x2="0" y1="0" y2="1">
                   <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
-                  <Stop offset="65%" stopColor="#0B1E42" stopOpacity="1" />
-                  <Stop offset="100%" stopColor="#0B1E42" stopOpacity="1" />
+                  <Stop offset="65%" stopColor={leopardPalette.primary} stopOpacity="1" />
+                  <Stop offset="100%" stopColor={leopardPalette.primary} stopOpacity="1" />
                 </LinearGradient>
                 <RadialGradient id="loginAuraGlow" cx="50%" cy="32%" r="48%">
                   <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.28" />
@@ -438,7 +442,7 @@ export function DriverLoginScreen({
             >
               {isSubmitting ? (
                 <View style={styles.loadingRow}>
-                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <ActivityIndicator color={colors.neutral.surface} size="small" />
                   <Text style={styles.primaryBtnText}>Đang xử lý…</Text>
                 </View>
               ) : (

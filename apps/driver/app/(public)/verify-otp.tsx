@@ -14,13 +14,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Role } from '@leopard/shared';
 
 import {
-  typeScale,
   IconChevron,
   IconClock,
   OtpPhoneHeroIcon,
+  colors,
   httpClient,
+  leopardPalette,
   sessionStore,
   toE164Vn,
+  typeScale,
 } from '@leopard/mobile-core';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 
@@ -229,7 +231,7 @@ export default function DriverVerifyOtpRoute() {
           <Defs>
             <LinearGradient id="verifyOtpGradient" x1="0" x2="0" y1="0" y2="1">
               <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
-              <Stop offset="100%" stopColor="#0B1E42" stopOpacity="0" />
+              <Stop offset="100%" stopColor={leopardPalette.primary} stopOpacity="0" />
             </LinearGradient>
             <RadialGradient id="verifyAuraGlow" cx="50%" cy="15%" r="65%">
               <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.32" />
@@ -251,7 +253,7 @@ export default function DriverVerifyOtpRoute() {
             style={({ pressed }) => [styles.backBtn, pressed && styles.controlPressed]}
             testID="btn-back"
           >
-            <IconChevron color="#FFFFFF" direction="left" size={20} />
+            <IconChevron color={colors.neutral.surface} direction="left" size={20} />
           </Pressable>
           <Text style={styles.headerTitle}>XÁC THỰC BẢO MẬT</Text>
           <View style={styles.headerPlaceholder} />
@@ -414,7 +416,7 @@ const styles = StyleSheet.create({
   },
   container: {
     alignSelf: 'center',
-    backgroundColor: '#0B1E42',
+    backgroundColor: leopardPalette.primary,
     flex: 1,
     justifyContent: 'space-between',
     maxWidth: 480,
@@ -481,7 +483,7 @@ const styles = StyleSheet.create({
     width: 56,
   },
   heroTitle: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.3,
@@ -498,13 +500,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   subline: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
   },
   phoneHighlight: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -597,11 +599,11 @@ const styles = StyleSheet.create({
     width: 2,
   },
   cellError: {
-    borderColor: '#EF4444',
+    borderColor: colors.danger.text,
     backgroundColor: 'rgba(239, 68, 68, 0.16)',
   },
   cellText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: 22,
     fontVariant: ['tabular-nums'],
@@ -624,7 +626,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   countdownText: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -710,7 +712,7 @@ const styles = StyleSheet.create({
     height: 50,
   },
   numpadKeyText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.title2.fontSize,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
@@ -724,7 +726,7 @@ const styles = StyleSheet.create({
     marginTop: -1,
   },
   numpadKeyActionText: {
-    color: '#CBD5E1',
+    color: leopardPalette.inputBorder,
     fontSize: 20,
     fontWeight: '700',
   },

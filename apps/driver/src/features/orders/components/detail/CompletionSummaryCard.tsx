@@ -1,6 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { driverPrimitives, iosContinuousCurve, IconCheck } from '@leopard/mobile-core';
+import {
+  IconCheck,
+  colors,
+  driverPrimitives,
+  iosContinuousCurve,
+} from '@leopard/mobile-core';
 
 export type CompletionSummaryCardProps = Readonly<{
   reference: string;
@@ -54,7 +59,7 @@ export function CompletionSummaryCard({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -88,15 +93,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   referencePill: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderRadius: 6,
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   referenceText: {
-    color: '#475569',
+    color: colors.neutral.mutedText,
     fontSize: 11,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],

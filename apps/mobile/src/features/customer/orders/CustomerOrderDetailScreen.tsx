@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { typeScale, colors, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import { typeScale, colors, customerPalette, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
 import { MediaImage } from '@leopard/mobile-core';
 import type {
   CustomerDetailContentView,
@@ -137,7 +137,7 @@ function CancelOrderSheet({
               setError(null);
             }}
             placeholder="Nhập lý do hủy đơn…"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={leopardPalette.inputPlaceholder}
             style={styles.cancelInput}
             value={customReason}
           />
@@ -297,7 +297,7 @@ function DriverCard({
             onPress={handleCall}
             style={({ pressed }) => [styles.driverCallBtn, pressed ? styles.pressed : null]}
           >
-            <IconPhone color="#16A34A" size={17} />
+            <IconPhone color={leopardPalette.ecoGreen} size={17} />
           </Pressable>
           <Pressable
             accessibilityLabel="Nhắn tin cho tài xế"
@@ -306,7 +306,7 @@ function DriverCard({
             onPress={handleMessage}
             style={({ pressed }) => [styles.driverMessageBtn, pressed ? styles.pressed : null]}
           >
-            <IconMessage color="#0B1E42" size={17} />
+            <IconMessage color={customerPalette.primary} size={17} />
           </Pressable>
         </View>
       </View>
@@ -315,7 +315,7 @@ function DriverCard({
       {typeof etaDurationSeconds === 'number' && !Number.isNaN(etaDurationSeconds) ? (
         <View style={styles.driverEtaBar}>
           <View style={styles.driverEtaLeft}>
-            <IconClock color="#0B1E42" size={17} />
+            <IconClock color={customerPalette.primary} size={17} />
             <View>
               <Text style={styles.driverEtaSub}>Dự kiến giao hàng (ETA dự kiến)</Text>
               <Text style={styles.driverEtaMain}>
@@ -332,7 +332,7 @@ function DriverCard({
               style={({ pressed }) => [styles.driverGpsLink, pressed ? styles.pressed : null]}
             >
               <Text style={styles.driverGpsLinkText}>Xem GPS</Text>
-              <IconExternalLink color="#0B1E42" size={13} />
+              <IconExternalLink color={customerPalette.primary} size={13} />
             </Pressable>
           ) : null}
         </View>
@@ -556,12 +556,12 @@ function CustomerDetailContent({
               >
                 {copied ? (
                   <View style={styles.copiedRow}>
-                    <IconCheck color="#10B981" size={13} />
+                    <IconCheck color={colors.success.text} size={13} />
                     <Text style={styles.copiedText}>Đã chép</Text>
                   </View>
                 ) : (
                   <View style={styles.copyBtnRow}>
-                    <IconCopy color="#0B1E42" size={13} />
+                    <IconCopy color={customerPalette.primary} size={13} />
                     <Text style={styles.copyBtnText}>Sao chép</Text>
                   </View>
                 )}
@@ -593,7 +593,7 @@ function CustomerDetailContent({
           <View style={styles.urgentPaymentCard}>
             <View style={styles.urgentPaymentTop}>
               <View style={styles.urgentPaymentTitleWrap}>
-                <IconShieldAlert color="#D97706" size={20} />
+                <IconShieldAlert color={colors.warning.text} size={20} />
                 <View style={styles.urgentPaymentTextWrap}>
                   <Text style={styles.urgentPaymentTitle}>Đơn hàng chưa thanh toán</Text>
                   <Text style={styles.urgentPaymentSub}>Thanh toán cước phí bằng VietQR Napas247</Text>
@@ -724,7 +724,7 @@ function CustomerDetailContent({
               ]}
             >
               <View style={styles.trackingLinkIconBox}>
-                <IconLocationPin color="#0B1E42" size={18} />
+                <IconLocationPin color={customerPalette.primary} size={18} />
               </View>
               <View style={styles.trackingLinkTextWrap}>
                 <Text style={styles.trackingLinkTitle}>Xem bản đồ theo dõi trực tiếp ➔</Text>
@@ -773,7 +773,7 @@ function CustomerDetailContent({
             </View>
             <View style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>DỊCH VỤ ĐI KÈM</Text>
-              <Text style={[styles.cargoGridValue, { color: '#0B1E42' }]}>
+              <Text style={[styles.cargoGridValue, { color: customerPalette.primary }]}>
                 {order.hasLoadingSupport ? 'Có bốc xếp 2 đầu' : 'Tự bốc xếp'}
               </Text>
             </View>
@@ -864,7 +864,7 @@ function CustomerDetailContent({
             <View style={styles.heroDivider} />
 
             <View style={[styles.paymentTopRow, { marginTop: 10 }]}>
-              <Text style={{ fontSize: typeScale.subheadline.fontSize, fontWeight: '700', color: '#0B1E42' }}>
+              <Text style={{ fontSize: typeScale.subheadline.fontSize, fontWeight: '700', color: customerPalette.primary }}>
                 Tổng cước vận chuyển
               </Text>
               <Text style={styles.paymentAmount}>{order.priceLabel}</Text>
@@ -1019,13 +1019,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   heroCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     borderWidth: 1,
     padding: spacing.md,
     gap: 12,
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -1034,7 +1034,7 @@ const styles = StyleSheet.create({
   heroSectionTitle: {
     fontSize: typeScale.callout.fontSize,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   heroTopRow: {
     flexDirection: 'row',
@@ -1050,8 +1050,8 @@ const styles = StyleSheet.create({
   liveTagBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderColor: '#BBF7D0',
+    backgroundColor: colors.success.background,
+    borderColor: leopardPalette.ecoGreenSoft,
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 7,
@@ -1059,19 +1059,19 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   liveTagText: {
-    color: '#15803D',
+    color: colors.success.text,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   heroPrice: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 20,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   heroDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   heroStatsRow: {
     flexDirection: 'row',
@@ -1084,13 +1084,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   heroStatLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   heroStatValue: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1098,13 +1098,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   modernCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 16,
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -1115,19 +1115,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxs,
   },
   cardTitle: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.callout.fontSize,
     fontWeight: '700',
   },
   cardSubtitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
   },
   trackingLinkBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,
@@ -1139,7 +1139,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1148,25 +1148,25 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   trackingLinkTitle: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 13,
     fontWeight: '700',
   },
   trackingLinkSubtitle: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
   },
   topMetaBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -1181,15 +1181,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   orderCodeText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 15,
     fontWeight: '800',
     fontFamily: 'monospace',
     letterSpacing: 0.5,
   },
   copyBtn: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 7,
@@ -1201,7 +1201,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   copyBtnText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1211,12 +1211,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   copiedText: {
-    color: '#10B981',
+    color: colors.success.text,
     fontSize: 11,
     fontWeight: '700',
   },
   orderCreatedTime: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 11,
     fontWeight: '500',
   },
@@ -1224,13 +1224,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   urgentPaymentCard: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
     borderRadius: 16,
     borderWidth: 1.5,
     padding: spacing.md,
     gap: 12,
-    shadowColor: '#D97706',
+    shadowColor: colors.warning.text,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -1253,38 +1253,38 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   urgentPaymentTitle: {
-    color: '#92400E',
+    color: colors.warning.text,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
   },
   urgentPaymentSub: {
-    color: '#B45309',
+    color: colors.warning.text,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '500',
   },
   urgentPaymentAmount: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: typeScale.body.fontSize,
     fontWeight: '900',
     fontFamily: 'monospace',
   },
   urgentNoticeBox: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
     borderRadius: 8,
     borderWidth: 1,
     padding: 8,
   },
   urgentNoticeText: {
-    color: '#92400E',
+    color: colors.warning.text,
     fontSize: 12,
   },
   urgentPaymentBtnWrap: {
     marginTop: 2,
   },
   cargoSpecsGrid: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     padding: 10,
@@ -1294,21 +1294,21 @@ const styles = StyleSheet.create({
   },
   cargoGridItem: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 8,
     borderWidth: 1,
     padding: 8,
     gap: 2,
   },
   cargoGridLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   cargoGridValue: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
@@ -1323,18 +1323,18 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   driverRatingPill: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: colors.warning.background,
     borderRadius: 4,
     paddingHorizontal: 5,
     paddingVertical: 1,
   },
   driverRatingText: {
-    color: '#D97706',
+    color: colors.warning.text,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   driverVehicleText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -1342,8 +1342,8 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1352,8 +1352,8 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F0F4F9',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1362,8 +1362,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 10,
@@ -1376,12 +1376,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   driverEtaSub: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '500',
   },
   driverEtaMain: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1391,17 +1391,17 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: 6,
   },
   driverGpsLinkText: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   driverCard: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 14,
     borderWidth: 1,
     padding: spacing.md,
@@ -1411,12 +1411,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.neutral.text,
     alignItems: 'center',
     justifyContent: 'center',
   },
   driverAvatarText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: typeScale.body.fontSize,
     fontWeight: '800',
   },
@@ -1425,12 +1425,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   driverName: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   driverStatusText: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -1442,14 +1442,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: colors.neutral.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   driverText: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 13,
     fontWeight: '600',
     flexShrink: 1,
@@ -1462,7 +1462,7 @@ const styles = StyleSheet.create({
   },
   helper: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     flexShrink: 1,
   },
   freshnessRow: {
@@ -1474,30 +1474,30 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: '#22C55E',
+    backgroundColor: colors.success.text,
   },
   infoBanner: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     padding: spacing.sm,
   },
   warningBanner: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
     borderRadius: 10,
     borderWidth: 1,
     padding: spacing.sm,
   },
   warningText: {
     fontSize: 13,
-    color: '#92400E',
+    color: colors.warning.text,
     flexShrink: 1,
   },
   cargoSpecsBox: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     padding: 10,
@@ -1509,13 +1509,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   cargoSpecLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '600',
     minWidth: 80,
   },
   cargoSpecValue: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     flex: 1,
@@ -1525,8 +1525,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   mediaTile: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 12,
     borderWidth: 1,
     flex: 1,
@@ -1535,12 +1535,12 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   mediaIndex: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 11,
     fontWeight: '700',
   },
   mediaLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
@@ -1554,14 +1554,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   paymentAmount: {
-    color: '#0B1E42',
+    color: customerPalette.primary,
     fontSize: 20,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   paymentDetailsBox: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
     padding: 10,
@@ -1574,24 +1574,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   paymentDetailLabel: {
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     fontSize: 12,
     fontWeight: '500',
   },
   paymentDetailValue: {
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   paymentNoticeBox: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: colors.success.background,
+    borderColor: leopardPalette.ecoGreenSoft,
     borderRadius: 8,
     borderWidth: 1,
     padding: 10,
   },
   paymentNoticeText: {
-    color: '#15803D',
+    color: colors.success.text,
     fontSize: 12,
     lineHeight: 17,
   },
@@ -1603,25 +1603,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   invoiceEmailInput: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
     borderRadius: 10,
     borderWidth: 1,
-    color: '#0F172A',
+    color: colors.neutral.text,
     fontSize: 13,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   notice: {
-    backgroundColor: '#FEF3C7',
-    borderLeftColor: '#F59E0B',
+    backgroundColor: colors.warning.background,
+    borderLeftColor: leopardPalette.accentYellow,
     borderLeftWidth: 4,
     padding: spacing.sm,
     borderRadius: 10,
   },
   cancelledReasonCard: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
     borderWidth: 1,
     borderRadius: 14,
     padding: 14,
@@ -1636,23 +1636,23 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger.text,
   },
   cancelledReasonTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#991B1B',
+    color: colors.danger.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   cancelledReasonContent: {
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
-    color: '#7F1D1D',
+    color: colors.danger.text,
   },
   cancelledReasonTime: {
     fontSize: typeScale.caption1.fontSize,
-    color: '#991B1B',
+    color: colors.danger.text,
     opacity: 0.8,
   },
   cancelOverlay: {
@@ -1673,14 +1673,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.4)',
   },
   cancelSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 34,
     gap: 12,
-    shadowColor: '#0F172A',
+    shadowColor: colors.neutral.text,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
@@ -1689,11 +1689,11 @@ const styles = StyleSheet.create({
   cancelSheetTitle: {
     fontSize: typeScale.body.fontSize,
     fontWeight: '800',
-    color: '#0F172A',
+    color: colors.neutral.text,
   },
   cancelSheetSubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     marginBottom: 4,
   },
   cancelOption: {
@@ -1703,31 +1703,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: colors.neutral.border,
+    backgroundColor: colors.neutral.canvas,
     gap: 12,
   },
   cancelOptionSelected: {
-    borderColor: '#0B1E42',
-    backgroundColor: '#F0F4F9',
+    borderColor: customerPalette.primary,
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   cancelRadio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#94A3B8',
+    borderColor: leopardPalette.inputPlaceholder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelRadioSelected: {
-    borderColor: '#0B1E42',
+    borderColor: customerPalette.primary,
   },
   cancelRadioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#0B1E42',
+    backgroundColor: customerPalette.primary,
   },
   cancelOptionText: {
     fontSize: typeScale.subheadline.fontSize,
@@ -1737,22 +1737,22 @@ const styles = StyleSheet.create({
   },
   cancelOptionTextSelected: {
     fontWeight: '700',
-    color: '#0B1E42',
+    color: customerPalette.primary,
   },
   cancelInput: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.subtleBorder,
     borderWidth: 1,
     borderRadius: 10,
     padding: 12,
     fontSize: typeScale.footnote.fontSize,
-    color: '#0F172A',
+    color: colors.neutral.text,
     minHeight: 70,
     textAlignVertical: 'top',
   },
   cancelErrorText: {
     fontSize: 12,
-    color: '#DC2626',
+    color: colors.danger.text,
     fontWeight: '600',
   },
   cancelSheetActions: {
@@ -1764,7 +1764,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cancelSection: {
-    borderTopColor: '#FEE2E2',
+    borderTopColor: colors.danger.border,
     borderTopWidth: 1,
     gap: spacing.sm,
     paddingTop: spacing.md,

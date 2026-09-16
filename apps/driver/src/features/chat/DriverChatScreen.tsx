@@ -115,7 +115,7 @@ export function DriverChatScreen() {
       onPress={handleCall}
       style={styles.callBtn}
     >
-      <IconPhone color="#FFFFFF" size={iconSize.sm} />
+      <IconPhone color={colors.neutral.surface} size={iconSize.sm} />
       <AppText variant="footnote" style={styles.callBtnText}>
         Gọi khách
       </AppText>

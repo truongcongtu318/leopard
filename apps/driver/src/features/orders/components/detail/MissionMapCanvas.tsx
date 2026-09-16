@@ -1,11 +1,12 @@
 import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
-  radius,
-  leopardPalette,
   IconClock,
   IconRoute,
   RealInteractiveMap,
+  colors,
+  leopardPalette,
+  radius,
   type MapCoordinate,
   type RoutePolylineSegment,
 } from '@leopard/mobile-core';
@@ -345,7 +346,7 @@ export function MissionMapCanvas({
 
       {/* Floating Pill Bottom Left: ETA & Distance */}
       <View style={styles.mapFloatingEtaPill} testID="pill-eta-estimate">
-        <IconClock color="#0B1E42" size={13} />
+        <IconClock color={leopardPalette.primary} size={13} />
         <Text numberOfLines={1} style={styles.mapFloatingEtaText}>
           {isTripEnded ? etaText.replace('ETA dự kiến · ', '') : etaText}
         </Text>
@@ -382,7 +383,7 @@ export function MissionMapCanvas({
             testID="btn-navigate-next-stop"
           >
             <IconRoute
-              color={hasValidNavigationTarget ? '#0B1E42' : '#94A3B8'}
+              color={hasValidNavigationTarget ? leopardPalette.primary : '#94A3B8'}
               size={18}
             />
           </Pressable>
@@ -394,7 +395,7 @@ export function MissionMapCanvas({
 
 const styles = StyleSheet.create({
   mapCanvasContainer: {
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.neutral.text,
     borderRadius: 20,
     height: 270,
     overflow: 'hidden',
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
   },
   mapDemoBadge: {
     backgroundColor: '#FEF3C7',
-    borderColor: '#F59E0B',
+    borderColor: leopardPalette.accentYellow,
     borderRadius: radius.pill,
     borderWidth: 1,
     paddingHorizontal: 10,
@@ -424,7 +425,7 @@ const styles = StyleSheet.create({
   },
   mapStaleBadge: {
     backgroundColor: '#FEE2E2',
-    borderColor: '#EF4444',
+    borderColor: colors.danger.text,
     borderRadius: radius.pill,
     borderWidth: 1,
     paddingHorizontal: 10,
@@ -460,10 +461,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
   },
   mapStatusDotWarning: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: leopardPalette.accentYellow,
   },
   mapStatusPillText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -490,14 +491,14 @@ const styles = StyleSheet.create({
     width: 8,
   },
   waypointDestinationText: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 11,
     fontWeight: '700',
   },
   mapFloatingEtaPill: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: radius.pill,
     borderWidth: 1,
     bottom: 14,
@@ -528,8 +529,8 @@ const styles = StyleSheet.create({
   },
   mapFloatingQuickBtn: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
     borderRadius: 22,
     borderWidth: 1,
     elevation: 4,
@@ -542,8 +543,8 @@ const styles = StyleSheet.create({
     width: 44,
   },
   btnDisabled: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: leopardPalette.inputBorder,
     opacity: 0.6,
   },
   pressed: {

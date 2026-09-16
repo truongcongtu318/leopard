@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useNotificationsBootstrap } from '../../src/features/customer/notifications/useNotificationsBootstrap';
 import { useProtectedLayout } from '../../src/navigation/role-router';
 import { useTabBarHidden } from '../../src/navigation/tabBarVisibilityStore';
-import { spacing, typography, customerPalette, FloatingNavBar, type TabKey, TruckLoader } from '@leopard/mobile-core';
+import { colors, spacing, typography, customerPalette, FloatingNavBar, type TabKey, TruckLoader } from '@leopard/mobile-core';
 
 export default function CustomerLayout() {
   const decision = useProtectedLayout('customer');
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body,
-    color: '#64748B',
+    color: colors.neutral.subtleText,
     textAlign: 'center',
   },
   flex: {

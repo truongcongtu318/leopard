@@ -12,19 +12,20 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 
 import {
-  driverPrimitives,
-  iosContinuousCurve,
   Button,
-  ScreenScaffold,
   IconCamera,
   IconCheck,
   IconIdCard,
+  IconMessage,
   IconPhone,
   IconSecurityShield,
   IconSpeedTruck,
-  IconMessage,
   IconUser,
+  ScreenScaffold,
+  colors,
+  driverPrimitives,
   iconSize,
+  iosContinuousCurve,
 } from '@leopard/mobile-core';
 import { formatPhoneNumber } from './ProfileScreen';
 
@@ -175,7 +176,7 @@ export function DriverEditProfileScreen({
               </View>
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <IconUser color="#FFFFFF" size={38} />
+                <IconUser color={colors.neutral.surface} size={38} />
               </View>
             )}
 
@@ -186,7 +187,7 @@ export function DriverEditProfileScreen({
               onPress={handleTakePhoto}
               style={styles.cameraBadgePill}
             >
-              <IconCamera color="#FFFFFF" size={13} />
+              <IconCamera color={colors.neutral.surface} size={13} />
             </Pressable>
           </View>
 
@@ -334,7 +335,7 @@ export function DriverEditProfileScreen({
 
 const styles = StyleSheet.create({
   scrollWrap: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
   },
   scrollContent: {
@@ -373,7 +374,7 @@ const styles = StyleSheet.create({
     ...driverPrimitives.shadows.md,
   },
   avatarInitial: {
-    color: '#FFFFFF',
+    color: colors.neutral.surface,
     fontSize: 36,
     fontWeight: '700',
   },
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
   avatarActionPill: {
     alignItems: 'center',
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 9999,
     borderWidth: 1,
     flex: 1,
@@ -456,7 +457,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: colors.neutral.border,
     borderRadius: 18,
     ...iosContinuousCurve,
     borderWidth: 1,
