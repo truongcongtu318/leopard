@@ -70,7 +70,7 @@ describe('CustomerAddAddressScreen (customer-address route)', () => {
     await fireEvent.press(screen.getByTestId('ca-use-current-location'));
 
     await waitFor(() => {
-      expect(screen.getByText(/Đã xác định vị trí/i)).toBeTruthy();
+      expect(screen.getByText(/Nam Kỳ Khởi Nghĩa/i)).toBeTruthy();
     });
 
     await screen.unmount();

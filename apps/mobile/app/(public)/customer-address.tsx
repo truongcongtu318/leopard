@@ -87,7 +87,6 @@ export default function CustomerAddAddressScreen() {
   const [isDefault, setIsDefault] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [locationSuccessMsg, setLocationSuccessMsg] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   // Debounced search via /maps/search, Vietmap direct, or popular suggestions
@@ -191,10 +190,8 @@ export default function CustomerAddAddressScreen() {
           try {
             const resolved = await reverseGeocodeCoords({ lat, lng }, vietmapApiKey);
             setSelectedAddress(resolved || 'Vị trí đã chọn');
-            setLocationSuccessMsg(`Đã xác định vị trí: ${resolved || 'Vị trí đã chọn'}`);
           } catch {
             setSelectedAddress('Vị trí đã chọn');
-            setLocationSuccessMsg('Đã xác định vị trí trên bản đồ');
           }
         }
       }
@@ -214,7 +211,6 @@ export default function CustomerAddAddressScreen() {
 
   const handleGetCurrentLocation = () => {
     setIsLocating(true);
-    setLocationSuccessMsg(null);
 
     const vietmapApiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
 
@@ -229,10 +225,8 @@ export default function CustomerAddAddressScreen() {
           try {
             const resolved = await reverseGeocodeCoords({ lat, lng }, vietmapApiKey);
             setSelectedAddress(resolved || 'Vị trí hiện tại của bạn');
-            setLocationSuccessMsg(`Đã xác định vị trí: ${resolved || 'Vị trí hiện tại của bạn'}`);
           } catch {
             setSelectedAddress('Vị trí hiện tại của bạn');
-            setLocationSuccessMsg('Đã xác định vị trí hiện tại của bạn');
           }
         },
         () => {
@@ -241,7 +235,6 @@ export default function CustomerAddAddressScreen() {
           const fallbackLng = 106.698;
           setCoords({ lat: fallbackLat, lng: fallbackLng });
           setSelectedAddress('135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
-          setLocationSuccessMsg('Đã xác định vị trí: 135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
         },
         { timeout: 8000, enableHighAccuracy: true },
       );
@@ -252,7 +245,6 @@ export default function CustomerAddAddressScreen() {
         const fallbackLng = 106.698;
         setCoords({ lat: fallbackLat, lng: fallbackLng });
         setSelectedAddress('135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
-        setLocationSuccessMsg('Đã xác định vị trí: 135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
       }, 500);
     }
   };
@@ -267,7 +259,6 @@ export default function CustomerAddAddressScreen() {
     setSelectedAddress(item.address);
     if (item.lat && item.lng) {
       setCoords({ lat: item.lat, lng: item.lng });
-      setLocationSuccessMsg(`Đã xác định vị trí: ${item.name}`);
     }
     setSearchQuery('');
     setSearchResults([]);
@@ -508,16 +499,6 @@ export default function CustomerAddAddressScreen() {
                 {selectedAddress}
               </Text>
             </View>
-
-            {/* Location Feedback Toast */}
-            {locationSuccessMsg ? (
-              <View style={styles.locationFeedbackRow}>
-                <View style={styles.locationFeedbackDot} />
-                <Text numberOfLines={1} style={styles.locationFeedbackText}>
-                  {locationSuccessMsg}
-                </Text>
-              </View>
-            ) : null}
           </View>
 
           {/* ================= 2. COMPACT SEARCH BAR ================= */}
@@ -844,29 +825,6 @@ const styles = StyleSheet.create({
     lineHeight: typeScale.footnote.lineHeight,
     fontWeight: '600',
     color: customerPalette.textSlateDark,
-  },
-  locationFeedbackRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: customerPalette.primaryBg,
-    borderTopWidth: 1,
-    borderTopColor: customerPalette.primaryBorder,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
-  },
-  locationFeedbackDot: {
-    width: 5,
-    height: 5,
-    borderRadius: radius.pill,
-    backgroundColor: customerPalette.primary,
-  },
-  locationFeedbackText: {
-    flex: 1,
-    fontSize: typeScale.caption2.fontSize,
-    lineHeight: typeScale.caption2.lineHeight,
-    fontWeight: '600',
-    color: customerPalette.primary,
   },
 
   /* Search */
