@@ -206,6 +206,20 @@ describe('Driver mappers', () => {
     expect(publicOrder.etaLabel).toBe('Thời gian dự kiến · 18 phút');
   });
 
+  it('maps missing price/distance to null labels, not demo fixtures', () => {
+    const publicOrder = mapOrderToPublicOrderView({
+      ...sampleOrder,
+      status: 'REQUESTED',
+      priceVnd: null,
+      distanceMeters: null,
+      stops: [],
+    });
+    expect(publicOrder.priceVnd).toBeNull();
+    expect(publicOrder.priceLabel).toBeNull();
+    expect(publicOrder.distanceLabel).toBeNull();
+    expect(publicOrder.pickupDistanceLabel).toBeNull();
+  });
+
   it('maps order to active trip view with proof requirement indicator', () => {
     const activeTripNoProof = mapOrderToActiveTrip(sampleOrder);
     expect(activeTripNoProof.id).toBe(sampleOrder.id);

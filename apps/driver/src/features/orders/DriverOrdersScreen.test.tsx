@@ -117,15 +117,10 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await fireEvent.press(screen.getByTestId('quick-action-sos'));
     expect(alertSpy).toHaveBeenCalledWith(
       'Cuộc gọi khẩn cấp SOS',
-      expect.stringContaining('1900 1919'),
+      expect.stringContaining('Hiện chưa có số liên hệ'),
       expect.any(Array),
     );
-
-    const linkingSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined as never);
-    const sosButtons = alertSpy.mock.calls[0][2] as Array<{ text: string; onPress?: () => void }>;
-    sosButtons.find((button) => button.text === 'Gọi ngay')?.onPress?.();
-    expect(linkingSpy).toHaveBeenCalledWith('tel:19001919');
-    linkingSpy.mockRestore();
+    expect(Linking.openURL).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByTestId('quick-action-wallet'));
     expect(onNavigate).toHaveBeenCalledWith('/wallet');

@@ -99,7 +99,7 @@ export function PublicDetailView({
               </View>
             </View>
             <View style={styles.fareAmountRow}>
-              <Text style={styles.fareAmountText}>{view.order.priceLabel || '285.000 ₫'}</Text>
+              <Text style={styles.fareAmountText}>{view.order.priceLabel ?? 'Đang cập nhật'}</Text>
             </View>
             <View style={styles.fareTermsRow}>
               <View style={styles.checkIconDot}>
@@ -132,7 +132,7 @@ export function PublicDetailView({
                     <View style={styles.publicDistanceChip}>
                       <IconLocationPin color="#0B1E42" size={10} />
                       <Text style={styles.publicDistanceChipText}>
-                        {view.order.pickupDistanceLabel || 'Cách bạn 1.2 km'}
+                        {view.order.pickupDistanceLabel ?? 'Đang cập nhật'}
                       </Text>
                     </View>
                   </View>
@@ -142,7 +142,7 @@ export function PublicDetailView({
                 <View style={styles.publicDistanceBetweenRow}>
                   <IconRoute color="#0B1E42" size={12} />
                   <Text style={styles.publicDistanceBetweenText}>
-                    Khoảng cách chặng · {view.order.distanceLabel || '18,4 km'}
+                    Khoảng cách chặng · {view.order.distanceLabel ?? 'Đang cập nhật'}
                   </Text>
                 </View>
 

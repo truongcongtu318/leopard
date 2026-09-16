@@ -34,6 +34,15 @@ describe('DriverProfileScreen', () => {
     await screen.unmount();
   });
 
+  it('does not fall back to a hardcoded name when BE name is null', async () => {
+    const screen = await render(<DriverProfileScreen view={{ ...fixtureProfile, name: null }} />);
+
+    expect(screen.queryByText('Trần Văn Nam')).toBeNull();
+    expect(screen.getByText('0901234567')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
   it('renders error boundary view cleanly when error occurs', async () => {
     const screen = await render(
       <DriverProfileScreen

@@ -208,7 +208,7 @@ export function EpodPanel({
               {paymentMethod === 'CASH'
                 ? isCashConfirmed
                   ? 'Đã xác nhận thu tiền mặt từ khách'
-                  : `Thu tiền mặt khi giao (COD): ${priceLabel || '285.000 ₫'}`
+                  : `Thu tiền mặt khi giao (COD): ${priceLabel ?? 'Đang cập nhật'}`
                 : 'Đã thanh toán qua VietQR'}
             </Text>
           </View>

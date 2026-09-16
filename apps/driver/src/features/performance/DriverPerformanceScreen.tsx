@@ -30,8 +30,8 @@ function formatPct(value: number): string {
 export type DriverPerformanceScreenProps = Readonly<{
   ratingAvg: number;
   ratingCount: number;
-  acceptancePct: number;
-  cancellationPct: number;
+  acceptancePct: number | null;
+  cancellationPct: number | null;
   recentReviews: readonly DriverPerformanceReviewResponse[];
   isLoading: boolean;
   isError: boolean;
@@ -105,9 +105,8 @@ export function DriverPerformanceScreen({
               </View>
               <View style={styles.metricLeft}>
                 <Text style={styles.metricTitle}>Tỷ lệ nhận cuốc</Text>
-                <Text style={styles.metricSub}>Chuẩn hệ thống: &gt; 95%</Text>
               </View>
-              <Text style={[styles.metricValue, styles.metricValueEmerald]}>{formatPct(acceptancePct)}</Text>
+              <Text style={[styles.metricValue, styles.metricValueEmerald]}>{acceptancePct !== null && acceptancePct !== undefined ? formatPct(acceptancePct) : '—'}</Text>
             </View>
 
             <View style={styles.rowDivider} />
@@ -119,9 +118,8 @@ export function DriverPerformanceScreen({
               </View>
               <View style={styles.metricLeft}>
                 <Text style={styles.metricTitle}>Tỷ lệ hủy cuốc</Text>
-                <Text style={styles.metricSub}>Chuẩn hệ thống: &lt; 1%</Text>
               </View>
-              <Text style={[styles.metricValue, styles.metricValueEmerald]}>{formatPct(cancellationPct)}</Text>
+              <Text style={[styles.metricValue, styles.metricValueEmerald]}>{cancellationPct !== null && cancellationPct !== undefined ? formatPct(cancellationPct) : '—'}</Text>
             </View>
           </View>
         </View>

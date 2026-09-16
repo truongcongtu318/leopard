@@ -85,4 +85,66 @@ describe('WithdrawalsRepository', () => {
     expect(page.items).toHaveLength(2);
     expect(page.items[0].amountVnd).toBe(2000); // most recently created first
   });
+
+  it('includes the linked bank account from DriverProfile in the wallet summary', async () => {
+    const { prisma, repo, driverId } = await setup();
+    await prisma.order.create({ data: { customerId: 'c1', driverId, status: 'DELIVERED', priceVnd: 100000 } });
+    await prisma.driverProfile.create({
+      data: { userId: driverId, availability: 'OFFLINE', vehicleType: 'MOTORBIKE' },
+    });
+    // Mock driverProfile.create drops bank fields — set them via update.
+    await prisma.driverProfile.update({
+      where: { userId: driverId },
+      data: {
+        bankName: 'MB Bank',
+        bankAccountNumber: '0987654321',
+        bankAccountName: 'NGUYEN VAN A',
+      },
+    });
+
+    const summary = await repo.getWalletSummary(driverId);
+
+    expect(summary.bankName).toBe('MB Bank');
+    expect(summary.bankAccountNumber).toBe('0987654321');
+    expect(summary.bankAccountName).toBe('NGUYEN VAN A');
+  });
+
+  it('returns null bank fields when no bank account is linked', async () => {
+    const { repo, driverId } = await setup();
+
+    const summary = await repo.getWalletSummary(driverId);
+
+    expect(summary.bankName).toBeNull();
+    expect(summary.bankAccountNumber).toBeNull();
+    expect(summary.bankAccountName).toBeNull();
+  });
+
+  it('updates the linked bank account on DriverProfile', async () => {
+    const { prisma, repo, driverId } = await setup();
+    await prisma.driverProfile.create({
+      data: { userId: driverId, availability: 'OFFLINE', vehicleType: 'MOTORBIKE' },
+    });
+
+    const updated = await repo.updateBankAccount(driverId, {
+      bankName: 'Vietcombank',
+      bankAccountNumber: '1012345678',
+      bankAccountName: 'NGUYEN VAN A',
+    });
+
+    expect(updated.bankName).toBe('Vietcombank');
+    expect(updated.bankAccountNumber).toBe('1012345678');
+    expect(updated.bankAccountName).toBe('NGUYEN VAN A');
+  });
+
+  it('throws 404 RESOURCE_NOT_FOUND when the driver has no profile', async () => {
+    const { repo, driverId } = await setup();
+
+    await expect(
+      repo.updateBankAccount(driverId, {
+        bankName: 'MB Bank',
+        bankAccountNumber: '0987654321',
+        bankAccountName: 'NGUYEN VAN A',
+      }),
+    ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND', status: 404 });
+  });
 });

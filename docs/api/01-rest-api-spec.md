@@ -61,6 +61,18 @@ Chi tiết thiết lập và quy tắc cải tiến: xem [05-driver-backend-api-
 | POST | `/driver/orders/:id/accept` | Driver | Nhận order (đối soát `vehicleType`) |
 | POST | `/driver/orders/:id/status` | Assigned Driver | Transition status (yêu cầu proof khi `DELIVERED`) |
 | POST | `/driver/orders/:id/incident` | Assigned Driver | Báo cáo sự cố, hủy đơn bất khả kháng và giải phóng tài xế |
+| GET | `/driver/wallet` | Driver | Tổng quan ví: số dư khả dụng, thu nhập, rút chờ duyệt, số đơn đã giao + tài khoản ngân hàng đã liên kết |
+| POST | `/driver/wallet/withdrawals` | Driver | Tạo yêu cầu rút tiền (idempotent theo `clientRequestId`) |
+| GET | `/driver/wallet/withdrawals` | Driver | Lịch sử rút tiền phân trang |
+| PATCH | `/driver/wallet/bank` | Driver | Cập nhật tài khoản ngân hàng liên kết |
+
+`GET /driver/wallet` → `{ availableBalanceVnd, lifetimeDeliveredVnd, pendingWithdrawalVnd, deliveredOrderCount, bankName: string|null, bankAccountNumber: string|null, bankAccountName: string|null }`.
+
+`POST /driver/wallet/withdrawals` body `{ amountVnd, bankName, bankAccountNumber, bankAccountName, clientRequestId? }` → 201 withdrawal; request lặp với cùng `clientRequestId` trả kết quả cũ; số tiền vượt số dư khả dụng trả `409 INSUFFICIENT_BALANCE`.
+
+`GET /driver/wallet/withdrawals?page=&pageSize=` → page envelope chuẩn `{ items, total, page, pageSize, totalPages }`.
+
+`PATCH /driver/wallet/bank` body `{ bankName, bankAccountNumber, bankAccountName }` → 200 profile đã cập nhật. Input validation của cả 4 endpoint trả `422 VALIDATION_ERROR` kèm field details; role khác Driver nhận `403`.
 
 Status input: `{"status":"IN_TRANSIT","clientRequestId":"uuid"}`. Request lặp với cùng ID trả kết quả cũ.
 Incident input: `{"reason":"RECIPIENT_REJECTED","note":"...","clientRequestId":"uuid"}`.

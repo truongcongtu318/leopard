@@ -44,6 +44,26 @@ const baseProps: DriverWalletScreenProps = {
 };
 
 describe('DriverWalletScreen', () => {
+  it('wallet screen shows BE bank account, no hardcoded credit wallet', async () => {
+    const screen = await render(
+      <DriverWalletScreen
+        {...baseProps}
+        summary={{
+          ...baseProps.summary,
+          bankName: 'MB Bank',
+          bankAccountNumber: '0987654321',
+          bankAccountName: 'NGUYEN VAN A',
+        }}
+      />,
+    );
+
+    expect(screen.getByText('0987654321')).toBeTruthy();
+    expect(screen.queryByText('Ví tín dụng')).toBeNull();
+    expect(screen.queryByText('Nhiều tiện ích khác cùng Ví')).toBeNull();
+
+    await screen.unmount();
+  });
+
   it('renders the real available balance, not a hardcoded number', async () => {
     const screen = await render(<DriverWalletScreen {...baseProps} />);
 

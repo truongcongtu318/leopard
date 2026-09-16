@@ -47,6 +47,19 @@ describe('DriverPerformanceScreen', () => {
     await screen.unmount();
   });
 
+  it('renders no hardcoded system thresholds and empty state for null KPIs', async () => {
+    const screen = await render(
+      <DriverPerformanceScreen {...baseProps} acceptancePct={null} cancellationPct={null} />,
+    );
+
+    expect(screen.queryByText(/Chuẩn hệ thống/)).toBeNull();
+    expect(screen.queryByText(/> 95%/)).toBeNull();
+    expect(screen.queryByText(/< 1%/)).toBeNull();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+
+    await screen.unmount();
+  });
+
   it('shows a retry action when the summary query fails', async () => {
     const onRetry = jest.fn();
     const screen = await render(<DriverPerformanceScreen {...baseProps} isError={true} onRetry={onRetry} />);

@@ -30,7 +30,11 @@ interface DriverApplicationResponse {
   licenseNumber: string | null;
 }
 
-const APP_VERSION = '0.0.0';
+import appJson from '../../../app.json';
+
+const APP_VERSION: string = (appJson as { expo?: { version?: unknown } })?.expo?.version
+  ? String((appJson as { expo: { version: unknown } }).expo.version)
+  : '—';
 const VEHICLE_TYPE_LABEL: Record<string, string> = {
   MOTORBIKE: 'Xe máy',
   VAN: 'Xe van',

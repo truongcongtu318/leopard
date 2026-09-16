@@ -139,7 +139,7 @@ export function DriverHistoryScreen({
               <IconTrophy color="#16A34A" size={15} />
             </View>
             <Text style={[styles.kpiValue, styles.kpiValueGreen]}>{formatCompact(displayedRevenue)}</Text>
-            <Text style={styles.kpiLabel}>Doanh thu hiển thị</Text>
+            <Text style={styles.kpiLabel}>Doanh thu (trang đã tải)</Text>
           </View>
 
           <View style={styles.kpiBox}>
@@ -147,7 +147,7 @@ export function DriverHistoryScreen({
               <IconSecurityShield color="#0B1E42" size={15} />
             </View>
             <Text style={styles.kpiValue}>{completionRate}%</Text>
-            <Text style={styles.kpiLabel}>Tỷ lệ giao thành công</Text>
+            <Text style={styles.kpiLabel}>Tỷ lệ (trang đã tải)</Text>
           </View>
         </View>
 
@@ -299,7 +299,6 @@ export function DriverHistoryScreen({
                     <Text style={styles.photoPlaceholderText}>Ảnh hạ tải tại điểm giao</Text>
                   </View>
                   <View style={styles.watermarkBox}>
-                    <Text style={styles.watermarkText}>GPS: 10.8231° N, 106.6297° E</Text>
                     <Text style={styles.watermarkText}>Thời gian: {selectedEpodTrip.completedAtLabel}</Text>
                     <Text style={styles.watermarkText}>Mã đơn: {selectedEpodTrip.reference}</Text>
                   </View>
@@ -315,9 +314,11 @@ export function DriverHistoryScreen({
                     <IconCheck color="#059669" size={14} strokeWidth={2.5} />
                     <Text style={styles.signaturePathPreview}>Đã ký điện tử xác thực</Text>
                   </View>
-                  <Text style={styles.signerNameText}>
-                    Người ký nhận: {selectedEpodTrip.signerName ?? 'Thủ kho nhận hàng'}
-                  </Text>
+                  {selectedEpodTrip.signerName ? (
+                    <Text style={styles.signerNameText}>
+                      Người ký nhận: {selectedEpodTrip.signerName}
+                    </Text>
+                  ) : null}
                 </View>
               </View>
             )}

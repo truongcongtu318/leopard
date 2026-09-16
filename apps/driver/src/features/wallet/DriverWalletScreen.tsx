@@ -170,20 +170,6 @@ export function DriverWalletScreen({
 
               <Text style={styles.balanceAmount}>{formatCurrency(summary.availableBalanceVnd)}</Text>
 
-              {/* Grab Wallet asset breakdown */}
-              <View style={styles.assetList}>
-                <View style={styles.assetItem}>
-                  <View style={styles.assetLeft}>
-                    <CreditIcon />
-                    <View>
-                      <Text style={styles.assetTitle}>Ví tín dụng</Text>
-                      <Text style={styles.assetDesc}>Hạn mức nhận cuốc</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.assetValue}>0 ₫</Text>
-                </View>
-              </View>
-
               <View style={styles.balanceFooter}>
                 <View style={styles.balanceStat}>
                   <Text style={styles.balanceStatLabel}>Đang chờ duyệt</Text>
@@ -233,43 +219,6 @@ export function DriverWalletScreen({
               ) : (
                 <Text style={styles.unlinkedText}>Chưa liên kết tài khoản ngân hàng</Text>
               )}
-            </View>
-
-            {/* ── Value-Added Utilities Section (Image 3: Nhiều tiện ích khác cùng Ví) ── */}
-            <View style={styles.utilitiesSection}>
-              <Text style={styles.sectionHeading}>Nhiều tiện ích khác cùng Ví</Text>
-
-              <View style={styles.utilityCard}>
-                <View style={styles.utilityIconWrap}>
-                  <CreditIcon />
-                </View>
-                <View style={styles.utilityInfo}>
-                  <Text style={styles.utilityTitle}>Nạp tiền vào Ví tài khoản để nhận cuốc xe nhanh hơn!</Text>
-                  <Text style={styles.utilityLink}>Nạp tiền</Text>
-                </View>
-              </View>
-
-              <View style={styles.utilityCard}>
-                <View style={styles.utilityIconWrap}>
-                  <View style={styles.shieldIconWrap}>
-                    <Text style={styles.shieldEmoji}>🛡️</Text>
-                  </View>
-                </View>
-                <View style={styles.utilityInfo}>
-                  <Text style={styles.utilityTitle}>Bảo vệ bạn và người thân với dịch vụ bảo hiểm</Text>
-                  <Text style={styles.utilityLink}>Xem thêm</Text>
-                </View>
-              </View>
-
-              <View style={styles.utilityCard}>
-                <View style={styles.utilityIconWrap}>
-                  <CashIcon />
-                </View>
-                <View style={styles.utilityInfo}>
-                  <Text style={styles.utilityTitle}>Khám phá các hỗ trợ tài chính khác!</Text>
-                  <Text style={styles.utilityLink}>Tìm hiểu thêm</Text>
-                </View>
-              </View>
             </View>
 
             {/* ── Transaction History Section ── */}
