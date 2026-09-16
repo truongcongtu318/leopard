@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Location from 'expo-location';
 
 import {
   AppText,
@@ -209,43 +210,67 @@ export default function CustomerAddAddressScreen() {
     }
   };
 
-  const handleGetCurrentLocation = () => {
+  const handleGetCurrentLocation = async () => {
     setIsLocating(true);
-
     const vietmapApiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
 
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          setIsLocating(false);
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          setCoords({ lat, lng });
+    try {
+      let lat: number | null = null;
+      let lng: number | null = null;
 
-          try {
-            const resolved = await reverseGeocodeCoords({ lat, lng }, vietmapApiKey);
-            setSelectedAddress(resolved || 'Vị trí hiện tại của bạn');
-          } catch {
-            setSelectedAddress('Vị trí hiện tại của bạn');
-          }
-        },
-        () => {
-          setIsLocating(false);
-          const fallbackLat = 10.7725;
-          const fallbackLng = 106.698;
-          setCoords({ lat: fallbackLat, lng: fallbackLng });
-          setSelectedAddress('135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
-        },
-        { timeout: 8000, enableHighAccuracy: true },
-      );
-    } else {
-      setTimeout(() => {
-        setIsLocating(false);
+      // 1. Try Native/Expo Location API (iOS & Android devices)
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (permission.status === 'granted') {
+          const pos = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        }
+      } catch {
+        // Fallback to browser geolocation
+      }
+
+      // 2. Fallback to Web Geolocation API (Browser/PWA)
+      if (lat === null || lng === null) {
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+          await new Promise<void>((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                lat = pos.coords.latitude;
+                lng = pos.coords.longitude;
+                resolve();
+              },
+              () => resolve(),
+              { timeout: 8000, enableHighAccuracy: true },
+            );
+          });
+        }
+      }
+
+      if (typeof lat === 'number' && typeof lng === 'number') {
+        setCoords({ lat, lng });
+        try {
+          const resolved = await reverseGeocodeCoords({ lat, lng }, vietmapApiKey);
+          setSelectedAddress(resolved || 'Vị trí hiện tại của bạn');
+        } catch {
+          setSelectedAddress('Vị trí hiện tại của bạn');
+        }
+      } else {
+        // Default deterministic fallback if permission was not granted
         const fallbackLat = 10.7725;
         const fallbackLng = 106.698;
         setCoords({ lat: fallbackLat, lng: fallbackLng });
         setSelectedAddress('135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
-      }, 500);
+      }
+    } catch {
+      const fallbackLat = 10.7725;
+      const fallbackLng = 106.698;
+      setCoords({ lat: fallbackLat, lng: fallbackLng });
+      setSelectedAddress('135 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh');
+    } finally {
+      setIsLocating(false);
     }
   };
 

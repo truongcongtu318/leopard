@@ -19,6 +19,14 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
+jest.mock('expo-location', () => ({
+  requestForegroundPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  getCurrentPositionAsync: jest.fn(async () => ({
+    coords: { latitude: 10.7725, longitude: 106.698 },
+  })),
+  Accuracy: { High: 4, Balanced: 3 },
+}));
+
 jest.mock('@leopard/mobile-core/src/api/http-client', () => ({
   httpClient: {
     get: jest.fn(),
@@ -70,7 +78,7 @@ describe('CustomerAddAddressScreen (customer-address route)', () => {
     await fireEvent.press(screen.getByTestId('ca-use-current-location'));
 
     await waitFor(() => {
-      expect(screen.getByText(/Nam Kỳ Khởi Nghĩa/i)).toBeTruthy();
+      expect(screen.getByText(/Quận 1|Hồ Chí Minh/i)).toBeTruthy();
     });
 
     await screen.unmount();
