@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { IconCheck, IconOrders, IconWallet, spacing } from '@leopard/mobile-core';
+import { driverPrimitives, iosContinuousCurve, IconCheck } from '@leopard/mobile-core';
 
 export type CompletionSummaryCardProps = Readonly<{
   reference: string;
@@ -10,157 +10,123 @@ export type CompletionSummaryCardProps = Readonly<{
 }>;
 
 export function CompletionSummaryCard({
-  reference,
-  priceLabel,
-  status,
   deliveredAtLabel,
+  priceLabel,
+  reference,
+  status,
 }: CompletionSummaryCardProps) {
   const isDelivered = status === 'DELIVERED';
 
   return (
-    <View style={styles.container}>
+    <View style={styles.cardContainer}>
+      {/* Top row: Status pill on left, reference code on right */}
       <View style={styles.headerRow}>
-        <View style={[styles.iconCircle, isDelivered ? styles.iconSuccess : styles.iconReturned]}>
-          <IconCheck color="#FFFFFF" size={20} strokeWidth={2.5} />
-        </View>
-        <View style={styles.headerTextCol}>
-          <Text style={styles.eyebrow}>
-            {isDelivered ? 'CHUYẾN ĐI ĐÃ HOÀN TẤT' : 'CHUYẾN ĐI ĐÃ HOÀN HÀNG'}
-          </Text>
-          <Text style={styles.title}>
+        <View style={styles.statusPill}>
+          <View style={styles.statusDot}>
+            <IconCheck color="#059669" size={11} strokeWidth={2.5} />
+          </View>
+          <Text style={styles.statusText}>
             {isDelivered ? 'Giao hàng thành công' : 'Đã hoàn trả về điểm xuất phát'}
           </Text>
         </View>
-      </View>
 
-      <View style={styles.earningsBox}>
-        <View style={styles.earningsRow}>
-          <View style={styles.earningsLeft}>
-            <View style={styles.walletIcon}>
-              <IconWallet color="#10B981" size={16} />
-            </View>
-            <View>
-              <Text style={styles.earningsCaption}>CƯỚC THỰC NHẬN CHUYẾN ĐI</Text>
-              <Text style={styles.earningsSub}>Cộng trực tiếp vào ví khả dụng</Text>
-            </View>
-          </View>
-          <Text style={styles.earningsAmount}>{priceLabel || '285.000 ₫'}</Text>
+        <View style={styles.referencePill}>
+          <Text style={styles.referenceText}>{reference}</Text>
         </View>
       </View>
 
-      <View style={styles.metaRow}>
-        <View style={styles.metaItem}>
-          <IconOrders color="#64748B" size={13} />
-          <Text style={styles.metaText}>Mã vận đơn: {reference}</Text>
-        </View>
-        {deliveredAtLabel ? (
-          <Text style={styles.metaTimestamp}>{deliveredAtLabel}</Text>
-        ) : null}
+      {/* Hero Payout Amount */}
+      <View style={styles.payoutBlock}>
+        <Text style={styles.payoutLabel}>TIỀN CƯỚC THỰC NHẬN</Text>
+        <Text style={styles.priceValue}>{priceLabel || '0 ₫'}</Text>
       </View>
+
+      {/* Footer: Delivered timestamp */}
+      {deliveredAtLabel ? (
+        <View style={styles.footerRow}>
+          <Text style={styles.metaTimestamp}>Hoàn tất lúc: {deliveredAtLabel}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
+  cardContainer: {
+    backgroundColor: driverPrimitives.colors.white,
     borderColor: '#E2E8F0',
-    borderRadius: 18,
+    borderRadius: 20,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    gap: spacing.sm + 2,
-    padding: spacing.md,
+    gap: 12,
+    padding: 18,
+    ...driverPrimitives.shadows.sm,
   },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
   },
-  iconCircle: {
+  statusPill: {
     alignItems: 'center',
-    borderRadius: 22,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  iconSuccess: {
-    backgroundColor: '#10B981',
-  },
-  iconReturned: {
-    backgroundColor: '#64748B',
-  },
-  headerTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  eyebrow: {
-    color: '#10B981',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  title: {
-    color: '#0B1E42',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  earningsBox: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderRadius: 12,
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderRadius: 9999,
     borderWidth: 1,
-    padding: 12,
-  },
-  earningsRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  earningsLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  walletIcon: {
-    alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  earningsCaption: {
-    color: '#15803D',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  earningsSub: {
-    color: '#475569',
-    fontSize: 10.5,
-  },
-  earningsAmount: {
-    color: '#15803D',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  metaRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 4,
-  },
-  metaItem: {
-    alignItems: 'center',
     flexDirection: 'row',
     gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  metaText: {
-    color: '#64748B',
+  statusDot: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusText: {
+    color: driverPrimitives.colors.green700,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  referencePill: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  referenceText: {
+    color: '#475569',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.3,
+  },
+  payoutBlock: {
+    gap: 2,
+    paddingTop: 2,
+  },
+  payoutLabel: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  priceValue: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 32,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.5,
+  },
+  footerRow: {
+    borderTopColor: driverPrimitives.colors.gray100,
+    borderTopWidth: 1,
+    paddingTop: 10,
   },
   metaTimestamp: {
-    color: '#94A3B8',
-    fontSize: 11,
+    color: driverPrimitives.colors.gray400,
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

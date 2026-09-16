@@ -26,6 +26,7 @@ describe('DispatchService', () => {
       3_000,
       6,
       undefined,
+      [],
     );
     expect(result).toEqual([
       { userId: 'drv-1', distanceM: 120 },
@@ -40,7 +41,7 @@ describe('DispatchService', () => {
     const service = new DispatchService(driversRepository as unknown as DriversRepository);
     await service.findCandidates({ lat: 1, lng: 2 }, 6_000, 10);
 
-    expect(driversRepository.findNearbyAvailableDrivers).toHaveBeenCalledWith(1, 2, 6_000, 10, undefined);
+    expect(driversRepository.findNearbyAvailableDrivers).toHaveBeenCalledWith(1, 2, 6_000, 10, undefined, []);
   });
 
   it('forwards vehicleType through to the repository so candidates are pre-filtered', async () => {
@@ -56,6 +57,24 @@ describe('DispatchService', () => {
       3_000,
       6,
       'TRUCK',
+      [],
+    );
+  });
+
+  it('forwards excludeDriverIds through to the repository', async () => {
+    const driversRepository = createMockDriversRepository();
+    driversRepository.findNearbyAvailableDrivers.mockResolvedValue([]);
+
+    const service = new DispatchService(driversRepository as unknown as DriversRepository);
+    await service.findCandidates({ lat: 10.7326, lng: 106.7168 }, 6_000, 6, 'TRUCK', ['drv-1']);
+
+    expect(driversRepository.findNearbyAvailableDrivers).toHaveBeenCalledWith(
+      10.7326,
+      106.7168,
+      6_000,
+      6,
+      'TRUCK',
+      ['drv-1'],
     );
   });
 });

@@ -5,7 +5,9 @@ import { DatabaseModule } from '../database/database.module.js';
 import { MapsModule } from '../maps/maps.module.js';
 import { AcceptOrderService } from './accept-order.service.js';
 import { CancelOrderService } from './cancel-order.service.js';
+import { DeclineOrderOfferService } from './decline-order-offer.service.js';
 import { DeliveryProofReader, PrismaDeliveryProofReader } from './domain/delivery-proof-reader.js';
+import { OrderDispatchOffersRepository } from './order-dispatch-offers.repository.js';
 import { OrdersController } from './orders.controller.js';
 import { OrdersRepository } from './orders.repository.js';
 import { OrdersService } from './orders.service.js';
@@ -25,6 +27,8 @@ import { OrderEventsPublisher } from './order-events.publisher.js';
     ReportOrderIncidentService,
     OrderEventsPublisher,
     CancelOrderService,
+    OrderDispatchOffersRepository,
+    DeclineOrderOfferService,
     PrismaDeliveryProofReader,
     {
       provide: DeliveryProofReader,
@@ -39,6 +43,8 @@ import { OrderEventsPublisher } from './order-events.publisher.js';
     ReportOrderIncidentService,
     OrderEventsPublisher,
     CancelOrderService,
+    OrderDispatchOffersRepository,
+    DeclineOrderOfferService,
     DeliveryProofReader,
   ],
 })

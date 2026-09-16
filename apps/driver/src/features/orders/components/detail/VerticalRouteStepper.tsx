@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { IconCheck, leopardPalette, radius, spacing } from '@leopard/mobile-core';
+import { driverPrimitives, iosContinuousCurve, IconCheck, radius, spacing } from '@leopard/mobile-core';
 import type { OrderStatus } from '@leopard/shared';
 import type { DriverRouteStopView, DriverStopProgressStatus } from '../../model';
 
@@ -272,11 +272,14 @@ export function VerticalRouteStepper({
 
 const styles = StyleSheet.create({
   verticalRouteCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: driverPrimitives.colors.white,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
+    borderRadius: 18,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    padding: spacing.md,
+    padding: 16,
+    gap: 8,
+    ...driverPrimitives.shadows.sm,
   },
   rowBetween: {
     alignItems: 'center',
@@ -296,21 +299,23 @@ const styles = StyleSheet.create({
   },
   checkBadge: {
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
     borderRadius: 14,
+    borderWidth: 1,
     height: 28,
     justifyContent: 'center',
     width: 28,
   },
   routeNodeSubA: {
-    color: '#64748B',
+    color: driverPrimitives.colors.gray400,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   routeNodeTitleA: {
-    color: '#64748B',
-    fontSize: 13,
+    color: driverPrimitives.colors.gray700,
+    fontSize: 13.5,
     fontWeight: '600',
   },
   routeNodeAExpanded: {
@@ -495,15 +500,17 @@ const styles = StyleSheet.create({
     width: 2,
   },
   spineDistancePill: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 9999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
   spineDistanceText: {
-    color: '#475569',
-    fontSize: 10,
-    fontWeight: '700',
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11,
+    fontWeight: '600',
   },
 
   /* Node B */
@@ -514,7 +521,7 @@ const styles = StyleSheet.create({
   },
   badgeB: {
     alignItems: 'center',
-    backgroundColor: '#F97316',
+    backgroundColor: driverPrimitives.colors.dark950,
     borderRadius: 14,
     height: 28,
     justifyContent: 'center',
@@ -527,15 +534,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   routeNodeSubB: {
-    color: '#64748B',
+    color: driverPrimitives.colors.gray400,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   routeNodeTitleB: {
-    color: '#0B1E42',
+    color: driverPrimitives.colors.gray900,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 20,
   },
   pressed: {

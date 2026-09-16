@@ -99,7 +99,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await screen.unmount();
   });
 
-  it('routes the idle quick-action grid to vehicle, SOS, wallet and settings', async () => {
+  it('routes the idle quick-action grid to order list, SOS, wallet and settings', async () => {
     const onNavigate = jest.fn();
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const screen = await render(
@@ -111,21 +111,16 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
 
     expect(screen.getByTestId('driver-quick-action-grid')).toBeTruthy();
 
-    await fireEvent.press(screen.getByTestId('quick-action-vehicle'));
-    expect(onNavigate).toHaveBeenCalledWith('/profile');
+    await fireEvent.press(screen.getByTestId('quick-action-order-list'));
+    expect(onNavigate).toHaveBeenCalledWith('/board');
 
     await fireEvent.press(screen.getByTestId('quick-action-sos'));
     expect(alertSpy).toHaveBeenCalledWith(
       'Cuộc gọi khẩn cấp SOS',
-      expect.stringContaining('1900 1919'),
+      expect.stringContaining('Hiện chưa có số liên hệ'),
       expect.any(Array),
     );
-
-    const linkingSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined as never);
-    const sosButtons = alertSpy.mock.calls[0][2] as Array<{ text: string; onPress?: () => void }>;
-    sosButtons.find((button) => button.text === 'Gọi ngay')?.onPress?.();
-    expect(linkingSpy).toHaveBeenCalledWith('tel:19001919');
-    linkingSpy.mockRestore();
+    expect(Linking.openURL).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByTestId('quick-action-wallet'));
     expect(onNavigate).toHaveBeenCalledWith('/wallet');
@@ -166,6 +161,10 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     // Customer contact actions
     expect(screen.getByTestId('driver-call-btn')).toBeTruthy();
     expect(screen.getByTestId('driver-chat-btn')).toBeTruthy();
+    expect(screen.getByTestId('driver-nav-leg-btn')).toBeTruthy();
+
+    // 4-stage stepper
+    expect(screen.getByText('Nhận đơn (ACCEPTED)')).toBeTruthy();
 
     // Route spine A -> B
     expect(screen.getByText('Kho VLXD Minh Khang — Tân Phú')).toBeTruthy();
@@ -257,7 +256,9 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     await fireEvent.press(callBtn);
 
     await fireEvent.press(chatBtn);
-    expect(onNavigate).toHaveBeenCalledWith('/chat');
+    expect(onNavigate).toHaveBeenCalledWith(
+      `/chat/22222222-2222-4222-8222-222222222001?customerContact=${encodeURIComponent('Thủ kho Nam (0987654321)')}`,
+    );
 
     await screen.unmount();
   });

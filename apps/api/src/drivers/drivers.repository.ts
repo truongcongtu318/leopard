@@ -214,6 +214,7 @@ export class DriversRepository {
     radiusM: number,
     limit = 50,
     vehicleType?: VehicleType,
+    excludeDriverIds: string[] = [],
   ): Promise<Array<{ userId: string; distanceM: number }>> {
     const rows = vehicleType
       ? await this.prisma.$queryRaw<Array<{ userId: string; distance_m: number }>>`
@@ -225,6 +226,7 @@ export class DriversRepository {
             AND "vehicleType"::text = ${vehicleType}
             AND "lastKnownAt" > NOW() - INTERVAL '90 seconds'
             AND ST_DWithin("lastKnownLocation", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusM})
+            AND NOT ("userId" = ANY(${excludeDriverIds}::uuid[]))
           ORDER BY distance_m ASC
           LIMIT ${limit}
         `
@@ -236,6 +238,7 @@ export class DriversRepository {
           WHERE availability = 'AVAILABLE'
             AND "lastKnownAt" > NOW() - INTERVAL '90 seconds'
             AND ST_DWithin("lastKnownLocation", ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusM})
+            AND NOT ("userId" = ANY(${excludeDriverIds}::uuid[]))
           ORDER BY distance_m ASC
           LIMIT ${limit}
         `;
@@ -286,6 +289,55 @@ export class DriversRepository {
       ...first,
       stops: stops ?? [],
       statusHistory: first.statusHistory ?? [],
+    };
+  }
+
+  async getPerformanceStats(driverId: string): Promise<{
+    ratingAvg: number | null;
+    ratingCount: number;
+    acceptancePct: number | null;
+    cancellationPct: number | null;
+    recentReviews: Array<{
+      id: string;
+      orderId: string;
+      rating: number;
+      comment: string | null;
+      createdAt: Date;
+    }>;
+  }> {
+    const [ratingAgg, offerGroups, totalAssigned, cancelledAssigned, recentReviews] =
+      await Promise.all([
+        this.prisma.orderReview.aggregate({
+          where: { order: { driverId } },
+          _avg: { rating: true },
+          _count: { _all: true },
+        }),
+        this.prisma.orderDispatchOffer.groupBy({
+          by: ['status'],
+          where: { driverId, status: { in: ['ACCEPTED', 'DECLINED', 'EXPIRED'] } },
+          _count: { _all: true },
+        }),
+        this.prisma.order.count({ where: { driverId, status: { not: 'REQUESTED' } } }),
+        this.prisma.order.count({
+          where: { driverId, status: { in: ['CANCELLED', 'INCIDENT_CANCELLED'] } },
+        }),
+        this.prisma.orderReview.findMany({
+          where: { order: { driverId }, comment: { not: null } },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: { id: true, orderId: true, rating: true, comment: true, createdAt: true },
+        }),
+      ]);
+
+    const acceptedCount = offerGroups.find((g) => g.status === 'ACCEPTED')?._count._all ?? 0;
+    const resolvedOfferCount = offerGroups.reduce((sum, g) => sum + g._count._all, 0);
+
+    return {
+      ratingAvg: ratingAgg._avg.rating,
+      ratingCount: ratingAgg._count._all,
+      acceptancePct: resolvedOfferCount > 0 ? (acceptedCount / resolvedOfferCount) * 100 : null,
+      cancellationPct: totalAssigned > 0 ? (cancelledAssigned / totalAssigned) * 100 : null,
+      recentReviews,
     };
   }
 }

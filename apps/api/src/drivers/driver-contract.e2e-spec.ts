@@ -45,7 +45,6 @@ describe('Driver Contract Signing (E2E)', () => {
 
   let customerSession: AuthSessionBody;
   let customerUserId: string;
-  let fleetOwnerSession: AuthSessionBody;
   let adminSession: AuthSessionBody;
   let noApplicationCustomerSession: AuthSessionBody;
   let noApplicationCustomerUserId: string;
@@ -113,12 +112,6 @@ describe('Driver Contract Signing (E2E)', () => {
     const customerSessionRecord = await refreshSessions.create(customerUser.id);
     customerSession = tokenService.createAuthSession(customerUser, customerSessionRecord);
 
-    const fleetOwnerUser = await prismaMock.user.create({
-      data: { phone: '+84932222222', role: 'FLEET_OWNER', status: 'ACTIVE' },
-    });
-    const fleetOwnerSessionRecord = await refreshSessions.create(fleetOwnerUser.id);
-    fleetOwnerSession = tokenService.createAuthSession(fleetOwnerUser, fleetOwnerSessionRecord);
-
     const adminUser = await prismaMock.user.create({
       data: { phone: '+84933333333', role: 'ADMIN', status: 'ACTIVE' },
     });
@@ -179,7 +172,7 @@ describe('Driver Contract Signing (E2E)', () => {
     it('rejects GET /admin/drivers/:id/contract with 403 for a non-admin role', async () => {
       await request(app.getHttpServer())
         .get(`/admin/drivers/${customerUserId}/contract`)
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
+        .set('Authorization', `Bearer ${customerSession.accessToken}`)
         .expect(403);
     });
   });

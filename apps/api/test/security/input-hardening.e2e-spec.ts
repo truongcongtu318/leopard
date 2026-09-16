@@ -22,13 +22,10 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
 
   let customerSession: AuthSessionBody;
   let driverSession: AuthSessionBody;
-  let fleetOwnerSession: AuthSessionBody;
   let adminSession: AuthSessionBody;
 
   let customerUserId: string;
   let driverUserId: string;
-  let fleetOwnerUserId: string;
-  let fleetId: string;
   let orderId: string;
 
   beforeAll(async () => {
@@ -84,23 +81,6 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
     });
     const sD = await refreshSessions.create(d.id);
     driverSession = tokenService.createAuthSession(d, sD);
-
-    // Fleet Owner
-    const fo = await prismaMock.user.create({
-      data: { phone: '+84903000001', role: 'FLEET_OWNER', status: 'ACTIVE' },
-    });
-    fleetOwnerUserId = fo.id;
-    const sFo = await refreshSessions.create(fo.id);
-    fleetOwnerSession = tokenService.createAuthSession(fo, sFo);
-
-    const f = await prismaMock.fleet.create({ data: { name: 'Test Fleet' } });
-    fleetId = f.id;
-    await prismaMock.fleetMember.create({
-      data: { fleetId, userId: fleetOwnerUserId, role: 'OWNER', status: 'ACTIVE' },
-    });
-    await prismaMock.fleetMember.create({
-      data: { fleetId, userId: driverUserId, role: 'DRIVER', status: 'ACTIVE' },
-    });
 
     // Admin
     const adm = await prismaMock.user.create({
@@ -276,15 +256,6 @@ describe('Security & Privacy: Input Hardening, Boundary Validation & Error Redac
 
       expect(res.body.code).toBe('INTERNAL_ERROR');
       expect(res.body.message).toBe('Đã xảy ra lỗi hệ thống, vui lòng thử lại sau');
-    });
-
-    it('rejects pageSize exceeding 100 on Fleet endpoints', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/fleet/drivers?pageSize=500')
-        .set('Authorization', `Bearer ${fleetOwnerSession.accessToken}`)
-        .expect(500);
-
-      expect(res.body.code).toBe('INTERNAL_ERROR');
     });
 
     it('rejects pageSize exceeding 100 on Tracking query with 400 Bad Request', async () => {

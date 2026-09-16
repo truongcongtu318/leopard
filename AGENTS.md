@@ -80,6 +80,11 @@ LEOPARD là hệ thống vận hành logistics thông minh, kết hợp tính ch
   - Bản đồ theo dõi thời gian thực Dark Mode (Real-time tracking map) tích hợp thanh tìm kiếm kính mờ, nút phóng to, zoom `+ / -` và marker bưu kiện 3D / selected pill xanh lục.
   - Bố cục Bento 2 cột trực quan: Cột trái gồm Bản đồ tối & Bảng danh sách đơn hàng có pill filter; Cột phải gồm Tổng quan trạng thái (thanh phân đoạn 4 màu), Hiệu suất thực hiện (cột đứng xanh lục) và Doanh thu vận hành (thẻ gradient hoàng hôn kèm biểu đồ sóng trắng mềm mại).
 - Mọi màn hình chính có đầy đủ loading, empty, error, success và permission-denied state.
+- **Mobile UI & Color Rules (Apple HIG Standard)**:
+  - Header: Luôn dùng `ScreenScaffold` với `title` căn giữa (17pt semibold) và nút back chevron 44x44pt. Không tự dựng `headerBar` thủ công lệch chuẩn.
+  - Hạn chế tối đa màu sắc (Color Restraint): Không bọc icon trong các ô vuông nền pastel xanh/vàng/tím/xanh dương. Icon danh mục dùng phong cách SF Symbols đơn sắc trung tính (`gray500`/`gray700`).
+  - Số liệu & KPI: Dùng typography đen/xám than trung tính (`gray900`, `fontVariant: ['tabular-nums']`). Không tô xanh/đỏ các con số thống kê thông thường.
+  - Màu sắc chức năng: Chỉ dành cho tín hiệu nghiệp vụ thực (sao vàng `amber500`, huỷ/cảnh báo `red500`, online `green500`).
 - ETA luôn dùng nhãn “ETA dự kiến”; dữ liệu demo/mô phỏng phải hiển thị rõ “Dữ liệu mô phỏng”.
 - Dữ liệu hiển thị phải phản ánh đúng phạm vi pilot (không đưa các giả định AI XGBoost hay báo cáo ESG ngoài scope vào nghiệp vụ thực).
 - Kiểm tra text overflow, overlap, keyboard focus và tương phản màu sắc (WCAG AA) trước khi hoàn tất.

@@ -2,7 +2,7 @@ openapi: "3.1.0"
 info:
   title: LEOPARD API
   description: |
-    LEOPARD delivery platform — REST API for customers, drivers, fleet owners, and administrators.
+    LEOPARD delivery platform — REST API for customers, drivers, and administrators.
   version: "0.0.0"
   contact:
     name: LEOPARD Team
@@ -175,7 +175,7 @@ paths:
     get:
       operationId: orders.getById
       summary: Order detail
-      description: Accessible by owner, assigned driver, fleet owner, or admin.
+      description: Accessible by owner, assigned driver, or admin.
       tags: [Orders]
       parameters:
         - $ref: "#/components/parameters/OrderIdParam"
@@ -223,7 +223,7 @@ paths:
     get:
       operationId: orders.getTracking
       summary: Paginated order tracking points
-      description: Accessible by owner, assigned driver, fleet owner, or admin.
+      description: Accessible by owner, assigned driver, or admin.
       tags: [Orders]
       parameters:
         - $ref: "#/components/parameters/OrderIdParam"
@@ -402,146 +402,6 @@ paths:
         "404":
           $ref: "#/components/responses/ApiError"
         "409":
-          $ref: "#/components/responses/ApiError"
-  # ── Fleet Owner ───────────────────────────────────────────────────────
-  /fleet/profile:
-    get:
-      operationId: fleet.getProfile
-      summary: Fleet owner profile
-      tags: [Fleet]
-      responses:
-        "200":
-          description: Fleet profile
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FleetProfile"
-        "401":
-          $ref: "#/components/responses/ApiError"
-  /fleet/drivers:
-    get:
-      operationId: fleet.listDrivers
-      summary: List drivers in the fleet
-      tags: [Fleet]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: status
-          in: query
-          schema:
-            $ref: "#/components/schemas/FleetMemberStatus"
-        - name: q
-          in: query
-          schema:
-            type: string
-          description: Search query
-        - $ref: "#/components/parameters/SortParam"
-      responses:
-        "200":
-          description: Fleet drivers
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/PaginationEnvelope"
-                  - type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/FleetDriver"
-        "401":
-          $ref: "#/components/responses/ApiError"
-  /fleet/orders:
-    get:
-      operationId: fleet.listOrders
-      summary: List orders assigned to fleet drivers
-      tags: [Fleet]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: driverId
-          in: query
-          schema:
-            type: string
-          description: Filter by driver
-        - name: status
-          in: query
-          schema:
-            $ref: "#/components/schemas/OrderStatus"
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Start of date range
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: End of date range
-        - name: q
-          in: query
-          schema:
-            type: string
-          description: Search query
-        - $ref: "#/components/parameters/SortParam"
-      responses:
-        "200":
-          description: Fleet orders
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/PaginationEnvelope"
-                  - type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/OrderSchema"
-        "401":
-          $ref: "#/components/responses/ApiError"
-  /fleet/orders/{id}:
-    get:
-      operationId: fleet.getOrderById
-      summary: Fleet order detail
-      tags: [Fleet]
-      parameters:
-        - $ref: "#/components/parameters/OrderIdParam"
-      responses:
-        "200":
-          description: Order detail
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OrderSchema"
-        "401":
-          $ref: "#/components/responses/ApiError"
-        "404":
-          $ref: "#/components/responses/ApiError"
-  /fleet/orders/{id}/tracking:
-    get:
-      operationId: fleet.getOrderTracking
-      summary: Paginated fleet order tracking points
-      tags: [Fleet]
-      parameters:
-        - $ref: "#/components/parameters/OrderIdParam"
-        - $ref: "#/components/parameters/FromParam"
-        - $ref: "#/components/parameters/ToParam"
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-      responses:
-        "200":
-          description: Tracking points ordered by capturedAt DESC, id DESC
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TrackingPointPage"
-        "401":
-          $ref: "#/components/responses/ApiError"
-        "404":
           $ref: "#/components/responses/ApiError"
   # ── Media & Payment ───────────────────────────────────────────────────
   /orders/{id}/media/cargo:
@@ -867,36 +727,6 @@ paths:
           $ref: "#/components/responses/ApiError"
         "404":
           $ref: "#/components/responses/ApiError"
-  /admin/fleets:
-    get:
-      operationId: admin.listFleets
-      summary: List fleets and memberships
-      tags: [Admin]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: q
-          in: query
-          schema:
-            type: string
-          description: Search query
-        - $ref: "#/components/parameters/SortParam"
-      responses:
-        "200":
-          description: Paginated fleets
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/PaginationEnvelope"
-                  - type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/AdminFleetRecord"
-        "401":
-          $ref: "#/components/responses/ApiError"
   /admin/drivers:
     get:
       operationId: admin.listDrivers
@@ -1094,16 +924,10 @@ components:
     # ══ Enums (canonical — MUST match packages/shared/src/enums.ts) ══
     Role:
       type: string
-      enum: [CUSTOMER, DRIVER, FLEET_OWNER, ADMIN]
+      enum: [CUSTOMER, DRIVER, ADMIN]
     UserStatus:
       type: string
       enum: [ACTIVE, DISABLED]
-    FleetMemberRole:
-      type: string
-      enum: [OWNER, DRIVER]
-    FleetMemberStatus:
-      type: string
-      enum: [INVITED, ACTIVE, REMOVED]
     DriverAvailability:
       type: string
       enum: [OFFLINE, AVAILABLE, BUSY]
@@ -1435,8 +1259,6 @@ components:
           type: string
         driverId:
           type: string
-        fleetId:
-          type: string
         createdAt:
           type: string
           format: date-time
@@ -1593,51 +1415,6 @@ components:
         clientRequestId:
           type: string
           format: uuid
-
-    # ══ Fleet ══
-    FleetProfile:
-      type: object
-      required: [id, name, createdAt]
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        logoUrl:
-          type: string
-          format: uri
-        driverCount:
-          type: integer
-        activeOrderCount:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    FleetDriver:
-      type: object
-      required: [id, name, status, availability, joinedAt]
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        status:
-          $ref: "#/components/schemas/FleetMemberStatus"
-        role:
-          $ref: "#/components/schemas/FleetMemberRole"
-        availability:
-          $ref: "#/components/schemas/DriverAvailability"
-        activeOrderCount:
-          type: integer
-        joinedAt:
-          type: string
-          format: date-time
 
     # ══ Media ══
     MediaUploadRequest:
@@ -1838,8 +1615,6 @@ components:
           type: string
         email:
           type: string
-        fleetId:
-          type: string
         createdAt:
           type: string
           format: date-time
@@ -1854,29 +1629,9 @@ components:
         status:
           $ref: "#/components/schemas/UserStatus"
 
-    AdminFleetRecord:
-      type: object
-      required: [id, name, driverCount, createdAt]
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        ownerName:
-          type: string
-        ownerPhone:
-          type: string
-        driverCount:
-          type: integer
-        activeOrderCount:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-
     AdminDriverRecord:
       type: object
-      required: [id, name, availability, fleetName, createdAt]
+      required: [id, name, availability, createdAt]
       properties:
         id:
           type: string
@@ -1886,10 +1641,6 @@ components:
           type: string
         availability:
           $ref: "#/components/schemas/DriverAvailability"
-        fleetId:
-          type: string
-        fleetName:
-          type: string
         activeOrderCount:
           type: integer
         createdAt:

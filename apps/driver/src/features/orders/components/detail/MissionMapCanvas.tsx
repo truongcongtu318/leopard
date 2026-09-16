@@ -149,6 +149,9 @@ export function MissionMapCanvas({
     tracking.kind === 'reconnecting' ||
     tracking.kind === 'permission-denied';
 
+  // Chuyến đã kết thúc: không còn vị trí xe để theo dõi. Ẩn mọi pill
+  // trạng thái/đích đến, bản đồ chỉ còn tuyến đường tĩnh đã hoàn tất.
+
   const isEtaStale = eta?.outcome === 'STALE';
   const isStale = isTrackingStale || isEtaStale;
 
@@ -223,7 +226,19 @@ export function MissionMapCanvas({
 
   // Resolved geometry
   const effectiveRouteSegments = eta?.polylineSegments ?? routeSegments;
-  const effectiveRouteCoords = eta?.polylineCoords ?? routeCoords ?? [];
+  const etaRouteCoords = eta?.polylineCoords ?? routeCoords ?? [];
+  // Fallback: nối thẳng điểm nhận → điểm giao khi thiếu geometry bám đường
+  // thật (ghi nhãn mô phỏng qua `isRoutePreview`). ponytail: thay bằng
+  // polyline Vietmap/OSRM khi backend trả routeCoords đầy đủ.
+  const fallbackRouteCoords = React.useMemo(() => {
+    if (etaRouteCoords.length >= 2) return null;
+    if (resolvedOrigin.coords == null || resolvedDestination.coords == null) {
+      return null;
+    }
+    return [resolvedOrigin.coords, resolvedDestination.coords];
+  }, [etaRouteCoords, resolvedDestination.coords, resolvedOrigin.coords]);
+  const effectiveRouteCoords = fallbackRouteCoords ?? etaRouteCoords;
+  const isRoutePreview = fallbackRouteCoords != null;
 
   // Bottom left ETA text formatting
   const etaText = React.useMemo(() => {
@@ -267,14 +282,16 @@ export function MissionMapCanvas({
     return distPart ? `${distPart} · ${mainEta}` : mainEta;
   }, [distanceLabel, eta, etaLabel]);
 
-  const isDemo = eta?.source === 'DEMO';
+  const isDemo = eta?.source === 'DEMO' || isRoutePreview;
+  const isTripEnded = tracking.kind === 'unavailable' || tracking.kind === 'not-started';
+  const showLiveOverlays = !isTripEnded;
 
   return (
     <View style={styles.mapCanvasContainer} testID={testID}>
       <RealInteractiveMap
         destination={resolvedDestination}
         height="100%"
-        mode="tracking"
+        mode={isTripEnded ? 'route' : 'tracking'}
         origin={resolvedOrigin}
         routeCoords={effectiveRouteCoords}
         routeResolutionPolicy="PROVIDED_ONLY"
@@ -283,87 +300,94 @@ export function MissionMapCanvas({
         truckEtaLabel={tracking.label}
       />
 
-      {/* Floating Badges Top Left: Demo warning & Stale pill */}
-      <View style={styles.mapFloatingTopLeftGroup}>
-        {isDemo ? (
-          <View style={styles.mapDemoBadge} testID="badge-demo-data">
-            <Text style={styles.mapDemoBadgeText}>Dữ liệu mô phỏng</Text>
+      {/* Chuyến đã kết thúc: bản đồ tĩnh, chỉ còn pill ETA tóm tắt ở đáy */}
+      {showLiveOverlays ? (
+        <>
+          {/* Floating Badges Top Left: Demo warning & Stale pill */}
+          <View style={styles.mapFloatingTopLeftGroup}>
+            {isDemo ? (
+              <View style={styles.mapDemoBadge} testID="badge-demo-data">
+                <Text style={styles.mapDemoBadgeText}>Dữ liệu mô phỏng</Text>
+              </View>
+            ) : null}
+
+            {isEtaStale ? (
+              <View style={styles.mapStaleBadge} testID="badge-stale-eta">
+                <Text style={styles.mapStaleBadgeText}>ETA cũ</Text>
+              </View>
+            ) : null}
           </View>
-        ) : null}
 
-        {isEtaStale ? (
-          <View style={styles.mapStaleBadge} testID="badge-stale-eta">
-            <Text style={styles.mapStaleBadgeText}>ETA cũ</Text>
+          {/* Floating Pill Top Right: Tracking Status */}
+          <View style={styles.mapFloatingStatusPill} testID="pill-tracking-status">
+            <View
+              style={[
+                styles.mapStatusDot,
+                isStale ? styles.mapStatusDotWarning : styles.mapStatusDotHealthy,
+              ]}
+            />
+            <Text numberOfLines={1} style={styles.mapStatusPillText}>
+              {tracking.label}
+            </Text>
           </View>
-        ) : null}
-      </View>
 
-      {/* Floating Pill Top Right: Tracking Status */}
-      <View style={styles.mapFloatingStatusPill} testID="pill-tracking-status">
-        <View
-          style={[
-            styles.mapStatusDot,
-            isStale ? styles.mapStatusDotWarning : styles.mapStatusDotHealthy,
-          ]}
-        />
-        <Text numberOfLines={1} style={styles.mapStatusPillText}>
-          {tracking.label}
-        </Text>
-      </View>
-
-      {/* Floating Waypoint Guidance Bar */}
-      {resolvedTarget?.label ? (
-        <View style={styles.mapWaypointGuidanceCard} testID="card-waypoint-guidance">
-          <View style={styles.waypointDot} />
-          <Text numberOfLines={1} style={styles.waypointDestinationText}>
-            {`ĐÍCH ĐẾN: ${resolvedTarget.label}`}
-          </Text>
-        </View>
+          {/* Floating Waypoint Guidance Bar */}
+          {resolvedTarget?.label ? (
+            <View style={styles.mapWaypointGuidanceCard} testID="card-waypoint-guidance">
+              <View style={styles.waypointDot} />
+              <Text numberOfLines={1} style={styles.waypointDestinationText}>
+                {`ĐÍCH ĐẾN: ${resolvedTarget.label}`}
+              </Text>
+            </View>
+          ) : null}
+        </>
       ) : null}
 
       {/* Floating Pill Bottom Left: ETA & Distance */}
       <View style={styles.mapFloatingEtaPill} testID="pill-eta-estimate">
         <IconClock color="#0B1E42" size={13} />
         <Text numberOfLines={1} style={styles.mapFloatingEtaText}>
-          {etaText}
+          {isTripEnded ? etaText.replace('ETA dự kiến · ', '') : etaText}
         </Text>
       </View>
 
-      {/* Floating Quick Action Group Bottom Right */}
-      <View style={styles.mapFloatingControlsGroup}>
-        <Pressable
-          accessibilityHint="Mở ứng dụng Google Maps để dẫn đường đến điểm dừng tiếp theo"
-          accessibilityLabel="Mở bản đồ đến điểm tiếp theo"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !hasValidNavigationTarget }}
-          disabled={!hasValidNavigationTarget}
-          onPress={() => {
-            if (!hasValidNavigationTarget || !resolvedTarget) {
-              Alert.alert(
-                'Không có tọa độ dẫn đường',
-                'Điểm đến tiếp theo chưa có tọa độ GPS hợp lệ để mở bản đồ dẫn đường.',
-              );
-              return;
-            }
-            openExternalNavigation({
-              target: resolvedTarget,
-              vehicleType,
-              onWarning: onNavigationWarning,
-            });
-          }}
-          style={({ pressed }) => [
-            styles.mapFloatingQuickBtn,
-            !hasValidNavigationTarget ? styles.btnDisabled : null,
-            pressed && hasValidNavigationTarget ? styles.pressed : null,
-          ]}
-          testID="btn-navigate-next-stop"
-        >
-          <IconRoute
-            color={hasValidNavigationTarget ? '#0B1E42' : '#94A3B8'}
-            size={18}
-          />
-        </Pressable>
-      </View>
+      {/* Floating Quick Action Group Bottom Right (chỉ khi đang chạy) */}
+      {showLiveOverlays ? (
+        <View style={styles.mapFloatingControlsGroup}>
+          <Pressable
+            accessibilityHint="Mở ứng dụng Google Maps để dẫn đường đến điểm dừng tiếp theo"
+            accessibilityLabel="Mở bản đồ đến điểm tiếp theo"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !hasValidNavigationTarget }}
+            disabled={!hasValidNavigationTarget}
+            onPress={() => {
+              if (!hasValidNavigationTarget || !resolvedTarget) {
+                Alert.alert(
+                  'Không có tọa độ dẫn đường',
+                  'Điểm đến tiếp theo chưa có tọa độ GPS hợp lệ để mở bản đồ dẫn đường.',
+                );
+                return;
+              }
+              openExternalNavigation({
+                target: resolvedTarget,
+                vehicleType,
+                onWarning: onNavigationWarning,
+              });
+            }}
+            style={({ pressed }) => [
+              styles.mapFloatingQuickBtn,
+              !hasValidNavigationTarget ? styles.btnDisabled : null,
+              pressed && hasValidNavigationTarget ? styles.pressed : null,
+            ]}
+            testID="btn-navigate-next-stop"
+          >
+            <IconRoute
+              color={hasValidNavigationTarget ? '#0B1E42' : '#94A3B8'}
+              size={18}
+            />
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }

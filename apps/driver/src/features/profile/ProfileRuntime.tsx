@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { sessionStore } from '@leopard/mobile-core';
 import { createDriverProfileHttpAdapter } from './adapter';
+import { createDriverPerformanceHttpAdapter } from '../performance/adapter';
 import type { DriverProfileView } from './model';
 import { DriverProfileScreen } from './ProfileScreen';
 
@@ -11,12 +12,17 @@ export function DriverProfileRuntime({
   onNavigate,
 }: Readonly<{ onNavigate?: (route: string) => void }> = {}) {
   const port = useMemo(() => createDriverProfileHttpAdapter(), []);
+  const performancePort = useMemo(() => createDriverPerformanceHttpAdapter(), []);
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const query = useQuery({
     queryKey: ['driver', 'profile'],
     queryFn: () => port.getProfileView(),
+  });
+  const performanceQuery = useQuery({
+    queryKey: ['driver', 'performance'],
+    queryFn: () => performancePort.getPerformanceSummary(),
   });
 
   async function handleLogout() {
@@ -44,9 +50,12 @@ export function DriverProfileRuntime({
 
   return (
     <DriverProfileScreen
+      acceptancePct={performanceQuery.data?.acceptancePct}
+      cancellationPct={performanceQuery.data?.cancellationPct}
       onLogout={() => void handleLogout()}
       onNavigate={onNavigate}
       onRetry={() => query.refetch()}
+      ratingAvg={performanceQuery.data?.ratingAvg}
       view={displayView}
     />
   );

@@ -1,11 +1,25 @@
-import { useState } from 'react';
+import React from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, ScreenScaffold, ScreenState, StatusBadge, IconCheck, IconChevron, IconClock, IconIdCard, IconInsuranceDoc, IconLicense, IconOrders, IconPhone, IconSecurityShield, IconSpeedTruck, IconStar, IconSupport247, IconTrophy, IconUser, IconWallet } from '@leopard/mobile-core';
-import { useDriverDrawer } from '../navigation/DriverDrawerContext';
-import { DriverMenuButton } from '../navigation/DriverMenuButton';
-import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
+import {
+  driverPrimitives,
+  iosContinuousCurve,
+  Button,
+  ScreenScaffold,
+  ScreenState,
+  IconChevronRight,
+  IconSettings,
+  IconSupport247,
+  IconWallet,
+  IconEarnings,
+  IconTrophy,
+  IconRoute,
+  IconMessage,
+  IconStar,
+  IconCheck,
+  IconUser,
+} from '@leopard/mobile-core';
 import type { DriverProfileView } from './model';
 
 export type DriverProfileScreenProps = Readonly<{
@@ -13,89 +27,57 @@ export type DriverProfileScreenProps = Readonly<{
   onLogout?: () => void;
   onRetry?: () => void;
   onNavigate?: (route: string) => void;
+  ratingAvg?: number;
+  acceptancePct?: number;
+  cancellationPct?: number;
 }>;
 
-type ProfileTab = 'personal' | 'documents' | 'settings';
+export function formatPhoneNumber(phone: string | null | undefined): string {
+  if (!phone) return '';
+  const trimmed = phone.trim();
 
-function InfoRow({
-  icon,
-  label,
-  value,
-  badge,
-  isLast = false,
-}: Readonly<{
-  icon: React.ReactNode;
-  label: string;
-  value?: string;
-  badge?: React.ReactNode;
-  isLast?: boolean;
-}>) {
-  return (
-    <View style={[styles.infoRow, isLast ? styles.infoRowLast : null]}>
-      <View style={styles.infoRowIconChip}>{icon}</View>
-      <Text style={styles.infoRowLabel}>{label}</Text>
-      <View style={styles.infoRowRight}>
-        {value ? <Text style={styles.infoRowValue}>{value}</Text> : null}
-        {badge}
-      </View>
-    </View>
-  );
-}
+  // Match +84 with 9 or 10 digits
+  const vnE164Match = trimmed.match(/^\+84(\d{9,10})$/);
+  if (vnE164Match) {
+    const digits = vnE164Match[1];
+    return `+84 ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  }
 
-function MenuRow({
-  icon,
-  isLast = false,
-  label,
-  onPress,
-  sublabel,
-}: Readonly<{
-  icon?: React.ReactNode;
-  label: string;
-  sublabel?: string;
-  onPress?: () => void;
-  isLast?: boolean;
-}>) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.menuRow,
-        isLast ? styles.menuRowLast : null,
-        pressed ? styles.pressed : null,
-      ]}
-    >
-      <View style={styles.menuLeft}>
-        {icon ? <View style={styles.menuIconWrap}>{icon}</View> : null}
-        <View style={styles.menuTextCol}>
-          <Text style={styles.menuLabel}>{label}</Text>
-          {sublabel ? <Text style={styles.menuSublabel}>{sublabel}</Text> : null}
-        </View>
-      </View>
-      <IconChevron color={leopardPalette.textSubtle} direction="right" size={16} />
-    </Pressable>
-  );
+  // Match 10-digit local starting with 0: e.g. 0901234567 -> 0901 234 567
+  if (/^0\d{9}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 4)} ${trimmed.slice(4, 7)} ${trimmed.slice(7)}`;
+  }
+
+  // Fallback if starts with +84 but other formatting
+  if (trimmed.startsWith('+84')) {
+    const rest = trimmed.slice(3).replace(/\D/g, '');
+    if (rest.length >= 9) {
+      return `+84 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
+    }
+  }
+
+  return trimmed;
 }
 
 export function DriverProfileScreen({
+  acceptancePct = 0,
+  cancellationPct = 0,
   onLogout,
   onNavigate,
   onRetry,
+  ratingAvg = 0,
   view,
 }: DriverProfileScreenProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<ProfileTab>('personal');
-  const { openDrawer } = useDriverDrawer();
 
   if (view.kind !== 'content') {
     return (
-      <View style={styles.screenContainer}>
-        <ScreenScaffold
-          headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-          headerTone="plain"
-          title="Hồ sơ"
-        >
+      <ScreenScaffold
+        headerTone="plain"
+        onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
+        title="Hồ sơ tài xế"
+      >
+        <View style={styles.errorBody}>
           <ScreenState
             actionLabel={view.kind === 'error' ? 'Thử lại' : undefined}
             message={view.message}
@@ -103,463 +85,336 @@ export function DriverProfileScreen({
             state={view.kind}
             title={view.title}
           />
-        </ScreenScaffold>
-
-        <DriverBottomNavigation
-          activeTab="profile"
-          onNavigate={onNavigate ?? ((route) => router.push(route))}
-        />
-      </View>
+        </View>
+      </ScreenScaffold>
     );
   }
 
-  const driverName = view.name ?? 'Nguyễn Văn Tuấn';
-  const vehicleName = view.vehicleLabel ?? '51C-889.24 · Xe tải 2.5T';
+  const formattedPhone = formatPhoneNumber(view.phone);
+  const driverName = view.name?.trim() ? view.name : (formattedPhone || 'Tài xế');
 
   return (
-    <View style={styles.screenContainer}>
-      <ScreenScaffold
-        headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-        headerTone="plain"
-        title="Hồ sơ tài xế"
-      >
+    <ScreenScaffold
+      headerRight={
+        <View style={styles.headerRightCluster}>
+          <Pressable
+            accessibilityLabel="Trợ giúp & Hỗ trợ"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => router.push('/chat')}
+            style={styles.headerBtn}
+          >
+            <IconSupport247 color={driverPrimitives.colors.gray700} size={20} />
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Cài đặt"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => router.push('/settings')}
+            style={styles.headerBtn}
+          >
+            <IconSettings color={driverPrimitives.colors.gray700} size={20} />
+          </Pressable>
+        </View>
+      }
+      headerTone="plain"
+      onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
+      title="Hồ sơ tài xế"
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* 1. Executive Driver Cockpit ID Hero Card */}
-        <View style={styles.heroCard}>
-          {/* Top Brand & Status Line */}
-          <View style={styles.heroTopLine}>
-            <View style={styles.heroBrandChip}>
-              <IconSpeedTruck color="#38BDF8" size={14} />
-              <Text style={styles.heroBrandText}>LEOPARD COCKPIT ID</Text>
-            </View>
-            <View style={styles.heroKycBadge}>
-              <IconSecurityShield color="#10B981" size={13} />
-              <Text style={styles.heroKycText}>✓ ĐÃ XÁC THỰC KYC</Text>
-            </View>
-          </View>
-
-          {/* Center Identity Section */}
+        {/* ── 1. Hero Driver Bento Card (Apple Monochrome Minimal) ── */}
+        <Pressable
+          accessibilityLabel={`Chỉnh sửa hồ sơ ${driverName}`}
+          accessibilityRole="button"
+          onPress={() => router.push('/profile-edit')}
+          style={({ pressed }) => [styles.heroCard, pressed ? styles.pressed : null]}
+        >
           <View style={styles.heroMainRow}>
             <View style={styles.avatarContainer}>
               {view.avatarUrl ? (
-                <Image source={{ uri: view.avatarUrl }} style={styles.avatarImage} />
+                <Image
+                  resizeMode="cover"
+                  source={{ uri: view.avatarUrl }}
+                  style={styles.avatarImage}
+                />
               ) : (
-                <View style={styles.avatarBox}>
-                  <Text style={styles.avatarText}>{driverName.charAt(0).toUpperCase()}</Text>
+                <View style={styles.avatarPlaceholder}>
+                  {driverName && driverName !== 'Tài xế' ? (
+                    <Text style={styles.avatarInitial}>
+                      {driverName.charAt(0).toUpperCase()}
+                    </Text>
+                  ) : (
+                    <IconUser color="#FFFFFF" size={26} />
+                  )}
                 </View>
               )}
-              <View style={styles.onlineBadge} />
             </View>
 
-            <View style={styles.driverInfoCol}>
-              <Text style={styles.driverNameText}>{driverName}</Text>
-              <View style={styles.idCodeChip}>
-                <Text style={styles.idCodeText}>MÃ TX: DRV-88924</Text>
-              </View>
-              <View style={styles.vehicleRow}>
-                <IconSpeedTruck color="#94A3B8" size={13} />
-                <Text numberOfLines={1} style={styles.vehicleRowText}>
-                  {vehicleName}
+            <View style={styles.driverInfoBlock}>
+              <View style={styles.driverNameRow}>
+                <Text numberOfLines={1} style={styles.driverNameText}>
+                  {driverName}
                 </Text>
+                <View style={styles.verifiedCheckBadge}>
+                  <IconCheck color={driverPrimitives.colors.white} size={10} strokeWidth={3} />
+                </View>
               </View>
-              <Pressable
-                accessibilityLabel="Chỉnh sửa hồ sơ"
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={() => router.push('/profile-edit')}
-                style={styles.editProfileBtn}
-              >
-                <Text style={styles.editProfileText}>Chỉnh sửa hồ sơ</Text>
-                <IconChevron color="#38BDF8" direction="right" size={12} />
-              </Pressable>
+
+              {view.name ? <Text style={styles.driverPhoneText}>{formattedPhone}</Text> : null}
+
+              <View style={styles.badgeRow}>
+                <View style={styles.statusPill}>
+                  <View style={styles.statusDotInner} />
+                  <Text style={styles.statusPillText}>{view.statusLabel || 'Đang hoạt động'}</Text>
+                </View>
+
+                {view.vehicleLabel ? (
+                  <View style={styles.vehiclePill}>
+                    <Text numberOfLines={1} style={styles.vehiclePillText}>
+                      {view.vehicleLabel}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+
+            <View style={styles.editChevronButton}>
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={18} />
+            </View>
+          </View>
+        </Pressable>
+
+        {/* ── 2. Daily Performance Bento Card (Neutral Typography) ── */}
+        <Pressable
+          accessibilityLabel="Xem báo cáo hiệu suất chi tiết"
+          accessibilityRole="button"
+          onPress={() => router.push('/performance')}
+          style={({ pressed }) => [styles.kpiCard, pressed ? styles.pressed : null]}
+        >
+          <View style={styles.kpiCardHeader}>
+            <Text style={styles.kpiSectionTitle}>Hiệu suất hàng ngày</Text>
+            <View style={styles.kpiDetailLink}>
+              <Text style={styles.kpiDetailLinkText}>Chi tiết</Text>
+              <IconChevronRight color={driverPrimitives.colors.blue600} size={13} />
             </View>
           </View>
 
-          {/* Bottom Cockpit Metrics Strip */}
-          <View style={styles.heroDivider} />
-          <View style={styles.heroMetricsStrip}>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricVal}>128</Text>
-              <Text style={styles.metricLbl}>Chuyến xe</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <View style={styles.ratingValRow}>
-                <Text style={[styles.metricVal, styles.metricValGold]}>4.95</Text>
-                <IconStar color="#F59E0B" fill="#F59E0B" size={12} />
+          <View style={styles.kpiColumns}>
+            {/* Rating */}
+            <View style={styles.kpiCol}>
+              <View style={styles.kpiValueRow}>
+                <IconStar color={driverPrimitives.colors.amber500} filled size={16} />
+                <Text style={styles.kpiValueMain}>{ratingAvg.toFixed(1)}</Text>
               </View>
-              <Text style={styles.metricLbl}>Hạng Vàng</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text style={[styles.metricVal, styles.metricValGreen]}>98.5%</Text>
-              <Text style={styles.metricLbl}>Đúng giờ</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text style={styles.metricVal}>1.5 năm</Text>
-              <Text style={styles.metricLbl}>Gắn bó</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 2. Modern 3-Tab Segmented Selector */}
-        <View accessibilityRole="tablist" style={styles.tabContainer}>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'personal' }}
-            onPress={() => setActiveTab('personal')}
-            style={[styles.tabButton, activeTab === 'personal' ? styles.tabButtonActive : null]}
-          >
-            <Text
-              style={[styles.tabButtonText, activeTab === 'personal' ? styles.tabTextActive : null]}
-            >
-              Cá nhân & Xe
-            </Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'documents' }}
-            onPress={() => setActiveTab('documents')}
-            style={[styles.tabButton, activeTab === 'documents' ? styles.tabButtonActive : null]}
-          >
-            <Text
-              style={[styles.tabButtonText, activeTab === 'documents' ? styles.tabTextActive : null]}
-            >
-              Giấy tờ & KYC
-            </Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'settings' }}
-            onPress={() => setActiveTab('settings')}
-            style={[styles.tabButton, activeTab === 'settings' ? styles.tabButtonActive : null]}
-          >
-            <Text
-              style={[styles.tabButtonText, activeTab === 'settings' ? styles.tabTextActive : null]}
-            >
-              Tiện ích & Ví
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* 3. Tab Contents */}
-        {activeTab === 'personal' && (
-          <View style={styles.tabPane}>
-            {/* Contact & Identity Section */}
-            <View style={styles.sectionBlock}>
-              <Text style={styles.sectionLabel}>THÔNG TIN LIÊN LẠC & ĐỊNH DANH</Text>
-              <View style={styles.cardContainer}>
-                <InfoRow
-                  icon={<IconPhone color={colors.brand.background} size={16} />}
-                  label="Số điện thoại"
-                  value={view.phone}
-                />
-                <InfoRow
-                  icon={<IconPhone color={colors.brand.background} size={16} />}
-                  label="SĐT khẩn cấp"
-                  value="0909 113 115"
-                />
-                <InfoRow
-                  icon={<IconUser color={colors.brand.background} size={16} />}
-                  label="Vai trò hệ thống"
-                  value={view.roleLabel}
-                />
-                <InfoRow
-                  icon={<IconClock color={colors.brand.background} size={16} />}
-                  label="Ca làm việc"
-                  value="Toàn thời gian (06:00 - 22:00)"
-                />
-                <InfoRow
-                  badge={<StatusBadge domain="user" status="ACTIVE" />}
-                  icon={<IconSecurityShield color={colors.brand.background} size={16} />}
-                  isLast
-                  label="Trạng thái tài khoản"
-                />
-              </View>
+              <Text style={styles.kpiLabelSub}>Đánh giá sao</Text>
             </View>
 
-            {/* Assigned Vehicle Section */}
-            <View style={styles.sectionBlock}>
-              <Text style={styles.sectionLabel}>PHƯƠNG TIỆN PHÂN CÔNG (FLEET)</Text>
-              <View style={styles.cardContainer}>
-                <InfoRow
-                  icon={<IconSpeedTruck color={colors.brand.background} size={16} />}
-                  label="Phương tiện"
-                  value={vehicleName}
-                />
-                <InfoRow
-                  icon={<IconLicense color={colors.brand.background} size={16} />}
-                  label="Biển kiểm soát"
-                  value="51C-889.24 (TP.HCM)"
-                />
-                <InfoRow
-                  icon={<IconIdCard color={colors.brand.background} size={16} />}
-                  label="Đội xe chủ quản"
-                  value="Fleet Tân Bình (Pilot)"
-                />
-                <InfoRow
-                  icon={<IconSupport247 color={colors.brand.background} size={16} />}
-                  label="Hỗ trợ Fleet Owner"
-                  value="0912 345 678"
-                />
-                <InfoRow
-                  icon={<IconSecurityShield color={colors.brand.background} size={16} />}
-                  isLast
-                  label="Tải trọng cho phép"
-                  value="2.490 kg · 14 m³"
-                />
-              </View>
-            </View>
+            <View style={styles.kpiDividerVertical} />
 
-            {/* Quick Edit CTA */}
-            <Pressable
-              accessibilityLabel="Chỉnh sửa hồ sơ tài xế"
-              accessibilityRole="button"
-              onPress={() => router.push('/profile-edit')}
-              style={({ pressed }) => [styles.editActionCard, pressed ? styles.pressed : null]}
-            >
-              <Text style={styles.editActionCardText}>Chỉnh sửa thông tin hồ sơ & hình đại diện →</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {activeTab === 'documents' && (
-          <View style={styles.tabPane}>
-            {/* Compliance Banner */}
-            <View style={styles.complianceCard}>
-              <View style={styles.complianceIconWrap}>
-                <IconSecurityShield color="#10B981" size={20} />
-              </View>
-              <View style={styles.complianceTextCol}>
-                <Text style={styles.complianceTitle}>Hồ sơ pháp lý hợp chuẩn</Text>
-                <Text style={styles.complianceDesc}>
-                  Đã xác thực đầy đủ 4/4 giấy tờ vận tải theo quy định Bộ GTVT.
-                </Text>
-              </View>
-            </View>
-
-            {/* Documents List */}
-            <View style={styles.sectionBlock}>
-              <Text style={styles.sectionLabel}>DANH MỤC GIẤY TỜ BẮT BUỘC</Text>
-              <View style={styles.cardContainer}>
-                <View style={styles.docItemRow}>
-                  <View style={styles.docIconWrap}>
-                    <IconIdCard color="#0B1E42" size={18} />
-                  </View>
-                  <View style={styles.docTextCol}>
-                    <Text style={styles.docTitle}>Căn cước công dân gắn chip (CCCD)</Text>
-                    <Text style={styles.docMeta}>Số: 07920100**** · Cục CS QLHC cấp</Text>
-                  </View>
-                  <View style={styles.docVerifiedPill}>
-                    <Text style={styles.docVerifiedText}>✓ Đã duyệt</Text>
-                  </View>
-                </View>
-
-                <View style={styles.docItemRow}>
-                  <View style={styles.docIconWrap}>
-                    <IconLicense color="#0B1E42" size={18} />
-                  </View>
-                  <View style={styles.docTextCol}>
-                    <Text style={styles.docTitle}>Giấy phép lái xe Hạng C (GPLX)</Text>
-                    <Text style={styles.docMeta}>Số: 79015829**** · Giá trị đến 10/2030</Text>
-                  </View>
-                  <View style={styles.docVerifiedPill}>
-                    <Text style={styles.docVerifiedText}>✓ Hợp lệ</Text>
-                  </View>
-                </View>
-
-                <View style={styles.docItemRow}>
-                  <View style={styles.docIconWrap}>
-                    <IconSpeedTruck color="#0B1E42" size={18} />
-                  </View>
-                  <View style={styles.docTextCol}>
-                    <Text style={styles.docTitle}>Cà vẹt & Đăng kiểm xe tải 2.5T</Text>
-                    <Text style={styles.docMeta}>Biển số: 51C-889.24 · Hạn kiểm định 12/2026</Text>
-                  </View>
-                  <View style={styles.docVerifiedPill}>
-                    <Text style={styles.docVerifiedText}>✓ Còn hạn</Text>
-                  </View>
-                </View>
-
-                <View style={[styles.docItemRow, styles.docItemRowLast]}>
-                  <View style={styles.docIconWrap}>
-                    <IconInsuranceDoc color="#0B1E42" size={18} />
-                  </View>
-                  <View style={styles.docTextCol}>
-                    <Text style={styles.docTitle}>Bảo hiểm trách nhiệm dân sự bắt buộc</Text>
-                    <Text style={styles.docMeta}>Bảo hiểm Bảo Việt · Hạn đến 08/2027</Text>
-                  </View>
-                  <View style={styles.docVerifiedPill}>
-                    <Text style={styles.docVerifiedText}>✓ Đã nộp</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <Pressable
-              accessibilityLabel="Mở màn hình quản lý hồ sơ KYC"
-              accessibilityRole="button"
-              onPress={() => router.push('/kyc')}
-              style={({ pressed }) => [styles.editActionCard, pressed ? styles.pressed : null]}
-            >
-              <Text style={styles.editActionCardText}>Xem chi tiết & Cập nhật hồ sơ KYC ›</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {activeTab === 'settings' && (
-          <View style={styles.tabPane}>
-            {/* Connected Services */}
-            <View style={styles.sectionBlock}>
-              <Text style={styles.sectionLabel}>DỊCH VỤ VẬN HÀNH & TÀI CHÍNH</Text>
-              <View style={styles.cardContainer}>
-                <MenuRow
-                  icon={<IconWallet color="#0B1E42" size={18} />}
-                  label="Ví tài xế & Quyết toán"
-                  onPress={() => router.push('/wallet')}
-                  sublabel="Số dư khả dụng 1.450.000 ₫ · MB Bank"
-                />
-                <MenuRow
-                  icon={<IconOrders color="#0B1E42" size={18} />}
-                  label="Lịch sử chuyến xe"
-                  onPress={() => router.push('/history')}
-                  sublabel="Xem lại các chuyến đã hoàn tất"
-                />
-                <MenuRow
-                  icon={<IconTrophy color="#F59E0B" size={18} />}
-                  label="Báo cáo điểm hiệu suất"
-                  onPress={() => router.push('/performance')}
-                  sublabel="Điểm 4.8 ★ · Xếp hạng Vàng"
-                />
-                <MenuRow
-                  icon={<IconSecurityShield color="#10B981" size={18} />}
-                  label="Hồ sơ KYC & Pháp lý"
-                  onPress={() => router.push('/kyc')}
-                  sublabel="4/4 giấy tờ đã kiểm duyệt hợp lệ"
-                />
-                <MenuRow
-                  icon={<IconClock color="#475569" size={18} />}
-                  isLast
-                  label="Cài đặt chuông báo & GPS"
-                  onPress={() => router.push('/settings')}
-                  sublabel="Chuông to, Vietmap Nav"
-                />
-              </View>
-            </View>
-
-            {/* Emergency Hotline SOS 24/7 */}
-            <View style={styles.sosCard}>
-              <View style={styles.sosLeft}>
-                <View style={styles.sosIconWrap}>
-                  <IconSupport247 color="#DC2626" size={20} />
-                </View>
-                <View style={styles.sosTextCol}>
-                  <Text style={styles.sosTitle}>Đội cứu hộ khẩn cấp LEOPARD 24/7</Text>
-                  <Text style={styles.sosDesc}>Sự cố phương tiện & tai nạn trên đường</Text>
-                </View>
-              </View>
-              <Text style={styles.sosPhone}>1900-LEOPARD</Text>
-            </View>
-
-            {/* App Info & Logout */}
-            <View style={styles.appInfoRow}>
-              <Text style={styles.appVersionText}>
-                Phiên bản ứng dụng: {view.appVersion}
+            {/* Acceptance - Clean neutral dark text */}
+            <View style={styles.kpiCol}>
+              <Text style={styles.kpiValueMain}>
+                {acceptancePct.toFixed(1)}%
               </Text>
+              <Text style={styles.kpiLabelSub}>Chấp nhận</Text>
             </View>
 
-            <View style={styles.logoutWrapper}>
-              <Button
-                disabledLabel="Đăng xuất"
-                isLoading={view.isLoggingOut}
-                label="Đăng xuất tài khoản"
-                loadingLabel="Đang đăng xuất…"
-                onPress={onLogout}
-                variant="destructive"
-              />
+            <View style={styles.kpiDividerVertical} />
+
+            {/* Cancellation - Clean neutral dark text */}
+            <View style={styles.kpiCol}>
+              <Text style={styles.kpiValueMain}>
+                {cancellationPct.toFixed(1)}%
+              </Text>
+              <Text style={styles.kpiLabelSub}>Huỷ chuyến</Text>
             </View>
           </View>
-        )}
+        </Pressable>
+
+        {/* ── 3. Quick Bento Grid: Hoạt động & Tài chính (Monochrome Icons) ── */}
+        <View style={styles.bentoSection}>
+          <Text style={styles.sectionHeaderTitle}>Hoạt động & Tài chính</Text>
+
+          <View style={styles.bentoGridRow}>
+            {/* Tile 1: Ví tài xế */}
+            <Pressable
+              accessibilityLabel="Ví tài xế và rút tiền"
+              accessibilityRole="button"
+              onPress={() => router.push('/wallet')}
+              style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.bentoTopRow}>
+                <View style={styles.bentoIconBox}>
+                  <IconWallet color={driverPrimitives.colors.gray700} size={20} />
+                </View>
+                <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
+              </View>
+              <Text style={styles.bentoTileTitle}>Ví tài xế</Text>
+              <Text style={styles.bentoTileSub}>Số dư & rút tiền</Text>
+            </Pressable>
+
+            {/* Tile 2: Thu nhập */}
+            <Pressable
+              accessibilityLabel="Báo cáo thu nhập và thưởng"
+              accessibilityRole="button"
+              onPress={() => router.push('/earnings')}
+              style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.bentoTopRow}>
+                <View style={styles.bentoIconBox}>
+                  <IconEarnings color={driverPrimitives.colors.gray700} size={20} />
+                </View>
+                <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
+              </View>
+              <Text style={styles.bentoTileTitle}>Thu nhập & Thưởng</Text>
+              <Text style={styles.bentoTileSub}>Doanh thu & tiền cước</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.bentoGridRow}>
+            {/* Tile 3: Lịch nhận cuốc */}
+            <Pressable
+              accessibilityLabel="Bảng tin và lịch nhận cuốc"
+              accessibilityRole="button"
+              onPress={() => router.push('/board')}
+              style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.bentoTopRow}>
+                <View style={styles.bentoIconBox}>
+                  <IconRoute color={driverPrimitives.colors.gray700} size={20} />
+                </View>
+                <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
+              </View>
+              <Text style={styles.bentoTileTitle}>Lịch nhận cuốc</Text>
+              <Text style={styles.bentoTileSub}>Lịch trình & đơn mới</Text>
+            </Pressable>
+
+            {/* Tile 4: Hiệu suất */}
+            <Pressable
+              accessibilityLabel="Báo cáo hiệu suất tài xế"
+              accessibilityRole="button"
+              onPress={() => router.push('/performance')}
+              style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.bentoTopRow}>
+                <View style={styles.bentoIconBox}>
+                  <IconTrophy color={driverPrimitives.colors.gray700} size={20} />
+                </View>
+                <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
+              </View>
+              <Text style={styles.bentoTileTitle}>Hiệu suất tài xế</Text>
+              <Text style={styles.bentoTileSub}>Tỷ lệ nhận & huỷ chuyến</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* ── 4. Grouped Settings & Support (Apple Inset Grouped) ── */}
+        <View style={styles.menuGroupSection}>
+          <Text style={styles.sectionHeaderTitle}>Cài đặt & Hỗ trợ</Text>
+
+          <View style={styles.groupedMenuCard}>
+            {/* Hộp thư đến */}
+            <Pressable
+              accessibilityLabel="Hộp thư đến và tin nhắn"
+              accessibilityRole="button"
+              onPress={() => router.push('/chat')}
+              style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
+            >
+              <View style={styles.iconBox}>
+                <IconMessage color={driverPrimitives.colors.gray700} size={20} />
+                <View style={styles.notificationDot} />
+              </View>
+              <View style={styles.menuItemTextCol}>
+                <Text style={styles.menuItemTitle}>Hộp thư đến & Thông báo</Text>
+                <Text style={styles.menuItemSub}>Tin nhắn điều phối và thông báo hệ thống</Text>
+              </View>
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
+            </Pressable>
+
+            <View style={styles.menuItemSeparator} />
+
+            {/* Cài đặt ứng dụng */}
+            <Pressable
+              accessibilityLabel="Cài đặt ứng dụng"
+              accessibilityRole="button"
+              onPress={() => router.push('/settings')}
+              style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
+            >
+              <View style={styles.iconBox}>
+                <IconSettings color={driverPrimitives.colors.gray700} size={20} />
+              </View>
+              <View style={styles.menuItemTextCol}>
+                <Text style={styles.menuItemTitle}>Cài đặt & Pháp lý</Text>
+                <Text style={styles.menuItemSub}>Định vị GPS, thông tin ứng dụng & bảo mật</Text>
+              </View>
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* ── 5. App Version & Logout ── */}
+        <View style={styles.footerSection}>
+          <Text style={styles.versionLabel}>LEOPARD Driver · Phiên bản: {view.appVersion}</Text>
+
+          <View style={styles.logoutBtnWrap}>
+            <Button
+              disabledLabel="Đăng xuất"
+              isLoading={view.isLoggingOut}
+              label="Đăng xuất tài khoản"
+              loadingLabel="Đang đăng xuất…"
+              onPress={onLogout}
+              variant="destructive"
+            />
+          </View>
+        </View>
       </ScrollView>
     </ScreenScaffold>
-
-    <DriverBottomNavigation
-      activeTab="profile"
-      onNavigate={onNavigate ?? ((route) => router.push(route))}
-    />
-  </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screenContainer: {
-    flex: 1,
-    position: 'relative',
-  },
   scrollWrap: {
-    backgroundColor: leopardPalette.canvas,
+    backgroundColor: '#F8FAFC',
     flex: 1,
   },
   scrollContent: {
-    gap: spacing.md,
-    padding: spacing.md,
-    paddingBottom: 100,
+    gap: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    paddingBottom: 44,
+  },
+  headerRightCluster: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
+  headerBtn: {
+    alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  errorBody: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 16,
   },
 
-  // Executive Cockpit ID Card
+  /* Hero Driver Card */
   heroCard: {
-    backgroundColor: '#0F172A',
-    borderColor: '#334155',
-    borderRadius: 16,
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    elevation: 4,
-    padding: spacing.md,
-    shadowColor: '#0F172A',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-  },
-  heroTopLine: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  heroBrandChip: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderRadius: 6,
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  heroBrandText: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  heroKycBadge: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderRadius: 6,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  heroKycText: {
-    color: '#10B981',
-    fontSize: 11,
-    fontWeight: '700',
+    padding: 16,
+    ...driverPrimitives.shadows.sm,
   },
   heroMainRow: {
     alignItems: 'center',
@@ -569,424 +424,300 @@ const styles = StyleSheet.create({
   avatarContainer: {
     position: 'relative',
   },
-  avatarBox: {
-    alignItems: 'center',
-    backgroundColor: '#1E293B',
-    borderColor: '#F59E0B',
-    borderRadius: 36,
-    borderWidth: 2,
-    height: 72,
-    justifyContent: 'center',
-    width: 72,
-  },
-  avatarText: {
-    color: '#F8FAFC',
-    fontSize: 28,
-    fontWeight: '800',
-  },
   avatarImage: {
-    borderColor: '#F59E0B',
-    borderRadius: 36,
-    borderWidth: 2,
-    height: 72,
-    width: 72,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: 9999,
+    borderWidth: 1.5,
+    height: 56,
+    width: 56,
   },
-  onlineBadge: {
-    backgroundColor: '#10B981',
-    borderColor: '#0F172A',
-    borderRadius: 7,
-    borderWidth: 2,
-    bottom: 2,
-    height: 14,
-    position: 'absolute',
-    right: 2,
-    width: 14,
-  },
-  driverInfoCol: {
-    flex: 1,
-    gap: 3,
-  },
-  driverNameText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  idCodeChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#1E293B',
-    borderRadius: 4,
-    marginTop: 2,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  idCodeText: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  vehicleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 5,
-    marginTop: 4,
-  },
-  vehicleRowText: {
-    color: '#CBD5E1',
-    fontSize: 12.5,
-    fontWeight: '600',
-  },
-  editProfileBtn: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    gap: 4,
-    minHeight: 44,
-    marginTop: 2,
-  },
-  editProfileText: {
-    color: '#38BDF8',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  ratingValRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-  },
-  heroDivider: {
-    backgroundColor: '#334155',
-    height: 1,
-    marginVertical: 14,
-  },
-  heroMetricsStrip: {
+  avatarPlaceholder: {
     alignItems: 'center',
     backgroundColor: '#1E293B',
-    borderRadius: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 10,
-  },
-  metricItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  metricVal: {
-    color: '#F8FAFC',
-    fontSize: 14.5,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  metricValGold: {
-    color: '#F59E0B',
-  },
-  metricValGreen: {
-    color: '#10B981',
-  },
-  metricLbl: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  metricDivider: {
-    backgroundColor: '#334155',
-    height: 22,
-    width: 1,
-  },
-
-  // 3-Tab Segmented Selector
-  tabContainer: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 4,
-    padding: 4,
-  },
-  tabButton: {
-    alignItems: 'center',
-    borderRadius: 8,
-    flex: 1,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: 9999,
+    borderWidth: 1.5,
+    height: 56,
     justifyContent: 'center',
-    paddingVertical: 10,
+    width: 56,
   },
-  tabButtonActive: {
-    backgroundColor: colors.brand.background,
-    elevation: 2,
-    shadowColor: colors.brand.background,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  tabButtonText: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 12.5,
+  avatarInitial: {
+    color: '#FFFFFF',
+    fontSize: 22,
     fontWeight: '700',
   },
-  tabTextActive: {
-    color: '#FFFFFF',
+  driverInfoBlock: {
+    flex: 1,
+    gap: 4,
   },
-
-  // Tab Panes & Section Blocks
-  tabPane: {
-    gap: 14,
-  },
-  sectionBlock: {
+  driverNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
     gap: 6,
   },
-  sectionLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    marginLeft: 4,
+  driverNameText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
-  cardContainer: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  infoRow: {
+  verifiedCheckBadge: {
     alignItems: 'center',
-    borderBottomColor: leopardPalette.subtleDivider,
-    borderBottomWidth: 1,
+    backgroundColor: driverPrimitives.colors.blue600,
+    borderRadius: 9999,
+    height: 16,
+    justifyContent: 'center',
+    width: 16,
+  },
+  driverPhoneText: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 13,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
+  },
+  badgeRow: {
+    alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 2,
   },
-  infoRowLast: {
-    borderBottomWidth: 0,
-  },
-  infoRowIconChip: {
+  statusPill: {
     alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 9999,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  statusDotInner: {
+    backgroundColor: driverPrimitives.colors.green500,
+    borderRadius: 9999,
+    height: 6,
+    width: 6,
+  },
+  statusPillText: {
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  vehiclePill: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 9999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  vehiclePillText: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  editChevronButton: {
+    alignItems: 'center',
+    backgroundColor: driverPrimitives.colors.gray50,
+    borderRadius: 9999,
     height: 32,
     justifyContent: 'center',
     width: 32,
   },
-  infoRowLabel: {
-    color: leopardPalette.textMutedSlate,
-    flex: 1,
-    fontSize: 13.5,
+
+  /* KPI Card */
+  kpiCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    padding: 16,
+    ...driverPrimitives.shadows.sm,
+  },
+  kpiCardHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  kpiSectionTitle: {
+    color: driverPrimitives.colors.gray700,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  kpiDetailLink: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 3,
+  },
+  kpiDetailLinkText: {
+    color: driverPrimitives.colors.blue600,
+    fontSize: 12,
     fontWeight: '600',
   },
-  infoRowRight: {
+  kpiColumns: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    justifyContent: 'space-around',
   },
-  infoRowValue: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 13.5,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  editActionCard: {
-    alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderColor: colors.brand.border,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  editActionCardText: {
-    color: colors.brand.background,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-
-  // Compliance & Documents
-  complianceCard: {
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
-    borderRadius: radius.card,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    padding: 14,
-  },
-  complianceIconWrap: {
-    alignItems: 'center',
-    backgroundColor: '#D1FAE5',
-    borderRadius: 19,
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
-  },
-  complianceTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  complianceTitle: {
-    color: '#065F46',
-    fontSize: 13.5,
-    fontWeight: '700',
-  },
-  complianceDesc: {
-    color: '#047857',
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  docItemRow: {
-    alignItems: 'center',
-    borderBottomColor: leopardPalette.subtleDivider,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-  },
-  docItemRowLast: {
-    borderBottomWidth: 0,
-  },
-  docIconWrap: {
-    alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: 8,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
-  },
-  docTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  docTitle: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  docMeta: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
-  },
-  docVerifiedPill: {
-    backgroundColor: '#D1FAE5',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  docVerifiedText: {
-    color: '#059669',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-
-  // Connected Services Menu
-  menuRow: {
-    alignItems: 'center',
-    borderBottomColor: leopardPalette.subtleDivider,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-  },
-  menuRowLast: {
-    borderBottomWidth: 0,
-  },
-  menuLeft: {
+  kpiCol: {
     alignItems: 'center',
     flex: 1,
-    flexDirection: 'row',
-    gap: 12,
+    gap: 3,
   },
-  menuIconWrap: {
+  kpiValueRow: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.bgMuted,
-    borderRadius: 8,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
+    flexDirection: 'row',
+    gap: 4,
   },
-  menuTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  menuLabel: {
-    color: leopardPalette.textSlateDark,
-    fontSize: 13.5,
-    fontWeight: '700',
-  },
-  menuSublabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
-  },
-  menuChevron: {
-    color: leopardPalette.textSubtle,
+  kpiValueMain: {
+    color: driverPrimitives.colors.gray900,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.3,
+  },
+  kpiLabelSub: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
+    fontWeight: '500',
+  },
+  kpiDividerVertical: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 30,
+    width: 1,
   },
 
-  // Emergency SOS Card
-  sosCard: {
-    alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-    borderRadius: radius.card,
+  /* Bento 2x2 Hub - Clean Monochrome */
+  bentoSection: {
+    gap: 8,
+  },
+  bentoGridRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  bentoTile: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
     borderWidth: 1,
+    flex: 1,
+    gap: 4,
+    padding: 14,
+    ...driverPrimitives.shadows.sm,
+  },
+  bentoTopRow: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 14,
+    marginBottom: 4,
   },
-  sosLeft: {
+  bentoIconBox: {
     alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    gap: 10,
-  },
-  sosIconWrap: {
-    alignItems: 'center',
-    backgroundColor: '#FEE2E2',
-    borderRadius: 18,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    borderWidth: 1,
     height: 36,
     justifyContent: 'center',
     width: 36,
   },
-  sosTextCol: {
+  bentoTileTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  bentoTileSub: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
+    fontWeight: '400',
+  },
+
+  /* Grouped Menu */
+  menuGroupSection: {
+    gap: 8,
+  },
+  sectionHeaderTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    paddingHorizontal: 4,
+  },
+  groupedMenuCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...driverPrimitives.shadows.sm,
+  },
+  menuItemRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  menuItemPressed: {
+    backgroundColor: driverPrimitives.colors.gray50,
+  },
+  iconBox: {
+    alignItems: 'center',
+    height: 28,
+    justifyContent: 'center',
+    position: 'relative',
+    width: 28,
+  },
+  notificationDot: {
+    backgroundColor: driverPrimitives.colors.red500,
+    borderColor: driverPrimitives.colors.white,
+    borderRadius: 9999,
+    borderWidth: 1.5,
+    height: 8,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 8,
+  },
+  menuItemTextCol: {
     flex: 1,
     gap: 2,
   },
-  sosTitle: {
-    color: '#991B1B',
-    fontSize: 13,
-    fontWeight: '700',
+  menuItemTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14.5,
+    fontWeight: '600',
+    letterSpacing: -0.2,
   },
-  sosDesc: {
-    color: '#B91C1C',
-    fontSize: 11,
+  menuItemSub: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 11.5,
+    fontWeight: '400',
   },
-  sosPhone: {
-    color: '#DC2626',
-    fontSize: 13,
-    fontWeight: '800',
-    marginLeft: 8,
+  menuItemSeparator: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    marginLeft: 56,
   },
 
-  // Footer App Info & Actions
-  appInfoRow: {
+  /* Footer */
+  footerSection: {
     alignItems: 'center',
-    paddingVertical: 4,
+    gap: 12,
+    marginTop: 8,
   },
-  appVersionText: {
-    color: leopardPalette.textSubtle,
+  versionLabel: {
+    color: driverPrimitives.colors.gray400,
     fontSize: 12,
+    fontWeight: '500',
   },
-  logoutWrapper: {
-    marginTop: 4,
+  logoutBtnWrap: {
+    alignSelf: 'stretch',
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.85,
   },
 });

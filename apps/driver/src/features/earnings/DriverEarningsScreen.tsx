@@ -1,121 +1,86 @@
 // apps/driver/src/features/earnings/DriverEarningsScreen.tsx
-import { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
-  AppText,
-  colors,
-  layout,
-  radius,
-  spacing,
+  driverPrimitives,
+  iosContinuousCurve,
+  IconCheck,
   IconChevronRight,
+  IconEarnings,
+  IconSpeedTruck,
+  IconSupport247,
+  IconWallet,
+  ScreenScaffold,
   ScreenState,
   SkeletonCard,
 } from '@leopard/mobile-core';
-import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
+import { FinanceBottomBar } from '../finance/FinanceBottomBar';
 
 export type DriverEarningsScreenProps = Readonly<{
   lifetimeDeliveredVnd: number;
   availableBalanceVnd: number;
   deliveredOrderCount: number;
   totalOrderCount: number;
+  todayEarningsVnd: number;
+  todayJobCount: number;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
   onNavigate?: (route: string) => void;
 }>;
 
-/** Scroll distance over which the large title hands off to the inline nav-bar title. */
-const TITLE_COLLAPSE_DISTANCE = 44;
-
-/**
- * Every card on this screen sits on a pale canvas that's barely lighter than
- * a muted surface — a border alone reads as washed out here. A soft shadow
- * (not zero, not heavy) is what actually separates card from page.
- */
-const cardShadow = {
-  shadowColor: colors.neutral.text,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.08,
-  shadowRadius: 6,
-  elevation: 2,
-} as const;
-
 function formatCurrency(val: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 }
 
 export function DriverEarningsScreen({
-  lifetimeDeliveredVnd,
   availableBalanceVnd,
   deliveredOrderCount,
-  totalOrderCount,
-  isLoading,
   isError,
-  onRetry,
+  isLoading,
+  lifetimeDeliveredVnd,
   onNavigate,
+  onRetry,
+  todayEarningsVnd,
+  todayJobCount,
+  totalOrderCount,
 }: DriverEarningsScreenProps) {
   const router = useRouter();
-  const completionRate = totalOrderCount > 0 ? Math.round((deliveredOrderCount / totalOrderCount) * 100) : 0;
-  const scrollY = useRef(new Animated.Value(0)).current;
-
-  const onScroll = useRef(
-    Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-      useNativeDriver: true,
-    }),
-  ).current;
-
-  const barTitleOpacity = scrollY.interpolate({
-    inputRange: [TITLE_COLLAPSE_DISTANCE - 16, TITLE_COLLAPSE_DISTANCE],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-  const barBorderOpacity = scrollY.interpolate({
-    inputRange: [0, TITLE_COLLAPSE_DISTANCE],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
+  const completionRate =
+    totalOrderCount > 0 ? Math.round((deliveredOrderCount / totalOrderCount) * 100) : 0;
 
   const handleNavigate = useCallback(
     (route: string) => (onNavigate ? onNavigate(route) : router.push(route as never)),
     [onNavigate, router],
   );
 
-  // The API only reports a lifetime total today — no per-period breakdown yet.
-  // These cards mirror the reference app's carousel shape without inventing
-  // day/week/month numbers we don't have.
-  const periodCards = [
-    { key: 'today', title: 'Thu nhập hôm nay', jobs: 0, amount: 0 },
-    { key: 'week', title: 'Thu nhập tuần này', jobs: 0, amount: 0 },
-    { key: 'month', title: 'Thu nhập tháng này', jobs: 0, amount: 0 },
-  ];
-
   return (
-    <View style={styles.screenRoot}>
-      <View style={styles.navBar} testID="driver-earnings-nav-bar">
-        <Animated.View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={[styles.navBarTitle, { opacity: barTitleOpacity }]}
+    <ScreenScaffold
+      headerRight={
+        <Pressable
+          accessibilityLabel="Trợ giúp"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => handleNavigate('/chat')}
+          style={styles.headerActionBtn}
         >
-          <AppText numberOfLines={1} style={styles.navBarTitleText} variant="headline">
-            Thu nhập
-          </AppText>
-        </Animated.View>
-        <Animated.View style={[styles.navBarBorder, { opacity: barBorderOpacity }]} />
-      </View>
-
-      <Animated.ScrollView
-        contentContainerStyle={styles.content}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
+          <IconSupport247 color={driverPrimitives.colors.gray700} size={20} />
+        </Pressable>
+      }
+      headerTone="plain"
+      onBack={() => (router.canGoBack() ? router.back() : handleNavigate('/orders'))}
+      stickyFooter={
+        <FinanceBottomBar activeTab="earnings" onNavigate={handleNavigate} />
+      }
+      title="Thu nhập"
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        style={styles.scrollWrap}
       >
-        <AppText accessibilityRole="header" style={styles.pageTitle} variant="largeTitle">
-          Thu nhập
-        </AppText>
-
         {isLoading ? (
           <View style={styles.sectionGap}>
             <SkeletonCard />
@@ -127,213 +92,303 @@ export function DriverEarningsScreen({
           </View>
         ) : (
           <>
-            {/* Period cards: a horizontal carousel, one real value today (lifetime), rest 0 until the API reports per-period totals */}
-            <ScrollView
-              contentContainerStyle={styles.periodRow}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.periodScroll}
-            >
-              {periodCards.map((card) => (
-                <View key={card.key} style={styles.periodCard} testID={`kpi-period-${card.key}`}>
-                  <View style={styles.periodHeaderRow}>
-                    <AppText tone="secondary" variant="callout">
-                      {card.title}
-                    </AppText>
-                    <AppText tone="subtle" variant="footnote">
-                      {card.jobs} chuyến
-                    </AppText>
+            {/* ── 1. Today Hero Bento Card ── */}
+            <View style={styles.heroCard} testID="kpi-period-today">
+              <View style={styles.heroHeaderRow}>
+                <View style={styles.heroTitleGroup}>
+                  <View style={styles.heroIconBox}>
+                    <IconEarnings color={driverPrimitives.colors.gray700} size={18} />
                   </View>
-                  <AppText numeric style={styles.periodAmount} variant="title1">
-                    {formatCurrency(card.amount)}
-                  </AppText>
-                  <Pressable
-                    accessibilityLabel={`Xem chi tiết ${card.title}`}
-                    accessibilityRole="button"
-                    onPress={() => handleNavigate('/history')}
-                  >
-                    <AppText style={styles.detailLinkText} variant="footnote">
-                      Xem chi tiết
-                    </AppText>
-                  </Pressable>
+                  <Text style={styles.heroTitle}>Thu nhập hôm nay</Text>
                 </View>
-              ))}
-            </ScrollView>
+                <View style={styles.jobsBadge}>
+                  <Text style={styles.jobsBadgeText}>{todayJobCount} Jobs</Text>
+                </View>
+              </View>
 
-            {/* Real totals — flat rows, not another set of bordered cards */}
-            <View style={styles.rowGroup} testID="kpi-net-payout">
-              <Pressable
-                accessibilityLabel="Tổng thu nhập trọn đời"
-                onPress={() => handleNavigate('/history')}
-                style={styles.row}
-              >
-                <View>
-                  <AppText variant="body">Tổng thu nhập (trọn đời)</AppText>
-                  <AppText numeric style={styles.rowValue} variant="title3">
-                    {formatCurrency(lifetimeDeliveredVnd)}
-                  </AppText>
-                </View>
-                <IconChevronRight color={colors.neutral.subtleText} size={18} />
-              </Pressable>
+              <Text style={styles.heroAmount}>
+                {todayEarningsVnd === 0 ? '0 ₫' : formatCurrency(todayEarningsVnd)}
+              </Text>
+
+              <View style={styles.heroFooterRow}>
+                <Text style={styles.heroScopeNote}>Tính từ danh sách đã tải</Text>
+                <Pressable
+                  accessibilityLabel="Xem chi tiết Thu nhập hôm nay"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => handleNavigate('/history')}
+                >
+                  <Text style={styles.detailLinkText}>Xem chi tiết →</Text>
+                </Pressable>
+              </View>
             </View>
 
-            <View style={styles.rowGroup} testID="kpi-completed-trips">
-              <Pressable
-                accessibilityLabel="Cuốc xe đã hoàn tất"
-                onPress={() => handleNavigate('/history')}
-                style={styles.row}
-              >
-                <View>
-                  <AppText variant="body">Cuốc xe đã hoàn tất</AppText>
-                  <AppText numeric style={styles.rowValue} variant="title3">
-                    {deliveredOrderCount} cuốc xe
-                  </AppText>
-                </View>
-                <IconChevronRight color={colors.neutral.subtleText} size={18} />
-              </Pressable>
+            {/* ── 2. Operational KPIs (Apple Inset Grouped) ── */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionHeading}>Hiệu suất giao hàng</Text>
 
-              <View style={styles.rowDivider} />
+              <View style={styles.groupedCard} testID="kpi-completed-trips">
+                {/* Row 1: Cuốc xe đã hoàn tất */}
+                <Pressable
+                  accessibilityLabel="Xem chi tiết cuốc xe đã hoàn tất"
+                  accessibilityRole="button"
+                  onPress={() => handleNavigate('/history')}
+                  style={({ pressed }) => [styles.itemRow, pressed ? styles.itemPressed : null]}
+                >
+                  <View style={styles.itemLeft}>
+                    <View style={styles.itemIconBox}>
+                      <IconSpeedTruck color={driverPrimitives.colors.gray500} size={20} />
+                    </View>
+                    <Text style={styles.itemTitle}>Cuốc xe đã hoàn tất</Text>
+                  </View>
+                  <View style={styles.itemRight}>
+                    <Text style={styles.itemValue}>{deliveredOrderCount} cuốc xe</Text>
+                    <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
+                  </View>
+                </Pressable>
 
-              <Pressable
-                accessibilityLabel="Tỷ lệ giao thành công"
-                style={styles.row}
-              >
-                <View>
-                  <AppText variant="body">Tỷ lệ giao thành công</AppText>
-                  <AppText numeric style={styles.rowValue} variant="title3">
-                    {completionRate}%
-                  </AppText>
+                <View style={styles.itemDivider} />
+
+                {/* Row 2: Tỷ lệ giao thành công */}
+                <View style={styles.itemRow}>
+                  <View style={styles.itemLeft}>
+                    <View style={styles.itemIconBox}>
+                      <IconCheck color={driverPrimitives.colors.gray500} size={20} strokeWidth={2.5} />
+                    </View>
+                    <Text style={styles.itemTitle}>Tỷ lệ giao thành công</Text>
+                  </View>
+                  <View style={styles.itemRight}>
+                    <Text style={styles.itemValue}>{completionRate}%</Text>
+                  </View>
                 </View>
-              </Pressable>
+              </View>
             </View>
 
-            <View style={styles.rowGroup}>
-              <Pressable
-                accessibilityLabel="Số dư khả dụng để rút"
-                onPress={() => handleNavigate('/wallet')}
-                style={styles.row}
-              >
-                <View>
-                  <AppText variant="body">Số dư khả dụng để rút</AppText>
-                  <AppText numeric style={styles.rowValue} tone="success" variant="title3">
-                    {formatCurrency(availableBalanceVnd)}
-                  </AppText>
-                  <AppText tone="subtle" variant="caption2">
-                    Tự động cập nhật
-                  </AppText>
-                </View>
-                <IconChevronRight color={colors.neutral.subtleText} size={18} />
-              </Pressable>
+            {/* ── 3. Lifetime & Available Financials (Apple Inset Grouped) ── */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionHeading}>Thống kê tài chính</Text>
+
+              <View style={styles.groupedCard} testID="kpi-net-payout">
+                {/* Row 1: Tổng thu nhập trọn đời */}
+                <Pressable
+                  accessibilityLabel="Xem chi tiết tổng thu nhập trọn đời"
+                  accessibilityRole="button"
+                  onPress={() => handleNavigate('/history')}
+                  style={({ pressed }) => [styles.itemRow, pressed ? styles.itemPressed : null]}
+                >
+                  <View style={styles.itemLeft}>
+                    <View style={styles.itemIconBox}>
+                      <IconEarnings color={driverPrimitives.colors.gray500} size={20} />
+                    </View>
+                    <Text style={styles.itemTitle}>Tổng thu nhập (trọn đời)</Text>
+                  </View>
+                  <View style={styles.itemRight}>
+                    <Text style={styles.itemValue}>{formatCurrency(lifetimeDeliveredVnd)}</Text>
+                    <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
+                  </View>
+                </Pressable>
+
+                <View style={styles.itemDivider} />
+
+                {/* Row 2: Số dư khả dụng để rút */}
+                <Pressable
+                  accessibilityLabel="Xem ví và rút tiền"
+                  accessibilityRole="button"
+                  onPress={() => handleNavigate('/wallet')}
+                  style={({ pressed }) => [styles.itemRow, pressed ? styles.itemPressed : null]}
+                >
+                  <View style={styles.itemLeft}>
+                    <View style={styles.itemIconBox}>
+                      <IconWallet color={driverPrimitives.colors.gray500} size={20} />
+                    </View>
+                    <View style={styles.itemTitleCol}>
+                      <Text style={styles.itemTitle}>Số dư khả dụng để rút</Text>
+                      <Text style={styles.itemSub}>Tự động cập nhật</Text>
+                    </View>
+                  </View>
+                  <View style={styles.itemRight}>
+                    <Text style={styles.itemValue}>{formatCurrency(availableBalanceVnd)}</Text>
+                    <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
+                  </View>
+                </Pressable>
+              </View>
             </View>
           </>
         )}
-      </Animated.ScrollView>
-
-      <DriverBottomNavigation activeTab="earnings" onNavigate={handleNavigate} />
-    </View>
+      </ScrollView>
+    </ScreenScaffold>
   );
 }
 
-const NAV_BAR_HEIGHT = 44;
-const PERIOD_CARD_WIDTH = 300;
-
 const styles = StyleSheet.create({
-  screenRoot: {
-    backgroundColor: colors.neutral.canvas,
+  headerActionBtn: {
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  scrollWrap: {
+    backgroundColor: '#F8FAFC',
     flex: 1,
   },
-  navBar: {
-    alignItems: 'center',
-    height: NAV_BAR_HEIGHT,
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  navBarTitle: {
-    maxWidth: '70%',
-  },
-  navBarTitleText: {
-    color: colors.neutral.titleText,
-    textAlign: 'center',
-  },
-  navBarBorder: {
-    backgroundColor: colors.neutral.border,
-    bottom: 0,
-    height: StyleSheet.hairlineWidth,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-  },
-  content: {
-    alignSelf: 'center',
-    gap: spacing.md,
-    maxWidth: layout.contentMaxWidth,
-    paddingBottom: layout.bottomNavClearance,
-    width: '100%',
-  },
-  pageTitle: {
-    color: colors.neutral.titleText,
-    paddingHorizontal: spacing.md,
+  scrollContent: {
+    gap: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    paddingBottom: 48,
   },
   sectionGap: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
+    gap: 12,
   },
   boundaryBox: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 12,
   },
 
-  periodScroll: {
-    flexGrow: 0,
-  },
-  periodRow: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  periodCard: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.border,
-    borderRadius: radius.card,
+  /* Hero Card */
+  heroCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.md,
-    width: PERIOD_CARD_WIDTH,
-    ...cardShadow,
+    gap: 12,
+    padding: 16,
+    ...driverPrimitives.shadows.sm,
   },
-  periodHeaderRow: {
+  heroHeaderRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  periodAmount: {
-    color: colors.neutral.titleText,
+  heroTitleGroup: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  heroIconBox: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  heroTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14.5,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  jobsBadge: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    borderRadius: 9999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  jobsBadgeText: {
+    color: '#475569',
+    fontSize: 11.5,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  heroAmount: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 34,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.5,
+  },
+  heroFooterRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 4,
+  },
+  heroScopeNote: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 12,
   },
   detailLinkText: {
-    color: colors.brand.blue,
+    color: driverPrimitives.colors.blue500,
+    fontSize: 13,
     fontWeight: '600',
   },
 
-  rowGroup: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.border,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    marginHorizontal: spacing.md,
-    overflow: 'hidden',
-    ...cardShadow,
+  /* Sections */
+  sectionBlock: {
+    gap: 8,
   },
-  row: {
+  sectionHeading: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    paddingHorizontal: 4,
+  },
+  groupedCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...driverPrimitives.shadows.sm,
+  },
+  itemRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: spacing.md,
+    minHeight: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  rowDivider: {
-    backgroundColor: colors.neutral.rowDivider,
-    height: StyleSheet.hairlineWidth,
-    marginHorizontal: spacing.md,
+  itemPressed: {
+    backgroundColor: driverPrimitives.colors.gray50,
   },
-  rowValue: {
-    marginTop: spacing.xxs,
+  itemLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    flex: 1,
+  },
+  itemIconBox: {
+    alignItems: 'center',
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+  itemTitleCol: {
+    flex: 1,
+    gap: 2,
+  },
+  itemTitle: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14.5,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  itemSub: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 11.5,
+  },
+  itemRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  itemValue: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 15,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  itemDivider: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    marginLeft: 52,
   },
 });

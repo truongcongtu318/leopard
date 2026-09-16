@@ -1,12 +1,12 @@
 import type {
   DriverAvailability,
-  FleetMemberStatus,
   OrderStatus,
   PaymentStatus,
   UserStatus,
 } from '@leopard/ui';
 
 import type {
+  FleetMemberStatus,
   AdminCommandKind,
   AdminCommandView,
   AdminListFilters,
@@ -298,8 +298,8 @@ export function parseAdminListFilters(
   });
 }
 
-function append(params: URLSearchParams, key: string, value: string, fallback = ''): void {
-  if (value !== fallback) params.set(key, value);
+function append(params: URLSearchParams, key: string, value?: string, fallback = ''): void {
+  if (value !== undefined && value !== fallback) params.set(key, value);
 }
 
 function allowedPreviewScenario(

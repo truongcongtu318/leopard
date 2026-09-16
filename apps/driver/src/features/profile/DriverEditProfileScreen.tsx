@@ -11,15 +11,28 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, leopardPalette, radius, spacing, typeScale, Button, ScreenScaffold, IconCamera, IconCheck, IconClock, IconIdCard, IconPhone, IconSecurityShield, IconSpeedTruck, IconSupport247, IconUser, IconWarningShield, iconSize } from '@leopard/mobile-core';
+import {
+  driverPrimitives,
+  iosContinuousCurve,
+  Button,
+  ScreenScaffold,
+  IconCamera,
+  IconCheck,
+  IconIdCard,
+  IconPhone,
+  IconSecurityShield,
+  IconSpeedTruck,
+  IconMessage,
+  IconUser,
+  iconSize,
+} from '@leopard/mobile-core';
+import { formatPhoneNumber } from './ProfileScreen';
 
 export type DriverEditProfileScreenProps = Readonly<{
   initialName: string;
   initialEmail: string;
-  phone?: string;
+  phone?: string | null;
   vehicleLabel?: string | null;
-  fleetLabel?: string | null;
-  driverCode?: string;
   avatarUrl: string | null;
   isSaving: boolean;
   errorMessage?: string;
@@ -30,21 +43,18 @@ export type DriverEditProfileScreenProps = Readonly<{
 
 export function DriverEditProfileScreen({
   avatarUrl,
-  driverCode = 'DRV-88924',
   errorMessage,
-  fleetLabel = 'Fleet Tân Bình (Pilot)',
   initialEmail,
   initialName,
   isSaving,
   onBack,
   onPickAvatar,
   onSave,
-  phone = '0987 *** 892',
-  vehicleLabel = '51C-889.24 · Xe tải 2.5T',
+  phone = null,
+  vehicleLabel = null,
 }: DriverEditProfileScreenProps) {
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
-  const [emergencyPhone, setEmergencyPhone] = useState('0909 113 115');
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
 
@@ -128,20 +138,21 @@ export function DriverEditProfileScreen({
     }
   };
 
+  const displayPhone = phone ? (formatPhoneNumber(phone) || phone) : '—';
+  const displayVehicle = vehicleLabel ? vehicleLabel : '—';
+
   return (
     <ScreenScaffold
       headerTone="plain"
       onBack={onBack}
       stickyFooter={
-        <View style={styles.footerContainer}>
-          <Button
-            disabledLabel="Lưu thông tin hồ sơ"
-            isLoading={isSaving}
-            label="Lưu thông tin hồ sơ"
-            loadingLabel="Đang lưu thay đổi…"
-            onPress={handleSave}
-          />
-        </View>
+        <Button
+          disabledLabel="Lưu thông tin hồ sơ"
+          isLoading={isSaving}
+          label="Lưu thông tin hồ sơ"
+          loadingLabel="Đang lưu thay đổi…"
+          onPress={handleSave}
+        />
       }
       title="Chỉnh sửa hồ sơ"
     >
@@ -151,49 +162,61 @@ export function DriverEditProfileScreen({
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* 1. Avatar Studio Section */}
-        <View style={styles.avatarStudioCard}>
+        {/* ── 1. Avatar Studio Hero ── */}
+        <View style={styles.avatarHeroContainer}>
           <View style={styles.avatarWrapper}>
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-            ) : (
+            ) : name.trim() ? (
               <View style={styles.avatarPlaceholder}>
                 <Text style={styles.avatarInitial}>
-                  {(name || 'T').charAt(0).toUpperCase()}
+                  {name.trim().charAt(0).toUpperCase()}
                 </Text>
               </View>
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <IconUser color="#FFFFFF" size={38} />
+              </View>
             )}
-            <View style={styles.cameraIconPill}>
-              <IconCamera color="#FFFFFF" size={16} />
-            </View>
+
+            <Pressable
+              accessibilityLabel="Chụp hoặc đổi ảnh đại diện"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={handleTakePhoto}
+              style={styles.cameraBadgePill}
+            >
+              <IconCamera color="#FFFFFF" size={13} />
+            </Pressable>
           </View>
 
+          {/* Action Buttons */}
           <View style={styles.avatarActionRow}>
             <Pressable
-              accessibilityLabel="Chụp ảnh chân dung"
+              accessibilityLabel="Chụp ảnh mới"
               accessibilityRole="button"
               onPress={handleTakePhoto}
-              style={({ pressed }) => [styles.avatarActionBtn, pressed ? styles.pressed : null]}
+              style={({ pressed }) => [styles.avatarActionPill, pressed ? styles.pressed : null]}
             >
-              <IconCamera color={colors.brand.background} size={15} />
-              <Text style={styles.avatarActionBtnText}>Chụp ảnh mới</Text>
+              <IconCamera color={driverPrimitives.colors.gray700} size={15} />
+              <Text style={styles.avatarActionText}>Chụp ảnh mới</Text>
             </Pressable>
 
             <Pressable
-              accessibilityLabel="Chọn ảnh từ thư viện"
+              accessibilityLabel="Chọn từ thư viện"
               accessibilityRole="button"
               onPress={handlePickFromLibrary}
-              style={({ pressed }) => [styles.avatarActionBtn, pressed ? styles.pressed : null]}
+              style={({ pressed }) => [styles.avatarActionPill, pressed ? styles.pressed : null]}
             >
-              <IconIdCard color={colors.brand.background} size={15} />
-              <Text style={styles.avatarActionBtnText}>Chọn từ thư viện</Text>
+              <IconIdCard color={driverPrimitives.colors.gray700} size={15} />
+              <Text style={styles.avatarActionText}>Chọn từ thư viện</Text>
             </Pressable>
           </View>
 
-          {/* Avatar Guideline Box */}
+          {/* Guideline Card */}
           <View style={styles.guidelineCard}>
             <View style={styles.guidelineHeader}>
-              <IconSecurityShield color="#059669" size={15} />
+              <IconSecurityShield color={driverPrimitives.colors.green600} size={14} />
               <Text style={styles.guidelineTitle}>Tiêu chuẩn ảnh nhận diện đối tác</Text>
             </View>
             <Text style={styles.guidelineText}>
@@ -208,14 +231,14 @@ export function DriverEditProfileScreen({
           </View>
         </View>
 
-        {/* 2. Editable Information Section */}
+        {/* ── 2. Editable Form Section (Apple Inset Grouped) ── */}
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>THÔNG TIN LIÊN HỆ & HIỂN THỊ</Text>
           <View style={styles.card}>
             {/* Field: Full Name */}
             <View style={styles.fieldRow}>
               <View style={styles.fieldIconWrap}>
-                <IconUser color={colors.brand.background} size={18} />
+                <IconUser color={driverPrimitives.colors.gray400} size={18} />
               </View>
               <View style={styles.fieldInputCol}>
                 <Text style={styles.fieldLabel}>Họ và tên tài xế</Text>
@@ -228,7 +251,7 @@ export function DriverEditProfileScreen({
                     if (nameError) setNameError(null);
                   }}
                   placeholder="Nhập họ và tên đầy đủ"
-                  placeholderTextColor={leopardPalette.textSubtle}
+                  placeholderTextColor={driverPrimitives.colors.gray400}
                   style={styles.textInput}
                   value={name}
                 />
@@ -241,7 +264,7 @@ export function DriverEditProfileScreen({
             {/* Field: Email */}
             <View style={styles.fieldRow}>
               <View style={styles.fieldIconWrap}>
-                <IconSupport247 color={colors.brand.background} size={18} />
+                <IconMessage color={driverPrimitives.colors.gray400} size={18} />
               </View>
               <View style={styles.fieldInputCol}>
                 <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
@@ -255,36 +278,13 @@ export function DriverEditProfileScreen({
                     if (emailError) setEmailError(null);
                   }}
                   placeholder="email@example.com (nhận sao kê & hóa đơn)"
-                  placeholderTextColor={leopardPalette.textSubtle}
+                  placeholderTextColor={driverPrimitives.colors.gray400}
                   style={styles.textInput}
                   value={email}
                 />
               </View>
             </View>
             {emailError && <Text style={styles.errorTextRow}>{emailError}</Text>}
-
-            <View style={styles.rowDivider} />
-
-            {/* Field: Emergency Phone */}
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconPhone color={colors.brand.background} size={18} />
-              </View>
-              <View style={styles.fieldInputCol}>
-                <Text style={styles.fieldLabel}>Số điện thoại liên hệ khẩn cấp</Text>
-                <TextInput
-                  accessibilityLabel="Nhập số điện thoại liên hệ khẩn cấp"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="phone-pad"
-                  onChangeText={setEmergencyPhone}
-                  placeholder="09xx xxx xxx (Người thân)"
-                  placeholderTextColor={leopardPalette.textSubtle}
-                  style={styles.textInput}
-                  value={emergencyPhone}
-                />
-              </View>
-            </View>
           </View>
 
           {errorMessage ? (
@@ -294,102 +294,37 @@ export function DriverEditProfileScreen({
           ) : null}
         </View>
 
-        {/* 3. Protected Identity Section (Read-Only) */}
+        {/* ── 3. Protected Read-Only Identity Section ── */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionLabel}>ĐỊNH DANH BUỒNG LÁI & ĐỘI XE (FLEET)</Text>
+          <Text style={styles.sectionLabel}>THÔNG TIN ĐỊNH DANH (CHỈ ĐỌC)</Text>
           <View style={styles.card}>
-            {/* Registered Phone */}
+            {/* Phone */}
             <View style={styles.readonlyRow}>
               <View style={styles.fieldIconWrap}>
-                <IconPhone color="#64748B" size={18} />
+                <IconPhone color={driverPrimitives.colors.gray400} size={18} />
               </View>
               <View style={styles.readonlyTextCol}>
                 <Text style={styles.readonlyLabel}>Số điện thoại đăng ký</Text>
-                <Text style={styles.readonlyValue}>{phone}</Text>
+                <Text style={styles.readonlyValue}>{displayPhone}</Text>
               </View>
               <View style={styles.verifiedBadge}>
-                <IconCheck color="#059669" size={iconSize.xs} />
+                <IconCheck color={driverPrimitives.colors.green600} size={iconSize.xs} />
                 <Text style={styles.verifiedBadgeText}>Xác thực OTP</Text>
               </View>
             </View>
 
             <View style={styles.rowDivider} />
 
-            {/* Driver Code */}
+            {/* Vehicle */}
             <View style={styles.readonlyRow}>
               <View style={styles.fieldIconWrap}>
-                <IconIdCard color="#64748B" size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
-                <Text style={styles.readonlyLabel}>Mã số tài xế đối tác</Text>
-                <Text style={styles.readonlyValue}>{driverCode}</Text>
-              </View>
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* Assigned Vehicle */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconSpeedTruck color="#64748B" size={18} />
+                <IconSpeedTruck color={driverPrimitives.colors.gray400} size={18} />
               </View>
               <View style={styles.readonlyTextCol}>
                 <Text style={styles.readonlyLabel}>Phương tiện phân công</Text>
-                <Text style={styles.readonlyValue}>{vehicleLabel}</Text>
+                <Text style={styles.readonlyValue}>{displayVehicle}</Text>
               </View>
             </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* Fleet Name */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconClock color="#64748B" size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
-                <Text style={styles.readonlyLabel}>Đội xe chủ quản</Text>
-                <Text style={styles.readonlyValue}>{fleetLabel}</Text>
-              </View>
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* Fleet Owner Support Contact */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconSupport247 color="#64748B" size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
-                <Text style={styles.readonlyLabel}>Hotline hỗ trợ đội xe (Fleet Owner)</Text>
-                <Text style={styles.readonlyValue}>0912 345 678 (Chủ xe Tân Bình)</Text>
-              </View>
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* KYC Status */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
-                <IconSecurityShield color="#059669" size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
-                <Text style={styles.readonlyLabel}>Hồ sơ pháp lý vận tải</Text>
-                <Text style={styles.readonlyValue}>4/4 Giấy tờ kiểm duyệt</Text>
-              </View>
-              <View style={styles.verifiedBadge}>
-                <IconCheck color="#059669" size={iconSize.xs} />
-                <Text style={styles.verifiedBadgeText}>Đã duyệt</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Security Notice Box */}
-          <View style={styles.securityNoticeCard}>
-            <IconWarningShield color="#D97706" size={18} />
-            <Text style={styles.securityNoticeText}>
-              Các thông tin định danh (SĐT, biển số xe, đội xe) được khóa để đảm bảo an toàn pháp
-              lý vận tải. Để cập nhật, vui lòng liên hệ quản lý Fleet hoặc Hotline 1900-LEOPARD.
-            </Text>
           </View>
         </View>
       </ScrollView>
@@ -399,99 +334,93 @@ export function DriverEditProfileScreen({
 
 const styles = StyleSheet.create({
   scrollWrap: {
-    backgroundColor: leopardPalette.canvas,
+    backgroundColor: '#F8FAFC',
     flex: 1,
   },
   scrollContent: {
-    gap: spacing.md,
-    padding: spacing.md,
-    paddingBottom: spacing.xl * 2,
-  },
-  footerContainer: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderTopColor: leopardPalette.cardBorder,
-    borderTopWidth: 1,
-    padding: spacing.md,
+    gap: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    paddingBottom: 48,
   },
 
-  // Avatar Studio Card
-  avatarStudioCard: {
+  /* Avatar Studio Hero */
+  avatarHeroContainer: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    padding: spacing.md,
+    gap: 14,
+    paddingVertical: 8,
   },
   avatarWrapper: {
-    marginBottom: 12,
     position: 'relative',
   },
   avatarImage: {
-    borderColor: '#F59E0B',
+    borderColor: driverPrimitives.colors.white,
     borderRadius: 48,
-    borderWidth: 2.5,
+    borderWidth: 3,
     height: 96,
     width: 96,
+    ...driverPrimitives.shadows.md,
   },
   avatarPlaceholder: {
     alignItems: 'center',
-    backgroundColor: '#0F172A',
-    borderColor: '#F59E0B',
+    backgroundColor: '#1E293B',
+    borderColor: driverPrimitives.colors.white,
     borderRadius: 48,
-    borderWidth: 2.5,
+    borderWidth: 3,
     height: 96,
     justifyContent: 'center',
     width: 96,
+    ...driverPrimitives.shadows.md,
   },
   avatarInitial: {
-    color: '#F8FAFC',
+    color: '#FFFFFF',
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: '700',
   },
-  cameraIconPill: {
+  cameraBadgePill: {
     alignItems: 'center',
-    backgroundColor: colors.brand.background,
-    borderColor: '#FFFFFF',
-    borderRadius: 15,
+    backgroundColor: driverPrimitives.colors.blue600,
+    borderColor: driverPrimitives.colors.white,
+    borderRadius: 14,
     borderWidth: 2,
     bottom: 0,
-    height: 30,
+    height: 28,
     justifyContent: 'center',
     position: 'absolute',
     right: 0,
-    width: 30,
+    width: 28,
+    ...driverPrimitives.shadows.sm,
   },
   avatarActionRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: 14,
+    gap: 10,
     width: '100%',
   },
-  avatarActionBtn: {
+  avatarActionPill: {
     alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderColor: colors.brand.border,
-    borderRadius: 8,
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 9999,
     borderWidth: 1,
     flex: 1,
     flexDirection: 'row',
     gap: 6,
+    height: 38,
     justifyContent: 'center',
-    minHeight: 44,
-    paddingVertical: 10,
+    ...driverPrimitives.shadows.sm,
   },
-  avatarActionBtnText: {
-    color: colors.brand.background,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+  avatarActionText: {
+    color: driverPrimitives.colors.gray700,
+    fontSize: 12.5,
+    fontWeight: '600',
   },
 
-  // Guideline Card
+  /* Guideline Box */
   guidelineCard: {
     backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderRadius: 10,
+    borderColor: '#DCFCE7',
+    borderRadius: 14,
+    ...iosContinuousCurve,
     borderWidth: 1,
     gap: 4,
     padding: 12,
@@ -504,148 +433,135 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   guidelineTitle: {
-    color: '#065F46',
-    fontSize: typeScale.footnote.fontSize,
+    color: '#15803D',
+    fontSize: 12,
     fontWeight: '700',
   },
   guidelineText: {
-    color: '#047857',
-    fontSize: typeScale.caption1.fontSize,
+    color: '#166534',
+    fontSize: 11,
     lineHeight: 16,
   },
 
-  // Sections & Form Cards
+  /* Form Sections */
   sectionBlock: {
     gap: 6,
   },
   sectionLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: typeScale.caption1.fontSize,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    marginLeft: 4,
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    paddingHorizontal: 4,
   },
   card: {
-    backgroundColor: leopardPalette.surfaceWhite,
-    borderColor: leopardPalette.cardBorder,
-    borderRadius: radius.card,
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
     borderWidth: 1,
     overflow: 'hidden',
+    ...driverPrimitives.shadows.sm,
   },
+
+  /* Field Rows */
   fieldRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
   },
   fieldIconWrap: {
     alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: 8,
-    height: 36,
+    height: 24,
     justifyContent: 'center',
-    width: 36,
+    width: 24,
   },
   fieldInputCol: {
     flex: 1,
     gap: 2,
   },
   fieldLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: typeScale.caption1.fontSize,
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
     fontWeight: '600',
   },
   textInput: {
-    color: leopardPalette.textSlateDark,
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14.5,
+    fontWeight: '600',
     padding: 0,
   },
   rowDivider: {
-    backgroundColor: leopardPalette.subtleDivider,
+    backgroundColor: driverPrimitives.colors.gray100,
     height: 1,
-    marginLeft: 62,
+    marginLeft: 52,
   },
   errorTextRow: {
-    color: '#DC2626',
-    fontSize: typeScale.caption1.fontSize,
-    fontWeight: '600',
-    marginLeft: 62,
-    marginTop: -6,
+    color: driverPrimitives.colors.red500,
+    fontSize: 11.5,
+    fontWeight: '500',
+    marginLeft: 52,
     paddingBottom: 8,
   },
-  errorBanner: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 10,
-  },
-  errorBannerText: {
-    color: '#DC2626',
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
 
-  // Read-only Rows
+  /* Readonly Rows */
   readonlyRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
   },
   readonlyTextCol: {
     flex: 1,
     gap: 2,
   },
   readonlyLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: typeScale.caption1.fontSize,
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
     fontWeight: '600',
   },
   readonlyValue: {
-    color: leopardPalette.textSlateDark,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   verifiedBadge: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xxs,
     backgroundColor: '#ECFDF5',
     borderColor: '#A7F3D0',
-    borderRadius: 6,
-    borderWidth: 1,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
-  },
-  verifiedBadgeText: {
-    color: '#059669',
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
-  },
-
-  // Security Notice Box
-  securityNoticeCard: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
-    borderRadius: radius.card,
+    borderRadius: 9999,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
-    padding: 12,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
-  securityNoticeText: {
-    color: '#92400E',
-    flex: 1,
-    fontSize: typeScale.caption1.fontSize,
-    lineHeight: 16,
+  verifiedBadgeText: {
+    color: driverPrimitives.colors.green700,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  /* Error Banner */
+  errorBanner: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 6,
+    padding: 10,
+  },
+  errorBannerText: {
+    color: driverPrimitives.colors.red600,
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.8,
   },
 });

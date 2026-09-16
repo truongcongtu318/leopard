@@ -191,21 +191,6 @@ describe('StatusBadge', () => {
       expectedClass: 'bg-neutral',
     },
     {
-      props: { domain: 'fleetMemberStatus', status: 'INVITED' },
-      label: 'Đã mời',
-      expectedClass: 'bg-info',
-    },
-    {
-      props: { domain: 'fleetMemberStatus', status: 'ACTIVE' },
-      label: 'Đang tham gia',
-      expectedClass: 'bg-active',
-    },
-    {
-      props: { domain: 'fleetMemberStatus', status: 'REMOVED' },
-      label: 'Đã gỡ khỏi đội xe',
-      expectedClass: 'bg-neutral',
-    },
-    {
       props: { domain: 'userStatus', status: 'ACTIVE' },
       label: 'Đang hoạt động',
       expectedClass: 'bg-active',
@@ -240,8 +225,8 @@ describe('StatusBadge', () => {
   });
 
   it('applies custom className', () => {
-    render(<StatusBadge domain="fleetMemberStatus" status="ACTIVE" className="my-badge" />);
-    const badge = screen.getByText('Đang tham gia');
+    render(<StatusBadge domain="userStatus" status="ACTIVE" className="my-badge" />);
+    const badge = screen.getByText('Đang hoạt động');
     expect(badge.className).toContain('my-badge');
   });
 });

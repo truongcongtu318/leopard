@@ -23,18 +23,12 @@ export interface DemoOtpProviderOptions {
 export const DEMO_IDENTITIES = new Map<string, OtpIdentity>([
   ['customer', { providerUserId: 'demo:customer', phoneNumber: '+840000000001' }],
   ['driver', { providerUserId: 'demo:driver', phoneNumber: '+840000000002' }],
-  [
-    'fleet-owner',
-    { providerUserId: 'demo:fleet-owner', phoneNumber: '+840000000003' },
-  ],
   ['admin', { providerUserId: 'demo:admin', phoneNumber: '+840000000004' }],
   ['+840000000001', { providerUserId: 'demo:customer', phoneNumber: '+840000000001' }],
   ['+840000000002', { providerUserId: 'demo:driver', phoneNumber: '+840000000002' }],
-  ['+840000000003', { providerUserId: 'demo:fleet-owner', phoneNumber: '+840000000003' }],
   ['+840000000004', { providerUserId: 'demo:admin', phoneNumber: '+840000000004' }],
   ['0900000001', { providerUserId: 'demo:customer', phoneNumber: '+840000000001' }],
   ['0900000002', { providerUserId: 'demo:driver', phoneNumber: '+840000000002' }],
-  ['0900000003', { providerUserId: 'demo:fleet-owner', phoneNumber: '+840000000003' }],
   ['0900000004', { providerUserId: 'demo:admin', phoneNumber: '+840000000004' }],
   // Remaining seeded drivers. Without an alias the app would treat these phones
   // as unknown and silently create a brand-new CUSTOMER account instead.

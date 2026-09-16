@@ -89,7 +89,6 @@ describe('Admin immutable scenario catalogue', () => {
       'readOrders',
       'readOrderDetail',
       'readUsers',
-      'readFleets',
       'readDrivers',
       'readPayments',
       'readInvoices',

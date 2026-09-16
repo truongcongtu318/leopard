@@ -37,38 +37,20 @@ jest.mock('../features/orders/useDriverIdlePing', () => ({
   useDriverIdlePing: jest.fn(),
 }));
 
-jest.mock('./DriverDrawerContext', () => {
-  const ReactModule = require('react');
-  const { View } = require('react-native');
-  return {
-    DriverDrawerProvider: ({ children }: { children: React.ReactNode }) =>
-      ReactModule.createElement(
-        View,
-        { testID: 'mock-drawer-provider-container' },
-        children,
-        ReactModule.createElement(View, { testID: 'mock-drawer-sentinel' }),
-      ),
-  };
-});
-
 describe('RootLayout composition', () => {
-  it('renders both routed content and provider drawer as descendants of driver-viewport-frame and driver-safe-area', async () => {
+  it('renders routed content as descendant of driver-viewport-frame and driver-safe-area', async () => {
     const screen = await render(<RootLayout />);
 
     const frame = screen.getByTestId('driver-viewport-frame');
     const safeArea = screen.getByTestId('driver-safe-area');
 
-    // Both routed Slot and Drawer sentinel must be inside driver-viewport-frame
+    // Routed Slot must be inside driver-viewport-frame
     const slotInFrame = within(frame).getByTestId('mock-routed-slot');
-    const drawerInFrame = within(frame).getByTestId('mock-drawer-sentinel');
     expect(slotInFrame).toBeTruthy();
-    expect(drawerInFrame).toBeTruthy();
 
-    // Both routed Slot and Drawer sentinel must be inside driver-safe-area
+    // Routed Slot must be inside driver-safe-area
     const slotInSafeArea = within(safeArea).getByTestId('mock-routed-slot');
-    const drawerInSafeArea = within(safeArea).getByTestId('mock-drawer-sentinel');
     expect(slotInSafeArea).toBeTruthy();
-    expect(drawerInSafeArea).toBeTruthy();
 
     // Exactly one safe area should exist in the root layout
     expect(screen.getAllByTestId('driver-safe-area').length).toBe(1);

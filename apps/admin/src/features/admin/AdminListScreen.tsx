@@ -290,7 +290,7 @@ function driverColumns(previewContext?: AdminPreviewContext): DataTableColumn[] 
     },
     { key: 'account', header: 'Tài khoản', render: (row) => <StatusBadge domain="userStatus" status={(row.item as AdminDriverListItemView).accountStatus} /> },
     { key: 'availability', header: 'Trạng thái tài xế', render: (row) => <StatusBadge domain="driverAvailability" status={(row.item as AdminDriverListItemView).availability} /> },
-    { key: 'membership', header: 'Thành viên đội xe', className: 'hidden lg:table-cell', render: (row) => <div className="min-w-44"><StatusBadge domain="fleetMemberStatus" status={(row.item as AdminDriverListItemView).membershipStatus} /><p className="mt-xxs text-xs text-neutral-muted break-words">{(row.item as AdminDriverListItemView).fleetLabel}</p></div> },
+    { key: 'membership', header: 'Thành viên đội xe', className: 'hidden lg:table-cell', render: (row) => <div className="min-w-44"><span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">{(row.item as AdminDriverListItemView).membershipStatus}</span><p className="mt-xxs text-xs text-neutral-muted break-words">{(row.item as AdminDriverListItemView).fleetLabel}</p></div> },
     { key: 'order', header: 'Đơn đang chạy', render: (row) => <DriverOrderLink driver={row.item as AdminDriverListItemView} previewContext={previewContext} /> },
     {
       key: 'location', header: 'Vị trí gần nhất', className: 'hidden xl:table-cell', render: (row) => {
@@ -1304,7 +1304,7 @@ function mobileItem(
     details: [
       { id: 'phone', label: 'Số điện thoại', value: item.maskedPhone },
       { id: 'account', label: 'Tài khoản', value: <StatusBadge domain="userStatus" status={item.accountStatus} /> },
-      { id: 'membership', label: 'Thành viên đội xe', value: <StatusBadge domain="fleetMemberStatus" status={item.membershipStatus} /> },
+      { id: 'membership', label: 'Thành viên đội xe', value: <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">{item.membershipStatus}</span> },
       { id: 'fleet', label: 'Đội xe', value: item.fleetLabel },
       { id: 'order', label: 'Đơn đang chạy', value: <DriverOrderLink driver={item} previewContext={previewContext} /> },
       { id: 'location', label: 'Vị trí gần nhất', value: `${item.locationLabel} · ${item.locationUpdatedAtLabel}` },

@@ -33,8 +33,6 @@ const DEFAULT_FILTERS: AdminListFilters = {
   role: 'ALL',
   userStatus: 'ALL',
   availability: 'ALL',
-  membershipStatus: 'ALL',
-  fleetId: '',
   customerId: '',
   driverId: '',
   from: '',
@@ -60,7 +58,7 @@ describe('loadAdminRuntimeView – overview', () => {
       const path = args[0] as string;
       const query = args[1] as Record<string, unknown> | undefined;
       if (path === '/admin/dashboard') {
-        return { totalUsers: 100, totalOrders: 42, activeFleets: 6, revenueVnd: 1250000 };
+        return { totalUsers: 100, totalOrders: 42, revenueVnd: 1250000 };
       }
       const statusTotals: Record<string, number> = {
         REQUESTED: 4,
@@ -129,7 +127,7 @@ describe('loadAdminRuntimeView – overview', () => {
       const path = args[0] as string;
       const query = args[1] as Record<string, unknown> | undefined;
       if (path === '/admin/dashboard') {
-        return { totalUsers: 1, totalOrders: 0, activeFleets: 0, revenueVnd: 0 };
+        return { totalUsers: 1, totalOrders: 0, revenueVnd: 0 };
       }
       if (query && typeof query.status === 'string') {
         return { items: [], total: 0, page: 1, pageSize: 1, totalPages: 0 };

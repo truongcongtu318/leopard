@@ -6,7 +6,7 @@ import { cn } from './cn';
 export type VehicleCategory = 'VAN' | 'BAGAC' | 'TRUCK_5T' | 'TRUCK_15T' | 'CONTAINER';
 
 export interface TruckDrivebySceneProps {
-  role?: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
+  role?: 'CUSTOMER' | 'DRIVER' | 'ADMIN';
   initialVehicleType?: VehicleCategory;
   isDrivingFast?: boolean;
   showWaypoints?: boolean;
@@ -33,8 +33,6 @@ export function TruckDrivebyScene({
     switch (role) {
       case 'DRIVER':
         return { text: 'TÀI XẾ ĐỐI TÁC', color: '#15803D', bg: '#DCFCE7', border: '#86EFAC' };
-      case 'FLEET_OWNER':
-        return { text: 'CHỦ ĐỘI XE', color: '#B45309', bg: '#FEF3C7', border: '#FDE68A' };
       case 'ADMIN':
         return { text: 'QUẢN TRỊ VIÊN', color: '#7E22CE', bg: '#F3E8FF', border: '#D8B4FE' };
       case 'CUSTOMER':

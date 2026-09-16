@@ -15,9 +15,8 @@ import { RequireRoles } from '../auth/decorators/require-roles.js';
 import { parsePageQuery } from '@leopard/shared';
 import type {
   AdminUserQuery,
-  AdminFleetQuery,
-  FleetDriverQuery,
-  FleetOrderQuery,
+  AdminDriverQuery,
+  AdminOrderQuery,
   AdminUpdateUserStatusCommand,
   AdminPaymentQuery,
   AdminInvoiceQuery,
@@ -66,18 +65,9 @@ export class AdminController {
     return this.queryService.getUsers(parsedQuery);
   }
 
-  @Get('fleets')
-  async getFleets(@Query() query: any) {
-    const parsedQuery: AdminFleetQuery = {
-      ...parsePageQuery({ page: query.page, pageSize: query.pageSize }),
-      q: query.q,
-    };
-    return this.queryService.getFleets(parsedQuery);
-  }
-
   @Get('drivers')
   async getDrivers(@Query() query: any) {
-    const parsedQuery: FleetDriverQuery = {
+    const parsedQuery: AdminDriverQuery = {
       ...parsePageQuery({ page: query.page, pageSize: query.pageSize }),
       status: query.status,
       q: query.q,
@@ -87,7 +77,7 @@ export class AdminController {
 
   @Get('orders')
   async getOrders(@Query() query: any) {
-    const parsedQuery: FleetOrderQuery = {
+    const parsedQuery: AdminOrderQuery = {
       ...parsePageQuery({ page: query.page, pageSize: query.pageSize }),
       status: query.status,
       driverId: query.driverId,

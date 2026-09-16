@@ -14,7 +14,6 @@ export type PaymentStatus = 'UNPAID' | 'QR_CREATED' | 'PAID_MANUAL' | 'FAILED';
 export type InvoiceStatus = 'ISSUED' | 'VOIDED';
 
 export type DriverAvailability = 'OFFLINE' | 'AVAILABLE' | 'BUSY';
-export type FleetMemberStatus = 'INVITED' | 'ACTIVE' | 'REMOVED';
 export type UserStatus = 'ACTIVE' | 'DISABLED';
 
 export type StatusDomain =
@@ -22,7 +21,6 @@ export type StatusDomain =
   | 'paymentStatus'
   | 'invoiceStatus'
   | 'driverAvailability'
-  | 'fleetMemberStatus'
   | 'userStatus';
 
 export type StatusTone = 'neutral' | 'info' | 'warning' | 'active' | 'success' | 'danger';
@@ -37,7 +35,6 @@ type StatusValueByDomain = Readonly<{
   paymentStatus: PaymentStatus;
   invoiceStatus: InvoiceStatus;
   driverAvailability: DriverAvailability;
-  fleetMemberStatus: FleetMemberStatus;
   userStatus: UserStatus;
 }>;
 
@@ -69,11 +66,6 @@ const STATUS_BY_DOMAIN: CanonicalStatusMap = {
     OFFLINE: { label: 'Ngoại tuyến', tone: 'neutral' },
     AVAILABLE: { label: 'Sẵn sàng', tone: 'success' },
     BUSY: { label: 'Đang bận', tone: 'active' },
-  },
-  fleetMemberStatus: {
-    INVITED: { label: 'Đã mời', tone: 'info' },
-    ACTIVE: { label: 'Đang tham gia', tone: 'active' },
-    REMOVED: { label: 'Đã gỡ khỏi đội xe', tone: 'neutral' },
   },
   userStatus: {
     ACTIVE: { label: 'Đang hoạt động', tone: 'active' },
@@ -109,7 +101,6 @@ type CanonicalStatusSelection =
   | { domain: 'paymentStatus'; status: PaymentStatus }
   | { domain: 'invoiceStatus'; status: InvoiceStatus }
   | { domain: 'driverAvailability'; status: DriverAvailability }
-  | { domain: 'fleetMemberStatus'; status: FleetMemberStatus }
   | { domain: 'userStatus'; status: UserStatus };
 
 export type StatusBadgeProps = CanonicalStatusSelection & Readonly<{ className?: string }>;
@@ -130,8 +121,6 @@ function resolveCanonicalStatus(selection: CanonicalStatusSelection): CanonicalS
       return STATUS_BY_DOMAIN.invoiceStatus[selection.status];
     case 'driverAvailability':
       return STATUS_BY_DOMAIN.driverAvailability[selection.status];
-    case 'fleetMemberStatus':
-      return STATUS_BY_DOMAIN.fleetMemberStatus[selection.status];
     case 'userStatus':
       return STATUS_BY_DOMAIN.userStatus[selection.status];
   }

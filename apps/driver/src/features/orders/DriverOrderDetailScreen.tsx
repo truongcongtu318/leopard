@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, ScreenScaffold, ScreenState, SlideToAction } from '@leopard/mobile-core';
-import { createDriverDetailFixture } from './fixtures';
 import type {
-  DriverAssignedDetailView,
   DriverCommandView,
   DriverDetailView,
   DriverPrimaryTaskView,
 } from './model';
 import { PublicDetailView } from './components/detail/PublicDetailView';
 import { AssignedDetailView } from './components/detail/AssignedDetailView';
+import { CompletedOrderDetailView } from './components/detail/CompletedOrderDetailView';
 import { DriverIncidentModal } from './DriverIncidentModal';
 
 export type DriverOrderDetailScreenProps = Readonly<{
@@ -147,20 +146,9 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   const { view: directView, orderId, onBack } = props;
   const [localIncidentOpen, setLocalIncidentOpen] = useState(false);
   const handleOpenIncidentModal = props.onOpenIncidentModal ?? (() => setLocalIncidentOpen(true));
-  const view: DriverDetailView | undefined = directView ?? (orderId ? (() => {
-    const fixture = createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED');
-    if (fixture.kind === 'content' && fixture.accessScope === 'ASSIGNED_FULL') {
-      const assigned: DriverAssignedDetailView = {
-        ...fixture,
-        order: {
-          ...fixture.order,
-          id: orderId,
-        },
-      };
-      return assigned;
-    }
-    return fixture;
-  })() : undefined);
+  // Runtime always supplies `view`. An orderId-only deep link renders nothing here —
+  // the route resolves it through DriverOrderDetailRuntime, never a fixture.
+  const view: DriverDetailView | undefined = directView;
 
   if (!view) return null;
 
@@ -217,6 +205,19 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
         view={view}
       />
     );
+  }
+
+  // Terminal statuses without pending primary task (completed, returned, cancelled) show read-only receipt.
+  // If there is still a pending action (e.g. advance to RETURNED), keep active view so driver can finish.
+  const isTerminal =
+    (view.order.status === 'DELIVERED' ||
+      view.order.status === 'RETURNED' ||
+      view.order.status === 'CANCELLED' ||
+      view.order.status === 'INCIDENT_CANCELLED') &&
+    !view.primaryTask;
+
+  if (isTerminal) {
+    return <CompletedOrderDetailView onBack={onBack} view={view} />;
   }
 
   return (

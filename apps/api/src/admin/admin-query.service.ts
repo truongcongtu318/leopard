@@ -5,12 +5,10 @@ import type {
   AdminDashboardDto,
   AdminUserSummaryDto,
   AdminUserQuery,
-  AdminFleetSummaryDto,
-  AdminFleetQuery,
-  FleetDriverSummaryDto,
-  FleetDriverQuery,
-  FleetOrderSummaryDto,
-  FleetOrderQuery,
+  AdminDriverSummaryDto,
+  AdminDriverQuery,
+  AdminOrderSummaryDto,
+  AdminOrderQuery,
   AdminPaymentItemDto,
   AdminPaymentQuery,
   AdminInvoiceItemDto,
@@ -35,8 +33,8 @@ import type {
   AdminSupportQuery,
 } from '@leopard/shared';
 import { Prisma } from '@prisma/client';
-import type { User, Fleet, DriverProfile, Order, PaymentIntent, Invoice, AuditLog, PromotionVoucher, SupportTicket, OrderReview, VehicleType } from '@prisma/client';
-import type { Role, UserStatus, OrderStatus, FleetMemberStatus, PaymentStatus, ProviderSource, InvoiceStatus, PromotionDiscountType, SupportTicketStatus } from '@prisma/client';
+import type { User, DriverProfile, Order, PaymentIntent, Invoice, AuditLog, PromotionVoucher, SupportTicket, OrderReview, VehicleType } from '@prisma/client';
+import type { Role, UserStatus, OrderStatus, PaymentStatus, ProviderSource, InvoiceStatus, PromotionDiscountType, SupportTicketStatus } from '@prisma/client';
 import { DEFAULT_PRICING_CONFIG } from '../maps/domain/pricing.service.js';
 
 @Injectable()
@@ -44,10 +42,9 @@ export class AdminQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDashboard(): Promise<AdminDashboardDto> {
-    const [totalUsers, totalOrders, activeFleets, revenueRes] = await Promise.all([
+    const [totalUsers, totalOrders, revenueRes] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.order.count(),
-      this.prisma.fleet.count(),
       this.prisma.order.aggregate({
         _sum: { priceVnd: true },
         where: { status: 'DELIVERED' },
@@ -57,7 +54,6 @@ export class AdminQueryService {
     return {
       totalUsers,
       totalOrders,
-      activeFleets,
       revenueVnd: revenueRes._sum.priceVnd ?? 0,
     };
   }
@@ -93,73 +89,7 @@ export class AdminQueryService {
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }
 
-  async getFleets(query: AdminFleetQuery) {
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 20;
-    const skip = (page - 1) * pageSize;
-
-    const where: Prisma.FleetWhereInput = {};
-    if (query.q) where.name = { contains: query.q, mode: 'insensitive' };
-
-    const [total, fleets] = await Promise.all([
-      this.prisma.fleet.count({ where }),
-      this.prisma.fleet.findMany({
-        where,
-        skip,
-        take: pageSize,
-        include: { _count: { select: { memberships: { where: { role: 'DRIVER', status: 'ACTIVE' } } } } },
-        orderBy: { createdAt: 'desc' },
-      }),
-    ]);
-
-    type FleetWithCount = Fleet & { _count: { memberships: number } };
-    const fleetIds = fleets.map((f) => f.id);
-    const activeMemberships =
-      fleetIds.length > 0
-        ? await this.prisma.fleetMember.findMany({
-            where: { fleetId: { in: fleetIds }, role: 'DRIVER', status: 'ACTIVE' },
-            select: { fleetId: true, userId: true },
-          })
-        : [];
-    const driverIdsByFleet = new Map<string, string[]>();
-    for (const membership of activeMemberships) {
-      const list = driverIdsByFleet.get(membership.fleetId) ?? [];
-      list.push(membership.userId);
-      driverIdsByFleet.set(membership.fleetId, list);
-    }
-    const allDriverIds = [...new Set(activeMemberships.map((m) => m.userId))];
-    const activeOrderGroups =
-      allDriverIds.length > 0
-        ? await this.prisma.order.groupBy({
-            by: ['driverId'],
-            _count: { _all: true },
-            where: {
-              driverId: { in: allDriverIds },
-              status: { notIn: ['DELIVERED', 'CANCELLED'] },
-            },
-          })
-        : [];
-    const activeOrdersByDriver = new Map(
-      activeOrderGroups
-        .filter((g): g is typeof g & { driverId: string } => g.driverId !== null)
-        .map((g) => [g.driverId, g._count._all]),
-    );
-
-    const items: AdminFleetSummaryDto[] = fleets.map((f: FleetWithCount) => ({
-      id: f.id,
-      name: f.name,
-      createdAt: f.createdAt.toISOString(),
-      driversCount: f._count.memberships,
-      activeOrdersCount: (driverIdsByFleet.get(f.id) ?? []).reduce(
-        (sum, driverId) => sum + (activeOrdersByDriver.get(driverId) ?? 0),
-        0,
-      ),
-    }));
-
-    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
-  }
-
-  async getDrivers(query: FleetDriverQuery) {
+  async getDrivers(query: AdminDriverQuery) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
@@ -176,11 +106,6 @@ export class AdminQueryService {
         take: pageSize,
         include: {
           driverProfile: true,
-          fleetMemberships: {
-            where: { role: 'DRIVER', status: { in: ['INVITED', 'ACTIVE'] } },
-            include: { fleet: { select: { name: true } } },
-            take: 1,
-          },
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -188,9 +113,8 @@ export class AdminQueryService {
 
     type DriverWithRelations = User & {
       driverProfile: DriverProfile | null;
-      fleetMemberships: Array<{ status: string; fleet: { name: string } }>;
     };
-    const items: FleetDriverSummaryDto[] = users.map((u: DriverWithRelations) => ({
+    const items: AdminDriverSummaryDto[] = users.map((u: DriverWithRelations) => ({
       id: u.id,
       name: u.name ?? u.phone ?? '',
       phone: u.phone ?? '',
@@ -198,14 +122,12 @@ export class AdminQueryService {
       availability: u.driverProfile?.availability ?? 'OFFLINE',
       vehicleType: u.driverProfile?.vehicleType ?? 'MOTORBIKE',
       lastKnownAt: u.driverProfile?.lastKnownAt?.toISOString() ?? null,
-      membershipStatus: u.fleetMemberships[0]?.status ?? null,
-      fleetName: u.fleetMemberships[0]?.fleet.name ?? null,
     }));
 
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }
 
-  async getOrders(query: FleetOrderQuery) {
+  async getOrders(query: AdminOrderQuery) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
@@ -260,7 +182,7 @@ export class AdminQueryService {
       list.push(row);
       coordsByOrder.set(row.orderId, list);
     }
-    const items: FleetOrderSummaryDto[] = orders.map((o: OrderWithRelations) => {
+    const items: AdminOrderSummaryDto[] = orders.map((o: OrderWithRelations) => {
       const rawId = o.id.replace(/-/g, '');
       const suffix = rawId.slice(-4).toUpperCase();
       const pickup = o.stops.find((s) => s.type === 'PICKUP');

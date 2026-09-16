@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -14,13 +13,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   AppText,
   colors,
+  httpClient,
   iconSize,
   radius,
   spacing,
   typeScale,
   ScreenScaffold,
+  ScreenState,
   IconPhone,
 } from '@leopard/mobile-core';
+import { callPhoneNumber } from '../orders/components/detail/CargoAndContactCard';
 
 type DriverChatMessage = {
   id: string;
@@ -29,26 +31,14 @@ type DriverChatMessage = {
   time: string;
 };
 
-const initialMessages: DriverChatMessage[] = [
-  {
-    id: 'm-1',
-    sender: 'SYSTEM',
-    text: 'Bạn đã nhận đơn hàng LP-D-260815-001 của khách hàng Nguyễn Văn A.',
-    time: '14:20',
-  },
-  {
-    id: 'm-2',
-    sender: 'DRIVER',
-    text: 'Chào bạn, mình đang trên đường qua kho lấy hàng, khoảng 10 phút nữa tới nhé.',
-    time: '14:22',
-  },
-  {
-    id: 'm-3',
-    sender: 'CUSTOMER',
-    text: 'Dạ vâng, hàng đã đóng gói sẵn ở cổng số 2 rồi ạ.',
-    time: '14:25',
-  },
-];
+type ApiOrderMessage = {
+  id: string;
+  orderId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+  senderRole?: 'CUSTOMER' | 'DRIVER';
+};
 
 const driverQuickReplies = [
   'Tôi đang tới điểm lấy hàng',
@@ -59,13 +49,43 @@ const driverQuickReplies = [
 
 export function DriverChatScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const [messages, setMessages] = useState<DriverChatMessage[]>(initialMessages);
+  const { id, customerContact } = useLocalSearchParams<{ id?: string; customerContact?: string }>();
+  const [messages, setMessages] = useState<DriverChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
 
-  const handleSend = (textToSend?: string) => {
+  useEffect(() => {
+    if (!id) return;
+    let isMounted = true;
+
+    async function fetchMessages() {
+      try {
+        const data = await httpClient.get<ApiOrderMessage[]>(`/orders/${id}/messages`);
+        if (isMounted && Array.isArray(data)) {
+          const mapped: DriverChatMessage[] = data.map((msg) => ({
+            id: msg.id,
+            sender: msg.senderRole === 'DRIVER' ? 'DRIVER' : 'CUSTOMER',
+            text: msg.body,
+            time: msg.createdAt
+              ? new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+              : '',
+          }));
+          setMessages(mapped);
+        }
+      } catch {
+        // Keep empty state on fetch failure
+      }
+    }
+
+    void fetchMessages();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const handleSend = async (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
-    if (!text) return;
+    if (!text || !id) return;
 
     const newMsg: DriverChatMessage = {
       id: `msg-${Date.now()}`,
@@ -76,10 +96,16 @@ export function DriverChatScreen() {
 
     setMessages((prev) => [...prev, newMsg]);
     if (!textToSend) setInputText('');
+
+    try {
+      await httpClient.post(`/orders/${id}/messages`, { body: text });
+    } catch {
+      // Retain optimistic message in local state
+    }
   };
 
   const handleCall = () => {
-    Linking.openURL('tel:0900000001');
+    callPhoneNumber(customerContact ?? null);
   };
 
   const callButton = (
@@ -96,9 +122,26 @@ export function DriverChatScreen() {
     </Pressable>
   );
 
+  if (!id) {
+    return (
+      <ScreenScaffold
+        headerTone="ink"
+        onBack={() => router.back()}
+        subtitle="Nhắn tin chỉ khả dụng khi bạn có chuyến đang thực hiện."
+        title="Nhắn tin với khách"
+      >
+        <ScreenState
+          message="Chưa có chuyến đang hoạt động để nhắn tin với khách."
+          state="empty"
+          title="Chưa có cuộc trò chuyện"
+        />
+      </ScreenScaffold>
+    );
+  }
+
   return (
     <ScreenScaffold
-      eyebrow={`DRIVER · CHAT · ${id ?? 'LP-D-260815-001'}`}
+      eyebrow={`DRIVER · CHAT · ${id}`}
       headerRight={callButton}
       headerTone="ink"
       onBack={() => router.back()}

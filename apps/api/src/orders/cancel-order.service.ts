@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { DomainError } from '../common/domain-error.js';
 import { requestContextStore } from '../common/logger.service.js';
@@ -130,5 +131,67 @@ export class CancelOrderService {
     this.eventsPublisher.publishStatusChanged(result.event);
 
     return mapOrderResponse(result.order);
+  }
+
+  /**
+   * System-initiated cancel for an order that exhausted redispatch without
+   * finding a driver (see DispatchSweepService). Reuses the ADMIN-with-reason
+   * branch of assertOrderTransition — there is no SYSTEM role, and adding one
+   * would ripple into auth for no real gain. actorId stays null: no real user
+   * performed this.
+   */
+  async cancelUnmatchedOrder(orderId: string, reason: string): Promise<void> {
+    const order = await this.ordersRepository.findById(orderId);
+    if (!order || order.status !== 'REQUESTED' || order.driverId) {
+      return;
+    }
+
+    assertOrderTransition({
+      from: order.status,
+      to: 'CANCELLED',
+      actorRole: Role.ADMIN,
+      hasDeliveryProof: false,
+      cancelReason: reason,
+    });
+
+    const now = new Date();
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const updateRes = await tx.order.updateMany({
+        where: { id: orderId, status: 'REQUESTED' },
+        data: { status: 'CANCELLED', cancelledAt: now },
+      });
+
+      if (updateRes.count === 0) {
+        return null;
+      }
+
+      const history = await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          fromStatus: 'REQUESTED',
+          toStatus: 'CANCELLED',
+          actorId: null,
+          reason,
+        },
+      });
+
+      return {
+        order: await this.ordersRepository.findById(orderId, tx),
+        event: {
+          orderId,
+          previousStatus: 'REQUESTED',
+          currentStatus: 'CANCELLED',
+          eventId: history.id,
+          occurredAt: history.createdAt.toISOString(),
+        } satisfies OrderStatusChangedEvent,
+      };
+    });
+
+    if (!result) {
+      return;
+    }
+
+    this.eventsPublisher.publishStatusChanged(result.event);
   }
 }

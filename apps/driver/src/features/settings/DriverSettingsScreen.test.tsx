@@ -4,17 +4,11 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { DriverSettingsScreen } from './DriverSettingsScreen';
 
 describe('DriverSettingsScreen', () => {
-  it('renders cockpit diagnostics card and all settings categories', async () => {
+  it('renders all settings categories and test alert row', async () => {
     const screen = await render(<DriverSettingsScreen />);
 
-    // Diagnostics hero card
-    expect(screen.getByText('CHẨN ĐOÁN BUỒNG LÁI')).toBeTruthy();
-    expect(screen.getByText('SẴN SÀNG NHẬN ĐƠN')).toBeTruthy();
-    expect(screen.getByText('GPS thực địa')).toBeTruthy();
-    expect(screen.getByText('±3m · Cao')).toBeTruthy();
-    expect(screen.getByText('Server Ping')).toBeTruthy();
-    expect(screen.getByText('24 ms')).toBeTruthy();
-    expect(screen.getByText('Nghe thử chuông nổ đơn & Test GPS')).toBeTruthy();
+    // Test alert row in sound settings
+    expect(screen.getByText('Nghe thử chuông nổ đơn')).toBeTruthy();
 
     // Section headings
     expect(screen.getByText('BÁO HIỆU & ĐIỀU PHỐI ĐƠN HÀNG')).toBeTruthy();
@@ -22,6 +16,18 @@ describe('DriverSettingsScreen', () => {
     expect(screen.getByText('MÀN HÌNH LÁI XE & TỐI ƯU PIN')).toBeTruthy();
     expect(screen.getByText('QUYỀN THIẾT BỊ & DỌN DẸP DỮ LIỆU')).toBeTruthy();
     expect(screen.getByText('TRỢ GIÚP KỸ THUẬT & PHÁP LÝ')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('settings has no hardcoded diagnostics', async () => {
+    const screen = await render(<DriverSettingsScreen />);
+
+    expect(screen.queryByText('±3m · Cao')).toBeNull();
+    expect(screen.queryByText('24 ms')).toBeNull();
+    expect(screen.queryByText('142 MB')).toBeNull();
+    expect(screen.queryByText(/v2\.4\.0-pilot/)).toBeNull();
+    expect(screen.queryByText(/1900 1919/)).toBeNull();
 
     await screen.unmount();
   });

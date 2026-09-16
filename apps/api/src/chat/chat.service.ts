@@ -17,13 +17,19 @@ export interface OrderMessageDto {
 export class ChatService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listOrderMessages(userId: string, orderId: string): Promise<OrderMessage[]> {
-    await this.verifyOrderParticipant(userId, orderId);
+  async listOrderMessages(userId: string, orderId: string): Promise<OrderMessageDto[]> {
+    const order = await this.verifyOrderParticipant(userId, orderId);
 
-    return this.prisma.orderMessage.findMany({
+    const messages = await this.prisma.orderMessage.findMany({
       where: { orderId },
       orderBy: { createdAt: 'asc' },
     });
+
+    return messages.map((message) => ({
+      ...message,
+      createdAt: message.createdAt.toISOString(),
+      senderRole: message.senderId === order.driverId ? 'DRIVER' : 'CUSTOMER',
+    }));
   }
 
   async sendMessage(userId: string, orderId: string, dto: SendMessageDto): Promise<OrderMessage> {

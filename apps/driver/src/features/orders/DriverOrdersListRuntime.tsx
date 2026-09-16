@@ -3,6 +3,9 @@ import { useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { createDriverProfileHttpAdapter } from '../profile/adapter';
+import { createDriverWalletHttpAdapter } from '../wallet/adapter';
+import { createDriverHistoryHttpAdapter, sumTodayEarnings } from '../history/adapter';
+import { createDriverPerformanceHttpAdapter } from '../performance/adapter';
 import { createDriverHttpAdapter } from './adapter';
 import { DriverOrdersScreen } from './DriverOrdersScreen';
 import { useDispatchOffer } from './useDispatchOffer';
@@ -15,6 +18,9 @@ export type DriverOrdersListRuntimeProps = Readonly<{
 export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrdersListRuntimeProps) {
   const port = useMemo(() => createDriverHttpAdapter(), []);
   const profilePort = useMemo(() => createDriverProfileHttpAdapter(), []);
+  const walletPort = useMemo(() => createDriverWalletHttpAdapter(), []);
+  const historyPort = useMemo(() => createDriverHistoryHttpAdapter(), []);
+  const performancePort = useMemo(() => createDriverPerformanceHttpAdapter(), []);
   const queryClient = useQueryClient();
   const queryKey = ['driver', 'orders'];
 
@@ -28,6 +34,23 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
     queryFn: () => profilePort.getProfileView(),
     staleTime: 5 * 60 * 1000,
   });
+
+  const walletQuery = useQuery({
+    queryKey: ['driver', 'wallet', 'summary'],
+    queryFn: () => walletPort.getWalletSummary(),
+    staleTime: 60 * 1000,
+  });
+  const historyQuery = useQuery({
+    queryKey: ['driver', 'order-history'],
+    queryFn: () => historyPort.getHistory(),
+    staleTime: 60 * 1000,
+  });
+  const performanceQuery = useQuery({
+    queryKey: ['driver', 'performance'],
+    queryFn: () => performancePort.getPerformanceSummary(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const todayEarnings = sumTodayEarnings(historyQuery.data?.items ?? []);
 
   const driverIdentity = useMemo(() => {
     if (profileQuery.data && profileQuery.data.kind === 'content') {
@@ -46,6 +69,9 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
     return (
       <DriverOrdersScreen
         driverIdentity={driverIdentity}
+        earningsTodayVnd={todayEarnings.amountVnd}
+        ratingAvg={performanceQuery.data?.ratingAvg}
+        walletBalanceVnd={walletQuery.data?.availableBalanceVnd}
         onNavigate={onNavigate}
         onOpenOrder={onOpenOrder}
         onRetry={() => {
@@ -67,6 +93,9 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
     return (
       <DriverOrdersScreen
         driverIdentity={driverIdentity}
+        earningsTodayVnd={todayEarnings.amountVnd}
+        ratingAvg={performanceQuery.data?.ratingAvg}
+        walletBalanceVnd={walletQuery.data?.availableBalanceVnd}
         onNavigate={onNavigate}
         onOpenOrder={onOpenOrder}
         onRetry={() => {
@@ -117,6 +146,9 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
   return (
     <DriverOrdersScreen
       driverIdentity={driverIdentity}
+      earningsTodayVnd={todayEarnings.amountVnd}
+      ratingAvg={performanceQuery.data?.ratingAvg}
+      walletBalanceVnd={walletQuery.data?.availableBalanceVnd}
       incomingOffer={offer}
       isAcceptingIncomingOffer={isAcceptingOffer}
       networkError={query.isError ? (query.error?.message ?? 'Lỗi kết nối máy chủ') : null}

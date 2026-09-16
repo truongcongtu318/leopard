@@ -78,7 +78,21 @@ describe('ChatService', () => {
         where: { orderId: mockOrder.id },
         orderBy: { createdAt: 'asc' },
       });
-      expect(res).toEqual([mockMessage]);
+      expect(res).toEqual([
+        { ...mockMessage, createdAt: mockMessage.createdAt.toISOString(), senderRole: 'CUSTOMER' },
+      ]);
+    });
+
+    it('tags a message from the order driver with senderRole DRIVER', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue(mockOrder);
+      const driverMessage = { ...mockMessage, id: 'msg-2', senderId: 'driver-1' };
+      mockPrisma.orderMessage.findMany.mockResolvedValue([driverMessage]);
+
+      const res = await service.listOrderMessages('cust-1', mockOrder.id);
+
+      expect(res).toEqual([
+        { ...driverMessage, createdAt: driverMessage.createdAt.toISOString(), senderRole: 'DRIVER' },
+      ]);
     });
   });
 

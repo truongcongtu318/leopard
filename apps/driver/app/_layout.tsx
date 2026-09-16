@@ -6,7 +6,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { queryClient, sessionStore } from '@leopard/mobile-core';
 import { DriverViewportShell } from '../src/navigation/DriverViewportShell';
-import { DriverDrawerProvider } from '../src/navigation/DriverDrawerContext';
 import { useDriverIdlePing } from '../src/features/orders/useDriverIdlePing';
 import { DriverDispatchProvider } from '../src/features/orders/DriverDispatchContext';
 
@@ -58,12 +57,10 @@ function RootProviders({ children }: PropsWithChildren) {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <DriverViewportShell>
-          <DriverDrawerProvider>
-            <DriverIdlePingListener />
-            <DriverDispatchProvider>
-              {children}
-            </DriverDispatchProvider>
-          </DriverDrawerProvider>
+          <DriverIdlePingListener />
+          <DriverDispatchProvider>
+            {children}
+          </DriverDispatchProvider>
         </DriverViewportShell>
       </SafeAreaProvider>
     </QueryClientProvider>

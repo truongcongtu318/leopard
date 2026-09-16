@@ -27,6 +27,7 @@ import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
 import { DomainError } from '../common/domain-error.js';
 import { AcceptOrderService } from '../orders/accept-order.service.js';
+import { DeclineOrderOfferService } from '../orders/decline-order-offer.service.js';
 import { ReportOrderIncidentService } from '../orders/report-order-incident.service.js';
 import { UpdateOrderStatusService } from '../orders/update-order-status.service.js';
 import { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto.js';
@@ -36,6 +37,7 @@ import { DriverApplicationService } from './driver-application.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
 import { ApplyDriverDto } from './dto/apply-driver.dto.js';
 import { RequestWithdrawalDto } from './dto/request-withdrawal.dto.js';
+import { UpdateBankAccountDto } from './dto/update-bank-account.dto.js';
 import { ReportOrderIncidentDto } from './dto/report-order-incident.dto.js';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
@@ -68,6 +70,7 @@ export class DriversController {
     private readonly driverDocumentService: DriverDocumentService,
     private readonly driverContractService: DriverContractService,
     private readonly acceptOrderService: AcceptOrderService,
+    private readonly declineOrderOfferService: DeclineOrderOfferService,
     private readonly updateOrderStatusService: UpdateOrderStatusService,
     private readonly reportOrderIncidentService: ReportOrderIncidentService,
   ) {}
@@ -114,6 +117,23 @@ export class DriversController {
       `inline; filename="hop-dong-tai-xe-${CONTRACT_VERSION}.pdf"`,
     );
     res.status(HttpStatus.OK).send(buffer);
+  }
+
+  // Self-service view of the driver's own SIGNED contract (version, signer,
+  // signed-at, short-lived PDF link) — signing itself happens once during
+  // onboarding (`DriverApplicationService`), this route is read-only.
+  @Get('contract/status')
+  @RequireRoles('DRIVER')
+  async getContractStatus(@CurrentUser() actor: AuthenticatedActor) {
+    try {
+      const contract = await this.driverContractService.getSignedContractForAdmin(actor.userId);
+      return { signed: true as const, ...contract };
+    } catch (error) {
+      if (error instanceof DomainError && error.code === 'RESOURCE_NOT_FOUND') {
+        return { signed: false as const };
+      }
+      throw error;
+    }
   }
 
   // KYC document upload (GPLX / cà-vẹt / CCCD / ảnh xe) — multipart/form-data.
@@ -211,6 +231,12 @@ export class DriversController {
     return this.driversService.getWalletSummary(actor);
   }
 
+  @Get('performance')
+  @RequireRoles('DRIVER')
+  getPerformanceSummary(@CurrentUser() actor: AuthenticatedActor) {
+    return this.driversService.getPerformanceSummary(actor);
+  }
+
   @Post('wallet/withdrawals')
   @RequireRoles('DRIVER')
   @HttpCode(HttpStatus.CREATED)
@@ -233,6 +259,16 @@ export class DriversController {
     return this.driversService.getWithdrawalHistory(actor, pageNum, limitNum);
   }
 
+  @Patch('wallet/bank')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  updateBankAccount(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Body() dto: UpdateBankAccountDto,
+  ) {
+    return this.driversService.updateBankAccount(actor, dto);
+  }
+
   @Post('orders/:id/accept')
   @RequireRoles('DRIVER')
   @HttpCode(HttpStatus.OK)
@@ -242,6 +278,16 @@ export class DriversController {
     @Body() dto: AcceptOrderDto,
   ) {
     return this.acceptOrderService.acceptOrder(actor, id, dto.clientRequestId);
+  }
+
+  @Post('orders/:id/decline')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.OK)
+  declineOrder(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') id: string,
+  ): Promise<void> {
+    return this.declineOrderOfferService.declineOffer(actor, id);
   }
 
   @Post('orders/:id/status')

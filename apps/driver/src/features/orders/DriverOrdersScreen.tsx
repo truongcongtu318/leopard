@@ -50,11 +50,19 @@ export type DriverOrdersScreenProps = Readonly<{
     vehiclePlate?: string | null;
     vehicleType?: string | null;
   };
+  earningsTodayVnd?: number;
+  walletBalanceVnd?: number;
+  ratingAvg?: number;
   showDebugActions?: boolean;
 }>;
 
+function formatDongLabel(value: number): string {
+  return `đ ${Math.round(value).toLocaleString('vi-VN')}`;
+}
+
 export function DriverOrdersScreen({
   driverIdentity,
+  earningsTodayVnd,
   incomingOffer = null,
   isAcceptingIncomingOffer = false,
   networkError = null,
@@ -65,8 +73,10 @@ export function DriverOrdersScreen({
   onOpenOrder,
   onRetry,
   onSetAvailability,
+  ratingAvg,
   showDebugActions = false,
   view,
+  walletBalanceVnd,
 }: DriverOrdersScreenProps) {
   const [dismissedOfferId, setDismissedOfferId] = useState<string | null>(null);
   const [simulatedOffer, setSimulatedOffer] = useState<IncomingDispatchOffer | null>(null);
@@ -92,61 +102,35 @@ export function DriverOrdersScreen({
   const truckCoords = driverLocation.kind === 'ready' ? driverLocation.coords : undefined;
   const retryCurrentLocation = () => setLocationRequestKey((current) => current + 1);
 
-  /** Demo hotline for LEOPARD's own emergency dispatch desk (fictional, dialable digits). */
-  const SOS_HOTLINE_DIAL = '19001919';
-  const SOS_HOTLINE_LABEL = '1900 1919';
-
+  // No backend-configured emergency line exists: surface a placeholder instead
+  // of dialing a fabricated hotline number.
   const handleTriggerSos = () => {
     const title = 'Cuộc gọi khẩn cấp SOS';
-    const message = `Gọi Đội cứu hộ khẩn cấp LEOPARD 24/7 (${SOS_HOTLINE_LABEL})? Tọa độ GPS của bạn sẽ được chuyển tiếp tức thì.`;
-    const dial = () => void Linking.openURL(`tel:${SOS_HOTLINE_DIAL}`);
-    // react-native-web's Alert.alert is a no-op (no dialog implementation) —
-    // fall back to window.confirm so the action still dials while testing on web.
-    if (Platform.OS === 'web') {
-      if (window.confirm(`${title}\n\n${message}`)) dial();
-      return;
-    }
-    Alert.alert(title, message, [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Gọi ngay', style: 'destructive', onPress: dial },
-    ]);
+    const message = 'Đường dây nóng khẩn cấp sẽ hiển thị khi BE cấu hình. Hiện chưa có số liên hệ.';
+    Alert.alert(title, message, [{ text: 'Đã hiểu', style: 'cancel' }]);
   };
 
+  // Debug-only: replay the first real BE offer to exercise the incoming-offer
+  // modal UI. Never fabricates order data — returns silently in production.
   const handleSimulateIncomingOffer = () => {
+    if (!__DEV__) return;
     const first =
       view.kind === 'content' && view.requestedOrders.length > 0 ? view.requestedOrders[0] : null;
+    if (!first) return;
     setDismissedOfferId(null);
-    if (first) {
-      setSimulatedOffer({
-        id: first.id,
-        reference: first.reference,
-        pickupDistanceLabel: first.pickupDistanceLabel ?? 'Cách bạn 1.2 km · 4 phút',
-        pickupAddress: first.pickupLocationLabel ?? 'Kho Tân Bình, Q. Tân Bình, TP.HCM',
-        dropoffAddress: first.dropoffLocationLabel ?? 'KCN Sóng Thần 1, Dĩ An, Bình Dương',
-        tripDistanceLabel: first.distanceLabel ?? '24.5 km',
-        etaLabel: first.etaLabel ?? '45 phút (ước tính)',
-        priceLabel: first.priceLabel ?? '485.000 ₫',
-        vehicleLabel: first.vehicleLabel ?? 'Xe tải 2.5T mui bạt',
-        cargoSummary: first.cargoSummary ?? 'Thiết bị phụ tùng công nghiệp (1.800 kg)',
-        notes: 'Bốc dỡ nhanh tại cổng số 2 kho tổng',
-        timeoutSeconds: 30,
-      });
-    } else {
-      setSimulatedOffer({
-        id: 'sim-offer-999',
-        reference: 'ORD-DEMO-999',
-        pickupDistanceLabel: 'Cách bạn 0.8 km · 3 phút',
-        pickupAddress: 'Kho Tân Bình, Q. Tân Bình, TP.HCM',
-        dropoffAddress: 'KCN Sóng Thần 1, Dĩ An, Bình Dương',
-        tripDistanceLabel: '24.5 km',
-        etaLabel: '45 phút (ước tính)',
-        priceLabel: '485.000 ₫',
-        vehicleLabel: 'Xe tải 2.5T mui bạt',
-        cargoSummary: 'Kiện pallet linh kiện điện tử (1.8 tấn)',
-        notes: 'Giao trong giờ hành chính, có xe nâng hạ hàng',
-        timeoutSeconds: 30,
-      });
-    }
+    setSimulatedOffer({
+      id: first.id,
+      reference: first.reference,
+      pickupDistanceLabel: first.pickupDistanceLabel ?? 'Đang cập nhật',
+      pickupAddress: first.pickupLocationLabel ?? 'Điểm lấy hàng',
+      dropoffAddress: first.dropoffLocationLabel ?? 'Điểm giao hàng',
+      tripDistanceLabel: first.distanceLabel ?? 'Đang cập nhật',
+      etaLabel: first.etaLabel ?? 'ETA dự kiến: đang cập nhật',
+      priceLabel: first.priceLabel ?? 'Đang cập nhật',
+      vehicleLabel: first.vehicleLabel ?? '—',
+      cargoSummary: first.cargoSummary ?? '—',
+      timeoutSeconds: 30,
+    });
   };
 
   const activeIncomingOffer =
@@ -325,8 +309,8 @@ export function DriverOrdersScreen({
               <DriverConnectionStatusRow isOnline={isOnline} subtitle={vehicleSubtitle || null} />
 
               <DriverQuickActionGrid
+                onOpenOrderList={() => onNavigate?.('/board')}
                 onOpenSettings={() => setIsSettingsOpen(true)}
-                onOpenVehicle={() => onNavigate?.('/profile')}
                 onOpenWallet={() => onNavigate?.('/wallet')}
                 onTriggerSos={handleTriggerSos}
               />
@@ -359,10 +343,16 @@ export function DriverOrdersScreen({
         </View>
       )}
 
-      {/* ── Layer 4: Grab-style floating quick-nav (pill + avatar), not a docked tab bar.
-          Hidden during an active trip — the mission cockpit owns the full screen then. ── */}
+      {/* ── Layer 4: Grab-style floating quick-nav (pill + avatar) ── */}
       {!activeTrip ? (
-        <DriverQuickNavOverlay driverName={driverIdentity?.name} onNavigate={onNavigate} />
+        <DriverQuickNavOverlay
+          driverName={driverIdentity?.name}
+          earningsTodayLabel={earningsTodayVnd !== undefined ? formatDongLabel(earningsTodayVnd) : undefined}
+          isOnline={isOnline}
+          onNavigate={onNavigate}
+          rating={ratingAvg !== undefined ? ratingAvg.toFixed(2) : undefined}
+          walletBalanceLabel={walletBalanceVnd !== undefined ? formatDongLabel(walletBalanceVnd) : undefined}
+        />
       ) : null}
 
       {/* ── Layer 5: overlays ── */}
@@ -425,7 +415,7 @@ const styles = StyleSheet.create({
   idlePanel: {
     bottom: 0,
     left: 0,
-    paddingBottom: 28,
+    paddingBottom: 20,
     paddingHorizontal: 16,
     paddingTop: 12,
     position: 'absolute',
@@ -433,9 +423,8 @@ const styles = StyleSheet.create({
     zIndex: 40,
   },
   capsuleLayer: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     left: 0,
-    paddingLeft: 16,
     position: 'absolute',
     right: 0,
     zIndex: 25,

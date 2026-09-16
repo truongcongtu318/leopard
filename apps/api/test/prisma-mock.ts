@@ -9,7 +9,6 @@ import type {
   DriverAvailability,
   OrderStatus,
   Role,
-  FleetMember,
   AuditLog,
   Notification,
   DeviceToken,
@@ -41,8 +40,6 @@ export class InMemoryPrismaService {
   public users = new Map<string, User>();
   public refreshSessions = new Map<string, RefreshSession>();
   public driverProfiles = new Map<string, DriverProfile>();
-  public fleetMembers = new Map<string, FleetMember>();
-  public fleets = new Map<string, any>();
   public orders = new Map<string, Order>();
   public orderStops = new Map<string, OrderStop & { lat: number; lng: number }>();
   public driverLocations = new Map<string, { lat: number; lng: number }>();
@@ -487,108 +484,6 @@ export class InMemoryPrismaService {
     ),
   };
 
-  fleet = {
-    findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
-      return this.fleets.get(where.id) ?? null;
-    }),
-    findMany: jest.fn(async ({ include }: { include?: any } = {}) => {
-      const list = Array.from(this.fleets.values());
-      if (include?._count?.select?.memberships) {
-        const where = include._count.select.memberships.where;
-        return list.map((f) => {
-          const count = Array.from(this.fleetMembers.values()).filter(
-            (m) =>
-              m.fleetId === f.id &&
-              (!where?.role || m.role === where.role) &&
-              (!where?.status || m.status === where.status),
-          ).length;
-          return {
-            ...f,
-            _count: { memberships: count },
-          };
-        });
-      }
-      return list;
-    }),
-    count: jest.fn(async () => {
-      return this.fleets.size;
-    }),
-    create: jest.fn(async ({ data }: { data: any }) => {
-      const id = data.id ?? `fleet-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const fleet = { id, ...data, createdAt: new Date() };
-      this.fleets.set(id, fleet);
-      return fleet;
-    }),
-  };
-
-  fleetMember = {
-    findMany: jest.fn(async ({ where, select, include }: { where?: any; select?: any; include?: any } = {}) => {
-      let filtered = Array.from(this.fleetMembers.values());
-      if (where) {
-        if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
-        if (where.status) filtered = filtered.filter((m) => m.status === where.status);
-        if (where.role) filtered = filtered.filter((m) => m.role === where.role);
-        if (where.fleetId) {
-          if (typeof where.fleetId === 'string') filtered = filtered.filter((m) => m.fleetId === where.fleetId);
-          else if (where.fleetId.in) filtered = filtered.filter((m) => where.fleetId.in.includes(m.fleetId));
-        }
-      }
-      if (select?.fleetId) {
-        return filtered.map((m) => ({ fleetId: m.fleetId }));
-      }
-      if (include?.user) {
-        return filtered.map((m) => {
-          const user = this.users.get(m.userId);
-          const driverProfile = Array.from(this.driverProfiles.values()).find((p) => p.userId === m.userId) ?? null;
-          return {
-            ...m,
-            user: user ? { ...user, driverProfile } : null,
-          };
-        });
-      }
-      return filtered;
-    }),
-    findFirst: jest.fn(async ({ where }: { where?: any } = {}) => {
-      let filtered = Array.from(this.fleetMembers.values());
-      if (where) {
-        if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
-        if (where.status) filtered = filtered.filter((m) => m.status === where.status);
-        if (where.fleetId) {
-          if (typeof where.fleetId === 'string') filtered = filtered.filter((m) => m.fleetId === where.fleetId);
-          else if (where.fleetId.in) filtered = filtered.filter((m) => where.fleetId.in.includes(m.fleetId));
-        }
-      }
-      return filtered[0] ?? null;
-    }),
-    count: jest.fn(async ({ where }: { where?: any } = {}) => {
-      let filtered = Array.from(this.fleetMembers.values());
-      if (where) {
-        if (where.userId) filtered = filtered.filter((m) => m.userId === where.userId);
-        if (where.status) filtered = filtered.filter((m) => m.status === where.status);
-        if (where.fleetId) filtered = filtered.filter((m) => m.fleetId === where.fleetId);
-        if (where.role) filtered = filtered.filter((m) => m.role === where.role);
-      }
-      return filtered.length;
-    }),
-    create: jest.fn(async ({ data }: { data: any }) => {
-      const id = data.id ?? `member-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const member: FleetMember = {
-        id,
-        fleetId: data.fleetId,
-        userId: data.userId,
-        role: data.role ?? 'DRIVER',
-        status: data.status ?? 'INVITED',
-        invitedAt: new Date(),
-        joinedAt: data.joinedAt ?? null,
-        removedAt: data.removedAt ?? null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      this.fleetMembers.set(id, member);
-      return member;
-    }),
-  };
-
   private filterOrders(where?: any): Order[] {
     let list = Array.from(this.orders.values());
     if (!where) return list;
@@ -627,18 +522,6 @@ export class InMemoryPrismaService {
         const needle = cond.clientRequestId.contains.toLowerCase();
         if (!o.clientRequestId?.toLowerCase().includes(needle)) return false;
       }
-      if (cond.driver?.fleetMemberships?.some) {
-        const { fleetId, role, status } = cond.driver.fleetMemberships.some;
-        if (!o.driverId) return false;
-        const matched = Array.from(this.fleetMembers.values()).some(
-          (m) =>
-            m.userId === o.driverId &&
-            (!fleetId || m.fleetId === fleetId) &&
-            (!role || m.role === role) &&
-            (!status || m.status === status),
-        );
-        if (!matched) return false;
-      }
       if (cond.AND && Array.isArray(cond.AND)) {
         if (!cond.AND.every((c: any) => matchesCondition(o, c))) return false;
       }
@@ -650,7 +533,6 @@ export class InMemoryPrismaService {
 
     return list.filter((o) => matchesCondition(o, where));
   }
-
   order = {
     findUnique: jest.fn(async ({ where, include }: { where: { id: string }; include?: any }) => {
       const order = this.orders.get(where.id);

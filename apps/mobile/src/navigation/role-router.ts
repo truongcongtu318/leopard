@@ -37,7 +37,6 @@ export function getMobileHome(role: Role): MobileHome {
     case 'CUSTOMER':
       return '/customer/home';
     case 'DRIVER':
-    case 'FLEET_OWNER':
     case 'ADMIN':
       return '/(public)/login';
   }
@@ -64,7 +63,7 @@ export function getMobileRouteDecision({
     };
   }
 
-  if (role === 'FLEET_OWNER' || role === 'ADMIN' || role === 'DRIVER') {
+  if (role === 'ADMIN' || role === 'DRIVER') {
     return {
       canRenderProtectedContent: false,
       kind: 'denied',

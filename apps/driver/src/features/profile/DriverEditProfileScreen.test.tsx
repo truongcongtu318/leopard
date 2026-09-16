@@ -4,12 +4,36 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { DriverEditProfileScreen } from './DriverEditProfileScreen';
 
 describe('DriverEditProfileScreen', () => {
+  it('does not render hardcoded driver identity when BE fields are null', async () => {
+    const screen = await render(
+      <DriverEditProfileScreen
+        avatarUrl={null}
+        initialEmail=""
+        initialName=""
+        isSaving={false}
+        onPickAvatar={jest.fn()}
+        onSave={jest.fn()}
+        phone={null}
+        vehicleLabel={null}
+      />,
+    );
+
+    expect(screen.queryByText('DRV-88924')).toBeNull();
+    expect(screen.queryByText(/Tân Bình/)).toBeNull();
+    expect(screen.queryByText('51C-889.24 · Xe tải 2.5T')).toBeNull();
+    expect(screen.queryByText('0987 *** 892')).toBeNull();
+    expect(screen.queryByText('0909 113 115')).toBeNull();
+    expect(screen.queryByText('0912 345 678 (Chủ xe Tân Bình)')).toBeNull();
+    expect(screen.queryByText('4/4 Giấy tờ kiểm duyệt')).toBeNull();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+
+    await screen.unmount();
+  });
+
   it('renders avatar studio, guidelines, editable fields, and protected identity', async () => {
     const screen = await render(
       <DriverEditProfileScreen
         avatarUrl={null}
-        driverCode="DRV-88924"
-        fleetLabel="Fleet Tân Bình (Pilot)"
         initialEmail="tuan.nguyen@leopard.vn"
         initialName="Nguyễn Văn Tuấn"
         isSaving={false}
@@ -30,20 +54,17 @@ describe('DriverEditProfileScreen', () => {
 
     // Section headings
     expect(screen.getByText('THÔNG TIN LIÊN HỆ & HIỂN THỊ')).toBeTruthy();
-    expect(screen.getByText('ĐỊNH DANH BUỒNG LÁI & ĐỘI XE (FLEET)')).toBeTruthy();
+    expect(screen.getByText('THÔNG TIN ĐỊNH DANH (CHỈ ĐỌC)')).toBeTruthy();
 
     // Values in inputs
     expect(screen.getByDisplayValue('Nguyễn Văn Tuấn')).toBeTruthy();
     expect(screen.getByDisplayValue('tuan.nguyen@leopard.vn')).toBeTruthy();
 
-    // Readonly values
+    // Readonly values (BE-provided)
     expect(screen.getByText('0987 654 321')).toBeTruthy();
-    expect(screen.getByText('DRV-88924')).toBeTruthy();
     expect(screen.getByText('51C-889.24 · Xe tải 2.5T')).toBeTruthy();
-    expect(screen.getByText('Fleet Tân Bình (Pilot)')).toBeTruthy();
     // Verification badges use a vector icon, not a text glyph.
     expect(screen.getByText('Xác thực OTP')).toBeTruthy();
-    expect(screen.getByText('Đã duyệt')).toBeTruthy();
 
     await screen.unmount();
   });

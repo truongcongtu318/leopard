@@ -12,11 +12,21 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
-import { leopardPalette, radius } from '@leopard/mobile-core/src/theme/tokens';
-import { IconShield, IconTruck } from '@leopard/mobile-core/src/icons/svg-icons';
-import { typeScale, IconChevron, IconClock, IconPhone } from '@leopard/mobile-core';
+import {
+  httpClient,
+  sessionStore,
+  leopardPalette,
+  radius,
+  driverPrimitives,
+  driverSemantics,
+  iosContinuousCurve,
+  IconShield,
+  IconTruck,
+  typeScale,
+  IconChevron,
+  IconClock,
+  IconPhone,
+} from '@leopard/mobile-core';
 
 interface ApplicationStatusResponse {
   status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';
@@ -25,7 +35,6 @@ interface ApplicationStatusResponse {
   licensePlate?: string | null;
 }
 
-const DRIVER_BLUE = '#1E5BB8';
 const SUPPORT_HOTLINE = '19006789';
 
 export default function KycPendingRoute() {
@@ -94,12 +103,12 @@ export default function KycPendingRoute() {
         <Pressable
           accessibilityLabel="Quay lại"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           onPress={handleBack}
           style={styles.backBtn}
           testID="btn-back"
         >
-          <IconChevron color="#0B1E42" direction="left" size={20} />
+          <IconChevron color={driverSemantics.text.primary} direction="left" size={20} />
         </Pressable>
         <Text accessibilityRole="header" style={styles.headerTitle}>
           Trạng thái hồ sơ
@@ -107,7 +116,7 @@ export default function KycPendingRoute() {
         <Pressable
           accessibilityLabel="Đăng xuất"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           onPress={handleLogout}
           style={styles.logoutBtn}
           testID="btn-logout"
@@ -120,7 +129,7 @@ export default function KycPendingRoute() {
         {/* Main Status Hero Card */}
         <View style={styles.heroCard} testID="kyc-status-card">
           <View style={styles.heroBadge}>
-            <IconClock color={DRIVER_BLUE} size={32} />
+            <IconClock color={driverPrimitives.colors.blue600} size={32} />
           </View>
           <Text style={styles.heroTitle}>Hồ sơ đang chờ phê duyệt</Text>
           <Text style={styles.heroSubtitle}>
@@ -136,7 +145,7 @@ export default function KycPendingRoute() {
         {/* Vehicle Summary Card */}
         <View style={styles.summaryCard} testID="vehicle-summary-card">
           <View style={styles.cardHeaderRow}>
-            <IconTruck color={DRIVER_BLUE} size="md" />
+            <IconTruck color={driverPrimitives.colors.blue600} size="md" />
             <Text style={styles.cardHeaderTitle}>Thông tin phương tiện đăng ký</Text>
           </View>
 
@@ -196,7 +205,7 @@ export default function KycPendingRoute() {
             style={({ pressed }) => [styles.secondaryActionBtn, pressed && styles.btnPressed]}
             testID="btn-hotline"
           >
-            <IconPhone color={DRIVER_BLUE} size={18} />
+            <IconPhone color={driverPrimitives.colors.blue600} size={18} />
             <Text style={styles.secondaryActionBtnText}>Tổng đài hỗ trợ đối tác 1900 6789</Text>
           </Pressable>
         </View>
@@ -233,7 +242,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: driverSemantics.text.primary,
   },
   logoutBtn: {
     minWidth: 44,
@@ -283,7 +292,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: typeScale.title3.fontSize,
     fontWeight: '800',
-    color: '#0B1E42',
+    color: driverSemantics.text.primary,
     textAlign: 'center',
   },
   heroSubtitle: {
@@ -328,7 +337,7 @@ const styles = StyleSheet.create({
   cardHeaderTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0B1E42',
+    color: driverSemantics.text.primary,
   },
   divider: {
     height: 1,
@@ -346,7 +355,7 @@ const styles = StyleSheet.create({
   },
   fieldValue: {
     fontSize: typeScale.subheadline.fontSize,
-    color: '#0B1E42',
+    color: driverSemantics.text.primary,
     fontWeight: '700',
   },
   monoText: {
@@ -390,14 +399,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   primaryActionBtn: {
-    backgroundColor: DRIVER_BLUE,
+    backgroundColor: driverPrimitives.colors.blue600,
     borderRadius: 14,
+    ...iosContinuousCurve,
     minHeight: 48,
     height: 50,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: DRIVER_BLUE,
+    shadowColor: driverPrimitives.colors.blue600,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -411,9 +421,10 @@ const styles = StyleSheet.create({
   secondaryActionBtn: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderColor: '#CAD9EB',
+    borderColor: driverPrimitives.colors.gray200,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 12,
+    ...iosContinuousCurve,
     minHeight: 48,
     height: 50,
     width: '100%',
@@ -422,7 +433,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   secondaryActionBtnText: {
-    color: DRIVER_BLUE,
+    color: driverPrimitives.colors.blue600,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },

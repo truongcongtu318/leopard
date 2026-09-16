@@ -4,7 +4,6 @@ import type { PaymentStatus, ProviderSource, OrderStatus } from './enums.js';
 export interface AdminDashboardDto {
   totalUsers: number;
   totalOrders: number;
-  activeFleets: number;
   revenueVnd: number;
 }
 
@@ -19,18 +18,6 @@ export interface AdminUserSummaryDto {
 export interface AdminUserQuery extends PageQuery {
   role?: string;
   status?: string;
-  q?: string;
-}
-
-export interface AdminFleetSummaryDto {
-  id: string;
-  name: string;
-  createdAt: string;
-  driversCount: number;
-  activeOrdersCount: number;
-}
-
-export interface AdminFleetQuery extends PageQuery {
   q?: string;
 }
 
@@ -190,6 +177,49 @@ export interface AdminReportQuery extends PageQuery {
   status?: string;
   category?: string;
   orderId?: string;
+  from?: string;
+  to?: string;
+  q?: string;
+}
+
+export interface AdminDriverSummaryDto {
+  id: string;
+  name: string;
+  phone: string;
+  status: string;
+  availability: string;
+  vehicleType: string;
+  lastKnownAt?: string | null;
+}
+
+export interface AdminDriverQuery extends PageQuery {
+  status?: string;
+  q?: string;
+}
+
+export interface AdminOrderSummaryDto {
+  id: string;
+  code: string;
+  status: string;
+  driverId?: string | undefined;
+  driverName?: string | undefined;
+  customerPhone: string | null;
+  pickupLabel: string;
+  pickupLat?: number | null;
+  pickupLng?: number | null;
+  dropoffLabel: string;
+  dropoffLat?: number | null;
+  dropoffLng?: number | null;
+  paymentStatus: string;
+  priceVnd: number;
+  createdAt: string;
+  updatedAt: string;
+  distanceMeters: number;
+}
+
+export interface AdminOrderQuery extends PageQuery {
+  driverId?: string;
+  status?: string;
   from?: string;
   to?: string;
   q?: string;
@@ -381,5 +411,3 @@ export interface AdminSendSupportMessageCommand {
   body: string;
   clientRequestId?: string | undefined;
 }
-
-

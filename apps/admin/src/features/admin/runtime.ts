@@ -2,7 +2,6 @@ import 'server-only';
 
 import type {
   DriverAvailability,
-  FleetMemberStatus,
   OrderStatus,
   PaymentStatus,
   UserStatus,
@@ -27,6 +26,7 @@ import type {
   AdminInvoiceListItemView,
   AdminListFilters,
   AdminListItemView,
+  FleetMemberStatus,
   AdminListRouteView,
   AdminListScreen,
   AdminListView,

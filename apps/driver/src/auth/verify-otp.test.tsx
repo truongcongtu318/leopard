@@ -3,8 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 import VerifyOtpRoute from '../../app/(public)/verify-otp';
-import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
+import { httpClient, sessionStore } from '@leopard/mobile-core';
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();

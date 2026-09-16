@@ -15,7 +15,7 @@ import { RequireRoles } from '../auth/decorators/require-roles.js';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard.js';
 import { RoleGuard } from '../auth/guards/role.guard.js';
 import { ApiExceptionFilter } from '../common/api-exception.filter.js';
-import { ChatService } from './chat.service.js';
+import { ChatService, type OrderMessageDto } from './chat.service.js';
 import { SendMessageDto } from './dto/send-message.dto.js';
 
 @Controller('orders')
@@ -28,7 +28,7 @@ export class ChatController {
   listMessages(
     @CurrentUser() actor: AuthenticatedActor,
     @Param('id') id: string,
-  ): Promise<OrderMessage[]> {
+  ): Promise<OrderMessageDto[]> {
     return this.chatService.listOrderMessages(actor.userId, id);
   }
 

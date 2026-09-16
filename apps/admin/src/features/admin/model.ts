@@ -1,11 +1,12 @@
 import type {
   CommandDialogState,
   DriverAvailability,
-  FleetMemberStatus,
   OrderStatus,
   PaymentStatus,
   UserStatus,
 } from '@leopard/ui';
+
+export type FleetMemberStatus = 'INVITED' | 'ACTIVE' | 'REMOVED';
 
 export type AdminPreviewScreen =
   | 'overview'
@@ -127,8 +128,8 @@ export type AdminListFilters = Readonly<{
   role: 'ALL' | 'CUSTOMER' | 'DRIVER' | 'ADMIN';
   userStatus: 'ALL' | UserStatus;
   availability: 'ALL' | DriverAvailability;
-  membershipStatus: 'ALL' | FleetMemberStatus;
-  fleetId: string;
+  membershipStatus?: 'ALL' | 'INVITED' | 'ACTIVE' | 'REMOVED' | string;
+  fleetId?: string;
   customerId: string;
   driverId: string;
   from: string;

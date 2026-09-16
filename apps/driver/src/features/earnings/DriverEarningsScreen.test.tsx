@@ -14,6 +14,8 @@ const baseProps: DriverEarningsScreenProps = {
   availableBalanceVnd: 1450000,
   deliveredOrderCount: 128,
   totalOrderCount: 130,
+  todayEarningsVnd: 485000,
+  todayJobCount: 3,
   isLoading: false,
   isError: false,
   onRetry: jest.fn(),
@@ -24,7 +26,6 @@ describe('DriverEarningsScreen', () => {
     const screen = await render(<DriverEarningsScreen {...baseProps} />);
 
     expect(screen.getAllByText('Thu nhập').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByTestId('driver-bottom-navigation')).toBeTruthy();
     expect(screen.getByText(/18.450.000/)).toBeTruthy();
     expect(screen.getByText('128 cuốc xe')).toBeTruthy();
     expect(screen.queryByText(/Chiết khấu nền tảng/)).toBeNull();
@@ -39,13 +40,20 @@ describe('DriverEarningsScreen', () => {
     await screen.unmount();
   });
 
-  it('shows 0đ on the today/week/month cards instead of a fabricated per-period number', async () => {
-    // The API only reports a lifetime total — no real per-period breakdown yet.
+  it('shows the real today earnings and job count computed from order history', async () => {
     const screen = await render(<DriverEarningsScreen {...baseProps} />);
     expect(screen.getByTestId('kpi-period-today')).toBeTruthy();
-    expect(screen.getByTestId('kpi-period-week')).toBeTruthy();
-    expect(screen.getByTestId('kpi-period-month')).toBeTruthy();
-    expect(screen.getAllByText('0 ₫').length).toBe(3);
+    expect(screen.getByText(/485.000/)).toBeTruthy();
+    expect(screen.getByText('3 Jobs')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('shows 0đ / 0 Jobs when there are no orders delivered today', async () => {
+    const screen = await render(
+      <DriverEarningsScreen {...baseProps} todayEarningsVnd={0} todayJobCount={0} />,
+    );
+    expect(screen.getByText('0 ₫')).toBeTruthy();
+    expect(screen.getByText('0 Jobs')).toBeTruthy();
     await screen.unmount();
   });
 
@@ -59,11 +67,11 @@ describe('DriverEarningsScreen', () => {
     await screen.unmount();
   });
 
-  it('renders a horizontal carousel of period cards (Hôm nay / Tuần này / Tháng này)', async () => {
+  it('renders the today period card (no fabricated week/month breakdown)', async () => {
     const screen = await render(<DriverEarningsScreen {...baseProps} />);
     expect(screen.getByText('Thu nhập hôm nay')).toBeTruthy();
-    expect(screen.getByText('Thu nhập tuần này')).toBeTruthy();
-    expect(screen.getByText('Thu nhập tháng này')).toBeTruthy();
+    expect(screen.queryByText('Thu nhập tuần này')).toBeNull();
+    expect(screen.queryByText('Thu nhập tháng này')).toBeNull();
     await screen.unmount();
   });
 });

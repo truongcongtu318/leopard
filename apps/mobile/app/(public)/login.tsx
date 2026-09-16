@@ -24,7 +24,6 @@ export default function LoginRoute() {
         router.replace('/customer/home');
         break;
       case 'DRIVER':
-      case 'FLEET_OWNER':
       case 'ADMIN':
         router.replace('/(public)/login');
         break;
@@ -36,7 +35,7 @@ export default function LoginRoute() {
 
   return (
     <LoginScreen
-      allowDemo={allowDemo}
+      allowDemo={false}
       onLoginSuccess={handleLoginSuccess}
       {...(allowDemo
         ? {

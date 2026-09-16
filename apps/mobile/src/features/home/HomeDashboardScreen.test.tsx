@@ -2,6 +2,15 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
+jest.mock('expo-location', () => ({
+  Accuracy: { High: 6 },
+  PermissionStatus: { GRANTED: 'granted', DENIED: 'denied', UNDETERMINED: 'undetermined' },
+  getCurrentPositionAsync: jest.fn(),
+  requestForegroundPermissionsAsync: jest
+    .fn<() => Promise<{ status: string }>>()
+    .mockResolvedValue({ status: 'denied' }),
+}));
+
 import { addressStore } from '../customer/addresses/address-store';
 import { getTimeOfDayGreeting, HomeDashboardScreen } from './HomeDashboardScreen';
 

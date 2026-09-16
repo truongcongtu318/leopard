@@ -89,7 +89,7 @@ export class TrackingService {
     query: TrackingPointQuery,
   ): Promise<TrackingPointPage> {
     assertOrderId(orderId);
-    const order = await this.repository.findOrderAccess(actor.userId, orderId);
+    const order = await this.repository.findOrderAccess(orderId);
     if (!order) {
       throw notFound();
     }
@@ -106,7 +106,7 @@ export class TrackingService {
     orderId: string,
   ): Promise<TrackingPointDto | null> {
     assertOrderId(orderId);
-    const order = await this.repository.findOrderAccess(actor.userId, orderId);
+    const order = await this.repository.findOrderAccess(orderId);
     if (!order) {
       throw notFound();
     }

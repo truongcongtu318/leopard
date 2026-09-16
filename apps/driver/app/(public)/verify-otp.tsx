@@ -13,10 +13,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Role } from '@leopard/shared';
 
-import { typeScale, IconChevron, IconClock, OtpPhoneHeroIcon } from '@leopard/mobile-core';
-import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
-import { toE164Vn } from '@leopard/mobile-core/src/auth/phone';
+import {
+  typeScale,
+  IconChevron,
+  IconClock,
+  OtpPhoneHeroIcon,
+  httpClient,
+  sessionStore,
+  toE164Vn,
+} from '@leopard/mobile-core';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 interface AuthResponse {

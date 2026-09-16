@@ -26,7 +26,7 @@ export class TrackingRepository {
     ) => Promise<void>,
   ): Promise<TrackingPointRawRow> {
     return this.prisma.$transaction(async (tx) => {
-      const order = await this.findOrderAccessInternal(tx, actorId, orderId);
+      const order = await this.findOrderAccessInternal(tx, orderId);
       if (!order) {
         throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy đơn hàng');
       }
@@ -131,11 +131,11 @@ export class TrackingRepository {
     });
   }
 
-  public async findOrderAccess(actorId: string, orderId: string): Promise<TrackingOrderAccess | null> {
-    return this.findOrderAccessInternal(this.prisma, actorId, orderId);
+  public async findOrderAccess(orderId: string): Promise<TrackingOrderAccess | null> {
+    return this.findOrderAccessInternal(this.prisma, orderId);
   }
 
-  private async findOrderAccessInternal(db: any, actorId: string, orderId: string): Promise<TrackingOrderAccess | null> {
+  private async findOrderAccessInternal(db: any, orderId: string): Promise<TrackingOrderAccess | null> {
     const order = await db.order.findUnique({
       where: { id: orderId },
       select: { id: true, status: true, customerId: true, driverId: true },
@@ -143,38 +143,11 @@ export class TrackingRepository {
 
     if (!order) return null;
 
-    const fleetMemberships = await db.fleetMember.findMany({
-      where: {
-        userId: actorId,
-        status: 'ACTIVE',
-      },
-      select: { fleetId: true, role: true },
-    });
-
-    const activeOwnerFleetIds = fleetMemberships
-      .filter((m: any) => m.role === 'OWNER')
-      .map((m: any) => m.fleetId);
-
-    let activeDriverFleetIds: string[] = [];
-    if (order.driverId) {
-      const driverMemberships = await db.fleetMember.findMany({
-        where: {
-          userId: order.driverId,
-          status: 'ACTIVE',
-          role: 'DRIVER'
-        },
-        select: { fleetId: true },
-      });
-      activeDriverFleetIds = driverMemberships.map((m: any) => m.fleetId);
-    }
-
     return {
       id: order.id,
       status: order.status as OrderStatus,
       customerId: order.customerId,
       driverId: order.driverId,
-      activeOwnerFleetIds,
-      activeDriverFleetIds,
     };
   }
 

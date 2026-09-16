@@ -114,11 +114,11 @@ export type DriverPublicOrderView = Readonly<{
   etaLabel: string;
   updatedAtLabel: string;
   priceVnd?: number | null;
-  priceLabel?: string;
-  distanceLabel?: string;
+  priceLabel?: string | null;
+  distanceLabel?: string | null;
   pickupLocationLabel?: string;
   dropoffLocationLabel?: string;
-  pickupDistanceLabel?: string;
+  pickupDistanceLabel?: string | null;
   /** Cargo-first freight fields. Optional: older payloads only carry `cargoSummary`. */
   cargoName?: string | null;
   cargoWeightKg?: number | null;

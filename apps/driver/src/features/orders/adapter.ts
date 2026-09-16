@@ -467,8 +467,8 @@ export function mapOrderToPublicOrderView(
     : 'Khu vực lấy hàng';
   const dropoffLocationLabel = dropoffStop?.address ?? 'Khu vực giao hàng';
 
-  const priceVnd = order.priceVnd ?? 285000;
-  const distanceLabel = order.distanceMeters ? formatDistance(order.distanceMeters) : '18,4 km';
+  const priceVnd = order.priceVnd ?? null;
+  const distanceLabel = order.distanceMeters ? formatDistance(order.distanceMeters) : null;
 
   return {
     id: order.id,
@@ -483,11 +483,13 @@ export function mapOrderToPublicOrderView(
     ),
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
     priceVnd,
-    priceLabel: formatVndPrice(priceVnd),
+    priceLabel: priceVnd !== null ? formatVndPrice(priceVnd) : null,
     distanceLabel,
     pickupLocationLabel,
     dropoffLocationLabel,
-    pickupDistanceLabel: 'Cách bạn 1.2 km',
+    // Backend does not return driver→pickup proximity; null until a
+    // location-based proximity API exists.
+    pickupDistanceLabel: null,
   };
 }
 
@@ -1227,7 +1229,7 @@ export function createDriverHttpAdapter(
           ) {
             try {
               const currentOrder = await activeClient.get<MappedDriverOrderResponse>(
-                `/driver/orders/${orderId}`,
+                `/orders/${orderId}`,
               );
               const fetchedView = mapOrderToDriverDetailView(currentOrder);
               if (fetchedView.kind === 'content' && fetchedView.accessScope === 'ASSIGNED_FULL') {

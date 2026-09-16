@@ -1,6 +1,7 @@
 // apps/api/src/drivers/withdrawals.repository.ts
 import { Injectable } from '@nestjs/common';
 import type { WithdrawalRequest } from '@prisma/client';
+import { DomainError } from '../common/domain-error.js';
 import { PrismaService } from '../database/prisma.service.js';
 
 export interface WalletSummary {
@@ -8,6 +9,15 @@ export interface WalletSummary {
   readonly lifetimeDeliveredVnd: number;
   readonly pendingWithdrawalVnd: number;
   readonly deliveredOrderCount: number;
+  readonly bankName: string | null;
+  readonly bankAccountNumber: string | null;
+  readonly bankAccountName: string | null;
+}
+
+export interface UpdateBankAccountInput {
+  readonly bankName: string;
+  readonly bankAccountNumber: string;
+  readonly bankAccountName: string;
 }
 
 export interface CreateWithdrawalRequestInput {
@@ -24,13 +34,18 @@ export class WithdrawalsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async getWalletSummary(driverId: string): Promise<WalletSummary> {
-    const [deliveredOrders, heldWithdrawals] = await Promise.all([
+    const [deliveredOrders, heldWithdrawals, profile] = await Promise.all([
       this.prisma.order.findMany({
         where: { driverId, status: 'DELIVERED' },
         select: { priceVnd: true },
       }),
       this.prisma.withdrawalRequest.findMany({
         where: { driverId, status: { in: ['PENDING', 'APPROVED'] } },
+      }),
+      // Bank columns already exist on DriverProfile (schema.prisma:287-289) — no new migration.
+      this.prisma.driverProfile.findUnique({
+        where: { userId: driverId },
+        select: { bankName: true, bankAccountNumber: true, bankAccountName: true },
       }),
     ]);
 
@@ -51,7 +66,28 @@ export class WithdrawalsRepository {
       lifetimeDeliveredVnd,
       pendingWithdrawalVnd,
       deliveredOrderCount: deliveredOrders.length,
+      bankName: profile?.bankName ?? null,
+      bankAccountNumber: profile?.bankAccountNumber ?? null,
+      bankAccountName: profile?.bankAccountName ?? null,
     };
+  }
+
+  async updateBankAccount(driverId: string, input: UpdateBankAccountInput) {
+    const profile = await this.prisma.driverProfile.findUnique({
+      where: { userId: driverId },
+      select: { id: true },
+    });
+    if (!profile) {
+      throw new DomainError('RESOURCE_NOT_FOUND', 404, 'Không tìm thấy hồ sơ tài xế');
+    }
+    return this.prisma.driverProfile.update({
+      where: { userId: driverId },
+      data: {
+        bankName: input.bankName,
+        bankAccountNumber: input.bankAccountNumber,
+        bankAccountName: input.bankAccountName,
+      },
+    });
   }
 
   createWithdrawalRequest(input: CreateWithdrawalRequestInput): Promise<WithdrawalRequest> {

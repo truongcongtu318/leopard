@@ -1,12 +1,12 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import React from 'react';
 
 import { DriverProfileScreen } from './ProfileScreen';
 import type { ProfileContentView } from './model';
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
 }));
 
 const fixtureProfile: ProfileContentView = {
@@ -25,20 +25,25 @@ const fixtureProfile: ProfileContentView = {
 };
 
 describe('DriverProfileScreen', () => {
-  it('renders driver profile with bottom navigation dock', async () => {
+  it('renders driver profile identity and name', async () => {
     const screen = await render(<DriverProfileScreen view={fixtureProfile} />);
 
     expect(screen.getByText('Hồ sơ tài xế')).toBeTruthy();
     expect(screen.getByText('Trần Văn Nam')).toBeTruthy();
-    expect(screen.getByTestId('driver-bottom-navigation')).toBeTruthy();
-
-    const profileTab = screen.getByLabelText(/Hồ sơ|Tôi/);
-    expect(profileTab.props.accessibilityState).toEqual({ selected: true });
 
     await screen.unmount();
   });
 
-  it('renders bottom navigation even in error boundary view so driver is not trapped', async () => {
+  it('does not fall back to a hardcoded name when BE name is null', async () => {
+    const screen = await render(<DriverProfileScreen view={{ ...fixtureProfile, name: null }} />);
+
+    expect(screen.queryByText('Trần Văn Nam')).toBeNull();
+    expect(screen.getByText('0901 234 567')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('renders error boundary view cleanly when error occurs', async () => {
     const screen = await render(
       <DriverProfileScreen
         view={{
@@ -51,21 +56,6 @@ describe('DriverProfileScreen', () => {
     );
 
     expect(screen.getByText('Lỗi tải hồ sơ')).toBeTruthy();
-    expect(screen.getByTestId('driver-bottom-navigation')).toBeTruthy();
-
-    await screen.unmount();
-  });
-
-  it('navigates to /orders when pressing Trang chủ tab', async () => {
-    const onNavigate = jest.fn();
-    const screen = await render(
-      <DriverProfileScreen onNavigate={onNavigate} view={fixtureProfile} />,
-    );
-
-    const homeTab = screen.getByLabelText('Trang chủ');
-    await fireEvent.press(homeTab);
-
-    expect(onNavigate).toHaveBeenCalledWith('/orders');
 
     await screen.unmount();
   });

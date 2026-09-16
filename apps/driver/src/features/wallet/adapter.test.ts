@@ -4,47 +4,35 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { createDriverWalletHttpAdapter } from './adapter';
 
 describe('createDriverWalletHttpAdapter', () => {
-  it('maps GET /driver/wallet to a WalletSummary with real balanceVnd and recentPayouts', async () => {
+  it('getWalletSummary passes through BE aggregates without client recompute', async () => {
     const get = jest.fn(async () => ({
-      balanceVnd: 200000,
+      availableBalanceVnd: 200000,
+      lifetimeDeliveredVnd: 500000,
+      pendingWithdrawalVnd: 100000,
+      deliveredOrderCount: 7,
       bankName: 'MB Bank',
       bankAccountNumber: '0987654321',
       bankAccountName: 'NGUYEN VAN A',
-      recentPayouts: [
-        {
-          id: 'wr-1',
-          status: 'PENDING',
-          amountVnd: 50000,
-          bankName: 'MB Bank',
-          bankAccountNumber: '0987654321',
-          bankAccountName: 'NGUYEN VAN A',
-          createdAt: '2026-09-13T00:00:00.000Z',
-        },
-      ],
     }));
     const adapter = createDriverWalletHttpAdapter({ get: get as any, post: jest.fn() as any });
 
-    const summary = await adapter.getWalletSummary();
-
-    expect(get).toHaveBeenCalledWith('/driver/wallet');
-    expect(summary.availableBalanceVnd).toBe(200000);
-    expect(summary.pendingWithdrawalVnd).toBe(50000);
-    expect(summary.bankName).toBe('MB Bank');
-  });
-
-  it('posts a payout request to /driver/payout and auto-generates clientRequestId', async () => {
-    const post = jest.fn(async () => ({
-      id: 'wr-1',
-      status: 'PENDING',
-      amountVnd: 100000,
+    expect(await adapter.getWalletSummary()).toEqual({
+      availableBalanceVnd: 200000,
+      lifetimeDeliveredVnd: 500000,
+      pendingWithdrawalVnd: 100000,
+      deliveredOrderCount: 7,
       bankName: 'MB Bank',
       bankAccountNumber: '0987654321',
       bankAccountName: 'NGUYEN VAN A',
-      createdAt: '2026-09-13T00:00:00.000Z',
-    }));
+    });
+    expect(get).toHaveBeenCalledWith('/driver/wallet');
+  });
+
+  it('requestWithdrawal sends bank fields to POST /driver/wallet/withdrawals', async () => {
+    const post = jest.fn(async () => ({ id: 'w1', status: 'PENDING' }));
     const adapter = createDriverWalletHttpAdapter({ get: jest.fn() as any, post: post as any });
 
-    const result = await adapter.requestWithdrawal({
+    await adapter.requestWithdrawal({
       amountVnd: 100000,
       bankName: 'MB Bank',
       bankAccountNumber: '0987654321',
@@ -52,33 +40,30 @@ describe('createDriverWalletHttpAdapter', () => {
     });
 
     expect(post).toHaveBeenCalledWith(
-      '/driver/payout',
-      expect.objectContaining({ amountVnd: 100000, clientRequestId: expect.any(String) }),
+      '/driver/wallet/withdrawals',
+      expect.objectContaining({
+        amountVnd: 100000,
+        bankName: 'MB Bank',
+        bankAccountNumber: '0987654321',
+        bankAccountName: 'NGUYEN VAN A',
+        clientRequestId: expect.any(String),
+      }),
     );
-    expect(result.status).toBe('PENDING');
   });
 
-  it('retrieves withdrawal history from /driver/wallet recentPayouts', async () => {
+  it('getWithdrawalHistory calls GET /driver/wallet/withdrawals with paging', async () => {
     const get = jest.fn(async () => ({
-      balanceVnd: 150000,
-      recentPayouts: [
-        {
-          id: 'wr-1',
-          status: 'APPROVED',
-          amountVnd: 50000,
-          bankName: 'MB Bank',
-          bankAccountNumber: '0987654321',
-          bankAccountName: 'NGUYEN VAN A',
-          createdAt: '2026-09-10T00:00:00.000Z',
-        },
-      ],
+      items: [{ id: 'w1' }],
+      total: 1,
+      page: 2,
+      pageSize: 20,
+      totalPages: 1,
     }));
     const adapter = createDriverWalletHttpAdapter({ get: get as any, post: jest.fn() as any });
 
-    const history = await adapter.getWithdrawalHistory();
+    const res = await adapter.getWithdrawalHistory(2, 20);
 
-    expect(get).toHaveBeenCalledWith('/driver/wallet');
-    expect(history.items[0].status).toBe('APPROVED');
-    expect(history.items[0].amountVnd).toBe(50000);
+    expect(get).toHaveBeenCalledWith('/driver/wallet/withdrawals?page=2&pageSize=20');
+    expect(res.total).toBe(1);
   });
 });

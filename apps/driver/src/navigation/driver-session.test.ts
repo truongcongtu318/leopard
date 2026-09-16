@@ -10,8 +10,7 @@ describe('resolveDriverLogin', () => {
     expect(resolveDriverLogin({ isAuthenticated: true, role: 'CUSTOMER' })).toEqual({ kind: 'not-a-driver' });
   });
 
-  it('chặn khi role là FLEET_OWNER hoặc ADMIN', () => {
-    expect(resolveDriverLogin({ isAuthenticated: true, role: 'FLEET_OWNER' })).toEqual({ kind: 'not-a-driver' });
+  it('chặn khi role là ADMIN', () => {
     expect(resolveDriverLogin({ isAuthenticated: true, role: 'ADMIN' })).toEqual({ kind: 'not-a-driver' });
   });
 

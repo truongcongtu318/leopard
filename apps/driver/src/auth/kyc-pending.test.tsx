@@ -4,8 +4,7 @@ import React from 'react';
 import { Linking } from 'react-native';
 
 import KycPendingRoute from '../../app/(public)/kyc-pending';
-import { httpClient } from '@leopard/mobile-core/src/api/http-client';
-import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
+import { httpClient, sessionStore } from '@leopard/mobile-core';
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
@@ -108,6 +107,13 @@ describe('KycPendingRoute (Driver)', () => {
       expect(mockReplace).toHaveBeenCalledWith('/(public)/login');
     });
 
+    await screen.unmount();
+  });
+
+  it('gives the back button a 12pt touch slop', async () => {
+    const screen = await render(<KycPendingRoute />);
+    const backBtn = screen.getByTestId('btn-back');
+    expect(backBtn.props.hitSlop).toMatchObject({ top: 12, bottom: 12, left: 12, right: 12 });
     await screen.unmount();
   });
 });

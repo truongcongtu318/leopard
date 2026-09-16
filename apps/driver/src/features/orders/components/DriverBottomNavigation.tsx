@@ -2,10 +2,12 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  driverPrimitives,
   IconHome,
   IconOrders,
   IconUser,
   IconWallet,
+  iosContinuousCurve,
   radius,
   spacing,
 } from '@leopard/mobile-core';
@@ -30,28 +32,51 @@ const NAV_ITEMS: readonly DriverNavItem[] = [
     label: 'Trang chủ',
     a11yLabel: 'Trang chủ',
     route: '/orders',
-    icon: (active) => <IconHome color={active ? '#0B1E42' : '#64748B'} filled={active} size={20} />,
+    icon: (active) => (
+      <IconHome
+        color={active ? driverPrimitives.colors.green500 : driverPrimitives.colors.gray500}
+        filled={active}
+        size={22}
+      />
+    ),
   },
   {
     key: 'board',
     label: 'Đơn',
     a11yLabel: 'Đơn',
     route: '/board',
-    icon: (active) => <IconOrders color={active ? '#0B1E42' : '#64748B'} filled={active} size={20} />,
+    icon: (active) => (
+      <IconOrders
+        color={active ? driverPrimitives.colors.green500 : driverPrimitives.colors.gray500}
+        filled={active}
+        size={22}
+      />
+    ),
   },
   {
     key: 'earnings',
     label: 'Thu nhập',
     a11yLabel: 'Thu nhập',
     route: '/earnings',
-    icon: (active) => <IconWallet color={active ? '#0B1E42' : '#64748B'} size={20} />,
+    icon: (active) => (
+      <IconWallet
+        color={active ? driverPrimitives.colors.green500 : driverPrimitives.colors.gray500}
+        size={22}
+      />
+    ),
   },
   {
     key: 'profile',
     label: 'Hồ sơ',
     a11yLabel: 'Hồ sơ',
     route: '/profile',
-    icon: (active) => <IconUser color={active ? '#0B1E42' : '#64748B'} filled={active} size={20} />,
+    icon: (active) => (
+      <IconUser
+        color={active ? driverPrimitives.colors.green500 : driverPrimitives.colors.gray500}
+        filled={active}
+        size={22}
+      />
+    ),
   },
 ];
 
@@ -81,9 +106,15 @@ export function DriverBottomNavigation({
               accessibilityState={{ selected: isActive }}
               key={item.key}
               onPress={() => handlePress(item)}
-              style={({ pressed }) => [styles.navItem, pressed ? styles.pressed : null]}
+              style={({ pressed }) => [
+                styles.navItem,
+                isActive ? styles.navItemActive : null,
+                pressed ? styles.pressed : null,
+              ]}
             >
-              <View style={styles.iconWrap}>{item.icon(isActive)}</View>
+              <View style={[styles.iconWrap, isActive ? styles.iconWrapActive : null]}>
+                {item.icon(isActive)}
+              </View>
               <Text
                 numberOfLines={1}
                 style={[styles.navLabel, isActive ? styles.navLabelActive : null]}
@@ -100,11 +131,11 @@ export function DriverBottomNavigation({
 
 const styles = StyleSheet.create({
   dockWrapper: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'transparent',
     bottom: 0,
     left: 0,
     paddingBottom: Platform.OS === 'ios' ? spacing.md : spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxs,
     position: 'absolute',
     right: 0,
@@ -112,45 +143,45 @@ const styles = StyleSheet.create({
   },
   dockContainer: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: radius.tabBar,
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: driverPrimitives.radius.pill,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    elevation: 6,
     flexDirection: 'row',
-    gap: spacing.xxs,
+    height: 64,
     justifyContent: 'space-around',
-    padding: spacing.xxs,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    ...Platform.select({
-      web: { boxShadow: '0 4px 12px rgba(11, 30, 66, 0.08)' } as object,
-    }),
+    paddingHorizontal: spacing.xs,
+    ...driverPrimitives.shadows.floating,
   },
   navItem: {
     alignItems: 'center',
     borderRadius: radius.control,
     flex: 1,
-    minHeight: 48,
+    height: '100%',
     justifyContent: 'center',
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
+  navItemActive: {},
   iconWrap: {
     alignItems: 'center',
-    height: 22,
+    borderRadius: driverPrimitives.radius.pill,
+    height: 28,
     justifyContent: 'center',
+    width: 28,
+  },
+  iconWrapActive: {
+    backgroundColor: driverPrimitives.colors.green50,
   },
   navLabel: {
-    color: '#64748B',
-    fontSize: 10,
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
   },
   navLabelActive: {
-    color: '#0B1E42',
-    fontWeight: '800',
+    color: driverPrimitives.colors.green500,
+    fontWeight: '700',
   },
   pressed: {
     opacity: 0.8,

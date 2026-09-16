@@ -1,7 +1,8 @@
 import React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
-import { Button, iosContinuousCurve } from '@leopard/mobile-core';
+import { driverPrimitives, iosContinuousCurve } from '@leopard/mobile-core';
 import type { DriverListContentView } from '../model';
 
 export type DriverNoticeProps = Readonly<{
@@ -9,76 +10,90 @@ export type DriverNoticeProps = Readonly<{
   onNoticeAction?: () => void;
 }>;
 
-/** Dispatch-issued notice (tone + optional action) rendered inside the sheet. */
+function WarningTriangleIcon({ size = 20, color = driverPrimitives.colors.red500 }: { size?: number; color?: string }) {
+  return (
+    <Svg height={size} viewBox="0 0 24 24" width={size}>
+      <Path
+        d="M12 2L1 21h22L12 2zm0 3.5L20 19H4L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+/** Dispatch-issued notice card matching Image 1 from Grab Driver. */
 export function DriverNotice({ onNoticeAction, view }: DriverNoticeProps) {
   if (!view.notice) return null;
 
-  const toneStyle =
-    view.notice.tone === 'danger'
-      ? styles.danger
-      : view.notice.tone === 'warning'
-        ? styles.warning
-        : styles.info;
-
-  const textStyle =
-    view.notice.tone === 'danger'
-      ? styles.dangerText
-      : view.notice.tone === 'warning'
-        ? styles.warningText
-        : styles.infoText;
-
   return (
-    <View accessibilityRole="alert" style={[styles.notice, toneStyle]} testID="driver-notice">
-      <Text style={[styles.body, textStyle]}>{view.notice.message}</Text>
+    <View accessibilityRole="alert" style={styles.card} testID="driver-notice">
+      <View style={styles.topRow}>
+        <View style={styles.iconWrap}>
+          <WarningTriangleIcon />
+        </View>
+        <Text style={styles.messageText}>{view.notice.message}</Text>
+      </View>
+
       {view.notice.actionLabel ? (
-        <Button label={view.notice.actionLabel} onPress={onNoticeAction} variant="secondary" />
+        <>
+          <View style={styles.divider} />
+          <Pressable
+            accessibilityRole="button"
+            onPress={onNoticeAction}
+            style={({ pressed }) => [styles.actionButton, pressed ? styles.actionPressed : null]}
+          >
+            <Text style={styles.actionLabel}>{view.notice.actionLabel}</Text>
+          </Pressable>
+        </>
       ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  notice: {
-    borderRadius: 16,
+  card: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: driverPrimitives.colors.gray200,
+    borderRadius: driverPrimitives.radius.card,
     ...iosContinuousCurve,
     borderWidth: 1,
-    elevation: 6,
-    gap: 8,
     marginBottom: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    ...Platform.select({
-      web: { boxShadow: '0 6px 14px rgba(11, 30, 66, 0.14)' } as object,
-    }),
+    paddingTop: 14,
+    ...driverPrimitives.shadows.sm,
   },
-  info: {
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
+  topRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingBottom: 12,
   },
-  warning: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+  iconWrap: {
+    marginTop: 2,
   },
-  danger: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-  },
-  body: {
-    fontSize: 12.5,
+  messageText: {
+    color: driverPrimitives.colors.gray900,
+    flex: 1,
+    fontSize: 13.5,
     fontWeight: '600',
-    lineHeight: 18,
+    lineHeight: 19,
   },
-  infoText: {
-    color: '#0B1E42',
+  divider: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    width: '100%',
   },
-  warningText: {
-    color: '#92400E',
+  actionButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
   },
-  dangerText: {
-    color: '#991B1B',
+  actionPressed: {
+    opacity: 0.8,
+  },
+  actionLabel: {
+    color: driverPrimitives.colors.blue500,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

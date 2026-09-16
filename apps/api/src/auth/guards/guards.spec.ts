@@ -388,7 +388,7 @@ describe('PH-05-T04 guards and resource policy', () => {
     const user: StoredUser = {
       id: 'user-disabled',
       phone: '+840000000003',
-      role: 'FLEET_OWNER',
+      role: 'DRIVER',
       status: 'DISABLED',
       createdAt: new Date('2026-08-01T00:00:00.000Z'),
       updatedAt: new Date('2026-08-01T00:00:00.000Z'),
@@ -707,13 +707,13 @@ describe('PH-05-T04 guards and resource policy', () => {
     const policy = new ResourcePolicy();
     const actor: AuthenticatedActor = {
       userId: 'actor-1',
-      role: 'FLEET_OWNER',
+      role: 'DRIVER',
       sessionId: 'session-1',
     };
 
     await expect(
       policy.assert(actor, 'view', {
-        allowedRoles: ['FLEET_OWNER'],
+        allowedRoles: ['DRIVER'],
       }),
     ).resolves.toBeUndefined();
 

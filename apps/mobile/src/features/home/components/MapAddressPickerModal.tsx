@@ -1,3 +1,4 @@
+import * as Location from 'expo-location';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
@@ -12,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { typeScale, httpClient } from '@leopard/mobile-core';
-import { IconLocationPin, RealInteractiveMap, resolveLocationCoords, VIETNAM_LOCATION_DICT, type MapCoordinate, describeGeolocationFailure } from '@leopard/mobile-core';
+import { IconLocationPin, RealInteractiveMap, resolveLocationCoords, VIETNAM_LOCATION_DICT, type MapCoordinate } from '@leopard/mobile-core';
 
 function formatVietnamesePhone(phone?: string | null): string {
   if (!phone) return '';
@@ -529,49 +530,49 @@ export function MapAddressPickerModal({
     }, 400);
   };
 
-  const handleGetCurrentGpsLocation = () => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setGpsNotice('Thiết bị không hỗ trợ định vị. Vui lòng chọn địa chỉ trên bản đồ.');
-      return;
-    }
+  const handleGetCurrentGpsLocation = async () => {
     setIsLocatingGps(true);
     setIsReverseGeocoding(true);
     setGpsNotice(null);
     setModalAddress('Đang định vị GPS…');
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = Number(pos.coords.latitude.toFixed(5));
-        const lng = Number(pos.coords.longitude.toFixed(5));
-        setCustomPinCoords({ lat, lng });
-        setGpsNotice(null);
 
-        try {
-          const humanAddress = await reverseGeocodeCoords(
-            { lat, lng },
-            effectiveVietmapApiKey,
-          );
-          setModalAddress(humanAddress);
-        } catch {
-          setModalAddress(`Vị trí tại (${lat}, ${lng})`);
-        } finally {
-          setIsLocatingGps(false);
-          setIsReverseGeocoding(false);
-          setSuggestions([]);
-          setShowSuggestions(false);
-        }
-      },
-      (err) => {
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== 'granted') {
         setIsLocatingGps(false);
         setIsReverseGeocoding(false);
-        console.warn('Geolocation error:', err.message);
-        // Never leave a stale address on screen as if it were the GPS result —
-        // that is how a customer ends up booking from a location they never
-        // chose. Restore the previous value and say why nothing happened.
         setModalAddress(initialAddress || defaultFallbackAddress);
-        setGpsNotice(describeGeolocationFailure(err));
-      },
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
+        setGpsNotice('Chưa cấp quyền vị trí. Vui lòng chọn địa chỉ trên bản đồ.');
+        return;
+      }
+
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const lat = Number(pos.coords.latitude.toFixed(5));
+      const lng = Number(pos.coords.longitude.toFixed(5));
+      setCustomPinCoords({ lat, lng });
+      setGpsNotice(null);
+
+      try {
+        const humanAddress = await reverseGeocodeCoords({ lat, lng }, effectiveVietmapApiKey);
+        setModalAddress(humanAddress);
+      } catch {
+        setModalAddress(`Vị trí tại (${lat}, ${lng})`);
+      } finally {
+        setIsLocatingGps(false);
+        setIsReverseGeocoding(false);
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (err) {
+      setIsLocatingGps(false);
+      setIsReverseGeocoding(false);
+      console.warn('Geolocation error:', err);
+      // Never leave a stale address on screen as if it were the GPS result —
+      // that is how a customer ends up booking from a location they never
+      // chose. Restore the previous value and say why nothing happened.
+      setModalAddress(initialAddress || defaultFallbackAddress);
+      setGpsNotice('Không lấy được vị trí hiện tại. Vui lòng chọn địa chỉ trên bản đồ.');
+    }
   };
 
   const handleFillMySenderInfo = () => {

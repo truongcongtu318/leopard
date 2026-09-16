@@ -67,6 +67,9 @@ describe('Driver Wallet API (E2E)', () => {
       lifetimeDeliveredVnd: 0,
       pendingWithdrawalVnd: 0,
       deliveredOrderCount: 0,
+      bankName: null,
+      bankAccountNumber: null,
+      bankAccountName: null,
     });
   });
 
@@ -163,6 +166,31 @@ describe('Driver Wallet API (E2E)', () => {
       .set('Authorization', `Bearer ${driverSession.accessToken}`)
       .expect(200);
     expect(listRes.body.items).toHaveLength(1); // no duplicate created
+  });
+
+  it('returns the canonical summary shape, not the legacy balanceVnd shape', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/driver/wallet')
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .expect(200);
+
+    expect(res.body).toEqual({
+      availableBalanceVnd: 0,
+      lifetimeDeliveredVnd: 0,
+      pendingWithdrawalVnd: 0,
+      deliveredOrderCount: 0,
+      bankName: null,
+      bankAccountNumber: null,
+      bankAccountName: null,
+    });
+  });
+
+  it('returns 404 for the removed legacy POST /driver/payout', async () => {
+    await request(app.getHttpServer())
+      .post('/driver/payout')
+      .set('Authorization', `Bearer ${driverSession.accessToken}`)
+      .send({ amountVnd: 100000, clientRequestId: 'legacy-1' })
+      .expect(404);
   });
 
   it('rejects Customer access to driver wallet routes with 403', async () => {

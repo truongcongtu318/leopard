@@ -1,5 +1,5 @@
-import { DriverPerformanceScreen } from '../src/features/performance/DriverPerformanceScreen';
+import { DriverPerformanceRuntime } from '../src/features/performance/DriverPerformanceRuntime';
 
 export default function DriverPerformanceRoute() {
-  return <DriverPerformanceScreen />;
+  return <DriverPerformanceRuntime />;
 }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## System Architecture
 
-LEOPARD is a mini-production freight logistics pilot platform connecting Customers, Drivers, Fleet Owners, and Admins. It is organized as a `pnpm` monorepo managed with `turbo`.
+LEOPARD is a mini-production freight logistics pilot platform connecting Customers, Drivers, and Admins. It is organized as a `pnpm` monorepo managed with `turbo`.
 
 ### Applications (`apps/`)
 
@@ -13,7 +13,7 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
   - Owns business rules: pricing, ETA estimation, order lifecycle state machine, payments, and authorization.
   - Integration providers (maps/routing, phone OTP, storage, payment) use provider interfaces with deterministic demo fallbacks controlled via `ALLOW_DEMO_PROVIDER`.
 - **`apps/admin` (package: `web`)**:
-  - Next.js (App Router, Next 16+ with React 19) operations dashboard for Fleet Owners and Admins.
+  - Next.js (App Router, Next 16+ with React 19) operations dashboard for Admins.
   - Follows the NexaFleet Modern Bento layout with real-time tracking map and operational statistics.
   - *Note:* Refer to Next.js guides in `node_modules/next/dist/docs/` for breaking conventions in this version.
 - **`apps/mobile` (package: `mobile`)**:
@@ -34,11 +34,52 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 
 ### Key Architectural Invariants
 
-- **Authorization**: API enforces role, ownership, assignment, and fleet membership. Fleet Owners access fleet data via valid `FleetMember` records (read-only for most fleet entities) and do not inherit Admin privileges.
+- **Authorization**: API enforces role and ownership/assignment checks (Customer owns the order, Driver is assigned to it).
 - **Transactions**: Database transactions are mandatory for accepting orders, recording status transition history, and manual payment confirmations.
 - **ETA & Labels**: ETA must always be labeled as "ETA dự kiến"; simulated/demo data must explicitly display "Dữ liệu mô phỏng".
 - **Dispatch**: Includes automated single-order dispatch (nearest available driver).
 - **Out of Scope**: Multi-tenancy, multi-tier fleets, multi-order routing optimization, AI XGBoost ETA, and automated bank reconciliation are explicitly excluded.
+
+---
+
+## UI Component Development Workflow
+
+When asked to build or refactor a UI component:
+
+1. **FIRST**:
+   - Search the repository for an existing equivalent in `@leopard/mobile-core`, `@leopard/ui`, or app workspaces.
+   - If no suitable component exists, query the UI MCP (`shadcn-ui-mcp-server`) for structural and state references.
+
+2. **THEN**:
+   - Analyze the MCP result for accessibility contracts and component anatomy.
+   - Adapt it to the repository conventions.
+   - **Never copy NativeWind styling directly** into React Native workspaces.
+
+3. **FINALLY**:
+   - Implement for Mobile using `StyleSheet.create` + `@leopard/mobile-core` (Apple HIG tokens, `driverPrimitives`, `iosContinuousCurve`).
+   - Implement for Web using Tailwind CSS + `@leopard/ui` primitives.
+
+### Mobile UI & Color Design Rules (Apple HIG Standard)
+
+1. **Standard Navigation Bar (Header)**:
+   - Always use `ScreenScaffold` with `onBack` and `title` for screen headers across all mobile apps (`apps/driver`, `apps/mobile`).
+   - Fixed 44pt bar height, centered 17pt Semibold title, standard chevron back button `<` with minimum 44x44pt hit target (`hitSlop`).
+   - Never create custom `headerBar` implementations with ad-hoc heights (e.g. 52pt) or raw SVG arrows.
+
+2. **Color Restraint (Content-First)**:
+   - **No rainbow/pastel icon background boxes**: Do not wrap icons in arbitrary green, amber, blue, purple squares (`#ECFDF5`, `#FFFBEB`, `#EFF6FF`).
+   - **Monochrome SF Symbols Style**: Setting, menu, and action icons must be neutral monochrome (`gray500` or `gray700`), placed directly beside labels.
+   - **Neutral Data & KPI Typography**: Normal statistics, percentages, and metrics must use high-contrast neutral dark typography (`driverPrimitives.colors.gray900`, bold, `fontVariant: ['tabular-nums']`). Never color numbers green or red unless indicating a specific delta/trend.
+   - **Functional Colors Only**: Reserve color strictly for active business signals:
+     - Rating stars: `amber500`
+     - Critical alerts / destructive actions: `red500` / `red600`
+     - Online status indicator / confirmed toggle: `green500`
+     - Unread notifications dot: `red500`
+
+3. **Surfaces & Cards (Apple Inset Grouped & Nexa Bento)**:
+   - Base canvas: `#F8FAFC` (`gray50`).
+   - Cards: Pure white `#FFFFFF`, thin border `#E2E8F0` (`border-slate-200`), rounded-2xl (18-20px, `iosContinuousCurve`), soft shadow (`shadow-sm`).
+   - Avoid aggressive pitch-black container boxes (`#0F172A`) that clash with the light iOS theme.
 
 ---
 
@@ -47,6 +88,7 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 ### Monorepo (Root)
 
 - Install dependencies: `pnpm install`
+- Start full local dev stack (Docker DB + local API, Driver Web, Admin Web): `pnpm start:all` or `./scripts/start-all.sh`
 - Start all dev services: `pnpm dev`
 - Build all packages/apps: `pnpm build`
 - Lint all: `pnpm lint`

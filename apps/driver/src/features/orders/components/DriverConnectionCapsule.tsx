@@ -2,22 +2,22 @@ import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { iosContinuousCurve } from '@leopard/mobile-core';
+import { driverPrimitives, iosContinuousCurve } from '@leopard/mobile-core';
 
 /**
  * Standby / online power glyph drawn as a vector path so the capsule never
  * depends on a font that may lack the U+23FB POWER SYMBOL codepoint.
  */
-function PowerGlyph({ color, size = 15 }: Readonly<{ color: string; size?: number }>) {
+function PowerGlyph({ color, size = 18 }: Readonly<{ color: string; size?: number }>) {
   return (
     <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path d="M12 3v9" fill="none" stroke={color} strokeLinecap="round" strokeWidth={2.4} />
+      <Path d="M12 3v9" fill="none" stroke={color} strokeLinecap="round" strokeWidth={2.5} />
       <Path
         d="M6.9 6.6a8 8 0 1 0 10.2 0"
         fill="none"
         stroke={color}
         strokeLinecap="round"
-        strokeWidth={2.4}
+        strokeWidth={2.5}
       />
     </Svg>
   );
@@ -58,9 +58,9 @@ export function DriverConnectionCapsule({
       style={({ pressed }) => [
         styles.capsule,
         {
-          backgroundColor: isOnline ? '#16A34A' : '#0B1E42',
-          paddingHorizontal: isOnline ? 0 : 20,
-          width: isOnline ? 48 : undefined,
+          backgroundColor: isOnline ? driverPrimitives.colors.green500 : driverPrimitives.colors.dark900,
+          paddingHorizontal: isOnline ? 0 : 28,
+          width: isOnline ? 52 : undefined,
         },
         pressed && !isBusy ? styles.pressed : null,
         isBusy ? styles.busy : null,
@@ -71,7 +71,7 @@ export function DriverConnectionCapsule({
         {isPending ? (
           <ActivityIndicator color="#FFFFFF" size="small" testID="driver-connection-spinner" />
         ) : (
-          <PowerGlyph color="#FFFFFF" />
+          <PowerGlyph color="#FFFFFF" size={18} />
         )}
       </View>
       {isOnline ? null : <Text style={styles.label}>Bật kết nối</Text>}
@@ -82,34 +82,30 @@ export function DriverConnectionCapsule({
 const styles = StyleSheet.create({
   capsule: {
     alignItems: 'center',
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    borderRadius: 999,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 9999,
     ...iosContinuousCurve,
     borderWidth: 1,
-    elevation: 8,
     flexDirection: 'row',
-    gap: 8,
-    height: 48,
+    gap: 10,
+    height: 52,
     justifyContent: 'center',
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
+    ...driverPrimitives.shadows.powerPill,
   },
   busy: {
     opacity: 0.75,
   },
   glyphDisc: {
     alignItems: 'center',
-    height: 20,
+    height: 22,
     justifyContent: 'center',
-    width: 20,
+    width: 22,
   },
   label: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
   },
   pressed: {
     opacity: 0.9,

@@ -24,20 +24,13 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
   let customer2Session: AuthSessionBody;
   let driver1Session: AuthSessionBody;
   let driver2Session: AuthSessionBody;
-  let fleetOwner1Session: AuthSessionBody;
-  let fleetOwner2Session: AuthSessionBody;
   let adminSession: AuthSessionBody;
 
   let customer1UserId: string;
   let customer2UserId: string;
   let driver1UserId: string;
   let driver2UserId: string;
-  let fleetOwner1UserId: string;
-  let fleetOwner2UserId: string;
   let adminUserId: string;
-
-  let fleet1Id: string;
-  let fleet2Id: string;
 
   let order1Id: string;
   let order2Id: string;
@@ -98,7 +91,7 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
     const sC2 = await refreshSessions.create(c2.id);
     customer2Session = tokenService.createAuthSession(c2, sC2);
 
-    // Driver 1 (Fleet Alpha)
+    // Driver 1
     const d1 = await prismaMock.user.create({
       data: { phone: '+84902000001', role: 'DRIVER', status: 'ACTIVE' },
     });
@@ -109,7 +102,7 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
     const sD1 = await refreshSessions.create(d1.id);
     driver1Session = tokenService.createAuthSession(d1, sD1);
 
-    // Driver 2 (Fleet Beta)
+    // Driver 2
     const d2 = await prismaMock.user.create({
       data: { phone: '+84902000002', role: 'DRIVER', status: 'ACTIVE' },
     });
@@ -120,40 +113,6 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
     const sD2 = await refreshSessions.create(d2.id);
     driver2Session = tokenService.createAuthSession(d2, sD2);
 
-    // Fleet Owner 1 (Fleet Alpha)
-    const fo1 = await prismaMock.user.create({
-      data: { phone: '+84903000001', role: 'FLEET_OWNER', status: 'ACTIVE' },
-    });
-    fleetOwner1UserId = fo1.id;
-    const sFo1 = await refreshSessions.create(fo1.id);
-    fleetOwner1Session = tokenService.createAuthSession(fo1, sFo1);
-
-    const f1 = await prismaMock.fleet.create({ data: { name: 'Fleet Alpha' } });
-    fleet1Id = f1.id;
-    await prismaMock.fleetMember.create({
-      data: { fleetId: fleet1Id, userId: fleetOwner1UserId, role: 'OWNER', status: 'ACTIVE' },
-    });
-    await prismaMock.fleetMember.create({
-      data: { fleetId: fleet1Id, userId: driver1UserId, role: 'DRIVER', status: 'ACTIVE' },
-    });
-
-    // Fleet Owner 2 (Fleet Beta)
-    const fo2 = await prismaMock.user.create({
-      data: { phone: '+84903000002', role: 'FLEET_OWNER', status: 'ACTIVE' },
-    });
-    fleetOwner2UserId = fo2.id;
-    const sFo2 = await refreshSessions.create(fo2.id);
-    fleetOwner2Session = tokenService.createAuthSession(fo2, sFo2);
-
-    const f2 = await prismaMock.fleet.create({ data: { name: 'Fleet Beta' } });
-    fleet2Id = f2.id;
-    await prismaMock.fleetMember.create({
-      data: { fleetId: fleet2Id, userId: fleetOwner2UserId, role: 'OWNER', status: 'ACTIVE' },
-    });
-    await prismaMock.fleetMember.create({
-      data: { fleetId: fleet2Id, userId: driver2UserId, role: 'DRIVER', status: 'ACTIVE' },
-    });
-
     // Admin
     const adm = await prismaMock.user.create({
       data: { phone: '+84909999999', role: 'ADMIN', status: 'ACTIVE' },
@@ -162,7 +121,7 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
     const sAdm = await refreshSessions.create(adm.id);
     adminSession = tokenService.createAuthSession(adm, sAdm);
 
-    // Order 1: Created by Customer 1, assigned to Driver 1 (Fleet Alpha)
+    // Order 1: Created by Customer 1, assigned to Driver 1
     const o1 = await prismaMock.order.create({
       data: {
         id: '11111111-1111-4111-8111-111111111111',
@@ -176,7 +135,7 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
     });
     order1Id = o1.id;
 
-    // Order 2: Created by Customer 2, assigned to Driver 2 (Fleet Beta)
+    // Order 2: Created by Customer 2, assigned to Driver 2
     const o2 = await prismaMock.order.create({
       data: {
         id: '22222222-2222-4222-8222-222222222222',
@@ -348,47 +307,6 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
       });
     });
 
-    describe('Fleet Owner Multi-Tenancy & Tenant Isolation', () => {
-      it('Fleet Owner 1 cannot access drivers of Fleet 2 via GET /fleet/drivers', async () => {
-        const res = await request(app.getHttpServer())
-          .get('/fleet/drivers')
-          .set('Authorization', `Bearer ${fleetOwner1Session.accessToken}`)
-          .expect(200);
-
-        const driverIds = res.body.items.map((d: any) => d.id);
-        expect(driverIds).toContain(driver1UserId);
-        expect(driverIds).not.toContain(driver2UserId);
-      });
-
-      it('Fleet Owner 1 cannot access orders assigned to Fleet 2 drivers via GET /fleet/orders', async () => {
-        const res = await request(app.getHttpServer())
-          .get('/fleet/orders')
-          .set('Authorization', `Bearer ${fleetOwner1Session.accessToken}`)
-          .expect(200);
-
-        const orderIds = res.body.items.map((o: any) => o.id);
-        expect(orderIds).toContain(order1Id);
-        expect(orderIds).not.toContain(order2Id);
-      });
-
-      it('Fleet Owner 1 cannot access single order of Fleet 2 via GET /fleet/orders/:id (404)', async () => {
-        const res = await request(app.getHttpServer())
-          .get(`/fleet/orders/${order2Id}`)
-          .set('Authorization', `Bearer ${fleetOwner1Session.accessToken}`)
-          .expect(404);
-
-        expect(res.body.code).toBe('RESOURCE_NOT_FOUND');
-      });
-
-      it('Fleet Owner 1 cannot access tracking of Fleet 2 order via GET /fleet/orders/:id/tracking (404)', async () => {
-        const res = await request(app.getHttpServer())
-          .get(`/fleet/orders/${order2Id}/tracking`)
-          .set('Authorization', `Bearer ${fleetOwner1Session.accessToken}`)
-          .expect(404);
-
-        expect(res.body.code).toBe('RESOURCE_NOT_FOUND');
-      });
-    });
   });
 
   // =========================================================================
@@ -397,7 +315,6 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
   describe('2. Role Escalation Prevention', () => {
     it('Unauthenticated requests are rejected with 401 Unauthorized', async () => {
       await request(app.getHttpServer()).get('/admin/dashboard').expect(401);
-      await request(app.getHttpServer()).get('/fleet/profile').expect(401);
       await request(app.getHttpServer()).get('/orders').expect(401);
       await request(app.getHttpServer()).patch('/driver/availability').expect(401);
       await request(app.getHttpServer()).get('/me').expect(401);
@@ -407,7 +324,6 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
       const adminEndpoints: Array<{ method: 'get' | 'patch' | 'post'; path: string; body?: any }> = [
         { method: 'get', path: '/admin/dashboard' },
         { method: 'get', path: '/admin/users' },
-        { method: 'get', path: '/admin/fleets' },
         { method: 'get', path: '/admin/drivers' },
         { method: 'get', path: '/admin/orders' },
         {
@@ -440,15 +356,6 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
         }
       });
 
-      it('blocks Fleet Owner from calling any Admin endpoint with 403 Forbidden', async () => {
-        for (const ep of adminEndpoints) {
-          const req = (request(app.getHttpServer()) as any)[ep.method](ep.path)
-            .set('Authorization', `Bearer ${fleetOwner1Session.accessToken}`);
-          if (ep.body) req.send(ep.body);
-          await req.expect(403);
-        }
-      });
-
       it('allows Admin to access Admin endpoints with 200', async () => {
         await request(app.getHttpServer())
           .get('/admin/dashboard')
@@ -463,124 +370,37 @@ describe('Security & Privacy: Multi-Role Authorization & IDOR Boundaries (E2E)',
     });
 
     describe('Driver Operational Routes Guarding', () => {
-      it('blocks Customer and Fleet Owner from updating driver availability with 403', async () => {
+      it('blocks Customer from updating driver availability with 403', async () => {
         await request(app.getHttpServer())
           .patch('/driver/availability')
           .set('Authorization', `Bearer ${customer1Session.accessToken}`)
-          .send({ availability: 'AVAILABLE' })
-          .expect(403);
-
-        await request(app.getHttpServer())
-          .patch('/driver/availability')
-          .set('Authorization', `Bearer ${fleetOwner1Session.accessToken}`)
           .send({ availability: 'AVAILABLE' })
           .expect(403);
       });
 
-      it('blocks Customer and Fleet Owner from accepting orders with 403', async () => {
+      it('blocks Customer from accepting orders with 403', async () => {
         await request(app.getHttpServer())
           .post(`/driver/orders/${order1Id}/accept`)
           .set('Authorization', `Bearer ${customer1Session.accessToken}`)
-          .expect(403);
-
-        await request(app.getHttpServer())
-          .post(`/driver/orders/${order1Id}/accept`)
-          .set('Authorization', `Bearer ${fleetOwner1Session.accessToken}`)
           .expect(403);
       });
     });
 
     describe('Customer Routes Guarding', () => {
-      it('blocks Driver and Fleet Owner from creating orders with 403', async () => {
+      it('blocks Driver from creating orders with 403', async () => {
         await request(app.getHttpServer())
           .post('/orders')
           .set('Authorization', `Bearer ${driver1Session.accessToken}`)
           .send({})
           .expect(403);
-
-        await request(app.getHttpServer())
-          .post('/orders')
-          .set('Authorization', `Bearer ${fleetOwner1Session.accessToken}`)
-          .send({})
-          .expect(403);
       });
     });
   });
 
   // =========================================================================
-  // 3. Fleet Membership Boundaries
+  // 3. Non-Disclosure & Envelope Verification
   // =========================================================================
-  describe('3. Fleet Membership Boundary Enforcement', () => {
-    let invitedFleetOwnerSession: AuthSessionBody;
-    let removedFleetOwnerSession: AuthSessionBody;
-    let noMembershipFleetOwnerSession: AuthSessionBody;
-
-    beforeAll(async () => {
-      const tokenService = app.get(TokenService);
-      const refreshSessions = app.get(RefreshSessionRepository);
-
-      // Fleet Owner with INVITED status
-      const foInvited = await prismaMock.user.create({
-        data: { phone: '+84904000001', role: 'FLEET_OWNER', status: 'ACTIVE' },
-      });
-      const sInvited = await refreshSessions.create(foInvited.id);
-      invitedFleetOwnerSession = tokenService.createAuthSession(foInvited, sInvited);
-      const fInvited = await prismaMock.fleet.create({ data: { name: 'Fleet Invited' } });
-      await prismaMock.fleetMember.create({
-        data: { fleetId: fInvited.id, userId: foInvited.id, role: 'OWNER', status: 'INVITED' },
-      });
-
-      // Fleet Owner with REMOVED status
-      const foRemoved = await prismaMock.user.create({
-        data: { phone: '+84904000002', role: 'FLEET_OWNER', status: 'ACTIVE' },
-      });
-      const sRemoved = await refreshSessions.create(foRemoved.id);
-      removedFleetOwnerSession = tokenService.createAuthSession(foRemoved, sRemoved);
-      const fRemoved = await prismaMock.fleet.create({ data: { name: 'Fleet Removed' } });
-      await prismaMock.fleetMember.create({
-        data: { fleetId: fRemoved.id, userId: foRemoved.id, role: 'OWNER', status: 'REMOVED' },
-      });
-
-      // Fleet Owner with no fleet membership record
-      const foNone = await prismaMock.user.create({
-        data: { phone: '+84904000003', role: 'FLEET_OWNER', status: 'ACTIVE' },
-      });
-      const sNone = await refreshSessions.create(foNone.id);
-      noMembershipFleetOwnerSession = tokenService.createAuthSession(foNone, sNone);
-    });
-
-    it('rejects INVITED fleet owner with 403 ("Fleet membership is not active")', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/fleet/profile')
-        .set('Authorization', `Bearer ${invitedFleetOwnerSession.accessToken}`)
-        .expect(403);
-
-      expect(res.body.message).toContain('Tư cách thành viên đội xe chưa được kích hoạt');
-    });
-
-    it('rejects REMOVED fleet owner with 403 ("Fleet membership is not active")', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/fleet/profile')
-        .set('Authorization', `Bearer ${removedFleetOwnerSession.accessToken}`)
-        .expect(403);
-
-      expect(res.body.message).toContain('Tư cách thành viên đội xe chưa được kích hoạt');
-    });
-
-    it('rejects FLEET_OWNER with no fleet membership with 403 ("No fleet membership found")', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/fleet/profile')
-        .set('Authorization', `Bearer ${noMembershipFleetOwnerSession.accessToken}`)
-        .expect(403);
-
-      expect(res.body.message).toContain('Không tìm thấy tư cách thành viên đội xe');
-    });
-  });
-
-  // =========================================================================
-  // 4. Non-Disclosure & Envelope Verification
-  // =========================================================================
-  describe('4. Non-Disclosure & Error Envelope Integrity', () => {
+  describe('3. Non-Disclosure & Error Envelope Integrity', () => {
     it('returns consistent ApiErrorEnvelope without leaking system internals', async () => {
       const res = await request(app.getHttpServer())
         .get(`/orders/${order1Id}`)
