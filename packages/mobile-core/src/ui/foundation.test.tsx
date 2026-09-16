@@ -476,10 +476,10 @@ describe('MapPanel', () => {
 });
 
 describe('customerPalette', () => {
-  it('aligns customerPalette with Midnight Navy primary and tabActive', () => {
-    expect(customerPalette.primary).toBe('#0B1E42');
-    expect(customerPalette.tabActive).toBe('#0B1E42');
-    expect(customerPalette.tabActiveBg).toBe('#F0F4F9');
-    expect(customerPalette.accent).toBe('#F59E0B');
+  it('aligns customerPalette with Trackly orange primary and tabActive', () => {
+    expect(customerPalette.primary).toBe('#F86E3F');
+    expect(customerPalette.tabActive).toBe('#F86E3F');
+    expect(customerPalette.tabActiveBg).toBe('#FFF1E9');
+    expect(customerPalette.accent).toBe('#1F1F1F');
   });
 });
