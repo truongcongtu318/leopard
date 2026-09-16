@@ -101,6 +101,7 @@ const PADDING = 5;
 // do not exist in mobile-core; hex lives here until those keys land.
 const splashScene = {
   accent: '#F97316',
+  base: driverPrimitives.colors.dark900,
 } as const;
 
 function SlideToGetStarted({ label, onAction, testID = 'splash-get-started-btn' }: SlideButtonProps) {
@@ -237,10 +238,10 @@ export function DriverSplashScreen({
         >
           <Defs>
             <LinearGradient id="heroGradient" x1="0" x2="0" y1="0" y2="1">
-              <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
-              <Stop offset="55%" stopColor="#0B1E42" stopOpacity="1" />
-              <Stop offset="85%" stopColor="#0B1E42" stopOpacity="0.95" />
-              <Stop offset="100%" stopColor="#0B1E42" stopOpacity="1" />
+              <Stop offset="0%" stopColor={splashScene.base} stopOpacity="1" />
+              <Stop offset="55%" stopColor={splashScene.base} stopOpacity="1" />
+              <Stop offset="85%" stopColor={splashScene.base} stopOpacity="0.95" />
+              <Stop offset="100%" stopColor={splashScene.base} stopOpacity="1" />
             </LinearGradient>
             <RadialGradient id="auraGlow" cx="50%" cy="45%" r="45%">
               <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.28" />
@@ -428,7 +429,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     ...iosContinuousCurve,
-    backgroundColor: '#12274E',
+    backgroundColor: splashScene.base,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.14)',
     padding: PADDING,
