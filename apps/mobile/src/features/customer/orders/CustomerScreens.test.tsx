@@ -46,7 +46,7 @@ describe('CustomerOrdersScreen', () => {
     await screen.unmount();
   });
 
-  it('renders active filter chip with Trackly orange #F86E3F background', async () => {
+  it('renders active filter chip with Midnight Navy #0B2545 background', async () => {
     const screen = await render(
       <CustomerOrdersScreen view={createCustomerListFixture('C-LIST-SUCCESS')} />,
     );
@@ -54,7 +54,7 @@ describe('CustomerOrdersScreen', () => {
     const allFilterChip = screen.getByRole('button', { name: /Tất cả/ });
     expect(allFilterChip.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ backgroundColor: '#F86E3F' }),
+        expect.objectContaining({ backgroundColor: '#0B2545' }),
       ]),
     );
     await screen.unmount();

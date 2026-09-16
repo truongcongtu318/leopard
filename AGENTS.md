@@ -11,10 +11,10 @@ LEOPARD là hệ thống kết nối logistics ở mức mini-production pilot v
 
 Approved stack:
 
-- Mobile: Expo/React Native hoặc Mobile PWA, TypeScript (`apps/mobile` cho Customer, `apps/driver` cho Driver).
-- Mobile Core: `@leopard/mobile-core` (thư viện dùng chung foundation, brand theme tokens, 2026 Liquid Glass floating dock, UI primitives).
-- Operations Web: Next.js, React, TypeScript, Tailwind CSS.
-- Backend: NestJS, Prisma, TypeScript.
+- Mobile: Expo (v57) / React Native (v0.86) với TypeScript (`apps/mobile` cho Customer, `apps/driver` cho Driver).
+- Mobile Core: `@leopard/mobile-core` (thư viện dùng chung foundation, brand theme tokens, Apple HIG layout, 2026 Liquid Glass floating dock, UI primitives).
+- Operations Web: Next.js (App Router, Next 16+ với React 19), TypeScript, Tailwind CSS (`apps/admin`, filter: `web`).
+- Backend: NestJS, Prisma, TypeScript (`apps/api`, filter: `api`).
 - Database: PostgreSQL + PostGIS.
 - Realtime: Socket.IO/WebSocket.
 - Integrations: Vietmap, Firebase Phone Auth, S3-compatible storage, VietQR/payOS.
@@ -69,25 +69,45 @@ Nếu thiếu thông tin làm thay đổi đáng kể solution, đọc tài li�
 - `release/*` tách từ `develop`; `hotfix/*` tách từ `main` và phải đồng bộ trở lại `develop`.
 - Tuân thủ commit convention, review gate và verification trong `CONTRIBUTING.md`.
 
-## UI Rules
+## UI & Design Token Rules
 
-LEOPARD là hệ thống vận hành logistics thông minh, kết hợp tính chính xác trong điều phối với giao diện người dùng hiện đại, tinh tế và trực quan:
+LEOPARD là hệ thống vận hành logistics thông minh, kết hợp tính chính xác trong điều phối với giao diện người dùng hiện đại, chuẩn **Apple Human Interface Guidelines (HIG)**:
 
-- Customer và Driver theo định dạng mobile-first; Fleet Owner/Admin sử dụng giao diện **NexaFleet Modern Bento Dispatch Console**:
-  - Tông nền canvas xám sáng thanh lịch (`#F4F5F7` / `#F8FAFC`), tạo độ tương phản cao và tôn vinh các thẻ bento trắng tinh khôi.
-  - Hệ thống thẻ nổi màu trắng tinh tế (`bg-white`), bo góc mềm mại `rounded-3xl` (24px–28px), viền mỏng kín đáo `border-slate-100` với đổ bóng êm ái (`shadow-xs` / `shadow-sm`).
-  - Topbar nổi bo góc với logo thương hiệu bên trái, cụm điều hướng trung tâm với tab active dạng pill đen tuyền (`bg-slate-900 text-white rounded-full`), chuông thông báo tròn và capsule hồ sơ người dùng bên phải.
-  - Bản đồ theo dõi thời gian thực Dark Mode (Real-time tracking map) tích hợp thanh tìm kiếm kính mờ, nút phóng to, zoom `+ / -` và marker bưu kiện 3D / selected pill xanh lục.
-  - Bố cục Bento 2 cột trực quan: Cột trái gồm Bản đồ tối & Bảng danh sách đơn hàng có pill filter; Cột phải gồm Tổng quan trạng thái (thanh phân đoạn 4 màu), Hiệu suất thực hiện (cột đứng xanh lục) và Doanh thu vận hành (thẻ gradient hoàng hôn kèm biểu đồ sóng trắng mềm mại).
-- Mọi màn hình chính có đầy đủ loading, empty, error, success và permission-denied state.
-- **Mobile UI & Color Rules (Apple HIG Standard)**:
-  - Header: Luôn dùng `ScreenScaffold` với `title` căn giữa (17pt semibold) và nút back chevron 44x44pt. Không tự dựng `headerBar` thủ công lệch chuẩn.
-  - Hạn chế tối đa màu sắc (Color Restraint): Không bọc icon trong các ô vuông nền pastel xanh/vàng/tím/xanh dương. Icon danh mục dùng phong cách SF Symbols đơn sắc trung tính (`gray500`/`gray700`).
-  - Số liệu & KPI: Dùng typography đen/xám than trung tính (`gray900`, `fontVariant: ['tabular-nums']`). Không tô xanh/đỏ các con số thống kê thông thường.
-  - Màu sắc chức năng: Chỉ dành cho tín hiệu nghiệp vụ thực (sao vàng `amber500`, huỷ/cảnh báo `red500`, online `green500`).
-- ETA luôn dùng nhãn “ETA dự kiến”; dữ liệu demo/mô phỏng phải hiển thị rõ “Dữ liệu mô phỏng”.
-- Dữ liệu hiển thị phải phản ánh đúng phạm vi pilot (không đưa các giả định AI XGBoost hay báo cáo ESG ngoài scope vào nghiệp vụ thực).
-- Kiểm tra text overflow, overlap, keyboard focus và tương phản màu sắc (WCAG AA) trước khi hoàn tất.
+### 1. Brand Palette & Semantic Colors
+- **Primary Brand Color**: **Midnight Navy (`#0B2545`)** - Trích xuất từ chữ `L` và đường viền quyền lực của logo Báo LEOPARD. Dùng cho nút CTA chính, Header/Topbar, Active Tab, Focus Ring.
+- **Secondary Accent Color**: **Cheetah Golden Amber (`#F59E0B` / `#D97706`)** - Trích xuất từ màu lông báo gấm. Dùng cho Voucher, Badge VIP, Điểm thưởng, Star rating và Slogan.
+- **Màu nền Canvas**: Trắng tuyết `#FFFFFF` và xám sáng `#F8FAFC` (`canvas`).
+- **Màu thẻ (Card)**: `#FFFFFF`, viền mỏng `#E2E8F0`, bo góc `radius.card` (14pt) / `radius.cardLg` (16pt) kèm đường cong liên tục `...iosContinuousCurve`.
+- **Màu chữ & Typography**: Chữ chính `#0F172A` (Slate 900), chữ phụ `#475569` / `#64748B` (`mutedText`/`subtleText`). Số liệu KPI dùng `tabular-nums`.
+- **Màu trạng thái (Functional Only)**: Xanh lá online/giao thành công (`#34C759` / `#16A34A`), Đỏ hủy/cảnh báo (`#FF3B30` / `#EF4444`), Vàng cảnh báo (`#F59E0B`), Xanh dương liên kết (`#0284C7` / `#007AFF`).
+
+### 2. Typography & Dynamic Type Contract (`typeScale`)
+- **Bắt buộc dùng `typeScale`**: Không được gõ cứng `fontSize: 11, 12, 13, 15...`. Phải dùng trực tiếp:
+  - `...typeScale.largeTitle` (34pt, weight 700)
+  - `...typeScale.title1` (28pt, weight 700)
+  - `...typeScale.title2` (22pt, weight 600)
+  - `...typeScale.title3` (20pt, weight 600)
+  - `...typeScale.headline` (17pt, weight 600)
+  - `...typeScale.body` (17pt, weight 400)
+  - `...typeScale.callout` (16pt, weight 400)
+  - `...typeScale.subheadline` (15pt, weight 600 - dùng cho label, item title)
+  - `...typeScale.footnote` (13pt, weight 400/600 - dùng cho caption, badge, chip)
+  - `...typeScale.caption1` (12pt, weight 400/600)
+  - `...typeScale.caption2` (11pt, weight 400/700 - dùng cho timestamp, micro-tag)
+
+### 3. Spacing & Layout Rhythm (4pt Apple Grid)
+- **Bắt buộc dùng `spacing`**:
+  - `spacing.hairline` (2pt), `spacing.xxs` (4pt), `spacing.xs` (8pt), `spacing.sm` (12pt), `spacing.md` (16pt), `spacing.lg` (24pt), `spacing.xl` (32pt).
+  - Không gõ khoảng cách tùy tiện (`gap: 3, 6, 7`, `padding: 10, 14, 18`).
+
+### 4. Border Radius & Continuous Squircle (`radius`)
+- **Bắt buộc dùng `radius`**:
+  - `radius.cardSm` (10pt), `radius.control` (12pt), `radius.card` (14pt), `radius.cardLg` (16pt), `radius.cardXl` (20pt), `radius.modal` (24pt), `radius.pill` (9999pt).
+  - Luôn đi kèm `...iosContinuousCurve` (`borderCurve: 'continuous'`).
+
+### 5. Primary CTA Buttons & Interactive Controls
+- **Nút CTA chính**: Chiều cao tiêu chuẩn 52-54pt, góc bo `16pt` continuous squircle, hiệu ứng phản hồi vật lý khi nhấn (`scale: 0.985`), đổ bóng đa tầng mềm mại.
+- **Thanh trượt nhận đơn (Slide to Action)**: Thiết kế chuẩn Apple Floating Capsule Glass viền kính mờ 1px và phản hồi xúc giác (Haptic).
 
 ## Verification
 
@@ -101,7 +121,7 @@ pnpm --filter api typecheck
 pnpm --filter api lint
 ```
 
-Frontend:
+Frontend / Admin Web:
 
 ```bash
 pnpm --filter web test
@@ -128,20 +148,13 @@ pnpm lint
 pnpm build
 ```
 
-Nếu script chưa tồn tại, nói rõ và chạy verification gần nhất có sẵn. UI thay đổi phải kiểm tra viewport trong `docs/ui/05-responsive-rules.md`.
-
 ## Review Expectations
 
 Trước khi báo hoàn tất, xác nhận:
 
 - Acceptance criteria và test scenario liên quan đạt.
 - Không còn P0/P1 issue thuộc phạm vi.
+- Không hardcode mã màu hex, cỡ chữ hay khoảng cách ngoài bộ token.
 - Không role nào truy cập dữ liệu riêng tư ngoài quyền.
 - Dữ liệu persist sau refresh khi liên quan.
 - Diff không chứa refactor hoặc generated file không liên quan.
-- API/data/UI docs được cập nhật khi behavior thay đổi.
-- Không có secret hoặc dữ liệu cá nhân trong code, fixture hay log.
-
-## Subagent Rules
-
-Dùng subagent chủ yếu cho exploration, independent review, test/log analysis, UI review và security review. Không để nhiều agent ghi cùng file nếu không có worktree tách biệt.

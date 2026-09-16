@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral.border,
   },
   modalCancelButtonText: {
-    color: '#334155',
+    color: colors.neutral.mutedText,
     fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
   },

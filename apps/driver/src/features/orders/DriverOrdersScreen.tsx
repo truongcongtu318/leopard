@@ -8,8 +8,12 @@ import {
   ScreenState,
   SkeletonCard,
   colors,
+  iosContinuousCurve,
   leopardPalette,
+  radius,
   resolveLocationCoords,
+  spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 
 import { IncomingDispatchModal } from './IncomingDispatchModal';
@@ -439,46 +443,47 @@ const styles = StyleSheet.create({
   },
   sheetContent: {
     paddingBottom: 104,
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
   },
   sheetSectionGap: {
-    gap: 12,
+    gap: spacing.sm,
   },
   sheetHeader: {
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   sheetTitle: {
     color: leopardPalette.primary,
-    fontSize: 17,
+    ...typeScale.headline,
     fontWeight: '800',
   },
   sheetSubtitle: {
     color: colors.neutral.subtleText,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: spacing.hairline,
   },
   boundaryBox: {
-    paddingVertical: 12,
+    paddingVertical: spacing.sm,
   },
   debugBtn: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.canvas,
     borderColor: leopardPalette.inputBorder,
-    borderRadius: 10,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    marginTop: 10,
+    marginTop: spacing.xs,
     minHeight: 36,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   debugBtnPressed: {
     opacity: 0.85,
   },
   debugBtnText: {
     color: leopardPalette.primary,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '700',
   },
   srOnly: {

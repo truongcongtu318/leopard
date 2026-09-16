@@ -20,9 +20,11 @@ import {
   RealInteractiveMap,
   SlideToAction,
   colors,
+  iosContinuousCurve,
   leopardPalette,
   radius,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export function formatPublicArea(address?: string | null): string {
@@ -676,25 +678,25 @@ const styles = StyleSheet.create({
   },
   fareNetPillText: {
     color: '#166534',
-    fontSize: 10,
+    ...typeScale.caption2,
     fontWeight: '800',
   },
   fareCaption: {
     color: '#15803D',
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
   fareAmount: {
     color: '#166534',
-    fontSize: 34,
+    ...typeScale.largeTitle,
     fontVariant: ['tabular-nums'],
     fontWeight: '900',
     letterSpacing: -0.8,
   },
   fareSub: {
-    color: '#4B5563',
-    fontSize: 11.5,
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -956,7 +958,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   specChipText: {
-    color: '#334155',
+    color: colors.neutral.mutedText,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -983,15 +985,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral.canvas,
     borderColor: leopardPalette.inputBorder,
     borderRadius: radius.pill,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    height: 48,
+    height: 50,
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 50,
     width: '100%',
   },
   declineButtonPressed: {
     backgroundColor: colors.neutral.surfaceMuted,
-    opacity: 0.8,
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
   },
   declineButtonDisabled: {
     opacity: 0.5,

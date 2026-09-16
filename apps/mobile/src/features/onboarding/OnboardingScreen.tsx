@@ -57,7 +57,7 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlideData[] = [
   },
 ];
 
-function ArrowRightIcon({ size = 24, color = '#081A3C' }: { size?: number; color?: string }) {
+function ArrowRightIcon({ size = 24, color = customerPalette.primary }: { size?: number; color?: string }) {
   if (Platform.OS === 'web') {
     return (
       <svg
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: 64,
-    backgroundColor: '#081A3C',
+    backgroundColor: customerPalette.primary,
     zIndex: 2,
   },
 

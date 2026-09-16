@@ -26,6 +26,8 @@ import {
   customerPalette,
   leopardPalette,
   pastelTheme,
+  radius,
+  spacing,
   IconPhone,
   IconSecurityShield,
   IconUser,
@@ -568,11 +570,10 @@ export default function CustomerRegisterScreen() {
                 onBlur={() => setFocusedField(null)}
                 onChangeText={setTaxCode}
                 onFocus={() => setFocusedField('taxCode')}
-                placeholder="VD: 0312345678 hoặc 0312345678-001"
+                placeholder="VD: 0312345678 (tùy chọn)"
                 placeholderTextColor={leopardPalette.inputPlaceholder}
                 style={[
                   styles.input,
-                  styles.monoInput,
                   focusedField === 'taxCode' && styles.inputFocused,
                 ]}
                 testID="cr-tax-code"
@@ -937,8 +938,9 @@ const styles = StyleSheet.create({
   /* Cards */
   card: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 18,
-    padding: 20,
+    borderRadius: radius.cardXl,
+    ...iosContinuousCurve,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     shadowColor: customerPalette.textSlateDark,
@@ -952,10 +954,10 @@ const styles = StyleSheet.create({
   sectionDivider: {
     height: 1,
     backgroundColor: colors.neutral.surfaceMuted,
-    marginVertical: 16,
+    marginVertical: spacing.md,
   },
   sectionGroup: {
-    gap: 12,
+    gap: spacing.sm,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -965,19 +967,19 @@ const styles = StyleSheet.create({
   sectionTitleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   sectionTitle: {
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '700',
     color: colors.neutral.text,
   },
 
   statusPillSuccess: {
     backgroundColor: leopardPalette.ecoGreenBg,
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.xs,
     paddingVertical: 3,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: leopardPalette.ecoGreenBorder,
   },
@@ -1334,9 +1336,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   label: {
-    fontSize: 13,
+    ...typeScale.subheadline,
     fontWeight: '600',
-    color: '#334155',
+    color: colors.neutral.mutedText,
   },
   requiredStar: {
     color: colors.danger.text,
@@ -1349,9 +1351,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 14,
     height: 50,
+    ...typeScale.body,
     fontSize: 15,
     color: colors.neutral.text,
-    fontWeight: '500',
     backgroundColor: customerPalette.surfaceWhite,
     ...Platform.select({
       web: {

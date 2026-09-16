@@ -969,7 +969,7 @@ const s = StyleSheet.create({
   completedRouteText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#334155',
+    color: colors.neutral.mutedText,
     flex: 1,
   },
   completedArrow: {

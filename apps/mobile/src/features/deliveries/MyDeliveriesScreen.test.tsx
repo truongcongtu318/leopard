@@ -190,7 +190,7 @@ describe('MyDeliveriesScreen', () => {
     await screen.unmount();
   });
 
-  it('applies Trackly orange #F86E3F border to search bar on focus', async () => {
+  it('applies Midnight Navy #0B2545 border to search bar on focus', async () => {
     const screen = await render(<MyDeliveriesScreen orders={mockOrders} />);
 
     const searchInput = screen.getByLabelText('Tìm kiếm đơn hàng');
@@ -199,7 +199,7 @@ describe('MyDeliveriesScreen', () => {
     const searchBar = screen.getByTestId('search-bar');
     expect(searchBar.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ borderColor: '#F86E3F' }),
+        expect.objectContaining({ borderColor: '#0B2545' }),
       ]),
     );
 

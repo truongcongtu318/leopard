@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     width: 6,
   },
   statusPillText: {
-    color: '#334155',
+    color: colors.neutral.mutedText,
     fontSize: 11,
     fontWeight: '600',
   },

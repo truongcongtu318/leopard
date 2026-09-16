@@ -15,10 +15,9 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 - **`apps/admin` (package: `web`)**:
   - Next.js (App Router, Next 16+ with React 19) operations dashboard for Admins.
   - Follows the NexaFleet Modern Bento layout with real-time tracking map and operational statistics.
-  - *Note:* Refer to Next.js guides in `node_modules/next/dist/docs/` for breaking conventions in this version.
 - **`apps/mobile` (package: `mobile`)**:
   - Expo (v57) / React Native (v0.86) app with Expo Router for Customer flows.
-  - Map-first Lalamove-style booking, Fleet Matrix (Van 500kg, Truck 1.25T, 2.5T, Ba gác), Route Spine, VietQR payOS, and VAT e-invoicing.
+  - Map-first booking, Fleet Matrix (Van 500kg, Truck 1.25T, 2.5T, Ba gác), Route Spine, VietQR payOS, and VAT e-invoicing.
   - TanStack React Query for caching, React Hook Form for input handling.
 - **`apps/driver` (package: `driver`)**:
   - Expo (v57) / React Native (v0.86) standalone app with Expo Router for Driver flows.
@@ -26,7 +25,7 @@ LEOPARD is a mini-production freight logistics pilot platform connecting Custome
 
 ### Shared Packages (`packages/`)
 
-- **`packages/mobile-core` (`@leopard/mobile-core`)**: Shared mobile foundation, brand theme tokens, 2026 Liquid Glass floating dock, and UI primitives for Customer and Driver apps.
+- **`packages/mobile-core` (`@leopard/mobile-core`)**: Shared mobile foundation, brand theme tokens, Apple HIG layout, 2026 Liquid Glass floating dock, and UI primitives for Customer and Driver apps.
 - **`packages/shared` (`@leopard/shared`)**: Pure TypeScript contracts, enums (`Role`, `OrderStatus`, `PaymentStatus`), and DTO interfaces (no framework dependencies).
 - **`packages/validators` (`@leopard/validators`)**: Shared Zod schemas for request validation.
 - **`packages/ui` (`@leopard/ui`)**: Shared web UI primitives for Admin/Web (Tailwind CSS based, presentation only, no business logic).
@@ -56,30 +55,43 @@ When asked to build or refactor a UI component:
    - **Never copy NativeWind styling directly** into React Native workspaces.
 
 3. **FINALLY**:
-   - Implement for Mobile using `StyleSheet.create` + `@leopard/mobile-core` (Apple HIG tokens, `driverPrimitives`, `iosContinuousCurve`).
+   - Implement for Mobile using `StyleSheet.create` + `@leopard/mobile-core` (Apple HIG tokens, `iosContinuousCurve`, `typeScale`, `spacing`, `radius`).
    - Implement for Web using Tailwind CSS + `@leopard/ui` primitives.
 
-### Mobile UI & Color Design Rules (Apple HIG Standard)
+### Mobile UI & Design Token Rules (Apple HIG Standard)
 
-1. **Standard Navigation Bar (Header)**:
-   - Always use `ScreenScaffold` with `onBack` and `title` for screen headers across all mobile apps (`apps/driver`, `apps/mobile`).
-   - Fixed 44pt bar height, centered 17pt Semibold title, standard chevron back button `<` with minimum 44x44pt hit target (`hitSlop`).
-   - Never create custom `headerBar` implementations with ad-hoc heights (e.g. 52pt) or raw SVG arrows.
+1. **Brand Colors & Palette**:
+   - **Primary Action & Brand**: **Midnight Navy (`#0B2545`)** (`customerPalette.primary` / `leopardPalette.primary`) — Trích xuất từ chữ `L` và viền Báo của Logo. Dùng cho Nút CTA chính, TabBar Active, Header/Topbar, Input Focus Ring.
+   - **Secondary Accent**: **Cheetah Golden Amber (`#F59E0B` / `#D97706`)** (`customerPalette.accent` / `leopardPalette.accentYellow`) — Trích xuất từ lông Báo gấm. Dùng cho Voucher, Badge VIP, Điểm thưởng, Star rating và Slogan.
+   - **Canvas & Cards**: Nền `#FFFFFF` / `#F8FAFC` (`canvas`). Thẻ Inset Grouped màu `#FFFFFF`, viền mỏng `#E2E8F0`, bo góc `radius.card` (14pt) hoặc `radius.cardLg` (16pt) kèm `...iosContinuousCurve`.
+   - **Neutral Typography**: Chữ chính `#0F172A` (Slate 900), chữ phụ `#475569` / `#64748B`. Số liệu KPI dùng fontVariant `['tabular-nums']`.
+   - **Functional Colors Only**: Chỉ dùng màu cho tín hiệu thực: Xanh lá online/thành công (`#34C759` / `#16A34A`), Đỏ hủy/cảnh báo (`#FF3B30` / `#EF4444`), Vàng cảnh báo (`#F59E0B`), Xanh dương liên kết (`#0284C7` / `#007AFF`).
 
-2. **Color Restraint (Content-First)**:
-   - **No rainbow/pastel icon background boxes**: Do not wrap icons in arbitrary green, amber, blue, purple squares (`#ECFDF5`, `#FFFBEB`, `#EFF6FF`).
-   - **Monochrome SF Symbols Style**: Setting, menu, and action icons must be neutral monochrome (`gray500` or `gray700`), placed directly beside labels.
-   - **Neutral Data & KPI Typography**: Normal statistics, percentages, and metrics must use high-contrast neutral dark typography (`driverPrimitives.colors.gray900`, bold, `fontVariant: ['tabular-nums']`). Never color numbers green or red unless indicating a specific delta/trend.
-   - **Functional Colors Only**: Reserve color strictly for active business signals:
-     - Rating stars: `amber500`
-     - Critical alerts / destructive actions: `red500` / `red600`
-     - Online status indicator / confirmed toggle: `green500`
-     - Unread notifications dot: `red500`
+2. **Typography & Dynamic Type Contract (`typeScale`)**:
+   - **Không được gõ cứng `fontSize` lẻ**: Luôn dùng trực tiếp `...typeScale.<style>`:
+     - `largeTitle` (34pt/41pt, weight 700)
+     - `title1` (28pt/34pt, weight 700)
+     - `title2` (22pt/28pt, weight 600)
+     - `title3` (20pt/25pt, weight 600)
+     - `headline` (17pt/22pt, weight 600)
+     - `body` (17pt/22pt, weight 400)
+     - `callout` (16pt/21pt, weight 400)
+     - `subheadline` (15pt/20pt, weight 600 - dùng cho labels, form field titles)
+     - `footnote` (13pt/18pt, weight 400/600 - dùng cho captions, meta chips)
+     - `caption1` (12pt/16pt, weight 400/600)
+     - `caption2` (11pt/13pt, weight 400/700 - dùng cho timestamps, badges)
 
-3. **Surfaces & Cards (Apple Inset Grouped & Nexa Bento)**:
-   - Base canvas: `#F8FAFC` (`gray50`).
-   - Cards: Pure white `#FFFFFF`, thin border `#E2E8F0` (`border-slate-200`), rounded-2xl (18-20px, `iosContinuousCurve`), soft shadow (`shadow-sm`).
-   - Avoid aggressive pitch-black container boxes (`#0F172A`) that clash with the light iOS theme.
+3. **Spacing & 4pt Grid (`spacing`)**:
+   - `spacing.hairline` (2pt), `spacing.xxs` (4pt), `spacing.xs` (8pt), `spacing.sm` (12pt), `spacing.md` (16pt), `spacing.lg` (24pt), `spacing.xl` (32pt).
+   - Tuyệt đối không gõ khoảng cách tùy tiện ngoài thang đo (`gap: 3, 6, 7`, `padding: 10, 14, 18`).
+
+4. **Border Radius & Continuous Squircle (`radius`)**:
+   - `radius.cardSm` (10pt), `radius.control` (12pt), `radius.card` (14pt), `radius.cardLg` (16pt), `radius.cardXl` (20pt), `radius.modal` (24pt), `radius.pill` (9999pt).
+   - Luôn áp dụng `...iosContinuousCurve` (`borderCurve: 'continuous'`).
+
+5. **Primary CTA Buttons & Controls**:
+   - Nút hành động chính (Primary CTA): Chiều cao 52-54pt, góc bo 16pt continuous squircle, hiệu ứng nhấn vật lý (`scale: 0.985`), đổ bóng đa tầng.
+   - Thanh trượt nhận đơn (`SlideToAction`): Kiểu dáng Apple Floating Capsule Glass viền kính mờ 1px và phản hồi xúc giác (Haptic).
 
 ---
 
@@ -94,8 +106,6 @@ When asked to build or refactor a UI component:
 - Lint all: `pnpm lint`
 - Typecheck all: `pnpm typecheck`
 - Run all tests: `pnpm test`
-- Run contract tests: `pnpm test:contract`
-- Run all E2E tests: `pnpm test:e2e`
 
 ### Backend (`apps/api`)
 
@@ -103,63 +113,32 @@ When asked to build or refactor a UI component:
 - Build: `pnpm --filter api build`
 - Typecheck: `pnpm --filter api typecheck`
 - Lint: `pnpm --filter api lint`
-- Run all unit/spec tests: `pnpm --filter api test`
-- Run a single test: `pnpm --filter api test -- src/orders/accept-order.service.spec.ts`
-- Run E2E tests: `pnpm --filter api test:e2e`
-- Run a single E2E test: `pnpm --filter api test:e2e -- src/orders/order-lifecycle.e2e-spec.ts`
-- Contract tests: `pnpm --filter api test:contract`
-- Prisma generate: `pnpm --filter api prisma:generate`
-- Database test migrations & database tests: `pnpm db:migrate:test`
+- Run all unit tests: `pnpm --filter api test`
 
 ### Operations Web / Admin (`apps/admin`, filter: `web`)
 
-*Note: Package name is `web`, filter using `--filter web`.*
-
 - Dev server: `pnpm --filter web dev`
-- Dev server with preview fixtures: `pnpm --filter web dev:preview`
 - Build: `pnpm --filter web build`
 - Typecheck: `pnpm --filter web typecheck`
 - Lint: `pnpm --filter web lint`
 - Run all unit tests: `pnpm --filter web test`
-- Run a single test: `pnpm --filter web test -- src/preview/preview-mode.test.ts`
-- Run E2E tests (Playwright): `pnpm --filter web test:e2e`
 
-### Mobile App (`apps/mobile`, filter: `mobile`)
+### Customer Mobile App (`apps/mobile`, filter: `mobile`)
 
 - Start Expo dev server: `pnpm --filter mobile start`
 - Typecheck: `pnpm --filter mobile typecheck`
 - Lint: `pnpm --filter mobile lint`
 - Run all tests: `pnpm --filter mobile test`
-- Run a single test: `pnpm --filter mobile test -- src/smoke.test.tsx`
-- Run E2E tests (Maestro): `pnpm --filter mobile test:e2e`
 
-### Driver App (`apps/driver`, filter: `driver`)
+### Driver Mobile App (`apps/driver`, filter: `driver`)
 
 - Start Expo dev server: `pnpm --filter driver start`
 - Typecheck: `pnpm --filter driver typecheck`
 - Lint: `pnpm --filter driver lint`
 - Run all tests: `pnpm --filter driver test`
 
-### Shared Packages
+### Shared Mobile Core (`packages/mobile-core`)
 
-- `@leopard/mobile-core`:
-  - Test (Jest): `pnpm --filter @leopard/mobile-core test`
-  - Typecheck: `pnpm --filter @leopard/mobile-core typecheck`
-  - Lint: `pnpm --filter @leopard/mobile-core lint`
-- `@leopard/shared`:
-  - Test (Vitest): `pnpm --filter @leopard/shared test`
-  - Single test: `pnpm --filter @leopard/shared test -- src/index.test.ts`
-- `@leopard/validators`:
-  - Test (Vitest): `pnpm --filter @leopard/validators test`
-  - Single test: `pnpm --filter @leopard/validators test -- src/index.test.ts`
-- `@leopard/ui`:
-  - Test (Jest): `pnpm --filter @leopard/ui test`
-
----
-
-## Git Workflow & Conventions
-
-- Base and integration branch: `develop`. Never commit directly to `main` or `develop`.
-- Branch naming: `feature/<issue>-<name>`, `fix/<issue>-<name>`, `docs/<issue>-<name>`, `refactor/<issue>-<name>`, or `codex/<type>-<name>`.
-- Standard PRs target `develop`; only `release/*` and `hotfix/*` target `main`.
-- Commit format: Conventional Commits (`feat(scope): imperative summary`).
+- Typecheck: `pnpm --filter @leopard/mobile-core typecheck`
+- Lint: `pnpm --filter @leopard/mobile-core lint`
+- Run all tests: `pnpm --filter @leopard/mobile-core test`
