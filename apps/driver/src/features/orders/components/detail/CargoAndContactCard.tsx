@@ -1,10 +1,11 @@
 import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
+  driverPrimitives,
+  iosContinuousCurve,
   IconOrders,
   IconPhone,
   IconSpeedTruck,
-  spacing,
 } from '@leopard/mobile-core';
 
 export type CargoAndContactCardProps = Readonly<{
@@ -43,54 +44,60 @@ export function callPhoneNumber(contact?: string | null) {
 }
 
 export function CargoAndContactCard({
-  vehicleLabel,
   cargoSummary,
   cargoWeightKg,
   contactRoleLabel,
   customerContact,
-  onChat,
+  vehicleLabel,
 }: CargoAndContactCardProps) {
   return (
-    <View style={styles.cargoContactCard}>
+    <View style={styles.cardContainer}>
       <Text style={styles.cardSectionTitle}>HÀNG HÓA & LIÊN HỆ</Text>
 
       {/* Cargo Spec Chips */}
       <View style={styles.specChipsRow}>
         <View style={styles.specChip}>
-          <IconSpeedTruck color="#0B1E42" size={14} />
+          <IconSpeedTruck color={driverPrimitives.colors.gray500} size={15} />
           <Text style={styles.specChipText}>{vehicleLabel}</Text>
         </View>
+
         {typeof cargoWeightKg === 'number' && cargoWeightKg > 0 ? (
           <View style={styles.specChip} testID="cargo-weight-chip">
-            <IconOrders color="#0B1E42" size={14} />
+            <IconOrders color={driverPrimitives.colors.gray500} size={15} />
             <Text style={styles.specChipText}>{cargoWeightKg} kg</Text>
           </View>
         ) : null}
+
         <View style={styles.specChip}>
-          <IconOrders color="#0B1E42" size={14} />
+          <IconOrders color={driverPrimitives.colors.gray500} size={15} />
           <Text numberOfLines={1} style={styles.specChipText}>
             {cargoSummary}
           </Text>
         </View>
       </View>
 
-      {/* Customer Contact Card */}
-      <View style={styles.contactCardRow}>
-        <View style={styles.contactIconChip}>
-          <IconPhone color="#0B1E42" size={16} />
+      <View style={styles.cardDivider} />
+
+      {/* Customer Contact Row */}
+      <View style={styles.contactRow}>
+        <View style={styles.contactIconCircle}>
+          <IconPhone color={driverPrimitives.colors.gray500} size={16} />
         </View>
-        <View style={styles.contactTextColumn}>
+
+        <View style={styles.contactInfoCol}>
           <Text style={styles.contactCaption}>{contactRoleLabel.toUpperCase()}</Text>
           <Text style={styles.contactValue}>{customerContact}</Text>
         </View>
+
         <Pressable
           accessibilityHint="Gọi điện thoại cho người nhận hoặc thủ kho"
           accessibilityLabel="Gọi điện thoại"
           accessibilityRole="button"
+          hitSlop={8}
           onPress={() => callPhoneNumber(customerContact)}
           style={({ pressed }) => [styles.contactCallBtn, pressed ? styles.pressed : null]}
         >
-          <IconPhone color="#FFFFFF" size={14} />
+          <IconPhone color="#FFFFFF" size={13} />
           <Text style={styles.contactCallBtnText}>Gọi</Text>
         </Pressable>
       </View>
@@ -99,15 +106,20 @@ export function CargoAndContactCard({
 }
 
 const styles = StyleSheet.create({
-  cargoContactCard: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs,
+  cardContainer: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    gap: 12,
+    padding: 16,
+    ...driverPrimitives.shadows.sm,
   },
   cardSectionTitle: {
-    color: '#0B1E42',
-    fontSize: 12,
-    fontWeight: '800',
+    color: driverPrimitives.colors.gray500,
+    fontSize: 11.5,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   specChipsRow: {
@@ -127,58 +139,59 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   specChipText: {
-    color: '#0B1E42',
+    color: driverPrimitives.colors.gray700,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  contactCardRow: {
+  cardDivider: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    width: '100%',
+  },
+  contactRow: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    borderWidth: 1,
     flexDirection: 'row',
     gap: 12,
-    padding: 12,
   },
-  contactIconChip: {
+  contactIconCircle: {
     alignItems: 'center',
-    backgroundColor: '#EEF2F6',
+    backgroundColor: '#F1F5F9',
     borderRadius: 20,
     height: 38,
     justifyContent: 'center',
     width: 38,
   },
-  contactTextColumn: {
+  contactInfoCol: {
     flex: 1,
     gap: 2,
   },
   contactCaption: {
-    color: '#64748B',
+    color: driverPrimitives.colors.gray400,
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   contactValue: {
-    color: '#0B1E42',
-    fontSize: 13,
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
     fontWeight: '700',
   },
   contactCallBtn: {
     alignItems: 'center',
-    backgroundColor: '#0B1E42',
-    borderRadius: 8,
+    backgroundColor: driverPrimitives.colors.dark950,
+    borderRadius: 9999,
     flexDirection: 'row',
     gap: 6,
+    height: 36,
+    justifyContent: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 8,
   },
   contactCallBtnText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.8,
   },
 });

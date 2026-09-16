@@ -1,19 +1,16 @@
+import React from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
-  colors,
-  leopardPalette,
-  radius,
-  spacing,
-  IconChevron,
+  driverPrimitives,
+  iosContinuousCurve,
   IconSecurityShield,
   IconSpeedTruck,
   IconStar,
   ScreenScaffold,
   ScreenState,
   StarRating,
-  typeScale,
 } from '@leopard/mobile-core';
 import type { DriverPerformanceReviewResponse } from './adapter';
 
@@ -39,33 +36,21 @@ export type DriverPerformanceScreenProps = Readonly<{
 }>;
 
 export function DriverPerformanceScreen({
-  ratingAvg,
-  ratingCount,
   acceptancePct,
   cancellationPct,
-  recentReviews,
-  isLoading,
   isError,
+  isLoading,
   onRetry,
+  ratingAvg,
+  ratingCount,
+  recentReviews,
 }: DriverPerformanceScreenProps) {
   const router = useRouter();
 
   return (
     <ScreenScaffold
-      eyebrow="DRIVER · OPERATIONAL METRICS"
-      headerLeading={
-        <Pressable
-          accessibilityLabel="Quay lại"
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <IconChevron color={colors.brand.background} direction="left" size={20} />
-          <Text style={styles.backButtonText}>Quay lại</Text>
-        </Pressable>
-      }
       headerTone="plain"
+      onBack={() => router.back()}
       title="Điểm hiệu suất"
     >
       <ScrollView
@@ -79,65 +64,104 @@ export function DriverPerformanceScreen({
           <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
         ) : (
           <>
-        {/* 1. Executive Rating Card (Double-Bezel) */}
-        <View style={styles.doubleBezelOuter}>
-          <View style={styles.doubleBezelInner}>
-            <View style={styles.overviewTopRow}>
-              <View style={styles.ratingBoxFull}>
-                <View style={styles.ratingRow}>
-                  <Text style={styles.ratingNumber}>{ratingAvg.toFixed(2)}</Text>
-                  <IconStar color="#F59E0B" fill="#F59E0B" size={22} />
+            {/* ── 1. Executive Rating Bento Card (Apple White Minimalist) ── */}
+            <View style={styles.ratingHeroCard}>
+              <View style={styles.ratingScoreRow}>
+                <Text style={styles.ratingBigNumber}>{ratingAvg.toFixed(2)}</Text>
+                <IconStar color={driverPrimitives.colors.amber500} filled size={28} />
+              </View>
+
+              <View style={styles.starsWrapper}>
+                <StarRating rating={ratingAvg} size={16} />
+              </View>
+
+              <Text style={styles.ratingCountText}>{ratingCount} đánh giá</Text>
+
+              <View style={styles.ratingBadgePill}>
+                <View style={styles.ratingBadgeDot} />
+                <Text style={styles.ratingBadgeText}>
+                  {ratingAvg >= 4.8
+                    ? 'Chất lượng xuất sắc'
+                    : ratingAvg >= 4.0
+                    ? 'Đạt chuẩn vận tải'
+                    : 'Cần cải thiện chất lượng'}
+                </Text>
+              </View>
+            </View>
+
+            {/* ── 2. Operational Core KPIs Section (Apple Inset Grouped) ── */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionLabel}>Chỉ số vận hành cốt lõi</Text>
+
+              <View style={styles.kpiCard}>
+                {/* Acceptance Rate Row */}
+                <View style={styles.metricRow}>
+                  <View style={styles.metricIconWrap}>
+                    <IconSpeedTruck color={driverPrimitives.colors.gray500} size={20} />
+                  </View>
+                  <View style={styles.metricInfoCol}>
+                    <Text style={styles.metricTitle}>Tỷ lệ nhận cuốc</Text>
+                    <Text style={styles.metricSub}>Tỷ lệ chấp nhận chuyến điều phối</Text>
+                  </View>
+                  <Text style={styles.metricValueText}>
+                    {acceptancePct !== null && acceptancePct !== undefined
+                      ? formatPct(acceptancePct)
+                      : '—'}
+                  </Text>
                 </View>
-                <Text style={styles.ratingCount}>{ratingCount} đánh giá</Text>
+
+                <View style={styles.metricDivider} />
+
+                {/* Cancellation Rate Row */}
+                <View style={styles.metricRow}>
+                  <View style={styles.metricIconWrap}>
+                    <IconSecurityShield color={driverPrimitives.colors.gray500} size={20} />
+                  </View>
+                  <View style={styles.metricInfoCol}>
+                    <Text style={styles.metricTitle}>Tỷ lệ hủy cuốc</Text>
+                    <Text style={styles.metricSub}>Chủ động huỷ chuyến sau khi nhận</Text>
+                  </View>
+                  <Text style={styles.metricValueText}>
+                    {cancellationPct !== null && cancellationPct !== undefined
+                      ? formatPct(cancellationPct)
+                      : '—'}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-        </View>
 
-        {/* 2. Operational KPIs Section (Double-Bezel) */}
-        <Text style={styles.sectionLabel}>Chỉ số vận hành cốt lõi</Text>
-        <View style={styles.doubleBezelOuterMuted}>
-          <View style={styles.doubleBezelInnerMuted}>
-            {/* Acceptance Rate KPI */}
-            <View style={styles.metricRow}>
-              <View style={styles.metricIconWrap}>
-                <IconSpeedTruck color="#10B981" size={18} />
-              </View>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricTitle}>Tỷ lệ nhận cuốc</Text>
-              </View>
-              <Text style={[styles.metricValue, styles.metricValueEmerald]}>{acceptancePct !== null && acceptancePct !== undefined ? formatPct(acceptancePct) : '—'}</Text>
+            {/* ── 3. Customer Reviews Feed (Apple Inset Grouped) ── */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionLabel}>
+                Đánh giá từ khách hàng ({recentReviews.length})
+              </Text>
+
+              {recentReviews.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyText}>Chưa có đánh giá nào từ khách hàng</Text>
+                </View>
+              ) : (
+                <View style={styles.reviewsGroupCard}>
+                  {recentReviews.map((item, index) => (
+                    <React.Fragment key={item.id}>
+                      <View style={styles.reviewItemRow}>
+                        <View style={styles.reviewItemHeader}>
+                          <StarRating rating={item.rating} size={14} />
+                          <Text style={styles.reviewDateText}>
+                            {formatReviewDate(item.createdAt)}
+                          </Text>
+                        </View>
+                        <Text style={styles.reviewCommentText}>{item.comment}</Text>
+                      </View>
+                      {index < recentReviews.length - 1 ? (
+                        <View style={styles.reviewSeparator} />
+                      ) : null}
+                    </React.Fragment>
+                  ))}
+                </View>
+              )}
             </View>
-
-            <View style={styles.rowDivider} />
-
-            {/* Cancellation Rate KPI */}
-            <View style={[styles.metricRow, styles.metricRowLast]}>
-              <View style={styles.metricIconWrap}>
-                <IconSecurityShield color="#10B981" size={18} />
-              </View>
-              <View style={styles.metricLeft}>
-                <Text style={styles.metricTitle}>Tỷ lệ hủy cuốc</Text>
-              </View>
-              <Text style={[styles.metricValue, styles.metricValueEmerald]}>{cancellationPct !== null && cancellationPct !== undefined ? formatPct(cancellationPct) : '—'}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 3. Customer Reviews Feed */}
-        <Text style={styles.sectionLabel}>Đánh giá từ khách hàng ({recentReviews.length})</Text>
-        <View style={styles.reviewList}>
-          {recentReviews.map((item) => (
-            <View key={item.id} style={styles.reviewCard}>
-              <View style={styles.reviewHeader}>
-                <StarRating rating={item.rating} size={14} />
-                <Text style={styles.reviewTime}>{formatReviewDate(item.createdAt)}</Text>
-              </View>
-              <Text style={styles.reviewComment}>{item.comment}</Text>
-            </View>
-          ))}
-        </View>
-        </>
+          </>
         )}
       </ScrollView>
     </ScreenScaffold>
@@ -146,274 +170,185 @@ export function DriverPerformanceScreen({
 
 const styles = StyleSheet.create({
   scrollWrap: {
+    backgroundColor: '#F8FAFC',
     flex: 1,
   },
   scrollContent: {
-    gap: spacing.sm,
-    paddingBottom: spacing.xl + 20,
-  },
-  backButton: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    minHeight: 44,
-    minWidth: 44,
-    paddingVertical: spacing.xxs,
-  },
-  backButtonText: {
-    color: colors.brand.background,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
-  },
-  /* Double-Bezel Card (Dark/Navy outer) */
-  doubleBezelOuter: {
-    backgroundColor: '#0B1E42',
-    borderRadius: radius.bezelOuter,
-    elevation: 3,
-    padding: 3,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-  },
-  doubleBezelInner: {
-    backgroundColor: '#0F172A',
-    borderColor: '#1E293B',
-    borderRadius: radius.bezelInner,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  overviewTopRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  ratingBox: {
-    alignItems: 'center',
-    borderRightColor: 'rgba(255, 255, 255, 0.15)',
-    borderRightWidth: 1,
-    justifyContent: 'center',
-    paddingRight: spacing.md,
-  },
-  ratingRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  ratingNumber: {
-    color: '#F8FAFC',
-    fontSize: typeScale.largeTitle.fontSize,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  ratingCount: {
-    color: colors.operational.inkMuted,
-    fontSize: 11,
-    fontVariant: ['tabular-nums'],
-    marginTop: 2,
-  },
-  ratingBoxFull: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  tierBox: {
-    flex: 1,
-    gap: 4,
-    justifyContent: 'center',
-  },
-  tierBadge: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  tierBadgeText: {
-    color: '#B45309',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  tierDesc: {
-    color: '#94A3B8',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  tierProgressLabel: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-    marginTop: 2,
+    gap: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    paddingBottom: 40,
   },
 
-  /* Tier Steps Progression Bar */
-  tierProgressContainer: {
-    backgroundColor: '#1E293B',
-    borderRadius: 10,
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  tierProgressionLabel: {
-    color: '#94A3B8',
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  tierStepsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  /* 1. Rating Hero Card - Pure Apple White Minimal */
+  ratingHeroCard: {
     alignItems: 'center',
-  },
-  tierStepCol: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  tierStepCircle: {
-    alignItems: 'center',
-    backgroundColor: '#334155',
-    borderRadius: 12,
-    height: 24,
-    justifyContent: 'center',
-    width: 24,
-  },
-  tierStepCircleDone: {
-    backgroundColor: '#10B981',
-  },
-  tierStepCircleActive: {
-    backgroundColor: '#F59E0B',
-  },
-  tierStepDotNumber: {
-    color: '#94A3B8',
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
-  },
-  tierStepText: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  tierStepTextActive: {
-    color: '#F59E0B',
-    fontWeight: '800',
-  },
-
-  /* Double-Bezel Card (Muted / White) */
-  doubleBezelOuterMuted: {
-    backgroundColor: '#0B1E42',
-    borderRadius: radius.bezelOuter,
-    elevation: 2,
-    padding: 2,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  doubleBezelInnerMuted: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: driverPrimitives.colors.white,
     borderColor: '#E2E8F0',
-    borderRadius: radius.bezelInner,
+    borderRadius: 20,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    paddingHorizontal: spacing.md,
+    gap: 8,
+    paddingVertical: 22,
+    paddingHorizontal: 16,
+    ...driverPrimitives.shadows.sm,
+  },
+  ratingScoreRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  ratingBigNumber: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 40,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.5,
+  },
+  starsWrapper: {
+    alignItems: 'center',
+    paddingVertical: 2,
+  },
+  ratingCountText: {
+    color: driverPrimitives.colors.gray500,
+    fontSize: 12.5,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
+  },
+  ratingBadgePill: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: 9999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  ratingBadgeDot: {
+    backgroundColor: driverPrimitives.colors.green500,
+    borderRadius: 9999,
+    height: 6,
+    width: 6,
+  },
+  ratingBadgeText: {
+    color: driverPrimitives.colors.gray700,
+    fontSize: 11.5,
+    fontWeight: '600',
   },
 
+  /* 2. Core KPIs Section - Apple Inset Grouped */
+  sectionBlock: {
+    gap: 8,
+  },
   sectionLabel: {
-    color: leopardPalette.textMutedSlate,
-    fontSize: 13,
+    color: driverPrimitives.colors.gray900,
+    fontSize: 13.5,
     fontWeight: '700',
-    marginTop: spacing.xs,
+    letterSpacing: -0.2,
+    paddingHorizontal: 4,
+  },
+  kpiCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...driverPrimitives.shadows.sm,
   },
   metricRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 12,
-  },
-  metricRowLast: {
-    paddingBottom: 12,
-  },
-  rowDivider: {
-    backgroundColor: '#F1F5F9',
-    height: 1,
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   metricIconWrap: {
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 8,
-    height: 36,
+    height: 24,
     justifyContent: 'center',
-    width: 36,
+    width: 24,
   },
-  metricLeft: {
+  metricInfoCol: {
     flex: 1,
     gap: 2,
   },
   metricTitle: {
-    color: colors.neutral.titleText,
-    fontSize: typeScale.footnote.fontSize,
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14.5,
     fontWeight: '600',
+    letterSpacing: -0.2,
   },
   metricSub: {
-    color: colors.neutral.subtleText,
-    fontSize: typeScale.caption1.fontSize,
+    color: driverPrimitives.colors.gray400,
+    fontSize: 11.5,
+    fontWeight: '400',
   },
-  metricValue: {
-    fontSize: 16,
+  metricValueText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 18,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.3,
   },
-  metricValueEmerald: {
-    color: '#10B981',
+  metricDivider: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    marginLeft: 54,
   },
 
-  /* Customer Reviews */
-  reviewList: {
-    gap: spacing.xs,
-    paddingBottom: spacing.xl,
-  },
-  reviewCard: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.neutral.subtleBorder,
-    borderRadius: radius.card,
+  /* 3. Reviews Feed - Apple Grouped */
+  reviewsGroupCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 6,
-    padding: spacing.md,
+    overflow: 'hidden',
+    ...driverPrimitives.shadows.sm,
   },
-  reviewHeader: {
+  reviewItemRow: {
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  reviewItemHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  reviewTime: {
-    color: colors.neutral.subtleText,
-    fontSize: typeScale.caption1.fontSize,
+  reviewDateText: {
+    color: driverPrimitives.colors.gray400,
+    fontSize: 12,
+    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
+  reviewCommentText: {
+    color: driverPrimitives.colors.gray900,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
   },
-  tagBadge: {
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+  reviewSeparator: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    marginHorizontal: 16,
   },
-  tagBadgeText: {
-    color: colors.brand.background,
-    fontSize: 11,
-    fontWeight: '700',
+  emptyCard: {
+    alignItems: 'center',
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingVertical: 32,
+    paddingHorizontal: 16,
   },
-  reviewComment: {
-    color: colors.neutral.text,
+  emptyText: {
+    color: driverPrimitives.colors.gray400,
     fontSize: 13,
-    lineHeight: 18,
+    fontWeight: '500',
   },
 });

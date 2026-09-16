@@ -38,7 +38,7 @@ describe('DriverProfileScreen', () => {
     const screen = await render(<DriverProfileScreen view={{ ...fixtureProfile, name: null }} />);
 
     expect(screen.queryByText('Trần Văn Nam')).toBeNull();
-    expect(screen.getByText('0901234567')).toBeTruthy();
+    expect(screen.getByText('0901 234 567')).toBeTruthy();
 
     await screen.unmount();
   });

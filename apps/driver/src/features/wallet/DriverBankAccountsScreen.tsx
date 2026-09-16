@@ -17,6 +17,7 @@ import {
   spacing,
   IconBank,
   IconSecurityShield,
+  ScreenScaffold,
   typeScale,
 } from '@leopard/mobile-core';
 
@@ -49,26 +50,11 @@ export function DriverBankAccountsScreen({
   const hasLinkedAccount = Boolean(bankName && bankAccountNumber);
 
   return (
-    <View style={styles.screenContainer}>
-      {/* ── Top Header Bar ── */}
-      <View style={styles.headerBar}>
-        <Pressable
-          accessibilityLabel="Quay lại"
-          accessibilityRole="button"
-          hitSlop={12}
-          onPress={() => router.back()}
-          style={styles.headerActionBtn}
-        >
-          <BackArrowIcon />
-        </Pressable>
-
-        <Text accessibilityRole="header" style={styles.headerTitle}>
-          Tài khoản thụ hưởng
-        </Text>
-
-        <View style={styles.headerActionBtn} />
-      </View>
-
+    <ScreenScaffold
+      headerTone="plain"
+      onBack={() => router.back()}
+      title="Tài khoản thụ hưởng"
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -130,7 +116,7 @@ export function DriverBankAccountsScreen({
           )}
         </View>
       </ScrollView>
-    </View>
+    </ScreenScaffold>
   );
 }
 
@@ -178,7 +164,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     gap: spacing.md,
-    padding: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 12,
     paddingBottom: 40,
   },
   backButton: {

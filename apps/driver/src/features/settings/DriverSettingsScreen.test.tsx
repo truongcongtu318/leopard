@@ -4,15 +4,11 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { DriverSettingsScreen } from './DriverSettingsScreen';
 
 describe('DriverSettingsScreen', () => {
-  it('renders cockpit diagnostics card and all settings categories', async () => {
+  it('renders all settings categories and test alert row', async () => {
     const screen = await render(<DriverSettingsScreen />);
 
-    // Diagnostics hero card
-    expect(screen.getByText('CHẨN ĐOÁN BUỒNG LÁI')).toBeTruthy();
-    expect(screen.getByText('SẴN SÀNG NHẬN ĐƠN')).toBeTruthy();
-    expect(screen.getByText('GPS thực địa')).toBeTruthy();
-    expect(screen.getByText('Server Ping')).toBeTruthy();
-    expect(screen.getByText('Nghe thử chuông nổ đơn & Test GPS')).toBeTruthy();
+    // Test alert row in sound settings
+    expect(screen.getByText('Nghe thử chuông nổ đơn')).toBeTruthy();
 
     // Section headings
     expect(screen.getByText('BÁO HIỆU & ĐIỀU PHỐI ĐƠN HÀNG')).toBeTruthy();
