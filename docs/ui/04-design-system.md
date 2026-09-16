@@ -192,29 +192,173 @@ theo raw enum value cho các domain khác nhau.
 
 ### 4.3 Typography
 
-Font chính là `Inter`, fallback `system-ui`. Web tải Inter qua app shell; mobile có
-thể dùng native system fallback trong pilot nếu chưa package font asset. Không giả
-lập weight hoặc chặn render để tải font.
+**Mobile dùng system font của nền tảng** — `System` (SF Pro, có optical sizing) trên iOS,
+`Roboto` trên Android. Đây là chủ ý theo Apple: dùng chính font hệ thống thay vì bundle
+một bản bắt chước SF Pro, để thừa hưởng optical sizing (SF Pro Text < 20 pt ↔ SF Pro
+Display ≥ 20 pt), `trak` table và Dynamic Type. `systemFontFamily` trong
+`packages/mobile-core/src/theme/tokens.ts` là nguồn duy nhất.
 
-| Token          | Size / line-height / weight | Dùng cho                           | Trạng thái parity                      |
-| -------------- | --------------------------- | ---------------------------------- | -------------------------------------- |
-| `caption`      | `12 / 16 / 400`             | Timestamp, source, helper          | Đã có mobile; web cần semantic utility |
-| `label`        | `14 / 20 / 600`             | Field/control/status label         | Đã có mobile; web cần semantic utility |
-| `bodyCompact`  | `14 / 20 / 400`             | Table/list metadata Operations Web | Wave 4 extension                       |
-| `body`         | `16 / 24 / 400`             | Nội dung và form mobile            | Đã có mobile                           |
-| `sectionTitle` | `20 / 28 / 600`             | Section hoặc panel title           | Ánh xạ từ mobile `title`               |
-| `pageTitle`    | `24 / 32 / 700`             | Một `h1`/screen title duy nhất     | Wave 4 extension                       |
+`Inter` là font của **Operations Web** (`apps/admin` nạp qua `next/font/google`), không
+áp cho Customer/Driver mobile. Không giả lập weight và không chặn render để tải font.
 
+#### 4.3.1 Mobile — Apple HIG text styles (canonical)
+
+Mobile dùng đúng bảng text style của
+[Apple HIG Typography](https://developer.apple.com/design/human-interface-guidelines/typography)
+(iOS 18). `tracking` trong bảng dưới là giá trị Apple công bố, dùng làm nguồn cho
+`trackingToLetterSpacing()` chứ không đặt bằng mắt.
+
+> **Ai áp tracking.** SF Pro mang optical tracking trong `trak` table và iOS tự áp theo
+> point size. Vì vậy `opticalLetterSpacing()` **bỏ hẳn `letterSpacing` trên iOS** — đặt
+> giá trị thủ công lên trên sẽ *thay thế* giá trị của Apple bằng một con số suy ra từ bảng
+> mà ta không kiểm chứng được đơn vị trong môi trường build này. Android (Roboto) và web
+> không có optical tracking nên nhận giá trị HIG. Nhờ vậy tracking đúng trong cả hai cách
+> hiểu đơn vị, không phụ thuộc vào giả định nào.
+>
+> Ngoại lệ duy nhất được phép đặt tracking thủ công: **micro-label in hoa**
+> (`letterSpacing.uppercaseLabel = 0.5`). Optical tracking của SF Pro dựa trên *size*, không
+> dựa trên *case*, còn chữ in hoa cần thoáng hơn mới đọc được.
+
+| `typeScale`    | Size / line-height / tracking (1/1000 em) | Weight | Dùng cho                              |
+| -------------- | ----------------------------------------- | ------ | ------------------------------------- |
+| `largeTitle`   | `34 / 41 / +0.40`                         | 700    | Hero duy nhất của màn hình            |
+| `title1`       | `28 / 34 / +0.38`                         | 700    | Empty/error state title               |
+| `title2`       | `22 / 28 / +0.34`                         | 600    | `pageTitle` (một `h1` mỗi màn hình)   |
+| `title3`       | `20 / 25 / +0.38`                         | 600    | `sectionTitle`                        |
+| `headline`     | `17 / 22 / −0.41`                         | 600    | Nhấn mạnh trong body, row title       |
+| `body`         | `17 / 22 / −0.41`                         | 400    | Nội dung và form mặc định             |
+| `callout`      | `16 / 21 / −0.32`                         | 400    | Nội dung phụ trong card               |
+| `subheadline`  | `15 / 20 / −0.24`                         | 400    | `label` cho field/control             |
+| `footnote`     | `13 / 18 / −0.08`                         | 400    | Metadata, helper text                 |
+| `caption1`     | `12 / 16 / 0`                             | 400    | Timestamp, source, helper ngắn        |
+| `caption2`     | `11 / 13 / +0.07`                         | 400    | Micro-label; **sàn đọc được của app** |
+
+Quy tắc:
+
+- **Không hardcode `fontSize`.** Dùng `<AppText variant="…" />` (hoặc `typeScale.*` trong
+  `StyleSheet`). `AppText` áp cùng lúc HIG text style, semantic tone, system font và
+  Dynamic Type.
+- Alias tương thích cho vocabulary cũ ở `docs/ui/08`: `caption → caption1`,
+  `label → subheadline`, `body → body`, `sectionTitle → title3`, `pageTitle → title2`.
+- **Sàn chữ theo vai trò** — `dynamicType.minimumReadableSize = 11` (`caption2`) áp cho
+  **nội dung người dùng phải đọc để hành động**: nhãn field, giá, địa chỉ, trạng thái,
+  điều khoản. Nội dung quan trọng không được thu nhỏ để vừa khung — hãy để nó wrap và scroll.
+
+  | Vai trò | Sàn | Ghi chú |
+  | ------- | --- | ------- |
+  | Nội dung đọc được | **11 pt** | `caption2`; vi phạm là lỗi |
+  | Chrome có nhãn cố định (tab bar, dock) | **10 pt** | iOS `UITabBarItem` vốn dùng 10 pt; không nhỏ hơn |
+  | Annotation trang trí (nhãn trên bản đồ, watermark) | miễn | Không được là nguồn thông tin duy nhất |
+
+  `fontSize: 1` là ngoại lệ hợp lệ duy nhất dưới mọi sàn: đó là text ẩn khỏi screen reader,
+  đã có nhãn thay thế.
+- Tracking tay chỉ được phép cho micro-label in hoa (`letterSpacing.uppercaseLabel`); mọi
+  chỗ khác để `typeScale`/`opticalLetterSpacing()` quyết định.
+- Số liệu (VND, km, thời gian, đếm) dùng `numeric`/`tabularNums` để giá trị động không
+  nhảy ngang.
 - Không scale font theo viewport; layout phải chịu được text zoom/Dynamic Type.
 - Heading theo thứ tự, không nhảy cấp vì mục đích tạo style.
-- ID, VND, time và số liệu bảng dùng tabular numerals khi platform hỗ trợ.
 - Label, địa chỉ và cargo note phải wrap; không truncate thông tin cần để quyết định.
 - Không dùng uppercase cho câu dài; uppercase chỉ dành cho micro-label ngắn và vẫn
   phải đọc được bằng screen reader.
 
+#### 4.3.2 Dynamic Type contract
+
+| Hằng số                           | Giá trị | Ý nghĩa                                                       |
+| --------------------------------- | ------- | ------------------------------------------------------------- |
+| `dynamicType.wcagMinimumScale`    | `2.0`   | Sàn WCAG 1.4.4 (AA): nội dung phải chịu được resize 200%      |
+| `dynamicType.chromeMaxScale`      | `1.6`   | Chỉ cho chrome có hình học cố định (tab bar, dock, badge)     |
+| `dynamicType.minimumReadableSize` | `11`    | Sàn size đọc được                                             |
+
+**Nội dung không bị chặn trần.** Apple đưa Body tới 53 pt ở AX5 (≈3.1×), vượt mốc 200%
+của WCAG; chặn ở 2.0 sẽ *giảm* khả năng tiếp cận so với hệ thống. Vì vậy `AppText`
+không đặt `maxFontSizeMultiplier` cho nội dung — layout phải reflow.
+
+`AppText` truyền `variant` xuống prop `dynamicTypeRamp` của iOS. Native dùng
+`UIFontMetrics(forTextStyle:).scaledValueForValue(...)`, tức đúng đường cong Dynamic
+Type **theo từng text style** của Apple — Body tăng nhiều hơn Large Title — thay vì
+một hệ số `fontScale` tuyến tính duy nhất. Đây là lý do tên 11 style trong `typeScale`
+trùng khít danh sách ramp mà React Native 0.86 chấp nhận
+(`caption2 … largeTitle`); alias (`caption`, `label`, `sectionTitle`, `pageTitle`) được
+resolve về ramp thật trước khi truyền xuống.
+
+- `AppText` bật `allowFontScaling` mặc định; chỉ chrome đặt `chrome` để chặn trần.
+- Không được hạ trần để layout vừa. Layout phải reflow: không dùng chiều cao text cố
+  định, không ép một dòng cho địa chỉ/action.
+- Ở text size lớn nhất, primary CTA và nội dung vẫn phải truy cập được.
+- `dynamicTypeRamp` là cơ chế iOS. Trên Android/web, scale đi theo `fontScale` của nền
+  tảng (Android 14 hỗ trợ non-linear tới 200%) — vẫn không chặn trần cho nội dung.
+
+#### 4.3.3 Web / Operations token cũ (giữ nguyên)
+
+| Token         | Size / line-height / weight | Dùng cho                           |
+| ------------- | --------------------------- | ---------------------------------- |
+| `caption`     | `12 / 16 / 400`             | Timestamp, source, helper          |
+| `label`       | `14 / 20 / 600`             | Field/control/status label         |
+| `bodyCompact` | `14 / 20 / 400`             | Table/list metadata Operations Web |
+| `body`        | `16 / 24 / 400`             | Nội dung và form mobile (legacy)   |
+| `sectionTitle`| `20 / 28 / 600`             | Section hoặc panel title           |
+| `pageTitle`   | `24 / 32 / 700`             | Một `h1`/screen title duy nhất     |
+
+`typography` là token **legacy**: giá trị được giữ để không phá primitive hiện có, và
+được migrate dần sang `typeScale` + `AppText`. Code mới không thêm chỗ dùng `typography`.
+Năm token heading của nó (`largeTitle`, `title1`, `title2`, `headline`, `callout`) từng
+mang tracking thủ công `-0.8 / -0.5 / -0.3 / -0.4 / -0.2` — mức siết nhìn thấy được và
+ngược với optical tracking của SF Pro; nay chúng đi qua `opticalLetterSpacing()` như
+`typeScale`, và `hig-contract.test.ts` chặn việc siết lại.
+
+#### 4.3.4 Trạng thái adoption
+
+`AppText` đã được đưa vào các primitive dùng chung, nên **mọi màn hình Customer và Driver
+đều đi qua nó** mà không phải sửa từng file:
+
+| Primitive        | Text style nhận được                                  |
+| ---------------- | ----------------------------------------------------- |
+| `ScreenScaffold` | title `headline` · eyebrow `caption2` + uppercase tracking · subtitle `footnote` |
+| `SectionHeading` | title `title3` · description `caption1`                |
+| `Button`         | label `subheadline` + semibold                         |
+| `ScreenState`    | title `title3` · message `body`                        |
+| `StatusBadge`    | `footnote` + semibold                                  |
+| `FormField`      | label `subheadline` + semibold · hint/error `caption1` · input `body` |
+| `ErrorScreen`    | code `caption1` + uppercase tracking · title `title3` · message `subheadline` |
+
+`Button` từng cap `maxFontSizeMultiplier = 1.3` — mức chặn làm nhãn nút không đọc được ở
+text size lớn; nay nhãn nút scale tự do.
+
+#### 4.3.5 Giá trị `fontSize` cứng đã được đưa về thang HIG
+
+Mọi `fontSize` cứng trong `packages/mobile-core`, `apps/mobile` và `apps/driver` (trừ
+`features/orders/**` đang được một session khác sửa) đã được snap về thang HIG bằng:
+
+```bash
+python3 packages/mobile-core/scripts/snap-font-sizes.py <root> [--apply]
+```
+
+Script chỉ đổi **giá trị**, giữ nguyên `lineHeight`/`fontWeight`, nên delta thị giác đúng
+bằng bước size. Chạy lại trên cây đã sạch cho ra `0 values` — đó là cách kiểm tra idempotent.
+
+| Nhóm | Quy tắc |
+| ---- | ------- |
+| `< 11` | Nâng lên `caption2` (11) — sàn nội dung |
+| Phân số (`10.5`, `12.5`, `13.5`, `14.5`…) | Không tồn tại trong HIG; snap về bước gần nhất |
+| Lệch thang (`14`, `18`, `19`, `21`, `24`, `26`, `30`, `32`) | Snap về bước gần nhất, hoà thì lấy bước lớn hơn |
+| `> 34` (largeTitle) | Giữ nguyên — là số hero/minh hoạ, không phải text style |
+| `fontSize: 1` | Giữ nguyên — text ẩn khỏi screen reader |
+| Watermark trên hình vẽ | Miễn, khai báo trong `EXEMPT_STYLES` của script |
+
+Kết quả: **388 giá trị** trong 61 file (mobile-core 28, mobile 244, driver 116).
+
+**Còn nợ:** các màn hình vẫn đặt size bằng số thay vì dùng `<AppText variant>`; snap mới
+chỉ đưa chúng về đúng thang, chưa đưa Dynamic Type ramp tới từng `<Text>`.
+
 ### 4.4 Spacing, density và sizing
 
-Scale duy nhất: `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`, `xl=32` px.
+Scale duy nhất: `none=0`, `hairline=2`, `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`,
+`xl=32`, `xxl=40`, `xxxl=48` px — tức `spacingScale`, allow-list duy nhất của app.
+
+- Apple layout trên lưới 4 pt. `hairline=2` chỉ dành cho khe hẹp giữa icon và label.
+- Mọi giá trị khác (`3`, `5`, `6`, `7`, `10`, `13`, `14`, `18`, `20`) là drift: snap về
+  bước gần nhất trong `spacingScale`. `isOnSpacingScale(value)` là guardrail cho code mới.
 
 | Context     | Mật độ mặc định    | Khoảng cách ưu tiên                                         |
 | ----------- | ------------------ | ----------------------------------------------------------- |
@@ -223,8 +367,25 @@ Scale duy nhất: `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`, `xl=32` px.
 | Fleet Owner | Compact/read-only  | `xs–sm` trong row, `md` giữa regions                        |
 | Admin       | Dense/filter-first | `xs–sm` trong table/filter, `md` giữa investigation regions |
 
+#### Icon sizing
+
+Icon neo vào text style đi kèm, không dùng số tuỳ ý:
+
+| `iconSize` | px  | Ghép với   |
+| ---------- | --- | ---------- |
+| `xs`       | 12  | `caption1` |
+| `sm`       | 16  | `callout`  |
+| `md`       | 20  | `body`     |
+| `lg`       | 24  | `title3`   |
+| `xl`       | 28  | `title2`   |
+| `xxl`      | 32  | `title1`   |
+| `display`  | 56  | Empty/hero |
+
+- Stroke theo `iconStroke`: `regular=1.5` (inline/decorative), `medium=1.75` (mặc định),
+  `bold=2` (nhấn mạnh, selected, icon actionable độc lập). Một layer chỉ dùng một stroke.
 - Control desktop chuẩn 40 px khi dùng chuột/bàn phím; touch target và control trên
   viewport touch tối thiểu `44 × 44` px.
+- Icon-only control nhỏ hơn 44 px phải mở rộng vùng chạm bằng `hitSlop(size)`.
 - Content max-width: Customer/Driver 768 px; Operations Web 1440 px.
 - Không dùng arbitrary spacing cho layout thông thường. Kích thước map, sidebar,
   column min-width và safe-area offset được phép là layout constraint có tên/rationale.
@@ -281,6 +442,84 @@ Scale duy nhất: `xxs=4`, `xs=8`, `sm=12`, `md=16`, `lg=24`, `xl=32` px.
   chuyển sang progress copy hoặc indicator không chuyển động khi có thể.
 - Loading indicator được phép lặp khi nó là feedback duy nhất, nhưng phải có text/live
   announcement và không làm layout thay đổi kích thước.
+
+### 4.8 Icon usage contract
+
+Icon trong LEOPARD là vector, đến từ đúng hai module của `@leopard/mobile-core`:
+`ui/icons/CoreIcons` (bộ chính) và `icons/svg-icons` (glyph xe/tài liệu chưa có trong bộ
+chính). Không thêm bộ icon thứ ba và không vendor icon rời vào app.
+
+| Quy tắc                  | Chuẩn                                                                 | Không được làm                                              |
+| ------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Một hình học cho mỗi tên | Mỗi tên icon chỉ có một implementation; nhập từ barrel `@leopard/mobile-core` | Khai báo lại cùng tên ở module khác với path/stroke khác |
+| Chỉ vector               | SVG scale sạch, đổi được màu theo token                                | Emoji (`🎨 🚀 ⚙️`) hoặc glyph chữ (`✓ ✕ ➔ ★`) làm icon cấu trúc |
+| Size theo token          | `iconSize.xs…display`; neo vào text style kèm theo                     | Số tuỳ ý `10/13/17/22/26/36`                                 |
+| Stroke theo token        | `iconStroke.regular/medium/bold`; một stroke cho mỗi visual layer      | Trộn 1.5 / 1.8 / 2.25 trong cùng một layer                  |
+| Nhất quán filled/outline | Một style cho mỗi cấp hierarchy                                        | Trộn filled và outline ở cùng cấp                           |
+| Vùng chạm                | `>= 44 × 44` pt; icon nhỏ hơn phải mở rộng bằng `hitSlop(size)`        | Icon 16 px không có padding/hitSlop                         |
+| Canh hàng                | Icon canh baseline với text và giữ padding đều                         | Icon lệch hoặc padding không nhất quán                      |
+| Tương phản               | Icon mang nghĩa/viền control `>= 3:1` so với nền kề                    | Icon mang nghĩa bị mờ dưới ngưỡng non-text                  |
+| Ngữ nghĩa                | Icon trang trí cạnh text hiển thị: ẩn khỏi accessibility tree          | Đọc lặp nội dung đã có bằng text                            |
+| Icon-only control        | Có `accessibilityLabel` mô tả hành động, kèm state khi áp dụng         | Nút chỉ có icon mà không có tên                             |
+
+- Trạng thái nhấn dùng color/opacity/elevation, không đổi layout bound và không gây jitter.
+- Không tự vẽ lại logo thương hiệu; dùng asset chính thức và giữ tỷ lệ/clear space.
+- `docs/ui/04` §4.4 quy định thang size; `iconSize` và `iconStroke` trong
+  `packages/mobile-core/src/theme/tokens.ts` là nguồn duy nhất.
+
+#### 4.8.1 Bộ icon hiện tại có phải icon Apple không?
+
+**Không.** Đây là bộ **linear/stroke tự vẽ** theo phong cách Feather/Lucide, không phải
+[SF Symbols](https://developer.apple.com/sf-symbols/). HIG **không bắt buộc** dùng SF
+Symbols cho icon thương hiệu/nghiệp vụ, nhưng nếu muốn "đúng icon Apple" theo nghĩa literal
+thì phải chuyển sang SF Symbols (`expo-symbols` trên iOS) — đó là một quyết định kiến trúc,
+không phải việc sửa icon lẻ. Bộ tự vẽ vẫn hợp lệ miễn giữ được contract ở §4.8.
+
+Bộ này **không đồng nhất về độ mở quang học**: đo bằng render rồi trim cho thấy bbox chạy
+từ **52% đến 99%** của khung. Phần nhỏ là các glyph vốn nhỏ theo quy ước (`✕`, `✓`, `+`,
+chevron) — chấp nhận được. Phần lớn (76–99%) là mức bình thường.
+
+#### 4.8.2 Cách review icon (bắt buộc trước khi thêm/sửa icon)
+
+Không review icon bằng cách đọc path. Render ra ảnh rồi nhìn, và đo:
+
+```bash
+# sprite toàn bộ set, tô màu trung tính + khung đồng nhất để so hình
+python3 packages/mobile-core/scripts/render-icon-sheet.py
+rsvg-convert -w 1160 -b white /tmp/icons_review.svg -o /tmp/icons_review.png
+# đo độ mở quang học thật của từng icon (% của khung)
+# (render từng icon 240px rồi `magick -trim -format "%w %h" info:`)
+```
+
+Script render đọc trực tiếp source, áp đúng default đang ship (`filled=false`, stroke
+riêng của từng icon), nên ảnh phản ánh cái người dùng thật sự thấy.
+
+#### 4.8.3 Đã sửa trong lần review này
+
+| Vấn đề | Trước | Sau |
+| ------ | ----- | --- |
+| `IconMenu`, `IconClose` mặc định `#FFFFFF` | Vô hình trên nền sáng | Mặc định về màu foreground |
+| `IconEarnings` vẽ ký hiệu **`$`** | Sai cho sản phẩm chỉ dùng VND | Banknote trung tính tiền tệ |
+| `IconShieldAlert` ≡ `IconWarningShield` | Hai hình cho một nghĩa | Một hình; tên cũ thành alias |
+| `IconShield` ≡ `IconSecurityShield` | Trùng **từng byte**, hai tên | Alias về bộ chính |
+| `IconVan` ≡ `IconVehicleVan`, `IconTruck` ≡ `IconVehicleLightTruck` | Hai bản vẽ cho một nghĩa | Alias về bộ chính |
+| `IconChevronLeft/Right` | 52% khung, nhỏ hơn hẳn phần còn lại | Tăng lên ~62% |
+| `IconTxTopup`, `IconTxPayment` | 49% khung | 78%, khớp `IconTxRefund` (76%) |
+| `IconTxTopup/Payment/Refund` stroke `bold` | Nặng hơn cả bộ trong cùng một list | Về `medium` |
+| `IconRole*` hardcode `strokeWidth="1.75"/"1.5"` | Không nhận `strokeWidth` từ ngoài | Theo token, có prop `strokeWidth` |
+
+`icon-contract.test.ts` chặn các lỗi này tái phát ở mức source.
+
+#### 4.8.4 Còn nợ
+
+- **Hai-tone chưa nhất quán trong họ role.** `IconRoleFleet` tô cửa sổ bằng
+  `secondaryColor`, nhưng `IconRoleCustomer` tô badge bằng `color` (khối đặc) và
+  `IconRoleAdmin` **hardcode `fill="#F8FAFC"`**. Cần một quy tắc hai-tone duy nhất.
+- **`IconOrders` là một khối lập phương 3D** — đọc ra "kiện hàng", không phải "đơn hàng".
+  Nên là list/clipboard.
+- **`IconScaleWeight` là cân thăng bằng** — trong iconography phương Tây đọc ra
+  "công lý/pháp lý", không phải "trọng tải".
+- **Chuẩn hoá quang học toàn bộ 67 icon** chưa làm; hiện chỉ sửa các outlier rõ nhất.
 
 ## 5. State vocabulary
 

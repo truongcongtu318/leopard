@@ -12,12 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Role } from '@leopard/shared';
 
-import { IconChevron } from '@leopard/mobile-core';
+import { typeScale, IconChevron, IconClock } from '@leopard/mobile-core';
 import { httpClient } from '@leopard/mobile-core/src/api/http-client';
 import { sessionStore } from '@leopard/mobile-core/src/auth/session-store';
 import { toE164Vn } from '@leopard/mobile-core/src/auth/phone';
 import { leopardPalette } from '@leopard/mobile-core/src/theme/tokens';
-import { IconClock } from '@leopard/mobile-core/src/icons/svg-icons';
 
 interface AuthResponse {
   user: {
@@ -368,7 +367,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   subline: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
     color: leopardPalette.textMutedSlate,
     textAlign: 'center',
@@ -473,7 +472,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resendBtnText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
     textDecorationLine: 'underline',

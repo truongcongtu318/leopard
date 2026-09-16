@@ -15,6 +15,7 @@ import {
   IconTrophy,
   ScreenScaffold,
   StarRating,
+  typeScale,
 } from '@leopard/mobile-core';
 
 type ReviewFeedItem = {
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: colors.brand.background,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   /* Double-Bezel Card (Dark/Navy outer) */
@@ -282,7 +283,7 @@ const styles = StyleSheet.create({
   },
   ratingNumber: {
     color: '#F8FAFC',
-    fontSize: 32,
+    fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
   },
   tierProgressionLabel: {
     color: '#94A3B8',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
   },
   tierStepDotNumber: {
     color: '#94A3B8',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   tierStepText: {
@@ -431,12 +432,12 @@ const styles = StyleSheet.create({
   },
   metricTitle: {
     color: colors.neutral.titleText,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   metricSub: {
     color: colors.neutral.subtleText,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
   },
   metricValue: {
     fontSize: 16,
@@ -467,7 +468,7 @@ const styles = StyleSheet.create({
   },
   reviewTime: {
     color: colors.neutral.subtleText,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
   },
   tagRow: {

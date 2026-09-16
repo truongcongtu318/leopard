@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Image,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -43,21 +45,41 @@ export function formatPublicArea(address?: string | null): string {
   return `Khu vực ${clean}`;
 }
 
+function formatVnd(amount: number): string {
+  const integerPart = Math.round(amount).toString();
+  const formatted = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${formatted} ₫`;
+}
+
 export type IncomingDispatchOffer = Readonly<{
-  id: string;
-  reference: string;
-  pickupDistanceLabel: string;
+  orderId?: string;
+  id?: any;
   pickupAddress: string;
+  dropoffAddress: string;
+  earningsAmount?: number;
+  distanceKm?: number;
+  pickupDistanceKm?: number;
+  expiresAtEpochMs?: number;
+  cargoName?: string;
+  cargoWeightKg?: number;
+  cargoDimensions?: string;
+  loadingFee?: number;
+  loadingDescription?: string;
+  cargoPhotoUrl?: string;
+  specialNotes?: string;
+
+  // Legacy fields for backward compatibility
+  reference?: string;
+  pickupDistanceLabel?: string;
   pickupArea?: string;
   pickupCoords?: { lat: number; lng: number };
-  dropoffAddress: string;
   dropoffArea?: string;
   dropoffCoords?: { lat: number; lng: number };
-  tripDistanceLabel: string;
-  etaLabel: string;
-  priceLabel: string;
-  vehicleLabel: string;
-  cargoSummary: string;
+  tripDistanceLabel?: string;
+  etaLabel?: string;
+  priceLabel?: string;
+  vehicleLabel?: string;
+  cargoSummary?: string;
   notes?: string;
   timeoutSeconds?: number;
 }>;
@@ -77,41 +99,98 @@ export function IncomingDispatchModal({
   onDecline,
   visible,
 }: IncomingDispatchModalProps) {
-  const initialSeconds = offer?.timeoutSeconds ?? 15;
-  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+  const targetOrderId = offer?.orderId ?? offer?.id ?? '';
+
+  const calculateSecondsLeft = () => {
+    if (offer?.expiresAtEpochMs) {
+      return Math.max(0, Math.ceil((offer.expiresAtEpochMs - Date.now()) / 1000));
+    }
+    return offer?.timeoutSeconds ?? 15;
+  };
+
+  const [secondsLeft, setSecondsLeft] = useState(calculateSecondsLeft);
+  const [totalDuration, setTotalDuration] = useState(calculateSecondsLeft);
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (!visible || !offer) return;
-    setSecondsLeft(initialSeconds);
+    const initial = calculateSecondsLeft();
+    setSecondsLeft(initial);
+    setTotalDuration(Math.max(1, initial));
 
     const timer = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
+      if (offer.expiresAtEpochMs) {
+        const remaining = Math.max(0, Math.ceil((offer.expiresAtEpochMs - Date.now()) / 1000));
+        if (remaining <= 0) {
           clearInterval(timer);
-          onDecline(offer.id);
-          return 0;
+          setSecondsLeft(0);
+          onDecline(targetOrderId);
+        } else {
+          setSecondsLeft(remaining);
         }
-        return prev - 1;
-      });
+      } else {
+        setSecondsLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            onDecline(targetOrderId);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [visible, offer, initialSeconds, onDecline]);
+  }, [visible, offer?.orderId, offer?.id, offer?.expiresAtEpochMs, offer?.timeoutSeconds, targetOrderId, onDecline]);
 
   if (!visible || !offer) return null;
 
-  const progressPercent = Math.max(0, Math.min(100, (secondsLeft / initialSeconds) * 100));
+  const progressPercent = Math.max(0, Math.min(100, (secondsLeft / Math.max(1, totalDuration)) * 100));
   const isUrgent = secondsLeft <= 5;
   const isWarning = secondsLeft <= 10 && !isUrgent;
 
   const pickupDisplay = offer.pickupArea || formatPublicArea(offer.pickupAddress);
   const dropoffDisplay = offer.dropoffArea || formatPublicArea(offer.dropoffAddress);
 
+  const fareAmount =
+    offer.earningsAmount !== undefined
+      ? formatVnd(offer.earningsAmount)
+      : offer.priceLabel ?? '0 ₫';
+
+  const pickupDistText = offer.pickupDistanceLabel
+    ? offer.pickupDistanceLabel
+    : offer.pickupDistanceKm !== undefined
+      ? `${offer.pickupDistanceKm} km`
+      : '';
+
+  const pickupBadgeText = pickupDistText
+    ? (pickupDistText.startsWith('Cách bạn') ? pickupDistText : `Cách bạn ${pickupDistText}`)
+    : '';
+
+  const tripDistText = offer.tripDistanceLabel
+    ? offer.tripDistanceLabel
+    : offer.distanceKm !== undefined
+      ? `${offer.distanceKm} km`
+      : '';
+
+  const cargoName = offer.cargoName || offer.cargoSummary || 'Hàng hóa tiêu chuẩn';
+  const specialNotes = offer.specialNotes || offer.notes;
+
+  const hasLoadingFee = Boolean(offer.loadingFee && offer.loadingFee > 0);
+  const formattedLoadingFee = hasLoadingFee && offer.loadingFee
+    ? formatVnd(offer.loadingFee).replace(/\s*₫/, '₫')
+    : '';
+  const loadingBadgeLabel = hasLoadingFee
+    ? offer.loadingDescription
+      ? `${offer.loadingDescription} (+${formattedLoadingFee})`
+      : `Bốc xếp (+${formattedLoadingFee})`
+    : null;
+
   return (
     <DriverModalSurface
       animationType="slide"
       hardwareAccelerated
-      onRequestClose={() => onDecline(offer.id)}
+      onRequestClose={() => onDecline(targetOrderId)}
       statusBarTranslucent
       testID="incoming-dispatch-modal"
       transparent
@@ -119,7 +198,7 @@ export function IncomingDispatchModal({
     >
       <View style={styles.scrimOverlay}>
         <View style={styles.sheetContainer}>
-          {/* 1. Header Bar with Radar Pulse and Title */}
+          {/* 1. Header Bar with Radar Pulse, Title, Countdown, and Decline ("Từ chối") Button */}
           <View style={styles.modalHeader}>
             <View style={styles.radarPulseContainer}>
               <View style={[styles.radarPulseOuter, isUrgent ? styles.radarPulseOuterUrgent : null]}>
@@ -147,12 +226,13 @@ export function IncomingDispatchModal({
                 </Text>
               </View>
               <Pressable
-                accessibilityHint="Bỏ qua đơn hàng này"
-                accessibilityLabel="Đóng modal đơn hàng"
+                accessibilityHint="Từ chối đơn hàng này"
+                accessibilityLabel="Từ chối"
                 accessibilityRole="button"
                 hitSlop={8}
-                onPress={() => onDecline(offer.id)}
+                onPress={() => onDecline(targetOrderId)}
                 style={styles.modalCloseBtn}
+                testID="dispatch-modal-decline-top"
               >
                 <IconClose color="#64748B" size={16} />
               </Pressable>
@@ -182,12 +262,14 @@ export function IncomingDispatchModal({
               mode="route"
               origin={{ label: offer.pickupAddress, coords: offer.pickupCoords }}
             />
-            <View style={styles.mapFloatingDistancePill}>
-              <IconLocationPin color="#0B1E42" size={12} />
-              <Text style={styles.mapFloatingDistanceText}>
-                Điểm đón · {offer.pickupDistanceLabel}
-              </Text>
-            </View>
+            {pickupDistText ? (
+              <View style={styles.mapFloatingDistancePill}>
+                <IconLocationPin color="#0B1E42" size={12} />
+                <Text style={styles.mapFloatingDistanceText}>
+                  Điểm đón · {pickupDistText}
+                </Text>
+              </View>
+            ) : null}
           </View>
 
           {/* 4. Fare Card - High Prominence Double-Bezel (Mega Price) */}
@@ -199,7 +281,7 @@ export function IncomingDispatchModal({
                   <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
                 </View>
               </View>
-              <Text style={styles.fareAmount}>{offer.priceLabel}</Text>
+              <Text style={styles.fareAmount}>{fareAmount}</Text>
               <Text style={styles.fareSub}>Đã khấu trừ phí nền tảng · Nhận vào ví ngay khi hoàn tất</Text>
             </View>
           </View>
@@ -222,14 +304,14 @@ export function IncomingDispatchModal({
                 <View style={styles.addressBlock}>
                   <View style={styles.addressTitleRow}>
                     <Text style={styles.addressTypeLabel}>ĐIỂM LẤY HÀNG</Text>
-                    <View style={styles.pickupDistBadge}>
-                      <IconLocationPin color="#0B1E42" size={12} />
-                      <Text style={styles.pickupDistText}>
-                        {offer.pickupDistanceLabel.startsWith('Cách bạn')
-                          ? offer.pickupDistanceLabel
-                          : `Cách bạn ${offer.pickupDistanceLabel}`}
-                      </Text>
-                    </View>
+                    {pickupBadgeText ? (
+                      <View style={styles.pickupDistBadge}>
+                        <IconLocationPin color="#0B1E42" size={12} />
+                        <Text style={styles.pickupDistText}>
+                          {pickupBadgeText}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
                   <Text numberOfLines={2} style={styles.addressNameText}>
                     {pickupDisplay}
@@ -237,12 +319,16 @@ export function IncomingDispatchModal({
                 </View>
 
                 {/* Transit Indicator */}
-                <View style={styles.transitMetaRow}>
-                  <IconRoute color="#64748B" size={13} />
-                  <Text style={styles.transitMetaText}>
-                    Lộ trình {offer.tripDistanceLabel} · Khoảng {offer.etaLabel}
-                  </Text>
-                </View>
+                {tripDistText ? (
+                  <View style={styles.transitMetaRow}>
+                    <IconRoute color="#64748B" size={13} />
+                    <Text style={styles.transitMetaText}>
+                      {offer.etaLabel
+                        ? `Lộ trình ${tripDistText} · Khoảng ${offer.etaLabel}`
+                        : `Lộ trình ${tripDistText}`}
+                    </Text>
+                  </View>
+                ) : null}
 
                 {/* Dropoff Point */}
                 <View style={styles.addressBlock}>
@@ -255,33 +341,89 @@ export function IncomingDispatchModal({
             </View>
           </View>
 
-          {/* 6. Vehicle & Cargo Chips */}
-          <View style={styles.chipsRow}>
-            <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
-              <IconSpeedTruck color="#0B1E42" size={15} />
-              <Text style={styles.specChipText}>{offer.vehicleLabel}</Text>
-            </View>
-            <View style={styles.specChip}>
-              <IconOrders color="#475569" size={15} />
-              <Text numberOfLines={1} style={styles.specChipText}>{offer.cargoSummary}</Text>
+          {/* 6. Cargo Bento Card: Cargo specs, loading fee badge, thumbnail, notes */}
+          <View style={styles.cargoBentoOuter} testID="cargo-bento-card">
+            <View style={styles.cargoBentoInner}>
+              <View style={styles.cargoHeaderRow}>
+                <View style={styles.cargoTitleRow}>
+                  <IconOrders color="#0B1E42" size={15} />
+                  <Text style={styles.cargoHeaderTitle}>THÔNG TIN HÀNG HÓA</Text>
+                </View>
+                {offer.vehicleLabel ? (
+                  <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
+                    <IconSpeedTruck color="#0B1E42" size={14} />
+                    <Text style={styles.specChipText}>{offer.vehicleLabel}</Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <View style={styles.cargoBodyRow}>
+                <View style={styles.cargoInfoColumn}>
+                  <Text numberOfLines={2} style={styles.cargoNameText}>
+                    {cargoName}
+                  </Text>
+
+                  {/* Specs: Weight and Dimensions */}
+                  {(offer.cargoWeightKg !== undefined || offer.cargoDimensions) ? (
+                    <View style={styles.cargoSpecsRow}>
+                      {offer.cargoWeightKg !== undefined ? (
+                        <View style={styles.cargoSpecPill}>
+                          <Text style={styles.cargoSpecValue}>{offer.cargoWeightKg} kg</Text>
+                        </View>
+                      ) : null}
+                      {offer.cargoDimensions ? (
+                        <View style={styles.cargoSpecPill}>
+                          <Text style={styles.cargoSpecValue}>{offer.cargoDimensions}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
+
+                  {/* Loading Fee Badge */}
+                  {loadingBadgeLabel ? (
+                    <View style={styles.loadingFeeBadge}>
+                      <Text style={styles.loadingFeeBadgeText}>{loadingBadgeLabel}</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                {/* Cargo Photo Thumbnail (if provided) */}
+                {offer.cargoPhotoUrl ? (
+                  <Pressable
+                    accessibilityHint="Chạm để phóng to xem chi tiết hàng hóa"
+                    accessibilityLabel="Xem ảnh hàng hóa"
+                    accessibilityRole="button"
+                    onPress={() => setPhotoPreviewOpen(true)}
+                    style={styles.cargoThumbnailWrapper}
+                    testID="cargo-photo-thumbnail"
+                  >
+                    <Image
+                      accessibilityLabel="Ảnh hàng hóa"
+                      source={{ uri: offer.cargoPhotoUrl }}
+                      style={styles.cargoThumbnailImage}
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+
+              {/* Special Notes */}
+              {specialNotes ? (
+                <View style={styles.notesBox}>
+                  <Text style={styles.notesText}>{specialNotes}</Text>
+                </View>
+              ) : null}
             </View>
           </View>
-
-          {offer.notes ? (
-            <View style={styles.notesBox}>
-              <Text style={styles.notesText}>{offer.notes}</Text>
-            </View>
-          ) : null}
 
           {/* 7. Action Controls: SlideToAction (Vuốt nhận cuốc) + Decline Button (Bỏ qua) */}
           <View style={styles.actionsContainer}>
             <SlideToAction
-              key={offer.id}
-              resetKey={offer.id}
-              colorVariant="brand"
+              key={targetOrderId}
+              resetKey={targetOrderId}
+              colorVariant="success"
               disabled={isAccepting}
               label="Vuốt để nhận cuốc ➔"
-              onActionComplete={() => onAccept(offer.id)}
+              onActionComplete={() => onAccept(targetOrderId)}
               testID="dispatch-slide-action"
             />
             <Pressable
@@ -290,7 +432,7 @@ export function IncomingDispatchModal({
               accessibilityRole="button"
               disabled={isAccepting}
               hitSlop={8}
-              onPress={() => onDecline(offer.id)}
+              onPress={() => onDecline(targetOrderId)}
               style={({ pressed }) => [
                 styles.declineButton,
                 pressed && !isAccepting ? styles.declineButtonPressed : null,
@@ -302,6 +444,42 @@ export function IncomingDispatchModal({
           </View>
         </View>
       </View>
+
+      {/* Cargo Photo Preview Modal */}
+      {offer.cargoPhotoUrl ? (
+        <Modal
+          animationType="fade"
+          onRequestClose={() => setPhotoPreviewOpen(false)}
+          statusBarTranslucent
+          testID="cargo-photo-preview-modal"
+          transparent
+          visible={photoPreviewOpen}
+        >
+          <View style={styles.previewBackdrop}>
+            <View style={styles.previewHeader}>
+              <Text style={styles.previewTitle}>Ảnh hàng hóa</Text>
+              <Pressable
+                accessibilityLabel="Đóng xem ảnh"
+                accessibilityRole="button"
+                hitSlop={12}
+                onPress={() => setPhotoPreviewOpen(false)}
+                style={styles.previewCloseBtn}
+                testID="cargo-photo-preview-close"
+              >
+                <IconClose color="#FFFFFF" size={18} />
+              </Pressable>
+            </View>
+            <View style={styles.previewImageContainer}>
+              <Image
+                accessibilityLabel="Ảnh chi tiết hàng hóa"
+                resizeMode="contain"
+                source={{ uri: offer.cargoPhotoUrl }}
+                style={styles.previewImage}
+              />
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </DriverModalSurface>
   );
 }
@@ -632,25 +810,153 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  chipsRow: {
-    flexDirection: 'row',
+  cargoBentoOuter: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: radius.bezelOuter,
+    padding: 2.5,
+  },
+  cargoBentoInner: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#F1F5F9',
+    borderRadius: radius.bezelInner,
+    borderWidth: 1,
     gap: 8,
+    padding: spacing.sm + 2,
+  },
+  cargoHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  cargoTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  cargoHeaderTitle: {
+    color: '#0B1E42',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  cargoBodyRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  cargoInfoColumn: {
+    flex: 1,
+    gap: 6,
+  },
+  cargoNameText: {
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '800',
+    lineHeight: 20,
+  },
+  cargoSpecsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  cargoSpecPill: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#CBD5E1',
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+  },
+  cargoSpecValue: {
+    color: '#0F172A',
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+  },
+  loadingFeeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  loadingFeeBadgeText: {
+    color: '#1D4ED8',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  cargoThumbnailWrapper: {
+    backgroundColor: '#0F172A',
+    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    borderWidth: 1.5,
+    height: 56,
+    overflow: 'hidden',
+    width: 56,
+  },
+  cargoThumbnailImage: {
+    height: '100%',
+    width: '100%',
+  },
+  previewBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  previewHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    left: 20,
+    position: 'absolute',
+    right: 20,
+    top: 48,
+    zIndex: 10,
+  },
+  previewTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  previewCloseBtn: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: radius.pill,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  previewImageContainer: {
+    alignItems: 'center',
+    height: '80%',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  previewImage: {
+    height: '100%',
+    width: '100%',
   },
   specChip: {
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
     borderColor: '#E2E8F0',
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    flex: 1,
     flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   specChipText: {
     color: '#334155',
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '700',
   },
   notesBox: {

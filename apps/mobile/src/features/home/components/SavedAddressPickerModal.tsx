@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { IconLocationPin, IconTrash } from '@leopard/mobile-core';
+import { typeScale, IconLocationPin, IconTrash } from '@leopard/mobile-core';
 import type { SavedAddress } from '../../customer/addresses/address-store';
 
 export type SavedAddressPickerModalProps = Readonly<{
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalCloseBtnText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#64748B',
     fontWeight: '700',
   },
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   savedAddrLabelTitle: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   defaultBadgeText: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#15803D',
   },
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   bottomSheetManageBtnText: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#475569',
   },
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   emptyTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },

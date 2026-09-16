@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEOPARD — Demo Portal</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F4F5F7;color:#1e293b;min-height:100vh;display:flex;flex-direction:column}
+  .header{background:#0f172a;color:#fff;padding:2rem 1.5rem;text-align:center}
+  .header h1{font-size:1.75rem;font-weight:800;letter-spacing:.04em}
+  .header p{color:#94a3b8;margin-top:.5rem;font-size:.9rem}
+  .badge{display:inline-block;background:#f59e0b;color:#0f172a;font-size:.65rem;font-weight:700;padding:.2rem .6rem;border-radius:9999px;margin-left:.5rem;vertical-align:middle;letter-spacing:.03em}
+  .container{max-width:960px;margin:0 auto;padding:2rem 1.5rem;flex:1;width:100%}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;margin-bottom:2.5rem}
+  .card{background:#fff;border-radius:1.25rem;border:1px solid #e2e8f0;padding:1.75rem;transition:box-shadow .2s;text-decoration:none;color:inherit;display:flex;flex-direction:column}
+  .card:hover{box-shadow:0 8px 25px rgba(0,0,0,.08)}
+  .card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem}
+  .card-icon.admin{background:#ede9fe}
+  .card-icon.customer{background:#dbeafe}
+  .card-icon.driver{background:#d1fae5}
+  .card h3{font-size:1rem;font-weight:700;margin-bottom:.35rem}
+  .card p{font-size:.8rem;color:#64748b;line-height:1.5;flex:1}
+  .card .link{margin-top:1rem;color:#3b82f6;font-size:.8rem;font-weight:600}
+  .port-hint{font-size:.7rem;color:#94a3b8;margin-top:.25rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .section-title{font-size:1.1rem;font-weight:700;margin-bottom:1rem}
+  .accounts{background:#fff;border-radius:1.25rem;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:2.5rem}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  thead{background:#f8fafc}
+  th{text-align:left;padding:.75rem 1rem;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0}
+  td{padding:.75rem 1rem;border-bottom:1px solid #f1f5f9}
+  tr:last-child td{border-bottom:none}
+  .role-pill{display:inline-block;padding:.15rem .55rem;border-radius:9999px;font-size:.7rem;font-weight:600}
+  .role-pill.admin{background:#ede9fe;color:#6d28d9}
+  .role-pill.driver{background:#d1fae5;color:#047857}
+  .role-pill.customer{background:#dbeafe;color:#1d4ed8}
+  .copy-btn{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:.3rem .6rem;font-size:.72rem;cursor:pointer;color:#475569;transition:all .15s;white-space:nowrap}
+  .copy-btn:hover{background:#e2e8f0}
+  .copy-btn.copied{background:#d1fae5;border-color:#a7f3d0;color:#047857}
+  .sim-banner{background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:.75rem 1rem;font-size:.8rem;color:#92400e;text-align:center;margin-bottom:2rem}
+  .steps{background:#fff;border-radius:1.25rem;border:1px solid #e2e8f0;padding:1.5rem 1.75rem;margin-bottom:2rem}
+  .steps ol{font-size:.85rem;line-height:2;padding-left:1.25rem;color:#475569}
+  .steps code{background:#f1f5f9;border-radius:4px;padding:.1rem .35rem;font-size:.8rem}
+  .footer{text-align:center;padding:1.5rem;color:#94a3b8;font-size:.75rem}
+  @media(max-width:600px){.grid{grid-template-columns:1fr}.container{padding:1.25rem 1rem}table{font-size:.78rem}th,td{padding:.6rem .5rem}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🐆 LEOPARD<span class="badge">DEMO</span></h1>
+  <p>Hệ thống kết nối vận tải hàng hóa — Mini-Production Pilot</p>
+</div>
+
+<div class="container">
+  <div class="sim-banner">⚠️ Dữ liệu mô phỏng — Môi trường demo, không dùng cho vận hành thật</div>
+
+  <div class="section-title">🚀 Ứng dụng</div>
+  <div class="grid">
+    <a class="card" id="card-admin" href="/login">
+      <div class="card-icon admin">🛡️</div>
+      <h3>Admin Console</h3>
+      <p>NexaFleet Dispatch Console — giám sát đơn hàng, tài xế, người dùng, bản đồ real-time và doanh thu.</p>
+      <div class="link">Mở Admin →</div>
+      <div class="port-hint" id="hint-admin">/login</div>
+    </a>
+
+    <a class="card" id="card-customer" href="#" data-port="8081">
+      <div class="card-icon customer">📦</div>
+      <h3>Customer App</h3>
+      <p>Đặt đơn hàng, chọn loại xe, theo dõi thời gian thực, thanh toán VietQR và xem hoá đơn VAT.</p>
+      <div class="link">Mở Customer →</div>
+      <div class="port-hint" id="hint-customer">cổng 8081</div>
+    </a>
+
+    <a class="card" id="card-driver" href="#" data-port="8082">
+      <div class="card-icon driver">🚛</div>
+      <h3>Driver App</h3>
+      <p>Cockpit tài xế — nhận đơn dispatch, 4 bước giao hàng, ký e-POD, ví và thu nhập.</p>
+      <div class="link">Mở Driver →</div>
+      <div class="port-hint" id="hint-driver">cổng 8082</div>
+    </a>
+  </div>
+
+  <div class="section-title">🔑 Tài khoản Demo</div>
+  <div class="accounts">
+    <table>
+      <thead>
+        <tr><th>Vai trò</th><th>Số điện thoại</th><th>Mã OTP</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="role-pill admin">Admin</span></td>
+          <td><code>0900000004</code></td>
+          <td><code data-demo-otp>······</code></td>
+          <td><button class="copy-btn" data-copy="0900000004">Sao chép SĐT</button></td>
+        </tr>
+        <tr>
+          <td><span class="role-pill driver">Driver</span></td>
+          <td><code>0900000002</code></td>
+          <td><code data-demo-otp>······</code></td>
+          <td><button class="copy-btn" data-copy="0900000002">Sao chép SĐT</button></td>
+        </tr>
+        <tr>
+          <td><span class="role-pill customer">Customer</span></td>
+          <td><code>0900000001</code></td>
+          <td><code data-demo-otp>······</code></td>
+          <td><button class="copy-btn" data-copy="0900000001">Sao chép SĐT</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="steps" style="margin-top:-1rem;margin-bottom:2rem">
+    <p style="font-size:.8rem;color:#64748b;line-height:1.7">
+      Nhập số điện thoại ở trên vào ô đăng nhập, bấm <strong>Tiếp tục</strong>, rồi nhập mã OTP
+      <code data-demo-otp>······</code>. Đây là mã dùng chung cho mọi tài khoản demo ở bản này —
+      mỗi lần deploy sinh một mã khác, không gửi SMS thật.
+    </p>
+  </div>
+
+  <div class="section-title">📋 Kịch bản demo</div>
+  <div class="steps">
+    <ol>
+      <li>Mở <strong>Customer App</strong> → SĐT <code>0900000001</code> + OTP <code data-demo-otp>······</code> → tạo đơn hàng mới.</li>
+      <li>Mở <strong>Driver App</strong> → SĐT <code>0900000002</code> + OTP <code data-demo-otp>······</code> → bật duty → nhận đơn dispatch.</li>
+      <li>Tài xế chuyển trạng thái: <strong>Accepted → Picking Up → In Transit → Delivered</strong> (kèm ký e-POD).</li>
+      <li>Mở <strong>Admin Console</strong> → SĐT <code>0900000004</code> + OTP <code data-demo-otp>······</code> → theo dõi đơn trên bản đồ real-time.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="footer">
+  LEOPARD Pilot — bàn giao demo
+</div>
+
+<script>
+  // Each app has its own origin: the Customer and Driver apps link their bundle
+  // and every route from the root, so they cannot share this host under a path
+  // prefix. The tunnel script therefore prints this portal with the two app URLs
+  // as query parameters, and they are wired up here.
+  //
+  // Falls back to the same host with the app's port, for the plain-IP deployment.
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var scheme = window.location.protocol;
+    var host = window.location.hostname;
+
+    ['customer', 'driver'].forEach(function (name) {
+      var card = document.getElementById('card-' + name);
+      var hint = document.getElementById('hint-' + name);
+      if (!card) return;
+
+      var override = params.get(name);
+      var url = override || (scheme + '//' + host + ':' + card.dataset.port + '/');
+      card.href = url;
+      if (hint) hint.textContent = override ? override : url;
+    });
+
+    var adminCard = document.getElementById('card-admin');
+    var adminHint = document.getElementById('hint-admin');
+    if (adminCard && adminHint) adminHint.textContent = '/login';
+
+    // The demo OTP is generated per deployment, so it arrives as a query
+    // parameter rather than being baked into this page. Without it the page
+    // still renders, showing a placeholder instead of a code that would be
+    // wrong.
+    var otp = params.get('otp');
+    if (otp) {
+      document.querySelectorAll('[data-demo-otp]').forEach(function (el) {
+        el.textContent = otp;
+      });
+    }
+  })();
+
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.dataset.copy;
+      var done = function () {
+        btn.textContent = '✓ Đã chép';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = 'Sao chép';
+          btn.classList.remove('copied');
+        }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        done();
+      }
+    });
+  });
+</script>
+</body>
+</html>

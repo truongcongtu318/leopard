@@ -23,6 +23,7 @@ import {
   IconPlus,
   IconSecurityShield,
   ScreenScaffold,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export type BankAccountItem = Readonly<{
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: colors.brand.background,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   securityNoticeCard: {
@@ -395,7 +396,7 @@ const styles = StyleSheet.create({
   },
   securityNoticeSub: {
     color: '#047857',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     lineHeight: 16,
   },
   accountSection: {
@@ -486,7 +487,7 @@ const styles = StyleSheet.create({
   },
   setDefaultText: {
     color: '#0B1E42',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   cardDivider: {
@@ -501,12 +502,12 @@ const styles = StyleSheet.create({
   },
   holderLabel: {
     color: colors.neutral.subtleText,
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
   },
   holderName: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
     marginTop: 1,
@@ -521,7 +522,7 @@ const styles = StyleSheet.create({
   },
   napasBadgeText: {
     color: '#1D4ED8',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   addAccountBtn: {
@@ -537,7 +538,7 @@ const styles = StyleSheet.create({
   },
   addAccountBtnText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   pressed: {

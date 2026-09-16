@@ -10,50 +10,21 @@ describe('DriverOrdersScreen', () => {
     const onOpenOrder = jest.fn();
     const screen = await render(
       <DriverOrdersScreen
-        driverIdentity={{ name: 'Nguyễn Văn Tuấn', vehicleLabel: 'Xe tải · 51C-889.24' }}
+        driverIdentity={{ name: 'Nguyễn Văn Tuấn', vehiclePlate: '51C-889.24', vehicleType: 'Xe tải 2.5T' }}
         onOpenOrder={onOpenOrder}
         view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
       />,
     );
 
-    expect(screen.getByText('Nguyễn Văn Tuấn')).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Đơn có thể nhận' })).toBeTruthy();
     expect(screen.getByTestId('driver-active-trip-slab')).toBeTruthy();
     expect(screen.getByText('Trạng thái nhận đơn')).toBeTruthy();
     expect(screen.getByText('Chuyến đang thực hiện')).toBeTruthy();
-    expect(screen.getByText('Đơn có thể nhận')).toBeTruthy();
-    expect(screen.getByText('Khu vực Tân Phú → TP. Thủ Đức')).toBeTruthy();
     expect(screen.queryByText('Thông tin liên hệ khách hàng · chỉ hiện sau phân công')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: /Mở chuyến LP-D-260815-001/ }));
     expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222001');
     await screen.unmount();
   }, 15000);
-
-  it('navigates to order details when pressing public order card body or accept action', async () => {
-    const onOpenOrder = jest.fn();
-    const screen = await render(
-      <DriverOrdersScreen
-        onOpenOrder={onOpenOrder}
-        view={createDriverListFixture('D-LIST-ACTIVE-REQUESTED')}
-      />,
-    );
-
-    const cardButton = screen.getByRole('button', {
-      name: /Xem chi tiết đơn LP-D-260815-101/,
-    });
-    await fireEvent.press(cardButton);
-    expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222101');
-
-    const acceptButton = screen.getByRole('button', {
-      name: 'Nhận đơn LP-D-260815-101',
-    });
-    await fireEvent.press(acceptButton);
-    expect(onOpenOrder).toHaveBeenCalledTimes(2);
-    expect(onOpenOrder).toHaveBeenLastCalledWith('22222222-2222-4222-8222-222222222101');
-
-    await screen.unmount();
-  });
 
   it('blocks repeated availability updates while pending', async () => {
     const onSetAvailability = jest.fn();

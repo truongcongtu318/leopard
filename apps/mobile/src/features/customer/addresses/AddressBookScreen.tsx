@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { httpClient } from '@leopard/mobile-core';
+import { typeScale, httpClient } from '@leopard/mobile-core';
 import { addressStore } from './address-store';
 import { colors, haptic, iosContinuousCurve, layout, radius, spacing, typography, Button, FormField, IconCheck, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
 import {
@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
   },
   addHeaderBtnText: {
     color: '#FFFFFF',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   cancelHeaderBtn: {
@@ -929,7 +929,7 @@ const styles = StyleSheet.create({
   },
   cancelHeaderBtnText: {
     color: '#475569',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
 
@@ -951,7 +951,7 @@ const styles = StyleSheet.create({
   searchInput: {
     color: '#0F172A',
     flex: 1,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     padding: 0,
   },
   clearSearchBtn: {
@@ -963,7 +963,7 @@ const styles = StyleSheet.create({
   },
   clearSearchText: {
     color: '#94A3B8',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
 
@@ -1073,7 +1073,7 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: '#64748B',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -1116,7 +1116,7 @@ const styles = StyleSheet.create({
   },
   switchSublabel: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
   },
   switchTrack: {
     backgroundColor: '#E2E8F0',
@@ -1191,7 +1191,7 @@ const styles = StyleSheet.create({
   },
   addressLabel: {
     color: '#0F172A',
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     flex: 1,
     marginRight: 6,
@@ -1207,7 +1207,7 @@ const styles = StyleSheet.create({
   },
   defaultBadgeText: {
     color: '#0B1E42',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   addressLineWrap: {
@@ -1242,16 +1242,16 @@ const styles = StyleSheet.create({
   },
   contactNameText: {
     color: '#475569',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   contactDivider: {
     color: '#CBD5E1',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
   },
   contactPhoneText: {
     color: '#0B1E42',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
 
@@ -1314,7 +1314,7 @@ const styles = StyleSheet.create({
   },
   mapPinHint: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
   },
   mapPinBox: {
     borderRadius: 10,
@@ -1342,7 +1342,7 @@ const styles = StyleSheet.create({
   },
   defaultActiveNoteText: {
     color: '#059669',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   deleteBtn: {
@@ -1387,7 +1387,7 @@ const styles = StyleSheet.create({
   },
   emptyMessage: {
     color: '#64748B',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 18,
     textAlign: 'center',
   },
@@ -1400,7 +1400,7 @@ const styles = StyleSheet.create({
   },
   resetFilterBtnText: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   firstAddBtn: {
@@ -1444,7 +1444,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E2E8F0',
   },
   suggestionsHeaderTitle: {
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#64748B',
     letterSpacing: 0.5,
@@ -1513,7 +1513,7 @@ const styles = StyleSheet.create({
   pinnedNoticeText: {
     color: '#15803D',
     flex: 1,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
 });

@@ -1,273 +1,131 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, IconRadarPulse, IconSettings } from '@leopard/mobile-core';
+import { colors, IconRadarPulse, spacing } from '@leopard/mobile-core';
 
 export type DriverOrderFiltersProps = Readonly<{
-  selectedFilter?: string;
-  onSelectFilter?: (filter: string) => void;
-  filters?: readonly string[];
+  /** How many compatible orders the radar is currently offering. */
   totalCount: number;
-  waitingCount?: number;
-  onOpenSettings?: () => void;
-  onSimulateOffer?: () => void;
+  /** Whether the driver is already on a trip (radar is paused). */
   hasActiveTrip?: boolean;
+  /** Receiving radius in km, shown as part of the single status line. */
   radiusKm?: string;
+  onSimulateOffer?: () => void;
   showDebugActions?: boolean;
 }>;
 
-const DEFAULT_FILTERS: readonly string[] = [];
-
+/**
+ * Apple HIG Inset Grouped Section Header for the load board.
+ *
+ * Sits cleanly directly on the canvas without an unnecessary heavy card enclosure.
+ * Features an active radar pulse pill and clear scannable counter.
+ */
 export function DriverOrderFilters({
-  filters = DEFAULT_FILTERS,
   hasActiveTrip = false,
-  onOpenSettings,
-  onSelectFilter,
   onSimulateOffer,
   radiusKm = '5',
-  selectedFilter,
   showDebugActions = false,
   totalCount,
-  waitingCount = 0,
 }: DriverOrderFiltersProps) {
-  return (
-    <View style={styles.container}>
-      {/* Radar Live Strip (hidden during active trip) */}
-      {!hasActiveTrip ? (
-        <View style={styles.radarLiveStrip}>
-          <View style={styles.radarLeftGroup}>
-            <View style={styles.radarIconOuter}>
-              <IconRadarPulse color="#0B1E42" size={15} />
-            </View>
-            <Text style={styles.radarLiveText}>
-              Radar đang quét bán kính{' '}
-              <Text style={styles.radarLiveHighlight}>{radiusKm} km</Text> ·{' '}
-              <Text style={styles.radarLiveHighlight}>
-                {waitingCount > 0 ? `${waitingCount} đơn phù hợp` : '0 đơn phù hợp'}
-              </Text>
-            </Text>
-          </View>
-          {showDebugActions && onSimulateOffer ? (
-            <Pressable
-              accessibilityHint="Mở modal đơn nổ để thử nghiệm giao diện tiếp nhận"
-              accessibilityLabel="Mô phỏng nổ đơn"
-              accessibilityRole="button"
-              onPress={onSimulateOffer}
-              style={({ pressed }) => [styles.radarSimulateBtn, pressed ? styles.pressed : null]}
-            >
-              <IconRadarPulse color="#0B1E42" size={13} />
-              <Text style={styles.radarSimulateBtnText}>Thử nổ đơn</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : null}
+  const statusLine = hasActiveTrip
+    ? 'Tạm dừng nhận đơn mới trong lúc chạy chuyến'
+    : totalCount > 0
+      ? `${totalCount} đơn phù hợp trong bán kính ${radiusKm} km`
+      : `Đang quét bán kính ${radiusKm} km`;
 
-      {/* Section Header: Title + Subtitle + Settings Action */}
-      <View style={styles.headerRow}>
-        <View style={styles.titleGroup}>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
+  return (
+    <View style={styles.sectionHeader} testID="driver-load-board-header">
+      <View style={styles.headerInfo}>
+        <View style={styles.titleRow}>
+          <Text accessibilityRole="header" style={styles.title}>
             Đơn có thể nhận
           </Text>
-          <Text style={styles.sectionSubtitle}>
-            {totalCount > 0 ? `${totalCount} đơn phù hợp gần bạn` : 'Chưa có đơn phù hợp'}
-          </Text>
+          <View style={styles.radarPill}>
+            <View style={styles.radarDot} />
+            <IconRadarPulse color="#16A34A" size={12} />
+          </View>
         </View>
-
-        {onOpenSettings ? (
-          <Pressable
-            accessibilityLabel="Mở bộ lọc nhận đơn"
-            accessibilityRole="button"
-            hitSlop={6}
-            onPress={onOpenSettings}
-            style={({ pressed }) => [styles.settingsBtn, pressed ? styles.pressed : null]}
-          >
-            <IconSettings color="#0B1E42" size={14} />
-            <Text style={styles.settingsBtnText}>Thiết lập</Text>
-          </Pressable>
-        ) : null}
+        <Text numberOfLines={1} style={styles.status}>
+          {statusLine}
+        </Text>
       </View>
 
-      {/* Filter chips (rendered only if explicitly provided) */}
-      {filters && filters.length > 0 ? (
-        <View style={styles.chipsRow}>
-          {filters.map((chip) => {
-            const isSelected = selectedFilter === chip;
-            return (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
-                key={chip}
-                onPress={() => onSelectFilter?.(chip)}
-                style={({ pressed }) => [
-                  styles.filterChip,
-                  isSelected ? styles.filterChipActive : null,
-                  pressed ? styles.pressed : null,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    isSelected ? styles.filterChipTextActive : null,
-                  ]}
-                >
-                  {chip}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      {showDebugActions && onSimulateOffer && !hasActiveTrip ? (
+        <Pressable
+          accessibilityHint="Mở modal đơn nổ để thử nghiệm giao diện tiếp nhận"
+          accessibilityLabel="Mô phỏng nổ đơn"
+          accessibilityRole="button"
+          onPress={onSimulateOffer}
+          style={({ pressed }) => [styles.debugBtn, pressed ? styles.pressed : null]}
+        >
+          <Text style={styles.debugBtnText}>Thử nổ đơn</Text>
+        </Pressable>
       ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 12,
-  },
-
-  // Radar Live Strip
-  radarLiveStrip: {
+  sectionHeader: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    marginBottom: spacing.sm,
+    marginTop: spacing.xxs,
+    paddingHorizontal: spacing.xxs,
   },
-  radarLeftGroup: {
-    alignItems: 'center',
+  headerInfo: {
     flex: 1,
+    gap: 3,
+  },
+  titleRow: {
+    alignItems: 'center',
     flexDirection: 'row',
-    marginRight: 8,
+    gap: 6,
   },
-  radarIconOuter: {
-    alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderRadius: 12,
-    height: 28,
-    justifyContent: 'center',
-    marginRight: 8,
-    width: 28,
-  },
-  radarLiveText: {
-    color: '#475569',
-    flex: 1,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  radarLiveHighlight: {
-    color: '#0B1E42',
+  title: {
+    color: '#0F172A',
+    fontSize: 15,
     fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  radarPill: {
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  radarDot: {
+    backgroundColor: '#16A34A',
+    borderRadius: 3,
+    height: 6,
+    width: 6,
+  },
+  status: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
-  radarSimulateBtn: {
+  debugBtn: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
-    borderWidth: 1,
-    flexDirection: 'row',
-    minHeight: 44,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  radarSimulateBtnText: {
-    color: '#0B1E42',
-    fontSize: 11,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-
-  // Header Row
-  headerRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  titleGroup: {
-    flex: 1,
-  },
-  sectionTitle: {
-    color: '#0B1E42',
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  sectionSubtitle: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 1,
-  },
-  settingsBtn: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F1F5F9',
     borderColor: '#E2E8F0',
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    minHeight: 44,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  settingsBtnText: {
-    color: '#0B1E42',
-    fontSize: 12,
-    fontWeight: '700',
-    marginLeft: 5,
-  },
-
-  // Chips Row
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  filterChip: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
-    elevation: 1,
+    minHeight: 32,
+    paddingHorizontal: 8,
   },
-  filterChipActive: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
-  },
-  filterChipText: {
-    color: '#475569',
-    fontSize: 12.5,
+  debugBtnText: {
+    color: colors.brand.primary,
+    fontSize: 11,
     fontWeight: '600',
   },
-  filterChipTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.8,
   },
 });

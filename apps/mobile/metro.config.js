@@ -14,6 +14,9 @@ config.resolver.blockList = [
   new RegExp(`${path.resolve(workspaceRoot, 'apps/api')}/.*`),
   new RegExp(`${path.resolve(workspaceRoot, 'apps/admin')}/.*`),
   new RegExp(`${path.resolve(workspaceRoot, 'apps/driver')}/.*`),
+  new RegExp(`${path.resolve(workspaceRoot, 'docs')}/.*`),
+  new RegExp(`${path.resolve(workspaceRoot, 'infra')}/.*`),
+  new RegExp(`${path.resolve(workspaceRoot, '.worktrees')}/.*`),
 ];
 
 module.exports = config;

@@ -516,6 +516,34 @@ describe('CustomerTrackingSocketManager', () => {
       );
     });
 
+    it('drops the /api/v1 suffix so it never becomes part of the namespace', async () => {
+      // The deployed web build ships EXPO_PUBLIC_API_URL=/api/v1 and relies on
+      // the app's own nginx to proxy /socket.io. Socket.IO treats everything
+      // after the host as the namespace, so a retained suffix would connect to
+      // /api/v1/tracking and never reach the gateway.
+      const factorySocket = new MockSocket();
+      const factory = jest.fn<() => SocketLike>().mockReturnValue(factorySocket);
+      const previous = process.env.EXPO_PUBLIC_API_URL;
+      process.env.EXPO_PUBLIC_API_URL = '/api/v1';
+
+      try {
+        const factoryManager = createCustomerTrackingSocket({
+          socketFactory: factory,
+          tokenProvider: () => 'test-token',
+        });
+
+        await factoryManager.connect();
+
+        expect(factory).toHaveBeenCalledWith(
+          '/tracking',
+          expect.objectContaining({ auth: { token: 'test-token' } }),
+        );
+      } finally {
+        if (previous === undefined) delete process.env.EXPO_PUBLIC_API_URL;
+        else process.env.EXPO_PUBLIC_API_URL = previous;
+      }
+    });
+
     it('destroy cleans up listeners and internal maps', () => {
       manager.joinOrder(validOrderId);
       manager.destroy();

@@ -13,7 +13,6 @@ const ADMIN_ROUTES = [
   { name: 'overview', path: '/admin?preview=enabled&scenario=ADM-OV-READY', table: true },
   { name: 'orders', path: '/admin/orders?preview=enabled&scenario=ADM-ORD-DENSE', table: true },
   { name: 'users', path: '/admin/users?preview=enabled&scenario=ADM-USR-DENSE', table: true },
-  { name: 'fleets', path: '/admin/fleets?preview=enabled&scenario=ADM-FLT-EMPTY', table: true },
   { name: 'drivers', path: '/admin/drivers?preview=enabled&scenario=ADM-DRV-MIXED', table: true },
   {
     name: 'detail',

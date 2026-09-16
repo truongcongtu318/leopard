@@ -25,6 +25,7 @@ import {
   IconPhone,
   IconSecurityShield,
   ScreenScaffold,
+  typeScale,
 } from '@leopard/mobile-core';
 
 type FaqItem = {
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
   },
   hotlineLabel: {
     color: colors.operational.inkMuted,
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
   },
   callBtnText: {
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   /* 2. SOS Emergency */
@@ -397,7 +398,7 @@ const styles = StyleSheet.create({
   },
   sosDesc: {
     color: colors.neutral.text,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 18,
     marginBottom: 4,
   },
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
   faqQuestion: {
     color: colors.neutral.titleText,
     flex: 1,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     paddingRight: 8,
   },
@@ -463,12 +464,12 @@ const styles = StyleSheet.create({
   },
   legalTitle: {
     color: colors.neutral.titleText,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   legalSubtitle: {
     color: colors.neutral.subtleText,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     marginTop: 2,
   },
   legalDivider: {
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
   },
   feedbackSuccessText: {
     color: '#059669',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   /* Modal */

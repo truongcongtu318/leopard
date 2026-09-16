@@ -3,7 +3,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { WebView } from 'react-native-webview';
 
-import { sessionStore } from '@leopard/mobile-core';
+import { typeScale, sessionStore } from '@leopard/mobile-core';
 import { Button, IconFileText, IconSecurityShield, ScreenScaffold } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 
@@ -158,12 +158,12 @@ const styles = StyleSheet.create({
   },
   complianceTitle: {
     color: '#0B1E42',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
   },
   complianceSubtitle: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     marginTop: 1,
   },
   complianceBadge: {
@@ -204,11 +204,11 @@ const styles = StyleSheet.create({
   },
   complianceMetaText: {
     color: '#334155',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
   },
   complianceMetaSub: {
     color: '#64748B',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontStyle: 'italic',
     marginTop: 2,
   },

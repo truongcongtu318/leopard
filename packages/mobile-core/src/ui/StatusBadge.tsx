@@ -5,9 +5,10 @@ import type {
   PaymentStatus,
   UserStatus,
 } from '@leopard/shared';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing } from '../theme/tokens';
+import { AppText } from './AppText';
 
 export type KycStatus = 'VERIFIED' | 'PENDING' | 'REJECTED' | 'EXPIRED';
 
@@ -305,9 +306,12 @@ export function StatusBadge(props: StatusBadgeProps) {
         importantForAccessibility="no"
         style={[styles.dot, colorRoleDotStyles[presentation.colorRole]]}
       />
-      <Text style={[styles.text, colorRoleTextStyles[presentation.colorRole]]}>
+      <AppText
+        variant="footnote"
+        style={[styles.text, colorRoleTextStyles[presentation.colorRole]]}
+      >
         {presentation.label}
-      </Text>
+      </AppText>
     </View>
   );
 }
@@ -330,7 +334,8 @@ const styles = StyleSheet.create({
     width: 6,
   },
   text: {
-    ...typography.label,
+    // HIG Footnote size with the semibold emphasis a compact badge needs.
+    fontWeight: '600',
     flexShrink: 1,
   },
 });

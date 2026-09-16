@@ -19,6 +19,14 @@ type ManifestUser = TimestampedManifest & {
   phone: string;
   role: 'CUSTOMER' | 'DRIVER' | 'FLEET_OWNER' | 'ADMIN';
   status: 'ACTIVE' | 'DISABLED';
+  name?: string;
+  onboardedAt?: string;
+};
+
+type DriverDocumentManifest = {
+  id: string;
+  type: string;
+  reviewStatus?: string;
 };
 
 type DriverProfileManifest = TimestampedManifest & {
@@ -28,6 +36,12 @@ type DriverProfileManifest = TimestampedManifest & {
   vehicleType: 'MOTORBIKE' | 'VAN' | 'TRUCK';
   lastKnownAt: string | null;
   location: Coordinate | null;
+  licensePlate?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  rejectionReason?: string;
+  contractSignedAt?: string;
+  documents?: DriverDocumentManifest[];
 };
 
 type FleetManifest = TimestampedManifest & {
@@ -184,6 +198,7 @@ type OrderRow = {
   acceptedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;
+  vehicleType: string;
   customerId: string;
   deliveredAt: string | null;
   driverId: string | null;
@@ -429,17 +444,14 @@ function expectedSeedState(manifest: DemoManifest): SeedSnapshot {
     ]),
   );
 
+  // Mirrors snapshotSeedState, which walks every boundary user: a seeded user
+  // with no declared session must appear as an explicit zero, not be absent.
   const refreshSessionsByUser = Object.fromEntries(
-    manifest.refreshSessions
-      .map((session) => {
-        const user = manifest.users.find((candidate) => candidate.id === session.userId);
-
-        if (!user) {
-          throw new Error(`Missing manifest user ${session.userId} for refresh session ${session.id}`);
-        }
-
-        return [user.phone, 1] as const;
-      })
+    manifest.users
+      .map((user) => [
+        user.phone,
+        manifest.refreshSessions.filter((session) => session.userId === user.id).length,
+      ] as const)
       .sort(([left], [right]) => left.localeCompare(right)),
   );
 
@@ -524,6 +536,7 @@ function expectedSeedState(manifest: DemoManifest): SeedSnapshot {
           providerSource: order.providerSource,
           status: order.status,
           updatedAt: createdAt,
+          vehicleType: order.vehicleType,
         };
       }),
     ),
@@ -708,6 +721,7 @@ async function snapshotSeedState(client: Client, manifest: DemoManifest): Promis
          "customerId",
          "driverId",
          status,
+         "vehicleType",
          "providerSource",
          "priceVnd",
          "etaSeconds",
@@ -1421,5 +1435,85 @@ seedDescribe('pilot seed determinism', () => {
 
     const afterFailure = await snapshotSeedState(client, manifest);
     expect(afterFailure).toEqual(beforeFailure);
+  });
+
+  it('seeds driver accounts that clear the login profileComplete gate', async () => {
+    const databaseUrl = requireDatabaseUrl();
+    const manifest = await loadManifest();
+    const driverIds = manifest.users.filter((user) => user.role === 'DRIVER').map((user) => user.id);
+
+    expect(driverIds.length).toBeGreaterThan(0);
+
+    runSeed(databaseUrl);
+
+    const users = await client.query<{
+      name: string | null;
+      onboardedAt: string | null;
+      phone: string;
+    }>(
+      `SELECT
+         phone,
+         name,
+         to_char("onboardedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "onboardedAt"
+       FROM "User"
+       WHERE id = ANY($1::uuid[])
+       ORDER BY phone`,
+      [driverIds],
+    );
+
+    expect(users.rows).toHaveLength(driverIds.length);
+    for (const row of users.rows) {
+      // profileComplete is derived from onboardedAt, so a null value would send
+      // every one of these drivers back to the registration wizard on login.
+      expect(row.onboardedAt).not.toBeNull();
+      expect(row.name).toBeTruthy();
+    }
+  });
+
+  it('seeds one approved partner with a signed contract and verified KYC documents', async () => {
+    const databaseUrl = requireDatabaseUrl();
+    const manifest = await loadManifest();
+
+    runSeed(databaseUrl);
+
+    const approved = await client.query<{
+      contractSignedAt: string | null;
+      documentCount: number;
+      licensePlate: string | null;
+      phone: string;
+    }>(
+      `SELECT
+         u.phone,
+         dp."licensePlate",
+         to_char(dp."contractSignedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "contractSignedAt",
+         (
+           SELECT COUNT(*)::int
+           FROM "DriverDocument" doc
+           WHERE doc."driverProfileId" = dp.id AND doc."reviewStatus" = 'VERIFIED'
+         ) AS "documentCount"
+       FROM "DriverProfile" dp
+       JOIN "User" u ON u.id = dp."userId"
+       WHERE dp."reviewedAt" IS NOT NULL
+         AND dp."contractSignedAt" IS NOT NULL
+         AND dp."rejectionReason" IS NULL
+       ORDER BY u.phone`,
+    );
+
+    expect(approved.rows.length).toBeGreaterThan(0);
+
+    // The canonical pilot login (0900000002 -> +840000000002) must be usable.
+    const pilotLogin = approved.rows.find((row) => row.phone === '+840000000002');
+    expect(pilotLogin).toBeDefined();
+    expect(pilotLogin?.licensePlate).toBeTruthy();
+    expect(pilotLogin?.documentCount).toBeGreaterThan(0);
+
+    // The pending and rejected review paths must stay demonstrable.
+    const pending = manifest.driverProfiles.filter(
+      (profile) => profile.submittedAt && !profile.reviewedAt,
+    );
+    const rejected = manifest.driverProfiles.filter((profile) => profile.rejectionReason);
+
+    expect(pending.length).toBeGreaterThan(0);
+    expect(rejected.length).toBeGreaterThan(0);
   });
 });

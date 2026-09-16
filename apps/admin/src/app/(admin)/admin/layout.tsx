@@ -17,7 +17,6 @@ const adminNavItems = [
   { label: 'Thông báo', href: '/admin/notifications' },
   { label: 'Đánh giá', href: '/admin/reviews' },
   { label: 'Người dùng', href: '/admin/users' },
-  { label: 'Đội xe', href: '/admin/fleets' },
   { label: 'Tài xế', href: '/admin/drivers' },
   { label: 'Duyệt hồ sơ', href: '/admin/driver-applications' },
   { label: 'Cấu hình giá', href: '/admin/pricing' },

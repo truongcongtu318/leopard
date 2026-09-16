@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { leopardElevation, leopardPalette, leopardRadius, spacing } from '../theme/tokens';
+import { leopardElevation, leopardPalette, leopardRadius, spacing, typeScale } from '../theme/tokens';
 import { TruckLoader } from './TruckLoader';
 
 export type ProcessingModalProps = Readonly<{
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   message: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     textAlign: 'center',
     lineHeight: 18,
     minHeight: 36,

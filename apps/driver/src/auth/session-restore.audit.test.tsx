@@ -9,6 +9,11 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace }) })
 
 jest.mock('@leopard/mobile-core', () => ({
   __esModule: true,
+  // The real token module is light (it only needs react-native), so keep its
+  // exports: screens that read typeScale from the barrel still render.
+  ...(jest.requireActual(
+    '@leopard/mobile-core/src/theme/tokens',
+  ) as Record<string, unknown>),
   sessionStore: {
     hydrate: jest.fn(),
     getAccessToken: jest.fn(),

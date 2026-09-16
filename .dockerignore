@@ -1,0 +1,66 @@
+# Docker build context filter.
+#
+# Without this file the context is the whole repository — and in this workspace
+# that is roughly 27 GB, dominated by .turbo (13 GB), .worktrees (11 GB) and
+# node_modules (1.8 GB). BuildKit walks and hashes every byte of the context on
+# every build, so leaving those in makes builds slow regardless of layer caching.
+#
+# Keep this list in sync with the COPY instructions in infra/docker/*.Dockerfile.
+# Anything a Dockerfile COPYs must NOT be excluded here. Currently those are:
+#   root:      package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc
+#   packages/: config/{package.json,tsconfig}, shared, validators, ui,
+#              mobile-core/{package.json,tsconfig.json,src,assets}
+#   apps/api:  package.json, tsconfig.json, src, scripts, prisma,
+#              prisma.config.ts
+#   apps/admin: package.json, tsconfig.json, next.config.mjs,
+#              postcss.config.mjs, src
+#   apps/mobile|driver: package.json, tsconfig.json, metro.config.js, app.json,
+#              app, src, assets, (mobile only) public
+#   infra/:    docker/ (nginx-expo.conf), seed/ (demo-manifest.json)
+
+# ── Dependency trees (reinstalled inside the image) ──
+node_modules
+**/node_modules
+
+# ── Build caches and worktrees ──
+.turbo
+**/.turbo
+.worktrees
+.git
+.github
+
+# ── Build output (each Dockerfile regenerates what it needs) ──
+**/dist
+**/.next
+**/.expo
+**/coverage
+**/*.tsbuildinfo
+
+# ── Local runtime data ──
+apps/api/uploads
+uploads
+storage
+tmp
+temp
+
+# ── Secrets: injected through compose env_file, never COPYed into an image ──
+.env
+.env.*
+**/.env
+**/.env.*
+
+# ── Documentation and tooling not referenced by any Dockerfile ──
+docs
+design-preview
+.agent
+.agents
+.superpowers
+*.md
+**/*.md
+
+# ── Editor / OS noise ──
+**/*.log
+.DS_Store
+Thumbs.db
+.idea
+.vscode

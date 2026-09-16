@@ -1,0 +1,237 @@
+# LEOPARD Full Demo Stack
+# Usage: ./infra/scripts/deploy-demo.sh
+# Manual:  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+#
+# IMAGE_TAG tags every built image so a previous build can be brought back by
+# setting the tag again, instead of every image silently becoming :latest.
+
+name: leopard-demo
+
+services:
+  # ── Database ──
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-leopard}
+      POSTGRES_USER: ${POSTGRES_USER:-leopard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - leopard-demo-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  # ── Backend API ──
+  api:
+    image: leopard-demo/api:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+    restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-3000}:3000"
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-leopard}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-leopard}?schema=public
+      PORT: "3000"
+      NODE_ENV: production
+    volumes:
+      - leopard-demo-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/v1/health/live',(r)=>{process.exit(r.statusCode===200?0:1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  # ── One-shot migrations ──
+  # Runs from the builder stage because the Prisma CLI is a dev-only dep and is
+  # intentionally absent from the runtime image.
+  #
+  # Migrations only. Seeding is a separate service because the seed script wipes
+  # and reloads the demo dataset: running it on every deploy destroyed customer
+  # accounts and orders that had been created since the previous one. The deploy
+  # script decides when seeding is appropriate — an empty database, or an
+  # explicit --reseed.
+  migrate:
+    image: leopard-demo/migrate:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+      target: builder
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-leopard}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-leopard}?schema=public
+      NODE_ENV: production
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - pnpm --filter api exec prisma migrate deploy
+
+  # ── Demo data reload (destructive, on demand only) ──
+  seed:
+    image: leopard-demo/migrate:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+      target: builder
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-leopard}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-leopard}?schema=public
+      NODE_ENV: production
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - node --experimental-strip-types apps/api/prisma/seed.ts
+
+  # ── Admin Console (Next.js standalone) ──
+  admin:
+    image: leopard-demo/admin:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: infra/docker/admin.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+    restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${ADMIN_PORT:-3002}:3002"
+    environment:
+      API_URL: http://api:3000/api/v1
+      NEXT_PUBLIC_ALLOW_DEMO_AUTH: "true"
+
+  # ── Customer App (Expo Web + Nginx) ──
+  customer:
+    image: leopard-demo/customer:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: infra/docker/customer.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+    restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      # Both Expo images listen on 8080 inside (see customer.Dockerfile).
+      - "${CUSTOMER_PORT:-8081}:8080"
+
+  # ── Driver App (Expo Web + Nginx) ──
+  driver:
+    image: leopard-demo/driver:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: infra/docker/driver.Dockerfile
+      args:
+        DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+    restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${DRIVER_PORT:-8082}:8080"
+
+  # ── Gateway (Nginx landing portal) ──
+  gateway:
+    image: leopard-demo/gateway:${IMAGE_TAG:-dev}
+    build:
+      context: infra/docker/gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # Docker's json-file log driver has no size limit by default, so a chatty
+    # container can fill the disk and take the database down with it. Cap it per
+    # service; this applies when a container is recreated, which every deploy
+    # does, so no daemon restart (and no downtime) is needed.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - api
+      - admin
+      - customer
+      - driver
+    ports:
+      # The gateway image runs unprivileged, so nginx listens on 8080 inside the
+      # container and the host's port 80 is mapped onto it.
+      - "${GATEWAY_PORT:-80}:8080"
+
+volumes:
+  leopard-demo-data:
+    name: leopard-demo-data
+  leopard-demo-uploads:
+    name: leopard-demo-uploads

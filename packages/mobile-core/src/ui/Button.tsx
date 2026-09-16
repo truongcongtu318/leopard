@@ -1,7 +1,8 @@
 import type { PressableProps } from 'react-native';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
-import { colors, control, iosContinuousCurve, radius, spacing, typography } from '../theme/tokens';
+import { colors, control, iosContinuousCurve, radius, spacing } from '../theme/tokens';
+import { AppText } from './AppText';
 import { haptic } from './haptics';
 
 type ButtonVariant = 'primary' | 'secondary' | 'destructive';
@@ -96,7 +97,9 @@ export function Button({
         isDisabled ? styles.disabled : null,
       ]}
     >
-      <Text maxFontSizeMultiplier={1.3} style={[styles.label, variantTextStyles[variant]]}>{visibleLabel}</Text>
+      <AppText variant="subheadline" style={[styles.label, variantTextStyles[variant]]}>
+        {visibleLabel}
+      </AppText>
     </Pressable>
   );
 }
@@ -113,7 +116,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   label: {
-    ...typography.label,
+    // HIG Subheadline size/leading with the semibold emphasis a control needs.
+    fontWeight: '600',
     flexShrink: 1,
     textAlign: 'center',
   },

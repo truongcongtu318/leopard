@@ -1,4 +1,5 @@
 export * from './AnalyticsHeroCard';
+export * from './AppText';
 export * from './Button';
 export * from './ErrorScreen';
 export * from './EtaIndicator';
@@ -26,10 +27,3 @@ export * from './TruckLoader';
 export * from './VehicleSelectCard';
 export * from './icons/CoreIcons';
 export * from '../icons/svg-icons';
-export {
-  IconClock,
-  IconClose,
-  IconOffice,
-  IconSearch,
-  IconWarehouse,
-} from '../icons/svg-icons';

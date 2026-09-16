@@ -12,42 +12,66 @@
       "phone": "+840000000002",
       "role": "DRIVER",
       "status": "ACTIVE",
-      "createdAt": "2026-08-01T07:01:00.000Z"
+      "createdAt": "2026-08-01T07:01:00.000Z",
+      "name": "Trần Minh Quân",
+      "onboardedAt": "2026-08-02T02:00:00.000Z",
+      "consentTermsAt": "2026-08-02T02:00:00.000Z",
+      "consentServiceAt": "2026-08-02T02:00:00.000Z"
     },
     {
       "id": "33333333-3333-4333-8333-333333333333",
       "phone": "+840000000005",
       "role": "DRIVER",
       "status": "ACTIVE",
-      "createdAt": "2026-08-01T07:02:00.000Z"
+      "createdAt": "2026-08-01T07:02:00.000Z",
+      "name": "Phạm Quốc Huy",
+      "onboardedAt": "2026-08-05T02:00:00.000Z",
+      "consentTermsAt": "2026-08-05T02:00:00.000Z",
+      "consentServiceAt": "2026-08-05T02:00:00.000Z"
     },
     {
       "id": "66666666-1111-4666-8666-666666666666",
       "phone": "+840000000006",
       "role": "DRIVER",
       "status": "ACTIVE",
-      "createdAt": "2026-08-01T07:03:00.000Z"
+      "createdAt": "2026-08-01T07:03:00.000Z",
+      "name": "Lê Văn Thành",
+      "onboardedAt": "2026-08-04T02:00:00.000Z",
+      "consentTermsAt": "2026-08-04T02:00:00.000Z",
+      "consentServiceAt": "2026-08-04T02:00:00.000Z"
     },
     {
       "id": "77777777-1111-4777-8777-777777777777",
       "phone": "+840000000007",
       "role": "DRIVER",
       "status": "ACTIVE",
-      "createdAt": "2026-08-01T07:04:00.000Z"
+      "createdAt": "2026-08-01T07:04:00.000Z",
+      "name": "Đỗ Minh Tuấn",
+      "onboardedAt": "2026-08-06T02:00:00.000Z",
+      "consentTermsAt": "2026-08-06T02:00:00.000Z",
+      "consentServiceAt": "2026-08-06T02:00:00.000Z"
     },
     {
       "id": "99999999-1111-4999-8999-999999999999",
       "phone": "+840000000008",
       "role": "DRIVER",
       "status": "ACTIVE",
-      "createdAt": "2026-08-01T07:05:00.000Z"
+      "createdAt": "2026-08-01T07:05:00.000Z",
+      "name": "Vũ Hoàng Long",
+      "onboardedAt": "2026-08-07T02:00:00.000Z",
+      "consentTermsAt": "2026-08-07T02:00:00.000Z",
+      "consentServiceAt": "2026-08-07T02:00:00.000Z"
     },
     {
       "id": "88888888-1111-4888-8888-098732456100",
-      "phone": "0987324561",
+      "phone": "+84987324561",
       "role": "DRIVER",
       "status": "ACTIVE",
-      "createdAt": "2026-08-01T07:05:30.000Z"
+      "createdAt": "2026-08-01T07:05:30.000Z",
+      "name": "Nguyễn Hữu Phước",
+      "onboardedAt": "2026-08-03T02:00:00.000Z",
+      "consentTermsAt": "2026-08-03T02:00:00.000Z",
+      "consentServiceAt": "2026-08-03T02:00:00.000Z"
     },
     {
       "id": "44444444-4444-4444-8444-444444444444",
@@ -75,7 +99,73 @@
       "location": {
         "lat": 10.7764,
         "lng": 106.7012
-      }
+      },
+      "licensePlate": "51D-123.45",
+      "licenseNumber": "B2-790123456",
+      "submittedAt": "2026-08-06T02:30:00.000Z",
+      "reviewedAt": "2026-08-10T03:00:00.000Z",
+      "reviewedById": "55555555-5555-4555-8555-555555555555",
+      "contractSignedAt": "2026-08-11T02:00:00.000Z",
+      "contractVersion": "v1",
+      "bankName": "Vietcombank",
+      "bankAccountNumber": "0071000123456",
+      "bankAccountName": "TRAN MINH QUAN",
+      "balanceVnd": 2450000,
+      "documents": [
+        {
+          "id": "266e5c1c-c805-57e0-ac22-1e6cbb1bc1f0",
+          "type": "ID_CARD",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666661/id_card.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "00eff1cdb3e05fa19714afc28a0e892600000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "079090001234"
+        },
+        {
+          "id": "aba442dd-d32f-5299-8b62-00c2383a4943",
+          "type": "LICENSE",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666661/license.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "d9810981efd25ebf9d0f31e6414a811800000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "B2-790123456",
+          "issuedAt": "2021-03-15T00:00:00.000Z",
+          "expiresAt": "2031-03-15T00:00:00.000Z"
+        },
+        {
+          "id": "7b47db85-5a4b-59e9-a084-be7a6b5e199d",
+          "type": "VEHICLE_REGISTRATION",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666661/vehicle_registration.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "f389285397e05891bb408a4c49d4bcd800000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "51D-123456"
+        },
+        {
+          "id": "8139bee1-dee9-52a8-af32-e3336e2ac4ab",
+          "type": "VEHICLE_PHOTO",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666661/vehicle_photo.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "ff7f06f3bff45a56a048d479a708005800000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z"
+        }
+      ]
     },
     {
       "id": "66666666-6666-4666-8666-666666666662",
@@ -84,7 +174,68 @@
       "vehicleType": "MOTORBIKE",
       "lastKnownAt": "2026-08-01T06:45:00.000Z",
       "createdAt": "2026-08-01T07:21:00.000Z",
-      "location": null
+      "location": null,
+      "licensePlate": "59-X1 123.45",
+      "licenseNumber": "A1-790555666",
+      "submittedAt": "2026-08-12T02:30:00.000Z",
+      "reviewedAt": "2026-08-13T02:00:00.000Z",
+      "reviewedById": "55555555-5555-4555-8555-555555555555",
+      "rejectionReason": "Ảnh cà vẹt xe bị lóa, không đọc được số khung. Vui lòng chụp lại.",
+      "documents": [
+        {
+          "id": "5b95678c-658c-5e2d-b5a3-e8013638372c",
+          "type": "ID_CARD",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666662/id_card.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "6af745a301785bc38e5ed3164ec6d1f200000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-13T02:00:00.000Z",
+          "createdAt": "2026-08-12T02:30:00.000Z",
+          "documentNumber": "079090001234"
+        },
+        {
+          "id": "02db3289-c3e0-5b2d-95d9-ab8d8be029cf",
+          "type": "LICENSE",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666662/license.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "68fedcf63a0e5501896d4f99cd6f213400000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-13T02:00:00.000Z",
+          "createdAt": "2026-08-12T02:30:00.000Z",
+          "documentNumber": "B2-790123456",
+          "issuedAt": "2021-03-15T00:00:00.000Z",
+          "expiresAt": "2031-03-15T00:00:00.000Z"
+        },
+        {
+          "id": "c3f0b6e5-13e7-5854-9ec3-cba95a9433e2",
+          "type": "VEHICLE_REGISTRATION",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666662/vehicle_registration.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "8e24c41b286758eebff5ea9809b5b4c700000000000000000000000000000000",
+          "reviewStatus": "REJECTED",
+          "reviewedAt": "2026-08-13T02:00:00.000Z",
+          "createdAt": "2026-08-12T02:30:00.000Z",
+          "documentNumber": "51D-123456"
+        },
+        {
+          "id": "0db8f9ba-3e23-59e4-8e7e-a740df3c5cc8",
+          "type": "VEHICLE_PHOTO",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666662/vehicle_photo.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "b58c7d2406ba50ee91876439d0d4adb600000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-13T02:00:00.000Z",
+          "createdAt": "2026-08-12T02:30:00.000Z"
+        }
+      ]
     },
     {
       "id": "66666666-6666-4666-8666-666666666663",
@@ -96,7 +247,61 @@
       "location": {
         "lat": 10.7741,
         "lng": 106.6881
-      }
+      },
+      "licensePlate": "51G-321.09",
+      "licenseNumber": "C-790111222",
+      "submittedAt": "2026-08-14T02:30:00.000Z",
+      "documents": [
+        {
+          "id": "3d71fb4f-9475-5d3d-9c29-fa4a7ad366fd",
+          "type": "ID_CARD",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666663/id_card.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "92fa8fe021ca507a9019ed252182785600000000000000000000000000000000",
+          "reviewStatus": "PENDING_REVIEW",
+          "createdAt": "2026-08-14T02:30:00.000Z",
+          "documentNumber": "079090001234"
+        },
+        {
+          "id": "3e050a62-659b-55d9-8426-0b6ecd89bc95",
+          "type": "LICENSE",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666663/license.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "c50fe1480046549e9c79168a7d8c0d5700000000000000000000000000000000",
+          "reviewStatus": "PENDING_REVIEW",
+          "createdAt": "2026-08-14T02:30:00.000Z",
+          "documentNumber": "B2-790123456",
+          "issuedAt": "2021-03-15T00:00:00.000Z",
+          "expiresAt": "2031-03-15T00:00:00.000Z"
+        },
+        {
+          "id": "6f3e96b5-5834-50a9-8cc2-a3539dce7d3f",
+          "type": "VEHICLE_REGISTRATION",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666663/vehicle_registration.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "9c31bc831f2b5ebfb07d74e56e0f7d5300000000000000000000000000000000",
+          "reviewStatus": "PENDING_REVIEW",
+          "createdAt": "2026-08-14T02:30:00.000Z",
+          "documentNumber": "51D-123456"
+        },
+        {
+          "id": "453010b6-6722-5475-8a98-f9e3ef25d605",
+          "type": "VEHICLE_PHOTO",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666663/vehicle_photo.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "63e9ee6b4788570ca5bcebb98bb28fc300000000000000000000000000000000",
+          "reviewStatus": "PENDING_REVIEW",
+          "createdAt": "2026-08-14T02:30:00.000Z"
+        }
+      ]
     },
     {
       "id": "66666666-6666-4666-8666-666666666664",
@@ -108,7 +313,73 @@
       "location": {
         "lat": 10.8362,
         "lng": 106.6694
-      }
+      },
+      "licensePlate": "51F-456.78",
+      "licenseNumber": "B2-790777888",
+      "submittedAt": "2026-08-06T02:30:00.000Z",
+      "reviewedAt": "2026-08-10T03:00:00.000Z",
+      "reviewedById": "55555555-5555-4555-8555-555555555555",
+      "contractSignedAt": "2026-08-12T02:00:00.000Z",
+      "contractVersion": "v1",
+      "bankName": "BIDV",
+      "bankAccountNumber": "31410000998877",
+      "bankAccountName": "DO MINH TUAN",
+      "balanceVnd": 1120000,
+      "documents": [
+        {
+          "id": "fb479c28-db33-5e8c-9eb7-37414cf43f02",
+          "type": "ID_CARD",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666664/id_card.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "252714b43b8e5fa3b1be2143296bb37500000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "079090001234"
+        },
+        {
+          "id": "f50aa30f-2e4c-5aa5-9bf5-538cba2ed90d",
+          "type": "LICENSE",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666664/license.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "ebd6785d46b65da8b99f4e169359babd00000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "B2-790123456",
+          "issuedAt": "2021-03-15T00:00:00.000Z",
+          "expiresAt": "2031-03-15T00:00:00.000Z"
+        },
+        {
+          "id": "0d734c11-a4cd-571f-9aa0-36f07dedf2e4",
+          "type": "VEHICLE_REGISTRATION",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666664/vehicle_registration.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "d81d3a9085df5fbbbbdaf9b420fca05c00000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "51D-123456"
+        },
+        {
+          "id": "67239700-880b-5397-b678-db7385ffa89c",
+          "type": "VEHICLE_PHOTO",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666664/vehicle_photo.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "105f5ba20f3e53d7995b76b2e338e54200000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z"
+        }
+      ]
     },
     {
       "id": "66666666-6666-4666-8666-666666666665",
@@ -120,7 +391,73 @@
       "location": {
         "lat": 10.8129,
         "lng": 106.6641
-      }
+      },
+      "licensePlate": "51H-654.32",
+      "licenseNumber": "B2-790333444",
+      "submittedAt": "2026-08-06T02:30:00.000Z",
+      "reviewedAt": "2026-08-10T03:00:00.000Z",
+      "reviewedById": "55555555-5555-4555-8555-555555555555",
+      "contractSignedAt": "2026-08-13T02:00:00.000Z",
+      "contractVersion": "v1",
+      "bankName": "ACB",
+      "bankAccountNumber": "1234567890123",
+      "bankAccountName": "VU HOANG LONG",
+      "balanceVnd": 640000,
+      "documents": [
+        {
+          "id": "0ef7c1fa-69fa-5508-9553-814b5f052d42",
+          "type": "ID_CARD",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666665/id_card.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "50716e8659f5591e86cac94c6deb8b8900000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "079090001234"
+        },
+        {
+          "id": "fe2ea534-f024-5b11-9ce8-0bbb8b13ced2",
+          "type": "LICENSE",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666665/license.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "5e2cd92a7186571db32c59ca5751800300000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "B2-790123456",
+          "issuedAt": "2021-03-15T00:00:00.000Z",
+          "expiresAt": "2031-03-15T00:00:00.000Z"
+        },
+        {
+          "id": "e92ff332-3d34-5973-8a4b-946b905ed944",
+          "type": "VEHICLE_REGISTRATION",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666665/vehicle_registration.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "50cd2c72c89459fbbbf342587620a95900000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "51D-123456"
+        },
+        {
+          "id": "86c1af9f-7903-5dfd-b6b7-ddeda219061a",
+          "type": "VEHICLE_PHOTO",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-666666666665/vehicle_photo.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "c4175940bb135478bee1b89079ffff7800000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z"
+        }
+      ]
     },
     {
       "id": "66666666-6666-4666-8666-098732456100",
@@ -132,7 +469,71 @@
       "location": {
         "lat": 10.7769,
         "lng": 106.7009
-      }
+      },
+      "licensePlate": "51C-889.24",
+      "licenseNumber": "C-790654321",
+      "submittedAt": "2026-08-06T02:30:00.000Z",
+      "reviewedAt": "2026-08-10T03:00:00.000Z",
+      "reviewedById": "55555555-5555-4555-8555-555555555555",
+      "bankName": "Techcombank",
+      "bankAccountNumber": "19001234567012",
+      "bankAccountName": "NGUYEN HUU PHUOC",
+      "balanceVnd": 0,
+      "documents": [
+        {
+          "id": "ab5c8833-f64a-56b9-8d74-0bde0ae08496",
+          "type": "ID_CARD",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-098732456100/id_card.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "c398713a12fa5767a31ddb68bbca60e400000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "079090001234"
+        },
+        {
+          "id": "3e381151-e027-59c7-a552-6d70ce88d0d1",
+          "type": "LICENSE",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-098732456100/license.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "45d28d60ace550b3bcfb5cccd0b3f2a900000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "B2-790123456",
+          "issuedAt": "2021-03-15T00:00:00.000Z",
+          "expiresAt": "2031-03-15T00:00:00.000Z"
+        },
+        {
+          "id": "f73e1412-9a5f-5ca7-855b-0823dd325ea5",
+          "type": "VEHICLE_REGISTRATION",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-098732456100/vehicle_registration.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "413b378b234859cebe3cb0e73badbca400000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z",
+          "documentNumber": "51D-123456"
+        },
+        {
+          "id": "828bae34-dd6a-5ff0-81fa-d3315daaea50",
+          "type": "VEHICLE_PHOTO",
+          "provider": "LOCAL",
+          "storageKey": "seed/driver-docs/66666666-6666-4666-8666-098732456100/vehicle_photo.jpg",
+          "contentType": "image/jpeg",
+          "sizeBytes": 248320,
+          "checksumSha256": "8a3ef52d15b25268849c1ff63e0f2a0c00000000000000000000000000000000",
+          "reviewStatus": "VERIFIED",
+          "reviewedAt": "2026-08-10T03:00:00.000Z",
+          "createdAt": "2026-08-06T02:30:00.000Z"
+        }
+      ]
     }
   ],
   "fleets": [
@@ -283,6 +684,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "REQUESTED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 5200,
       "durationSeconds": 1320,
@@ -345,6 +747,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "ACCEPTED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6800,
       "durationSeconds": 1680,
@@ -426,6 +829,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "PICKING_UP",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 9100,
       "durationSeconds": 2160,
@@ -549,6 +953,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "IN_TRANSIT",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 7400,
       "durationSeconds": 1860,
@@ -681,6 +1086,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -801,6 +1207,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 4100,
       "durationSeconds": 1020,
@@ -871,6 +1278,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -991,6 +1399,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1111,6 +1520,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1231,6 +1641,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1351,6 +1762,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1471,6 +1883,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1591,6 +2004,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1711,6 +2125,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1831,6 +2246,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -1951,6 +2367,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2071,6 +2488,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2191,6 +2609,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2311,6 +2730,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2431,6 +2851,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2551,6 +2972,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2671,6 +3093,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "CANCELLED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2791,6 +3214,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "CANCELLED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -2911,6 +3335,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3031,6 +3456,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3151,6 +3577,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3271,6 +3698,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3391,6 +3819,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3511,6 +3940,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3631,6 +4061,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "CANCELLED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3751,6 +4182,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3871,6 +4303,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -3991,6 +4424,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4111,6 +4545,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4231,6 +4666,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4351,6 +4787,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4471,6 +4908,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4591,6 +5029,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4711,6 +5150,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4831,6 +5271,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -4951,6 +5392,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5071,6 +5513,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5191,6 +5634,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5311,6 +5755,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5431,6 +5876,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5551,6 +5997,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5671,6 +6118,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5791,6 +6239,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "99999999-1111-4999-8999-999999999999",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -5911,6 +6360,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6031,6 +6481,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6151,6 +6602,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "33333333-3333-4333-8333-333333333333",
       "status": "DELIVERED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6271,6 +6723,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "77777777-1111-4777-8777-777777777777",
       "status": "CANCELLED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6391,6 +6844,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": null,
       "status": "CANCELLED",
+      "vehicleType": "MOTORBIKE",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6511,6 +6965,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6631,6 +7086,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "66666666-1111-4666-8666-666666666666",
       "status": "DELIVERED",
+      "vehicleType": "TRUCK",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6751,6 +7207,7 @@
       "customerId": "11111111-1111-4111-8111-111111111111",
       "driverId": "22222222-2222-4222-8222-222222222222",
       "status": "DELIVERED",
+      "vehicleType": "VAN",
       "providerSource": "DEMO",
       "distanceMeters": 6300,
       "durationSeconds": 1560,
@@ -6865,6 +7322,258 @@
           "expiresAt": null
         }
       ]
+    },
+    {
+      "id": "b9fb08b0-4609-54e0-842a-4beb615d2e8e",
+      "customerId": "11111111-1111-4111-8111-111111111111",
+      "driverId": null,
+      "status": "REQUESTED",
+      "vehicleType": "VAN",
+      "providerSource": "DEMO",
+      "distanceMeters": 7400,
+      "durationSeconds": 1138,
+      "priceVnd": 235000,
+      "etaSeconds": 1138,
+      "timestamps": {
+        "acceptedAt": null,
+        "pickingUpAt": null,
+        "inTransitAt": null,
+        "deliveredAt": null,
+        "cancelledAt": null
+      },
+      "routeSnapshot": {
+        "provider": "DEMO",
+        "label": "Bình Thạnh → Quận 5",
+        "pickup": "Kho điện máy Hòa Phát — Bình Thạnh",
+        "dropoff": "Cửa hàng VLXD 92 Nguyễn Trãi — Quận 5",
+        "stopCount": 0
+      },
+      "stops": [
+        {
+          "id": "44ae7f64-2ae2-592c-92ba-e67dec8cdb3d",
+          "type": "PICKUP",
+          "sequence": 0,
+          "address": "Kho điện máy Hòa Phát — Bình Thạnh",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.801,
+            "lng": 106.702
+          }
+        },
+        {
+          "id": "26523bfc-fa41-55eb-968d-b14b32c7e11b",
+          "type": "DROPOFF",
+          "sequence": 1,
+          "address": "Cửa hàng VLXD 92 Nguyễn Trãi — Quận 5",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.754,
+            "lng": 106.677
+          }
+        }
+      ],
+      "statusHistory": [
+        {
+          "id": "25c02e62-28c9-5bd4-bf42-bad55b903092",
+          "fromStatus": null,
+          "toStatus": "REQUESTED",
+          "actorId": "11111111-1111-4111-8111-111111111111",
+          "reason": "Đơn hàng mới đang chờ tài xế phù hợp",
+          "createdAt": "2026-09-15T01:00:00.000Z"
+        }
+      ],
+      "trackingPoints": [],
+      "mediaObjects": [],
+      "paymentIntents": []
+    },
+    {
+      "id": "cf61fbb3-eb39-5f35-a4c8-91512b5504f0",
+      "customerId": "11111111-1111-4111-8111-111111111111",
+      "driverId": null,
+      "status": "REQUESTED",
+      "vehicleType": "VAN",
+      "providerSource": "DEMO",
+      "distanceMeters": 11200,
+      "durationSeconds": 1723,
+      "priceVnd": 312000,
+      "etaSeconds": 1723,
+      "timestamps": {
+        "acceptedAt": null,
+        "pickingUpAt": null,
+        "inTransitAt": null,
+        "deliveredAt": null,
+        "cancelledAt": null
+      },
+      "routeSnapshot": {
+        "provider": "DEMO",
+        "label": "Quận 12 → Nhà máy Thủ Đức, Xa lộ Hà Nội",
+        "pickup": "Xưởng gỗ nội thất An Phú — Quận 12",
+        "dropoff": "Nhà máy Thủ Đức, Xa lộ Hà Nội",
+        "stopCount": 0
+      },
+      "stops": [
+        {
+          "id": "a5e433c3-b55f-50f9-b275-19dd8853d1e7",
+          "type": "PICKUP",
+          "sequence": 0,
+          "address": "Xưởng gỗ nội thất An Phú — Quận 12",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.842,
+            "lng": 106.658
+          }
+        },
+        {
+          "id": "8f56acc1-e9d1-57d9-9a42-e65d6df5e77d",
+          "type": "DROPOFF",
+          "sequence": 1,
+          "address": "Nhà máy Thủ Đức, Xa lộ Hà Nội",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.851,
+            "lng": 106.762
+          }
+        }
+      ],
+      "statusHistory": [
+        {
+          "id": "40d4b23b-9700-5935-888b-61e5a7ae62cf",
+          "fromStatus": null,
+          "toStatus": "REQUESTED",
+          "actorId": "11111111-1111-4111-8111-111111111111",
+          "reason": "Đơn hàng mới đang chờ tài xế phù hợp",
+          "createdAt": "2026-09-15T01:00:00.000Z"
+        }
+      ],
+      "trackingPoints": [],
+      "mediaObjects": [],
+      "paymentIntents": []
+    },
+    {
+      "id": "8417b85c-ffa6-563d-81d9-694e8f9a617f",
+      "customerId": "11111111-1111-4111-8111-111111111111",
+      "driverId": null,
+      "status": "REQUESTED",
+      "vehicleType": "VAN",
+      "providerSource": "DEMO",
+      "distanceMeters": 5100,
+      "durationSeconds": 784,
+      "priceVnd": 178000,
+      "etaSeconds": 784,
+      "timestamps": {
+        "acceptedAt": null,
+        "pickingUpAt": null,
+        "inTransitAt": null,
+        "deliveredAt": null,
+        "cancelledAt": null
+      },
+      "routeSnapshot": {
+        "provider": "DEMO",
+        "label": "Kho nước giải khát Tân Bình → Đại lý tạp hóa Gò Vấp, Phan Văn Trị",
+        "pickup": "Kho nước giải khát Tân Bình",
+        "dropoff": "Đại lý tạp hóa Gò Vấp, Phan Văn Trị",
+        "stopCount": 0
+      },
+      "stops": [
+        {
+          "id": "a8a60b7a-a196-53e3-895d-35810d83fd9e",
+          "type": "PICKUP",
+          "sequence": 0,
+          "address": "Kho nước giải khát Tân Bình",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.796,
+            "lng": 106.661
+          }
+        },
+        {
+          "id": "b046afdb-e5b3-51d5-b5e9-55541faf80f9",
+          "type": "DROPOFF",
+          "sequence": 1,
+          "address": "Đại lý tạp hóa Gò Vấp, Phan Văn Trị",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.838,
+            "lng": 106.69
+          }
+        }
+      ],
+      "statusHistory": [
+        {
+          "id": "a854720d-1673-5f7a-adad-56108af01153",
+          "fromStatus": null,
+          "toStatus": "REQUESTED",
+          "actorId": "11111111-1111-4111-8111-111111111111",
+          "reason": "Đơn hàng mới đang chờ tài xế phù hợp",
+          "createdAt": "2026-09-15T01:00:00.000Z"
+        }
+      ],
+      "trackingPoints": [],
+      "mediaObjects": [],
+      "paymentIntents": []
+    },
+    {
+      "id": "24ee4409-8f31-588b-97a7-84ba843afade",
+      "customerId": "11111111-1111-4111-8111-111111111111",
+      "driverId": null,
+      "status": "REQUESTED",
+      "vehicleType": "TRUCK",
+      "providerSource": "DEMO",
+      "distanceMeters": 24800,
+      "durationSeconds": 3815,
+      "priceVnd": 615000,
+      "etaSeconds": 3815,
+      "timestamps": {
+        "acceptedAt": null,
+        "pickingUpAt": null,
+        "inTransitAt": null,
+        "deliveredAt": null,
+        "cancelledAt": null
+      },
+      "routeSnapshot": {
+        "provider": "DEMO",
+        "label": "Bãi container A → KCN Sóng Thần 1, Dĩ An, Bình Dương",
+        "pickup": "Cảng Cát Lái — Bãi container A",
+        "dropoff": "KCN Sóng Thần 1, Dĩ An, Bình Dương",
+        "stopCount": 0
+      },
+      "stops": [
+        {
+          "id": "c08e0303-deb9-5360-b463-0133216cdb6c",
+          "type": "PICKUP",
+          "sequence": 0,
+          "address": "Cảng Cát Lái — Bãi container A",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.762,
+            "lng": 106.799
+          }
+        },
+        {
+          "id": "cc8d78cb-7569-5224-8e10-4886c5565986",
+          "type": "DROPOFF",
+          "sequence": 1,
+          "address": "KCN Sóng Thần 1, Dĩ An, Bình Dương",
+          "createdAt": "2026-09-15T01:00:00.000Z",
+          "location": {
+            "lat": 10.898,
+            "lng": 106.752
+          }
+        }
+      ],
+      "statusHistory": [
+        {
+          "id": "96ec9b33-f721-5bca-adef-88584682f99e",
+          "fromStatus": null,
+          "toStatus": "REQUESTED",
+          "actorId": "11111111-1111-4111-8111-111111111111",
+          "reason": "Đơn hàng mới đang chờ tài xế phù hợp",
+          "createdAt": "2026-09-15T01:00:00.000Z"
+        }
+      ],
+      "trackingPoints": [],
+      "mediaObjects": [],
+      "paymentIntents": []
     }
   ]
 }

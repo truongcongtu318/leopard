@@ -12,6 +12,7 @@ import {
   IconStar,
   ScreenScaffold,
   httpClient,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export interface OrderReviewScreenProps {
@@ -232,7 +233,7 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
 
             {/* ── Submit Review Button (>= 48px) ───────────────── */}
             {errorMessage ? (
-              <Text style={{ color: '#DC2626', fontSize: 14 }}>{errorMessage}</Text>
+              <Text style={{ color: '#DC2626', fontSize: typeScale.subheadline.fontSize }}>{errorMessage}</Text>
             ) : null}
             <Button
               disabled={submitting}
@@ -326,7 +327,7 @@ const styles = StyleSheet.create({
   },
   ratingLabel: {
     color: '#0B1E42',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     marginTop: 2,
   },
@@ -362,7 +363,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     color: '#334155',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   tagTextSelected: {

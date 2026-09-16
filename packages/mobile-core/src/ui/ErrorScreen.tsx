@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { colors, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
+import { colors, leopardPalette, leopardRadius, letterSpacing, spacing } from '../theme/tokens';
+import { AppText } from './AppText';
 import { Button } from './Button';
 import { IconSearch, IconSecurityShield } from './icons/CoreIcons';
 import { ScreenScaffold } from './ScreenScaffold';
@@ -91,9 +92,15 @@ export function ErrorScreen({
           <View style={[styles.iconBox, { backgroundColor: config.iconBg }]}>
             {renderErrorIcon(type)}
           </View>
-          <Text style={[styles.codeText, { color: config.accent }]}>{config.code}</Text>
-          <Text style={styles.errorTitle}>{title ?? config.title}</Text>
-          <Text style={styles.errorMessage}>{message ?? config.message}</Text>
+          <AppText variant="caption1" style={[styles.codeText, { color: config.accent }]}>
+            {config.code}
+          </AppText>
+          <AppText variant="title3" style={styles.errorTitle}>
+            {title ?? config.title}
+          </AppText>
+          <AppText variant="subheadline" style={styles.errorMessage}>
+            {message ?? config.message}
+          </AppText>
           <View style={styles.buttonGroup}>
             <Button label={config.actionLabel} onPress={handleHome} />
             {onRetry && (
@@ -134,20 +141,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   codeText: {
-    ...typography.caption,
+    // Error codes are an uppercase micro-label.
     fontWeight: '700',
-    letterSpacing: 0.8,
+    letterSpacing: letterSpacing.uppercaseLabel,
   },
   errorTitle: {
-    ...typography.sectionTitle,
     color: leopardPalette.textSlateDark,
     textAlign: 'center',
   },
   errorMessage: {
-    ...typography.body,
-    fontSize: 14,
     color: leopardPalette.textMutedSlate,
-    lineHeight: 20,
     marginBottom: spacing.md,
     textAlign: 'center',
   },

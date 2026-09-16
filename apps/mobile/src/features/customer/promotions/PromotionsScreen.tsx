@@ -12,6 +12,7 @@ import {
   Button,
   FormField,
   ScreenScaffold,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export type PromotionItem = Readonly<{
@@ -331,18 +332,18 @@ const styles = StyleSheet.create({
   },
   discountText: {
     color: '#D97706',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontVariant: ['tabular-nums'],
     fontWeight: '800',
   },
   promoTitle: {
     color: colors.neutral.titleText,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   promoDesc: {
     color: colors.neutral.text,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 17,
   },
   cardFooter: {
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
   },
   expiryText: {
     color: colors.neutral.subtleText,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
   },
   applyBtn: {

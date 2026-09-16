@@ -23,6 +23,7 @@ import {
   IconSpeedTruck,
   IconStar,
   ScreenScaffold,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export type DeliveryItem = Readonly<{
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     color: '#0F172A',
     paddingVertical: 8,
   },
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
   },
   bookingCodeText: {
     color: '#0B1E42',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -467,7 +468,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#16A34A',
   },
   statusText: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   statusTextActive: {
@@ -510,7 +511,7 @@ const styles = StyleSheet.create({
   },
   routeLabel: {
     color: '#334155',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '500',
     flex: 1,
   },
@@ -552,7 +553,7 @@ const styles = StyleSheet.create({
   },
   driverNameText: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   ratingBadge: {
@@ -568,13 +569,13 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     color: '#B45309',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   cargoText: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
   },
   priceCol: {
@@ -583,12 +584,12 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     color: '#94A3B8',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
   },
   priceText: {
     color: '#0B1E42',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -618,7 +619,7 @@ const styles = StyleSheet.create({
   },
   trackingBtnText: {
     color: '#FFFFFF',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   chatBtn: {
@@ -627,7 +628,7 @@ const styles = StyleSheet.create({
   },
   chatBtnText: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   pressed: {
@@ -648,6 +649,6 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     color: '#64748B',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
   },
 });

@@ -105,6 +105,145 @@ describe('production environment schema', () => {
     ).toThrow();
   });
 
+  it('treats a blank VIETMAP_API_KEY as unset when the demo map provider is selected', () => {
+    // .env.example ships MAP_PROVIDER=demo with VIETMAP_API_KEY= left blank, so
+    // an empty value must behave like an absent one instead of failing the
+    // min-length rule and preventing the API from starting.
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        MAP_PROVIDER: 'demo',
+        ALLOW_DEMO_PROVIDER: 'true',
+        VIETMAP_API_KEY: '',
+        FIREBASE_PROJECT_ID: 'leopard-demo',
+      }),
+    ).toMatchObject({ MAP_PROVIDER: 'demo', VIETMAP_API_KEY: undefined });
+  });
+
+  it('refuses demo auth in production unless it is explicitly acknowledged', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: undefined,
+      }),
+    ).toThrow(/ALLOW_DEMO_AUTH_PROVIDER/);
+  });
+
+  it('accepts demo auth in production once acknowledged', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: '718204',
+      }),
+    ).toMatchObject({
+      AUTH_DEMO_LOGIN_ENABLED: true,
+      ALLOW_DEMO_AUTH_PROVIDER: true,
+      AUTH_DEMO_OTP: '718204',
+    });
+  });
+
+  it('does not demand the demo auth acknowledgement when demo login is off', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'false',
+        ALLOW_DEMO_AUTH_PROVIDER: undefined,
+      }),
+    ).toMatchObject({ AUTH_DEMO_LOGIN_ENABLED: false });
+  });
+
+  it('does not demand the demo auth acknowledgement outside production', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        NODE_ENV: 'development',
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: undefined,
+      }),
+    ).toMatchObject({ AUTH_DEMO_LOGIN_ENABLED: true });
+  });
+
+  it('still requires VIETMAP_API_KEY when MAP_PROVIDER=vietmap', () => {
+    expect(() =>
+      parseEnv({ ...validProductionEnv, VIETMAP_API_KEY: '' }),
+    ).toThrow(/VIETMAP_API_KEY/);
+  });
+
+  it('rejects a whitespace-only VIETMAP_API_KEY', () => {
+    expect(() =>
+      parseEnv({ ...validProductionEnv, VIETMAP_API_KEY: '   ' }),
+    ).toThrow(/VIETMAP_API_KEY/);
+  });
+
+  it('rejects the demo fallback alongside a real Vietmap key in production', () => {
+    // With ALLOW_DEMO_PROVIDER=true, a failed Vietmap call silently serves the
+    // demo map instead of failing loudly — production would show simulated
+    // routes while claiming to run Vietmap.
+    expect(() =>
+      parseEnv({ ...validProductionEnv, ALLOW_DEMO_PROVIDER: 'true' }),
+    ).toThrow(/ALLOW_DEMO_PROVIDER/);
+  });
+
+  it('rejects the well-known demo OTP in production', () => {
+    // `123456` opened every seeded account, so knowing it was a full sign-in
+    // bypass for the demo admin.
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: '123456',
+      }),
+    ).toThrow(/AUTH_DEMO_OTP/);
+  });
+
+  it('requires an explicit demo OTP when demo login is on in production', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: undefined,
+      }),
+    ).toThrow(/AUTH_DEMO_OTP/);
+  });
+
+  it('accepts a generated demo OTP in production', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: '481920',
+      }),
+    ).toMatchObject({ AUTH_DEMO_OTP: '481920' });
+  });
+
+  it('rejects a demo OTP that is not a plausible code', () => {
+    expect(() =>
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'true',
+        ALLOW_DEMO_AUTH_PROVIDER: 'true',
+        AUTH_DEMO_OTP: 'abc',
+      }),
+    ).toThrow();
+  });
+
+  it('does not require a demo OTP when demo login is off', () => {
+    expect(
+      parseEnv({
+        ...validProductionEnv,
+        AUTH_DEMO_LOGIN_ENABLED: 'false',
+        ALLOW_DEMO_AUTH_PROVIDER: undefined,
+        AUTH_DEMO_OTP: undefined,
+      }),
+    ).toMatchObject({ AUTH_DEMO_LOGIN_ENABLED: false });
+  });
+
   it('accepts FCM_ENABLED=true alongside FIREBASE_PROJECT_ID', () => {
     expect(
       parseEnv({ ...validProductionEnv, FCM_ENABLED: 'true' }),

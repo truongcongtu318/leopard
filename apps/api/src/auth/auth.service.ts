@@ -65,6 +65,17 @@ const DEMO_ROLES = new Map<string, Role>([
   ['0900000004', 'ADMIN'],
   ['+84900000001', 'CUSTOMER'],
   ['+84900000002', 'DRIVER'],
+  // Remaining seeded drivers, mirroring DEMO_IDENTITIES.
+  ['+840000000005', 'DRIVER'],
+  ['+840000000006', 'DRIVER'],
+  ['+840000000007', 'DRIVER'],
+  ['+840000000008', 'DRIVER'],
+  ['0900000005', 'DRIVER'],
+  ['0900000006', 'DRIVER'],
+  ['0900000007', 'DRIVER'],
+  ['0900000008', 'DRIVER'],
+  ['0987324561', 'DRIVER'],
+  ['+84987324561', 'DRIVER'],
 ]);
 
 @Injectable()
@@ -84,7 +95,7 @@ export class AuthService {
       throw new DomainError('INVALID_PHONE', 400, 'Số điện thoại không hợp lệ');
     }
 
-    const code = '123456';
+    const code = this.demoOtpCode();
     const expiresAt = Date.now() + 5 * 60 * 1000;
     this.otpStore.set(phone, { code, expiresAt });
     const normalized = this.normalizePhone(phone);
@@ -96,6 +107,19 @@ export class AuthService {
       success: true,
       message: 'Mã OTP đã được gửi thành công',
     };
+  }
+
+  /**
+   * The code the demo OTP path accepts.
+   *
+   * Defaults to the classic 123456 outside production, where a fixed code is
+   * convenient. In production the env schema requires AUTH_DEMO_OTP and rejects
+   * the well-known values, so this never becomes a guessable production login.
+   */
+  private demoOtpCode(): string {
+    const configured = (process.env.AUTH_DEMO_OTP ?? '').trim();
+    if (configured.length > 0) return configured;
+    return '123456';
   }
 
   public async verifyOtp(
@@ -119,10 +143,13 @@ export class AuthService {
       (altPhone ? this.otpStore.get(altPhone) : undefined);
 
     const isStoredMatch = stored && stored.code === otp && stored.expiresAt > Date.now();
+    // Outside production the demo path stays available for local runs; in
+    // production it additionally needs the explicit acknowledgement, so a real
+    // deployment cannot accept the universal test code by accident.
     const isDemoAllowed =
-      process.env.AUTH_DEMO_LOGIN_ENABLED === 'true' ||
-      (process.env.NODE_ENV ?? 'development') !== 'production';
-    const isUniversalTestCode = isDemoAllowed && (otp === '123456' || otp === '654321');
+      process.env.AUTH_DEMO_LOGIN_ENABLED === 'true' &&
+      (!this.isProduction() || this.isDemoAuthAcknowledged());
+    const isUniversalTestCode = isDemoAllowed && otp === this.demoOtpCode();
 
     if (!isStoredMatch && !isUniversalTestCode) {
       throw new DomainError('INVALID_OTP', 400, 'Mã OTP không đúng hoặc đã hết hạn');
@@ -152,6 +179,7 @@ export class AuthService {
     const provider = new DemoOtpProvider({
       enabled: process.env.AUTH_DEMO_LOGIN_ENABLED === 'true',
       nodeEnv: process.env.NODE_ENV ?? 'development',
+      allowInProduction: this.isDemoAuthAcknowledged(),
     });
     const identity = await this.verifyProviderToken(() => provider.verify(accountId), {
       disabledCode: 'DEMO_LOGIN_DISABLED',
@@ -371,6 +399,20 @@ export class AuthService {
     }
 
     return null;
+  }
+
+  private isProduction(): boolean {
+    return (process.env.NODE_ENV ?? 'development') === 'production';
+  }
+
+  /**
+   * Whether a production deployment has explicitly opted in to demo auth.
+   * The env schema refuses to start without this when
+   * `AUTH_DEMO_LOGIN_ENABLED=true`, so the provider check here is the second
+   * line of defence rather than the only one.
+   */
+  private isDemoAuthAcknowledged(): boolean {
+    return process.env.ALLOW_DEMO_AUTH_PROVIDER === 'true';
   }
 
   private normalizePhone(phone: string): string {

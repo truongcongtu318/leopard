@@ -5,6 +5,19 @@ import { Animated, PanResponder } from 'react-native';
 const mockDriverOrderDetailRuntime = jest.fn<(props: unknown) => null>(() => null);
 let mockSearchParams: Readonly<Record<string, string | readonly string[] | undefined>> = {};
 
+// The e-POD watermark stamps the driver's real position, so the device location
+// has to be stubbed for the capture flow to produce coordinates.
+const mockRequestForegroundPermissionsAsync = jest.fn<() => Promise<{ status: string }>>();
+const mockGetCurrentPositionAsync = jest.fn<
+  () => Promise<{ coords: { latitude: number; longitude: number } }>
+>();
+
+jest.mock('expo-location', () => ({
+  Accuracy: { High: 6, Balanced: 3 },
+  requestForegroundPermissionsAsync: () => mockRequestForegroundPermissionsAsync(),
+  getCurrentPositionAsync: () => mockGetCurrentPositionAsync(),
+}));
+
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockSearchParams,
 }));
@@ -21,6 +34,10 @@ describe('Driver order detail route', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSearchParams = {};
+    mockRequestForegroundPermissionsAsync.mockResolvedValue({ status: 'granted' });
+    mockGetCurrentPositionAsync.mockResolvedValue({
+      coords: { latitude: 10.7626, longitude: 106.6602 },
+    });
   });
 
   it('forwards the exact validated order ID to the runtime container', async () => {
@@ -72,7 +89,9 @@ describe('Driver order detail route', () => {
     const captureBtn = screen.getByTestId('btn-capture-cargo-photo');
     await fireEvent.press(captureBtn);
     expect(screen.getByTestId('camera-watermark-overlay')).toBeTruthy();
-    expect(screen.getByText(/GPS lock/)).toBeTruthy();
+    // The watermark carries the device position, not a fixed demo coordinate.
+    expect(await screen.findByText(/10\.76260° N, 106\.66020° E/)).toBeTruthy();
+    expect(screen.queryByText(/GPS lock/)).toBeNull();
     expect(screen.getByText(/LEOPARD e-POD/)).toBeTruthy();
 
     // Part 2: Warehouse receiver digital signature pad
@@ -89,6 +108,20 @@ describe('Driver order detail route', () => {
       nativeEvent: { actionName: 'activate' },
     });
     expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-order-1');
+
+    await screen.unmount();
+  });
+
+  it('says the position is unavailable instead of inventing coordinates when GPS is blocked', async () => {
+    mockRequestForegroundPermissionsAsync.mockResolvedValue({ status: 'denied' });
+
+    const screen = await render(<DriverOrderDetailScreen orderId="order-1" />);
+
+    await fireEvent.press(screen.getByTestId('btn-capture-cargo-photo'));
+
+    expect(await screen.findByText('Chưa có vị trí GPS')).toBeTruthy();
+    expect(screen.queryByText(/GPS lock/)).toBeNull();
+    expect(screen.queryByText(/10\.7769/)).toBeNull();
 
     await screen.unmount();
   });

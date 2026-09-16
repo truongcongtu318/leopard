@@ -2,7 +2,15 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, customerPalette, layout, spacing, typography } from '../theme/tokens';
+import {
+  colors,
+  customerPalette,
+  layout,
+  letterSpacing,
+  spacing,
+  typeScale,
+  typography,
+} from '../theme/tokens';
 import { Button } from './Button';
 import { LedgerSection } from './LedgerSection';
 import { MapPanel } from './MapPanel';
@@ -75,7 +83,38 @@ describe('ScreenScaffold and SectionHeading', () => {
 
     expect(heading.props.accessibilityRole).toBe('header');
     expect(heading.props.numberOfLines).toBeUndefined();
-    expect(StyleSheet.flatten(heading.props.style)).toMatchObject(typography.sectionTitle);
+    // Section headings now carry the HIG Title 3 style, not the legacy token.
+    expect(StyleSheet.flatten(heading.props.style)).toMatchObject(typeScale.title3);
+    expect(heading.props.dynamicTypeRamp).toBe('title3');
+
+    await screen.unmount();
+  });
+
+  it('renders scaffold typography from the HIG ramp, not local literals', async () => {
+    const screen = await render(
+      <ScreenScaffold
+        eyebrow="DRIVER · FIELD COCKPIT"
+        subtitle="Ưu tiên chuyến đang thực hiện"
+        title="Bàn công việc"
+      >
+        <Text>Nội dung</Text>
+      </ScreenScaffold>,
+    );
+
+    const title = screen.getByText('Bàn công việc');
+    expect(StyleSheet.flatten(title.props.style)).toMatchObject(typeScale.headline);
+    expect(title.props.dynamicTypeRamp).toBe('headline');
+
+    const eyebrow = screen.getByText('DRIVER · FIELD COCKPIT');
+    expect(StyleSheet.flatten(eyebrow.props.style)).toMatchObject({
+      fontSize: typeScale.caption2.fontSize,
+      letterSpacing: letterSpacing.uppercaseLabel,
+    });
+    expect(eyebrow.props.dynamicTypeRamp).toBe('caption2');
+
+    const subtitle = screen.getByText('Ưu tiên chuyến đang thực hiện');
+    expect(StyleSheet.flatten(subtitle.props.style)).toMatchObject(typeScale.footnote);
+    expect(subtitle.props.dynamicTypeRamp).toBe('footnote');
 
     await screen.unmount();
   });

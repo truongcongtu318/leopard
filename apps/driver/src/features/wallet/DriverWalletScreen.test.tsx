@@ -90,4 +90,75 @@ describe('DriverWalletScreen', () => {
     expect(screen.getByText('Đã duyệt')).toBeTruthy(); // APPROVED row's status label
     await screen.unmount();
   });
+
+  it('renders balance card with testID="driver-wallet-balance-card" and button with testID="btn-request-withdrawal"', async () => {
+    const screen = await render(<DriverWalletScreen {...baseProps} />);
+    expect(screen.getByTestId('driver-wallet-balance-card')).toBeTruthy();
+    expect(screen.getByTestId('btn-request-withdrawal')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('renders transaction history with status indicators (+cước, -phí sàn, -rút tiền)', async () => {
+    const mixedProps: DriverWalletScreenProps = {
+      ...baseProps,
+      history: [
+        {
+          id: 'tx-1',
+          status: 'APPROVED',
+          amountVnd: 500000,
+          bankName: 'MB Bank',
+          bankAccountNumber: '0987654321',
+          bankAccountName: 'NGUYEN VAN A',
+          createdAt: '2026-09-10T08:30:00.000Z',
+          type: 'WITHDRAWAL',
+        },
+        {
+          id: 'tx-2',
+          status: 'APPROVED',
+          amountVnd: 250000,
+          bankName: null,
+          bankAccountNumber: null,
+          bankAccountName: null,
+          createdAt: '2026-09-11T10:00:00.000Z',
+          type: 'ORDER_PAYOUT',
+          title: 'Cước chuyến LP-D-260815-001',
+        },
+        {
+          id: 'tx-3',
+          status: 'APPROVED',
+          amountVnd: 37500,
+          bankName: null,
+          bankAccountNumber: null,
+          bankAccountName: null,
+          createdAt: '2026-09-11T10:01:00.000Z',
+          type: 'PLATFORM_FEE',
+          title: 'Phí nền tảng 15%',
+        },
+      ],
+    };
+
+    const screen = await render(<DriverWalletScreen {...mixedProps} />);
+    expect(screen.getByText('-rút tiền')).toBeTruthy();
+    expect(screen.getByText('+cước')).toBeTruthy();
+    expect(screen.getByText('-phí sàn')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('renders linked bank accounts bento card', async () => {
+    const linkedProps: DriverWalletScreenProps = {
+      ...baseProps,
+      summary: {
+        ...baseProps.summary,
+        bankName: 'MB Bank',
+        bankAccountNumber: '0987654321',
+        bankAccountName: 'NGUYEN VAN A',
+      },
+    };
+
+    const screen = await render(<DriverWalletScreen {...linkedProps} />);
+    expect(screen.getByTestId('driver-linked-bank-card')).toBeTruthy();
+    expect(screen.getByText('Tài khoản liên kết')).toBeTruthy();
+    expect(screen.getByText('0987654321')).toBeTruthy();
+    await screen.unmount();
+  });
 });

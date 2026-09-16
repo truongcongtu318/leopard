@@ -19,6 +19,7 @@ import {
   ScreenScaffold,
   ScreenState,
   StatusBadge,
+  typeScale,
 } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
@@ -50,6 +51,7 @@ export type DriverHistoryScreenProps = Readonly<{
   onNavigate?: (route: string) => void;
 }>;
 
+type StatusFilterType = 'ALL' | 'DELIVERED' | 'CANCELLED';
 type DateFilterType = 'ALL' | 'today' | 'week';
 
 export function DriverHistoryScreen({
@@ -61,13 +63,21 @@ export function DriverHistoryScreen({
   onNavigate,
 }: DriverHistoryScreenProps) {
   const router = useRouter();
+  const [statusFilter, setStatusFilter] = useState<StatusFilterType>('ALL');
   const [dateFilter, setDateFilter] = useState<DateFilterType>('ALL');
   const [selectedEpodTrip, setSelectedEpodTrip] = useState<HistoryTripItem | null>(null);
   const { openDrawer } = useDriverDrawer();
 
   const displayedList = items.filter((item) => {
-    if (dateFilter === 'ALL') return true;
-    return item.datePeriod === dateFilter;
+    if (statusFilter === 'DELIVERED' && item.status !== 'DELIVERED') return false;
+    if (
+      statusFilter === 'CANCELLED' &&
+      item.status !== 'CANCELLED' &&
+      item.status !== 'INCIDENT_CANCELLED'
+    )
+      return false;
+    if (dateFilter !== 'ALL' && item.datePeriod !== dateFilter) return false;
+    return true;
   });
 
   // These two are computed only over the currently fetched batch (not a
@@ -131,17 +141,56 @@ export function DriverHistoryScreen({
           <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
         ) : null}
 
-        {/* 2. Date Filter Segmented Toolbar */}
+        {/* 2. Status Filter Segmented Toolbar */}
         <View accessibilityRole="toolbar" style={styles.filterRow}>
+          <Pressable
+            accessibilityLabel="Lọc Tất cả"
+            accessibilityRole="button"
+            accessibilityState={{ selected: statusFilter === 'ALL' }}
+            onPress={() => setStatusFilter('ALL')}
+            style={[styles.filterChip, statusFilter === 'ALL' ? styles.filterChipActive : null]}
+          >
+            <Text style={[styles.filterText, statusFilter === 'ALL' ? styles.filterTextActive : null]}>
+              Tất cả ({items.length})
+            </Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Lọc Đã giao"
+            accessibilityRole="button"
+            accessibilityState={{ selected: statusFilter === 'DELIVERED' }}
+            onPress={() => setStatusFilter('DELIVERED')}
+            style={[styles.filterChip, statusFilter === 'DELIVERED' ? styles.filterChipActive : null]}
+          >
+            <Text style={[styles.filterText, statusFilter === 'DELIVERED' ? styles.filterTextActive : null]}>
+              Đã giao ({items.filter((i) => i.status === 'DELIVERED').length})
+            </Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Lọc Đã hủy"
+            accessibilityRole="button"
+            accessibilityState={{ selected: statusFilter === 'CANCELLED' }}
+            onPress={() => setStatusFilter('CANCELLED')}
+            style={[styles.filterChip, statusFilter === 'CANCELLED' ? styles.filterChipActive : null]}
+          >
+            <Text style={[styles.filterText, statusFilter === 'CANCELLED' ? styles.filterTextActive : null]}>
+              Đã hủy ({items.filter((i) => i.status === 'CANCELLED' || i.status === 'INCIDENT_CANCELLED').length})
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* 3. Date Filter Toolbar (Mọi lúc / Hôm nay / Tuần này) */}
+        <View accessibilityRole="toolbar" style={styles.dateFilterRow}>
           <Pressable
             accessibilityLabel="Lọc tất cả chuyến xe"
             accessibilityRole="button"
             accessibilityState={{ selected: dateFilter === 'ALL' }}
             onPress={() => setDateFilter('ALL')}
-            style={[styles.filterChip, dateFilter === 'ALL' ? styles.filterChipActive : null]}
+            style={[styles.dateFilterChip, dateFilter === 'ALL' ? styles.dateFilterChipActive : null]}
           >
-            <Text style={[styles.filterText, dateFilter === 'ALL' ? styles.filterTextActive : null]}>
-              Tất cả ({items.length})
+            <Text style={[styles.dateFilterText, dateFilter === 'ALL' ? styles.dateFilterTextActive : null]}>
+              Mọi lúc
             </Text>
           </Pressable>
 
@@ -150,9 +199,9 @@ export function DriverHistoryScreen({
             accessibilityRole="button"
             accessibilityState={{ selected: dateFilter === 'today' }}
             onPress={() => setDateFilter('today')}
-            style={[styles.filterChip, dateFilter === 'today' ? styles.filterChipActive : null]}
+            style={[styles.dateFilterChip, dateFilter === 'today' ? styles.dateFilterChipActive : null]}
           >
-            <Text style={[styles.filterText, dateFilter === 'today' ? styles.filterTextActive : null]}>
+            <Text style={[styles.dateFilterText, dateFilter === 'today' ? styles.dateFilterTextActive : null]}>
               Hôm nay
             </Text>
           </Pressable>
@@ -162,9 +211,9 @@ export function DriverHistoryScreen({
             accessibilityRole="button"
             accessibilityState={{ selected: dateFilter === 'week' }}
             onPress={() => setDateFilter('week')}
-            style={[styles.filterChip, dateFilter === 'week' ? styles.filterChipActive : null]}
+            style={[styles.dateFilterChip, dateFilter === 'week' ? styles.dateFilterChipActive : null]}
           >
-            <Text style={[styles.filterText, dateFilter === 'week' ? styles.filterTextActive : null]}>
+            <Text style={[styles.dateFilterText, dateFilter === 'week' ? styles.dateFilterTextActive : null]}>
               Tuần này
             </Text>
           </Pressable>
@@ -243,6 +292,7 @@ export function DriverHistoryScreen({
                       <Text style={styles.timeText}>{item.completedAtLabel}</Text>
                       {item.hasProof ? (
                         <Pressable
+                          testID={`btn-view-epod-${item.id}`}
                           accessibilityLabel={`Xem ảnh e-POD của chuyến ${item.reference}`}
                           accessibilityRole="button"
                           hitSlop={8}
@@ -285,7 +335,11 @@ export function DriverHistoryScreen({
           onPress={() => setSelectedEpodTrip(null)}
           style={styles.modalBackdrop}
         >
-          <Pressable onPress={(e) => e.stopPropagation()} style={styles.modalSheet}>
+          <Pressable
+            testID="epod-proof-modal"
+            onPress={(e) => e.stopPropagation()}
+            style={styles.modalSheet}
+          >
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
                 <IconCameraProof color={colors.brand.background} size={20} />
@@ -391,7 +445,7 @@ const styles = StyleSheet.create({
   },
   kpiValue: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -400,7 +454,7 @@ const styles = StyleSheet.create({
   },
   kpiLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
   },
 
@@ -431,6 +485,32 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   filterTextActive: {
+    color: '#FFFFFF',
+  },
+
+  /* Date Filter Toolbar */
+  dateFilterRow: {
+    flexDirection: 'row',
+    gap: spacing.xxs,
+  },
+  dateFilterChip: {
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: radius.pill,
+    flex: 1,
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingVertical: 6,
+  },
+  dateFilterChipActive: {
+    backgroundColor: '#0F172A',
+  },
+  dateFilterText: {
+    color: '#64748B',
+    fontSize: typeScale.caption1.fontSize,
+    fontWeight: '600',
+  },
+  dateFilterTextActive: {
     color: '#FFFFFF',
   },
 
@@ -477,7 +557,7 @@ const styles = StyleSheet.create({
   },
   referenceText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   statusRow: {
@@ -499,7 +579,7 @@ const styles = StyleSheet.create({
   },
   paymentMethodLabel: {
     color: leopardPalette.textSubtle,
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '500',
     marginTop: 1,
   },
@@ -544,7 +624,7 @@ const styles = StyleSheet.create({
   },
   routeOriginText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   distanceEtaRow: {
@@ -560,7 +640,7 @@ const styles = StyleSheet.create({
   },
   routeDestText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
 
@@ -573,7 +653,7 @@ const styles = StyleSheet.create({
   },
   cargoPillText: {
     color: '#475569',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '500',
   },
 
@@ -594,7 +674,7 @@ const styles = StyleSheet.create({
   },
   timeText: {
     color: leopardPalette.textSubtle,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
   },
   proofBadgeBtn: {
@@ -686,7 +766,7 @@ const styles = StyleSheet.create({
   },
   modalSub: {
     color: '#64748B',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontVariant: ['tabular-nums'],
   },
   modalCloseBtn: {
@@ -725,7 +805,7 @@ const styles = StyleSheet.create({
   },
   watermarkText: {
     color: '#38BDF8',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
@@ -744,7 +824,7 @@ const styles = StyleSheet.create({
   },
   signatureTitle: {
     color: '#0F172A',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   signatureCanvasPreview: {
@@ -766,7 +846,7 @@ const styles = StyleSheet.create({
   },
   signerNameText: {
     color: '#475569',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
 });

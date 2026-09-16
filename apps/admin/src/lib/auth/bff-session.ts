@@ -140,21 +140,51 @@ export function readCookie(request: Request, name: string): string | null {
   return null;
 }
 
-export function isSameOriginRequest(request: Request): boolean {
-  let requestOrigin: string;
+/**
+ * Origins this request could legitimately have been sent to.
+ *
+ * `new URL(request.url).origin` is only one of them, because Next.js builds that
+ * URL from the hostname the server was initialised with. Behind a reverse proxy
+ * that is an internal name (`admin:3002`), which never equals the public origin
+ * the browser sends in `Origin` — so every proxied POST was rejected as
+ * cross-site and the admin console could not be logged into through the gateway
+ * at all. The proxy's own forwarding headers carry the public host, so the check
+ * accepts a match against those too.
+ */
+function requestOrigins(request: Request): string[] {
+  const origins: string[] = [];
+  const add = (value: string | null): void => {
+    if (value && !origins.includes(value)) origins.push(value);
+  };
+
   try {
-    requestOrigin = new URL(request.url).origin;
+    add(new URL(request.url).origin);
   } catch {
-    return false;
+    // A malformed url just means this candidate cannot be used.
   }
 
+  const scheme = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const forwardedHost =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+    request.headers.get("host")?.trim() ??
+    null;
+  if (forwardedHost) {
+    add(scheme ? `${scheme}://${forwardedHost}` : `https://${forwardedHost}`);
+  }
+
+  return origins;
+}
+
+export function isSameOriginRequest(request: Request): boolean {
+  const allowedOrigins = requestOrigins(request);
+
   const origin = request.headers.get("origin");
-  if (origin) return origin === requestOrigin;
+  if (origin) return allowedOrigins.includes(origin);
 
   const referer = request.headers.get("referer");
   if (referer) {
     try {
-      return new URL(referer).origin === requestOrigin;
+      return allowedOrigins.includes(new URL(referer).origin);
     } catch {
       return false;
     }

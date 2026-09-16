@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { colors, leopardPalette, radius, spacing, Button, ScreenScaffold, IconCamera, IconClock, IconIdCard, IconPhone, IconSecurityShield, IconSpeedTruck, IconSupport247, IconUser, IconWarningShield } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typeScale, Button, ScreenScaffold, IconCamera, IconCheck, IconClock, IconIdCard, IconPhone, IconSecurityShield, IconSpeedTruck, IconSupport247, IconUser, IconWarningShield, iconSize } from '@leopard/mobile-core';
 
 export type DriverEditProfileScreenProps = Readonly<{
   initialName: string;
@@ -308,7 +308,8 @@ export function DriverEditProfileScreen({
                 <Text style={styles.readonlyValue}>{phone}</Text>
               </View>
               <View style={styles.verifiedBadge}>
-                <Text style={styles.verifiedBadgeText}>✓ Xác thực OTP</Text>
+                <IconCheck color="#059669" size={iconSize.xs} />
+                <Text style={styles.verifiedBadgeText}>Xác thực OTP</Text>
               </View>
             </View>
 
@@ -376,7 +377,8 @@ export function DriverEditProfileScreen({
                 <Text style={styles.readonlyValue}>4/4 Giấy tờ kiểm duyệt</Text>
               </View>
               <View style={styles.verifiedBadge}>
-                <Text style={styles.verifiedBadgeText}>✓ Đã duyệt</Text>
+                <IconCheck color="#059669" size={iconSize.xs} />
+                <Text style={styles.verifiedBadgeText}>Đã duyệt</Text>
               </View>
             </View>
           </View>
@@ -481,7 +483,7 @@ const styles = StyleSheet.create({
   },
   avatarActionBtnText: {
     color: colors.brand.background,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
 
@@ -503,12 +505,12 @@ const styles = StyleSheet.create({
   },
   guidelineTitle: {
     color: '#065F46',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   guidelineText: {
     color: '#047857',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     lineHeight: 16,
   },
 
@@ -518,7 +520,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '800',
     letterSpacing: 0.6,
     marginLeft: 4,
@@ -551,12 +553,12 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   textInput: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     padding: 0,
   },
@@ -567,7 +569,7 @@ const styles = StyleSheet.create({
   },
   errorTextRow: {
     color: '#DC2626',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
     marginLeft: 62,
     marginTop: -6,
@@ -582,7 +584,7 @@ const styles = StyleSheet.create({
   },
   errorBannerText: {
     color: '#DC2626',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -601,25 +603,28 @@ const styles = StyleSheet.create({
   },
   readonlyLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '600',
   },
   readonlyValue: {
     color: leopardPalette.textSlateDark,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
     backgroundColor: '#ECFDF5',
     borderColor: '#A7F3D0',
     borderRadius: 6,
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   verifiedBadgeText: {
     color: '#059669',
-    fontSize: 11,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
 
@@ -637,7 +642,7 @@ const styles = StyleSheet.create({
   securityNoticeText: {
     color: '#92400E',
     flex: 1,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     lineHeight: 16,
   },
   pressed: {

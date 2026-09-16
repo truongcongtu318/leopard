@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, ScreenScaffold, IconBell, IconCheck, IconChevronRight, IconClock, IconLocationPin, IconRadarPulse, IconRoute, IconSecurityShield, IconSettings, IconSpeedTruck, IconSupport247, IconTrash, IconWarningShield } from '@leopard/mobile-core';
+import { colors, leopardPalette, radius, spacing, typeScale, ScreenScaffold, IconBell, IconCheck, IconChevronRight, IconClock, IconLocationPin, IconRadarPulse, IconRoute, IconSecurityShield, IconSettings, IconSpeedTruck, IconSupport247, IconTrash, IconWarningShield } from '@leopard/mobile-core';
 import { useDriverDrawer } from '../navigation/DriverDrawerContext';
 import { DriverMenuButton } from '../navigation/DriverMenuButton';
 
@@ -747,18 +747,18 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     color: '#94A3B8',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
     marginBottom: 2,
   },
   metricValue: {
     color: '#F8FAFC',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '800',
   },
   metricValueGreen: {
     color: '#10B981',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '800',
   },
   metricDivider: {
@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '800',
     letterSpacing: 0.6,
     marginLeft: 4,
@@ -833,12 +833,12 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     color: leopardPalette.textSlateDark,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
   },
   settingDesc: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     lineHeight: 16,
   },
 
@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
   },
   navSelectorText: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   navSelectorTextActive: {
@@ -937,7 +937,7 @@ const styles = StyleSheet.create({
   },
   cleanActionText: {
     color: '#DC2626',
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
   },
   hotlineText: {
@@ -975,7 +975,7 @@ const styles = StyleSheet.create({
   },
   sosBtnText: {
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '800',
     letterSpacing: 0.4,
   },

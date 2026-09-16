@@ -31,6 +31,7 @@ import {
   VietnamFlagIcon,
   TruckLoader,
   IconAlertTriangle,
+  typeScale,
 } from '@leopard/mobile-core';
 import { sendPhoneOtp, resetRecaptcha, type OtpChallenge } from '@leopard/mobile-core/src/auth/firebase-auth';
 
@@ -1053,12 +1054,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   countryCode: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
   countryChevron: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     color: '#64748B',
     fontWeight: '700',
     marginTop: -1,
@@ -1266,7 +1267,7 @@ const styles = StyleSheet.create({
   },
   modalErrorText: {
     color: '#B91C1C',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -1314,7 +1315,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   resendActionLink: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: brandNavy,
     textDecorationLine: 'underline',
@@ -1337,7 +1338,7 @@ const styles = StyleSheet.create({
   requiredStar: {
     color: '#EF4444',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
   },
   input: {
     borderWidth: 1.5,
@@ -1478,7 +1479,7 @@ const styles = StyleSheet.create({
   },
   driverLinkText: {
     color: brandNavy,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
 });

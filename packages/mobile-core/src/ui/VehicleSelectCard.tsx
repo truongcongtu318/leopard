@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { leopardElevation, leopardPalette, leopardRadius, spacing, typography } from '../theme/tokens';
+import { leopardElevation, leopardPalette, leopardRadius, spacing, typography, typeScale } from '../theme/tokens';
 import { IconVehicle3Wheel, IconVehicleHeavyTruck, IconVehicleLightTruck } from './icons/CoreIcons';
 
 export type VehicleCategory = '3_WHEEL_BIKE' | 'LIGHT_TRUCK' | 'HEAVY_TRUCK';
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
   },
   priceTextSelected: {

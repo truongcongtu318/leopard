@@ -2,13 +2,12 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
-  colors,
-  radius,
-  spacing,
-  IconEarnings,
   IconHome,
   IconOrders,
   IconUser,
+  IconWallet,
+  radius,
+  spacing,
 } from '@leopard/mobile-core';
 
 export type DriverBottomNavigationProps = Readonly<{
@@ -20,6 +19,7 @@ export type DriverBottomNavigationProps = Readonly<{
 export type DriverNavItem = Readonly<{
   key: string;
   label: string;
+  a11yLabel?: string;
   route: string;
   icon: (active: boolean) => React.ReactNode;
 }>;
@@ -28,26 +28,30 @@ const NAV_ITEMS: readonly DriverNavItem[] = [
   {
     key: 'home',
     label: 'Trang chủ',
+    a11yLabel: 'Trang chủ',
     route: '/orders',
-    icon: (active) => <IconHome color={active ? '#0B1E42' : '#64748B'} size={20} />,
+    icon: (active) => <IconHome color={active ? '#0B1E42' : '#64748B'} filled={active} size={20} />,
   },
   {
-    key: 'orders',
+    key: 'board',
     label: 'Đơn',
-    route: '/history',
-    icon: (active) => <IconOrders color={active ? '#0B1E42' : '#64748B'} size={20} />,
+    a11yLabel: 'Đơn',
+    route: '/board',
+    icon: (active) => <IconOrders color={active ? '#0B1E42' : '#64748B'} filled={active} size={20} />,
   },
   {
     key: 'earnings',
     label: 'Thu nhập',
+    a11yLabel: 'Thu nhập',
     route: '/earnings',
-    icon: (active) => <IconEarnings color={active ? '#0B1E42' : '#64748B'} size={20} />,
+    icon: (active) => <IconWallet color={active ? '#0B1E42' : '#64748B'} size={20} />,
   },
   {
     key: 'profile',
-    label: 'Tôi',
+    label: 'Hồ sơ',
+    a11yLabel: 'Hồ sơ',
     route: '/profile',
-    icon: (active) => <IconUser color={active ? '#0B1E42' : '#64748B'} size={20} />,
+    icon: (active) => <IconUser color={active ? '#0B1E42' : '#64748B'} filled={active} size={20} />,
   },
 ];
 
@@ -72,19 +76,18 @@ export function DriverBottomNavigation({
           const isActive = activeTab === item.key;
           return (
             <Pressable
-              accessibilityLabel={item.label}
+              accessibilityLabel={item.a11yLabel || item.label}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
               key={item.key}
               onPress={() => handlePress(item)}
-              style={({ pressed }) => [
-                styles.navItem,
-                isActive ? styles.navItemActive : null,
-                pressed ? styles.pressed : null,
-              ]}
+              style={({ pressed }) => [styles.navItem, pressed ? styles.pressed : null]}
             >
               <View style={styles.iconWrap}>{item.icon(isActive)}</View>
-              <Text style={[styles.navLabel, isActive ? styles.navLabelActive : null]}>
+              <Text
+                numberOfLines={1}
+                style={[styles.navLabel, isActive ? styles.navLabelActive : null]}
+              >
                 {item.label}
               </Text>
             </Pressable>
@@ -97,38 +100,42 @@ export function DriverBottomNavigation({
 
 const styles = StyleSheet.create({
   dockWrapper: {
-    bottom: Platform.OS === 'ios' ? 24 : 16,
-    left: 16,
+    backgroundColor: '#F8FAFC',
+    bottom: 0,
+    left: 0,
+    paddingBottom: Platform.OS === 'ios' ? spacing.md : spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xxs,
     position: 'absolute',
-    right: 16,
+    right: 0,
     zIndex: 50,
   },
   dockContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
-    borderRadius: 26,
+    borderRadius: radius.tabBar,
     borderWidth: 1,
-    elevation: 8,
+    elevation: 6,
     flexDirection: 'row',
-    height: 64,
+    gap: spacing.xxs,
     justifyContent: 'space-around',
-    paddingHorizontal: 8,
+    padding: spacing.xxs,
     shadowColor: '#0B1E42',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    ...Platform.select({
+      web: { boxShadow: '0 4px 12px rgba(11, 30, 66, 0.08)' } as object,
+    }),
   },
   navItem: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: radius.control,
     flex: 1,
-    height: 48,
+    minHeight: 48,
     justifyContent: 'center',
-    paddingVertical: 4,
-  },
-  navItemActive: {
-    backgroundColor: 'rgba(11, 30, 66, 0.07)',
+    paddingVertical: 2,
   },
   iconWrap: {
     alignItems: 'center',
@@ -137,7 +144,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     color: '#64748B',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     marginTop: 2,
   },

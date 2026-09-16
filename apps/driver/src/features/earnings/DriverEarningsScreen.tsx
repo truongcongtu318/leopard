@@ -1,10 +1,18 @@
 // apps/driver/src/features/earnings/DriverEarningsScreen.tsx
+import { useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { colors, leopardPalette, radius, spacing, IconClock, IconSecurityShield, IconSpeedTruck, IconStar, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
-import { useDriverDrawer } from '../navigation/DriverDrawerContext';
-import { DriverMenuButton } from '../navigation/DriverMenuButton';
+import {
+  AppText,
+  colors,
+  layout,
+  radius,
+  spacing,
+  IconChevronRight,
+  ScreenState,
+  SkeletonCard,
+} from '@leopard/mobile-core';
 import { DriverBottomNavigation } from '../navigation/DriverBottomNavigation';
 
 export type DriverEarningsScreenProps = Readonly<{
@@ -17,6 +25,22 @@ export type DriverEarningsScreenProps = Readonly<{
   onRetry: () => void;
   onNavigate?: (route: string) => void;
 }>;
+
+/** Scroll distance over which the large title hands off to the inline nav-bar title. */
+const TITLE_COLLAPSE_DISTANCE = 44;
+
+/**
+ * Every card on this screen sits on a pale canvas that's barely lighter than
+ * a muted surface — a border alone reads as washed out here. A soft shadow
+ * (not zero, not heavy) is what actually separates card from page.
+ */
+const cardShadow = {
+  shadowColor: colors.neutral.text,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 6,
+  elevation: 2,
+} as const;
 
 function formatCurrency(val: number): string {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
@@ -33,107 +57,283 @@ export function DriverEarningsScreen({
   onNavigate,
 }: DriverEarningsScreenProps) {
   const router = useRouter();
-  const { openDrawer } = useDriverDrawer();
   const completionRate = totalOrderCount > 0 ? Math.round((deliveredOrderCount / totalOrderCount) * 100) : 0;
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const onScroll = useRef(
+    Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+      useNativeDriver: true,
+    }),
+  ).current;
+
+  const barTitleOpacity = scrollY.interpolate({
+    inputRange: [TITLE_COLLAPSE_DISTANCE - 16, TITLE_COLLAPSE_DISTANCE],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+  const barBorderOpacity = scrollY.interpolate({
+    inputRange: [0, TITLE_COLLAPSE_DISTANCE],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const handleNavigate = useCallback(
+    (route: string) => (onNavigate ? onNavigate(route) : router.push(route as never)),
+    [onNavigate, router],
+  );
+
+  // The API only reports a lifetime total today — no per-period breakdown yet.
+  // These cards mirror the reference app's carousel shape without inventing
+  // day/week/month numbers we don't have.
+  const periodCards = [
+    { key: 'today', title: 'Thu nhập hôm nay', jobs: 0, amount: 0 },
+    { key: 'week', title: 'Thu nhập tuần này', jobs: 0, amount: 0 },
+    { key: 'month', title: 'Thu nhập tháng này', jobs: 0, amount: 0 },
+  ];
 
   return (
-    <View style={styles.screenContainer}>
-      <ScreenScaffold
-        headerLeading={<DriverMenuButton onPress={openDrawer} variant="plain" />}
-        headerTone="plain"
-        title="Thu nhập"
+    <View style={styles.screenRoot}>
+      <View style={styles.navBar} testID="driver-earnings-nav-bar">
+        <Animated.View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={[styles.navBarTitle, { opacity: barTitleOpacity }]}
+        >
+          <AppText numberOfLines={1} style={styles.navBarTitleText} variant="headline">
+            Thu nhập
+          </AppText>
+        </Animated.View>
+        <Animated.View style={[styles.navBarBorder, { opacity: barBorderOpacity }]} />
+      </View>
+
+      <Animated.ScrollView
+        contentContainerStyle={styles.content}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
       >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} style={styles.scrollWrap}>
-        {isLoading ? <ScreenState state="loading" /> : isError ? (
-          <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
+        <AppText accessibilityRole="header" style={styles.pageTitle} variant="largeTitle">
+          Thu nhập
+        </AppText>
+
+        {isLoading ? (
+          <View style={styles.sectionGap}>
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        ) : isError ? (
+          <View style={styles.boundaryBox}>
+            <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
+          </View>
         ) : (
           <>
-            <View style={styles.doubleBezelOuter}>
-              <View style={styles.doubleBezelInner}>
-                <Text style={styles.financialEyebrow}>TỔNG THU NHẬP (TẤT CẢ ĐƠN ĐÃ GIAO)</Text>
-                <Text style={styles.mainEarningsAmount}>{formatCurrency(lifetimeDeliveredVnd)}</Text>
-
-                <View style={styles.walletQuickActionBox}>
-                  <View style={styles.walletBalanceLeft}>
-                    <View style={styles.walletIconCircle}>
-                      <IconWallet color="#10B981" size={16} />
-                    </View>
-                    <View>
-                      <Text style={styles.walletAvailLabel}>Số dư khả dụng để rút</Text>
-                      <Text style={styles.walletAvailAmount}>{formatCurrency(availableBalanceVnd)}</Text>
-                    </View>
+            {/* Period cards: a horizontal carousel, one real value today (lifetime), rest 0 until the API reports per-period totals */}
+            <ScrollView
+              contentContainerStyle={styles.periodRow}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.periodScroll}
+            >
+              {periodCards.map((card) => (
+                <View key={card.key} style={styles.periodCard} testID={`kpi-period-${card.key}`}>
+                  <View style={styles.periodHeaderRow}>
+                    <AppText tone="secondary" variant="callout">
+                      {card.title}
+                    </AppText>
+                    <AppText tone="subtle" variant="footnote">
+                      {card.jobs} chuyến
+                    </AppText>
                   </View>
-                  <Text style={styles.walletLink} onPress={() => router.push('/wallet')}>
-                    Đến ví →
-                  </Text>
+                  <AppText numeric style={styles.periodAmount} variant="title1">
+                    {formatCurrency(card.amount)}
+                  </AppText>
+                  <Pressable
+                    accessibilityLabel={`Xem chi tiết ${card.title}`}
+                    accessibilityRole="button"
+                    onPress={() => handleNavigate('/history')}
+                  >
+                    <AppText style={styles.detailLinkText} variant="footnote">
+                      Xem chi tiết
+                    </AppText>
+                  </Pressable>
                 </View>
-              </View>
+              ))}
+            </ScrollView>
+
+            {/* Real totals — flat rows, not another set of bordered cards */}
+            <View style={styles.rowGroup} testID="kpi-net-payout">
+              <Pressable
+                accessibilityLabel="Tổng thu nhập trọn đời"
+                onPress={() => handleNavigate('/history')}
+                style={styles.row}
+              >
+                <View>
+                  <AppText variant="body">Tổng thu nhập (trọn đời)</AppText>
+                  <AppText numeric style={styles.rowValue} variant="title3">
+                    {formatCurrency(lifetimeDeliveredVnd)}
+                  </AppText>
+                </View>
+                <IconChevronRight color={colors.neutral.subtleText} size={18} />
+              </Pressable>
             </View>
 
-            <View style={styles.kpiGrid}>
-              <View style={styles.kpiBox}>
-                <View style={styles.kpiIconWrap}>
-                  <IconSpeedTruck color="#10B981" size={15} />
+            <View style={styles.rowGroup} testID="kpi-completed-trips">
+              <Pressable
+                accessibilityLabel="Cuốc xe đã hoàn tất"
+                onPress={() => handleNavigate('/history')}
+                style={styles.row}
+              >
+                <View>
+                  <AppText variant="body">Cuốc xe đã hoàn tất</AppText>
+                  <AppText numeric style={styles.rowValue} variant="title3">
+                    {deliveredOrderCount} cuốc xe
+                  </AppText>
                 </View>
-                <Text style={styles.kpiBoxValue}>{deliveredOrderCount}</Text>
-                <Text style={styles.kpiBoxLabel}>Đã hoàn thành</Text>
-              </View>
+                <IconChevronRight color={colors.neutral.subtleText} size={18} />
+              </Pressable>
 
-              <View style={styles.kpiBox}>
-                <View style={styles.kpiIconWrap}>
-                  <IconSecurityShield color="#0B1E42" size={15} />
-                </View>
-                <Text style={styles.kpiBoxValue}>{completionRate}%</Text>
-                <Text style={styles.kpiBoxLabel}>Tỷ lệ giao thành công</Text>
-              </View>
+              <View style={styles.rowDivider} />
 
-              <View style={styles.kpiBox}>
-                <View style={styles.kpiIconWrap}>
-                  <IconClock color="#94A3B8" size={15} />
+              <Pressable
+                accessibilityLabel="Tỷ lệ giao thành công"
+                style={styles.row}
+              >
+                <View>
+                  <AppText variant="body">Tỷ lệ giao thành công</AppText>
+                  <AppText numeric style={styles.rowValue} variant="title3">
+                    {completionRate}%
+                  </AppText>
                 </View>
-                <Text style={styles.kpiBoxValuePlaceholder}>Sắp ra mắt</Text>
-                <Text style={styles.kpiBoxLabel}>Giờ trực tuyến</Text>
-              </View>
+              </Pressable>
+            </View>
 
-              <View style={styles.kpiBox}>
-                <View style={styles.kpiIconWrap}>
-                  <IconStar color="#94A3B8" size={14} />
+            <View style={styles.rowGroup}>
+              <Pressable
+                accessibilityLabel="Số dư khả dụng để rút"
+                onPress={() => handleNavigate('/wallet')}
+                style={styles.row}
+              >
+                <View>
+                  <AppText variant="body">Số dư khả dụng để rút</AppText>
+                  <AppText numeric style={styles.rowValue} tone="success" variant="title3">
+                    {formatCurrency(availableBalanceVnd)}
+                  </AppText>
+                  <AppText tone="subtle" variant="caption2">
+                    Tự động cập nhật
+                  </AppText>
                 </View>
-                <Text style={styles.kpiBoxValuePlaceholder}>Sắp ra mắt</Text>
-                <Text style={styles.kpiBoxLabel}>Đánh giá</Text>
-              </View>
+                <IconChevronRight color={colors.neutral.subtleText} size={18} />
+              </Pressable>
             </View>
           </>
         )}
-      </ScrollView>
-    </ScreenScaffold>
+      </Animated.ScrollView>
 
-    <DriverBottomNavigation
-      activeTab="earnings"
-      onNavigate={onNavigate ?? ((route) => router.push(route))}
-    />
-  </View>
+      <DriverBottomNavigation activeTab="earnings" onNavigate={handleNavigate} />
+    </View>
   );
 }
 
+const NAV_BAR_HEIGHT = 44;
+const PERIOD_CARD_WIDTH = 300;
+
 const styles = StyleSheet.create({
-  screenContainer: { flex: 1, position: 'relative' },
-  scrollWrap: { flex: 1 },
-  scrollContent: { gap: spacing.sm, paddingBottom: 100 },
-  doubleBezelOuter: { backgroundColor: '#0B1E42', borderRadius: radius.bezelOuter, padding: 3, shadowColor: '#0B1E42', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
-  doubleBezelInner: { backgroundColor: '#FFFFFF', borderRadius: radius.bezelInner, borderColor: '#E2E8F0', borderWidth: 1, padding: spacing.md, gap: spacing.xs + 2 },
-  financialEyebrow: { color: '#0B1E42', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
-  mainEarningsAmount: { color: '#0B1E42', fontSize: 32, fontWeight: '800', fontVariant: ['tabular-nums'], letterSpacing: -0.5 },
-  walletQuickActionBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F0FDF4', borderColor: '#BBF7D0', borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginTop: 6 },
-  walletBalanceLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  walletIconCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#DCFCE7', alignItems: 'center', justifyContent: 'center' },
-  walletAvailLabel: { color: '#065F46', fontSize: 10.5, fontWeight: '600' },
-  walletAvailAmount: { color: '#064E3B', fontSize: 14, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  walletLink: { color: leopardPalette.primary, fontSize: 12.5, fontWeight: '700' },
-  kpiGrid: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },
-  kpiBox: { flex: 1, minWidth: '45%', backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderWidth: 1, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center', gap: 2, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2, elevation: 1 },
-  kpiIconWrap: { marginBottom: 2 },
-  kpiBoxValue: { color: '#0F172A', fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  kpiBoxValuePlaceholder: { color: '#94A3B8', fontSize: 11.5, fontWeight: '700', fontStyle: 'italic' },
-  kpiBoxLabel: { color: '#64748B', fontSize: 9.5, fontWeight: '600' },
+  screenRoot: {
+    backgroundColor: colors.neutral.canvas,
+    flex: 1,
+  },
+  navBar: {
+    alignItems: 'center',
+    height: NAV_BAR_HEIGHT,
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  navBarTitle: {
+    maxWidth: '70%',
+  },
+  navBarTitleText: {
+    color: colors.neutral.titleText,
+    textAlign: 'center',
+  },
+  navBarBorder: {
+    backgroundColor: colors.neutral.border,
+    bottom: 0,
+    height: StyleSheet.hairlineWidth,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
+  content: {
+    alignSelf: 'center',
+    gap: spacing.md,
+    maxWidth: layout.contentMaxWidth,
+    paddingBottom: layout.bottomNavClearance,
+    width: '100%',
+  },
+  pageTitle: {
+    color: colors.neutral.titleText,
+    paddingHorizontal: spacing.md,
+  },
+  sectionGap: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  boundaryBox: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+
+  periodScroll: {
+    flexGrow: 0,
+  },
+  periodRow: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  periodCard: {
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.md,
+    width: PERIOD_CARD_WIDTH,
+    ...cardShadow,
+  },
+  periodHeaderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  periodAmount: {
+    color: colors.neutral.titleText,
+  },
+  detailLinkText: {
+    color: colors.brand.blue,
+    fontWeight: '600',
+  },
+
+  rowGroup: {
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    marginHorizontal: spacing.md,
+    overflow: 'hidden',
+    ...cardShadow,
+  },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+  },
+  rowDivider: {
+    backgroundColor: colors.neutral.rowDivider,
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: spacing.md,
+  },
+  rowValue: {
+    marginTop: spacing.xxs,
+  },
 });

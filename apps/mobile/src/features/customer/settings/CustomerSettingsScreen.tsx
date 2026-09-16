@@ -11,6 +11,7 @@ import {
   systemFontFamily,
   IconChevron,
   ScreenScaffold,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export function CustomerSettingsScreen() {
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
   settingDesc: {
     fontFamily: systemFontFamily,
     color: '#64748B',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     marginTop: 2,
     lineHeight: 16,
   },

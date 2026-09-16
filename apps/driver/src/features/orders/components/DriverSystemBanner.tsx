@@ -95,7 +95,7 @@ export function DriverSystemBanner({
 
 const styles = StyleSheet.create({
   bannerContainer: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   radarWarningBanner: {
     alignItems: 'center',

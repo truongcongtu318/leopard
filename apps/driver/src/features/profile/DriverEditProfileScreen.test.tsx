@@ -1,4 +1,4 @@
-﻿import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { DriverEditProfileScreen } from './DriverEditProfileScreen';
@@ -41,8 +41,9 @@ describe('DriverEditProfileScreen', () => {
     expect(screen.getByText('DRV-88924')).toBeTruthy();
     expect(screen.getByText('51C-889.24 · Xe tải 2.5T')).toBeTruthy();
     expect(screen.getByText('Fleet Tân Bình (Pilot)')).toBeTruthy();
-    expect(screen.getByText('✓ Xác thực OTP')).toBeTruthy();
-    expect(screen.getByText('✓ Đã duyệt')).toBeTruthy();
+    // Verification badges use a vector icon, not a text glyph.
+    expect(screen.getByText('Xác thực OTP')).toBeTruthy();
+    expect(screen.getByText('Đã duyệt')).toBeTruthy();
 
     await screen.unmount();
   });

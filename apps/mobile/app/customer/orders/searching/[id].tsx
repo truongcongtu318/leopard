@@ -23,6 +23,7 @@ import {
   IconSpeedTruck,
   iosContinuousCurve,
   systemFontFamily,
+  typeScale,
 } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from '../../../../src/features/customer/orders/adapter';
 
@@ -500,7 +501,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     color: '#0B1E42',
     letterSpacing: -0.3,
@@ -594,7 +595,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   timerValue: {
-    fontSize: 32,
+    fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
     color: '#F59E0B',
     fontVariant: ['tabular-nums'],
@@ -778,7 +779,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     color: '#0B1E42',
     textAlign: 'center',
@@ -865,7 +866,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   matchedSubtitle: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     color: '#64748B',
     textAlign: 'center',
     lineHeight: 19,
@@ -881,12 +882,12 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   matchedOrderRef: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
   },
   matchedOrderRoute: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     color: '#64748B',
   },
   matchedActionBtn: {

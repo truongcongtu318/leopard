@@ -17,7 +17,7 @@ describe('DriverOrdersScreen current location', () => {
     jest.clearAllMocks();
   });
 
-  it('labels the map as the real current GPS position after resolving coordinates', async () => {
+  it('centres the map on the real current GPS position after resolving coordinates', async () => {
     mockGetDriverCurrentLocation.mockResolvedValue({
       kind: 'ready',
       coords: { lat: 10.81234, lng: 106.67123 },
@@ -25,11 +25,12 @@ describe('DriverOrdersScreen current location', () => {
 
     await render(<DriverOrdersScreen view={createDriverListFixture('D-LIST-REQUESTED')} />);
 
-    expect(await screen.findByLabelText('Đang hiển thị vị trí GPS hiện tại')).toBeTruthy();
-    expect(screen.getByLabelText('Bản đồ vị trí hiện tại của tài xế')).toBeTruthy();
+    expect(await screen.findByLabelText('Bản đồ vị trí hiện tại của tài xế')).toBeTruthy();
+    // A healthy fix is silent chrome-wise: no leftover location pill.
+    expect(screen.queryByTestId('driver-current-location-status')).toBeNull();
   });
 
-  it('shows a truthful permission state and retries location acquisition on demand', async () => {
+  it('shows a truthful permission state, then clears it once the retry succeeds', async () => {
     mockGetDriverCurrentLocation
       .mockResolvedValueOnce({ kind: 'permission-denied' })
       .mockResolvedValueOnce({
@@ -45,6 +46,9 @@ describe('DriverOrdersScreen current location', () => {
     await fireEvent.press(retry);
 
     await waitFor(() => expect(mockGetDriverCurrentLocation).toHaveBeenCalledTimes(2));
-    expect(await screen.findByLabelText('Đang hiển thị vị trí GPS hiện tại')).toBeTruthy();
+    expect(await screen.findByLabelText('Bản đồ vị trí hiện tại của tài xế')).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.queryByTestId('driver-current-location-status')).toBeNull(),
+    );
   });
 });

@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { httpClient } from '@leopard/mobile-core';
-import { IconLocationPin, RealInteractiveMap, resolveLocationCoords, VIETNAM_LOCATION_DICT, type MapCoordinate } from '@leopard/mobile-core';
+import { typeScale, httpClient } from '@leopard/mobile-core';
+import { IconLocationPin, RealInteractiveMap, resolveLocationCoords, VIETNAM_LOCATION_DICT, type MapCoordinate, describeGeolocationFailure } from '@leopard/mobile-core';
 
 function formatVietnamesePhone(phone?: string | null): string {
   if (!phone) return '';
@@ -342,6 +342,7 @@ export function MapAddressPickerModal({
   const [modalAddress, setModalAddress] = useState(initialAddress);
   const [customPinCoords, setCustomPinCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocatingGps, setIsLocatingGps] = useState(false);
+  const [gpsNotice, setGpsNotice] = useState<string | null>(null);
   const [mapAddressNote, setMapAddressNote] = useState('');
   const [senderName, setSenderName] = useState(
     userName || (target === 'pickup' ? effectiveCustomer?.name || '' : ''),
@@ -529,40 +530,48 @@ export function MapAddressPickerModal({
   };
 
   const handleGetCurrentGpsLocation = () => {
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      setIsLocatingGps(true);
-      setIsReverseGeocoding(true);
-      setModalAddress('Đang định vị GPS…');
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = Number(pos.coords.latitude.toFixed(5));
-          const lng = Number(pos.coords.longitude.toFixed(5));
-          setCustomPinCoords({ lat, lng });
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGpsNotice('Thiết bị không hỗ trợ định vị. Vui lòng chọn địa chỉ trên bản đồ.');
+      return;
+    }
+    setIsLocatingGps(true);
+    setIsReverseGeocoding(true);
+    setGpsNotice(null);
+    setModalAddress('Đang định vị GPS…');
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(5));
+        const lng = Number(pos.coords.longitude.toFixed(5));
+        setCustomPinCoords({ lat, lng });
+        setGpsNotice(null);
 
-          try {
-            const humanAddress = await reverseGeocodeCoords(
-              { lat, lng },
-              effectiveVietmapApiKey,
-            );
-            setModalAddress(humanAddress);
-          } catch {
-            setModalAddress(`Vị trí tại (${lat}, ${lng})`);
-          } finally {
-            setIsLocatingGps(false);
-            setIsReverseGeocoding(false);
-            setSuggestions([]);
-            setShowSuggestions(false);
-          }
-        },
-        (err) => {
+        try {
+          const humanAddress = await reverseGeocodeCoords(
+            { lat, lng },
+            effectiveVietmapApiKey,
+          );
+          setModalAddress(humanAddress);
+        } catch {
+          setModalAddress(`Vị trí tại (${lat}, ${lng})`);
+        } finally {
           setIsLocatingGps(false);
           setIsReverseGeocoding(false);
-          console.warn('Geolocation error:', err.message);
-          setModalAddress(initialAddress || defaultFallbackAddress);
-        },
-        { enableHighAccuracy: true, timeout: 8000 },
-      );
-    }
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      },
+      (err) => {
+        setIsLocatingGps(false);
+        setIsReverseGeocoding(false);
+        console.warn('Geolocation error:', err.message);
+        // Never leave a stale address on screen as if it were the GPS result —
+        // that is how a customer ends up booking from a location they never
+        // chose. Restore the previous value and say why nothing happened.
+        setModalAddress(initialAddress || defaultFallbackAddress);
+        setGpsNotice(describeGeolocationFailure(err));
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
   };
 
   const handleFillMySenderInfo = () => {
@@ -737,6 +746,16 @@ export function MapAddressPickerModal({
                   </Pressable>
                 ) : null}
               </View>
+
+              {gpsNotice ? (
+                <Text
+                  accessibilityRole="alert"
+                  style={styles.gpsNoticeText}
+                  testID="gps-location-notice"
+                >
+                  {gpsNotice}
+                </Text>
+              ) : null}
 
               {/* Realtime Autocomplete Suggestions Dropdown */}
               {showSuggestions && suggestions.length > 0 ? (
@@ -1059,7 +1078,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   mapOverlayCloseBtnText: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -1079,7 +1098,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   mapAddressSectionTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     color: '#0F172A',
   },
@@ -1103,7 +1122,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   mapChangeAddrBtnText: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
   },
@@ -1125,7 +1144,7 @@ const styles = StyleSheet.create({
     borderColor: '#BBF7D0',
   },
   searchingBadgeText: {
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#16A34A',
   },
@@ -1149,9 +1168,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  gpsNoticeText: { fontSize: 11, lineHeight: 16, color: '#92400E', marginTop: 6, paddingHorizontal: 2 },
   mapTextInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#0F172A',
     fontWeight: '600',
     padding: 0,
@@ -1235,12 +1255,12 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   suggestionAddress: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#64748B',
     marginTop: 1,
   },
   suggestionActionApply: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
   },
@@ -1270,12 +1290,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   noSuggestionsTitle: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#334155',
   },
   noSuggestionsSubtitle: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#64748B',
     lineHeight: 16,
   },
@@ -1289,7 +1309,7 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   pinnedNoticeText: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#15803D',
     fontWeight: '600',
   },
@@ -1310,7 +1330,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mapSenderSectionTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     color: '#0F172A',
   },
@@ -1344,7 +1364,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   mapCancelBtnText: {
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#475569',
   },
@@ -1366,7 +1386,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   mapSaveBtnText: {
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.2,

@@ -2,7 +2,7 @@ import { usePathname, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, IconBell, IconClock, IconEarnings, IconOrders, IconUser, IconWallet } from '@leopard/mobile-core';
+import { typeScale, colors, radius, spacing, IconBell, IconClock, IconEarnings, IconOrders, IconUser, IconWallet } from '@leopard/mobile-core';
 
 export type TabBarItem = Readonly<{
   badgeCount?: number;
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     width: 18,
   },
   symbolIcon: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     lineHeight: 16,
   },
   barIconLine: {

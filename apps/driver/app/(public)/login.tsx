@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Role } from '@leopard/shared';
-import { sessionStore, IconAlertTriangle } from '@leopard/mobile-core';
+import { typeScale, sessionStore, IconAlertTriangle } from '@leopard/mobile-core';
 import { resolveDriverLogin } from '../../src/navigation/driver-session';
 import { DriverLoginScreen } from '../../src/auth/DriverLoginScreen';
 
@@ -56,13 +56,23 @@ export default function DriverLoginRoute() {
     );
   }
 
+  // Demo mode and real OTP are mutually exclusive, and this prop is the switch.
+  // DriverLoginScreen uses the Firebase flow (reCAPTCHA + SMS, verified by the
+  // API at /auth/firebase) whenever `onNavigateOtp` is absent, so passing it
+  // unconditionally, as this route used to, would have kept production on the
+  // demo OTP screen even with Firebase configured.
+  const allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true';
+
   return (
     <DriverLoginScreen
-      allowDemo={process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true'}
+      allowDemo={allowDemo}
       onLoginSuccess={handleLoginSuccess}
-      onNavigateOtp={(phone) =>
-        router.push({ pathname: '/(public)/verify-otp', params: { phone } })
-      }
+      {...(allowDemo
+        ? {
+            onNavigateOtp: (phone: string) =>
+              router.push({ pathname: '/(public)/verify-otp', params: { phone } }),
+          }
+        : {})}
       onNavigateRegister={() => router.push('/(public)/driver-register')}
       sessionExpired={isExpired}
     />
@@ -98,13 +108,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     color: '#0B1F3A',
     textAlign: 'center',
   },
   description: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
     color: '#5B6B80',
     textAlign: 'center',
@@ -135,7 +145,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     color: '#5B6B80',
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
   },
   pressed: {

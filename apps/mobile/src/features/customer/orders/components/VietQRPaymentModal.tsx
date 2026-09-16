@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
-import { colors, radius, spacing, typography, Button, IconCopy, IconQrPayment, IconSecurityShield } from '@leopard/mobile-core';
+import { typeScale, colors, radius, spacing, typography, Button, IconCopy, IconQrPayment, IconSecurityShield } from '@leopard/mobile-core';
 
 export type VietQRPaymentModalProps = Readonly<{
   visible: boolean;
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   modalSubtitle: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#64748B',
   },
   closeBtn: {
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeBtnText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#64748B',
     fontWeight: '700',
   },
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   },
   napasBadgeText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   qrHint: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#0C4A6E',
     textAlign: 'center',
     lineHeight: 16,
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   infoValHighlight: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '800',
     color: '#061226',
     letterSpacing: 0.5,
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
     borderColor: '#BBF7D0',
   },
   copyBtnText: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
   },
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   trustBannerText: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: '#166534',
     flex: 1,
     lineHeight: 16,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
   },
   successCheckIcon: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '900',
   },
   successHeading: {
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   successAmount: {
-    fontSize: 24,
+    fontSize: typeScale.title2.fontSize,
     fontWeight: '900',
     color: '#16A34A',
   },
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B1E42',
   },
   autoAdvanceText: {
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     color: '#0B1E42',
   },

@@ -1,6 +1,6 @@
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BrandLoginLogo, LeopardEmblem, radius, spacing } from '@leopard/mobile-core';
+import { typeScale, BrandLoginLogo, LeopardEmblem, radius, spacing } from '@leopard/mobile-core';
 
 export default function DriverRegisterGuideRoute() {
   const router = useRouter();
@@ -92,13 +92,13 @@ const styles = StyleSheet.create({
   },
   headline: {
     color: '#0B1F3A',
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     textAlign: 'center',
   },
   subline: {
     color: '#5B6B80',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     lineHeight: 19,
     textAlign: 'center',
     marginBottom: 8,
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     color: '#5B6B80',
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   pressed: {

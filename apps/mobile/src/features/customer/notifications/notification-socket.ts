@@ -101,7 +101,15 @@ export class CustomerNotificationSocketManager {
   constructor(options: CustomerNotificationSocketOptions = {}) {
     this.socket = options.socket ?? null;
     this.socketFactory = options.socketFactory;
-    this.serverUrl = options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? '';
+    // See tracking-socket.ts: strip the REST /api/v1 suffix so Socket.IO treats
+    // the remainder as the origin and /notifications as the namespace.
+    this.serverUrl = (
+      options.serverUrl ??
+      process.env.EXPO_PUBLIC_API_URL ??
+      ''
+    )
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/$/, '');
     this.namespace = options.namespace ?? '/notifications';
     this.tokenProvider = options.tokenProvider;
     this.onTokenExpiredHandler = options.onTokenExpired;

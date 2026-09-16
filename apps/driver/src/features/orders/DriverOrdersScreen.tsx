@@ -1,54 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import {
-  colors,
-  radius,
-  spacing,
-  typography,
-  Button,
-  GestureBottomSheet,
-  IconClose,
-  IconLocationPin,
-  IconMenu,
-  RealInteractiveMap,
-  resolveLocationCoords,
-  ScreenState,
-  SkeletonCard,
-} from '@leopard/mobile-core';
-import { useDriverDrawer } from '../navigation/DriverDrawerContext';
-import { useDriverIdlePingHealth } from './useDriverIdlePing';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+
+import { GestureBottomSheet, RealInteractiveMap, ScreenState, SkeletonCard, resolveLocationCoords } from '@leopard/mobile-core';
+
 import { IncomingDispatchModal } from './IncomingDispatchModal';
 import type { IncomingDispatchOffer } from './IncomingDispatchModal';
-import type {
-  DriverActiveTripView,
-  DriverListContentView,
-  DriverListView,
-  DriverPublicOrderView,
-} from './model';
+import type { DriverListView } from './model';
 
-import { DriverHomeHeader } from './components/DriverHomeHeader';
-import { DriverAvailabilityCard } from './components/DriverAvailabilityCard';
+import { DriverConnectionCapsule } from './components/DriverConnectionCapsule';
+import { DriverConnectionStatusRow } from './components/DriverConnectionStatusRow';
+import { DriverMapControlStack } from './components/DriverMapControlStack';
+import { DriverQuickActionGrid } from './components/DriverQuickActionGrid';
+import { DriverLocationStatus } from './components/DriverLocationStatus';
+import { DriverReceivingSettingsModal } from './components/DriverReceivingSettingsModal';
 import { DriverSystemBanner } from './components/DriverSystemBanner';
 import { DriverActiveTripCard } from './components/DriverActiveTripCard';
-import { DriverOrderFilters } from './components/DriverOrderFilters';
-import { DriverNearbyOrderCard } from './components/DriverNearbyOrderCard';
-import { DriverBottomNavigation } from './components/DriverBottomNavigation';
-import {
-  getDriverCurrentLocation,
-  type DriverLocationState,
-} from './driver-current-location';
+import { DriverNotice } from './components/DriverNotice';
+import { DriverQuickNavOverlay } from './components/DriverQuickNavOverlay';
+import { useDriverIdlePingHealth } from './useDriverIdlePing';
+import { getDriverCurrentLocation, type DriverLocationState } from './driver-current-location';
 
-const EMPTY_SNAP_POINTS: number[] = [0.26, 0.38, 0.86];
-const ORDER_SNAP_POINTS: number[] = [0.26, 0.50, 0.92];
-const ACTIVE_TRIP_SNAP_POINTS: number[] = [0.32, 0.58, 0.92];
+/**
+ * Home is a pure cockpit: duty toggle, map/location, active trip. The idle
+ * panel (status + quick actions) is a fixed, non-scrolling block — there is
+ * nothing in it worth dragging or scrolling, so it is a plain View, not a
+ * GestureBottomSheet. The sheet is reserved for the active-trip mission
+ * cockpit, which has enough content to benefit from drag/snap.
+ */
+const ACTIVE_TRIP_SNAP_POINTS: number[] = [0.32, 0.62, 0.92];
+
+/** Vertical gap between the connection pill and the sheet's top edge. */
+const CAPSULE_GAP = 8;
 
 export type DriverOrdersScreenProps = Readonly<{
   view: DriverListView;
@@ -62,164 +45,13 @@ export type DriverOrdersScreenProps = Readonly<{
   isAcceptingIncomingOffer?: boolean;
   onNavigate?: (route: string) => void;
   networkError?: string | null;
-  driverIdentity?: { name?: string | null; vehicleLabel?: string | null };
+  driverIdentity?: {
+    name?: string | null;
+    vehiclePlate?: string | null;
+    vehicleType?: string | null;
+  };
   showDebugActions?: boolean;
 }>;
-
-function DriverNotice({
-  onNoticeAction,
-  view,
-}: Readonly<{ view: DriverListContentView; onNoticeAction?: () => void }>) {
-  if (!view.notice) return null;
-  const toneStyle =
-    view.notice.tone === 'danger'
-      ? styles.noticeDanger
-      : view.notice.tone === 'warning'
-        ? styles.noticeWarning
-        : styles.noticeInfo;
-
-  return (
-    <View accessibilityRole="alert" style={[styles.notice, toneStyle]}>
-      <Text style={styles.noticeBody}>{view.notice.message}</Text>
-      {view.notice.actionLabel ? (
-        <Button label={view.notice.actionLabel} onPress={onNoticeAction} variant="secondary" />
-      ) : null}
-    </View>
-  );
-}
-
-function ReceivingSettingsModal({
-  onClose,
-  onSave,
-  radiusKm,
-  visible,
-}: Readonly<{
-  visible: boolean;
-  radiusKm: string;
-  onClose: () => void;
-  onSave: (radius: string) => void;
-}>) {
-  const [selectedRadius, setSelectedRadius] = useState(radiusKm);
-
-  const radiusOptions = ['3', '5', '10', '15'];
-
-  return (
-    <Modal
-      animationType="slide"
-      hardwareAccelerated
-      statusBarTranslucent
-      transparent
-      visible={visible}
-    >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.settingsSheet}>
-          <View style={styles.settingsHeader}>
-            <Text style={styles.settingsTitle}>THIẾT LẬP NHẬN ĐƠN</Text>
-            <Pressable
-              accessibilityLabel="Đóng thiết lập"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={onClose}
-              style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressed : null]}
-            >
-              <IconClose color="#64748B" size={18} />
-            </Pressable>
-          </View>
-
-          <View style={styles.settingsBody}>
-            <Text style={styles.filterSectionLabel}>BÁN KÍNH QUÉT ĐƠN (KM)</Text>
-            <View style={styles.optionsRow}>
-              {radiusOptions.map((r) => (
-                <Pressable
-                  key={r}
-                  onPress={() => setSelectedRadius(r)}
-                  style={[styles.optionPill, selectedRadius === r ? styles.optionPillActive : null]}
-                >
-                  <Text
-                    style={[
-                      styles.optionPillText,
-                      selectedRadius === r ? styles.optionPillTextActive : null,
-                    ]}
-                  >
-                    {r} km
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <Pressable
-              accessibilityLabel="Lưu cấu hình"
-              accessibilityRole="button"
-              onPress={() => {
-                onSave(selectedRadius);
-                onClose();
-              }}
-              style={({ pressed }) => [styles.saveSettingsBtn, pressed ? styles.pressed : null]}
-            >
-              <Text style={styles.saveSettingsBtnText}>ÁP DỤNG CẤU HÌNH</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-function DriverLocationStatus({
-  location,
-  onRetry,
-}: Readonly<{
-  location: DriverLocationState;
-  onRetry: () => void;
-}>) {
-  if (location.kind === 'ready') {
-    return (
-      <View
-        accessibilityLabel="Đang hiển thị vị trí GPS hiện tại"
-        style={styles.locationStatus}
-        testID="driver-current-location-status"
-      >
-        <View style={[styles.locationStatusDot, styles.locationStatusDotReady]} />
-        <Text style={styles.locationStatusText}>Vị trí hiện tại</Text>
-      </View>
-    );
-  }
-
-  if (location.kind === 'loading') {
-    return (
-      <View
-        accessibilityLabel="Đang xác định vị trí GPS hiện tại"
-        style={styles.locationStatus}
-        testID="driver-current-location-status"
-      >
-        <View style={[styles.locationStatusDot, styles.locationStatusDotLoading]} />
-        <Text style={styles.locationStatusText}>Đang xác định vị trí...</Text>
-      </View>
-    );
-  }
-
-  const label =
-    location.kind === 'permission-denied'
-      ? 'Chưa cấp quyền vị trí · Thử lại'
-      : 'Không lấy được vị trí · Thử lại';
-
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      onPress={onRetry}
-      style={({ pressed }) => [
-        styles.locationStatus,
-        styles.locationStatusWarning,
-        pressed ? styles.pressed : null,
-      ]}
-      testID="driver-current-location-status"
-    >
-      <View style={[styles.locationStatusDot, styles.locationStatusDotWarning]} />
-      <Text style={[styles.locationStatusText, styles.locationStatusTextWarning]}>{label}</Text>
-    </Pressable>
-  );
-}
 
 export function DriverOrdersScreen({
   driverIdentity,
@@ -240,10 +72,10 @@ export function DriverOrdersScreen({
   const [simulatedOffer, setSimulatedOffer] = useState<IncomingDispatchOffer | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [radiusKm, setRadiusKm] = useState('5');
-  const [dismissedOrderIds, setDismissedOrderIds] = useState<readonly string[]>([]);
   const [locationRequestKey, setLocationRequestKey] = useState(0);
   const [driverLocation, setDriverLocation] = useState<DriverLocationState>({ kind: 'loading' });
-  const { openDrawer } = useDriverDrawer();
+  /** Measured height of the fixed idle panel, so the duty capsule floats just above it. */
+  const [idlePanelHeight, setIdlePanelHeight] = useState(0);
   const idlePingHealth = useDriverIdlePingHealth();
 
   useEffect(() => {
@@ -260,12 +92,29 @@ export function DriverOrdersScreen({
   const truckCoords = driverLocation.kind === 'ready' ? driverLocation.coords : undefined;
   const retryCurrentLocation = () => setLocationRequestKey((current) => current + 1);
 
-  const handleOpenMenu = () => {
-    openDrawer();
+  /** Demo hotline for LEOPARD's own emergency dispatch desk (fictional, dialable digits). */
+  const SOS_HOTLINE_DIAL = '19001919';
+  const SOS_HOTLINE_LABEL = '1900 1919';
+
+  const handleTriggerSos = () => {
+    const title = 'Cuộc gọi khẩn cấp SOS';
+    const message = `Gọi Đội cứu hộ khẩn cấp LEOPARD 24/7 (${SOS_HOTLINE_LABEL})? Tọa độ GPS của bạn sẽ được chuyển tiếp tức thì.`;
+    const dial = () => void Linking.openURL(`tel:${SOS_HOTLINE_DIAL}`);
+    // react-native-web's Alert.alert is a no-op (no dialog implementation) —
+    // fall back to window.confirm so the action still dials while testing on web.
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${message}`)) dial();
+      return;
+    }
+    Alert.alert(title, message, [
+      { text: 'Hủy', style: 'cancel' },
+      { text: 'Gọi ngay', style: 'destructive', onPress: dial },
+    ]);
   };
 
   const handleSimulateIncomingOffer = () => {
-    const first = view.kind === 'content' && view.requestedOrders.length > 0 ? view.requestedOrders[0] : null;
+    const first =
+      view.kind === 'content' && view.requestedOrders.length > 0 ? view.requestedOrders[0] : null;
     setDismissedOfferId(null);
     if (first) {
       setSimulatedOffer({
@@ -307,146 +156,30 @@ export function DriverOrdersScreen({
         ? simulatedOffer
         : null;
 
-  // ── Loading State ──────────────────────────────────────────────────────────
-  if (view.kind === 'loading') {
-    return (
-      <View style={styles.screenRoot}>
-        {/* Layer 0: Map Canvas */}
-        <View style={styles.mapLayerContainer} testID="driver-map-canvas">
-          <RealInteractiveMap
-            height="100%"
-            initialPinCoords={truckCoords}
-            interactive={false}
-            mode="location"
-            style={StyleSheet.absoluteFill}
-            truckLocation={truckCoords}
-          />
-        </View>
+  const isContent = view.kind === 'content';
+  const activeTrip = isContent ? view.activeTrip : null;
+  const isOnline = isContent
+    ? view.availability.status === 'AVAILABLE' ||
+      (view.availability.status as string) === 'ONLINE'
+    : false;
 
-        {/* Layer 1: Top HUD */}
-        <View style={styles.topHudContainer}>
-          <View style={styles.topHudGlass}>
-            <DriverHomeHeader
-              availabilityControl={
-                <View style={styles.hudDutyWrap}>
-                  <Text style={styles.hudDutyLabel}>Trạng thái nhận đơn</Text>
-                  <View style={[styles.capsuleBtn, styles.capsuleOffline]}>
-                    <View style={[styles.statusDot, styles.statusDotOffline]} />
-                    <Text style={[styles.statusText, styles.statusTextOffline]}>
-                      Ngoại tuyến
-                    </Text>
-                  </View>
-                </View>
-              }
-              driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
-              onOpenMenu={handleOpenMenu}
-              vehicleLabel={driverIdentity?.vehicleLabel ?? 'Đang tải dữ liệu...'}
-            />
-          </View>
-          <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
-        </View>
+  const handleToggleAvailability = () => {
+    if (!isContent) return;
+    if (view.availability.action?.isPending || view.availability.action?.disabled) return;
+    if (onSetAvailability) {
+      onSetAvailability(view.availability.action?.id ?? (isOnline ? 'OFFLINE' : 'ONLINE'));
+    }
+  };
 
-        {/* Layer 2: GestureBottomSheet with Skeletons */}
-        <GestureBottomSheet
-          initialSnapIndex={1}
-          snapPoints={ORDER_SNAP_POINTS}
-          testID="driver-load-board-sheet"
-        >
-          <View style={styles.sheetScrollContent}>
-            <View style={styles.ordersSectionHeader}>
-              <Text accessibilityRole="header" style={styles.loadBoardTitle}>
-                Đơn có thể nhận
-              </Text>
-              <Text style={styles.loadBoardSubtitle}>Đang tải dữ liệu đơn hàng...</Text>
-            </View>
-            <View style={styles.skeletonList}>
-              <SkeletonCard />
-              <SkeletonCard />
-            </View>
-          </View>
-        </GestureBottomSheet>
-
-        <DriverBottomNavigation activeTab="home" onNavigate={onNavigate} />
-      </View>
-    );
-  }
-
-  // ── Error / Permission Denied State ───────────────────────────────────────
-  if (view.kind !== 'content') {
-    return (
-      <View style={styles.screenRoot}>
-        {/* Layer 0: Map Canvas */}
-        <View style={styles.mapLayerContainer} testID="driver-map-canvas">
-          <RealInteractiveMap
-            height="100%"
-            initialPinCoords={truckCoords}
-            interactive={false}
-            mode="location"
-            style={StyleSheet.absoluteFill}
-            truckLocation={truckCoords}
-          />
-        </View>
-
-        {/* Layer 1: Top HUD */}
-        <View style={styles.topHudContainer}>
-          <View style={styles.topHudGlass}>
-            <DriverHomeHeader
-              availabilityControl={
-                <View style={styles.hudDutyWrap}>
-                  <Text style={styles.hudDutyLabel}>Trạng thái nhận đơn</Text>
-                  <View style={[styles.capsuleBtn, styles.capsuleOffline]}>
-                    <View style={[styles.statusDot, styles.statusDotOffline]} />
-                    <Text style={[styles.statusText, styles.statusTextOffline]}>
-                      Ngoại tuyến
-                    </Text>
-                  </View>
-                </View>
-              }
-              driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
-              onOpenMenu={handleOpenMenu}
-              vehicleLabel={driverIdentity?.vehicleLabel ?? 'Đang cập nhật phương tiện'}
-            />
-          </View>
-          <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
-        </View>
-
-        {/* Layer 2: Boundary Card */}
-        <View style={styles.boundaryContainer}>
-          <ScreenState
-            actionLabel={view.kind === 'error' ? 'Thử tải lại danh sách' : undefined}
-            message={view.message}
-            onAction={onRetry}
-            state={view.kind}
-            title={view.title}
-          />
-        </View>
-
-        <DriverBottomNavigation activeTab="home" onNavigate={onNavigate} />
-      </View>
-    );
-  }
-
-  // ── Content State ──────────────────────────────────────────────────────────
-  const activeTrip = view.activeTrip;
-  const waitingCount = view.requestedOrders.length;
-  const isOnline = view.availability.status === 'AVAILABLE';
-
-  const filteredOrders = view.requestedOrders.filter(
-    (item) => !dismissedOrderIds.includes(item.id),
-  );
-
-  const snapPoints = activeTrip
-    ? ACTIVE_TRIP_SNAP_POINTS
-    : filteredOrders.length === 0
-      ? EMPTY_SNAP_POINTS
-      : ORDER_SNAP_POINTS;
-
-  const initialSnapIndex = filteredOrders.length === 0 && !activeTrip ? 0 : 1;
+  /** Secondary line under the connection status: the driver's registered vehicle. */
+  const vehicleSubtitle = [driverIdentity?.vehiclePlate?.trim(), driverIdentity?.vehicleType?.trim()]
+    .filter((part): part is string => Boolean(part))
+    .join(' · ');
 
   return (
     <View style={styles.screenRoot}>
-      {/* ── Layer 0: RealInteractiveMap running behind ── */}
-      <View style={styles.mapLayerContainer} testID="driver-map-canvas">
+      {/* ── Layer 0: full-bleed live map ── */}
+      <View style={styles.mapLayer} testID="driver-map-canvas">
         <RealInteractiveMap
           destination={
             activeTrip
@@ -460,7 +193,7 @@ export function DriverOrdersScreen({
           }
           height="100%"
           initialPinCoords={truckCoords}
-          interactive={true}
+          interactive={isContent}
           mode={activeTrip ? 'tracking' : 'location'}
           origin={
             activeTrip
@@ -487,114 +220,152 @@ export function DriverOrdersScreen({
         />
       </View>
 
-      {/* ── Layer 1: Clean Top Header & Availability Card HUD ── */}
-      <View style={styles.topHudContainer}>
-        <View style={styles.topHudGlass}>
-          <DriverHomeHeader
-            availabilityControl={
-              <DriverAvailabilityCard
-                availability={view.availability}
-                onSetAvailability={onSetAvailability}
-              />
-            }
-            driverName={driverIdentity?.name ?? 'Tài xế LEOPARD'}
-            onOpenMenu={handleOpenMenu}
-            vehicleLabel={driverIdentity?.vehicleLabel ?? 'Đang cập nhật phương tiện'}
-          />
-        </View>
-        <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
+      {/* ── Layer 1: right-edge map control stack (Grab-style) ── */}
+      <View pointerEvents="box-none" style={styles.mapControlLayer}>
+        <Text style={styles.srOnly}>Trạng thái nhận đơn</Text>
+        <DriverMapControlStack
+          isLocating={driverLocation.kind === 'loading'}
+          onOpenRadiusSettings={() => setIsSettingsOpen(true)}
+          onRecenter={retryCurrentLocation}
+          onRefreshOffers={onRetry}
+        />
       </View>
 
-      {/* ── Layer 2: GestureBottomSheet for Dispatch Load-Board & Active Trip ── */}
-      <GestureBottomSheet
-        initialSnapIndex={initialSnapIndex}
-        snapPoints={snapPoints}
-        testID="driver-load-board-sheet"
-      >
-        <ScrollView
-          contentContainerStyle={styles.sheetScrollContent}
-          nestedScrollEnabled={true}
-          showsVerticalScrollIndicator={false}
+      {/* ── Layer 2: duty pill pinned just above the sheet's top edge ── */}
+      {isContent && !activeTrip ? (
+        <View
+          pointerEvents="box-none"
+          style={[styles.capsuleLayer, { bottom: idlePanelHeight + CAPSULE_GAP }]}
         >
-          {/* Active Trip Rail (visual anchor when on a trip) */}
-          {activeTrip ? (
-            <DriverActiveTripCard
-              onNavigate={onNavigate}
-              onOpenOrder={onOpenOrder}
-              trip={activeTrip}
-            />
-          ) : null}
-
-          {/* System & Connection Banner (radar health or network retry) */}
-          <DriverSystemBanner
-            hasActiveTrip={Boolean(activeTrip)}
-            idlePingHealth={idlePingHealth}
+          <DriverConnectionCapsule
+            disabled={Boolean(view.availability.action?.disabled)}
             isOnline={isOnline}
-            networkError={networkError}
-            onRetry={onRetry}
+            isPending={Boolean(view.availability.action?.isPending)}
+            onToggle={handleToggleAvailability}
           />
-
-          {/* Order Filters & Live Radar Strip */}
-          <DriverOrderFilters
-            hasActiveTrip={Boolean(activeTrip)}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onSimulateOffer={showDebugActions ? handleSimulateIncomingOffer : undefined}
-            radiusKm={radiusKm}
-            showDebugActions={showDebugActions}
-            totalCount={filteredOrders.length}
-            waitingCount={waitingCount}
-          />
-
-          {/* System Notice Alert if present */}
-          <DriverNotice onNoticeAction={onNoticeAction} view={view} />
-
-          {/* Feed of Orders or Empty State */}
-          {filteredOrders.length === 0 ? (
-            <View style={styles.emptyBox}>
-              <View style={styles.emptyIconCircle}>
-                <IconLocationPin color="#0B1E42" size={28} />
-              </View>
-              <Text style={styles.emptyTitle}>Chưa có đơn phù hợp</Text>
-              <Text style={styles.emptyMessage}>
-                LEOPARD sẽ thông báo khi có đơn phù hợp với phạm vi nhận của bạn.
-              </Text>
-              <Pressable
-                accessibilityLabel="Mở rộng phạm vi nhận đơn"
-                accessibilityRole="button"
-                onPress={() => setIsSettingsOpen(true)}
-                style={({ pressed }) => [styles.expandRadiusBtn, pressed ? styles.pressed : null]}
-              >
-                <Text style={styles.expandRadiusText}>Mở rộng phạm vi nhận đơn</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.ordersFeed}>
-              {filteredOrders.map((item) => (
-                <DriverNearbyOrderCard
-                  item={item}
-                  key={item.id}
-                  onDecline={(orderId) => {
-                    setDismissedOrderIds((prev) =>
-                      prev.includes(orderId) ? prev : [...prev, orderId],
-                    );
-                  }}
-                  onOpenOrder={onOpenOrder}
-                />
-              ))}
-            </View>
-          )}
-        </ScrollView>
-      </GestureBottomSheet>
-
-      {/* ── Layer 3: Floating Dock Navigation ── */}
-      {!activeTrip ? (
-        <DriverBottomNavigation
-          activeTab="home"
-          onNavigate={onNavigate}
-        />
+        </View>
       ) : null}
 
-      {/* ── Layer 4: Modals ── */}
+      {/* ── Layer 3: mission cockpit (draggable) or idle panel (fixed, no scroll) ── */}
+      {activeTrip ? (
+        <GestureBottomSheet
+          initialSnapIndex={1}
+          snapPoints={ACTIVE_TRIP_SNAP_POINTS}
+          style={styles.sheetSurface}
+          testID="driver-load-board-sheet"
+        >
+          <ScrollView
+            contentContainerStyle={styles.sheetContent}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+          >
+            <DriverActiveTripCard onNavigate={onNavigate} onOpenOrder={onOpenOrder} trip={activeTrip} />
+
+            <DriverSystemBanner
+              hasActiveTrip
+              idlePingHealth={idlePingHealth}
+              isOnline={isOnline}
+              networkError={networkError}
+              onRetry={onRetry}
+            />
+
+            {isContent ? <DriverNotice onNoticeAction={onNoticeAction} view={view} /> : null}
+          </ScrollView>
+        </GestureBottomSheet>
+      ) : (
+        /* Grab renders this as a couple of stacked, fixed floating cards over the
+           map — not a scrollable/draggable sheet. There's nothing here worth
+           dragging, so this is a plain View: no ScrollView, no gesture handle. */
+        <View
+          onLayout={(event) => setIdlePanelHeight(event.nativeEvent.layout.height)}
+          style={styles.idlePanel}
+          testID="driver-load-board-sheet"
+        >
+          {/* Fade the backdrop in from the map (transparent) to solid canvas toward the
+              bottom, instead of a flat opacity — a hard-edged rectangle over the map reads
+              as a pasted-on panel. */}
+          <Svg height="100%" style={[StyleSheet.absoluteFill, styles.idlePanelFadeSvg]} width="100%">
+            <Defs>
+              <LinearGradient id="idlePanelFade" x1="0" x2="0" y1="0" y2="1">
+                <Stop offset="0" stopColor="#F8FAFC" stopOpacity={0} />
+                <Stop offset="0.35" stopColor="#F8FAFC" stopOpacity={0.8} />
+                <Stop offset="1" stopColor="#F8FAFC" stopOpacity={0.97} />
+              </LinearGradient>
+            </Defs>
+            <Rect fill="url(#idlePanelFade)" height="100%" width="100%" />
+          </Svg>
+
+          {view.kind === 'loading' ? (
+            <View style={styles.sheetSectionGap}>
+              <View style={styles.sheetHeader}>
+                <Text accessibilityRole="header" style={styles.sheetTitle}>
+                  Đang tải bảng đơn
+                </Text>
+                <Text style={styles.sheetSubtitle}>LEOPARD đang kết nối điều phối...</Text>
+              </View>
+              <SkeletonCard />
+              <SkeletonCard />
+            </View>
+          ) : null}
+
+          {view.kind === 'permission-denied' || view.kind === 'error' ? (
+            <View style={styles.boundaryBox}>
+              <ScreenState
+                actionLabel={view.kind === 'error' ? 'Thử tải lại danh sách' : undefined}
+                message={view.message}
+                onAction={onRetry}
+                state={view.kind}
+                title={view.title}
+              />
+            </View>
+          ) : null}
+
+          {isContent ? (
+            <>
+              <DriverConnectionStatusRow isOnline={isOnline} subtitle={vehicleSubtitle || null} />
+
+              <DriverQuickActionGrid
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                onOpenVehicle={() => onNavigate?.('/profile')}
+                onOpenWallet={() => onNavigate?.('/wallet')}
+                onTriggerSos={handleTriggerSos}
+              />
+
+              <DriverLocationStatus location={driverLocation} onRetry={retryCurrentLocation} />
+
+              {showDebugActions ? (
+                <Pressable
+                  accessibilityHint="Mở modal đơn nổ để thử nghiệm giao diện tiếp nhận"
+                  accessibilityLabel="Mô phỏng nổ đơn"
+                  accessibilityRole="button"
+                  onPress={handleSimulateIncomingOffer}
+                  style={({ pressed }) => [styles.debugBtn, pressed ? styles.debugBtnPressed : null]}
+                >
+                  <Text style={styles.debugBtnText}>Thử nổ đơn</Text>
+                </Pressable>
+              ) : null}
+
+              <DriverSystemBanner
+                hasActiveTrip={false}
+                idlePingHealth={idlePingHealth}
+                isOnline={isOnline}
+                networkError={networkError}
+                onRetry={onRetry}
+              />
+
+              <DriverNotice onNoticeAction={onNoticeAction} view={view} />
+            </>
+          ) : null}
+        </View>
+      )}
+
+      {/* ── Layer 4: Grab-style floating quick-nav (pill + avatar), not a docked tab bar.
+          Hidden during an active trip — the mission cockpit owns the full screen then. ── */}
+      {!activeTrip ? (
+        <DriverQuickNavOverlay driverName={driverIdentity?.name} onNavigate={onNavigate} />
+      ) : null}
+
+      {/* ── Layer 5: overlays ── */}
       <IncomingDispatchModal
         isAccepting={isAcceptingIncomingOffer}
         offer={activeIncomingOffer}
@@ -616,11 +387,9 @@ export function DriverOrdersScreen({
         visible={activeIncomingOffer !== null}
       />
 
-      <ReceivingSettingsModal
+      <DriverReceivingSettingsModal
         onClose={() => setIsSettingsOpen(false)}
-        onSave={(r) => {
-          setRadiusKm(r);
-        }}
+        onSave={setRadiusKm}
         radiusKm={radiusKm}
         visible={isSettingsOpen}
       />
@@ -629,385 +398,96 @@ export function DriverOrdersScreen({
 }
 
 const styles = StyleSheet.create({
+  sheetSurface: {
+    backgroundColor: '#F8FAFC',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   screenRoot: {
-    backgroundColor: '#F4F7FB',
+    backgroundColor: '#F8FAFC',
     flex: 1,
+    overflow: 'hidden',
     position: 'relative',
   },
-  mapLayerContainer: {
+  mapLayer: {
     ...StyleSheet.absoluteFill,
     zIndex: 0,
   },
-
-  // Top HUD
-  topHudContainer: {
-    left: 12,
+  mapControlLayer: {
     position: 'absolute',
-    right: 12,
-    top: Platform.OS === 'ios' ? 48 : 28,
+    right: 16,
+    top: '34%',
     zIndex: 20,
   },
-  topHudGlass: {
-    backgroundColor: 'rgba(244, 247, 251, 0.96)',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 22,
-    borderWidth: 1,
-    elevation: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+  idlePanelFadeSvg: {
+    pointerEvents: 'none',
   },
-  locationStatus: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
-    borderColor: 'rgba(11, 30, 66, 0.10)',
-    borderRadius: 999,
-    borderWidth: 1,
-    elevation: 3,
-    flexDirection: 'row',
-    minHeight: 36,
-    marginTop: 8,
-    paddingHorizontal: 12,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+  idlePanel: {
+    bottom: 0,
+    left: 0,
+    paddingBottom: 28,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    position: 'absolute',
+    right: 0,
+    zIndex: 40,
   },
-  locationStatusWarning: {
-    backgroundColor: 'rgba(255, 251, 235, 0.97)',
-    borderColor: '#FCD34D',
+  capsuleLayer: {
+    alignItems: 'flex-start',
+    left: 0,
+    paddingLeft: 16,
+    position: 'absolute',
+    right: 0,
+    zIndex: 25,
   },
-  locationStatusDot: {
-    borderRadius: 4,
-    height: 8,
-    marginRight: 7,
-    width: 8,
-  },
-  locationStatusDotReady: {
-    backgroundColor: '#16A34A',
-  },
-  locationStatusDotLoading: {
-    backgroundColor: '#0284C7',
-  },
-  locationStatusDotWarning: {
-    backgroundColor: '#D97706',
-  },
-  locationStatusText: {
-    color: '#0B1E42',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  locationStatusTextWarning: {
-    color: '#92400E',
-  },
-  hudMainRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  hudDriverGroup: {
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    marginRight: 10,
-  },
-  hudMenuBtn: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    borderWidth: 1,
-    height: 44,
-    justifyContent: 'center',
-    marginRight: 10,
-    width: 44,
-  },
-  hudDriverMeta: {
-    flex: 1,
-  },
-  hudDriverName: {
-    color: '#0B1E42',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  hudDutyWrap: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  hudDutyLabel: {
-    color: '#64748B',
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    marginBottom: 3,
-    textTransform: 'uppercase',
-  },
-  capsuleBtn: {
-    alignItems: 'center',
-    borderRadius: 20,
-    borderWidth: 1.5,
-    flexDirection: 'row',
-    height: 38,
-    paddingHorizontal: 12,
-  },
-  capsuleOffline: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-  },
-  statusDot: {
-    borderRadius: 4,
-    height: 8,
-    marginRight: 6,
-    width: 8,
-  },
-  statusDotOffline: {
-    backgroundColor: '#94A3B8',
-  },
-  statusText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    letterSpacing: 0.1,
-  },
-  statusTextOffline: {
-    color: '#475569',
-  },
-
-  // Sheet Content
-  sheetScrollContent: {
-    backgroundColor: '#F4F7FB',
+  sheetContent: {
     paddingBottom: 104,
     paddingHorizontal: 16,
     paddingTop: 8,
   },
-  ordersSectionHeader: {
-    marginBottom: 12,
+  sheetSectionGap: {
+    gap: 12,
   },
-  loadBoardTitle: {
+  sheetHeader: {
+    marginBottom: 4,
+  },
+  sheetTitle: {
     color: '#0B1E42',
     fontSize: 17,
     fontWeight: '800',
   },
-  loadBoardSubtitle: {
+  sheetSubtitle: {
     color: '#64748B',
     fontSize: 12,
-    marginTop: 1,
+    fontWeight: '500',
+    marginTop: 2,
   },
-  skeletonList: {
-    gap: 12,
-    marginTop: 8,
+  boundaryBox: {
+    paddingVertical: 12,
   },
-  skeletonTextLineLg: {
-    backgroundColor: '#E2E8F0',
-    borderRadius: 4,
-    height: 14,
-    marginBottom: 6,
-    width: 100,
-  },
-  skeletonTextLineSm: {
-    backgroundColor: '#E2E8F0',
-    borderRadius: 4,
-    height: 10,
-    width: 70,
-  },
-
-  // Boundary
-  boundaryContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    elevation: 8,
-    left: 20,
-    padding: 24,
-    position: 'absolute',
-    right: 20,
-    top: '35%',
-    zIndex: 30,
-  },
-
-  // Orders Feed
-  ordersFeed: {
-    gap: 2,
-  },
-
-  // Empty Box
-  emptyBox: {
+  debugBtn: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: 22,
-    borderWidth: 1,
-    marginTop: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 32,
-    shadowColor: '#0B1E42',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
-  },
-  emptyIconCircle: {
-    alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderRadius: 28,
-    height: 56,
-    justifyContent: 'center',
-    marginBottom: 12,
-    width: 56,
-  },
-  emptyTitle: {
-    color: '#0B1E42',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  emptyMessage: {
-    color: '#64748B',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  expandRadiusBtn: {
-    alignItems: 'center',
-    backgroundColor: '#0B1E42',
-    borderRadius: 14,
-    marginTop: 16,
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  expandRadiusText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-
-  // Notice
-  notice: {
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 12,
-    padding: 12,
-  },
-  noticeInfo: {
     backgroundColor: '#F0F4F9',
     borderColor: '#CBD5E1',
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 10,
+    minHeight: 36,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  noticeWarning: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+  debugBtnPressed: {
+    opacity: 0.85,
   },
-  noticeDanger: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-  },
-  noticeBody: {
+  debugBtnText: {
     color: '#0B1E42',
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 6,
-  },
-
-  // Settings Modal
-  modalBackdrop: {
-    backgroundColor: 'rgba(11, 30, 66, 0.45)',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  settingsSheet: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingBottom: 36,
-    paddingHorizontal: 20,
-    paddingTop: 18,
-  },
-  settingsHeader: {
-    alignItems: 'center',
-    borderBottomColor: '#F1F5F9',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: 14,
-  },
-  settingsTitle: {
-    color: '#0B1E42',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  closeBtn: {
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  settingsBody: {
-    paddingTop: 16,
-  },
-  filterSectionLabel: {
-    color: '#64748B',
     fontSize: 11,
     fontWeight: '700',
-    letterSpacing: 0.4,
-    marginBottom: 10,
-    textTransform: 'uppercase',
   },
-  optionsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  optionPill: {
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    borderWidth: 1,
-    flex: 1,
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingVertical: 10,
-  },
-  optionPillActive: {
-    backgroundColor: '#0B1E42',
-    borderColor: '#0B1E42',
-  },
-  optionPillText: {
-    color: '#334155',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  optionPillTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-
-  saveSettingsBtn: {
-    alignItems: 'center',
-    backgroundColor: '#F97316',
-    borderRadius: 16,
-    marginTop: 20,
-    minHeight: 48,
-    justifyContent: 'center',
-    paddingVertical: 14,
-    shadowColor: '#F97316',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  saveSettingsBtnText: {
-    color: '#0B1E42',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  pressed: {
-    opacity: 0.85,
+  srOnly: {
+    height: 1,
+    opacity: 0,
+    position: 'absolute',
+    width: 1,
   },
 });

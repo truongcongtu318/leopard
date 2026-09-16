@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { httpClient } from '@leopard/mobile-core';
+import { typeScale, httpClient } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../src/features/customer/addresses/address-store';
 import {
   BrandLoginLogo,
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.94 }],
   },
   backChevron: {
-    fontSize: 26,
+    fontSize: typeScale.title1.fontSize,
     lineHeight: 28,
     fontWeight: '600',
     color: '#0F172A',
@@ -841,7 +841,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   subline: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#475569',
     lineHeight: 20,
   },
@@ -874,7 +874,7 @@ const styles = StyleSheet.create({
   contactTextInput: {
     flex: 1,
     minWidth: 0,
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     color: '#0F172A',
     fontWeight: '500',
     ...Platform.select({
@@ -1050,7 +1050,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   selectedAddressText: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: '#0F172A',
     lineHeight: 18,
@@ -1066,7 +1066,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -1084,7 +1084,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     minWidth: 0,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#0F172A',
     fontWeight: '500',
     height: '100%',
@@ -1145,7 +1145,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   suggestionName: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -1170,7 +1170,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 14,
     height: 48,
-    fontSize: 14.5,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#0F172A',
     fontWeight: '500',
     backgroundColor: '#FFFFFF',

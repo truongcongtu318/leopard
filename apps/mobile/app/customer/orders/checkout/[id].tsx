@@ -19,6 +19,7 @@ import {
   IconSecurityShield,
   iosContinuousCurve,
   systemFontFamily,
+  typeScale,
 } from '@leopard/mobile-core';
 
 import {
@@ -628,7 +629,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   priceAmount: {
-    fontSize: 32,
+    fontSize: typeScale.largeTitle.fontSize,
     fontWeight: '800',
     color: '#0B1E42',
     fontVariant: ['tabular-nums'],
@@ -653,7 +654,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
     textTransform: 'uppercase',
@@ -699,7 +700,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   napasBadgeText: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.5,
@@ -746,7 +747,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   detailValueBold: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0B1E42',
     marginTop: 2,
@@ -826,7 +827,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   reconcileText: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     color: '#92400E',
     marginLeft: 10,
@@ -874,7 +875,7 @@ const styles = StyleSheet.create({
     borderColor: '#FDE68A',
   },
   timeoutTitle: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#92400E',
   },
@@ -933,13 +934,13 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   expiredTitle: {
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '800',
     color: '#0B1E42',
     textAlign: 'center',
   },
   expiredDesc: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
     color: '#475569',
     textAlign: 'center',

@@ -18,6 +18,7 @@ describe('DriverViewportShell', () => {
         maxWidth: 430,
         maxHeight: 932,
         outerInset: 16,
+        cornerRadius: 28,
       });
     });
   });

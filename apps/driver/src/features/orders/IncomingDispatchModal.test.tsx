@@ -260,4 +260,219 @@ describe('IncomingDispatchModal', () => {
       (window as any).removeEventListener = originalRemove;
     }
   });
+
+  it('renders Cargo-First dispatch offer with cargo specifications, loading fee badge, and notes', async () => {
+    const onAccept = jest.fn();
+    const onDecline = jest.fn();
+
+    const cargoOffer: IncomingDispatchOffer = {
+      orderId: 'ord-cargo-202',
+      pickupAddress: 'Kho Tân Bình, 123 Hoàng Hoa Thám, Tân Bình',
+      dropoffAddress: 'Kho Quận 7, 456 Nguyễn Thị Thập, Quận 7',
+      earningsAmount: 350000,
+      distanceKm: 18.5,
+      pickupDistanceKm: 2.4,
+      expiresAtEpochMs: Date.now() + 25000,
+      cargoName: 'Thiết bị điện máy',
+      cargoWeightKg: 450,
+      cargoDimensions: '1.8m x 1.2m x 1.0m',
+      loadingFee: 100000,
+      loadingDescription: 'Bốc xếp 2 đầu',
+      specialNotes: 'Hàng dễ vỡ, tránh mưa',
+    };
+
+    const screen = await render(
+      <IncomingDispatchModal
+        offer={cargoOffer}
+        onAccept={onAccept}
+        onDecline={onDecline}
+        visible={true}
+      />,
+    );
+
+    // Earnings amount formatted in VND with tabular-nums
+    expect(screen.getByText('350.000 ₫')).toBeTruthy();
+
+    // Cargo Bento Card: name, weight, dimensions
+    expect(screen.getByText('Thiết bị điện máy')).toBeTruthy();
+    expect(screen.getByText('450 kg')).toBeTruthy();
+    expect(screen.getByText('1.8m x 1.2m x 1.0m')).toBeTruthy();
+
+    // Loading fee badge
+    expect(screen.getByText('Bốc xếp 2 đầu (+100.000₫)')).toBeTruthy();
+
+    // Special notes
+    expect(screen.getByText('Hàng dễ vỡ, tránh mưa')).toBeTruthy();
+
+    // Distance labels
+    expect(screen.getByText('Cách bạn 2.4 km')).toBeTruthy();
+    expect(screen.getByText('Lộ trình 18.5 km')).toBeTruthy();
+
+    // SlideToAction uses colorVariant="success" and accepts with orderId
+    const slider = screen.getByTestId('dispatch-slide-action');
+    const sliderStyle = StyleSheet.flatten(slider.props.style);
+    expect(sliderStyle.backgroundColor).toBe('#16A34A');
+
+    await fireEvent(slider, 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+    expect(onAccept).toHaveBeenCalledWith('ord-cargo-202');
+
+    await screen.unmount();
+  });
+
+  it('renders fallback cargo name when cargoName is omitted', async () => {
+    const minimalOffer: IncomingDispatchOffer = {
+      orderId: 'ord-cargo-203',
+      pickupAddress: 'Điểm lấy',
+      dropoffAddress: 'Điểm giao',
+      earningsAmount: 200000,
+      distanceKm: 10,
+      expiresAtEpochMs: Date.now() + 15000,
+    };
+
+    const screen = await render(
+      <IncomingDispatchModal
+        offer={minimalOffer}
+        onAccept={jest.fn()}
+        onDecline={jest.fn()}
+        visible={true}
+      />,
+    );
+
+    expect(screen.getByText('Hàng hóa tiêu chuẩn')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('does not render loading fee badge when loadingFee is 0 or undefined', async () => {
+    const noLoadingOffer: IncomingDispatchOffer = {
+      orderId: 'ord-cargo-204',
+      pickupAddress: 'Điểm lấy',
+      dropoffAddress: 'Điểm giao',
+      earningsAmount: 200000,
+      distanceKm: 10,
+      expiresAtEpochMs: Date.now() + 15000,
+      cargoName: 'Thùng carton',
+      loadingFee: 0,
+    };
+
+    const screen = await render(
+      <IncomingDispatchModal
+        offer={noLoadingOffer}
+        onAccept={jest.fn()}
+        onDecline={jest.fn()}
+        visible={true}
+      />,
+    );
+
+    expect(screen.queryByText(/Bốc xếp/)).toBeNull();
+    await screen.unmount();
+  });
+
+  it('renders cargo thumbnail and opens/closes photo preview modal on tap', async () => {
+    const photoOffer: IncomingDispatchOffer = {
+      orderId: 'ord-cargo-205',
+      pickupAddress: 'Điểm lấy',
+      dropoffAddress: 'Điểm giao',
+      earningsAmount: 200000,
+      distanceKm: 10,
+      expiresAtEpochMs: Date.now() + 15000,
+      cargoName: 'Máy giặt công nghiệp',
+      cargoPhotoUrl: 'https://example.com/cargo-washer.jpg',
+    };
+
+    const screen = await render(
+      <IncomingDispatchModal
+        offer={photoOffer}
+        onAccept={jest.fn()}
+        onDecline={jest.fn()}
+        visible={true}
+      />,
+    );
+
+    const thumbnail = screen.getByTestId('cargo-photo-thumbnail');
+    expect(thumbnail).toBeTruthy();
+
+    // Modal preview initially closed
+    expect(screen.queryByTestId('cargo-photo-preview-modal')).toBeNull();
+
+    // Tap thumbnail to open
+    await fireEvent.press(thumbnail);
+    expect(screen.getByTestId('cargo-photo-preview-modal')).toBeTruthy();
+
+    // Tap close button in preview modal
+    const closeBtn = screen.getByTestId('cargo-photo-preview-close');
+    await fireEvent.press(closeBtn);
+    expect(screen.queryByTestId('cargo-photo-preview-modal')).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('calculates countdown timer from expiresAtEpochMs and auto-declines with orderId', async () => {
+    jest.useFakeTimers();
+    try {
+      const onDecline = jest.fn();
+      const epochOffer: IncomingDispatchOffer = {
+        orderId: 'ord-cargo-206',
+        pickupAddress: 'Điểm lấy',
+        dropoffAddress: 'Điểm giao',
+        earningsAmount: 200000,
+        distanceKm: 10,
+        expiresAtEpochMs: Date.now() + 20000,
+      };
+
+      const screen = await render(
+        <IncomingDispatchModal
+          offer={epochOffer}
+          onAccept={jest.fn()}
+          onDecline={onDecline}
+          visible={true}
+        />,
+      );
+
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(0);
+      });
+
+      expect(screen.getByText('20s')).toBeTruthy();
+
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(20000);
+      });
+
+      expect(onDecline).toHaveBeenCalledWith('ord-cargo-206');
+      await screen.unmount();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('declines offer via top "Từ chối" button calling onDecline with orderId', async () => {
+    const onDecline = jest.fn();
+    const cargoOffer: IncomingDispatchOffer = {
+      orderId: 'ord-cargo-207',
+      pickupAddress: 'Điểm lấy',
+      dropoffAddress: 'Điểm giao',
+      earningsAmount: 200000,
+      distanceKm: 10,
+      expiresAtEpochMs: Date.now() + 15000,
+    };
+
+    const screen = await render(
+      <IncomingDispatchModal
+        offer={cargoOffer}
+        onAccept={jest.fn()}
+        onDecline={onDecline}
+        visible={true}
+      />,
+    );
+
+    const topDeclineBtn = screen.getByRole('button', { name: 'Từ chối' });
+    expect(topDeclineBtn).toBeTruthy();
+
+    await fireEvent.press(topDeclineBtn);
+    expect(onDecline).toHaveBeenCalledWith('ord-cargo-207');
+
+    await screen.unmount();
+  });
 });

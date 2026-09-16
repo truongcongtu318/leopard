@@ -29,6 +29,7 @@ import {
   haptic,
   spacing,
   typography,
+  typeScale,
 } from '@leopard/mobile-core';
 import type {
   CustomerListContentView,
@@ -632,7 +633,7 @@ const s = StyleSheet.create({
     elevation: 3,
   },
   segmentLabel: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '500',
     color: '#64748B',
   },
@@ -807,13 +808,13 @@ const s = StyleSheet.create({
     flex: 1,
   },
   heroRouteLabel: {
-    fontSize: 9,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#64748B',
     letterSpacing: 0.5,
   },
   heroRouteAddress: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     color: '#0F172A',
     marginTop: 1,
@@ -983,7 +984,7 @@ const s = StyleSheet.create({
     borderRadius: 1,
   },
   completedArrowHead: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     color: '#CBD5E1',
     fontWeight: '700',
     lineHeight: 14,
@@ -1038,13 +1039,13 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: typeScale.body.fontSize,
     fontWeight: '700',
     color: '#0F172A',
     textAlign: 'center',
   },
   emptyBody: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '400',
     color: '#64748B',
     textAlign: 'center',

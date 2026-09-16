@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, leopardElevation, leopardPalette, leopardRadius, spacing } from '../theme/tokens';
+import { colors, leopardElevation, leopardPalette, leopardRadius, spacing, typeScale } from '../theme/tokens';
 import { IconPaymentConvenient } from './icons/CoreIcons';
 
 export type AnalyticsHeroCardProps = Readonly<{
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   },
   topUpText: {
     color: '#FFFFFF',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
   },
   divider: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
   aiEtaDot: {
     color: colors.info.text,
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     lineHeight: 14,
   },

@@ -15,14 +15,23 @@ import {
 import type { Role } from '@leopard/shared';
 
 import { httpClient } from '../api/http-client';
-import { colors, iosContinuousCurve, leopardPalette, spacing, systemFontFamily } from '../theme/tokens';
+import {
+  colors,
+  iosContinuousCurve,
+  leopardPalette,
+  spacing,
+  systemFontFamily,
+  typeScale,
+} from '../theme/tokens';
 import { Button } from '../ui/Button';
+import { IconChevron } from '../icons/svg-icons';
+import { AppText } from '../ui/AppText';
 import {
   BrandLoginLogo,
+  IconCheck,
   IconRoleAdmin,
   IconRoleCustomer,
   IconRoleDriver,
-  IconRoleFleet,
   OtpPhoneHeroIcon,
   VietnamFlagIcon,
 } from '../ui/icons/CoreIcons';
@@ -340,7 +349,7 @@ export function LoginScreen({
                 <Text style={styles.inputLabel}>Số điện thoại</Text>
                 {isLikelyVnPhone(phone) ? (
                   <View style={styles.validBadge}>
-                    <Text style={styles.validCheckIcon}>✓</Text>
+                    <IconCheck color="#15803D" size={12} />
                     <Text style={styles.validText}>Hợp lệ</Text>
                   </View>
                 ) : null}
@@ -356,7 +365,7 @@ export function LoginScreen({
                 <View style={styles.countryBadge}>
                   <VietnamFlagIcon height={15} width={22} />
                   <Text style={styles.countryCode}>+84</Text>
-                  <Text style={styles.countryChevron}>▾</Text>
+                  <IconChevron color="#64748B" direction="down" size={12} />
                 </View>
 
                 <View style={styles.badgeDivider} />
@@ -496,26 +505,6 @@ export function LoginScreen({
                   />
                 </View>
 
-                <View style={[styles.demoCard, styles.demoCardAmber]}>
-                  <View style={styles.demoCardTop}>
-                    <IconRoleFleet
-                      color={colors.warning.border}
-                      secondaryColor={colors.warning.background}
-                      size={22}
-                    />
-                    <View style={[styles.demoRoleBadge, styles.demoRoleBadgeAmber]}>
-                      <Text style={styles.demoRoleBadgeText}>Đội xe</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.demoCardDesc}>Giám sát xe & đối tác tài xế</Text>
-                  <Button
-                    disabled={isSubmitting}
-                    label="Demo Fleet Owner"
-                    onPress={() => handleDemoLogin('fleet-owner', 'FLEET_OWNER')}
-                    variant="secondary"
-                  />
-                </View>
-
                 <View style={[styles.demoCard, styles.demoCardSlate]}>
                   <View style={styles.demoCardTop}>
                     <IconRoleAdmin
@@ -553,9 +542,9 @@ export function LoginScreen({
             </View>
           ) : null}
 
-          <Text style={styles.termsNote}>
+          <AppText variant="caption1" style={styles.termsNote}>
             Bằng việc đăng nhập, bạn đồng ý với Điều khoản dịch vụ & Chính sách bảo mật của LEOPARD.
-          </Text>
+          </AppText>
         </View>
       </ScrollView>
 
@@ -794,7 +783,7 @@ const styles = StyleSheet.create({
   },
   alertText: {
     color: leopardPalette.accentYellowDark,
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     lineHeight: 18,
   },
@@ -807,7 +796,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#B91C1C',
-    fontSize: 12.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '600',
     lineHeight: 18,
     textAlign: 'center',
@@ -840,13 +829,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#BBF7D0',
   },
-  validCheckIcon: {
-    fontSize: 10,
-    color: '#15803D',
-    fontWeight: '800',
-  },
   validText: {
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     color: '#15803D',
     fontWeight: '700',
   },
@@ -885,16 +869,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   countryCode: {
-    fontSize: 14,
+    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: '#0F172A',
   },
-  countryChevron: {
-    fontSize: 10,
-    color: '#64748B',
-    fontWeight: '700',
-    marginTop: -1,
-  },
+
   badgeDivider: {
     width: 1,
     height: 22,
@@ -1020,7 +999,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   configNote: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: leopardPalette.textSubtle,
     textAlign: 'center',
     fontWeight: '500',
@@ -1041,7 +1020,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   demoDividerText: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     fontWeight: '700',
     color: leopardPalette.textSubtle,
     textTransform: 'uppercase',
@@ -1069,10 +1048,6 @@ const styles = StyleSheet.create({
     borderColor: colors.success.border,
     backgroundColor: colors.success.background,
   },
-  demoCardAmber: {
-    borderColor: colors.warning.border,
-    backgroundColor: colors.warning.background,
-  },
   demoCardSlate: {
     borderColor: leopardPalette.cardBorder,
     backgroundColor: '#F8FAFC',
@@ -1093,21 +1068,18 @@ const styles = StyleSheet.create({
   demoRoleBadgeGreen: {
     backgroundColor: colors.success.text,
   },
-  demoRoleBadgeAmber: {
-    backgroundColor: leopardPalette.accentYellowDark,
-  },
   demoRoleBadgeSlate: {
     backgroundColor: leopardPalette.textMutedSlate,
   },
   demoRoleBadgeText: {
-    fontSize: 10,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   demoCardDesc: {
-    fontSize: 11.5,
+    fontSize: typeScale.caption1.fontSize,
     color: leopardPalette.textMutedSlate,
-    lineHeight: 15,
+    lineHeight: typeScale.caption1.lineHeight,
   },
 
   /* Footer Navigation */
@@ -1127,10 +1099,8 @@ const styles = StyleSheet.create({
     color: '#0B1E42',
   },
   termsNote: {
-    fontSize: 10.5,
     color: leopardPalette.textSubtle,
     textAlign: 'center',
-    lineHeight: 15,
     paddingHorizontal: 8,
   },
 
@@ -1309,7 +1279,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   resendActionLink: {
-    fontSize: 13.5,
+    fontSize: typeScale.footnote.fontSize,
     fontWeight: '700',
     color: orange.primaryDark,
     textDecorationLine: 'underline',

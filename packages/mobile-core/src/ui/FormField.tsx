@@ -1,8 +1,9 @@
 import { useId } from 'react';
 import type { TextInputProps } from 'react-native';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
-import { colors, control, leopardPalette, radius, spacing, typography } from '../theme/tokens';
+import { colors, control, leopardPalette, radius, spacing, typeScale } from '../theme/tokens';
+import { AppText } from './AppText';
 
 type FormFieldProps = Omit<TextInputProps, 'style'> & {
   label: string;
@@ -19,9 +20,9 @@ export function FormField({ label, hint, error, ...inputProps }: FormFieldProps)
 
   return (
     <View style={styles.container}>
-      <Text nativeID={labelId} style={styles.label}>
+      <AppText nativeID={labelId} variant="subheadline" style={styles.label}>
         {label}
-      </Text>
+      </AppText>
       <TextInput
         {...inputProps}
         accessibilityHint={accessibilityHint || undefined}
@@ -30,19 +31,19 @@ export function FormField({ label, hint, error, ...inputProps }: FormFieldProps)
         style={[styles.input, error ? styles.inputError : null]}
       />
       {hint ? (
-        <Text nativeID={hintId} style={styles.hint}>
+        <AppText nativeID={hintId} variant="caption1" style={styles.hint}>
           {hint}
-        </Text>
+        </AppText>
       ) : null}
       <View style={styles.errorArea} testID="field-error-area">
         {error ? (
-          <Text accessibilityRole="alert" nativeID={errorId} style={styles.error}>
+          <AppText accessibilityRole="alert" nativeID={errorId} variant="caption1" style={styles.error}>
             {error}
-          </Text>
+          </AppText>
         ) : (
-          <Text accessibilityElementsHidden style={styles.error}>
+          <AppText accessibilityElementsHidden variant="caption1" style={styles.error}>
             {' '}
-          </Text>
+          </AppText>
         )}
       </View>
     </View>
@@ -55,12 +56,13 @@ const styles = StyleSheet.create({
     gap: spacing.xxs,
   },
   label: {
-    ...typography.label,
+    // HIG Subheadline size with the semibold emphasis a field label needs.
+    fontWeight: '600',
     color: leopardPalette.textSlateDark,
     flexShrink: 1,
   },
   input: {
-    ...typography.body,
+    ...typeScale.body,
     backgroundColor: leopardPalette.inputBg,
     borderColor: leopardPalette.inputBorder,
     borderRadius: radius.control,
@@ -75,15 +77,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger.background,
   },
   hint: {
-    ...typography.caption,
+    ...typeScale.caption1,
     color: leopardPalette.textMutedSlate,
     flexShrink: 1,
   },
   errorArea: {
-    minHeight: typography.caption.lineHeight,
+    minHeight: typeScale.caption1.lineHeight,
   },
   error: {
-    ...typography.caption,
+    ...typeScale.caption1,
     color: colors.danger.text,
     flexShrink: 1,
   },

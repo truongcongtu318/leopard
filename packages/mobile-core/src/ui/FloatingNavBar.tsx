@@ -1,7 +1,7 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, iosContinuousCurve, leopardRadius, radius, spacing } from '../theme/tokens';
+import { colors, iosContinuousCurve, leopardRadius, radius, spacing, typeScale } from '../theme/tokens';
 import { IconClock, IconEarnings, IconHome, IconOrders, IconSpeedTruck, IconUser, IconWallet } from './icons/CoreIcons';
 import { haptic } from './haptics';
 
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#FFFFFF',
-    fontSize: 9,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
   },
   label: {

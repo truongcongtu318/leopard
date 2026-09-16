@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography, typeScale } from '../theme/tokens';
 import { RealInteractiveMap } from './RealInteractiveMap';
 
 export type RouteMapSchematicProps = Readonly<{
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   pointDotText: {
     color: '#FFFFFF',
-    fontSize: 10.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '800',
   },
   locationTextWrap: {
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   locationLabel: {
     ...typography.caption,
     color: colors.neutral.mutedText,
-    fontSize: 9.5,
+    fontSize: typeScale.caption2.fontSize,
     fontWeight: '700',
     letterSpacing: 0.6,
   },

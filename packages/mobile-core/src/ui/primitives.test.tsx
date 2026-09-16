@@ -2,7 +2,16 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
 
-import { colors, control, leopardPalette, motion, radius, spacing, typography } from '../theme/tokens';
+import {
+  colors,
+  control,
+  leopardPalette,
+  motion,
+  radius,
+  spacing,
+  spacingScale,
+  typography,
+} from '../theme/tokens';
 import { Button } from './Button';
 import { EtaIndicator } from './EtaIndicator';
 import { FormField } from './FormField';
@@ -35,16 +44,16 @@ void statusBadgeTypeContract;
 
 describe('theme tokens', () => {
   it('exposes the approved platform typography, motion and control tokens', () => {
-    expect(Object.values(spacing)).toEqual([4, 8, 12, 16, 24, 32]);
+    expect(Object.values(spacing)).toEqual(spacingScale);
     expect(radius.control).toBe(12);
-    expect(radius.card).toBe(20);
+    expect(radius.card).toBe(14);
     expect(typography.body.fontSize).toBe(16);
-    expect(typography.sectionTitle).toEqual({
+    expect(typography.sectionTitle).toMatchObject({
       fontSize: 20,
       fontWeight: '600',
       lineHeight: 28,
     });
-    expect(typography.pageTitle).toEqual({
+    expect(typography.pageTitle).toMatchObject({
       fontSize: 24,
       fontWeight: '700',
       lineHeight: 32,
@@ -70,8 +79,8 @@ describe('theme tokens', () => {
   });
 
   it('exposes official brand colors and double-bezel radius tokens', () => {
-    expect(radius.bezelOuter).toBe(24);
-    expect(radius.bezelInner).toBe(18);
+    expect(radius.bezelOuter).toBe(18);
+    expect(radius.bezelInner).toBe(14);
     expect(radius.pill).toBe(9999);
     expect(leopardPalette.primary).toBe('#0B1E42');
     expect(leopardPalette.accentYellow).toBe('#F59E0B');

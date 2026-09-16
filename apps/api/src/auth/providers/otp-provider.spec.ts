@@ -23,11 +23,57 @@ describe('OTP provider boundary', () => {
     });
   });
 
+  it('maps every seeded driver alias to its own seeded phone', async () => {
+    const { DEMO_IDENTITIES } = await import('./demo-otp.provider.js');
+
+    // A missing alias makes the login endpoint treat the phone as unknown and
+    // create a fresh CUSTOMER account instead of signing the driver in.
+    const expected: ReadonlyArray<readonly [string, string]> = [
+      ['0900000002', '+840000000002'],
+      ['0900000005', '+840000000005'],
+      ['0900000006', '+840000000006'],
+      ['0900000007', '+840000000007'],
+      ['0900000008', '+840000000008'],
+      ['0987324561', '+84987324561'],
+    ];
+
+    for (const [alias, phoneNumber] of expected) {
+      expect(DEMO_IDENTITIES.get(alias)?.phoneNumber).toBe(phoneNumber);
+      expect(DEMO_IDENTITIES.get(phoneNumber)?.phoneNumber).toBe(phoneNumber);
+    }
+  });
+
   it('rejects the demo provider outside local or test environments', async () => {
     const { DemoOtpProvider } = await import('./demo-otp.provider.js');
     const provider = new DemoOtpProvider({
       enabled: true,
       nodeEnv: 'production',
+    });
+
+    await expect(provider.verify('customer')).rejects.toMatchObject({
+      code: 'OTP_PROVIDER_DISABLED',
+    });
+  });
+
+  it('accepts the demo provider in production once it is explicitly acknowledged', async () => {
+    const { DemoOtpProvider } = await import('./demo-otp.provider.js');
+    const provider = new DemoOtpProvider({
+      enabled: true,
+      nodeEnv: 'production',
+      allowInProduction: true,
+    });
+
+    await expect(provider.verify('customer')).resolves.toMatchObject({
+      phoneNumber: '+840000000001',
+    });
+  });
+
+  it('still rejects the acknowledged demo provider when the flag itself is off', async () => {
+    const { DemoOtpProvider } = await import('./demo-otp.provider.js');
+    const provider = new DemoOtpProvider({
+      enabled: false,
+      nodeEnv: 'production',
+      allowInProduction: true,
     });
 
     await expect(provider.verify('customer')).rejects.toMatchObject({
