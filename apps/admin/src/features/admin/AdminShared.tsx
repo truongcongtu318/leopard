@@ -12,6 +12,7 @@ import type {
   AdminListScreen,
   AdminNoticeView,
   AdminPreviewContext,
+  AdminPreviewScreen,
 } from './model';
 import { createAdminPreviewHref } from './adapter';
 
@@ -40,15 +41,23 @@ const listLabel: Readonly<Record<AdminListScreen, string>> = {
   users: 'Người dùng',
   fleets: 'Đội xe',
   drivers: 'Tài xế',
+  payments: 'Quản lý thanh toán',
+  invoices: 'Quản lý hóa đơn',
+  promotions: 'Quản lý khuyến mãi',
+  reviews: 'Đánh giá tài xế',
+  reports: 'Khiếu nại & Hỗ trợ',
+  audit: 'Nhật ký kiểm toán',
 };
 
 export function AdminBreadcrumbs({
   screen,
   orderReference,
+  reportTicketNumber,
   previewContext,
 }: Readonly<{
-  screen: AdminListScreen | 'order-detail';
+  screen: AdminPreviewScreen;
   orderReference?: string;
+  reportTicketNumber?: string;
   previewContext?: AdminPreviewContext | undefined;
 }>) {
   return (
@@ -79,9 +88,48 @@ export function AdminBreadcrumbs({
               {orderReference}
             </li>
           </>
+        ) : screen === 'report-detail' ? (
+          <>
+            <li className="list-none">
+              <a
+                className="inline-flex items-center rounded-lg px-2.5 py-1 text-slate-600 hover:text-brand hover:bg-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand font-medium motion-reduce:transition-none"
+                href={createAdminPreviewHref('/admin/reports', 'reports', previewContext)}
+              >
+                Khiếu nại
+              </a>
+            </li>
+            <li aria-hidden="true" className="list-none text-slate-300">/</li>
+            <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 break-all bg-white/70 rounded-lg shadow-2xs border border-white/60">
+              {reportTicketNumber ?? 'Chi tiết khiếu nại'}
+            </li>
+          </>
+        ) : screen === 'dispatch' ? (
+          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
+            Điều phối vận hành
+          </li>
+        ) : screen === 'notifications' ? (
+          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
+            Thông báo & Broadcast
+          </li>
+        ) : screen === 'pricing' ? (
+          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
+            Cấu hình giá linh hoạt
+          </li>
+        ) : screen === 'live-map' ? (
+          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
+            Bản đồ giám sát trực tiếp
+          </li>
+        ) : screen === 'settings' ? (
+          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
+            Cài đặt hệ thống & Đối tác
+          </li>
+        ) : screen === 'support' ? (
+          <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
+            Hỗ trợ khách hàng & CSKH
+          </li>
         ) : (
           <li aria-current="page" className="list-none font-bold text-slate-800 px-2.5 py-1 bg-white/70 rounded-lg shadow-2xs border border-white/60">
-            {listLabel[screen]}
+            {listLabel[screen as AdminListScreen]}
           </li>
         )}
       </ol>

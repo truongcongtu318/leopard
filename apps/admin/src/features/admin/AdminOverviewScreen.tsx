@@ -21,6 +21,10 @@ import type {
   AdminPreviewContext,
 } from './model';
 
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat('vi-VN').format(value);
+}
+
 export function AdminOverviewScreen({
   view,
   previewContext,
@@ -74,8 +78,11 @@ export function AdminOverviewScreen({
   const completionRate = totalOrdersCount > 0 ? Math.round((deliveredCount / totalOrdersCount) * 100) : 0;
 
   const revenueMetric = view.metrics.find((m) => m.id === 'revenue');
-  const revenueVnd = revenueMetric?.value ?? 0;
-  const formattedRevenue = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenueVnd);
+  const revenueVal = revenueMetric?.value ?? 0;
+  const formattedRevenue =
+    typeof revenueVal === 'number'
+      ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenueVal)
+      : revenueVal;
 
   const bentoOrders: BentoOrderItem[] = view.recentOrders.map((o) => {
     const rawRoute = o.routeLabel ?? '';
@@ -129,7 +136,7 @@ export function AdminOverviewScreen({
         id: o.id,
         orderRef: o.id,
         customer: o.customer,
-        routeLabel: `${o.route.from} ➔ ${o.route.to}`,
+        routeLabel: `${o.route.from} → ${o.route.to}`,
         x: 30 + ((idx * 15) % 50),
         y: 30 + ((idx * 15) % 50),
         lat,
@@ -191,7 +198,7 @@ export function AdminOverviewScreen({
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{kpi.label}</p>
                 <p className="text-2xl font-bold font-mono tracking-tight text-slate-900 tabular-nums truncate mt-1">
-                  {kpi.value}
+                  {typeof kpi.value === 'number' ? formatNumber(kpi.value) : kpi.value}
                 </p>
               </div>
               <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl ${kpi.iconClass}`}>
@@ -211,7 +218,7 @@ export function AdminOverviewScreen({
               title="Bản đồ điều phối thời gian thực"
               activeOrderCode={
                 bentoOrders[0]
-                  ? `${bentoOrders[0].id} · ${bentoOrders[0].customer} ➔ ${bentoOrders[0].route.to}`
+                  ? `${bentoOrders[0].id} · ${bentoOrders[0].customer} → ${bentoOrders[0].route.to}`
                   : 'Chưa có chuyến xe nào đang hoạt động'
               }
               searchPlaceholder="Tìm kiếm đơn hàng, tài xế..."

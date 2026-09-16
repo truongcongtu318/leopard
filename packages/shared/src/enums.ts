@@ -23,3 +23,9 @@ export type MediaType = (typeof MediaType)[number];
 
 export const ProviderSource = ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'] as const;
 export type ProviderSource = (typeof ProviderSource)[number];
+
+export const InvoiceStatus = ['ISSUED', 'VOIDED'] as const;
+export type InvoiceStatus = (typeof InvoiceStatus)[number];
+
+export const PromotionDiscountType = ['PERCENT', 'FIXED'] as const;
+export type PromotionDiscountType = (typeof PromotionDiscountType)[number];

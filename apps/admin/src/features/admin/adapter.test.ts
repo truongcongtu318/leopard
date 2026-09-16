@@ -114,6 +114,86 @@ describe('Admin URL and privacy boundary', () => {
         rawSearch: 'customer@example.test',
       }),
     ).toBe('/admin/orders?preview=enabled&scenario=ADM-ORD-DENSE');
+
+    expect(
+      createAdminPreviewHref('/admin/payments', 'payments', {
+        preview: 'enabled',
+        scenario: 'ADM-PAY-DENSE',
+        command: 'CONFIRM_MANUAL_PAYMENT',
+      }),
+    ).toBe('/admin/payments?preview=enabled&scenario=ADM-PAY-DENSE');
+
+    expect(
+      createAdminPreviewHref('/admin/payments', 'payments', {
+        preview: 'enabled',
+        scenario: 'ADM-PAY-DENSE',
+        command: 'DISABLE_USER',
+      }),
+    ).toBe('/admin/payments?preview=enabled&scenario=ADM-PAY-DENSE');
+  });
+
+  it('allow-lists Payment filters and validates payment status, dates, and sort', () => {
+    expect(
+      parseAdminListFilters('payments', {
+        status: 'UNPAID',
+        from: '2026-08-01',
+        to: '2026-08-15',
+        sort: 'updated-asc',
+        page: '2',
+        pageSize: '50',
+      }),
+    ).toEqual({
+      status: 'UNPAID',
+      role: 'ALL',
+      userStatus: 'ALL',
+      availability: 'ALL',
+      membershipStatus: 'ALL',
+      fleetId: '',
+      customerId: '',
+      driverId: '',
+      from: '2026-08-01',
+      to: '2026-08-15',
+      sort: 'updated-asc',
+      page: 2,
+      pageSize: 50,
+    });
+
+    expect(
+      parseAdminListFilters('payments', {
+        status: 'INVALID_STATUS',
+        sort: 'invalid-sort',
+      }),
+    ).toMatchObject({
+      status: 'ALL',
+      sort: 'updated-desc',
+    });
+
+    const serialized = serializeAdminListFilters(
+      'payments',
+      {
+        status: 'QR_CREATED',
+        role: 'ALL',
+        userStatus: 'ALL',
+        availability: 'ALL',
+        membershipStatus: 'ALL',
+        fleetId: '',
+        customerId: '',
+        driverId: '',
+        from: '2026-08-01',
+        to: '2026-08-15',
+        sort: 'updated-desc',
+        page: 1,
+        pageSize: 20,
+      },
+      {
+        preview: 'enabled',
+        scenario: 'ADM-PAY-DENSE',
+      },
+    );
+
+    expect(serialized).toBe(
+      'status=QR_CREATED&from=2026-08-01&to=2026-08-15&sort=updated-desc&page=1&pageSize=20&preview=enabled&scenario=ADM-PAY-DENSE',
+    );
   });
 
   it('uses per-screen defaults for invalid or missing values', () => {

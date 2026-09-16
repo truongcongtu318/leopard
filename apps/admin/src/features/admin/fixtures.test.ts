@@ -17,6 +17,31 @@ const screenByScenario: Readonly<Record<string, AdminPreviewScreen>> = {
   'ADM-TRK-STALE': 'order-detail',
   'ADM-MEDIA-ERROR': 'order-detail',
   'ADM-PAY-FAILED': 'order-detail',
+  'ADM-PAY-DENSE': 'payments',
+  'ADM-PAY-NORESULT': 'payments',
+  'ADM-INV-DENSE': 'invoices',
+  'ADM-INV-NORESULT': 'invoices',
+  'ADM-AUD-DENSE': 'audit',
+  'ADM-AUD-NORESULT': 'audit',
+  'ADM-PRM-DENSE': 'promotions',
+  'ADM-PRM-NORESULT': 'promotions',
+  'ADM-REV-DENSE': 'reviews',
+  'ADM-REV-NORESULT': 'reviews',
+  'ADM-REP-DENSE': 'reports',
+  'ADM-REP-NORESULT': 'reports',
+  'ADM-REP-DETAIL': 'report-detail',
+  'ADM-DSP-DENSE': 'dispatch',
+  'ADM-DSP-EMPTY': 'dispatch',
+  'ADM-NTF-COMPOSE': 'notifications',
+  'ADM-NTF-EMPTY': 'notifications',
+  'ADM-PRC-CURRENT': 'pricing',
+  'ADM-PRC-PREVIEW': 'pricing',
+  'ADM-MAP-LIVE': 'live-map',
+  'ADM-MAP-SIM': 'live-map',
+  'ADM-SET-HEALTHY': 'settings',
+  'ADM-SET-DEMO': 'settings',
+  'ADM-SUP-ACTIVE': 'support',
+  'ADM-SUP-EMPTY': 'support',
   'ADM-USR-DENSE': 'users',
   'ADM-FLT-EMPTY': 'fleets',
   'ADM-DRV-MIXED': 'drivers',
@@ -30,8 +55,8 @@ const screenByScenario: Readonly<Record<string, AdminPreviewScreen>> = {
 };
 
 describe('Admin immutable scenario catalogue', () => {
-  it('contains the 19 approved Admin scenarios', () => {
-    expect(ADMIN_PREVIEW_SCENARIOS).toHaveLength(19);
+  it('contains the 44 approved Admin scenarios', () => {
+    expect(ADMIN_PREVIEW_SCENARIOS).toHaveLength(44);
     expect(ADMIN_PREVIEW_SCENARIOS).toEqual(Object.keys(screenByScenario));
   });
 
@@ -66,6 +91,19 @@ describe('Admin immutable scenario catalogue', () => {
       'readUsers',
       'readFleets',
       'readDrivers',
+      'readPayments',
+      'readInvoices',
+      'readAudit',
+      'readPromotions',
+      'readReviews',
+      'readReports',
+      'readReportDetail',
+      'readDispatch',
+      'readNotifications',
+      'readPricing',
+      'readLiveMap',
+      'readSettings',
+      'readSupport',
       'executeAuditedCommand',
       'subscribeToReadEvents',
     ]);

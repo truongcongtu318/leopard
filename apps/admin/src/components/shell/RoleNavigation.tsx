@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, ClipboardCheck, LayoutGrid, Package, ShieldCheck, Users } from 'lucide-react';
+import { AlertCircle, Bell, Building2, Calculator, ClipboardCheck, CreditCard, FileText, Headphones, History, LayoutGrid, Navigation, Package, Radio, Settings, ShieldCheck, Star, TicketPercent, Users } from 'lucide-react';
 
 export interface NavItem {
   label: string;
@@ -33,11 +33,23 @@ function findCurrentHref(items: readonly NavItem[], currentPath: string) {
 const iconClass = 'h-5 w-5 shrink-0';
 
 function getNavIcon(href: string) {
+  if (href.endsWith('/dispatch')) return <Radio className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/live-map')) return <Navigation className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/orders')) return <Package className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/reports')) return <AlertCircle className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/support')) return <Headphones className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/payments')) return <CreditCard className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/invoices')) return <FileText className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/promotions')) return <TicketPercent className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/notifications')) return <Bell className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/reviews')) return <Star className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/users')) return <Users className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/fleets')) return <Building2 className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/drivers')) return <ShieldCheck className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   if (href.endsWith('/driver-applications')) return <ClipboardCheck className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/pricing')) return <Calculator className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/audit')) return <History className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
+  if (href.endsWith('/settings')) return <Settings className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
   return <LayoutGrid className={iconClass} strokeWidth={1.75} aria-hidden="true" />;
 }
 

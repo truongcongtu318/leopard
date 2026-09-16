@@ -6,6 +6,7 @@ export type {
   DriverAvailability,
   ExternalStatusBadgeProps,
   FleetMemberStatus,
+  InvoiceStatus,
   OrderStatus,
   PaymentStatus,
   StatusBadgeProps,

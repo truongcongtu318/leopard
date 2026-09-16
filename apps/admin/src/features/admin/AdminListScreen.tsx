@@ -12,10 +12,13 @@ import {
 } from '@leopard/ui';
 import React, { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileText, Plus, Star, TicketPercent, XCircle } from 'lucide-react';
 
 import { createAdminPreviewHref, serializeAdminListFilters } from './adapter';
 import { AdminCommandLauncher } from './AdminCommandLauncher';
+import { CreatePromotionModal } from './CreatePromotionModal';
+import { ResendInvoiceModal } from './ResendInvoiceModal';
+import { AuditDetailModal } from './AuditDetailModal';
 import {
   AdminBoundaryState,
   AdminBreadcrumbs,
@@ -25,15 +28,20 @@ import {
   AdminSurface,
 } from './AdminShared';
 import type {
+  AdminAuditEntryView,
   AdminCommandView,
   AdminDriverListItemView,
   AdminFleetListItemView,
+  AdminInvoiceListItemView,
   AdminListItemView,
   AdminListRouteView,
   AdminListScreen as AdminListScreenName,
   AdminListView,
   AdminOrderListItemView,
+  AdminPaymentListItemView,
   AdminPreviewContext,
+  AdminPromotionListItemView,
+  AdminReviewListItemView,
   AdminUserListItemView,
 } from './model';
 
@@ -45,6 +53,25 @@ const titleByScreen: Readonly<Record<AdminListScreenName, string>> = {
   users: 'Người dùng',
   fleets: 'Đội xe',
   drivers: 'Tài xế',
+  payments: 'Quản lý thanh toán',
+  invoices: 'Quản lý hóa đơn',
+  audit: 'Nhật ký kiểm toán',
+  promotions: 'Quản lý khuyến mãi',
+  reviews: 'Đánh giá tài xế',
+  reports: 'Khiếu nại & Hỗ trợ',
+};
+
+const entityNounByScreen: Readonly<Record<AdminListScreenName, string>> = {
+  orders: 'đơn hàng',
+  users: 'người dùng',
+  fleets: 'đội xe',
+  drivers: 'tài xế',
+  payments: 'thanh toán',
+  invoices: 'hóa đơn',
+  audit: 'mục kiểm toán',
+  promotions: 'khuyến mãi',
+  reviews: 'đánh giá',
+  reports: 'khiếu nại',
 };
 
 function formatUserRole(role: string): string {
@@ -274,14 +301,659 @@ function driverColumns(previewContext?: AdminPreviewContext): DataTableColumn[] 
   ];
 }
 
+function paymentColumns(
+  onSelectCommand?: (command: AdminCommandView) => void,
+  previewContext?: AdminPreviewContext,
+): DataTableColumn[] {
+  return [
+    {
+      key: 'order',
+      header: 'Mã đơn',
+      render: (row) => {
+        const payment = row.item as AdminPaymentListItemView;
+        return (
+          <div className="min-w-36">
+            <Link
+              aria-label={`Xem đơn ${payment.orderCode}`}
+              className="font-semibold text-brand underline-offset-4 hover:underline focus-visible:rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              href={createAdminPreviewHref(payment.href, 'order-detail', previewContext)}
+            >
+              {payment.orderCode}
+            </Link>
+            <p className="mt-xxs text-xs text-neutral-muted font-mono">{payment.referenceLabel}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'customer',
+      header: 'Khách hàng',
+      render: (row) => {
+        const payment = row.item as AdminPaymentListItemView;
+        return (
+          <div className="min-w-44">
+            <p className="font-semibold text-slate-800 break-words">{payment.customerName}</p>
+            <p className="mt-xxs text-xs text-neutral-muted">{payment.customerPhone ?? '—'}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'amount',
+      header: 'Số tiền',
+      render: (row) => {
+        const payment = row.item as AdminPaymentListItemView;
+        return (
+          <div className="min-w-32">
+            <p className="font-semibold text-slate-900 tabular-nums">{payment.amountLabel}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'source',
+      header: 'Nguồn',
+      render: (row) => {
+        const payment = row.item as AdminPaymentListItemView;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium text-xs bg-slate-100 text-slate-700">
+            {payment.sourceLabel}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'status',
+      header: 'Trạng thái',
+      render: (row) => (
+        <StatusBadge domain="paymentStatus" status={(row.item as AdminPaymentListItemView).status} />
+      ),
+    },
+    {
+      key: 'created',
+      header: 'Ngày tạo',
+      className: 'hidden lg:table-cell',
+      render: (row) => {
+        const payment = row.item as AdminPaymentListItemView;
+        return (
+          <div className="min-w-36 text-xs tabular-nums text-slate-600">
+            <p>{payment.createdAtLabel}</p>
+            {payment.confirmedByName ? (
+              <p className="mt-xxs text-[11px] text-slate-400">Bởi {payment.confirmedByName}</p>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Thao tác',
+      render: (row) => {
+        const payment = row.item as AdminPaymentListItemView;
+        if (!payment.availableCommands || payment.availableCommands.length === 0) {
+          return <span className="text-xs text-slate-400 font-medium">—</span>;
+        }
+        return (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {payment.availableCommands.map((command) => (
+              <Button
+                key={`${command.kind}-${command.targetId}`}
+                variant={command.buttonVariant}
+                size="sm"
+                className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+                onPress={() => onSelectCommand?.(command)}
+              >
+                {command.commandLabel}
+              </Button>
+            ))}
+          </div>
+        );
+      },
+    },
+  ];
+}
+
+function invoiceColumns(
+  previewContext?: AdminPreviewContext,
+  onResendInvoice?: (invoice: AdminInvoiceListItemView) => void,
+): DataTableColumn[] {
+  return [
+    {
+      key: 'invoiceNumber',
+      header: 'Số HĐ',
+      render: (row) => {
+        const invoice = row.item as AdminInvoiceListItemView;
+        return (
+          <div className="min-w-32">
+            <span className="font-mono text-xs font-semibold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md">
+              {invoice.invoiceNumber}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'order',
+      header: 'Đơn hàng',
+      render: (row) => {
+        const invoice = row.item as AdminInvoiceListItemView;
+        return (
+          <div className="min-w-36">
+            <Link
+              href={createAdminPreviewHref(`/admin/orders/${invoice.orderId}`, 'order-detail', previewContext)}
+              className="font-semibold text-xs text-brand hover:underline"
+            >
+              {invoice.orderCode}
+            </Link>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'customer',
+      header: 'Khách hàng',
+      render: (row) => {
+        const invoice = row.item as AdminInvoiceListItemView;
+        return (
+          <div className="min-w-44">
+            <p className="font-semibold text-slate-800 break-words">{invoice.customerName}</p>
+            {invoice.isMissingEmail || !invoice.customerEmail ? (
+              <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                Thiếu email
+              </span>
+            ) : (
+              <p className="mt-xxs text-xs text-neutral-muted truncate">{invoice.customerEmail}</p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'total',
+      header: 'Tổng tiền',
+      render: (row) => {
+        const invoice = row.item as AdminInvoiceListItemView;
+        return (
+          <div className="min-w-32">
+            <p className="font-semibold text-slate-900 tabular-nums">{invoice.totalLabel}</p>
+            <p className="text-[11px] text-slate-400">Trước VAT: {invoice.amountLabel}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'status',
+      header: 'Trạng thái',
+      render: (row) => (
+        <StatusBadge domain="invoiceStatus" status={(row.item as AdminInvoiceListItemView).status} />
+      ),
+    },
+    {
+      key: 'issuedAt',
+      header: 'Ngày phát hành',
+      className: 'hidden lg:table-cell',
+      render: (row) => {
+        const invoice = row.item as AdminInvoiceListItemView;
+        return (
+          <div className="min-w-36 text-xs tabular-nums text-slate-600">
+            <p>{invoice.issuedAtLabel}</p>
+            {invoice.emailSentAtLabel ? (
+              <p className="mt-xxs text-[11px] text-slate-400">Email: {invoice.emailSentAtLabel}</p>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Thao tác',
+      render: (row) => {
+        const invoice = row.item as AdminInvoiceListItemView;
+        return (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <a
+              href={invoice.pdfDownloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full border border-slate-200 bg-white text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <FileText className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
+              Tải PDF
+            </a>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+              isDisabled={invoice.isMissingEmail}
+              onPress={() => onResendInvoice?.(invoice)}
+            >
+              Gửi lại email
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+}
+
+function auditColumns(
+  onViewAuditDetail?: (entry: AdminAuditEntryView) => void,
+): DataTableColumn[] {
+  return [
+    {
+      key: 'timestamp',
+      header: 'Thời điểm',
+      render: (row) => {
+        const entry = row.item as AdminAuditEntryView;
+        return (
+          <div className="min-w-32">
+            <time className="font-mono text-xs font-semibold text-slate-700 tabular-nums" dateTime={entry.dateTime}>
+              {entry.timestampLabel}
+            </time>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'actor',
+      header: 'Người thực hiện',
+      render: (row) => {
+        const entry = row.item as AdminAuditEntryView;
+        const role = entry.actorRole ? formatUserRole(entry.actorRole) : 'Hệ thống';
+        return (
+          <div className="min-w-36">
+            <p className="font-semibold text-xs text-slate-900">{entry.actorName || entry.actorLabel || 'Hệ thống'}</p>
+            <span className="text-[11px] text-slate-500 font-mono">{role}</span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'action',
+      header: 'Hành động',
+      render: (row) => {
+        const entry = row.item as AdminAuditEntryView;
+        return (
+          <div className="min-w-36">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200/60 font-mono">
+              {entry.actionLabel || entry.action}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'resource',
+      header: 'Tài nguyên',
+      render: (row) => {
+        const entry = row.item as AdminAuditEntryView;
+        return (
+          <div className="min-w-36">
+            <p className="font-semibold text-xs text-slate-800">{entry.resourceType || '—'}</p>
+            {entry.resourceId ? (
+              <p className="text-[11px] font-mono text-slate-500 truncate max-w-[160px]">{entry.resourceId}</p>
+            ) : entry.targetLabel ? (
+              <p className="text-[11px] text-slate-500 truncate max-w-[160px]">{entry.targetLabel}</p>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'requestId',
+      header: 'Mã yêu cầu',
+      className: 'hidden lg:table-cell',
+      render: (row) => {
+        const entry = row.item as AdminAuditEntryView;
+        return (
+          <div className="min-w-32">
+            <span className="font-mono text-[11px] text-slate-500 break-all">{entry.requestId || '—'}</span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'details',
+      header: 'Chi tiết',
+      render: (row) => {
+        const entry = row.item as AdminAuditEntryView;
+        return (
+          <div className="min-w-44 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200/70">
+                {entry.outcomeLabel}
+              </span>
+              {entry.metadata ? (
+                <button
+                  type="button"
+                  onClick={() => onViewAuditDetail?.(entry)}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand hover:text-brand/80 hover:underline cursor-pointer"
+                >
+                  Chi tiết JSON
+                </button>
+              ) : null}
+            </div>
+            {entry.reason ? <p className="text-slate-700 break-words">{entry.reason}</p> : null}
+          </div>
+        );
+      },
+    },
+  ];
+}
+
+function promotionColumns(
+  onSelectCommand?: (command: AdminCommandView) => void,
+): DataTableColumn[] {
+  return [
+    {
+      key: 'code',
+      header: 'Mã voucher',
+      render: (row) => {
+        const promo = row.item as AdminPromotionListItemView;
+        return (
+          <div className="min-w-36">
+            <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-slate-900 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-full">
+              <TicketPercent className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+              {promo.code}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'title',
+      header: 'Tiêu đề & Mô tả',
+      render: (row) => {
+        const promo = row.item as AdminPromotionListItemView;
+        return (
+          <div className="min-w-48 max-w-xs">
+            <p className="font-semibold text-xs text-slate-900 break-words">{promo.title}</p>
+            <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">{promo.description}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'discount',
+      header: 'Mức giảm',
+      render: (row) => {
+        const promo = row.item as AdminPromotionListItemView;
+        const discountLabel =
+          promo.discountType === 'PERCENT'
+            ? `${promo.discountValue}%${promo.maxDiscountVnd ? ` (Tối đa ${promo.maxDiscountVnd.toLocaleString('vi-VN')} ₫)` : ''}`
+            : `${promo.discountValue.toLocaleString('vi-VN')} ₫`;
+        return (
+          <div className="min-w-32">
+            <p className="font-semibold text-xs text-slate-900 tabular-nums">{discountLabel}</p>
+            <span className="text-[11px] text-slate-500">
+              {promo.discountType === 'PERCENT' ? 'Theo tỷ lệ' : 'Cố định'}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'condition',
+      header: 'Đơn tối thiểu',
+      className: 'hidden lg:table-cell',
+      render: (row) => {
+        const promo = row.item as AdminPromotionListItemView;
+        return (
+          <div className="min-w-28 text-xs tabular-nums text-slate-700">
+            <span>{promo.minOrderAmountVnd.toLocaleString('vi-VN')} ₫</span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'usage',
+      header: 'Lượt dùng',
+      render: (row) => {
+        const promo = row.item as AdminPromotionListItemView;
+        const percent = promo.usageLimit > 0 ? Math.min(Math.round((promo.usageCount / promo.usageLimit) * 100), 100) : 0;
+        return (
+          <div className="min-w-32">
+            <p className="font-semibold text-xs text-slate-900 tabular-nums">
+              {promo.usageCount.toLocaleString('vi-VN')} / {promo.usageLimit.toLocaleString('vi-VN')}
+            </p>
+            <div className="mt-1 h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${percent >= 90 ? 'bg-amber-500' : 'bg-slate-900'}`}
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'expires',
+      header: 'Hạn sử dụng',
+      className: 'hidden xl:table-cell',
+      render: (row) => {
+        const promo = row.item as AdminPromotionListItemView;
+        return (
+          <div className="min-w-36 text-xs tabular-nums text-slate-600 font-mono">
+            {promo.expiresAtLabel}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'status',
+      header: 'Trạng thái',
+      render: (row) => {
+        const promo = row.item as AdminPromotionListItemView;
+        return promo.isActive ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" aria-hidden="true" />
+            Đang áp dụng
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+            <XCircle className="w-3 h-3 text-slate-400" aria-hidden="true" />
+            Tạm dừng
+          </span>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Thao tác',
+      render: (row) => {
+        const promo = row.item as AdminPromotionListItemView;
+        if (!promo.availableCommands || promo.availableCommands.length === 0) {
+          return <span className="text-xs text-slate-400 font-medium">—</span>;
+        }
+        return (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {promo.availableCommands.map((command) => (
+              <Button
+                key={`${command.kind}-${command.targetId}`}
+                variant={command.buttonVariant}
+                size="sm"
+                className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+                onPress={() => onSelectCommand?.(command)}
+              >
+                {command.commandLabel}
+              </Button>
+            ))}
+          </div>
+        );
+      },
+    },
+  ];
+}
+
+function reviewColumns(
+  onSelectCommand?: (command: AdminCommandView) => void,
+  previewContext?: AdminPreviewContext,
+): DataTableColumn[] {
+  return [
+    {
+      key: 'rating',
+      header: 'Điểm số',
+      render: (row) => {
+        const rev = row.item as AdminReviewListItemView;
+        return (
+          <div className="min-w-32">
+            <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-3.5 h-3.5 ${
+                      star <= rev.rating
+                        ? 'fill-amber-400 text-amber-400'
+                        : 'text-slate-200 fill-slate-100'
+                    }`}
+                    aria-hidden="true"
+                  />
+                ))}
+              </div>
+              <span className="font-bold text-xs text-slate-900 ml-1 tabular-nums">{rev.rating}.0</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'order',
+      header: 'Đơn hàng',
+      render: (row) => {
+        const rev = row.item as AdminReviewListItemView;
+        return (
+          <div className="min-w-32">
+            <Link
+              href={createAdminPreviewHref(`/admin/orders/${rev.orderId}`, 'order-detail', previewContext)}
+              className="font-semibold text-xs text-brand hover:underline font-mono"
+            >
+              {rev.orderCode}
+            </Link>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'customer',
+      header: 'Khách hàng',
+      render: (row) => {
+        const rev = row.item as AdminReviewListItemView;
+        return (
+          <div className="min-w-36">
+            <p className="font-semibold text-xs text-slate-900 break-words">{rev.customerName}</p>
+            <p className="text-xs text-slate-400 font-mono">{rev.customerPhone}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'driver',
+      header: 'Tài xế',
+      render: (row) => {
+        const rev = row.item as AdminReviewListItemView;
+        return (
+          <div className="min-w-36">
+            <p className="font-semibold text-xs text-slate-900 break-words">{rev.driverName}</p>
+            <p className="text-xs text-slate-400 font-mono">{rev.driverPhone}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'comment',
+      header: 'Nội dung nhận xét',
+      render: (row) => {
+        const rev = row.item as AdminReviewListItemView;
+        const isHidden = rev.comment.startsWith('[Đã ẩn');
+        return (
+          <div className="min-w-48 max-w-sm">
+            {isHidden ? (
+              <p className="text-xs italic text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200/60 break-words">
+                {rev.comment}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-700 break-words line-clamp-2">
+                {rev.comment}
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'tip',
+      header: 'Tiền tip',
+      className: 'hidden lg:table-cell',
+      render: (row) => {
+        const rev = row.item as AdminReviewListItemView;
+        return (
+          <div className="min-w-24 text-xs font-semibold text-slate-800 tabular-nums">
+            {rev.tipVndLabel}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'created',
+      header: 'Thời điểm',
+      className: 'hidden xl:table-cell',
+      render: (row) => {
+        const rev = row.item as AdminReviewListItemView;
+        return (
+          <time className="text-xs text-slate-500 tabular-nums font-mono">
+            {rev.createdAtLabel}
+          </time>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Thao tác',
+      render: (row) => {
+        const rev = row.item as AdminReviewListItemView;
+        if (!rev.availableCommands || rev.availableCommands.length === 0) {
+          return <span className="text-xs text-slate-400 font-medium">Đã xử lý</span>;
+        }
+        return (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {rev.availableCommands.map((command) => (
+              <Button
+                key={`${command.kind}-${command.targetId}`}
+                variant={command.buttonVariant}
+                size="sm"
+                className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+                onPress={() => onSelectCommand?.(command)}
+              >
+                {command.commandLabel}
+              </Button>
+            ))}
+          </div>
+        );
+      },
+    },
+  ];
+}
+
+type AdminListActionCallbacks = {
+  onResendInvoice?: (invoice: AdminInvoiceListItemView) => void;
+  onViewAuditDetail?: (entry: AdminAuditEntryView) => void;
+};
+
 function columnsFor(
   screen: AdminListScreenName,
   previewContext?: AdminPreviewContext,
   onSelectCommand?: (command: AdminCommandView) => void,
+  callbacks?: AdminListActionCallbacks,
 ): DataTableColumn[] {
   if (screen === 'orders') return orderColumns(previewContext);
   if (screen === 'users') return userColumns(onSelectCommand);
   if (screen === 'fleets') return fleetColumns();
+  if (screen === 'payments') return paymentColumns(onSelectCommand, previewContext);
+  if (screen === 'invoices') return invoiceColumns(previewContext, callbacks?.onResendInvoice);
+  if (screen === 'audit') return auditColumns(callbacks?.onViewAuditDetail);
+  if (screen === 'promotions') return promotionColumns(onSelectCommand);
+  if (screen === 'reviews') return reviewColumns(onSelectCommand, previewContext);
   return driverColumns(previewContext);
 }
 
@@ -289,6 +961,7 @@ function mobileItem(
   item: AdminListItemView,
   previewContext?: AdminPreviewContext,
   onSelectCommand?: (command: AdminCommandView) => void,
+  callbacks?: AdminListActionCallbacks,
 ): ResponsiveResultItem {
   if (item.entity === 'order') {
     return {
@@ -355,6 +1028,275 @@ function mobileItem(
       ],
     };
   }
+  if (item.entity === 'payment') {
+    return {
+      id: item.id,
+      heading: (
+        <span className="block border-l-4 border-brand pl-sm font-semibold">
+          <Link
+            aria-label={`Xem đơn ${item.orderCode}`}
+            className="text-brand underline-offset-4 hover:underline"
+            href={createAdminPreviewHref(item.href, 'order-detail', previewContext)}
+          >
+            {item.orderCode}
+          </Link>
+        </span>
+      ),
+      status: <StatusBadge domain="paymentStatus" status={item.status} />,
+      details: [
+        { id: 'customer', label: 'Khách hàng', value: `${item.customerName}${item.customerPhone ? ` · ${item.customerPhone}` : ''}` },
+        { id: 'amount', label: 'Số tiền', value: item.amountLabel },
+        { id: 'source', label: 'Nguồn', value: item.sourceLabel },
+        { id: 'reference', label: 'Mã tham chiếu', value: item.referenceLabel },
+        { id: 'created', label: 'Ngày tạo', value: item.createdAtLabel },
+        ...(item.confirmedByName ? [{ id: 'confirmedBy', label: 'Người xác nhận', value: item.confirmedByName }] : []),
+        ...(item.confirmationNote ? [{ id: 'note', label: 'Ghi chú', value: item.confirmationNote }] : []),
+      ],
+      actions: item.availableCommands.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {item.availableCommands.map((command) => (
+            <Button
+              key={`${command.kind}-${command.targetId}`}
+              variant={command.buttonVariant}
+              size="sm"
+              className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs"
+              onPress={() => onSelectCommand?.(command)}
+            >
+              {command.commandLabel}
+            </Button>
+          ))}
+        </div>
+      ) : undefined,
+    };
+  }
+  if (item.entity === 'invoice') {
+    return {
+      id: item.id,
+      heading: (
+        <span className="block border-l-4 border-brand pl-sm font-semibold font-mono text-xs text-slate-900">
+          {item.invoiceNumber}
+        </span>
+      ),
+      status: <StatusBadge domain="invoiceStatus" status={item.status} />,
+      details: [
+        {
+          id: 'order',
+          label: 'Đơn hàng',
+          value: (
+            <Link
+              href={createAdminPreviewHref(`/admin/orders/${item.orderId}`, 'order-detail', previewContext)}
+              className="font-semibold text-xs text-brand hover:underline"
+            >
+              {item.orderCode}
+            </Link>
+          ),
+        },
+        {
+          id: 'customer',
+          label: 'Khách hàng',
+          value: `${item.customerName}${item.customerEmail ? ` · ${item.customerEmail}` : ' (Thiếu email)'}`,
+        },
+        { id: 'total', label: 'Tổng tiền', value: item.totalLabel },
+        { id: 'issued', label: 'Ngày phát hành', value: item.issuedAtLabel },
+      ],
+      actions: (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <a
+            href={item.pdfDownloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full border border-slate-200 bg-white text-slate-700 shadow-2xs transition-all hover:bg-slate-50"
+          >
+            <FileText className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
+            Tải PDF
+          </a>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs"
+            isDisabled={item.isMissingEmail}
+            onPress={() => callbacks?.onResendInvoice?.(item)}
+          >
+            Gửi lại email
+          </Button>
+        </div>
+      ),
+    };
+  }
+  if (item.entity === 'audit') {
+    return {
+      id: item.id,
+      heading: (
+        <span className="block border-l-4 border-brand pl-sm font-semibold text-xs text-slate-900">
+          {item.actionLabel || item.action}
+        </span>
+      ),
+      status: (
+        <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200/70 shadow-2xs">
+          {item.outcomeLabel}
+        </span>
+      ),
+      details: [
+        { id: 'actor', label: 'Người thực hiện', value: `${item.actorName ?? item.actorLabel ?? 'Hệ thống'}${item.actorRole ? ` · ${formatUserRole(item.actorRole)}` : ''}` },
+        { id: 'resource', label: 'Tài nguyên', value: `${item.resourceType ?? ''}${item.resourceId ? ` · ${item.resourceId}` : (item.targetLabel ? ` · ${item.targetLabel}` : '')}` },
+        { id: 'time', label: 'Thời điểm', value: item.timestampLabel },
+        ...(item.requestId ? [{ id: 'request', label: 'Mã yêu cầu', value: item.requestId }] : []),
+        ...(item.reason ? [{ id: 'reason', label: 'Chi tiết', value: item.reason }] : []),
+      ],
+      actions: item.metadata ? (
+        <button
+          type="button"
+          onClick={() => callbacks?.onViewAuditDetail?.(item)}
+          className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline cursor-pointer"
+        >
+          Xem chi tiết JSON
+        </button>
+      ) : undefined,
+    };
+  }
+  if (item.entity === 'promotion') {
+    const discountLabel =
+      item.discountType === 'PERCENT'
+        ? `${item.discountValue}%${item.maxDiscountVnd ? ` (Tối đa ${item.maxDiscountVnd.toLocaleString('vi-VN')} ₫)` : ''}`
+        : `${item.discountValue.toLocaleString('vi-VN')} ₫`;
+    return {
+      id: item.id,
+      heading: (
+        <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-slate-900 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-full">
+          <TicketPercent className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+          {item.code}
+        </span>
+      ),
+      status: item.isActive ? (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+          <CheckCircle2 className="w-3 h-3 text-emerald-600" aria-hidden="true" />
+          Đang áp dụng
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+          <XCircle className="w-3 h-3 text-slate-400" aria-hidden="true" />
+          Tạm dừng
+        </span>
+      ),
+      details: [
+        { id: 'title', label: 'Chương trình', value: item.title },
+        { id: 'discount', label: 'Mức giảm', value: discountLabel },
+        { id: 'minOrder', label: 'Đơn tối thiểu', value: `${item.minOrderAmountVnd.toLocaleString('vi-VN')} ₫` },
+        { id: 'usage', label: 'Lượt dùng', value: `${item.usageCount.toLocaleString('vi-VN')} / ${item.usageLimit.toLocaleString('vi-VN')}` },
+        { id: 'expires', label: 'Hạn dùng', value: item.expiresAtLabel },
+      ],
+      actions: item.availableCommands.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {item.availableCommands.map((command) => (
+            <Button
+              key={`${command.kind}-${command.targetId}`}
+              variant={command.buttonVariant}
+              size="sm"
+              className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs"
+              onPress={() => onSelectCommand?.(command)}
+            >
+              {command.commandLabel}
+            </Button>
+          ))}
+        </div>
+      ) : undefined,
+    };
+  }
+  if (item.entity === 'review') {
+    const isHidden = item.comment.startsWith('[Đã ẩn');
+    return {
+      id: item.id,
+      heading: (
+        <span className="block border-l-4 border-brand pl-sm font-semibold">
+          <Link
+            aria-label={`Xem đơn ${item.orderCode}`}
+            className="text-brand underline-offset-4 hover:underline font-mono text-xs"
+            href={createAdminPreviewHref(`/admin/orders/${item.orderId}`, 'order-detail', previewContext)}
+          >
+            {item.orderCode}
+          </Link>
+        </span>
+      ),
+      status: (
+        <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`w-3.5 h-3.5 ${
+                  star <= item.rating
+                    ? 'fill-amber-400 text-amber-400'
+                    : 'text-slate-200 fill-slate-100'
+                }`}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+          <span className="font-bold text-xs text-slate-900 ml-1">{item.rating}.0</span>
+        </div>
+      ),
+      details: [
+        { id: 'customer', label: 'Khách hàng', value: `${item.customerName} · ${item.customerPhone}` },
+        { id: 'driver', label: 'Tài xế', value: `${item.driverName} · ${item.driverPhone}` },
+        {
+          id: 'comment',
+          label: 'Nhận xét',
+          value: isHidden ? (
+            <span className="italic text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">
+              {item.comment}
+            </span>
+          ) : (
+            item.comment
+          ),
+        },
+        { id: 'tip', label: 'Tiền tip', value: item.tipVndLabel },
+        { id: 'time', label: 'Thời điểm', value: item.createdAtLabel },
+      ],
+      actions: item.availableCommands.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {item.availableCommands.map((command) => (
+            <Button
+              key={`${command.kind}-${command.targetId}`}
+              variant={command.buttonVariant}
+              size="sm"
+              className="h-8 min-h-[32px] px-3 text-xs font-semibold rounded-full shadow-2xs"
+              onPress={() => onSelectCommand?.(command)}
+            >
+              {command.commandLabel}
+            </Button>
+          ))}
+        </div>
+      ) : undefined,
+    };
+  }
+  if (item.entity === 'report') {
+    return {
+      id: item.id,
+      heading: (
+        <span className="block border-l-4 border-brand pl-sm font-semibold">
+          <Link
+            aria-label={`Xem chi tiết khiếu nại ${item.ticketNumber}`}
+            className="text-brand underline-offset-4 hover:underline font-mono text-xs"
+            href={createAdminPreviewHref(`/admin/reports/${item.id}`, 'report-detail', previewContext)}
+          >
+            {item.ticketNumber}
+          </Link>
+        </span>
+      ),
+      status: (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
+          {item.statusLabel}
+        </span>
+      ),
+      details: [
+        { id: 'customer', label: 'Khách hàng', value: `${item.customerName} (${item.customerPhone ?? 'N/A'})` },
+        { id: 'order', label: 'Mã đơn', value: item.orderCode ?? 'Không có' },
+        { id: 'category', label: 'Danh mục', value: item.categoryLabel },
+        { id: 'severity', label: 'Mức độ', value: item.severityLabel },
+        { id: 'time', label: 'Thời điểm', value: item.createdAtLabel },
+      ],
+    };
+  }
   return {
     id: item.id,
     heading: <span className={`block border-l-4 pl-sm ${item.locationCondition === 'stale' ? 'border-warning-border' : 'border-brand'}`}>{item.displayName}</span>,
@@ -392,16 +1334,21 @@ function FilterField({
 function SortOptions({ screen }: Readonly<{ screen: AdminListScreenName }>) {
   return (
     <>
-      {screen === 'orders' || screen === 'users' ? (
+      <option value="updated-desc">Mới cập nhật trước</option>
+      <option value="updated-asc">Cũ cập nhật trước</option>
+      {screen === 'orders' || screen === 'payments' ? (
+        <option value="reference-asc">Mã đơn A–Z</option>
+      ) : null}
+      {screen === 'promotions' ? (
+        <option value="code-asc">Mã voucher A–Z</option>
+      ) : null}
+      {screen === 'reviews' ? (
         <>
-          <option value="updated-desc">Mới cập nhật trước</option>
-          <option value="updated-asc">Cũ cập nhật trước</option>
+          <option value="rating-desc">Điểm cao nhất</option>
+          <option value="rating-asc">Điểm thấp nhất</option>
         </>
-      ) : (
-        <option value="updated-desc">Mới cập nhật trước</option>
-      )}
-      {screen === 'orders' ? <option value="reference-asc">Mã đơn A–Z</option> : null}
-      {screen !== 'orders' ? (
+      ) : null}
+      {screen === 'users' || screen === 'fleets' || screen === 'drivers' ? (
         <>
           <option value="name-asc">Tên A–Z</option>
           <option value="name-desc">Tên Z–A</option>
@@ -422,6 +1369,35 @@ function matchesSessionSearch(item: AdminListItemView, query: string): boolean {
       item.driverLabel.toLowerCase().includes(q)
     );
   }
+  if (item.entity === 'payment') {
+    return (
+      item.orderCode.toLowerCase().includes(q) ||
+      item.customerName.toLowerCase().includes(q) ||
+      (item.customerPhone ? item.customerPhone.toLowerCase().includes(q) : false) ||
+      item.referenceLabel.toLowerCase().includes(q) ||
+      item.sourceLabel.toLowerCase().includes(q)
+    );
+  }
+  if (item.entity === 'invoice') {
+    return (
+      item.invoiceNumber.toLowerCase().includes(q) ||
+      item.orderCode.toLowerCase().includes(q) ||
+      item.customerName.toLowerCase().includes(q) ||
+      (item.customerEmail ? item.customerEmail.toLowerCase().includes(q) : false)
+    );
+  }
+  if (item.entity === 'audit') {
+    return (
+      (item.actorName ? item.actorName.toLowerCase().includes(q) : false) ||
+      (item.actorLabel ? item.actorLabel.toLowerCase().includes(q) : false) ||
+      (item.action ? item.action.toLowerCase().includes(q) : false) ||
+      (item.actionLabel ? item.actionLabel.toLowerCase().includes(q) : false) ||
+      (item.resourceType ? item.resourceType.toLowerCase().includes(q) : false) ||
+      (item.resourceId ? item.resourceId.toLowerCase().includes(q) : false) ||
+      (item.requestId ? item.requestId.toLowerCase().includes(q) : false) ||
+      (item.reason ? item.reason.toLowerCase().includes(q) : false)
+    );
+  }
   if (item.entity === 'user') {
     return (
       item.displayName.toLowerCase().includes(q) ||
@@ -436,11 +1412,41 @@ function matchesSessionSearch(item: AdminListItemView, query: string): boolean {
       item.ownerSummary.toLowerCase().includes(q)
     );
   }
-  return (
-    item.displayName.toLowerCase().includes(q) ||
-    item.maskedPhone.toLowerCase().includes(q) ||
-    item.fleetLabel.toLowerCase().includes(q)
-  );
+  if (item.entity === 'driver') {
+    return (
+      item.displayName.toLowerCase().includes(q) ||
+      item.maskedPhone.toLowerCase().includes(q) ||
+      item.fleetLabel.toLowerCase().includes(q)
+    );
+  }
+  if (item.entity === 'promotion') {
+    return (
+      item.code.toLowerCase().includes(q) ||
+      item.title.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q)
+    );
+  }
+  if (item.entity === 'review') {
+    return (
+      item.orderCode.toLowerCase().includes(q) ||
+      item.customerName.toLowerCase().includes(q) ||
+      item.driverName.toLowerCase().includes(q) ||
+      item.comment.toLowerCase().includes(q) ||
+      item.customerPhone.toLowerCase().includes(q) ||
+      item.driverPhone.toLowerCase().includes(q)
+    );
+  }
+  if (item.entity === 'report') {
+    return (
+      item.ticketNumber.toLowerCase().includes(q) ||
+      (item.orderCode?.toLowerCase().includes(q) ?? false) ||
+      item.customerName.toLowerCase().includes(q) ||
+      (item.customerPhone?.toLowerCase().includes(q) ?? false) ||
+      item.categoryLabel.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q)
+    );
+  }
+  return false;
 }
 
 function FilterFields({
@@ -515,6 +1521,103 @@ function FilterFields({
             <input id={`${idPrefix}-fleet`} className={fieldClass} defaultValue={filters.fleetId} name="fleetId" placeholder="Mã hoặc ID đội xe" />
           </FilterField>
         </>
+      ) : screen === 'payments' ? (
+        <>
+          <FilterField id={`${idPrefix}-status`} label="Trạng thái thanh toán">
+            <select id={`${idPrefix}-status`} className={fieldClass} defaultValue={filters.status} name="status">
+              <option value="ALL">Tất cả</option>
+              <option value="UNPAID">Chưa thanh toán</option>
+              <option value="QR_CREATED">Đã tạo mã QR</option>
+              <option value="PAID_MANUAL">Đã xác nhận</option>
+              <option value="FAILED">Thất bại</option>
+            </select>
+          </FilterField>
+          <FilterField id={`${idPrefix}-from`} label="Từ ngày">
+            <input id={`${idPrefix}-from`} className={fieldClass} defaultValue={filters.from} name="from" type="date" />
+          </FilterField>
+          <FilterField id={`${idPrefix}-to`} label="Đến ngày">
+            <input id={`${idPrefix}-to`} className={fieldClass} defaultValue={filters.to} name="to" type="date" />
+          </FilterField>
+        </>
+      ) : screen === 'invoices' ? (
+        <>
+          <FilterField id={`${idPrefix}-status`} label="Trạng thái hóa đơn">
+            <select id={`${idPrefix}-status`} className={fieldClass} defaultValue={filters.status} name="status">
+              <option value="ALL">Tất cả</option>
+              <option value="ISSUED">Đã phát hành</option>
+              <option value="VOIDED">Đã hủy</option>
+            </select>
+          </FilterField>
+          <FilterField id={`${idPrefix}-missingEmail`} label="Lọc email">
+            <select id={`${idPrefix}-missingEmail`} className={fieldClass} defaultValue={filters.missingEmail ? 'true' : ''} name="missingEmail">
+              <option value="">Tất cả hóa đơn</option>
+              <option value="true">Chỉ hóa đơn thiếu email</option>
+            </select>
+          </FilterField>
+          <FilterField id={`${idPrefix}-from`} label="Từ ngày">
+            <input id={`${idPrefix}-from`} className={fieldClass} defaultValue={filters.from} name="from" type="date" />
+          </FilterField>
+          <FilterField id={`${idPrefix}-to`} label="Đến ngày">
+            <input id={`${idPrefix}-to`} className={fieldClass} defaultValue={filters.to} name="to" type="date" />
+          </FilterField>
+        </>
+      ) : screen === 'audit' ? (
+        <>
+          <FilterField id={`${idPrefix}-actorId`} label="Người thực hiện">
+            <input id={`${idPrefix}-actorId`} className={fieldClass} defaultValue={filters.actorId ?? ''} name="actorId" placeholder="Mã ID người thực hiện" />
+          </FilterField>
+          <FilterField id={`${idPrefix}-action`} label="Hành động">
+            <input id={`${idPrefix}-action`} className={fieldClass} defaultValue={filters.action ?? ''} name="action" placeholder="VD: USER_STATUS_UPDATE, CANCEL_ORDER" />
+          </FilterField>
+          <FilterField id={`${idPrefix}-from`} label="Từ ngày">
+            <input id={`${idPrefix}-from`} className={fieldClass} defaultValue={filters.from} name="from" type="date" />
+          </FilterField>
+          <FilterField id={`${idPrefix}-to`} label="Đến ngày">
+            <input id={`${idPrefix}-to`} className={fieldClass} defaultValue={filters.to} name="to" type="date" />
+          </FilterField>
+        </>
+      ) : screen === 'promotions' ? (
+        <>
+          <FilterField id={`${idPrefix}-status`} label="Trạng thái voucher">
+            <select id={`${idPrefix}-status`} className={fieldClass} defaultValue={filters.status} name="status">
+              <option value="ALL">Tất cả</option>
+              <option value="ACTIVE">Đang áp dụng</option>
+              <option value="INACTIVE">Tạm dừng</option>
+            </select>
+          </FilterField>
+          <FilterField id={`${idPrefix}-discountType`} label="Loại chiết khấu">
+            <select id={`${idPrefix}-discountType`} className={fieldClass} defaultValue={filters.discountType ?? 'ALL'} name="discountType">
+              <option value="ALL">Tất cả hình thức</option>
+              <option value="PERCENT">Phần trăm (%)</option>
+              <option value="FIXED">Số tiền cố định (₫)</option>
+            </select>
+          </FilterField>
+          <FilterField id={`${idPrefix}-q`} label="Từ khóa (Mã/Tên)">
+            <input id={`${idPrefix}-q`} className={fieldClass} defaultValue={filters.q ?? ''} name="q" placeholder="Mã voucher hoặc tiêu đề..." />
+          </FilterField>
+        </>
+      ) : screen === 'reviews' ? (
+        <>
+          <FilterField id={`${idPrefix}-rating`} label="Số sao đánh giá">
+            <select id={`${idPrefix}-rating`} className={fieldClass} defaultValue={filters.rating ?? 'ALL'} name="rating">
+              <option value="ALL">Tất cả điểm số</option>
+              <option value="5">5 sao (Rất tốt)</option>
+              <option value="4">4 sao (Tốt)</option>
+              <option value="3">3 sao (Bình thường)</option>
+              <option value="2">2 sao (Chưa hài lòng)</option>
+              <option value="1">1 sao (Kém)</option>
+            </select>
+          </FilterField>
+          <FilterField id={`${idPrefix}-q`} label="Nội dung nhận xét">
+            <input id={`${idPrefix}-q`} className={fieldClass} defaultValue={filters.q ?? ''} name="q" placeholder="Nội dung bình luận hoặc tên..." />
+          </FilterField>
+          <FilterField id={`${idPrefix}-from`} label="Từ ngày">
+            <input id={`${idPrefix}-from`} className={fieldClass} defaultValue={filters.from} name="from" type="date" />
+          </FilterField>
+          <FilterField id={`${idPrefix}-to`} label="Đến ngày">
+            <input id={`${idPrefix}-to`} className={fieldClass} defaultValue={filters.to} name="to" type="date" />
+          </FilterField>
+        </>
       ) : null}
       <FilterField id={`${idPrefix}-sort`} label="Sắp xếp">
         <select id={`${idPrefix}-sort`} className={fieldClass} defaultValue={filters.sort} name="sort">
@@ -538,7 +1641,7 @@ function AdminFilters({
   sessionSearch?: string | undefined;
   onSessionSearchChange?: ((value: string) => void) | undefined;
 }>) {
-  const resetQuery = serializeAdminListFilters(screen, { ...view.filters, status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL', fleetId: '', customerId: '', driverId: '', from: '', to: '', page: 1 }, previewContext);
+  const resetQuery = serializeAdminListFilters(screen, { ...view.filters, status: 'ALL', role: 'ALL', userStatus: 'ALL', availability: 'ALL', membershipStatus: 'ALL', fleetId: '', customerId: '', driverId: '', from: '', to: '', discountType: 'ALL', rating: 'ALL', q: '', page: 1 }, previewContext);
   return (
     <section
       aria-label={`Phạm vi điều tra ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
@@ -595,13 +1698,35 @@ export function AdminListScreen({
   commandRuntime?: boolean | undefined;
 }>) {
   const [sessionSearch, setSessionSearch] = useState('');
-  const commands: readonly AdminCommandView[] = screen === 'users' && view.kind === 'list' && view.entity === 'users'
-    ? view.result.items.flatMap((item) => item.entity === 'user' ? item.availableCommands : [])
-    : [];
+  const [isCreatePromoOpen, setIsCreatePromoOpen] = useState(false);
+  const [resendInvoiceTarget, setResendInvoiceTarget] = useState<AdminInvoiceListItemView | null>(null);
+  const [auditDetailTarget, setAuditDetailTarget] = useState<AdminAuditEntryView | null>(null);
+  const [actionToast, setActionToast] = useState<string | null>(null);
 
-  const initialCommand = view.kind === 'list' && view.dialogPreview && screen === 'users'
-    ? commands.find((candidate) => candidate.kind === view.dialogPreview?.commandKind) ?? null
-    : null;
+  const actionCallbacks: AdminListActionCallbacks = {
+    onResendInvoice: (invoice) => setResendInvoiceTarget(invoice),
+    onViewAuditDetail: (entry) => setAuditDetailTarget(entry),
+  };
+
+  const commands: readonly AdminCommandView[] =
+    (screen === 'users' || screen === 'payments' || screen === 'promotions' || screen === 'reviews') && view.kind === 'list' && view.entity === screen
+      ? view.result.items.flatMap((item) =>
+          item.entity === 'user'
+            ? item.availableCommands
+            : item.entity === 'payment'
+              ? item.availableCommands
+              : item.entity === 'promotion'
+                ? item.availableCommands
+                : item.entity === 'review'
+                  ? item.availableCommands
+                  : [],
+        )
+      : [];
+
+  const initialCommand =
+    view.kind === 'list' && view.dialogPreview && (screen === 'users' || screen === 'payments' || screen === 'promotions' || screen === 'reviews')
+      ? commands.find((candidate) => candidate.kind === view.dialogPreview?.commandKind) ?? null
+      : null;
 
   const [activeCommand, setActiveCommand] = useState<AdminCommandView | null>(initialCommand);
 
@@ -616,7 +1741,9 @@ export function AdminListScreen({
     matchesSessionSearch(item, sessionSearch),
   );
   const rows = displayedItems.map((item) => ({ id: item.id, item }));
-  const mobileItems = displayedItems.map((item) => mobileItem(item, previewContext, (cmd) => setActiveCommand(cmd)));
+  const mobileItems = displayedItems.map((item) =>
+    mobileItem(item, previewContext, (cmd) => setActiveCommand(cmd), actionCallbacks),
+  );
 
   return (
     <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
@@ -626,6 +1753,40 @@ export function AdminListScreen({
         updatedAt={view.checkedAtLabel}
       />
       {view.notice ? <AdminNotice notice={view.notice} /> : null}
+      {actionToast ? (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold shadow-xs animate-in fade-in-0 duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-none" aria-hidden="true" />
+            <span>{actionToast}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionToast(null)}
+            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold px-2 py-1 rounded-md hover:bg-emerald-100/60 transition-colors cursor-pointer"
+            aria-label="Đóng thông báo"
+          >
+            Đóng
+          </button>
+        </div>
+      ) : null}
+      {view.metrics && view.metrics.length > 0 ? (
+        <section aria-label="Chỉ số vận hành" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {view.metrics.map((metric) => (
+            <div
+              key={metric.id}
+              className="flex flex-col gap-1 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
+            >
+              <span className="text-xs font-medium text-slate-500 truncate">{metric.label}</span>
+              <span className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight tabular-nums">
+                {typeof metric.value === 'number'
+                  ? metric.value.toLocaleString('vi-VN')
+                  : metric.value}
+              </span>
+              <span className="text-[11px] text-slate-400 truncate">{metric.detail}</span>
+            </div>
+          ))}
+        </section>
+      ) : null}
       <AdminFilters
         previewContext={previewContext}
         screen={screen}
@@ -635,12 +1796,12 @@ export function AdminListScreen({
       />
       <div aria-hidden={activeCommand ? 'true' : undefined} className="min-w-0">
         <AdminSurface
-          ariaLabel={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
-          title={`Sổ kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')}`}
+          ariaLabel={`Sổ kết quả ${entityNounByScreen[screen]}`}
+          title={`Sổ kết quả ${entityNounByScreen[screen]}`}
           description={`${displayedItems.length}${displayedItems.length !== view.result.totalItems ? ` / ${view.result.totalItems}` : ''} kết quả · Trang ${view.result.page}/${Math.max(view.result.totalPages, 1)}`}
         >
           {displayedItems.length === 0 ? (
-            <ScreenState state="no-results" title={`Không tìm thấy ${titleByScreen[screen].toLocaleLowerCase('vi')}`} message="Không có dữ liệu phù hợp với bộ lọc hoặc từ khóa tìm kiếm hiện tại; dùng Xóa bộ lọc để phục hồi." />
+            <ScreenState state="no-results" title={`Không tìm thấy ${entityNounByScreen[screen]}`} message="Không có dữ liệu phù hợp với bộ lọc hoặc từ khóa tìm kiếm hiện tại; dùng Xóa bộ lọc để phục hồi." />
           ) : (
             <div className="flex min-w-0 flex-col gap-md">
               {screen === 'orders' ? (
@@ -697,16 +1858,127 @@ export function AdminListScreen({
                     );
                   })}
                 </div>
+              ) : screen === 'payments' ? (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+                  {[
+                    { id: 'ALL', label: 'Tất cả' },
+                    { id: 'UNPAID', label: 'Chưa thanh toán' },
+                    { id: 'QR_CREATED', label: 'Đã tạo mã QR' },
+                    { id: 'PAID_MANUAL', label: 'Đã xác nhận' },
+                    { id: 'FAILED', label: 'Thất bại' },
+                  ].map((f) => {
+                    const isActive = view.filters.status === f.id;
+                    const href = `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, status: f.id as any, page: 1 }, previewContext)}`;
+                    return (
+                      <Link
+                        key={f.id}
+                        href={href}
+                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                        }`}
+                      >
+                        {f.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : screen === 'invoices' ? (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+                  {[
+                    { id: 'ALL', label: 'Tất cả' },
+                    { id: 'ISSUED', label: 'Đã phát hành' },
+                    { id: 'VOIDED', label: 'Đã hủy' },
+                  ].map((f) => {
+                    const isActive = view.filters.status === f.id;
+                    const href = `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, status: f.id as any, page: 1 }, previewContext)}`;
+                    return (
+                      <Link
+                        key={f.id}
+                        href={href}
+                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                        }`}
+                      >
+                        {f.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : screen === 'promotions' ? (
+                <div className="flex items-center justify-between gap-2 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+                  <div className="flex items-center gap-1.5">
+                    {[
+                      { id: 'ALL', label: 'Tất cả' },
+                      { id: 'ACTIVE', label: 'Đang áp dụng' },
+                      { id: 'INACTIVE', label: 'Tạm dừng' },
+                    ].map((f) => {
+                      const isActive = view.filters.status === f.id;
+                      const href = `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, status: f.id as any, page: 1 }, previewContext)}`;
+                      return (
+                        <Link
+                          key={f.id}
+                          href={href}
+                          className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                            isActive
+                              ? 'bg-slate-900 text-white shadow-xs'
+                              : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                          }`}
+                        >
+                          {f.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatePromoOpen(true)}
+                    className="flex-none inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white shadow-xs hover:bg-slate-800 transition-all cursor-pointer active:scale-95"
+                  >
+                    <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                    Tạo voucher mới
+                  </button>
+                </div>
+              ) : screen === 'reviews' ? (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 border-b border-slate-100 custom-scrollbar">
+                  {[
+                    { id: 'ALL', label: 'Tất cả' },
+                    { id: '5', label: '5 sao' },
+                    { id: '4', label: '4 sao' },
+                    { id: '3', label: '3 sao' },
+                    { id: '2', label: '2 sao' },
+                    { id: '1', label: '1 sao' },
+                  ].map((f) => {
+                    const isActive = (view.filters.rating ?? 'ALL') === f.id;
+                    const href = `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, rating: f.id as any, page: 1 }, previewContext)}`;
+                    return (
+                      <Link
+                        key={f.id}
+                        href={href}
+                        className={`flex-none rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                        }`}
+                      >
+                        {f.label}
+                      </Link>
+                    );
+                  })}
+                </div>
               ) : null}
               <div className="hidden min-w-0 overflow-x-auto md:block">
                 <DataTable
                   caption={`${titleByScreen[screen]} trong phạm vi Admin và bộ lọc hiện tại`}
-                  columns={columnsFor(screen, previewContext, (cmd) => setActiveCommand(cmd))}
+                  columns={columnsFor(screen, previewContext, (cmd) => setActiveCommand(cmd), actionCallbacks)}
                   rows={rows}
                 />
               </div>
-              <ResponsiveResultList ariaLabel={`Kết quả ${titleByScreen[screen].toLocaleLowerCase('vi')} dạng hàng responsive`} items={mobileItems} />
-              <AdminPaginationLinks hrefForPage={(page) => `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, page }, previewContext)}`} label={titleByScreen[screen].toLocaleLowerCase('vi')} page={view.result.page} totalPages={view.result.totalPages} />
+              <ResponsiveResultList ariaLabel={`Kết quả ${entityNounByScreen[screen]} dạng hàng responsive`} items={mobileItems} />
+              <AdminPaginationLinks hrefForPage={(page) => `/admin/${screen}?${serializeAdminListFilters(screen, { ...view.filters, page }, previewContext)}`} label={entityNounByScreen[screen]} page={view.result.page} totalPages={view.result.totalPages} />
             </div>
           )}
         </AdminSurface>
@@ -718,6 +1990,24 @@ export function AdminListScreen({
         hideTriggerList
         onActiveCommandChange={setActiveCommand}
         runtime={commandRuntime === true}
+      />
+      <CreatePromotionModal
+        isOpen={isCreatePromoOpen}
+        onClose={() => setIsCreatePromoOpen(false)}
+        onSuccess={(msg) => setActionToast(msg)}
+        commandRuntime={commandRuntime}
+      />
+      <ResendInvoiceModal
+        invoice={resendInvoiceTarget}
+        isOpen={resendInvoiceTarget !== null}
+        onClose={() => setResendInvoiceTarget(null)}
+        onSuccess={(msg) => setActionToast(msg)}
+        commandRuntime={commandRuntime}
+      />
+      <AuditDetailModal
+        entry={auditDetailTarget}
+        isOpen={auditDetailTarget !== null}
+        onClose={() => setAuditDetailTarget(null)}
       />
     </div>
   );

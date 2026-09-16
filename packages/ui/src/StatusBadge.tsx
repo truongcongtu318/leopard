@@ -11,6 +11,7 @@ export type OrderStatus =
   | 'CANCELLED';
 
 export type PaymentStatus = 'UNPAID' | 'QR_CREATED' | 'PAID_MANUAL' | 'FAILED';
+export type InvoiceStatus = 'ISSUED' | 'VOIDED';
 
 export type DriverAvailability = 'OFFLINE' | 'AVAILABLE' | 'BUSY';
 export type FleetMemberStatus = 'INVITED' | 'ACTIVE' | 'REMOVED';
@@ -19,6 +20,7 @@ export type UserStatus = 'ACTIVE' | 'DISABLED';
 export type StatusDomain =
   | 'orderStatus'
   | 'paymentStatus'
+  | 'invoiceStatus'
   | 'driverAvailability'
   | 'fleetMemberStatus'
   | 'userStatus';
@@ -33,6 +35,7 @@ type CanonicalStatus = Readonly<{
 type StatusValueByDomain = Readonly<{
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
+  invoiceStatus: InvoiceStatus;
   driverAvailability: DriverAvailability;
   fleetMemberStatus: FleetMemberStatus;
   userStatus: UserStatus;
@@ -57,6 +60,10 @@ const STATUS_BY_DOMAIN: CanonicalStatusMap = {
     QR_CREATED: { label: 'Đã tạo mã QR', tone: 'info' },
     PAID_MANUAL: { label: 'Đã xác nhận thanh toán', tone: 'success' },
     FAILED: { label: 'Thất bại', tone: 'danger' },
+  },
+  invoiceStatus: {
+    ISSUED: { label: 'Đã phát hành', tone: 'success' },
+    VOIDED: { label: 'Đã hủy', tone: 'danger' },
   },
   driverAvailability: {
     OFFLINE: { label: 'Ngoại tuyến', tone: 'neutral' },
@@ -100,6 +107,7 @@ const unknownStatus: CanonicalStatus = {
 type CanonicalStatusSelection =
   | { domain: 'orderStatus'; status: OrderStatus }
   | { domain: 'paymentStatus'; status: PaymentStatus }
+  | { domain: 'invoiceStatus'; status: InvoiceStatus }
   | { domain: 'driverAvailability'; status: DriverAvailability }
   | { domain: 'fleetMemberStatus'; status: FleetMemberStatus }
   | { domain: 'userStatus'; status: UserStatus };
@@ -118,6 +126,8 @@ function resolveCanonicalStatus(selection: CanonicalStatusSelection): CanonicalS
       return STATUS_BY_DOMAIN.orderStatus[selection.status];
     case 'paymentStatus':
       return STATUS_BY_DOMAIN.paymentStatus[selection.status];
+    case 'invoiceStatus':
+      return STATUS_BY_DOMAIN.invoiceStatus[selection.status];
     case 'driverAvailability':
       return STATUS_BY_DOMAIN.driverAvailability[selection.status];
     case 'fleetMemberStatus':

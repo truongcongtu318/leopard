@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, ArrowRight, Loader2, Phone, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Loader2,
+  Phone,
+  XCircle,
+} from "lucide-react";
 import { browserClient } from "../../lib/api/browser-client";
 import { setSession } from "../../lib/auth/session";
 import { ApiError } from "../../lib/api/api-error";
@@ -137,9 +143,9 @@ export function LoginForm({
       {sessionExpired ? (
         <div
           role="alert"
-          className="mb-4 flex items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/90 p-3.5 text-xs text-amber-900 shadow-2xs backdrop-blur-xs"
+          className="flex items-center gap-2.5 rounded-xl border border-amber-200/90 bg-amber-50/70 p-3 text-xs text-amber-900 shadow-2xs"
         >
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" strokeWidth={2} aria-hidden="true" />
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" strokeWidth={1.8} aria-hidden="true" />
           <span>Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</span>
         </div>
       ) : null}
@@ -147,23 +153,26 @@ export function LoginForm({
       {errorMessage ? (
         <div
           role="alert"
-          className="mb-4 flex items-center gap-2.5 rounded-2xl border border-rose-200 bg-rose-50/90 p-3.5 text-xs text-rose-900 shadow-2xs backdrop-blur-xs"
+          className="flex items-center gap-2.5 rounded-xl border border-rose-200/90 bg-rose-50/70 p-3 text-xs text-rose-900 shadow-2xs"
         >
-          <XCircle className="h-4 w-4 shrink-0 text-rose-600" strokeWidth={2} aria-hidden="true" />
+          <XCircle className="h-4 w-4 shrink-0 text-rose-600" strokeWidth={1.8} aria-hidden="true" />
           <span>{errorMessage}</span>
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-1.5 text-left">
-          <label
-            htmlFor="tokenInput"
-            className="text-xs font-semibold text-slate-700"
-          >
-            Số điện thoại hoặc Token
-          </label>
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="tokenInput"
+              className="text-xs font-semibold text-slate-700"
+            >
+              Số điện thoại hoặc Token
+            </label>
+            <span className="text-[11px] text-slate-400 font-mono">Firebase / Dev Token</span>
+          </div>
           <div className="relative group">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 group-focus-within:text-brand transition-colors">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 group-focus-within:text-slate-700 transition-colors">
               <Phone className="w-4 h-4" strokeWidth={1.8} />
             </div>
             <input
@@ -173,7 +182,7 @@ export function LoginForm({
               onChange={(e) => setTokenInput(e.target.value)}
               disabled={isSubmitting}
               placeholder="Nhập số điện thoại (VD: +840000000004) hoặc Token"
-              className="w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 pl-10 text-sm text-neutral-text placeholder:text-slate-400 shadow-2xs transition-all focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none disabled:opacity-50"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-white focus:bg-white px-4 py-2.5 pl-10 text-sm text-slate-900 placeholder:text-slate-400 font-mono shadow-2xs transition-all focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 focus:outline-none disabled:opacity-50"
             />
           </div>
         </div>
@@ -181,63 +190,122 @@ export function LoginForm({
         <button
           type="submit"
           disabled={isSubmitting || !tokenInput.trim()}
-          className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-slate-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand motion-reduce:transition-none"
+          className="group flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-sm font-semibold text-white shadow-xs transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 motion-reduce:transition-none cursor-pointer"
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              Đang xử lý...
+              <span>Đang xử lý...</span>
             </span>
           ) : (
-            <span className="flex items-center gap-2">Đăng nhập <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" /></span>
+            <>
+              <span>Đăng nhập</span>
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
+            </>
           )}
         </button>
       </form>
 
       {allowDemo ? (
-        <div className="mt-5 border-t border-slate-100 pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-slate-700">
-              <span className="sr-only">Tài khoản demo</span>
-              Đăng nhập nhanh theo vai trò hệ thống
-            </p>
-            <span className="rounded-full bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                Tài khoản demo (truy cập nhanh)
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">3 vai trò</span>
+            </div>
+            <span className="rounded bg-slate-100 border border-slate-200/70 px-2 py-0.5 text-[10px] font-medium text-slate-600">
               Môi trường thử nghiệm
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            {[
-                { id: "admin", role: "ADMIN", title: "Quản trị viên", testLabel: "Demo Admin", desc: "Hệ thống LEOPARD", phone: "+840000000004", icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z", testId: "demo-admin-button" },
-                { id: "driver", role: "DRIVER", title: "Tài xế", testLabel: "Demo Driver", desc: "Đội xe Sao Mai", phone: "+840000000002", icon: "M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2h-2 M14 5h5v5", testId: undefined },
-                { id: "customer", role: "CUSTOMER", title: "Khách hàng", testLabel: "Demo Customer", desc: "DN Minh Phát", phone: "+840000000001", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M22 11v6", testId: undefined },
-              ].map((acc) => (
-                <button
-                  key={acc.id}
-                  type="button"
-                  data-testid={acc.testId}
-                  disabled={isSubmitting}
-                  onClick={() => handleDemoLogin(acc.id, acc.role)}
-                  onMouseEnter={() => onRoleChange?.(acc.role as "CUSTOMER" | "DRIVER" | "ADMIN")}
-                  onFocus={() => onRoleChange?.(acc.role as "CUSTOMER" | "DRIVER" | "ADMIN")}
-                  className="group flex flex-col items-start gap-1.5 rounded-2xl border border-slate-200/80 bg-[#f8fbff] p-3 text-left transition-all hover:border-brand/40 hover:bg-white hover:shadow-xs active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
-                >
-                  <div className="flex w-full items-center justify-between">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white transition-colors">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={acc.icon} /></svg>
-                    </div>
-                    <span className="rounded-full border border-slate-200/80 bg-white px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
-                      {acc.role === 'ADMIN' ? 'Admin' : acc.role === 'DRIVER' ? 'Tài xế' : 'Khách'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="sr-only">{acc.testLabel}</span>
-                    <div className="text-xs font-bold text-slate-800">{acc.title}</div>
-                    <div className="text-[11px] text-slate-400">{acc.desc}</div>
-                    <span className="sr-only">{acc.phone}</span>
-                  </div>
-                </button>
-              ))}
+          {/* Technical Role Matrix */}
+          <div className="flex flex-col gap-2">
+            {/* Admin Role Row */}
+            <button
+              type="button"
+              data-testid="demo-admin-button"
+              disabled={isSubmitting}
+              onClick={() => handleDemoLogin("admin", "ADMIN")}
+              onMouseEnter={() => onRoleChange?.("ADMIN")}
+              onFocus={() => onRoleChange?.("ADMIN")}
+              className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-slate-900 p-3 text-left text-white shadow-2xs transition-all hover:bg-slate-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="rounded bg-white/20 px-2 py-0.5 text-[10px] font-mono font-bold text-white tracking-wide">
+                  ADMIN
+                </span>
+                <div className="min-w-0">
+                  <span className="sr-only">Demo Admin</span>
+                  <div className="text-xs font-bold leading-tight">Quản trị viên</div>
+                  <div className="text-[11px] text-slate-300">Toàn quyền điều phối & giám sát</div>
+                  <span className="sr-only">+840000000004</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-mono text-xs text-slate-300 group-hover:text-white transition-colors">
+                  +84 000 000 004
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-white" strokeWidth={2} />
+              </div>
+            </button>
+
+            {/* Driver Role Row */}
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleDemoLogin("driver", "DRIVER")}
+              onMouseEnter={() => onRoleChange?.("DRIVER")}
+              onFocus={() => onRoleChange?.("DRIVER")}
+              className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 text-left transition-all hover:border-slate-300 hover:bg-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="rounded bg-slate-200/70 border border-slate-300/60 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700 tracking-wide">
+                  DRIVER
+                </span>
+                <div className="min-w-0">
+                  <span className="sr-only">Demo Driver</span>
+                  <div className="text-xs font-bold text-slate-800 leading-tight">Tài xế</div>
+                  <div className="text-[11px] text-slate-500">Đội xe Sao Mai</div>
+                  <span className="sr-only">+840000000002</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-mono text-xs text-slate-500 group-hover:text-slate-800 transition-colors">
+                  +84 000 000 002
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-700" strokeWidth={2} />
+              </div>
+            </button>
+
+            {/* Customer Role Row */}
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleDemoLogin("customer", "CUSTOMER")}
+              onMouseEnter={() => onRoleChange?.("CUSTOMER")}
+              onFocus={() => onRoleChange?.("CUSTOMER")}
+              className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 text-left transition-all hover:border-slate-300 hover:bg-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="rounded bg-slate-200/70 border border-slate-300/60 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700 tracking-wide">
+                  CUSTOMER
+                </span>
+                <div className="min-w-0">
+                  <span className="sr-only">Demo Customer</span>
+                  <div className="text-xs font-bold text-slate-800 leading-tight">Khách hàng</div>
+                  <div className="text-[11px] text-slate-500">DN Vận tải Minh Phát</div>
+                  <span className="sr-only">+840000000001</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-mono text-xs text-slate-500 group-hover:text-slate-800 transition-colors">
+                  +84 000 000 001
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-700" strokeWidth={2} />
+              </div>
+            </button>
           </div>
         </div>
       ) : null}

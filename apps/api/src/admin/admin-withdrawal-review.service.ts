@@ -47,10 +47,25 @@ export class AdminWithdrawalReviewService {
 
   async approve(actor: AuthenticatedActor, id: string, note: string, clientRequestId?: string): Promise<void> {
     const trimmed = this.assertValidNote(note);
+
+    if (clientRequestId) {
+      const existing = await this.prisma.auditLog.findFirst({
+        where: { idempotencyRequestId: clientRequestId },
+      });
+      if (existing) return;
+    }
+
     const request = await this.requirePendingRequest(id);
     const now = new Date();
 
     await this.prisma.$transaction(async (tx) => {
+      if (clientRequestId) {
+        const existing = await tx.auditLog.findFirst({
+          where: { idempotencyRequestId: clientRequestId },
+        });
+        if (existing) return;
+      }
+
       await tx.withdrawalRequest.update({
         where: { id },
         data: { status: 'APPROVED', reviewedById: actor.userId, reviewedAt: now, reviewNote: trimmed },
@@ -71,10 +86,25 @@ export class AdminWithdrawalReviewService {
 
   async reject(actor: AuthenticatedActor, id: string, note: string, clientRequestId?: string): Promise<void> {
     const trimmed = this.assertValidNote(note);
+
+    if (clientRequestId) {
+      const existing = await this.prisma.auditLog.findFirst({
+        where: { idempotencyRequestId: clientRequestId },
+      });
+      if (existing) return;
+    }
+
     const request = await this.requirePendingRequest(id);
     const now = new Date();
 
     await this.prisma.$transaction(async (tx) => {
+      if (clientRequestId) {
+        const existing = await tx.auditLog.findFirst({
+          where: { idempotencyRequestId: clientRequestId },
+        });
+        if (existing) return;
+      }
+
       await tx.withdrawalRequest.update({
         where: { id },
         data: { status: 'REJECTED', reviewedById: actor.userId, reviewedAt: now, reviewNote: trimmed },

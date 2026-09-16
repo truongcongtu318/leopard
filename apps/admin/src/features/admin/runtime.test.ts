@@ -250,6 +250,140 @@ describe('loadAdminRuntimeView – orders list', () => {
   });
 });
 
+describe('loadAdminRuntimeView – payments list', () => {
+  it('maps payments, masks customer phone, attaches confirm command and calculates metrics', async () => {
+    let capturedPath: string | undefined;
+    let capturedQuery: Record<string, unknown> | undefined;
+
+    mockedApiGet.mockImplementation(async (...args: unknown[]) => {
+      capturedPath = args[0] as string;
+      capturedQuery = args[1] as Record<string, unknown> | undefined;
+
+      return emptyPage([
+        {
+          id: 'pay-001',
+          orderId: '33333333-3333-4333-8333-333333333101',
+          orderCode: 'LP-PAY-001',
+          customerId: 'cust-1',
+          customerPhone: '0901234567',
+          amountVnd: 250000,
+          provider: 'PAYOS',
+          providerReference: 'ORD-2026-PAYOS-01',
+          status: 'QR_CREATED',
+          paidAt: null,
+          createdAt: '2026-08-01T10:00:00.000Z',
+          updatedAt: '2026-08-01T10:05:00.000Z',
+        },
+        {
+          id: 'pay-002',
+          orderId: '33333333-3333-4333-8333-333333333102',
+          orderCode: 'LP-PAY-002',
+          customerId: 'cust-2',
+          customerPhone: '0909888777',
+          amountVnd: 500000,
+          provider: 'VIETQR',
+          providerReference: 'ORD-2026-VQR-02',
+          status: 'PAID_MANUAL',
+          paidAt: '2026-08-01T11:00:00.000Z',
+          createdAt: '2026-08-01T10:30:00.000Z',
+          updatedAt: '2026-08-01T11:00:00.000Z',
+        },
+        {
+          id: 'pay-003',
+          orderId: '33333333-3333-4333-8333-333333333103',
+          orderCode: 'LP-PAY-003',
+          customerId: 'cust-3',
+          customerPhone: '0905111222',
+          amountVnd: 100000,
+          provider: 'PAYOS',
+          providerReference: 'ORD-2026-PAYOS-03',
+          status: 'FAILED',
+          paidAt: null,
+          createdAt: '2026-08-01T09:00:00.000Z',
+          updatedAt: '2026-08-01T09:15:00.000Z',
+        },
+      ]);
+    });
+
+    const view = await run('payments', { filters: DEFAULT_FILTERS });
+
+    expect(capturedPath).toBe('/admin/payments');
+    expect(capturedQuery).toMatchObject({ page: 1, pageSize: 20 });
+    expect(view.kind).toBe('list');
+    if (view.kind !== 'list') return;
+
+    expect(view.result.items).toHaveLength(3);
+
+    // Row 1: QR_CREATED -> has CONFIRM_MANUAL_PAYMENT command
+    const row1 = view.result.items[0];
+    if (row1?.entity !== 'payment') throw new Error('expected payment entity');
+    expect(row1.orderCode).toBe('LP-PAY-001');
+    expect(row1.href).toBe('/admin/orders/33333333-3333-4333-8333-333333333101');
+    expect(row1.customerPhone).toBe('••• 4567');
+    expect(row1.amountVnd).toBe(250000);
+    expect(row1.amountLabel).toBe('250.000 ₫');
+    expect(row1.status).toBe('QR_CREATED');
+    expect(row1.statusLabel).toBe('Đã tạo mã QR');
+    expect(row1.availableCommands).toHaveLength(1);
+    expect(row1.availableCommands[0]?.kind).toBe('CONFIRM_MANUAL_PAYMENT');
+    expect(row1.availableCommands[0]?.targetId).toBe('pay-001');
+
+    // Row 2: PAID_MANUAL -> no commands
+    const row2 = view.result.items[1];
+    if (row2?.entity !== 'payment') throw new Error('expected payment entity');
+    expect(row2.status).toBe('PAID_MANUAL');
+    expect(row2.statusLabel).toBe('Đã xác nhận thanh toán');
+    expect(row2.availableCommands).toHaveLength(0);
+
+    // Row 3: FAILED
+    const row3 = view.result.items[2];
+    if (row3?.entity !== 'payment') throw new Error('expected payment entity');
+    expect(row3.status).toBe('FAILED');
+
+    // Check computed metrics
+    expect(view.metrics).toBeDefined();
+    const metrics = view.metrics ?? [];
+    expect(metrics.find((m) => m.id === 'total-tx')?.value).toBe(3);
+    expect(metrics.find((m) => m.id === 'pending-tx')?.value).toBe(1);
+    expect(metrics.find((m) => m.id === 'confirmed-tx')?.value).toBe(1);
+    expect(metrics.find((m) => m.id === 'failed-tx')?.value).toBe(1);
+    expect(metrics.find((m) => m.id === 'total-revenue')?.value).toBe('500.000 ₫');
+  });
+
+  it('passes status and date filters through to the API query', async () => {
+    let capturedQuery: Record<string, unknown> | undefined;
+    mockedApiGet.mockImplementation(async (...args: unknown[]) => {
+      capturedQuery = args[1] as Record<string, unknown> | undefined;
+      return emptyPage([]);
+    });
+
+    await run('payments', {
+      filters: {
+        ...DEFAULT_FILTERS,
+        status: 'UNPAID',
+        from: '2026-08-01',
+        to: '2026-08-15',
+      },
+    });
+
+    expect(capturedQuery).toMatchObject({
+      status: 'UNPAID',
+      from: '2026-08-01',
+      to: '2026-08-15',
+    });
+  });
+
+  it('maps a 403 from the API to a permission-denied boundary', async () => {
+    mockedApiGet.mockRejectedValue(
+      new ApiError(403, 'FORBIDDEN', 'Không có quyền truy cập'),
+    );
+
+    const view = await run('payments', { filters: DEFAULT_FILTERS });
+
+    expect(view).toMatchObject({ kind: 'permission-denied' });
+  });
+});
+
 describe('loadAdminRuntimeView – order detail', () => {
   const ORDER_ID = '33333333-3333-4333-8333-333333333101';
 

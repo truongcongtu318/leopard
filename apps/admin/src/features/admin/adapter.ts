@@ -29,6 +29,15 @@ const COMMAND_KINDS = [
   'DISABLE_USER',
   'ENABLE_USER',
   'CONFIRM_MANUAL_PAYMENT',
+  'CREATE_PROMOTION',
+  'UPDATE_PROMOTION',
+  'TOGGLE_PROMOTION_STATUS',
+  'HIDE_REVIEW',
+  'RESOLVE_REPORT',
+  'DISPATCH_MANUAL_REASSIGN',
+  'BROADCAST_NOTIFICATION',
+  'UPDATE_PRICING',
+  'SEND_SUPPORT_MESSAGE',
 ] as const;
 const ORDER_STATUSES = [
   'ALL',
@@ -39,15 +48,49 @@ const ORDER_STATUSES = [
   'DELIVERED',
   'CANCELLED',
 ] as const;
+const REPORT_STATUSES = [
+  'ALL',
+  'OPEN',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'CLOSED',
+] as const;
+const REPORT_CATEGORIES = [
+  'ALL',
+  'DAMAGED_CARGO',
+  'DRIVER_DELAY',
+  'GENERAL_INQUIRY',
+  'LOST_CARGO',
+  'WRONG_ITEM',
+  'BILLING',
+  'OTHER',
+] as const;
 const USER_ROLES = ['ALL', 'CUSTOMER', 'DRIVER', 'FLEET_OWNER', 'ADMIN'] as const;
 const USER_STATUSES = ['ALL', 'ACTIVE', 'DISABLED'] as const;
 const AVAILABILITIES = ['ALL', 'OFFLINE', 'AVAILABLE', 'BUSY'] as const;
 const MEMBERSHIP_STATUSES = ['ALL', 'INVITED', 'ACTIVE', 'REMOVED'] as const;
+const PAYMENT_STATUSES = [
+  'ALL',
+  'UNPAID',
+  'QR_CREATED',
+  'PAID_MANUAL',
+  'FAILED',
+] as const;
+const INVOICE_STATUSES = ['ALL', 'ISSUED', 'VOIDED'] as const;
+const PROMOTION_STATUSES = ['ALL', 'ACTIVE', 'INACTIVE'] as const;
+const DISCOUNT_TYPES = ['ALL', 'PERCENT', 'FIXED'] as const;
+const REVIEW_RATINGS = ['ALL', '1', '2', '3', '4', '5'] as const;
 const SORTS_BY_SCREEN = {
   orders: ['updated-desc', 'updated-asc', 'reference-asc'],
   users: ['updated-desc', 'updated-asc', 'name-asc', 'name-desc'],
   fleets: ['name-asc', 'name-desc', 'updated-desc'],
   drivers: ['name-asc', 'name-desc', 'updated-desc'],
+  payments: ['updated-desc', 'updated-asc', 'reference-asc'],
+  invoices: ['updated-desc', 'updated-asc', 'reference-asc'],
+  audit: ['updated-desc', 'updated-asc'],
+  promotions: ['updated-desc', 'updated-asc', 'code-asc'],
+  reviews: ['updated-desc', 'updated-asc', 'rating-desc', 'rating-asc'],
+  reports: ['updated-desc', 'updated-asc'],
 } as const;
 const PREVIEW_SCENARIOS_BY_SCREEN: Readonly<Record<AdminPreviewScreen, readonly string[]>> = {
   overview: [
@@ -83,6 +126,19 @@ const PREVIEW_SCENARIOS_BY_SCREEN: Readonly<Record<AdminPreviewScreen, readonly 
   ],
   fleets: ['ADM-FLT-EMPTY', 'ADM-DENIED', 'ADM-EXPIRED'],
   drivers: ['ADM-DRV-MIXED', 'ADM-DENIED', 'ADM-EXPIRED'],
+  payments: ['ADM-PAY-DENSE', 'ADM-PAY-NORESULT', 'ADM-DENIED', 'ADM-EXPIRED'],
+  invoices: ['ADM-INV-DENSE', 'ADM-INV-NORESULT', 'ADM-DENIED', 'ADM-EXPIRED'],
+  audit: ['ADM-AUD-DENSE', 'ADM-AUD-NORESULT', 'ADM-DENIED', 'ADM-EXPIRED'],
+  promotions: ['ADM-PRM-DENSE', 'ADM-PRM-NORESULT', 'ADM-DENIED', 'ADM-EXPIRED'],
+  reviews: ['ADM-REV-DENSE', 'ADM-REV-NORESULT', 'ADM-DENIED', 'ADM-EXPIRED'],
+  reports: ['ADM-REP-DENSE', 'ADM-REP-NORESULT', 'ADM-DENIED', 'ADM-EXPIRED'],
+  'report-detail': ['ADM-REP-DETAIL', 'ADM-DENIED', 'ADM-EXPIRED'],
+  dispatch: ['ADM-DSP-DENSE', 'ADM-DSP-EMPTY', 'ADM-DENIED', 'ADM-EXPIRED'],
+  notifications: ['ADM-NTF-COMPOSE', 'ADM-NTF-EMPTY', 'ADM-DENIED', 'ADM-EXPIRED'],
+  pricing: ['ADM-PRC-CURRENT', 'ADM-PRC-PREVIEW', 'ADM-DENIED', 'ADM-EXPIRED'],
+  'live-map': ['ADM-MAP-LIVE', 'ADM-MAP-SIM', 'ADM-DENIED', 'ADM-EXPIRED'],
+  settings: ['ADM-SET-HEALTHY', 'ADM-SET-DEMO', 'ADM-DENIED', 'ADM-EXPIRED'],
+  support: ['ADM-SUP-ACTIVE', 'ADM-SUP-EMPTY', 'ADM-DENIED', 'ADM-EXPIRED'],
 };
 const DEFAULT_PREVIEW_SCENARIO: Readonly<Record<AdminPreviewScreen, string>> = {
   overview: 'ADM-OV-READY',
@@ -91,6 +147,19 @@ const DEFAULT_PREVIEW_SCENARIO: Readonly<Record<AdminPreviewScreen, string>> = {
   users: 'ADM-USR-DENSE',
   fleets: 'ADM-FLT-EMPTY',
   drivers: 'ADM-DRV-MIXED',
+  payments: 'ADM-PAY-DENSE',
+  invoices: 'ADM-INV-DENSE',
+  audit: 'ADM-AUD-DENSE',
+  promotions: 'ADM-PRM-DENSE',
+  reviews: 'ADM-REV-DENSE',
+  reports: 'ADM-REP-DENSE',
+  'report-detail': 'ADM-REP-DETAIL',
+  dispatch: 'ADM-DSP-DENSE',
+  notifications: 'ADM-NTF-COMPOSE',
+  pricing: 'ADM-PRC-CURRENT',
+  'live-map': 'ADM-MAP-LIVE',
+  settings: 'ADM-SET-HEALTHY',
+  support: 'ADM-SUP-ACTIVE',
 };
 const COMMAND_PREVIEW_SCENARIOS = new Set([
   'ADM-CMD-INVALID',
@@ -162,7 +231,15 @@ function validDate(value: string | readonly string[] | undefined): string {
 }
 
 function defaultSort(screen: AdminListScreen): AdminListFilters['sort'] {
-  return screen === 'orders' || screen === 'users' ? 'updated-desc' : 'name-asc';
+  return screen === 'orders' ||
+    screen === 'users' ||
+    screen === 'payments' ||
+    screen === 'invoices' ||
+    screen === 'promotions' ||
+    screen === 'reviews' ||
+    screen === 'reports'
+    ? 'updated-desc'
+    : 'name-asc';
 }
 
 export function parseAdminListFilters(
@@ -170,8 +247,32 @@ export function parseAdminListFilters(
   search: AdminSearchParams,
 ): AdminListFilters {
   const fallbackSort = defaultSort(screen);
+  const status =
+    screen === 'payments'
+      ? allow(first(search.status), PAYMENT_STATUSES, 'ALL')
+      : screen === 'invoices'
+        ? allow(first(search.status), INVOICE_STATUSES, 'ALL')
+        : screen === 'promotions'
+          ? allow(first(search.status), PROMOTION_STATUSES, 'ALL')
+          : screen === 'reports'
+            ? allow(first(search.status), REPORT_STATUSES, 'ALL')
+            : allow(first(search.status), ORDER_STATUSES, 'ALL');
+  const missingEmailRaw = first(search.missingEmail);
+  const missingEmail = missingEmailRaw === 'true' || missingEmailRaw === '1';
+  const actorId = validId(search.actorId);
+  const action = cleanText(search.action);
+  const targetId = cleanText(search.targetId);
+  const discountType = screen === 'promotions' ? allow(first(search.discountType), DISCOUNT_TYPES, 'ALL') : 'ALL';
+  const rating = screen === 'reviews' ? allow(first(search.rating), REVIEW_RATINGS, 'ALL') : 'ALL';
+  const category = screen === 'reports' ? cleanText(search.category) : '';
+  const vehicleType = cleanText(search.vehicleType);
+  const orderId = validId(search.orderId);
+  const q =
+    screen === 'promotions' || screen === 'reviews' || screen === 'reports'
+      ? cleanText(search.q)
+      : '';
   return Object.freeze({
-    status: allow(first(search.status), ORDER_STATUSES, 'ALL'),
+    status,
     role: allow(first(search.role), USER_ROLES, 'ALL'),
     userStatus: allow(first(search.userStatus), USER_STATUSES, 'ALL'),
     availability: allow(first(search.availability), AVAILABILITIES, 'ALL'),
@@ -181,9 +282,19 @@ export function parseAdminListFilters(
     driverId: validId(search.driverId),
     from: validDate(search.from),
     to: validDate(search.to),
-    sort: allow(first(search.sort), SORTS_BY_SCREEN[screen], fallbackSort),
+    sort: allow(first(search.sort), SORTS_BY_SCREEN[screen] ?? ['updated-desc', 'updated-asc'], fallbackSort),
     page: page(search.page),
     pageSize: pageSize(search.pageSize),
+    ...(missingEmail ? { missingEmail: true } : {}),
+    ...(actorId ? { actorId } : {}),
+    ...(action ? { action } : {}),
+    ...(targetId ? { targetId } : {}),
+    ...(discountType !== 'ALL' ? { discountType } : {}),
+    ...(rating !== 'ALL' ? { rating } : {}),
+    ...(category && category !== 'ALL' ? { category } : {}),
+    ...(vehicleType && vehicleType !== 'ALL' ? { vehicleType } : {}),
+    ...(orderId ? { orderId } : {}),
+    ...(q ? { q } : {}),
   });
 }
 
@@ -208,7 +319,17 @@ function commandAllowedForScreen(
     ? command === 'CANCEL_ORDER' || command === 'CONFIRM_MANUAL_PAYMENT'
     : screen === 'users'
       ? command === 'DISABLE_USER' || command === 'ENABLE_USER'
-      : false;
+      : screen === 'payments'
+        ? command === 'CONFIRM_MANUAL_PAYMENT'
+        : screen === 'promotions'
+          ? command === 'TOGGLE_PROMOTION_STATUS' || command === 'UPDATE_PROMOTION' || command === 'CREATE_PROMOTION'
+          : screen === 'reviews'
+            ? command === 'HIDE_REVIEW'
+            : screen === 'report-detail'
+              ? command === 'RESOLVE_REPORT'
+              : screen === 'dispatch'
+                ? command === 'DISPATCH_MANUAL_REASSIGN'
+                : false;
 }
 
 function appendPreview(
@@ -242,6 +363,21 @@ export function serializeAdminListFilters(
     append(params, 'driverId', filters.driverId);
     append(params, 'from', filters.from);
     append(params, 'to', filters.to);
+  } else if (screen === 'payments') {
+    append(params, 'status', filters.status, 'ALL');
+    append(params, 'from', filters.from);
+    append(params, 'to', filters.to);
+  } else if (screen === 'invoices') {
+    append(params, 'status', filters.status, 'ALL');
+    if (filters.missingEmail) params.set('missingEmail', 'true');
+    append(params, 'from', filters.from);
+    append(params, 'to', filters.to);
+  } else if (screen === 'audit') {
+    if (filters.actorId) append(params, 'actorId', filters.actorId);
+    if (filters.action) append(params, 'action', filters.action);
+    if (filters.targetId) append(params, 'targetId', filters.targetId);
+    append(params, 'from', filters.from);
+    append(params, 'to', filters.to);
   } else if (screen === 'users') {
     append(params, 'role', filters.role, 'ALL');
     append(params, 'userStatus', filters.userStatus, 'ALL');
@@ -250,6 +386,24 @@ export function serializeAdminListFilters(
     append(params, 'userStatus', filters.userStatus, 'ALL');
     append(params, 'membershipStatus', filters.membershipStatus, 'ALL');
     append(params, 'fleetId', filters.fleetId);
+  } else if (screen === 'promotions') {
+    append(params, 'status', filters.status, 'ALL');
+    if (filters.discountType && filters.discountType !== 'ALL') append(params, 'discountType', filters.discountType);
+    if (filters.q) append(params, 'q', filters.q);
+  } else if (screen === 'reviews') {
+    if (filters.rating && filters.rating !== 'ALL') append(params, 'rating', filters.rating);
+    if (filters.driverId) append(params, 'driverId', filters.driverId);
+    if (filters.customerId) append(params, 'customerId', filters.customerId);
+    append(params, 'from', filters.from);
+    append(params, 'to', filters.to);
+    if (filters.q) append(params, 'q', filters.q);
+  } else if (screen === 'reports') {
+    append(params, 'status', filters.status, 'ALL');
+    if (filters.category && filters.category !== 'ALL') append(params, 'category', filters.category);
+    if (filters.orderId) append(params, 'orderId', filters.orderId);
+    append(params, 'from', filters.from);
+    append(params, 'to', filters.to);
+    if (filters.q) append(params, 'q', filters.q);
   }
   params.set('sort', filters.sort);
   params.set('page', String(filters.page));
@@ -261,6 +415,8 @@ export function serializeAdminListFilters(
 function fallbackPath(screen: AdminPreviewScreen): string {
   if (screen === 'overview') return '/admin';
   if (screen === 'order-detail') return '/admin/orders';
+  if (screen === 'report-detail') return '/admin/reports';
+  if (screen === 'dispatch') return '/admin/dispatch';
   return `/admin/${screen}`;
 }
 
@@ -272,6 +428,13 @@ function isPathForScreen(pathname: string, screen: AdminPreviewScreen): boolean 
       : '';
     return UUID_PATTERN.test(orderId);
   }
+  if (screen === 'report-detail') {
+    const reportId = pathname.startsWith('/admin/reports/')
+      ? pathname.slice('/admin/reports/'.length)
+      : '';
+    return UUID_PATTERN.test(reportId);
+  }
+  if (screen === 'dispatch') return pathname === '/admin/dispatch';
   return pathname === `/admin/${screen}`;
 }
 
@@ -502,7 +665,7 @@ export function createOrderCommandView(
     consequence: 'Backend sẽ ghi nhận xác nhận thanh toán thủ công kèm audit nếu command hợp lệ.',
     isIrreversible: true,
     contextVersion: `payment-${order.payment.id}-v1`,
-    commandLabel: 'Xác nhận đã thanh toán',
+    commandLabel: 'Xác nhận thanh toán thủ công',
     buttonVariant: 'primary',
     targetItems: [
       { id: 'order', label: 'Đơn hàng', value: order.reference },
@@ -514,6 +677,75 @@ export function createOrderCommandView(
         label: 'Trạng thái hiện tại',
         value: PAYMENT_STATUS_LABELS[order.payment.status] ?? order.payment.status,
       },
+    ],
+  };
+}
+
+export function createPromotionCommandView(
+  promotion: {
+    id: string;
+    code: string;
+    isActive: boolean;
+  },
+): AdminCommandView {
+  const willDeactivate = promotion.isActive;
+  return {
+    kind: 'TOGGLE_PROMOTION_STATUS',
+    targetId: promotion.id,
+    targetLabel: `Mã ${promotion.code}`,
+    currentStateLabel: willDeactivate ? 'Đang hoạt động' : 'Đã tạm dừng',
+    proposedStateLabel: willDeactivate ? 'Tạm dừng' : 'Kích hoạt',
+    reasonPolicy: {
+      label: willDeactivate ? 'Lý do tạm dừng khuyến mãi' : 'Lý do kích hoạt khuyến mãi',
+      required: true,
+      minLength: 5,
+      maxLength: 500,
+      hint: 'Nhập từ 5 đến 500 ký tự; thao tác sẽ được ghi vào nhật ký kiểm toán.',
+    },
+    consequence: willDeactivate
+      ? 'Khách hàng sẽ không thể áp dụng mã khuyến mãi này cho các đơn hàng mới.'
+      : 'Mã khuyến mãi sẽ có hiệu lực ngay lập tức cho các đơn hàng mới đáp ứng điều kiện.',
+    isIrreversible: false,
+    contextVersion: `promotion-${promotion.id}-v1`,
+    commandLabel: willDeactivate ? 'Tạm dừng' : 'Kích hoạt',
+    buttonVariant: willDeactivate ? 'destructive' : 'primary',
+    targetItems: [
+      { id: 'code', label: 'Mã voucher', value: promotion.code },
+      { id: 'status', label: 'Trạng thái hiện tại', value: willDeactivate ? 'Đang hoạt động' : 'Đã tạm dừng' },
+    ],
+  };
+}
+
+export function createReviewCommandView(
+  review: {
+    id: string;
+    orderCode: string;
+    driverName: string;
+    comment: string;
+  },
+): AdminCommandView {
+  return {
+    kind: 'HIDE_REVIEW',
+    targetId: review.id,
+    targetLabel: `Đánh giá đơn ${review.orderCode}`,
+    currentStateLabel: 'Hiển thị công khai',
+    proposedStateLabel: 'Đã ẩn bởi Quản trị viên',
+    reasonPolicy: {
+      label: 'Lý do ẩn nhận xét',
+      required: true,
+      minLength: 5,
+      maxLength: 500,
+      hint: 'Nhập từ 5 đến 500 ký tự (ví dụ: ngôn từ phản cảm, khiếu nại sai sự thật).',
+    },
+    consequence: 'Nội dung nhận xét sẽ bị thay thế bằng thông báo đã ẩn và ghi nhận vào nhật ký kiểm toán.',
+    isIrreversible: true,
+    contextVersion: `review-${review.id}-v1`,
+    commandLabel: 'Ẩn nhận xét',
+    buttonVariant: 'destructive',
+    targetItems: [
+      { id: 'order', label: 'Đơn hàng', value: review.orderCode },
+      { id: 'driver', label: 'Tài xế', value: review.driverName },
+      { id: 'comment', label: 'Nội dung', value: review.comment },
     ],
   };
 }
