@@ -46,12 +46,12 @@ describe('theme tokens', () => {
     expect(typography.sectionTitle).toMatchObject({
       fontSize: 20,
       fontWeight: '600',
-      lineHeight: 28,
+      lineHeight: 25,
     });
     expect(typography.pageTitle).toMatchObject({
       fontSize: 24,
       fontWeight: '700',
-      lineHeight: 32,
+      lineHeight: 34,
     });
     expect(motion).toEqual({
       none: 0,
@@ -77,9 +77,9 @@ describe('theme tokens', () => {
     expect(radius.bezelOuter).toBe(18);
     expect(radius.bezelInner).toBe(14);
     expect(radius.pill).toBe(9999);
-    expect(leopardPalette.primary).toBe('#0B1E42');
-    expect(leopardPalette.accentYellow).toBe('#F59E0B');
-    expect(leopardPalette.primarySoft).toBe('#0284C7');
+    expect(leopardPalette.primary).toBe('#F86E3F');
+    expect(leopardPalette.accentYellow).toBe('#FC913F');
+    expect(leopardPalette.primarySoft).toBe('#FC913F');
   });
 });
 

@@ -125,9 +125,10 @@ const sectionTitle = {
   fontFamily: systemFontFamily,
   fontSize: 20,
   fontWeight: '600' as const,
-  lineHeight: 28,
+  lineHeight: 25,
 } as const;
 
+// Apple Dynamic Type scale (San Francisco sizes, applied to Inter Display).
 export const typography = {
   largeTitle: {
     fontFamily: systemFontFamily,
@@ -195,7 +196,7 @@ export const typography = {
     fontFamily: systemFontFamily,
     fontSize: 24,
     fontWeight: '700' as const,
-    lineHeight: 32,
+    lineHeight: 34,
   },
   tabularNums: {
     fontVariant: ['tabular-nums'] as const,
@@ -433,42 +434,43 @@ export const colors = {
     mapLand: '#F8FAFC',
   },
   brand: {
-    primary: '#0B1E42',
-    accent: '#F59E0B',
+    primary: '#F86E3F',
+    accent: '#F86E3F',
     blue: '#0284C7',
     green: '#16A34A',
-    background: '#0B1E42',
+    background: '#1F1F1F',
     text: '#FFFFFF',
-    softBackground: '#F0F4F9',
-    softText: '#0B1E42',
-    border: '#0B1E42',
-    accentSoft: '#FFFBEB',
-    accentText: '#92400E',
+    softBackground: '#FFF1E9',
+    softText: '#1F1F1F',
+    border: '#1F1F1F',
+    accentSoft: '#FFF1E9',
+    accentText: '#C2410C',
   },
+  // Apple system-color semantics (light mode values).
   info: {
-    background: '#F0F4F9',
-    text: '#0B1E42',
-    border: '#CBD5E1',
+    background: '#EAF2FF',
+    text: '#007AFF',
+    border: '#B8D6FF',
   },
   warning: {
-    background: '#FFFBEB',
-    text: '#92400E',
-    border: '#FDE68A',
+    background: '#FFF4E5',
+    text: '#FF9500',
+    border: '#FFD8A8',
   },
   active: {
-    background: '#F0F4F9',
-    text: '#0B1E42',
-    border: '#0B1E42',
+    background: '#FFF1E9',
+    text: '#C2410C',
+    border: '#F86E3F',
   },
   success: {
-    background: '#F0FDF4',
-    text: '#166534',
-    border: '#BBF7D0',
+    background: '#E7F9EC',
+    text: '#34C759',
+    border: '#B4EBC0',
   },
   danger: {
-    background: '#FEF2F2',
-    text: '#991B1B',
-    border: '#FECACA',
+    background: '#FFEBEA',
+    text: '#FF3B30',
+    border: '#FFC5C1',
   },
 } as const;
 
@@ -504,19 +506,19 @@ export const pastelTheme = {
 } as const;
 
 export const leopardPalette = {
-  // Brand — Midnight Navy Blue
-  primary: '#0B1E42',
-  primaryDark: '#061226',
-  primarySoft: '#0284C7',
-  primaryBg: '#F0F4F9',
-  primaryBorder: '#CBD5E1',
+  // Brand — Trackly Orange
+  primary: '#F86E3F',
+  primaryDark: '#D9541F',
+  primarySoft: '#FC913F',
+  primaryBg: '#FFF1E9',
+  primaryBorder: '#FBD3B8',
 
-  // Accent — Leopard Amber Gold
-  accentYellow: '#F59E0B',
-  accentYellowDark: '#D97706',
-  accentYellowSoft: '#FDE68A',
-  accentYellowBg: '#FFFBEB',
-  accentYellowBorder: '#FDE68A',
+  // Accent — orange soft tier (Trackly system has no separate accent hue)
+  accentYellow: '#FC913F',
+  accentYellowDark: '#D9541F',
+  accentYellowSoft: '#FDCBA8',
+  accentYellowBg: '#FFF4ED',
+  accentYellowBorder: '#FBD3B8',
 
   // Eco — Calm Green
   ecoGreen: '#16A34A',
@@ -539,7 +541,7 @@ export const leopardPalette = {
   subtleDivider: '#E2E8F0',
 
   // Tab bar
-  tabActive: '#0B1E42',
+  tabActive: '#F86E3F',
   tabInactive: '#64748B',
   tabBarBg: '#FFFFFF',
   tabBarBorder: '#E2E8F0',
@@ -547,22 +549,22 @@ export const leopardPalette = {
   // Input fields
   inputBg: '#FFFFFF',
   inputBorder: '#CBD5E1',
-  inputFocusBorder: '#0B1E42',
-  inputFocusRing: 'rgba(11, 30, 66, 0.08)',
+  inputFocusBorder: '#F86E3F',
+  inputFocusRing: 'rgba(248, 110, 63, 0.12)',
   inputPlaceholder: '#94A3B8',
 
   // Vehicle card accents
-  vehicleBaGac: '#F59E0B',
-  vehicleTruck500: '#0B1E42',
+  vehicleBaGac: '#FC913F',
+  vehicleTruck500: '#F86E3F',
   vehicleTruck1T: '#1D4ED8',
   vehicleTruck2T: '#4338CA',
 
   // Status online/offline indicator
-  onlineGreen: '#16A34A',
+  onlineGreen: '#34C759',
   offlineGray: '#94A3B8',
 
   // Legacy — kept for backward compatibility
-  darkHeroBg: '#0B1E42',
+  darkHeroBg: '#1F1F1F',
 } as const;
 
 /**
@@ -571,28 +573,28 @@ export const leopardPalette = {
  * Use this in every customer-specific screen instead of leopardPalette.
  */
 export const customerPalette = {
-  // Primary — Midnight Navy (Chủ đạo thương hiệu & Hành động)
-  primary: '#0B1E42',
-  primaryDark: '#061226',
-  primaryBg: '#F0F4F9',
-  primaryBorder: '#CBD5E1',
-  primaryText: '#0B1E42',
+  // Primary — Trackly Orange (Chủ đạo thương hiệu & Hành động)
+  primary: '#F86E3F',
+  primaryDark: '#D9541F',
+  primaryBg: '#FFF1E9',
+  primaryBorder: '#FBD3B8',
+  primaryText: '#C2410C',   // readable text on orange-tint bg
 
-  // Brand Accent — Leopard Amber (Huy hiệu, điểm thưởng, voucher)
-  accent: '#F59E0B',
-  accentDark: '#D97706',
-  accentBg: '#FFFBEB',
-  accentBorder: '#FDE68A',
-  accentText: '#92400E',
+  // Brand Secondary — Black (Huy hiệu, điểm thưởng, voucher)
+  accent: '#1F1F1F',
+  accentDark: '#000000',
+  accentBg: '#F1F1F1',
+  accentBorder: '#D4D4D4',
+  accentText: '#1F1F1F',
 
   // Tab / nav (Active state)
-  tabActive: '#0B1E42',
-  tabActiveBg: '#F0F4F9',
+  tabActive: '#F86E3F',
+  tabActiveBg: '#FFF1E9',
   tabInactive: '#64748B',
 
   // Input focus
-  inputFocusBorder: '#0B1E42',
-  inputFocusRing: 'rgba(11, 30, 66, 0.08)',
+  inputFocusBorder: '#F86E3F',
+  inputFocusRing: 'rgba(248, 110, 63, 0.12)',
 
   // Shared neutrals
   textSlateDark: '#0F172A',
@@ -603,7 +605,7 @@ export const customerPalette = {
   surfaceWhite: '#FFFFFF',
   bgMuted: '#F8FAFC',
   canvas: '#F8FAFC',
-  onlineGreen: '#16A34A',
+  onlineGreen: '#34C759',
   offlineGray: '#94A3B8',
 } as const;
 

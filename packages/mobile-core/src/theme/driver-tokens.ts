@@ -16,7 +16,15 @@ import { Platform } from 'react-native';
 
 export const driverPrimitives = {
   colors: {
-    // Grab Iconic Emerald Brand
+    // LEOPARD Brand — Trackly Orange (not yet wired into screens below;
+    // those still reference green* directly. See driverBrand export.)
+    orange50: '#FFF1E9',
+    orange500: '#F86E3F',
+    orange600: '#D9541F',
+    orange700: '#C2410C',
+
+    // Grab Iconic Emerald — kept as-is: used for success/online status
+    // across existing screens, not purely brand identity.
     green50: '#E8F8EE',
     green100: '#D1F2DD',
     green500: '#00B14F', // Primary Grab Emerald
@@ -135,6 +143,17 @@ export const driverPrimitives = {
       elevation: 6,
     },
   },
+} as const;
+
+/**
+ * LEOPARD brand tokens for driver screens migrating off Grab green.
+ * Not consumed anywhere yet — existing screens read driverPrimitives.colors.green*
+ * directly for both brand-active state and success/online status.
+ */
+export const driverBrand = {
+  primary: driverPrimitives.colors.orange500,
+  primaryDark: driverPrimitives.colors.orange600,
+  primarySoft: driverPrimitives.colors.orange50,
 } as const;
 
 /* ==========================================================================
