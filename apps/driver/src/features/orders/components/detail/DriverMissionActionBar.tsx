@@ -9,7 +9,9 @@ import {
   driverPrimitives,
   iosContinuousCurve,
   leopardPalette,
+  radius,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 import { callPhoneNumber } from './CargoAndContactCard';
 import { openExternalNavigation } from './MissionMapCanvas';
@@ -108,29 +110,30 @@ export function DriverMissionActionBar({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: driverPrimitives.colors.white,
-    borderRadius: 22,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    gap: 8,
+    gap: spacing.xs,
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
-    padding: 14,
+    padding: spacing.md,
     ...driverPrimitives.shadows.md,
   },
   legTitle: {
     color: colors.neutral.text,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '700',
   },
   row: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: spacing.xs,
   },
   roundBtn: {
     alignItems: 'center',
     backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
-    borderRadius: 24,
+    borderRadius: radius.pill,
+    ...iosContinuousCurve,
     borderWidth: 1,
     height: 48,
     justifyContent: 'center',
@@ -145,15 +148,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FEE2E2',
     borderColor: '#FECACA',
-    borderRadius: 12,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     borderWidth: 1,
     justifyContent: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing.sm,
     height: 48,
   },
   incidentBannerBtnText: {
     color: colors.danger.text,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '700',
   },
   primaryBtnWrap: {

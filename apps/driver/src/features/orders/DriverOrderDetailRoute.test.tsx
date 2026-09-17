@@ -72,8 +72,8 @@ describe('Driver order detail route', () => {
       />,
     );
 
-    // Section labeled XÁC THỰC BÀN GIAO (POD)
-    expect(screen.getByText('XÁC THỰC BÀN GIAO (POD)')).toBeTruthy();
+    // Section labeled Xác thực bàn giao (POD)
+    expect(screen.getByText('Xác thực bàn giao (POD)')).toBeTruthy();
 
     // 4-step state machine transition labels inside extras drawer
     await fireEvent.press(screen.getByTestId('btn-toggle-mission-extras'));
@@ -84,7 +84,7 @@ describe('Driver order detail route', () => {
 
     // Verification container and requirements
     expect(screen.getByTestId('epod-verification-container')).toBeTruthy();
-    expect(screen.getByText('CHƯA ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByText('Chưa đủ điều kiện')).toBeTruthy();
 
     // Part 1: Cargo photo with GPS + timestamp watermark
     const captureBtn = screen.getByTestId('btn-capture-cargo-photo');
@@ -102,7 +102,7 @@ describe('Driver order detail route', () => {
     expect(screen.getByText(/Chữ ký điện tử đã được xác thực/)).toBeTruthy();
 
     // Now both photo & signature are captured -> status pill ready
-    expect(screen.getByText('ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
 
     // Final confirmation can be completed via SlideToAction accessibility action
     await fireEvent(screen.getByTestId('btn-epod-complete-delivery'), 'accessibilityAction', {
@@ -155,33 +155,33 @@ describe('Driver order detail route', () => {
     // Initial state: incomplete e-POD -> SlideToAction disabled
     const slider = screen.getByTestId('btn-epod-complete-delivery');
     expect(slider.props.accessibilityState).toEqual({ disabled: true });
-    expect(screen.getByText('CHƯA ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByText('Chưa đủ điều kiện')).toBeTruthy();
 
     // 1. Capture cargo photo with GPS watermark
     await fireEvent.press(screen.getByTestId('btn-capture-cargo-photo'));
     expect(screen.getByTestId('camera-watermark-overlay')).toBeTruthy();
-    expect(screen.getByText('CHƯA ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByText('Chưa đủ điều kiện')).toBeTruthy();
     expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
       disabled: true,
     });
 
     // 2. Sign in digital signature pad
     await fireEvent.press(screen.getByTestId('epod-signature-pad'));
-    expect(screen.getByText('ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
     expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
       disabled: false,
     });
 
     // 3. Clear signature to verify dynamic disabling
     await fireEvent.press(screen.getByRole('button', { name: 'Ký lại chữ ký' }));
-    expect(screen.getByText('CHƯA ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByText('Chưa đủ điều kiện')).toBeTruthy();
     expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
       disabled: true,
     });
 
     // Re-sign to make it ready again
     await fireEvent.press(screen.getByTestId('epod-signature-pad'));
-    expect(screen.getByText('ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
     expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
       disabled: false,
     });

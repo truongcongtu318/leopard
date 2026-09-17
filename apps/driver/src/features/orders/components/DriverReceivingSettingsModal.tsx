@@ -53,7 +53,7 @@ export function DriverReceivingSettingsModal({
           </View>
 
           <View style={styles.body}>
-            <Text style={styles.sectionLabel}>BÁN KÍNH QUÉT ĐƠN (KM)</Text>
+            <Text style={styles.sectionLabel}>Bán kính quét đơn (km)</Text>
             <View style={styles.optionsRow}>
               {DRIVER_RADIUS_OPTIONS.map((radius) => {
                 const isSelected = selectedRadius === radius;
@@ -93,7 +93,7 @@ export function DriverReceivingSettingsModal({
               style={({ pressed }) => [styles.saveBtn, pressed ? styles.pressed : null]}
               testID="driver-save-receiving-settings"
             >
-              <Text style={styles.saveBtnText}>ÁP DỤNG CẤU HÌNH</Text>
+              <Text style={styles.saveBtnText}>Áp dụng</Text>
             </Pressable>
           </View>
         </View>

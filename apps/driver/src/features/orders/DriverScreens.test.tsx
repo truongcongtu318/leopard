@@ -62,14 +62,14 @@ describe('DriverOrdersScreen', () => {
     );
 
     // Initial state: modal should not be visible
-    expect(screen.queryByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeNull();
+    expect(screen.queryByText('Đơn mới trong khu vực')).toBeNull();
 
     // Trigger simulation
     const simButton = screen.getByRole('button', { name: 'Mô phỏng nổ đơn' });
     await fireEvent.press(simButton);
 
     // Modal appears with prominent fare, route, and actions
-    expect(screen.getByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeTruthy();
+    expect(screen.getByText('Đơn mới trong khu vực')).toBeTruthy();
     expect(screen.getByText('Thu nhập ròng')).toBeTruthy();
     expect(screen.getByTestId('dispatch-slide-action')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Bỏ qua' })).toBeTruthy();
@@ -81,7 +81,7 @@ describe('DriverOrdersScreen', () => {
     expect(onOpenOrder).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222101');
 
     // Modal closes after acceptance
-    expect(screen.queryByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeNull();
+    expect(screen.queryByText('Đơn mới trong khu vực')).toBeNull();
 
     await screen.unmount();
   });
@@ -219,8 +219,8 @@ describe('DriverOrderDetailScreen', () => {
       />,
     );
 
-    expect(screen.getByText('THU TIỀN MẶT KHI GIAO HÀNG (CASH)')).toBeTruthy();
-    expect(screen.getByText('CHƯA THU TIỀN')).toBeTruthy();
+    expect(screen.getByTestId('cash-collection-container')).toBeTruthy();
+    expect(screen.getByText('Chưa thu COD')).toBeTruthy();
     expect(screen.getByText('280.000 ₫')).toBeTruthy();
 
     const confirmBtn = screen.getByTestId('btn-confirm-cash');
@@ -248,8 +248,8 @@ describe('DriverOrderDetailScreen', () => {
       <DriverOrderDetailScreen view={cashConfirmedView} />,
     );
 
-    expect(screen.getByText('THU TIỀN MẶT KHI GIAO HÀNG (CASH)')).toBeTruthy();
-    expect(screen.getByText('ĐÃ THU TIỀN MẶT')).toBeTruthy();
+    expect(screen.getByTestId('cash-collection-container')).toBeTruthy();
+    expect(screen.getAllByText('Đã thu COD').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByTestId('btn-confirm-cash')).toBeNull();
 
     await screen.unmount();

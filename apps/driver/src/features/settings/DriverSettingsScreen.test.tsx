@@ -11,11 +11,11 @@ describe('DriverSettingsScreen', () => {
     expect(screen.getByText('Nghe thử chuông nổ đơn')).toBeTruthy();
 
     // Section headings
-    expect(screen.getByText('BÁO HIỆU & ĐIỀU PHỐI ĐƠN HÀNG')).toBeTruthy();
-    expect(screen.getByText('BẢN ĐỒ & DẪN ĐƯỜNG XE TẢI')).toBeTruthy();
-    expect(screen.getByText('MÀN HÌNH LÁI XE & TỐI ƯU PIN')).toBeTruthy();
-    expect(screen.getByText('QUYỀN THIẾT BỊ & DỌN DẸP DỮ LIỆU')).toBeTruthy();
-    expect(screen.getByText('TRỢ GIÚP KỸ THUẬT & PHÁP LÝ')).toBeTruthy();
+    expect(screen.getByText('Báo hiệu & điều phối')).toBeTruthy();
+    expect(screen.getByText('Bản đồ & dẫn đường xe tải')).toBeTruthy();
+    expect(screen.getByText('Màn hình & tối ưu pin')).toBeTruthy();
+    expect(screen.getByText('Quyền thiết bị & dữ liệu')).toBeTruthy();
+    expect(screen.getByText('Trợ giúp & pháp lý')).toBeTruthy();
 
     await screen.unmount();
   });
@@ -93,7 +93,7 @@ describe('DriverSettingsScreen', () => {
 
     const sosBtn = screen.getByRole('button', { name: 'Nút gọi khẩn cấp SOS' });
     expect(sosBtn).toBeTruthy();
-    expect(screen.getByText('GỌI CỨU HỘ KHẨN CẤP SOS (24/7)')).toBeTruthy();
+    expect(screen.getByText('Gọi cứu hộ khẩn cấp SOS (24/7)')).toBeTruthy();
 
     await screen.unmount();
   });

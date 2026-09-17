@@ -68,7 +68,7 @@ const EpodHeader = memo(function EpodHeader({
         <IconCameraProof color={colors.neutral.text} size={18} />
       </View>
       <View style={styles.headerTextCol}>
-        <Text style={styles.sectionTitle}>XÁC THỰC BÀN GIAO (POD)</Text>
+        <Text style={styles.sectionTitle}>Xác thực bàn giao (POD)</Text>
         <Text style={styles.sectionSubtitle}>
           Bằng chứng giao hàng điện tử B2B bắt buộc theo quy định
         </Text>
@@ -85,7 +85,7 @@ const EpodHeader = memo(function EpodHeader({
             isCompleteReady ? styles.statusPillTextReady : styles.statusPillTextPending,
           ]}
         >
-          {isCompleteReady ? 'ĐỦ ĐIỀU KIỆN' : 'CHƯA ĐỦ ĐIỀU KIỆN'}
+          {isCompleteReady ? 'Đủ điều kiện' : 'Chưa đủ điều kiện'}
         </Text>
       </View>
     </View>
@@ -109,8 +109,8 @@ const EpodPaymentReminder = memo(function EpodPaymentReminder({
       <View style={styles.paymentTextCol}>
         <Text style={styles.paymentTitle}>
           {paymentMethod === 'CASH'
-            ? 'NHẮC NHỞ THU TIỀN MẶT (COD)'
-            : 'THANH TOÁN ĐƠN HÀNG'}
+            ? 'Thu tiền mặt (COD)'
+            : 'Thanh toán đơn hàng'}
         </Text>
         <Text style={styles.paymentSub}>
           {paymentMethod === 'CASH'
@@ -124,9 +124,9 @@ const EpodPaymentReminder = memo(function EpodPaymentReminder({
         <Text style={styles.paymentBadgeText}>
           {paymentMethod === 'CASH'
             ? isCashConfirmed
-              ? 'ĐÃ THU COD'
-              : 'CẦN THU COD'
-            : 'VIETQR'}
+              ? 'Đã thu COD'
+              : 'Cần thu COD'
+            : 'VietQR'}
         </Text>
       </View>
     </View>
@@ -147,7 +147,7 @@ const EpodPhotoSection = memo(function EpodPhotoSection({
   return (
     <View style={styles.partSection}>
       <View style={styles.partHeaderRow}>
-        <Text style={styles.partTitle}>ẢNH CHỤP KIỆN HÀNG BÀN GIAO</Text>
+        <Text style={styles.partTitle}>Ảnh chụp kiện hàng</Text>
       </View>
 
       {cargoPhotoUri ? (
@@ -420,7 +420,7 @@ export function EpodPanel({
       {/* ── 4. Part 2: Warehouse Receiver Digital Signature Pad (Freehand drawing) ── */}
       <View style={styles.partSection}>
         <View style={styles.partHeaderRow}>
-          <Text style={styles.partTitle}>CHỮ KÝ TAY THỦ KHO / NGƯỜI NHẬN</Text>
+          <Text style={styles.partTitle}>Chữ ký người nhận / thủ kho</Text>
           {signatureCaptured ? (
             <Pressable
               accessibilityLabel="Ký lại chữ ký"
@@ -501,9 +501,9 @@ export function EpodPanel({
           ) : (
             <View pointerEvents="none" style={styles.signatureEmptyCol}>
               <IconOrders color={colors.neutral.subtleText} size={22} />
-              <Text style={styles.signaturePromptTitle}>KÝ TÊN BẰNG TAY VÀO ĐÂY</Text>
+              <Text style={styles.signaturePromptTitle}>Ký tên vào đây</Text>
               <Text style={styles.signaturePromptDesc}>
-                Thủ kho / Người nhận dùng ngón tay ký trực tiếp vào khung
+                Người nhận dùng ngón tay ký trực tiếp vào khung
               </Text>
             </View>
           )}

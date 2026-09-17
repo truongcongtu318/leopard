@@ -39,8 +39,8 @@ describe('IncomingDispatchModal', () => {
       />,
     );
 
-    expect(screen.getByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeTruthy();
-    expect(screen.getByText('CƯỚC THỰC NHẬN DỰ KIẾN')).toBeTruthy();
+    expect(screen.getByText('Đơn mới trong khu vực')).toBeTruthy();
+    expect(screen.getByText('Cước thực nhận dự kiến')).toBeTruthy();
     expect(screen.getByText('245.000 ₫')).toBeTruthy();
     expect(screen.getByText('25s')).toBeTruthy();
     expect(screen.getByText('Cách bạn 1.2 km · 4 phút')).toBeTruthy();
@@ -210,7 +210,7 @@ describe('IncomingDispatchModal', () => {
       />,
     );
 
-    expect(screen.queryByText('ĐƠN HÀNG MỚI TRONG KHU VỰC')).toBeNull();
+    expect(screen.queryByText('Đơn mới trong khu vực')).toBeNull();
     await screen.unmount();
   });
 

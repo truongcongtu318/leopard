@@ -86,7 +86,7 @@ export function VerticalRouteStepper({
             <IconCheck color="#15803D" size={13} strokeWidth={2.5} />
           </View>
           <View style={styles.routeTextCol}>
-            <Text style={styles.routeNodeSubA}>ĐÃ LẤY HÀNG TẠI</Text>
+            <Text style={styles.routeNodeSubA}>Đã lấy hàng tại</Text>
             <Text numberOfLines={2} style={styles.routeNodeTitleA}>
               {resolvedOrigin.label}
             </Text>
@@ -99,10 +99,10 @@ export function VerticalRouteStepper({
           </View>
           <View style={styles.routeTextCol}>
             <View style={styles.rowBetween}>
-              <Text style={styles.routeNodeSubA}>ĐIỂM LẤY HÀNG (A)</Text>
+              <Text style={styles.routeNodeSubA}>Điểm lấy hàng (A)</Text>
               {isAtPickup ? (
                 <View style={styles.activeLegTag}>
-                  <Text style={styles.activeLegTagText}>CHẶNG HIỆN TẠI</Text>
+                  <Text style={styles.activeLegTagText}>Chặng hiện tại</Text>
                 </View>
               ) : null}
             </View>
@@ -177,23 +177,23 @@ export function VerticalRouteStepper({
               <View style={styles.routeTextCol}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.stopSubTitle}>
-                    ĐIỂM DỪNG {stop.sequence}
+                    Điểm dừng {stop.sequence}
                   </Text>
                   {stop.progress === 'COMPLETED' ? (
                     <View style={styles.completedTag}>
-                      <Text style={styles.completedTagText}>ĐÃ HOÀN TẤT</Text>
+                      <Text style={styles.completedTagText}>Đã xong</Text>
                     </View>
                   ) : stop.progress === 'IN_SERVICE' ? (
                     <View style={styles.inServiceTag}>
-                      <Text style={styles.inServiceTagText}>ĐANG XỬ LÝ</Text>
+                      <Text style={styles.inServiceTagText}>Đang xử lý</Text>
                     </View>
                   ) : stop.progress === 'ARRIVED' ? (
                     <View style={styles.arrivedTag}>
-                      <Text style={styles.arrivedTagText}>ĐÃ ĐẾN NƠI</Text>
+                      <Text style={styles.arrivedTagText}>Đã đến</Text>
                     </View>
                   ) : isActionable ? (
                     <View style={styles.activeLegTag}>
-                      <Text style={styles.activeLegTagText}>ĐIỂM TIẾP THEO</Text>
+                      <Text style={styles.activeLegTagText}>Điểm tiếp theo</Text>
                     </View>
                   ) : null}
                 </View>
@@ -260,12 +260,12 @@ export function VerticalRouteStepper({
           <View style={styles.rowBetween}>
             <Text style={styles.routeNodeSubB}>
               {status === 'DELIVERED'
-                ? 'ĐÃ GIAO HÀNG TẠI'
-                : 'ĐIỂM GIAO HÀNG (B)'}
+                ? 'Đã giao hàng tại'
+                : 'Điểm giao hàng (B)'}
             </Text>
             {activeStopIndex === -1 && status === 'IN_TRANSIT' ? (
               <View style={styles.activeLegTag}>
-                <Text style={styles.activeLegTagText}>CHẶNG HIỆN TẠI</Text>
+                <Text style={styles.activeLegTagText}>Chặng hiện tại</Text>
               </View>
             ) : null}
           </View>

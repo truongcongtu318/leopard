@@ -58,7 +58,7 @@ export function PublicDetailView({
           {/* Floating Tag Top Right: Public Preview Mode */}
           <View style={styles.publicMapTopTag}>
             <View style={styles.publicMapDot} />
-            <Text style={styles.publicMapTopTagText}>XEM TRƯỚC LỘ TRÌNH</Text>
+            <Text style={styles.publicMapTopTagText}>Xem trước lộ trình</Text>
           </View>
 
           {/* Floating Pill Bottom Left: ETA & Distance */}
@@ -80,8 +80,8 @@ export function PublicDetailView({
           {/* Header Row: Title and Status */}
           <View style={styles.missionHeaderRow}>
             <View style={styles.missionTitleCol}>
-              <Text style={styles.missionEyebrow}>ĐƠN HÀNG CHỜ TIẾP NHẬN</Text>
-              <Text style={styles.missionLegTitle}>THÔNG TIN QUYẾT ĐỊNH NHẬN ĐƠN</Text>
+              <Text style={styles.missionEyebrow}>Đơn chờ tiếp nhận</Text>
+              <Text style={styles.missionLegTitle}>Thông tin nhận đơn</Text>
             </View>
             <StatusBadge domain="order" status={view.order.status} />
           </View>
@@ -93,7 +93,7 @@ export function PublicDetailView({
                 <IconOrders color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.fareTitleCol}>
-                <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
+                <Text style={styles.fareCaption}>Cước thực nhận dự kiến</Text>
                 <Text style={styles.fareSubcaption}>Nhận vào ví ngay khi hoàn tất giao hàng</Text>
               </View>
               <View style={styles.fareNetPill}>
@@ -115,7 +115,7 @@ export function PublicDetailView({
 
           {/* 4. Vertical Route Spine (Public Scope) */}
           <View style={styles.publicRouteCard}>
-            <Text style={styles.cardSectionTitle}>LỘ TRÌNH VẬN CHUYỂN</Text>
+            <Text style={styles.cardSectionTitle}>Lộ trình vận chuyển</Text>
             <View style={styles.publicRouteSpineRow}>
               <View style={styles.publicSpineColumn}>
                 <View style={styles.publicSpinePointA}>
@@ -130,7 +130,7 @@ export function PublicDetailView({
               <View style={styles.publicSpineLabelsCol}>
                 <View style={styles.publicPointBlock}>
                   <View style={styles.rowBetween}>
-                    <Text style={styles.publicPointSubA}>ĐIỂM LẤY HÀNG (A)</Text>
+                    <Text style={styles.publicPointSubA}>Điểm lấy hàng (A)</Text>
                     <View style={styles.publicDistanceChip}>
                       <IconLocationPin color={leopardPalette.primary} size={10} />
                       <Text style={styles.publicDistanceChipText}>
@@ -149,7 +149,7 @@ export function PublicDetailView({
                 </View>
 
                 <View style={styles.publicPointBlock}>
-                  <Text style={styles.publicPointSubB}>ĐIỂM GIAO HÀNG (B)</Text>
+                  <Text style={styles.publicPointSubB}>Điểm giao hàng (B)</Text>
                   <Text style={styles.publicPointTitleB}>{dropoffLabel}</Text>
                 </View>
               </View>
@@ -170,7 +170,7 @@ export function PublicDetailView({
                 <IconSpeedTruck color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.specCellTextCol}>
-                <Text style={styles.specCellLabel}>LOẠI XE YÊU CẦU</Text>
+                <Text style={styles.specCellLabel}>Loại xe yêu cầu</Text>
                 <Text style={styles.specCellValue}>{view.order.vehicleLabel}</Text>
               </View>
             </View>
@@ -180,7 +180,7 @@ export function PublicDetailView({
                 <IconOrders color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.specCellTextCol}>
-                <Text style={styles.specCellLabel}>QUY CÁCH HÀNG HÓA</Text>
+                <Text style={styles.specCellLabel}>Quy cách hàng hóa</Text>
                 <Text numberOfLines={2} style={styles.specCellValue}>{view.order.cargoSummary}</Text>
               </View>
             </View>
@@ -190,7 +190,7 @@ export function PublicDetailView({
                 <IconClock color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.specCellTextCol}>
-                <Text style={styles.specCellLabel}>THỜI GIAN DỰ KIẾN</Text>
+                <Text style={styles.specCellLabel}>Thời gian dự kiến</Text>
                 <Text style={styles.specCellValue}>{view.order.etaLabel}</Text>
               </View>
             </View>
@@ -200,7 +200,7 @@ export function PublicDetailView({
                 <IconLocationPin color={leopardPalette.primary} size={16} />
               </View>
               <View style={styles.specCellTextCol}>
-                <Text style={styles.specCellLabel}>CẬP NHẬT ĐƠN</Text>
+                <Text style={styles.specCellLabel}>Cập nhật đơn</Text>
                 <Text style={styles.specCellValue}>{view.order.updatedAtLabel}</Text>
               </View>
             </View>

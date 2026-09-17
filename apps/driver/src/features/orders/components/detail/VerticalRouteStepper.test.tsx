@@ -116,7 +116,7 @@ describe('VerticalRouteStepper (Task 20)', () => {
     );
 
     expect(screen.getByTestId('node-origin-active')).toBeTruthy();
-    expect(screen.getByText('CHẶNG HIỆN TẠI')).toBeTruthy();
+    expect(screen.getByText('Chặng hiện tại')).toBeTruthy();
   });
 
   it('renders destination as completed when status is DELIVERED', async () => {
@@ -129,6 +129,6 @@ describe('VerticalRouteStepper (Task 20)', () => {
       />,
     );
 
-    expect(screen.getByText('ĐÃ GIAO HÀNG TẠI')).toBeTruthy();
+    expect(screen.getByText('Đã giao hàng tại')).toBeTruthy();
   });
 });

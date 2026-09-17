@@ -164,9 +164,9 @@ export function AssignedDetailView({
                   <IconCamera color={leopardPalette.primary} size={18} />
                 </View>
                 <View style={styles.pickingChecklistTitleCol}>
-                  <Text style={styles.pickingChecklistTitle}>DANH SÁCH KIỂM HÀNG & BỐC HÀNG</Text>
+                  <Text style={styles.pickingChecklistTitle}>Kiểm hàng & bốc hàng</Text>
                   <Text style={styles.pickingChecklistSubtitle}>
-                    Kiểm tra đúng quy cách trước khi tài xế bốc hàng lên xe
+                    Kiểm tra đúng quy cách trước khi bốc hàng lên xe
                   </Text>
                 </View>
               </View>
@@ -238,14 +238,14 @@ export function AssignedDetailView({
                     )}
                   </View>
                   <View style={styles.cashHeaderTextCol}>
-                    <Text style={styles.cashSectionTitle}>THU TIỀN MẶT KHI GIAO HÀNG (CASH)</Text>
+                    <Text style={styles.cashSectionTitle}>Thu tiền mặt (COD)</Text>
                     <Text style={styles.cashSectionSubtitle}>
                       {isCashConfirmed ? 'Đã xác nhận thu tiền mặt từ khách' : 'Thu đúng cước tiền mặt khi bàn giao đơn hàng'}
                     </Text>
                   </View>
                   <View style={[styles.cashStatusPill, isCashConfirmed ? styles.cashStatusPillReady : styles.cashStatusPillPending]}>
                     <Text style={[styles.cashStatusPillText, isCashConfirmed ? styles.cashStatusPillTextReady : styles.cashStatusPillTextPending]}>
-                      {isCashConfirmed ? 'ĐÃ THU TIỀN MẶT' : 'CHƯA THU TIỀN'}
+                      {isCashConfirmed ? 'Đã thu COD' : 'Chưa thu COD'}
                     </Text>
                   </View>
                 </View>

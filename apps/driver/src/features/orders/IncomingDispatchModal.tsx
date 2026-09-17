@@ -148,7 +148,7 @@ const FareCardSection = memo(function FareCardSection({
     <View style={[styles.fareBezelOuter, isUrgent ? styles.fareBezelOuterUrgent : null]}>
       <View style={[styles.fareBezelInner, isUrgent ? styles.fareBezelInnerUrgent : null]}>
         <View style={styles.fareHeaderRow}>
-          <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
+          <Text style={styles.fareCaption}>Cước thực nhận dự kiến</Text>
           <View style={styles.fareNetPill}>
             <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
           </View>
@@ -191,7 +191,7 @@ const RouteSpineSection = memo(function RouteSpineSection({
         <View style={styles.routeAddressesColumn}>
           <View style={styles.addressBlock}>
             <View style={styles.addressTitleRow}>
-              <Text style={styles.addressTypeLabel}>ĐIỂM LẤY HÀNG</Text>
+              <Text style={styles.addressTypeLabel}>Điểm lấy hàng</Text>
               {pickupBadgeText ? (
                 <View style={styles.pickupDistBadge}>
                   <IconLocationPin color={leopardPalette.primary} size={12} />
@@ -216,7 +216,7 @@ const RouteSpineSection = memo(function RouteSpineSection({
           ) : null}
 
           <View style={styles.addressBlock}>
-            <Text style={styles.addressTypeLabelDropoff}>ĐIỂM GIAO HÀNG</Text>
+            <Text style={styles.addressTypeLabelDropoff}>Điểm giao hàng</Text>
             <Text numberOfLines={2} style={styles.addressNameText}>
               {dropoffDisplay}
             </Text>
@@ -254,7 +254,7 @@ const CargoBentoSection = memo(function CargoBentoSection({
         <View style={styles.cargoHeaderRow}>
           <View style={styles.cargoTitleRow}>
             <IconOrders color={leopardPalette.primary} size={15} />
-            <Text style={styles.cargoHeaderTitle}>THÔNG TIN HÀNG HÓA</Text>
+            <Text style={styles.cargoHeaderTitle}>Thông tin hàng hóa</Text>
           </View>
           {vehicleLabel ? (
             <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
@@ -526,7 +526,7 @@ export function IncomingDispatchModal({
                 <View style={[styles.radarPulseCore, isUrgent ? styles.radarPulseCoreUrgent : null]} />
               </Animated.View>
               <Text style={[styles.modalBadgeText, isUrgent ? styles.modalBadgeTextUrgent : null]}>
-                ĐƠN HÀNG MỚI TRONG KHU VỰC
+                Đơn mới trong khu vực
               </Text>
             </View>
 

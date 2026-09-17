@@ -77,7 +77,7 @@ export function DriverActiveTripCard({
         <View style={styles.headerRight}>
           <View style={styles.liveBadge}>
             <View style={styles.livePulseDot} />
-            <Text style={styles.liveBadgeText}>ĐANG CHẠY</Text>
+            <Text style={styles.liveBadgeText}>Đang chạy</Text>
           </View>
           <StatusBadge domain="order" status={trip.status} />
         </View>
@@ -102,7 +102,7 @@ export function DriverActiveTripCard({
 
         <View style={styles.spineLabelsCol}>
           <View style={styles.locationGroup}>
-            <Text style={styles.pointTypeA}>ĐIỂM LẤY HÀNG (A)</Text>
+            <Text style={styles.pointTypeA}>Điểm lấy hàng (A)</Text>
             <Text numberOfLines={2} style={styles.originAddress}>
               {trip.route.origin.label}
             </Text>
@@ -116,7 +116,7 @@ export function DriverActiveTripCard({
           </View>
 
           <View style={styles.locationGroup}>
-            <Text style={styles.pointTypeB}>ĐIỂM GIAO HÀNG (B)</Text>
+            <Text style={styles.pointTypeB}>Điểm giao hàng (B)</Text>
             <Text numberOfLines={2} style={styles.destAddress}>
               {trip.route.destination.label}
             </Text>

@@ -156,7 +156,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
     // Active trip slab
     expect(screen.getByTestId('driver-active-trip-slab')).toBeTruthy();
     expect(screen.getByText('Chuyến đang thực hiện')).toBeTruthy();
-    expect(screen.getByText('ĐANG CHẠY')).toBeTruthy();
+    expect(screen.getByText('Đang chạy')).toBeTruthy();
 
     // Customer contact actions
     expect(screen.getByTestId('driver-call-btn')).toBeTruthy();

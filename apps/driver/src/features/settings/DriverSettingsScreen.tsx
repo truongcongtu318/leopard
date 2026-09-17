@@ -163,9 +163,9 @@ export function DriverSettingsScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* ── 1. BÁO HIỆU & ĐIỀU PHỐI ĐƠN HÀNG (Apple Inset Grouped) ── */}
+        {/* ── 1. Báo hiệu & điều phối (Apple Inset Grouped) ── */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionLabel}>BÁO HIỆU & ĐIỀU PHỐI ĐƠN HÀNG</Text>
+          <Text style={styles.sectionLabel}>Báo hiệu & điều phối</Text>
 
           <View style={styles.card}>
             {/* Tự động nhận đơn */}
@@ -374,9 +374,9 @@ export function DriverSettingsScreen() {
           </View>
         </View>
 
-        {/* ── 2. BẢN ĐỒ & DẪN ĐƯỜNG XE TẢI ── */}
+        {/* ── 2. Bản đồ & dẫn đường xe tải ── */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionLabel}>BẢN ĐỒ & DẪN ĐƯỜNG XE TẢI</Text>
+          <Text style={styles.sectionLabel}>Bản đồ & dẫn đường xe tải</Text>
 
           <View style={styles.card}>
             {/* Lựa chọn app bản đồ */}
@@ -474,9 +474,9 @@ export function DriverSettingsScreen() {
           </View>
         </View>
 
-        {/* ── 3. MÀN HÌNH LÁI XE & TỐI ƯU PIN ── */}
+        {/* ── 3. Màn hình & tối ưu pin ── */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionLabel}>MÀN HÌNH LÁI XE & TỐI ƯU PIN</Text>
+          <Text style={styles.sectionLabel}>Màn hình & tối ưu pin</Text>
 
           <View style={styles.card}>
             {/* Giữ màn hình luôn sáng */}
@@ -521,9 +521,9 @@ export function DriverSettingsScreen() {
           </View>
         </View>
 
-        {/* ── 4. QUYỀN THIẾT BỊ & DỌN DẸP DỮ LIỆU ── */}
+        {/* ── 4. Quyền thiết bị & dữ liệu ── */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionLabel}>QUYỀN THIẾT BỊ & DỌN DẸP DỮ LIỆU</Text>
+          <Text style={styles.sectionLabel}>Quyền thiết bị & dữ liệu</Text>
 
           <View style={styles.card}>
             <View style={styles.settingRow}>
@@ -574,9 +574,9 @@ export function DriverSettingsScreen() {
           </View>
         </View>
 
-        {/* ── 5. TRỢ GIÚP KỸ THUẬT & PHÁP LÝ ── */}
+        {/* ── 5. Trợ giúp & pháp lý ── */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionLabel}>TRỢ GIÚP KỸ THUẬT & PHÁP LÝ</Text>
+          <Text style={styles.sectionLabel}>Trợ giúp & pháp lý</Text>
 
           <View style={styles.card}>
             <View style={styles.settingRow}>
@@ -596,7 +596,7 @@ export function DriverSettingsScreen() {
               accessibilityRole="button"
               onPress={() => {
                 Alert.alert(
-                  'GỌI CỨU HỘ KHẨN CẤP SOS (24/7)',
+                  'Cứu hộ khẩn cấp SOS (24/7)',
                   'Đường dây nóng khẩn cấp sẽ hiển thị khi BE cấu hình. Hiện chưa có số liên hệ.',
                   [{ text: 'Đã hiểu', style: 'cancel' }],
                 );
@@ -604,7 +604,7 @@ export function DriverSettingsScreen() {
               style={({ pressed }) => [styles.sosButton, pressed ? styles.pressed : null]}
             >
               <IconWarningShield color={colors.danger.text} size={18} />
-              <Text style={styles.sosButtonText}>GỌI CỨU HỘ KHẨN CẤP SOS (24/7)</Text>
+              <Text style={styles.sosButtonText}>Gọi cứu hộ khẩn cấp SOS (24/7)</Text>
             </Pressable>
           </View>
         </View>

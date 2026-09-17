@@ -12,6 +12,9 @@ import {
   colors,
   driverPrimitives,
   iosContinuousCurve,
+  radius,
+  spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 import type { DriverPerformanceReviewResponse } from './adapter';
 
@@ -201,6 +204,7 @@ const styles = StyleSheet.create({
   },
   ratingBigNumber: {
     color: driverPrimitives.colors.gray900,
+    ...typeScale.largeTitle,
     fontSize: 40,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
@@ -208,11 +212,11 @@ const styles = StyleSheet.create({
   },
   starsWrapper: {
     alignItems: 'center',
-    paddingVertical: 2,
+    paddingVertical: spacing.hairline,
   },
   ratingCountText: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12.5,
+    ...typeScale.caption1,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
@@ -220,41 +224,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
-    borderRadius: 9999,
+    borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 6,
-    marginTop: 4,
+    marginTop: spacing.xxs,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: spacing.xxs,
   },
   ratingBadgeDot: {
     backgroundColor: driverPrimitives.colors.green500,
-    borderRadius: 9999,
+    borderRadius: radius.pill,
     height: 6,
     width: 6,
   },
   ratingBadgeText: {
     color: driverPrimitives.colors.gray700,
-    fontSize: 11.5,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
 
   /* 2. Core KPIs Section - Apple Inset Grouped */
   sectionBlock: {
-    gap: 8,
+    gap: spacing.xs,
   },
   sectionLabel: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 13.5,
+    ...typeScale.footnote,
     fontWeight: '700',
     letterSpacing: -0.2,
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xxs,
   },
   kpiCard: {
     backgroundColor: driverPrimitives.colors.white,
     borderColor: colors.neutral.border,
-    borderRadius: 18,
+    borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     borderWidth: 1,
     overflow: 'hidden',
@@ -263,9 +267,9 @@ const styles = StyleSheet.create({
   metricRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md - 2,
   },
   metricIconWrap: {
     alignItems: 'center',
@@ -275,22 +279,22 @@ const styles = StyleSheet.create({
   },
   metricInfoCol: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   metricTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    ...typeScale.subheadline,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   metricSub: {
     color: driverPrimitives.colors.gray400,
-    fontSize: 11.5,
+    ...typeScale.caption2,
     fontWeight: '400',
   },
   metricValueText: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 18,
+    ...typeScale.title3,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.3,
@@ -305,7 +309,7 @@ const styles = StyleSheet.create({
   reviewsGroupCard: {
     backgroundColor: driverPrimitives.colors.white,
     borderColor: colors.neutral.border,
-    borderRadius: 18,
+    borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     borderWidth: 1,
     overflow: 'hidden',
@@ -313,8 +317,8 @@ const styles = StyleSheet.create({
   },
   reviewItemRow: {
     gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md - 2,
   },
   reviewItemHeader: {
     alignItems: 'center',
@@ -323,33 +327,33 @@ const styles = StyleSheet.create({
   },
   reviewDateText: {
     color: driverPrimitives.colors.gray400,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
   reviewCommentText: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14,
+    ...typeScale.footnote,
     fontWeight: '500',
     lineHeight: 20,
   },
   reviewSeparator: {
     backgroundColor: driverPrimitives.colors.gray100,
     height: 1,
-    marginHorizontal: 16,
+    marginHorizontal: spacing.md,
   },
   emptyCard: {
     alignItems: 'center',
     backgroundColor: driverPrimitives.colors.white,
     borderColor: colors.neutral.border,
-    borderRadius: 18,
+    borderRadius: radius.cardXl,
     borderWidth: 1,
-    paddingVertical: 32,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.md,
   },
   emptyText: {
     color: driverPrimitives.colors.gray400,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '500',
   },
 });

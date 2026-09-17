@@ -206,7 +206,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
 
     // Signature pad
     await fireEvent.press(screen.getByTestId('epod-signature-pad'));
-    expect(screen.getByText('ĐỦ ĐIỀU KIỆN')).toBeTruthy();
+    expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
 
     // Action SlideToAction with label "Vuốt hoàn tất cuốc xe ➔" and colorVariant success
     const epodSlider = screen.getByTestId('btn-epod-complete-delivery');
