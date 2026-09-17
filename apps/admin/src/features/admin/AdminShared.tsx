@@ -47,7 +47,7 @@ const listLabel: Readonly<Record<AdminListScreen, string>> = {
   audit: 'Nhật ký kiểm toán',
 };
 
-export function AdminBreadcrumbs({}: Readonly<{
+export function AdminBreadcrumbs(_props: Readonly<{
   screen: AdminPreviewScreen;
   orderReference?: string;
   reportTicketNumber?: string;
