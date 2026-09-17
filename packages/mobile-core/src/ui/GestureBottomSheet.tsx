@@ -175,6 +175,7 @@ export const GestureBottomSheet = forwardRef<
       Math.min(initialSnapIndex, safeSnapPoints.length - 1)
     );
     activeIndexRef.current = targetIdx;
+    setCurrentSnapIndex(targetIdx);
     const targetY = getTranslateYForSnap(safeSnapPoints[targetIdx]);
     currentTranslateY.current = targetY;
     translateYAnim.setValue(targetY);
@@ -232,7 +233,7 @@ export const GestureBottomSheet = forwardRef<
   );
 
   const currentSnapFraction = safeSnapPoints[currentSnapIndex] ?? safeSnapPoints[0];
-  const maxVisibleContentHeight = Math.max(
+  const contentHeight = Math.max(
     80,
     Math.round(effectiveHeight * currentSnapFraction - 44)
   );
@@ -263,6 +264,7 @@ export const GestureBottomSheet = forwardRef<
         testID={`${testID}-content`}
         style={[
           styles.content,
+          { height: contentHeight },
           contentStyle,
         ]}
       >

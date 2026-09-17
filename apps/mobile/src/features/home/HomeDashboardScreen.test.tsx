@@ -729,7 +729,7 @@ describe('HomeDashboardScreen', () => {
       // Add stop 1
       await fireEvent.press(addStopBtn);
       expect(screen.getByTestId('cr-stop-input-0')).toBeTruthy();
-      expect(screen.getByText('ĐIỂM DỪNG 1')).toBeTruthy();
+      expect(screen.getAllByText(/Điểm dừng 1/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Thêm điểm dừng (1/3)')).toBeTruthy();
 
       // Type stop 1 address
@@ -741,7 +741,7 @@ describe('HomeDashboardScreen', () => {
       // Add stop 2
       await fireEvent.press(screen.getByTestId('cr-add-stop'));
       expect(screen.getByTestId('cr-stop-input-1')).toBeTruthy();
-      expect(screen.getByText('ĐIỂM DỪNG 2')).toBeTruthy();
+      expect(screen.getAllByText(/Điểm dừng 2/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Thêm điểm dừng (2/3)')).toBeTruthy();
 
       // Type stop 2 address
@@ -753,7 +753,7 @@ describe('HomeDashboardScreen', () => {
       // Add stop 3
       await fireEvent.press(screen.getByTestId('cr-add-stop'));
       expect(screen.getByTestId('cr-stop-input-2')).toBeTruthy();
-      expect(screen.getByText('ĐIỂM DỪNG 3')).toBeTruthy();
+      expect(screen.getAllByText(/Điểm dừng 3/i).length).toBeGreaterThanOrEqual(1);
 
       // Maximum 3 stops reached -> Add button is replaced with limit hint
       expect(screen.queryByTestId('cr-add-stop')).toBeNull();

@@ -1071,7 +1071,7 @@ export function HomeDashboardScreen({
                     </View>
                     <View style={styles.inputInnerWrap}>
                       <View style={styles.locationHeaderRow}>
-                        <Text style={styles.inputMicroLabel}>ĐIỂM LẤY HÀNG</Text>
+                        <Text style={styles.inputMicroLabel}>Điểm lấy hàng</Text>
                         {pickupLabel ? (
                           <View style={styles.pickupLabelBadge} testID="pickup-label-badge">
                             <IconWarehouse color={colors.success.text} size={12} />
@@ -1112,7 +1112,7 @@ export function HomeDashboardScreen({
                       </View>
                       <View style={styles.inputInnerWrap}>
                         <View style={styles.locationHeaderRow}>
-                          <Text style={styles.inputMicroLabel}>ĐIỂM DỪNG {idx + 1}</Text>
+                          <Text style={styles.inputMicroLabel}>Điểm dừng {idx + 1}</Text>
                         </View>
                         <TextInput
                           accessibilityLabel={`Địa điểm dừng ${idx + 1}`} autoCapitalize="none" autoCorrect={false}
@@ -1135,7 +1135,7 @@ export function HomeDashboardScreen({
                       <View style={styles.dropoffPinSquare} />
                     </View>
                     <View style={styles.inputInnerWrap}>
-                      <Text style={styles.inputMicroLabel}>ĐIỂM GIAO HÀNG</Text>
+                      <Text style={styles.inputMicroLabel}>Điểm giao hàng</Text>
                       <TextInput
                         accessibilityLabel="Địa điểm giao hàng" autoCapitalize="none" autoCorrect={false}
                         onChangeText={handleDropoffChangeText} onFocus={() => setFocusedField('dropoff')}
@@ -1301,10 +1301,10 @@ export function HomeDashboardScreen({
                           testID={`vehicle-row-${vehicle.id}`}
                         >
                           <View style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}>
-                            {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? leopardPalette.accentYellow : customerPalette.textSubtle} size={28} />}
-                            {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? colors.brand.blue : customerPalette.textSubtle} size={28} />}
-                            {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={28} />}
-                            {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={30} />}
+                            {vehicle.id === 'BIKE_3W' && <IconBike color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={20} />}
+                            {vehicle.id === 'VAN_500KG' && <IconVan color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={20} />}
+                            {vehicle.id === 'TRUCK_125T' && <IconTruck color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={20} />}
+                            {vehicle.id === 'TRUCK_25T' && <IconTruck color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={20} />}
                           </View>
                           <View style={styles.vehicleMeta}>
                             <View style={styles.vehicleNameRow}>
@@ -1320,18 +1320,10 @@ export function HomeDashboardScreen({
                               ) : null}
                             </View>
                             <View style={styles.vehicleSpecRow}>
-                              <View style={[styles.dimensionBadge, isSelected && styles.dimensionBadgeSelected]}>
-                                <Text style={[styles.dimensionText, isSelected && styles.dimensionTextSelected]}>
-                                  {vehicle.dimensions}
-                                </Text>
-                              </View>
-                              <Text style={styles.fleetCapacityText}> · Tải trọng: {vehicle.weightCapacity}</Text>
-                            </View>
-                            <View style={styles.vehicleEtaBadge}>
-                              <IconClock color={isSelected ? customerPalette.primary : customerPalette.textSubtle} size={11} />
-                              <Text style={[styles.vehicleEtaText, isSelected && styles.vehicleEtaTextSelected]}>
-                                {FLEET_ETA_LABELS[vehicle.id]}
+                              <Text style={[styles.dimensionText, isSelected && styles.dimensionTextSelected]}>
+                                {vehicle.dimensions}
                               </Text>
+                              <Text style={styles.fleetCapacityText}> · {vehicle.weightCapacity} · {FLEET_ETA_LABELS[vehicle.id].replace('ETA ~', '')}</Text>
                             </View>
                           </View>
                           <View style={styles.vehiclePriceCol}>
@@ -1350,14 +1342,14 @@ export function HomeDashboardScreen({
                   {/* Receiver & Cargo Details Section (Integrated Full Booking Flow) */}
                   <View style={styles.bookingDetailsSection} testID="booking-details-modal">
                     <View style={styles.sectionHeaderRow}>
-                      <Text style={styles.sectionLabel}>THÔNG TIN GIAO NHẬN & HÀNG HÓA</Text>
+                      <Text style={styles.sectionLabel}>Thông tin người nhận & Hàng hóa</Text>
                       <Text style={styles.sectionSubLabel}>Chi tiết chuyến hàng</Text>
                     </View>
 
                     <View style={styles.groupedFormCard}>
                       {/* Tên người nhận */}
                       <View style={styles.formRow}>
-                        <Text style={styles.formMicroLabel}>TÊN NGƯỜI NHẬN</Text>
+                        <Text style={styles.formMicroLabel}>Tên người nhận</Text>
                         <TextInput
                           accessibilityLabel="Tên người nhận"
                           autoCapitalize="words"
@@ -1374,7 +1366,7 @@ export function HomeDashboardScreen({
 
                       {/* Số điện thoại người nhận */}
                       <View style={styles.formRow}>
-                        <Text style={styles.formMicroLabel}>SỐ ĐIỆN THOẠI</Text>
+                        <Text style={styles.formMicroLabel}>Số điện thoại</Text>
                         <TextInput
                           accessibilityLabel="Số điện thoại người nhận"
                           autoCapitalize="none"
@@ -1392,7 +1384,7 @@ export function HomeDashboardScreen({
 
                       {/* Loại hàng hóa */}
                       <View style={styles.formRowPadded}>
-                        <Text style={styles.formMicroLabel}>LOẠI HÀNG HÓA</Text>
+                        <Text style={styles.formMicroLabel}>Loại hàng hóa</Text>
                         <ScrollView
                           contentContainerStyle={styles.categoryPillsScroll}
                           horizontal
@@ -1432,7 +1424,7 @@ export function HomeDashboardScreen({
 
                       {/* Ghi chú hàng hóa */}
                       <View style={styles.formRow}>
-                        <Text style={styles.formMicroLabel}>GHI CHÚ HÀNG HÓA</Text>
+                        <Text style={styles.formMicroLabel}>Ghi chú hàng hóa</Text>
                         <TextInput
                           accessibilityLabel="Ghi chú hàng hóa"
                           autoCapitalize="sentences"
@@ -1450,7 +1442,7 @@ export function HomeDashboardScreen({
 
                       {/* Ảnh chụp hàng hóa */}
                       <View style={styles.formRowPadded}>
-                        <Text style={styles.formMicroLabel}>ẢNH CHỤP HÀNG HÓA</Text>
+                        <Text style={styles.formMicroLabel}>Ảnh hàng hóa</Text>
                         <View style={styles.cargoImageRow}>
                           <Pressable
                             accessibilityLabel="Chụp hoặc tải ảnh hàng hóa"
@@ -1497,7 +1489,7 @@ export function HomeDashboardScreen({
 
                   {/* Fast Payment Method Selector: One-Thumb Ergonomics */}
                   <View style={styles.quickPaymentSection} testID="home-quick-payment">
-                    <Text style={styles.quickSectionLabel}>HÌNH THỨC THANH TOÁN</Text>
+                    <Text style={styles.quickSectionLabel}>Hình thức thanh toán</Text>
                     <View style={styles.paymentMethodRow}>
                       <Pressable
                         accessibilityLabel="Thanh toán VietQR"
@@ -1978,19 +1970,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   routeBox: {
-    backgroundColor: customerPalette.canvas,
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    padding: spacing.sm,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
   },
   unifiedRouteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 46,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: customerPalette.cardBorder,
   },
   lastRouteRow: { borderBottomWidth: 0 },
@@ -2024,19 +2018,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    minHeight: 44,
+    minHeight: 40,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
-    marginTop: spacing.xs,
     backgroundColor: customerPalette.canvas,
-    borderRadius: radius.control,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    borderColor: customerPalette.cardBorder,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: customerPalette.cardBorder,
   },
   addStopBtnPressed: {
     backgroundColor: customerPalette.primaryBg,
-    borderColor: customerPalette.primaryBorder,
     opacity: 0.85,
   },
   addStopBtnText: { ...typeScale.subheadline, fontWeight: '600', color: customerPalette.primary },
@@ -2214,18 +2204,18 @@ const styles = StyleSheet.create({
   vehicleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     gap: spacing.sm,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: customerPalette.cardBorder,
-    minHeight: 64,
+    minHeight: 48,
   },
   vehicleRowSelected: { backgroundColor: customerPalette.primaryBg },
   vehicleRowPressed: { opacity: 0.85 },
   vehicleIconBox: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     borderRadius: radius.control,
     ...iosContinuousCurve,
     backgroundColor: customerPalette.canvas,
@@ -2245,7 +2235,7 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.canvas,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
+    paddingVertical: 1,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
   },
@@ -2255,12 +2245,12 @@ const styles = StyleSheet.create({
   },
   vehicleBadgeText: { ...typeScale.caption2, fontWeight: '600', color: customerPalette.textSubtle },
   vehicleBadgeTextSelected: { color: customerPalette.surfaceWhite },
-  vehicleSpecRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: spacing.xxs },
+  vehicleSpecRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 1 },
   dimensionBadge: {
     backgroundColor: customerPalette.canvas,
     borderRadius: radius.cardSm,
     paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
+    paddingVertical: 1,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
   },
@@ -2268,20 +2258,17 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.surfaceWhite,
     borderColor: customerPalette.primaryBorder,
   },
-  dimensionText: { ...typeScale.caption2, fontWeight: '600', color: customerPalette.textMutedSlate, fontVariant: ['tabular-nums'] },
+  dimensionText: { ...typeScale.caption2, fontWeight: '500', color: customerPalette.textMutedSlate, fontVariant: ['tabular-nums'] },
   dimensionTextSelected: { color: customerPalette.primary },
   fleetCapacityText: { ...typeScale.caption2, color: customerPalette.textSubtle },
-  vehicleEtaBadge: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, marginTop: spacing.xxs },
-  vehicleEtaText: { ...typeScale.caption2, color: customerPalette.textSubtle, fontWeight: '500' },
-  vehicleEtaTextSelected: { color: customerPalette.primary, fontWeight: '600' },
-  vehiclePriceCol: { alignItems: 'flex-end', gap: spacing.xxs },
-  vehiclePrice: { ...typeScale.subheadline, fontWeight: '700', color: customerPalette.textSlateDark, fontVariant: ['tabular-nums'], marginLeft: spacing.xs },
+  vehiclePriceCol: { alignItems: 'flex-end', gap: 2 },
+  vehiclePrice: { ...typeScale.callout, fontWeight: '700', color: customerPalette.textSlateDark, fontVariant: ['tabular-nums'], marginLeft: spacing.xs },
   vehiclePriceSelected: { color: customerPalette.primary },
   selectionDot: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     borderRadius: radius.pill,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: customerPalette.cardBorder,
     backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
@@ -2292,8 +2279,8 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primary,
   },
   selectionDotInner: {
-    width: 8,
-    height: 8,
+    width: 6,
+    height: 6,
     borderRadius: radius.pill,
     backgroundColor: customerPalette.surfaceWhite,
   },
@@ -2303,7 +2290,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   groupedFormCard: {
-    backgroundColor: customerPalette.canvas,
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -2419,8 +2406,8 @@ const styles = StyleSheet.create({
 
   /* Quick Payment Method Selector: One-Thumb Ergonomics */
   quickPaymentSection: {
-    marginTop: spacing.sm,
-    backgroundColor: customerPalette.canvas,
+    marginTop: spacing.md,
+    backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     padding: spacing.sm,
