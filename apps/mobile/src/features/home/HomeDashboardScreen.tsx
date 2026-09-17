@@ -311,7 +311,7 @@ function mapFleetToVehicleType(fleetId: FleetVehicleCategory): 'MOTORBIKE' | 'VA
 
 export function HomeDashboardScreen({
   activeShipment = null, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
-  initialCargoImageUri, nearbyDrivers: nearbyDriversProp,
+  initialCargoImageUri = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80', nearbyDrivers: nearbyDriversProp,
   onConfirmBooking, onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
   onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
   onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = [],

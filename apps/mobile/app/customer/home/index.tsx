@@ -248,7 +248,11 @@ export default function CustomerHomePage() {
             pickupCoords,
             stops: (booking.stops || [])
               .filter((s) => s.address.trim().length > 0)
-              .map((s) => ({ id: s.id, value: s.address, coords: s.coords })),
+              .map((s) => ({
+                id: s.id,
+                value: s.address,
+                coords: s.coords || resolveLocationCoords(s.address, pickupCoords),
+              })),
             dropoff: booking.dropoff,
             dropoffCoords,
             vehicleType,

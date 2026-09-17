@@ -4,7 +4,7 @@ import React, { Component, memo, useEffect, useRef, useState, type PropsWithChil
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { colors, queryClient, sessionStore, spacing, typeScale } from '@leopard/mobile-core';
+import { colors, queryClient, refreshSession, sessionStore, spacing, typeScale } from '@leopard/mobile-core';
 import { DriverViewportShell } from '../src/navigation/DriverViewportShell';
 import { useDriverIdlePing } from '../src/features/orders/useDriverIdlePing';
 import { DriverDispatchProvider } from '../src/features/orders/DriverDispatchContext';
@@ -83,6 +83,36 @@ const RootProviders = memo(function RootProviders({ children }: PropsWithChildre
 
 // ponytail: Headless ping listener and dispatch provider embedded in root layout; upgrade to background task service when standalone native background fetch is wired.
 export default function RootLayout() {
+  const [, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function initSession() {
+      try {
+        await sessionStore.hydrate();
+        const hasRefreshToken = (await sessionStore.getRefreshToken()) !== null;
+        if (hasRefreshToken && !sessionStore.getAccessToken()) {
+          const refreshed = await refreshSession();
+          if (!refreshed) {
+            await sessionStore.clearSession();
+          }
+        }
+      } catch {
+        await sessionStore.clearSession();
+      } finally {
+        if (isMounted) {
+          setIsHydrated(true);
+        }
+      }
+    }
+
+    void initSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <RootErrorBoundary>
       <RootProviders>

@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LEOPARD Customer App — 3-Stage Gesture Bottom Sheet Interactive Preview</title>
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --primary: #0B2545;
+      --primary-light: #133E68;
+      --accent: #F59E0B;
+      --accent-soft: #FEF3C7;
+      --canvas: #0F172A;
+      --surface: #FFFFFF;
+      --surface-muted: #F8FAFC;
+      --border: #E2E8F0;
+      --border-dark: #334155;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --text-subtle: #94A3B8;
+      --success: #10B981;
+      --danger: #EF4444;
+      --radius-card: 16px;
+      --radius-pill: 9999px;
+      --squircle: cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--canvas);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #F8FAFC;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+    }
+
+    /* Top Control Bar */
+    .top-bar {
+      max-width: 1080px;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 20px;
+      border-radius: var(--radius-pill);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--accent), #D97706);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #0B2545;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .stage-switchers {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 4px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .stage-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-subtle);
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s var(--squircle);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stage-btn.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(11, 37, 69, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Main Showcase Container */
+    .preview-layout {
+      display: flex;
+      gap: 36px;
+      align-items: flex-start;
+      max-width: 1080px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* iPhone 16 Pro Mockup Chassis */
+    .phone-chassis {
+      position: relative;
+      width: 393px;
+      height: 852px;
+      background: #000000;
+      border-radius: 54px;
+      border: 4px solid #334155;
+      box-shadow: 
+        0 0 0 2px #1E293B,
+        0 25px 70px -10px rgba(0, 0, 0, 0.8),
+        0 0 40px rgba(11, 37, 69, 0.4);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* Dynamic Island */
+    .dynamic-island {
+      position: absolute;
+      top: 11px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 35px;
+      background: #000000;
+      border-radius: 20px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    .island-lens {
+      width: 11px;
+      height: 11px;
+      background: #0B192C;
+      border-radius: 50%;
+      border: 1px solid #1E293B;
+    }
+
+    /* Layer 0: Map Container */
+    #mockup-map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Floating Status Pill on Map */
+    .map-floating-pill {
+      position: absolute;
+      top: 56px;
+      left: 16px;
+      right: 16px;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: var(--radius-card);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+      color: var(--text-main);
+    }
+
+    .pill-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: #FFFFFF;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .pill-info h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .pill-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .pill-status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--success);
+      background: rgba(16, 185, 129, 0.12);
+      padding: 4px 8px;
+      border-radius: var(--radius-pill);
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    /* ==========================================================================
+       THE 3-STAGE GESTURE BOTTOM SHEET
+       ========================================================================== */
+    .bottom-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #FFFFFF;
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+      box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.18);
+      z-index: 30;
+      transition: height 0.4s var(--squircle);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      color: var(--text-main);
+    }
+
+    /* Snap heights */
+    .bottom-sheet.stage-1 { height: 215px; } /* ~25% Collapsed */
+    .bottom-sheet.stage-2 { height: 490px; } /* ~58% Routing & Fleet Matrix */
+    .bottom-sheet.stage-3 { height: 750px; } /* ~88% Expanded Details */
+
+    /* Drag Handle Zone */
+    .sheet-handle-zone {
+      width: 100%;
+      padding: 10px 0 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: grab;
+      touch-action: none;
+      flex-shrink: 0;
+    }
+
+    .drag-indicator {
+      width: 38px;
+      height: 5px;
+      background: #CBD5E1;
+      border-radius: var(--radius-pill);
+      transition: background 0.2s;
+    }
+
+    .sheet-handle-zone:hover .drag-indicator {
+      background: #94A3B8;
+    }
+
+    /* Sheet Body Content */
+    .sheet-content-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scrollbar-width: none;
+    }
+    .sheet-content-scroll::-webkit-scrollbar { display: none; }
+
+    /* SECTION A: ROUTING INPUTS (Unified Route Card) */
+    .route-card {
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .route-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .route-marker-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .marker-pickup { background: #0284C7; border: 2.5px solid #BAE6FD; }
+    .marker-dropoff { background: var(--accent); border: 2.5px solid #FDE68A; }
+
+    .route-input-group {
+      flex: 1;
+    }
+
+    .route-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .route-value {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .route-divider {
+      height: 1px;
+      background: #E2E8F0;
+      margin-left: 24px;
+    }
+
+    /* Quick Hubs Carousel */
+    .quick-hubs-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .quick-hubs-row::-webkit-scrollbar { display: none; }
+
+    .hub-chip {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.2s;
+    }
+    .hub-chip:hover, .hub-chip.active {
+      border-color: var(--primary);
+      background: #F0F7FF;
+    }
+
+    /* SECTION B: FLEET VEHICLES MATRIX */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .vehicle-matrix {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .vehicle-card {
+      background: #FFFFFF;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.25s var(--squircle);
+    }
+
+    .vehicle-card.selected {
+      border-color: var(--primary);
+      background: #F8FAFC;
+      box-shadow: 0 4px 14px -2px rgba(11, 37, 69, 0.12);
+      transform: scale(1.008);
+    }
+
+    .vehicle-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .vehicle-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--surface-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      border: 1px solid var(--border);
+    }
+    .vehicle-card.selected .vehicle-icon {
+      background: #EBF3FF;
+      border-color: #BFDBFE;
+    }
+
+    .vehicle-meta h3 {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .badge-yellow { background: var(--accent-soft); color: #B45309; }
+    .badge-blue { background: #E0F2FE; color: #0369A1; }
+    .badge-navy { background: #E2E8F0; color: var(--primary); }
+
+    .vehicle-dims {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .vehicle-right {
+      text-align: right;
+    }
+
+    .vehicle-price {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .vehicle-eta {
+      font-size: 11px;
+      color: var(--success);
+      font-weight: 600;
+      margin-top: 1px;
+    }
+
+    /* SECTION C: EXTRA SERVICES & PAYMENT (STAGE 3) */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+    }
+
+    .option-info h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .option-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* iOS Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 26px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #CBD5E1;
+      transition: .3s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+
+    /* Payment Segmented Control */
+    .payment-segment {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .payment-chip {
+      border: 1px solid var(--border);
+      background: #FFFFFF;
+      border-radius: 10px;
+      padding: 9px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+    .payment-chip.selected {
+      border-color: var(--primary);
+      background: #F0F7FF;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Fixed Bottom Action CTA (The One-Thumb Driver) */
+    .sheet-sticky-footer {
+      padding: 12px 18px 18px;
+      background: #FFFFFF;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .primary-cta-btn {
+      width: 100%;
+      height: 54px;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px -4px rgba(11, 37, 69, 0.4);
+      transition: transform 0.15s, background-color 0.2s;
+    }
+    .primary-cta-btn:active {
+      transform: scale(0.985);
+      background: var(--primary-light);
+    }
+
+    .cta-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--accent);
+      background: rgba(245, 158, 11, 0.15);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    /* Side Specs & Design Explanations */
+    .specs-panel {
+      flex: 1;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .spec-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      backdrop-filter: blur(12px);
+    }
+
+    .spec-card h2 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #F8FAFC;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .spec-card p {
+      font-size: 13.5px;
+      color: var(--text-subtle);
+      line-height: 1.6;
+    }
+
+    .feature-list {
+      margin-top: 12px;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: #E2E8F0;
+    }
+    .feature-item svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--accent);
+    }
+
+    .code-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Control Bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-logo">🐆</div>
+      <div>
+        <div class="brand-title">LEOPARD MOBILE REDESIGN</div>
+        <div class="brand-badge">Apple HIG 2026 · One-Thumb Ergonomics</div>
+      </div>
+    </div>
+
+    <!-- Stage Switcher Controls -->
+    <div class="stage-switchers">
+      <button class="stage-btn" onclick="setStage(1)" id="btn-stage-1">
+        <span>📍 Mức 1: Thu gọn (25%)</span>
+      </button>
+      <button class="stage-btn active" onclick="setStage(2)" id="btn-stage-2">
+        <span>🚚 Mức 2: Chọn xe (58%)</span>
+      </button>
+      <button class="stage-btn" onclick="setStage(3)" id="btn-stage-3">
+        <span>📦 Mức 3: Chi tiết (88%)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Showcase Container -->
+  <main class="preview-layout">
+    
+    <!-- iPhone Chassis Mockup -->
+    <section class="phone-chassis">
+      <!-- Dynamic Island -->
+      <div class="dynamic-island">
+        <div class="island-lens"></div>
+        <div style="width: 10px; height: 10px; background: #10B981; border-radius: 50%;"></div>
+      </div>
+
+      <!-- Layer 0: Full-bleed Leaflet Map -->
+      <div id="mockup-map"></div>
+
+      <!-- Floating Map Status Capsule -->
+      <div class="map-floating-pill">
+        <div class="pill-left">
+          <div class="pill-avatar">Q1</div>
+          <div class="pill-info">
+            <h4>Kho Hàng Quận 1</h4>
+            <p>123 Nguyễn Huệ, P. Bến Nghé</p>
+          </div>
+        </div>
+        <div class="pill-status">
+          <div class="pulse-dot"></div>
+          <span>4 xe sẵn sàng</span>
+        </div>
+      </div>
+
+      <!-- Interactive 3-Stage Bottom Sheet -->
+      <div class="bottom-sheet stage-2" id="bottomSheet">
+        <!-- Drag Handle Indicator -->
+        <div class="sheet-handle-zone" onclick="toggleNextStage()">
+          <div class="drag-indicator"></div>
+        </div>
+
+        <!-- Scrollable Sheet Content -->
+        <div class="sheet-content-scroll">
+
+          <!-- 1. Route Summary Box -->
+          <div class="route-card">
+            <div class="route-row">
+              <div class="route-marker-dot marker-pickup"></div>
+              <div class="route-input-group">
+                <div class="route-label">Điểm lấy hàng (Kho cố định)</div>
+                <div class="route-value">123 Nguyễn Huệ, Q.1, TP.HCM</div>
+              </div>
+            </div>
+            <div class="route-divider"></div>
+            <div class="route-row">
+              <div class="route-marker-dot marker-dropoff"></div>
+              <div class="route-input-group">
+                <div class="route-label">Điểm giao hàng</div>
+                <div class="route-value" id="currentDropoffText">456 Lê Duẩn, Q.1, TP.HCM</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Hub Chips -->
+          <div class="quick-hubs-row">
+            <div class="hub-chip active" onclick="selectHub('456 Lê Duẩn, Q.1, TP.HCM')">📍 Giao Lê Duẩn</div>
+            <div class="hub-chip" onclick="selectHub('KCN Tân Bình, Q. Tân Bình')">🏭 KCN Tân Bình</div>
+            <div class="hub-chip" onclick="selectHub('Cảng Cát Lái, TP. Thủ Đức')">⚓ Cảng Cát Lái</div>
+            <div class="hub-chip" onclick="selectHub('Chợ Bến Thành, Q.1')">🏪 Chợ Bến Thành</div>
+          </div>
+
+          <!-- 2. Fleet Vehicle Matrix (Section B) -->
+          <div id="vehicleMatrixSection">
+            <div class="section-title">CHỌN LOẠI XE PHÙ HỢP (CƯỚC ĐỘNG)</div>
+            <div class="vehicle-matrix">
+              <!-- Xe 1: Ba Gác -->
+              <div class="vehicle-card" onclick="selectVehicle('BIKE_3W', 'Xe Ba Gác', '70.000 ₫')" id="card-BIKE_3W">
+                <div class="vehicle-left">
+                  <div class="vehicle-icon">🛺</div>
+                  <div class="vehicle-meta">
+                    <h3>Xe Ba Gác <span class="badge-tag badge-yellow">Tiết kiệm</span></h3>
+                    <div class="vehicle-dims">Thùng 1.8 x 1.1m · Tối đa 400kg</div>
+                  </div>
+                </div>
+                <div class="vehicle-right">
+                  <div class="vehicle-price">70.000 ₫</div>
+                  <div class="vehicle-eta">~3 phút</div>
+                </div>
+              </div>
+
+              <!-- Xe 2: Van 500kg (Default) -->
+              <div class="vehicle-card selected" onclick="selectVehicle('VAN_500KG', 'Van 500kg', '130.000 ₫')" id="card-VAN_500KG">
+                <div class="vehicle-left">
+                  <div class="vehicle-icon">🚐</div>
+                  <div class="vehicle-meta">
+                    <h3>Van 500kg <span class="badge-tag badge-blue">Đô thị</span></h3>
+                    <div class="vehicle-dims">Thùng 2.1 x 1.3 x 1.2m · Phố cấm 24/7</div>
+                  </div>
+                </div>
+                <div class="vehicle-right">
+                  <div class="vehicle-price">130.000 ₫</div>
+                  <div class="vehicle-eta">~5 phút</div>
+                </div>
+              </div>
+
+              <!-- Xe 3: Tải 1.25T -->
+              <div class="vehicle-card" onclick="selectVehicle('TRUCK_125T', 'Xe Tải 1.25T', '200.000 ₫')" id="card-TRUCK_125T">
+                <div class="vehicle-left">
+                  <div class="vehicle-icon">🚚</div>
+                  <div class="vehicle-meta">
+                    <h3>Xe Tải 1.25T <span class="badge-tag badge-navy">Phổ biến</span></h3>
+                    <div class="vehicle-dims">Thùng 3.2 x 1.6 x 1.7m · Chuyển kho</div>
+                  </div>
+                </div>
+                <div class="vehicle-right">
+                  <div class="vehicle-price">200.000 ₫</div>
+                  <div class="vehicle-eta">~8 phút</div>
+                </div>
+              </div>
+
+              <!-- Xe 4: Tải 2.5T -->
+              <div class="vehicle-card" onclick="selectVehicle('TRUCK_25T', 'Xe Tải 2.5T', '320.000 ₫')" id="card-TRUCK_25T">
+                <div class="vehicle-left">
+                  <div class="vehicle-icon">🚛</div>
+                  <div class="vehicle-meta">
+                    <h3>Xe Tải 2.5T <span class="badge-tag badge-navy">Tải lớn</span></h3>
+                    <div class="vehicle-dims">Thùng 4.3 x 1.8 x 1.9m · Hàng nặng</div>
+                  </div>
+                </div>
+                <div class="vehicle-right">
+                  <div class="vehicle-price">320.000 ₫</div>
+                  <div class="vehicle-eta">~12 phút</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Extended Details (Visible in Stage 3) -->
+          <div id="extendedDetailsSection">
+            <div class="section-title">TIỆN ÍCH & THANH TOÁN</div>
+            <div class="options-grid">
+              <!-- Hỗ trợ bốc xếp -->
+              <div class="option-row">
+                <div class="option-info">
+                  <h4>Hỗ trợ tài xế bốc xếp</h4>
+                  <p>Tài xế phụ bưng bê hàng hóa lên/xuống xe</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="loadingSupportToggle" onchange="toggleAddon()">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <!-- Hóa đơn VAT -->
+              <div class="option-row">
+                <div class="option-info">
+                  <h4>Xuất hóa đơn điện tử VAT</h4>
+                  <p>Gửi trực tiếp qua email doanh nghiệp</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <!-- Phương thức thanh toán -->
+              <div class="payment-segment">
+                <div class="payment-chip selected" onclick="selectPayment(this, 'VIETQR')">
+                  💳 Chuyển khoản VietQR
+                </div>
+                <div class="payment-chip" onclick="selectPayment(this, 'CASH')">
+                  💵 Tiền mặt khi giao
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Sticky Bottom CTA Button (One-Thumb Reachable) -->
+        <div class="sheet-sticky-footer">
+          <button class="primary-cta-btn" onclick="handleBookingAction()">
+            <span id="ctaActionLabel">GỌI XE NGAY</span>
+            <span>·</span>
+            <span class="cta-price" id="ctaPriceDisplay">130.000 ₫</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Side Specs & Philosophy Explanation -->
+    <aside class="specs-panel">
+      <div class="spec-card">
+        <h2>
+          <span>🎯</span>
+          <span>Triết lý One-Thumb Ergonomics</span>
+        </h2>
+        <p>
+          Trong thiết kế Apple HIG 2026, 60% diện tích trên cùng của màn hình smartphone cỡ lớn rất khó chạm tới khi dùng bằng một tay. Bằng cách hạ toàn bộ trung tâm tương tác xuống <strong>Bottom Sheet 3 mức</strong>:
+        </p>
+        <ul class="feature-list">
+          <li class="feature-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.8 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <span><strong>Xoá bỏ hoàn toàn Modal che kín</strong>: Bản đồ và lộ trình luôn nhìn thấy được ở mọi giai đoạn.</span>
+          </li>
+          <li class="feature-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.8 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <span><strong>Nút CTA Midnight Navy (<span class="code-pill">#0B2545</span>) cố định</strong>: Chiều cao 54pt, squircle 16pt, bấm 1 chạm là gọi xe ngay.</span>
+          </li>
+          <li class="feature-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.8 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <span><strong>3 Snap Points mượt mà</strong>: Trượt tự nhiên theo thói quen vuốt của người dùng iOS / Android.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="spec-card">
+        <h2>
+          <span>⚡</span>
+          <span>Bảo toàn Kiến trúc & E2E Tests</span>
+        </h2>
+        <p>
+          Cải tiến giao diện này không thay đổi bất kỳ business logic nào của backend hay adapter:
+        </p>
+        <ul class="feature-list">
+          <li class="feature-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            <span>Giữ nguyên <span class="code-pill">vehicle-row-{id}</span>, <span class="code-pill">home-main-cta-btn</span>, <span class="code-pill">hub-chip-*</span>.</span>
+          </li>
+          <li class="feature-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            <span>Giữ nguyên luồng tính giá cước thực tế từ <span class="code-pill">estimateOrder</span> API.</span>
+          </li>
+          <li class="feature-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            <span>Đảm bảo toàn bộ bộ test E2E 01 → 06 tiếp tục PASS xanh 100%.</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+  </main>
+
+  <script>
+    // 1. Initialize Realistic Leaflet Map
+    const map = L.map('mockup-map', {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([10.7785, 106.6995], 15);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // Route Polyline (123 Nguyen Hue -> 456 Le Duan)
+    const pickupCoords = [10.7769, 106.7009];
+    const dropoffCoords = [10.7820, 106.6980];
+
+    const polyline = L.polyline([
+      pickupCoords,
+      [10.7780, 106.7000],
+      [10.7795, 106.6990],
+      dropoffCoords
+    ], {
+      color: '#0B2545',
+      weight: 5,
+      opacity: 0.85,
+      dashArray: '8, 8',
+      lineCap: 'round'
+    }).addTo(map);
+
+    // Pickup & Dropoff Marker Pins
+    const pickupIcon = L.divIcon({
+      className: 'custom-pin',
+      html: '<div style="background:#0284C7;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,0.3);">📦</div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+
+    const dropoffIcon = L.divIcon({
+      className: 'custom-pin',
+      html: '<div style="background:#F59E0B;color:#0B2545;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,0.3);font-weight:bold;">🏁</div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+
+    L.marker(pickupCoords, { icon: pickupIcon }).addTo(map);
+    L.marker(dropoffCoords, { icon: dropoffIcon }).addTo(map);
+
+    // 2. Interactive Stage Switcher
+    let currentStage = 2;
+    const sheet = document.getElementById('bottomSheet');
+
+    function setStage(stageNumber) {
+      currentStage = stageNumber;
+      sheet.className = `bottom-sheet stage-${stageNumber}`;
+
+      // Update switcher buttons
+      document.querySelectorAll('.stage-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx + 1 === stageNumber);
+      });
+
+      // Update CTA Label based on stage
+      const ctaLabel = document.getElementById('ctaActionLabel');
+      if (stageNumber === 1) {
+        ctaLabel.textContent = 'CHỌN ĐIỂM ĐẾN ĐỂ TÍNH GIÁ';
+      } else if (stageNumber === 2) {
+        ctaLabel.textContent = 'TIẾP TỤC ĐẶT XE';
+      } else {
+        ctaLabel.textContent = 'XÁC NHẬN GỌI XE';
+      }
+    }
+
+    function toggleNextStage() {
+      const next = currentStage === 3 ? 1 : currentStage + 1;
+      setStage(next);
+    }
+
+    // 3. Select Vehicle Logic
+    let basePriceNum = 130000;
+    let selectedVehicleId = 'VAN_500KG';
+
+    function selectVehicle(id, name, priceStr) {
+      selectedVehicleId = id;
+      document.querySelectorAll('.vehicle-card').forEach(card => card.classList.remove('selected'));
+      document.getElementById(`card-${id}`).classList.add('selected');
+
+      basePriceNum = parseInt(priceStr.replace(/[^0-9]/g, ''), 10);
+      updateTotal();
+    }
+
+    function toggleAddon() {
+      updateTotal();
+    }
+
+    function updateTotal() {
+      const hasLoading = document.getElementById('loadingSupportToggle').checked;
+      const loadingFee = hasLoading ? 50000 : 0;
+      const total = basePriceNum + loadingFee;
+      document.getElementById('ctaPriceDisplay').textContent = total.toLocaleString('vi-VN') + ' ₫';
+    }
+
+    function selectHub(addr) {
+      document.getElementById('currentDropoffText').textContent = addr;
+      setStage(2);
+    }
+
+    function selectPayment(el, method) {
+      document.querySelectorAll('.payment-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function handleBookingAction() {
+      if (currentStage === 1) {
+        setStage(2);
+      } else if (currentStage === 2) {
+        setStage(3);
+      } else {
+        alert('🎉 Đơn hàng đã được tạo thành công trên hệ thống LEOPARD! Đang điều phối tài xế gần nhất...');
+      }
+    }
+  </script>
+</body>
+</html>

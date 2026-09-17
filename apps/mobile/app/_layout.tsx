@@ -127,6 +127,15 @@ export function resolveSessionRedirect({
   isAuthenticated: boolean;
   role: string | null;
 }): string | null {
+  const isPublicLogin =
+    currentPath === '/login' ||
+    currentPath.startsWith('/login/') ||
+    currentPath.startsWith('/(public)/login');
+  const isPublicOnboarding =
+    currentPath === '/onboarding' ||
+    currentPath.startsWith('/onboarding/') ||
+    currentPath === '/(public)/onboarding';
+
   // If not authenticated or not customer role: cannot access protected customer routes
   if (!isAuthenticated || role !== 'CUSTOMER') {
     if (currentPath.startsWith('/customer')) {
@@ -136,7 +145,7 @@ export function resolveSessionRedirect({
   }
 
   // If authenticated as CUSTOMER: should not stay on login / onboarding routes
-  if (currentPath.startsWith('/(public)/login') || currentPath === '/(public)/onboarding') {
+  if (isPublicLogin || isPublicOnboarding) {
     return '/customer/home';
   }
 
@@ -234,11 +243,13 @@ function SessionAndDeepLinkRouter() {
   useEffect(() => {
     let isMounted = true;
 
-    void Linking.getInitialURL().then((initialUrl) => {
-      if (isMounted && initialUrl) {
-        handleIncomingUrl(initialUrl);
-      }
-    });
+    if (Platform.OS !== 'web') {
+      void Linking.getInitialURL().then((initialUrl) => {
+        if (isMounted && initialUrl) {
+          handleIncomingUrl(initialUrl);
+        }
+      });
+    }
 
     const subscription = Linking.addEventListener('url', (event) => {
       if (isMounted && event.url) {

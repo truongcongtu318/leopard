@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainError } from '../common/domain-error.js';
 
-const DEFAULT_LIMIT = 20;
+const DEFAULT_LIMIT = process.env.AUTH_RATE_LIMIT
+  ? parseInt(process.env.AUTH_RATE_LIMIT, 10)
+  : process.env.NODE_ENV === 'production'
+    ? 20
+    : 500;
 const DEFAULT_WINDOW_MS = 60_000;
 const DEFAULT_MAX_KEYS = 50_000;
 

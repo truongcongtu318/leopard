@@ -82,6 +82,9 @@ export const addressStore = {
       const remote = await httpClient.get<any[]>('/users/me/addresses');
       if (Array.isArray(remote)) {
         const cached = this.getAddresses();
+        if (remote.length === 0 && cached.length > 0) {
+          return cached;
+        }
         const cachedMap = new Map(cached.map((a) => [a.id, a]));
         const mapped: SavedAddress[] = remote.map((item: any) => {
           const local = cachedMap.get(item.id);

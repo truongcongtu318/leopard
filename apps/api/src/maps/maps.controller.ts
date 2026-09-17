@@ -85,15 +85,16 @@ interface ValidationIssue {
 }
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
+const isProd = process.env.NODE_ENV === 'production';
 const ROUTE_RATE_LIMITS: ReadonlyArray<{
   method: 'GET' | 'POST';
   pathPrefix: string;
   maxRequests: number;
 }> = [
-  { method: 'GET', pathPrefix: '/maps/search', maxRequests: 30 },
-  { method: 'GET', pathPrefix: '/maps/geocode/', maxRequests: 30 },
-  { method: 'GET', pathPrefix: '/maps/nearby-drivers', maxRequests: 60 },
-  { method: 'POST', pathPrefix: '/orders/estimate', maxRequests: 10 },
+  { method: 'GET', pathPrefix: '/maps/search', maxRequests: isProd ? 30 : 200 },
+  { method: 'GET', pathPrefix: '/maps/geocode/', maxRequests: isProd ? 30 : 200 },
+  { method: 'GET', pathPrefix: '/maps/nearby-drivers', maxRequests: isProd ? 60 : 200 },
+  { method: 'POST', pathPrefix: '/orders/estimate', maxRequests: isProd ? 10 : 200 },
 ];
 
 @Injectable()
