@@ -2,13 +2,20 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
+  LayoutAnimation,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  UIManager,
   View,
 } from 'react-native';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 import {
   IconChevronRight,
@@ -189,6 +196,7 @@ export function BookingRouteSection({
   }, [searchQuery]);
 
   const handleOpenSearch = (target: 'pickup' | 'dropoff') => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setActiveTarget(target);
     setSearchQuery('');
     setSearchResults([]);
@@ -197,12 +205,14 @@ export function BookingRouteSection({
   };
 
   const handleCloseSearch = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     Keyboard.dismiss();
     setActiveTarget(null);
     setSearchQuery('');
   };
 
   const handleSelectLocation = (item: LocationSearchResult) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     Keyboard.dismiss();
     const fullAddress = item.address.includes(item.name)
       ? item.address

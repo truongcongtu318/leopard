@@ -116,6 +116,25 @@ export function BookingScreen({
   }, []);
 
   const scrollY = useRef(new Animated.Value(0)).current;
+  const entranceFade = useRef(new Animated.Value(0)).current;
+  const entranceScale = useRef(new Animated.Value(0.96)).current;
+
+  // Fluid entrance animation (Fade + Scale from 96% to 100%)
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(entranceFade, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.spring(entranceScale, {
+        toValue: 1,
+        damping: 20,
+        stiffness: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [entranceFade, entranceScale]);
 
   // Live Pricing Calculation
   const pricingBreakdown = useMemo(() => {
@@ -180,7 +199,15 @@ export function BookingScreen({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.rootView}
     >
-      <View style={styles.rootView}>
+      <Animated.View
+        style={[
+          styles.rootView,
+          {
+            opacity: entranceFade,
+            transform: [{ scale: entranceScale }],
+          },
+        ]}
+      >
         {/* Animated ScrollView */}
         <Animated.ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -334,7 +361,7 @@ export function BookingScreen({
           onClose={() => setShowPriceDetail(false)}
           visible={showPriceDetail}
         />
-      </View>
+      </Animated.View>
     </KeyboardAvoidingView>
   );
 }
