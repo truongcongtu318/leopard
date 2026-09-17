@@ -15,7 +15,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
-    "test:e2e:playwright": "pnpm --filter @leopard/e2e test",
+    "test:e2e:playwright": "pnpm --filter @leopard/e2e test:playwright",
     "test:contract": "turbo run test:contract",
     "db:migrate:test": "pnpm --filter api prisma:migrate:test",
     "format:check": "turbo run format:check"
