@@ -1,18 +1,25 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { parseCustomerOrderId } from '../../../src/features/customer/orders/adapter';
 import { CustomerOrderDetailRuntime } from '../../../src/features/customer/orders/CustomerOrderDetailRuntime';
 import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 
 export default function CustomerOrderDetailPage() {
+  const router = typeof useRouter === 'function' ? useRouter() : undefined;
   const params = useLocalSearchParams<{ id?: string | string[] }>();
-  const orderId = parseCustomerOrderId(params.id);
+  const orderId = parseCustomerOrderId(params?.id);
 
   if (!orderId) {
     return (
       <ScreenScaffold title="Chi tiết đơn">
         <ScreenState
+          actionLabel="Về danh sách đơn"
           message="Liên kết đơn hàng không đúng định dạng. Hãy quay lại danh sách đơn."
+          onAction={() => {
+            if (router?.replace) {
+              router.replace('/customer/orders');
+            }
+          }}
           state="error"
           title="Mã đơn không hợp lệ"
         />
@@ -22,4 +29,3 @@ export default function CustomerOrderDetailPage() {
 
   return <CustomerOrderDetailRuntime orderId={orderId} />;
 }
-

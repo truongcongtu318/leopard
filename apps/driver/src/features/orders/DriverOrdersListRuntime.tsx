@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { createDriverProfileHttpAdapter } from '../profile/adapter';
@@ -13,9 +13,14 @@ import { useDispatchOffer } from './useDispatchOffer';
 export type DriverOrdersListRuntimeProps = Readonly<{
   onOpenOrder: (orderId: string) => void;
   onNavigate?: (route: string) => void;
+  focusKey?: number;
 }>;
 
-export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrdersListRuntimeProps) {
+export function DriverOrdersListRuntime({
+  focusKey,
+  onNavigate,
+  onOpenOrder,
+}: DriverOrdersListRuntimeProps) {
   const port = useMemo(() => createDriverHttpAdapter(), []);
   const profilePort = useMemo(() => createDriverProfileHttpAdapter(), []);
   const walletPort = useMemo(() => createDriverWalletHttpAdapter(), []);
@@ -51,6 +56,22 @@ export function DriverOrdersListRuntime({ onNavigate, onOpenOrder }: DriverOrder
     staleTime: 5 * 60 * 1000,
   });
   const todayEarnings = sumTodayEarnings(historyQuery.data?.items ?? []);
+
+  const prevFocusKeyRef = useRef(focusKey);
+  useEffect(() => {
+    if (
+      prevFocusKeyRef.current !== undefined &&
+      focusKey !== undefined &&
+      focusKey > prevFocusKeyRef.current
+    ) {
+      void query.refetch();
+      void profileQuery.refetch();
+      void walletQuery.refetch();
+      void historyQuery.refetch();
+      void performanceQuery.refetch();
+    }
+    prevFocusKeyRef.current = focusKey;
+  }, [focusKey, query, profileQuery, walletQuery, historyQuery, performanceQuery]);
 
   const driverIdentity = useMemo(() => {
     if (profileQuery.data && profileQuery.data.kind === 'content') {

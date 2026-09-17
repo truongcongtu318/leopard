@@ -111,7 +111,7 @@ export function DriverActiveTripCard({
           <View style={styles.etaRow}>
             <IconClock color={leopardPalette.primary} size={12} />
             <Text style={styles.etaText}>
-              Lộ trình · ETA {trip.route.distanceLabel}
+              Lộ trình · ETA dự kiến: {trip.route.distanceLabel}
             </Text>
           </View>
 

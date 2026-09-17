@@ -10,6 +10,7 @@ import { createDriverIdleLocationPing, type DriverIdleLocationPing, type IdlePin
 // readable from any screen (e.g. the orders list). Sharing the same ping
 // instance's health stream avoids a context provider for one small value.
 let sharedIdlePing: DriverIdleLocationPing | null = null;
+const pingListeners = new Set<(ping: DriverIdleLocationPing) => void>();
 
 /**
  * Starts/stops the driver's idle location ping based on their AVAILABLE status.
@@ -34,6 +35,7 @@ export function useDriverIdlePing(enabled: boolean): void {
   const idlePing = useMemo(() => {
     const instance = createDriverIdleLocationPing();
     sharedIdlePing = instance;
+    for (const listener of pingListeners) listener(instance);
     return instance;
   }, []);
 
@@ -64,9 +66,21 @@ export function useDriverIdlePingHealth(): IdlePingHealth {
   const [health, setHealth] = useState<IdlePingHealth>(() => sharedIdlePing?.getHealth() ?? 'idle');
 
   useEffect(() => {
-    if (!sharedIdlePing) return undefined;
-    const subscription = sharedIdlePing.observeHealth(setHealth);
-    return () => subscription.unsubscribe();
+    let sub: { unsubscribe: () => void } | null = null;
+    const attach = (instance: DriverIdleLocationPing) => {
+      sub?.unsubscribe();
+      sub = instance.observeHealth(setHealth);
+    };
+
+    if (sharedIdlePing) {
+      attach(sharedIdlePing);
+    }
+    pingListeners.add(attach);
+
+    return () => {
+      pingListeners.delete(attach);
+      sub?.unsubscribe();
+    };
   }, []);
 
   return health;

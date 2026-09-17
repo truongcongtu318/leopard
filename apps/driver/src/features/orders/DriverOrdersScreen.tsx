@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
@@ -166,6 +166,29 @@ export function DriverOrdersScreen({
       onSetAvailability(view.availability.action?.id ?? (isOnline ? 'OFFLINE' : 'ONLINE'));
     }
   };
+
+  const handleAcceptIncomingModal = useCallback(
+    (orderId: string) => {
+      if (onAcceptIncomingOffer) {
+        onAcceptIncomingOffer(orderId);
+      } else if (onOpenOrder) {
+        setSimulatedOffer(null);
+        onOpenOrder(orderId);
+      }
+    },
+    [onAcceptIncomingOffer, onOpenOrder],
+  );
+
+  const handleDeclineIncomingModal = useCallback(
+    (orderId: string) => {
+      setDismissedOfferId(orderId);
+      setSimulatedOffer(null);
+      if (onDeclineIncomingOffer) {
+        onDeclineIncomingOffer(orderId);
+      }
+    },
+    [onDeclineIncomingOffer],
+  );
 
   /** Secondary line under the connection status: the driver's registered vehicle. */
   const vehicleSubtitle = [driverIdentity?.vehiclePlate?.trim(), driverIdentity?.vehicleType?.trim()]
@@ -371,21 +394,8 @@ export function DriverOrdersScreen({
       <IncomingDispatchModal
         isAccepting={isAcceptingIncomingOffer}
         offer={activeIncomingOffer}
-        onAccept={(orderId) => {
-          if (onAcceptIncomingOffer) {
-            onAcceptIncomingOffer(orderId);
-          } else if (onOpenOrder) {
-            setSimulatedOffer(null);
-            onOpenOrder(orderId);
-          }
-        }}
-        onDecline={(orderId) => {
-          setDismissedOfferId(orderId);
-          setSimulatedOffer(null);
-          if (onDeclineIncomingOffer) {
-            onDeclineIncomingOffer(orderId);
-          }
-        }}
+        onAccept={handleAcceptIncomingModal}
+        onDecline={handleDeclineIncomingModal}
         visible={activeIncomingOffer !== null}
       />
 
@@ -402,8 +412,7 @@ export function DriverOrdersScreen({
 const styles = StyleSheet.create({
   sheetSurface: {
     backgroundColor: colors.neutral.canvas,
-    shadowOpacity: 0,
-    elevation: 0,
+    boxShadow: 'none',
   },
   screenRoot: {
     backgroundColor: colors.neutral.canvas,
@@ -417,7 +426,7 @@ const styles = StyleSheet.create({
   },
   mapControlLayer: {
     position: 'absolute',
-    right: 16,
+    right: spacing.md,
     top: '34%',
     zIndex: 20,
   },
@@ -427,9 +436,9 @@ const styles = StyleSheet.create({
   idlePanel: {
     bottom: 0,
     left: 0,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
     position: 'absolute',
     right: 0,
     zIndex: 40,

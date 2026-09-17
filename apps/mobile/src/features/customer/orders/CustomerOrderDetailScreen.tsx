@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { typeScale, colors, customerPalette, iosContinuousCurve, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
@@ -520,13 +520,25 @@ function CustomerDetailContent({
   const cancelAction = 'action' in view.cancel ? view.cancel.action : null;
   const [copied, setCopied] = useState(false);
   const [showCancelSheet, setShowCancelSheet] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleCopyOrderCode = () => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       void navigator.clipboard.writeText(order.reference);
     }
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+    }
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   const isUnpaid = (order.payment.status === 'UNPAID' || order.payment.status === 'QR_CREATED')
@@ -661,7 +673,7 @@ function CustomerDetailContent({
             ) : null}
             {showEta ? (
               <View style={styles.heroStatItem}>
-                <Text style={styles.heroStatLabel}>DỰ KIẾN (ETA)</Text>
+                <Text style={styles.heroStatLabel}>ETA DỰ KIẾN</Text>
                 <Text style={styles.heroStatValue}>
                   ~{Math.round(order.etaDurationSeconds as number / 60)} phút
                 </Text>

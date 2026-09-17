@@ -90,7 +90,10 @@ function getActiveStatusAccentColor(status: OrderStatus): string {
 
 // ── Animated pulse dot ───────────────────────────────────────────────
 
-function PulseDot({ color, size = 8 }: Readonly<{ color: string; size?: number }>) {
+const PulseDot = React.memo(function PulseDot({
+  color,
+  size = 8,
+}: Readonly<{ color: string; size?: number }>) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -120,7 +123,7 @@ function PulseDot({ color, size = 8 }: Readonly<{ color: string; size?: number }
       <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }} />
     </View>
   );
-}
+});
 
 // ── iOS 18 Segmented Control ─────────────────────────────────────────
 
@@ -219,7 +222,7 @@ function InlineFilterBar({
 
 // ── Hero Active Order Card ───────────────────────────────────────────
 
-function ActiveOrderHeroCard({
+const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
   order,
   onPress,
 }: Readonly<{
@@ -304,11 +307,11 @@ function ActiveOrderHeroCard({
       </View>
     </Pressable>
   );
-}
+});
 
 // ── Completed Order Card (Apple-style clean) ─────────────────────────
 
-function CompletedOrderCard({
+const CompletedOrderCard = React.memo(function CompletedOrderCard({
   order,
   onPress,
 }: Readonly<{
@@ -366,7 +369,7 @@ function CompletedOrderCard({
       </View>
     </Pressable>
   );
-}
+});
 
 // ── Empty Active State ───────────────────────────────────────────────
 
@@ -504,18 +507,24 @@ export function CustomerOrdersScreen({
   // Auto-switch to active tab if there are active orders and segment is 'all'
   // ponytail: could add useEffect to auto-switch, skipping — user controls tab
 
-  const renderActiveItem = ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
-    <ActiveOrderHeroCard
-      onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-      order={item}
-    />
+  const renderActiveItem = useCallback(
+    ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
+      <ActiveOrderHeroCard
+        onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+        order={item}
+      />
+    ),
+    [onOpenOrder],
   );
 
-  const renderCompletedItem = ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
-    <CompletedOrderCard
-      onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-      order={item}
-    />
+  const renderCompletedItem = useCallback(
+    ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
+      <CompletedOrderCard
+        onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+        order={item}
+      />
+    ),
+    [onOpenOrder],
   );
 
   return (
@@ -592,49 +601,45 @@ export function CustomerOrdersScreen({
 const s = StyleSheet.create({
   // List
   listContent: {
-    gap: 10,
-    paddingBottom: layout.bottomNavClearance + 28,
+    gap: spacing.sm,
+    paddingBottom: layout.bottomNavClearance + spacing.xl,
   },
   headerContent: {
-    gap: 10,
-    paddingBottom: 4,
+    gap: spacing.sm,
+    paddingBottom: spacing.xxs,
   },
 
   // Skeleton
   skeletonWrap: {
-    gap: 12,
+    gap: spacing.sm,
   },
 
   // ─── iOS 18 Segmented Control ──────────────────────────────────
   segmentedBar: {
     flexDirection: 'row',
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 12,
+    borderRadius: radius.control,
     ...iosContinuousCurve,
-    padding: 3,
-    gap: 3,
+    padding: spacing.hairline,
+    gap: spacing.hairline,
   },
   segmentTab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
   },
   segmentTabActive: {
     backgroundColor: colors.neutral.surface,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    elevation: 3,
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12)',
   },
   segmentLabel: {
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '500',
     color: colors.neutral.subtleText,
   },
@@ -644,16 +649,16 @@ const s = StyleSheet.create({
   },
   segmentBadge: {
     backgroundColor: customerPalette.onlineGreen,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     minWidth: 20,
     height: 20,
-    paddingHorizontal: 6,
+    paddingHorizontal: spacing.xxs,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentBadgeText: {
     color: colors.neutral.surface,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
@@ -661,15 +666,15 @@ const s = StyleSheet.create({
   // ─── Inline Filter Bar ─────────────────────────────────────────
   filterBar: {
     flexDirection: 'row',
-    gap: 6,
-    paddingVertical: 2,
+    gap: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
     backgroundColor: colors.neutral.surfaceMuted,
   },
@@ -677,7 +682,7 @@ const s = StyleSheet.create({
     backgroundColor: customerPalette.primary,
   },
   filterChipText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '500',
     color: colors.neutral.subtleText,
   },
@@ -688,18 +693,18 @@ const s = StyleSheet.create({
   filterBadge: {
     minWidth: 20,
     height: 18,
-    borderRadius: 9,
+    borderRadius: radius.cardSm,
     backgroundColor: colors.neutral.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
-    marginLeft: 6,
+    paddingHorizontal: spacing.xxs,
+    marginLeft: spacing.xxs,
   },
   filterBadgeActive: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   filterBadgeText: {
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
     color: colors.neutral.mutedText,
@@ -711,16 +716,12 @@ const s = StyleSheet.create({
   // ─── Hero Active Order Card ───────────────────────────────────
   heroCard: {
     backgroundColor: colors.neutral.surface,
-    borderRadius: 20,
+    borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.neutral.border,
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    boxShadow: '0 6px 16px rgba(11, 37, 69, 0.08)',
   },
   heroCardPressed: {
     opacity: 0.92,
@@ -747,7 +748,7 @@ const s = StyleSheet.create({
     marginTop: -3,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   heroRouteEndpoint: {
     width: 10,
@@ -764,34 +765,34 @@ const s = StyleSheet.create({
   },
   heroStatusPill: {
     position: 'absolute',
-    top: 10,
-    right: 12,
+    top: spacing.xs,
+    right: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.pill,
   },
   heroStatusText: {
     color: colors.neutral.surface,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
 
   // Content
   heroContent: {
-    padding: 14,
-    gap: 12,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   heroRouteInfo: {
-    gap: 8,
+    gap: spacing.xs,
   },
   heroRoutePoint: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.xs,
   },
   heroOriginDot: {
     width: 10,
@@ -809,19 +810,19 @@ const s = StyleSheet.create({
     flex: 1,
   },
   heroRouteLabel: {
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '700',
     color: colors.neutral.subtleText,
     letterSpacing: 0.5,
   },
   heroRouteAddress: {
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
     color: colors.neutral.text,
-    marginTop: 1,
+    marginTop: spacing.hairline,
   },
   heroRouteSeparator: {
-    marginLeft: 4,
+    marginLeft: spacing.xxs,
     width: 2,
     height: 8,
     backgroundColor: colors.neutral.border,
@@ -835,15 +836,15 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     borderTopWidth: 1,
     borderTopColor: colors.neutral.surfaceMuted,
-    paddingTop: 10,
+    paddingTop: spacing.xs,
   },
   heroRefWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xxs,
   },
   heroRef: {
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
     color: colors.neutral.subtleText,
     fontVariant: ['tabular-nums'],
@@ -851,26 +852,26 @@ const s = StyleSheet.create({
   heroMetaRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   heroEtaPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xxs,
     backgroundColor: '#F0F4F9',
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   heroEtaText: {
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '700',
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
   heroPrice: {
-    fontSize: 15,
-    fontWeight: '800',
+    ...typeScale.subheadline,
+    fontWeight: '700',
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
@@ -880,35 +881,31 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.xs,
     backgroundColor: customerPalette.primary,
-    paddingVertical: 12,
+    paddingVertical: spacing.sm,
   },
   heroTrackText: {
     color: colors.neutral.surface,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '700',
   },
   heroTrackArrow: {
     color: 'rgba(255,255,255,0.6)',
-    fontSize: 16,
+    ...typeScale.callout,
     fontWeight: '700',
   },
 
   // ─── Completed Order Card ─────────────────────────────────────
   completedCard: {
     backgroundColor: colors.neutral.surface,
-    borderRadius: 16,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    padding: 14,
-    gap: 10,
+    padding: spacing.md,
+    gap: spacing.sm,
     borderWidth: 1,
     borderColor: colors.neutral.surfaceMuted,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
   },
   completedCardPressed: {
     opacity: 0.88,
@@ -917,12 +914,12 @@ const s = StyleSheet.create({
   completedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.xs,
   },
   completedIconBox: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
     backgroundColor: customerPalette.bgMuted,
     alignItems: 'center',
@@ -933,14 +930,14 @@ const s = StyleSheet.create({
     minWidth: 0,
   },
   completedRef: {
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '600',
     color: colors.neutral.text,
   },
   completedUpdated: {
-    fontSize: 12,
+    ...typeScale.caption1,
     color: colors.neutral.subtleText,
-    marginTop: 1,
+    marginTop: spacing.hairline,
   },
 
   // Route horizontal compact
@@ -948,16 +945,16 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: customerPalette.bgMuted,
-    borderRadius: 10,
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
-    padding: 10,
-    gap: 6,
+    padding: spacing.xs,
+    gap: spacing.xs,
   },
   completedRouteFlow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
     minWidth: 0,
   },
   completedDot: {
@@ -967,7 +964,7 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   completedRouteText: {
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '500',
     color: colors.neutral.mutedText,
     flex: 1,
@@ -975,8 +972,8 @@ const s = StyleSheet.create({
   completedArrow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 2,
+    gap: spacing.hairline,
+    paddingHorizontal: spacing.hairline,
   },
   completedArrowLine: {
     width: 12,
@@ -985,7 +982,7 @@ const s = StyleSheet.create({
     borderRadius: 1,
   },
   completedArrowHead: {
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     color: colors.neutral.subtleBorder,
     fontWeight: '700',
     lineHeight: 14,
@@ -995,22 +992,22 @@ const s = StyleSheet.create({
   completedFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingTop: 2,
+    gap: spacing.sm,
+    paddingTop: spacing.hairline,
   },
   completedPrice: {
-    fontSize: 16,
+    ...typeScale.callout,
     fontWeight: '700',
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
   completedDistance: {
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '500',
     color: colors.neutral.subtleText,
   },
   completedEta: {
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '500',
     color: colors.neutral.subtleText,
   },
@@ -1018,9 +1015,9 @@ const s = StyleSheet.create({
   // ─── Empty State ──────────────────────────────────────────────
   emptyActive: {
     alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 32,
-    gap: 12,
+    paddingVertical: spacing.xxxl,
+    paddingHorizontal: spacing.xl,
+    gap: spacing.sm,
   },
   emptyIconOuter: {
     width: 72,
@@ -1029,7 +1026,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   emptyIconInner: {
     width: 52,
@@ -1040,13 +1037,13 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyTitle: {
-    fontSize: typeScale.body.fontSize,
+    ...typeScale.headline,
     fontWeight: '700',
     color: colors.neutral.text,
     textAlign: 'center',
   },
   emptyBody: {
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '400',
     color: colors.neutral.subtleText,
     textAlign: 'center',
@@ -1055,10 +1052,10 @@ const s = StyleSheet.create({
 
   // ─── Notice ───────────────────────────────────────────────────
   notice: {
-    borderRadius: 12,
+    borderRadius: radius.control,
     ...iosContinuousCurve,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   noticeWarning: {
     backgroundColor: colors.warning.background,
@@ -1071,7 +1068,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   noticeText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '500',
     color: colors.neutral.text,
     lineHeight: 18,
@@ -1079,11 +1076,11 @@ const s = StyleSheet.create({
 
   // ─── Time group ───────────────────────────────────────────────
   timeGroupHeader: {
-    paddingVertical: 4,
-    paddingHorizontal: 2,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.hairline,
   },
   timeGroupText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
     color: colors.neutral.subtleText,
     letterSpacing: 0.3,
@@ -1094,32 +1091,28 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.xs,
     backgroundColor: customerPalette.primary,
-    borderRadius: 14,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    minHeight: 48,
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 4,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    minHeight: 52,
+    boxShadow: '0 6px 14px rgba(11, 37, 69, 0.2)',
   },
   floatingCtaPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.98 }],
+    transform: [{ scale: 0.985 }],
   },
   floatingCtaText: {
     color: colors.neutral.surface,
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '700',
   },
 
   // Load more
   loadMoreContainer: {
-    paddingTop: 4,
+    paddingTop: spacing.xxs,
   },
 
   // Shared

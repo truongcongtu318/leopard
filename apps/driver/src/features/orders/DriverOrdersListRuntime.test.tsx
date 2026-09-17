@@ -183,4 +183,32 @@ describe('DriverOrdersListRuntime', () => {
     await screen.unmount();
     screen.client.clear();
   }, 15000);
+
+  it('refetches when focusKey increments on return from navigation', async () => {
+    const getOrdersView = jest.fn(async () => CONTENT_VIEW);
+    (createDriverHttpAdapter as jest.Mock<any>).mockReturnValue({
+      getOrdersView,
+    });
+
+    const screen = await renderWithClient(
+      <DriverOrdersListRuntime focusKey={1} onOpenOrder={jest.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(getOrdersView).toHaveBeenCalledTimes(1);
+    });
+
+    screen.rerender(
+      <QueryClientProvider client={screen.client}>
+        <DriverOrdersListRuntime focusKey={2} onOpenOrder={jest.fn()} />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(getOrdersView).toHaveBeenCalledTimes(2);
+    });
+
+    await screen.unmount();
+    screen.client.clear();
+  });
 });

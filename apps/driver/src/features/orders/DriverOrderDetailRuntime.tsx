@@ -36,7 +36,7 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
     [],
   );
   const queryClient = useQueryClient();
-  const queryKey = ['driver', 'order', orderId];
+  const queryKey = useMemo(() => ['driver', 'order', orderId], [orderId]);
 
   const router = useRouter();
   const query = useQuery({
@@ -170,6 +170,9 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
           });
         },
       );
+      if (cancelled && subscription) {
+        subscription.remove();
+      }
     }
 
     void startWatching();

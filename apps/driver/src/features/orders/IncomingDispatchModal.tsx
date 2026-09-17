@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Image,
   Modal,
@@ -114,6 +114,8 @@ export function IncomingDispatchModal({
   const [secondsLeft, setSecondsLeft] = useState(calculateSecondsLeft);
   const [totalDuration, setTotalDuration] = useState(calculateSecondsLeft);
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
+  const onDeclineRef = useRef(onDecline);
+  onDeclineRef.current = onDecline;
 
   useEffect(() => {
     if (!visible || !offer) return;
@@ -127,7 +129,7 @@ export function IncomingDispatchModal({
         if (remaining <= 0) {
           clearInterval(timer);
           setSecondsLeft(0);
-          onDecline(targetOrderId);
+          onDeclineRef.current(targetOrderId);
         } else {
           setSecondsLeft(remaining);
         }
@@ -135,7 +137,7 @@ export function IncomingDispatchModal({
         setSecondsLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            onDecline(targetOrderId);
+            onDeclineRef.current(targetOrderId);
             return 0;
           }
           return prev - 1;
@@ -144,7 +146,7 @@ export function IncomingDispatchModal({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [visible, offer?.orderId, offer?.id, offer?.expiresAtEpochMs, offer?.timeoutSeconds, targetOrderId, onDecline]);
+  }, [visible, offer?.orderId, offer?.id, offer?.expiresAtEpochMs, offer?.timeoutSeconds, targetOrderId]);
 
   if (!visible || !offer) return null;
 
@@ -497,15 +499,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    elevation: 24,
+    boxShadow: '0 -10px 24px rgba(0, 0, 0, 0.28)',
     gap: spacing.sm,
     paddingBottom: spacing.xl + 8,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md + 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
   },
   modalHeader: {
     alignItems: 'center',
@@ -626,7 +624,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
     bottom: 8,
-    elevation: 3,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
     flexDirection: 'row',
     gap: 4,
     left: 8,

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
@@ -9,9 +9,14 @@ import type { CustomerOrderFilter } from './model';
 export type CustomerOrdersListRuntimeProps = Readonly<{
   onCreate: () => void;
   onOpenOrder: (orderId: string) => void;
+  focusKey?: number;
 }>;
 
-export function CustomerOrdersListRuntime({ onCreate, onOpenOrder }: CustomerOrdersListRuntimeProps) {
+export function CustomerOrdersListRuntime({
+  focusKey,
+  onCreate,
+  onOpenOrder,
+}: CustomerOrdersListRuntimeProps) {
   const port = useMemo(() => createCustomerHttpAdapter(), []);
   const [filter, setFilter] = useState<CustomerOrderFilter>('ALL');
 
@@ -19,6 +24,18 @@ export function CustomerOrdersListRuntime({ onCreate, onOpenOrder }: CustomerOrd
     queryKey: ['customer', 'orders', filter],
     queryFn: () => port.getOrdersView(filter),
   });
+
+  const prevFocusKeyRef = useRef(focusKey);
+  useEffect(() => {
+    if (
+      prevFocusKeyRef.current !== undefined &&
+      focusKey !== undefined &&
+      focusKey > prevFocusKeyRef.current
+    ) {
+      void query.refetch();
+    }
+    prevFocusKeyRef.current = focusKey;
+  }, [focusKey, query]);
 
   if (query.isPending) {
     return (

@@ -41,4 +41,38 @@ describe('CustomerOrdersListRuntime', () => {
     await screen.unmount();
     screen.client.clear();
   });
+
+  it('refetches when focusKey increments from navigation lifecycle', async () => {
+    const getOrdersView = jest.fn(async () => ({
+      scenarioId: 'C-LIST-EMPTY',
+      kind: 'empty',
+      title: 'Bạn chưa có đơn hàng nào',
+      message: 'Tạo đơn đầu tiên khi bạn đã sẵn sàng gửi hàng.',
+    }));
+
+    (createCustomerHttpAdapter as jest.Mock<any>).mockReturnValue({
+      getOrdersView,
+    });
+
+    const screen = await renderWithClient(
+      <CustomerOrdersListRuntime focusKey={1} onCreate={jest.fn()} onOpenOrder={jest.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(getOrdersView).toHaveBeenCalledTimes(1);
+    });
+
+    screen.rerender(
+      <QueryClientProvider client={screen.client}>
+        <CustomerOrdersListRuntime focusKey={2} onCreate={jest.fn()} onOpenOrder={jest.fn()} />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(getOrdersView).toHaveBeenCalledTimes(2);
+    });
+
+    await screen.unmount();
+    screen.client.clear();
+  });
 });

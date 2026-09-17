@@ -27,7 +27,7 @@ export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRunti
   );
   const router = useRouter();
   const queryClient = useQueryClient();
-  const queryKey = ['customer', 'order', orderId];
+  const queryKey = useMemo(() => ['customer', 'order', orderId], [orderId]);
 
   const query = useQuery({
     queryKey,
@@ -77,6 +77,7 @@ export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRunti
     return () => {
       unsubscribe();
       socketManager.leaveOrder(orderId);
+      socketManager.disconnect();
     };
   }, [socketManager, orderId, status]);
 
