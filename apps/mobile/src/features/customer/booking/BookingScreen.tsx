@@ -24,6 +24,7 @@ import {
 import { bookingDraftStore } from './bookingDraftStore';
 import { BookingCargoSection } from './components/BookingCargoSection';
 import { BookingFixedBottomBar } from './components/BookingFixedBottomBar';
+import { BookingLocationSearchOverlay } from './components/BookingLocationSearchOverlay';
 import { BookingPaymentSection } from './components/BookingPaymentSection';
 import { BookingReceiverSection } from './components/BookingReceiverSection';
 import { BookingRouteMapHeader } from './components/BookingRouteMapHeader';
@@ -42,6 +43,7 @@ export interface BookingScreenProps {
   initialDropoffLng?: number;
   distanceKm?: number;
   etaMinutes?: number;
+  initialFocusTarget?: 'pickup' | 'dropoff';
   onBack?: () => void;
   onOrderCreated?: (orderId: string, totalFare: number) => void;
   onOpenSearchAddress?: () => void;
@@ -56,11 +58,16 @@ export function BookingScreen({
   initialDropoffLng = 106.7351,
   distanceKm = 12.5,
   etaMinutes = 35,
+  initialFocusTarget,
   onBack,
   onOrderCreated,
   onOpenSearchAddress,
 }: BookingScreenProps) {
   const insets = useSafeInsets();
+
+  const [searchOverlayTarget, setSearchOverlayTarget] = useState<'pickup' | 'dropoff' | null>(
+    initialFocusTarget ?? null,
+  );
 
   // Initialize store draft synchronously
   const [draft, setDraft] = useState<BookingDraftState>(() => {
@@ -215,8 +222,8 @@ export function BookingScreen({
             dropoffAddress={draft.dropoffAddress}
             etaMinutes={etaMinutes}
             onAddStop={handleAddStop}
-            onPressDropoff={onOpenSearchAddress}
-            onPressPickup={onOpenSearchAddress}
+            onPressDropoff={() => setSearchOverlayTarget('dropoff')}
+            onPressPickup={() => setSearchOverlayTarget('pickup')}
             onRemoveStop={handleRemoveStop}
             pickupAddress={draft.pickupAddress}
             routeError={validation.errors.route}
@@ -316,6 +323,31 @@ export function BookingScreen({
           distanceKm={distanceKm}
           onClose={() => setShowPriceDetail(false)}
           visible={showPriceDetail}
+        />
+
+        {/* Real-time Location Search Overlay (Grab style) */}
+        <BookingLocationSearchOverlay
+          currentValue={searchOverlayTarget === 'pickup' ? draft.pickupAddress : draft.dropoffAddress}
+          onClose={() => setSearchOverlayTarget(null)}
+          onPickOnMap={onOpenSearchAddress}
+          onSelectLocation={(address, coords) => {
+            if (searchOverlayTarget === 'pickup') {
+              bookingDraftStore.updateDraft({
+                pickupAddress: address,
+                pickupLat: coords?.lat,
+                pickupLng: coords?.lng,
+              });
+            } else {
+              bookingDraftStore.updateDraft({
+                dropoffAddress: address,
+                dropoffLat: coords?.lat,
+                dropoffLng: coords?.lng,
+              });
+            }
+            setSearchOverlayTarget(null);
+          }}
+          target={searchOverlayTarget || 'dropoff'}
+          visible={searchOverlayTarget !== null}
         />
       </View>
     </KeyboardAvoidingView>

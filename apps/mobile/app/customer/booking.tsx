@@ -13,6 +13,7 @@ export default function CustomerBookingPage() {
     dropoffLat?: string;
     dropoffLng?: string;
     distanceKm?: string;
+    focus?: 'pickup' | 'dropoff';
   }>();
 
   const defaultAddr = addressStore.getDefaultAddress();
@@ -29,6 +30,7 @@ export default function CustomerBookingPage() {
       initialPickup={pickup}
       initialPickupLat={params.pickupLat ? parseFloat(params.pickupLat) : 10.8421}
       initialPickupLng={params.pickupLng ? parseFloat(params.pickupLng) : 106.6192}
+      initialFocusTarget={params.focus}
       onBack={() => router.back()}
       onOpenSearchAddress={() => router.push('/customer/search-address')}
       onOrderCreated={(orderId, totalFare) => {
