@@ -12,7 +12,7 @@ import React, {
 } from 'react';
 import { Alert, Vibration } from 'react-native';
 
-import { sessionStore } from '@leopard/mobile-core';
+import { haptic, sessionStore } from '@leopard/mobile-core';
 import { createDriverHttpAdapter } from './adapter';
 import { createDispatchOfferListener, type DispatchOfferListener } from './dispatch-offer-listener';
 import { IncomingDispatchModal, type IncomingDispatchOffer } from './IncomingDispatchModal';
@@ -34,7 +34,8 @@ export function useDriverDispatch(): DriverDispatchContextValue | null {
 
 function isOrdersScreenPath(pathname: string | null | undefined): boolean {
   if (!pathname) return false;
-  return pathname === '/orders' || pathname === '/orders/' || pathname === '/';
+  const normalized = pathname.trim().replace(/\/+$/, '');
+  return normalized === '' || normalized === '/orders';
 }
 
 function safeUsePathname(): string | null {
@@ -75,6 +76,14 @@ export function DriverDispatchProvider({
 
   const isDispatchActive = enabled !== undefined ? enabled : isAuthenticatedDriver;
 
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const queryClient = useQueryClient();
   const router = safeUseRouter();
   const pathname = safeUsePathname();
@@ -82,18 +91,23 @@ export function DriverDispatchProvider({
 
   useEffect(() => {
     return sessionStore.subscribe((state) => {
-      setIsAuthenticatedDriver(state.authenticated && state.role === 'DRIVER');
+      if (isMountedRef.current) {
+        setIsAuthenticatedDriver(state.authenticated && state.role === 'DRIVER');
+      }
     });
   }, []);
 
   const onOfferRef = useRef<(offer: IncomingDispatchOffer) => void>(() => {});
   onOfferRef.current = (incoming: IncomingDispatchOffer) => {
     try {
+      haptic.warning();
       Vibration.vibrate([0, 200, 100, 200]);
     } catch {
-      // safe fallback on platforms without vibration
+      // Safe fallback on platforms without Taptic Engine / vibration
     }
-    setOffer(incoming);
+    if (isMountedRef.current) {
+      setOffer(incoming);
+    }
   };
 
   const listener = useMemo(() => {
@@ -101,6 +115,7 @@ export function DriverDispatchProvider({
     return factory({ onOffer: (o) => onOfferRef.current(o) });
   }, [listenerFactory]);
 
+  // Connect/disconnect dispatch listener on lifecycle transitions
   useEffect(() => {
     if (isDispatchActive) {
       listener.connect();
@@ -114,7 +129,9 @@ export function DriverDispatchProvider({
   }, [isDispatchActive, listener]);
 
   const declineOffer = useCallback((_orderId?: string) => {
-    setOffer(null);
+    if (isMountedRef.current) {
+      setOffer(null);
+    }
   }, []);
 
   const acceptOffer = useCallback(
@@ -122,20 +139,42 @@ export function DriverDispatchProvider({
       setIsAccepting(true);
       try {
         const result = await port.acceptOrder(orderId);
-        setOffer(null);
+        if (isMountedRef.current) {
+          setOffer(null);
+        }
         void queryClient.invalidateQueries({ queryKey: ['driver', 'orders'] });
         if (result.kind === 'content') {
+          haptic.success();
           router.push(`/orders/${orderId}` as any);
         } else if (result.kind === 'conflict') {
+          haptic.warning();
           Alert.alert(result.title, result.message);
         }
       } catch (err: any) {
+        haptic.warning();
         Alert.alert('Không thể nhận đơn', err?.message || 'Đã có lỗi xảy ra khi tiếp nhận đơn hàng.');
       } finally {
-        setIsAccepting(false);
+        if (isMountedRef.current) {
+          setIsAccepting(false);
+        }
       }
     },
     [port, queryClient, router],
+  );
+
+  // Stable handlers for IncomingDispatchModal to prevent re-render cascades
+  const handleModalAccept = useCallback(
+    (orderId: string) => {
+      void acceptOffer(orderId);
+    },
+    [acceptOffer],
+  );
+
+  const handleModalDecline = useCallback(
+    (orderId: string) => {
+      declineOffer(orderId);
+    },
+    [declineOffer],
   );
 
   const contextValue = useMemo<DriverDispatchContextValue>(
@@ -149,16 +188,18 @@ export function DriverDispatchProvider({
     [offer, isAccepting, acceptOffer, declineOffer],
   );
 
+  // Suppress global modal on screens that already render their own (such as /orders)
   const shouldRenderGlobalModal = Boolean(offer) && !isOrdersScreenPath(pathname);
 
+  // ponytail: Global overlay presentation handles cross-screen notifications; upgrade to native sheet route when navigation stack standardizes deep link triggers.
   return (
     <DriverDispatchContext.Provider value={contextValue}>
       {children}
       <IncomingDispatchModal
         isAccepting={isAccepting}
         offer={offer}
-        onAccept={(orderId) => void acceptOffer(orderId)}
-        onDecline={(orderId) => declineOffer(orderId)}
+        onAccept={handleModalAccept}
+        onDecline={handleModalDecline}
         visible={shouldRenderGlobalModal}
       />
     </DriverDispatchContext.Provider>

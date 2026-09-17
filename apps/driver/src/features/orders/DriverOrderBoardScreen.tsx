@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import {
@@ -43,9 +43,12 @@ export function DriverOrderBoardScreen({
   const isContent = view.kind === 'content';
   const activeTrip = isContent ? view.activeTrip : null;
 
-  const filteredOrders = isContent
-    ? view.requestedOrders.filter((item) => !dismissedOrderIds.includes(item.id))
-    : [];
+  const filteredOrders = useMemo(() => {
+    if (view.kind !== 'content') return [];
+    if (dismissedOrderIds.length === 0) return view.requestedOrders;
+    const dismissedSet = new Set(dismissedOrderIds);
+    return view.requestedOrders.filter((item) => !dismissedSet.has(item.id));
+  }, [view, dismissedOrderIds]);
 
   const handleDecline = useCallback((orderId: string) => {
     setDismissedOrderIds((prev) => (prev.includes(orderId) ? prev : [...prev, orderId]));
@@ -59,10 +62,12 @@ export function DriverOrderBoardScreen({
     onNavigate?.('/orders');
   }, [onBack, onNavigate]);
 
+  // ponytail: Flat list rendering handles load board feed; upgrade to FlashList when concurrent available orders exceed 50.
   return (
     <ScreenScaffold headerTone="plain" onBack={handleBack} title="Đơn">
       <ScrollView
         contentContainerStyle={styles.content}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {view.kind === 'loading' ? (

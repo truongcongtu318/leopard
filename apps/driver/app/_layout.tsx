@@ -1,10 +1,10 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot } from 'expo-router';
-import { Component, useEffect, useState, type PropsWithChildren } from 'react';
+import React, { Component, memo, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { queryClient, sessionStore } from '@leopard/mobile-core';
+import { colors, queryClient, sessionStore, spacing, typeScale } from '@leopard/mobile-core';
 import { DriverViewportShell } from '../src/navigation/DriverViewportShell';
 import { useDriverIdlePing } from '../src/features/orders/useDriverIdlePing';
 import { DriverDispatchProvider } from '../src/features/orders/DriverDispatchContext';
@@ -28,7 +28,9 @@ class RootErrorBoundary extends Component<PropsWithChildren, RootErrorBoundarySt
     if (this.state.hasError) {
       return (
         <View style={styles.boundary}>
-          <Text accessibilityRole="alert">Ứng dụng tài xế chưa thể khởi động.</Text>
+          <Text accessibilityRole="alert" style={styles.boundaryText}>
+            Ứng dụng tài xế chưa thể khởi động.
+          </Text>
         </View>
       );
     }
@@ -37,22 +39,34 @@ class RootErrorBoundary extends Component<PropsWithChildren, RootErrorBoundarySt
   }
 }
 
+/**
+ * Isolated headless listener for background driver availability pinging.
+ * Isolated to prevent its state changes from causing parent tree re-renders.
+ */
 function DriverIdlePingListener() {
+  const isMountedRef = useRef(true);
   const [isAuthenticatedDriver, setIsAuthenticatedDriver] = useState(
     () => sessionStore.isAuthenticated() && sessionStore.getRole() === 'DRIVER',
   );
 
   useEffect(() => {
-    return sessionStore.subscribe((state) => {
-      setIsAuthenticatedDriver(state.authenticated && state.role === 'DRIVER');
+    isMountedRef.current = true;
+    const unsubscribe = sessionStore.subscribe((state) => {
+      if (isMountedRef.current) {
+        setIsAuthenticatedDriver(state.authenticated && state.role === 'DRIVER');
+      }
     });
+    return () => {
+      isMountedRef.current = false;
+      unsubscribe();
+    };
   }, []);
 
   useDriverIdlePing(isAuthenticatedDriver);
   return null;
 }
 
-function RootProviders({ children }: PropsWithChildren) {
+const RootProviders = memo(function RootProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
@@ -65,8 +79,9 @@ function RootProviders({ children }: PropsWithChildren) {
       </SafeAreaProvider>
     </QueryClientProvider>
   );
-}
+});
 
+// ponytail: Headless ping listener and dispatch provider embedded in root layout; upgrade to background task service when standalone native background fetch is wired.
 export default function RootLayout() {
   return (
     <RootErrorBoundary>
@@ -79,6 +94,15 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   boundary: {
+    alignItems: 'center',
+    backgroundColor: colors.neutral.canvas,
     flex: 1,
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  boundaryText: {
+    color: colors.neutral.text,
+    ...typeScale.headline,
+    textAlign: 'center',
   },
 });

@@ -1,11 +1,23 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { driverPrimitives, IconRadarPulse, IconSettings, iosContinuousCurve } from '@leopard/mobile-core';
+import {
+  colors,
+  driverPrimitives,
+  haptic,
+  IconRadarPulse,
+  IconSettings,
+  iosContinuousCurve,
+  radius,
+  spacing,
+} from '@leopard/mobile-core';
 
 /** Crosshair "locate me" glyph, drawn as a vector (no font dependency). */
-function RecenterGlyph({ color, size = 18 }: Readonly<{ color: string; size?: number }>) {
+const RecenterGlyph = memo(function RecenterGlyph({
+  color,
+  size = 18,
+}: Readonly<{ color: string; size?: number }>) {
   return (
     <Svg height={size} viewBox="0 0 24 24" width={size}>
       <Circle cx={12} cy={12} fill="none" r={6.5} stroke={color} strokeWidth={2} />
@@ -13,7 +25,7 @@ function RecenterGlyph({ color, size = 18 }: Readonly<{ color: string; size?: nu
       <Path d="M12 2v3.5M12 18.5v3.5M2 12h3.5M18.5 12h3.5" stroke={color} strokeLinecap="round" strokeWidth={2} />
     </Svg>
   );
-}
+});
 
 export type DriverMapControlStackProps = Readonly<{
   isLocating?: boolean;
@@ -25,12 +37,28 @@ export type DriverMapControlStackProps = Readonly<{
 /**
  * Grab-style vertical control stack floating on the right edge of the map.
  */
-export function DriverMapControlStack({
+export const DriverMapControlStack = memo(function DriverMapControlStack({
   isLocating = false,
   onOpenRadiusSettings,
   onRecenter,
   onRefreshOffers,
 }: DriverMapControlStackProps): React.JSX.Element {
+  const handleRecenter = useCallback(() => {
+    haptic.selection();
+    onRecenter();
+  }, [onRecenter]);
+
+  const handleRefresh = useCallback(() => {
+    haptic.light();
+    onRefreshOffers?.();
+  }, [onRefreshOffers]);
+
+  const handleOpenSettings = useCallback(() => {
+    haptic.selection();
+    onOpenRadiusSettings();
+  }, [onOpenRadiusSettings]);
+
+  // ponytail: Vector buttons sized 44x44pt satisfy Apple HIG minimum touch target without extra padding container.
   return (
     <View style={styles.stack} testID="driver-map-control-stack">
       <Pressable
@@ -39,47 +67,49 @@ export function DriverMapControlStack({
         }
         accessibilityRole="button"
         accessibilityState={{ busy: isLocating }}
-        onPress={onRecenter}
+        onPress={handleRecenter}
         style={({ pressed }) => [styles.btn, pressed ? styles.pressed : null]}
         testID="driver-map-recenter"
       >
-        <RecenterGlyph color={isLocating ? driverPrimitives.colors.gray400 : driverPrimitives.colors.gray900} />
+        <RecenterGlyph
+          color={isLocating ? colors.neutral.subtleText : colors.neutral.text}
+        />
       </Pressable>
 
       {onRefreshOffers ? (
         <Pressable
           accessibilityLabel="Làm mới danh sách đơn"
           accessibilityRole="button"
-          onPress={onRefreshOffers}
+          onPress={handleRefresh}
           style={({ pressed }) => [styles.btn, pressed ? styles.pressed : null]}
           testID="driver-map-refresh"
         >
-          <IconRadarPulse color={driverPrimitives.colors.gray900} size={19} />
+          <IconRadarPulse color={colors.neutral.text} size={19} />
         </Pressable>
       ) : null}
 
       <Pressable
         accessibilityLabel="Thiết lập bán kính nhận đơn"
         accessibilityRole="button"
-        onPress={onOpenRadiusSettings}
+        onPress={handleOpenSettings}
         style={({ pressed }) => [styles.btn, pressed ? styles.pressed : null]}
         testID="driver-map-radius"
       >
-        <IconSettings color={driverPrimitives.colors.gray900} size={19} />
+        <IconSettings color={colors.neutral.text} size={19} />
       </Pressable>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   stack: {
-    gap: 8,
+    gap: spacing.xs,
   },
   btn: {
     alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 9999,
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
     borderWidth: 1,
     height: 44,

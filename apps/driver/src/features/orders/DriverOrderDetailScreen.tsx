@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, ScreenScaffold, ScreenState, SlideToAction } from '@leopard/mobile-core';
+import {
+  Button,
+  ScreenScaffold,
+  ScreenState,
+  SlideToAction,
+  spacing,
+  typeScale,
+} from '@leopard/mobile-core';
 import type {
   DriverCommandView,
   DriverDetailView,
@@ -31,7 +38,7 @@ export type DriverOrderDetailScreenProps = Readonly<{
   onBack?: () => void;
 }>;
 
-function CommandButton({
+const CommandButton = memo(function CommandButton({
   command,
   onPress,
 }: Readonly<{ command: DriverCommandView; onPress?: (commandId: string) => void }>) {
@@ -49,7 +56,7 @@ function CommandButton({
       size="driver-primary"
     />
   );
-}
+});
 
 function getLifecycleSlideConfig(command: DriverCommandView) {
   if (command.targetStatus === 'PICKING_UP' || command.id.includes('pickup')) {
@@ -82,11 +89,11 @@ function getLifecycleSlideConfig(command: DriverCommandView) {
   };
 }
 
-function TaskButton({
-  task,
+const TaskButton = memo(function TaskButton({
   onExecuteTask,
-  onSelectProof,
   onRetryProof,
+  onSelectProof,
+  task,
 }: Readonly<{
   task: Exclude<DriverPrimaryTaskView, null>;
   onExecuteTask?: (commandId: string) => void;
@@ -140,12 +147,21 @@ function TaskButton({
   }
 
   return <CommandButton command={task.command} onPress={onExecuteTask} />;
-}
+});
 
 export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
-  const { view: directView, orderId, onBack } = props;
+  const { view: directView, onBack } = props;
   const [localIncidentOpen, setLocalIncidentOpen] = useState(false);
-  const handleOpenIncidentModal = props.onOpenIncidentModal ?? (() => setLocalIncidentOpen(true));
+
+  const handleOpenIncidentModal = useMemo(
+    () => props.onOpenIncidentModal ?? (() => setLocalIncidentOpen(true)),
+    [props.onOpenIncidentModal],
+  );
+
+  const handleCloseIncidentModal = useCallback(() => {
+    setLocalIncidentOpen(false);
+  }, []);
+
   // Runtime always supplies `view`. An orderId-only deep link renders nothing here —
   // the route resolves it through DriverOrderDetailRuntime, never a fixture.
   const view: DriverDetailView | undefined = directView;
@@ -220,6 +236,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
     return <CompletedOrderDetailView onBack={onBack} view={view} />;
   }
 
+  // ponytail: Modal presentation handles local fallback incident form; upgrade to modal route if incident flows require deep linking.
   return (
     <>
       <AssignedDetailView
@@ -247,10 +264,8 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
       />
       <DriverIncidentModal
         isSubmitting={false}
-        onClose={() => setLocalIncidentOpen(false)}
-        onSubmit={() => {
-          setLocalIncidentOpen(false);
-        }}
+        onClose={handleCloseIncidentModal}
+        onSubmit={handleCloseIncidentModal}
         orderReference={view.order.reference}
         visible={localIncidentOpen}
       />
@@ -270,7 +285,7 @@ const styles = StyleSheet.create({
     width: 1,
   },
   a11yHiddenText: {
-    fontSize: 1,
+    ...typeScale.caption2,
     opacity: 0.01,
   },
 });

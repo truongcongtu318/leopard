@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   Image,
   Modal,
   Pressable,
@@ -95,6 +96,277 @@ export type IncomingDispatchModalProps = Readonly<{
   isAccepting?: boolean;
 }>;
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * Memoized sub-components to prevent re-rendering entire modal tree every 1s
+ * ────────────────────────────────────────────────────────────────────────── */
+
+type HeroMapSectionProps = {
+  pickupAddress: string;
+  dropoffAddress: string;
+  pickupCoords?: { lat: number; lng: number };
+  dropoffCoords?: { lat: number; lng: number };
+  pickupDistText: string;
+};
+
+const HeroMapSection = memo(function HeroMapSection({
+  dropoffAddress,
+  dropoffCoords,
+  pickupAddress,
+  pickupCoords,
+  pickupDistText,
+}: HeroMapSectionProps) {
+  return (
+    <View style={styles.modalMapCanvas} testID="dispatch-modal-map">
+      <RealInteractiveMap
+        destination={{ label: dropoffAddress, coords: dropoffCoords }}
+        height="100%"
+        mode="route"
+        origin={{ label: pickupAddress, coords: pickupCoords }}
+      />
+      {pickupDistText ? (
+        <View style={styles.mapFloatingDistancePill}>
+          <IconLocationPin color={leopardPalette.primary} size={12} />
+          <Text style={styles.mapFloatingDistanceText}>
+            Điểm đón · {pickupDistText}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+});
+
+type FareCardSectionProps = {
+  fareAmount: string;
+  isUrgent: boolean;
+};
+
+const FareCardSection = memo(function FareCardSection({
+  fareAmount,
+  isUrgent,
+}: FareCardSectionProps) {
+  return (
+    <View style={[styles.fareBezelOuter, isUrgent ? styles.fareBezelOuterUrgent : null]}>
+      <View style={[styles.fareBezelInner, isUrgent ? styles.fareBezelInnerUrgent : null]}>
+        <View style={styles.fareHeaderRow}>
+          <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
+          <View style={styles.fareNetPill}>
+            <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
+          </View>
+        </View>
+        <Text style={styles.fareAmount}>{fareAmount}</Text>
+        <Text style={styles.fareSub}>Đã khấu trừ phí nền tảng · Nhận vào ví ngay khi hoàn tất</Text>
+      </View>
+    </View>
+  );
+});
+
+type RouteSpineSectionProps = {
+  pickupDisplay: string;
+  dropoffDisplay: string;
+  pickupBadgeText: string;
+  tripDistText: string;
+  etaLabel?: string;
+};
+
+const RouteSpineSection = memo(function RouteSpineSection({
+  dropoffDisplay,
+  etaLabel,
+  pickupBadgeText,
+  pickupDisplay,
+  tripDistText,
+}: RouteSpineSectionProps) {
+  return (
+    <View style={styles.routeBezelOuter}>
+      <View style={styles.routeBezelInner}>
+        <View style={styles.routeSpineColumn}>
+          <View style={styles.spineOriginCircle}>
+            <Text style={styles.spinePointTextA}>A</Text>
+          </View>
+          <View style={styles.spineTrackDotted} />
+          <View style={styles.spineDestSquare}>
+            <Text style={styles.spinePointTextB}>B</Text>
+          </View>
+        </View>
+
+        <View style={styles.routeAddressesColumn}>
+          <View style={styles.addressBlock}>
+            <View style={styles.addressTitleRow}>
+              <Text style={styles.addressTypeLabel}>ĐIỂM LẤY HÀNG</Text>
+              {pickupBadgeText ? (
+                <View style={styles.pickupDistBadge}>
+                  <IconLocationPin color={leopardPalette.primary} size={12} />
+                  <Text style={styles.pickupDistText}>{pickupBadgeText}</Text>
+                </View>
+              ) : null}
+            </View>
+            <Text numberOfLines={2} style={styles.addressNameText}>
+              {pickupDisplay}
+            </Text>
+          </View>
+
+          {tripDistText ? (
+            <View style={styles.transitMetaRow}>
+              <IconRoute color={colors.neutral.subtleText} size={13} />
+              <Text style={styles.transitMetaText}>
+                {etaLabel
+                  ? `Lộ trình ${tripDistText} · Khoảng ${etaLabel}`
+                  : `Lộ trình ${tripDistText}`}
+              </Text>
+            </View>
+          ) : null}
+
+          <View style={styles.addressBlock}>
+            <Text style={styles.addressTypeLabelDropoff}>ĐIỂM GIAO HÀNG</Text>
+            <Text numberOfLines={2} style={styles.addressNameText}>
+              {dropoffDisplay}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+});
+
+type CargoBentoSectionProps = {
+  cargoName: string;
+  vehicleLabel?: string;
+  cargoWeightKg?: number;
+  cargoDimensions?: string;
+  loadingBadgeLabel: string | null;
+  cargoPhotoUrl?: string;
+  specialNotes?: string;
+  onOpenPhotoPreview: () => void;
+};
+
+const CargoBentoSection = memo(function CargoBentoSection({
+  cargoDimensions,
+  cargoName,
+  cargoPhotoUrl,
+  cargoWeightKg,
+  loadingBadgeLabel,
+  onOpenPhotoPreview,
+  specialNotes,
+  vehicleLabel,
+}: CargoBentoSectionProps) {
+  return (
+    <View style={styles.cargoBentoOuter} testID="cargo-bento-card">
+      <View style={styles.cargoBentoInner}>
+        <View style={styles.cargoHeaderRow}>
+          <View style={styles.cargoTitleRow}>
+            <IconOrders color={leopardPalette.primary} size={15} />
+            <Text style={styles.cargoHeaderTitle}>THÔNG TIN HÀNG HÓA</Text>
+          </View>
+          {vehicleLabel ? (
+            <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
+              <IconSpeedTruck color={leopardPalette.primary} size={14} />
+              <Text style={styles.specChipText}>{vehicleLabel}</Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.cargoBodyRow}>
+          <View style={styles.cargoInfoColumn}>
+            <Text numberOfLines={2} style={styles.cargoNameText}>
+              {cargoName}
+            </Text>
+
+            {(cargoWeightKg !== undefined || cargoDimensions) ? (
+              <View style={styles.cargoSpecsRow}>
+                {cargoWeightKg !== undefined ? (
+                  <View style={styles.cargoSpecPill}>
+                    <Text style={styles.cargoSpecValue}>{cargoWeightKg} kg</Text>
+                  </View>
+                ) : null}
+                {cargoDimensions ? (
+                  <View style={styles.cargoSpecPill}>
+                    <Text style={styles.cargoSpecValue}>{cargoDimensions}</Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+
+            {loadingBadgeLabel ? (
+              <View style={styles.loadingFeeBadge}>
+                <Text style={styles.loadingFeeBadgeText}>{loadingBadgeLabel}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          {cargoPhotoUrl ? (
+            <Pressable
+              accessibilityHint="Chạm để phóng to xem chi tiết hàng hóa"
+              accessibilityLabel="Xem ảnh hàng hóa"
+              accessibilityRole="button"
+              onPress={onOpenPhotoPreview}
+              style={styles.cargoThumbnailWrapper}
+              testID="cargo-photo-thumbnail"
+            >
+              <Image
+                accessibilityLabel="Ảnh hàng hóa"
+                source={{ uri: cargoPhotoUrl }}
+                style={styles.cargoThumbnailImage}
+              />
+            </Pressable>
+          ) : null}
+        </View>
+
+        {specialNotes ? (
+          <View style={styles.notesBox}>
+            <Text style={styles.notesText}>{specialNotes}</Text>
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+});
+
+type ActionControlsSectionProps = {
+  targetOrderId: string;
+  isAccepting: boolean;
+  onAccept: (orderId: string) => void;
+  onDecline: (orderId: string) => void;
+};
+
+const ActionControlsSection = memo(function ActionControlsSection({
+  isAccepting,
+  onAccept,
+  onDecline,
+  targetOrderId,
+}: ActionControlsSectionProps) {
+  return (
+    <View style={styles.actionsContainer}>
+      <SlideToAction
+        key={targetOrderId}
+        resetKey={targetOrderId}
+        colorVariant="success"
+        disabled={isAccepting}
+        label="Vuốt để nhận cuốc ➔"
+        onActionComplete={() => onAccept(targetOrderId)}
+        testID="dispatch-slide-action"
+      />
+      <Pressable
+        accessibilityHint="Bỏ qua đơn hàng này"
+        accessibilityLabel="Bỏ qua"
+        accessibilityRole="button"
+        disabled={isAccepting}
+        hitSlop={spacing.xs}
+        onPress={() => onDecline(targetOrderId)}
+        style={({ pressed }) => [
+          styles.declineButton,
+          pressed && !isAccepting ? styles.declineButtonPressed : null,
+          isAccepting ? styles.declineButtonDisabled : null,
+        ]}
+      >
+        <Text style={styles.declineButtonText}>Bỏ qua</Text>
+      </Pressable>
+    </View>
+  );
+});
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Main IncomingDispatchModal Component
+ * ────────────────────────────────────────────────────────────────────────── */
+
 export function IncomingDispatchModal({
   isAccepting = false,
   offer,
@@ -104,49 +376,87 @@ export function IncomingDispatchModal({
 }: IncomingDispatchModalProps) {
   const targetOrderId = offer?.orderId ?? offer?.id ?? '';
 
-  const calculateSecondsLeft = () => {
-    if (offer?.expiresAtEpochMs) {
-      return Math.max(0, Math.ceil((offer.expiresAtEpochMs - Date.now()) / 1000));
+  const calculateSecondsLeft = useCallback((targetOffer: IncomingDispatchOffer | null) => {
+    if (!targetOffer) return 0;
+    if (targetOffer.expiresAtEpochMs) {
+      return Math.max(0, Math.ceil((targetOffer.expiresAtEpochMs - Date.now()) / 1000));
     }
-    return offer?.timeoutSeconds ?? 15;
-  };
+    return targetOffer.timeoutSeconds ?? 15;
+  }, []);
 
-  const [secondsLeft, setSecondsLeft] = useState(calculateSecondsLeft);
-  const [totalDuration, setTotalDuration] = useState(calculateSecondsLeft);
+  const [secondsLeft, setSecondsLeft] = useState(() => calculateSecondsLeft(offer));
+  const [totalDuration, setTotalDuration] = useState(() => calculateSecondsLeft(offer));
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
-  const onDeclineRef = useRef(onDecline);
-  onDeclineRef.current = onDecline;
+
+  // UI-thread pulse animation for radar
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!visible || !offer) return;
-    const initial = calculateSecondsLeft();
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.35,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulseLoop.start();
+    return () => {
+      pulseLoop.stop();
+      pulseAnim.setValue(1);
+    };
+  }, [visible, offer, pulseAnim]);
+
+  // Keep decline handler fresh without re-triggering timer effect
+  const onDeclineRef = useRef(onDecline);
+  onDeclineRef.current = onDecline;
+
+  // Lifecycle timer: countdown with clean unmount and accepting-pause guard
+  useEffect(() => {
+    if (!visible || !offer || isAccepting) return;
+
+    const initial = calculateSecondsLeft(offer);
     setSecondsLeft(initial);
     setTotalDuration(Math.max(1, initial));
 
+    if (initial <= 0) {
+      onDeclineRef.current(targetOrderId);
+      return;
+    }
+
+    const expiryEpochMs = offer.expiresAtEpochMs ?? (Date.now() + initial * 1000);
+
     const timer = setInterval(() => {
-      if (offer.expiresAtEpochMs) {
-        const remaining = Math.max(0, Math.ceil((offer.expiresAtEpochMs - Date.now()) / 1000));
-        if (remaining <= 0) {
-          clearInterval(timer);
-          setSecondsLeft(0);
-          onDeclineRef.current(targetOrderId);
-        } else {
-          setSecondsLeft(remaining);
-        }
-      } else {
-        setSecondsLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            onDeclineRef.current(targetOrderId);
-            return 0;
-          }
-          return prev - 1;
-        });
+      const remaining = Math.max(0, Math.ceil((expiryEpochMs - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(timer);
+        onDeclineRef.current(targetOrderId);
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [visible, offer?.orderId, offer?.id, offer?.expiresAtEpochMs, offer?.timeoutSeconds, targetOrderId]);
+  }, [
+    visible,
+    offer?.orderId,
+    offer?.id,
+    offer?.expiresAtEpochMs,
+    offer?.timeoutSeconds,
+    targetOrderId,
+    calculateSecondsLeft,
+    isAccepting,
+  ]);
+
+  const handleOpenPhotoPreview = useCallback(() => {
+    setPhotoPreviewOpen(true);
+  }, []);
 
   if (!visible || !offer) return null;
 
@@ -203,16 +513,23 @@ export function IncomingDispatchModal({
     >
       <View style={styles.scrimOverlay}>
         <View style={styles.sheetContainer}>
-          {/* 1. Header Bar with Radar Pulse, Title, Countdown, and Decline ("Từ chối") Button */}
+          {/* 1. Header Bar with Animated Radar Pulse, Title, Countdown, and Decline ("Từ chối") Button */}
           <View style={styles.modalHeader}>
             <View style={styles.radarPulseContainer}>
-              <View style={[styles.radarPulseOuter, isUrgent ? styles.radarPulseOuterUrgent : null]}>
+              <Animated.View
+                style={[
+                  styles.radarPulseOuter,
+                  isUrgent ? styles.radarPulseOuterUrgent : null,
+                  { transform: [{ scale: pulseAnim }] },
+                ]}
+              >
                 <View style={[styles.radarPulseCore, isUrgent ? styles.radarPulseCoreUrgent : null]} />
-              </View>
+              </Animated.View>
               <Text style={[styles.modalBadgeText, isUrgent ? styles.modalBadgeTextUrgent : null]}>
                 ĐƠN HÀNG MỚI TRONG KHU VỰC
               </Text>
             </View>
+
             <View style={styles.modalHeaderRight}>
               <View
                 style={[
@@ -220,7 +537,10 @@ export function IncomingDispatchModal({
                   isUrgent ? styles.timerBadgeUrgent : isWarning ? styles.timerBadgeWarning : null,
                 ]}
               >
-                <IconClock color={isUrgent ? colors.danger.text : isWarning ? '#D97706' : leopardPalette.primary} size={14} />
+                <IconClock
+                  color={isUrgent ? colors.danger.text : isWarning ? leopardPalette.accentYellowDark : leopardPalette.primary}
+                  size={14}
+                />
                 <Text
                   style={[
                     styles.timerText,
@@ -234,7 +554,7 @@ export function IncomingDispatchModal({
                 accessibilityHint="Từ chối đơn hàng này"
                 accessibilityLabel="Từ chối"
                 accessibilityRole="button"
-                hitSlop={8}
+                hitSlop={spacing.xs}
                 onPress={() => onDecline(targetOrderId)}
                 style={styles.modalCloseBtn}
                 testID="dispatch-modal-decline-top"
@@ -259,194 +579,49 @@ export function IncomingDispatchModal({
             />
           </View>
 
-          {/* 3. Hero Mini Route Map */}
-          <View style={styles.modalMapCanvas} testID="dispatch-modal-map">
-            <RealInteractiveMap
-              destination={{ label: offer.dropoffAddress, coords: offer.dropoffCoords }}
-              height="100%"
-              mode="route"
-              origin={{ label: offer.pickupAddress, coords: offer.pickupCoords }}
-            />
-            {pickupDistText ? (
-              <View style={styles.mapFloatingDistancePill}>
-                <IconLocationPin color={leopardPalette.primary} size={12} />
-                <Text style={styles.mapFloatingDistanceText}>
-                  Điểm đón · {pickupDistText}
-                </Text>
-              </View>
-            ) : null}
-          </View>
+          {/* 3. Hero Mini Route Map (Memoized) */}
+          <HeroMapSection
+            dropoffAddress={offer.dropoffAddress}
+            dropoffCoords={offer.dropoffCoords}
+            pickupAddress={offer.pickupAddress}
+            pickupCoords={offer.pickupCoords}
+            pickupDistText={pickupDistText}
+          />
 
-          {/* 4. Fare Card - High Prominence Double-Bezel (Mega Price) */}
-          <View style={[styles.fareBezelOuter, isUrgent ? styles.fareBezelOuterUrgent : null]}>
-            <View style={[styles.fareBezelInner, isUrgent ? styles.fareBezelInnerUrgent : null]}>
-              <View style={styles.fareHeaderRow}>
-                <Text style={styles.fareCaption}>CƯỚC THỰC NHẬN DỰ KIẾN</Text>
-                <View style={styles.fareNetPill}>
-                  <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
-                </View>
-              </View>
-              <Text style={styles.fareAmount}>{fareAmount}</Text>
-              <Text style={styles.fareSub}>Đã khấu trừ phí nền tảng · Nhận vào ví ngay khi hoàn tất</Text>
-            </View>
-          </View>
+          {/* 4. Fare Card - Double-Bezel (Memoized) */}
+          <FareCardSection
+            fareAmount={fareAmount}
+            isUrgent={isUrgent}
+          />
 
-          {/* 5. Route Spine: Pickup -> Dropoff Double-Bezel */}
-          <View style={styles.routeBezelOuter}>
-            <View style={styles.routeBezelInner}>
-              <View style={styles.routeSpineColumn}>
-                <View style={styles.spineOriginCircle}>
-                  <Text style={styles.spinePointTextA}>A</Text>
-                </View>
-                <View style={styles.spineTrackDotted} />
-                <View style={styles.spineDestSquare}>
-                  <Text style={styles.spinePointTextB}>B</Text>
-                </View>
-              </View>
+          {/* 5. Route Spine: Pickup -> Dropoff Double-Bezel (Memoized) */}
+          <RouteSpineSection
+            dropoffDisplay={dropoffDisplay}
+            etaLabel={offer.etaLabel}
+            pickupBadgeText={pickupBadgeText}
+            pickupDisplay={pickupDisplay}
+            tripDistText={tripDistText}
+          />
 
-              <View style={styles.routeAddressesColumn}>
-                {/* Pickup Point */}
-                <View style={styles.addressBlock}>
-                  <View style={styles.addressTitleRow}>
-                    <Text style={styles.addressTypeLabel}>ĐIỂM LẤY HÀNG</Text>
-                    {pickupBadgeText ? (
-                      <View style={styles.pickupDistBadge}>
-                        <IconLocationPin color={leopardPalette.primary} size={12} />
-                        <Text style={styles.pickupDistText}>
-                          {pickupBadgeText}
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <Text numberOfLines={2} style={styles.addressNameText}>
-                    {pickupDisplay}
-                  </Text>
-                </View>
+          {/* 6. Cargo Bento Card (Memoized) */}
+          <CargoBentoSection
+            cargoDimensions={offer.cargoDimensions}
+            cargoName={cargoName}
+            cargoPhotoUrl={offer.cargoPhotoUrl}
+            cargoWeightKg={offer.cargoWeightKg}
+            loadingBadgeLabel={loadingBadgeLabel}
+            onOpenPhotoPreview={handleOpenPhotoPreview}
+            specialNotes={specialNotes}
+            vehicleLabel={offer.vehicleLabel}
+          />
 
-                {/* Transit Indicator */}
-                {tripDistText ? (
-                  <View style={styles.transitMetaRow}>
-                    <IconRoute color={colors.neutral.subtleText} size={13} />
-                    <Text style={styles.transitMetaText}>
-                      {offer.etaLabel
-                        ? `Lộ trình ${tripDistText} · Khoảng ${offer.etaLabel}`
-                        : `Lộ trình ${tripDistText}`}
-                    </Text>
-                  </View>
-                ) : null}
-
-                {/* Dropoff Point */}
-                <View style={styles.addressBlock}>
-                  <Text style={styles.addressTypeLabelDropoff}>ĐIỂM GIAO HÀNG</Text>
-                  <Text numberOfLines={2} style={styles.addressNameText}>
-                    {dropoffDisplay}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* 6. Cargo Bento Card: Cargo specs, loading fee badge, thumbnail, notes */}
-          <View style={styles.cargoBentoOuter} testID="cargo-bento-card">
-            <View style={styles.cargoBentoInner}>
-              <View style={styles.cargoHeaderRow}>
-                <View style={styles.cargoTitleRow}>
-                  <IconOrders color={leopardPalette.primary} size={15} />
-                  <Text style={styles.cargoHeaderTitle}>THÔNG TIN HÀNG HÓA</Text>
-                </View>
-                {offer.vehicleLabel ? (
-                  <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
-                    <IconSpeedTruck color={leopardPalette.primary} size={14} />
-                    <Text style={styles.specChipText}>{offer.vehicleLabel}</Text>
-                  </View>
-                ) : null}
-              </View>
-
-              <View style={styles.cargoBodyRow}>
-                <View style={styles.cargoInfoColumn}>
-                  <Text numberOfLines={2} style={styles.cargoNameText}>
-                    {cargoName}
-                  </Text>
-
-                  {/* Specs: Weight and Dimensions */}
-                  {(offer.cargoWeightKg !== undefined || offer.cargoDimensions) ? (
-                    <View style={styles.cargoSpecsRow}>
-                      {offer.cargoWeightKg !== undefined ? (
-                        <View style={styles.cargoSpecPill}>
-                          <Text style={styles.cargoSpecValue}>{offer.cargoWeightKg} kg</Text>
-                        </View>
-                      ) : null}
-                      {offer.cargoDimensions ? (
-                        <View style={styles.cargoSpecPill}>
-                          <Text style={styles.cargoSpecValue}>{offer.cargoDimensions}</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                  ) : null}
-
-                  {/* Loading Fee Badge */}
-                  {loadingBadgeLabel ? (
-                    <View style={styles.loadingFeeBadge}>
-                      <Text style={styles.loadingFeeBadgeText}>{loadingBadgeLabel}</Text>
-                    </View>
-                  ) : null}
-                </View>
-
-                {/* Cargo Photo Thumbnail (if provided) */}
-                {offer.cargoPhotoUrl ? (
-                  <Pressable
-                    accessibilityHint="Chạm để phóng to xem chi tiết hàng hóa"
-                    accessibilityLabel="Xem ảnh hàng hóa"
-                    accessibilityRole="button"
-                    onPress={() => setPhotoPreviewOpen(true)}
-                    style={styles.cargoThumbnailWrapper}
-                    testID="cargo-photo-thumbnail"
-                  >
-                    <Image
-                      accessibilityLabel="Ảnh hàng hóa"
-                      source={{ uri: offer.cargoPhotoUrl }}
-                      style={styles.cargoThumbnailImage}
-                    />
-                  </Pressable>
-                ) : null}
-              </View>
-
-              {/* Special Notes */}
-              {specialNotes ? (
-                <View style={styles.notesBox}>
-                  <Text style={styles.notesText}>{specialNotes}</Text>
-                </View>
-              ) : null}
-            </View>
-          </View>
-
-          {/* 7. Action Controls: SlideToAction (Vuốt nhận cuốc) + Decline Button (Bỏ qua) */}
-          <View style={styles.actionsContainer}>
-            <SlideToAction
-              key={targetOrderId}
-              resetKey={targetOrderId}
-              colorVariant="success"
-              disabled={isAccepting}
-              label="Vuốt để nhận cuốc ➔"
-              onActionComplete={() => onAccept(targetOrderId)}
-              testID="dispatch-slide-action"
-            />
-            <Pressable
-              accessibilityHint="Bỏ qua đơn hàng này"
-              accessibilityLabel="Bỏ qua"
-              accessibilityRole="button"
-              disabled={isAccepting}
-              hitSlop={8}
-              onPress={() => onDecline(targetOrderId)}
-              style={({ pressed }) => [
-                styles.declineButton,
-                pressed && !isAccepting ? styles.declineButtonPressed : null,
-                isAccepting ? styles.declineButtonDisabled : null,
-              ]}
-            >
-              <Text style={styles.declineButtonText}>Bỏ qua</Text>
-            </Pressable>
-          </View>
+          {/* 7. Action Controls: SlideToAction + Decline Button (Memoized) */}
+          <ActionControlsSection
+            isAccepting={isAccepting}
+            onAccept={onAccept}
+            onDecline={onDecline}
+            targetOrderId={targetOrderId}
+          />
         </View>
       </View>
 
@@ -466,7 +641,7 @@ export function IncomingDispatchModal({
               <Pressable
                 accessibilityLabel="Đóng xem ảnh"
                 accessibilityRole="button"
-                hitSlop={12}
+                hitSlop={spacing.sm}
                 onPress={() => setPhotoPreviewOpen(false)}
                 style={styles.previewCloseBtn}
                 testID="cargo-photo-preview-close"
@@ -489,6 +664,7 @@ export function IncomingDispatchModal({
   );
 }
 
+// ponytail: Static styles adhere to Apple HIG 4pt spacing scale, radius tokens, and typeScale ramps.
 const styles = StyleSheet.create({
   scrimOverlay: {
     backgroundColor: 'rgba(15, 23, 42, 0.88)',
@@ -497,24 +673,25 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     backgroundColor: colors.neutral.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: radius.modal,
+    borderTopRightRadius: radius.modal,
+    ...iosContinuousCurve,
     boxShadow: '0 -10px 24px rgba(0, 0, 0, 0.28)',
     gap: spacing.sm,
-    paddingBottom: spacing.xl + 8,
+    paddingBottom: spacing.xl + spacing.xs,
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md + 2,
+    paddingTop: spacing.md,
   },
   modalHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 4,
+    paddingBottom: spacing.xxs,
   },
   modalHeaderRight: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.xs,
   },
   modalCloseBtn: {
     alignItems: 'center',
@@ -527,22 +704,22 @@ const styles = StyleSheet.create({
   radarPulseContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.xs,
   },
   radarPulseOuter: {
     alignItems: 'center',
     backgroundColor: 'rgba(2, 132, 199, 0.2)',
-    borderRadius: 11,
+    borderRadius: radius.pill,
     height: 22,
     justifyContent: 'center',
     width: 22,
   },
   radarPulseOuterUrgent: {
-    backgroundColor: 'rgba(220, 38, 38, 0.2)',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
   },
   radarPulseCore: {
     backgroundColor: leopardPalette.primary,
-    borderRadius: 5,
+    borderRadius: radius.pill,
     height: 10,
     width: 10,
   },
@@ -551,7 +728,7 @@ const styles = StyleSheet.create({
   },
   modalBadgeText: {
     color: leopardPalette.primaryDark,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
@@ -560,44 +737,44 @@ const styles = StyleSheet.create({
   },
   timerBadge: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderColor: leopardPalette.inputBorder,
+    backgroundColor: leopardPalette.primaryBg,
+    borderColor: leopardPalette.primaryBorder,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.sm - spacing.xxs,
+    paddingVertical: spacing.xxs,
   },
   timerBadgeWarning: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: leopardPalette.accentYellowBg,
+    borderColor: leopardPalette.accentYellowBorder,
   },
   timerBadgeUrgent: {
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
   },
   timerText: {
-    color: '#061226',
-    fontSize: 14,
+    color: leopardPalette.textSlateDark,
+    ...typeScale.subheadline,
     fontVariant: ['tabular-nums'],
-    fontWeight: '900',
+    fontWeight: '800',
   },
   timerWarning: {
-    color: '#D97706',
+    color: leopardPalette.accentYellowDark,
   },
   timerUrgent: {
     color: colors.danger.text,
   },
   progressTrack: {
     backgroundColor: colors.neutral.border,
-    borderRadius: 3,
+    borderRadius: radius.pill,
     height: 6,
     overflow: 'hidden',
     width: '100%',
   },
   progressBar: {
-    borderRadius: 3,
+    borderRadius: radius.pill,
     height: '100%',
   },
   progressBarNormal: {
@@ -611,7 +788,8 @@ const styles = StyleSheet.create({
   },
   modalMapCanvas: {
     backgroundColor: colors.neutral.text,
-    borderRadius: 14,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     height: 160,
     overflow: 'hidden',
     position: 'relative',
@@ -623,38 +801,38 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral.border,
     borderRadius: radius.pill,
     borderWidth: 1,
-    bottom: 8,
+    bottom: spacing.xs,
     boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
     flexDirection: 'row',
-    gap: 4,
-    left: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    gap: spacing.xxs,
+    left: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline + 1,
     position: 'absolute',
     zIndex: 10,
   },
   mapFloatingDistanceText: {
-    color: '#061226',
-    fontSize: 11,
+    color: leopardPalette.textSlateDark,
+    ...typeScale.caption2,
     fontWeight: '800',
   },
   fareBezelOuter: {
-    backgroundColor: '#86EFAC',
+    backgroundColor: leopardPalette.ecoGreenBorder,
     borderRadius: radius.bezelOuter,
-    padding: 3,
+    padding: spacing.hairline + 1,
   },
   fareBezelOuterUrgent: {
     backgroundColor: '#FCA5A5',
   },
   fareBezelInner: {
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: leopardPalette.ecoGreenBg,
+    borderColor: leopardPalette.ecoGreenBorder,
     borderRadius: radius.bezelInner,
     borderWidth: 1,
-    gap: 2,
+    gap: spacing.hairline,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.sm,
   },
   fareBezelInnerUrgent: {
     backgroundColor: '#FFF1F2',
@@ -663,7 +841,7 @@ const styles = StyleSheet.create({
   fareHeaderRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.xs,
     justifyContent: 'center',
   },
   fareNetPill: {
@@ -671,8 +849,8 @@ const styles = StyleSheet.create({
     borderColor: '#86EFAC',
     borderRadius: radius.pill,
     borderWidth: 1,
-    paddingHorizontal: 7,
-    paddingVertical: 1.5,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   fareNetPillText: {
     color: '#166534',
@@ -689,7 +867,7 @@ const styles = StyleSheet.create({
     color: '#166534',
     ...typeScale.largeTitle,
     fontVariant: ['tabular-nums'],
-    fontWeight: '900',
+    fontWeight: '800',
     letterSpacing: -0.8,
   },
   fareSub: {
@@ -701,7 +879,7 @@ const styles = StyleSheet.create({
   routeBezelOuter: {
     backgroundColor: colors.neutral.border,
     borderRadius: radius.bezelOuter,
-    padding: 2.5,
+    padding: spacing.hairline + 1,
   },
   routeBezelInner: {
     backgroundColor: colors.neutral.surface,
@@ -709,32 +887,32 @@ const styles = StyleSheet.create({
     borderRadius: radius.bezelInner,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 12,
-    padding: spacing.sm + 2,
+    gap: spacing.sm,
+    padding: spacing.sm + spacing.xxs,
   },
   routeSpineColumn: {
     alignItems: 'center',
-    paddingTop: 4,
+    paddingTop: spacing.xxs,
     width: 16,
   },
   spineOriginCircle: {
     alignItems: 'center',
     backgroundColor: '#16A34A',
-    borderRadius: 8,
+    borderRadius: radius.pill,
     height: 16,
     justifyContent: 'center',
     width: 16,
   },
   spinePointTextA: {
     color: colors.neutral.surface,
-    fontSize: 9,
-    fontWeight: '900',
+    ...typeScale.caption2,
+    fontWeight: '800',
     textAlign: 'center',
   },
   spineTrackDotted: {
     backgroundColor: leopardPalette.inputBorder,
     flex: 1,
-    marginVertical: 4,
+    marginVertical: spacing.xxs,
     minHeight: 28,
     width: 2,
   },
@@ -748,112 +926,112 @@ const styles = StyleSheet.create({
   },
   spinePointTextB: {
     color: colors.neutral.surface,
-    fontSize: 9,
-    fontWeight: '900',
+    ...typeScale.caption2,
+    fontWeight: '800',
     textAlign: 'center',
   },
   routeAddressesColumn: {
     flex: 1,
-    gap: 8,
+    gap: spacing.xs,
   },
   addressBlock: {
-    gap: 2,
+    gap: spacing.hairline,
   },
   addressTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: spacing.xxs,
     justifyContent: 'space-between',
   },
   addressTypeLabel: {
     color: '#16A34A',
-    fontSize: 10,
+    ...typeScale.caption2,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   addressTypeLabelDropoff: {
     color: colors.danger.text,
-    fontSize: 10,
+    ...typeScale.caption2,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   pickupDistBadge: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
-    borderColor: leopardPalette.inputBorder,
+    backgroundColor: leopardPalette.primaryBg,
+    borderColor: leopardPalette.primaryBorder,
     borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    gap: spacing.hairline + 1,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   pickupDistText: {
-    color: '#061226',
-    fontSize: 11,
+    color: leopardPalette.textSlateDark,
+    ...typeScale.caption2,
     fontWeight: '800',
   },
   addressNameText: {
     color: leopardPalette.textSlateDark,
-    fontSize: 14,
+    ...typeScale.subheadline,
     fontWeight: '700',
-    lineHeight: 19,
+    lineHeight: 20,
   },
   transitMetaRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
-    paddingVertical: 2,
+    gap: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   transitMetaText: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
   cargoBentoOuter: {
     backgroundColor: colors.neutral.border,
     borderRadius: radius.bezelOuter,
-    padding: 2.5,
+    padding: spacing.hairline + 1,
   },
   cargoBentoInner: {
     backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.surfaceMuted,
     borderRadius: radius.bezelInner,
     borderWidth: 1,
-    gap: 8,
-    padding: spacing.sm + 2,
+    gap: spacing.xs,
+    padding: spacing.sm + spacing.xxs,
   },
   cargoHeaderRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.xs,
   },
   cargoTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: spacing.xs,
   },
   cargoHeaderTitle: {
     color: leopardPalette.primary,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '800',
     letterSpacing: 0.6,
   },
   cargoBodyRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
     justifyContent: 'space-between',
   },
   cargoInfoColumn: {
     flex: 1,
-    gap: 6,
+    gap: spacing.xs,
   },
   cargoNameText: {
     color: colors.neutral.text,
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '800',
     lineHeight: 20,
   },
@@ -861,19 +1039,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: spacing.xs,
   },
   cargoSpecPill: {
     backgroundColor: colors.neutral.surfaceMuted,
     borderColor: leopardPalette.inputBorder,
-    borderRadius: 6,
+    borderRadius: radius.control / 2,
     borderWidth: 1,
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline + 1,
   },
   cargoSpecValue: {
     color: colors.neutral.text,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
@@ -883,18 +1061,18 @@ const styles = StyleSheet.create({
     borderColor: '#BFDBFE',
     borderRadius: radius.pill,
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline + 1,
   },
   loadingFeeBadgeText: {
     color: '#1D4ED8',
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '800',
   },
   cargoThumbnailWrapper: {
     backgroundColor: colors.neutral.text,
     borderColor: leopardPalette.inputBorder,
-    borderRadius: 10,
+    borderRadius: radius.cardSm,
     borderWidth: 1.5,
     height: 56,
     overflow: 'hidden',
@@ -903,6 +1081,49 @@ const styles = StyleSheet.create({
   cargoThumbnailImage: {
     height: '100%',
     width: '100%',
+  },
+  notesBox: {
+    backgroundColor: leopardPalette.accentYellowBg,
+    borderColor: leopardPalette.accentYellowBorder,
+    borderRadius: radius.cardSm,
+    borderWidth: 1,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  notesText: {
+    color: '#92400E',
+    ...typeScale.caption1,
+    fontWeight: '600',
+  },
+  actionsContainer: {
+    gap: spacing.xs,
+    marginTop: spacing.xxs,
+    paddingTop: spacing.xxs,
+  },
+  declineButton: {
+    alignItems: 'center',
+    backgroundColor: colors.neutral.canvas,
+    borderColor: leopardPalette.inputBorder,
+    borderRadius: radius.pill,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    height: 52,
+    justifyContent: 'center',
+    minHeight: 48,
+    width: '100%',
+  },
+  declineButtonPressed: {
+    backgroundColor: colors.neutral.surfaceMuted,
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
+  },
+  declineButtonDisabled: {
+    opacity: 0.5,
+  },
+  declineButtonText: {
+    color: colors.neutral.subtleText,
+    ...typeScale.subheadline,
+    fontWeight: '700',
   },
   previewBackdrop: {
     alignItems: 'center',
@@ -915,15 +1136,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    left: 20,
+    left: spacing.lg,
     position: 'absolute',
-    right: 20,
-    top: 48,
+    right: spacing.lg,
+    top: spacing.xxxl,
     zIndex: 10,
   },
   previewTitle: {
     color: colors.neutral.surface,
-    fontSize: 16,
+    ...typeScale.callout,
     fontWeight: '700',
   },
   previewCloseBtn: {
@@ -948,59 +1169,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
-    borderRadius: 8,
+    borderRadius: radius.cardSm,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
   },
   specChipText: {
     color: colors.neutral.mutedText,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  notesBox: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  notesText: {
-    color: '#92400E',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  actionsContainer: {
-    gap: 8,
-    marginTop: spacing.xs,
-    paddingTop: 4,
-  },
-  declineButton: {
-    alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: radius.pill,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    height: 50,
-    justifyContent: 'center',
-    minHeight: 50,
-    width: '100%',
-  },
-  declineButtonPressed: {
-    backgroundColor: colors.neutral.surfaceMuted,
-    opacity: 0.85,
-    transform: [{ scale: 0.985 }],
-  },
-  declineButtonDisabled: {
-    opacity: 0.5,
-  },
-  declineButtonText: {
-    color: colors.neutral.subtleText,
-    fontSize: 15,
+    ...typeScale.caption1,
     fontWeight: '700',
   },
 });
