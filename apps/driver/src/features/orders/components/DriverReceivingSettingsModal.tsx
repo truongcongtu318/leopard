@@ -6,6 +6,7 @@ import {
   colors,
   iosContinuousCurve,
   leopardPalette,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export const DRIVER_RADIUS_OPTIONS: readonly string[] = ['3', '5', '10', '15'];
@@ -124,9 +125,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
+    ...typeScale.headline,
     color: leopardPalette.primary,
-    fontSize: 18,
-    fontWeight: '800',
   },
   closeBtn: {
     alignItems: 'center',
@@ -141,8 +141,8 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: colors.neutral.subtleText,
-    fontSize: 10,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   optionsRow: {
@@ -166,8 +166,8 @@ const styles = StyleSheet.create({
   },
   optionPillText: {
     color: colors.neutral.mutedText,
-    fontSize: 13,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   optionPillTextActive: {
@@ -189,8 +189,8 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     color: colors.neutral.surface,
-    fontSize: 14,
-    fontWeight: '800',
+    ...typeScale.subheadline,
+    fontWeight: '600',
     letterSpacing: 0.4,
   },
   pressed: {

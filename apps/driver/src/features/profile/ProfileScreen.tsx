@@ -20,6 +20,7 @@ import {
   colors,
   driverPrimitives,
   iosContinuousCurve,
+  typeScale,
 } from '@leopard/mobile-core';
 import type { DriverProfileView } from './model';
 
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
   },
   avatarInitial: {
     color: colors.neutral.surface,
-    fontSize: 22,
+    ...typeScale.title2,
     fontWeight: '700',
   },
   driverInfoBlock: {
@@ -458,7 +459,7 @@ const styles = StyleSheet.create({
   },
   driverNameText: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 17,
+    ...typeScale.headline,
     fontWeight: '700',
     letterSpacing: -0.3,
   },
@@ -471,9 +472,8 @@ const styles = StyleSheet.create({
     width: 16,
   },
   driverPhoneText: {
-    color: driverPrimitives.colors.gray500,
-    fontSize: 13,
-    fontWeight: '500',
+    color: colors.neutral.mutedText,
+    ...typeScale.footnote,
     fontVariant: ['tabular-nums'],
   },
   badgeRow: {
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   },
   statusPillText: {
     color: colors.neutral.mutedText,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   vehiclePill: {
@@ -510,9 +510,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   vehiclePillText: {
-    color: driverPrimitives.colors.gray500,
-    fontSize: 11,
-    fontWeight: '500',
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
   },
   editChevronButton: {
     alignItems: 'center',
@@ -541,8 +540,8 @@ const styles = StyleSheet.create({
   },
   kpiSectionTitle: {
     color: driverPrimitives.colors.gray700,
-    fontSize: 13,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   kpiDetailLink: {
@@ -552,7 +551,7 @@ const styles = StyleSheet.create({
   },
   kpiDetailLinkText: {
     color: driverPrimitives.colors.blue600,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
   kpiColumns: {
@@ -572,15 +571,14 @@ const styles = StyleSheet.create({
   },
   kpiValueMain: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 18,
-    fontWeight: '800',
+    ...typeScale.title3,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.3,
   },
   kpiLabelSub: {
-    color: driverPrimitives.colors.gray500,
-    fontSize: 11.5,
-    fontWeight: '500',
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
   },
   kpiDividerVertical: {
     backgroundColor: driverPrimitives.colors.gray100,
@@ -625,14 +623,13 @@ const styles = StyleSheet.create({
   },
   bentoTileTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   bentoTileSub: {
-    color: driverPrimitives.colors.gray500,
-    fontSize: 11.5,
-    fontWeight: '400',
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
   },
 
   /* Grouped Menu */
@@ -641,8 +638,8 @@ const styles = StyleSheet.create({
   },
   sectionHeaderTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
     letterSpacing: -0.2,
     paddingHorizontal: 4,
   },
@@ -689,14 +686,13 @@ const styles = StyleSheet.create({
   },
   menuItemTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    ...typeScale.subheadline,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   menuItemSub: {
-    color: driverPrimitives.colors.gray400,
-    fontSize: 11.5,
-    fontWeight: '400',
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
   },
   menuItemSeparator: {
     backgroundColor: driverPrimitives.colors.gray100,
@@ -711,9 +707,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   versionLabel: {
-    color: driverPrimitives.colors.gray400,
-    fontSize: 12,
-    fontWeight: '500',
+    color: colors.neutral.mutedText,
+    ...typeScale.caption1,
   },
   logoutBtnWrap: {
     alignSelf: 'stretch',

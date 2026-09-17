@@ -153,13 +153,13 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: scene.ctaCyan,
-    fontSize: 11,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
     letterSpacing: 0.8,
   },
   contractRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
-  hintText: { color: scene.muted, fontSize: typeScale.footnote.fontSize, flexShrink: 1 },
-  errorHintText: { color: scene.danger, fontSize: typeScale.footnote.fontSize },
+  hintText: { color: scene.muted, ...typeScale.footnote, flexShrink: 1 },
+  errorHintText: { color: scene.danger, ...typeScale.footnote },
   contractLink: {
     backgroundColor: 'rgba(2, 132, 199, 0.14)',
     borderColor: 'rgba(56, 189, 248, 0.40)',
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  contractLinkText: { color: scene.ctaCyan, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
+  contractLinkText: { color: scene.ctaCyan, ...typeScale.footnote, fontWeight: '600' },
   pressed: { opacity: 0.85 },
   consentRow: {
     alignItems: 'flex-start',
@@ -195,14 +195,13 @@ const styles = StyleSheet.create({
   consentText: {
     color: colors.neutral.border,
     flex: 1,
-    fontSize: typeScale.footnote.fontSize,
-    lineHeight: typeScale.footnote.lineHeight,
+    ...typeScale.footnote,
   },
   field: { gap: spacing.xs },
   inputLabel: {
     color: scene.ink,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
   inputWrap: {
     backgroundColor: scene.fieldBg,
@@ -224,7 +223,7 @@ const styles = StyleSheet.create({
   },
   input: {
     color: scene.ink,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
     outlineStyle: 'none',
   } as any,

@@ -729,7 +729,7 @@ const styles = StyleSheet.create({
   modalBadgeText: {
     color: leopardPalette.primaryDark,
     ...typeScale.caption1,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.4,
   },
   modalBadgeTextUrgent: {
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
     color: leopardPalette.textSlateDark,
     ...typeScale.subheadline,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
   },
   timerWarning: {
     color: leopardPalette.accentYellowDark,
@@ -814,7 +814,7 @@ const styles = StyleSheet.create({
   mapFloatingDistanceText: {
     color: leopardPalette.textSlateDark,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   fareBezelOuter: {
     backgroundColor: leopardPalette.ecoGreenBorder,
@@ -855,25 +855,23 @@ const styles = StyleSheet.create({
   fareNetPillText: {
     color: '#166534',
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   fareCaption: {
     color: '#15803D',
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.8,
   },
   fareAmount: {
     color: '#166534',
     ...typeScale.largeTitle,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
     letterSpacing: -0.8,
   },
   fareSub: {
     color: colors.neutral.mutedText,
     ...typeScale.caption2,
-    fontWeight: '500',
     textAlign: 'center',
   },
   routeBezelOuter: {
@@ -906,7 +904,7 @@ const styles = StyleSheet.create({
   spinePointTextA: {
     color: colors.neutral.surface,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '700',
     textAlign: 'center',
   },
   spineTrackDotted: {
@@ -927,7 +925,7 @@ const styles = StyleSheet.create({
   spinePointTextB: {
     color: colors.neutral.surface,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '700',
     textAlign: 'center',
   },
   routeAddressesColumn: {
@@ -947,13 +945,13 @@ const styles = StyleSheet.create({
   addressTypeLabel: {
     color: '#16A34A',
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.4,
   },
   addressTypeLabelDropoff: {
     color: colors.danger.text,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.4,
   },
   pickupDistBadge: {
@@ -970,13 +968,17 @@ const styles = StyleSheet.create({
   pickupDistText: {
     color: leopardPalette.textSlateDark,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   addressNameText: {
     color: leopardPalette.textSlateDark,
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 20,
+  },
+  addressDetailText: {
+    color: leopardPalette.textMutedSlate,
+    ...typeScale.caption1,
   },
   transitMetaRow: {
     alignItems: 'center',
@@ -987,7 +989,6 @@ const styles = StyleSheet.create({
   transitMetaText: {
     color: leopardPalette.textMutedSlate,
     ...typeScale.caption1,
-    fontWeight: '600',
   },
   cargoBentoOuter: {
     backgroundColor: colors.neutral.border,
@@ -1016,7 +1017,7 @@ const styles = StyleSheet.create({
   cargoHeaderTitle: {
     color: leopardPalette.primary,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.6,
   },
   cargoBodyRow: {
@@ -1032,7 +1033,7 @@ const styles = StyleSheet.create({
   cargoNameText: {
     color: colors.neutral.text,
     ...typeScale.subheadline,
-    fontWeight: '800',
+    fontWeight: '600',
     lineHeight: 20,
   },
   cargoSpecsRow: {
@@ -1053,7 +1054,7 @@ const styles = StyleSheet.create({
     color: colors.neutral.text,
     ...typeScale.caption1,
     fontVariant: ['tabular-nums'],
-    fontWeight: '700',
+    fontWeight: '600',
   },
   loadingFeeBadge: {
     alignSelf: 'flex-start',
@@ -1067,7 +1068,7 @@ const styles = StyleSheet.create({
   loadingFeeBadgeText: {
     color: '#1D4ED8',
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   cargoThumbnailWrapper: {
     backgroundColor: colors.neutral.text,
@@ -1091,9 +1092,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   notesText: {
-    color: '#92400E',
+    color: leopardPalette.textMutedSlate,
     ...typeScale.caption1,
-    fontWeight: '600',
   },
   actionsContainer: {
     gap: spacing.xs,
@@ -1123,7 +1123,7 @@ const styles = StyleSheet.create({
   declineButtonText: {
     color: colors.neutral.subtleText,
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   previewBackdrop: {
     alignItems: 'center',
@@ -1145,7 +1145,7 @@ const styles = StyleSheet.create({
   previewTitle: {
     color: colors.neutral.surface,
     ...typeScale.callout,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   previewCloseBtn: {
     alignItems: 'center',
@@ -1179,6 +1179,6 @@ const styles = StyleSheet.create({
   specChipText: {
     color: colors.neutral.mutedText,
     ...typeScale.caption1,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

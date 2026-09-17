@@ -1093,9 +1093,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     ...iosContinuousCurve,
   },
-  backBtnText: { color: scene.ink, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
-  headline: { color: scene.ink, fontSize: 22, fontWeight: '800', marginTop: 4, zIndex: 2 },
-  subline: { color: scene.mutedLight, fontSize: 13, fontWeight: '500', lineHeight: 18, zIndex: 2 },
+  backBtnText: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
+  headline: { color: scene.ink, ...typeScale.title2, fontWeight: '700', marginTop: 4, zIndex: 2 },
+  subline: { color: scene.mutedLight, ...typeScale.footnote, zIndex: 2 },
   body: {
     flex: 1,
     gap: spacing.md,
@@ -1118,13 +1118,13 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: scene.ctaCyan,
-    fontSize: 11,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
     letterSpacing: 0.8,
   },
   field: { gap: spacing.xs },
-  inputLabel: { color: scene.ink, fontSize: 13, fontWeight: '700' },
-  fieldHint: { color: scene.muted, fontSize: typeScale.caption1.fontSize, marginTop: 2, lineHeight: 16 },
+  inputLabel: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
+  fieldHint: { color: scene.muted, ...typeScale.caption1, marginTop: 2 },
   inputWrap: {
     backgroundColor: scene.fieldBg,
     borderColor: scene.inputBorder,
@@ -1157,8 +1157,8 @@ const styles = StyleSheet.create({
   },
   flagCode: {
     color: scene.ink,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   phoneInput: {
@@ -1180,7 +1180,7 @@ const styles = StyleSheet.create({
   },
   input: {
     color: scene.ink,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
     padding: 0,
   },
@@ -1204,12 +1204,12 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: scene.muted,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   chipTextActive: {
     color: scene.ctaCyan,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   vehicleGrid: {
     gap: 10,
@@ -1234,15 +1234,15 @@ const styles = StyleSheet.create({
   },
   vehicleCardTitle: {
     color: scene.ink,
-    fontSize: 15,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
   },
   vehicleCardTitleSelected: {
     color: scene.ctaCyan,
   },
   vehicleCardSub: {
     color: scene.muted,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
   },
   vehicleCardSubSelected: {
     color: scene.mutedLight,
@@ -1297,8 +1297,8 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: scene.ink,
-    fontSize: 15,
-    fontWeight: '800',
+    ...typeScale.subheadline,
+    fontWeight: '600',
   },
   btnGloss: {
     ...StyleSheet.absoluteFill,
@@ -1316,12 +1316,12 @@ const styles = StyleSheet.create({
   },
   loginHelper: {
     color: scene.muted,
-    fontSize: 13,
+    ...typeScale.footnote,
   },
   loginLink: {
     color: scene.ctaCyan,
-    fontSize: 13,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
   stepperWrap: {
     backgroundColor: scene.canvasDark,
@@ -1352,8 +1352,8 @@ const styles = StyleSheet.create({
   },
   stepperArrow: {
     color: 'rgba(255, 255, 255, 0.25)',
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
     marginBottom: 16,
   },
   stepCircle: {
@@ -1377,25 +1377,25 @@ const styles = StyleSheet.create({
   },
   stepCircleText: {
     color: scene.muted,
-    fontSize: 12,
-    fontWeight: '700',
+    ...typeScale.caption1,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   stepCircleTextActive: {
     color: scene.canvasDark,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   stepCircleTextPassed: {
     color: scene.successLight,
   },
   stepLabel: {
     color: scene.muted,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
   stepLabelActive: {
     color: scene.ctaCyan,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   stepLabelPassed: {
     color: scene.mutedLight,
@@ -1417,14 +1417,14 @@ const styles = StyleSheet.create({
   },
   stepBadgeText: {
     color: scene.badgeText,
-    fontSize: 11,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   stepTitleText: {
     color: scene.ink,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
   stepNavRow: {
     flexDirection: 'row',
@@ -1445,8 +1445,8 @@ const styles = StyleSheet.create({
   },
   outlineNavBtnText: {
     color: scene.mutedLight,
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
   },
   primaryNavBtn: {
     flex: 1.8,
@@ -1484,8 +1484,8 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   kycGuideCopy: { flex: 1, gap: 2 },
-  kycGuideTitle: { color: scene.ink, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
-  kycGuideText: { color: scene.mutedLight, fontSize: 12, lineHeight: 17 },
+  kycGuideTitle: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
+  kycGuideText: { color: scene.mutedLight, ...typeScale.caption1, lineHeight: 17 },
   kycList: { gap: spacing.md },
   docSlot: {
     backgroundColor: scene.surfaceDark,
@@ -1515,13 +1515,13 @@ const styles = StyleSheet.create({
   },
   docStatusNumber: {
     color: scene.muted,
-    fontSize: 12,
-    fontWeight: '700',
+    ...typeScale.caption1,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   docInfo: { flex: 1, gap: 2 },
-  docLabel: { color: scene.ink, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
-  docHint: { color: scene.muted, fontSize: typeScale.caption1.fontSize },
+  docLabel: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
+  docHint: { color: scene.muted, ...typeScale.caption1 },
   docStatusPill: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: radius.pill,
@@ -1532,7 +1532,7 @@ const styles = StyleSheet.create({
   docStatusPillDone: {
     backgroundColor: scene.successBg,
   },
-  docStatusText: { color: scene.muted, fontSize: 11, fontWeight: '700' },
+  docStatusText: { color: scene.muted, ...typeScale.caption2, fontWeight: '600' },
   docStatusTextDone: { color: scene.successLight },
   docThumb: {
     height: 140,
@@ -1566,8 +1566,8 @@ const styles = StyleSheet.create({
   },
   docBtnText: {
     color: scene.ink,
-    fontSize: 13,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
   docBtnTextDone: {
     color: scene.successLight,
@@ -1585,8 +1585,8 @@ const styles = StyleSheet.create({
   },
   deleteDocBtnText: {
     color: scene.dangerLight,
-    fontSize: 13,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
   summaryCard: {
     backgroundColor: scene.surfaceDark,
@@ -1599,8 +1599,8 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     color: scene.ctaCyan,
-    fontSize: typeScale.caption1.fontSize,
-    fontWeight: '800',
+    ...typeScale.caption1,
+    fontWeight: '600',
     letterSpacing: 0.8,
     marginBottom: 2,
   },
@@ -1612,8 +1612,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: scene.borderDivider,
   },
-  summaryLabel: { color: scene.mutedLight, fontSize: 13, fontWeight: '500' },
-  summaryValue: { color: scene.ink, fontSize: typeScale.footnote.fontSize, fontWeight: '700' },
+  summaryLabel: { color: scene.mutedLight, ...typeScale.footnote },
+  summaryValue: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
   errorBox: {
     backgroundColor: scene.dangerBg,
     borderColor: scene.dangerBorder,
@@ -1624,7 +1624,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: scene.dangerText,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
     lineHeight: 18,
   },
@@ -1659,19 +1659,18 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     color: scene.ink,
-    fontSize: 20,
-    fontWeight: '800',
+    ...typeScale.title3,
+    fontWeight: '700',
     textAlign: 'center',
   },
   successText: {
     color: scene.mutedLight,
-    fontSize: typeScale.subheadline.fontSize,
-    lineHeight: 20,
+    ...typeScale.subheadline,
     textAlign: 'center',
   },
   contractMetaText: {
     color: scene.ctaCyan,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
@@ -1705,20 +1704,20 @@ const styles = StyleSheet.create({
   },
   otpTitle: {
     color: scene.ink,
-    fontSize: typeScale.title3.fontSize,
-    fontWeight: '800',
+    ...typeScale.title3,
+    fontWeight: '700',
     textAlign: 'center',
   },
   otpSubtitle: {
     color: scene.mutedLight,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     lineHeight: 19,
     textAlign: 'center',
     marginBottom: 4,
   },
   phoneHighlight: {
     color: scene.ctaCyan,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   otpErrorBox: {
@@ -1731,7 +1730,7 @@ const styles = StyleSheet.create({
   },
   otpErrorText: {
     color: scene.dangerText,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -1744,7 +1743,7 @@ const styles = StyleSheet.create({
   },
   verifyingText: {
     color: scene.ctaCyan,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   otpFooterRow: {
@@ -1757,13 +1756,12 @@ const styles = StyleSheet.create({
   },
   resendText: {
     color: scene.ctaCyan,
-    fontSize: 13,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   resendDisabledText: {
     color: scene.muted,
-    fontWeight: '500',
   },
   otpActionRow: {
     flexDirection: 'row',
@@ -1783,8 +1781,8 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     color: scene.mutedLight,
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
   },
   confirmBtn: {
     flex: 1.4,
@@ -1807,8 +1805,8 @@ const styles = StyleSheet.create({
   },
   confirmBtnText: {
     color: scene.ink,
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
   },
   controlPressed: {
     opacity: 0.82,

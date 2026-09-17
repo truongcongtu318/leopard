@@ -14,6 +14,7 @@ import {
   leopardPalette,
   radius,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 import type { OrderStatus } from '@leopard/shared';
 import type { DriverRouteStopView, DriverStopProgressStatus } from '../../model';
@@ -316,14 +317,14 @@ const styles = StyleSheet.create({
     width: 28,
   },
   routeNodeSubA: {
-    color: driverPrimitives.colors.gray400,
-    fontSize: 10,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   routeNodeTitleA: {
+    ...typeScale.footnote,
     color: driverPrimitives.colors.gray700,
-    fontSize: 13.5,
     fontWeight: '600',
   },
   routeNodeAExpanded: {
@@ -341,15 +342,14 @@ const styles = StyleSheet.create({
     width: 28,
   },
   badgeTextA: {
+    ...typeScale.caption1,
     color: colors.neutral.surface,
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   routeNodeTitleAExpanded: {
+    ...typeScale.subheadline,
     color: leopardPalette.primary,
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 20,
+    fontWeight: '600',
   },
 
   /* Stop Nodes */
@@ -397,26 +397,25 @@ const styles = StyleSheet.create({
     width: 24,
   },
   stopBadgeText: {
+    ...typeScale.caption2,
     color: colors.neutral.surface,
-    fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   stopPendingBadgeText: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   stopSubTitle: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   stopTitle: {
+    ...typeScale.footnote,
     color: leopardPalette.primary,
-    fontSize: 13,
     fontWeight: '600',
-    lineHeight: 18,
   },
   stopActionWrap: {
     marginTop: 6,
@@ -431,9 +430,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   stopActionBtnText: {
+    ...typeScale.caption1,
     color: colors.neutral.surface,
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   btnBusy: {
     opacity: 0.7,
@@ -449,9 +448,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   activeLegTagText: {
+    ...typeScale.caption2,
     color: '#D97706',
-    fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   completedTag: {
     backgroundColor: '#DCFCE7',
@@ -462,9 +461,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   completedTagText: {
+    ...typeScale.caption2,
     color: '#15803D',
-    fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   inServiceTag: {
     backgroundColor: '#D1FAE5',
@@ -475,9 +474,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   inServiceTagText: {
+    ...typeScale.caption2,
     color: '#059669',
-    fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   arrivedTag: {
     backgroundColor: '#DBEAFE',
@@ -488,9 +487,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   arrivedTagText: {
+    ...typeScale.caption2,
     color: '#2563EB',
-    fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 
   /* Vertical Spine */
@@ -516,8 +515,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   spineDistanceText: {
+    ...typeScale.caption2,
     color: driverPrimitives.colors.gray500,
-    fontSize: 11,
     fontWeight: '600',
   },
 
@@ -537,21 +536,20 @@ const styles = StyleSheet.create({
     width: 28,
   },
   badgeTextB: {
+    ...typeScale.caption1,
     color: colors.neutral.surface,
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   routeNodeSubB: {
-    color: driverPrimitives.colors.gray400,
-    fontSize: 10,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   routeNodeTitleB: {
+    ...typeScale.subheadline,
     color: driverPrimitives.colors.gray900,
-    fontSize: 14,
     fontWeight: '600',
-    lineHeight: 20,
   },
   pressed: {
     opacity: 0.8,

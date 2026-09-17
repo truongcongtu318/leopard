@@ -5,6 +5,7 @@ import {
   colors,
   leopardPalette,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export type MissionStepperProps = Readonly<{
@@ -123,8 +124,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral.border,
   },
   stepDotNumber: {
-    fontSize: 10,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '700',
   },
   stepDotNumberActive: {
     color: colors.neutral.surface,
@@ -133,13 +134,13 @@ const styles = StyleSheet.create({
     color: colors.neutral.subtleText,
   },
   stepLabel: {
-    fontSize: 9.5,
-    fontWeight: '700',
+    ...typeScale.caption2,
+    fontWeight: '600',
     textAlign: 'center',
   },
   stepLabelCurrent: {
     color: leopardPalette.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   stepLabelPast: {
     color: '#10B981',

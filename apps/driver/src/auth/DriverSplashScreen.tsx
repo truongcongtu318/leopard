@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   driverBadgeText: {
     color: '#38BDF8',
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   heroImage: {
@@ -416,7 +416,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typeScale.largeTitle,
-    fontWeight: '800',
     color: colors.neutral.surface,
     letterSpacing: -0.5,
     lineHeight: 40,
@@ -424,7 +423,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typeScale.subheadline,
-    fontWeight: '400',
     color: leopardPalette.inputBorder,
     lineHeight: 22,
     marginBottom: spacing.xl + spacing.xxs,

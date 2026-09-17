@@ -168,15 +168,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   contractCodeLabel: {
-    color: colors.neutral.subtleText,
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '800',
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
     letterSpacing: 0.4,
   },
   contractCodeValue: {
+    ...typeScale.subheadline,
     color: leopardPalette.primary,
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '900',
+    fontWeight: '700',
     letterSpacing: 0.5,
     fontVariant: ['tabular-nums'],
   },
@@ -193,8 +192,8 @@ const styles = StyleSheet.create({
   },
   statusPillText: {
     color: '#15803D',
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
   },
   overviewDivider: {
     backgroundColor: colors.neutral.border,
@@ -208,14 +207,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metaLabel: {
-    color: colors.neutral.subtleText,
-    fontSize: 11,
-    fontWeight: '600',
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
   },
   metaValue: {
     color: colors.neutral.text,
-    fontSize: 11,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
   },
   downloadPdfBtn: {
     alignItems: 'center',
@@ -232,7 +230,7 @@ const styles = StyleSheet.create({
   },
   downloadPdfText: {
     color: '#1D4ED8',
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '800',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
 });

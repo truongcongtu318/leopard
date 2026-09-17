@@ -16,6 +16,7 @@ import {
   colors,
   driverPrimitives,
   iosContinuousCurve,
+  typeScale,
 } from '@leopard/mobile-core';
 import { FinanceBottomBar } from '../finance/FinanceBottomBar';
 
@@ -278,8 +279,8 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   jobsBadge: {
@@ -292,14 +293,13 @@ const styles = StyleSheet.create({
   },
   jobsBadgeText: {
     color: colors.neutral.mutedText,
-    fontSize: 11.5,
-    fontWeight: '700',
+    ...typeScale.caption2,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   heroAmount: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 34,
-    fontWeight: '800',
+    ...typeScale.largeTitle,
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.5,
   },
@@ -310,12 +310,12 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   heroScopeNote: {
-    color: driverPrimitives.colors.gray400,
-    fontSize: 12,
+    color: colors.neutral.mutedText,
+    ...typeScale.caption1,
   },
   detailLinkText: {
     color: driverPrimitives.colors.blue500,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
 
@@ -325,8 +325,8 @@ const styles = StyleSheet.create({
   },
   sectionHeading: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
     letterSpacing: -0.2,
     paddingHorizontal: 4,
   },
@@ -368,13 +368,13 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    ...typeScale.subheadline,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   itemSub: {
-    color: driverPrimitives.colors.gray400,
-    fontSize: 11.5,
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
   },
   itemRight: {
     alignItems: 'center',
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   },
   itemValue: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },

@@ -330,13 +330,12 @@ const styles = StyleSheet.create({
   kpiValue: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.callout,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   kpiLabel: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
-    fontWeight: '500',
     textAlign: 'center',
   },
   kpiDividerVertical: {
@@ -366,13 +365,12 @@ const styles = StyleSheet.create({
     ...driverPrimitives.shadows.sm,
   },
   segmentBtnText: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption1,
-    fontWeight: '500',
   },
   segmentBtnTextActive: {
     color: driverPrimitives.colors.gray900,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   /* 3. Trip Feed Cards */
@@ -395,15 +393,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tripReferenceText: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption1,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.3,
   },
   tripPayoutText: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.subheadline,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   routeRow: {
@@ -439,20 +437,19 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   distanceText: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
-    fontWeight: '500',
   },
   metaDot: {
     color: driverPrimitives.colors.gray300,
     ...typeScale.caption2,
   },
   timeText: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
   },
   vehicleText: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
   },
   proofBadgeBtn: {
@@ -487,11 +484,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: spacing.xxs,
   },
   emptyMessage: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption1,
     textAlign: 'center',
   },
@@ -521,7 +518,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.headline,
-    fontWeight: '700',
   },
   modalBody: {
     gap: spacing.sm,
@@ -546,9 +542,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   proofWatermarkText: {
-    color: driverPrimitives.colors.gray400,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
-    fontWeight: '500',
   },
   signatureBox: {
     gap: spacing.xxs + 2,

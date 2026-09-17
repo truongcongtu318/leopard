@@ -462,14 +462,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxs,
   },
   sheetTitle: {
-    color: leopardPalette.primary,
     ...typeScale.headline,
-    fontWeight: '800',
+    color: leopardPalette.primary,
   },
   sheetSubtitle: {
-    color: colors.neutral.subtleText,
     ...typeScale.caption1,
-    fontWeight: '500',
+    color: colors.neutral.mutedText,
     marginTop: spacing.hairline,
   },
   boundaryBox: {
@@ -491,9 +489,9 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   debugBtnText: {
-    color: leopardPalette.primary,
     ...typeScale.caption2,
-    fontWeight: '700',
+    color: leopardPalette.primary,
+    fontWeight: '600',
   },
   srOnly: {
     height: 1,

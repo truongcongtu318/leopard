@@ -5,6 +5,7 @@ import {
   colors,
   driverPrimitives,
   iosContinuousCurve,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export type CompletionSummaryCardProps = Readonly<{
@@ -88,9 +89,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statusText: {
+    ...typeScale.caption1,
     color: driverPrimitives.colors.green700,
-    fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   referencePill: {
     backgroundColor: colors.neutral.surfaceMuted,
@@ -101,10 +102,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   referenceText: {
+    ...typeScale.caption2,
     color: colors.neutral.mutedText,
-    fontSize: 11,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
+    fontWeight: '600',
     letterSpacing: 0.3,
   },
   payoutBlock: {
@@ -112,15 +113,14 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   payoutLabel: {
+    ...typeScale.caption2,
     color: driverPrimitives.colors.gray400,
-    fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   priceValue: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 32,
-    fontWeight: '800',
+    ...typeScale.largeTitle,
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.5,
   },
@@ -130,8 +130,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   metaTimestamp: {
-    color: driverPrimitives.colors.gray400,
-    fontSize: 12,
-    fontWeight: '500',
+    ...typeScale.caption1,
+    color: colors.neutral.mutedText,
   },
 });

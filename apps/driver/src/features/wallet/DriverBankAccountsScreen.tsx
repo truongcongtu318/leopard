@@ -144,8 +144,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 18,
-    fontWeight: '700',
+    ...typeScale.headline,
   },
   bankCard: {
     backgroundColor: driverPrimitives.colors.white,
@@ -178,8 +177,8 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: colors.brand.background,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
   securityNoticeCard: {
     alignItems: 'center',
@@ -205,12 +204,12 @@ const styles = StyleSheet.create({
   },
   securityNoticeTitle: {
     color: '#065F46',
-    fontSize: 13,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
   securityNoticeSub: {
     color: '#047857',
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
     lineHeight: 16,
   },
   accountSection: {
@@ -218,8 +217,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 13,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
   },
   /* Double-Bezel Card: 24px outer, 18px inner */
   doubleBezelOuter: {
@@ -263,12 +262,12 @@ const styles = StyleSheet.create({
   },
   bankName: {
     color: leopardPalette.primary,
-    fontSize: 15,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
   },
   accountNumber: {
     color: colors.neutral.mutedText,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
     marginTop: 2,
@@ -286,8 +285,8 @@ const styles = StyleSheet.create({
   },
   defaultBadgeText: {
     color: '#059669',
-    fontSize: 11,
-    fontWeight: '700',
+    ...typeScale.caption2,
+    fontWeight: '600',
   },
   setDefaultButton: {
     backgroundColor: colors.neutral.surfaceMuted,
@@ -301,8 +300,8 @@ const styles = StyleSheet.create({
   },
   setDefaultText: {
     color: leopardPalette.primary,
-    fontSize: typeScale.caption1.fontSize,
-    fontWeight: '700',
+    ...typeScale.caption1,
+    fontWeight: '600',
   },
   cardDivider: {
     backgroundColor: colors.neutral.surfaceMuted,
@@ -315,14 +314,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   holderLabel: {
-    color: colors.neutral.subtleText,
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '600',
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
   },
   holderName: {
     color: colors.neutral.text,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
     letterSpacing: 0.5,
     marginTop: 1,
   },
@@ -336,8 +334,8 @@ const styles = StyleSheet.create({
   },
   napasBadgeText: {
     color: '#1D4ED8',
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    ...typeScale.caption2,
+    fontWeight: '600',
   },
   addAccountBtn: {
     alignItems: 'center',
@@ -352,8 +350,8 @@ const styles = StyleSheet.create({
   },
   addAccountBtnText: {
     color: colors.neutral.surface,
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
   },
   pressed: {
     opacity: 0.85,
@@ -397,8 +395,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     color: colors.neutral.titleText,
-    fontSize: 16,
-    fontWeight: '800',
+    ...typeScale.callout,
+    fontWeight: '600',
   },
   modalCloseBtn: {
     alignItems: 'center',
@@ -414,8 +412,8 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     color: colors.neutral.titleText,
-    fontSize: 12,
-    fontWeight: '700',
+    ...typeScale.caption1,
+    fontWeight: '600',
     marginTop: spacing.xxs,
   },
   bankGrid: {
@@ -442,20 +440,19 @@ const styles = StyleSheet.create({
   },
   bankSelectChipText: {
     color: colors.neutral.mutedText,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   bankSelectChipTextActive: {
     color: colors.brand.background,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   textInput: {
     borderColor: colors.neutral.subtleBorder,
     borderRadius: radius.card,
     borderWidth: 1,
     color: colors.neutral.titleText,
-    fontSize: 15,
-    fontWeight: '600',
+    ...typeScale.subheadline,
     fontVariant: ['tabular-nums'],
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -469,8 +466,7 @@ const styles = StyleSheet.create({
   },
   formErrorText: {
     color: colors.danger.text,
-    fontSize: 12,
-    fontWeight: '600',
+    ...typeScale.caption1,
     textAlign: 'center',
   },
   modalActions: {
@@ -480,12 +476,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14,
-    fontWeight: '700',
+    ...typeScale.subheadline,
+    fontWeight: '600',
   },
   emptySub: {
-    color: driverPrimitives.colors.gray500,
-    fontSize: 12.5,
+    color: colors.neutral.mutedText,
+    ...typeScale.caption1,
     lineHeight: 17,
   },
 });

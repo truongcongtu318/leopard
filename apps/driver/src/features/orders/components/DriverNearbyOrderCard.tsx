@@ -10,6 +10,7 @@ import {
   leopardPalette,
   radius,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 import type { DriverPublicOrderView } from '../model';
 
@@ -197,23 +198,22 @@ const styles = StyleSheet.create({
     paddingVertical: 2.5,
   },
   vehicleTagText: {
+    ...typeScale.caption2,
     color: leopardPalette.primary,
-    fontSize: 11.5,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   proximityText: {
-    color: colors.neutral.subtleText,
-    fontSize: 12,
-    fontWeight: '500',
+    ...typeScale.caption1,
+    color: colors.neutral.mutedText,
   },
   priceWrap: {
     alignItems: 'flex-end',
   },
   priceAmount: {
+    ...typeScale.headline,
     color: leopardPalette.primary,
-    fontSize: 18,
-    fontWeight: '800',
     fontVariant: ['tabular-nums'],
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
 
@@ -255,8 +255,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addressText: {
+    ...typeScale.footnote,
     color: colors.neutral.text,
-    fontSize: 13,
     fontWeight: '600',
   },
   distanceBadge: {
@@ -273,10 +273,10 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   distanceText: {
+    ...typeScale.caption2,
     color: colors.neutral.mutedText,
-    fontSize: 11,
-    fontWeight: '600',
     fontVariant: ['tabular-nums'],
+    fontWeight: '600',
   },
 
   // Row 3: Metadata snippet
@@ -289,28 +289,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   cargoNameText: {
-    color: colors.neutral.subtleText,
-    fontSize: 12,
-    fontWeight: '500',
+    ...typeScale.caption1,
+    color: colors.neutral.mutedText,
   },
   cargoWeightText: {
+    ...typeScale.caption1,
     color: colors.neutral.subtleText,
-    fontSize: 12,
-    fontWeight: '600',
     fontVariant: ['tabular-nums'],
+    fontWeight: '600',
   },
   loadingText: {
+    ...typeScale.caption2,
     color: '#D97706',
-    fontSize: 11.5,
     fontWeight: '600',
   },
   refDot: {
+    ...typeScale.caption2,
     color: leopardPalette.inputBorder,
-    fontSize: 12,
   },
   refText: {
-    color: '#94A3B8',
-    fontSize: 11,
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
     fontVariant: ['tabular-nums'],
   },
 
@@ -333,8 +332,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   declineText: {
+    ...typeScale.footnote,
     color: colors.neutral.subtleText,
-    fontSize: 13,
     fontWeight: '600',
   },
   acceptBtn: {
@@ -352,9 +351,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   acceptText: {
+    ...typeScale.subheadline,
     color: colors.neutral.surface,
-    fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   pressed: {
     opacity: 0.8,

@@ -14,6 +14,7 @@ import {
   leopardPalette,
   radius,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 import type { DriverDetailContentView } from '../../model';
 
@@ -267,9 +268,9 @@ const styles = StyleSheet.create({
     width: 7,
   },
   publicMapTopTagText: {
+    ...typeScale.caption2,
     color: colors.neutral.surface,
-    fontSize: 10.5,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   mapFloatingEtaPill: {
@@ -293,9 +294,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   mapFloatingEtaText: {
+    ...typeScale.caption1,
     color: leopardPalette.primary,
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   publicProtectedTag: {
     backgroundColor: 'rgba(15, 23, 42, 0.75)',
@@ -308,9 +309,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   publicProtectedText: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '700',
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
+    fontWeight: '600',
   },
   publicSheetContainer: {
     backgroundColor: colors.neutral.surface,
@@ -331,15 +332,15 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   missionEyebrow: {
+    ...typeScale.caption2,
     color: leopardPalette.primary,
-    fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.6,
   },
   missionLegTitle: {
+    ...typeScale.subheadline,
     color: colors.neutral.text,
-    fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   fareSlab: {
@@ -367,14 +368,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fareCaption: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.4,
   },
   fareSubcaption: {
-    color: '#94A3B8',
-    fontSize: 10,
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
   },
   fareNetPill: {
     backgroundColor: '#DCFCE7',
@@ -383,17 +384,16 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   fareNetPillText: {
+    ...typeScale.caption2,
     color: '#15803D',
-    fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   fareAmountRow: {
     marginVertical: 2,
   },
   fareAmountText: {
+    ...typeScale.title1,
     color: leopardPalette.primary,
-    fontSize: 26,
-    fontWeight: '900',
     letterSpacing: -0.5,
   },
   fareTermsRow: {
@@ -410,14 +410,14 @@ const styles = StyleSheet.create({
     width: 16,
   },
   checkIconDotText: {
+    ...typeScale.caption2,
     color: '#15803D',
-    fontSize: 10,
-    fontWeight: '900',
+    fontWeight: '600',
   },
   fareTermsText: {
+    ...typeScale.caption2,
     color: colors.neutral.mutedText,
     flex: 1,
-    fontSize: 10.5,
   },
   publicRouteCard: {
     backgroundColor: colors.neutral.surface,
@@ -428,9 +428,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   cardSectionTitle: {
+    ...typeScale.caption1,
     color: leopardPalette.primary,
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   publicRouteSpineRow: {
@@ -451,9 +451,9 @@ const styles = StyleSheet.create({
     width: 28,
   },
   publicSpinePointTextA: {
+    ...typeScale.caption1,
     color: colors.neutral.surface,
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   publicSpineDashedLine: {
     backgroundColor: leopardPalette.inputBorder,
@@ -471,9 +471,9 @@ const styles = StyleSheet.create({
     width: 28,
   },
   publicSpinePointTextB: {
+    ...typeScale.caption1,
     color: colors.neutral.surface,
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   publicSpineLabelsCol: {
     flex: 1,
@@ -488,9 +488,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   publicPointSubA: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   publicDistanceChip: {
     alignItems: 'center',
@@ -502,14 +502,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   publicDistanceChipText: {
+    ...typeScale.caption2,
     color: colors.neutral.mutedText,
-    fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   publicPointTitleA: {
+    ...typeScale.footnote,
     color: leopardPalette.primary,
-    fontSize: 13.5,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   publicDistanceBetweenRow: {
     alignItems: 'center',
@@ -518,19 +518,19 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   publicDistanceBetweenText: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 11,
     fontWeight: '600',
   },
   publicPointSubB: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   publicPointTitleB: {
+    ...typeScale.footnote,
     color: leopardPalette.primary,
-    fontSize: 13.5,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   publicRouteMetaFooter: {
     backgroundColor: colors.neutral.canvas,
@@ -538,9 +538,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   publicRouteMetaText: {
+    ...typeScale.caption2,
     color: colors.neutral.mutedText,
-    fontSize: 11,
-    fontWeight: '600',
   },
   publicSpecsGrid: {
     flexDirection: 'row',
@@ -571,14 +570,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   specCellLabel: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   specCellValue: {
+    ...typeScale.caption1,
     color: leopardPalette.primary,
-    fontSize: 11.5,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   publicDispatchNotice: {
     alignItems: 'flex-start',
@@ -603,14 +602,13 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   noticeHeader: {
+    ...typeScale.caption1,
     color: '#1E40AF',
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   noticeBodyText: {
+    ...typeScale.caption2,
     color: '#1E3A8A',
-    fontSize: 11,
-    lineHeight: 16,
   },
   publicPrivacyCard: {
     backgroundColor: colors.neutral.canvas,
@@ -619,13 +617,12 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   publicPrivacyTitle: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   privacyCopy: {
-    color: '#94A3B8',
-    fontSize: 10,
-    lineHeight: 14,
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
   },
 });

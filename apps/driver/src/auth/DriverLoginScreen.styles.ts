@@ -106,7 +106,7 @@ export const styles = StyleSheet.create({
   driverBadgeText: {
     color: '#38BDF8',
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1.2,
   },
   heroCopy: {
@@ -117,14 +117,14 @@ export const styles = StyleSheet.create({
   eyebrow: {
     color: '#FDBA74',
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1.25,
     marginBottom: 7,
   },
   mainTitle: {
     color: colors.neutral.surface,
     ...typeScale.title2,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: -0.3,
     textAlign: 'center',
     lineHeight: 30,
@@ -192,7 +192,7 @@ export const styles = StyleSheet.create({
   fieldLabel: {
     color: colors.neutral.surface,
     ...typeScale.subheadline,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   validBadge: {
     flexDirection: 'row',
@@ -206,13 +206,12 @@ export const styles = StyleSheet.create({
   validText: {
     ...typeScale.caption2,
     color: '#15803D',
-    fontWeight: '700',
+    fontWeight: '600',
   },
   fieldHint: {
     color: leopardPalette.inputBorder,
     ...typeScale.caption1,
     marginTop: spacing.xs,
-    fontWeight: '500',
   },
   inputRow: {
     alignItems: 'center',
@@ -254,14 +253,13 @@ export const styles = StyleSheet.create({
   },
   countryCode: {
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.surface,
     fontVariant: ['tabular-nums'],
   },
   countryChevron: {
     ...typeScale.caption2,
     color: '#94A3B8',
-    fontWeight: '700',
     marginTop: -1,
   },
   badgeDivider: {
@@ -274,7 +272,6 @@ export const styles = StyleSheet.create({
     color: colors.neutral.surface,
     flex: 1,
     ...typeScale.callout,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
     minWidth: 0,
@@ -318,14 +315,14 @@ export const styles = StyleSheet.create({
   primaryBtnText: {
     color: colors.neutral.surface,
     ...typeScale.callout,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.3,
     textAlign: 'center',
   },
   primaryBtnDisabledText: {
     color: '#7DD3FC',
     ...typeScale.subheadline,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.2,
   },
   loadingRow: {
@@ -347,7 +344,6 @@ export const styles = StyleSheet.create({
   orText: {
     color: leopardPalette.inputBorder,
     ...typeScale.caption1,
-    fontWeight: '700',
   },
   googleBtn: {
     alignItems: 'center',
@@ -381,7 +377,7 @@ export const styles = StyleSheet.create({
     color: colors.neutral.surface,
     flexShrink: 1,
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
   btnDisabled: {
@@ -414,7 +410,6 @@ export const styles = StyleSheet.create({
   footerPrompt: {
     color: leopardPalette.inputBorder,
     ...typeScale.footnote,
-    fontWeight: '500',
   },
   registerAction: {
     justifyContent: 'center',
@@ -425,7 +420,7 @@ export const styles = StyleSheet.create({
   footerLinkAction: {
     color: '#38BDF8',
     ...typeScale.subheadline,
-    fontWeight: '800',
+    fontWeight: '600',
     textDecorationLine: 'underline',
   },
   pressed: {
@@ -472,12 +467,12 @@ export const styles = StyleSheet.create({
   otpNavBackText: {
     color: '#102A43',
     ...typeScale.footnote,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   otpNavStatus: {
     color: colors.neutral.subtleText,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.7,
   },
   otpCenterHero: {
@@ -504,8 +499,8 @@ export const styles = StyleSheet.create({
   },
   otpModalTitle: {
     color: '#102A43',
-    ...typeScale.body,
-    fontWeight: '900',
+    ...typeScale.headline,
+    fontWeight: '700',
     marginBottom: 6,
     textAlign: 'center',
   },
@@ -517,7 +512,7 @@ export const styles = StyleSheet.create({
   },
   phoneHighlight: {
     color: '#102A43',
-    fontWeight: '800',
+    fontWeight: '700',
   },
   verifyingWrap: {
     alignItems: 'center',
@@ -571,7 +566,7 @@ export const styles = StyleSheet.create({
   resendBtnText: {
     color: '#102A43',
     ...typeScale.footnote,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   resendBtnDisabledText: {
     color: '#8A98A7',

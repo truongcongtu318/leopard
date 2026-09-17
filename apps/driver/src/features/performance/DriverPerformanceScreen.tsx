@@ -205,8 +205,6 @@ const styles = StyleSheet.create({
   ratingBigNumber: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.largeTitle,
-    fontSize: 40,
-    fontWeight: '800',
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.5,
   },
@@ -215,9 +213,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.hairline,
   },
   ratingCountText: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption1,
-    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
   ratingBadgePill: {
@@ -251,7 +248,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: -0.2,
     paddingHorizontal: spacing.xxs,
   },
@@ -288,14 +285,13 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   metricSub: {
-    color: driverPrimitives.colors.gray400,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
-    fontWeight: '400',
   },
   metricValueText: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.title3,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.3,
   },
@@ -326,15 +322,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   reviewDateText: {
-    color: driverPrimitives.colors.gray400,
+    color: colors.neutral.mutedText,
     ...typeScale.caption1,
-    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
   reviewCommentText: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.footnote,
-    fontWeight: '500',
     lineHeight: 20,
   },
   reviewSeparator: {
@@ -352,8 +346,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   emptyText: {
-    color: driverPrimitives.colors.gray400,
+    color: colors.neutral.mutedText,
     ...typeScale.footnote,
-    fontWeight: '500',
   },
 });

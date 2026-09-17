@@ -7,6 +7,7 @@ import {
   colors,
   leopardPalette,
   radius,
+  typeScale,
   type MapCoordinate,
   type RoutePolylineSegment,
 } from '@leopard/mobile-core';
@@ -431,8 +432,8 @@ const styles = StyleSheet.create({
   },
   mapDemoBadgeText: {
     color: '#92400E',
-    fontSize: 10,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
   },
   mapStaleBadge: {
     backgroundColor: '#FEE2E2',
@@ -444,8 +445,8 @@ const styles = StyleSheet.create({
   },
   mapStaleBadgeText: {
     color: '#991B1B',
-    fontSize: 10,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
   },
   mapFloatingStatusPill: {
     alignItems: 'center',
@@ -475,9 +476,9 @@ const styles = StyleSheet.create({
     backgroundColor: leopardPalette.accentYellow,
   },
   mapStatusPillText: {
+    ...typeScale.caption2,
     color: colors.neutral.surface,
-    fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   mapWaypointGuidanceCard: {
     alignItems: 'center',
@@ -502,9 +503,9 @@ const styles = StyleSheet.create({
     width: 8,
   },
   waypointDestinationText: {
+    ...typeScale.caption2,
     color: colors.neutral.surface,
-    fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   mapFloatingEtaPill: {
     alignItems: 'center',
@@ -528,9 +529,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   mapFloatingEtaText: {
+    ...typeScale.caption1,
     color: leopardPalette.textSlateDark,
-    fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   mapFloatingControlsGroup: {
     bottom: 12,

@@ -14,6 +14,7 @@ import {
   leopardPalette,
   radius,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 import type { DriverActiveTripView } from '../model';
 import { callPhoneNumber } from './detail/CargoAndContactCard';
@@ -233,17 +234,17 @@ const styles = StyleSheet.create({
     width: 36,
   },
   sectionTitle: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
   activeReference: {
+    ...typeScale.subheadline,
     color: leopardPalette.primary,
-    fontSize: 15,
-    fontWeight: '800',
     fontVariant: ['tabular-nums'],
+    fontWeight: '600',
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -271,8 +272,8 @@ const styles = StyleSheet.create({
   },
   liveBadgeText: {
     color: '#166534',
-    fontSize: 10,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
     letterSpacing: 0.3,
   },
 
@@ -301,9 +302,9 @@ const styles = StyleSheet.create({
     width: 20,
   },
   spinePointTextA: {
+    ...typeScale.caption2,
     color: colors.neutral.surface,
-    fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   spineTrack: {
     backgroundColor: leopardPalette.inputBorder,
@@ -320,9 +321,9 @@ const styles = StyleSheet.create({
     width: 20,
   },
   spinePointTextB: {
+    ...typeScale.caption2,
     color: colors.neutral.surface,
-    fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   spineLabelsCol: {
     flex: 1,
@@ -330,29 +331,27 @@ const styles = StyleSheet.create({
   },
   locationGroup: {},
   pointTypeA: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.2,
   },
   originAddress: {
+    ...typeScale.footnote,
     color: colors.neutral.text,
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 18,
+    fontWeight: '600',
     marginTop: 1,
   },
   pointTypeB: {
+    ...typeScale.caption2,
     color: '#C2410C',
-    fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.2,
   },
   destAddress: {
+    ...typeScale.footnote,
     color: colors.neutral.text,
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 18,
+    fontWeight: '600',
     marginTop: 1,
   },
   etaRow: {
@@ -362,8 +361,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   etaText: {
+    ...typeScale.caption1,
     color: leopardPalette.primary,
-    fontSize: 11.5,
     fontWeight: '700',
   },
 
@@ -381,9 +380,9 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   proofWarningText: {
+    ...typeScale.caption1,
     color: '#92400E',
     flex: 1,
-    fontSize: 11.5,
     fontWeight: '600',
   },
 
@@ -401,9 +400,8 @@ const styles = StyleSheet.create({
     width: 7,
   },
   trackingText: {
+    ...typeScale.caption1,
     color: colors.neutral.mutedText,
-    fontSize: 11.5,
-    fontWeight: '500',
   },
 
   // Customer contact bar
@@ -423,14 +421,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contactTitle: {
+    ...typeScale.caption2,
     color: colors.neutral.subtleText,
-    fontSize: 10.5,
     fontWeight: '600',
   },
   contactPhone: {
+    ...typeScale.footnote,
     color: colors.neutral.text,
-    fontSize: 12.5,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: 1,
   },
   contactButtons: {
@@ -471,8 +469,8 @@ const styles = StyleSheet.create({
   },
   primaryActionText: {
     color: colors.neutral.surface,
-    fontSize: 15,
-    fontWeight: '800',
+    ...typeScale.subheadline,
+    fontWeight: '600',
     letterSpacing: 0.3,
   },
   pressed: {

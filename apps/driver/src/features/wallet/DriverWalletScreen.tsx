@@ -410,18 +410,17 @@ const styles = StyleSheet.create({
   balanceLabel: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   balanceSubLabel: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
     lineHeight: 16,
   },
   balanceAmount: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.title1,
-    fontWeight: '800',
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.5,
   },
@@ -442,9 +441,8 @@ const styles = StyleSheet.create({
     gap: spacing.hairline,
   },
   balanceStatLabel: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
-    fontWeight: '500',
   },
   balanceStatValue: {
     color: driverPrimitives.colors.gray900,
@@ -472,7 +470,7 @@ const styles = StyleSheet.create({
   withdrawBtnText: {
     color: driverPrimitives.colors.white,
     ...typeScale.callout,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   /* Linked Bank Account Card */
@@ -509,11 +507,11 @@ const styles = StyleSheet.create({
   bentoCardTitle: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   bentoCardSub: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
   },
   bankDetailRow: {
@@ -528,14 +526,13 @@ const styles = StyleSheet.create({
     gap: spacing.hairline + 1,
   },
   bankNameText: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption1,
     fontWeight: '600',
   },
   bankAccountNumText: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.headline,
-    fontWeight: '800',
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
   },
@@ -546,7 +543,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   unlinkedText: {
-    color: driverPrimitives.colors.gray400,
+    color: colors.neutral.mutedText,
     ...typeScale.footnote,
     paddingVertical: spacing.xxs,
   },
@@ -558,7 +555,7 @@ const styles = StyleSheet.create({
   sectionHeading: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: -0.2,
     paddingHorizontal: spacing.xxs,
   },
@@ -573,9 +570,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   emptyHistoryText: {
-    color: driverPrimitives.colors.gray400,
+    color: colors.neutral.mutedText,
     ...typeScale.footnote,
-    fontWeight: '500',
   },
   txGroupCard: {
     backgroundColor: driverPrimitives.colors.white,
@@ -639,7 +635,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   txTime: {
-    color: driverPrimitives.colors.gray400,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
   },
   txRight: {
@@ -654,9 +650,8 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   txStatus: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
-    fontWeight: '500',
   },
   txDivider: {
     backgroundColor: driverPrimitives.colors.gray100,
@@ -691,11 +686,10 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.title3,
-    fontWeight: '700',
     letterSpacing: -0.3,
   },
   modalSubtitle: {
-    color: driverPrimitives.colors.gray500,
+    color: colors.neutral.mutedText,
     ...typeScale.footnote,
     marginBottom: spacing.xxs,
   },
@@ -706,7 +700,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     color: driverPrimitives.colors.red600,
     ...typeScale.caption1,
-    fontWeight: '500',
     padding: spacing.xs,
   },
   inputGroup: {
@@ -725,7 +718,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     color: driverPrimitives.colors.gray900,
     ...typeScale.footnote,
-    fontWeight: '500',
     height: 44,
     paddingHorizontal: spacing.sm,
   },

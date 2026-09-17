@@ -8,6 +8,7 @@ import {
   colors,
   leopardPalette,
   spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 import type { DriverAssignedDetailView, DriverPrimaryTaskView } from '../../model';
 import { formatVndPrice } from '../../adapter';
@@ -367,8 +368,8 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   warningText: {
+    ...typeScale.caption1,
     color: '#B45309',
-    fontSize: 11.5,
     fontWeight: '600',
   },
   permissionAlertBox: {
@@ -381,13 +382,12 @@ const styles = StyleSheet.create({
   },
   permissionAlertTitle: {
     color: '#991B1B',
-    fontSize: 12.5,
-    fontWeight: '800',
+    ...typeScale.caption1,
+    fontWeight: '600',
   },
   permissionAlertMessage: {
+    ...typeScale.caption1,
     color: '#7F1D1D',
-    fontSize: 11.5,
-    lineHeight: 16,
   },
   pickingChecklistCard: {
     backgroundColor: colors.neutral.surface,
@@ -416,13 +416,13 @@ const styles = StyleSheet.create({
   },
   pickingChecklistTitle: {
     color: colors.neutral.text,
-    fontSize: 11.5,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
     letterSpacing: 0.3,
   },
   pickingChecklistSubtitle: {
-    color: colors.neutral.subtleText,
-    fontSize: 11,
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
   },
   checklistItemsCol: {
     gap: 6,
@@ -433,15 +433,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   checklistItemLabel: {
+    ...typeScale.caption1,
     color: colors.neutral.subtleText,
-    fontSize: 12,
     fontWeight: '600',
   },
   checklistItemValue: {
+    ...typeScale.caption1,
     color: colors.neutral.text,
     flexShrink: 1,
-    fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   preloadingCaptureBtn: {
     backgroundColor: colors.neutral.canvas,
@@ -460,16 +460,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   preloadingCaptureText: {
+    ...typeScale.caption1,
     color: leopardPalette.primary,
     flexShrink: 1,
-    fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   preloadingCaptureTextDone: {
+    ...typeScale.caption1,
     color: '#15803D',
     flexShrink: 1,
-    fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   cashCardOuter: {
     borderRadius: 14,
@@ -505,13 +505,13 @@ const styles = StyleSheet.create({
   },
   cashSectionTitle: {
     color: colors.neutral.text,
-    fontSize: 11,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
     letterSpacing: 0.3,
   },
   cashSectionSubtitle: {
-    color: colors.neutral.subtleText,
-    fontSize: 10.5,
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
   },
   cashStatusPill: {
     borderRadius: 999,
@@ -525,8 +525,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFBEB',
   },
   cashStatusPillText: {
-    fontSize: 9.5,
-    fontWeight: '800',
+    ...typeScale.caption2,
+    fontWeight: '600',
   },
   cashStatusPillTextReady: {
     color: '#15803D',
@@ -540,14 +540,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cashAmountLabel: {
+    ...typeScale.caption1,
     color: colors.neutral.subtleText,
-    fontSize: 12,
     fontWeight: '600',
   },
   cashAmountValue: {
     color: colors.neutral.text,
-    fontSize: 16,
-    fontWeight: '800',
+    ...typeScale.callout,
+    fontWeight: '700',
   },
   cashSuccessNotice: {
     alignItems: 'center',
@@ -558,17 +558,17 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   cashSuccessNoticeText: {
+    ...typeScale.caption2,
     color: '#15803D',
     flexShrink: 1,
-    fontSize: 11,
     fontWeight: '600',
   },
   cashActionWrap: {
     gap: 6,
   },
   cashActionHint: {
-    color: colors.neutral.subtleText,
-    fontSize: 10.5,
+    ...typeScale.caption2,
+    color: colors.neutral.mutedText,
     textAlign: 'center',
   },
   pressed: {
