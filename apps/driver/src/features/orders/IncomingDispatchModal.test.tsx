@@ -308,10 +308,10 @@ describe('IncomingDispatchModal', () => {
     expect(screen.getByText('Cách bạn 2.4 km')).toBeTruthy();
     expect(screen.getByText('Lộ trình 18.5 km')).toBeTruthy();
 
-    // SlideToAction uses colorVariant="success" and accepts with orderId
+    // SlideToAction uses colorVariant="brand" and accepts with orderId
     const slider = screen.getByTestId('dispatch-slide-action');
     const sliderStyle = StyleSheet.flatten(slider.props.style);
-    expect(sliderStyle.backgroundColor).toBe('#16A34A');
+    expect(sliderStyle.backgroundColor).toBe('#0B1E42');
 
     await fireEvent(slider, 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },

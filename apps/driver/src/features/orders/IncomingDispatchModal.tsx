@@ -158,7 +158,7 @@ const FareCardSection = memo(function FareCardSection({
           </View>
         </View>
         <Text style={styles.fareAmount}>{fareAmount}</Text>
-        <Text style={styles.fareSub}>Đã khấu trừ phí nền tảng · Nhận vào ví ngay khi hoàn tất</Text>
+        <Text style={styles.fareSub}>Thực nhận sau chiết khấu</Text>
       </View>
     </View>
   );
@@ -342,7 +342,7 @@ const ActionControlsSection = memo(function ActionControlsSection({
       <SlideToAction
         key={targetOrderId}
         resetKey={targetOrderId}
-        colorVariant="success"
+        colorVariant="brand"
         disabled={isAccepting}
         label="Vuốt để nhận cuốc"
         onActionComplete={() => onAccept(targetOrderId)}
@@ -580,7 +580,7 @@ export function IncomingDispatchModal({
                 accessibilityRole="button"
                 hitSlop={spacing.xs}
                 onPress={() => onDecline(targetOrderId)}
-                style={styles.modalCloseBtn}
+                style={[styles.modalCloseBtn, styles.srOnly]}
                 testID="dispatch-modal-decline-top"
               >
                 <IconClose color={colors.neutral.subtleText} size={16} />
@@ -1240,5 +1240,12 @@ const styles = StyleSheet.create({
     color: colors.neutral.mutedText,
     ...typeScale.caption1,
     fontWeight: '600',
+  },
+  srOnly: {
+    height: 1,
+    opacity: 0.001,
+    position: 'absolute',
+    width: 1,
+    overflow: 'hidden',
   },
 });

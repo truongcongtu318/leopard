@@ -105,11 +105,33 @@ const TaskButton = memo(function TaskButton({
 }>) {
   if (task.kind === 'upload-proof') {
     const handler = task.command.id === 'cmd-retry-proof-demo' ? onRetryProof : onSelectProof;
+    const disabled = task.command.disabled || task.command.isPending;
     return (
-      <CommandButton
-        command={task.command}
-        onPress={handler ? () => handler(task.command.id) : undefined}
-      />
+      <View style={styles.advanceLegContainer}>
+        <Pressable
+          accessibilityLabel={task.command.label}
+          accessibilityRole="button"
+          disabled={disabled}
+          onPress={handler ? () => handler(task.command.id) : undefined}
+          style={styles.a11yHiddenButton}
+          testID={`btn-proof-${task.command.id}`}
+        >
+          <Text style={styles.a11yHiddenText}>{task.command.label}</Text>
+        </Pressable>
+        <SlideToAction
+          key={task.command.id}
+          resetKey={task.command.id}
+          colorVariant="brand"
+          disabled={disabled}
+          label="Đã tới điểm giao hàng"
+          onActionComplete={() => {
+            if (handler && !disabled) {
+              handler(task.command.id);
+            }
+          }}
+          testID="btn-advance-leg-slide"
+        />
+      </View>
     );
   }
 
@@ -280,12 +302,19 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
         onRecordStopProgress={props.onRecordStopProgress}
         onRetryProof={props.onRetryProof}
         onSelectProof={props.onSelectProof}
+        onOpenPickupProof={handleOpenPickupProof}
+        onOpenDeliveryProof={handleOpenDeliveryProof}
         taskButtonComponent={
           view.primaryTask ? (
             <TaskButton
               onExecuteTask={props.onExecuteTask}
               onRetryProof={props.onRetryProof}
-              onSelectProof={props.onSelectProof}
+              onSelectProof={() => {
+                if (props.onSelectProof) props.onSelectProof();
+                if (view.order.status === 'IN_TRANSIT') {
+                  handleOpenDeliveryProof();
+                }
+              }}
               task={view.primaryTask}
             />
           ) : undefined

@@ -17,6 +17,7 @@ config.resolver.blockList = [
   new RegExp(`${path.resolve(workspaceRoot, 'docs')}/.*`),
   new RegExp(`${path.resolve(workspaceRoot, 'infra')}/.*`),
   new RegExp(`${path.resolve(workspaceRoot, '.worktrees')}/.*`),
+  /.*\.tmpdir(\/.*)?$/,
 ];
 
 module.exports = config;

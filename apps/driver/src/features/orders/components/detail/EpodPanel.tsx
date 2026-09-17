@@ -514,7 +514,7 @@ export function EpodPanel({
       {(status === 'IN_TRANSIT' || status === 'DELIVERED') && (
         <View style={styles.sliderContainer}>
           <SlideToAction
-            colorVariant="success"
+            colorVariant="brand"
             disabled={!isCompleteReady}
             label="Vuốt hoàn tất cuốc xe"
             onActionComplete={handleConfirmDelivery}

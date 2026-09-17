@@ -304,6 +304,7 @@ export const Driver12JourneyPlayground = memo(function Driver12JourneyPlayground
           styles.dockContainer,
           isOfferState ? styles.dockContainerOfferMode : styles.dockContainerBottom,
         ]}
+        testID="playground-dock-container"
       >
         <Pressable
           onPress={() => setShowDock(!showDock)}

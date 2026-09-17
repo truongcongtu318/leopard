@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   primaryCtaSuccess: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#0B2545',
   },
   primaryCtaDanger: {
     backgroundColor: '#FF3B30',

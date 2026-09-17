@@ -30,12 +30,6 @@ export type PickupVerificationViewProps = Readonly<{
   onCancel?: () => void;
 }>;
 
-const PRESET_NOTES = [
-  'Vỏ thùng nguyên vẹn, không móp méo',
-  'Hàng đã chằng buộc cẩn thận',
-  'Kiểm đếm đúng số lượng',
-];
-
 export const PickupVerificationView = memo(function PickupVerificationView({
   initialPackageCount = 24,
   onCancel,
@@ -46,7 +40,6 @@ export const PickupVerificationView = memo(function PickupVerificationView({
   senderPhotoReferenceUrl,
 }: PickupVerificationViewProps) {
   const [packageCount, setPackageCount] = useState(initialPackageCount);
-  const [selectedNote, setSelectedNote] = useState(PRESET_NOTES[0]);
 
   const hasPhoto = photos.length > 0;
 
@@ -66,7 +59,7 @@ export const PickupVerificationView = memo(function PickupVerificationView({
     onConfirmPickup({
       photos,
       packageCount,
-      notes: selectedNote,
+      notes: '',
     });
   };
 
@@ -86,11 +79,14 @@ export const PickupVerificationView = memo(function PickupVerificationView({
         ) : (
           <View style={styles.cancelPlaceholder} />
         )}
-        <Text style={styles.topBarTitle}>CHỤP ẢNH HÀNG HÓA ({photos.length}/3)</Text>
+        <Text style={styles.topBarTitle}>XÁC NHẬN LẤY HÀNG</Text>
         <Text style={styles.topBarBadge}>{orderCode}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Section Label */}
+        <Text style={styles.sectionLabel}>BẰNG CHỨNG LẤY HÀNG (POD BẮT BUỘC)</Text>
+
         {/* Photo Capture & Reference Section */}
         <View style={styles.photoContainer}>
           {hasPhoto ? (
@@ -114,11 +110,11 @@ export const PickupVerificationView = memo(function PickupVerificationView({
               testID="btn-capture-photo"
             >
               <View style={styles.cameraIconBox}>
-                <IconCamera color="#F59E0B" size={30} />
+                <IconCamera color="#0B2545" size={32} />
               </View>
-              <Text style={styles.capturePrompt}>+ Chụp ảnh hàng hóa</Text>
+              <Text style={styles.capturePrompt}>+ Chụp ảnh hàng hóa tại điểm lấy</Text>
               <Text style={styles.captureSubprompt}>
-                Bắt buộc tối thiểu 1 ảnh rõ kiện hàng tại thùng xe
+                Chụp rõ kiện hàng trên thùng xe trước khi bốc
               </Text>
             </Pressable>
           )}
@@ -134,10 +130,10 @@ export const PickupVerificationView = memo(function PickupVerificationView({
           ) : null}
         </View>
 
-        {/* Package Counter */}
-        <View style={styles.counterCard}>
-          <Text style={styles.sectionLabel}>SỐ KIỆN HÀNG THỰC TẾ</Text>
-          <View style={styles.counterRow}>
+        {/* Package Counter - Clean compact row */}
+        <View style={styles.counterRow}>
+          <Text style={styles.counterLabel}>Số kiện hàng thực tế:</Text>
+          <View style={styles.stepperContainer}>
             <Pressable
               accessibilityLabel="Giảm số kiện hàng"
               accessibilityRole="button"
@@ -157,28 +153,6 @@ export const PickupVerificationView = memo(function PickupVerificationView({
             >
               <Text style={styles.counterBtnText}>+</Text>
             </Pressable>
-          </View>
-        </View>
-
-        {/* Quick Note Tags */}
-        <View style={styles.notesSection}>
-          <Text style={styles.sectionLabel}>TÌNH TRẠNG HÀNG HÓA</Text>
-          <View style={styles.tagsWrapper}>
-            {PRESET_NOTES.map((note) => {
-              const isSelected = selectedNote === note;
-              return (
-                <Pressable
-                  key={note}
-                  accessibilityRole="button"
-                  onPress={() => setSelectedNote(note)}
-                  style={[styles.tagPill, isSelected ? styles.tagPillActive : null]}
-                >
-                  <Text style={[styles.tagText, isSelected ? styles.tagTextActive : null]}>
-                    {note}
-                  </Text>
-                </Pressable>
-              );
-            })}
           </View>
         </View>
       </ScrollView>
@@ -340,20 +314,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
   },
-  counterCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.card,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...iosContinuousCurve,
-    shadowColor: '#0B2545',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
   sectionLabel: {
     ...typeScale.footnote,
     fontWeight: '700',
@@ -363,13 +323,28 @@ const styles = StyleSheet.create({
   counterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xl,
-    paddingVertical: spacing.xs,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...iosContinuousCurve,
+  },
+  counterLabel: {
+    ...typeScale.subheadline,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  stepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   counterBtn: {
-    width: 48,
-    height: 48,
+    width: 36,
+    height: 36,
     borderRadius: radius.pill,
     backgroundColor: '#F0F4FA',
     alignItems: 'center',
@@ -378,43 +353,18 @@ const styles = StyleSheet.create({
     borderColor: '#CBD9EB',
   },
   counterBtnText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: '#0B2545',
+    lineHeight: 22,
   },
   counterValueText: {
-    fontSize: 34,
+    fontSize: 22,
     fontWeight: '800',
     color: '#0B2545',
     fontVariant: ['tabular-nums'],
-    minWidth: 60,
+    minWidth: 36,
     textAlign: 'center',
-  },
-  notesSection: {
-    marginBottom: spacing.md,
-  },
-  tagsWrapper: {
-    gap: spacing.xs,
-  },
-  tagPill: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  tagPillActive: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#F59E0B',
-  },
-  tagText: {
-    ...typeScale.subheadline,
-    color: '#475569',
-  },
-  tagTextActive: {
-    color: '#B45309',
-    fontWeight: '700',
   },
   footerContainer: {
     position: 'absolute',

@@ -6,18 +6,17 @@ import {
   IconCamera,
   IconCheck,
   IconTxPayment,
-  colors,
   iosContinuousCurve,
   leopardPalette,
   radius,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
-import type { DriverAssignedDetailView, DriverPrimaryTaskView } from '../../model';
+import type { DriverAssignedDetailView } from '../../model';
 import { formatVndPrice } from '../../adapter';
 import { getDriverCurrentLocation } from '../../driver-current-location';
 import { postMapMessageToFrames } from '@leopard/mobile-core';
-import { MissionMapCanvas, openExternalNavigation } from './MissionMapCanvas';
+import { MissionMapCanvas } from './MissionMapCanvas';
 import { VerticalRouteStepper } from './VerticalRouteStepper';
 import { EpodPanel } from './EpodPanel';
 import { CompletionSummaryCard } from './CompletionSummaryCard';
@@ -31,6 +30,8 @@ export type AssignedDetailViewProps = Readonly<{
   onBack?: () => void;
   onExecuteTask?: (commandId: string) => void;
   onSelectProof?: () => void;
+  onOpenPickupProof?: () => void;
+  onOpenDeliveryProof?: () => void;
   onRetryProof?: (commandId: string) => void;
   onOpenIncidentModal?: () => void;
   onOpenLocationSettings?: () => void;
@@ -49,6 +50,8 @@ export function AssignedDetailView({
   onBack,
   onExecuteTask,
   onSelectProof,
+  onOpenPickupProof,
+  onOpenDeliveryProof,
   onRetryProof,
   onOpenIncidentModal,
   onOpenLocationSettings,
@@ -108,9 +111,9 @@ export function AssignedDetailView({
   }, [isReturning, isPickupLeg, view.order.route.origin, view.order.route.destination]);
 
   const mapOrigin = React.useMemo(() => {
-    // Luôn ưu tiên vị trí GPS thực của tài xế nếu có
-    if (driverLocation && driverLocation.lat > 0 && driverLocation.lng > 0) {
-      return { label: 'Vị trí của bạn', coords: driverLocation };
+    // Luôn ưu tiên vị trí xe hợp lệ trong khu vực của chuyến đi
+    if (effectiveTruckLocation) {
+      return { label: 'Vị trí của bạn', coords: effectiveTruckLocation };
     }
     return {
       label: view.order.route.origin.label,
@@ -119,9 +122,19 @@ export function AssignedDetailView({
           ? { lat: view.order.route.origin.lat, lng: view.order.route.origin.lng }
           : undefined,
     };
-  }, [driverLocation, view.order.route.origin]);
+  }, [effectiveTruckLocation, view.order.route.origin]);
 
   const mapDestination = React.useMemo(() => {
+    // Trong giai đoạn đi lấy hàng (ACCEPTED, PICKING_UP), đích đến của bản đồ là ĐIỂM LẤY HÀNG
+    if (isPickupLeg) {
+      return {
+        label: view.order.route.origin.label,
+        coords:
+          view.order.route.origin.lat != null && view.order.route.origin.lng != null
+            ? { lat: view.order.route.origin.lat, lng: view.order.route.origin.lng }
+            : undefined,
+      };
+    }
     return {
       label: view.order.route.destination.label,
       coords:
@@ -129,7 +142,7 @@ export function AssignedDetailView({
           ? { lat: view.order.route.destination.lat, lng: view.order.route.destination.lng }
           : undefined,
     };
-  }, [view.order.route.destination]);
+  }, [isPickupLeg, view.order.route.origin, view.order.route.destination]);
 
   const isMissionActive =
     !isTerminal &&
@@ -145,7 +158,7 @@ export function AssignedDetailView({
     : view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP'
       ? 'ĐẾN ĐIỂM LẤY HÀNG'
       : view.order.status === 'IN_TRANSIT'
-        ? 'VẬN CHUYỂN ĐẾN ĐIỂM GIAO'
+        ? 'ĐẾN ĐIỂM GIAO HÀNG'
         : view.order.status === 'RETURNING'
           ? 'HOÀN HÀNG VỀ ĐIỂM GỬI'
           : 'TIẾN ĐỘ CHUYẾN ĐI';
@@ -290,7 +303,61 @@ export function AssignedDetailView({
                   : view.order.route.destination.label}
               </Text>
 
-              {view.order.cargoSummary ? (
+              {/* Stage 2 (PICKING_UP): Tích hợp gọn gàng kiểm hàng ngay trong thẻ điểm đến, KHÔNG tạo card riêng che map */}
+              {view.order.status === 'PICKING_UP' ? (
+                <View style={styles.inlineCargoChecklist} testID="cargo-specs-checklist">
+                  <View style={styles.inlineCargoInfoRow}>
+                    <View style={styles.inlineCargoSummaryCol}>
+                      <Text numberOfLines={1} style={styles.inlineCargoText}>
+                        {view.order.cargoSummary || 'Hàng hóa tiêu chuẩn'}
+                      </Text>
+                      {view.order.cargoWeightKg ? (
+                        <Text style={styles.inlineCargoWeightText}>{view.order.cargoWeightKg} kg</Text>
+                      ) : null}
+                    </View>
+                    <View style={styles.inlineCargoFeeCol}>
+                      <Text style={styles.inlineCargoFeeLabel}>Phí bốc xếp:</Text>
+                      <Text style={styles.inlineCargoBold}> Miễn phí tiêu chuẩn</Text>
+                    </View>
+                  </View>
+
+                  <Pressable
+                    accessibilityHint="Chụp ảnh hàng hóa trước khi bốc lên xe để làm bằng chứng tránh khiếu nại"
+                    accessibilityLabel="Chụp ảnh hàng trước khi bốc"
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setPreloadingPhotoCaptured(true);
+                      if (onOpenPickupProof) {
+                        onOpenPickupProof();
+                      } else if (onSelectProof) {
+                        onSelectProof();
+                      }
+                    }}
+                    style={({ pressed }) => [
+                      styles.inlineCaptureBtn,
+                      preloadingPhotoCaptured ? styles.inlineCaptureBtnDone : null,
+                      pressed ? styles.btnPressed : null,
+                    ]}
+                    testID="btn-preloading-cargo-photo"
+                  >
+                    {preloadingPhotoCaptured ? (
+                      <View style={styles.inlineCaptureInnerRow}>
+                        <IconCheck color="#15803D" size={16} strokeWidth={2.5} />
+                        <Text style={styles.inlineCaptureDoneText}>
+                          Đã chụp ảnh kiểm hàng (tránh khiếu nại)
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.inlineCaptureInnerRow}>
+                        <IconCamera color="#0B2545" size={16} />
+                        <Text style={styles.inlineCapturePromptText}>
+                          + Chụp ảnh kiểm hàng tại điểm lấy
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                </View>
+              ) : view.order.cargoSummary ? (
                 <View style={styles.activeLegCargoRow}>
                   <Text numberOfLines={1} style={styles.activeLegCargoText}>
                     📦 {view.order.cargoSummary}
@@ -298,70 +365,6 @@ export function AssignedDetailView({
                   </Text>
                 </View>
               ) : null}
-            </View>
-          )}
-
-          {/* Stage 2: Khi đã đến điểm lấy và cần chụp ảnh kiểm hàng, hiện card chụp ảnh chuẩn Apple HIG */}
-          {view.order.status === 'PICKING_UP' && (
-            <View style={styles.appleActionSurfaceCard} testID="cargo-specs-checklist">
-              <View style={styles.appleCardHeaderRow}>
-                <View style={styles.appleIconBadgeAmber}>
-                  <IconCamera color="#D97706" size={20} />
-                </View>
-                <View style={styles.appleCardHeaderTextCol}>
-                  <Text style={styles.appleCardTitle}>Kiểm tra hàng hóa</Text>
-                  <Text style={styles.appleCardSubtitle}>
-                    {view.order.cargoSummary || 'Hàng hóa tiêu chuẩn'}
-                  </Text>
-                </View>
-                <View style={preloadingPhotoCaptured ? styles.appleBadgeSuccess : styles.appleBadgePending}>
-                  <Text style={preloadingPhotoCaptured ? styles.appleBadgeSuccessText : styles.appleBadgePendingText}>
-                    {preloadingPhotoCaptured ? 'Đã chụp' : 'Cần 1 ảnh'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Chi tiết thông số kiểm hàng & Phí bốc xếp */}
-              <View style={styles.appleChecklistMetaRow}>
-                <Text style={styles.appleChecklistMetaItem}>
-                  <Text>Khối lượng:</Text> <Text style={styles.appleChecklistMetaBold}>{view.order.cargoWeightKg ? `${view.order.cargoWeightKg} kg` : 'Theo tải trọng xe'}</Text>
-                </Text>
-                <Text style={styles.appleChecklistMetaItem}>
-                  <Text>Phí bốc xếp:</Text> <Text style={styles.appleChecklistMetaBold}>Miễn phí bốc xếp tiêu chuẩn</Text>
-                </Text>
-              </View>
-
-              <Pressable
-                accessibilityHint="Chụp ảnh hàng hóa trước khi bốc lên xe để làm bằng chứng tránh khiếu nại"
-                accessibilityLabel="Chụp ảnh hàng trước khi bốc"
-                accessibilityRole="button"
-                onPress={() => {
-                  setPreloadingPhotoCaptured(true);
-                  if (onSelectProof) onSelectProof();
-                }}
-                style={({ pressed }) => [
-                  styles.appleCaptureBtn,
-                  preloadingPhotoCaptured ? styles.appleCaptureBtnDone : null,
-                  pressed ? styles.btnPressed : null,
-                ]}
-                testID="btn-preloading-cargo-photo"
-              >
-                {preloadingPhotoCaptured ? (
-                  <View style={styles.appleCaptureInnerRow}>
-                    <IconCheck color="#16A34A" size={18} strokeWidth={2.5} />
-                    <Text style={styles.appleCaptureDoneText}>
-                      Đã chụp ảnh kiểm hàng trước khi bốc (tránh khiếu nại)
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.appleCaptureInnerRow}>
-                    <IconCamera color="#0B2545" size={18} />
-                    <Text style={styles.appleCapturePromptText}>
-                      + Chụp ảnh hàng hóa tại điểm lấy
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
             </View>
           )}
 
@@ -516,7 +519,7 @@ const styles = StyleSheet.create({
   floatingMapControls: {
     position: 'absolute',
     right: 16,
-    bottom: 160,
+    bottom: 295,
     flexDirection: 'column',
     gap: 10,
     zIndex: 999,
@@ -607,6 +610,79 @@ const styles = StyleSheet.create({
   activeLegCargoText: {
     color: '#64748B',
     ...typeScale.footnote,
+  },
+  inlineCargoChecklist: {
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    gap: 6,
+  },
+  inlineCargoInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  inlineCargoSummaryCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  inlineCargoText: {
+    ...typeScale.footnote,
+    color: '#0F172A',
+    fontWeight: '600',
+  },
+  inlineCargoWeightText: {
+    ...typeScale.footnote,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  inlineCargoFeeCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inlineCargoFeeLabel: {
+    ...typeScale.caption1,
+    color: '#64748B',
+  },
+  inlineCargoBold: {
+    fontWeight: '700',
+    color: '#0B2545',
+  },
+  inlineCaptureBtn: {
+    height: 38,
+    borderRadius: radius.control,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+    ...iosContinuousCurve,
+  },
+  inlineCaptureBtnDone: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+    borderStyle: 'solid',
+  },
+  inlineCaptureInnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  inlineCapturePromptText: {
+    ...typeScale.footnote,
+    color: '#0B2545',
+    fontWeight: '600',
+  },
+  inlineCaptureDoneText: {
+    ...typeScale.footnote,
+    color: '#15803D',
+    fontWeight: '600',
   },
   notice: {
     backgroundColor: '#FEF3C7',
@@ -709,35 +785,6 @@ const styles = StyleSheet.create({
     ...typeScale.caption2,
     fontWeight: '700',
   },
-  appleCaptureBtn: {
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: '#FFFBEB',
-    borderColor: '#F59E0B',
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...iosContinuousCurve,
-  },
-  appleCaptureBtnDone: {
-    backgroundColor: '#E8F8EE',
-    borderColor: '#22C55E',
-  },
-  appleCaptureInnerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  appleCapturePromptText: {
-    color: '#B45309',
-    ...typeScale.subheadline,
-    fontWeight: '700',
-  },
-  appleCaptureDoneText: {
-    color: '#15803D',
-    ...typeScale.subheadline,
-    fontWeight: '700',
-  },
   appleCashAmountBox: {
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
@@ -791,201 +838,6 @@ const styles = StyleSheet.create({
     ...typeScale.subheadline,
     fontWeight: '800',
     letterSpacing: 0.3,
-  },
-  appleChecklistMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: spacing.xs,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  appleChecklistMetaItem: {
-    color: '#64748B',
-    ...typeScale.caption2,
-  },
-  appleChecklistMetaBold: {
-    color: '#0F172A',
-    fontWeight: '700',
-  },
-  pickingChecklistHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  pickingChecklistIconBadge: {
-    alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderRadius: 10,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  pickingChecklistTitleCol: {
-    flex: 1,
-    gap: 2,
-  },
-  pickingChecklistTitle: {
-    color: colors.neutral.text,
-    ...typeScale.caption2,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  pickingChecklistSubtitle: {
-    ...typeScale.caption2,
-    color: colors.neutral.mutedText,
-  },
-  checklistItemsCol: {
-    gap: 6,
-  },
-  checklistItemRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  checklistItemLabel: {
-    ...typeScale.caption1,
-    color: colors.neutral.subtleText,
-    fontWeight: '600',
-  },
-  checklistItemValue: {
-    ...typeScale.caption1,
-    color: colors.neutral.text,
-    flexShrink: 1,
-    fontWeight: '600',
-  },
-  preloadingCaptureBtn: {
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 10,
-  },
-  preloadingCaptureBtnDone: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-  },
-  preloadingCaptureInner: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  preloadingCaptureText: {
-    ...typeScale.caption1,
-    color: leopardPalette.primary,
-    flexShrink: 1,
-    fontWeight: '600',
-  },
-  preloadingCaptureTextDone: {
-    ...typeScale.caption1,
-    color: '#15803D',
-    flexShrink: 1,
-    fontWeight: '600',
-  },
-  cashCardOuter: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  cashCardInner: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.border,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 10,
-    padding: 12,
-  },
-  cashHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  cashIconBadge: {
-    alignItems: 'center',
-    backgroundColor: '#FFFBEB',
-    borderRadius: 10,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  cashIconBadgeSuccess: {
-    backgroundColor: '#F0FDF4',
-  },
-  cashHeaderTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  cashSectionTitle: {
-    color: colors.neutral.text,
-    ...typeScale.caption2,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  cashSectionSubtitle: {
-    ...typeScale.caption2,
-    color: colors.neutral.mutedText,
-  },
-  cashStatusPill: {
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  cashStatusPillReady: {
-    backgroundColor: '#F0FDF4',
-  },
-  cashStatusPillPending: {
-    backgroundColor: '#FFFBEB',
-  },
-  cashStatusPillText: {
-    ...typeScale.caption2,
-    fontWeight: '600',
-  },
-  cashStatusPillTextReady: {
-    color: '#15803D',
-  },
-  cashStatusPillTextPending: {
-    color: '#B45309',
-  },
-  cashAmountRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cashAmountLabel: {
-    ...typeScale.caption1,
-    color: colors.neutral.subtleText,
-    fontWeight: '600',
-  },
-  cashAmountValue: {
-    color: colors.neutral.text,
-    ...typeScale.callout,
-    fontWeight: '700',
-  },
-  cashSuccessNotice: {
-    alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    borderRadius: 10,
-    flexDirection: 'row',
-    gap: 8,
-    padding: 10,
-  },
-  cashSuccessNoticeText: {
-    ...typeScale.caption2,
-    color: '#15803D',
-    flexShrink: 1,
-    fontWeight: '600',
-  },
-  cashActionWrap: {
-    gap: 6,
-  },
-  cashActionHint: {
-    ...typeScale.caption2,
-    color: colors.neutral.mutedText,
-    textAlign: 'center',
-  },
-  pressed: {
-    opacity: 0.8,
   },
   srOnly: {
     height: 1,

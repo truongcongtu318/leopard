@@ -317,7 +317,7 @@ export function MissionMapCanvas({
         routeResolutionPolicy="PROVIDED_ONLY"
         routeSegments={effectiveRouteSegments}
         stops={mapStops}
-        truckEtaLabel={tracking.label}
+        truckEtaLabel=""
         truckLocation={truckLocation}
       />
 
