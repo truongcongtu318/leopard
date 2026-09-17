@@ -377,23 +377,22 @@ export default function OrderSearchingScreen({
         visible={showCancelModal}
       >
         <View style={styles.modalOverlay}>
+          <Pressable onPress={() => setShowCancelModal(false)} style={StyleSheet.absoluteFill} />
           <View style={styles.modalContentCard}>
             <View style={styles.modalIconWrap}>
-              <IconSecurityShield color={colors.success.text} size={32} />
+              <IconSecurityShield color="#16A34A" size={26} />
             </View>
 
             <Text style={styles.modalTitle}>Xác nhận hủy tìm xe?</Text>
 
             <View style={styles.refundHighlightBox}>
               <Text style={styles.refundHighlightText}>
-                Hoàn cọc 100% tức thì về ví hoặc tài khoản ngân hàng của bạn theo
-                chính sách bảo vệ quyền lợi khách hàng LEOPARD.
+                Hoàn cọc 100% tức thì về ví hoặc tài khoản ngân hàng của bạn theo chính sách bảo vệ quyền lợi khách hàng LEOPARD.
               </Text>
             </View>
 
             <Text style={styles.modalDescription}>
-              Bạn có thể tạo lại cuốc xe mới bất kỳ lúc nào mà không phát sinh
-              thêm phí.
+              Bạn có thể tạo lại cuốc xe mới bất kỳ lúc nào mà không phát sinh thêm phí.
             </Text>
 
             <View style={styles.modalActionButtons}>
@@ -401,7 +400,7 @@ export default function OrderSearchingScreen({
                 accessibilityLabel="Xác nhận hủy và hoàn tiền"
                 accessibilityRole="button"
                 onPress={handleCancelConfirm}
-                style={styles.modalConfirmCancelBtn}
+                style={({ pressed }) => [styles.modalConfirmCancelBtn, pressed && styles.btnPressed]}
               >
                 <Text style={styles.modalConfirmCancelText}>
                   Xác nhận hủy và hoàn tiền
@@ -412,7 +411,7 @@ export default function OrderSearchingScreen({
                 accessibilityLabel="Tiếp tục tìm xe"
                 accessibilityRole="button"
                 onPress={() => setShowCancelModal(false)}
-                style={styles.modalKeepWaitingBtn}
+                style={({ pressed }) => [styles.modalKeepWaitingBtn, pressed && styles.btnPressed]}
               >
                 <Text style={styles.modalKeepWaitingText}>Tiếp tục tìm xe</Text>
               </Pressable>
@@ -730,112 +729,116 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   cancelBtn: {
-    height: 52,
-    minHeight: 52,
-    borderRadius: 16,
+    height: 50,
+    minHeight: 50,
+    borderRadius: 14,
     ...iosContinuousCurve,
-    borderWidth: 1.5,
-    borderColor: colors.danger.border,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 59, 48, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.danger.background,
+    backgroundColor: '#FFFFFF',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
   },
   cancelBtnPressed: {
-    backgroundColor: colors.danger.background,
+    backgroundColor: '#FFF1F2',
     opacity: 0.88,
     transform: [{ scale: 0.99 }],
   },
   cancelBtnText: {
     fontFamily: systemFontFamily,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.danger.text,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FF3B30',
     letterSpacing: -0.2,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(11, 30, 66, 0.65)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
   },
   modalContentCard: {
-    backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     padding: 24,
     width: '100%',
-    maxWidth: 380,
+    maxWidth: 330,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
+    boxShadow: '0 12px 36px rgba(0, 0, 0, 0.18)',
     elevation: 10,
+    ...iosContinuousCurve,
   },
   modalIconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.success.background,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#F0FDF4',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   modalTitle: {
-    fontSize: typeScale.body.fontSize,
+    fontSize: 18,
     fontWeight: '700',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
+    letterSpacing: -0.3,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   refundHighlightBox: {
-    backgroundColor: leopardPalette.ecoGreenBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: leopardPalette.ecoGreenBorder,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
     width: '100%',
+    ...iosContinuousCurve,
   },
   refundHighlightText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.success.text,
+    fontWeight: '500',
+    color: '#15803D',
     lineHeight: 18,
     textAlign: 'center',
   },
   modalDescription: {
     fontSize: 13,
-    color: customerPalette.textSubtle,
+    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 20,
+    paddingHorizontal: 4,
   },
   modalActionButtons: {
     width: '100%',
-    gap: 10,
+    gap: 8,
   },
   modalConfirmCancelBtn: {
     minHeight: 48,
-    borderRadius: 16,
-    backgroundColor: colors.danger.text,
+    borderRadius: 14,
+    backgroundColor: '#FF3B30',
     justifyContent: 'center',
     alignItems: 'center',
+    ...iosContinuousCurve,
   },
   modalConfirmCancelText: {
-    color: customerPalette.surfaceWhite,
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
+    letterSpacing: -0.2,
   },
   modalKeepWaitingBtn: {
-    minHeight: 48,
-    borderRadius: 16,
-    backgroundColor: colors.neutral.surfaceMuted,
+    minHeight: 46,
+    borderRadius: 14,
+    backgroundColor: '#F2F2F7',
     justifyContent: 'center',
     alignItems: 'center',
+    ...iosContinuousCurve,
   },
   modalKeepWaitingText: {
-    color: customerPalette.textMutedSlate,
+    color: '#000000',
     fontSize: 15,
     fontWeight: '600',
   },
