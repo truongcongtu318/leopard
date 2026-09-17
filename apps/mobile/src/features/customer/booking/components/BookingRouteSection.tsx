@@ -13,10 +13,6 @@ import {
   View,
 } from 'react-native';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 import {
   IconChevronRight,
   IconClose,
@@ -33,6 +29,10 @@ import { addressStore, type SavedAddress } from '../../addresses/address-store';
 import { searchPlacesDirect } from '../../../home/HomeDashboardScreen';
 import { searchVietmapWithCoords, type GeocodedSuggestion } from '../../../home/services/vietmap-search';
 import type { RouteStop } from '../booking-schema';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export interface LocationSearchResult {
   id: string;
@@ -55,6 +55,7 @@ export interface BookingRouteSectionProps {
   onAddStop: () => void;
   onRemoveStop: (stopId: string) => void;
   onPickOnMap?: () => void;
+  onSearchStateChange?: (isSearching: boolean) => void;
   routeError?: string;
   initialActiveTarget?: 'pickup' | 'dropoff' | null;
 }
@@ -105,26 +106,22 @@ export function BookingRouteSection({
   onAddStop,
   onRemoveStop,
   onPickOnMap,
+  onSearchStateChange,
   routeError,
   initialActiveTarget = null,
 }: BookingRouteSectionProps) {
-  // Always start closed by default; only show dropdown when user explicitly taps/clicks a row
   const [activeTarget, setActiveTarget] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-focus a newly added empty stop
-  useEffect(() => {
-    const emptyStop = stops.find((s) => !s.address);
-    if (emptyStop) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setActiveTarget(emptyStop.id);
-      setSearchQuery('');
-      setSearchResults([]);
+  // Notify parent component about search focus state change
+  const triggerSearchStateChange = (isSearching: boolean) => {
+    if (onSearchStateChange) {
+      onSearchStateChange(isSearching);
     }
-  }, [stops]);
+  };
 
   // Load real saved addresses from addressStore
   const realSavedAddresses = useMemo<LocationSearchResult[]>(() => {
@@ -214,6 +211,7 @@ export function BookingRouteSection({
     setActiveTarget(target);
     setSearchQuery('');
     setSearchResults([]);
+    triggerSearchStateChange(true);
     if (target === 'pickup' && onPressPickup) onPressPickup();
     if (target === 'dropoff' && onPressDropoff) onPressDropoff();
   };
@@ -223,6 +221,7 @@ export function BookingRouteSection({
     Keyboard.dismiss();
     setActiveTarget(null);
     setSearchQuery('');
+    triggerSearchStateChange(false);
   };
 
   const handleSelectLocation = (item: LocationSearchResult) => {
@@ -241,6 +240,30 @@ export function BookingRouteSection({
     }
     setActiveTarget(null);
     setSearchQuery('');
+    triggerSearchStateChange(false);
+  };
+
+  const renderHighlightedText = (text: string, highlight: string) => {
+    if (!highlight.trim()) {
+      return <Text style={styles.resultTitle}>{text}</Text>;
+    }
+    const lowerText = text.toLowerCase();
+    const lowerHighlight = highlight.trim().toLowerCase();
+    const startIndex = lowerText.indexOf(lowerHighlight);
+    if (startIndex === -1) {
+      return <Text style={styles.resultTitle}>{text}</Text>;
+    }
+    const before = text.slice(0, startIndex);
+    const match = text.slice(startIndex, startIndex + lowerHighlight.length);
+    const after = text.slice(startIndex + lowerHighlight.length);
+
+    return (
+      <Text style={styles.resultTitle}>
+        {before}
+        <Text style={styles.highlightedMatch}>{match}</Text>
+        {after}
+      </Text>
+    );
   };
 
   const isIdentical =
@@ -266,29 +289,30 @@ export function BookingRouteSection({
               </View>
             </View>
             <View style={styles.inputCol}>
-              <Text style={styles.stopTypeLabel}>ĐANG NHẬP ĐIỂM LẤY HÀNG</Text>
-              <TextInput
-                accessibilityLabel="Nhập địa chỉ lấy hàng"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoFocus
-                onChangeText={setSearchQuery}
-                placeholder="Nhập địa chỉ lấy hàng..."
-                placeholderTextColor="#8E8E93"
-                style={styles.inlineSearchInput}
-                value={searchQuery}
-              />
+              <Text style={styles.stopTypeLabel}>ĐIỂM LẤY HÀNG</Text>
+              <View style={styles.inputWrapperFocused}>
+                <TextInput
+                  accessibilityLabel="Nhập địa chỉ lấy hàng"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoFocus
+                  onChangeText={setSearchQuery}
+                  onSubmitEditing={handleCloseSearch}
+                  placeholder="Nhập địa chỉ lấy hàng..."
+                  placeholderTextColor="#8E8E93"
+                  returnKeyType="done"
+                  style={styles.inlineSearchInput}
+                  value={searchQuery}
+                />
+                {searchQuery.length > 0 && (
+                  <Pressable hitSlop={10} onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                    <View style={styles.clearCircle}>
+                      <IconClose color="#FFFFFF" size={10} />
+                    </View>
+                  </Pressable>
+                )}
+              </View>
             </View>
-            {searchQuery.length > 0 && (
-              <Pressable hitSlop={10} onPress={() => setSearchQuery('')} style={styles.clearBtn}>
-                <View style={styles.clearCircle}>
-                  <IconClose color="#FFFFFF" size={10} />
-                </View>
-              </Pressable>
-            )}
-            <Pressable hitSlop={8} onPress={handleCloseSearch} style={styles.doneBtn}>
-              <Text style={styles.doneBtnText}>Xong</Text>
-            </Pressable>
           </View>
         ) : (
           <Pressable
@@ -337,29 +361,30 @@ export function BookingRouteSection({
                   <View style={styles.connectorLine} />
                 </View>
                 <View style={styles.inputCol}>
-                  <Text style={styles.stopTypeLabel}>ĐANG NHẬP ĐIỂM DỪNG {index + 1}</Text>
-                  <TextInput
-                    accessibilityLabel={`Nhập địa chỉ điểm dừng ${index + 1}`}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoFocus
-                    onChangeText={setSearchQuery}
-                    placeholder="Nhập địa chỉ điểm dừng..."
-                    placeholderTextColor="#8E8E93"
-                    style={styles.inlineSearchInput}
-                    value={searchQuery}
-                  />
+                  <Text style={styles.stopTypeLabel}>ĐIỂM DỪNG {index + 1}</Text>
+                  <View style={styles.inputWrapperFocused}>
+                    <TextInput
+                      accessibilityLabel={`Nhập địa chỉ điểm dừng ${index + 1}`}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoFocus
+                      onChangeText={setSearchQuery}
+                      onSubmitEditing={handleCloseSearch}
+                      placeholder="Nhập địa chỉ điểm dừng..."
+                      placeholderTextColor="#8E8E93"
+                      returnKeyType="done"
+                      style={styles.inlineSearchInput}
+                      value={searchQuery}
+                    />
+                    {searchQuery.length > 0 && (
+                      <Pressable hitSlop={10} onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                        <View style={styles.clearCircle}>
+                          <IconClose color="#FFFFFF" size={10} />
+                        </View>
+                      </Pressable>
+                    )}
+                  </View>
                 </View>
-                {searchQuery.length > 0 && (
-                  <Pressable hitSlop={10} onPress={() => setSearchQuery('')} style={styles.clearBtn}>
-                    <View style={styles.clearCircle}>
-                      <IconClose color="#FFFFFF" size={10} />
-                    </View>
-                  </Pressable>
-                )}
-                <Pressable hitSlop={8} onPress={handleCloseSearch} style={styles.doneBtn}>
-                  <Text style={styles.doneBtnText}>Xong</Text>
-                </Pressable>
               </View>
             );
           }
@@ -388,16 +413,19 @@ export function BookingRouteSection({
                   </Text>
                 ) : null}
               </View>
+              {/* Nút xóa tách màu: Xám mặc định, đỏ khi bấm, vùng chạm 44x44pt */}
               <Pressable
                 accessibilityLabel={`Xóa điểm dừng ${index + 1}`}
                 accessibilityRole="button"
-                hitSlop={12}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 onPress={() => onRemoveStop(stop.id)}
                 style={styles.removeStopBtn}
               >
-                <View style={styles.removeStopCircle}>
-                  <IconClose color="#FFFFFF" size={10} />
-                </View>
+                {({ pressed }) => (
+                  <View style={[styles.removeStopCircle, pressed && styles.removeStopCirclePressed]}>
+                    <IconClose color={pressed ? '#FF3B30' : '#94A3B8'} size={12} />
+                  </View>
+                )}
               </Pressable>
             </Pressable>
           );
@@ -412,29 +440,30 @@ export function BookingRouteSection({
               </View>
             </View>
             <View style={styles.inputCol}>
-              <Text style={styles.stopTypeLabel}>ĐANG NHẬP ĐIỂM GIAO HÀNG</Text>
-              <TextInput
-                accessibilityLabel="Nhập địa chỉ giao hàng"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoFocus
-                onChangeText={setSearchQuery}
-                placeholder="Nhập địa chỉ giao hàng..."
-                placeholderTextColor="#8E8E93"
-                style={styles.inlineSearchInput}
-                value={searchQuery}
-              />
+              <Text style={styles.stopTypeLabel}>ĐIỂM GIAO HÀNG</Text>
+              <View style={styles.inputWrapperFocused}>
+                <TextInput
+                  accessibilityLabel="Nhập địa chỉ giao hàng"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoFocus
+                  onChangeText={setSearchQuery}
+                  onSubmitEditing={handleCloseSearch}
+                  placeholder="Nhập địa chỉ giao hàng..."
+                  placeholderTextColor="#8E8E93"
+                  returnKeyType="done"
+                  style={styles.inlineSearchInput}
+                  value={searchQuery}
+                />
+                {searchQuery.length > 0 && (
+                  <Pressable hitSlop={10} onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                    <View style={styles.clearCircle}>
+                      <IconClose color="#FFFFFF" size={10} />
+                    </View>
+                  </Pressable>
+                )}
+              </View>
             </View>
-            {searchQuery.length > 0 && (
-              <Pressable hitSlop={10} onPress={() => setSearchQuery('')} style={styles.clearBtn}>
-                <View style={styles.clearCircle}>
-                  <IconClose color="#FFFFFF" size={10} />
-                </View>
-              </Pressable>
-            )}
-            <Pressable hitSlop={8} onPress={handleCloseSearch} style={styles.doneBtn}>
-              <Text style={styles.doneBtnText}>Xong</Text>
-            </Pressable>
           </View>
         ) : (
           <Pressable
@@ -496,11 +525,11 @@ export function BookingRouteSection({
       )}
 
       {/* ========================================================================= */}
-      {/* 🚀 DROPDOWN OVERLAY LIST: ĐÈ LÊN CÁC COMPONENT BÊN DƯỚI (GRAB/UBER STYLE) */}
+      {/* 🚀 DROPDOWN OVERLAY LIST: TÁCH RIÊNG 2 KHỐI VÀ LỌC THEO TỪ KHÓA          */}
       {/* ========================================================================= */}
       {isSearching && (
         <View style={styles.dropdownOverlay}>
-          {/* Action: Chọn trên bản đồ */}
+          {/* KHỐI 1: Action Card độc lập "Chọn trên bản đồ" */}
           <Pressable
             accessibilityLabel="Chọn trên bản đồ"
             accessibilityRole="button"
@@ -508,18 +537,19 @@ export function BookingRouteSection({
               handleCloseSearch();
               if (onPickOnMap) onPickOnMap();
             }}
-            style={({ pressed }) => [styles.pickOnMapRow, pressed && styles.rowPressed]}
+            style={({ pressed }) => [styles.pickOnMapCard, pressed && styles.rowPressed]}
           >
             <View style={styles.mapPinCircle}>
-              <IconLocationPin color={customerPalette.primary} size={16} />
+              <IconLocationPin color={customerPalette.primary} size={18} />
             </View>
-            <Text style={styles.pickOnMapText}>Chọn vị trí chính xác trên bản đồ</Text>
-            <IconChevronRight color="#C7C7CC" size={14} />
+            <View style={styles.pickOnMapTextWrap}>
+              <Text style={styles.pickOnMapTitle}>Chọn vị trí chính xác trên bản đồ</Text>
+              <Text style={styles.pickOnMapSub}>Kéo thả ghim trực quan trên bản đồ vệ tinh</Text>
+            </View>
+            <IconChevronRight color="#C7C7CC" size={15} />
           </Pressable>
 
-          <View style={styles.separator} />
-
-          {/* Results list */}
+          {/* KHỐI 2: Danh sách kết quả hoặc Sổ địa chỉ (Tách riêng biệt) */}
           <ScrollView
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
@@ -533,35 +563,37 @@ export function BookingRouteSection({
               </View>
             )}
 
-            {/* Real Search Results */}
-            {isQueryActive &&
-              searchResults.map((item, idx) => (
-                <React.Fragment key={item.id}>
-                  {idx > 0 && <View style={styles.separator} />}
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => handleSelectLocation(item)}
-                    style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
-                  >
-                    <View style={styles.pinCircle}>
-                      <IconLocationPin color="#64748B" size={15} />
-                    </View>
-                    <View style={styles.resultTextWrap}>
-                      <Text numberOfLines={1} style={styles.resultTitle}>
-                        {item.name}
-                      </Text>
-                      <Text numberOfLines={2} style={styles.resultSubtitle}>
-                        {item.address}
-                      </Text>
-                    </View>
-                    <IconChevronRight color="#C7C7CC" size={14} />
-                  </Pressable>
-                </React.Fragment>
-              ))}
+            {/* TRƯỜNG HỢP 1: Gõ đủ ký tự (≥ 2 ký tự) -> Hiển thị kết quả API thực tế */}
+            {isQueryActive && (
+              <View style={styles.resultsCard}>
+                <Text style={styles.sectionHeader}>KẾT QUẢ TÌM KIẾM THỰC TẾ</Text>
+                {searchResults.map((item, idx) => (
+                  <React.Fragment key={item.id}>
+                    {idx > 0 && <View style={styles.separator} />}
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => handleSelectLocation(item)}
+                      style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
+                    >
+                      <View style={styles.pinCircle}>
+                        <IconLocationPin color="#64748B" size={16} />
+                      </View>
+                      <View style={styles.resultTextWrap}>
+                        {renderHighlightedText(item.name, searchQuery)}
+                        <Text numberOfLines={2} style={styles.resultSubtitle}>
+                          {item.address}
+                        </Text>
+                      </View>
+                      <IconChevronRight color="#C7C7CC" size={14} />
+                    </Pressable>
+                  </React.Fragment>
+                ))}
+              </View>
+            )}
 
-            {/* Real Saved Addresses (When not typing query) */}
+            {/* TRƯỜNG HỢP 2: Chưa gõ hoặc gõ ít (< 2 ký tự) -> Hiện sổ địa chỉ đã lưu */}
             {!isQueryActive && realSavedAddresses.length > 0 && (
-              <>
+              <View style={styles.resultsCard}>
                 <Text style={styles.sectionHeader}>SỔ ĐỊA CHỈ ĐÃ LƯU</Text>
                 {realSavedAddresses.map((addr, idx) => (
                   <React.Fragment key={addr.id}>
@@ -572,7 +604,7 @@ export function BookingRouteSection({
                       style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
                     >
                       <View style={[styles.pinCircle, styles.savedPinCircle]}>
-                        <IconLocationPin color={customerPalette.primary} size={15} />
+                        <IconLocationPin color={customerPalette.primary} size={16} />
                       </View>
                       <View style={styles.resultTextWrap}>
                         <Text numberOfLines={1} style={styles.resultTitle}>
@@ -586,10 +618,10 @@ export function BookingRouteSection({
                     </Pressable>
                   </React.Fragment>
                 ))}
-              </>
+              </View>
             )}
 
-            {/* No Results */}
+            {/* Không tìm thấy */}
             {hasNoResults && (
               <View style={styles.emptyWrap}>
                 <Text style={styles.emptyTitle}>Không tìm thấy địa chỉ phù hợp</Text>
@@ -637,28 +669,40 @@ const styles = StyleSheet.create({
   activeInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 4,
-    minHeight: 56,
+    minHeight: 58,
   },
   inputCol: {
     flex: 1,
     paddingHorizontal: 8,
   },
+  inputWrapperFocused: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: customerPalette.primary,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginTop: 4,
+    ...iosContinuousCurve,
+  },
   inlineSearchInput: {
+    flex: 1,
     ...typeScale.body,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#000000',
     padding: 0,
-    marginTop: 2,
+    minHeight: 34,
   },
   clearBtn: {
     width: 24,
     height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 6,
   },
   clearCircle: {
     width: 16,
@@ -667,16 +711,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#8E8E93',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  doneBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  doneBtnText: {
-    ...typeScale.body,
-    fontSize: 15,
-    fontWeight: '600',
-    color: customerPalette.primary,
   },
   stopRow: {
     flexDirection: 'row',
@@ -819,12 +853,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   removeStopCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FF3B30',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  removeStopCirclePressed: {
+    backgroundColor: 'rgba(255, 59, 48, 0.15)',
   },
   routeFooter: {
     ...typeScale.footnote,
@@ -843,45 +880,54 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   dropdownOverlay: {
-    position: 'absolute',
-    top: '100%',
-    left: 16,
-    right: 16,
-    marginTop: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    maxHeight: 340,
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.16)',
-    elevation: 20,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
+    marginTop: 12,
+    maxHeight: 380,
     zIndex: 9999,
-    ...iosContinuousCurve,
   },
-  pickOnMapRow: {
+  pickOnMapCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 14,
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+    ...iosContinuousCurve,
   },
   mapPinCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#EBF2FA',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
-  pickOnMapText: {
+  pickOnMapTextWrap: {
     flex: 1,
+  },
+  pickOnMapTitle: {
     ...typeScale.body,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: customerPalette.primary,
   },
+  pickOnMapSub: {
+    ...typeScale.caption2,
+    fontSize: 12,
+    color: '#8E8E93',
+    marginTop: 2,
+  },
   resultsScroll: {
-    maxHeight: 280,
+    maxHeight: 300,
+  },
+  resultsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 8,
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+    ...iosContinuousCurve,
   },
   loadingRow: {
     flexDirection: 'row',
@@ -889,6 +935,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 8,
   },
   loadingText: {
     ...typeScale.footnote,
@@ -902,24 +951,24 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textTransform: 'uppercase',
     letterSpacing: 0.2,
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 4,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 6,
   },
   resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   pinCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   savedPinCircle: {
     backgroundColor: '#EBF2FA',
@@ -927,25 +976,32 @@ const styles = StyleSheet.create({
   resultTextWrap: {
     flex: 1,
     justifyContent: 'center',
-    marginRight: 6,
+    marginRight: 8,
   },
   resultTitle: {
     ...typeScale.body,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#000000',
     marginBottom: 2,
   },
+  highlightedMatch: {
+    fontWeight: '700',
+    color: customerPalette.primary,
+  },
   resultSubtitle: {
-    ...typeScale.caption1,
-    fontSize: 12,
+    ...typeScale.subheadline,
+    fontSize: 13,
     color: '#8E8E93',
-    lineHeight: 16,
+    lineHeight: 17,
   },
   emptyWrap: {
     alignItems: 'center',
-    paddingVertical: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 28,
     paddingHorizontal: 16,
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
   },
   emptyTitle: {
     ...typeScale.subheadline,

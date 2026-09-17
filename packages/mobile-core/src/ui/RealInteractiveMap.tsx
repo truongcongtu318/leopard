@@ -88,11 +88,15 @@ type NearbyDriversUpdateMessage = Readonly<{
   drivers: readonly NearbyDriver[];
 }>;
 
-export function postNearbyDriversToMapFrame(
-  mapFrame: Pick<HTMLIFrameElement, 'contentWindow'> | null,
-  message: NearbyDriversUpdateMessage,
-): void {
-  mapFrame?.contentWindow?.postMessage(message, '*');
+export function postMapMessageToFrames(message: any): void {
+  if (typeof window === 'undefined') return;
+  window.postMessage(message, '*');
+  const frames = document.querySelectorAll('iframe');
+  frames.forEach((f) => {
+    try {
+      f.contentWindow?.postMessage(message, '*');
+    } catch {}
+  });
 }
 
 // ── Vietnamese Logistics Hubs Dictionary ────────────────────────────────
@@ -123,6 +127,14 @@ export const VIETNAM_LOCATION_DICT: Record<string, MapCoordinate> = {
   'đồng nai': { lat: 10.957, lng: 106.828 },
   'biên hòa': { lat: 10.957, lng: 106.828 },
   'hà nội': { lat: 21.0285, lng: 105.854 },
+  'ba đình': { lat: 21.0345, lng: 105.825 },
+  'hoàng hoa thám': { lat: 21.0425, lng: 105.820 },
+  'cầu giấy': { lat: 21.0315, lng: 105.795 },
+  'trần duy hưng': { lat: 21.0125, lng: 105.798 },
+  'nam từ liêm': { lat: 21.015, lng: 105.765 },
+  'bắc từ liêm': { lat: 21.065, lng: 105.765 },
+  'thanh xuân': { lat: 20.998, lng: 105.812 },
+  'hai bà trưng': { lat: 21.008, lng: 105.855 },
   'tôn đức thắng': { lat: 21.0278, lng: 105.834 },
   'đống đa': { lat: 21.0185, lng: 105.829 },
   'quốc tử giám': { lat: 21.0278, lng: 105.834 },
@@ -279,24 +291,30 @@ export function buildLeafletHtml({
           var abortCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
           var timeoutTimer = setTimeout(function() {
             if (abortCtrl) abortCtrl.abort();
-          }, 4000);
+          }, 5000);
 
+          console.log('[RealInteractiveMap] Requesting VietMap Route API:', vmUrl);
           fetch(vmUrl, abortCtrl ? { signal: abortCtrl.signal } : {})
             .then(function(r) { return r.json(); })
             .then(function(data) {
               clearTimeout(timeoutTimer);
+              console.log('[RealInteractiveMap] VietMap Route Response:', data);
               if (data && data.paths && data.paths[0] && data.paths[0].points && data.paths[0].points.coordinates) {
                 var coords = data.paths[0].points.coordinates.map(function(c) { return [c[1], c[0]]; });
+                console.log('[RealInteractiveMap] Applied VietMap coordinates count:', coords.length);
                 applyRouteCoords(coords);
                 return;
               }
+              console.warn('[RealInteractiveMap] VietMap returned no paths, falling back to OSRM...');
               fetchOsrmRoute(waypoints);
             })
-            .catch(function() {
+            .catch(function(err) {
               clearTimeout(timeoutTimer);
+              console.warn('[RealInteractiveMap] VietMap Route error:', err, 'falling back to OSRM...');
               fetchOsrmRoute(waypoints);
             });
         } else {
+          console.log('[RealInteractiveMap] No VietMap API key, requesting OSRM Route...');
           fetchOsrmRoute(waypoints);
         }`;
 
@@ -312,7 +330,7 @@ export function buildLeafletHtml({
         ? `
       applyRouteSegments(${JSON.stringify(routeSegments)});
         `
-        : routeCoords.length >= 2
+        : routeCoords && routeCoords.length >= 2
         ? `
       applyRouteCoords(${JSON.stringify(routeCoords.map((c) => [c.lat, c.lng]))});
         `
@@ -331,16 +349,19 @@ export function buildLeafletHtml({
       function fetchOsrmRoute(waypoints) {
         var coordsStr = waypoints.map(function(w) { return w[0] + ',' + w[1]; }).join(';');
         var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson';
+        console.log('[RealInteractiveMap] Requesting OSRM Route:', osrmUrl);
         fetch(osrmUrl)
           .then(function(r) { return r.json(); })
           .then(function(data) {
+            console.log('[RealInteractiveMap] OSRM Route Response:', data);
             if (data && data.routes && data.routes[0] && data.routes[0].geometry && data.routes[0].geometry.coordinates) {
               var coords = data.routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+              console.log('[RealInteractiveMap] Applied OSRM street route coordinates count:', coords.length);
               applyRouteCoords(coords);
             }
           })
-          .catch(function() {
-            // Keep straight line fallback
+          .catch(function(err) {
+            console.warn('[RealInteractiveMap] OSRM Route Error, using straight line:', err);
           });
       }
 
@@ -372,11 +393,11 @@ export function buildLeafletHtml({
     .pin-core.stop-completed { background: #64748B; opacity: 0.85; }
     .pin-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFFFFF; }
 
-    /* Truck Marker Styles */
+    /* Truck / Driver Navigation Puck Marker Styles */
     .truck-wrap { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .truck-pulse { position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(2, 132, 199, 0.35); animation: pinPulse 2s ease-out infinite; }
-    .truck-badge { position: relative; width: 34px; height: 34px; border-radius: 50%; background: #0B1E42; border: 3px solid #FFFFFF; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.45); display: flex; align-items: center; justify-content: center; z-index: 3; color: #FFFFFF; font-size: 16px; font-weight: bold; }
-    .truck-eta { margin-top: 4px; background: #0F172A; color: #FFFFFF; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 12px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+    .truck-pulse { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(11, 37, 69, 0.25); animation: pinPulse 2s ease-out infinite; }
+    .truck-badge { position: relative; width: 34px; height: 34px; border-radius: 50%; background: #0B2545; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 12px rgba(11, 37, 69, 0.4); display: flex; align-items: center; justify-content: center; z-index: 3; }
+    .truck-eta { margin-top: 4px; background: #0B2545; color: #FFFFFF; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 12px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.2); }
 
     /* Nearby Driver Marker Styles */
     .nearby-driver-wrap { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -449,7 +470,7 @@ export function buildLeafletHtml({
     function createTruckIcon(eta) {
       return L.divIcon({
         className: 'custom-truck-icon',
-        html: '<div class="truck-wrap"><div class="truck-pulse"></div><div class="truck-badge">🚚</div>' + (eta ? '<div class="truck-eta">' + eta + '</div>' : '') + '</div>',
+        html: '<div class="truck-wrap"><div class="truck-pulse"></div><div class="truck-badge"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#FBBF24"/></svg></div>' + (eta ? '<div class="truck-eta">' + eta + '</div>' : '') + '</div>',
         iconSize: [50, 60],
         iconAnchor: [25, 30]
       });
@@ -710,9 +731,23 @@ export function buildLeafletHtml({
         renderNearbyDrivers(config.nearbyDrivers);
       }
 
-      // Smooth real-time updates via message
-      window.addEventListener('message', function(event) {
-        if (event.data && event.data.mapInstanceId === config.mapInstanceId) {
+      function handleMapControlMsg(event) {
+        if (!event.data) return;
+        if (event.data.type === 'LEOPARD_MAP_SET_VIEW_MODE') {
+          if (event.data.mode === 'overview') {
+            if (bounds.length > 0) {
+              map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+            }
+          } else if (event.data.mode === 'driving' || event.data.mode === 'follow') {
+            if (truckMarker) {
+              map.setView(truckMarker.getLatLng(), 17, { animate: true });
+            } else if (config.truck && config.truck.coords && config.truck.coords.lat !== 0) {
+              map.setView([config.truck.coords.lat, config.truck.coords.lng], 17, { animate: true });
+            } else if (bounds.length > 0) {
+              map.setView(bounds[0], 17, { animate: true });
+            }
+          }
+        } else if (event.data.mapInstanceId === config.mapInstanceId) {
           if (event.data.type === 'LEOPARD_UPDATE_TRUCK_LOCATION') {
             var nLat = event.data.lat;
             var nLng = event.data.lng;
@@ -733,7 +768,11 @@ export function buildLeafletHtml({
             renderNearbyDrivers(event.data.drivers || []);
           }
         }
-      });
+      }
+      window.addEventListener('message', handleMapControlMsg);
+      if (window.parent && window.parent !== window) {
+        window.parent.addEventListener('message', handleMapControlMsg);
+      }
 
       if (bounds.length > 0) {
         map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
@@ -868,11 +907,14 @@ export function RealInteractiveMap({
     if (!mapFrame?.contentWindow) return;
 
     try {
-      postNearbyDriversToMapFrame(mapFrame, {
-        type: 'LEOPARD_UPDATE_NEARBY_DRIVERS',
-        mapInstanceId,
-        drivers: nearbyDrivers ?? [],
-      });
+      mapFrame.contentWindow.postMessage(
+        {
+          type: 'LEOPARD_UPDATE_NEARBY_DRIVERS',
+          mapInstanceId,
+          drivers: nearbyDrivers ?? [],
+        },
+        '*',
+      );
     } catch {
       // Ignore postMessage communication errors on unmounted iframe
     }

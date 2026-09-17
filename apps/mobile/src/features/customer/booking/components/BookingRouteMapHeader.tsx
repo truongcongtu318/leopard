@@ -23,6 +23,9 @@ export interface BookingRouteMapHeaderProps {
   dropoffAddress: string;
   pickupCoords?: { lat: number; lng: number };
   dropoffCoords?: { lat: number; lng: number };
+  stops?: readonly { id: string; label: string; coords?: { lat: number; lng: number } }[];
+  routeCoords?: readonly { lat: number; lng: number }[];
+  mapHeight?: number;
 }
 
 export function BookingRouteMapHeader({
@@ -32,6 +35,9 @@ export function BookingRouteMapHeader({
   dropoffAddress,
   pickupCoords,
   dropoffCoords,
+  stops = [],
+  routeCoords,
+  mapHeight = 210,
 }: BookingRouteMapHeaderProps) {
   const insets = useSafeInsets();
   const topInset = insets.top || 44;
@@ -54,9 +60,9 @@ export function BookingRouteMapHeader({
     : 0;
 
   return (
-    <View style={styles.container}>
-      {/* 190pt Clean Route Map Background without bulky ledger */}
-      <View style={styles.mapWrap}>
+    <View style={[styles.container, { height: mapHeight }]}>
+      {/* Dynamic Route Map Background */}
+      <View style={[styles.mapWrap, { height: mapHeight }]}>
         <RealInteractiveMap
           destination={{
             label: dropoffAddress,
@@ -69,6 +75,8 @@ export function BookingRouteMapHeader({
             label: pickupAddress,
             coords: pickupCoords || { lat: 10.8421, lng: 106.6192 },
           }}
+          routeCoords={routeCoords}
+          stops={stops}
         />
       </View>
 
@@ -106,7 +114,6 @@ export function BookingRouteMapHeader({
 
 const styles = StyleSheet.create({
   container: {
-    height: 195,
     width: '100%',
     position: 'relative',
     backgroundColor: '#E2E8F0',
@@ -114,7 +121,6 @@ const styles = StyleSheet.create({
   },
   mapWrap: {
     ...StyleSheet.absoluteFill,
-    height: 195,
   },
   navBarOverlay: {
     position: 'absolute',

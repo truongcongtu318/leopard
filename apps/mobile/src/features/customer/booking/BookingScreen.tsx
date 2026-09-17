@@ -3,6 +3,7 @@ import {
   Animated,
   Keyboard,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
   Pressable,
   ScrollView,
@@ -15,6 +16,7 @@ import { useSafeInsets } from './safe-insets';
 import {
   appendFileToFormData,
   customerPalette,
+  decodePolyline,
   httpClient,
   resolveLocationCoords,
   spacing,
@@ -115,6 +117,8 @@ export function BookingScreen({
   const [showPriceDetail, setShowPriceDetail] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [liveRouteCoords, setLiveRouteCoords] = useState<readonly { lat: number; lng: number }[] | undefined>(undefined);
 
   // Subscribe to store updates
   useEffect(() => {
@@ -125,6 +129,79 @@ export function BookingScreen({
       unsub();
     };
   }, []);
+
+  // Fetch real street routing via backend estimate API
+  useEffect(() => {
+    let mounted = true;
+    async function fetchRouteEstimate() {
+      if (!draft.pickupAddress || !draft.dropoffAddress) return;
+      try {
+        const pickupCoords =
+          (draft.pickupLat && draft.pickupLng ? { lat: draft.pickupLat, lng: draft.pickupLng } : undefined) ||
+          resolveLocationCoords(draft.pickupAddress);
+        const dropoffCoords =
+          (draft.dropoffLat && draft.dropoffLng ? { lat: draft.dropoffLat, lng: draft.dropoffLng } : undefined) ||
+          resolveLocationCoords(draft.dropoffAddress, pickupCoords);
+
+        const payload = {
+          pickup: draft.pickupAddress,
+          pickupCoords,
+          stops: draft.stops
+            .filter((s) => s.address.trim().length > 0)
+            .map((s) => ({
+              id: s.id,
+              value: s.address,
+              coords: s.lat && s.lng ? { lat: s.lat, lng: s.lng } : resolveLocationCoords(s.address, pickupCoords),
+            })),
+          dropoff: draft.dropoffAddress,
+          dropoffCoords,
+          vehicleType: resolveVehicleOrderType(draft.vehicleId).vehicleType,
+          cargoWeightKg: parseInt(resolveVehicleOrderType(draft.vehicleId).cargoWeight, 10) || 1250,
+        };
+
+        const response = await httpClient.post<{
+          routes?: Array<{
+            polyline?: string;
+            distanceM?: number;
+            durationS?: number;
+          }>;
+        }>('/orders/estimate', payload);
+
+        console.log('[Routing API] Backend Estimate Response:', response);
+        if (mounted && response?.routes?.[0]?.polyline) {
+          const rawPolyline = response.routes[0].polyline;
+          try {
+            const decoded = decodePolyline(rawPolyline.trim(), 'POLYLINE5');
+            console.log('[Routing API] Decoded Coordinates count (POLYLINE5):', decoded.length);
+            setLiveRouteCoords(decoded);
+          } catch {
+            try {
+              const decoded = decodePolyline(rawPolyline.trim(), 'POLYLINE6');
+              console.log('[Routing API] Decoded Coordinates count (POLYLINE6):', decoded.length);
+              setLiveRouteCoords(decoded);
+            } catch (err) {
+              console.warn('[Routing API] Polyline decode error:', err);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[Routing API] Route estimate fetch error:', err);
+      }
+    }
+    void fetchRouteEstimate();
+    return () => {
+      mounted = false;
+    };
+  }, [
+    draft.pickupAddress,
+    draft.dropoffAddress,
+    draft.pickupLat,
+    draft.pickupLng,
+    draft.dropoffLat,
+    draft.dropoffLng,
+    draft.stops,
+    draft.vehicleId,
+  ]);
 
   // Keyboard show/hide detection
   useEffect(() => {
@@ -343,7 +420,7 @@ export function BookingScreen({
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Map 190pt */}
+          {/* Header Map */}
           <BookingRouteMapHeader
             dropoffAddress={draft.dropoffAddress}
             dropoffCoords={
@@ -351,6 +428,7 @@ export function BookingScreen({
                 ? { lat: draft.dropoffLat, lng: draft.dropoffLng }
                 : undefined
             }
+            mapHeight={isSearchingAddress ? 130 : 210}
             onBack={handleBack}
             pickupAddress={draft.pickupAddress}
             pickupCoords={
@@ -358,7 +436,13 @@ export function BookingScreen({
                 ? { lat: draft.pickupLat, lng: draft.pickupLng }
                 : undefined
             }
+            routeCoords={liveRouteCoords}
             scrollY={scrollY}
+            stops={draft.stops.map((s) => ({
+              id: s.id,
+              label: s.address,
+              coords: s.lat && s.lng ? { lat: s.lat, lng: s.lng } : undefined,
+            }))}
           />
 
           {/* Section 1: Lộ trình với Dropdown Overlay đè lên component bên dưới */}
@@ -369,6 +453,10 @@ export function BookingScreen({
             onAddStop={handleAddStop}
             onPickOnMap={onOpenSearchAddress}
             onRemoveStop={handleRemoveStop}
+            onSearchStateChange={(isSearching) => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              setIsSearchingAddress(isSearching);
+            }}
             onUpdateDropoff={(address, coords) => {
               bookingDraftStore.updateDraft({
                 dropoffAddress: address,
@@ -395,66 +483,71 @@ export function BookingScreen({
             stops={draft.stops}
           />
 
-          {/* Section 2: Loại xe */}
-          <BookingVehicleSection
-            distanceKm={distanceKm}
-            onSelectVehicle={(vehicleId) => bookingDraftStore.updateDraft({ vehicleId })}
-            selectedVehicleId={draft.vehicleId}
-          />
+          {/* Khi đang nhập/tìm địa chỉ: ẨN hoàn toàn các section bên dưới để overlay chiếm trọn màn hình */}
+          {!isSearchingAddress && (
+            <>
+              {/* Section 2: Loại xe */}
+              <BookingVehicleSection
+                distanceKm={distanceKm}
+                onSelectVehicle={(vehicleId) => bookingDraftStore.updateDraft({ vehicleId })}
+                selectedVehicleId={draft.vehicleId}
+              />
 
-          {/* Section 3: Người nhận */}
-          <BookingReceiverSection
-            nameError={validation.errors.receiverName}
-            onChangeName={(name) => bookingDraftStore.updateDraft({ receiverName: name })}
-            onChangePhone={(phone) => bookingDraftStore.updateDraft({ receiverPhone: phone })}
-            phoneError={validation.errors.receiverPhone}
-            receiverName={draft.receiverName}
-            receiverPhone={draft.receiverPhone}
-          />
+              {/* Section 3: Người nhận */}
+              <BookingReceiverSection
+                nameError={validation.errors.receiverName}
+                onChangeName={(name) => bookingDraftStore.updateDraft({ receiverName: name })}
+                onChangePhone={(phone) => bookingDraftStore.updateDraft({ receiverPhone: phone })}
+                phoneError={validation.errors.receiverPhone}
+                receiverName={draft.receiverName}
+                receiverPhone={draft.receiverPhone}
+              />
 
-          {/* Section 4: Hàng hóa */}
-          <BookingCargoSection
-            cargoImages={draft.cargoImages}
-            cargoNote={draft.cargoNote}
-            onAddImage={(uri) =>
-              bookingDraftStore.updateDraft({ cargoImages: [...draft.cargoImages, uri] })
-            }
-            onChangeNote={(note) => bookingDraftStore.updateDraft({ cargoNote: note })}
-            onRemoveImage={(idx) =>
-              bookingDraftStore.updateDraft({
-                cargoImages: draft.cargoImages.filter((_, i) => i !== idx),
-              })
-            }
-            onSelectCategory={(category: CargoCategory) =>
-              bookingDraftStore.updateDraft({ cargoCategory: category })
-            }
-            selectedCategory={draft.cargoCategory}
-          />
+              {/* Section 4: Hàng hóa */}
+              <BookingCargoSection
+                cargoImages={draft.cargoImages}
+                cargoNote={draft.cargoNote}
+                onAddImage={(uri) =>
+                  bookingDraftStore.updateDraft({ cargoImages: [...draft.cargoImages, uri] })
+                }
+                onChangeNote={(note) => bookingDraftStore.updateDraft({ cargoNote: note })}
+                onRemoveImage={(idx) =>
+                  bookingDraftStore.updateDraft({
+                    cargoImages: draft.cargoImages.filter((_, i) => i !== idx),
+                  })
+                }
+                onSelectCategory={(category: CargoCategory) =>
+                  bookingDraftStore.updateDraft({ cargoCategory: category })
+                }
+                selectedCategory={draft.cargoCategory}
+              />
 
-          {/* Section 5: Dịch vụ thêm */}
-          <BookingServicesSection
-            hasLoadingSupport={draft.hasLoadingSupport}
-            hasVatInvoice={draft.hasVatInvoice}
-            onChangeVatField={(field, value) => bookingDraftStore.updateDraft({ [field]: value })}
-            onToggleLoading={(value) => bookingDraftStore.updateDraft({ hasLoadingSupport: value })}
-            onToggleVat={(value) => bookingDraftStore.updateDraft({ hasVatInvoice: value })}
-            vatCompany={draft.vatCompany}
-            vatEmail={draft.vatEmail}
-            vatErrors={{
-              company: validation.errors.vatCompany,
-              taxId: validation.errors.vatTaxId,
-              email: validation.errors.vatEmail,
-            }}
-            vatTaxId={draft.vatTaxId}
-          />
+              {/* Section 5: Dịch vụ thêm */}
+              <BookingServicesSection
+                hasLoadingSupport={draft.hasLoadingSupport}
+                hasVatInvoice={draft.hasVatInvoice}
+                onChangeVatField={(field, value) => bookingDraftStore.updateDraft({ [field]: value })}
+                onToggleLoading={(value) => bookingDraftStore.updateDraft({ hasLoadingSupport: value })}
+                onToggleVat={(value) => bookingDraftStore.updateDraft({ hasVatInvoice: value })}
+                vatCompany={draft.vatCompany}
+                vatEmail={draft.vatEmail}
+                vatErrors={{
+                  company: validation.errors.vatCompany,
+                  taxId: validation.errors.vatTaxId,
+                  email: validation.errors.vatEmail,
+                }}
+                vatTaxId={draft.vatTaxId}
+              />
 
-          {/* Section 6: Phương thức thanh toán */}
-          <BookingPaymentSection
-            onSelectMethod={(method: PaymentMethod) =>
-              bookingDraftStore.updateDraft({ paymentMethod: method })
-            }
-            selectedMethod={draft.paymentMethod}
-          />
+              {/* Section 6: Phương thức thanh toán */}
+              <BookingPaymentSection
+                onSelectMethod={(method: PaymentMethod) =>
+                  bookingDraftStore.updateDraft({ paymentMethod: method })
+                }
+                selectedMethod={draft.paymentMethod}
+              />
+            </>
+          )}
         </Animated.ScrollView>
 
         {/* Keyboard Toolbar when typing */}
@@ -472,8 +565,8 @@ export function BookingScreen({
           </View>
         )}
 
-        {/* Section 7: Sticky Bottom Dock (Hidden when keyboard is open) */}
-        {!isKeyboardVisible && (
+        {/* Section 7: Sticky Bottom Dock (Hidden when keyboard or address search is open) */}
+        {!isKeyboardVisible && !isSearchingAddress && (
           <BookingFixedBottomBar
             isLoading={isSubmitting}
             isValid={validation.isValid}
