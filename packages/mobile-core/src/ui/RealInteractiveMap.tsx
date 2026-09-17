@@ -82,11 +82,18 @@ export function postTruckLocationToMapFrame(
   mapFrame?.contentWindow?.postMessage(message, '*');
 }
 
-type NearbyDriversUpdateMessage = Readonly<{
+export type NearbyDriversUpdateMessage = Readonly<{
   type: 'LEOPARD_UPDATE_NEARBY_DRIVERS';
   mapInstanceId: string;
   drivers: readonly NearbyDriver[];
 }>;
+
+export function postNearbyDriversToMapFrame(
+  mapFrame: Pick<HTMLIFrameElement, 'contentWindow'> | null,
+  message: NearbyDriversUpdateMessage,
+): void {
+  mapFrame?.contentWindow?.postMessage(message, '*');
+}
 
 export function postMapMessageToFrames(message: any): void {
   if (typeof window === 'undefined') return;
