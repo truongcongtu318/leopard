@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Keyboard,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -26,6 +27,7 @@ import {
 import { addressStore, type SavedAddress } from '../../addresses/address-store';
 import { searchPlacesDirect } from '../../../home/HomeDashboardScreen';
 import { searchVietmapWithCoords, type GeocodedSuggestion } from '../../../home/services/vietmap-search';
+import { useSafeInsets } from '../safe-insets';
 
 export interface LocationSearchResult {
   id: string;
@@ -51,6 +53,7 @@ export function BookingLocationSearchOverlay({
   onSelectLocation,
   onPickOnMap,
 }: BookingLocationSearchOverlayProps) {
+  const insets = useSafeInsets();
   const [query, setQuery] = useState('');
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
@@ -149,8 +152,6 @@ export function BookingLocationSearchOverlay({
     };
   }, [query]);
 
-  if (!visible) return null;
-
   const isSearching = query.trim().length >= 2;
   const hasNoResults = isSearching && !isSearchingOnline && searchResults.length === 0;
 
@@ -164,179 +165,184 @@ export function BookingLocationSearchOverlay({
   };
 
   return (
-    <View style={styles.overlayContainer}>
-      {/* Header bar with Back button & Input */}
-      <View style={styles.headerBar}>
-        <Pressable
-          accessibilityLabel="Đóng tìm kiếm"
-          accessibilityRole="button"
-          hitSlop={12}
-          onPress={onClose}
-          style={styles.backBtn}
-        >
-          <IconChevronLeft color={customerPalette.primary} size={22} />
-        </Pressable>
+    <Modal
+      animationType="slide"
+      onRequestClose={onClose}
+      transparent={false}
+      visible={visible}
+    >
+      <View style={[styles.overlayContainer, { paddingTop: insets.top || 48 }]}>
+        {/* Header bar with Back button & Input */}
+        <View style={styles.headerBar}>
+          <Pressable
+            accessibilityLabel="Đóng tìm kiếm"
+            accessibilityRole="button"
+            hitSlop={12}
+            onPress={onClose}
+            style={styles.backBtn}
+          >
+            <IconChevronLeft color={customerPalette.primary} size={22} />
+          </Pressable>
 
-        <View style={styles.inputWrapper}>
-          <IconSearch color="#8E8E93" size={17} />
-          <TextInput
-            accessibilityLabel={
-              target === 'pickup' ? 'Nhập địa chỉ lấy hàng' : 'Nhập địa chỉ giao hàng'
-            }
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoFocus
-            clearButtonMode="never"
-            onChangeText={setQuery}
-            placeholder={
-              target === 'pickup' ? 'Nhập địa chỉ lấy hàng...' : 'Nhập địa chỉ giao hàng...'
-            }
-            placeholderTextColor="#8E8E93"
-            returnKeyType="search"
-            style={styles.searchInput}
-            value={query}
+          <View style={styles.inputWrapper}>
+            <IconSearch color="#8E8E93" size={17} />
+            <TextInput
+              accessibilityLabel={
+                target === 'pickup' ? 'Nhập địa chỉ lấy hàng' : 'Nhập địa chỉ giao hàng'
+              }
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+              clearButtonMode="never"
+              onChangeText={setQuery}
+              placeholder={
+                target === 'pickup' ? 'Nhập địa chỉ lấy hàng...' : 'Nhập địa chỉ giao hàng...'
+              }
+              placeholderTextColor="#8E8E93"
+              returnKeyType="search"
+              style={styles.searchInput}
+              value={query}
+            />
+            {isSearchingOnline && (
+              <ActivityIndicator color={customerPalette.primary} size="small" style={{ marginRight: 4 }} />
+            )}
+            {query.length > 0 && (
+              <Pressable
+                accessibilityLabel="Xóa chữ"
+                accessibilityRole="button"
+                hitSlop={10}
+                onPress={() => setQuery('')}
+                style={styles.clearBtn}
+              >
+                <View style={styles.clearCircle}>
+                  <IconClose color="#FFFFFF" size={10} />
+                </View>
+              </Pressable>
+            )}
+          </View>
+        </View>
+
+        {/* Target indicator */}
+        <View style={styles.targetIndicatorRow}>
+          <View
+            style={[
+              styles.targetDot,
+              target === 'pickup' ? styles.pickupDot : styles.dropoffDot,
+            ]}
           />
-          {isSearchingOnline && (
-            <ActivityIndicator color={customerPalette.primary} size="small" style={{ marginRight: 4 }} />
-          )}
-          {query.length > 0 && (
-            <Pressable
-              accessibilityLabel="Xóa chữ"
-              accessibilityRole="button"
-              hitSlop={10}
-              onPress={() => setQuery('')}
-              style={styles.clearBtn}
-            >
-              <View style={styles.clearCircle}>
-                <IconClose color="#FFFFFF" size={10} />
+          <Text style={styles.targetLabel}>
+            {target === 'pickup' ? 'Đang chọn Điểm lấy hàng' : 'Đang chọn Điểm giao hàng'}
+          </Text>
+        </View>
+
+        {/* Main List */}
+        <View style={styles.listContainer}>
+          {/* Pinned "Chọn trên bản đồ" Action */}
+          <Pressable
+            accessibilityLabel="Chọn trên bản đồ"
+            accessibilityRole="button"
+            onPress={() => {
+              onClose();
+              if (onPickOnMap) onPickOnMap();
+            }}
+            style={({ pressed }) => [styles.pickOnMapCard, pressed && styles.rowPressed]}
+          >
+            <View style={styles.mapPinCircle}>
+              <IconLocationPin color={customerPalette.primary} size={18} />
+            </View>
+            <Text style={styles.pickOnMapText}>Chọn vị trí chính xác trên bản đồ</Text>
+            <IconChevronRight color="#C7C7CC" size={15} />
+          </Pressable>
+
+          {/* Real Search Results */}
+          {isSearching && searchResults.length > 0 && (
+            <View style={styles.sectionWrap}>
+              <Text style={styles.sectionHeader}>KẾT QUẢ TÌM KIẾM THỰC TẾ</Text>
+              <View style={styles.insetCard}>
+                <FlatList
+                  data={searchResults}
+                  ItemSeparatorComponent={() => <View style={styles.separator} />}
+                  keyboardShouldPersistTaps="handled"
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => handleSelect(item)}
+                      style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
+                    >
+                      <View style={styles.pinCircle}>
+                        <IconLocationPin color="#64748B" size={16} />
+                      </View>
+                      <View style={styles.resultTextWrap}>
+                        <Text numberOfLines={1} style={styles.resultTitle}>
+                          {item.name}
+                        </Text>
+                        <Text numberOfLines={2} style={styles.resultSubtitle}>
+                          {item.address}
+                        </Text>
+                      </View>
+                      <IconChevronRight color="#C7C7CC" size={14} />
+                    </Pressable>
+                  )}
+                />
               </View>
-            </Pressable>
+            </View>
+          )}
+
+          {/* Real Saved Addresses (If User has saved addresses and not searching) */}
+          {!isSearching && realSavedAddresses.length > 0 && (
+            <View style={styles.sectionWrap}>
+              <Text style={styles.sectionHeader}>SỔ ĐỊA CHỈ ĐÃ LƯU</Text>
+              <View style={styles.insetCard}>
+                {realSavedAddresses.map((addr, idx) => (
+                  <React.Fragment key={addr.id}>
+                    {idx > 0 && <View style={styles.separator} />}
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => handleSelect(addr)}
+                      style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
+                    >
+                      <View style={[styles.pinCircle, styles.savedPinCircle]}>
+                        <IconLocationPin color={customerPalette.primary} size={16} />
+                      </View>
+                      <View style={styles.resultTextWrap}>
+                        <Text numberOfLines={1} style={styles.resultTitle}>
+                          {addr.name}
+                        </Text>
+                        <Text numberOfLines={2} style={styles.resultSubtitle}>
+                          {addr.address}
+                        </Text>
+                      </View>
+                      <IconChevronRight color="#C7C7CC" size={14} />
+                    </Pressable>
+                  </React.Fragment>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* No Results Fallback */}
+          {hasNoResults && (
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconCircle}>
+                <IconSearch color="#8E8E93" size={28} />
+              </View>
+              <Text style={styles.emptyTitle}>Không tìm thấy địa chỉ</Text>
+              <Text style={styles.emptySubtitle}>
+                Thử kiểm tra lại tên đường hoặc chọn vị trí trực tiếp trên bản đồ.
+              </Text>
+            </View>
           )}
         </View>
       </View>
-
-      {/* Target indicator */}
-      <View style={styles.targetIndicatorRow}>
-        <View
-          style={[
-            styles.targetDot,
-            target === 'pickup' ? styles.pickupDot : styles.dropoffDot,
-          ]}
-        />
-        <Text style={styles.targetLabel}>
-          {target === 'pickup' ? 'Đang chọn Điểm lấy hàng' : 'Đang chọn Điểm giao hàng'}
-        </Text>
-      </View>
-
-      {/* Main List */}
-      <View style={styles.listContainer}>
-        {/* Pinned "Chọn trên bản đồ" Action */}
-        <Pressable
-          accessibilityLabel="Chọn trên bản đồ"
-          accessibilityRole="button"
-          onPress={() => {
-            onClose();
-            if (onPickOnMap) onPickOnMap();
-          }}
-          style={({ pressed }) => [styles.pickOnMapCard, pressed && styles.rowPressed]}
-        >
-          <View style={styles.mapPinCircle}>
-            <IconLocationPin color={customerPalette.primary} size={18} />
-          </View>
-          <Text style={styles.pickOnMapText}>Chọn vị trí chính xác trên bản đồ</Text>
-          <IconChevronRight color="#C7C7CC" size={15} />
-        </Pressable>
-
-        {/* Real Search Results */}
-        {isSearching && searchResults.length > 0 && (
-          <View style={styles.sectionWrap}>
-            <Text style={styles.sectionHeader}>KẾT QUẢ TÌM KIẾM THỰC TẾ</Text>
-            <View style={styles.insetCard}>
-              <FlatList
-                data={searchResults}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
-                keyboardShouldPersistTaps="handled"
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => handleSelect(item)}
-                    style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
-                  >
-                    <View style={styles.pinCircle}>
-                      <IconLocationPin color="#64748B" size={16} />
-                    </View>
-                    <View style={styles.resultTextWrap}>
-                      <Text numberOfLines={1} style={styles.resultTitle}>
-                        {item.name}
-                      </Text>
-                      <Text numberOfLines={2} style={styles.resultSubtitle}>
-                        {item.address}
-                      </Text>
-                    </View>
-                    <IconChevronRight color="#C7C7CC" size={14} />
-                  </Pressable>
-                )}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Real Saved Addresses (If User has saved addresses and not searching) */}
-        {!isSearching && realSavedAddresses.length > 0 && (
-          <View style={styles.sectionWrap}>
-            <Text style={styles.sectionHeader}>SỔ ĐỊA CHỈ ĐÃ LƯU</Text>
-            <View style={styles.insetCard}>
-              {realSavedAddresses.map((addr, idx) => (
-                <React.Fragment key={addr.id}>
-                  {idx > 0 && <View style={styles.separator} />}
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => handleSelect(addr)}
-                    style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
-                  >
-                    <View style={[styles.pinCircle, styles.savedPinCircle]}>
-                      <IconLocationPin color={customerPalette.primary} size={16} />
-                    </View>
-                    <View style={styles.resultTextWrap}>
-                      <Text numberOfLines={1} style={styles.resultTitle}>
-                        {addr.name}
-                      </Text>
-                      <Text numberOfLines={2} style={styles.resultSubtitle}>
-                        {addr.address}
-                      </Text>
-                    </View>
-                    <IconChevronRight color="#C7C7CC" size={14} />
-                  </Pressable>
-                </React.Fragment>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* No Results Fallback */}
-        {hasNoResults && (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconCircle}>
-              <IconSearch color="#8E8E93" size={28} />
-            </View>
-            <Text style={styles.emptyTitle}>Không tìm thấy địa chỉ</Text>
-            <Text style={styles.emptySubtitle}>
-              Thử kiểm tra lại tên đường hoặc chọn vị trí trực tiếp trên bản đồ.
-            </Text>
-          </View>
-        )}
-      </View>
-    </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   overlayContainer: {
-    ...StyleSheet.absoluteFill,
+    flex: 1,
     backgroundColor: '#F2F2F7', // Apple systemGroupedBackground
-    zIndex: 100,
-    paddingTop: 48,
   },
   headerBar: {
     flexDirection: 'row',

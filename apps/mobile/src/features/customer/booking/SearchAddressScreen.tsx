@@ -35,32 +35,7 @@ export interface AddressItem {
   lng?: number;
 }
 
-const DEFAULT_RECENT_ADDRESSES: AddressItem[] = [
-  {
-    id: 'recent-1',
-    name: 'Công trình Jamona City',
-    address: 'Đào Trí, P. Phú Thuận, Quận 7, TP.HCM',
-    distanceKm: 3.2,
-    lat: 10.7325,
-    lng: 106.7351,
-  },
-  {
-    id: 'recent-2',
-    name: 'Kho Tân Bình',
-    address: 'KCN Tân Bình, P. Tây Thạnh, Tân Phú, TP.HCM',
-    distanceKm: 8.1,
-    lat: 10.8123,
-    lng: 106.6234,
-  },
-  {
-    id: 'recent-3',
-    name: 'Xưởng Cơ Khí Minh Phát',
-    address: '45 Lê Thị Riêng, P. Thới An, Quận 12, TP.HCM',
-    distanceKm: 5.4,
-    lat: 10.8654,
-    lng: 106.6543,
-  },
-];
+const DEFAULT_RECENT_ADDRESSES: AddressItem[] = [];
 
 export interface SearchAddressScreenProps {
   onBack: () => void;
@@ -80,7 +55,7 @@ export function SearchAddressScreen({
   onOpenSettings,
   hasLocationPermission = true,
   initialQuery = '',
-  recentAddresses = DEFAULT_RECENT_ADDRESSES,
+  recentAddresses = [],
   savedAddresses: savedAddressesProp,
 }: SearchAddressScreenProps) {
   const insets = useSafeInsets();
@@ -385,35 +360,37 @@ export function SearchAddressScreen({
         {/* Default Inset Grouped Sections */}
         {!isSearching && (
           <>
-            {/* GẦN ĐÂY */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionHeader}>GẦN ĐÂY</Text>
-              <View style={styles.insetGroupedCard}>
-                {recentAddresses.map((item, index) => (
-                  <React.Fragment key={item.id}>
-                    {index > 0 && <View style={styles.separator} />}
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => handleSelect(item)}
-                      style={({ pressed }) => [styles.rowItem, pressed && styles.rowPressed]}
-                    >
-                      <View style={styles.itemIconCircle}>
-                        <IconSearch color="#8E8E93" size={15} />
-                      </View>
-                      <View style={styles.itemContent}>
-                        <Text style={styles.itemTitle}>{item.name}</Text>
-                        <Text numberOfLines={1} style={styles.itemAddress}>
-                          {item.address}
-                        </Text>
-                      </View>
-                      {item.distanceKm !== undefined && (
-                        <Text style={styles.distanceText}>{item.distanceKm.toFixed(1)} km</Text>
-                      )}
-                    </Pressable>
-                  </React.Fragment>
-                ))}
+            {/* GẦN ĐÂY (chỉ hiện khi có địa chỉ gần đây thật) */}
+            {recentAddresses.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionHeader}>GẦN ĐÂY</Text>
+                <View style={styles.insetGroupedCard}>
+                  {recentAddresses.map((item, index) => (
+                    <React.Fragment key={item.id}>
+                      {index > 0 && <View style={styles.separator} />}
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() => handleSelect(item)}
+                        style={({ pressed }) => [styles.rowItem, pressed && styles.rowPressed]}
+                      >
+                        <View style={styles.itemIconCircle}>
+                          <IconSearch color="#8E8E93" size={15} />
+                        </View>
+                        <View style={styles.itemContent}>
+                          <Text style={styles.itemTitle}>{item.name}</Text>
+                          <Text numberOfLines={1} style={styles.itemAddress}>
+                            {item.address}
+                          </Text>
+                        </View>
+                        {item.distanceKm !== undefined && (
+                          <Text style={styles.distanceText}>{item.distanceKm.toFixed(1)} km</Text>
+                        )}
+                      </Pressable>
+                    </React.Fragment>
+                  ))}
+                </View>
               </View>
-            </View>
+            )}
 
             {/* SỔ ĐỊA CHỈ */}
             <View style={styles.sectionContainer}>

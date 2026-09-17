@@ -17,7 +17,13 @@ describe('SearchAddressScreen', () => {
 
   it('renders recent and saved addresses when search query is empty', async () => {
     const screen = await render(
-      <SearchAddressScreen onBack={jest.fn()} onSelectAddress={jest.fn()} />
+      <SearchAddressScreen
+        onBack={jest.fn()}
+        onSelectAddress={jest.fn()}
+        recentAddresses={[
+          { id: 'r-1', name: 'Công trình Jamona City', address: 'Đào Trí, Q.7', distanceKm: 3.2 },
+        ]}
+      />
     );
 
     expect(screen.getByText('GẦN ĐÂY')).toBeTruthy();
@@ -27,7 +33,13 @@ describe('SearchAddressScreen', () => {
   it('triggers onSelectAddress when a recent or search item is tapped', async () => {
     const onSelect = jest.fn();
     const screen = await render(
-      <SearchAddressScreen onBack={jest.fn()} onSelectAddress={onSelect} />
+      <SearchAddressScreen
+        onBack={jest.fn()}
+        onSelectAddress={onSelect}
+        recentAddresses={[
+          { id: 'r-1', name: 'Công trình Jamona City', address: 'Đào Trí, Q.7', distanceKm: 3.2 },
+        ]}
+      />
     );
 
     const firstRecentItem = screen.getByText('Công trình Jamona City');
@@ -35,7 +47,7 @@ describe('SearchAddressScreen', () => {
 
     expect(onSelect).toHaveBeenCalledWith(
       expect.stringContaining('Jamona'),
-      expect.anything()
+      undefined,
     );
   });
 
