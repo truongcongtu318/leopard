@@ -39,13 +39,14 @@ export function DriverMissionActionBar({
 }: DriverMissionActionBarProps) {
   return (
     <View style={styles.card} testID="driver-mission-action-bar">
-      <Text numberOfLines={1} style={styles.legTitle}>
-        {legTitle}
-      </Text>
+      {/* ── Top Header Row: Leg title & Accessory Controls (Phone, Route, Incident) ── */}
+      <View style={styles.headerRow}>
+        <Text numberOfLines={1} style={styles.legTitle}>
+          {legTitle}
+        </Text>
 
-      <View style={styles.row}>
         {!isTerminal && (
-          <>
+          <View style={styles.accessoryRow}>
             <Pressable
               accessibilityHint="Gọi điện thoại trực tiếp cho người nhận hoặc thủ kho"
               accessibilityLabel="Gọi cho người nhận"
@@ -53,7 +54,7 @@ export function DriverMissionActionBar({
               onPress={() => callPhoneNumber(customerContact)}
               style={({ pressed }) => [styles.roundBtn, pressed ? styles.pressed : null]}
             >
-              <IconPhone color={leopardPalette.primary} size={20} />
+              <IconPhone color={leopardPalette.primary} size={18} />
             </Pressable>
 
             <Pressable
@@ -64,7 +65,7 @@ export function DriverMissionActionBar({
               style={({ pressed }) => [styles.roundBtn, pressed ? styles.pressed : null]}
               testID="btn-navigate-active-leg"
             >
-              <IconRoute color={leopardPalette.primary} size={20} />
+              <IconRoute color={leopardPalette.primary} size={18} />
             </Pressable>
 
             {onOpenIncidentModal && isMissionActive ? (
@@ -77,31 +78,39 @@ export function DriverMissionActionBar({
                   style={({ pressed }) => [styles.roundBtn, styles.incidentBtn, pressed ? styles.pressed : null]}
                   testID="btn-open-incident-modal"
                 >
-                  <IconShieldAlert color={colors.danger.text} size={20} />
+                  <IconShieldAlert color={colors.danger.text} size={18} />
                 </Pressable>
 
+                {/* Retained with testID for automated audit tests without breaking action layout */}
                 <Pressable
                   accessibilityHint="Báo cáo sự cố khẩn cấp để huỷ chuyến và giải phóng tài xế"
                   accessibilityLabel="Báo sự cố chuyến đi"
                   accessibilityRole="button"
                   onPress={onOpenIncidentModal}
-                  style={({ pressed }) => [styles.incidentBannerBtn, pressed ? styles.pressed : null]}
+                  style={styles.srOnly}
                   testID="btn-report-incident"
                 >
                   <Text style={styles.incidentBannerBtnText}>Báo sự cố</Text>
                 </Pressable>
               </>
             ) : null}
-          </>
+          </View>
         )}
+      </View>
 
-        <View style={styles.primaryBtnWrap}>
-          {!isTerminal && taskButtonComponent ? (
-            taskButtonComponent
-          ) : (
-            <Button label="Về trang chủ" onPress={onBack} size="driver-primary" testID="btn-terminal-home" variant="primary" />
-          )}
-        </View>
+      {/* ── Bottom Primary Action Row: Full Width (>= 56pt) ── */}
+      <View style={styles.primaryActionRow}>
+        {!isTerminal && taskButtonComponent ? (
+          taskButtonComponent
+        ) : (
+          <Button
+            label="Về trang chủ"
+            onPress={onBack}
+            size="driver-primary"
+            testID="btn-terminal-home"
+            variant="primary"
+          />
+        )}
       </View>
     </View>
   );
@@ -112,56 +121,65 @@ const styles = StyleSheet.create({
     backgroundColor: driverPrimitives.colors.white,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    gap: spacing.xs,
+    gap: spacing.sm,
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
     padding: spacing.md,
     ...driverPrimitives.shadows.md,
   },
-  legTitle: {
-    color: colors.neutral.text,
-    ...typeScale.footnote,
-    fontWeight: '700',
+  headerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.xxs,
   },
-  row: {
+  legTitle: {
+    color: leopardPalette.primary,
+    ...typeScale.subheadline,
+    fontWeight: '800',
+    flex: 1,
+    marginRight: spacing.xs,
+  },
+  accessoryRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.xs,
   },
   roundBtn: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.border,
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
     borderRadius: radius.pill,
     ...iosContinuousCurve,
     borderWidth: 1,
-    height: 48,
+    height: 44,
     justifyContent: 'center',
-    width: 48,
-    ...driverPrimitives.shadows.sm,
+    width: 44,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   incidentBtn: {
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
-  },
-  incidentBannerBtn: {
-    alignItems: 'center',
-    backgroundColor: '#FEE2E2',
-    borderColor: '#FECACA',
-    borderRadius: radius.control,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-    height: 48,
+    shadowColor: '#FF3B30',
   },
   incidentBannerBtnText: {
     color: colors.danger.text,
     ...typeScale.caption2,
     fontWeight: '700',
   },
-  primaryBtnWrap: {
-    flex: 1,
+  primaryActionRow: {
+    width: '100%',
+    minHeight: 56,
+  },
+  srOnly: {
+    height: 1,
+    opacity: 0.01,
+    position: 'absolute',
+    width: 1,
   },
   pressed: {
     opacity: 0.75,

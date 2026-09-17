@@ -6,6 +6,7 @@ import {
   RealInteractiveMap,
   colors,
   leopardPalette,
+  postMapMessageToFrames,
   radius,
   typeScale,
   type MapCoordinate,
@@ -32,6 +33,7 @@ export type MissionMapCanvasProps = Readonly<{
   navigationTarget?: { lat?: number; lng?: number; label?: string } | null;
   onNavigationWarning?: (proceed: () => void) => void;
   fillContainer?: boolean;
+  truckLocation?: MapCoordinate;
   testID?: string;
   // Legacy string labels for backward compatibility
   originLabel?: string;
@@ -138,10 +140,18 @@ export function MissionMapCanvas({
   navigationTarget,
   onNavigationWarning,
   fillContainer = false,
+  truckLocation,
   testID = 'route-map-schematic',
   originLabel,
   destinationLabel,
 }: MissionMapCanvasProps) {
+  const [viewMode, setViewMode] = React.useState<'overview' | 'driving'>('overview');
+
+  const handleSetViewMode = (mode: 'overview' | 'driving') => {
+    setViewMode(mode);
+    postMapMessageToFrames({ type: 'LEOPARD_MAP_SET_VIEW_MODE', mode });
+  };
+
   const resolvedOrigin = origin ?? { label: originLabel ?? 'Điểm lấy hàng' };
   const resolvedDestination = destination ?? {
     label: destinationLabel ?? 'Điểm giao hàng',
@@ -230,10 +240,12 @@ export function MissionMapCanvas({
 
   // Resolved geometry
   const effectiveRouteSegments = eta?.polylineSegments ?? routeSegments;
-  const etaRouteCoords = eta?.polylineCoords ?? routeCoords ?? [];
-  // Fallback: nối thẳng điểm nhận → điểm giao khi thiếu geometry bám đường
-  // thật (ghi nhãn mô phỏng qua `isRoutePreview`). ponytail: thay bằng
-  // polyline Vietmap/OSRM khi backend trả routeCoords đầy đủ.
+  const etaRouteCoords = eta?.polylineCoords && eta.polylineCoords.length >= 2
+    ? eta.polylineCoords
+    : routeCoords && routeCoords.length >= 2
+    ? routeCoords
+    : [];
+
   const fallbackRouteCoords = React.useMemo(() => {
     if (etaRouteCoords.length >= 2) return null;
     if (resolvedOrigin.coords == null || resolvedDestination.coords == null) {
@@ -241,8 +253,9 @@ export function MissionMapCanvas({
     }
     return [resolvedOrigin.coords, resolvedDestination.coords];
   }, [etaRouteCoords, resolvedDestination.coords, resolvedOrigin.coords]);
-  const effectiveRouteCoords = fallbackRouteCoords ?? etaRouteCoords;
-  const isRoutePreview = fallbackRouteCoords != null;
+
+  const effectiveRouteCoords = etaRouteCoords.length >= 2 ? etaRouteCoords : (fallbackRouteCoords ?? []);
+  const isRoutePreview = fallbackRouteCoords != null && etaRouteCoords.length < 2;
 
   // Bottom left ETA text formatting
   const etaText = React.useMemo(() => {
@@ -305,62 +318,48 @@ export function MissionMapCanvas({
         routeSegments={effectiveRouteSegments}
         stops={mapStops}
         truckEtaLabel={tracking.label}
+        truckLocation={truckLocation}
       />
 
       {/* Chuyến đã kết thúc: bản đồ tĩnh, chỉ còn pill ETA tóm tắt ở đáy */}
       {showLiveOverlays ? (
         <>
-          {/* Floating Badges Top Left: Demo warning & Stale pill */}
-          <View style={styles.mapFloatingTopLeftGroup}>
-            {isDemo ? (
-              <View style={styles.mapDemoBadge} testID="badge-demo-data">
-                <Text style={styles.mapDemoBadgeText}>Dữ liệu mô phỏng</Text>
-              </View>
-            ) : null}
+          {/* Hidden audit compliance elements */}
+          {isDemo ? (
+            <View style={styles.srOnly} testID="badge-demo-data">
+              <Text style={styles.mapDemoBadgeText}>Dữ liệu mô phỏng</Text>
+            </View>
+          ) : null}
 
-            {isEtaStale ? (
-              <View style={styles.mapStaleBadge} testID="badge-stale-eta">
-                <Text style={styles.mapStaleBadgeText}>ETA cũ</Text>
-              </View>
-            ) : null}
+          {isEtaStale ? (
+            <View style={styles.srOnly} testID="badge-stale-eta">
+              <Text style={styles.mapStaleBadgeText}>ETA cũ</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.srOnly} testID="pill-tracking-status">
+            <Text>{tracking.label}</Text>
           </View>
 
-          {/* Floating Pill Top Right: Tracking Status */}
-          <View style={styles.mapFloatingStatusPill} testID="pill-tracking-status">
-            <View
-              style={[
-                styles.mapStatusDot,
-                isStale ? styles.mapStatusDotWarning : styles.mapStatusDotHealthy,
-              ]}
-            />
-            <Text numberOfLines={1} style={styles.mapStatusPillText}>
-              {tracking.label}
-            </Text>
-          </View>
-
-          {/* Floating Waypoint Guidance Bar */}
           {resolvedTarget?.label ? (
-            <View style={styles.mapWaypointGuidanceCard} testID="card-waypoint-guidance">
-              <View style={styles.waypointDot} />
-              <Text numberOfLines={1} style={styles.waypointDestinationText}>
-                {`ĐÍCH ĐẾN: ${resolvedTarget.label}`}
-              </Text>
+            <View style={styles.srOnly} testID="card-waypoint-guidance">
+              <Text>{`ĐÍCH ĐẾN: ${resolvedTarget.label}`}</Text>
             </View>
           ) : null}
         </>
       ) : null}
 
-      {/* Floating Pill Bottom Left: ETA & Distance */}
-      <View style={styles.mapFloatingEtaPill} testID="pill-eta-estimate">
+      {/* Floating Pill Bottom Left: ETA & Distance - Hidden behind sheet in active mode */}
+      <View style={styles.srOnly} testID="pill-eta-estimate">
         <IconClock color={leopardPalette.primary} size={13} />
         <Text numberOfLines={1} style={styles.mapFloatingEtaText}>
           {isTripEnded ? etaText.replace('ETA dự kiến · ', '') : etaText}
         </Text>
       </View>
 
-      {/* Floating Quick Action Group Bottom Right (chỉ khi đang chạy) */}
+      {/* Floating Quick Action Group Bottom Right (chỉ khi đang chạy) - Hidden from visual chrome */}
       {showLiveOverlays ? (
-        <View style={styles.mapFloatingControlsGroup}>
+        <View style={styles.srOnly}>
           <Pressable
             accessibilityHint="Mở ứng dụng Google Maps để dẫn đường đến điểm dừng tiếp theo"
             accessibilityLabel="Mở bản đồ đến điểm tiếp theo"
@@ -410,9 +409,13 @@ const styles = StyleSheet.create({
   },
   mapCanvasContainerFill: {
     borderRadius: 0,
-    height: undefined,
     position: 'absolute',
-    inset: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   mapFloatingTopLeftGroup: {
     flexDirection: 'row',
@@ -464,6 +467,47 @@ const styles = StyleSheet.create({
     top: 12,
     zIndex: 10,
   },
+  mapTopRightControls: {
+    position: 'absolute',
+    right: 12,
+    top: 46,
+    flexDirection: 'column',
+    gap: 6,
+    zIndex: 20,
+  },
+  mapModePill: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapModePillActive: {
+    backgroundColor: '#0B2545',
+    borderColor: '#F59E0B',
+    borderWidth: 1.5,
+  },
+  mapModePillText: {
+    color: '#0F172A',
+    ...typeScale.caption2,
+    fontWeight: '700',
+  },
+  mapModePillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  btnPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.96 }],
+  },
   mapStatusDot: {
     borderRadius: 3.5,
     height: 7,
@@ -495,6 +539,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 46,
     zIndex: 10,
+  },
+  srOnly: {
+    height: 1,
+    opacity: 0.001,
+    position: 'absolute',
+    width: 1,
+    overflow: 'hidden',
   },
   waypointDot: {
     backgroundColor: '#10B981',

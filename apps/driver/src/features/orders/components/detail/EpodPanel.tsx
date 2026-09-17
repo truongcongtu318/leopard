@@ -516,7 +516,7 @@ export function EpodPanel({
           <SlideToAction
             colorVariant="success"
             disabled={!isCompleteReady}
-            label="Vuốt hoàn tất cuốc xe ➔"
+            label="Vuốt hoàn tất cuốc xe"
             onActionComplete={handleConfirmDelivery}
             resetKey={`${orderId}-${signatureCaptured ? 'signed' : 'unsigned'}`}
             testID="btn-epod-complete-delivery"
@@ -529,14 +529,18 @@ export function EpodPanel({
 
 const styles = StyleSheet.create({
   epodCard: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.border,
-    borderRadius: radius.cardXl,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
     ...iosContinuousCurve,
     borderWidth: 1,
-    gap: spacing.sm + spacing.hairline,
+    gap: spacing.sm,
     padding: spacing.md,
-    ...driverPrimitives.shadows.sm,
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
   },
 
   /* Header */
@@ -547,8 +551,10 @@ const styles = StyleSheet.create({
   },
   iconBox: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: radius.cardSm,
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+    borderRadius: radius.pill,
     height: 36,
     justifyContent: 'center',
     width: 36,
@@ -558,14 +564,13 @@ const styles = StyleSheet.create({
     gap: spacing.hairline,
   },
   sectionTitle: {
-    color: colors.neutral.text,
-    ...typeScale.caption1,
+    color: '#0F172A',
+    ...typeScale.headline,
     fontWeight: '700',
-    letterSpacing: 0.3,
   },
   sectionSubtitle: {
-    color: colors.neutral.mutedText,
-    ...typeScale.caption2,
+    color: '#64748B',
+    ...typeScale.footnote,
   },
   statusPill: {
     borderRadius: radius.pill,
@@ -774,34 +779,41 @@ const styles = StyleSheet.create({
   },
   captureBtn: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: radius.control,
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
+    borderRadius: radius.card,
     borderStyle: 'dashed',
     borderWidth: 1.5,
     flexDirection: 'row',
     gap: spacing.sm,
-    padding: spacing.sm + spacing.hairline,
+    padding: spacing.md,
   },
   captureIconCircle: {
     alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.dark950,
+    backgroundColor: '#0B2545',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
     borderRadius: radius.pill,
     height: 40,
     justifyContent: 'center',
     width: 40,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   captureTextCol: {
     flex: 1,
-    gap: spacing.hairline,
+    gap: 2,
   },
   captureTitle: {
-    color: colors.neutral.text,
+    color: '#0B2545',
     ...typeScale.subheadline,
     fontWeight: '700',
   },
   captureDesc: {
-    color: colors.neutral.mutedText,
+    color: '#64748B',
     ...typeScale.caption2,
   },
 
@@ -815,7 +827,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xxs + 2,
+    paddingVertical: 6,
   },
   receiverLabel: {
     color: colors.neutral.mutedText,

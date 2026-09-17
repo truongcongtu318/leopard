@@ -54,7 +54,7 @@ describe('IncomingDispatchModal', () => {
 
     // Verifies SlideToAction is rendered with Vietnamese label
     expect(screen.getByTestId('dispatch-slide-action')).toBeTruthy();
-    expect(screen.getByText('Vuốt để nhận cuốc ➔')).toBeTruthy();
+    expect(screen.getByText('Vuốt để nhận cuốc')).toBeTruthy();
 
     // Verifies Decline button exists
     expect(screen.getByRole('button', { name: 'Bỏ qua' })).toBeTruthy();

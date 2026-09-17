@@ -2,12 +2,13 @@ import type {
   DriverAvailability,
   OrderStatus,
   ProviderSource,
+  RouteCoordinate,
   RouteEtaResponse,
   StopProgressCommandResponse,
   VehicleType,
 } from '@leopard/shared';
 
-import { ApiError } from '@leopard/mobile-core';
+import { ApiError, decodePolyline } from '@leopard/mobile-core';
 import type {
   DriverActiveTripView,
   DriverAssignedDetailView,
@@ -440,6 +441,21 @@ export function mapOrderToRouteView(
   const etaDurationSeconds = order.durationSeconds ?? order.etaSeconds ?? 0;
   const etaSource = (order.providerSource as ProviderSource) ?? 'DEMO';
 
+  let routeCoords: readonly RouteCoordinate[] | undefined;
+  const snapshot = order.routeSnapshot as Record<string, any> | undefined;
+  const rawPolyline = snapshot?.polyline;
+  if (typeof rawPolyline === 'string' && rawPolyline.trim()) {
+    try {
+      routeCoords = decodePolyline(rawPolyline.trim(), 'POLYLINE5');
+    } catch {
+      try {
+        routeCoords = decodePolyline(rawPolyline.trim(), 'POLYLINE6');
+      } catch {
+        // fallback to undefined
+      }
+    }
+  }
+
   return {
     origin,
     stops,
@@ -448,6 +464,7 @@ export function mapOrderToRouteView(
     etaDurationSeconds,
     etaSource,
     eta: null,
+    routeCoords,
   };
 }
 

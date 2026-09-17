@@ -195,6 +195,15 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
 
     if (nextContent.accessScope === 'ASSIGNED_FULL' && routeEtaResult.kind === 'content') {
       const etaView = routeEtaResult.view;
+      const effectiveRouteCoords =
+        etaView.polylineCoords && etaView.polylineCoords.length > 0
+          ? etaView.polylineCoords
+          : nextContent.order.route.routeCoords;
+      const effectiveRouteSegments =
+        etaView.polylineSegments && etaView.polylineSegments.length > 0
+          ? etaView.polylineSegments
+          : nextContent.order.route.routeSegments;
+
       nextContent = {
         ...nextContent,
         order: {
@@ -202,14 +211,8 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
           route: {
             ...nextContent.order.route,
             eta: etaView,
-            routeCoords:
-              etaView.polylineCoords && etaView.polylineCoords.length > 0
-                ? etaView.polylineCoords
-                : nextContent.order.route.routeCoords,
-            routeSegments:
-              etaView.polylineSegments && etaView.polylineSegments.length > 0
-                ? etaView.polylineSegments
-                : nextContent.order.route.routeSegments,
+            routeCoords: effectiveRouteCoords,
+            routeSegments: effectiveRouteSegments,
           },
         },
       };

@@ -17,6 +17,9 @@ import { PublicDetailView } from './components/detail/PublicDetailView';
 import { AssignedDetailView } from './components/detail/AssignedDetailView';
 import { CompletedOrderDetailView } from './components/detail/CompletedOrderDetailView';
 import { DriverIncidentModal } from './DriverIncidentModal';
+import { DriverModalSurface } from '../../navigation/DriverModalSurface';
+import { PickupVerificationView } from './components/detail/PickupVerificationView';
+import { DeliveryVerificationView } from './components/detail/DeliveryVerificationView';
 
 export type DriverOrderDetailScreenProps = Readonly<{
   view?: DriverDetailView;
@@ -61,30 +64,30 @@ const CommandButton = memo(function CommandButton({
 function getLifecycleSlideConfig(command: DriverCommandView) {
   if (command.targetStatus === 'PICKING_UP' || command.id.includes('pickup')) {
     return {
-      label: 'Vuốt đã tới điểm lấy hàng ➔',
+      label: 'Đã tới điểm lấy hàng',
       colorVariant: 'brand' as const,
     };
   }
   if (command.targetStatus === 'IN_TRANSIT' || command.id.includes('transit')) {
     return {
-      label: 'Vuốt đã bốc xong - Bắt đầu giao ➔',
+      label: 'Bắt đầu giao hàng',
       colorVariant: 'brand' as const,
     };
   }
   if (command.targetStatus === 'DELIVERED' || command.id.includes('deliver')) {
     return {
-      label: 'Vuốt đã tới điểm giao hàng ➔',
+      label: 'Đã tới điểm giao hàng',
       colorVariant: 'brand' as const,
     };
   }
   if (command.targetStatus === 'RETURNED' || command.id.includes('return')) {
     return {
-      label: 'Vuốt đã hoàn hàng về điểm gửi ➔',
+      label: 'Đã hoàn hàng về điểm gửi',
       colorVariant: 'brand' as const,
     };
   }
   return {
-    label: `Vuốt: ${command.label} ➔`,
+    label: command.label,
     colorVariant: 'brand' as const,
   };
 }
@@ -127,7 +130,7 @@ const TaskButton = memo(function TaskButton({
           style={styles.a11yHiddenButton}
           testID={`btn-lifecycle-${task.command.id}`}
         >
-          <Text style={styles.a11yHiddenText}>{`Vuốt: ${task.command.label} ➔`}</Text>
+          <Text style={styles.a11yHiddenText}>{task.command.label}</Text>
         </Pressable>
         <SlideToAction
           key={task.command.id}
@@ -152,6 +155,9 @@ const TaskButton = memo(function TaskButton({
 export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   const { view: directView, onBack } = props;
   const [localIncidentOpen, setLocalIncidentOpen] = useState(false);
+  const [isPickupProofModalOpen, setIsPickupProofModalOpen] = useState(false);
+  const [isDeliveryProofModalOpen, setIsDeliveryProofModalOpen] = useState(false);
+  const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
 
   const handleOpenIncidentModal = useMemo(
     () => props.onOpenIncidentModal ?? (() => setLocalIncidentOpen(true)),
@@ -161,6 +167,30 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   const handleCloseIncidentModal = useCallback(() => {
     setLocalIncidentOpen(false);
   }, []);
+
+  const handleOpenPickupProof = useCallback(() => {
+    setIsPickupProofModalOpen(true);
+  }, []);
+
+  const handleOpenDeliveryProof = useCallback(() => {
+    setIsDeliveryProofModalOpen(true);
+  }, []);
+
+  const handleConfirmPickupProof = useCallback((data: { photos: string[]; packageCount: number; notes: string }) => {
+    setIsPickupProofModalOpen(false);
+    if (props.onSelectProof) props.onSelectProof();
+    if (props.onExecuteTask && directView && directView.kind === 'content' && directView.primaryTask) {
+      props.onExecuteTask(directView.primaryTask.command.id);
+    }
+  }, [props, directView]);
+
+  const handleConfirmDeliveryProof = useCallback((data: { collectedAmount?: number; photos: string[]; notes?: string }) => {
+    setIsDeliveryProofModalOpen(false);
+    if (props.onSelectProof) props.onSelectProof();
+    if (props.onExecuteTask && directView && directView.kind === 'content' && directView.primaryTask) {
+      props.onExecuteTask(directView.primaryTask.command.id);
+    }
+  }, [props, directView]);
 
   // Runtime always supplies `view`. An orderId-only deep link renders nothing here —
   // the route resolves it through DriverOrderDetailRuntime, never a fixture.
@@ -269,6 +299,53 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
         orderReference={view.order.reference}
         visible={localIncidentOpen}
       />
+
+      {/* Màn hình chụp ảnh kiểm hàng trước khi bốc (Full-screen Focused Modal - Apple HIG) */}
+      <DriverModalSurface
+        animationType="slide"
+        onRequestClose={() => setIsPickupProofModalOpen(false)}
+        testID="modal-pickup-verification"
+        transparent={false}
+        visible={isPickupProofModalOpen}
+      >
+        <PickupVerificationView
+          initialPackageCount={24}
+          onCancel={() => setIsPickupProofModalOpen(false)}
+          onCapturePhoto={() => {
+            setCapturedPhotos(['file://captured-cargo-photo.jpg']);
+            if (props.onSelectProof) props.onSelectProof();
+          }}
+          onConfirmPickup={handleConfirmPickupProof}
+          orderCode={view.order.reference}
+          photos={capturedPhotos}
+        />
+      </DriverModalSurface>
+
+      {/* Màn hình xác nhận giao hàng POD / COD (Full-screen Focused Modal - Apple HIG) */}
+      <DriverModalSurface
+        animationType="slide"
+        onRequestClose={() => setIsDeliveryProofModalOpen(false)}
+        testID="modal-delivery-verification"
+        transparent={false}
+        visible={isDeliveryProofModalOpen}
+      >
+        <DeliveryVerificationView
+          expectedAmount={view.order.priceVnd ?? 308106}
+          onCancel={() => setIsDeliveryProofModalOpen(false)}
+          onCapturePhoto={() => {
+            setCapturedPhotos(['file://captured-delivered-photo.jpg']);
+            if (props.onSelectProof) props.onSelectProof();
+          }}
+          onCompleteDelivery={handleConfirmDeliveryProof}
+          onReportFailure={() => {
+            setIsDeliveryProofModalOpen(false);
+            handleOpenIncidentModal();
+          }}
+          orderCode={view.order.reference}
+          photos={capturedPhotos}
+          type={view.order.paymentMethod === 'CASH' ? 'COD' : 'PREPAID'}
+        />
+      </DriverModalSurface>
     </>
   );
 }

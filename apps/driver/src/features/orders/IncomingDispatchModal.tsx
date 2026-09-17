@@ -4,6 +4,7 @@ import {
   Image,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -21,6 +22,7 @@ import {
   RealInteractiveMap,
   SlideToAction,
   colors,
+  driverHapticMatrix,
   iosContinuousCurve,
   leopardPalette,
   radius,
@@ -94,6 +96,8 @@ export type IncomingDispatchModalProps = Readonly<{
   onAccept: (orderId: string) => void;
   onDecline: (orderId: string) => void;
   isAccepting?: boolean;
+  countdownSeconds?: number;
+  queuedOfferCount?: number;
 }>;
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -340,7 +344,7 @@ const ActionControlsSection = memo(function ActionControlsSection({
         resetKey={targetOrderId}
         colorVariant="success"
         disabled={isAccepting}
-        label="Vuốt để nhận cuốc ➔"
+        label="Vuốt để nhận cuốc"
         onActionComplete={() => onAccept(targetOrderId)}
         testID="dispatch-slide-action"
       />
@@ -368,21 +372,24 @@ const ActionControlsSection = memo(function ActionControlsSection({
  * ────────────────────────────────────────────────────────────────────────── */
 
 export function IncomingDispatchModal({
+  countdownSeconds,
   isAccepting = false,
   offer,
   onAccept,
   onDecline,
+  queuedOfferCount,
   visible,
 }: IncomingDispatchModalProps) {
   const targetOrderId = offer?.orderId ?? offer?.id ?? '';
 
   const calculateSecondsLeft = useCallback((targetOffer: IncomingDispatchOffer | null) => {
+    if (countdownSeconds !== undefined) return countdownSeconds;
     if (!targetOffer) return 0;
     if (targetOffer.expiresAtEpochMs) {
       return Math.max(0, Math.ceil((targetOffer.expiresAtEpochMs - Date.now()) / 1000));
     }
     return targetOffer.timeoutSeconds ?? 15;
-  }, []);
+  }, [countdownSeconds]);
 
   const [secondsLeft, setSecondsLeft] = useState(() => calculateSecondsLeft(offer));
   const [totalDuration, setTotalDuration] = useState(() => calculateSecondsLeft(offer));
@@ -436,6 +443,13 @@ export function IncomingDispatchModal({
     const timer = setInterval(() => {
       const remaining = Math.max(0, Math.ceil((expiryEpochMs - Date.now()) / 1000));
       setSecondsLeft(remaining);
+      if (remaining <= 5 && remaining > 0) {
+        try {
+          driverHapticMatrix.countdownCritical();
+        } catch {
+          // ignore
+        }
+      }
       if (remaining <= 0) {
         clearInterval(timer);
         onDeclineRef.current(targetOrderId);
@@ -512,6 +526,16 @@ export function IncomingDispatchModal({
       visible={visible}
     >
       <View style={styles.scrimOverlay}>
+        {queuedOfferCount && queuedOfferCount > 0 ? (
+          <View style={styles.queueToast} testID="queue-toast">
+            <Text style={styles.queueToastText}>
+              🔔 CÓ {queuedOfferCount} ĐƠN KHÁC ĐANG CHỜ TRONG HÀNG
+            </Text>
+            <Text style={styles.queueToastSubtext}>
+              (Sẽ tự động hiện sau khi kết thúc)
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.sheetContainer}>
           {/* 1. Header Bar with Animated Radar Pulse, Title, Countdown, and Decline ("Từ chối") Button */}
           <View style={styles.modalHeader}>
@@ -576,44 +600,51 @@ export function IncomingDispatchModal({
                     ? styles.progressBarWarning
                     : styles.progressBarNormal,
               ]}
+              testID="countdown-progress-bar"
             />
           </View>
 
-          {/* 3. Hero Mini Route Map (Memoized) */}
-          <HeroMapSection
-            dropoffAddress={offer.dropoffAddress}
-            dropoffCoords={offer.dropoffCoords}
-            pickupAddress={offer.pickupAddress}
-            pickupCoords={offer.pickupCoords}
-            pickupDistText={pickupDistText}
-          />
+          {/* Scrollable Center Content */}
+          <ScrollView
+            contentContainerStyle={styles.centerScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* 3. Hero Mini Route Map (Memoized) */}
+            <HeroMapSection
+              dropoffAddress={offer.dropoffAddress}
+              dropoffCoords={offer.dropoffCoords}
+              pickupAddress={offer.pickupAddress}
+              pickupCoords={offer.pickupCoords}
+              pickupDistText={pickupDistText}
+            />
 
-          {/* 4. Fare Card - Double-Bezel (Memoized) */}
-          <FareCardSection
-            fareAmount={fareAmount}
-            isUrgent={isUrgent}
-          />
+            {/* 4. Fare Card - Double-Bezel (Memoized) */}
+            <FareCardSection
+              fareAmount={fareAmount}
+              isUrgent={isUrgent}
+            />
 
-          {/* 5. Route Spine: Pickup -> Dropoff Double-Bezel (Memoized) */}
-          <RouteSpineSection
-            dropoffDisplay={dropoffDisplay}
-            etaLabel={offer.etaLabel}
-            pickupBadgeText={pickupBadgeText}
-            pickupDisplay={pickupDisplay}
-            tripDistText={tripDistText}
-          />
+            {/* 5. Route Spine: Pickup -> Dropoff Double-Bezel (Memoized) */}
+            <RouteSpineSection
+              dropoffDisplay={dropoffDisplay}
+              etaLabel={offer.etaLabel}
+              pickupBadgeText={pickupBadgeText}
+              pickupDisplay={pickupDisplay}
+              tripDistText={tripDistText}
+            />
 
-          {/* 6. Cargo Bento Card (Memoized) */}
-          <CargoBentoSection
-            cargoDimensions={offer.cargoDimensions}
-            cargoName={cargoName}
-            cargoPhotoUrl={offer.cargoPhotoUrl}
-            cargoWeightKg={offer.cargoWeightKg}
-            loadingBadgeLabel={loadingBadgeLabel}
-            onOpenPhotoPreview={handleOpenPhotoPreview}
-            specialNotes={specialNotes}
-            vehicleLabel={offer.vehicleLabel}
-          />
+            {/* 6. Cargo Bento Card (Memoized) */}
+            <CargoBentoSection
+              cargoDimensions={offer.cargoDimensions}
+              cargoName={cargoName}
+              cargoPhotoUrl={offer.cargoPhotoUrl}
+              cargoWeightKg={offer.cargoWeightKg}
+              loadingBadgeLabel={loadingBadgeLabel}
+              onOpenPhotoPreview={handleOpenPhotoPreview}
+              specialNotes={specialNotes}
+              vehicleLabel={offer.vehicleLabel}
+            />
+          </ScrollView>
 
           {/* 7. Action Controls: SlideToAction + Decline Button (Memoized) */}
           <ActionControlsSection
@@ -667,26 +698,55 @@ export function IncomingDispatchModal({
 // ponytail: Static styles adhere to Apple HIG 4pt spacing scale, radius tokens, and typeScale ramps.
 const styles = StyleSheet.create({
   scrimOverlay: {
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    backgroundColor: '#F8FAFC',
     flex: 1,
-    justifyContent: 'flex-end',
   },
   sheetContainer: {
-    backgroundColor: colors.neutral.surface,
-    borderTopLeftRadius: radius.modal,
-    borderTopRightRadius: radius.modal,
-    ...iosContinuousCurve,
-    boxShadow: '0 -10px 24px rgba(0, 0, 0, 0.28)',
-    gap: spacing.sm,
-    paddingBottom: spacing.xl + spacing.xs,
+    backgroundColor: '#F8FAFC',
+    flex: 1,
+    height: '100%',
+    width: '100%',
+    gap: spacing.xs,
+    paddingBottom: spacing.md,
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
+    justifyContent: 'space-between',
+  },
+  centerScrollContent: {
+    gap: spacing.xs,
+    paddingVertical: spacing.xxs,
+    paddingBottom: spacing.sm,
   },
   modalHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingBottom: spacing.xxs,
+  },
+  queueToast: {
+    position: 'absolute',
+    top: spacing.xl,
+    alignSelf: 'center',
+    backgroundColor: '#0F172A',
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  queueToastText: {
+    color: '#FFFFFF',
+    ...typeScale.footnote,
+    fontWeight: '700',
+  },
+  queueToastSubtext: {
+    color: '#94A3B8',
+    ...typeScale.caption2,
   },
   modalHeaderRight: {
     alignItems: 'center',
@@ -817,7 +877,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   fareBezelOuter: {
-    backgroundColor: leopardPalette.ecoGreenBorder,
+    backgroundColor: '#F0F4FA',
     borderRadius: radius.bezelOuter,
     padding: spacing.hairline + 1,
   },
@@ -826,8 +886,8 @@ const styles = StyleSheet.create({
   },
   fareBezelInner: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.ecoGreenBg,
-    borderColor: leopardPalette.ecoGreenBorder,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
     borderRadius: radius.bezelInner,
     borderWidth: 1,
     gap: spacing.hairline,
@@ -845,26 +905,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fareNetPill: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#86EFAC',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
     borderRadius: radius.pill,
     borderWidth: 1,
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.hairline,
   },
   fareNetPillText: {
-    color: '#166534',
+    color: '#D97706',
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   fareCaption: {
-    color: '#15803D',
+    color: '#64748B',
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.8,
   },
   fareAmount: {
-    color: '#166534',
+    color: leopardPalette.primary,
     ...typeScale.largeTitle,
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.8,

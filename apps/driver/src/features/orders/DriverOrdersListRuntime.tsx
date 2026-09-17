@@ -73,6 +73,13 @@ export function DriverOrdersListRuntime({
     prevFocusKeyRef.current = focusKey;
   }, [focusKey, query, profileQuery, walletQuery, historyQuery, performanceQuery]);
 
+  // If driver has an active trip, automatically route to the active order detail screen
+  useEffect(() => {
+    if (query.data && query.data.kind === 'content' && query.data.activeTrip?.id) {
+      onOpenOrder(query.data.activeTrip.id);
+    }
+  }, [query.data, onOpenOrder]);
+
   const driverIdentity = useMemo(() => {
     if (profileQuery.data && profileQuery.data.kind === 'content') {
       return {

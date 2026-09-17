@@ -219,7 +219,7 @@ describe('Driver order detail route', () => {
     );
 
     expect(screen.getByTestId('btn-advance-leg-slide')).toBeTruthy();
-    expect(screen.getByText('Vuốt: Bắt đầu đi lấy hàng ➔')).toBeTruthy();
+    expect(screen.getByText('Bắt đầu đi lấy hàng')).toBeTruthy();
 
     const panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
     const mockEvent = {} as any;
@@ -253,7 +253,7 @@ describe('Driver order detail route', () => {
     );
 
     // Initial leg: cmd-pickup-demo
-    expect(screen.getByText('Vuốt: Bắt đầu đi lấy hàng ➔')).toBeTruthy();
+    expect(screen.getByText('Bắt đầu đi lấy hàng')).toBeTruthy();
     let panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
     const mockEvent = {} as any;
     await act(async () => {
@@ -274,7 +274,7 @@ describe('Driver order detail route', () => {
       />,
     );
 
-    expect(screen.getByText('Vuốt: Đã lấy hàng — bắt đầu giao ➔')).toBeTruthy();
+    expect(screen.getByText('Đã lấy hàng — bắt đầu giao')).toBeTruthy();
 
     // Verify SlideToAction is re-armed with fresh resetKey/key and accepts the next swipe
     panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];

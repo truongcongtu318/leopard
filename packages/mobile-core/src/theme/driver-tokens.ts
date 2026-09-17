@@ -318,3 +318,29 @@ export const driverComponents = {
     arrowSize: 6,
   },
 } as const;
+
+/* ==========================================================================
+ * 4. DRIVER JOURNEY HIG TOKENS (12-State Cockpit Standard)
+ * ========================================================================== */
+export const driverJourneyTokens = {
+  sizes: {
+    primaryCtaHeight: 56,
+    swipeBarHeight: 64,
+    secondaryTouchTarget: 48,
+    cardRadius: 14,
+    pillRadius: 9999,
+  },
+  colors: {
+    primaryNavy: '#0B2545',
+    successGreen: '#34C759',
+    alertRed: '#FF3B30',
+    codAmber: '#F59E0B',
+    canvasSlate: '#F8FAFC',
+    cardLight: '#FFFFFF',
+    darkOled: '#0B0F17',
+    darkSurface: '#161F30',
+    darkBorder: '#26354A',
+    darkRoutePuck: '#38BDF8',
+  },
+} as const;
+

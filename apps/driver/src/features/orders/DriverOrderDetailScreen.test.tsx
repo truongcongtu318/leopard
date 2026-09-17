@@ -49,7 +49,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     // SlideToAction for Stage 1
     const slider = screen.getByTestId('btn-advance-leg-slide');
     expect(slider).toBeTruthy();
-    expect(screen.getByText('Vuốt đã tới điểm lấy hàng ➔')).toBeTruthy();
+    expect(screen.getByText('Đã tới điểm lấy hàng')).toBeTruthy();
 
     // Swiping or activating executes command
     await fireEvent(slider, 'accessibilityAction', {
@@ -102,7 +102,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     // SlideToAction for Stage 2
     const slider = screen.getByTestId('btn-advance-leg-slide');
     expect(slider).toBeTruthy();
-    expect(screen.getByText('Vuốt đã bốc xong - Bắt đầu giao ➔')).toBeTruthy();
+    expect(screen.getByText('Bắt đầu giao hàng')).toBeTruthy();
 
     // Swiping or activating executes command
     await fireEvent(slider, 'accessibilityAction', {
@@ -159,7 +159,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     // SlideToAction for Stage 3
     const slider = screen.getByTestId('btn-advance-leg-slide');
     expect(slider).toBeTruthy();
-    expect(screen.getByText('Vuốt đã tới điểm giao hàng ➔')).toBeTruthy();
+    expect(screen.getByText('Đã tới điểm giao hàng')).toBeTruthy();
 
     await fireEvent(slider, 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
@@ -208,10 +208,10 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     await fireEvent.press(screen.getByTestId('epod-signature-pad'));
     expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
 
-    // Action SlideToAction with label "Vuốt hoàn tất cuốc xe ➔" and colorVariant success
+    // Action SlideToAction with label "Vuốt hoàn tất cuốc xe" and colorVariant success
     const epodSlider = screen.getByTestId('btn-epod-complete-delivery');
     expect(epodSlider).toBeTruthy();
-    expect(screen.getByText('Vuốt hoàn tất cuốc xe ➔')).toBeTruthy();
+    expect(screen.getByText('Vuốt hoàn tất cuốc xe')).toBeTruthy();
 
     await fireEvent(epodSlider, 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
@@ -295,7 +295,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     // Slide action for returning
     const slider = screen.getByTestId('btn-advance-leg-slide');
     expect(slider).toBeTruthy();
-    expect(screen.getByText('Vuốt đã hoàn hàng về điểm gửi ➔')).toBeTruthy();
+    expect(screen.getByText('Đã hoàn hàng về điểm gửi')).toBeTruthy();
 
     await fireEvent(slider, 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },

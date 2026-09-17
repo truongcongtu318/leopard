@@ -13,6 +13,7 @@ export type DriverMissionExtrasProps = Readonly<{
   customerContact: string;
   vehicleLabel: string;
   history: DriverAssignedDetailView['order']['history'];
+  routeStepperComponent?: React.ReactNode;
 }>;
 
 export function DriverMissionExtras({
@@ -21,15 +22,17 @@ export function DriverMissionExtras({
   contactRoleLabel,
   customerContact,
   history,
+  routeStepperComponent,
   status,
   vehicleLabel,
 }: DriverMissionExtrasProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const isTerminal = status === 'DELIVERED' || status === 'RETURNED';
 
   return (
     <View style={styles.container}>
       <Pressable
-        accessibilityHint="Bấm để ẩn hoặc hiện tiến độ, hàng hóa, và nhật ký trạng thái"
+        accessibilityHint="Bấm để xem lộ trình chi tiết và thông tin hàng hóa"
         accessibilityLabel="Xem thêm chi tiết chuyến"
         accessibilityRole="button"
         onPress={() => setIsOpen(!isOpen)}
@@ -45,7 +48,14 @@ export function DriverMissionExtras({
 
       {isOpen ? (
         <View style={styles.content}>
+          {routeStepperComponent ? (
+            <View style={styles.routeSection}>
+              {routeStepperComponent}
+            </View>
+          ) : null}
+
           <MissionStepper status={status} />
+
           <CargoAndContactCard
             cargoSummary={cargoSummary}
             cargoWeightKg={cargoWeightKg}
@@ -53,7 +63,10 @@ export function DriverMissionExtras({
             customerContact={customerContact}
             vehicleLabel={vehicleLabel}
           />
-          {history.length > 0 ? <StatusTimeline entries={history} /> : null}
+
+          {isTerminal && history.length > 0 ? (
+            <StatusTimeline entries={history} />
+          ) : null}
         </View>
       ) : null}
     </View>
@@ -62,18 +75,25 @@ export function DriverMissionExtras({
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     overflow: 'hidden',
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   toggleBtn: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
+    backgroundColor: colors.neutral.surface,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    height: 48,
   },
   toggleLeft: {
     alignItems: 'center',
@@ -82,18 +102,23 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     color: leopardPalette.primary,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
   },
   toggleArrow: {
-    color: colors.neutral.subtleText,
+    color: leopardPalette.primary,
     fontSize: 11,
     fontWeight: '700',
   },
   content: {
     backgroundColor: colors.neutral.surface,
+    borderTopColor: colors.neutral.border,
+    borderTopWidth: 1,
     gap: spacing.sm,
-    padding: 12,
+    padding: spacing.md,
+  },
+  routeSection: {
+    marginBottom: spacing.xs,
   },
   pressed: {
     opacity: 0.8,

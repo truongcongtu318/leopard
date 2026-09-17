@@ -51,4 +51,5 @@ export * from './ui/MediaImage';
 export * from './ui/NavigableMetricCard';
 export * from './ui/GestureBottomSheet';
 export * from './ui/haptics';
+export * from './ui/decode-polyline';
 export * from './icons/svg-icons';

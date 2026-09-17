@@ -110,5 +110,34 @@ export const haptic = {
       // no-op
     }
   },
+
+  error(): void {
+    try {
+      if (expoHaptics?.notificationAsync && expoHaptics?.NotificationFeedbackType) {
+        expoHaptics.notificationAsync(expoHaptics.NotificationFeedbackType.Error).catch(() => {});
+        return;
+      }
+      if (Platform.OS === 'android') {
+        Vibration.vibrate([0, 40, 60, 40]);
+      } else if (Platform.OS === 'ios') {
+        Vibration.vibrate();
+      }
+    } catch {
+      // no-op
+    }
+  },
 };
+
+/**
+ * Driver Journey HIG Haptic Mapping
+ */
+export const driverHapticMatrix = {
+  offerIncoming: () => haptic.medium(),
+  countdownCritical: () => haptic.heavy(),
+  swipeThreshold: () => haptic.medium(),
+  swipeSuccess: () => haptic.success(),
+  actionHeavy: () => haptic.heavy(),
+  errorAlert: () => haptic.error(),
+};
+
 
