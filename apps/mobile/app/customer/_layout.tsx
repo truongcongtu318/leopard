@@ -83,6 +83,8 @@ export default function CustomerLayout() {
   };
 
   const isSubScreenWithoutNav =
+    pathname.includes('/customer/search-address') ||
+    pathname.includes('/customer/booking') ||
     pathname.includes('/customer/orders/checkout') ||
     pathname.includes('/customer/orders/searching') ||
     pathname.match(/\/customer\/orders\/[^/]+$/) !== null ||
