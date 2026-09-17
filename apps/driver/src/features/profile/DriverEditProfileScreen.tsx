@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +27,7 @@ import {
   driverPrimitives,
   iconSize,
   iosContinuousCurve,
+  typeScale,
 } from '@leopard/mobile-core';
 import { formatPhoneNumber } from './ProfileScreen';
 
@@ -412,7 +414,7 @@ const styles = StyleSheet.create({
   },
   avatarActionText: {
     color: driverPrimitives.colors.gray700,
-    fontSize: 12.5,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
 
@@ -435,12 +437,12 @@ const styles = StyleSheet.create({
   },
   guidelineTitle: {
     color: '#15803D',
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '700',
   },
   guidelineText: {
     color: '#166534',
-    fontSize: 11,
+    ...typeScale.caption2,
     lineHeight: 16,
   },
 
@@ -450,7 +452,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 11.5,
+    ...typeScale.caption2,
     fontWeight: '700',
     letterSpacing: 0.5,
     paddingHorizontal: 4,
@@ -485,14 +487,20 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 11.5,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   textInput: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    ...typeScale.subheadline,
     fontWeight: '600',
     padding: 0,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        outlineWidth: 0,
+      } as any,
+    }),
   },
   rowDivider: {
     backgroundColor: driverPrimitives.colors.gray100,
@@ -501,7 +509,7 @@ const styles = StyleSheet.create({
   },
   errorTextRow: {
     color: driverPrimitives.colors.red500,
-    fontSize: 11.5,
+    ...typeScale.caption2,
     fontWeight: '500',
     marginLeft: 52,
     paddingBottom: 8,
@@ -521,12 +529,12 @@ const styles = StyleSheet.create({
   },
   readonlyLabel: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 11.5,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   readonlyValue: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14,
+    ...typeScale.subheadline,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
@@ -543,7 +551,7 @@ const styles = StyleSheet.create({
   },
   verifiedBadgeText: {
     color: driverPrimitives.colors.green700,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
 
@@ -558,7 +566,7 @@ const styles = StyleSheet.create({
   },
   errorBannerText: {
     color: driverPrimitives.colors.red600,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '500',
     textAlign: 'center',
   },

@@ -1,14 +1,12 @@
 import {
-  colors,
-  driverPrimitives,
-  driverSemantics,
+  customerPalette,
   iosContinuousCurve,
   leopardPalette,
   radius,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -42,22 +40,22 @@ function IsometricBoxIcon({ size = 22 }: { size?: number }) {
       {/* Top Diamond Face */}
       <Path
         d="M12 2.5L20.5 7.4L12 12.3L3.5 7.4L12 2.5Z"
-        fill={colors.neutral.surface}
+        fill="#FFFFFF"
       />
       {/* Left Shaded Face */}
       <Path
         d="M3.5 7.4L12 12.3V21.5L3.5 16.6V7.4Z"
-        fill="rgba(255, 255, 255, 0.84)"
+        fill="rgba(255, 255, 255, 0.88)"
       />
       {/* Right Shaded Face */}
       <Path
         d="M12 12.3L20.5 7.4V16.6L12 21.5V12.3Z"
-        fill="rgba(255, 255, 255, 0.68)"
+        fill="rgba(255, 255, 255, 0.72)"
       />
       {/* Subtle inner box crease */}
       <Path
         d="M12 2.5L12 12.3M12 12.3L20.5 7.4M12 12.3L3.5 7.4"
-        stroke="#F97316"
+        stroke="#D97706"
         strokeWidth={0.8}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -71,7 +69,7 @@ function TripleChevronIcon() {
     <Svg width={24} height={16} viewBox="0 0 24 16" fill="none">
       <Path
         d="M5 2.5L10 8L5 13.5"
-        stroke={colors.neutral.subtleText}
+        stroke="#FFFFFF"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -79,7 +77,7 @@ function TripleChevronIcon() {
       />
       <Path
         d="M11 2.5L16 8L11 13.5"
-        stroke={colors.neutral.subtleText}
+        stroke="#FFFFFF"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -87,7 +85,7 @@ function TripleChevronIcon() {
       />
       <Path
         d="M17 2.5L22 8L17 13.5"
-        stroke={colors.neutral.subtleText}
+        stroke="#FFFFFF"
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -105,11 +103,6 @@ interface SlideButtonProps {
 
 const THUMB_SIZE = 48;
 const PADDING = 5;
-
-const splashScene = {
-  accent: leopardPalette.primary,
-  base: leopardPalette.primary,
-} as const;
 
 function SlideToGetStarted({ label, onAction, testID = 'splash-get-started-btn' }: SlideButtonProps) {
   const [trackWidth, setTrackWidth] = useState(0);
@@ -227,12 +220,12 @@ export function DriverSplashScreen({
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  // Hero image spans the upper 58% of the screen height, seamlessly dissolving downwards
-  const heroHeight = Math.max(windowHeight * 0.58, 380);
+  // Hero image spans the upper 56% of the screen height, dissolving downwards into pure white canvas
+  const heroHeight = Math.max(windowHeight * 0.56, 360);
 
   return (
     <View style={styles.container} testID={testID}>
-      {/* Upper Hero Area with clean SVG aura and brand logo */}
+      {/* Upper Hero Area with clean subtle ambient gradient and brand logo */}
       <View
         style={[styles.imageContainer, { height: heroHeight }]}
         testID="splash-river-image"
@@ -245,14 +238,13 @@ export function DriverSplashScreen({
         >
           <Defs>
             <LinearGradient id="heroGradient" x1="0" x2="0" y1="0" y2="1">
-              <Stop offset="0%" stopColor={splashScene.base} stopOpacity="1" />
-              <Stop offset="55%" stopColor={splashScene.base} stopOpacity="1" />
-              <Stop offset="85%" stopColor={splashScene.base} stopOpacity="0.95" />
-              <Stop offset="100%" stopColor={splashScene.base} stopOpacity="1" />
+              <Stop offset="0%" stopColor="#F0F7FF" stopOpacity="1" />
+              <Stop offset="60%" stopColor="#F8FAFC" stopOpacity="0.8" />
+              <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="1" />
             </LinearGradient>
-            <RadialGradient id="auraGlow" cx="50%" cy="45%" r="45%">
-              <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.28" />
-              <Stop offset="60%" stopColor="#0284C7" stopOpacity="0.08" />
+            <RadialGradient id="auraGlow" cx="50%" cy="40%" r="50%">
+              <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.12" />
+              <Stop offset="60%" stopColor="#0284C7" stopOpacity="0.04" />
               <Stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
             </RadialGradient>
           </Defs>
@@ -280,19 +272,15 @@ export function DriverSplashScreen({
             style={styles.wordmarkImage}
             testID="splash-leopard-wordmark"
           />
-          <View style={styles.driverBadge}>
-            <View style={styles.driverBadgeDot} />
-            <Text style={styles.driverBadgeText}>DRIVER PILOT</Text>
-          </View>
         </View>
       </View>
 
       {/* Bottom Content Area */}
       <View
-        style={[styles.bottomContent, { paddingBottom: Math.max(insets.bottom, 16) }]}
+        style={[styles.bottomContent, { paddingBottom: Math.max(insets.bottom, 16) + spacing.xs }]}
       >
         <View style={styles.contentWrapper}>
-          {/* Pagination Indicators (two muted dots + one orange pill) */}
+          {/* Pagination Indicators (two muted dots + one navy/amber pill) */}
           <View style={styles.indicatorsRow} testID="splash-indicators">
             <View style={styles.inactiveDot} />
             <View style={styles.inactiveDot} />
@@ -326,7 +314,7 @@ export function DriverSplashScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: driverPrimitives.colors.dark900,
+    backgroundColor: '#FFFFFF',
   },
   imageContainer: {
     width: '100%',
@@ -344,44 +332,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 20,
+    paddingBottom: spacing.md,
   },
   emblemBox: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   emblemImage: {
-    width: 140,
-    height: 67,
+    width: 150,
+    height: 72,
   },
   wordmarkImage: {
-    width: 190,
-    height: 43,
-    marginTop: 2,
-  },
-  driverBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(2, 132, 199, 0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xxs,
-    gap: 6,
-    marginTop: spacing.sm + spacing.xxs,
-  },
-  driverBadgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#38BDF8',
-  },
-  driverBadgeText: {
-    color: '#38BDF8',
-    ...typeScale.caption2,
-    fontWeight: '600',
-    letterSpacing: 1,
+    width: 200,
+    height: 45,
+    marginTop: spacing.hairline,
   },
   heroImage: {
     width: '100%',
@@ -392,58 +356,60 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   contentWrapper: {
-    paddingHorizontal: spacing.lg + spacing.xxs,
-    paddingBottom: Platform.OS === 'ios' ? spacing.md : spacing.lg + spacing.xxs,
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? spacing.md : spacing.lg,
   },
   indicatorsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    marginBottom: spacing.xl - spacing.sm,
+    gap: spacing.xs,
+    marginBottom: spacing.md,
   },
   inactiveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: driverPrimitives.colors.gray400,
-    opacity: 0.85,
+    backgroundColor: '#CBD5E1',
   },
   activePill: {
     width: 24,
     height: 6,
     borderRadius: 3,
-    backgroundColor: splashScene.accent,
+    backgroundColor: leopardPalette.primary,
   },
   title: {
     ...typeScale.largeTitle,
-    color: colors.neutral.surface,
-    letterSpacing: -0.5,
-    lineHeight: 40,
-    marginBottom: spacing.sm,
+    color: '#0F172A',
+    letterSpacing: -0.6,
+    lineHeight: 38,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     ...typeScale.subheadline,
-    color: leopardPalette.inputBorder,
+    color: '#64748B',
     lineHeight: 22,
-    marginBottom: spacing.xl + spacing.xxs,
+    marginBottom: spacing.lg,
   },
   buttonWrapper: {
     width: '100%',
   },
   track: {
-    height: 60,
+    height: 58,
     borderRadius: radius.pill,
     ...iosContinuousCurve,
-    backgroundColor: splashScene.base,
+    backgroundColor: leopardPalette.primary,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     padding: PADDING,
     justifyContent: 'center',
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: '#050F24',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
+    shadowColor: leopardPalette.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
     shadowRadius: 10,
     elevation: 4,
   },
@@ -454,14 +420,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 60,
   },
   btnLabel: {
-    color: colors.neutral.surfaceMuted,
+    color: '#FFFFFF',
     ...typeScale.callout,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   chevronContainer: {
     position: 'absolute',
-    right: spacing.xl - spacing.sm,
+    right: spacing.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -469,13 +435,13 @@ const styles = StyleSheet.create({
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
-    backgroundColor: splashScene.accent,
+    backgroundColor: customerPalette.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: splashScene.accent,
+    shadowColor: customerPalette.accent,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
 });

@@ -29,6 +29,7 @@ import {
   colors,
   driverPrimitives,
   iosContinuousCurve,
+  typeScale,
 } from '@leopard/mobile-core';
 
 // Same source as profile adapter: real bundled version, never a hardcoded pilot tag.
@@ -638,7 +639,7 @@ const styles = StyleSheet.create({
   },
   resetBtnText: {
     color: driverPrimitives.colors.blue500,
-    fontSize: 16,
+    ...typeScale.subheadline,
     fontWeight: '600',
     textAlign: 'right',
   },
@@ -649,7 +650,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 11.5,
+    ...typeScale.caption2,
     fontWeight: '700',
     letterSpacing: 0.5,
     paddingHorizontal: 4,
@@ -711,17 +712,17 @@ const styles = StyleSheet.create({
   },
   newPillText: {
     color: colors.neutral.mutedText,
-    fontSize: 9.5,
+    ...typeScale.caption2,
     fontWeight: '700',
   },
   settingTitle: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   settingDesc: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12,
+    ...typeScale.caption1,
     lineHeight: 16,
   },
 
@@ -735,7 +736,7 @@ const styles = StyleSheet.create({
   },
   subConfigLabel: {
     color: driverPrimitives.colors.gray700,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
 
@@ -759,7 +760,7 @@ const styles = StyleSheet.create({
   },
   segmentBtnText: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '500',
   },
   segmentBtnTextActive: {
@@ -785,7 +786,7 @@ const styles = StyleSheet.create({
   },
   segmentCompactText: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '500',
   },
   segmentCompactTextActive: {
@@ -806,7 +807,7 @@ const styles = StyleSheet.create({
   },
   statusPillGreenText: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
 
@@ -824,7 +825,7 @@ const styles = StyleSheet.create({
   },
   sosButtonText: {
     color: colors.danger.text,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
@@ -836,12 +837,12 @@ const styles = StyleSheet.create({
   },
   footerVersion: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
   footerCopyright: {
     color: driverPrimitives.colors.gray400,
-    fontSize: 11,
+    ...typeScale.caption2,
   },
   pressed: {
     opacity: 0.85,

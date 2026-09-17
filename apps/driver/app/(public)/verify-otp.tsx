@@ -18,8 +18,6 @@ import {
   IconClock,
   OtpPhoneHeroIcon,
   colors,
-  driverPrimitives,
-  driverSemantics,
   httpClient,
   iosContinuousCurve,
   leopardPalette,
@@ -29,7 +27,6 @@ import {
   toE164Vn,
   typeScale,
 } from '@leopard/mobile-core';
-import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 interface AuthResponse {
   user: {
@@ -51,7 +48,6 @@ interface AuthResponse {
 
 const NUM_CELLS = 6;
 const COUNTDOWN_INITIAL = 60;
-const DRIVER_ACCENT = '#0284C7';
 
 const KEYPAD_LETTERS: Record<string, string> = {
   '1': '',
@@ -231,23 +227,6 @@ export default function DriverVerifyOtpRoute() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Top Ambient Glow */}
-        <Svg height={160} pointerEvents="none" preserveAspectRatio="none" style={styles.heroAuraSvg} width="100%">
-          <Defs>
-            <LinearGradient id="verifyOtpGradient" x1="0" x2="0" y1="0" y2="1">
-              <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
-              <Stop offset="100%" stopColor={leopardPalette.primary} stopOpacity="0" />
-            </LinearGradient>
-            <RadialGradient id="verifyAuraGlow" cx="50%" cy="15%" r="65%">
-              <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.32" />
-              <Stop offset="70%" stopColor="#0284C7" stopOpacity="0.08" />
-              <Stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
-            </RadialGradient>
-          </Defs>
-          <Rect fill="url(#verifyOtpGradient)" height="100%" width="100%" />
-          <Rect fill="url(#verifyAuraGlow)" height="100%" width="100%" />
-        </Svg>
-
         {/* Top Header */}
         <View style={styles.header}>
           <Pressable
@@ -258,9 +237,11 @@ export default function DriverVerifyOtpRoute() {
             style={({ pressed }) => [styles.backBtn, pressed && styles.controlPressed]}
             testID="btn-back"
           >
-            <IconChevron color={colors.neutral.surface} direction="left" size={20} />
+            <IconChevron color="#0F172A" direction="left" size={20} />
           </Pressable>
-          <Text style={styles.headerTitle}>XÁC THỰC BẢO MẬT</Text>
+          <Text accessibilityRole="header" style={styles.headerTitle}>
+            Xác nhận mã OTP
+          </Text>
           <View style={styles.headerPlaceholder} />
         </View>
 
@@ -277,7 +258,7 @@ export default function DriverVerifyOtpRoute() {
 
           <View style={styles.sublineWrap}>
             <Text style={styles.subline}>
-              Mã 6 chữ số đã gửi tới{' '}
+              Mã xác thực gồm 6 chữ số đã được gửi tới số điện thoại{' '}
               <Text style={styles.phoneHighlight}>{formattedPhone || phone}</Text>
             </Text>
             <Pressable
@@ -341,11 +322,11 @@ export default function DriverVerifyOtpRoute() {
             </View>
           </Pressable>
 
-          {/* Resend / Countdown Capsule */}
+          {/* Resend / Countdown Row */}
           <View style={styles.resendRow}>
             {countdown > 0 ? (
-              <View style={styles.timerCapsule}>
-                <IconClock color="#38BDF8" size="sm" />
+              <View style={styles.timerGroup}>
+                <IconClock color="#64748B" size="sm" />
                 <Text style={styles.countdownText}>
                   Gửi lại mã sau{' '}
                   <Text style={styles.countdownTime}>
@@ -369,17 +350,14 @@ export default function DriverVerifyOtpRoute() {
 
           {isSubmitting ? (
             <View style={styles.submittingIndicator}>
-              <ActivityIndicator color={DRIVER_ACCENT} size="small" />
-              <Text style={styles.submittingText}>Đang xác thực hồ sơ tài xế...</Text>
+              <ActivityIndicator color={leopardPalette.primary} size="small" />
+              <Text style={styles.submittingText}>Đang xác thực mã OTP...</Text>
             </View>
           ) : null}
         </View>
 
-        {/* iOS-Style Numeric Keypad */}
-        <View
-          style={[styles.numpadContainer, isCompactViewport && styles.numpadContainerCompact]}
-          testID="virtual-numpad"
-        >
+        {/* Numeric Numpad - fixed at bottom */}
+        <View style={styles.numpadContainer} testID="virtual-numpad">
           <View style={styles.numpadRow}>
             {['1', '2', '3'].map((n) => renderNumpadKey(n))}
           </View>
@@ -390,7 +368,7 @@ export default function DriverVerifyOtpRoute() {
             {['7', '8', '9'].map((n) => renderNumpadKey(n))}
           </View>
           <View style={styles.numpadRow}>
-            <View style={[styles.numpadKeyEmpty, isCompactViewport && styles.numpadKeyCompact]} />
+            <View style={styles.numpadKeyEmpty} />
             {renderNumpadKey('0')}
             <Pressable
               accessibilityLabel="Xóa"
@@ -417,118 +395,117 @@ export default function DriverVerifyOtpRoute() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#06162F',
+    backgroundColor: '#FFFFFF',
   },
   container: {
     alignSelf: 'center',
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: '#FFFFFF',
     flex: 1,
     justifyContent: 'space-between',
-    maxWidth: 480,
+    maxWidth: 440,
     width: '100%',
-    position: 'relative',
-  },
-  heroAuraSvg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 160,
   },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     height: 56,
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    zIndex: 10,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   backBtn: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    borderColor: 'rgba(255, 255, 255, 0.20)',
-    borderRadius: 22,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.pill,
     borderWidth: 1,
-    height: 44,
+    height: 40,
     justifyContent: 'center',
-    width: 44,
+    width: 40,
+  },
+  controlPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   headerTitle: {
-    color: '#38BDF8',
-    ...typeScale.caption2,
-    fontWeight: '800',
-    letterSpacing: 1.4,
+    color: '#0F172A',
+    ...typeScale.headline,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   headerPlaceholder: {
-    width: 44,
+    width: 40,
   },
   content: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl - spacing.sm,
-    paddingBottom: spacing.md,
-    zIndex: 5,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   contentCompact: {
+    paddingTop: spacing.xs,
     paddingBottom: spacing.xxs,
   },
   heroBadge: {
     alignItems: 'center',
-    backgroundColor: 'rgba(2, 132, 199, 0.16)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
     borderRadius: radius.pill,
     borderWidth: 1.5,
     height: 56,
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
     width: 56,
   },
   heroTitle: {
-    color: colors.neutral.surface,
+    color: '#0F172A',
     ...typeScale.title2,
     fontWeight: '800',
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
     lineHeight: 28,
-    marginBottom: 6,
+    marginBottom: spacing.xxs,
     textAlign: 'center',
   },
   sublineWrap: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: spacing.xxs + spacing.hairline,
     justifyContent: 'center',
-    marginBottom: spacing.xl - spacing.sm,
+    marginBottom: spacing.md,
   },
   subline: {
-    color: leopardPalette.inputBorder,
-    ...typeScale.footnote,
-    lineHeight: 18,
+    color: '#64748B',
+    ...typeScale.subheadline,
+    lineHeight: 20,
     textAlign: 'center',
   },
   phoneHighlight: {
-    color: colors.neutral.surface,
-    fontWeight: '800',
+    color: '#0F172A',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   changePhoneBtn: {
     paddingHorizontal: spacing.xxs,
-    paddingVertical: 2,
+    paddingVertical: spacing.hairline,
   },
   changePhoneText: {
-    color: '#38BDF8',
+    color: leopardPalette.primary,
     ...typeScale.footnote,
-    fontWeight: '800',
+    fontWeight: '700',
     textDecorationLine: 'underline',
   },
   errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.14)',
-    borderColor: 'rgba(248, 113, 113, 0.46)',
-    borderRadius: radius.control,
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1,
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.md,
@@ -536,9 +513,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   errorText: {
-    color: '#FECACA',
+    color: '#B91C1C',
     ...typeScale.footnote,
     fontWeight: '600',
+    lineHeight: 18,
     textAlign: 'center',
   },
   hiddenInput: {
@@ -548,10 +526,10 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   cellsRow: {
-    alignItems: 'center',
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg - spacing.xs,
+    marginVertical: spacing.xs,
     width: '100%',
   },
   cellTriplet: {
@@ -561,183 +539,154 @@ const styles = StyleSheet.create({
   cellDivider: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xs,
+    width: 20,
   },
   dividerBar: {
-    backgroundColor: 'rgba(255, 255, 255, 0.28)',
-    borderRadius: 1,
-    height: 3,
-    width: 12,
+    backgroundColor: '#CBD5E1',
+    borderRadius: radius.pill,
+    height: 2,
+    width: 10,
   },
   cell: {
     alignItems: 'center',
-    backgroundColor: '#0F2347',
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
     borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1.5,
-    height: 52,
+    height: 54,
     justifyContent: 'center',
-    shadowColor: '#020817',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.14,
-    shadowRadius: 6,
-    width: 44,
+    position: 'relative',
+    width: 46,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
     elevation: 1,
   },
   cellFilled: {
-    backgroundColor: '#132C56',
-    borderColor: 'rgba(56, 189, 248, 0.55)',
+    backgroundColor: '#FFFFFF',
+    borderColor: leopardPalette.primary,
   },
   cellActive: {
-    backgroundColor: '#163566',
-    borderColor: '#38BDF8',
+    backgroundColor: '#FFFFFF',
+    borderColor: leopardPalette.primary,
+    borderWidth: 2,
+    shadowColor: leopardPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
     elevation: 3,
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-  },
-  activeCursor: {
-    backgroundColor: '#38BDF8',
-    borderRadius: 1,
-    height: 20,
-    width: 2,
   },
   cellError: {
-    borderColor: colors.danger.text,
-    backgroundColor: 'rgba(239, 68, 68, 0.16)',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#EF4444',
+  },
+  activeCursor: {
+    backgroundColor: leopardPalette.primary,
+    borderRadius: 1,
+    height: 22,
+    width: 2,
   },
   cellText: {
+    color: '#0F172A',
     ...typeScale.title2,
-    color: colors.neutral.surface,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontVariant: ['tabular-nums'],
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    textAlign: 'center',
   },
   resendRow: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 40,
+    minHeight: 44,
+    marginTop: spacing.xxs,
   },
-  timerCapsule: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: radius.pill,
-    borderWidth: 1,
+  timerGroup: {
     flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: spacing.sm + spacing.xxs,
-    paddingVertical: 7,
+    alignItems: 'center',
+    gap: spacing.xxs + spacing.hairline,
   },
   countdownText: {
-    color: leopardPalette.inputBorder,
-    ...typeScale.caption1,
-    fontWeight: '600',
+    color: '#64748B',
+    ...typeScale.footnote,
   },
   countdownTime: {
-    ...typeScale.caption1,
-    color: '#38BDF8',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontVariant: ['tabular-nums'],
+    color: '#0F172A',
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   resendBtn: {
     alignItems: 'center',
-    backgroundColor: 'rgba(2, 132, 199, 0.16)',
-    borderColor: 'rgba(56, 189, 248, 0.40)',
-    borderRadius: radius.pill,
-    borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 40,
-    paddingHorizontal: spacing.lg - spacing.xs,
-    paddingVertical: spacing.xs,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
   },
   resendBtnText: {
-    color: '#38BDF8',
-    ...typeScale.footnote,
-    fontWeight: '800',
+    color: leopardPalette.primary,
+    ...typeScale.subheadline,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   submittingIndicator: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.xs,
-    marginTop: spacing.xs + spacing.hairline,
+    marginTop: spacing.xs,
   },
   submittingText: {
-    color: '#D8E3F0',
-    ...typeScale.caption1,
+    color: '#64748B',
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   numpadContainer: {
-    backgroundColor: '#071830',
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    borderTopLeftRadius: radius.modal,
-    borderTopRightRadius: radius.modal,
-    borderTopWidth: 1,
-    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
     paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.md,
-    paddingHorizontal: spacing.xl - spacing.sm,
-    paddingTop: spacing.sm,
-  },
-  numpadContainerCompact: {
-    gap: 6,
-    paddingBottom: 10,
-    paddingTop: spacing.xs,
+    gap: spacing.xs,
   },
   numpadRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.xs + spacing.hairline,
     justifyContent: 'space-between',
   },
   numpadKey: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: radius.cardLg,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
     ...iosContinuousCurve,
     borderWidth: 1,
     flex: 1,
-    height: 50,
+    height: 52,
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
   },
   numpadKeyCompact: {
-    height: 44,
+    height: 46,
   },
   numpadKeyPressed: {
-    backgroundColor: '#0284C7',
-    borderColor: '#38BDF8',
+    backgroundColor: '#E2E8F0',
     transform: [{ scale: 0.97 }],
   },
   numpadKeyEmpty: {
     flex: 1,
-    height: 50,
+    height: 52,
   },
   numpadKeyText: {
-    color: colors.neutral.surface,
+    color: '#0F172A',
     ...typeScale.title2,
-    fontVariant: ['tabular-nums'],
     fontWeight: '700',
-    lineHeight: 24,
+    fontVariant: ['tabular-nums'],
   },
   numpadSubText: {
-    color: '#94A3B8',
+    color: '#64748B',
     ...typeScale.caption2,
-    fontWeight: '700',
     letterSpacing: 1.2,
-    marginTop: -1,
+    marginTop: -2,
   },
   numpadKeyActionText: {
-    color: leopardPalette.inputBorder,
+    color: '#0F172A',
     ...typeScale.title3,
-    fontWeight: '700',
-  },
-  controlPressed: {
-    opacity: 0.82,
-    transform: [{ scale: 0.96 }],
+    fontWeight: '600',
   },
 });

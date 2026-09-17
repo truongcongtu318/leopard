@@ -1,7 +1,6 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { styles } from './DriverLoginScreen.styles';
 import type { Role } from '@leopard/shared';
@@ -20,6 +19,18 @@ import {
   colors,
   leopardPalette,
   sessionStore,
+  typeScale,
+  BrandLoginLogo,
+  Button,
+  IconCheck,
+  IconClose,
+  IconRoleAdmin,
+  IconRoleCustomer,
+  IconRoleDriver,
+  VietnamFlagIcon,
+  hitSlop,
+  iconSize,
+  isLikelyVnPhone,
 } from '@leopard/mobile-core';
 import { isFirebaseConfigured } from '@leopard/mobile-core/src/auth/firebase';
 import {
@@ -28,8 +39,6 @@ import {
   signInWithGoogle,
   type OtpChallenge,
 } from '@leopard/mobile-core/src/auth/firebase-auth';
-import { isLikelyVnPhone, VietnamFlagIcon } from '@leopard/mobile-core';
-import { hitSlop, IconCheck, IconClose, iconSize } from '@leopard/mobile-core';
 import { DriverOtpModal } from './DriverOtpModal';
 
 function GoogleMark() {
@@ -54,9 +63,6 @@ function GoogleMark() {
     </Svg>
   );
 }
-
-const leopardEmblem = require('../../assets/brand/leopard-emblem.png');
-const brandLogin = require('../../assets/brand/brand_login.png');
 
 const RECAPTCHA_CONTAINER_ID = 'leopard-driver-recaptcha-container';
 
@@ -264,7 +270,40 @@ export function DriverLoginScreen({
     }
   };
 
-  const handleChangePhone = () => {
+  const handleDemoLogin = async (accountId: string, defaultRole: Role) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMsg(null);
+
+    try {
+      const res = await httpClient.post<AuthResponse>('/auth/login/demo', { accountId });
+      const accessToken = res.session?.accessToken ?? '';
+      const refreshToken = res.session?.refreshToken ?? '';
+      await sessionStore.setSession(accessToken, refreshToken, res.user.role);
+      const role = res.user?.role ?? defaultRole;
+      if (res.user?.profileComplete !== undefined) {
+        onLoginSuccess?.(role, res.user.profileComplete);
+      } else {
+        (onLoginSuccess as any)?.(role);
+      }
+    } catch (err) {
+      const statusCode = (err as { statusCode?: number })?.statusCode ?? 0;
+      const message = (err as { message?: string })?.message;
+
+      if (statusCode === 401 || statusCode === 403) {
+        setErrorMsg(message || 'Tài khoản demo không hợp lệ');
+      } else if (statusCode === 503 || statusCode === 0) {
+        setErrorMsg(message || 'Hệ thống xác thực tạm thời không khả dụng');
+      } else {
+        setErrorMsg(message || 'Đã xảy ra lỗi khi đăng nhập demo');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChangePhone = useCallback(() => {
     resetRecaptcha();
     otpChallengeRef.current = null;
     setOtpCode('');
@@ -272,7 +311,7 @@ export function DriverLoginScreen({
     setResendSuccessMsg(null);
     setIsVerified(false);
     setAuthPhase('phone');
-  };
+  }, []);
 
   const cleanPhone = phone.replace(/\D/g, '');
   const isPhoneValid = isLikelyVnPhone(cleanPhone);
@@ -295,55 +334,26 @@ export function DriverLoginScreen({
             },
           ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >
+          {/* Top Brand & Header Section */}
           <View style={styles.heroSection} testID="driver-login-hero-image">
-            <Svg height="100%" pointerEvents="none" preserveAspectRatio="none" style={styles.heroAuraSvg} width="100%">
-              <Defs>
-                <LinearGradient id="driverLoginGradient" x1="0" x2="0" y1="0" y2="1">
-                  <Stop offset="0%" stopColor="#0F2754" stopOpacity="1" />
-                  <Stop offset="65%" stopColor={leopardPalette.primary} stopOpacity="1" />
-                  <Stop offset="100%" stopColor={leopardPalette.primary} stopOpacity="1" />
-                </LinearGradient>
-                <RadialGradient id="loginAuraGlow" cx="50%" cy="32%" r="48%">
-                  <Stop offset="0%" stopColor="#0284C7" stopOpacity="0.28" />
-                  <Stop offset="70%" stopColor="#0284C7" stopOpacity="0.06" />
-                  <Stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
-                </RadialGradient>
-              </Defs>
-              <Rect fill="url(#driverLoginGradient)" height="100%" width="100%" />
-              <Rect fill="url(#loginAuraGlow)" height="100%" width="100%" />
-            </Svg>
-
-            <View style={[styles.brandHeader, { paddingTop: Math.max(insets?.top ?? 0, 18) }]}>
-              <View style={styles.brandRow}>
-                <Image
-                  accessibilityLabel="LEOPARD Logo"
-                  resizeMode="contain"
-                  source={leopardEmblem}
-                  style={styles.brandEmblem}
-                />
-                <Image
-                  accessibilityLabel="LEOPARD"
-                  resizeMode="contain"
-                  source={brandLogin}
-                  style={styles.brandWordmark}
-                />
-              </View>
-              <View style={styles.driverBadge}>
-                <View style={styles.driverBadgeDot} />
-                <Text style={styles.driverBadgeText}>DRIVER PILOT</Text>
-              </View>
+            <View style={styles.brandHeader}>
+              <BrandLoginLogo height={32} />
             </View>
 
             <View style={styles.heroCopy}>
               <Text accessibilityRole="header" style={styles.mainTitle}>
                 Chào mừng bác tài
               </Text>
-              <Text style={styles.subTitle}>Đăng nhập để nhận đơn và điều hướng chuyến đi.</Text>
+              <Text style={styles.subTitle}>
+                Đăng nhập để nhận đơn và điều hướng chuyến đi.
+              </Text>
             </View>
           </View>
 
+          {/* Form Card */}
           <View style={styles.formCard}>
             {sessionExpired ? (
               <View style={styles.alertBox} testID="session-expired-banner">
@@ -353,14 +363,12 @@ export function DriverLoginScreen({
               </View>
             ) : null}
 
-            {errorMsg !== null ? (
-              authPhase === 'phone' ? (
-                <View style={styles.errorBox} testID="login-error-banner">
-                  <Text accessibilityRole="alert" style={styles.errorText}>
-                    {errorMsg}
-                  </Text>
-                </View>
-              ) : null
+            {errorMsg !== null && authPhase === 'phone' ? (
+              <View style={styles.errorBox} testID="login-error-banner">
+                <Text accessibilityRole="alert" style={styles.errorText}>
+                  {errorMsg}
+                </Text>
+              </View>
             ) : null}
 
             <View style={styles.fieldSection}>
@@ -378,7 +386,7 @@ export function DriverLoginScreen({
                 style={[
                   styles.inputRow,
                   isInputFocused ? styles.inputRowFocused : null,
-                  !isInputFocused ? (isPhoneValid ? styles.inputRowValid : null) : null,
+                  !isInputFocused && isPhoneValid ? styles.inputRowValid : null,
                 ]}
               >
                 <View style={styles.countryBadge}>
@@ -407,18 +415,16 @@ export function DriverLoginScreen({
                   style={styles.textInput}
                   value={phone}
                 />
-                {phone.length > 0 ? (
-                  !isSubmitting ? (
-                    <Pressable
-                      accessibilityLabel="Xóa số điện thoại"
-                      accessibilityRole="button"
-                      hitSlop={hitSlop(iconSize.sm)}
-                      onPress={() => setPhone('')}
-                      style={styles.clearBtn}
-                    >
-                      <IconClose color="#94A3B8" size={iconSize.sm} />
-                    </Pressable>
-                  ) : null
+                {phone.length > 0 && !isSubmitting ? (
+                  <Pressable
+                    accessibilityLabel="Xóa số điện thoại"
+                    accessibilityRole="button"
+                    hitSlop={hitSlop(iconSize.sm)}
+                    onPress={() => setPhone('')}
+                    style={styles.clearBtn}
+                  >
+                    <IconClose color="#94A3B8" size={iconSize.sm} />
+                  </Pressable>
                 ) : null}
               </View>
               <Text style={styles.fieldHint}>Mã xác thực được gửi qua SMS.</Text>
@@ -437,7 +443,7 @@ export function DriverLoginScreen({
               style={({ pressed }) => [
                 styles.primaryBtn,
                 isBtnDisabled ? styles.primaryBtnDisabled : null,
-                pressed ? (!isBtnDisabled ? styles.pressed : null) : null,
+                pressed && !isBtnDisabled ? styles.pressed : null,
               ]}
             >
               {isSubmitting ? (
@@ -473,7 +479,7 @@ export function DriverLoginScreen({
               onPress={handleGoogleLogin}
               style={({ pressed }) => [
                 styles.googleBtn,
-                (isSubmitting || !firebaseReady) ? styles.btnDisabled : null,
+                isSubmitting || !firebaseReady ? styles.btnDisabled : null,
                 pressed ? styles.pressed : null,
               ]}
             >
@@ -487,6 +493,79 @@ export function DriverLoginScreen({
               <Text style={styles.firebaseNote}>
                 Đăng nhập Google hiện chưa khả dụng trên thiết bị này.
               </Text>
+            ) : null}
+
+            {/* Demo One-Click Section */}
+            {allowDemo ? (
+              <View style={styles.demoSection}>
+                <View style={styles.dividerRow}>
+                  <View style={styles.orLine} />
+                  <Text style={styles.demoDividerText}>Tài khoản demo</Text>
+                  <View style={styles.orLine} />
+                </View>
+
+                <View style={styles.demoGrid}>
+                  <View style={[styles.demoCard, styles.demoCardGreen]}>
+                    <View style={styles.demoCardTop}>
+                      <IconRoleDriver
+                        color={colors.success.border}
+                        secondaryColor={colors.success.background}
+                        size={22}
+                      />
+                      <View style={[styles.demoRoleBadge, styles.demoRoleBadgeGreen]}>
+                        <Text style={styles.demoRoleBadgeText}>Tài xế</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.demoCardDesc}>Nhận chuyến, định vị & tải POD</Text>
+                    <Button
+                      disabled={isSubmitting}
+                      label="Demo Driver"
+                      onPress={() => handleDemoLogin('driver', 'DRIVER')}
+                      variant="secondary"
+                    />
+                  </View>
+
+                  <View style={[styles.demoCard, styles.demoCardBlue]}>
+                    <View style={styles.demoCardTop}>
+                      <IconRoleCustomer
+                        color={colors.brand.background}
+                        secondaryColor={colors.brand.softBackground}
+                        size={22}
+                      />
+                      <View style={[styles.demoRoleBadge, styles.demoRoleBadgeBlue]}>
+                        <Text style={styles.demoRoleBadgeText}>Khách hàng</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.demoCardDesc}>Thử đăng nhập tài khoản khách hàng</Text>
+                    <Button
+                      disabled={isSubmitting}
+                      label="Demo Customer"
+                      onPress={() => handleDemoLogin('customer', 'CUSTOMER')}
+                      variant="secondary"
+                    />
+                  </View>
+
+                  <View style={[styles.demoCard, styles.demoCardSlate]}>
+                    <View style={styles.demoCardTop}>
+                      <IconRoleAdmin
+                        color={colors.neutral.text}
+                        secondaryColor={colors.neutral.surface}
+                        size={22}
+                      />
+                      <View style={[styles.demoRoleBadge, styles.demoRoleBadgeSlate]}>
+                        <Text style={styles.demoRoleBadgeText}>Admin</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.demoCardDesc}>Kiểm soát toàn hệ thống</Text>
+                    <Button
+                      disabled={isSubmitting}
+                      label="Demo Admin"
+                      onPress={() => handleDemoLogin('admin', 'ADMIN')}
+                      variant="secondary"
+                    />
+                  </View>
+                </View>
+              </View>
             ) : null}
 
             <View nativeID={RECAPTCHA_CONTAINER_ID} style={styles.recaptcha} />
@@ -504,6 +583,10 @@ export function DriverLoginScreen({
                 </Pressable>
               </View>
             ) : null}
+
+            <Text style={styles.termsNote}>
+              Bằng việc đăng nhập, bạn đồng ý với Điều khoản dịch vụ & Chính sách bảo mật của LEOPARD.
+            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

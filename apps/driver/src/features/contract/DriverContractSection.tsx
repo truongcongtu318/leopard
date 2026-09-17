@@ -2,26 +2,14 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   colors,
+  iosContinuousCurve,
   leopardPalette,
   radius,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
 import { IconCheck, iconSize } from '@leopard/mobile-core';
-
-/** Palette mirrored from `app/(public)/driver-register.tsx` for visual continuity. */
-const scene = {
-  surface: '#0F2347',
-  fieldBg: '#132B52',
-  ink: colors.neutral.surface,
-  muted: leopardPalette.inputBorder,
-  subtle: '#94A3B8',
-  border: 'rgba(255, 255, 255, 0.12)',
-  ctaTop: '#0284C7',
-  ctaBottom: '#0284C7',
-  ctaCyan: '#38BDF8',
-  danger: '#F87171',
-} as const;
+import { scene } from '../registration/driver-register-scene';
 
 export interface DriverContractPreview {
   readonly version: string;
@@ -107,7 +95,7 @@ export function DriverContractSection({
         testID="driver-contract-consent"
       >
         <View style={[styles.checkbox, consentChecked && styles.checkboxOn]}>
-          {consentChecked ? <IconCheck color={colors.neutral.surface} size={iconSize.sm} /> : null}
+          {consentChecked ? <IconCheck color="#FFFFFF" size={iconSize.sm} /> : null}
         </View>
         <Text style={styles.consentText}>
           Tôi đã đọc và đồng ý với hợp đồng tài xế của LEOPARD.
@@ -127,7 +115,7 @@ export function DriverContractSection({
             onChangeText={onChangeSignature}
             onFocus={onFocusSignature}
             placeholder="Nhập họ tên để xác nhận chữ ký"
-            placeholderTextColor={colors.neutral.subtleText}
+            placeholderTextColor={scene.placeholder}
             style={styles.input}
             value={signatureName}
           />
@@ -139,93 +127,99 @@ export function DriverContractSection({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: scene.surface,
-    borderColor: scene.border,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.cardXl,
+    ...iosContinuousCurve,
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.lg,
-    shadowColor: '#020817',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionLabel: {
-    color: scene.ctaCyan,
-    ...typeScale.caption2,
-    fontWeight: '600',
+    color: leopardPalette.primary,
+    ...typeScale.caption1,
+    fontWeight: '700',
     letterSpacing: 0.8,
   },
   contractRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
   hintText: { color: scene.muted, ...typeScale.footnote, flexShrink: 1 },
   errorHintText: { color: scene.danger, ...typeScale.footnote },
   contractLink: {
-    backgroundColor: 'rgba(2, 132, 199, 0.14)',
-    borderColor: 'rgba(56, 189, 248, 0.40)',
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
+    borderColor: 'rgba(11, 37, 69, 0.20)',
     borderRadius: radius.pill,
-    borderWidth: 1.5,
+    ...iosContinuousCurve,
+    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  contractLinkText: { color: scene.ctaCyan, ...typeScale.footnote, fontWeight: '600' },
+  contractLinkText: { color: leopardPalette.primary, ...typeScale.footnote, fontWeight: '700' },
   pressed: { opacity: 0.85 },
   consentRow: {
     alignItems: 'flex-start',
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderTopColor: '#F1F5F9',
     borderTopWidth: 1,
     flexDirection: 'row',
     gap: spacing.sm,
     paddingTop: spacing.sm,
     paddingVertical: spacing.xs,
   },
-  consentRowPressed: { backgroundColor: 'rgba(255, 255, 255, 0.04)' },
+  consentRowPressed: { backgroundColor: '#F8FAFC' },
   checkbox: {
     alignItems: 'center',
-    backgroundColor: scene.fieldBg,
-    borderColor: 'rgba(255, 255, 255, 0.20)',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
     borderRadius: 6,
+    ...iosContinuousCurve,
     borderWidth: 1.5,
     height: 22,
     justifyContent: 'center',
     marginTop: 1,
     width: 22,
   },
-  checkboxOn: { backgroundColor: scene.ctaBottom, borderColor: scene.ctaCyan },
+  checkboxOn: { backgroundColor: leopardPalette.primary, borderColor: leopardPalette.primary },
   consentText: {
-    color: colors.neutral.border,
+    color: '#0F172A',
     flex: 1,
     ...typeScale.footnote,
+    lineHeight: 20,
   },
   field: { gap: spacing.xs },
   inputLabel: {
-    color: scene.ink,
-    ...typeScale.footnote,
-    fontWeight: '600',
+    color: '#475569',
+    ...typeScale.caption1,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   inputWrap: {
-    backgroundColor: scene.fieldBg,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1.5,
-    height: 48,
+    height: 50,
     justifyContent: 'center',
     paddingHorizontal: 14,
   },
   inputWrapFocused: {
-    backgroundColor: '#163566',
-    borderColor: scene.ctaCyan,
-    shadowColor: scene.ctaBottom,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
+    backgroundColor: '#FFFFFF',
+    borderColor: leopardPalette.primary,
+    shadowColor: leopardPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
   },
   input: {
-    color: scene.ink,
+    color: '#0F172A',
     ...typeScale.subheadline,
     fontWeight: '600',
     outlineStyle: 'none',
   } as any,
 });
-

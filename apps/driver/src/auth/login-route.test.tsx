@@ -120,6 +120,21 @@ describe('DriverLoginRoute', () => {
     });
     await screen.unmount();
   });
+
+  it('đăng nhập nhanh bằng Demo Driver khi allowDemo=true', async () => {
+    (httpClient.post as jest.MockedFunction<typeof httpClient.post>).mockResolvedValueOnce(
+      sessionOf('DRIVER'),
+    );
+    const screen = await render(<DriverLoginRoute />);
+    expect(screen.getByText('Tài khoản demo')).toBeTruthy();
+    expect(screen.getByText('Demo Driver')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Demo Driver'));
+    await waitFor(() => {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/login/demo', { accountId: 'driver' });
+      expect(mockReplace).toHaveBeenCalledWith('/orders');
+    });
+    await screen.unmount();
+  });
 });
 
 import { DriverOtpModal } from './DriverOtpModal';

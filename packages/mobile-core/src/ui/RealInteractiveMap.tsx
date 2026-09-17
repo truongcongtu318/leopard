@@ -926,7 +926,7 @@ export function RealInteractiveMap({
       : null;
   const containerStyle: StyleProp<ViewStyle> = [
     styles.container,
-    isFullScreen ? { height: '100%', borderRadius: 0 } : { height: (height as any) ?? 240 },
+    isFullScreen ? { height: '100%', flex: 1, borderRadius: 0 } : { height: (height as any) ?? 240 },
     style,
   ];
 
@@ -944,8 +944,10 @@ export function RealInteractiveMap({
           style: {
             width: '100%',
             height: '100%',
+            minHeight: '100%',
             border: 'none',
             borderRadius: isFullScreen ? 0 : 14,
+            display: 'block',
           },
           title:
             mode === 'location'
@@ -1062,6 +1064,7 @@ export function RealInteractiveMap({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    height: '100%',
     backgroundColor: '#F1F5F9',
     borderRadius: 14,
     overflow: 'hidden',

@@ -81,6 +81,8 @@ export interface BookingDetailsModalProps {
   initialReceiverName?: string;
   initialReceiverPhone?: string;
   initialCargoImageUri?: string;
+  initialHasLoadingSupport?: boolean;
+  initialPaymentMethod?: BookingPaymentMethod;
   testID?: string;
 }
 
@@ -110,6 +112,8 @@ export function BookingDetailsModal({
   basePrice,
   dropoffAddress,
   initialCargoImageUri,
+  initialHasLoadingSupport = false,
+  initialPaymentMethod = 'VIETQR',
   initialReceiverName = '',
   initialReceiverPhone = '',
   loadingFee: loadingFeeProp,
@@ -129,9 +133,9 @@ export function BookingDetailsModal({
   const [cargoImageUri, setCargoImageUri] = useState<string | null>(initialCargoImageUri ?? null);
   const [cargoImageName, setCargoImageName] = useState<string | null>(null);
   const [cargoImageError, setCargoImageError] = useState<string | null>(null);
-  const [hasLoadingSupport, setHasLoadingSupport] = useState(false);
+  const [hasLoadingSupport, setHasLoadingSupport] = useState(initialHasLoadingSupport);
   const [hasVatInvoice, setHasVatInvoice] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<BookingPaymentMethod>('VIETQR');
+  const [paymentMethod, setPaymentMethod] = useState<BookingPaymentMethod>(initialPaymentMethod);
 
   // Voucher state: Cheetah Golden Amber (#F59E0B)
   const [voucherInput, setVoucherInput] = useState('');
@@ -147,10 +151,12 @@ export function BookingDetailsModal({
       if (initialReceiverName !== undefined) setReceiverName(initialReceiverName);
       if (initialReceiverPhone !== undefined) setReceiverPhone(initialReceiverPhone);
       if (initialCargoImageUri !== undefined) setCargoImageUri(initialCargoImageUri);
+      if (initialHasLoadingSupport !== undefined) setHasLoadingSupport(initialHasLoadingSupport);
+      if (initialPaymentMethod !== undefined) setPaymentMethod(initialPaymentMethod);
       setCargoImageError(null);
       setVoucherError(null);
     }
-  }, [visible, initialReceiverName, initialReceiverPhone, initialCargoImageUri, dragY]);
+  }, [visible, initialReceiverName, initialReceiverPhone, initialCargoImageUri, initialHasLoadingSupport, initialPaymentMethod, dragY]);
 
   const panResponder = useMemo(
     () =>
@@ -730,7 +736,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(11, 37, 69, 0.35)',
     ...Platform.select({
       web: {
         position: 'fixed',
@@ -753,7 +759,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.modal,
     borderTopRightRadius: radius.modal,
     ...iosContinuousCurve,
-    maxHeight: '90%',
+    maxHeight: '88%',
     shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.16,
@@ -984,7 +990,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
     paddingHorizontal: spacing.sm,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     color: customerPalette.textSlateDark,
   },
   noteInput: {
@@ -1115,7 +1121,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: customerPalette.accent,
     paddingHorizontal: spacing.sm,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     color: customerPalette.textSlateDark,
     fontWeight: '600',
   },
@@ -1212,12 +1218,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toggleTitle: {
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   toggleFee: {
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '700',
     color: leopardPalette.ecoGreen,
     fontVariant: ['tabular-nums'],
@@ -1267,12 +1273,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   radioTitle: {
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   radioSubtitle: {
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
     color: customerPalette.textSubtle,
     marginTop: spacing.hairline,
   },

@@ -6,50 +6,47 @@ import {
 } from '@leopard/mobile-core';
 
 /**
- * Scene palette for Driver Registration.
- * Reference tokens:
- * - canvas: driverSemantics.surface.canvas (or '#0B1E42' for dark night cockpit)
- * - surface: driverSemantics.surface.card
- * - ink: driverSemantics.text.inverse ('#FFFFFF')
- * - muted/subtle: driverSemantics.text.muted ('#94A3B8')
- * - borders: driverPrimitives.colors.*
- * - CTA: driverPrimitives.colors.blue500 or '#0284C7'
- * - success: driverPrimitives.colors.green500 ('#00B14F')
+ * Global Driver Apple HIG Inset Grouped Theme palette.
+ * Strictly adheres to Apple Human Interface Guidelines:
+ * - Canvas (System Grouped Background): #F8FAFC
+ * - Surface / Cards (Inset Grouped Card): #FFFFFF with fine border #E2E8F0
+ * - Inks: Slate dark #0F172A (Primary), #64748B (Secondary / Muted), #94A3B8 (Tertiary / Subtle)
+ * - Brand Primary: Midnight Navy (#0B2545) & Accent Amber (#F59E0B)
  */
 export const scene = {
-  canvas: driverSemantics.surface.canvas,
-  canvasDark: leopardPalette.primary,
-  surface: driverSemantics.surface.card,
-  surfaceDark: '#0F2347',
-  fieldBg: '#132B52',
-  fieldBgSoft: 'rgba(255, 255, 255, 0.06)',
-  ink: driverSemantics.text.inverse,
-  muted: driverSemantics.text.muted,
-  mutedLight: leopardPalette.inputBorder,
-  subtle: driverSemantics.text.muted,
-  placeholder: colors.neutral.subtleText,
-  border: driverPrimitives.colors.gray200,
-  borderDark: 'rgba(255, 255, 255, 0.12)',
-  borderLight: 'rgba(255, 255, 255, 0.20)',
-  borderSubtle: 'rgba(255, 255, 255, 0.08)',
-  borderDivider: 'rgba(255, 255, 255, 0.06)',
-  inputBorder: 'rgba(255, 255, 255, 0.16)',
-  inputFocusBorder: driverPrimitives.colors.cyan400 ?? '#38BDF8',
-  ctaTop: '#0284C7',
-  ctaBottom: '#0284C7',
-  ctaCyan: driverPrimitives.colors.cyan400 ?? '#38BDF8',
+  canvas: '#F8FAFC',
+  canvasDark: '#F8FAFC',
+  surface: '#FFFFFF',
+  surfaceDark: '#FFFFFF',
+  fieldBg: '#F8FAFC',
+  fieldBgSoft: '#F1F5F9',
+  ink: '#0F172A',
+  muted: '#64748B',
+  mutedLight: '#64748B',
+  subtle: '#94A3B8',
+  placeholder: '#94A3B8',
+  border: '#E2E8F0',
+  borderDark: '#E2E8F0',
+  borderLight: '#E2E8F0',
+  borderSubtle: '#F1F5F9',
+  borderDivider: '#F1F5F9',
+  inputBorder: '#E2E8F0',
+  inputFocusBorder: leopardPalette.primary,
+  ctaTop: leopardPalette.primary,
+  ctaBottom: leopardPalette.primary,
+  ctaCyan: leopardPalette.primary,
   accentYellow: leopardPalette.accentYellow,
-  badgeBg: 'rgba(56, 189, 248, 0.12)',
-  badgeBorder: 'rgba(56, 189, 248, 0.35)',
-  badgeText: driverPrimitives.colors.cyan400 ?? '#38BDF8',
-  success: driverPrimitives.colors.green500,
-  successLight: '#4ADE80',
-  successBg: 'rgba(34, 197, 94, 0.16)',
-  successBorder: 'rgba(34, 197, 94, 0.35)',
-  warning: driverPrimitives.colors.amber500,
-  danger: driverPrimitives.colors.red500,
-  dangerLight: '#F87171',
-  dangerBg: 'rgba(239, 68, 68, 0.14)',
-  dangerBorder: 'rgba(248, 113, 113, 0.46)',
-  dangerText: '#FECACA',
+  badgeBg: 'rgba(11, 37, 69, 0.08)',
+  badgeBorder: 'rgba(11, 37, 69, 0.16)',
+  badgeText: leopardPalette.primary,
+  success: '#15803D',
+  successLight: '#15803D',
+  successBg: '#F0FDF4',
+  successBorder: '#BBF7D0',
+  warning: '#D97706',
+  danger: '#DC2626',
+  dangerLight: '#DC2626',
+  dangerBg: '#FEF2F2',
+  dangerBorder: '#FECACA',
+  dangerText: '#B91C1C',
 } as const;

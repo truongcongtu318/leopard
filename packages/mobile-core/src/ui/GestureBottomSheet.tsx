@@ -263,7 +263,6 @@ export const GestureBottomSheet = forwardRef<
         testID={`${testID}-content`}
         style={[
           styles.content,
-          { maxHeight: maxVisibleContentHeight },
           contentStyle,
         ]}
       >

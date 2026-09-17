@@ -16,12 +16,15 @@ import {
   spacing,
   VietnamFlagIcon,
   OtpSixCellInput,
+  BrandLoginLogo,
   IconCamera,
   IconCheck,
+  IconChevron,
   IconShieldAlert,
   toE164Vn,
   typeScale,
   iosContinuousCurve,
+  leopardPalette,
 } from '@leopard/mobile-core';
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 
@@ -124,132 +127,118 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
     VEHICLE_OPTIONS.find((v) => v.id === selectedVehicle) ?? VEHICLE_OPTIONS[0];
 
   return (
-    <ScrollView
-      bounces={false}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-      overScrollMode="never"
-      showsHorizontalScrollIndicator={false}
-      showsVerticalScrollIndicator={false}
-      style={styles.scroll}
-    >
-      <View style={styles.masthead}>
-        <Svg
-          height={140}
-          pointerEvents="none"
-          preserveAspectRatio="none"
-          style={styles.heroAuraSvg}
-          width="100%"
+    <View style={styles.screenWrap}>
+      {/* Apple Navigation Top Bar (Sticky) */}
+      <View style={styles.topNavigation}>
+        <Pressable
+          accessibilityLabel={currentStep > 1 ? 'Quay lại' : 'Đăng nhập'}
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={handleMastheadBack}
+          style={({ pressed }) => [styles.backBtn, pressed && styles.controlPressed]}
+          testID="btn-back"
         >
-          <Defs>
-            <LinearGradient id="registerAuraGradient" x1="0" x2="0" y1="0" y2="1">
-              <Stop offset="0%" stopColor="#0F2754" stopOpacity={1} />
-              <Stop offset="100%" stopColor={scene.canvasDark} stopOpacity={0} />
-            </LinearGradient>
-            <RadialGradient id="registerAuraGlow" cx="50%" cy="20%" r="60%">
-              <Stop offset="0%" stopColor={scene.ctaTop} stopOpacity={0.25} />
-              <Stop offset="70%" stopColor={scene.ctaTop} stopOpacity={0.06} />
-              <Stop offset="100%" stopColor={scene.ctaTop} stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Rect fill="url(#registerAuraGradient)" height="100%" width="100%" />
-          <Rect fill="url(#registerAuraGlow)" height="100%" width="100%" />
-        </Svg>
-
-        <View style={styles.topRow}>
-          <Pressable
-            hitSlop={8}
-            onPress={handleMastheadBack}
-            style={({ pressed }) => [styles.backBtn, pressed ? styles.controlPressed : null]}
-          >
-            <Text style={styles.backBtnText}>
-              {currentStep > 1 ? '← Quay lại' : '← Về trang trước'}
+          <IconChevron color="#0F172A" direction="left" size={24} />
+        </Pressable>
+        <BrandLoginLogo height={32} />
+        <View style={styles.navRightBox}>
+          {!success ? (
+            <Text style={styles.stepCounterText}>
+              {currentStep <= 3 ? `${currentStep} / 3` : '4 / 4'}
             </Text>
-          </Pressable>
+          ) : (
+            <View style={styles.navPlaceholder} />
+          )}
         </View>
-        <Text accessibilityRole="header" style={styles.headline}>
-          Đăng ký tài xế đối tác
-        </Text>
-        <Text style={styles.subline}>
-          Hoàn tất hồ sơ 3 bước để LEOPARD xét duyệt và bắt đầu nhận đơn.
-        </Text>
       </View>
 
-      {/* Progress Stepper on top showing: 1. Cá nhân ➔ 2. Phương tiện ➔ 3. Giấy tờ */}
+      {/* Progress Stepper Bar (Sticky under Top Bar) */}
       {!success ? (
         <View style={styles.stepperWrap} testID="driver-register-stepper">
-          <View style={styles.stepperBarBg}>
-            <View
-              style={[
-                styles.stepperBarFill,
-                { width: `${Math.min(100, (currentStep / 3) * 100)}%` },
-              ]}
-            />
-          </View>
-          <View style={styles.stepperSegments}>
-            {WIZARD_STEPS.map((s, idx) => {
+          <View style={styles.stepperBarsRow}>
+            {WIZARD_STEPS.map((s) => {
               const isActive = currentStep === s.step;
               const isPassed = currentStep > s.step;
               return (
-                <React.Fragment key={s.step}>
-                  <Pressable
-                    accessibilityLabel={`Bước ${s.step}: ${s.label}`}
-                    accessibilityRole="button"
-                    disabled={!isPassed}
-                    onPress={() => {
-                      setErrorMsg(null);
-                      setCurrentStep(s.step);
-                    }}
-                    style={styles.stepItem}
-                  >
-                    <View
-                      style={[
-                        styles.stepCircle,
-                        isActive ? styles.stepCircleActive : null,
-                        isPassed ? styles.stepCirclePassed : null,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.stepCircleText,
-                          (isActive || isPassed) ? styles.stepCircleTextActive : null,
-                          isPassed ? styles.stepCircleTextPassed : null,
-                        ]}
-                      >
-                        {isPassed ? '✓' : s.step}
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.stepLabel,
-                        isActive ? styles.stepLabelActive : null,
-                        isPassed ? styles.stepLabelPassed : null,
-                      ]}
-                    >
-                      {s.label}
-                    </Text>
-                  </Pressable>
-                  {idx < WIZARD_STEPS.length - 1 ? (
-                    <Text style={styles.stepperArrow}>➔</Text>
-                  ) : null}
-                </React.Fragment>
+                <View
+                  key={`bar-${s.step}`}
+                  style={[
+                    styles.stepperBar,
+                    isPassed
+                      ? styles.stepperBarPassed
+                      : isActive
+                      ? styles.stepperBarActive
+                      : null,
+                  ]}
+                />
               );
             })}
           </View>
-          <View style={styles.stepHeadlineRow}>
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepBadgeText}>
-                {currentStep <= 3 ? `Bước ${currentStep}/3` : 'Bước 4/4'}
-              </Text>
-            </View>
-            <Text style={styles.stepTitleText}>
-              {currentStep <= 3
-                ? WIZARD_STEPS[currentStep - 1].title
-                : 'Hợp đồng điện tử & Ký số'}
-            </Text>
+          <View style={styles.stepperLabelsRow}>
+            {WIZARD_STEPS.map((s) => {
+              const isActive = currentStep === s.step;
+              const isPassed = currentStep > s.step;
+              return (
+                <Pressable
+                  accessibilityLabel={`Bước ${s.step}: ${s.label}`}
+                  accessibilityRole="button"
+                  disabled={!isPassed}
+                  key={s.step}
+                  onPress={() => {
+                    setErrorMsg(null);
+                    setCurrentStep(s.step);
+                  }}
+                  style={styles.stepLabelBtn}
+                >
+                  <Text
+                    style={[
+                      styles.stepLabelText,
+                      isActive ? styles.stepLabelTextActive : null,
+                      isPassed ? styles.stepLabelTextPassed : null,
+                    ]}
+                  >
+                    {s.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       ) : null}
+
+      {/* Scrollable Form Body */}
+      <ScrollView
+        bounces={false}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        overScrollMode="never"
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        style={styles.scroll}
+      >
+        {/* Title Section (Dynamic per step, Apple Large Title) */}
+        {!success ? (
+          <View style={styles.titleSection}>
+            <Text accessibilityRole="header" style={styles.largeTitle}>
+              {currentStep === 1
+                ? 'Thông tin cá nhân'
+                : currentStep === 2
+                ? 'Phương tiện & GPLX'
+                : currentStep === 3
+                ? 'Giấy tờ xác minh'
+                : 'Hợp đồng & Ký số'}
+            </Text>
+            <Text style={styles.largeSubtitle}>
+              {currentStep === 1
+                ? 'Nhập họ tên và số điện thoại để đăng ký đối tác.'
+                : currentStep === 2
+                ? 'Chọn loại xe hoạt động và nhập thông tin đăng kiểm.'
+                : currentStep === 3
+                ? 'Chụp ảnh giấy tờ bản gốc rõ nét để được xét duyệt.'
+                : 'Xem lại hợp đồng hợp tác và ký xác nhận điện tử.'}
+            </Text>
+          </View>
+        ) : null}
 
       <View style={styles.body}>
         {success ? (
@@ -354,8 +343,6 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
             {currentStep === 1 ? (
               <>
                 <View style={styles.card}>
-                  <Text style={styles.sectionLabel}>THÔNG TIN CÁ NHÂN & LIÊN HỆ</Text>
-
                   <View style={styles.field}>
                     <Text style={styles.inputLabel}>Họ và tên</Text>
                     <View
@@ -469,9 +456,9 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                             accessibilityRole="button"
                             disabled={isSubmitting}
                             onPress={() => void captureSelfie()}
-                            style={[styles.docBtn, styles.docBtnDone]}
+                            style={[styles.docBtn, styles.docBtnHalf, styles.docBtnDone]}
                           >
-                            <IconCamera color={scene.successLight} secondaryColor="transparent" size={18} />
+                            <IconCamera color="#334155" secondaryColor="transparent" size={18} />
                             <Text style={[styles.docBtnText, styles.docBtnTextDone]}>
                               Chụp lại
                             </Text>
@@ -547,22 +534,6 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                   </View>
                 </View>
 
-                <Pressable
-                  accessibilityLabel="Tiếp tục sang bước phương tiện"
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: !step1Valid }}
-                  disabled={!step1Valid}
-                  onPress={handleNextToStep2}
-                  style={({ pressed }) => [
-                    styles.primaryBtn,
-                    !step1Valid ? styles.primaryBtnDisabled : null,
-                    pressed ? styles.pressed : null,
-                  ]}
-                >
-                  <View pointerEvents="none" style={styles.btnGloss} />
-                  <Text style={styles.primaryBtnText}>Tiếp tục sang bước phương tiện →</Text>
-                </Pressable>
-
                 <View style={styles.loginRow}>
                   <Text style={styles.loginHelper}>Đã là tài xế?</Text>
                   <Pressable hitSlop={8} onPress={() => router.replace('/(public)/login')}>
@@ -576,8 +547,6 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
             {currentStep === 2 ? (
               <>
                 <View style={styles.card}>
-                  <Text style={styles.sectionLabel}>PHƯƠNG TIỆN DUY NHẤT & GPLX</Text>
-
                   <View style={styles.field}>
                     <Text style={styles.inputLabel}>Chọn đúng 1 loại phương tiện</Text>
                     <View style={styles.vehicleGrid}>
@@ -702,35 +671,6 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                     </View>
                   </View>
                 </View>
-
-                <View style={styles.stepNavRow}>
-                  <Pressable
-                    accessibilityLabel="Quay lại bước cá nhân"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      setErrorMsg(null);
-                      setCurrentStep(1);
-                    }}
-                    style={styles.outlineNavBtn}
-                  >
-                    <Text style={styles.outlineNavBtnText}>← Quay lại</Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityLabel="Tiếp tục sang chụp giấy tờ"
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: !step2Valid }}
-                    disabled={!step2Valid}
-                    onPress={handleNextToStep3}
-                    style={({ pressed }) => [
-                      styles.primaryNavBtn,
-                      !step2Valid ? styles.primaryBtnDisabled : null,
-                      pressed ? styles.pressed : null,
-                    ]}
-                  >
-                    <View pointerEvents="none" style={styles.btnGloss} />
-                    <Text style={styles.primaryBtnText}>Tiếp tục sang chụp giấy tờ →</Text>
-                  </Pressable>
-                </View>
               </>
             ) : null}
 
@@ -792,7 +732,7 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                               onPress={() => void captureDoc(slot.type)}
                               style={[styles.docBtn, styles.docBtnHalf, styles.docBtnDone]}
                             >
-                              <IconCamera color={scene.successLight} secondaryColor="transparent" size={18} />
+                              <IconCamera color="#334155" secondaryColor="transparent" size={18} />
                               <Text style={[styles.docBtnText, styles.docBtnTextDone]}>
                                 {capturingDocType === slot.type ? 'Đang mở camera…' : 'Chụp lại'}
                               </Text>
@@ -830,35 +770,6 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                       </View>
                     );
                   })}
-                </View>
-
-                <View style={styles.stepNavRow}>
-                  <Pressable
-                    accessibilityLabel="Quay lại bước phương tiện"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      setErrorMsg(null);
-                      setCurrentStep(2);
-                    }}
-                    style={styles.outlineNavBtn}
-                  >
-                    <Text style={styles.outlineNavBtnText}>← Quay lại</Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityLabel="Tiếp tục xem hợp đồng"
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: !step3Valid }}
-                    disabled={!step3Valid}
-                    onPress={handleNextToStep4}
-                    style={({ pressed }) => [
-                      styles.primaryNavBtn,
-                      !step3Valid ? styles.primaryBtnDisabled : null,
-                      pressed ? styles.pressed : null,
-                    ]}
-                  >
-                    <View pointerEvents="none" style={styles.btnGloss} />
-                    <Text style={styles.primaryBtnText}>Tiếp tục xem hợp đồng →</Text>
-                  </Pressable>
                 </View>
               </>
             ) : null}
@@ -928,128 +839,248 @@ export function DriverRegisterView({ registration, onDone }: DriverRegisterViewP
                   onViewContract={() => void handleViewContract()}
                   signatureName={signatureName}
                 />
-
-                <View style={styles.stepNavRow}>
-                  <Pressable
-                    accessibilityLabel="Quay lại bước giấy tờ"
-                    accessibilityRole="button"
-                    disabled={isSubmitting}
-                    onPress={() => {
-                      setErrorMsg(null);
-                      setCurrentStep(3);
-                    }}
-                    style={styles.outlineNavBtn}
-                  >
-                    <Text style={styles.outlineNavBtnText}>← Quay lại</Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityLabel="Gửi hồ sơ đăng ký"
-                    accessibilityRole="button"
-                    accessibilityState={{ busy: isSubmitting, disabled: !canSubmit }}
-                    disabled={!canSubmit}
-                    onPress={handleSubmit}
-                    style={({ pressed }) => [
-                      styles.primaryNavBtn,
-                      !canSubmit ? styles.primaryBtnDisabled : null,
-                      pressed ? styles.pressed : null,
-                    ]}
-                  >
-                    <View pointerEvents="none" style={styles.btnGloss} />
-                    <Text style={styles.primaryBtnText}>
-                      {isSubmitting ? 'Đang gửi hồ sơ...' : 'Ký & Gửi hồ sơ'}
-                    </Text>
-                  </Pressable>
-                </View>
               </>
             ) : null}
           </>
         )}
       </View>
+    </ScrollView>
 
-      {/* In-flow Phone Verification Modal (Xác thực OTP tức thời) */}
-      {showOtpModal ? (
-        <View style={styles.otpModalOverlay} testID="register-otp-modal">
+    {/* Apple Sticky Bottom Action Bar */}
+    {!success ? (
+      <View style={styles.stickyBottomBar}>
+        {currentStep === 1 ? (
           <Pressable
-            accessibilityLabel="Đóng xác thực"
-            onPress={() => setShowOtpModal(false)}
-            style={styles.otpBackdrop}
-          />
-          <View style={styles.otpCard}>
-            <Text style={styles.otpTitle}>Xác thực số điện thoại</Text>
-            <Text style={styles.otpSubtitle}>
-              Nhập mã OTP gồm 6 chữ số đã gửi tới số{' '}
-              <Text style={styles.phoneHighlight}>{toE164Vn(phone.trim()) || phone}</Text>
+            accessibilityLabel="Tiếp tục sang bước phương tiện"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !step1Valid }}
+            disabled={!step1Valid}
+            onPress={handleNextToStep2}
+            style={({ pressed }) => [
+              styles.primaryBtn,
+              !step1Valid ? styles.primaryBtnDisabled : null,
+              pressed && step1Valid ? styles.pressed : null,
+            ]}
+          >
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.primaryBtnText,
+                !step1Valid ? styles.primaryBtnDisabledText : null,
+              ]}
+            >
+              Tiếp tục
             </Text>
-
-            <OtpSixCellInput
-              autoFocus
-              editable={!isVerifyingOtp}
-              hasError={Boolean(otpError)}
-              isSubmitting={isVerifyingOtp}
-              onChangeText={(text) => {
-                setOtpCode(text);
-                if (otpError) setOtpError(null);
+          </Pressable>
+        ) : currentStep === 2 ? (
+          <View style={styles.stepNavRow}>
+            <Pressable
+              accessibilityLabel="Quay lại bước cá nhân"
+              accessibilityRole="button"
+              onPress={() => {
+                setErrorMsg(null);
+                setCurrentStep(1);
               }}
-              onComplete={(code) => {
-                void handleVerifyOtp(code);
-              }}
-              value={otpCode}
-            />
-
-            {otpError ? (
-              <View style={styles.otpErrorBox}>
-                <Text style={styles.otpErrorText}>{otpError}</Text>
-              </View>
-            ) : null}
-
-            {isVerifyingOtp ? (
-              <View style={styles.verifyingRow}>
-                <ActivityIndicator color={scene.ctaBottom} size="small" />
-                <Text style={styles.verifyingText}>Đang xác thực và nộp hồ sơ...</Text>
-              </View>
-            ) : null}
-
-            <View style={styles.otpFooterRow}>
-              <Pressable
-                disabled={otpCountdown > 0 || isVerifyingOtp}
-                onPress={handleResendOtp}
-                style={styles.resendBtn}
-              >
-                <Text style={[styles.resendText, otpCountdown > 0 ? styles.resendDisabledText : null]}>
-                  {otpCountdown > 0 ? `Gửi lại mã (${otpCountdown}s)` : 'Gửi lại mã OTP'}
-                </Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.otpActionRow}>
-              <Pressable
-                disabled={isVerifyingOtp}
-                onPress={() => setShowOtpModal(false)}
-                style={styles.cancelBtn}
-              >
-                <Text style={styles.cancelBtnText}>Hủy</Text>
-              </Pressable>
-              <Pressable
-                disabled={otpCode.length < 6 || isVerifyingOtp}
-                onPress={() => void handleVerifyOtp(otpCode)}
+              style={({ pressed }) => [styles.outlineNavBtn, pressed && styles.controlPressed]}
+            >
+              <Text numberOfLines={1} style={styles.outlineNavBtnText}>Quay lại</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Tiếp tục sang chụp giấy tờ"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !step2Valid }}
+              disabled={!step2Valid}
+              onPress={handleNextToStep3}
+              style={({ pressed }) => [
+                styles.primaryNavBtn,
+                !step2Valid ? styles.primaryBtnDisabled : null,
+                pressed && step2Valid ? styles.pressed : null,
+              ]}
+            >
+              <Text
+                numberOfLines={1}
                 style={[
-                  styles.confirmBtn,
-                  (otpCode.length < 6 || isVerifyingOtp) ? styles.confirmBtnDisabled : null,
+                  styles.primaryBtnText,
+                  !step2Valid ? styles.primaryBtnDisabledText : null,
                 ]}
               >
-                <Text style={styles.confirmBtnText}>Xác nhận & Nộp</Text>
-              </Pressable>
+                Tiếp tục
+              </Text>
+            </Pressable>
+          </View>
+        ) : currentStep === 3 ? (
+          <View style={styles.stepNavRow}>
+            <Pressable
+              accessibilityLabel="Quay lại bước phương tiện"
+              accessibilityRole="button"
+              onPress={() => {
+                setErrorMsg(null);
+                setCurrentStep(2);
+              }}
+              style={({ pressed }) => [styles.outlineNavBtn, pressed && styles.controlPressed]}
+            >
+              <Text numberOfLines={1} style={styles.outlineNavBtnText}>Quay lại</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Tiếp tục xem hợp đồng"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !step3Valid }}
+              disabled={!step3Valid}
+              onPress={handleNextToStep4}
+              style={({ pressed }) => [
+                styles.primaryNavBtn,
+                !step3Valid ? styles.primaryBtnDisabled : null,
+                pressed && step3Valid ? styles.pressed : null,
+              ]}
+            >
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.primaryBtnText,
+                  !step3Valid ? styles.primaryBtnDisabledText : null,
+                ]}
+              >
+                Tiếp tục
+              </Text>
+            </Pressable>
+          </View>
+        ) : currentStep === 4 ? (
+          <View style={styles.stepNavRow}>
+            <Pressable
+              accessibilityLabel="Quay lại bước giấy tờ"
+              accessibilityRole="button"
+              disabled={isSubmitting}
+              onPress={() => {
+                setErrorMsg(null);
+                setCurrentStep(3);
+              }}
+              style={({ pressed }) => [styles.outlineNavBtn, pressed && styles.controlPressed]}
+            >
+              <Text numberOfLines={1} style={styles.outlineNavBtnText}>Quay lại</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Gửi hồ sơ đăng ký"
+              accessibilityRole="button"
+              accessibilityState={{ busy: isSubmitting, disabled: !canSubmit }}
+              disabled={!canSubmit}
+              onPress={handleSubmit}
+              style={({ pressed }) => [
+                styles.primaryNavBtn,
+                !canSubmit ? styles.primaryBtnDisabled : null,
+                pressed && canSubmit ? styles.pressed : null,
+              ]}
+            >
+              {isSubmitting ? (
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <Text numberOfLines={1} style={styles.primaryBtnText}>Đang gửi...</Text>
+                </View>
+              ) : (
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.primaryBtnText,
+                    !canSubmit ? styles.primaryBtnDisabledText : null,
+                  ]}
+                >
+                  Ký & Gửi hồ sơ
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
+    ) : null}
+
+    {/* In-flow Phone Verification Modal (Xác thực OTP tức thời) */}
+    {showOtpModal ? (
+      <View style={styles.otpModalOverlay} testID="register-otp-modal">
+        <Pressable
+          accessibilityLabel="Đóng xác thực"
+          onPress={() => setShowOtpModal(false)}
+          style={styles.otpBackdrop}
+        />
+        <View style={styles.otpCard}>
+          <Text style={styles.otpTitle}>Xác thực số điện thoại</Text>
+          <Text style={styles.otpSubtitle}>
+            Nhập mã OTP gồm 6 chữ số đã gửi tới số{' '}
+            <Text style={styles.phoneHighlight}>{toE164Vn(phone.trim()) || phone}</Text>
+          </Text>
+
+          <OtpSixCellInput
+            autoFocus
+            editable={!isVerifyingOtp}
+            hasError={Boolean(otpError)}
+            isSubmitting={isVerifyingOtp}
+            onChangeText={(text) => {
+              setOtpCode(text);
+              if (otpError) setOtpError(null);
+            }}
+            onComplete={(code) => {
+              void handleVerifyOtp(code);
+            }}
+            value={otpCode}
+          />
+
+          {otpError ? (
+            <View style={styles.otpErrorBox}>
+              <Text style={styles.otpErrorText}>{otpError}</Text>
             </View>
+          ) : null}
+
+          {isVerifyingOtp ? (
+            <View style={styles.verifyingRow}>
+              <ActivityIndicator color={scene.ctaBottom} size="small" />
+              <Text style={styles.verifyingText}>Đang xác thực và nộp hồ sơ...</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.otpFooterRow}>
+            <Pressable
+              disabled={otpCountdown > 0 || isVerifyingOtp}
+              onPress={handleResendOtp}
+              style={styles.resendBtn}
+            >
+              <Text style={[styles.resendText, otpCountdown > 0 ? styles.resendDisabledText : null]}>
+                {otpCountdown > 0 ? `Gửi lại mã (${otpCountdown}s)` : 'Gửi lại mã OTP'}
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.otpActionRow}>
+            <Pressable
+              disabled={isVerifyingOtp}
+              onPress={() => setShowOtpModal(false)}
+              style={styles.cancelBtn}
+            >
+              <Text style={styles.cancelBtnText}>Hủy</Text>
+            </Pressable>
+            <Pressable
+              disabled={otpCode.length < 6 || isVerifyingOtp}
+              onPress={() => void handleVerifyOtp(otpCode)}
+              style={[
+                styles.confirmBtn,
+                (otpCode.length < 6 || isVerifyingOtp) ? styles.confirmBtnDisabled : null,
+              ]}
+            >
+              <Text style={styles.confirmBtnText}>Xác nhận & Nộp</Text>
+            </Pressable>
           </View>
         </View>
-      ) : null}
-    </ScrollView>
-  );
+      </View>
+    ) : null}
+  </View>
+);
 }
 
 const styles = StyleSheet.create({
+  screenWrap: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    ...(Platform.OS === 'web' ? { minHeight: '100dvh' as any } : {}),
+  },
   scroll: {
-    backgroundColor: scene.canvasDark,
+    backgroundColor: '#F8FAFC',
     flex: 1,
     ...(Platform.OS === 'web'
       ? {
@@ -1058,85 +1089,160 @@ const styles = StyleSheet.create({
         }
       : {}),
   },
-  container: { flexGrow: 1 },
-  masthead: {
-    backgroundColor: scene.canvasDark,
-    borderBottomColor: scene.borderSubtle,
-    borderBottomWidth: 1,
-    gap: 6,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    position: 'relative',
-    overflow: 'hidden',
+  container: {
+    flexGrow: 1,
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
+    backgroundColor: '#F8FAFC',
   },
-  heroAuraSvg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 140,
-  },
-  topRow: {
-    alignItems: 'center',
+  /* Apple Navigation Top Bar */
+  topNavigation: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
-    zIndex: 2,
+    paddingHorizontal: spacing.md,
+    paddingTop: Platform.select({ ios: spacing.md, default: spacing.lg }),
+    paddingBottom: spacing.xs,
+    backgroundColor: '#FFFFFF',
   },
   backBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    borderColor: scene.borderLight,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    ...iosContinuousCurve,
+    width: 44,
+    height: 44,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
-  backBtnText: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
-  headline: { color: scene.ink, ...typeScale.title2, fontWeight: '700', marginTop: 4, zIndex: 2 },
-  subline: { color: scene.mutedLight, ...typeScale.footnote, zIndex: 2 },
+  navRightBox: {
+    width: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  stepCounterText: {
+    color: '#64748B',
+    ...typeScale.caption1,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  navPlaceholder: {
+    width: 44,
+  },
+
+  /* Apple HIG Large Title Area */
+  titleSection: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
+    backgroundColor: '#FFFFFF',
+  },
+  largeTitle: {
+    color: '#0F172A',
+    ...typeScale.title1,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  largeSubtitle: {
+    color: '#64748B',
+    ...typeScale.subheadline,
+    lineHeight: 20,
+    marginTop: spacing.xxs,
+  },
+
+  /* Apple 3-Segment Progress Stepper */
+  stepperWrap: {
+    backgroundColor: '#FFFFFF',
+    borderBottomColor: '#E2E8F0',
+    borderBottomWidth: 1,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+    paddingTop: spacing.xxs,
+    gap: spacing.xs,
+  },
+  stepperBarsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  stepperBar: {
+    flex: 1,
+    height: 3,
+    backgroundColor: '#E2E8F0',
+    borderRadius: radius.pill,
+  },
+  stepperBarActive: {
+    backgroundColor: leopardPalette.primary,
+  },
+  stepperBarPassed: {
+    backgroundColor: '#15803D',
+  },
+  stepperLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stepLabelBtn: {
+    paddingVertical: 2,
+  },
+  stepLabelText: {
+    color: '#94A3B8',
+    ...typeScale.caption2,
+    fontWeight: '600',
+  },
+  stepLabelTextActive: {
+    color: leopardPalette.primary,
+    fontWeight: '700',
+  },
+  stepLabelTextPassed: {
+    color: '#15803D',
+    fontWeight: '600',
+  },
   body: {
     flex: 1,
     gap: spacing.md,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
   card: {
-    backgroundColor: scene.surfaceDark,
-    borderColor: scene.borderDark,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
     borderWidth: 1,
     gap: spacing.sm,
-    padding: spacing.lg,
-    shadowColor: '#020817',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 2,
+    padding: spacing.md,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
     ...iosContinuousCurve,
   },
   sectionLabel: {
-    color: scene.ctaCyan,
+    color: '#64748B',
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
-  field: { gap: spacing.xs },
-  inputLabel: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
-  fieldHint: { color: scene.muted, ...typeScale.caption1, marginTop: 2 },
+  field: { gap: spacing.xxs },
+  inputLabel: {
+    color: '#334155',
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+  fieldHint: { color: '#94A3B8', ...typeScale.caption2, marginTop: 2 },
   inputWrap: {
-    backgroundColor: scene.fieldBg,
-    borderColor: scene.inputBorder,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    height: 48,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.control,
+    borderWidth: 1,
+    height: 44,
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.sm,
     ...iosContinuousCurve,
   },
   inputWrapFocused: {
-    borderColor: scene.inputFocusBorder,
+    borderColor: leopardPalette.primary,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
   },
   phoneInputRow: {
     flexDirection: 'row',
@@ -1147,23 +1253,23 @@ const styles = StyleSheet.create({
   flagPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingLeft: 12,
-    paddingRight: 10,
-    borderRightWidth: 1.5,
-    borderRightColor: 'rgba(255, 255, 255, 0.14)',
+    gap: spacing.xxs,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.xs,
+    borderRightWidth: 1,
+    borderRightColor: '#E2E8F0',
     height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#F1F5F9',
   },
   flagCode: {
-    color: scene.ink,
-    ...typeScale.footnote,
+    color: '#0F172A',
+    ...typeScale.subheadline,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   phoneInput: {
     flex: 1,
-    paddingLeft: 10,
+    paddingLeft: spacing.xs,
     fontVariant: ['tabular-nums'],
   },
   dateInput: {
@@ -1179,53 +1285,65 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   input: {
-    color: scene.ink,
+    color: '#0F172A',
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '500',
     padding: 0,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        outlineWidth: 0,
+      } as any,
+    }),
   },
   chipWrapRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.xs,
   },
   chip: {
-    backgroundColor: scene.fieldBgSoft,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
     borderRadius: radius.pill,
     borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs + spacing.hairline,
     ...iosContinuousCurve,
   },
   chipActive: {
-    backgroundColor: 'rgba(56, 189, 248, 0.18)',
-    borderColor: scene.ctaCyan,
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
+    borderColor: leopardPalette.primary,
   },
   chipText: {
-    color: scene.muted,
-    ...typeScale.footnote,
-    fontWeight: '600',
+    color: '#64748B',
+    ...typeScale.subheadline,
+    fontWeight: '500',
   },
   chipTextActive: {
-    color: scene.ctaCyan,
+    color: leopardPalette.primary,
     fontWeight: '600',
   },
   vehicleGrid: {
-    gap: 10,
+    gap: spacing.xs,
   },
   vehicleCard: {
-    backgroundColor: scene.fieldBg,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    borderRadius: 14,
-    borderWidth: 1.5,
-    padding: 14,
-    gap: 4,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.control,
+    borderWidth: 1,
+    padding: spacing.sm,
+    gap: spacing.xxs,
     ...iosContinuousCurve,
   },
   vehicleCardSelected: {
-    borderColor: scene.ctaCyan,
-    backgroundColor: scene.badgeBg,
+    borderColor: leopardPalette.primary,
+    borderWidth: 1.5,
+    backgroundColor: '#FFFFFF',
+    shadowColor: leopardPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   vehicleCardHeader: {
     flexDirection: 'row',
@@ -1233,79 +1351,108 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   vehicleCardTitle: {
-    color: scene.ink,
+    color: '#0F172A',
     ...typeScale.subheadline,
     fontWeight: '600',
   },
   vehicleCardTitleSelected: {
-    color: scene.ctaCyan,
+    color: leopardPalette.primary,
+    fontWeight: '700',
   },
   vehicleCardSub: {
-    color: scene.muted,
-    ...typeScale.footnote,
+    color: '#64748B',
+    ...typeScale.caption1,
   },
   vehicleCardSubSelected: {
-    color: scene.mutedLight,
+    color: leopardPalette.primary,
   },
   radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    width: 18,
+    height: 18,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
   radioCircleSelected: {
-    borderColor: scene.ctaCyan,
+    borderColor: leopardPalette.primary,
   },
   radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: scene.ctaCyan,
+    width: 8,
+    height: 8,
+    borderRadius: radius.pill,
+    backgroundColor: leopardPalette.primary,
   },
   selfieContainer: {
-    gap: 10,
+    gap: spacing.xs,
   },
   selfieThumb: {
-    width: 120,
-    height: 120,
-    borderRadius: 12,
+    width: 100,
+    height: 100,
+    borderRadius: radius.control,
     borderWidth: 1.5,
-    borderColor: scene.ctaCyan,
+    borderColor: leopardPalette.primary,
     ...iosContinuousCurve,
   },
   primaryBtn: {
     alignItems: 'center',
-    backgroundColor: scene.ctaTop,
-    borderRadius: radius.pill,
-    height: 50,
+    backgroundColor: leopardPalette.primary,
+    borderRadius: radius.cardLg,
+    height: 48,
     justifyContent: 'center',
-    overflow: 'hidden',
-    shadowColor: scene.ctaTop,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
+    paddingHorizontal: spacing.md,
+    shadowColor: leopardPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
     elevation: 3,
     ...iosContinuousCurve,
   },
   primaryBtnDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#E2E8F0',
     shadowOpacity: 0,
     elevation: 0,
   },
+  primaryBtnDisabledText: {
+    color: '#94A3B8',
+  },
   primaryBtnText: {
-    color: scene.ink,
+    color: '#FFFFFF',
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  stickyBottomBar: {
+    backgroundColor: '#FFFFFF',
+    borderTopColor: '#E2E8F0',
+    borderTopWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: Platform.select({ ios: spacing.lg, default: spacing.sm }),
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 20,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   btnGloss: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    display: 'none',
   },
   pressed: {
     opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   loginRow: {
     alignItems: 'center',
@@ -1315,315 +1462,239 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   loginHelper: {
-    color: scene.muted,
+    color: '#64748B',
     ...typeScale.footnote,
   },
   loginLink: {
-    color: scene.ctaCyan,
+    color: leopardPalette.primary,
     ...typeScale.footnote,
-    fontWeight: '600',
-  },
-  stepperWrap: {
-    backgroundColor: scene.canvasDark,
-    borderBottomColor: scene.borderSubtle,
-    borderBottomWidth: 1,
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  stepperBarBg: {
-    backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    borderRadius: 4,
-    height: 4,
-    overflow: 'hidden',
-  },
-  stepperBarFill: {
-    backgroundColor: scene.ctaCyan,
-    height: '100%',
-  },
-  stepperSegments: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  stepItem: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  stepperArrow: {
-    color: 'rgba(255, 255, 255, 0.25)',
-    ...typeScale.subheadline,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  stepCircle: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: scene.borderLight,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    height: 28,
-    justifyContent: 'center',
-    width: 28,
-    ...iosContinuousCurve,
-  },
-  stepCircleActive: {
-    backgroundColor: scene.ctaCyan,
-    borderColor: scene.ctaCyan,
-  },
-  stepCirclePassed: {
-    backgroundColor: 'rgba(74, 222, 128, 0.2)',
-    borderColor: scene.successLight,
-  },
-  stepCircleText: {
-    color: scene.muted,
-    ...typeScale.caption1,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-  },
-  stepCircleTextActive: {
-    color: scene.canvasDark,
-    fontWeight: '600',
-  },
-  stepCircleTextPassed: {
-    color: scene.successLight,
-  },
-  stepLabel: {
-    color: scene.muted,
-    ...typeScale.caption1,
-    fontWeight: '600',
-  },
-  stepLabelActive: {
-    color: scene.ctaCyan,
-    fontWeight: '600',
-  },
-  stepLabelPassed: {
-    color: scene.mutedLight,
-  },
-  stepHeadlineRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 2,
-  },
-  stepBadge: {
-    backgroundColor: scene.badgeBg,
-    borderColor: scene.badgeBorder,
-    borderRadius: 6,
-    borderWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    ...iosContinuousCurve,
-  },
-  stepBadgeText: {
-    color: scene.badgeText,
-    ...typeScale.caption2,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-  },
-  stepTitleText: {
-    color: scene.ink,
-    ...typeScale.footnote,
-    fontWeight: '600',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   stepNavRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
     alignItems: 'center',
-    marginTop: 4,
+    width: '100%',
   },
   outlineNavBtn: {
     flex: 1,
-    height: 50,
-    borderRadius: radius.pill,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    borderWidth: 1.5,
-    backgroundColor: scene.fieldBgSoft,
+    height: 48,
+    borderRadius: radius.cardLg,
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
     ...iosContinuousCurve,
   },
   outlineNavBtnText: {
-    color: scene.mutedLight,
+    color: '#0F172A',
     ...typeScale.subheadline,
     fontWeight: '600',
+    textAlign: 'center',
   },
   primaryNavBtn: {
-    flex: 1.8,
-    height: 50,
-    borderRadius: radius.pill,
-    backgroundColor: scene.ctaTop,
+    flex: 2,
+    height: 48,
+    borderRadius: radius.cardLg,
+    backgroundColor: leopardPalette.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    shadowColor: scene.ctaTop,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
+    paddingHorizontal: spacing.md,
+    shadowColor: leopardPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
     elevation: 3,
     ...iosContinuousCurve,
   },
   kycGuideCard: {
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
-    borderColor: 'rgba(56, 189, 248, 0.25)',
-    borderRadius: 16,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderRadius: radius.card,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
     padding: spacing.md,
     alignItems: 'center',
     ...iosContinuousCurve,
   },
   kycGuideIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: 'rgba(56, 189, 248, 0.16)',
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
     ...iosContinuousCurve,
   },
   kycGuideCopy: { flex: 1, gap: 2 },
-  kycGuideTitle: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
-  kycGuideText: { color: scene.mutedLight, ...typeScale.caption1, lineHeight: 17 },
-  kycList: { gap: spacing.md },
+  kycGuideTitle: { color: '#0F172A', ...typeScale.subheadline, fontWeight: '700' },
+  kycGuideText: { color: '#64748B', ...typeScale.caption1, lineHeight: 16 },
+  kycList: { gap: spacing.sm },
   docSlot: {
-    backgroundColor: scene.surfaceDark,
-    borderColor: scene.borderDark,
-    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
     borderWidth: 1,
-    gap: 12,
+    gap: spacing.sm,
     padding: spacing.md,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
     ...iosContinuousCurve,
   },
   docTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   docStatusIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    width: 24,
+    height: 24,
+    borderRadius: radius.pill,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
     ...iosContinuousCurve,
   },
   docStatusIconDone: {
-    backgroundColor: 'rgba(74, 222, 128, 0.18)',
+    backgroundColor: '#F0FDF4',
   },
   docStatusNumber: {
-    color: scene.muted,
-    ...typeScale.caption1,
-    fontWeight: '600',
+    color: '#64748B',
+    ...typeScale.caption2,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  docInfo: { flex: 1, gap: 2 },
-  docLabel: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
-  docHint: { color: scene.muted, ...typeScale.caption1 },
+  docInfo: { flex: 1, gap: 1 },
+  docLabel: { color: '#0F172A', ...typeScale.subheadline, fontWeight: '600' },
+  docHint: { color: '#94A3B8', ...typeScale.caption2 },
   docStatusPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#F1F5F9',
     borderRadius: radius.pill,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2,
     ...iosContinuousCurve,
   },
   docStatusPillDone: {
-    backgroundColor: scene.successBg,
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+    borderWidth: 1,
   },
-  docStatusText: { color: scene.muted, ...typeScale.caption2, fontWeight: '600' },
-  docStatusTextDone: { color: scene.successLight },
+  docStatusText: { color: '#64748B', ...typeScale.caption2, fontWeight: '600' },
+  docStatusTextDone: { color: '#15803D', fontWeight: '700' },
   docThumb: {
-    height: 140,
+    height: 120,
     width: '100%',
-    borderRadius: 10,
-    backgroundColor: scene.fieldBg,
+    borderRadius: radius.control,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     ...iosContinuousCurve,
   },
   docActionRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.xs,
+    alignItems: 'center',
+    marginTop: spacing.xs,
   },
   docBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: scene.inputBorder,
-    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.control,
     borderWidth: 1,
-    height: 42,
+    height: 44,
     ...iosContinuousCurve,
   },
   docBtnHalf: {
     flex: 1,
   },
   docBtnDone: {
-    borderColor: scene.successBorder,
-    backgroundColor: 'rgba(74, 222, 128, 0.12)',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#CBD5E1',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   docBtnText: {
-    color: scene.ink,
-    ...typeScale.footnote,
+    color: '#0F172A',
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   docBtnTextDone: {
-    color: scene.successLight,
+    color: '#0F172A',
+    fontWeight: '600',
   },
   deleteDocBtn: {
-    width: 60,
-    height: 42,
-    borderRadius: 12,
+    minWidth: 68,
+    height: 44,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.35)',
-    backgroundColor: scene.dangerBg,
+    borderColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
     alignItems: 'center',
     justifyContent: 'center',
     ...iosContinuousCurve,
   },
   deleteDocBtnText: {
-    color: scene.dangerLight,
-    ...typeScale.footnote,
+    color: '#DC2626',
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   summaryCard: {
-    backgroundColor: scene.surfaceDark,
-    borderColor: scene.borderDark,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
     borderWidth: 1,
     padding: spacing.md,
-    gap: 8,
+    gap: spacing.xxs,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
     ...iosContinuousCurve,
   },
   summaryTitle: {
-    color: scene.ctaCyan,
-    ...typeScale.caption1,
-    fontWeight: '600',
+    color: '#64748B',
+    ...typeScale.caption2,
+    fontWeight: '700',
+    textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginBottom: 2,
+    marginBottom: spacing.xxs,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: spacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: scene.borderDivider,
+    borderBottomColor: '#F8FAFC',
   },
-  summaryLabel: { color: scene.mutedLight, ...typeScale.footnote },
-  summaryValue: { color: scene.ink, ...typeScale.footnote, fontWeight: '600' },
+  summaryLabel: { color: '#64748B', ...typeScale.footnote },
+  summaryValue: { color: '#0F172A', ...typeScale.footnote, fontWeight: '600' },
   errorBox: {
-    backgroundColor: scene.dangerBg,
-    borderColor: scene.dangerBorder,
-    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: radius.card,
     borderWidth: 1,
     padding: spacing.md,
     ...iosContinuousCurve,
   },
   errorText: {
-    color: scene.dangerText,
+    color: '#DC2626',
     ...typeScale.footnote,
     fontWeight: '600',
     lineHeight: 18,
@@ -1636,9 +1707,9 @@ const styles = StyleSheet.create({
   successIconBadge: {
     width: 64,
     height: 64,
-    borderRadius: 32,
-    backgroundColor: scene.successBg,
-    borderColor: scene.successBorder,
+    borderRadius: radius.pill,
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1648,9 +1719,9 @@ const styles = StyleSheet.create({
   warningIconBadge: {
     width: 64,
     height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(245, 158, 11, 0.16)',
-    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderRadius: radius.pill,
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1658,18 +1729,18 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   successTitle: {
-    color: scene.ink,
-    ...typeScale.title3,
+    color: '#0F172A',
+    ...typeScale.title2,
     fontWeight: '700',
     textAlign: 'center',
   },
   successText: {
-    color: scene.mutedLight,
+    color: '#64748B',
     ...typeScale.subheadline,
     textAlign: 'center',
   },
   contractMetaText: {
-    color: scene.ctaCyan,
+    color: leopardPalette.primary,
     ...typeScale.footnote,
     fontWeight: '600',
     textAlign: 'center',
@@ -1684,52 +1755,52 @@ const styles = StyleSheet.create({
   },
   otpBackdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(6, 22, 47, 0.82)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
   },
   otpCard: {
-    backgroundColor: scene.surfaceDark,
-    borderColor: scene.inputBorder,
-    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.modal,
     borderWidth: 1,
     padding: 24,
     width: '100%',
     maxWidth: 400,
     gap: 12,
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.15,
     shadowRadius: 24,
     elevation: 10,
     ...iosContinuousCurve,
   },
   otpTitle: {
-    color: scene.ink,
+    color: '#0F172A',
     ...typeScale.title3,
     fontWeight: '700',
     textAlign: 'center',
   },
   otpSubtitle: {
-    color: scene.mutedLight,
+    color: '#64748B',
     ...typeScale.footnote,
     lineHeight: 19,
     textAlign: 'center',
     marginBottom: 4,
   },
   phoneHighlight: {
-    color: scene.ctaCyan,
+    color: '#0F172A',
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   otpErrorBox: {
-    backgroundColor: scene.dangerBg,
-    borderColor: scene.dangerBorder,
-    borderRadius: 8,
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderRadius: radius.control,
     borderWidth: 1,
     padding: 8,
     ...iosContinuousCurve,
   },
   otpErrorText: {
-    color: scene.dangerText,
+    color: '#DC2626',
     ...typeScale.caption1,
     fontWeight: '600',
     textAlign: 'center',
@@ -1742,7 +1813,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   verifyingText: {
-    color: scene.ctaCyan,
+    color: leopardPalette.primary,
     ...typeScale.footnote,
     fontWeight: '600',
   },
@@ -1755,13 +1826,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   resendText: {
-    color: scene.ctaCyan,
+    color: leopardPalette.primary,
     ...typeScale.footnote,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
   resendDisabledText: {
-    color: scene.muted,
+    color: '#94A3B8',
   },
   otpActionRow: {
     flexDirection: 'row',
@@ -1770,43 +1841,43 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    height: 46,
-    borderRadius: radius.pill,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
+    height: 48,
+    borderRadius: radius.cardLg,
+    borderColor: '#E2E8F0',
     borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: scene.fieldBgSoft,
+    backgroundColor: '#FFFFFF',
     ...iosContinuousCurve,
   },
   cancelBtnText: {
-    color: scene.mutedLight,
+    color: '#0F172A',
     ...typeScale.subheadline,
     fontWeight: '600',
   },
   confirmBtn: {
     flex: 1.4,
-    height: 46,
-    borderRadius: radius.pill,
-    backgroundColor: scene.ctaTop,
+    height: 48,
+    borderRadius: radius.cardLg,
+    backgroundColor: leopardPalette.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: scene.ctaTop,
+    shadowColor: leopardPalette.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.18,
     shadowRadius: 6,
     elevation: 3,
     ...iosContinuousCurve,
   },
   confirmBtnDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#E2E8F0',
     shadowOpacity: 0,
     elevation: 0,
   },
   confirmBtnText: {
-    color: scene.ink,
+    color: '#FFFFFF',
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   controlPressed: {
     opacity: 0.82,

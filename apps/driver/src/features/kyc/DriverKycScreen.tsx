@@ -141,17 +141,17 @@ const styles = StyleSheet.create({
   },
   verifiedTitle: {
     color: colors.success.text,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '700',
   },
   verifiedSub: {
     color: colors.success.text,
-    fontSize: 12,
+    ...typeScale.caption1,
     marginTop: 2,
   },
   sectionLabel: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '700',
   },
   checklistCard: {
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   checklistLabel: {
     color: colors.neutral.titleText,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   checklistLabelMissing: {
@@ -183,19 +183,19 @@ const styles = StyleSheet.create({
   },
   checklistSummaryOk: {
     color: colors.success.text,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
     marginTop: 4,
   },
   checklistSummaryMissing: {
     color: colors.danger.text,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
     marginTop: 4,
   },
   loadingText: {
     color: leopardPalette.textMutedSlate,
-    fontSize: 13,
+    ...typeScale.footnote,
     textAlign: 'center',
     paddingVertical: spacing.lg,
   },
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   docTitle: {
     color: colors.neutral.titleText,
     flex: 1,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '700',
   },
   updateCard: {
@@ -246,12 +246,12 @@ const styles = StyleSheet.create({
   },
   updateTitle: {
     color: colors.neutral.titleText,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '700',
   },
   updateDesc: {
     color: colors.neutral.mutedText,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     lineHeight: 17,
   },
 });

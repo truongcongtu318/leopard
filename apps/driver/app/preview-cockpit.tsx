@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { ScreenScaffold, colors, leopardPalette, spacing } from '@leopard/mobile-core';
+import { ScreenScaffold, colors, leopardPalette, spacing, typeScale } from '@leopard/mobile-core';
 import { DriverOrderDetailScreen } from '../src/features/orders/DriverOrderDetailScreen';
 import { createDriverDetailFixture } from '../src/features/orders/fixtures';
 import type { DriverDetailScenarioId } from '../src/features/orders/fixtures';
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   },
   scenarioLabel: {
     color: '#94A3B8',
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   },
   scenarioMenuItemText: {
     color: '#E2E8F0',
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
   scenarioMenuItemTextActive: {
