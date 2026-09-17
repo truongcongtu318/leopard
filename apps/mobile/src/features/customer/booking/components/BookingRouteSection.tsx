@@ -106,7 +106,8 @@ export function BookingRouteSection({
   routeError,
   initialActiveTarget = null,
 }: BookingRouteSectionProps) {
-  const [activeTarget, setActiveTarget] = useState<'pickup' | 'dropoff' | null>(initialActiveTarget);
+  // Always start closed by default; only show dropdown when user explicitly taps/clicks a row
+  const [activeTarget, setActiveTarget] = useState<'pickup' | 'dropoff' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);

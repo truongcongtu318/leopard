@@ -243,7 +243,6 @@ export function BookingScreen({
             distanceKm={distanceKm}
             dropoffAddress={draft.dropoffAddress}
             etaMinutes={etaMinutes}
-            initialActiveTarget={initialFocusTarget}
             onAddStop={handleAddStop}
             onPickOnMap={onOpenSearchAddress}
             onRemoveStop={handleRemoveStop}
