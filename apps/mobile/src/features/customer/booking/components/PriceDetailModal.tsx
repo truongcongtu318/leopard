@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   sheetContainer: {
     backgroundColor: '#FFFFFF',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     ...typeScale.title3,
     fontWeight: '600',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   closeText: {
     ...typeScale.subheadline,
@@ -168,14 +168,14 @@ const styles = StyleSheet.create({
   },
   itemLabel: {
     ...typeScale.subheadline,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     flex: 1,
     paddingRight: spacing.sm,
   },
   itemValue: {
     ...typeScale.subheadline,
     fontWeight: '500',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   separator: {
     height: 0.5,
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   totalLabel: {
     ...typeScale.headline,
     fontWeight: '700',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   totalValue: {
     ...typeScale.title3,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   noteText: {
     ...typeScale.footnote,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginTop: 4,
   },
   confirmBtn: {

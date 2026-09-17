@@ -51,13 +51,9 @@ export function BookingCargoSection({
   const handlePickImage = async () => {
     if (cargoImages.length >= 5) return;
     try {
-      const result = await pickDeviceImage({
-        allowsEditing: false,
-        mediaTypes: ['images'],
-        quality: 0.8,
-      });
-      if (result && !result.canceled && result.assets?.[0]?.uri) {
-        onAddImage(result.assets[0].uri);
+      const result = await pickDeviceImage();
+      if (result && result.uri) {
+        onAddImage(result.uri);
       }
     } catch {
       // Fallback demo image if device picker unavailable in test
@@ -167,7 +163,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '600',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: spacing.xs,
     paddingHorizontal: spacing.xs,
     textTransform: 'uppercase',
@@ -198,7 +194,7 @@ const styles = StyleSheet.create({
   chipText: {
     ...typeScale.footnote,
     fontWeight: '500',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   chipTextSelected: {
     color: '#FFFFFF',
@@ -218,12 +214,12 @@ const styles = StyleSheet.create({
   fieldLabel: {
     ...typeScale.subheadline,
     fontWeight: '500',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: 4,
   },
   multilineInput: {
     ...typeScale.body,
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
     minHeight: 64,
     textAlignVertical: 'top',
     padding: 0,
@@ -244,7 +240,7 @@ const styles = StyleSheet.create({
   },
   photoCount: {
     ...typeScale.footnote,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
   },
   photoGrid: {
     flexDirection: 'row',

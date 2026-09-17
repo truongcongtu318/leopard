@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '600',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: spacing.xs,
     paddingHorizontal: spacing.xs,
     textTransform: 'uppercase',
@@ -174,11 +174,11 @@ const styles = StyleSheet.create({
   toggleTitle: {
     ...typeScale.body,
     fontWeight: '500',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   toggleSubtitle: {
     ...typeScale.footnote,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginTop: 2,
   },
   separator: {
@@ -194,13 +194,13 @@ const styles = StyleSheet.create({
   fieldLabel: {
     ...typeScale.subheadline,
     fontWeight: '500',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: 4,
   },
   textInput: {
     height: 40,
     ...typeScale.body,
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
     padding: 0,
   },
   errorText: {

@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { calculateBookingFare, VEHICLE_RATES } from './booking-pricing';
 
 describe('calculateBookingFare', () => {

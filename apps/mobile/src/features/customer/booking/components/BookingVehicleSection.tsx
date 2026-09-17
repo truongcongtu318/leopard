@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '600',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: spacing.xs,
     paddingHorizontal: spacing.xs,
     textTransform: 'uppercase',
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   vehicleName: {
     ...typeScale.headline,
     fontWeight: '600',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   tagBadge: {
     backgroundColor: '#F1F5F9',
@@ -188,11 +188,11 @@ const styles = StyleSheet.create({
   tagBadgeText: {
     ...typeScale.caption2,
     fontWeight: '600',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
   },
   specsText: {
     ...typeScale.footnote,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
   },
   etaText: {
     ...typeScale.caption1,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   priceText: {
     ...typeScale.subheadline,
     fontWeight: '600',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   priceTextSelected: {
     color: customerPalette.primary,

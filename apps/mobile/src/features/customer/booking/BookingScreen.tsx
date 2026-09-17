@@ -84,9 +84,12 @@ export function BookingScreen({
 
   // Subscribe to store updates
   useEffect(() => {
-    return bookingDraftStore.subscribe(() => {
+    const unsub = bookingDraftStore.subscribe(() => {
       setDraft({ ...bookingDraftStore.getDraft() });
     });
+    return () => {
+      unsub();
+    };
   }, []);
 
   // Keyboard show/hide detection

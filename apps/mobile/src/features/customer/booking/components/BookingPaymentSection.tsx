@@ -69,7 +69,7 @@ export function BookingPaymentSection({
           ]}
         >
           <View style={styles.iconCircle}>
-            <IconPaymentConvenient color={customerPalette.textSecondary} size={20} />
+            <IconPaymentConvenient color={customerPalette.textMutedSlate} size={20} />
           </View>
           <View style={styles.methodInfo}>
             <Text style={styles.methodName}>Tiền mặt</Text>
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '600',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: spacing.xs,
     paddingHorizontal: spacing.xs,
     textTransform: 'uppercase',
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   methodName: {
     ...typeScale.body,
     fontWeight: '600',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   recommendedBadge: {
     backgroundColor: '#FEF3C7',
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   methodDesc: {
     ...typeScale.footnote,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginTop: 2,
   },
   separator: {

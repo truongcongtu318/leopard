@@ -1,17 +1,18 @@
+import { describe, expect, it, jest } from '@jest/globals';
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import { BookingVehicleSection } from './BookingVehicleSection';
-import { BookingServicesSection } from './BookingServicesSection';
 import { BookingFixedBottomBar } from './BookingFixedBottomBar';
-import { BookingRouteSection } from './BookingRouteSection';
 import { BookingReceiverSection } from './BookingReceiverSection';
+import { BookingRouteSection } from './BookingRouteSection';
+import { BookingServicesSection } from './BookingServicesSection';
+import { BookingVehicleSection } from './BookingVehicleSection';
 import { PriceDetailModal } from './PriceDetailModal';
 
 describe('Booking Modular Components', () => {
   it('BookingVehicleSection renders vehicles and selects via checkmark without radio buttons', async () => {
     const onSelect = jest.fn();
     const screen = await render(
-      <BookingVehicleSection selectedVehicleId="TRUCK_125T" onSelectVehicle={onSelect} />
+      <BookingVehicleSection onSelectVehicle={onSelect} selectedVehicleId="TRUCK_125T" />
     );
 
     expect(screen.getByText('Xe Tải 1.25 Tấn')).toBeTruthy();
@@ -26,13 +27,13 @@ describe('Booking Modular Components', () => {
     const onAddStop = jest.fn();
     const screen = await render(
       <BookingRouteSection
-        pickupAddress="Kho VLXD Đại Phát - 120 Song Hành"
-        dropoffAddress="Công trình Jamona City, Đào Trí"
-        stops={[]}
         distanceKm={12.5}
+        dropoffAddress="Công trình Jamona City, Đào Trí"
         etaMinutes={35}
         onAddStop={onAddStop}
         onRemoveStop={jest.fn()}
+        pickupAddress="Kho VLXD Đại Phát - 120 Song Hành"
+        stops={[]}
       />
     );
 
@@ -49,12 +50,12 @@ describe('Booking Modular Components', () => {
     const onChangePhone = jest.fn();
     const screen = await render(
       <BookingReceiverSection
-        receiverName="Anh Tuấn"
-        receiverPhone="90 123 4567"
+        nameError="Vui lòng nhập họ và tên người nhận"
         onChangeName={jest.fn()}
         onChangePhone={onChangePhone}
-        nameError="Vui lòng nhập họ và tên người nhận"
         phoneError="Số điện thoại không hợp lệ"
+        receiverName="Anh Tuấn"
+        receiverPhone="90 123 4567"
       />
     );
 
@@ -69,12 +70,12 @@ describe('Booking Modular Components', () => {
       <BookingServicesSection
         hasLoadingSupport={false}
         hasVatInvoice={false}
+        onChangeVatField={jest.fn()}
         onToggleLoading={jest.fn()}
         onToggleVat={onToggleVat}
         vatCompany=""
-        vatTaxId=""
         vatEmail=""
-        onChangeVatField={jest.fn()}
+        vatTaxId=""
       />
     );
 
@@ -86,10 +87,10 @@ describe('Booking Modular Components', () => {
     const onBook = jest.fn();
     const screen = await render(
       <BookingFixedBottomBar
-        totalFare={200_000}
         isValid={false}
         onPressBook={onBook}
         onPressDetails={jest.fn()}
+        totalFare={200_000}
       />
     );
 
@@ -102,8 +103,6 @@ describe('Booking Modular Components', () => {
     const onClose = jest.fn();
     const screen = await render(
       <PriceDetailModal
-        visible={true}
-        onClose={onClose}
         breakdown={{
           vehicleId: 'TRUCK_125T',
           vehicleName: 'Xe Tải 1.25 Tấn',
@@ -117,6 +116,8 @@ describe('Booking Modular Components', () => {
           totalFare: 378_000,
         }}
         distanceKm={12.5}
+        onClose={onClose}
+        visible={true}
       />
     );
 

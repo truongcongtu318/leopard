@@ -90,12 +90,12 @@ const styles = StyleSheet.create({
   },
   fareLabel: {
     ...typeScale.subheadline,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
   },
   fareValue: {
     ...typeScale.title2,
     fontWeight: '700',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   detailsBtn: {
     paddingVertical: spacing.xxs,

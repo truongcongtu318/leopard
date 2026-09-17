@@ -66,7 +66,7 @@ export function BookingRouteSection({
               {pickupAddress || 'Chọn điểm lấy hàng'}
             </Text>
           </View>
-          <IconChevronRight color={customerPalette.textSecondary} size={16} />
+          <IconChevronRight color={customerPalette.textMutedSlate} size={16} />
         </Pressable>
 
         {/* Điểm dừng trung gian (nếu có) */}
@@ -109,7 +109,7 @@ export function BookingRouteSection({
               {dropoffAddress || 'Chọn điểm giao hàng'}
             </Text>
           </View>
-          <IconChevronRight color={customerPalette.textSecondary} size={16} />
+          <IconChevronRight color={customerPalette.textMutedSlate} size={16} />
         </Pressable>
 
         {/* Hàng "+ Thêm điểm dừng" */}
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   stopTypeLabel: {
     ...typeScale.caption2,
     fontWeight: '700',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     letterSpacing: 0.5,
   },
   warehouseTag: {
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   addressLine1: {
     ...typeScale.body,
     fontWeight: '500',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   separator: {
     height: 0.5,
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   },
   routeFooter: {
     ...typeScale.footnote,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginTop: spacing.xs,
     paddingHorizontal: spacing.xs,
   },

@@ -1,5 +1,6 @@
+import { beforeEach, describe, expect, it } from '@jest/globals';
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
 import { BookingScreen } from './BookingScreen';
 import { bookingDraftStore } from './bookingDraftStore';
 

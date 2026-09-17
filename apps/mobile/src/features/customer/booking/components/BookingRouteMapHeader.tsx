@@ -51,7 +51,6 @@ export function BookingRouteMapHeader({
       <View style={styles.mapWrap}>
         <RouteMapSchematic
           destinationLabel={dropoffAddress}
-          height={180}
           originLabel={pickupAddress}
         />
       </View>
@@ -91,11 +90,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
   mapWrap: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     height: 180,
   },
   navBarOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderBottomWidth: 0.5,
     borderBottomColor: '#E2E8F0',
@@ -132,7 +131,7 @@ const styles = StyleSheet.create({
   inlineTitle: {
     ...typeScale.headline,
     fontWeight: '600',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   placeholderRight: {
     width: 44,

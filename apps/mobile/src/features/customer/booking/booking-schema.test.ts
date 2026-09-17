@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { validateBookingForm, type BookingDraftState } from './booking-schema';
 
 describe('validateBookingForm', () => {

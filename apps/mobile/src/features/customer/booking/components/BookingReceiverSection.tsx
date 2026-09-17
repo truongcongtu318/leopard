@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '600',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: spacing.xs,
     paddingHorizontal: spacing.xs,
     textTransform: 'uppercase',
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     ...typeScale.subheadline,
     fontWeight: '500',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: 4,
   },
   inputWrap: {
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     ...typeScale.body,
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
     padding: 0,
   },
   contactBtn: {
@@ -159,13 +159,13 @@ const styles = StyleSheet.create({
   countryCodeText: {
     ...typeScale.body,
     fontWeight: '600',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   phoneTextInput: {
     flex: 1,
     height: 40,
     ...typeScale.body,
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
     padding: 0,
   },
   separator: {

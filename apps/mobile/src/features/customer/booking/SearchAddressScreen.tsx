@@ -2,12 +2,12 @@ import React, { useMemo, useState } from 'react';
 import {
   FlatList,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   IconChevronLeft,
@@ -158,7 +158,7 @@ export function SearchAddressScreen({
         </Pressable>
 
         <View style={styles.searchFieldContainer}>
-          <IconSearch color={customerPalette.textSecondary} size={16} />
+          <IconSearch color={customerPalette.textMutedSlate} size={16} />
           <TextInput
             accessibilityLabel="Tìm địa chỉ giao hàng"
             autoCapitalize="none"
@@ -223,7 +223,7 @@ export function SearchAddressScreen({
             <IconLocationPin color={customerPalette.primary} size={18} />
           </View>
           <Text style={styles.mapPickTitle}>Chọn trên bản đồ</Text>
-          <IconChevronRight color={customerPalette.textSecondary} size={14} />
+          <IconChevronRight color={customerPalette.textMutedSlate} size={14} />
         </Pressable>
 
         {/* Active Search Results */}
@@ -242,7 +242,7 @@ export function SearchAddressScreen({
                     style={({ pressed }) => [styles.rowItem, pressed && styles.cardPressed]}
                   >
                     <View style={styles.itemIconCircle}>
-                      <IconLocationPin color={customerPalette.textSecondary} size={16} />
+                      <IconLocationPin color={customerPalette.textMutedSlate} size={16} />
                     </View>
                     <View style={styles.itemContent}>
                       {renderHighlightedText(item.name, query)}
@@ -265,7 +265,7 @@ export function SearchAddressScreen({
         {hasNoResults && (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
-              <IconSearch color={customerPalette.textSecondary} size={32} />
+              <IconSearch color={customerPalette.textMutedSlate} size={32} />
             </View>
             <Text style={styles.emptyTitle}>Không tìm thấy địa chỉ</Text>
             <Text style={styles.emptySubtitle}>
@@ -301,7 +301,7 @@ export function SearchAddressScreen({
                       style={({ pressed }) => [styles.rowItem, pressed && styles.cardPressed]}
                     >
                       <View style={styles.itemIconCircle}>
-                        <IconSearch color={customerPalette.textSecondary} size={15} />
+                        <IconSearch color={customerPalette.textMutedSlate} size={15} />
                       </View>
                       <View style={styles.itemContent}>
                         <Text style={styles.itemTitle}>{item.name}</Text>
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     ...typeScale.body,
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
     padding: 0,
   },
   clearButton: {
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '600',
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginBottom: spacing.xs,
     paddingHorizontal: spacing.xs,
     textTransform: 'uppercase',
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   itemTitle: {
     ...typeScale.body,
     fontWeight: '500',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
   },
   highlightedMatch: {
     fontWeight: '700',
@@ -488,12 +488,12 @@ const styles = StyleSheet.create({
   },
   itemAddress: {
     ...typeScale.subheadline,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginTop: 2,
   },
   distanceText: {
     ...typeScale.footnote,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     marginLeft: spacing.sm,
   },
   emptyContainer: {
@@ -514,12 +514,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     ...typeScale.headline,
     fontWeight: '600',
-    color: customerPalette.textPrimary,
+    color: customerPalette.textSlateDark,
     marginBottom: spacing.xxs,
   },
   emptySubtitle: {
     ...typeScale.subheadline,
-    color: customerPalette.textSecondary,
+    color: customerPalette.textMutedSlate,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
