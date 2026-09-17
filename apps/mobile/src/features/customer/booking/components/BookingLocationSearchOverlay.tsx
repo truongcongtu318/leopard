@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 
 import {
-  IconChevronLeft,
   IconChevronRight,
   IconClose,
   IconLocationPin,
@@ -27,7 +26,6 @@ import {
 import { addressStore, type SavedAddress } from '../../addresses/address-store';
 import { searchPlacesDirect } from '../../../home/HomeDashboardScreen';
 import { searchVietmapWithCoords, type GeocodedSuggestion } from '../../../home/services/vietmap-search';
-import { useSafeInsets } from '../safe-insets';
 
 export interface LocationSearchResult {
   id: string;
@@ -53,7 +51,6 @@ export function BookingLocationSearchOverlay({
   onSelectLocation,
   onPickOnMap,
 }: BookingLocationSearchOverlayProps) {
-  const insets = useSafeInsets();
   const [query, setQuery] = useState('');
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
@@ -75,12 +72,12 @@ export function BookingLocationSearchOverlay({
         }));
       }
     } catch {
-      // Fallback if addressStore has issue
+      // Fallback
     }
     return [];
   }, [visible]);
 
-  // Reset query on open
+  // Reset on open
   useEffect(() => {
     if (visible) {
       setQuery('');
@@ -98,7 +95,7 @@ export function BookingLocationSearchOverlay({
       return;
     }
 
-    // 1. Instant real places match (filtering out fake fallbacks)
+    // 1. Instant real places match
     const directMatches = searchPlacesDirect(trimmed)
       .filter((p) => !p.id.startsWith('typed-'))
       .map((p) => ({
@@ -126,7 +123,6 @@ export function BookingLocationSearchOverlay({
             coords: item.coords,
           }));
 
-          // Deduplicate by name
           const seen = new Set<string>();
           const deduped: LocationSearchResult[] = [];
           for (const item of [...directMatches, ...mapped]) {
@@ -168,22 +164,48 @@ export function BookingLocationSearchOverlay({
     <Modal
       animationType="slide"
       onRequestClose={onClose}
-      transparent={false}
+      transparent={true}
       visible={visible}
     >
-      <View style={[styles.overlayContainer, { paddingTop: insets.top || 48 }]}>
-        {/* Header bar with Back button & Input */}
-        <View style={styles.headerBar}>
-          <Pressable
-            accessibilityLabel="Đóng tìm kiếm"
-            accessibilityRole="button"
-            hitSlop={12}
-            onPress={onClose}
-            style={styles.backBtn}
-          >
-            <IconChevronLeft color={customerPalette.primary} size={22} />
-          </Pressable>
+      <View style={styles.modalRoot}>
+        {/* Semi-transparent backdrop - Tapping here dismisses overlay */}
+        <Pressable
+          accessibilityLabel="Đóng overlay"
+          onPress={onClose}
+          style={styles.upperBackdrop}
+        />
 
+        {/* Floating Sheet Container (Grab style) */}
+        <View style={styles.sheetCard}>
+          {/* Grabber */}
+          <View style={styles.grabber} />
+
+          {/* Header row */}
+          <View style={styles.sheetHeader}>
+            <View style={styles.targetBadge}>
+              <View
+                style={[
+                  styles.targetDot,
+                  target === 'pickup' ? styles.pickupDot : styles.dropoffDot,
+                ]}
+              />
+              <Text style={styles.targetTitle}>
+                {target === 'pickup' ? 'Điểm lấy hàng' : 'Điểm giao hàng'}
+              </Text>
+            </View>
+
+            <Pressable
+              accessibilityLabel="Đóng tìm kiếm"
+              accessibilityRole="button"
+              hitSlop={12}
+              onPress={onClose}
+              style={styles.closeBtn}
+            >
+              <Text style={styles.closeBtnText}>Đóng</Text>
+            </Pressable>
+          </View>
+
+          {/* Search Input Box */}
           <View style={styles.inputWrapper}>
             <IconSearch color="#8E8E93" size={17} />
             <TextInput
@@ -220,24 +242,8 @@ export function BookingLocationSearchOverlay({
               </Pressable>
             )}
           </View>
-        </View>
 
-        {/* Target indicator */}
-        <View style={styles.targetIndicatorRow}>
-          <View
-            style={[
-              styles.targetDot,
-              target === 'pickup' ? styles.pickupDot : styles.dropoffDot,
-            ]}
-          />
-          <Text style={styles.targetLabel}>
-            {target === 'pickup' ? 'Đang chọn Điểm lấy hàng' : 'Đang chọn Điểm giao hàng'}
-          </Text>
-        </View>
-
-        {/* Main List */}
-        <View style={styles.listContainer}>
-          {/* Pinned "Chọn trên bản đồ" Action */}
+          {/* Action "Chọn trên bản đồ" */}
           <Pressable
             accessibilityLabel="Chọn trên bản đồ"
             accessibilityRole="button"
@@ -256,68 +262,69 @@ export function BookingLocationSearchOverlay({
 
           {/* Real Search Results */}
           {isSearching && searchResults.length > 0 && (
-            <View style={styles.sectionWrap}>
+            <View style={styles.resultsWrap}>
               <Text style={styles.sectionHeader}>KẾT QUẢ TÌM KIẾM THỰC TẾ</Text>
-              <View style={styles.insetCard}>
-                <FlatList
-                  data={searchResults}
-                  ItemSeparatorComponent={() => <View style={styles.separator} />}
-                  keyboardShouldPersistTaps="handled"
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => handleSelect(item)}
-                      style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
-                    >
-                      <View style={styles.pinCircle}>
-                        <IconLocationPin color="#64748B" size={16} />
-                      </View>
-                      <View style={styles.resultTextWrap}>
-                        <Text numberOfLines={1} style={styles.resultTitle}>
-                          {item.name}
-                        </Text>
-                        <Text numberOfLines={2} style={styles.resultSubtitle}>
-                          {item.address}
-                        </Text>
-                      </View>
-                      <IconChevronRight color="#C7C7CC" size={14} />
-                    </Pressable>
-                  )}
-                />
-              </View>
+              <FlatList
+                data={searchResults}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                keyboardShouldPersistTaps="handled"
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => handleSelect(item)}
+                    style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
+                  >
+                    <View style={styles.pinCircle}>
+                      <IconLocationPin color="#64748B" size={16} />
+                    </View>
+                    <View style={styles.resultTextWrap}>
+                      <Text numberOfLines={1} style={styles.resultTitle}>
+                        {item.name}
+                      </Text>
+                      <Text numberOfLines={2} style={styles.resultSubtitle}>
+                        {item.address}
+                      </Text>
+                    </View>
+                    <IconChevronRight color="#C7C7CC" size={14} />
+                  </Pressable>
+                )}
+                style={styles.listStyle}
+              />
             </View>
           )}
 
-          {/* Real Saved Addresses (If User has saved addresses and not searching) */}
+          {/* Real Saved Addresses (If any) */}
           {!isSearching && realSavedAddresses.length > 0 && (
-            <View style={styles.sectionWrap}>
+            <View style={styles.resultsWrap}>
               <Text style={styles.sectionHeader}>SỔ ĐỊA CHỈ ĐÃ LƯU</Text>
-              <View style={styles.insetCard}>
-                {realSavedAddresses.map((addr, idx) => (
-                  <React.Fragment key={addr.id}>
-                    {idx > 0 && <View style={styles.separator} />}
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => handleSelect(addr)}
-                      style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
-                    >
-                      <View style={[styles.pinCircle, styles.savedPinCircle]}>
-                        <IconLocationPin color={customerPalette.primary} size={16} />
-                      </View>
-                      <View style={styles.resultTextWrap}>
-                        <Text numberOfLines={1} style={styles.resultTitle}>
-                          {addr.name}
-                        </Text>
-                        <Text numberOfLines={2} style={styles.resultSubtitle}>
-                          {addr.address}
-                        </Text>
-                      </View>
-                      <IconChevronRight color="#C7C7CC" size={14} />
-                    </Pressable>
-                  </React.Fragment>
-                ))}
-              </View>
+              <FlatList
+                data={realSavedAddresses}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                keyboardShouldPersistTaps="handled"
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => handleSelect(item)}
+                    style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
+                  >
+                    <View style={[styles.pinCircle, styles.savedPinCircle]}>
+                      <IconLocationPin color={customerPalette.primary} size={16} />
+                    </View>
+                    <View style={styles.resultTextWrap}>
+                      <Text numberOfLines={1} style={styles.resultTitle}>
+                        {item.name}
+                      </Text>
+                      <Text numberOfLines={2} style={styles.resultSubtitle}>
+                        {item.address}
+                      </Text>
+                    </View>
+                    <IconChevronRight color="#C7C7CC" size={14} />
+                  </Pressable>
+                )}
+                style={styles.listStyle}
+              />
             </View>
           )}
 
@@ -340,33 +347,82 @@ export function BookingLocationSearchOverlay({
 }
 
 const styles = StyleSheet.create({
-  overlayContainer: {
+  modalRoot: {
     flex: 1,
-    backgroundColor: '#F2F2F7', // Apple systemGroupedBackground
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
   },
-  headerBar: {
+  upperBackdrop: {
+    height: 90,
+    width: '100%',
+  },
+  sheetCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 24,
+    boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.16)',
+    ...iosContinuousCurve,
+  },
+  grabber: {
+    width: 36,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#D1D1D6',
+    alignSelf: 'center',
+    marginVertical: 8,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  targetBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     gap: 8,
   },
-  backBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: -8,
+  targetDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  pickupDot: {
+    backgroundColor: '#34C759',
+  },
+  dropoffDot: {
+    backgroundColor: '#FF3B30',
+  },
+  targetTitle: {
+    ...typeScale.title3,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: -0.3,
+  },
+  closeBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  closeBtnText: {
+    ...typeScale.body,
+    fontSize: 16,
+    fontWeight: '600',
+    color: customerPalette.primary,
   },
   inputWrapper: {
-    flex: 1,
-    height: 40,
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(118, 118, 128, 0.14)',
+    backgroundColor: 'rgba(118, 118, 128, 0.12)',
     borderRadius: 12,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     gap: 8,
+    marginBottom: 12,
     ...iosContinuousCurve,
   },
   searchInput: {
@@ -391,54 +447,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  targetIndicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 6,
-    marginBottom: 8,
-  },
-  targetDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  pickupDot: {
-    backgroundColor: '#34C759',
-  },
-  dropoffDot: {
-    backgroundColor: '#FF3B30',
-  },
-  targetLabel: {
-    ...typeScale.caption2,
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  listContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
   pickOnMapCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 16,
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+    borderWidth: 0.5,
+    borderColor: '#E2E8F0',
     ...iosContinuousCurve,
   },
   mapPinCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#EBF2FA',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   pickOnMapText: {
     flex: 1,
@@ -447,8 +475,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: customerPalette.primary,
   },
-  sectionWrap: {
-    marginBottom: 20,
+  rowPressed: {
+    opacity: 0.75,
+  },
+  resultsWrap: {
+    flex: 1,
   },
   sectionHeader: {
     ...typeScale.footnote,
@@ -457,25 +488,15 @@ const styles = StyleSheet.create({
     color: '#6E6E73',
     textTransform: 'uppercase',
     letterSpacing: 0.2,
-    paddingHorizontal: 12,
     marginBottom: 8,
   },
-  insetCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    overflow: 'hidden',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
-    ...iosContinuousCurve,
+  listStyle: {
+    flex: 1,
   },
   resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     paddingVertical: 12,
-    minHeight: 56,
-  },
-  rowPressed: {
-    backgroundColor: 'rgba(0, 0, 0, 0.04)',
   },
   pinCircle: {
     width: 32,
@@ -510,22 +531,22 @@ const styles = StyleSheet.create({
   separator: {
     height: 0.5,
     backgroundColor: '#E5E5EA',
-    marginLeft: 60,
+    marginLeft: 44,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
+    paddingVertical: 40,
     paddingHorizontal: 24,
   },
   emptyIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#E2E8F0',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   emptyTitle: {
     ...typeScale.headline,

@@ -83,6 +83,12 @@ export interface BookingPricingBreakdown {
   totalFare: number;
 }
 
+export function getVehicleFare(vehicleId: VehicleTypeId, distanceKm: number): number {
+  const rate = VEHICLE_RATES[vehicleId] ?? VEHICLE_RATES.TRUCK_125T;
+  const distanceFare = Math.round(distanceKm * rate.perKmVnd);
+  return Math.max(rate.baseFareVnd, distanceFare);
+}
+
 export function calculateBookingFare(input: BookingPricingInput): BookingPricingBreakdown {
   const rate = VEHICLE_RATES[input.vehicleId] ?? VEHICLE_RATES.TRUCK_125T;
   const stopCount = Math.max(0, input.stopCount ?? 0);

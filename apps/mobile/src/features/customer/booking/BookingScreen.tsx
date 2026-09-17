@@ -232,6 +232,7 @@ export function BookingScreen({
 
           {/* Section 2: Loại xe */}
           <BookingVehicleSection
+            distanceKm={distanceKm}
             onSelectVehicle={(vehicleId) => bookingDraftStore.updateDraft({ vehicleId })}
             selectedVehicleId={draft.vehicleId}
           />

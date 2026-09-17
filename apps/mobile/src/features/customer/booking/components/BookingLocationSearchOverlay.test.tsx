@@ -62,6 +62,6 @@ describe('BookingLocationSearchOverlay (Grab style)', () => {
     );
 
     expect(screen.getByPlaceholderText('Nhập địa chỉ lấy hàng...')).toBeTruthy();
-    expect(screen.getByText('Đang chọn Điểm lấy hàng')).toBeTruthy();
+    expect(screen.getByText('Điểm lấy hàng')).toBeTruthy();
   });
 });

@@ -13,12 +13,13 @@ import {
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
-import { VEHICLE_RATES, type VehicleTypeId } from '../booking-pricing';
+import { VEHICLE_RATES, getVehicleFare, type VehicleTypeId } from '../booking-pricing';
 
 export interface BookingVehicleSectionProps {
   selectedVehicleId: VehicleTypeId;
   onSelectVehicle: (vehicleId: VehicleTypeId) => void;
   onViewDimensions?: () => void;
+  distanceKm?: number;
 }
 
 const VEHICLE_ORDER: VehicleTypeId[] = ['BIKE_3W', 'VAN_500KG', 'TRUCK_125T', 'TRUCK_25T'];
@@ -27,6 +28,7 @@ export function BookingVehicleSection({
   selectedVehicleId,
   onSelectVehicle,
   onViewDimensions,
+  distanceKm,
 }: BookingVehicleSectionProps) {
   const renderVehicleIcon = (id: VehicleTypeId, isSelected: boolean) => {
     const iconColor = isSelected ? customerPalette.primary : '#475569';
@@ -50,6 +52,7 @@ export function BookingVehicleSection({
         {VEHICLE_ORDER.map((id, index) => {
           const rate = VEHICLE_RATES[id];
           const isSelected = selectedVehicleId === id;
+          const fare = distanceKm ? getVehicleFare(id, distanceKm) : rate.baseFareVnd;
 
           return (
             <React.Fragment key={id}>
@@ -90,7 +93,7 @@ export function BookingVehicleSection({
                 {/* Giá cước & Checkmark thẳng hàng */}
                 <View style={styles.rightCol}>
                   <Text style={[styles.priceText, isSelected && styles.priceTextSelected]}>
-                    {rate.baseFareVnd.toLocaleString('vi-VN')} đ
+                    {fare.toLocaleString('vi-VN')} đ
                   </Text>
                   <View style={styles.checkSlot}>
                     {isSelected ? <IconCheck color={customerPalette.primary} size={18} /> : null}

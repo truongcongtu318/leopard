@@ -1,6 +1,5 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeInsets } from '../safe-insets';
 
 import {
   customerPalette,
@@ -10,6 +9,7 @@ import {
   typeScale,
 } from '@leopard/mobile-core';
 import type { BookingPricingBreakdown } from '../booking-pricing';
+import { useSafeInsets } from '../safe-insets';
 
 export interface PriceDetailModalProps {
   visible: boolean;
@@ -47,66 +47,106 @@ export function PriceDetailModal({
 
           {/* Header */}
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Chi tiết cước vận chuyển</Text>
-            <Pressable hitSlop={12} onPress={onClose}>
+            <View>
+              <Text style={styles.sheetTitle}>Chi tiết cước vận chuyển</Text>
+              <Text style={styles.sheetSubtitle}>Bóc tách minh bạch chi phí đơn hàng</Text>
+            </View>
+            <Pressable hitSlop={12} onPress={onClose} style={styles.closeBtn}>
               <Text style={styles.closeText}>Đóng</Text>
             </Pressable>
           </View>
 
-          {/* Itemized breakdown */}
+          {/* Itemized breakdown with transparent math */}
           <View style={styles.itemList}>
-            {/* Cước cơ bản / xuất xe */}
+            {/* 1. Cước xuất xe cơ sở */}
             <View style={styles.itemRow}>
-              <Text style={styles.itemLabel}>
-                Cước vận chuyển ({breakdown.vehicleName} · {distanceKm.toFixed(1).replace('.', ',')} km)
-              </Text>
+              <View style={styles.labelCol}>
+                <Text style={styles.itemLabel}>1. Cước xuất xe cơ sở</Text>
+                <Text style={styles.itemHint}>{breakdown.vehicleName} · Đã gồm định mức khởi điểm</Text>
+              </View>
               <Text style={styles.itemValue}>
-                {breakdown.transportFare.toLocaleString('vi-VN')} đ
+                {breakdown.baseFare.toLocaleString('vi-VN')} đ
               </Text>
             </View>
 
-            {/* Phụ phí điểm dừng */}
+            {/* 2. Cước cự ly di chuyển thực tế */}
+            <View style={styles.itemRow}>
+              <View style={styles.labelCol}>
+                <Text style={styles.itemLabel}>
+                  2. Cước cự ly ({distanceKm.toFixed(1).replace('.', ',')} km)
+                </Text>
+                <Text style={styles.itemHint}>
+                  Tính theo quãng đường thực tế
+                </Text>
+              </View>
+              <Text style={styles.itemValue}>
+                {breakdown.distanceFare.toLocaleString('vi-VN')} đ
+              </Text>
+            </View>
+
+            {/* 3. Phụ phí điểm dừng (nếu có) */}
             {breakdown.stopFare > 0 && (
               <View style={styles.itemRow}>
-                <Text style={styles.itemLabel}>Phụ phí điểm dừng</Text>
-                <Text style={styles.itemValue}>
-                  {breakdown.stopFare.toLocaleString('vi-VN')} đ
+                <View style={styles.labelCol}>
+                  <Text style={styles.itemLabel}>3. Phụ phí điểm dừng dỡ hàng</Text>
+                  <Text style={styles.itemHint}>Phụ phí bến bãi &amp; dừng xe trả hàng</Text>
+                </View>
+                <Text style={styles.itemValuePlus}>
+                  +{breakdown.stopFare.toLocaleString('vi-VN')} đ
                 </Text>
               </View>
             )}
 
-            {/* Bốc xếp */}
+            {/* 4. Tài xế hỗ trợ bốc xếp (nếu có) */}
             {breakdown.loadingFee > 0 && (
               <View style={styles.itemRow}>
-                <Text style={styles.itemLabel}>Tài xế hỗ trợ bốc xếp</Text>
-                <Text style={styles.itemValue}>
-                  {breakdown.loadingFee.toLocaleString('vi-VN')} đ
-                </Text>
-              </View>
-            )}
-
-            {/* VAT */}
-            {breakdown.vatFee > 0 && (
-              <View style={styles.itemRow}>
-                <Text style={styles.itemLabel}>Thuế VAT (8%)</Text>
-                <Text style={styles.itemValue}>
-                  {breakdown.vatFee.toLocaleString('vi-VN')} đ
+                <View style={styles.labelCol}>
+                  <Text style={styles.itemLabel}>4. Tài xế hỗ trợ bốc xếp</Text>
+                  <Text style={styles.itemHint}>Dịch vụ bốc dỡ hàng theo yêu cầu</Text>
+                </View>
+                <Text style={styles.itemValuePlus}>
+                  +{breakdown.loadingFee.toLocaleString('vi-VN')} đ
                 </Text>
               </View>
             )}
 
             <View style={styles.separator} />
 
+            {/* Tạm tính trước thuế */}
+            <View style={styles.itemRowSubtotal}>
+              <Text style={styles.subtotalLabel}>Tạm tính cước vận chuyển &amp; dịch vụ</Text>
+              <Text style={styles.subtotalValue}>
+                {breakdown.subtotal.toLocaleString('vi-VN')} đ
+              </Text>
+            </View>
+
+            {/* 5. Thuế VAT 8% (nếu có) */}
+            {breakdown.vatFee > 0 && (
+              <View style={styles.itemRow}>
+                <View style={styles.labelCol}>
+                  <Text style={styles.itemLabel}>5. Thuế GTGT / VAT (8%)</Text>
+                  <Text style={styles.itemHint}>Xuất hóa đơn điện tử hợp lệ</Text>
+                </View>
+                <Text style={styles.itemValuePlus}>
+                  +{breakdown.vatFee.toLocaleString('vi-VN')} đ
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.separatorBold} />
+
             {/* Tổng cộng */}
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>TỔNG CỘNG</Text>
+              <View>
+                <Text style={styles.totalLabel}>TỔNG CỘNG</Text>
+                <Text style={styles.noteText}>
+                  Đã gồm nhiên liệu, phí cầu đường &amp; thuế (nếu có)
+                </Text>
+              </View>
               <Text style={styles.totalValue}>
                 {breakdown.totalFare.toLocaleString('vi-VN')} đ
               </Text>
             </View>
-            <Text style={styles.noteText}>
-              (Đã bao gồm tất cả thuế, phụ phí nhiên liệu &amp; phí cầu đường)
-            </Text>
           </View>
 
           {/* Nút Đã hiểu */}
@@ -134,12 +174,12 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     paddingHorizontal: 20,
     paddingTop: 8,
-    maxHeight: '65%',
-    boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
+    maxHeight: '75%',
+    boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.16)',
     ...iosContinuousCurve,
   },
   grabber: {
@@ -154,13 +194,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#E5E5EA',
   },
   sheetTitle: {
     ...typeScale.title3,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#000000',
+    letterSpacing: -0.3,
+  },
+  sheetSubtitle: {
+    ...typeScale.caption1,
+    fontSize: 12,
+    color: '#8E8E93',
+    marginTop: 2,
+  },
+  closeBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   closeText: {
     ...typeScale.body,
@@ -170,18 +223,29 @@ const styles = StyleSheet.create({
   },
   itemList: {
     paddingVertical: 12,
+    gap: 8,
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    alignItems: 'flex-start',
+    paddingVertical: 4,
+  },
+  labelCol: {
+    flex: 1,
+    paddingRight: 12,
   },
   itemLabel: {
     ...typeScale.subheadline,
     fontSize: 14,
-    color: '#6E6E73',
-    flex: 1,
-    paddingRight: 12,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  itemHint: {
+    ...typeScale.caption2,
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
   },
   itemValue: {
     ...typeScale.subheadline,
@@ -190,16 +254,50 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontVariant: ['tabular-nums'],
   },
+  itemValuePlus: {
+    ...typeScale.subheadline,
+    fontSize: 14,
+    fontWeight: '600',
+    color: customerPalette.primary,
+    fontVariant: ['tabular-nums'],
+  },
+  itemRowSubtotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  subtotalLabel: {
+    ...typeScale.footnote,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  subtotalValue: {
+    ...typeScale.subheadline,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#000000',
+    fontVariant: ['tabular-nums'],
+  },
   separator: {
     height: 0.5,
     backgroundColor: '#E5E5EA',
-    marginVertical: 12,
+    marginVertical: 4,
+  },
+  separatorBold: {
+    height: 1,
+    backgroundColor: '#CBD5E1',
+    marginVertical: 6,
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
-    paddingVertical: 4,
+    alignItems: 'center',
+    paddingVertical: 6,
   },
   totalLabel: {
     ...typeScale.headline,
@@ -209,16 +307,16 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     ...typeScale.title2,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
   noteText: {
     ...typeScale.footnote,
-    fontSize: 12,
+    fontSize: 11,
     color: '#8E8E93',
-    marginTop: 6,
+    marginTop: 2,
   },
   confirmBtn: {
     height: 50,
@@ -226,7 +324,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 12,
+    boxShadow: '0 2px 8px rgba(11, 37, 69, 0.25)',
     ...iosContinuousCurve,
   },
   confirmBtnPressed: {
