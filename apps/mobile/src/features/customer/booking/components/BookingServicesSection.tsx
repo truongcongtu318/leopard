@@ -40,7 +40,7 @@ export function BookingServicesSection({
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>DỊCH VỤ THÊM</Text>
 
-      <View style={styles.groupedCard}>
+      <View style={styles.insetGroupedCard}>
         {/* Toggle Bốc xếp */}
         <View style={styles.toggleRow}>
           <View style={styles.toggleTextCol}>
@@ -51,7 +51,7 @@ export function BookingServicesSection({
             accessibilityLabel="Tài xế hỗ trợ bốc xếp"
             onValueChange={onToggleLoading}
             thumbColor="#FFFFFF"
-            trackColor={{ false: '#E2E8F0', true: customerPalette.primary }}
+            trackColor={{ false: '#E9E9EA', true: customerPalette.primary }}
             value={hasLoadingSupport}
           />
         </View>
@@ -68,7 +68,7 @@ export function BookingServicesSection({
             accessibilityLabel="Xuất hóa đơn VAT"
             onValueChange={onToggleVat}
             thumbColor="#FFFFFF"
-            trackColor={{ false: '#E2E8F0', true: customerPalette.primary }}
+            trackColor={{ false: '#E9E9EA', true: customerPalette.primary }}
             value={hasVatInvoice}
           />
         </View>
@@ -85,7 +85,7 @@ export function BookingServicesSection({
                 accessibilityLabel="Tên công ty"
                 onChangeText={(text) => onChangeVatField('vatCompany', text)}
                 placeholder="Tên công ty đầy đủ"
-                placeholderTextColor={customerPalette.textMutedSlate}
+                placeholderTextColor="#C7C7CC"
                 style={styles.textInput}
                 value={vatCompany}
               />
@@ -104,7 +104,7 @@ export function BookingServicesSection({
                 keyboardType="number-pad"
                 onChangeText={(text) => onChangeVatField('vatTaxId', text)}
                 placeholder="Mã số thuế doanh nghiệp"
-                placeholderTextColor={customerPalette.textMutedSlate}
+                placeholderTextColor="#C7C7CC"
                 style={styles.textInput}
                 value={vatTaxId}
               />
@@ -124,7 +124,7 @@ export function BookingServicesSection({
                 keyboardType="email-address"
                 onChangeText={(text) => onChangeVatField('vatEmail', text)}
                 placeholder="ketoan@congty.com"
-                placeholderTextColor={customerPalette.textMutedSlate}
+                placeholderTextColor="#C7C7CC"
                 style={styles.textInput}
                 value={vatEmail}
               />
@@ -141,70 +141,80 @@ export function BookingServicesSection({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: 24,
   },
   sectionHeader: {
     ...typeScale.footnote,
+    fontSize: 13,
     fontWeight: '600',
-    color: customerPalette.textMutedSlate,
-    marginBottom: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    color: '#6E6E73',
+    paddingHorizontal: 32,
+    marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: -0.08,
   },
-  groupedCard: {
+  insetGroupedCard: {
+    marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.card,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: spacing.md,
+    borderRadius: 14,
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
   },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     minHeight: 56,
   },
   toggleTextCol: {
     flex: 1,
+    paddingRight: 16,
   },
   toggleTitle: {
     ...typeScale.body,
+    fontSize: 16,
     fontWeight: '500',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
   },
   toggleSubtitle: {
     ...typeScale.footnote,
-    color: customerPalette.textMutedSlate,
+    fontSize: 13,
+    color: '#8E8E93',
     marginTop: 2,
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#E5E5EA',
+    marginLeft: 16,
   },
   vatExpandedContainer: {
-    paddingBottom: spacing.sm,
+    paddingBottom: 4,
   },
   vatField: {
-    paddingVertical: spacing.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   fieldLabel: {
     ...typeScale.subheadline,
+    fontSize: 13,
     fontWeight: '500',
-    color: customerPalette.textMutedSlate,
+    color: '#8E8E93',
     marginBottom: 4,
   },
   textInput: {
-    height: 40,
+    height: 36,
     ...typeScale.body,
-    color: customerPalette.textSlateDark,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
     padding: 0,
   },
   errorText: {
     ...typeScale.footnote,
+    fontSize: 12,
     color: '#FF3B30',
     marginTop: 2,
   },

@@ -39,7 +39,7 @@ export function BookingReceiverSection({
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>NGƯỜI NHẬN</Text>
 
-      <View style={styles.groupedCard}>
+      <View style={styles.insetGroupedCard}>
         {/* Tên người nhận */}
         <View style={styles.fieldRow}>
           <Text style={styles.fieldLabel}>Tên người nhận</Text>
@@ -48,7 +48,7 @@ export function BookingReceiverSection({
               accessibilityLabel="Tên người nhận"
               onChangeText={onChangeName}
               placeholder="Họ và tên người nhận"
-              placeholderTextColor={customerPalette.textMutedSlate}
+              placeholderTextColor="#C7C7CC"
               style={styles.textInput}
               value={receiverName}
             />
@@ -59,12 +59,13 @@ export function BookingReceiverSection({
               onPress={onOpenContacts}
               style={styles.contactBtn}
             >
-              <IconUser color={customerPalette.primary} size={20} />
+              <View style={styles.contactIconCircle}>
+                <IconUser color={customerPalette.primary} size={18} />
+              </View>
             </Pressable>
           </View>
+          {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
         </View>
-
-        {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
 
         <View style={styles.separator} />
 
@@ -80,14 +81,13 @@ export function BookingReceiverSection({
               keyboardType="number-pad"
               onChangeText={handlePhoneChange}
               placeholder="90 000 0001"
-              placeholderTextColor={customerPalette.textMutedSlate}
+              placeholderTextColor="#C7C7CC"
               style={styles.phoneTextInput}
               value={receiverPhone}
             />
           </View>
+          {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
         </View>
-
-        {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
       </View>
     </View>
   );
@@ -95,33 +95,35 @@ export function BookingReceiverSection({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: 24,
   },
   sectionHeader: {
     ...typeScale.footnote,
+    fontSize: 13,
     fontWeight: '600',
-    color: customerPalette.textMutedSlate,
-    marginBottom: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    color: '#6E6E73',
+    paddingHorizontal: 32,
+    marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: -0.08,
   },
-  groupedCard: {
+  insetGroupedCard: {
+    marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.card,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: spacing.md,
+    borderRadius: 14,
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
   },
   fieldRow: {
-    paddingVertical: spacing.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   fieldLabel: {
     ...typeScale.subheadline,
+    fontSize: 13,
     fontWeight: '500',
-    color: customerPalette.textMutedSlate,
+    color: '#8E8E93',
     marginBottom: 4,
   },
   inputWrap: {
@@ -130,51 +132,66 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    height: 40,
+    height: 36,
     ...typeScale.body,
-    color: customerPalette.textSlateDark,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
     padding: 0,
   },
   contactBtn: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contactIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EBF2FA',
     justifyContent: 'center',
     alignItems: 'center',
   },
   phoneInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 8,
   },
   countryCodeBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: '#F1F5F9',
-    borderRadius: radius.control,
-    minHeight: 38,
+    paddingHorizontal: 10,
+    height: 34,
+    backgroundColor: 'rgba(118, 118, 128, 0.12)',
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     ...iosContinuousCurve,
   },
   countryCodeText: {
     ...typeScale.body,
+    fontSize: 15,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
   },
   phoneTextInput: {
     flex: 1,
-    height: 40,
+    height: 36,
     ...typeScale.body,
-    color: customerPalette.textSlateDark,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
     padding: 0,
+    fontVariant: ['tabular-nums'],
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#E5E5EA',
+    marginLeft: 16,
   },
   errorText: {
     ...typeScale.footnote,
+    fontSize: 12,
     color: '#FF3B30',
-    paddingBottom: spacing.xs,
+    marginTop: 4,
   },
 });

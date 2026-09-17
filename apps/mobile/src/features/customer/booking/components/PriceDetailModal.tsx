@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeInsets } from '../safe-insets';
 
 import {
   customerPalette,
@@ -23,6 +24,8 @@ export function PriceDetailModal({
   breakdown,
   distanceKm,
 }: PriceDetailModalProps) {
+  const insets = useSafeInsets();
+
   return (
     <Modal
       animationType="slide"
@@ -33,14 +36,19 @@ export function PriceDetailModal({
       <View style={styles.modalOverlay}>
         <Pressable onPress={onClose} style={styles.backdrop} />
 
-        <View style={styles.sheetContainer}>
+        <View
+          style={[
+            styles.sheetContainer,
+            { paddingBottom: Math.max(insets.bottom, 24) },
+          ]}
+        >
           {/* iOS Grabber */}
           <View style={styles.grabber} />
 
           {/* Header */}
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>Chi tiết cước vận chuyển</Text>
-            <Pressable hitSlop={8} onPress={onClose}>
+            <Pressable hitSlop={12} onPress={onClose}>
               <Text style={styles.closeText}>Đóng</Text>
             </Pressable>
           </View>
@@ -118,7 +126,7 @@ export function PriceDetailModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
   },
   backdrop: {
@@ -126,97 +134,108 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: radius.modal,
-    borderTopRightRadius: radius.modal,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.xl,
-    maxHeight: '60%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    maxHeight: '65%',
+    boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
     ...iosContinuousCurve,
   },
   grabber: {
     width: 36,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: '#D1D1D6',
     alignSelf: 'center',
-    marginVertical: spacing.xs,
+    marginVertical: 8,
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: 12,
   },
   sheetTitle: {
     ...typeScale.title3,
+    fontSize: 18,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
   },
   closeText: {
-    ...typeScale.subheadline,
-    fontWeight: '500',
+    ...typeScale.body,
+    fontSize: 16,
+    fontWeight: '600',
     color: customerPalette.primary,
   },
   itemList: {
-    paddingVertical: spacing.md,
+    paddingVertical: 12,
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
+    paddingVertical: 8,
   },
   itemLabel: {
     ...typeScale.subheadline,
-    color: customerPalette.textMutedSlate,
+    fontSize: 14,
+    color: '#6E6E73',
     flex: 1,
-    paddingRight: spacing.sm,
+    paddingRight: 12,
   },
   itemValue: {
     ...typeScale.subheadline,
-    fontWeight: '500',
-    color: customerPalette.textSlateDark,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    fontVariant: ['tabular-nums'],
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E2E8F0',
-    marginVertical: spacing.sm,
+    backgroundColor: '#E5E5EA',
+    marginVertical: 12,
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    paddingVertical: spacing.xs,
+    paddingVertical: 4,
   },
   totalLabel: {
     ...typeScale.headline,
+    fontSize: 16,
     fontWeight: '700',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
   },
   totalValue: {
-    ...typeScale.title3,
+    ...typeScale.title2,
+    fontSize: 20,
     fontWeight: '700',
     color: customerPalette.primary,
+    fontVariant: ['tabular-nums'],
   },
   noteText: {
     ...typeScale.footnote,
-    color: customerPalette.textMutedSlate,
-    marginTop: 4,
+    fontSize: 12,
+    color: '#8E8E93',
+    marginTop: 6,
   },
   confirmBtn: {
-    height: 48,
+    height: 50,
     backgroundColor: customerPalette.primary,
-    borderRadius: radius.control,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.md,
+    marginTop: 16,
     ...iosContinuousCurve,
   },
   confirmBtnPressed: {
-    opacity: 0.85,
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   confirmBtnText: {
     ...typeScale.callout,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
     letterSpacing: 0.5,

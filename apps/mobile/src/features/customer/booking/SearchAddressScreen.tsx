@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import {
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeInsets } from './safe-insets';
 
 import {
   IconChevronLeft,
@@ -98,6 +99,7 @@ export function SearchAddressScreen({
   recentAddresses = DEFAULT_RECENT_ADDRESSES,
   savedAddresses = DEFAULT_SAVED_ADDRESSES,
 }: SearchAddressScreenProps) {
+  const insets = useSafeInsets();
   const [query, setQuery] = useState(initialQuery);
 
   const searchResults = useMemo(() => {
@@ -144,21 +146,21 @@ export function SearchAddressScreen({
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      {/* iOS Top Navigation Bar */}
+    <View style={[styles.rootContainer, { paddingTop: insets.top || 16 }]}>
+      {/* iOS 17/18 Navigation Header with Search Field */}
       <View style={styles.topBar}>
         <Pressable
           accessibilityLabel="Quay lại"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={12}
           onPress={onBack}
           style={styles.backButton}
         >
-          <IconChevronLeft color={customerPalette.primary} size={20} />
+          <IconChevronLeft color={customerPalette.primary} size={22} />
         </Pressable>
 
-        <View style={styles.searchFieldContainer}>
-          <IconSearch color={customerPalette.textMutedSlate} size={16} />
+        <View style={styles.searchFieldWrapper}>
+          <IconSearch color="#8E8E93" size={17} />
           <TextInput
             accessibilityLabel="Tìm địa chỉ giao hàng"
             autoCapitalize="none"
@@ -167,7 +169,7 @@ export function SearchAddressScreen({
             clearButtonMode="never"
             onChangeText={setQuery}
             placeholder="Tìm địa chỉ giao hàng"
-            placeholderTextColor={customerPalette.textMutedSlate}
+            placeholderTextColor="#8E8E93"
             returnKeyType="search"
             style={styles.searchInput}
             value={query}
@@ -176,61 +178,65 @@ export function SearchAddressScreen({
             <Pressable
               accessibilityLabel="Xóa tìm kiếm"
               accessibilityRole="button"
-              hitSlop={8}
+              hitSlop={10}
               onPress={() => setQuery('')}
               style={styles.clearButton}
             >
-              <IconClose color={customerPalette.textMutedSlate} size={16} />
+              <View style={styles.clearCircle}>
+                <IconClose color="#FFFFFF" size={12} />
+              </View>
             </Pressable>
           )}
         </View>
       </View>
 
-      <View style={styles.contentContainer}>
-        {/* Location Permission Banner if not granted */}
+      <View style={styles.scrollContent}>
+        {/* Permission Banner */}
         {!hasLocationPermission && (
           <View style={styles.permissionBanner}>
-            <View style={styles.permissionIconWrapper}>
-              <IconLocationPin color="#FF9500" size={20} />
+            <View style={styles.permissionIconCircle}>
+              <IconLocationPin color="#F59E0B" size={18} />
             </View>
-            <View style={styles.permissionTextWrapper}>
+            <View style={styles.permissionTextCol}>
               <Text style={styles.permissionTitle}>Bật vị trí để tính cước chính xác</Text>
               <Text style={styles.permissionSubtitle}>
-                Ứng dụng cần quyền vị trí để định vị kho và tính lộ trình giao hàng nhanh nhất.
+                Ứng dụng cần quyền vị trí để tự động định vị kho và tính cự ly tối ưu.
               </Text>
             </View>
             <Pressable
               accessibilityRole="button"
               onPress={onOpenSettings}
-              style={styles.permissionActionBtn}
+              style={styles.permissionBtn}
             >
-              <Text style={styles.permissionActionBtnText}>Mở Cài đặt</Text>
+              <Text style={styles.permissionBtnText}>Mở Cài đặt</Text>
             </Pressable>
           </View>
         )}
 
         {/* Pinned "Chọn trên bản đồ" Action Card */}
-        <Pressable
-          accessibilityLabel="Chọn trên bản đồ"
-          accessibilityRole="button"
-          onPress={() => {
-            if (onPickOnMap) onPickOnMap();
-            else onSelectAddress('Vị trí chọn trên bản đồ (Demo)', { lat: 10.7769, lng: 106.7009 });
-          }}
-          style={({ pressed }) => [styles.mapPickCard, pressed && styles.cardPressed]}
-        >
-          <View style={styles.mapIconCircle}>
-            <IconLocationPin color={customerPalette.primary} size={18} />
-          </View>
-          <Text style={styles.mapPickTitle}>Chọn trên bản đồ</Text>
-          <IconChevronRight color={customerPalette.textMutedSlate} size={14} />
-        </Pressable>
+        <View style={styles.pinnedSection}>
+          <Pressable
+            accessibilityLabel="Chọn trên bản đồ"
+            accessibilityRole="button"
+            onPress={() => {
+              if (onPickOnMap) onPickOnMap();
+              else onSelectAddress('Vị trí chọn trên bản đồ (Demo)', { lat: 10.7769, lng: 106.7009 });
+            }}
+            style={({ pressed }) => [styles.mapPickCard, pressed && styles.rowPressed]}
+          >
+            <View style={styles.mapIconCircle}>
+              <IconLocationPin color={customerPalette.primary} size={18} />
+            </View>
+            <Text style={styles.mapPickTitle}>Chọn trên bản đồ</Text>
+            <IconChevronRight color="#C7C7CC" size={14} />
+          </Pressable>
+        </View>
 
         {/* Active Search Results */}
         {isSearching && !hasNoResults && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionHeader}>KẾT QUẢ TÌM KIẾM</Text>
-            <View style={styles.groupedCard}>
+            <View style={styles.insetGroupedCard}>
               <FlatList
                 data={searchResults}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -239,10 +245,10 @@ export function SearchAddressScreen({
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => handleSelect(item)}
-                    style={({ pressed }) => [styles.rowItem, pressed && styles.cardPressed]}
+                    style={({ pressed }) => [styles.rowItem, pressed && styles.rowPressed]}
                   >
                     <View style={styles.itemIconCircle}>
-                      <IconLocationPin color={customerPalette.textMutedSlate} size={16} />
+                      <IconLocationPin color="#8E8E93" size={16} />
                     </View>
                     <View style={styles.itemContent}>
                       {renderHighlightedText(item.name, query)}
@@ -261,11 +267,11 @@ export function SearchAddressScreen({
           </View>
         )}
 
-        {/* No Results State */}
+        {/* No Results Empty State */}
         {hasNoResults && (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
-              <IconSearch color={customerPalette.textMutedSlate} size={32} />
+              <IconSearch color="#8E8E93" size={32} />
             </View>
             <Text style={styles.emptyTitle}>Không tìm thấy địa chỉ</Text>
             <Text style={styles.emptySubtitle}>
@@ -277,31 +283,31 @@ export function SearchAddressScreen({
                 if (onPickOnMap) onPickOnMap();
                 else onSelectAddress('Vị trí chọn trên bản đồ (Demo)', { lat: 10.7769, lng: 106.7009 });
               }}
-              style={styles.emptyMapButton}
+              style={({ pressed }) => [styles.emptyMapBtn, pressed && styles.btnPressed]}
             >
               <IconLocationPin color="#FFFFFF" size={16} />
-              <Text style={styles.emptyMapButtonText}>Chọn trên bản đồ</Text>
+              <Text style={styles.emptyMapBtnText}>Chọn trên bản đồ</Text>
             </Pressable>
           </View>
         )}
 
-        {/* Default Sections: Gần đây & Sổ địa chỉ */}
+        {/* Default Inset Grouped Sections */}
         {!isSearching && (
           <>
             {/* GẦN ĐÂY */}
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionHeader}>GẦN ĐÂY</Text>
-              <View style={styles.groupedCard}>
+              <View style={styles.insetGroupedCard}>
                 {recentAddresses.map((item, index) => (
                   <React.Fragment key={item.id}>
                     {index > 0 && <View style={styles.separator} />}
                     <Pressable
                       accessibilityRole="button"
                       onPress={() => handleSelect(item)}
-                      style={({ pressed }) => [styles.rowItem, pressed && styles.cardPressed]}
+                      style={({ pressed }) => [styles.rowItem, pressed && styles.rowPressed]}
                     >
                       <View style={styles.itemIconCircle}>
-                        <IconSearch color={customerPalette.textMutedSlate} size={15} />
+                        <IconSearch color="#8E8E93" size={15} />
                       </View>
                       <View style={styles.itemContent}>
                         <Text style={styles.itemTitle}>{item.name}</Text>
@@ -321,16 +327,16 @@ export function SearchAddressScreen({
             {/* SỔ ĐỊA CHỈ */}
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionHeader}>SỔ ĐỊA CHỈ</Text>
-              <View style={styles.groupedCard}>
+              <View style={styles.insetGroupedCard}>
                 {savedAddresses.map((item, index) => (
                   <React.Fragment key={item.id}>
                     {index > 0 && <View style={styles.separator} />}
                     <Pressable
                       accessibilityRole="button"
                       onPress={() => handleSelect(item)}
-                      style={({ pressed }) => [styles.rowItem, pressed && styles.cardPressed]}
+                      style={({ pressed }) => [styles.rowItem, pressed && styles.rowPressed]}
                     >
-                      <View style={styles.itemIconCircle}>
+                      <View style={[styles.itemIconCircle, styles.savedIconCircle]}>
                         <IconLocationPin color={customerPalette.primary} size={15} />
                       </View>
                       <View style={styles.itemContent}>
@@ -350,68 +356,80 @@ export function SearchAddressScreen({
           </>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
+  rootContainer: {
     flex: 1,
-    backgroundColor: customerPalette.canvas,
+    backgroundColor: '#F2F2F7', // Apple standard systemGroupedBackground
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    backgroundColor: customerPalette.canvas,
-    gap: spacing.xs,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#F2F2F7',
+    gap: 8,
   },
   backButton: {
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: -8,
   },
-  searchFieldContainer: {
+  searchFieldWrapper: {
     flex: 1,
-    height: 40,
+    height: 38,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E5E5EA',
-    borderRadius: radius.control,
-    paddingHorizontal: spacing.sm,
-    gap: spacing.xs,
+    backgroundColor: 'rgba(118, 118, 128, 0.12)', // Apple standard search background
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    gap: 8,
     ...iosContinuousCurve,
   },
   searchInput: {
     flex: 1,
     height: '100%',
     ...typeScale.body,
-    color: customerPalette.textSlateDark,
+    fontSize: 16,
+    color: '#000000',
     padding: 0,
   },
   clearButton: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  contentContainer: {
+  clearCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#8E8E93',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
     flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
+    paddingTop: 8,
+  },
+  pinnedSection: {
+    paddingHorizontal: 16,
+    marginBottom: 20,
   },
   mapPickCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.control,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
-    minHeight: 52,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    minHeight: 54,
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
   },
   mapIconCircle: {
@@ -421,48 +439,45 @@ const styles = StyleSheet.create({
     backgroundColor: '#EBF2FA',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.sm,
+    marginRight: 12,
   },
   mapPickTitle: {
     flex: 1,
     ...typeScale.body,
+    fontSize: 16,
     fontWeight: '600',
     color: customerPalette.primary,
   },
-  cardPressed: {
-    opacity: 0.75,
-  },
   sectionContainer: {
-    marginBottom: spacing.lg,
+    marginBottom: 24,
   },
   sectionHeader: {
     ...typeScale.footnote,
+    fontSize: 13,
     fontWeight: '600',
-    color: customerPalette.textMutedSlate,
-    marginBottom: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    color: '#6E6E73',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: -0.08,
+    paddingHorizontal: 32,
+    marginBottom: 8,
   },
-  groupedCard: {
+  insetGroupedCard: {
+    marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.control,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
+    borderRadius: 12,
     overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
   },
   rowItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     minHeight: 56,
   },
-  separator: {
-    height: 0.5,
-    backgroundColor: '#E2E8F0',
-    marginLeft: 52,
+  rowPressed: {
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
   },
   itemIconCircle: {
     width: 32,
@@ -471,7 +486,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.sm,
+    marginRight: 12,
+  },
+  savedIconCircle: {
+    backgroundColor: '#EBF2FA',
   },
   itemContent: {
     flex: 1,
@@ -479,8 +497,9 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     ...typeScale.body,
+    fontSize: 16,
     fontWeight: '500',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
   },
   highlightedMatch: {
     fontWeight: '700',
@@ -488,96 +507,118 @@ const styles = StyleSheet.create({
   },
   itemAddress: {
     ...typeScale.subheadline,
-    color: customerPalette.textMutedSlate,
+    fontSize: 13,
+    color: '#8E8E93',
     marginTop: 2,
   },
   distanceText: {
     ...typeScale.footnote,
-    color: customerPalette.textMutedSlate,
-    marginLeft: spacing.sm,
+    fontSize: 13,
+    color: '#8E8E93',
+    marginLeft: 12,
+    fontVariant: ['tabular-nums'],
+  },
+  separator: {
+    height: 0.5,
+    backgroundColor: '#C6C6C8',
+    marginLeft: 60,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xl * 1.5,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: 60,
+    paddingHorizontal: 24,
   },
   emptyIconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'rgba(118, 118, 128, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 16,
   },
   emptyTitle: {
     ...typeScale.headline,
+    fontSize: 17,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
-    marginBottom: spacing.xxs,
+    color: '#000000',
+    marginBottom: 4,
   },
   emptySubtitle: {
     ...typeScale.subheadline,
-    color: customerPalette.textMutedSlate,
+    fontSize: 14,
+    color: '#8E8E93',
     textAlign: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: 24,
+    lineHeight: 20,
   },
-  emptyMapButton: {
+  emptyMapBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 8,
     backgroundColor: customerPalette.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.control,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     minHeight: 44,
     ...iosContinuousCurve,
   },
-  emptyMapButtonText: {
+  btnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
+  },
+  emptyMapBtnText: {
     ...typeScale.callout,
     fontWeight: '600',
     color: '#FFFFFF',
   },
   permissionBanner: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 0.5,
+    borderColor: '#FDE68A',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFBEB',
-    borderRadius: radius.control,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    marginBottom: spacing.md,
+    gap: 12,
     ...iosContinuousCurve,
   },
-  permissionIconWrapper: {
-    marginRight: spacing.sm,
+  permissionIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  permissionTextWrapper: {
+  permissionTextCol: {
     flex: 1,
   },
   permissionTitle: {
     ...typeScale.subheadline,
+    fontSize: 14,
     fontWeight: '600',
     color: '#92400E',
   },
   permissionSubtitle: {
     ...typeScale.footnote,
+    fontSize: 12,
     color: '#B45309',
     marginTop: 2,
+    lineHeight: 16,
   },
-  permissionActionBtn: {
-    marginLeft: spacing.sm,
-    paddingVertical: spacing.xxs,
-    paddingHorizontal: spacing.sm,
+  permissionBtn: {
     backgroundColor: '#D97706',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
-    minHeight: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  permissionActionBtnText: {
+  permissionBtnText: {
     ...typeScale.footnote,
+    fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
   },

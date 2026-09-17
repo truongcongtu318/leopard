@@ -56,7 +56,6 @@ export function BookingCargoSection({
         onAddImage(result.uri);
       }
     } catch {
-      // Fallback demo image if device picker unavailable in test
       onAddImage(`file:///cargo-${Date.now()}.jpg`);
     }
   };
@@ -93,7 +92,7 @@ export function BookingCargoSection({
         })}
       </ScrollView>
 
-      <View style={styles.groupedCard}>
+      <View style={styles.insetGroupedCard}>
         {/* Ô nhập ghi chú nhiều dòng */}
         <View style={styles.noteWrap}>
           <Text style={styles.fieldLabel}>Ghi chú hàng hóa</Text>
@@ -103,7 +102,7 @@ export function BookingCargoSection({
             numberOfLines={3}
             onChangeText={onChangeNote}
             placeholder="Khối lượng, tính chất hàng, lưu ý khi bốc dỡ"
-            placeholderTextColor={customerPalette.textMutedSlate}
+            placeholderTextColor="#C7C7CC"
             style={styles.multilineInput}
             value={cargoNote}
           />
@@ -125,11 +124,13 @@ export function BookingCargoSection({
                 <Pressable
                   accessibilityLabel={`Xóa ảnh ${idx + 1}`}
                   accessibilityRole="button"
-                  hitSlop={10}
+                  hitSlop={12}
                   onPress={() => onRemoveImage(idx)}
                   style={styles.deletePhotoBtn}
                 >
-                  <IconClose color="#FFFFFF" size={14} />
+                  <View style={styles.deletePhotoCircle}>
+                    <IconClose color="#FFFFFF" size={10} />
+                  </View>
                 </Pressable>
               </View>
             ))}
@@ -144,7 +145,7 @@ export function BookingCargoSection({
                   pressed && styles.chipPressed,
                 ]}
               >
-                <IconCamera color={customerPalette.primary} size={24} />
+                <IconCamera color={customerPalette.primary} size={22} />
                 <Text style={styles.addPhotoText}>+ Thêm ảnh</Text>
               </Pressable>
             )}
@@ -157,124 +158,138 @@ export function BookingCargoSection({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: 24,
   },
   sectionHeader: {
     ...typeScale.footnote,
+    fontSize: 13,
     fontWeight: '600',
-    color: customerPalette.textMutedSlate,
-    marginBottom: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    color: '#6E6E73',
+    paddingHorizontal: 32,
+    marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: -0.08,
   },
   chipsScroll: {
-    gap: spacing.xs,
-    paddingBottom: spacing.sm,
+    paddingHorizontal: 16,
+    gap: 8,
+    paddingBottom: 10,
   },
   chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.pill,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
+    borderRadius: 18,
     minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+    ...iosContinuousCurve,
   },
   chipSelected: {
     backgroundColor: customerPalette.primary,
-    borderColor: customerPalette.primary,
   },
   chipPressed: {
     opacity: 0.75,
   },
   chipText: {
     ...typeScale.footnote,
+    fontSize: 14,
     fontWeight: '500',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
   },
   chipTextSelected: {
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  groupedCard: {
+  insetGroupedCard: {
+    marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.card,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
-    padding: spacing.md,
+    borderRadius: 14,
+    padding: 16,
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
   },
   noteWrap: {
-    paddingBottom: spacing.sm,
+    paddingBottom: 4,
   },
   fieldLabel: {
     ...typeScale.subheadline,
+    fontSize: 13,
     fontWeight: '500',
-    color: customerPalette.textMutedSlate,
-    marginBottom: 4,
+    color: '#8E8E93',
+    marginBottom: 6,
   },
   multilineInput: {
     ...typeScale.body,
-    color: customerPalette.textSlateDark,
+    fontSize: 15,
+    color: '#000000',
     minHeight: 64,
     textAlignVertical: 'top',
     padding: 0,
+    lineHeight: 20,
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E2E8F0',
-    marginVertical: spacing.xs,
+    backgroundColor: '#E5E5EA',
+    marginVertical: 12,
   },
   photoSection: {
-    paddingTop: spacing.xs,
+    paddingTop: 2,
   },
   photoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: 8,
   },
   photoCount: {
     ...typeScale.footnote,
-    color: customerPalette.textMutedSlate,
+    fontSize: 13,
+    color: '#8E8E93',
+    fontVariant: ['tabular-nums'],
   },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: 12,
   },
   thumbnailWrapper: {
     width: 72,
     height: 72,
-    borderRadius: 10,
+    borderRadius: 12,
     position: 'relative',
-    overflow: 'visible',
     ...iosContinuousCurve,
   },
   thumbnailImage: {
     width: 72,
     height: 72,
-    borderRadius: 10,
-    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    backgroundColor: '#F2F2F7',
   },
   deletePhotoBtn: {
     position: 'absolute',
-    top: -8,
-    right: -8,
+    top: -6,
+    right: -6,
     width: 44,
     height: 44,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    zIndex: 10,
+  },
+  deletePhotoCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
   },
   addPhotoBox: {
     width: 72,
     height: 72,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: '#CBD5E1',
@@ -285,6 +300,7 @@ const styles = StyleSheet.create({
   },
   addPhotoText: {
     ...typeScale.caption2,
+    fontSize: 11,
     fontWeight: '600',
     color: customerPalette.primary,
     marginTop: 2,

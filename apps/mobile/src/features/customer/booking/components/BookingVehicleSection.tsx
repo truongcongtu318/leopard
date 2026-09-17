@@ -28,16 +28,17 @@ export function BookingVehicleSection({
   onSelectVehicle,
   onViewDimensions,
 }: BookingVehicleSectionProps) {
-  const renderVehicleIcon = (id: VehicleTypeId) => {
+  const renderVehicleIcon = (id: VehicleTypeId, isSelected: boolean) => {
+    const iconColor = isSelected ? customerPalette.primary : '#475569';
     switch (id) {
       case 'BIKE_3W':
-        return <IconVehicle3Wheel color={customerPalette.primary} size={32} />;
+        return <IconVehicle3Wheel color={iconColor} size={30} />;
       case 'VAN_500KG':
-        return <IconVehicleVan color={customerPalette.primary} size={32} />;
+        return <IconVehicleVan color={iconColor} size={30} />;
       case 'TRUCK_125T':
-        return <IconVehicleLightTruck color={customerPalette.primary} size={32} />;
+        return <IconVehicleLightTruck color={iconColor} size={30} />;
       case 'TRUCK_25T':
-        return <IconVehicleHeavyTruck color={customerPalette.primary} size={32} />;
+        return <IconVehicleHeavyTruck color={iconColor} size={30} />;
     }
   };
 
@@ -45,7 +46,7 @@ export function BookingVehicleSection({
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>LOẠI XE (SẮP XẾP THEO TẢI TRỌNG)</Text>
 
-      <View style={styles.groupedCard}>
+      <View style={styles.insetGroupedCard}>
         {VEHICLE_ORDER.map((id, index) => {
           const rate = VEHICLE_RATES[id];
           const isSelected = selectedVehicleId === id;
@@ -63,17 +64,21 @@ export function BookingVehicleSection({
                   pressed && styles.rowPressed,
                 ]}
               >
-                {/* Minh họa xe 56pt */}
+                {/* Vehicle Thumbnail Box */}
                 <View style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}>
-                  {renderVehicleIcon(id)}
+                  {renderVehicleIcon(id, isSelected)}
                 </View>
 
                 {/* Thông tin xe */}
                 <View style={styles.vehicleInfo}>
                   <View style={styles.nameTagRow}>
-                    <Text style={styles.vehicleName}>{rate.name}</Text>
-                    <View style={styles.tagBadge}>
-                      <Text style={styles.tagBadgeText}>{rate.tag}</Text>
+                    <Text style={[styles.vehicleName, isSelected && styles.vehicleNameSelected]}>
+                      {rate.name}
+                    </Text>
+                    <View style={[styles.tagBadge, isSelected && styles.tagBadgeSelected]}>
+                      <Text style={[styles.tagBadgeText, isSelected && styles.tagBadgeTextSelected]}>
+                        {rate.tag}
+                      </Text>
                     </View>
                   </View>
                   <Text numberOfLines={1} style={styles.specsText}>
@@ -87,13 +92,13 @@ export function BookingVehicleSection({
                   <Text style={[styles.priceText, isSelected && styles.priceTextSelected]}>
                     {rate.baseFareVnd.toLocaleString('vi-VN')} đ
                   </Text>
-                  {isSelected ? (
-                    <View style={styles.checkmarkWrapper}>
-                      <IconCheck color={customerPalette.primary} size={16} />
-                    </View>
-                  ) : (
-                    <View style={styles.checkmarkPlaceholder} />
-                  )}
+                  <View style={styles.checkmarkSlot}>
+                    {isSelected ? (
+                      <View style={styles.checkmarkCircle}>
+                        <IconCheck color="#FFFFFF" size={12} />
+                      </View>
+                    ) : null}
+                  </View>
                 </View>
               </Pressable>
             </React.Fragment>
@@ -116,53 +121,52 @@ export function BookingVehicleSection({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: 24,
   },
   sectionHeader: {
     ...typeScale.footnote,
+    fontSize: 13,
     fontWeight: '600',
-    color: customerPalette.textMutedSlate,
-    marginBottom: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    color: '#6E6E73',
+    paddingHorizontal: 32,
+    marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: -0.08,
   },
-  groupedCard: {
+  insetGroupedCard: {
+    marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.card,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
+    borderRadius: 14,
     overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
   },
   vehicleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    minHeight: 76,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 74,
     backgroundColor: '#FFFFFF',
   },
   vehicleRowSelected: {
-    backgroundColor: '#F4F7FB',
+    backgroundColor: 'rgba(11, 37, 69, 0.03)',
   },
   rowPressed: {
-    opacity: 0.8,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
   },
   vehicleIconBox: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F2F2F7',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.sm,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
+    marginRight: 12,
+    ...iosContinuousCurve,
   },
   vehicleIconBoxSelected: {
     backgroundColor: '#EBF2FA',
-    borderColor: customerPalette.primary,
   },
   vehicleInfo: {
     flex: 1,
@@ -171,73 +175,91 @@ const styles = StyleSheet.create({
   nameTagRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 6,
     marginBottom: 2,
   },
   vehicleName: {
     ...typeScale.headline,
+    fontSize: 16,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
+  },
+  vehicleNameSelected: {
+    color: customerPalette.primary,
   },
   tagBadge: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(118, 118, 128, 0.1)',
     paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
+    paddingVertical: 1.5,
+    borderRadius: 5,
+  },
+  tagBadgeSelected: {
+    backgroundColor: '#EBF2FA',
   },
   tagBadgeText: {
     ...typeScale.caption2,
+    fontSize: 11,
     fontWeight: '600',
-    color: customerPalette.textMutedSlate,
+    color: '#6E6E73',
+  },
+  tagBadgeTextSelected: {
+    color: customerPalette.primary,
   },
   specsText: {
     ...typeScale.footnote,
-    color: customerPalette.textMutedSlate,
+    fontSize: 13,
+    color: '#8E8E93',
   },
   etaText: {
     ...typeScale.caption1,
+    fontSize: 12,
     color: '#64748B',
     marginTop: 2,
   },
   priceCol: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    marginLeft: spacing.xs,
+    marginLeft: 8,
   },
   priceText: {
     ...typeScale.subheadline,
+    fontSize: 15,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
+    fontVariant: ['tabular-nums'],
   },
   priceTextSelected: {
     color: customerPalette.primary,
     fontWeight: '700',
   },
-  checkmarkWrapper: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  checkmarkSlot: {
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
   },
-  checkmarkPlaceholder: {
-    width: 24,
-    height: 24,
-    marginTop: 4,
+  checkmarkCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: customerPalette.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#E5E5EA',
     marginLeft: 76,
   },
   footerLinkWrap: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    marginTop: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 32,
+    marginTop: 2,
   },
   footerLinkText: {
     ...typeScale.subheadline,
+    fontSize: 14,
     fontWeight: '500',
     color: customerPalette.primary,
   },

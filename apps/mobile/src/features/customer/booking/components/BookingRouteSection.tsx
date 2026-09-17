@@ -52,8 +52,10 @@ export function BookingRouteSection({
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
         >
           <View style={styles.indicatorCol}>
-            <View style={styles.greenCircleDot} />
-            <View style={styles.dottedLine} />
+            <View style={styles.greenHalo}>
+              <View style={styles.greenInnerDot} />
+            </View>
+            <View style={styles.connectorLine} />
           </View>
           <View style={styles.addressTextCol}>
             <View style={styles.tagRow}>
@@ -66,15 +68,17 @@ export function BookingRouteSection({
               {pickupAddress || 'Chọn điểm lấy hàng'}
             </Text>
           </View>
-          <IconChevronRight color={customerPalette.textMutedSlate} size={16} />
+          <IconChevronRight color="#C7C7CC" size={14} />
         </Pressable>
 
         {/* Điểm dừng trung gian (nếu có) */}
         {stops.map((stop, index) => (
           <View key={stop.id} style={styles.stopRow}>
             <View style={styles.indicatorCol}>
-              <View style={styles.orangeCircleDot} />
-              <View style={styles.dottedLine} />
+              <View style={styles.orangeHalo}>
+                <View style={styles.orangeInnerDot} />
+              </View>
+              <View style={styles.connectorLine} />
             </View>
             <View style={styles.addressTextCol}>
               <Text style={styles.stopTypeLabel}>ĐIỂM DỪNG {index + 1}</Text>
@@ -89,7 +93,9 @@ export function BookingRouteSection({
               onPress={() => onRemoveStop(stop.id)}
               style={styles.removeStopBtn}
             >
-              <IconClose color="#FF3B30" size={16} />
+              <View style={styles.removeStopCircle}>
+                <IconClose color="#FFFFFF" size={10} />
+              </View>
             </Pressable>
           </View>
         ))}
@@ -101,7 +107,9 @@ export function BookingRouteSection({
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
         >
           <View style={styles.indicatorCol}>
-            <View style={styles.redSquareDot} />
+            <View style={styles.redHalo}>
+              <View style={styles.redInnerSquare} />
+            </View>
           </View>
           <View style={styles.addressTextCol}>
             <Text style={styles.stopTypeLabel}>ĐIỂM GIAO HÀNG</Text>
@@ -109,7 +117,7 @@ export function BookingRouteSection({
               {dropoffAddress || 'Chọn điểm giao hàng'}
             </Text>
           </View>
-          <IconChevronRight color={customerPalette.textMutedSlate} size={16} />
+          <IconChevronRight color="#C7C7CC" size={14} />
         </Pressable>
 
         {/* Hàng "+ Thêm điểm dừng" */}
@@ -122,19 +130,19 @@ export function BookingRouteSection({
               onPress={onAddStop}
               style={({ pressed }) => [styles.addStopBtn, pressed && styles.rowPressed]}
             >
-              <IconPlus color={customerPalette.primary} size={16} />
+              <IconPlus color={customerPalette.primary} size={15} />
               <Text style={styles.addStopBtnText}>+ Thêm điểm dừng</Text>
             </Pressable>
           </View>
         )}
       </View>
 
-      {/* Thông tin cự ly & thời gian dự kiến */}
+      {/* Footer lộ trình */}
       <Text style={styles.routeFooter}>
         Khoảng {distanceKm.toFixed(1).replace('.', ',')} km · dự kiến {etaMinutes} phút
       </Text>
 
-      {/* Lỗi lộ trình nếu trùng nhau */}
+      {/* Lỗi lộ trình */}
       {(routeError || isIdentical) && (
         <Text style={styles.errorText}>
           {routeError || 'Điểm giao hàng không được trùng với điểm lấy hàng'}
@@ -146,38 +154,34 @@ export function BookingRouteSection({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    marginTop: -16,
+    paddingHorizontal: 16,
+    marginTop: -20,
     zIndex: 10,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: radius.card,
-    padding: spacing.sm,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
     ...iosContinuousCurve,
   },
   cardError: {
+    borderWidth: 1,
     borderColor: '#FF3B30',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     minHeight: 52,
   },
   stopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
     minHeight: 48,
   },
   rowPressed: {
@@ -188,45 +192,70 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  greenCircleDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  greenHalo: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: 'rgba(52, 199, 89, 0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  greenInnerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#34C759',
   },
-  orangeCircleDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  orangeHalo: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: 'rgba(255, 149, 0, 0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  orangeInnerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#FF9500',
   },
-  redSquareDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
+  redHalo: {
+    width: 14,
+    height: 14,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 59, 48, 0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  redInnerSquare: {
+    width: 6,
+    height: 6,
+    borderRadius: 1.5,
     backgroundColor: '#FF3B30',
   },
-  dottedLine: {
+  connectorLine: {
     width: 1.5,
-    height: 32,
-    backgroundColor: '#CBD5E1',
+    height: 28,
+    backgroundColor: '#D1D1D6',
     marginVertical: 2,
   },
   addressTextCol: {
     flex: 1,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: 8,
   },
   tagRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 6,
     marginBottom: 2,
   },
   stopTypeLabel: {
     ...typeScale.caption2,
+    fontSize: 11,
     fontWeight: '700',
-    color: customerPalette.textMutedSlate,
-    letterSpacing: 0.5,
+    color: '#8E8E93',
+    letterSpacing: 0.4,
   },
   warehouseTag: {
     backgroundColor: '#E8F5E9',
@@ -236,18 +265,20 @@ const styles = StyleSheet.create({
   },
   warehouseTagText: {
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
     color: '#2E7D32',
   },
   addressLine1: {
     ...typeScale.body,
-    fontWeight: '500',
-    color: customerPalette.textSlateDark,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E2E8F0',
-    marginVertical: spacing.xs,
+    backgroundColor: '#E5E5EA',
+    marginLeft: 36,
   },
   addStopWrap: {
     marginTop: 2,
@@ -255,13 +286,14 @@ const styles = StyleSheet.create({
   addStopBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    gap: 6,
+    paddingVertical: 10,
+    paddingLeft: 36,
     minHeight: 44,
   },
   addStopBtnText: {
     ...typeScale.subheadline,
+    fontSize: 14,
     fontWeight: '600',
     color: customerPalette.primary,
   },
@@ -271,16 +303,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  removeStopCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   routeFooter: {
     ...typeScale.footnote,
-    color: customerPalette.textMutedSlate,
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    fontSize: 13,
+    color: '#8E8E93',
+    marginTop: 8,
+    paddingHorizontal: 8,
+    textAlign: 'center',
   },
   errorText: {
     ...typeScale.footnote,
+    fontSize: 13,
     color: '#FF3B30',
     marginTop: 4,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: 8,
+    textAlign: 'center',
   },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeInsets } from '../safe-insets';
 
 import {
   customerPalette,
@@ -24,8 +25,15 @@ export function BookingFixedBottomBar({
   onPressDetails,
   isLoading = false,
 }: BookingFixedBottomBarProps) {
+  const insets = useSafeInsets();
+
   return (
-    <View style={styles.fixedContainer}>
+    <View
+      style={[
+        styles.fixedContainer,
+        { paddingBottom: Math.max(insets.bottom, 16) },
+      ]}
+    >
       <View style={styles.topRow}>
         <View style={styles.fareGroup}>
           <Text style={styles.fareLabel}>Tổng cước:</Text>
@@ -38,7 +46,7 @@ export function BookingFixedBottomBar({
           accessibilityRole="button"
           hitSlop={8}
           onPress={onPressDetails}
-          style={styles.detailsBtn}
+          style={({ pressed }) => [styles.detailsBtn, pressed && styles.btnPressed]}
         >
           <Text style={styles.detailsBtnText}>Chi tiết ⌵</Text>
         </Pressable>
@@ -65,69 +73,77 @@ export function BookingFixedBottomBar({
 
 const styles = StyleSheet.create({
   fixedContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
     borderTopWidth: 0.5,
-    borderTopColor: '#E2E8F0',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 4,
+    borderTopColor: 'rgba(60, 60, 67, 0.18)',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.05)',
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+    alignItems: 'baseline',
+    marginBottom: 10,
   },
   fareGroup: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: spacing.xs,
+    gap: 8,
   },
   fareLabel: {
     ...typeScale.subheadline,
-    color: customerPalette.textMutedSlate,
+    fontSize: 14,
+    color: '#8E8E93',
   },
   fareValue: {
     ...typeScale.title2,
+    fontSize: 22,
     fontWeight: '700',
-    color: customerPalette.textSlateDark,
+    color: '#000000',
+    fontVariant: ['tabular-nums'],
   },
   detailsBtn: {
-    paddingVertical: spacing.xxs,
-    paddingHorizontal: spacing.xs,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: '#EBF2FA',
+    borderRadius: 12,
+    ...iosContinuousCurve,
+  },
+  btnPressed: {
+    opacity: 0.7,
   },
   detailsBtnText: {
-    ...typeScale.subheadline,
-    fontWeight: '500',
+    ...typeScale.footnote,
+    fontSize: 13,
+    fontWeight: '600',
     color: customerPalette.primary,
   },
   ctaButton: {
-    height: 50,
+    height: 52,
     backgroundColor: customerPalette.primary,
-    borderRadius: radius.card,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    boxShadow: '0 2px 8px rgba(11, 37, 69, 0.25)',
     ...iosContinuousCurve,
   },
   ctaButtonDisabled: {
-    backgroundColor: '#94A3B8',
-    opacity: 0.5,
+    backgroundColor: '#E2E8F0',
+    boxShadow: 'none',
   },
   ctaButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.99 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   ctaText: {
     ...typeScale.headline,
+    fontSize: 17,
     fontWeight: '600',
     color: '#FFFFFF',
+    letterSpacing: -0.2,
   },
   ctaTextDisabled: {
-    color: '#E2E8F0',
+    color: '#94A3B8',
   },
 });

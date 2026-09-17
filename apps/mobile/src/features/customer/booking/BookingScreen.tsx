@@ -4,12 +4,15 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
+import { useSafeInsets } from './safe-insets';
 
-import { customerPalette, spacing } from '@leopard/mobile-core';
+import { customerPalette, spacing, typeScale } from '@leopard/mobile-core';
 import { calculateBookingFare } from './booking-pricing';
 import {
   type BookingDraftState,
@@ -57,6 +60,8 @@ export function BookingScreen({
   onOrderCreated,
   onOpenSearchAddress,
 }: BookingScreenProps) {
+  const insets = useSafeInsets();
+
   // Initialize store draft synchronously
   const [draft, setDraft] = useState<BookingDraftState>(() => {
     const existing = bookingDraftStore.getDraft();
@@ -171,12 +176,13 @@ export function BookingScreen({
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
+      style={styles.rootView}
     >
-      <View style={styles.container}>
-        {/* Dynamic Animated ScrollView */}
+      <View style={styles.rootView}>
+        {/* Animated ScrollView */}
         <Animated.ScrollView
           contentContainerStyle={styles.scrollContent}
+          contentInsetAdjustmentBehavior="never"
           keyboardShouldPersistTaps="handled"
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -268,6 +274,21 @@ export function BookingScreen({
           />
         </Animated.ScrollView>
 
+        {/* Keyboard Toolbar when typing */}
+        {isKeyboardVisible && (
+          <View style={styles.keyboardToolbar}>
+            <View style={{ flex: 1 }} />
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => Keyboard.dismiss()}
+              style={styles.keyboardDoneBtn}
+            >
+              <Text style={styles.keyboardDoneText}>Xong</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Section 7: Sticky Bottom Dock (Hidden when keyboard is open) */}
         {!isKeyboardVisible && (
           <BookingFixedBottomBar
@@ -292,11 +313,30 @@ export function BookingScreen({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  rootView: {
     flex: 1,
-    backgroundColor: customerPalette.canvas,
+    backgroundColor: '#F2F2F7', // Apple systemGroupedBackground
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 60,
+  },
+  keyboardToolbar: {
+    height: 44,
+    backgroundColor: '#F2F2F7',
+    borderTopWidth: 0.5,
+    borderTopColor: '#C6C6C8',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  keyboardDoneBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  keyboardDoneText: {
+    ...typeScale.body,
+    fontSize: 16,
+    fontWeight: '600',
+    color: customerPalette.primary,
   },
 });
