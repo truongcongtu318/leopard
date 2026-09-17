@@ -95,7 +95,9 @@ export function postMapMessageToFrames(message: any): void {
   frames.forEach((f) => {
     try {
       f.contentWindow?.postMessage(message, '*');
-    } catch {}
+    } catch {
+      // Ignore cross-origin postMessage errors
+    }
   });
 }
 
