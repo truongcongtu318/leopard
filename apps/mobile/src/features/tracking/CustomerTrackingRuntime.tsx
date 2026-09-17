@@ -204,6 +204,8 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
   const driverName =
     assignedDriver?.name?.trim() || getDriverLabel(order.tracking) || 'Đang điều phối';
 
+  const isSimulated = order.etaSource === 'DEMO';
+
   return (
     <RealtimeTrackingScreen
       driver={{
@@ -212,6 +214,7 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
         ...(assignedDriver?.licensePlate ? { vehiclePlate: assignedDriver.licensePlate } : {}),
         ...(assignedDriver?.vehicleType ? { vehicleType: assignedDriver.vehicleType } : {}),
       }}
+      isSimulatedData={isSimulated}
       onBack={() => router.back()}
       onShowVietQR={() => router.push(`/customer/orders/${order.id}`)}
       trip={{
@@ -220,11 +223,7 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
         originCoords: order.route.origin.coords,
         destination: order.route.destination.label,
         destinationCoords: order.route.destination.coords,
-        stops: order.route.stops.map((s) => ({
-          id: s.id,
-          label: s.label,
-          coords: s.coords,
-        })),
+        stops: order.route.stops,
         cargoLabel: order.cargo.note ?? 'Hàng hóa',
         weightKg: order.cargo.weightKg ?? 0,
         priceVnd: order.priceLabel,
@@ -234,6 +233,7 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
         etaLabel: `${etaMinutes} phút`,
         status: mapStatusToTripStatus(order.status),
         hasDeliveryProof: order.media.kind === 'available',
+        isSimulated,
       }}
       truckLocation={truckPoint ?? undefined}
     />

@@ -227,7 +227,7 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
   onPress,
 }: Readonly<{
   order: CustomerOrderListItemView;
-  onPress?: () => void;
+  onPress?: (orderId: string) => void;
 }>) {
   const statusLabel = getActiveOrderStatusLabel(order.status);
   const accentColor = getActiveStatusAccentColor(order.status);
@@ -237,7 +237,7 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
       accessibilityHint="Theo dõi chuyến hàng"
       accessibilityLabel={`${order.reference}, ${statusLabel}`}
       accessibilityRole="button"
-      onPress={() => { haptic.light(); onPress?.(); }}
+      onPress={() => { haptic.light(); onPress?.(order.id); }}
       style={({ pressed }) => [s.heroCard, pressed && s.heroCardPressed]}
     >
       {/* Dark gradient map strip */}
@@ -265,7 +265,7 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
           <View style={s.heroRoutePoint}>
             <View style={s.heroOriginDot} />
             <View style={s.heroRouteTextWrap}>
-              <Text style={s.heroRouteLabel}>LẤY HÀNG</Text>
+              <Text style={s.heroRouteLabel}>Lấy hàng</Text>
               <Text numberOfLines={1} style={s.heroRouteAddress}>{order.route.origin.label}</Text>
             </View>
           </View>
@@ -273,7 +273,7 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
           <View style={s.heroRoutePoint}>
             <View style={s.heroDestDot} />
             <View style={s.heroRouteTextWrap}>
-              <Text style={s.heroRouteLabel}>GIAO HÀNG</Text>
+              <Text style={s.heroRouteLabel}>Giao hàng</Text>
               <Text numberOfLines={1} style={s.heroRouteAddress}>{order.route.destination.label}</Text>
             </View>
           </View>
@@ -316,7 +316,7 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
   onPress,
 }: Readonly<{
   order: CustomerOrderListItemView;
-  onPress?: () => void;
+  onPress?: (orderId: string) => void;
 }>) {
   const isDelivered = order.status === 'DELIVERED';
   const isCancelled = order.status === 'CANCELLED';
@@ -326,7 +326,7 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
       accessibilityHint="Xem chi tiết đơn hàng"
       accessibilityLabel={`Đơn ${order.reference}`}
       accessibilityRole="button"
-      onPress={() => { haptic.light(); onPress?.(); }}
+      onPress={() => { haptic.light(); onPress?.(order.id); }}
       style={({ pressed }) => [s.completedCard, pressed && s.completedCardPressed]}
     >
       {/* Header: icon + reference + status */}
@@ -510,7 +510,7 @@ export function CustomerOrdersScreen({
   const renderActiveItem = useCallback(
     ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
       <ActiveOrderHeroCard
-        onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+        onPress={onOpenOrder}
         order={item}
       />
     ),
@@ -520,7 +520,7 @@ export function CustomerOrdersScreen({
   const renderCompletedItem = useCallback(
     ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
       <CompletedOrderCard
-        onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
+        onPress={onOpenOrder}
         order={item}
       />
     ),

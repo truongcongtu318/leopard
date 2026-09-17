@@ -283,7 +283,7 @@ describe('BookingDetailsModal', () => {
       />,
     );
 
-    expect(screen.getByText('CHEETAH VOUCHER')).toBeTruthy();
+    expect(screen.getByText('Cheetah voucher')).toBeTruthy();
     expect(screen.getByText('Mã khuyến mãi / Voucher')).toBeTruthy();
 
     // Tap quick voucher LEOPARD20K (-20,000)

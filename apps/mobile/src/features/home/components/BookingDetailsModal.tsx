@@ -412,7 +412,7 @@ export function BookingDetailsModal({
               <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitle}>Ảnh chụp hàng hóa</Text>
                 <View style={styles.badgeRequired}>
-                  <Text style={styles.badgeRequiredText}>BẮT BUỘC</Text>
+                  <Text style={styles.badgeRequiredText}>Bắt buộc</Text>
                 </View>
               </View>
               {cargoImageUri ? (
@@ -489,7 +489,7 @@ export function BookingDetailsModal({
                   <Text style={styles.sectionTitle}>Mã khuyến mãi / Voucher</Text>
                 </View>
                 <View style={styles.voucherTagAmber}>
-                  <Text style={styles.voucherTagAmberText}>CHEETAH VOUCHER</Text>
+                  <Text style={styles.voucherTagAmberText}>Cheetah voucher</Text>
                 </View>
               </View>
 

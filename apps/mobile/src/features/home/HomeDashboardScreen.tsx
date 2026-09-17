@@ -573,11 +573,13 @@ export function HomeDashboardScreen({
   const [liveSuggestions, setLiveSuggestions] = useState<readonly LocationSuggestionItem[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const searchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequestIdRef = useRef(0);
 
   useEffect(() => {
     if (!focusedField) return;
     const q = activeSearchQuery.trim();
     if (q.length < 2) {
+      searchRequestIdRef.current += 1;
       setLiveSuggestions([]);
       setIsSearchingLocation(false);
       return;
@@ -588,14 +590,21 @@ export function HomeDashboardScreen({
     if (searchDebounceTimerRef.current) {
       clearTimeout(searchDebounceTimerRef.current);
     }
+    const reqId = ++searchRequestIdRef.current;
     searchDebounceTimerRef.current = setTimeout(async () => {
       try {
         const liveResults = await searchPlacesLive(q);
-        setLiveSuggestions(liveResults);
+        if (searchRequestIdRef.current === reqId) {
+          setLiveSuggestions(liveResults);
+        }
       } catch {
-        setLiveSuggestions([]);
+        if (searchRequestIdRef.current === reqId) {
+          setLiveSuggestions([]);
+        }
       } finally {
-        setIsSearchingLocation(false);
+        if (searchRequestIdRef.current === reqId) {
+          setIsSearchingLocation(false);
+        }
       }
     }, 200);
 

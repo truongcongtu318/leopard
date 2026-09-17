@@ -390,13 +390,13 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
 
           <View style={styles.progressLabelsRow}>
             <View style={styles.progressStatCol}>
-              <Text style={styles.progressStatSub}>ĐÃ DI CHUYỂN</Text>
+              <Text style={styles.progressStatSub}>Đã di chuyển</Text>
               <Text style={styles.progressLabelLeft}>
                 {distanceTraveled} km đã đi
               </Text>
             </View>
             <View style={[styles.progressStatCol, styles.statAlignEnd]}>
-              <Text style={styles.progressStatSub}>CÒN LẠI</Text>
+              <Text style={styles.progressStatSub}>Còn lại</Text>
               <Text style={styles.progressLabelRight}>
                 {trip.distanceRemainingKm.toFixed(1)} km còn lại
               </Text>

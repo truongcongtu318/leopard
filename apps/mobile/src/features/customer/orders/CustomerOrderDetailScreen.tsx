@@ -656,16 +656,16 @@ function CustomerDetailContent({
 
           <View style={styles.heroStatsRow}>
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatLabel}>CẬP NHẬT</Text>
+              <Text style={styles.heroStatLabel}>Cập nhật</Text>
               <Text style={styles.heroStatValue}>{order.updatedAtLabel}</Text>
             </View>
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatLabel}>LOẠI XE</Text>
+              <Text style={styles.heroStatLabel}>Loại xe</Text>
               <Text style={styles.heroStatValue}>{order.requestedVehicleLabel || 'Xe Tải'}</Text>
             </View>
             {order.distanceMeters ? (
               <View style={styles.heroStatItem}>
-                <Text style={styles.heroStatLabel}>QUÃNG ĐƯỜNG</Text>
+                <Text style={styles.heroStatLabel}>Quãng đường</Text>
                 <Text style={styles.heroStatValue}>
                   {(order.distanceMeters / 1000).toFixed(1)} km
                 </Text>
@@ -673,7 +673,7 @@ function CustomerDetailContent({
             ) : null}
             {showEta ? (
               <View style={styles.heroStatItem}>
-                <Text style={styles.heroStatLabel}>ETA DỰ KIẾN</Text>
+                <Text style={styles.heroStatLabel}>ETA dự kiến</Text>
                 <Text style={styles.heroStatValue}>
                   ~{Math.round(order.etaDurationSeconds as number / 60)} phút
                 </Text>
@@ -774,23 +774,23 @@ function CustomerDetailContent({
 
           <View style={styles.cargoSpecsGrid}>
             <View style={styles.cargoGridItem}>
-              <Text style={styles.cargoGridLabel}>MẶT HÀNG</Text>
+              <Text style={styles.cargoGridLabel}>Mặt hàng</Text>
               <Text style={styles.cargoGridValue}>{order.cargo.note || 'Hàng tổng hợp'}</Text>
             </View>
             <View style={styles.cargoGridItem}>
-              <Text style={styles.cargoGridLabel}>KHỐI LƯỢNG</Text>
+              <Text style={styles.cargoGridLabel}>Khối lượng</Text>
               <Text style={styles.cargoGridValue}>
                 {order.cargo.weightKg ? `${order.cargo.weightKg} kg` : '—'}
               </Text>
             </View>
             <View style={styles.cargoGridItem}>
-              <Text style={styles.cargoGridLabel}>DỊCH VỤ ĐI KÈM</Text>
+              <Text style={styles.cargoGridLabel}>Dịch vụ đi kèm</Text>
               <Text style={[styles.cargoGridValue, { color: customerPalette.primary }]}>
                 {order.hasLoadingSupport ? 'Có bốc xếp 2 đầu' : 'Tự bốc xếp'}
               </Text>
             </View>
             <View style={styles.cargoGridItem}>
-              <Text style={styles.cargoGridLabel}>NGƯỜI NHẬN</Text>
+              <Text style={styles.cargoGridLabel}>Người nhận</Text>
               <Text style={styles.cargoGridValue} numberOfLines={1}>
                 {order.route.destination.label.split(',')[0]}
               </Text>
