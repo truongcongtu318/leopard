@@ -919,7 +919,7 @@ const styles = StyleSheet.create({
   addHeaderBtnText: {
     color: customerPalette.surfaceWhite,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   cancelHeaderBtn: {
     alignItems: 'center',
@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
   clearSearchText: {
     color: leopardPalette.inputPlaceholder,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // 2. Filter Row (3 chips cố định, không scroll, không bao giờ bị cắt chữ)
@@ -992,7 +992,6 @@ const styles = StyleSheet.create({
   filterChipText: {
     color: customerPalette.textSubtle,
     fontSize: 13,
-    fontWeight: '500',
     textAlign: 'center',
   },
   filterChipTextActive: {
@@ -1014,7 +1013,7 @@ const styles = StyleSheet.create({
   },
   filterBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
     color: customerPalette.textMutedSlate,
   },
@@ -1074,12 +1073,11 @@ const styles = StyleSheet.create({
   segmentText: {
     color: customerPalette.textSubtle,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '500',
     textAlign: 'center',
   },
   segmentTextSelected: {
     color: customerPalette.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // Fields & Contact
@@ -1192,7 +1190,7 @@ const styles = StyleSheet.create({
   addressLabel: {
     color: customerPalette.textSlateDark,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     flex: 1,
     marginRight: 6,
   },
@@ -1208,7 +1206,7 @@ const styles = StyleSheet.create({
   defaultBadgeText: {
     color: customerPalette.primary,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   addressLineWrap: {
     flexDirection: 'row',
@@ -1310,7 +1308,7 @@ const styles = StyleSheet.create({
   mapPinTitle: {
     color: customerPalette.textSlateDark,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   mapPinHint: {
     color: customerPalette.textSubtle,
@@ -1382,7 +1380,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: customerPalette.textSlateDark,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
   emptyMessage: {
@@ -1413,7 +1411,7 @@ const styles = StyleSheet.create({
   firstAddBtnText: {
     color: customerPalette.surfaceWhite,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   addressFieldWrapper: {
     position: 'relative',
@@ -1445,7 +1443,7 @@ const styles = StyleSheet.create({
   },
   suggestionsHeaderTitle: {
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSubtle,
     letterSpacing: 0.5,
   },

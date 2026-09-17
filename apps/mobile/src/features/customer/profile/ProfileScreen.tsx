@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   leopardIdText: {
     color: leopardPalette.inputPlaceholder,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.6,
   },
   editHeroBtn: {
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: colors.neutral.surfaceMuted,
     fontSize: typeScale.title1.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   avatarImage: {
     borderRadius: 16,
@@ -435,14 +435,13 @@ const styles = StyleSheet.create({
   heroName: {
     color: customerPalette.surfaceWhite,
     fontSize: 17,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   heroPhone: {
     color: leopardPalette.inputPlaceholder,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
-    fontWeight: '500',
   },
   membershipPill: {
     alignItems: 'center',
@@ -464,7 +463,7 @@ const styles = StyleSheet.create({
   },
   membershipRole: {
     color: leopardPalette.accentYellow,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   quickStatsRow: {
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
@@ -489,25 +488,24 @@ const styles = StyleSheet.create({
   statLabel: {
     color: leopardPalette.inputPlaceholder,
     fontSize: 11,
-    fontWeight: '500',
   },
   statValueWhite: {
     color: customerPalette.surfaceWhite,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
   },
   statValueGold: {
     color: customerPalette.surfaceWhite,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
   },
   statValueGreen: {
     color: customerPalette.surfaceWhite,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
   },
 
   /* FLOATING BENTO WALLET */
@@ -559,7 +557,7 @@ const styles = StyleSheet.create({
   bentoEyebrow: {
     color: customerPalette.textSubtle,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   eyeToggleBtn: {
@@ -574,25 +572,23 @@ const styles = StyleSheet.create({
     color: customerPalette.textSlateDark,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
     marginTop: 2,
   },
   bentoSubGreen: {
     color: customerPalette.textSubtle,
     fontSize: 11,
-    fontWeight: '500',
   },
   bentoPromoText: {
     color: customerPalette.primaryDark,
     fontSize: 16,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
     marginTop: 2,
   },
   bentoSubMuted: {
     color: customerPalette.textSubtle,
     fontSize: 11,
-    fontWeight: '500',
   },
 
   /* GROUPED LISTS */
@@ -602,7 +598,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     color: customerPalette.textSubtle,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.8,
     marginLeft: 4,
   },
@@ -660,7 +656,7 @@ const styles = StyleSheet.create({
   menuBadgeText: {
     color: customerPalette.textSlateDark,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   menuSubtitle: {
     color: customerPalette.textSubtle,
@@ -669,7 +665,6 @@ const styles = StyleSheet.create({
   menuChevron: {
     color: leopardPalette.inputPlaceholder,
     fontSize: typeScale.body.fontSize,
-    fontWeight: '400',
   },
 
   /* LOGOUT SECTION */
@@ -690,7 +685,7 @@ const styles = StyleSheet.create({
   logoutBtnText: {
     color: colors.danger.text,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   /* ℹ️ FOOTER INFO */
@@ -706,7 +701,7 @@ const styles = StyleSheet.create({
   },
   footerVersionBold: {
     color: customerPalette.textSlateDark,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   footerCopyrightText: {
     color: leopardPalette.inputPlaceholder,

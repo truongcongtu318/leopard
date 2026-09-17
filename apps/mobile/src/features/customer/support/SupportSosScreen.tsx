@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: colors.brand.background,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.4,
     marginTop: spacing.xxs,
   },
@@ -340,14 +340,14 @@ const styles = StyleSheet.create({
   hotlineLabel: {
     color: colors.operational.inkMuted,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   hotlineNumber: {
     color: colors.brand.softBackground,
     fontSize: 20,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
   },
   callBtn: {
     alignItems: 'center',
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   callBtnText: {
     color: customerPalette.surfaceWhite,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   /* 2. SOS Emergency */
   sosCardOuter: {
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   sosTitle: {
     color: colors.danger.text,
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   sosDesc: {
     color: colors.neutral.text,
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     color: colors.neutral.titleText,
     flex: 1,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     paddingRight: 8,
   },
   faqAnswer: {
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   legalTitle: {
     color: colors.neutral.titleText,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   legalSubtitle: {
     color: colors.neutral.subtleText,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   feedbackSuccessText: {
     color: colors.success.text,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   /* Modal */
   modalBackdrop: {
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
     color: colors.neutral.titleText,
     flex: 1,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     paddingRight: 8,
   },
   modalCloseBtn: {

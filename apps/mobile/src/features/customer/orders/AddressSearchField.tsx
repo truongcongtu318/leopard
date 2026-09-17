@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   locationFieldLabel: {
     color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   },
   contactBadgeText: {
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   contactBadgeTextPickup: {
     color: colors.success.text,
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   removeStopInlineBtnText: {
     color: colors.danger.text,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   locationTextInput: {
     color: colors.neutral.text,
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   clearBtnText: {
     fontSize: 11,
     color: colors.neutral.subtleText,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 13,
   },
   inputMapPinBtn: {

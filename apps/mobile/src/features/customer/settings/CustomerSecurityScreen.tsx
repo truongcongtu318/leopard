@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: colors.neutral.titleText,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   headerRightSpacer: {
     width: 44,
@@ -229,14 +229,14 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: colors.brand.background,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
     marginTop: spacing.xs,
   },
   sectionLabelDanger: {
     color: colors.danger.text,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
     marginTop: spacing.xs,
   },
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   cardHeading: {
     color: colors.neutral.titleText,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   cardSubtext: {
     color: colors.neutral.subtleText,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: colors.neutral.surface,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   alertError: {
     alignItems: 'center',
@@ -334,7 +334,6 @@ const styles = StyleSheet.create({
     color: colors.danger.text,
     flex: 1,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '500',
   },
   alertSuccess: {
     alignItems: 'center',
@@ -398,7 +397,7 @@ const styles = StyleSheet.create({
   dangerHeading: {
     color: colors.danger.text,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   dangerLegalNotice: {
     color: customerPalette.textSubtle,
@@ -425,7 +424,7 @@ const styles = StyleSheet.create({
   deleteAccountButtonText: {
     color: colors.neutral.surface,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   /* Confirmation Modal */
   modalBackdrop: {
@@ -462,7 +461,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: colors.neutral.text,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
   modalDescription: {
@@ -509,7 +508,7 @@ const styles = StyleSheet.create({
   modalConfirmButtonText: {
     color: colors.neutral.surface,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
 });

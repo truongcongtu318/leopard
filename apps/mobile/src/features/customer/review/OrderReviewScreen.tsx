@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   driverName: {
     color: customerPalette.textSlateDark,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   plateBadge: {
     backgroundColor: customerPalette.surfaceWhite,
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   ratingLabel: {
     color: customerPalette.textSlateDark,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: 2,
   },
 
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: customerPalette.textSlateDark,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
 
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   successTitle: {
     color: leopardPalette.ecoGreen,
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   successMessage: {
     color: colors.success.text,

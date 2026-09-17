@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     ...typography.pageTitle,
     color: leopardPalette.textSlateDark,
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   newOrderBtn: {
     backgroundColor: customerPalette.primary,
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   newOrderBtnText: {
     color: leopardPalette.surfaceWhite,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   searchBar: {
     flexDirection: 'row',
@@ -505,7 +505,6 @@ const styles = StyleSheet.create({
     flex: 1,
     color: leopardPalette.textSlateDark,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '500',
   },
   clearSearchBtn: {
     padding: 4,
@@ -534,7 +533,6 @@ const styles = StyleSheet.create({
   chipLabel: {
     color: leopardPalette.textSubtle,
     fontSize: 13,
-    fontWeight: '500',
   },
   chipLabelActive: {
     color: leopardPalette.surfaceWhite,
@@ -613,7 +611,7 @@ const styles = StyleSheet.create({
   cargoLabel: {
     color: leopardPalette.textSlateDark,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   bookingCode: {
     color: leopardPalette.textMutedSlate,
@@ -662,7 +660,6 @@ const styles = StyleSheet.create({
   metaText: {
     color: leopardPalette.textMutedSlate,
     fontSize: typeScale.caption1.fontSize,
-    fontWeight: '500',
   },
   metaDot: {
     color: leopardPalette.cardBorder,
@@ -688,12 +685,12 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   priceText: {
     color: leopardPalette.textSlateDark,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   vehicleText: {
     color: leopardPalette.textMutedSlate,
@@ -732,12 +729,12 @@ const styles = StyleSheet.create({
   stepCheck: {
     color: leopardPalette.ecoGreen,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   stepNumber: {
     color: leopardPalette.textMutedSlate,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   stepLabel: {
     color: leopardPalette.textMutedSlate,
@@ -746,7 +743,7 @@ const styles = StyleSheet.create({
   },
   stepLabelCompleted: {
     color: leopardPalette.ecoGreen,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   stepConnector: {
     flex: 1,
@@ -778,7 +775,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: leopardPalette.textSlateDark,
     fontSize: 17,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   emptySubtext: {
     color: leopardPalette.textMutedSlate,
@@ -796,7 +793,7 @@ const styles = StyleSheet.create({
   historyBtnText: {
     color: customerPalette.primary,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   pressed: {
     transform: [{ scale: 0.96 }],

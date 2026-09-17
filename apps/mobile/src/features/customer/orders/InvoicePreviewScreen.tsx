@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   complianceTitle: {
     color: colors.neutral.text,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   complianceSubtitle: {
     color: colors.neutral.subtleText,
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   complianceBadgeText: {
     color: colors.success.text,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   complianceDetailsRow: {
     flexDirection: 'row',
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   downloadPdfBtnText: {
     color: colors.brand.text,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   pressed: {
     opacity: 0.85,

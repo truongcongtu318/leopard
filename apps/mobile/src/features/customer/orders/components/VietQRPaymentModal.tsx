@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '600',
     color: colors.neutral.text,
   },
   modalSubtitle: {
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: typeScale.subheadline.fontSize,
     color: colors.neutral.subtleText,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   scrollContent: {
     padding: 16,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   },
   qrBankName: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.text,
   },
   napasBadge: {
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   napasBadgeText: {
     color: colors.neutral.surface,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   qrCodeBox: {
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   },
   timerClock: {
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.danger.text,
     backgroundColor: colors.danger.background,
     paddingHorizontal: 8,
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   },
   infoTableTitle: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     color: colors.neutral.mutedText,
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -534,13 +534,13 @@ const styles = StyleSheet.create({
   },
   infoValHighlight: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.neutral.text,
     letterSpacing: 0.5,
   },
   infoValPrice: {
     fontSize: 15,
-    fontWeight: '900',
+    fontWeight: '700',
     color: customerPalette.primary,
   },
   infoRowDivider: {
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   },
   copyBtnText: {
     fontSize: typeScale.caption1.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.primary,
   },
   copyBtnTextSuccess: {
@@ -624,17 +624,17 @@ const styles = StyleSheet.create({
   successCheckIcon: {
     color: colors.neutral.surface,
     fontSize: typeScale.largeTitle.fontSize,
-    fontWeight: '900',
+    fontWeight: '700',
   },
   successHeading: {
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.neutral.text,
     textAlign: 'center',
   },
   successAmount: {
     fontSize: typeScale.title2.fontSize,
-    fontWeight: '900',
+    fontWeight: '700',
     color: colors.success.text,
   },
   successDetailBox: {

@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   headerSubtitle: {
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
   },
   priceAmount: {
     fontSize: typeScale.largeTitle.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
     marginVertical: 6,
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
   },
   napasBankTitle: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   napasBadge: {
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
   },
   napasBadgeText: {
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: customerPalette.surfaceWhite,
     letterSpacing: 0.5,
   },
@@ -904,7 +904,7 @@ const styles = StyleSheet.create({
   },
   timeoutTitle: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.warning.text,
   },
   timeoutDesc: {
@@ -932,7 +932,7 @@ const styles = StyleSheet.create({
   },
   cancelOrderText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.danger.text,
   },
   expiredOverlay: {
@@ -963,7 +963,7 @@ const styles = StyleSheet.create({
   },
   expiredTitle: {
     fontSize: typeScale.body.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     color: customerPalette.textSlateDark,
     textAlign: 'center',
   },

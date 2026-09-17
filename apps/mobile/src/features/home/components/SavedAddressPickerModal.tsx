@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetTitle: {
     fontSize: 17,
-    fontWeight: '800',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   bottomSheetSub: {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   modalCloseBtnText: {
     fontSize: typeScale.subheadline.fontSize,
     color: customerPalette.textSubtle,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   savedAddressListScroll: {
     gap: 8,
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   },
   savedAddrLabelTitle: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   defaultBadge: {
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
   defaultBadgeText: {
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: leopardPalette.ecoGreen,
   },
   savedAddrFullText: {
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   checkCircleText: {
     color: customerPalette.surfaceWhite,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   bottomSheetFooter: {
     flexDirection: 'row',
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetMapBtnText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   bottomSheetManageBtn: {
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetManageBtnText: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textMutedSlate,
   },
   pressed: {
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   emptySubtitle: {

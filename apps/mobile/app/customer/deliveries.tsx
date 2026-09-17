@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   filterPillText: {
     color: colors.neutral.subtleText,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   filterPillTextActive: {
     color: customerPalette.surfaceWhite,
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   bookingCodeText: {
     color: customerPalette.primary,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   plateBadge: {
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: typeScale.caption1.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   statusTextActive: {
     color: colors.info.text,
@@ -515,7 +515,6 @@ const styles = StyleSheet.create({
   routeLabel: {
     color: colors.neutral.mutedText,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '500',
     flex: 1,
   },
 
@@ -557,7 +556,7 @@ const styles = StyleSheet.create({
   driverNameText: {
     color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   ratingBadge: {
     flexDirection: 'row',
@@ -593,7 +592,7 @@ const styles = StyleSheet.create({
   priceText: {
     color: customerPalette.primary,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
 
@@ -623,7 +622,7 @@ const styles = StyleSheet.create({
   trackingBtnText: {
     color: customerPalette.surfaceWhite,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   chatBtn: {
     backgroundColor: customerPalette.surfaceWhite,
@@ -632,7 +631,7 @@ const styles = StyleSheet.create({
   chatBtnText: {
     color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   pressed: {
     opacity: 0.85,
@@ -648,7 +647,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: colors.neutral.text,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   emptySubtitle: {
     color: colors.neutral.subtleText,

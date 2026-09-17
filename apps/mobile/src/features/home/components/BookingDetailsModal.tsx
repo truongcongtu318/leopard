@@ -786,13 +786,11 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     ...typeScale.headline,
-    fontWeight: '800',
     color: customerPalette.textSlateDark,
     letterSpacing: -0.3,
   },
   sheetSubtitle: {
     ...typeScale.footnote,
-    fontWeight: '600',
     color: customerPalette.textSubtle,
     marginTop: spacing.hairline,
   },
@@ -871,7 +869,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -884,7 +882,7 @@ const styles = StyleSheet.create({
   },
   badgeRequiredText: {
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     color: colors.danger.text,
     letterSpacing: 0.4,
   },
@@ -919,7 +917,7 @@ const styles = StyleSheet.create({
   },
   photoPickerTitle: {
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   photoPickerSubtitle: {
@@ -949,7 +947,7 @@ const styles = StyleSheet.create({
   },
   imageFileName: {
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   imageReadyText: {
@@ -965,7 +963,7 @@ const styles = StyleSheet.create({
   },
   removePhotoBtnText: {
     ...typeScale.caption1,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.danger.text,
   },
   errorFeedbackText: {
@@ -1023,7 +1021,7 @@ const styles = StyleSheet.create({
   },
   chipTextSelected: {
     color: customerPalette.surfaceWhite,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   chipTextUnselected: {
     color: customerPalette.textMutedSlate,
@@ -1051,7 +1049,7 @@ const styles = StyleSheet.create({
   },
   voucherTagAmberText: {
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     color: '#92400E',
     letterSpacing: 0.5,
   },
@@ -1081,7 +1079,7 @@ const styles = StyleSheet.create({
   },
   appliedVoucherCode: {
     ...typeScale.subheadline,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#92400E',
     fontVariant: ['tabular-nums'],
   },
@@ -1142,7 +1140,7 @@ const styles = StyleSheet.create({
   },
   applyVoucherBtnText: {
     ...typeScale.footnote,
-    fontWeight: '800',
+    fontWeight: '600',
     color: customerPalette.surfaceWhite,
   },
   quickVoucherRow: {
@@ -1165,7 +1163,7 @@ const styles = StyleSheet.create({
   },
   quickVoucherChipText: {
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#92400E',
     fontVariant: ['tabular-nums'],
   },
@@ -1270,12 +1268,11 @@ const styles = StyleSheet.create({
   },
   radioTitle: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   radioSubtitle: {
     fontSize: typeScale.caption1.fontSize,
-    fontWeight: '500',
     color: customerPalette.textSubtle,
     marginTop: spacing.hairline,
   },
@@ -1306,7 +1303,7 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     color: customerPalette.surfaceWhite,
     ...typeScale.headline,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.2,
     fontVariant: ['tabular-nums'],
   },

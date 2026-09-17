@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     color: colors.warning.text,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   headline: {
     color: colors.neutral.text,
     fontSize: typeScale.body.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     textAlign: 'center',
   },
   subline: {

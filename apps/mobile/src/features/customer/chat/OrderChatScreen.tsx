@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   driverName: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.text,
   },
   driverMetaRow: {
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   callBtnText: {
     color: colors.neutral.surface,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // Message list

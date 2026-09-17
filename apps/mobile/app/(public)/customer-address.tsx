@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
   mapGpsFloatingText: {
     fontSize: typeScale.caption2.fontSize,
     lineHeight: typeScale.caption2.lineHeight,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.primary,
   },
   addressBar: {
@@ -875,7 +875,6 @@ const styles = StyleSheet.create({
     fontSize: typeScale.footnote.fontSize,
     lineHeight: typeScale.footnote.lineHeight,
     color: customerPalette.textSlateDark,
-    fontWeight: '500',
     height: '100%',
     ...Platform.select({
       web: {
@@ -960,7 +959,6 @@ const styles = StyleSheet.create({
     fontSize: typeScale.footnote.fontSize,
     lineHeight: typeScale.footnote.lineHeight,
     color: customerPalette.textSlateDark,
-    fontWeight: '500',
     backgroundColor: customerPalette.canvas,
     ...iosContinuousCurve,
     ...Platform.select({
@@ -993,7 +991,6 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: typeScale.caption1.fontSize,
     lineHeight: typeScale.caption1.lineHeight,
-    fontWeight: '500',
     color: customerPalette.textMutedSlate,
   },
   chipTextActive: {
@@ -1028,7 +1025,6 @@ const styles = StyleSheet.create({
     fontSize: typeScale.footnote.fontSize,
     lineHeight: typeScale.footnote.lineHeight,
     color: customerPalette.textSlateDark,
-    fontWeight: '500',
     ...Platform.select({
       web: {
         outlineStyle: 'none',
@@ -1061,7 +1057,6 @@ const styles = StyleSheet.create({
     fontSize: typeScale.caption1.fontSize,
     lineHeight: typeScale.caption1.lineHeight,
     color: customerPalette.textSlateDark,
-    fontWeight: '500',
   },
 
   /* Input Focus */

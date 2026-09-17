@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     fontFamily: systemFontFamily,
     color: customerPalette.textSubtle,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
@@ -212,7 +212,6 @@ const styles = StyleSheet.create({
     fontFamily: systemFontFamily,
     color: leopardPalette.inputPlaceholder,
     fontSize: 13,
-    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
 });

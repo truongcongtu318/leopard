@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
   },
   statusTextOverlay: {
     ...typeScale.caption1,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   liveTag: {
     flexDirection: 'row',
@@ -827,7 +827,7 @@ const styles = StyleSheet.create({
   liveText: {
     color: customerPalette.surfaceWhite,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.6,
   },
   demoBadge: {
@@ -844,7 +844,7 @@ const styles = StyleSheet.create({
   },
   demoBadgeText: {
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
     color: pastelTheme.yellowCard.text,
     letterSpacing: 0.4,
   },
@@ -981,7 +981,7 @@ const styles = StyleSheet.create({
   driverName: {
     color: customerPalette.textSlateDark,
     ...typeScale.callout,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   driverMetaRow: {
     flexDirection: 'row',
@@ -1023,7 +1023,6 @@ const styles = StyleSheet.create({
   tripsText: {
     color: customerPalette.textSubtle,
     ...typeScale.caption1,
-    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
   driverPhoneMasked: {
@@ -1061,7 +1060,7 @@ const styles = StyleSheet.create({
   callBtnText: {
     color: customerPalette.surfaceWhite,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   chatBtn: {
     backgroundColor: customerPalette.surfaceWhite,
@@ -1070,7 +1069,7 @@ const styles = StyleSheet.create({
   chatBtnText: {
     color: customerPalette.textSlateDark,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // ── Cargo Details Card (Bo góc radius.card 14pt continuous) ──
@@ -1111,7 +1110,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: customerPalette.textSlateDark,
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   sectionHeaderBetween: {
     flexDirection: 'row',
@@ -1160,7 +1159,7 @@ const styles = StyleSheet.create({
   progressStatSub: {
     color: leopardPalette.inputPlaceholder,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.4,
   },
   progressLabelLeft: {
@@ -1209,7 +1208,6 @@ const styles = StyleSheet.create({
   routeCompactText: {
     color: colors.neutral.mutedText,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '500',
     flex: 1,
   },
 
@@ -1235,7 +1233,6 @@ const styles = StyleSheet.create({
   detailLabel: {
     color: customerPalette.textSubtle,
     ...typeScale.caption1,
-    fontWeight: '500',
   },
   detailValue: {
     color: customerPalette.textSlateDark,
@@ -1257,12 +1254,11 @@ const styles = StyleSheet.create({
   pricingLabel: {
     color: customerPalette.textSubtle,
     ...typeScale.caption2,
-    fontWeight: '500',
   },
   pricingValue: {
     color: customerPalette.primary,
     fontSize: typeScale.body.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   vietQrBtn: {
@@ -1285,7 +1281,7 @@ const styles = StyleSheet.create({
   vietQrBtnText: {
     color: customerPalette.surfaceWhite,
     ...typeScale.caption1,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // Invoice Section
@@ -1318,7 +1314,7 @@ const styles = StyleSheet.create({
   vatRatePillText: {
     color: colors.warning.text,
     ...typeScale.caption2,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   invoiceDownloadBtn: {
     flexDirection: 'row',
@@ -1349,7 +1345,7 @@ const styles = StyleSheet.create({
   invoicePdfIconText: {
     color: customerPalette.surfaceWhite,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '900',
+    fontWeight: '700',
   },
   invoiceDownloadTextWrap: {
     gap: spacing.hairline,
@@ -1357,7 +1353,7 @@ const styles = StyleSheet.create({
   invoiceDownloadLabel: {
     color: customerPalette.primary,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   invoiceDownloadSubLabel: {
     color: customerPalette.textSubtle,
@@ -1400,7 +1396,7 @@ const styles = StyleSheet.create({
   proofLabel: {
     color: colors.success.text,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   proofSubLabel: {
     color: colors.brand.green,
@@ -1420,7 +1416,7 @@ const styles = StyleSheet.create({
   proofVerifiedText: {
     color: colors.success.text,
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // Utilities

@@ -84,7 +84,7 @@ export default function OrderSearchingScreen({
     return (
       <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: customerPalette.textSlateDark, textAlign: 'center' }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: customerPalette.textSlateDark, textAlign: 'center' }}>
             Không tìm thấy mã đơn hàng cần điều phối.
           </Text>
           <Pressable
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: typeScale.body.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     color: customerPalette.textSlateDark,
     letterSpacing: -0.3,
   },
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   },
   radarStatusText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
     textAlign: 'center',
     marginBottom: 4,
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
   },
   timerValue: {
     fontSize: typeScale.largeTitle.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     color: leopardPalette.accentYellow,
     fontVariant: ['tabular-nums'],
     marginBottom: 8,
@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: typeScale.body.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     color: customerPalette.textSlateDark,
     textAlign: 'center',
     marginBottom: 12,
@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
   },
   matchedTitle: {
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '700',
     color: customerPalette.textSlateDark,
     textAlign: 'center',
   },
@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
   },
   matchedOrderRef: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   matchedOrderRoute: {

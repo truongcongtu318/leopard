@@ -302,11 +302,10 @@ const styles = StyleSheet.create({
   label: {
     ...typeScale.caption2,
     color: '#64748B',
-    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
   labelActive: {
     color: customerPalette.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

@@ -1044,11 +1044,11 @@ const styles = StyleSheet.create({
   mapModalCloseBtnText: {
     fontSize: 16,
     color: customerPalette.textSlateDark,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   mapModalTopBarTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
     letterSpacing: -0.2,
   },
@@ -1080,7 +1080,7 @@ const styles = StyleSheet.create({
   },
   mapOverlayCloseBtnText: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   mapAddressCard: {
@@ -1100,7 +1100,7 @@ const styles = StyleSheet.create({
   },
   mapAddressSectionTitle: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   mapAddressTypeDot: {
@@ -1124,7 +1124,7 @@ const styles = StyleSheet.create({
   },
   mapChangeAddrBtnText: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   mapAddressInputWrapper: {
@@ -1146,7 +1146,7 @@ const styles = StyleSheet.create({
   },
   searchingBadgeText: {
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: leopardPalette.ecoGreen,
   },
   mapInputWrapper: {
@@ -1209,7 +1209,7 @@ const styles = StyleSheet.create({
   },
   suggestionsHeaderTitle: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
     letterSpacing: 0.3,
   },
@@ -1222,7 +1222,7 @@ const styles = StyleSheet.create({
   suggestionsCloseBtnText: {
     fontSize: 11,
     color: customerPalette.textSlateDark,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   suggestionsListScroll: {
     maxHeight: 200,
@@ -1252,7 +1252,7 @@ const styles = StyleSheet.create({
   },
   suggestionTitle: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   suggestionAddress: {
@@ -1262,7 +1262,7 @@ const styles = StyleSheet.create({
   },
   suggestionActionApply: {
     fontSize: typeScale.caption1.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   suggestionItemGps: {
@@ -1274,11 +1274,11 @@ const styles = StyleSheet.create({
   },
   suggestionTitleGps: {
     color: leopardPalette.ecoGreen,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   suggestionActionGps: {
     color: leopardPalette.ecoGreen,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   noSuggestionsContainer: {
     backgroundColor: customerPalette.canvas,
@@ -1292,7 +1292,7 @@ const styles = StyleSheet.create({
   },
   noSuggestionsTitle: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   noSuggestionsSubtitle: {
@@ -1332,7 +1332,7 @@ const styles = StyleSheet.create({
   },
   mapSenderSectionTitle: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   mapSenderMeBtn: {
@@ -1341,7 +1341,7 @@ const styles = StyleSheet.create({
   },
   mapSenderMeBtnText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   mapModalBottomBar: {
@@ -1366,7 +1366,7 @@ const styles = StyleSheet.create({
   },
   mapCancelBtnText: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textMutedSlate,
   },
   mapSaveBtn: {
@@ -1404,7 +1404,7 @@ const styles = StyleSheet.create({
   clearBtnText: {
     fontSize: 11,
     color: customerPalette.textSubtle,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 13,
   },
   pressed: {

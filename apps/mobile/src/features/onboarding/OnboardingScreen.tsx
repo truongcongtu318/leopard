@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   brandTitleText: {
     color: customerPalette.surfaceWhite,
     fontSize: 15,
-    fontWeight: '900',
+    fontWeight: '700',
     fontStyle: 'italic',
     letterSpacing: 1.2,
   },
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   skipBtnText: {
     color: customerPalette.surfaceWhite,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // Bottom Section
@@ -584,13 +584,13 @@ const styles = StyleSheet.create({
   badgeText: {
     color: '#BAE6FD',
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
   titleText: {
     fontSize: typeScale.title1.fontSize,
-    fontWeight: '900',
+    fontWeight: '700',
     color: customerPalette.surfaceWhite,
     lineHeight: 35,
     marginBottom: 12,
@@ -677,11 +677,10 @@ const styles = StyleSheet.create({
   driverText: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.70)',
-    fontWeight: '500',
   },
   driverHighlight: {
     color: '#FDE68A',
-    fontWeight: '700',
+    fontWeight: '600',
     textDecorationLine: 'underline',
   },
 });

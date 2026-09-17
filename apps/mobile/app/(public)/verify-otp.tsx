@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   headerPlaceholder: {
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   },
   cellText: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: '700',
     color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -457,7 +457,6 @@ const styles = StyleSheet.create({
   countdownText: {
     fontSize: 13,
     color: leopardPalette.textMutedSlate,
-    fontWeight: '500',
   },
   countdownTime: {
     fontWeight: '700',
@@ -473,7 +472,7 @@ const styles = StyleSheet.create({
   },
   resendBtnText: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.primary,
     textDecorationLine: 'underline',
   },
@@ -525,7 +524,7 @@ const styles = StyleSheet.create({
   },
   numpadKeyActionText: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textMutedSlate,
   },
 });

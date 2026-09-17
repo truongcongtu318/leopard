@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   markAllBtnText: {
     color: customerPalette.primary,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   filterWrap: {
     marginBottom: 2,
@@ -322,7 +322,6 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 13,
-    fontWeight: '500',
     color: colors.neutral.subtleText,
   },
   filterChipTextActive: {
@@ -344,7 +343,7 @@ const styles = StyleSheet.create({
   },
   filterBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
     color: colors.neutral.mutedText,
   },
@@ -361,7 +360,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     color: colors.neutral.subtleText,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -420,12 +419,12 @@ const styles = StyleSheet.create({
   },
   typeBadgeText: {
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   cardTitle: {
     color: colors.neutral.text,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   cardTime: {
     color: customerPalette.offlineGray,
@@ -467,7 +466,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: colors.neutral.text,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
   emptyMessage: {
@@ -498,6 +497,6 @@ const styles = StyleSheet.create({
   loadMoreBtnText: {
     color: customerPalette.primary,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

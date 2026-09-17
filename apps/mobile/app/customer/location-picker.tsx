@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   addressHeaderLabel: {
     fontFamily: systemFontFamily,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   detectedAddressText: {
     fontFamily: systemFontFamily,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.textSlateDark,
     lineHeight: 23,
     marginBottom: 8,

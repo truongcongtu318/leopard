@@ -640,7 +640,6 @@ const s = StyleSheet.create({
   },
   segmentLabel: {
     ...typeScale.subheadline,
-    fontWeight: '500',
     color: colors.neutral.subtleText,
   },
   segmentLabelActive: {
@@ -659,7 +658,7 @@ const s = StyleSheet.create({
   segmentBadgeText: {
     color: colors.neutral.surface,
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
 
@@ -683,7 +682,6 @@ const s = StyleSheet.create({
   },
   filterChipText: {
     ...typeScale.footnote,
-    fontWeight: '500',
     color: colors.neutral.subtleText,
   },
   filterChipTextActive: {
@@ -705,7 +703,7 @@ const s = StyleSheet.create({
   },
   filterBadgeText: {
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
     color: colors.neutral.mutedText,
   },
@@ -777,7 +775,7 @@ const s = StyleSheet.create({
   heroStatusText: {
     color: colors.neutral.surface,
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.3,
   },
 
@@ -811,7 +809,7 @@ const s = StyleSheet.create({
   },
   heroRouteLabel: {
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.subtleText,
     letterSpacing: 0.5,
   },
@@ -888,12 +886,12 @@ const s = StyleSheet.create({
   heroTrackText: {
     color: colors.neutral.surface,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   heroTrackArrow: {
     color: 'rgba(255,255,255,0.6)',
     ...typeScale.callout,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // ─── Completed Order Card ─────────────────────────────────────
@@ -965,7 +963,6 @@ const s = StyleSheet.create({
   },
   completedRouteText: {
     ...typeScale.caption1,
-    fontWeight: '500',
     color: colors.neutral.mutedText,
     flex: 1,
   },
@@ -984,7 +981,7 @@ const s = StyleSheet.create({
   completedArrowHead: {
     ...typeScale.subheadline,
     color: colors.neutral.subtleBorder,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 14,
   },
 
@@ -1003,12 +1000,10 @@ const s = StyleSheet.create({
   },
   completedDistance: {
     ...typeScale.caption1,
-    fontWeight: '500',
     color: colors.neutral.subtleText,
   },
   completedEta: {
     ...typeScale.caption2,
-    fontWeight: '500',
     color: colors.neutral.subtleText,
   },
 
@@ -1038,13 +1033,11 @@ const s = StyleSheet.create({
   },
   emptyTitle: {
     ...typeScale.headline,
-    fontWeight: '700',
     color: colors.neutral.text,
     textAlign: 'center',
   },
   emptyBody: {
     ...typeScale.subheadline,
-    fontWeight: '400',
     color: colors.neutral.subtleText,
     textAlign: 'center',
     lineHeight: 20,
@@ -1069,7 +1062,6 @@ const s = StyleSheet.create({
   },
   noticeText: {
     ...typeScale.footnote,
-    fontWeight: '500',
     color: colors.neutral.text,
     lineHeight: 18,
   },

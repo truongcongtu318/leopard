@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
   largeTitle: {
     fontFamily: systemFontFamily,
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '700',
     color: customerPalette.textSlateDark,
     letterSpacing: -0.6,
     lineHeight: 34,
@@ -930,7 +930,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.danger.text,
     fontSize: 13,
-    fontWeight: '500',
     flex: 1,
     lineHeight: 18,
   },
@@ -971,7 +970,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.text,
   },
 
@@ -1030,7 +1029,6 @@ const styles = StyleSheet.create({
   lockedTag: {
     fontSize: 12,
     color: customerPalette.textSubtle,
-    fontWeight: '500',
   },
 
   /* Phone Input Container (Exact Login Luxury Style) */
@@ -1060,13 +1058,13 @@ const styles = StyleSheet.create({
   },
   countryCode: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.text,
   },
   countryChevron: {
     fontSize: typeScale.caption2.fontSize,
     color: customerPalette.textSubtle,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: -1,
   },
   badgeDivider: {
@@ -1104,7 +1102,7 @@ const styles = StyleSheet.create({
   sendOtpBtnText: {
     color: customerPalette.surfaceWhite,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   sendOtpBtnTextDisabled: {
     color: customerPalette.offlineGray,
@@ -1177,7 +1175,7 @@ const styles = StyleSheet.create({
   otpBackBtnText: {
     color: brandNavy,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   otpHeroWrapper: {
     alignItems: 'center',
@@ -1220,19 +1218,18 @@ const styles = StyleSheet.create({
   otpHeadline: {
     color: colors.neutral.text,
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '700',
     textAlign: 'center',
   },
   otpSubline: {
     color: customerPalette.textSubtle,
     fontSize: 13,
     lineHeight: 18,
-    fontWeight: '500',
     textAlign: 'center',
   },
   otpPhoneHighlight: {
     color: colors.neutral.text,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   modalSubmitBtn: {
     width: '100%',
@@ -1297,7 +1294,7 @@ const styles = StyleSheet.create({
   },
   verifiedSuccessText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#15803D',
   },
   resendArea: {
@@ -1308,7 +1305,6 @@ const styles = StyleSheet.create({
   resendCountdownText: {
     fontSize: 13,
     color: customerPalette.textSubtle,
-    fontWeight: '500',
   },
   resendCountdownTime: {
     fontWeight: '700',
@@ -1321,7 +1317,7 @@ const styles = StyleSheet.create({
   },
   resendActionLink: {
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: brandNavy,
     textDecorationLine: 'underline',
   },
@@ -1342,7 +1338,7 @@ const styles = StyleSheet.create({
   },
   requiredStar: {
     color: colors.danger.text,
-    fontWeight: '700',
+    fontWeight: '600',
     fontSize: typeScale.subheadline.fontSize,
   },
   input: {
@@ -1412,7 +1408,7 @@ const styles = StyleSheet.create({
   checkboxTick: {
     color: customerPalette.surfaceWhite,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   consentTextWrap: {
     flex: 1,
@@ -1485,6 +1481,6 @@ const styles = StyleSheet.create({
   driverLinkText: {
     color: brandNavy,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

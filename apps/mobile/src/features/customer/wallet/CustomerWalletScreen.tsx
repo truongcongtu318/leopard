@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   brandPillText: {
     color: colors.neutral.surfaceMuted,
     ...typeScale.caption1,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.4,
   },
   securityBadge: {
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
   balanceEyebrow: {
     color: customerPalette.offlineGray,
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.8,
   },
   amountRow: {
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   balanceAmount: {
     color: customerPalette.surfaceWhite,
     fontSize: typeScale.title1.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.5,
     fontVariant: ['tabular-nums'],
   },
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
   cardFooterNumber: {
     color: customerPalette.cardBorder,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
 
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: colors.neutral.text,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.6,
   },
   filterTabsRow: {
@@ -584,7 +584,6 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 13,
-    fontWeight: '500',
     color: customerPalette.textSubtle,
   },
   filterChipTextActive: {
@@ -606,7 +605,7 @@ const styles = StyleSheet.create({
   },
   filterBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
     color: customerPalette.textMutedSlate,
   },
@@ -635,7 +634,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.text,
   },
   emptySubtitle: {
@@ -697,7 +696,7 @@ const styles = StyleSheet.create({
   },
   txTitle: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.text,
   },
   txSubRow: {
@@ -727,7 +726,7 @@ const styles = StyleSheet.create({
   },
   txAmount: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.neutral.text,
     fontVariant: ['tabular-nums'],
   },
@@ -739,7 +738,7 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.2,
   },
   txActionRow: {
@@ -761,7 +760,7 @@ const styles = StyleSheet.create({
   payNowBtnText: {
     color: customerPalette.surfaceWhite,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   pressed: {
     opacity: 0.8,

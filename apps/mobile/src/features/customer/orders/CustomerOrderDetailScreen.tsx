@@ -876,7 +876,7 @@ function CustomerDetailContent({
             <View style={styles.heroDivider} />
 
             <View style={[styles.paymentTopRow, { marginTop: 10 }]}>
-              <Text style={{ fontSize: typeScale.subheadline.fontSize, fontWeight: '700', color: customerPalette.primary }}>
+              <Text style={{ fontSize: typeScale.subheadline.fontSize, fontWeight: '600', color: customerPalette.primary }}>
                 Tổng cước vận chuyển
               </Text>
               <Text style={styles.paymentAmount}>{order.priceLabel}</Text>
@@ -1045,7 +1045,7 @@ const styles = StyleSheet.create({
   },
   heroSectionTitle: {
     fontSize: typeScale.callout.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.neutral.text,
   },
   heroTopRow: {
@@ -1073,12 +1073,12 @@ const styles = StyleSheet.create({
   liveTagText: {
     color: colors.success.text,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   heroPrice: {
     color: customerPalette.primary,
     ...typeScale.title3,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   heroDivider: {
@@ -1098,13 +1098,13 @@ const styles = StyleSheet.create({
   heroStatLabel: {
     color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   heroStatValue: {
     color: colors.neutral.text,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   etaIndicatorBox: {
     marginTop: spacing.hairline,
@@ -1130,7 +1130,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: colors.neutral.text,
     fontSize: typeScale.callout.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   cardSubtitle: {
     color: colors.neutral.subtleText,
@@ -1164,7 +1164,7 @@ const styles = StyleSheet.create({
   trackingLinkTitle: {
     color: customerPalette.primary,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   trackingLinkSubtitle: {
     color: colors.neutral.subtleText,
@@ -1197,7 +1197,7 @@ const styles = StyleSheet.create({
   orderCodeText: {
     color: colors.neutral.text,
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
     fontFamily: 'monospace',
     letterSpacing: 0.5,
   },
@@ -1217,7 +1217,7 @@ const styles = StyleSheet.create({
   copyBtnText: {
     color: customerPalette.primary,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   copiedRow: {
     flexDirection: 'row',
@@ -1227,12 +1227,11 @@ const styles = StyleSheet.create({
   copiedText: {
     color: colors.success.text,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   orderCreatedTime: {
     color: colors.neutral.subtleText,
     fontSize: 11,
-    fontWeight: '500',
   },
   topMetaRight: {
     alignItems: 'flex-end',
@@ -1269,17 +1268,16 @@ const styles = StyleSheet.create({
   urgentPaymentTitle: {
     color: colors.warning.text,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   urgentPaymentSub: {
     color: colors.warning.text,
     fontSize: typeScale.caption1.fontSize,
-    fontWeight: '500',
   },
   urgentPaymentAmount: {
     color: customerPalette.primary,
     fontSize: typeScale.body.fontSize,
-    fontWeight: '900',
+    fontWeight: '700',
     fontFamily: 'monospace',
   },
   urgentNoticeBox: {
@@ -1318,13 +1316,13 @@ const styles = StyleSheet.create({
   cargoGridLabel: {
     color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   cargoGridValue: {
     color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   driverMainRow: {
     flexDirection: 'row',
@@ -1345,12 +1343,11 @@ const styles = StyleSheet.create({
   driverRatingText: {
     color: colors.warning.text,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   driverVehicleText: {
     color: colors.neutral.subtleText,
     fontSize: 12,
-    fontWeight: '500',
   },
   driverCallBtn: {
     width: 38,
@@ -1392,7 +1389,6 @@ const styles = StyleSheet.create({
   driverEtaSub: {
     color: colors.neutral.subtleText,
     fontSize: typeScale.caption2.fontSize,
-    fontWeight: '500',
   },
   driverEtaMain: {
     color: colors.neutral.text,
@@ -1411,7 +1407,7 @@ const styles = StyleSheet.create({
   driverGpsLinkText: {
     color: customerPalette.primary,
     fontSize: typeScale.caption1.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   driverCard: {
     backgroundColor: colors.neutral.canvas,
@@ -1432,7 +1428,7 @@ const styles = StyleSheet.create({
   driverAvatarText: {
     color: colors.neutral.surface,
     fontSize: typeScale.body.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   driverInfo: {
     flex: 1,
@@ -1441,12 +1437,11 @@ const styles = StyleSheet.create({
   driverName: {
     color: colors.neutral.text,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   driverStatusText: {
     color: colors.neutral.subtleText,
     fontSize: 12,
-    fontWeight: '500',
   },
   driverActions: {
     flexDirection: 'row',
@@ -1531,7 +1526,7 @@ const styles = StyleSheet.create({
   cargoSpecValue: {
     color: colors.neutral.text,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     flex: 1,
   },
   mediaGrid: {
@@ -1551,7 +1546,7 @@ const styles = StyleSheet.create({
   mediaIndex: {
     color: customerPalette.primary,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   mediaLabel: {
     color: colors.neutral.subtleText,
@@ -1570,7 +1565,7 @@ const styles = StyleSheet.create({
   paymentAmount: {
     color: customerPalette.primary,
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   paymentDetailsBox: {
@@ -1590,7 +1585,6 @@ const styles = StyleSheet.create({
   paymentDetailLabel: {
     color: colors.neutral.subtleText,
     fontSize: 12,
-    fontWeight: '500',
   },
   paymentDetailValue: {
     color: colors.neutral.text,
@@ -1654,7 +1648,7 @@ const styles = StyleSheet.create({
   },
   cancelledReasonTitle: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.danger.text,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1702,7 +1696,7 @@ const styles = StyleSheet.create({
   },
   cancelSheetTitle: {
     fontSize: typeScale.body.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.neutral.text,
   },
   cancelSheetSubtitle: {
@@ -1745,12 +1739,11 @@ const styles = StyleSheet.create({
   },
   cancelOptionText: {
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '500',
     color: colors.neutral.mutedText,
     flex: 1,
   },
   cancelOptionTextSelected: {
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.primary,
   },
   cancelInput: {

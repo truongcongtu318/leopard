@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     color: colors.brand.background,
     fontSize: typeScale.largeTitle.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   cameraIconPill: {
     alignItems: 'center',
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   avatarActionBtnText: {
     color: colors.brand.background,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // Form Section
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: leopardPalette.textMutedSlate,
     fontSize: typeScale.caption1.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.6,
     marginLeft: 4,
   },
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   textInput: {
     color: leopardPalette.textSlateDark,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     padding: 0,
   },
   rowDivider: {

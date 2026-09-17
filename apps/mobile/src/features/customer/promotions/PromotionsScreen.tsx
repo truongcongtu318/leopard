@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: colors.brand.background,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.4,
     marginTop: spacing.xxs,
   },
@@ -328,19 +328,19 @@ const styles = StyleSheet.create({
     color: colors.brand.background,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   discountText: {
     color: leopardPalette.accentYellowDark,
     fontSize: typeScale.subheadline.fontSize,
     fontVariant: ['tabular-nums'],
-    fontWeight: '800',
+    fontWeight: '700',
   },
   promoTitle: {
     color: colors.neutral.titleText,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   promoDesc: {
     color: colors.neutral.text,
@@ -371,6 +371,6 @@ const styles = StyleSheet.create({
   applyBtnText: {
     color: colors.brand.background,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

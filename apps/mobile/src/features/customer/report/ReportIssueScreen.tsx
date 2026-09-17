@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: customerPalette.textSlateDark,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
 
@@ -250,11 +250,10 @@ const styles = StyleSheet.create({
   categoryText: {
     color: customerPalette.textSlateDark,
     fontSize: typeScale.footnote.fontSize,
-    fontWeight: '500',
   },
   categoryTextSelected: {
     color: customerPalette.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
   // ── Photo Upload Box (>= 44px) ────────────────────
@@ -286,7 +285,7 @@ const styles = StyleSheet.create({
   photoUploadText: {
     color: customerPalette.textSlateDark,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
   photoUploadSub: {
@@ -322,12 +321,12 @@ const styles = StyleSheet.create({
   successTitle: {
     color: colors.success.text,
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   ticketCode: {
     color: colors.success.text,
     fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
     backgroundColor: colors.success.background,
     paddingHorizontal: 10,
