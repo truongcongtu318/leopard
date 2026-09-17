@@ -33,18 +33,32 @@ export default function CustomerBookingPage() {
       initialFocusTarget={params.focus}
       onBack={() => router.back()}
       onOpenSearchAddress={() => router.push('/customer/search-address')}
-      onOrderCreated={(orderId, totalFare) => {
-        router.push({
-          pathname: `/customer/orders/searching/${orderId}`,
-          params: {
-            amount: String(totalFare),
-            pickup,
-            dropoff,
-            origin: pickup,
-            destination: dropoff,
-            paymentMethod: 'VIETQR',
-          },
-        });
+      onOrderCreated={(orderId, totalFare, paymentMethod) => {
+        if (paymentMethod === 'CASH') {
+          router.push({
+            pathname: `/customer/orders/searching/${orderId}`,
+            params: {
+              amount: String(totalFare),
+              pickup,
+              dropoff,
+              origin: pickup,
+              destination: dropoff,
+              paymentMethod: 'CASH',
+            },
+          });
+        } else {
+          router.push({
+            pathname: `/customer/orders/checkout/${orderId}`,
+            params: {
+              amount: String(totalFare),
+              pickup,
+              dropoff,
+              origin: pickup,
+              destination: dropoff,
+              paymentMethod: 'VIETQR',
+            },
+          });
+        }
       }}
     />
   );

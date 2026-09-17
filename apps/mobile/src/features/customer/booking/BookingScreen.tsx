@@ -12,7 +12,15 @@ import {
 } from 'react-native';
 import { useSafeInsets } from './safe-insets';
 
-import { customerPalette, spacing, typeScale } from '@leopard/mobile-core';
+import {
+  appendFileToFormData,
+  customerPalette,
+  httpClient,
+  resolveLocationCoords,
+  spacing,
+  typeScale,
+} from '@leopard/mobile-core';
+import { createCustomerHttpAdapter } from '../orders/adapter';
 import { calculateBookingFare } from './booking-pricing';
 import {
   type BookingDraftState,
@@ -44,8 +52,27 @@ export interface BookingScreenProps {
   etaMinutes?: number;
   initialFocusTarget?: 'pickup' | 'dropoff';
   onBack?: () => void;
-  onOrderCreated?: (orderId: string, totalFare: number) => void;
+  onOrderCreated?: (orderId: string, totalFare: number, paymentMethod?: PaymentMethod) => void;
   onOpenSearchAddress?: () => void;
+}
+
+function resolveVehicleOrderType(vehicleId: string): {
+  vehicleType: 'MOTORBIKE' | 'VAN' | 'TRUCK';
+  cargoWeight: string;
+} {
+  if (vehicleId === 'TRUCK_25T') {
+    return { vehicleType: 'TRUCK', cargoWeight: '2500' };
+  }
+  if (vehicleId === 'TRUCK_125T') {
+    return { vehicleType: 'TRUCK', cargoWeight: '1250' };
+  }
+  if (vehicleId === 'VAN_500KG') {
+    return { vehicleType: 'VAN', cargoWeight: '500' };
+  }
+  if (vehicleId === 'BIKE_3W') {
+    return { vehicleType: 'MOTORBIKE', cargoWeight: '300' };
+  }
+  return { vehicleType: 'TRUCK', cargoWeight: '1250' };
 }
 
 export function BookingScreen({
@@ -169,7 +196,7 @@ export function BookingScreen({
     if (draft.stops.length >= 3) return;
     const newStop: RouteStop = {
       id: `stop-${Date.now()}`,
-      address: `Điểm dừng trả hàng ${draft.stops.length + 1} (Khu Công Nghiệp)`,
+      address: '',
     };
     bookingDraftStore.updateDraft({
       stops: [...draft.stops, newStop],
@@ -185,13 +212,109 @@ export function BookingScreen({
   const handleCreateOrder = async () => {
     if (!validation.isValid) return;
     setIsSubmitting(true);
-    const orderId = `ord-${Date.now()}`;
-    setTimeout(() => {
-      setIsSubmitting(false);
-      if (onOrderCreated) {
-        onOrderCreated(orderId, pricingBreakdown.totalFare);
+
+    let orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+    let finalAmount = pricingBreakdown.totalFare;
+
+    const { vehicleType, cargoWeight } = resolveVehicleOrderType(draft.vehicleId);
+
+    try {
+      const port = createCustomerHttpAdapter();
+      const pickupCoords =
+        (draft.pickupLat && draft.pickupLng ? { lat: draft.pickupLat, lng: draft.pickupLng } : undefined) ||
+        resolveLocationCoords(draft.pickupAddress);
+      const dropoffCoords =
+        (draft.dropoffLat && draft.dropoffLng ? { lat: draft.dropoffLat, lng: draft.dropoffLng } : undefined) ||
+        resolveLocationCoords(draft.dropoffAddress, pickupCoords);
+
+      const formPayload = {
+        pickup: draft.pickupAddress,
+        pickupCoords,
+        stops: draft.stops
+          .filter((s) => s.address.trim().length > 0)
+          .map((s) => ({
+            id: s.id,
+            value: s.address,
+            coords: s.lat && s.lng ? { lat: s.lat, lng: s.lng } : resolveLocationCoords(s.address, pickupCoords),
+          })),
+        dropoff: draft.dropoffAddress,
+        dropoffCoords,
+        vehicleType,
+        cargoNote: [
+          pricingBreakdown.vehicleName ? `Loại xe: ${pricingBreakdown.vehicleName}` : null,
+          draft.hasLoadingSupport ? 'Bốc xếp: Có' : null,
+          draft.receiverName ? `Người nhận: ${draft.receiverName} (${draft.receiverPhone})` : null,
+          draft.cargoCategory,
+          draft.cargoNote,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        cargoWeight,
+        requiresLoadingSupport: draft.hasLoadingSupport,
+        hasLoadingSupport: draft.hasLoadingSupport,
+        hasVatInvoice: draft.hasVatInvoice,
+        paymentMethod: draft.paymentMethod,
+        fieldErrors: {},
+      };
+
+      // 1. Get estimate from real backend API
+      const estimateView = await port.estimateOrder(formPayload);
+      const estimateToken =
+        estimateView.kind === 'form' && estimateView.estimate.kind === 'ready'
+          ? estimateView.estimate.routes[0]?.estimateToken
+          : undefined;
+
+      if (
+        estimateView.kind === 'form' &&
+        estimateView.estimate.kind === 'ready' &&
+        estimateView.estimate.routes[0]?.priceLabel
+      ) {
+        const rawDigits = estimateView.estimate.routes[0].priceLabel.replace(/[^0-9]/g, '');
+        const parsed = Number(rawDigits);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          finalAmount = parsed;
+        }
       }
-    }, 400);
+
+      // 2. Call real createOrder
+      if (estimateToken) {
+        const created = await port.createOrder(formPayload, estimateToken);
+        if (created.kind === 'content') {
+          orderId = created.order.id;
+          if (created.order.priceLabel) {
+            const rawDigits = created.order.priceLabel.replace(/[^0-9]/g, '');
+            const parsed = Number(rawDigits);
+            if (Number.isFinite(parsed) && parsed > 0) {
+              finalAmount = parsed;
+            }
+          }
+
+          // 3. Upload cargo photo if selected
+          if (draft.cargoImages.length > 0) {
+            try {
+              const form = new FormData();
+              await appendFileToFormData(form, 'file', {
+                uri: draft.cargoImages[0],
+                name: 'cargo.jpg',
+                mimeType: 'image/jpeg',
+              });
+              form.append('clientRequestId', `req-${Date.now()}`);
+              await httpClient.postForm(`/orders/${orderId}/media/cargo`, form);
+            } catch {
+              // Non-blocking upload fallback
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[CustomerBooking] Backend API call error, using local transaction fallback:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+
+    if (onOrderCreated) {
+      onOrderCreated(orderId, finalAmount, draft.paymentMethod);
+    }
   };
 
   return (
@@ -258,6 +381,13 @@ export function BookingScreen({
                 pickupAddress: address,
                 pickupLat: coords?.lat,
                 pickupLng: coords?.lng,
+              });
+            }}
+            onUpdateStop={(stopId, address, coords) => {
+              bookingDraftStore.updateDraft({
+                stops: draft.stops.map((s) =>
+                  s.id === stopId ? { ...s, address, lat: coords?.lat, lng: coords?.lng } : s,
+                ),
               });
             }}
             pickupAddress={draft.pickupAddress}

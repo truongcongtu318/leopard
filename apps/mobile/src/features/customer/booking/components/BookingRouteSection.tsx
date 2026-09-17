@@ -51,6 +51,7 @@ export interface BookingRouteSectionProps {
   onPressDropoff?: () => void;
   onUpdatePickup?: (address: string, coords?: { lat: number; lng: number }) => void;
   onUpdateDropoff?: (address: string, coords?: { lat: number; lng: number }) => void;
+  onUpdateStop?: (stopId: string, address: string, coords?: { lat: number; lng: number }) => void;
   onAddStop: () => void;
   onRemoveStop: (stopId: string) => void;
   onPickOnMap?: () => void;
@@ -100,6 +101,7 @@ export function BookingRouteSection({
   onPressDropoff,
   onUpdatePickup,
   onUpdateDropoff,
+  onUpdateStop,
   onAddStop,
   onRemoveStop,
   onPickOnMap,
@@ -107,11 +109,22 @@ export function BookingRouteSection({
   initialActiveTarget = null,
 }: BookingRouteSectionProps) {
   // Always start closed by default; only show dropdown when user explicitly taps/clicks a row
-  const [activeTarget, setActiveTarget] = useState<'pickup' | 'dropoff' | null>(null);
+  const [activeTarget, setActiveTarget] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-focus a newly added empty stop
+  useEffect(() => {
+    const emptyStop = stops.find((s) => !s.address);
+    if (emptyStop) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setActiveTarget(emptyStop.id);
+      setSearchQuery('');
+      setSearchResults([]);
+    }
+  }, [stops]);
 
   // Load real saved addresses from addressStore
   const realSavedAddresses = useMemo<LocationSearchResult[]>(() => {
@@ -196,7 +209,7 @@ export function BookingRouteSection({
     };
   }, [searchQuery]);
 
-  const handleOpenSearch = (target: 'pickup' | 'dropoff') => {
+  const handleOpenSearch = (target: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setActiveTarget(target);
     setSearchQuery('');
@@ -221,8 +234,10 @@ export function BookingRouteSection({
 
     if (activeTarget === 'pickup') {
       if (onUpdatePickup) onUpdatePickup(fullAddress, item.coords);
-    } else {
+    } else if (activeTarget === 'dropoff') {
       if (onUpdateDropoff) onUpdateDropoff(fullAddress, item.coords);
+    } else if (activeTarget && onUpdateStop) {
+      onUpdateStop(activeTarget, fullAddress, item.coords);
     }
     setActiveTarget(null);
     setSearchQuery('');
@@ -310,8 +325,52 @@ export function BookingRouteSection({
         {/* Điểm dừng trung gian (nếu có) */}
         {stops.map((stop, index) => {
           const stopParsed = formatAddressForDisplay(stop.address, `Điểm dừng ${index + 1}`);
+          const isActiveStop = activeTarget === stop.id;
+
+          if (isActiveStop) {
+            return (
+              <View key={stop.id} style={styles.activeInputRow}>
+                <View style={styles.indicatorCol}>
+                  <View style={styles.orangeHalo}>
+                    <View style={styles.orangeInnerDot} />
+                  </View>
+                  <View style={styles.connectorLine} />
+                </View>
+                <View style={styles.inputCol}>
+                  <Text style={styles.stopTypeLabel}>ĐANG NHẬP ĐIỂM DỪNG {index + 1}</Text>
+                  <TextInput
+                    accessibilityLabel={`Nhập địa chỉ điểm dừng ${index + 1}`}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoFocus
+                    onChangeText={setSearchQuery}
+                    placeholder="Nhập địa chỉ điểm dừng..."
+                    placeholderTextColor="#8E8E93"
+                    style={styles.inlineSearchInput}
+                    value={searchQuery}
+                  />
+                </View>
+                {searchQuery.length > 0 && (
+                  <Pressable hitSlop={10} onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                    <View style={styles.clearCircle}>
+                      <IconClose color="#FFFFFF" size={10} />
+                    </View>
+                  </Pressable>
+                )}
+                <Pressable hitSlop={8} onPress={handleCloseSearch} style={styles.doneBtn}>
+                  <Text style={styles.doneBtnText}>Xong</Text>
+                </Pressable>
+              </View>
+            );
+          }
+
           return (
-            <View key={stop.id} style={styles.stopRow}>
+            <Pressable
+              accessibilityRole="button"
+              key={stop.id}
+              onPress={() => handleOpenSearch(stop.id)}
+              style={({ pressed }) => [styles.stopRow, pressed && styles.rowPressed]}
+            >
               <View style={styles.indicatorCol}>
                 <View style={styles.orangeHalo}>
                   <View style={styles.orangeInnerDot} />
@@ -321,7 +380,7 @@ export function BookingRouteSection({
               <View style={styles.addressTextCol}>
                 <Text style={styles.stopTypeLabel}>ĐIỂM DỪNG {index + 1}</Text>
                 <Text numberOfLines={1} style={styles.addressLine1}>
-                  {stopParsed.title}
+                  {stop.address ? stopParsed.title : 'Chạm để nhập địa chỉ điểm dừng'}
                 </Text>
                 {stopParsed.subtitle ? (
                   <Text numberOfLines={1} style={styles.addressLine2}>
@@ -340,7 +399,7 @@ export function BookingRouteSection({
                   <IconClose color="#FFFFFF" size={10} />
                 </View>
               </Pressable>
-            </View>
+            </Pressable>
           );
         })}
 
