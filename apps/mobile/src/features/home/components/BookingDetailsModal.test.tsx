@@ -271,4 +271,79 @@ describe('BookingDetailsModal', () => {
 
     await screen.unmount();
   });
+
+  it('renders Cheetah Golden Amber voucher section, applies voucher and deducts from total fare', async () => {
+    const onConfirm = jest.fn();
+    const screen = await render(
+      <BookingDetailsModal
+        {...defaultProps}
+        basePrice={200000}
+        initialCargoImageUri="file:///test-cargo.jpg"
+        onConfirm={onConfirm}
+      />,
+    );
+
+    expect(screen.getByText('CHEETAH VOUCHER')).toBeTruthy();
+    expect(screen.getByText('Mã khuyến mãi / Voucher')).toBeTruthy();
+
+    // Tap quick voucher LEOPARD20K (-20,000)
+    const voucherChip = screen.getByLabelText('Chọn voucher LEOPARD20K');
+    await fireEvent.press(voucherChip);
+
+    expect(screen.getByTestId('applied-voucher-card')).toBeTruthy();
+    expect(screen.getByText('LEOPARD20K')).toBeTruthy();
+    expect(screen.getByText(/Đã giảm 20\.000 ₫/)).toBeTruthy();
+
+    // Base: 200,000 - Discount: 20,000 = 180,000
+    expect(
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(180000)} ➔`),
+    ).toBeTruthy();
+
+    // Confirm booking with voucher
+    const cta = screen.getByLabelText(`XÁC NHẬN GỌI XE · ${formatVnd(180000)}`);
+    await fireEvent.press(cta);
+
+    expect(onConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        totalFare: 180000,
+        voucherCode: 'LEOPARD20K',
+        discountAmount: 20000,
+      }),
+    );
+
+    await screen.unmount();
+  });
+
+  it('allows removing applied voucher and restores original total fare', async () => {
+    const screen = await render(
+      <BookingDetailsModal
+        {...defaultProps}
+        basePrice={200000}
+        initialCargoImageUri="file:///test-cargo.jpg"
+      />,
+    );
+
+    // Apply voucher
+    await fireEvent.press(screen.getByLabelText('Chọn voucher LEOPARD50K'));
+    expect(
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(150000)} ➔`),
+    ).toBeTruthy();
+
+    // Remove voucher
+    await fireEvent.press(screen.getByLabelText('Bỏ áp dụng voucher'));
+    expect(screen.queryByTestId('applied-voucher-card')).toBeNull();
+    expect(
+      screen.getByText(`XÁC NHẬN GỌI XE · ${formatVnd(200000)} ➔`),
+    ).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('renders gesture drag handle for smooth bottom sheet pull-down', async () => {
+    const screen = await render(<BookingDetailsModal {...defaultProps} />);
+
+    expect(screen.getByTestId('modal-drag-handle-wrap')).toBeTruthy();
+
+    await screen.unmount();
+  });
 });

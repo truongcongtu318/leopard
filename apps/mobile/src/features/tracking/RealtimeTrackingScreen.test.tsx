@@ -195,4 +195,47 @@ describe('RealtimeTrackingScreen', () => {
 
     await screen.unmount();
   });
+
+  it('renders "Dữ liệu mô phỏng" badge when isSimulatedData or trip is simulated', async () => {
+    const screen = await render(
+      <RealtimeTrackingScreen
+        driver={mockDriver}
+        isSimulatedData
+        trip={mockTrip}
+      />,
+    );
+
+    expect(screen.getByTestId('badge-demo-data')).toBeTruthy();
+    expect(screen.getByText('Dữ liệu mô phỏng')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('handles real-time socket truckLocation updates without throwing', async () => {
+    const screen = await render(
+      <RealtimeTrackingScreen
+        driver={mockDriver}
+        trip={mockTrip}
+        truckLocation={{ lat: 10.795, lng: 106.652, timestamp: '2026-03-31T08:00:00Z' }}
+      />,
+    );
+
+    await screen.rerender(
+      <RealtimeTrackingScreen
+        driver={mockDriver}
+        trip={{
+          ...mockTrip,
+          distanceRemainingKm: 1.2,
+          etaLabel: '8 phút',
+          etaMinutes: 8,
+        }}
+        truckLocation={{ lat: 10.792, lng: 106.648, timestamp: '2026-03-31T08:00:05Z' }}
+      />,
+    );
+
+    expect(screen.getByText('ETA dự kiến: 8 phút · Còn 1.2 km')).toBeTruthy();
+    expect(screen.getByText('ETA dự kiến: 8 phút')).toBeTruthy();
+
+    await screen.unmount();
+  });
 });

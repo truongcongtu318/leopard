@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   Image,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -10,32 +12,60 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { z } from 'zod';
 
 import {
-  colors,
-  customerPalette,
   IconCamera,
+  IconCheck,
+  IconClose,
+  IconTag,
+  colors,
+  control,
+  customerPalette,
+  haptic,
   iosContinuousCurve,
   leopardPalette,
+  pastelTheme,
   pickDeviceImage,
+  radius,
+  spacing,
   systemFontFamily,
   typeScale,
 } from '@leopard/mobile-core';
-import { haptic } from '@leopard/mobile-core/src/ui/haptics';
 
 export type BookingPaymentMethod = 'VIETQR' | 'CASH';
 
-export interface BookingDetails {
-  receiverName: string;
-  receiverPhone: string;
-  cargoCategory: string;
-  cargoNote?: string;
-  cargoImageUri: string;
-  hasLoadingSupport: boolean;
-  hasVatInvoice: boolean;
-  paymentMethod: BookingPaymentMethod;
-  totalFare: number;
-}
+export const CARGO_CATEGORIES = [
+  'Kiện hàng',
+  'May mặc',
+  'VLXD',
+  'Nội thất',
+  'Khác',
+] as const;
+
+// ── Zod Schema: Pilot Freight Logistics Scope Only ──────────────────
+
+export const bookingDetailsSchema = z
+  .object({
+    receiverName: z.string().trim().max(100).default(''),
+    receiverPhone: z.string().trim().max(20).default(''),
+    cargoCategory: z.enum(['Kiện hàng', 'May mặc', 'VLXD', 'Nội thất', 'Khác']),
+    cargoNote: z.string().trim().max(1000).optional(),
+    cargoImageUri: z
+      .string({
+        message: 'Vui lòng chụp hoặc tải ảnh hàng hóa (Bắt buộc).',
+      })
+      .min(1, 'Vui lòng chụp hoặc tải ảnh hàng hóa (Bắt buộc).'),
+    hasLoadingSupport: z.boolean().default(false),
+    hasVatInvoice: z.boolean().default(false),
+    paymentMethod: z.enum(['VIETQR', 'CASH']).default('VIETQR'),
+    totalFare: z.number().nonnegative(),
+    voucherCode: z.string().trim().max(50).optional(),
+    discountAmount: z.number().nonnegative().optional(),
+  })
+  .strict();
+
+export type BookingDetails = z.infer<typeof bookingDetailsSchema>;
 
 export interface BookingDetailsModalProps {
   visible: boolean;
@@ -64,86 +94,177 @@ export function resolveDefaultLoadingFee(vehicleName: string): number {
   return 120000;
 }
 
-export const CARGO_CATEGORIES = [
-  'Kiện hàng',
-  'May mặc',
-  'VLXD',
-  'Nội thất',
-  'Khác',
-] as const;
-
 export function formatVnd(val: number): string {
   const rounded = Math.round(val);
   return `${new Intl.NumberFormat('vi-VN').format(rounded)} ₫`;
 }
 
+// Preset Pilot Vouchers (Cheetah Golden Amber #F59E0B)
+export const PRESET_VOUCHERS = [
+  { code: 'LEOPARD20K', label: 'Giảm 20k', discount: 20000 },
+  { code: 'LEOPARD50K', label: 'Giảm 50k', discount: 50000 },
+  { code: 'FREESHIP', label: 'Freeship 30k', discount: 30000 },
+] as const;
+
 export function BookingDetailsModal({
-  visible,
-  onClose,
-  onConfirm,
-  pickupAddress,
-  dropoffAddress,
-  stops = [],
-  vehicleName,
-  vehicleDimensions,
   basePrice,
-  loadingFee: loadingFeeProp,
+  dropoffAddress,
   initialCargoImageUri,
   initialReceiverName = '',
   initialReceiverPhone = '',
+  loadingFee: loadingFeeProp,
+  onClose,
+  onConfirm,
+  pickupAddress,
+  stops = [],
   testID = 'booking-details-modal',
+  vehicleDimensions,
+  vehicleName,
+  visible,
 }: BookingDetailsModalProps) {
   const [receiverName, setReceiverName] = useState(initialReceiverName);
   const [receiverPhone, setReceiverPhone] = useState(initialReceiverPhone);
-  const [cargoCategory, setCargoCategory] = useState<string>('Kiện hàng');
+  const [cargoCategory, setCargoCategory] = useState<typeof CARGO_CATEGORIES[number]>('Kiện hàng');
   const [cargoNote, setCargoNote] = useState('');
-  const [cargoImageUri, setCargoImageUri] = useState<string | null>(
-    initialCargoImageUri ?? null,
-  );
+  const [cargoImageUri, setCargoImageUri] = useState<string | null>(initialCargoImageUri ?? null);
   const [cargoImageName, setCargoImageName] = useState<string | null>(null);
   const [cargoImageError, setCargoImageError] = useState<string | null>(null);
   const [hasLoadingSupport, setHasLoadingSupport] = useState(false);
   const [hasVatInvoice, setHasVatInvoice] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<BookingPaymentMethod>('VIETQR');
 
+  // Voucher state: Cheetah Golden Amber (#F59E0B)
+  const [voucherInput, setVoucherInput] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState<{ code: string; discount: number } | null>(null);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+
+  // Smooth Gesture Bottom Sheet Dismissal
+  const dragY = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     if (visible) {
+      dragY.setValue(0);
       if (initialReceiverName !== undefined) setReceiverName(initialReceiverName);
       if (initialReceiverPhone !== undefined) setReceiverPhone(initialReceiverPhone);
       if (initialCargoImageUri !== undefined) setCargoImageUri(initialCargoImageUri);
       setCargoImageError(null);
+      setVoucherError(null);
     }
-  }, [visible, initialReceiverName, initialReceiverPhone, initialCargoImageUri]);
+  }, [visible, initialReceiverName, initialReceiverPhone, initialCargoImageUri, dragY]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 8,
+        onPanResponderMove: (_, gestureState) => {
+          if (gestureState.dy > 0) {
+            dragY.setValue(gestureState.dy);
+          }
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy > 100 || gestureState.vy > 0.6) {
+            haptic.light();
+            Animated.timing(dragY, {
+              toValue: 600,
+              duration: 200,
+              useNativeDriver: true,
+            }).start(() => {
+              onClose();
+              dragY.setValue(0);
+            });
+          } else {
+            Animated.spring(dragY, {
+              toValue: 0,
+              damping: 20,
+              stiffness: 240,
+              useNativeDriver: true,
+            }).start();
+          }
+        },
+      }),
+    [onClose, dragY],
+  );
 
   const safeBasePrice = Math.max(0, basePrice || 0);
   const stopCount = stops.length;
   const stopSurcharge = stopCount * 30000;
-  const unitLoadingFee = loadingFeeProp !== undefined ? loadingFeeProp : resolveDefaultLoadingFee(vehicleName);
+  const unitLoadingFee =
+    loadingFeeProp !== undefined ? loadingFeeProp : resolveDefaultLoadingFee(vehicleName);
   const loadingFee = hasLoadingSupport ? unitLoadingFee : 0;
   const vatAmount = Math.round((safeBasePrice + stopSurcharge + loadingFee) * 0.08);
   const vatFee = hasVatInvoice ? vatAmount : 0;
-  const totalFare = safeBasePrice + stopSurcharge + loadingFee + vatFee;
+  const discountAmount = appliedVoucher ? appliedVoucher.discount : 0;
+  const totalFare = Math.max(0, safeBasePrice + stopSurcharge + loadingFee + vatFee - discountAmount);
 
-  const handleConfirm = () => {
-    if (!cargoImageUri) {
+  const handleApplyVoucher = useCallback((codeToApply?: string) => {
+    const targetCode = (codeToApply || voucherInput).trim().toUpperCase();
+    if (!targetCode) return;
+
+    const matched = PRESET_VOUCHERS.find((v) => v.code === targetCode);
+    if (matched) {
+      haptic.success();
+      setAppliedVoucher({ code: matched.code, discount: matched.discount });
+      setVoucherInput('');
+      setVoucherError(null);
+    } else {
       haptic.warning();
-      setCargoImageError('Vui lòng chụp hoặc tải ảnh hàng hóa (Bắt buộc).');
-      return;
+      setVoucherError('Mã voucher không hợp lệ hoặc đã hết lượt dùng.');
     }
-    setCargoImageError(null);
-    haptic.medium();
-    onConfirm({
+  }, [voucherInput]);
+
+  const handleRemoveVoucher = useCallback(() => {
+    haptic.light();
+    setAppliedVoucher(null);
+    setVoucherError(null);
+  }, []);
+
+  const handleConfirm = useCallback(() => {
+    // Validate rigorously using Zod schema
+    const rawPayload = {
       receiverName: receiverName.trim(),
       receiverPhone: receiverPhone.trim(),
       cargoCategory,
       cargoNote: cargoNote.trim() ? cargoNote.trim() : undefined,
-      cargoImageUri,
+      cargoImageUri: cargoImageUri || '',
       hasLoadingSupport,
       hasVatInvoice,
       paymentMethod,
       totalFare,
-    });
-  };
+      ...(appliedVoucher
+        ? { voucherCode: appliedVoucher.code, discountAmount: appliedVoucher.discount }
+        : {}),
+    };
+
+    const validation = bookingDetailsSchema.safeParse(rawPayload);
+
+    if (!validation.success) {
+      haptic.warning();
+      const firstIssue = validation.error.issues[0];
+      if (firstIssue.path.includes('cargoImageUri')) {
+        setCargoImageError('Vui lòng chụp hoặc tải ảnh hàng hóa (Bắt buộc).');
+      } else {
+        setCargoImageError(firstIssue.message);
+      }
+      return;
+    }
+
+    setCargoImageError(null);
+    haptic.medium();
+    onConfirm(validation.data);
+  }, [
+    receiverName,
+    receiverPhone,
+    cargoCategory,
+    cargoNote,
+    cargoImageUri,
+    hasLoadingSupport,
+    hasVatInvoice,
+    paymentMethod,
+    totalFare,
+    appliedVoucher,
+    onConfirm,
+  ]);
 
   const subtitle = vehicleDimensions
     ? `${vehicleName} • ${vehicleDimensions}`
@@ -163,8 +284,14 @@ export function BookingDetailsModal({
           onPress={onClose}
           style={styles.modalBackdrop}
         />
-        <View style={styles.sheetContainer}>
-          <View style={styles.sheetHandle} />
+
+        <Animated.View
+          style={[styles.sheetContainer, { transform: [{ translateY: dragY }] }]}
+        >
+          {/* Gesture Drag Handle (minHeight >= 44pt touch zone) */}
+          <View {...panResponder.panHandlers} style={styles.handleWrap} testID="modal-drag-handle-wrap">
+            <View style={styles.sheetHandle} />
+          </View>
 
           {/* Header */}
           <View style={styles.headerRow}>
@@ -176,16 +303,16 @@ export function BookingDetailsModal({
             </View>
             <Pressable
               accessibilityLabel="Đóng modal chi tiết"
-              hitSlop={8}
+              hitSlop={spacing.xs}
               onPress={onClose}
               style={styles.closeBtn}
             >
-              <Text style={styles.closeBtnText}>✕</Text>
+              <IconClose color={customerPalette.textSubtle} size={16} />
             </Pressable>
           </View>
 
           {/* Route Info Badge */}
-          {(pickupAddress || dropoffAddress) ? (
+          {pickupAddress || dropoffAddress ? (
             <View style={styles.routeBadge} testID="modal-route-badge">
               <View style={styles.routeBadgeDotOrigin} />
               <Text numberOfLines={1} style={styles.routeBadgeText}>
@@ -261,9 +388,7 @@ export function BookingDetailsModal({
                       <Text
                         style={[
                           styles.chipText,
-                          isSelected
-                            ? styles.chipTextSelected
-                            : styles.chipTextUnselected,
+                          isSelected ? styles.chipTextSelected : styles.chipTextUnselected,
                         ]}
                       >
                         {cat}
@@ -344,9 +469,7 @@ export function BookingDetailsModal({
                     <IconCamera color={customerPalette.textSlateDark} size={20} />
                   </View>
                   <View style={styles.photoPickerTextCol}>
-                    <Text style={styles.photoPickerTitle}>
-                      Chụp hoặc tải ảnh hàng hóa
-                    </Text>
+                    <Text style={styles.photoPickerTitle}>Chụp hoặc tải ảnh hàng hóa</Text>
                     <Text style={styles.photoPickerSubtitle}>
                       Tài xế đối chiếu kích thước trước khi nhận chuyến
                     </Text>
@@ -358,7 +481,96 @@ export function BookingDetailsModal({
               ) : null}
             </View>
 
-            {/* 4. Dịch vụ cộng thêm */}
+            {/* 4. Voucher Cheetah Golden Amber (#F59E0B) */}
+            <View style={styles.section}>
+              <View style={styles.voucherSectionHeader}>
+                <View style={styles.voucherTitleRow}>
+                  <IconTag color={customerPalette.accent} size={16} />
+                  <Text style={styles.sectionTitle}>Mã khuyến mãi / Voucher</Text>
+                </View>
+                <View style={styles.voucherTagAmber}>
+                  <Text style={styles.voucherTagAmberText}>CHEETAH VOUCHER</Text>
+                </View>
+              </View>
+
+              {appliedVoucher ? (
+                <View style={styles.appliedVoucherCard} testID="applied-voucher-card">
+                  <View style={styles.appliedVoucherLeft}>
+                    <View style={styles.appliedVoucherDot} />
+                    <View>
+                      <Text style={styles.appliedVoucherCode}>{appliedVoucher.code}</Text>
+                      <Text style={styles.appliedVoucherDesc}>
+                        Đã giảm {formatVnd(appliedVoucher.discount)} vào cước chuyến
+                      </Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    accessibilityLabel="Bỏ áp dụng voucher"
+                    accessibilityRole="button"
+                    hitSlop={spacing.xs}
+                    onPress={handleRemoveVoucher}
+                    style={styles.removeVoucherBtn}
+                    testID="btn-remove-voucher"
+                  >
+                    <IconClose color={customerPalette.accent} size={14} />
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={styles.voucherInputContainer}>
+                  <View style={styles.voucherInputRow}>
+                    <TextInput
+                      accessibilityLabel="Nhập mã khuyến mãi"
+                      autoCapitalize="characters"
+                      onChangeText={(t) => {
+                        setVoucherInput(t);
+                        if (voucherError) setVoucherError(null);
+                      }}
+                      placeholder="Nhập mã voucher (VD: LEOPARD20K)"
+                      placeholderTextColor={leopardPalette.inputPlaceholder}
+                      style={styles.voucherTextInput}
+                      value={voucherInput}
+                    />
+                    <Pressable
+                      accessibilityLabel="Áp dụng mã khuyến mãi"
+                      accessibilityRole="button"
+                      onPress={() => handleApplyVoucher()}
+                      style={({ pressed }) => [
+                        styles.applyVoucherBtn,
+                        pressed ? styles.applyVoucherBtnPressed : null,
+                      ]}
+                      testID="btn-apply-voucher"
+                    >
+                      <Text style={styles.applyVoucherBtnText}>Áp dụng</Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Preset Quick Chips */}
+                  <View style={styles.quickVoucherRow}>
+                    {PRESET_VOUCHERS.map((v) => (
+                      <Pressable
+                        accessibilityLabel={`Chọn voucher ${v.code}`}
+                        accessibilityRole="button"
+                        key={v.code}
+                        onPress={() => handleApplyVoucher(v.code)}
+                        style={({ pressed }) => [
+                          styles.quickVoucherChip,
+                          pressed ? styles.quickVoucherChipPressed : null,
+                        ]}
+                      >
+                        <Text style={styles.quickVoucherChipText}>
+                          {v.code} · {v.label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  {voucherError ? (
+                    <Text style={styles.voucherErrorText}>{voucherError}</Text>
+                  ) : null}
+                </View>
+              )}
+            </View>
+
+            {/* 5. Dịch vụ cộng thêm */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Dịch vụ cộng thêm</Text>
               <View style={styles.toggleStack}>
@@ -383,13 +595,11 @@ export function BookingDetailsModal({
                     ]}
                   >
                     {hasLoadingSupport ? (
-                      <Text style={styles.checkmark}>✓</Text>
+                      <IconCheck color={customerPalette.surfaceWhite} size={14} strokeWidth={2.5} />
                     ) : null}
                   </View>
                   <View style={styles.toggleLabelCol}>
-                    <Text style={styles.toggleTitle}>
-                      Tài xế hỗ trợ bốc xếp 2 đầu
-                    </Text>
+                    <Text style={styles.toggleTitle}>Tài xế hỗ trợ bốc xếp 2 đầu</Text>
                   </View>
                   <Text style={styles.toggleFee}>+{formatVnd(unitLoadingFee)}</Text>
                 </Pressable>
@@ -415,22 +625,18 @@ export function BookingDetailsModal({
                     ]}
                   >
                     {hasVatInvoice ? (
-                      <Text style={styles.checkmark}>✓</Text>
+                      <IconCheck color={customerPalette.surfaceWhite} size={14} strokeWidth={2.5} />
                     ) : null}
                   </View>
                   <View style={styles.toggleLabelCol}>
-                    <Text style={styles.toggleTitle}>
-                      Xuất hóa đơn VAT điện tử (8%)
-                    </Text>
+                    <Text style={styles.toggleTitle}>Xuất hóa đơn VAT điện tử (8%)</Text>
                   </View>
-                  <Text style={styles.toggleFee}>
-                    +{formatVnd(vatAmount)}
-                  </Text>
+                  <Text style={styles.toggleFee}>+{formatVnd(vatAmount)}</Text>
                 </Pressable>
               </View>
             </View>
 
-            {/* 4. Hình thức thanh toán */}
+            {/* 6. Hình thức thanh toán */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Hình thức thanh toán</Text>
               <View style={styles.radioStack}>
@@ -451,9 +657,7 @@ export function BookingDetailsModal({
                   <View
                     style={[
                       styles.radioCircle,
-                      paymentMethod === 'VIETQR'
-                        ? styles.radioCircleActive
-                        : null,
+                      paymentMethod === 'VIETQR' ? styles.radioCircleActive : null,
                     ]}
                   >
                     {paymentMethod === 'VIETQR' ? (
@@ -461,12 +665,8 @@ export function BookingDetailsModal({
                     ) : null}
                   </View>
                   <View style={styles.radioTextCol}>
-                    <Text style={styles.radioTitle}>
-                      Chuyển khoản VietQR payOS
-                    </Text>
-                    <Text style={styles.radioSubtitle}>
-                      Ký quỹ Escrow bảo vệ an toàn
-                    </Text>
+                    <Text style={styles.radioTitle}>Chuyển khoản VietQR payOS</Text>
+                    <Text style={styles.radioSubtitle}>Ký quỹ Escrow bảo vệ an toàn</Text>
                   </View>
                 </Pressable>
 
@@ -487,9 +687,7 @@ export function BookingDetailsModal({
                   <View
                     style={[
                       styles.radioCircle,
-                      paymentMethod === 'CASH'
-                        ? styles.radioCircleActive
-                        : null,
+                      paymentMethod === 'CASH' ? styles.radioCircleActive : null,
                     ]}
                   >
                     {paymentMethod === 'CASH' ? (
@@ -497,19 +695,15 @@ export function BookingDetailsModal({
                     ) : null}
                   </View>
                   <View style={styles.radioTextCol}>
-                    <Text style={styles.radioTitle}>
-                      Tiền mặt khi nhận hàng
-                    </Text>
-                    <Text style={styles.radioSubtitle}>
-                      Người gửi hoặc người nhận thanh toán
-                    </Text>
+                    <Text style={styles.radioTitle}>Tiền mặt khi nhận hàng</Text>
+                    <Text style={styles.radioSubtitle}>Người gửi hoặc người nhận thanh toán</Text>
                   </View>
                 </Pressable>
               </View>
             </View>
           </ScrollView>
 
-          {/* Footer Primary CTA */}
+          {/* Footer Primary CTA: Midnight Navy (#0B2545) */}
           <View style={styles.footer}>
             <Pressable
               accessibilityLabel={`XÁC NHẬN GỌI XE · ${formatVnd(totalFare)}`}
@@ -519,13 +713,14 @@ export function BookingDetailsModal({
                 styles.confirmBtn,
                 pressed ? styles.btnPressed : null,
               ]}
+              testID="btn-confirm-booking-details"
             >
               <Text style={styles.confirmBtnText}>
                 XÁC NHẬN GỌI XE · {formatVnd(totalFare)} ➔
               </Text>
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -555,128 +750,127 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 2,
     backgroundColor: customerPalette.surfaceWhite,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: radius.modal,
+    borderTopRightRadius: radius.modal,
     ...iosContinuousCurve,
     maxHeight: '90%',
-    paddingTop: 8,
     shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.16,
     shadowRadius: 20,
     elevation: 12,
   },
+  handleWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 32,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxs,
+  },
   sheetHandle: {
-    width: 36,
+    width: 44,
     height: 4,
-    borderRadius: 2,
+    borderRadius: spacing.hairline,
     backgroundColor: colors.neutral.subtleBorder,
-    alignSelf: 'center',
-    marginBottom: 8,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xs,
   },
   headerTextGroup: {
     flex: 1,
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   sheetTitle: {
-    fontFamily: systemFontFamily,
-    fontSize: typeScale.body.fontSize,
+    ...typeScale.headline,
     fontWeight: '800',
     color: customerPalette.textSlateDark,
     letterSpacing: -0.3,
   },
   sheetSubtitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
     color: customerPalette.textSubtle,
-    marginTop: 2,
+    marginTop: spacing.hairline,
   },
   closeBtn: {
     minWidth: 44,
     minHeight: 44,
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  closeBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: customerPalette.textSubtle,
   },
   routeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: customerPalette.canvas,
-    marginHorizontal: 20,
-    marginBottom: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    gap: 6,
+    gap: spacing.xxs,
   },
   routeBadgeDotOrigin: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: spacing.xs,
+    height: spacing.xs,
+    borderRadius: spacing.xxs,
     backgroundColor: colors.info.text,
   },
   routeBadgeDotDest: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: spacing.xs,
+    height: spacing.xs,
+    borderRadius: spacing.xxs,
     backgroundColor: colors.danger.text,
   },
   routeBadgeText: {
     flex: 1,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
     color: customerPalette.textMutedSlate,
   },
   routeBadgeArrow: {
-    fontSize: 11,
+    ...typeScale.caption2,
     color: leopardPalette.inputPlaceholder,
   },
   routeBadgeStopCountPill: {
     backgroundColor: colors.info.background,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+    borderRadius: radius.cardSm,
   },
   routeBadgeStopCountText: {
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '700',
     color: colors.info.text,
   },
   scrollArea: {
-    maxHeight: 440,
+    maxHeight: 460,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    gap: 16,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
   },
   section: {
-    gap: 8,
+    gap: spacing.xs,
   },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   sectionTitle: {
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
     textTransform: 'uppercase',
@@ -684,12 +878,12 @@ const styles = StyleSheet.create({
   },
   badgeRequired: {
     backgroundColor: colors.danger.background,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+    borderRadius: radius.cardSm,
   },
   badgeRequiredText: {
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '800',
     color: colors.danger.text,
     letterSpacing: 0.4,
@@ -697,14 +891,15 @@ const styles = StyleSheet.create({
   photoPickerBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
     backgroundColor: customerPalette.canvas,
-    borderRadius: 14,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: colors.neutral.subtleBorder,
-    gap: 12,
+    gap: spacing.sm,
   },
   photoPickerBoxError: {
     borderColor: colors.danger.text,
@@ -720,93 +915,94 @@ const styles = StyleSheet.create({
   },
   photoPickerTextCol: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   photoPickerTitle: {
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
   },
   photoPickerSubtitle: {
-    fontSize: 11,
+    ...typeScale.caption2,
     color: customerPalette.textSubtle,
   },
   imagePreviewRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: spacing.xs,
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 14,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    gap: 12,
+    gap: spacing.sm,
   },
   imageThumbnail: {
     width: 48,
     height: 48,
-    borderRadius: 8,
+    borderRadius: radius.cardSm,
     backgroundColor: colors.neutral.subtleBorder,
   },
   imageInfoCol: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   imageFileName: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
   },
   imageReadyText: {
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
     color: leopardPalette.ecoGreen,
   },
   removePhotoBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.cardSm,
     backgroundColor: colors.danger.background,
   },
   removePhotoBtnText: {
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '700',
     color: colors.danger.text,
   },
   errorFeedbackText: {
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
     color: colors.danger.text,
-    marginTop: 2,
+    marginTop: spacing.hairline,
   },
   inputStack: {
-    gap: 8,
+    gap: spacing.xs,
   },
   textInput: {
     minHeight: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: radius.control,
     ...iosContinuousCurve,
     backgroundColor: customerPalette.canvas,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    paddingHorizontal: 14,
+    paddingHorizontal: spacing.sm,
     fontSize: typeScale.subheadline.fontSize,
     color: customerPalette.textSlateDark,
   },
   noteInput: {
-    marginTop: 4,
+    marginTop: spacing.hairline,
   },
   chipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.xs,
   },
   chip: {
     minHeight: 44,
     minWidth: 44,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 22,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
     alignItems: 'center',
     justifyContent: 'center',
@@ -822,7 +1018,7 @@ const styles = StyleSheet.create({
     borderColor: customerPalette.cardBorder,
   },
   chipText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     letterSpacing: -0.1,
   },
   chipTextSelected: {
@@ -833,21 +1029,168 @@ const styles = StyleSheet.create({
     color: customerPalette.textMutedSlate,
     fontWeight: '600',
   },
+
+  // ── Voucher Cheetah Golden Amber (#F59E0B) Styles ────────────────
+  voucherSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  voucherTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  voucherTagAmber: {
+    backgroundColor: '#FEF3C7',
+    borderColor: customerPalette.accent,
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+  },
+  voucherTagAmberText: {
+    ...typeScale.caption2,
+    fontWeight: '800',
+    color: '#92400E',
+    letterSpacing: 0.5,
+  },
+  appliedVoucherCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFBEB',
+    borderColor: customerPalette.accent,
+    borderWidth: 1.5,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  appliedVoucherLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flex: 1,
+  },
+  appliedVoucherDot: {
+    width: spacing.xs,
+    height: spacing.xs,
+    borderRadius: spacing.xxs,
+    backgroundColor: customerPalette.accent,
+  },
+  appliedVoucherCode: {
+    ...typeScale.subheadline,
+    fontWeight: '800',
+    color: '#92400E',
+    fontVariant: ['tabular-nums'],
+  },
+  appliedVoucherDesc: {
+    ...typeScale.caption2,
+    fontWeight: '600',
+    color: '#B45309',
+    marginTop: spacing.hairline,
+  },
+  removeVoucherBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voucherInputContainer: {
+    gap: spacing.xs,
+  },
+  voucherInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  voucherTextInput: {
+    flex: 1,
+    minHeight: 44,
+    height: 44,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    backgroundColor: customerPalette.canvas,
+    borderWidth: 1,
+    borderColor: customerPalette.accent,
+    paddingHorizontal: spacing.sm,
+    fontSize: typeScale.subheadline.fontSize,
+    color: customerPalette.textSlateDark,
+    fontWeight: '600',
+  },
+  applyVoucherBtn: {
+    minHeight: 44,
+    height: 44,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    backgroundColor: customerPalette.accent,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: customerPalette.accent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  applyVoucherBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
+  },
+  applyVoucherBtnText: {
+    ...typeScale.footnote,
+    fontWeight: '800',
+    color: customerPalette.surfaceWhite,
+  },
+  quickVoucherRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  quickVoucherChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderColor: customerPalette.accent,
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+  },
+  quickVoucherChipPressed: {
+    opacity: 0.75,
+  },
+  quickVoucherChipText: {
+    ...typeScale.caption2,
+    fontWeight: '700',
+    color: '#92400E',
+    fontVariant: ['tabular-nums'],
+  },
+  voucherErrorText: {
+    ...typeScale.caption2,
+    fontWeight: '600',
+    color: colors.danger.text,
+  },
+
+  // ── Dịch vụ cộng thêm ─────────────────────────────────────────────
   toggleStack: {
-    gap: 8,
+    gap: spacing.xs,
   },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 48,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 14,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.card,
     ...iosContinuousCurve,
     backgroundColor: customerPalette.canvas,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    gap: 10,
+    gap: spacing.xs,
   },
   toggleRowActive: {
     backgroundColor: leopardPalette.ecoGreenBg,
@@ -856,7 +1199,7 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 22,
     height: 22,
-    borderRadius: 6,
+    borderRadius: radius.cardSm,
     borderWidth: 1.5,
     borderColor: leopardPalette.inputPlaceholder,
     backgroundColor: customerPalette.surfaceWhite,
@@ -866,11 +1209,6 @@ const styles = StyleSheet.create({
   checkboxActive: {
     borderColor: leopardPalette.ecoGreen,
     backgroundColor: leopardPalette.ecoGreen,
-  },
-  checkmark: {
-    color: customerPalette.surfaceWhite,
-    fontSize: 12,
-    fontWeight: '800',
   },
   toggleLabelCol: {
     flex: 1,
@@ -886,21 +1224,23 @@ const styles = StyleSheet.create({
     color: leopardPalette.ecoGreen,
     fontVariant: ['tabular-nums'],
   },
+
+  // ── Hình thức thanh toán ──────────────────────────────────────────
   radioStack: {
-    gap: 8,
+    gap: spacing.xs,
   },
   radioRow: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 52,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 14,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.card,
     ...iosContinuousCurve,
     backgroundColor: customerPalette.canvas,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    gap: 12,
+    gap: spacing.sm,
   },
   radioRowActive: {
     backgroundColor: colors.info.background,
@@ -937,40 +1277,41 @@ const styles = StyleSheet.create({
     fontSize: typeScale.caption1.fontSize,
     fontWeight: '500',
     color: customerPalette.textSubtle,
-    marginTop: 1,
+    marginTop: spacing.hairline,
   },
+
+  // ── Footer CTA: Midnight Navy (#0B2545) ───────────────────────────
   footer: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: Platform.select({ ios: 34, default: 20 }),
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: Platform.select({ ios: 34, default: spacing.md }),
     borderTopWidth: 1,
     borderTopColor: colors.neutral.surfaceMuted,
     backgroundColor: customerPalette.surfaceWhite,
   },
   confirmBtn: {
-    minHeight: 48,
-    height: 48,
-    borderRadius: 16,
+    minHeight: 52,
+    height: 52,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     backgroundColor: customerPalette.primary,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowOpacity: 0.24,
+    shadowRadius: 10,
     elevation: 4,
   },
   confirmBtnText: {
     color: customerPalette.surfaceWhite,
-    fontFamily: systemFontFamily,
-    fontSize: 15,
+    ...typeScale.headline,
     fontWeight: '800',
     letterSpacing: 0.2,
     fontVariant: ['tabular-nums'],
   },
   btnPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.99 }],
+    transform: [{ scale: 0.985 }],
   },
 });
