@@ -1,14 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { useSafeInsets } from './safe-insets';
 
 import {
   IconChevronLeft,
@@ -22,6 +21,10 @@ import {
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
+import { addressStore } from '../addresses/address-store';
+import { searchPlacesDirect } from '../../home/HomeDashboardScreen';
+import { searchVietmapWithCoords } from '../../home/services/vietmap-search';
+import { useSafeInsets } from './safe-insets';
 
 export interface AddressItem {
   id: string;
@@ -59,25 +62,6 @@ const DEFAULT_RECENT_ADDRESSES: AddressItem[] = [
   },
 ];
 
-const DEFAULT_SAVED_ADDRESSES: AddressItem[] = [
-  {
-    id: 'saved-1',
-    name: 'Kho Tổng Đại Phát',
-    address: '120 Song Hành, P. Tân Hưng Thuận, Quận 12, TP.HCM',
-    distanceKm: 0.0,
-    lat: 10.8421,
-    lng: 106.6192,
-  },
-  {
-    id: 'saved-2',
-    name: 'Cửa Hàng VLXD Quận 9',
-    address: '88 Đỗ Xuân Hợp, Phước Long B, Thủ Đức, TP.HCM',
-    distanceKm: 16.5,
-    lat: 10.8234,
-    lng: 106.7789,
-  },
-];
-
 export interface SearchAddressScreenProps {
   onBack: () => void;
   onSelectAddress: (address: string, coords?: { lat: number; lng: number }) => void;
@@ -97,24 +81,126 @@ export function SearchAddressScreen({
   hasLocationPermission = true,
   initialQuery = '',
   recentAddresses = DEFAULT_RECENT_ADDRESSES,
-  savedAddresses = DEFAULT_SAVED_ADDRESSES,
+  savedAddresses: savedAddressesProp,
 }: SearchAddressScreenProps) {
   const insets = useSafeInsets();
   const [query, setQuery] = useState(initialQuery);
+  const [isSearchingOnline, setIsSearchingOnline] = useState(false);
+  const [onlineResults, setOnlineResults] = useState<AddressItem[]>([]);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Load real saved addresses from addressStore
+  const effectiveSavedAddresses = useMemo<AddressItem[]>(() => {
+    if (savedAddressesProp) return savedAddressesProp;
+    const storeAddresses = addressStore.getAddresses();
+    if (storeAddresses && storeAddresses.length > 0) {
+      return storeAddresses.map((addr) => ({
+        id: addr.id,
+        name: addr.label || 'Địa chỉ đã lưu',
+        address: addr.address,
+        lat: addr.latitude,
+        lng: addr.longitude,
+        distanceKm: addr.isDefault ? 0.0 : undefined,
+      }));
+    }
+    return [
+      {
+        id: 'saved-1',
+        name: 'Kho Tổng Đại Phát',
+        address: '120 Song Hành, P. Tân Hưng Thuận, Quận 12, TP.HCM',
+        distanceKm: 0.0,
+        lat: 10.8421,
+        lng: 106.6192,
+      },
+      {
+        id: 'saved-2',
+        name: 'Cửa Hàng VLXD Quận 9',
+        address: '88 Đỗ Xuân Hợp, Phước Long B, Thủ Đức, TP.HCM',
+        distanceKm: 16.5,
+        lat: 10.8234,
+        lng: 106.7789,
+      },
+    ];
+  }, [savedAddressesProp]);
+
+  // Real-time location search via VietMap + Direct places
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) {
+      setOnlineResults([]);
+      setIsSearchingOnline(false);
+      return;
+    }
+
+    // 1. Instant direct places match
+    const directMatches = searchPlacesDirect(trimmed)
+      .filter((place) => !place.id.startsWith('typed-'))
+      .map((place) => ({
+        id: place.id,
+        name: place.title,
+        address: place.address || place.subtitle,
+        lat: place.coords?.lat,
+        lng: place.coords?.lng,
+      }));
+    setOnlineResults(directMatches);
+
+    // 2. Debounced real API search
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    setIsSearchingOnline(true);
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const vietmapList = await searchVietmapWithCoords(trimmed);
+        if (vietmapList && vietmapList.length > 0) {
+          const mappedVietmap: AddressItem[] = vietmapList.map((vm) => ({
+            id: vm.id,
+            name: vm.title,
+            address: vm.address || vm.subtitle,
+            lat: vm.coords?.lat,
+            lng: vm.coords?.lng,
+          }));
+          setOnlineResults(mappedVietmap);
+        }
+      } catch {
+        // Keep direct matches fallback
+      } finally {
+        setIsSearchingOnline(false);
+      }
+    }, 250);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [query]);
+
+  // Combined search results
   const searchResults = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return [];
-    const pool = [...recentAddresses, ...savedAddresses];
-    return pool.filter(
+
+    // Local matches from recent and saved
+    const pool = [...recentAddresses, ...effectiveSavedAddresses];
+    const localFiltered = pool.filter(
       (item) =>
         item.name.toLowerCase().includes(trimmed) ||
         item.address.toLowerCase().includes(trimmed),
     );
-  }, [query, recentAddresses, savedAddresses]);
+
+    // Merge online results avoiding duplicates by name
+    const seenNames = new Set(localFiltered.map((i) => i.name.toLowerCase()));
+    const additionalOnline = onlineResults.filter(
+      (i) => !seenNames.has(i.name.toLowerCase()),
+    );
+
+    return [...localFiltered, ...additionalOnline];
+  }, [query, recentAddresses, effectiveSavedAddresses, onlineResults]);
 
   const isSearching = query.trim().length > 0;
-  const hasNoResults = isSearching && searchResults.length === 0;
+  const hasNoResults = isSearching && !isSearchingOnline && searchResults.length === 0;
 
   const renderHighlightedText = (text: string, highlight: string) => {
     if (!highlight.trim()) {
@@ -140,7 +226,9 @@ export function SearchAddressScreen({
   };
 
   const handleSelect = (item: AddressItem) => {
-    const fullAddress = `${item.name} - ${item.address}`;
+    const fullAddress = item.address.includes(item.name)
+      ? item.address
+      : `${item.name} - ${item.address}`;
     const coords = item.lat && item.lng ? { lat: item.lat, lng: item.lng } : undefined;
     onSelectAddress(fullAddress, coords);
   };
@@ -174,6 +262,9 @@ export function SearchAddressScreen({
             style={styles.searchInput}
             value={query}
           />
+          {isSearchingOnline && (
+            <ActivityIndicator color={customerPalette.primary} size="small" style={{ marginRight: 4 }} />
+          )}
           {query.length > 0 && (
             <Pressable
               accessibilityLabel="Xóa tìm kiếm"
@@ -183,7 +274,7 @@ export function SearchAddressScreen({
               style={styles.clearButton}
             >
               <View style={styles.clearCircle}>
-                <IconClose color="#FFFFFF" size={12} />
+                <IconClose color="#FFFFFF" size={10} />
               </View>
             </Pressable>
           )}
@@ -232,8 +323,8 @@ export function SearchAddressScreen({
           </Pressable>
         </View>
 
-        {/* Active Search Results */}
-        {isSearching && !hasNoResults && (
+        {/* Search Results */}
+        {isSearching && searchResults.length > 0 && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionHeader}>KẾT QUẢ TÌM KIẾM</Text>
             <View style={styles.insetGroupedCard}>
@@ -328,7 +419,7 @@ export function SearchAddressScreen({
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionHeader}>SỔ ĐỊA CHỈ</Text>
               <View style={styles.insetGroupedCard}>
-                {savedAddresses.map((item, index) => (
+                {effectiveSavedAddresses.map((item, index) => (
                   <React.Fragment key={item.id}>
                     {index > 0 && <View style={styles.separator} />}
                     <Pressable

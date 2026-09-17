@@ -37,12 +37,14 @@ describe('Booking Modular Components', () => {
       />
     );
 
-    expect(screen.getByText('Kho VLXD Đại Phát - 120 Song Hành')).toBeTruthy();
-    expect(screen.getByText('Công trình Jamona City, Đào Trí')).toBeTruthy();
+    expect(screen.getByText('Kho VLXD Đại Phát')).toBeTruthy();
+    expect(screen.getByText('120 Song Hành')).toBeTruthy();
+    expect(screen.getByText('Công trình Jamona City')).toBeTruthy();
+    expect(screen.getByText('Đào Trí')).toBeTruthy();
     expect(screen.getByText('Kho')).toBeTruthy();
     expect(screen.getByText(/Khoảng 12,5 km · dự kiến 35 phút/i)).toBeTruthy();
 
-    fireEvent.press(screen.getByText('+ Thêm điểm dừng'));
+    fireEvent.press(screen.getByText('Thêm điểm dừng'));
     expect(onAddStop).toHaveBeenCalled();
   });
 

@@ -191,11 +191,21 @@ export function BookingScreen({
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Map 180pt */}
+          {/* Header Map 190pt */}
           <BookingRouteMapHeader
             dropoffAddress={draft.dropoffAddress}
+            dropoffCoords={
+              draft.dropoffLat && draft.dropoffLng
+                ? { lat: draft.dropoffLat, lng: draft.dropoffLng }
+                : undefined
+            }
             onBack={handleBack}
             pickupAddress={draft.pickupAddress}
+            pickupCoords={
+              draft.pickupLat && draft.pickupLng
+                ? { lat: draft.pickupLat, lng: draft.pickupLng }
+                : undefined
+            }
             scrollY={scrollY}
           />
 

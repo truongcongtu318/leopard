@@ -32,13 +32,13 @@ export function BookingVehicleSection({
     const iconColor = isSelected ? customerPalette.primary : '#475569';
     switch (id) {
       case 'BIKE_3W':
-        return <IconVehicle3Wheel color={iconColor} size={30} />;
+        return <IconVehicle3Wheel color={iconColor} size={28} />;
       case 'VAN_500KG':
-        return <IconVehicleVan color={iconColor} size={30} />;
+        return <IconVehicleVan color={iconColor} size={28} />;
       case 'TRUCK_125T':
-        return <IconVehicleLightTruck color={iconColor} size={30} />;
+        return <IconVehicleLightTruck color={iconColor} size={28} />;
       case 'TRUCK_25T':
-        return <IconVehicleHeavyTruck color={iconColor} size={30} />;
+        return <IconVehicleHeavyTruck color={iconColor} size={28} />;
     }
   };
 
@@ -64,7 +64,7 @@ export function BookingVehicleSection({
                   pressed && styles.rowPressed,
                 ]}
               >
-                {/* Vehicle Thumbnail Box */}
+                {/* Vehicle Silhouette Box */}
                 <View style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}>
                   {renderVehicleIcon(id, isSelected)}
                 </View>
@@ -87,17 +87,13 @@ export function BookingVehicleSection({
                   <Text style={styles.etaText}>Tài xế đến trong ~{rate.etaMinutes} phút</Text>
                 </View>
 
-                {/* Giá cước & Checkmark */}
-                <View style={styles.priceCol}>
+                {/* Giá cước & Checkmark thẳng hàng */}
+                <View style={styles.rightCol}>
                   <Text style={[styles.priceText, isSelected && styles.priceTextSelected]}>
                     {rate.baseFareVnd.toLocaleString('vi-VN')} đ
                   </Text>
-                  <View style={styles.checkmarkSlot}>
-                    {isSelected ? (
-                      <View style={styles.checkmarkCircle}>
-                        <IconCheck color="#FFFFFF" size={12} />
-                      </View>
-                    ) : null}
+                  <View style={styles.checkSlot}>
+                    {isSelected ? <IconCheck color={customerPalette.primary} size={18} /> : null}
                   </View>
                 </View>
               </Pressable>
@@ -136,7 +132,7 @@ const styles = StyleSheet.create({
   insetGroupedCard: {
     marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
@@ -145,8 +141,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 74,
+    paddingVertical: 14,
+    minHeight: 76,
     backgroundColor: '#FFFFFF',
   },
   vehicleRowSelected: {
@@ -156,10 +152,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.03)',
   },
   vehicleIconBox: {
-    width: 48,
+    width: 52,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: '#F2F2F7',
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -176,7 +172,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   vehicleName: {
     ...typeScale.headline,
@@ -188,10 +184,10 @@ const styles = StyleSheet.create({
     color: customerPalette.primary,
   },
   tagBadge: {
-    backgroundColor: 'rgba(118, 118, 128, 0.1)',
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 6,
     paddingVertical: 1.5,
-    borderRadius: 5,
+    borderRadius: 4,
   },
   tagBadgeSelected: {
     backgroundColor: '#EBF2FA',
@@ -200,7 +196,7 @@ const styles = StyleSheet.create({
     ...typeScale.caption2,
     fontSize: 11,
     fontWeight: '600',
-    color: '#6E6E73',
+    color: '#64748B',
   },
   tagBadgeTextSelected: {
     color: customerPalette.primary,
@@ -208,17 +204,19 @@ const styles = StyleSheet.create({
   specsText: {
     ...typeScale.footnote,
     fontSize: 13,
-    color: '#8E8E93',
+    color: '#64748B',
   },
   etaText: {
     ...typeScale.caption1,
     fontSize: 12,
-    color: '#64748B',
+    color: '#94A3B8',
     marginTop: 2,
   },
-  priceCol: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
+  rightCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
     marginLeft: 8,
   },
   priceText: {
@@ -232,30 +230,20 @@ const styles = StyleSheet.create({
     color: customerPalette.primary,
     fontWeight: '700',
   },
-  checkmarkSlot: {
+  checkSlot: {
     width: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  checkmarkCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: customerPalette.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   separator: {
     height: 0.5,
     backgroundColor: '#E5E5EA',
-    marginLeft: 76,
+    marginLeft: 80,
   },
   footerLinkWrap: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 32,
-    marginTop: 2,
   },
   footerLinkText: {
     ...typeScale.subheadline,

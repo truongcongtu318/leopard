@@ -1,14 +1,15 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeInsets } from '../safe-insets';
 
 import {
+  IconChevronRight,
   customerPalette,
   iosContinuousCurve,
   radius,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
+import { useSafeInsets } from '../safe-insets';
 
 export interface BookingFixedBottomBarProps {
   totalFare: number;
@@ -73,18 +74,18 @@ export function BookingFixedBottomBar({
 
 const styles = StyleSheet.create({
   fixedContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(60, 60, 67, 0.18)',
+    borderTopColor: 'rgba(60, 60, 67, 0.15)',
     paddingHorizontal: 20,
     paddingTop: 12,
-    boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.05)',
+    boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.06)',
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   fareGroup: {
     flexDirection: 'row',
@@ -98,16 +99,17 @@ const styles = StyleSheet.create({
   },
   fareValue: {
     ...typeScale.title2,
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     color: '#000000',
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.3,
   },
   detailsBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    backgroundColor: '#EBF2FA',
-    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
     ...iosContinuousCurve,
   },
   btnPressed: {
@@ -125,11 +127,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 2px 8px rgba(11, 37, 69, 0.25)',
+    boxShadow: '0 4px 12px rgba(11, 37, 69, 0.28)',
     ...iosContinuousCurve,
   },
   ctaButtonDisabled: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#CBD5E1',
     boxShadow: 'none',
   },
   ctaButtonPressed: {

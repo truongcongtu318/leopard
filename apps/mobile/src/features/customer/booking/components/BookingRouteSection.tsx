@@ -26,6 +26,38 @@ export interface BookingRouteSectionProps {
   routeError?: string;
 }
 
+/**
+ * Parses a raw geocoded or user address into clean, Apple HIG 2-tier typography:
+ * Line 1: Main place name or street (e.g. "Kho Tổng Đại Phát" or "Xã Cát Sơn")
+ * Line 2: Detailed ward, district, city (e.g. "120 Song Hành, P. Tân Hưng Thuận, Q.12")
+ */
+export function formatAddressForDisplay(rawAddress: string, defaultName: string): { title: string; subtitle: string } {
+  if (!rawAddress || !rawAddress.trim()) {
+    return { title: defaultName, subtitle: '' };
+  }
+  let clean = rawAddress.trim();
+  // Strip raw plus code prefix if present (e.g. "7P6C3XXG+XQ ")
+  clean = clean.replace(/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,4}\s*,?\s*/i, '');
+
+  if (clean.includes(' - ')) {
+    const parts = clean.split(' - ');
+    return {
+      title: parts[0]?.trim() || defaultName,
+      subtitle: parts.slice(1).join(' - ').trim(),
+    };
+  }
+
+  const commaIndex = clean.indexOf(',');
+  if (commaIndex !== -1) {
+    return {
+      title: clean.slice(0, commaIndex).trim(),
+      subtitle: clean.slice(commaIndex + 1).trim(),
+    };
+  }
+
+  return { title: clean, subtitle: '' };
+}
+
 export function BookingRouteSection({
   pickupAddress,
   dropoffAddress,
@@ -41,6 +73,9 @@ export function BookingRouteSection({
   const isIdentical =
     pickupAddress.trim().length > 0 &&
     pickupAddress.trim().toLowerCase() === dropoffAddress.trim().toLowerCase();
+
+  const pickupParsed = formatAddressForDisplay(pickupAddress, 'Kho VLXD Đại Phát');
+  const dropoffParsed = formatAddressForDisplay(dropoffAddress, 'Điểm giao hàng');
 
   return (
     <View style={styles.container}>
@@ -65,40 +100,53 @@ export function BookingRouteSection({
               </View>
             </View>
             <Text numberOfLines={1} style={styles.addressLine1}>
-              {pickupAddress || 'Chọn điểm lấy hàng'}
+              {pickupParsed.title}
             </Text>
+            {pickupParsed.subtitle ? (
+              <Text numberOfLines={1} style={styles.addressLine2}>
+                {pickupParsed.subtitle}
+              </Text>
+            ) : null}
           </View>
           <IconChevronRight color="#C7C7CC" size={14} />
         </Pressable>
 
         {/* Điểm dừng trung gian (nếu có) */}
-        {stops.map((stop, index) => (
-          <View key={stop.id} style={styles.stopRow}>
-            <View style={styles.indicatorCol}>
-              <View style={styles.orangeHalo}>
-                <View style={styles.orangeInnerDot} />
+        {stops.map((stop, index) => {
+          const stopParsed = formatAddressForDisplay(stop.address, `Điểm dừng ${index + 1}`);
+          return (
+            <View key={stop.id} style={styles.stopRow}>
+              <View style={styles.indicatorCol}>
+                <View style={styles.orangeHalo}>
+                  <View style={styles.orangeInnerDot} />
+                </View>
+                <View style={styles.connectorLine} />
               </View>
-              <View style={styles.connectorLine} />
-            </View>
-            <View style={styles.addressTextCol}>
-              <Text style={styles.stopTypeLabel}>ĐIỂM DỪNG {index + 1}</Text>
-              <Text numberOfLines={1} style={styles.addressLine1}>
-                {stop.address}
-              </Text>
-            </View>
-            <Pressable
-              accessibilityLabel={`Xóa điểm dừng ${index + 1}`}
-              accessibilityRole="button"
-              hitSlop={12}
-              onPress={() => onRemoveStop(stop.id)}
-              style={styles.removeStopBtn}
-            >
-              <View style={styles.removeStopCircle}>
-                <IconClose color="#FFFFFF" size={10} />
+              <View style={styles.addressTextCol}>
+                <Text style={styles.stopTypeLabel}>ĐIỂM DỪNG {index + 1}</Text>
+                <Text numberOfLines={1} style={styles.addressLine1}>
+                  {stopParsed.title}
+                </Text>
+                {stopParsed.subtitle ? (
+                  <Text numberOfLines={1} style={styles.addressLine2}>
+                    {stopParsed.subtitle}
+                  </Text>
+                ) : null}
               </View>
-            </Pressable>
-          </View>
-        ))}
+              <Pressable
+                accessibilityLabel={`Xóa điểm dừng ${index + 1}`}
+                accessibilityRole="button"
+                hitSlop={12}
+                onPress={() => onRemoveStop(stop.id)}
+                style={styles.removeStopBtn}
+              >
+                <View style={styles.removeStopCircle}>
+                  <IconClose color="#FFFFFF" size={10} />
+                </View>
+              </Pressable>
+            </View>
+          );
+        })}
 
         {/* Điểm giao hàng */}
         <Pressable
@@ -114,13 +162,18 @@ export function BookingRouteSection({
           <View style={styles.addressTextCol}>
             <Text style={styles.stopTypeLabel}>ĐIỂM GIAO HÀNG</Text>
             <Text numberOfLines={1} style={styles.addressLine1}>
-              {dropoffAddress || 'Chọn điểm giao hàng'}
+              {dropoffParsed.title}
             </Text>
+            {dropoffParsed.subtitle ? (
+              <Text numberOfLines={1} style={styles.addressLine2}>
+                {dropoffParsed.subtitle}
+              </Text>
+            ) : null}
           </View>
           <IconChevronRight color="#C7C7CC" size={14} />
         </Pressable>
 
-        {/* Hàng "+ Thêm điểm dừng" */}
+        {/* Hàng "Thêm điểm dừng" (Đã bỏ dấu + trùng lặp) */}
         {stops.length < 3 && (
           <View style={styles.addStopWrap}>
             <View style={styles.separator} />
@@ -130,8 +183,10 @@ export function BookingRouteSection({
               onPress={onAddStop}
               style={({ pressed }) => [styles.addStopBtn, pressed && styles.rowPressed]}
             >
-              <IconPlus color={customerPalette.primary} size={15} />
-              <Text style={styles.addStopBtnText}>+ Thêm điểm dừng</Text>
+              <View style={styles.plusCircle}>
+                <IconPlus color={customerPalette.primary} size={14} />
+              </View>
+              <Text style={styles.addStopBtnText}>Thêm điểm dừng</Text>
             </Pressable>
           </View>
         )}
@@ -155,15 +210,15 @@ export function BookingRouteSection({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    marginTop: -20,
+    marginTop: -24,
     zIndex: 10,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
     ...iosContinuousCurve,
   },
   cardError: {
@@ -173,16 +228,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 4,
-    minHeight: 52,
+    minHeight: 56,
   },
   stopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 4,
-    minHeight: 48,
+    minHeight: 52,
   },
   rowPressed: {
     opacity: 0.7,
@@ -193,62 +248,62 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   greenHalo: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: 'rgba(52, 199, 89, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   greenInnerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: '#34C759',
   },
   orangeHalo: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: 'rgba(255, 149, 0, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   orangeInnerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: '#FF9500',
   },
   redHalo: {
-    width: 14,
-    height: 14,
-    borderRadius: 3,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: 'rgba(255, 59, 48, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   redInnerSquare: {
-    width: 6,
-    height: 6,
-    borderRadius: 1.5,
+    width: 7,
+    height: 7,
+    borderRadius: 2,
     backgroundColor: '#FF3B30',
   },
   connectorLine: {
     width: 1.5,
-    height: 28,
-    backgroundColor: '#D1D1D6',
+    height: 32,
+    backgroundColor: '#CBD5E1',
     marginVertical: 2,
   },
   addressTextCol: {
     flex: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
   },
   tagRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   stopTypeLabel: {
     ...typeScale.caption2,
@@ -260,7 +315,7 @@ const styles = StyleSheet.create({
   warehouseTag: {
     backgroundColor: '#E8F5E9',
     paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingVertical: 1.5,
     borderRadius: 4,
   },
   warehouseTagText: {
@@ -275,21 +330,35 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
   },
+  addressLine2: {
+    ...typeScale.subheadline,
+    fontSize: 13,
+    color: '#8E8E93',
+    marginTop: 2,
+  },
   separator: {
     height: 0.5,
     backgroundColor: '#E5E5EA',
-    marginLeft: 36,
+    marginLeft: 38,
   },
   addStopWrap: {
-    marginTop: 2,
+    marginTop: 4,
   },
   addStopBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     paddingVertical: 10,
-    paddingLeft: 36,
+    paddingLeft: 38,
     minHeight: 44,
+  },
+  plusCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#EBF2FA',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addStopBtnText: {
     ...typeScale.subheadline,
@@ -315,7 +384,7 @@ const styles = StyleSheet.create({
     ...typeScale.footnote,
     fontSize: 13,
     color: '#8E8E93',
-    marginTop: 8,
+    marginTop: 10,
     paddingHorizontal: 8,
     textAlign: 'center',
   },

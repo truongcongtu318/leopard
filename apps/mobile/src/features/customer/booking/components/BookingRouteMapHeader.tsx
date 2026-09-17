@@ -6,21 +6,23 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeInsets } from '../safe-insets';
 
 import {
   IconChevronLeft,
-  RouteMapSchematic,
+  RealInteractiveMap,
   customerPalette,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
+import { useSafeInsets } from '../safe-insets';
 
 export interface BookingRouteMapHeaderProps {
   onBack: () => void;
   scrollY?: Animated.Value;
   pickupAddress: string;
   dropoffAddress: string;
+  pickupCoords?: { lat: number; lng: number };
+  dropoffCoords?: { lat: number; lng: number };
 }
 
 export function BookingRouteMapHeader({
@@ -28,6 +30,8 @@ export function BookingRouteMapHeader({
   scrollY,
   pickupAddress,
   dropoffAddress,
+  pickupCoords,
+  dropoffCoords,
 }: BookingRouteMapHeaderProps) {
   const insets = useSafeInsets();
   const topInset = insets.top || 44;
@@ -51,11 +55,20 @@ export function BookingRouteMapHeader({
 
   return (
     <View style={styles.container}>
-      {/* 180pt Route Map Background */}
+      {/* 190pt Clean Route Map Background without bulky ledger */}
       <View style={styles.mapWrap}>
-        <RouteMapSchematic
-          destinationLabel={dropoffAddress}
-          originLabel={pickupAddress}
+        <RealInteractiveMap
+          destination={{
+            label: dropoffAddress,
+            coords: dropoffCoords || { lat: 10.7325, lng: 106.7351 },
+          }}
+          height="100%"
+          interactive={false}
+          mode="route"
+          origin={{
+            label: pickupAddress,
+            coords: pickupCoords || { lat: 10.8421, lng: 106.6192 },
+          }}
         />
       </View>
 
@@ -93,21 +106,22 @@ export function BookingRouteMapHeader({
 
 const styles = StyleSheet.create({
   container: {
-    height: 190,
+    height: 195,
     width: '100%',
     position: 'relative',
     backgroundColor: '#E2E8F0',
+    overflow: 'hidden',
   },
   mapWrap: {
     ...StyleSheet.absoluteFill,
-    height: 190,
+    height: 195,
   },
   navBarOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
     borderBottomWidth: 0.5,
     borderBottomColor: 'rgba(60, 60, 67, 0.18)',
     zIndex: 10,
@@ -127,10 +141,10 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
   },
   btnPressed: {
     opacity: 0.85,
