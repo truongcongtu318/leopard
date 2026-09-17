@@ -382,9 +382,10 @@ export default function CustomerHomePage() {
       onOpenProfile={() => router.push('/customer/profile')}
       onOpenQrScan={() => router.push('/customer/wallet')}
       onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
+      onPressSearchAddress={() => router.push('/customer/search-address')}
       onQuickBook={(pickup, dropoff, dropoffCoords, pickupCoords) => {
         router.push({
-          pathname: '/customer/orders/new',
+          pathname: '/customer/booking',
           params: {
             pickup,
             dropoff,

@@ -345,6 +345,7 @@ export type HomeDashboardScreenProps = Readonly<{
     vehicleName: string;
     fleetVehicleId?: FleetVehicleCategory;
   }) => void;
+  onPressSearchAddress?: () => void;
   onOpenSavedAddresses?: () => void;
   onNavigateTab?: (tab: TabKey) => void;
   onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
@@ -366,7 +367,7 @@ export function HomeDashboardScreen({
   activeShipment = null, defaultDropoffLocation, defaultPickupLabel, defaultPickupLocation,
   initialCargoImageUri = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80', nearbyDrivers: nearbyDriversProp,
   onConfirmBooking, onCreateOrder, onNavigateTab, onOpenActiveOrder, onOpenChat, onOpenNotifications,
-  onOpenOrder, onOpenSavedAddresses, onQuickBook, onRegisterDriver, onSelectSavedAddress,
+  onOpenOrder, onOpenSavedAddresses, onPressSearchAddress, onQuickBook, onRegisterDriver, onSelectSavedAddress,
   onSelectVehicleAndBook, onSwitchRole, onViewAllOrders, recentOrders = [],
   savedAddresses, hasFloatingNavBar = true, showFloatingNavBar = false, smeName = 'Cửa hàng VLXD Đại Phát',
   unreadMessages = 0, unreadNotifications = 3, userName = 'Anh Hoàng', userPhone,
@@ -898,8 +899,12 @@ export function HomeDashboardScreen({
                   accessibilityLabel="Tìm kiếm địa chỉ giao hàng"
                   onPress={() => {
                     haptic.light();
-                    setIsBookingSheetOpen(true);
-                    setFocusedField('dropoff');
+                    if (onPressSearchAddress) {
+                      onPressSearchAddress();
+                    } else {
+                      setIsBookingSheetOpen(true);
+                      setFocusedField('dropoff');
+                    }
                   }}
                   style={styles.heroSearchPill}
                   testID="hero-search-pill"
@@ -914,7 +919,11 @@ export function HomeDashboardScreen({
                       autoCorrect={false}
                       onChangeText={handleDropoffChangeText}
                       onFocus={() => {
-                        setFocusedField('dropoff');
+                        if (onPressSearchAddress) {
+                          onPressSearchAddress();
+                        } else {
+                          setFocusedField('dropoff');
+                        }
                       }}
                       onSubmitEditing={() => {
                         if (pickupText.trim().length >= 3 && dropoffText.trim().length >= 3) {
