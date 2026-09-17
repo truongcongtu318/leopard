@@ -11,15 +11,7 @@ import {
 } from 'react-native';
 
 import {
-  colors,
-  customerPalette,
-  layout,
-  leopardPalette,
-  radius,
-  spacing,
-  typography,
   Button,
-  FormField,
   IconAlertTriangle,
   IconChevron,
   IconClose,
@@ -27,6 +19,13 @@ import {
   IconPhone,
   IconSecurityShield,
   ScreenScaffold,
+  colors,
+  customerPalette,
+  haptic,
+  iosContinuousCurve,
+  layout,
+  radius,
+  spacing,
   typeScale,
 } from '@leopard/mobile-core';
 
@@ -62,24 +61,18 @@ const faqs: FaqItem[] = [
 export function SupportSosScreen() {
   const router = useRouter();
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
-  const [feedbackText, setFeedbackText] = useState('');
-  const [feedbackSent, setFeedbackSent] = useState(false);
 
   // Legal Modal state
   const [legalModalTitle, setLegalModalTitle] = useState<string | null>(null);
   const [legalModalContent, setLegalModalContent] = useState<string | null>(null);
 
   const handleCallHotline = () => {
+    haptic.selection();
     Linking.openURL('tel:19006868');
   };
 
-  const handleSendFeedback = () => {
-    if (!feedbackText.trim()) return;
-    setFeedbackSent(true);
-    setFeedbackText('');
-  };
-
   const openTerms = () => {
+    haptic.selection();
     setLegalModalTitle('Điều khoản dịch vụ vận chuyển LEOPARD');
     setLegalModalContent(
       '1. QUY ĐỊNH CHUNG\nLEOPARD cung cấp nền tảng công nghệ kết nối vận tải giữa Người gửi hàng (Khách hàng B2B/Cá nhân) và Đối tác tài xế có đầy đủ giấy phép kinh doanh vận tải.\n\n2. TRÁCH NHIỆM BẢO HIỂM HÀNG HÓA\nMọi chuyến hàng trên nền tảng LEOPARD đều được bảo hiểm trách nhiệm hàng hóa tự động lên đến 50.000.000 ₫ cho các rủi ro va chạm, hư hỏng trong quá trình vận chuyển.\n\n3. ĐỐI SOÁT CÔNG NỢ B2B\nDoanh nghiệp sử dụng hạn mức tín dụng B2B thực hiện đối soát tự động vào ngày 25 hàng tháng và thanh toán chậm nhất vào ngày 30 (kỳ T+30).'
@@ -87,6 +80,7 @@ export function SupportSosScreen() {
   };
 
   const openPrivacy = () => {
+    haptic.selection();
     setLegalModalTitle('Chính sách bảo mật & Quyền riêng tư');
     setLegalModalContent(
       '1. THU THẬP VÀ SỬ DỤNG DỮ LIỆU\nLEOPARD cam kết thu thập tối thiểu thông tin cần thiết phục vụ vận chuyển: Tọa độ điểm giao nhận, số điện thoại liên lạc người gửi/nhận, mã số thuế doanh nghiệp để xuất hóa đơn VAT.\n\n2. BẢO MẬT DỮ LIỆU ĐỊA ĐIỂM\nDữ liệu vị trí thời gian thực (GPS tracking) chỉ được kích hoạt trong thời gian chuyến xe đang vận hành và tự động ngừng chia sẻ khi cuốc xe hoàn tất.\n\n3. QUYỀN XÓA TÀI KHOẢN (APPLE GUIDELINE 5.1.1)\nNgười dùng có quyền yêu cầu xóa vĩnh viễn tài khoản và toàn bộ dữ liệu cá nhân tại mục Cài đặt > Bảo mật tài khoản bất kỳ lúc nào.'
@@ -95,151 +89,155 @@ export function SupportSosScreen() {
 
   return (
     <ScreenScaffold
+      hasFloatingNavBar
+      headerTone="plain"
       onBack={() => router.back()}
-      subtitle="Tổng đài hỗ trợ vận hành, trợ giúp khẩn cấp và giải đáp thắc mắc."
       title="Trợ giúp & SOS"
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 1. HOTLINE CARD (DOUBLE-BEZEL) */}
-        <View style={styles.hotlineCardOuter}>
-          <View style={styles.hotlineCardInner}>
-            <View style={styles.hotlineLeft}>
-              <View style={styles.hotlineIconBox}>
-                <IconPhone color={customerPalette.surfaceWhite} size={22} />
-              </View>
-              <View>
-                <Text style={styles.hotlineLabel}>TỔNG ĐÀI HỖ TRỢ 24/7</Text>
-                <Text style={styles.hotlineNumber}>1900 6868</Text>
-              </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── 1. HOTLINE 24/7 HERO CARD ── */}
+        <View style={styles.hotlineCard}>
+          <View style={styles.hotlineHeader}>
+            <View style={styles.hotlineBadge}>
+              <View style={styles.livePulseDot} />
+              <Text style={styles.hotlineBadgeText}>Trực tuyến 24/7</Text>
             </View>
-            <Pressable
-              accessibilityLabel="Gọi hotline tổng đài 1900 6868"
-              accessibilityRole="button"
-              onPress={handleCallHotline}
-              style={({ pressed }) => [styles.callBtn, pressed ? styles.pressed : null]}
-            >
-              <Text style={styles.callBtnText}>Gọi ngay</Text>
-            </Pressable>
+            <View style={styles.hotlineIconBadge}>
+              <IconPhone color="#FFFFFF" size={16} />
+            </View>
           </View>
+
+          <View style={styles.hotlineBody}>
+            <Text style={styles.hotlineTitle}>Tổng đài điều hành</Text>
+            <Text style={styles.hotlineNumber}>1900 6868</Text>
+            <Text style={styles.hotlineDesc}>Hỗ trợ xử lý đơn hàng, điều phối xe và cước phí</Text>
+          </View>
+
+          <Pressable
+            accessibilityLabel="Gọi hotline tổng đài 1900 6868"
+            accessibilityRole="button"
+            onPress={handleCallHotline}
+            style={({ pressed }) => [styles.callActionBtn, pressed ? styles.actionPressed : null]}
+          >
+            <IconPhone color="#FFFFFF" size={16} />
+            <Text style={styles.callActionBtnText}>Gọi ngay</Text>
+          </Pressable>
         </View>
 
-        {/* 2. SOS EMERGENCY CARD (DOUBLE-BEZEL) */}
-        <View style={styles.sosCardOuter}>
-          <View style={styles.sosCardInner}>
-            <View style={styles.sosHeaderRow}>
-              <View style={styles.sosIconBox}>
-                <IconAlertTriangle color={colors.danger.text} size="md" />
-              </View>
+        {/* ── 2. SOS EMERGENCY ACTION (COMPACT) ── */}
+        <View style={styles.sosCard}>
+          <View style={styles.sosRow}>
+            <View style={styles.sosIconBadge}>
+              <IconAlertTriangle color={colors.danger.text} size="md" />
+            </View>
+            <View style={styles.sosContentCol}>
               <Text style={styles.sosTitle}>Báo cáo khẩn cấp (SOS)</Text>
+              <Text style={styles.sosDesc}>
+                Hỗ trợ xử lý tai nạn, va chạm hoặc sự cố nghiêm trọng trên đường.
+              </Text>
             </View>
-            <Text style={styles.sosDesc}>
-              Dành cho các trường hợp tai nạn, tranh chấp nghiêm trọng trên đường hoặc sự cố khẩn cấp cần can thiệp ngay lập tức từ điều phối viên LEOPARD.
-            </Text>
-            <Button
-              label="Kích hoạt trợ giúp SOS khẩn cấp"
-              onPress={handleCallHotline}
-              variant="destructive"
-            />
+          </View>
+
+          <Pressable
+            accessibilityLabel="Kích hoạt trợ giúp SOS khẩn cấp"
+            accessibilityRole="button"
+            onPress={handleCallHotline}
+            style={({ pressed }) => [styles.sosActionBtn, pressed ? styles.actionPressed : null]}
+          >
+            <IconAlertTriangle color="#FFFFFF" size={16} />
+            <Text style={styles.sosActionBtnText}>Kích hoạt trợ giúp SOS khẩn cấp</Text>
+          </Pressable>
+        </View>
+
+        {/* ── 3. FAQ ACCORDION (APPLE INSET GROUPED TABLE) ── */}
+        <View style={styles.sectionGroup}>
+          <Text style={styles.sectionLabel}>Câu hỏi thường gặp</Text>
+          <View style={styles.groupedCard}>
+            {faqs.map((faq, index) => {
+              const isExpanded = expandedFaq === faq.id;
+              const isLast = index === faqs.length - 1;
+              return (
+                <View key={faq.id}>
+                  <Pressable
+                    accessibilityLabel={faq.q}
+                    accessibilityRole="button"
+                    onPress={() => {
+                      haptic.selection();
+                      setExpandedFaq(isExpanded ? null : faq.id);
+                    }}
+                    style={({ pressed }) => [
+                      styles.faqRow,
+                      isExpanded ? styles.faqRowActive : null,
+                      pressed ? styles.rowPressed : null,
+                    ]}
+                  >
+                    <View style={styles.faqHeader}>
+                      <Text style={[styles.faqQuestion, isExpanded ? styles.faqQuestionActive : null]}>
+                        {faq.q}
+                      </Text>
+                      <IconChevron
+                        color={isExpanded ? customerPalette.primary : '#94A3B8'}
+                        direction={isExpanded ? 'up' : 'down'}
+                        size="sm"
+                      />
+                    </View>
+                    {isExpanded ? (
+                      <View style={styles.faqAnswerContainer}>
+                        <Text style={styles.faqAnswer}>{faq.a}</Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                  {!isLast && <View style={styles.rowDivider} />}
+                </View>
+              );
+            })}
           </View>
         </View>
 
-        {/* 3. FAQ ACCORDION (DOUBLE-BEZEL CARDS) */}
-        <Text style={styles.sectionLabel}>CÂU HỎI THƯỜNG GẶP (FAQ)</Text>
-        <View style={styles.faqList}>
-          {faqs.map((faq) => {
-            const isExpanded = expandedFaq === faq.id;
-            return (
-              <View key={faq.id} style={styles.doubleBezelOuter}>
-                <Pressable
-                  accessibilityLabel={faq.q}
-                  accessibilityRole="button"
-                  onPress={() => setExpandedFaq(isExpanded ? null : faq.id)}
-                  style={styles.faqCardInner}
-                >
-                  <View style={styles.faqHeader}>
-                    <Text style={styles.faqQuestion}>{faq.q}</Text>
-                    <IconChevron
-                      color={colors.neutral.subtleText}
-                      direction={isExpanded ? 'up' : 'down'}
-                      size="sm"
-                    />
-                  </View>
-                  {isExpanded ? <Text style={styles.faqAnswer}>{faq.a}</Text> : null}
-                </Pressable>
-              </View>
-            );
-          })}
-        </View>
-
-        {/* 4. TERMS OF SERVICE & PRIVACY POLICY (DOUBLE-BEZEL CARD) */}
-        <Text style={styles.sectionLabel}>ĐIỀU KHOẢN DỊCH VỤ & CHÍNH SÁCH BẢO MẬT</Text>
-        <View style={styles.doubleBezelOuter}>
-          <View style={styles.legalCardInner}>
+        {/* ── 4. LEGAL & PRIVACY POLICIES ── */}
+        <View style={styles.sectionGroup}>
+          <Text style={styles.sectionLabel}>Điều khoản dịch vụ & chính sách bảo mật</Text>
+          <View style={styles.groupedCard}>
             <Pressable
               accessibilityLabel="Xem Điều khoản dịch vụ vận chuyển"
               accessibilityRole="button"
               onPress={openTerms}
-              style={styles.legalRow}
+              style={({ pressed }) => [styles.legalRow, pressed ? styles.rowPressed : null]}
             >
               <View style={styles.legalRowLeft}>
-                <View style={styles.legalIconBox}>
-                  <IconFileText color={colors.brand.primary} size={18} />
+                <View style={[styles.legalIconBadge, { backgroundColor: customerPalette.primaryBg }]}>
+                  <IconFileText color={customerPalette.primary} size={18} />
                 </View>
                 <View style={styles.legalTextCol}>
                   <Text style={styles.legalTitle}>Điều khoản dịch vụ vận chuyển LEOPARD</Text>
                   <Text style={styles.legalSubtitle}>Quy định quyền lợi, trách nhiệm bảo hiểm & cước phí</Text>
                 </View>
               </View>
-              <IconChevron color={colors.neutral.subtleText} direction="right" size="md" />
+              <IconChevron color="#CBD5E1" direction="right" size="sm" />
             </Pressable>
 
-            <View style={styles.legalDivider} />
+            <View style={styles.rowDividerIndent} />
 
             <Pressable
               accessibilityLabel="Xem Chính sách bảo mật dữ liệu"
               accessibilityRole="button"
               onPress={openPrivacy}
-              style={styles.legalRow}
+              style={({ pressed }) => [styles.legalRow, pressed ? styles.rowPressed : null]}
             >
               <View style={styles.legalRowLeft}>
-                <View style={styles.legalIconBox}>
-                  <IconSecurityShield color={colors.brand.primary} size={18} />
+                <View style={[styles.legalIconBadge, { backgroundColor: customerPalette.primaryBg }]}>
+                  <IconSecurityShield color={customerPalette.primary} size={18} />
                 </View>
                 <View style={styles.legalTextCol}>
                   <Text style={styles.legalTitle}>Chính sách bảo mật & Quyền riêng tư</Text>
                   <Text style={styles.legalSubtitle}>Bảo mật vị trí GPS & Tiêu chuẩn Apple Guideline 5.1.1</Text>
                 </View>
               </View>
-              <IconChevron color={colors.neutral.subtleText} direction="right" size="md" />
+              <IconChevron color="#CBD5E1" direction="right" size="sm" />
             </Pressable>
-          </View>
-        </View>
-
-        {/* 5. FEEDBACK SECTION (DOUBLE-BEZEL CARD) */}
-        <Text style={styles.sectionLabel}>GỬI Ý KIẾN ĐÓNG GÓP</Text>
-        <View style={styles.doubleBezelOuter}>
-          <View style={styles.feedbackCardInner}>
-            {feedbackSent ? (
-              <View style={styles.feedbackSuccess}>
-                <IconSecurityShield color={colors.success.text} size={20} />
-                <Text style={styles.feedbackSuccessText}>Cảm ơn bạn đã gửi đóng góp ý kiến!</Text>
-              </View>
-            ) : (
-              <>
-                <FormField
-                  label="Nội dung ý kiến hoặc yêu cầu hỗ trợ"
-                  multiline
-                  onChangeText={setFeedbackText}
-                  placeholder="Nhập thông tin chi tiết bạn cần hỗ trợ..."
-                  value={feedbackText}
-                />
-                <Button
-                  disabled={!feedbackText.trim()}
-                  label="Gửi phản hồi"
-                  onPress={handleSendFeedback}
-                />
-              </>
-            )}
           </View>
         </View>
       </ScrollView>
@@ -252,33 +250,31 @@ export function SupportSosScreen() {
         visible={Boolean(legalModalTitle)}
       >
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalCardOuter}>
-            <View style={styles.modalCardInner}>
-              <View style={styles.modalHeaderRow}>
-                <Text numberOfLines={1} style={styles.modalHeading}>
-                  {legalModalTitle}
-                </Text>
-                <Pressable
-                  accessibilityLabel="Đóng"
-                  accessibilityRole="button"
-                  hitSlop={8}
-                  onPress={() => setLegalModalTitle(null)}
-                  style={styles.modalCloseBtn}
-                >
-                  <IconClose color={customerPalette.textMutedSlate} size="md" />
-                </Pressable>
-              </View>
-
-              <ScrollView style={styles.modalScrollBody}>
-                <Text style={styles.modalContentText}>{legalModalContent}</Text>
-              </ScrollView>
-
-              <Button
-                label="Đã hiểu"
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeaderRow}>
+              <Text numberOfLines={1} style={styles.modalHeading}>
+                {legalModalTitle}
+              </Text>
+              <Pressable
+                accessibilityLabel="Đóng"
+                accessibilityRole="button"
+                hitSlop={8}
                 onPress={() => setLegalModalTitle(null)}
-                variant="secondary"
-              />
+                style={styles.modalCloseBtn}
+              >
+                <IconClose color="#64748B" size="md" />
+              </Pressable>
             </View>
+
+            <ScrollView style={styles.modalScrollBody}>
+              <Text style={styles.modalContentText}>{legalModalContent}</Text>
+            </ScrollView>
+
+            <Button
+              label="Đã hiểu"
+              onPress={() => setLegalModalTitle(null)}
+              variant="secondary"
+            />
           </View>
         </View>
       </Modal>
@@ -289,162 +285,255 @@ export function SupportSosScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: layout.bottomNavClearance + 20,
+    paddingHorizontal: 0,
+    paddingVertical: spacing.xs,
+    paddingBottom: layout.bottomNavClearance + 44,
   },
-  pressed: {
-    opacity: 0.8,
+  rowPressed: {
+    backgroundColor: '#F8FAFC',
   },
-  sectionLabel: {
-    color: colors.brand.background,
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.4,
-    marginTop: spacing.xxs,
+  actionPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
-  doubleBezelOuter: {
-    backgroundColor: 'rgba(11, 30, 66, 0.04)',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 24,
+
+  /* ── 1. Hotline Hero Card ── */
+  hotlineCard: {
+    backgroundColor: customerPalette.primary,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    padding: 6,
+    gap: spacing.sm,
+    padding: spacing.md,
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  /* 1. Hotline */
-  hotlineCardOuter: {
-    backgroundColor: 'rgba(15, 23, 42, 0.08)',
-    borderColor: 'rgba(15, 23, 42, 0.15)',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 6,
-  },
-  hotlineCardInner: {
+  hotlineHeader: {
     alignItems: 'center',
-    backgroundColor: colors.operational.ink,
-    borderRadius: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: spacing.md,
   },
-  hotlineLeft: {
+  hotlineBadge: {
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: radius.pill,
+    borderWidth: 1,
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
-  hotlineIconBox: {
+  livePulseDot: {
+    backgroundColor: '#34C759',
+    borderRadius: 999,
+    height: 6,
+    width: 6,
+  },
+  hotlineBadgeText: {
+    color: '#E2E8F0',
+    ...typeScale.caption2,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  hotlineIconBadge: {
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 12,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  hotlineLabel: {
-    color: colors.operational.inkMuted,
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  hotlineNumber: {
-    color: colors.brand.softBackground,
-    fontSize: 20,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-  },
-  callBtn: {
-    alignItems: 'center',
-    backgroundColor: leopardPalette.ecoGreen,
-    borderRadius: 12,
-    height: 44,
-    justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 84,
-    paddingHorizontal: 16,
-  },
-  callBtnText: {
-    color: customerPalette.surfaceWhite,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '600',
-  },
-  /* 2. SOS Emergency */
-  sosCardOuter: {
-    backgroundColor: 'rgba(239, 68, 68, 0.06)',
-    borderColor: 'rgba(239, 68, 68, 0.25)',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 6,
-  },
-  sosCardInner: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.danger.border,
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.md,
-  },
-  sosHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  sosIconBox: {
-    alignItems: 'center',
-    backgroundColor: colors.danger.background,
-    borderRadius: 8,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     height: 32,
     justifyContent: 'center',
     width: 32,
   },
+  hotlineBody: {
+    gap: 2,
+  },
+  hotlineTitle: {
+    color: '#94A3B8',
+    ...typeScale.caption1,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  hotlineNumber: {
+    color: '#FFFFFF',
+    ...typeScale.title2,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  hotlineDesc: {
+    color: '#CBD5E1',
+    ...typeScale.footnote,
+    lineHeight: 18,
+  },
+  callActionBtn: {
+    alignItems: 'center',
+    backgroundColor: '#34C759',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    height: 44,
+    justifyContent: 'center',
+    marginTop: spacing.xxs,
+    shadowColor: '#34C759',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  callActionBtnText: {
+    color: '#FFFFFF',
+    ...typeScale.subheadline,
+    fontWeight: '700',
+  },
+
+  /* ── 2. SOS Emergency Action (Compact) ── */
+  sosCard: {
+    backgroundColor: '#FFF1F2',
+    borderColor: '#FFE4E6',
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
+    shadowColor: '#E11D48',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  sosRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  sosIconBadge: {
+    alignItems: 'center',
+    backgroundColor: '#FFE4E6',
+    borderColor: '#FECDD3',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  sosContentCol: {
+    flex: 1,
+    gap: 2,
+  },
   sosTitle: {
     color: colors.danger.text,
-    fontSize: 15,
-    fontWeight: '600',
+    ...typeScale.subheadline,
+    fontWeight: '700',
   },
   sosDesc: {
-    color: colors.neutral.text,
-    fontSize: typeScale.footnote.fontSize,
-    lineHeight: 18,
-    marginBottom: 4,
+    color: '#64748B',
+    ...typeScale.caption1,
+    lineHeight: 16,
   },
-  /* 3. FAQ */
-  faqList: {
+  sosActionBtn: {
+    alignItems: 'center',
+    backgroundColor: colors.danger.text,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    height: 44,
+    justifyContent: 'center',
+    shadowColor: colors.danger.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  sosActionBtnText: {
+    color: '#FFFFFF',
+    ...typeScale.subheadline,
+    fontWeight: '700',
+  },
+
+  /* ── Section Groups ── */
+  sectionGroup: {
     gap: spacing.xs,
   },
-  faqCardInner: {
-    backgroundColor: colors.neutral.background,
-    borderRadius: 18,
+  sectionLabel: {
+    color: customerPalette.textMutedSlate,
+    ...typeScale.footnote,
+    fontWeight: '600',
+    letterSpacing: 0.1,
+    paddingHorizontal: spacing.xxs,
+  },
+
+  /* Inset Grouped Card */
+  groupedCard: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+
+  /* FAQ Row */
+  faqRow: {
     gap: spacing.xs,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  faqRowActive: {
+    backgroundColor: '#F8FAFC',
   },
   faqHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   faqQuestion: {
-    color: colors.neutral.titleText,
+    color: customerPalette.textSlateDark,
     flex: 1,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
-    paddingRight: 8,
+  },
+  faqQuestionActive: {
+    color: customerPalette.primary,
+  },
+  faqAnswerContainer: {
+    borderLeftColor: customerPalette.cardBorder,
+    borderLeftWidth: 2,
+    marginLeft: spacing.xxs,
+    marginTop: spacing.xxs,
+    paddingLeft: spacing.sm,
   },
   faqAnswer: {
-    color: colors.neutral.text,
-    fontSize: 13,
+    color: '#475569',
+    ...typeScale.footnote,
     lineHeight: 18,
-    marginTop: 4,
   },
-  /* 4. Legal */
-  legalCardInner: {
-    backgroundColor: colors.neutral.background,
-    borderRadius: 18,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+  rowDivider: {
+    backgroundColor: '#F1F5F9',
+    height: 1,
+    marginLeft: spacing.md,
   },
+
+  /* Legal Row */
   legalRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 52,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   legalRowLeft: {
     alignItems: 'center',
@@ -453,76 +542,55 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingRight: spacing.sm,
   },
-  legalIconBox: {
+  legalIconBadge: {
     alignItems: 'center',
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: 8,
-    height: 36,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    height: 38,
     justifyContent: 'center',
-    width: 36,
+    width: 38,
   },
   legalTextCol: {
     flex: 1,
+    gap: 2,
   },
   legalTitle: {
     color: colors.neutral.titleText,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   legalSubtitle: {
-    color: colors.neutral.subtleText,
-    fontSize: typeScale.caption1.fontSize,
-    marginTop: 2,
+    color: customerPalette.textMutedSlate,
+    ...typeScale.caption1,
+    lineHeight: 16,
   },
-  legalDivider: {
-    backgroundColor: colors.neutral.rowDivider,
+  rowDividerIndent: {
+    backgroundColor: '#F1F5F9',
     height: 1,
+    marginLeft: 62,
   },
-  /* 5. Feedback */
-  feedbackCardInner: {
-    backgroundColor: colors.neutral.background,
-    borderRadius: 18,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  feedbackSuccess: {
-    alignItems: 'center',
-    backgroundColor: colors.success.background,
-    borderColor: colors.success.border,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    padding: spacing.md,
-  },
-  feedbackSuccessText: {
-    color: colors.success.text,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '600',
-  },
-  /* Modal */
+
+  /* Legal Modal */
   modalBackdrop: {
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     flex: 1,
     justifyContent: 'center',
     padding: spacing.md,
   },
-  modalCardOuter: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: 'rgba(11, 30, 66, 0.1)',
-    borderRadius: 24,
-    borderWidth: 1,
-    maxHeight: '80%',
-    maxWidth: 500,
-    padding: 6,
-    width: '100%',
-  },
-  modalCardInner: {
-    backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 18,
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.modal,
+    ...iosContinuousCurve,
     gap: spacing.md,
-    padding: spacing.md,
+    maxHeight: '80%',
+    padding: spacing.lg,
+    width: '100%',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   modalHeaderRow: {
     alignItems: 'center',
@@ -532,25 +600,25 @@ const styles = StyleSheet.create({
   modalHeading: {
     color: colors.neutral.titleText,
     flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    paddingRight: 8,
+    ...typeScale.headline,
+    fontWeight: '700',
+    paddingRight: spacing.sm,
   },
   modalCloseBtn: {
     alignItems: 'center',
-    borderRadius: 22,
-    height: 44,
+    backgroundColor: '#F1F5F9',
+    borderRadius: radius.pill,
+    height: 32,
     justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 44,
-    width: 44,
+    width: 32,
   },
   modalScrollBody: {
-    maxHeight: 300,
+    maxHeight: 320,
   },
   modalContentText: {
-    color: customerPalette.textSlateDark,
-    fontSize: 13,
-    lineHeight: 20,
+    color: '#334155',
+    ...typeScale.body,
+    fontSize: 14,
+    lineHeight: 22,
   },
 });

@@ -118,3 +118,4 @@ cypress/videos/
 apps/admin/CLAUDE.md
 apps/admin/AGENTS.md
 design-preview/
+output/

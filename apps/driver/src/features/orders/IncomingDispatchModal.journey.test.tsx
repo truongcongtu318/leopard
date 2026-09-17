@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { colors } from '@leopard/mobile-core';
 import { IncomingDispatchModal } from './IncomingDispatchModal';
 
 describe('IncomingDispatchModal Journey & HIG Compliance (States 1, 2, 11)', () => {
@@ -42,7 +43,7 @@ describe('IncomingDispatchModal Journey & HIG Compliance (States 1, 2, 11)', () 
       />
     );
     const progressBar = screen.getByTestId('countdown-progress-bar');
-    expect(progressBar).toHaveStyle({ backgroundColor: '#FF3B30' });
+    expect(progressBar).toHaveStyle({ backgroundColor: colors.danger.text });
     expect(screen.getByText(/4s/)).toBeTruthy();
   });
 

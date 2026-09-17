@@ -164,9 +164,9 @@ describe('CustomerWalletScreen', () => {
 
     // Header & Escrow pool card
     expect(screen.getByText('Lịch sử ký quỹ & thanh toán')).toBeTruthy();
-    expect(screen.getByText('Ký quỹ đảm bảo LEOPARD')).toBeTruthy();
+    expect(screen.getByText('Ký quỹ an toàn')).toBeTruthy();
     expect(screen.getByText('Bảo đảm 100%')).toBeTruthy();
-    expect(screen.getByText('TỔNG ĐÃ KÝ QUỸ THEO ĐƠN')).toBeTruthy();
+    expect(screen.getByText('Tổng tiền ký quỹ theo đơn')).toBeTruthy();
 
     // Verify fake wallet elements are GONE
     expect(screen.queryByText('Ví VietQR LEOPARD')).toBeNull();

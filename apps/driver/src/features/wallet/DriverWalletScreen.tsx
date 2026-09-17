@@ -94,19 +94,9 @@ export function DriverWalletScreen({
 
   return (
     <ScreenScaffold
-      headerRight={
-        <Pressable
-          accessibilityLabel="Trợ giúp"
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => router.push('/chat')}
-          style={styles.headerActionBtn}
-        >
-          <IconSupport247 color={driverPrimitives.colors.gray700} size={20} />
-        </Pressable>
-      }
       headerTone="plain"
       onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
+      stickyFooterBleed
       stickyFooter={
         <FinanceBottomBar activeTab="wallet" onNavigate={(r) => router.push(r as never)} />
       }

@@ -325,7 +325,20 @@ export class DriversRepository {
           where: { order: { driverId }, comment: { not: null } },
           orderBy: { createdAt: 'desc' },
           take: 10,
-          select: { id: true, orderId: true, rating: true, comment: true, createdAt: true },
+          select: {
+            id: true,
+            orderId: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+              },
+            },
+          },
         }),
       ]);
 

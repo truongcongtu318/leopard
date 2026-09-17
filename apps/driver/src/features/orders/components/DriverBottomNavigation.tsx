@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  colors,
   driverPrimitives,
   IconHome,
   IconOrders,
@@ -34,7 +35,7 @@ const NAV_ITEMS: readonly DriverNavItem[] = [
     route: '/orders',
     icon: (active) => (
       <IconHome
-        color={active ? driverPrimitives.colors.green500 : driverPrimitives.colors.gray500}
+        color={active ? colors.brand.primary : driverPrimitives.colors.gray500}
         filled={active}
         size={22}
       />
@@ -47,7 +48,7 @@ const NAV_ITEMS: readonly DriverNavItem[] = [
     route: '/board',
     icon: (active) => (
       <IconOrders
-        color={active ? driverPrimitives.colors.green500 : driverPrimitives.colors.gray500}
+        color={active ? colors.brand.primary : driverPrimitives.colors.gray500}
         filled={active}
         size={22}
       />
@@ -60,7 +61,8 @@ const NAV_ITEMS: readonly DriverNavItem[] = [
     route: '/earnings',
     icon: (active) => (
       <IconWallet
-        color={active ? driverPrimitives.colors.green500 : driverPrimitives.colors.gray500}
+        color={active ? colors.brand.primary : driverPrimitives.colors.gray500}
+        filled={active}
         size={22}
       />
     ),
@@ -72,7 +74,7 @@ const NAV_ITEMS: readonly DriverNavItem[] = [
     route: '/profile',
     icon: (active) => (
       <IconUser
-        color={active ? driverPrimitives.colors.green500 : driverPrimitives.colors.gray500}
+        color={active ? colors.brand.primary : driverPrimitives.colors.gray500}
         filled={active}
         size={22}
       />
@@ -171,7 +173,7 @@ const styles = StyleSheet.create({
     width: 28,
   },
   iconWrapActive: {
-    backgroundColor: driverPrimitives.colors.green50,
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
   },
   navLabel: {
     color: driverPrimitives.colors.gray500,
@@ -180,7 +182,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   navLabelActive: {
-    color: driverPrimitives.colors.green500,
+    color: colors.brand.primary,
     fontWeight: '700',
   },
   pressed: {

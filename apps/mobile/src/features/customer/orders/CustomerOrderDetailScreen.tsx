@@ -1647,11 +1647,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger.text,
   },
   cancelledReasonTitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
     color: colors.danger.text,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   cancelledReasonContent: {
     fontSize: typeScale.subheadline.fontSize,

@@ -6,6 +6,7 @@ import {
   colors,
   driverPrimitives,
   haptic,
+  iconSize,
   IconRadarPulse,
   IconSettings,
   iosContinuousCurve,
@@ -16,7 +17,7 @@ import {
 /** Crosshair "locate me" glyph, drawn as a vector (no font dependency). */
 const RecenterGlyph = memo(function RecenterGlyph({
   color,
-  size = 18,
+  size = iconSize.md,
 }: Readonly<{ color: string; size?: number }>) {
   return (
     <Svg height={size} viewBox="0 0 24 24" width={size}>
@@ -58,7 +59,7 @@ export const DriverMapControlStack = memo(function DriverMapControlStack({
     onOpenRadiusSettings();
   }, [onOpenRadiusSettings]);
 
-  // ponytail: Vector buttons sized 44x44pt satisfy Apple HIG minimum touch target without extra padding container.
+  // ponytail: Vector buttons sized 46x46pt satisfy Apple HIG minimum touch target without extra padding container.
   return (
     <View style={styles.stack} testID="driver-map-control-stack">
       <Pressable
@@ -73,6 +74,7 @@ export const DriverMapControlStack = memo(function DriverMapControlStack({
       >
         <RecenterGlyph
           color={isLocating ? colors.neutral.subtleText : colors.neutral.text}
+          size={iconSize.md}
         />
       </Pressable>
 
@@ -84,7 +86,7 @@ export const DriverMapControlStack = memo(function DriverMapControlStack({
           style={({ pressed }) => [styles.btn, pressed ? styles.pressed : null]}
           testID="driver-map-refresh"
         >
-          <IconRadarPulse color={colors.neutral.text} size={19} />
+          <IconRadarPulse color={colors.neutral.text} size={iconSize.md} />
         </Pressable>
       ) : null}
 
@@ -95,7 +97,7 @@ export const DriverMapControlStack = memo(function DriverMapControlStack({
         style={({ pressed }) => [styles.btn, pressed ? styles.pressed : null]}
         testID="driver-map-radius"
       >
-        <IconSettings color={colors.neutral.text} size={19} />
+        <IconSettings color={colors.neutral.text} size={iconSize.md} />
       </Pressable>
     </View>
   );
@@ -112,9 +114,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     ...iosContinuousCurve,
     borderWidth: 1,
-    height: 44,
+    height: 46,
     justifyContent: 'center',
-    width: 44,
+    width: 46,
     ...driverPrimitives.shadows.md,
   },
   pressed: {

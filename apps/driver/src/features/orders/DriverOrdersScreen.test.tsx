@@ -160,7 +160,6 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
 
     // Customer contact actions
     expect(screen.getByTestId('driver-call-btn')).toBeTruthy();
-    expect(screen.getByTestId('driver-chat-btn')).toBeTruthy();
     expect(screen.getByTestId('driver-nav-leg-btn')).toBeTruthy();
 
     // 4-stage stepper
@@ -251,14 +250,7 @@ describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
 
     // Contact buttons work safely
     const callBtn = screen.getByTestId('driver-call-btn');
-    const chatBtn = screen.getByTestId('driver-chat-btn');
-
     await fireEvent.press(callBtn);
-
-    await fireEvent.press(chatBtn);
-    expect(onNavigate).toHaveBeenCalledWith(
-      `/chat/22222222-2222-4222-8222-222222222001?customerContact=${encodeURIComponent('Thủ kho Nam (0987654321)')}`,
-    );
 
     await screen.unmount();
   });

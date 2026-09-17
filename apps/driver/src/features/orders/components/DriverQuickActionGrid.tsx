@@ -1,13 +1,18 @@
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   driverPrimitives,
+  iconSize,
   IconLocationPin,
   IconSpeedTruck,
   IconWallet,
   IconWarningShield,
   iosContinuousCurve,
+  leopardPalette,
+  radius,
+  spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export type DriverQuickAction = Readonly<{
@@ -27,7 +32,7 @@ export type DriverQuickActionGridProps = Readonly<{
 }>;
 
 /**
- * Grab-style 4-button shortcut row: order list, SOS, wallet, radius settings.
+ * Clean Grab-style 4-button shortcut row with unified brand palette.
  */
 export function DriverQuickActionGrid({
   onOpenOrderList,
@@ -41,7 +46,14 @@ export function DriverQuickActionGrid({
       label: 'Đơn',
       accessibilityLabel: 'Danh sách đơn hàng',
       onPress: onOpenOrderList,
-      icon: <IconSpeedTruck color={driverPrimitives.colors.gray900} size={20} />,
+      icon: (
+        <IconSpeedTruck
+          color={leopardPalette.primary}
+          secondaryColor="#F0F4F9"
+          size={22}
+          strokeWidth={1.75}
+        />
+      ),
       testID: 'quick-action-order-list',
     },
     {
@@ -49,7 +61,14 @@ export function DriverQuickActionGrid({
       label: 'SOS khẩn cấp',
       accessibilityLabel: 'Gọi cứu hộ khẩn cấp SOS',
       onPress: onTriggerSos,
-      icon: <IconWarningShield color={driverPrimitives.colors.red500} size={20} />,
+      icon: (
+        <IconWarningShield
+          color={leopardPalette.primary}
+          secondaryColor="#F0F4F9"
+          size={22}
+          strokeWidth={1.75}
+        />
+      ),
       testID: 'quick-action-sos',
     },
     {
@@ -57,7 +76,14 @@ export function DriverQuickActionGrid({
       label: 'Ví tài xế',
       accessibilityLabel: 'Ví tài xế',
       onPress: onOpenWallet,
-      icon: <IconWallet color={driverPrimitives.colors.gray900} size={20} />,
+      icon: (
+        <IconWallet
+          color={leopardPalette.primary}
+          secondaryColor="#FFFFFF"
+          size={22}
+          strokeWidth={1.75}
+        />
+      ),
       testID: 'quick-action-wallet',
     },
     {
@@ -65,7 +91,14 @@ export function DriverQuickActionGrid({
       label: 'Bán kính',
       accessibilityLabel: 'Thiết lập bán kính nhận đơn',
       onPress: onOpenSettings,
-      icon: <IconLocationPin color={driverPrimitives.colors.gray900} size={20} />,
+      icon: (
+        <IconLocationPin
+          color={leopardPalette.primary}
+          secondaryColor="#F0F4F9"
+          size={22}
+          strokeWidth={1.75}
+        />
+      ),
       testID: 'quick-action-settings',
     },
   ];
@@ -94,16 +127,20 @@ export function DriverQuickActionGrid({
 const styles = StyleSheet.create({
   grid: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 20,
+    borderColor: '#E2E8F0',
+    borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 14,
-    ...driverPrimitives.shadows.sm,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.md,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   item: {
     alignItems: 'center',
@@ -111,21 +148,24 @@ const styles = StyleSheet.create({
   },
   circle: {
     alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.gray100,
-    borderRadius: 9999,
+    backgroundColor: '#F0F4F9',
+    borderColor: 'rgba(11, 37, 69, 0.06)',
+    borderRadius: radius.pill,
+    borderWidth: 1,
     height: 48,
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
     width: 48,
   },
   label: {
-    color: driverPrimitives.colors.gray700,
-    fontSize: 11.5,
+    color: driverPrimitives.colors.gray900,
+    ...typeScale.caption1,
     fontWeight: '600',
+    letterSpacing: -0.1,
     textAlign: 'center',
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.75,
     transform: [{ scale: 0.96 }],
   },
 });

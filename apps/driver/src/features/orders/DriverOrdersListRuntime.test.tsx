@@ -81,9 +81,8 @@ describe('DriverOrdersListRuntime', () => {
     const screen = await renderWithClient(<DriverOrdersListRuntime onOpenOrder={jest.fn()} />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Hiện chưa có đơn có thể nhận; trạng thái nhận đơn vẫn được giữ.'),
-      ).toBeTruthy();
+      expect(screen.getByTestId('driver-load-board-sheet')).toBeTruthy();
+      expect(screen.getByTestId('driver-connection-toggle')).toBeTruthy();
     });
     await screen.unmount();
     screen.client.clear();

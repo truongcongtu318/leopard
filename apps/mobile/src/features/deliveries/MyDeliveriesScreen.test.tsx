@@ -168,7 +168,7 @@ describe('MyDeliveriesScreen', () => {
     const inTransitText = screen.getByText('Đang vận chuyển');
     expect(inTransitText.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ color: '#0F172A' }),
+        expect.objectContaining({ color: '#1A1A1A' }),
       ]),
     );
 
@@ -177,13 +177,13 @@ describe('MyDeliveriesScreen', () => {
     const acceptedText = screen.getAllByText('Đã nhận').find((el) => {
       const style = Array.isArray(el.props.style) ? el.props.style : [el.props.style];
       return style.some(
-        (s: Record<string, unknown> | undefined) => s?.color === '#0F172A',
+        (s: Record<string, unknown> | undefined) => s?.color === '#1A1A1A',
       );
     });
     expect(acceptedText).toBeTruthy();
     expect(acceptedText?.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ color: '#0F172A' }),
+        expect.objectContaining({ color: '#1A1A1A' }),
       ]),
     );
 

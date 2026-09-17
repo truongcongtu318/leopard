@@ -19,6 +19,7 @@ export function DriverKycRuntime() {
       isError={query.isError}
       isLoading={query.isLoading}
       onBack={() => router.back()}
+      onRetry={() => void query.refetch()}
     />
   );
 }

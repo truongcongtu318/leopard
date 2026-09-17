@@ -9,9 +9,39 @@ import {
   View,
 } from 'react-native';
 
-import { typeScale, httpClient } from '@leopard/mobile-core';
 import { addressStore } from './address-store';
-import { colors, customerPalette, leopardPalette, haptic, iosContinuousCurve, layout, radius, spacing, typography, Button, FormField, IconCheck, IconClose, IconHome, IconLocationPin, IconOffice, IconPhone, IconPin, IconPlus, IconSearch, IconStar, IconTrash, IconUser, IconWarehouse, RealInteractiveMap, resolveLocationCoords, ScreenScaffold } from '@leopard/mobile-core';
+import {
+  Button,
+  FormField,
+  IconCheck,
+  IconClose,
+  IconHome,
+  IconLocationPin,
+  IconOffice,
+  IconPhone,
+  IconPin,
+  IconPlus,
+  IconSearch,
+  IconStar,
+  IconTrash,
+  IconUser,
+  IconWarehouse,
+  RealInteractiveMap,
+  ScreenScaffold,
+  colors,
+  customerPalette,
+  haptic,
+  httpClient,
+  iosContinuousCurve,
+  layout,
+  leopardElevation,
+  leopardPalette,
+  radius,
+  resolveLocationCoords,
+  spacing,
+  typeScale,
+  typography,
+} from '@leopard/mobile-core';
 import {
   POPULAR_MAP_SUGGESTIONS,
   reverseGeocodeCoords,
@@ -345,48 +375,41 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
           label: 'Kho hàng',
           icon: <IconWarehouse color={customerPalette.primary} size={20} />,
           color: customerPalette.primary,
-          bg: colors.neutral.surfaceMuted,
+          bg: '#FFFBEB',
         };
       case 'OFFICE':
         return {
           label: 'Văn phòng',
           icon: <IconOffice color={customerPalette.primary} size={20} />,
           color: customerPalette.primary,
-          bg: colors.neutral.surfaceMuted,
+          bg: '#EFF6FF',
         };
       case 'HOME':
         return {
           label: 'Nhà riêng',
           icon: <IconHome color={customerPalette.primary} size={20} />,
           color: customerPalette.primary,
-          bg: colors.neutral.surfaceMuted,
+          bg: '#F0FDF4',
         };
       default:
         return {
           label: 'Khác',
-          icon: <IconPin color={customerPalette.textSubtle} size={20} />,
-          color: customerPalette.textSubtle,
-          bg: colors.neutral.surfaceMuted,
+          icon: <IconPin color={customerPalette.primary} size={20} />,
+          color: customerPalette.primary,
+          bg: '#F1F5F9',
         };
     }
   };
 
-  const headerRight = (
+  const headerRight = isAdding ? null : (
     <Pressable
-      accessibilityLabel={isAdding ? 'Hủy thêm địa chỉ' : '+ Thêm mới'}
+      accessibilityLabel="+ Thêm mới"
       accessibilityRole="button"
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      onPress={() => setIsAdding(!isAdding)}
-      style={({ pressed }) => [
-        isAdding ? styles.cancelHeaderBtn : styles.addHeaderBtn,
-        pressed ? styles.pressed : null,
-      ]}
+      onPress={() => setIsAdding(true)}
+      style={({ pressed }) => [styles.addHeaderBtn, pressed ? styles.pressed : null]}
     >
-      {isAdding ? (
-        <IconClose color={customerPalette.primary} size="sm" />
-      ) : (
-        <IconPlus color={customerPalette.primary} size={20} strokeWidth={2.5} />
-      )}
+      <IconPlus color={customerPalette.primary} size={20} strokeWidth={2.5} />
     </Pressable>
   );
 
@@ -403,11 +426,6 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       hasFloatingNavBar
       headerRight={headerRight}
       onBack={handleBack}
-      subtitle={
-        isAdding
-          ? 'Lưu địa điểm thường xuyên gửi/nhận hàng'
-          : 'Lưu sẵn địa chỉ thường dùng để tạo đơn và giao hàng nhanh chóng.'
-      }
       title={isAdding ? 'Thêm địa chỉ mới' : 'Sổ địa chỉ'}
     >
       <View style={styles.container}>
@@ -505,132 +523,147 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
           </View>
         ) : null}
 
-        {/* 3. Form Tạo Địa Chỉ Mới (Apple HIG Inset Grouped, không box lồng) */}
+        {/* 3. Form Tạo Địa Chỉ Mới (Apple HIG Inset Grouped) */}
         {isAdding ? (
           <ScrollView
             contentContainerStyle={styles.addFormScroll}
+            contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.addFormPlain}>
-              {/* Chọn Loại Địa Điểm (Apple HIG Segmented Control) */}
-              <View style={styles.categoryPickerSection}>
-                <Text style={styles.categoryPickerLabel}>Loại địa điểm</Text>
-                <View style={styles.segmentedControl}>
-                  {categoryOptions.map((cat) => {
-                    const selected = newCategory === cat.id;
-                    return (
-                      <Pressable
-                        accessibilityLabel={cat.label}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        key={cat.id}
-                        onPress={() => {
-                          haptic.selection();
-                          setNewCategory(cat.id);
-                        }}
-                        style={({ pressed }) => [
-                          styles.segmentItem,
-                          selected ? styles.segmentItemSelected : null,
-                          pressed ? styles.pressed : null,
+              {/* Section 1: Loại địa điểm & Địa chỉ */}
+              <Text style={styles.formSectionTitle}>Loại địa điểm</Text>
+              <View style={styles.segmentedControl}>
+                {categoryOptions.map((cat) => {
+                  const selected = newCategory === cat.id;
+                  return (
+                    <Pressable
+                      accessibilityLabel={cat.label}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      key={cat.id}
+                      onPress={() => {
+                        haptic.selection();
+                        setNewCategory(cat.id);
+                      }}
+                      style={({ pressed }) => [
+                        styles.segmentItem,
+                        selected ? styles.segmentItemSelected : null,
+                        pressed ? styles.pressed : null,
+                      ]}
+                    >
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.segmentText,
+                          selected ? styles.segmentTextSelected : null,
                         ]}
                       >
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            styles.segmentText,
-                            selected ? styles.segmentTextSelected : null,
-                          ]}
-                        >
-                          {cat.label}
+                        {cat.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.formSectionTitle}>Thông tin địa điểm</Text>
+              <View style={styles.formGroupCard}>
+                <View style={styles.fieldRow}>
+                  <Text style={styles.fieldLabel}>Tên gợi nhớ</Text>
+                  <TextInput
+                    accessibilityLabel="Tên gợi nhớ (VD: Kho Quận 7, Xưởng may Tân Bình...)"
+                    onChangeText={setNewLabel}
+                    placeholder="VD: Kho Quận 7, Xưởng Tân Bình..."
+                    placeholderTextColor={leopardPalette.inputPlaceholder}
+                    style={styles.fieldInput}
+                    value={newLabel}
+                  />
+                </View>
+
+                <View style={styles.rowDivider} />
+
+                <View style={styles.addressFieldWrapper}>
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Địa chỉ chi tiết</Text>
+                    <TextInput
+                      accessibilityLabel="Địa chỉ chi tiết"
+                      onChangeText={handleAddressChange}
+                      onFocus={() => {
+                        if (!newAddress.trim() || newAddress.trim().length < 2) {
+                          setAddressSuggestions(POPULAR_MAP_SUGGESTIONS);
+                        }
+                        setShowAddressSuggestions(true);
+                      }}
+                      placeholder="Số nhà, tên đường, phường, quận, tỉnh/thành..."
+                      placeholderTextColor={leopardPalette.inputPlaceholder}
+                      style={styles.fieldInput}
+                      value={newAddress}
+                    />
+                  </View>
+
+                  {showAddressSuggestions && addressSuggestions.length > 0 ? (
+                    <View style={styles.suggestionsContainer}>
+                      <View style={styles.suggestionsHeader}>
+                        <Text style={styles.suggestionsHeaderTitle}>
+                          {newAddress.trim().length < 2 ? 'GỢI Ý ĐỊA ĐIỂM PHỔ BIẾN' : 'GỢI Ý TỪ BẢN ĐỒ'}
                         </Text>
-                      </Pressable>
-                    );
-                  })}
+                        <Pressable
+                          accessibilityLabel="Đóng danh sách gợi ý"
+                          hitSlop={12}
+                          onPress={() => setShowAddressSuggestions(false)}
+                        >
+                          <Text style={styles.suggestionsCloseText}>Đóng</Text>
+                        </Pressable>
+                      </View>
+                      <ScrollView
+                        keyboardShouldPersistTaps="handled"
+                        nestedScrollEnabled
+                        style={styles.suggestionsListScroll}
+                      >
+                        {addressSuggestions.map((item, index) => {
+                          const isGpsItem = item.id === 'popular-gps';
+                          return (
+                            <Pressable
+                              key={`${item.id}-${index}`}
+                              onPress={() => handleSelectAddressSuggestion(item)}
+                              style={({ pressed }) => [
+                                styles.suggestionItem,
+                                pressed && styles.suggestionItemPressed,
+                              ]}
+                            >
+                              <View
+                                style={[
+                                  styles.suggestionIconBox,
+                                  isGpsItem && styles.suggestionIconBoxGps,
+                                ]}
+                              >
+                                <IconLocationPin
+                                  color={isGpsItem ? colors.brand.green : customerPalette.primary}
+                                  size={16}
+                                />
+                              </View>
+                              <View style={styles.suggestionTextCol}>
+                                <Text numberOfLines={1} style={styles.suggestionTitle}>
+                                  {item.label}
+                                </Text>
+                                <Text numberOfLines={1} style={styles.suggestionSubtitle}>
+                                  {item.address}
+                                </Text>
+                              </View>
+                              <Text style={styles.suggestionActionText}>
+                                {isGpsItem ? 'Định vị ›' : 'Chọn ›'}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  ) : null}
                 </View>
               </View>
 
-              <FormField
-                label="Tên gợi nhớ (VD: Kho Quận 7, Xưởng may Tân Bình...)"
-                onChangeText={setNewLabel}
-                placeholder="Nhập tên gọi nhớ..."
-                value={newLabel}
-              />
-
-              <View style={styles.addressFieldWrapper}>
-                <FormField
-                  label="Địa chỉ chi tiết"
-                  onChangeText={handleAddressChange}
-                  onFocus={() => {
-                    if (!newAddress.trim() || newAddress.trim().length < 2) {
-                      setAddressSuggestions(POPULAR_MAP_SUGGESTIONS);
-                    }
-                    setShowAddressSuggestions(true);
-                  }}
-                  placeholder="Số nhà, tên đường, phường, quận, tỉnh/thành..."
-                  value={newAddress}
-                />
-                {showAddressSuggestions && addressSuggestions.length > 0 ? (
-                  <View style={styles.suggestionsContainer}>
-                    <View style={styles.suggestionsHeader}>
-                      <Text style={styles.suggestionsHeaderTitle}>
-                        {newAddress.trim().length < 2 ? 'GỢI Ý ĐỊA ĐIỂM PHỔ BIẾN' : 'GỢI Ý TỪ BẢN ĐỒ'}
-                      </Text>
-                      <Pressable
-                        accessibilityLabel="Đóng danh sách gợi ý"
-                        hitSlop={12}
-                        onPress={() => setShowAddressSuggestions(false)}
-                      >
-                        <Text style={styles.suggestionsCloseText}>Đóng</Text>
-                      </Pressable>
-                    </View>
-                    <ScrollView
-                      keyboardShouldPersistTaps="handled"
-                      nestedScrollEnabled
-                      style={styles.suggestionsListScroll}
-                    >
-                      {addressSuggestions.map((item, index) => {
-                        const isGpsItem = item.id === 'popular-gps';
-                        return (
-                          <Pressable
-                            key={`${item.id}-${index}`}
-                            onPress={() => handleSelectAddressSuggestion(item)}
-                            style={({ pressed }) => [
-                              styles.suggestionItem,
-                              pressed && styles.suggestionItemPressed,
-                            ]}
-                          >
-                            <View
-                              style={[
-                                styles.suggestionIconBox,
-                                isGpsItem && styles.suggestionIconBoxGps,
-                              ]}
-                            >
-                              <IconLocationPin
-                                color={isGpsItem ? colors.brand.green : customerPalette.primary}
-                                size={16}
-                              />
-                            </View>
-                            <View style={styles.suggestionTextCol}>
-                              <Text numberOfLines={1} style={styles.suggestionTitle}>
-                                {item.label}
-                              </Text>
-                              <Text numberOfLines={1} style={styles.suggestionSubtitle}>
-                                {item.address}
-                              </Text>
-                            </View>
-                            <Text style={styles.suggestionActionText}>
-                              {isGpsItem ? 'Định vị ›' : 'Chọn ›'}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-                ) : null}
-              </View>
-
-              {/* Định vị vị trí thực tế trên bản đồ vệ tinh / đường phố (Apple Maps style) */}
+              {/* Định vị vị trí thực tế trên bản đồ vệ tinh / đường phố */}
               <View style={styles.mapPinSection}>
                 <View style={styles.mapPinHeader}>
                   <View style={styles.mapPinTitleRow}>
@@ -659,27 +692,38 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                 ) : null}
               </View>
 
-              <View style={styles.contactFieldsRow}>
-                <View style={styles.flexField}>
-                  <FormField
-                    label="Tên người liên hệ"
+              {/* Section 2: Thông tin người liên hệ */}
+              <Text style={styles.formSectionTitle}>Thông tin người liên hệ</Text>
+              <View style={styles.formGroupCard}>
+                <View style={styles.fieldRow}>
+                  <Text style={styles.fieldLabel}>Tên người liên hệ</Text>
+                  <TextInput
+                    accessibilityLabel="Tên người liên hệ"
                     onChangeText={setNewContact}
                     placeholder="Tên người gửi/nhận"
+                    placeholderTextColor={leopardPalette.inputPlaceholder}
+                    style={styles.fieldInput}
                     value={newContact}
                   />
                 </View>
-                <View style={styles.flexField}>
-                  <FormField
+
+                <View style={styles.rowDivider} />
+
+                <View style={styles.fieldRow}>
+                  <Text style={styles.fieldLabel}>Số điện thoại</Text>
+                  <TextInput
+                    accessibilityLabel="Số điện thoại"
                     keyboardType="phone-pad"
-                    label="Số điện thoại"
                     onChangeText={setNewPhone}
                     placeholder="0901234567"
+                    placeholderTextColor={leopardPalette.inputPlaceholder}
+                    style={styles.fieldInput}
                     value={newPhone}
                   />
                 </View>
               </View>
 
-              {/* Apple HIG iOS Switch Row */}
+              {/* Section 3: Cài đặt mặc định */}
               <Pressable
                 accessibilityLabel="Đặt làm địa chỉ mặc định"
                 accessibilityRole="checkbox"
@@ -770,58 +814,95 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                     item.isDefault ? styles.addressCardDefault : null,
                   ]}
                 >
-                  <View style={styles.cardMainRow}>
-                    {/* Hộp icon phân loại */}
-                    <View style={[styles.categoryIconBox, { backgroundColor: meta.bg }]}>
-                      {meta.icon}
+                  {/* Top Header: Category Icon + Title + Default Badge + Delete */}
+                  <View style={styles.cardHeaderRow}>
+                    <View style={styles.cardTitleGroup}>
+                      <View style={styles.inlineCategoryIcon}>{meta.icon}</View>
+                      <Text numberOfLines={1} style={styles.addressLabel}>
+                        {item.label}
+                      </Text>
+                      {item.isDefault ? (
+                        <View style={styles.defaultBadge}>
+                          <IconStar
+                            color={customerPalette.accent}
+                            fill={customerPalette.accent}
+                            size={10}
+                            strokeWidth={2}
+                          />
+                          <Text style={styles.defaultBadgeText}>Mặc định</Text>
+                        </View>
+                      ) : null}
                     </View>
 
-                    {/* Nội dung thông tin địa chỉ */}
-                    <View style={styles.cardContentCol}>
-                      <View style={styles.cardTitleRow}>
-                        <Text numberOfLines={1} style={styles.addressLabel}>
-                          {item.label}
+                    <View style={styles.headerActionGroup}>
+                      <Pressable
+                        accessibilityLabel={`Xem bản đồ ${item.label}`}
+                        accessibilityRole="button"
+                        hitSlop={spacing.xs}
+                        onPress={() =>
+                          setExpandedMapId(expandedMapId === item.id ? null : item.id)
+                        }
+                        style={({ pressed }) => [
+                          styles.actionTextBtn,
+                          pressed ? styles.pressed : null,
+                        ]}
+                      >
+                        <IconLocationPin color={customerPalette.primary} size={13} />
+                        <Text style={styles.toggleMapText}>
+                          {expandedMapId === item.id ? 'Ẩn bản đồ' : 'Bản đồ'}
                         </Text>
-                        {item.isDefault ? (
-                          <View style={styles.defaultBadge}>
-                            <IconStar
-                              color={customerPalette.primary}
-                              fill={customerPalette.primary}
-                              size={11}
-                              strokeWidth={2}
-                            />
-                            <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                          </View>
-                        ) : null}
-                      </View>
+                      </Pressable>
 
-                      <View style={styles.addressLineWrap}>
-                        <IconLocationPin color={customerPalette.textSubtle} size={13} />
-                        <Text numberOfLines={2} style={styles.addressText}>
-                          {item.address}
-                        </Text>
-                      </View>
-
-                      {/* Thông tin liên hệ dạng Pill mềm mại (100% Vector Icons) */}
-                      <View style={styles.contactPill}>
-                        <View style={styles.contactItem}>
-                          <IconUser color={customerPalette.textMutedSlate} size={12} />
-                          <Text style={styles.contactNameText}>{item.contactName}</Text>
-                        </View>
-                        <Text style={styles.contactDivider}>•</Text>
-                        <View style={styles.contactItem}>
-                          <IconPhone color={customerPalette.primary} size={12} />
-                          <Text style={styles.contactPhoneText}>{item.contactPhone}</Text>
-                        </View>
-                      </View>
+                      <Pressable
+                        accessibilityLabel={`Xóa ${item.label}`}
+                        accessibilityRole="button"
+                        hitSlop={spacing.xs}
+                        onPress={() => handleDelete(item.id)}
+                        style={({ pressed }) => [
+                          styles.actionTextBtn,
+                          pressed ? styles.pressed : null,
+                        ]}
+                      >
+                        <IconTrash color={colors.danger.text} size={13} />
+                        <Text style={styles.deleteText}>Xóa</Text>
+                      </Pressable>
                     </View>
+                  </View>
+
+                  {/* Address Line: Clean text without redundant outer icons */}
+                  <Text numberOfLines={2} style={styles.addressText}>
+                    {item.address}
+                  </Text>
+
+                  {/* Contact Line + Set Default Action: Inline, clean and compact */}
+                  <View style={styles.cardFooterRow}>
+                    <Text numberOfLines={1} style={styles.contactInlineText}>
+                      <Text style={styles.contactName}>{item.contactName}</Text>
+                      <Text style={styles.contactDot}> · </Text>
+                      <Text style={styles.contactPhone}>{item.contactPhone}</Text>
+                    </Text>
+
+                    {!item.isDefault ? (
+                      <Pressable
+                        accessibilityLabel={`Đặt ${item.label} làm mặc định`}
+                        accessibilityRole="button"
+                        hitSlop={spacing.xs}
+                        onPress={() => handleSetDefault(item.id)}
+                        style={({ pressed }) => [
+                          styles.setDefaultBtn,
+                          pressed ? styles.pressed : null,
+                        ]}
+                      >
+                        <Text style={styles.setDefaultText}>Đặt làm mặc định</Text>
+                      </Pressable>
+                    ) : null}
                   </View>
 
                   {/* Bản đồ xem nhanh khi mở rộng */}
                   {expandedMapId === item.id ? (
                     <View style={styles.cardMapPreviewWrap}>
                       <RealInteractiveMap
-                        height={140}
+                        height={130}
                         mode="preview"
                         origin={{
                           label: item.label,
@@ -834,63 +915,6 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                       />
                     </View>
                   ) : null}
-
-                  {/* Thanh thao tác dưới thẻ */}
-                  <View style={styles.cardActionFooter}>
-                    <View style={styles.leftActions}>
-                      {!item.isDefault ? (
-                        <Pressable
-                          accessibilityLabel={`Đặt ${item.label} làm mặc định`}
-                          accessibilityRole="button"
-                          onPress={() => handleSetDefault(item.id)}
-                          style={({ pressed }) => [
-                            styles.actionBtn,
-                            pressed ? styles.pressed : null,
-                          ]}
-                        >
-                          <IconStar color={customerPalette.primary} size={13} strokeWidth={2} />
-                          <Text style={styles.setDefaultText}>Đặt làm mặc định</Text>
-                        </Pressable>
-                      ) : (
-                        <View style={styles.defaultActiveNote}>
-                          <IconCheck color={colors.success.text} size={12} strokeWidth={2.5} />
-                          <Text style={styles.defaultActiveNoteText}>
-                            Đang áp dụng cho đơn mới
-                          </Text>
-                        </View>
-                      )}
-
-                      <Pressable
-                        accessibilityLabel={`Xem bản đồ ${item.label}`}
-                        accessibilityRole="button"
-                        onPress={() =>
-                          setExpandedMapId(expandedMapId === item.id ? null : item.id)
-                        }
-                        style={({ pressed }) => [
-                          styles.toggleMapBtn,
-                          pressed ? styles.pressed : null,
-                        ]}
-                      >
-                        <IconLocationPin color={customerPalette.primary} size={13} />
-                        <Text style={styles.toggleMapText}>
-                          {expandedMapId === item.id ? 'Ẩn bản đồ' : 'Bản đồ'}
-                        </Text>
-                      </Pressable>
-                    </View>
-
-                    <Pressable
-                      accessibilityLabel={`Xóa ${item.label}`}
-                      accessibilityRole="button"
-                      onPress={() => handleDelete(item.id)}
-                      style={({ pressed }) => [
-                        styles.deleteBtn,
-                        pressed ? styles.pressed : null,
-                      ]}
-                    >
-                      <IconTrash color={colors.danger.text} size={13} />
-                      <Text style={styles.deleteText}>Xóa</Text>
-                    </Pressable>
-                  </View>
                 </View>
               );
             }}
@@ -918,7 +942,7 @@ const styles = StyleSheet.create({
   },
   addHeaderBtnText: {
     color: customerPalette.surfaceWhite,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   cancelHeaderBtn: {
@@ -929,7 +953,7 @@ const styles = StyleSheet.create({
   },
   cancelHeaderBtnText: {
     color: customerPalette.textMutedSlate,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
 
@@ -940,37 +964,43 @@ const styles = StyleSheet.create({
   searchBar: {
     alignItems: 'center',
     backgroundColor: customerPalette.surfaceWhite,
-    borderColor: customerPalette.cardBorder,
-    borderRadius: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: 9,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
   searchInput: {
     color: customerPalette.textSlateDark,
     flex: 1,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.subheadline,
     padding: 0,
   },
   clearSearchBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 44,
+    minHeight: 36,
+    minWidth: 36,
     padding: 2,
   },
   clearSearchText: {
     color: leopardPalette.inputPlaceholder,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
 
-  // 2. Filter Row (3 chips cố định, không scroll, không bao giờ bị cắt chữ)
+  // 2. Filter Row
   filterRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: spacing.xs,
     width: '100%',
     paddingBottom: 4,
   },
@@ -979,165 +1009,185 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.neutral.surfaceMuted,
+    backgroundColor: '#F1F5F9',
     borderRadius: 10,
     ...iosContinuousCurve,
-    minHeight: 36,
+    minHeight: 38,
     paddingHorizontal: 8,
     paddingVertical: 7,
   },
   filterChipActive: {
     backgroundColor: customerPalette.primary,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   filterChipText: {
-    color: customerPalette.textSubtle,
-    fontSize: 13,
+    color: '#64748B',
+    ...typeScale.footnote,
+    fontWeight: '500',
     textAlign: 'center',
   },
   filterChipTextActive: {
     color: customerPalette.surfaceWhite,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   filterBadge: {
-    minWidth: 20,
+    minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: customerPalette.surfaceWhite,
+    backgroundColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
     marginLeft: 6,
   },
   filterBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
   filterBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...typeScale.caption2,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    color: customerPalette.textMutedSlate,
+    color: '#475569',
   },
   filterBadgeTextActive: {
     color: customerPalette.surfaceWhite,
   },
 
-  // 3. Form (Apple HIG Grouped, không box lồng)
+  // 3. Form
   addFormScroll: {
     flexGrow: 1,
-    gap: spacing.md,
-    paddingBottom: layout.bottomNavClearance,
+    paddingBottom: layout.bottomNavClearance + spacing.xxl,
   },
   addFormPlain: {
-    gap: spacing.md,
+    gap: spacing.sm,
+  },
+  formSectionTitle: {
+    ...typeScale.footnote,
+    fontWeight: '600',
+    color: colors.neutral.mutedText,
+    paddingHorizontal: spacing.hairline,
+    marginTop: spacing.xs,
+  },
+  formGroupCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.cardLg,
+    borderColor: colors.neutral.border,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...iosContinuousCurve,
+    ...leopardElevation.subtle,
+  },
+  fieldRow: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.hairline,
+  },
+  fieldLabel: {
+    ...typeScale.caption1,
+    fontWeight: '600',
+    color: colors.neutral.mutedText,
+  },
+  fieldInput: {
+    ...typeScale.body,
+    color: colors.neutral.text,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: 0,
+    minHeight: 36,
+  },
+  rowDivider: {
+    height: 0.5,
+    backgroundColor: colors.neutral.border,
+    marginLeft: spacing.md,
   },
   submitBtnWrap: {
-    paddingTop: spacing.xs,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
   },
 
   // Apple HIG Segmented Control
-  categoryPickerSection: {
-    gap: 6,
-  },
-  categoryPickerLabel: {
-    color: customerPalette.textSubtle,
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
   segmentedControl: {
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 10,
+    borderRadius: radius.control,
     ...iosContinuousCurve,
     flexDirection: 'row',
-    padding: 3,
-    minHeight: 36,
+    padding: spacing.hairline,
+    minHeight: 40,
+    gap: spacing.hairline,
   },
   segmentItem: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.xxs,
+    paddingVertical: spacing.xs,
   },
   segmentItemSelected: {
     backgroundColor: customerPalette.surfaceWhite,
-    shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: 1.5 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    ...leopardElevation.subtle,
   },
   segmentText: {
     color: customerPalette.textSubtle,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     textAlign: 'center',
   },
   segmentTextSelected: {
     color: customerPalette.primary,
-    fontWeight: '600',
-  },
-
-  // Fields & Contact
-  contactFieldsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  flexField: {
-    flex: 1,
+    fontWeight: '700',
   },
 
   // Apple HIG iOS Switch Row
   switchRow: {
     alignItems: 'center',
-    backgroundColor: customerPalette.canvas,
-    borderColor: customerPalette.cardBorder,
-    borderRadius: 14,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     gap: spacing.xs,
+    marginTop: spacing.xs,
+    ...leopardElevation.subtle,
   },
   switchTextCol: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   switchLabel: {
-    color: customerPalette.textSlateDark,
-    fontSize: 13,
+    color: colors.neutral.text,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   switchSublabel: {
     color: customerPalette.textSubtle,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
   },
   switchTrack: {
-    backgroundColor: customerPalette.cardBorder,
-    borderRadius: 16,
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderRadius: radius.pill,
     height: 28,
     justifyContent: 'center',
-    paddingHorizontal: 2,
+    paddingHorizontal: spacing.hairline,
     width: 48,
   },
   switchTrackActive: {
-    backgroundColor: customerPalette.primary,
+    backgroundColor: colors.success.text,
   },
   switchThumb: {
     alignItems: 'center',
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     height: 24,
     justifyContent: 'center',
-    shadowColor: customerPalette.accentDark,
-    shadowOffset: { width: 0, height: 1.5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2.5,
-    elevation: 2,
+    ...leopardElevation.subtle,
     width: 24,
   },
   switchThumbActive: {
@@ -1147,153 +1197,135 @@ const styles = StyleSheet.create({
   // 4. Address Cards List
   listContent: {
     gap: spacing.sm,
-    paddingBottom: layout.bottomNavClearance,
+    paddingBottom: layout.bottomNavClearance + spacing.xl,
   },
   addressCard: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderColor: customerPalette.cardBorder,
-    borderRadius: 18,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
-    shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    ...leopardElevation.subtle,
   },
   addressCardDefault: {
-    borderColor: leopardPalette.inputBorder,
-    backgroundColor: '#FAFCFF',
-    borderWidth: 1.5,
+    borderColor: colors.neutral.border,
+    backgroundColor: customerPalette.surfaceWhite,
   },
-  cardMainRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  categoryIconBox: {
-    alignItems: 'center',
-    borderRadius: 12,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
-  cardContentCol: {
-    flex: 1,
-    gap: 4,
-  },
-  cardTitleRow: {
+  cardHeaderRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  cardTitleGroup: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flex: 1,
+    gap: spacing.xs,
+  },
+  inlineCategoryIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addressLabel: {
     color: customerPalette.textSlateDark,
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '600',
-    flex: 1,
-    marginRight: 6,
+    ...typeScale.headline,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    flexShrink: 1,
   },
   defaultBadge: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 999,
-    flexDirection: 'row',
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  defaultBadgeText: {
-    color: customerPalette.primary,
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '600',
-  },
-  addressLineWrap: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 4,
-    marginTop: 1,
-  },
-  addressText: {
-    color: colors.neutral.mutedText,
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  contactPill: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: customerPalette.canvas,
-    borderColor: colors.neutral.surfaceMuted,
-    borderRadius: 6,
+    backgroundColor: colors.warning.background,
+    borderColor: colors.warning.border,
+    borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 6,
-    marginTop: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  contactItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-  },
-  contactNameText: {
-    color: customerPalette.textMutedSlate,
-    fontSize: typeScale.caption1.fontSize,
-    fontWeight: '600',
-  },
-  contactDivider: {
-    color: leopardPalette.inputBorder,
-    fontSize: typeScale.caption2.fontSize,
-  },
-  contactPhoneText: {
-    color: customerPalette.primary,
-    fontSize: typeScale.caption1.fontSize,
-    fontWeight: '600',
-  },
-
-  // Actions Footer
-  cardActionFooter: {
-    alignItems: 'center',
-    borderTopColor: colors.neutral.surfaceMuted,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-    paddingTop: 8,
-  },
-  leftActions: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-  },
-  toggleMapBtn: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
+    gap: 3,
+    paddingHorizontal: 7,
     paddingVertical: 2,
+  },
+  defaultBadgeText: {
+    color: colors.warning.text,
+    ...typeScale.caption2,
+    fontWeight: '700',
+  },
+  headerActionGroup: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  actionTextBtn: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 3,
+    paddingVertical: spacing.xxs,
   },
   toggleMapText: {
     color: customerPalette.primary,
-    fontSize: 12,
+    ...typeScale.caption1,
+    fontWeight: '600',
+  },
+  deleteText: {
+    color: colors.danger.text,
+    ...typeScale.caption1,
+    fontWeight: '600',
+  },
+  addressText: {
+    color: customerPalette.textMutedSlate,
+    ...typeScale.footnote,
+    lineHeight: 18,
+  },
+  cardFooterRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+    marginTop: spacing.hairline,
+  },
+  contactInlineText: {
+    color: customerPalette.textSubtle,
+    ...typeScale.caption1,
+    flex: 1,
+  },
+  contactName: {
+    color: colors.neutral.mutedText,
+    fontWeight: '500',
+  },
+  contactDot: {
+    color: colors.neutral.subtleText,
+  },
+  contactPhone: {
+    color: customerPalette.primary,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
+  },
+  setDefaultBtn: {
+    paddingVertical: spacing.xxs,
+  },
+  setDefaultText: {
+    color: colors.neutral.mutedText,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
   cardMapPreviewWrap: {
-    borderRadius: 10,
-    marginTop: 8,
+    borderRadius: radius.cardSm,
+    marginTop: spacing.xs,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: customerPalette.cardBorder,
+    borderColor: colors.neutral.border,
   },
   mapPinSection: {
-    backgroundColor: customerPalette.canvas,
-    borderColor: customerPalette.cardBorder,
-    borderRadius: 14,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 8,
-    padding: spacing.sm,
+    gap: spacing.xs,
+    padding: spacing.md,
+    ...leopardElevation.subtle,
   },
   mapPinHeader: {
     alignItems: 'center',
@@ -1303,89 +1335,56 @@ const styles = StyleSheet.create({
   mapPinTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: spacing.xs,
   },
   mapPinTitle: {
-    color: customerPalette.textSlateDark,
-    fontSize: 13,
+    color: colors.neutral.text,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   mapPinHint: {
     color: customerPalette.textSubtle,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption2,
   },
   mapPinBox: {
-    borderRadius: 10,
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
     overflow: 'hidden',
-    borderColor: leopardPalette.inputBorder,
+    borderColor: colors.neutral.border,
     borderWidth: 1,
   },
-  actionBtn: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    paddingVertical: 2,
-  },
-  setDefaultText: {
-    color: customerPalette.primary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  defaultActiveNote: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    paddingVertical: 2,
-  },
-  defaultActiveNoteText: {
-    color: colors.success.text,
-    fontSize: typeScale.caption1.fontSize,
-    fontWeight: '600',
-  },
-  deleteBtn: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-  },
-  deleteText: {
-    color: colors.danger.text,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
   // Empty State
   emptyBox: {
     alignItems: 'center',
     backgroundColor: customerPalette.surfaceWhite,
-    borderColor: customerPalette.cardBorder,
-    borderRadius: 16,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 6,
+    gap: spacing.xs,
     marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
+    ...leopardElevation.subtle,
   },
   emptyIconCircle: {
     alignItems: 'center',
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 30,
-    height: 60,
+    borderRadius: radius.pill,
+    height: 56,
     justifyContent: 'center',
-    marginBottom: 4,
-    width: 60,
+    marginBottom: spacing.xxs,
+    width: 56,
   },
   emptyTitle: {
-    color: customerPalette.textSlateDark,
-    fontSize: 15,
+    color: colors.neutral.text,
+    ...typeScale.subheadline,
     fontWeight: '600',
     textAlign: 'center',
   },
   emptyMessage: {
     color: customerPalette.textSubtle,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     lineHeight: 18,
     textAlign: 'center',
   },
@@ -1393,12 +1392,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 999,
-    backgroundColor: colors.neutral.surfaceMuted,
+    borderRadius: radius.pill,
+    backgroundColor: '#F1F5F9',
   },
   resetFilterBtnText: {
     color: customerPalette.textSlateDark,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   firstAddBtn: {
@@ -1406,11 +1405,11 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 999,
+    borderRadius: radius.pill,
   },
   firstAddBtnText: {
     color: customerPalette.surfaceWhite,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   addressFieldWrapper: {
@@ -1420,7 +1419,7 @@ const styles = StyleSheet.create({
   suggestionsContainer: {
     backgroundColor: customerPalette.surfaceWhite,
     borderWidth: 1,
-    borderColor: leopardPalette.inputBorder,
+    borderColor: '#E2E8F0',
     borderRadius: 12,
     marginTop: -8,
     marginBottom: 12,
@@ -1437,18 +1436,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: customerPalette.canvas,
+    backgroundColor: '#F8FAFC',
     borderBottomWidth: 1,
-    borderBottomColor: customerPalette.cardBorder,
+    borderBottomColor: '#E2E8F0',
   },
   suggestionsHeaderTitle: {
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
-    color: customerPalette.textSubtle,
+    color: '#64748B',
     letterSpacing: 0.5,
   },
   suggestionsCloseText: {
-    fontSize: 11,
+    ...typeScale.caption2,
     color: customerPalette.primary,
     fontWeight: '600',
   },
@@ -1461,45 +1460,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.neutral.surfaceMuted,
+    borderBottomColor: '#F1F5F9',
     gap: 10,
   },
   suggestionItemPressed: {
-    backgroundColor: colors.neutral.surfaceMuted,
+    backgroundColor: '#F1F5F9',
   },
   suggestionIconBox: {
     width: 28,
     height: 28,
     borderRadius: 6,
-    backgroundColor: colors.neutral.surfaceMuted,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   suggestionIconBoxGps: {
-    backgroundColor: colors.success.background,
+    backgroundColor: '#ECFDF5',
   },
   suggestionTextCol: {
     flex: 1,
     gap: 2,
   },
   suggestionTitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
   suggestionSubtitle: {
-    fontSize: 11,
-    color: customerPalette.textSubtle,
+    ...typeScale.caption2,
+    color: '#64748B',
   },
   suggestionActionText: {
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '600',
     color: customerPalette.primary,
   },
   pinnedNotice: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.ecoGreenBg,
-    borderColor: leopardPalette.ecoGreenBorder,
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -1509,9 +1508,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   pinnedNoticeText: {
-    color: colors.success.text,
+    color: '#059669',
     flex: 1,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
 });

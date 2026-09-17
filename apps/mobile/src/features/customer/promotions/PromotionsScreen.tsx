@@ -3,16 +3,19 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  IconCheck,
+  ScreenScaffold,
   colors,
+  control,
+  customerPalette,
+  haptic,
+  hitSlop,
   httpClient,
+  iosContinuousCurve,
   layout,
-  leopardPalette,
+  leopardElevation,
   radius,
   spacing,
-  typography,
-  Button,
-  FormField,
-  ScreenScaffold,
   typeScale,
 } from '@leopard/mobile-core';
 
@@ -87,9 +90,8 @@ export function PromotionsScreen() {
   const router = useRouter();
   const [promotions, setPromotions] = useState<readonly PromotionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
-  const [isApplying, setIsApplying] = useState(false);
+  const [, setIsApplying] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
   useEffect(() => {
@@ -122,7 +124,7 @@ export function PromotionsScreen() {
     const normalizedCode = code.trim().toUpperCase();
     if (!normalizedCode) return;
 
-    setPromoCodeInput(normalizedCode);
+    haptic.selection();
     setIsApplying(true);
     setFeedbackMessage(null);
 
@@ -133,18 +135,21 @@ export function PromotionsScreen() {
       });
 
       if (res?.valid) {
+        haptic.success();
         setAppliedCode(normalizedCode);
         setFeedbackMessage({
-          text: `Áp dụng thành công! Giảm ${res.discountVnd.toLocaleString('vi-VN')} ₫`,
+          text: `Đã áp dụng mã ${normalizedCode}! Giảm ${res.discountVnd.toLocaleString('vi-VN')} ₫`,
           isError: false,
         });
       } else {
+        haptic.warning();
         setFeedbackMessage({
           text: 'Mã không hợp lệ hoặc không đủ điều kiện',
           isError: true,
         });
       }
     } catch (err: any) {
+      haptic.error();
       const msg = err?.message || 'Không thể áp dụng mã khuyến mãi';
       setFeedbackMessage({
         text: msg,
@@ -157,93 +162,84 @@ export function PromotionsScreen() {
 
   return (
     <ScreenScaffold
+      headerTone="plain"
       onBack={() => router.back()}
-      subtitle="Mã giảm giá và ưu đãi cước vận chuyển khả dụng."
       title="Khuyến mãi"
     >
       <View style={styles.container}>
-        <View style={styles.doubleBezelOuter}>
-          <View style={styles.inputCardInner}>
-            <View style={styles.inputRow}>
-              <View style={styles.inputWrap}>
-                <FormField
-                  autoCapitalize="characters"
-                  label="Nhập mã khuyến mãi"
-                  onChangeText={(val) => {
-                    setPromoCodeInput(val);
-                    setFeedbackMessage(null);
-                  }}
-                  placeholder="VD: LEOPARD20"
-                  value={promoCodeInput}
-                />
-              </View>
-            </View>
-
-            {feedbackMessage && (
-              <Text
-                style={[
-                  styles.feedbackText,
-                  feedbackMessage.isError ? styles.feedbackError : styles.feedbackSuccess,
-                ]}
-              >
-                {feedbackMessage.text}
-              </Text>
-            )}
-
-            <Button
-              disabled={!promoCodeInput.trim() || isApplying}
-              label={
-                isApplying
-                  ? 'Đang kiểm tra...'
-                  : appliedCode === promoCodeInput.trim().toUpperCase()
-                    ? 'Đã áp dụng'
-                    : 'Áp dụng mã'
-              }
-              onPress={() => handleApply(promoCodeInput.trim().toUpperCase())}
-            />
+        {feedbackMessage ? (
+          <View
+            style={[
+              styles.bannerBox,
+              feedbackMessage.isError ? styles.bannerBoxError : styles.bannerBoxSuccess,
+            ]}
+          >
+            {!feedbackMessage.isError ? (
+              <IconCheck color={colors.success.text} size={16} />
+            ) : null}
+            <Text
+              style={[
+                styles.feedbackText,
+                feedbackMessage.isError ? styles.feedbackError : styles.feedbackSuccess,
+              ]}
+            >
+              {feedbackMessage.text}
+            </Text>
           </View>
-        </View>
+        ) : null}
 
-        <Text style={styles.sectionLabel}>MÃ KHUYẾN MÃI CÓ SẴN</Text>
+        {/* Available Vouchers Section */}
+        <Text style={styles.sectionLabel}>Mã khuyến mãi có sẵn</Text>
 
         {isLoading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator color={colors.brand.background} size="small" />
+            <ActivityIndicator color={customerPalette.primary} size="small" />
+          </View>
+        ) : promotions.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>Chưa có mã khuyến mãi</Text>
+            <Text style={styles.emptySubtitle}>Các mã ưu đãi mới sẽ được cập nhật sớm.</Text>
           </View>
         ) : (
           <FlatList
             contentContainerStyle={styles.listContent}
+            contentInsetAdjustmentBehavior="automatic"
             data={promotions}
             keyExtractor={(item) => item.code}
             renderItem={({ item }) => {
               const isApplied = appliedCode === item.code;
               return (
-                <View style={styles.doubleBezelOuter}>
-                  <View style={[styles.promoCardInner, isApplied ? styles.promoCardApplied : null]}>
-                    <View style={styles.cardHeader}>
-                      <View style={styles.codeTag}>
-                        <Text style={styles.codeText}>{item.code}</Text>
-                      </View>
-                      <Text style={styles.discountText}>{item.discount}</Text>
+                <View style={[styles.promoCard, isApplied ? styles.promoCardApplied : null]}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.codeTag}>
+                      <Text style={styles.codeText}>{item.code}</Text>
                     </View>
-                    <Text style={styles.promoTitle}>{item.title}</Text>
-                    {item.description ? <Text style={styles.promoDesc}>{item.description}</Text> : null}
-                    <View style={styles.cardFooter}>
-                      <Text style={styles.expiryText}>HSD: {item.expiresAt}</Text>
-                      <Pressable
-                        accessibilityLabel={isApplied ? 'Đang dùng mã' : `Sử dụng mã ${item.code}`}
-                        accessibilityRole="button"
-                        hitSlop={8}
-                        onPress={() => handleApply(item.code)}
-                        style={styles.applyBtn}
-                      >
-                        <Text style={styles.applyBtnText}>{isApplied ? 'Đang dùng' : 'Sử dụng'}</Text>
-                      </Pressable>
-                    </View>
+                    <Text style={styles.discountText}>{item.discount}</Text>
+                  </View>
+                  <Text style={styles.promoTitle}>{item.title}</Text>
+                  {item.description ? <Text style={styles.promoDesc}>{item.description}</Text> : null}
+                  <View style={styles.cardFooter}>
+                    <Text style={styles.expiryText}>HSD: {item.expiresAt}</Text>
+                    <Pressable
+                      accessibilityLabel={isApplied ? 'Đang dùng mã' : `Sử dụng mã ${item.code}`}
+                      accessibilityRole="button"
+                      hitSlop={hitSlop(32, control.minimumTouchHeight)}
+                      onPress={() => handleApply(item.code)}
+                      style={({ pressed }) => [
+                        styles.applyBtn,
+                        isApplied ? styles.applyBtnActive : null,
+                        pressed ? styles.pressed : null,
+                      ]}
+                    >
+                      <Text style={[styles.applyBtnText, isApplied ? styles.applyBtnTextActive : null]}>
+                        {isApplied ? 'Đang dùng' : 'Sử dụng'}
+                      </Text>
+                    </Pressable>
                   </View>
                 </View>
               );
             }}
+            showsVerticalScrollIndicator={false}
           />
         )}
       </View>
@@ -254,31 +250,30 @@ export function PromotionsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
-  doubleBezelOuter: {
-    backgroundColor: 'rgba(11, 30, 66, 0.04)',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 6,
-  },
-  inputCardInner: {
-    backgroundColor: colors.neutral.background,
-    borderRadius: 18,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  inputRow: {
+  bannerBox: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
   },
-  inputWrap: {
-    flex: 1,
+  bannerBoxSuccess: {
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
+  },
+  bannerBoxError: {
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
   },
   feedbackText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
-    marginTop: -spacing.xxs,
+    flex: 1,
   },
   feedbackSuccess: {
     color: colors.success.text,
@@ -287,11 +282,11 @@ const styles = StyleSheet.create({
     color: colors.danger.text,
   },
   sectionLabel: {
-    color: colors.brand.background,
-    fontSize: 11,
+    color: colors.neutral.text,
+    ...typeScale.subheadline,
     fontWeight: '600',
-    letterSpacing: 0.4,
-    marginTop: spacing.xxs,
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.hairline,
   },
   loadingWrap: {
     alignItems: 'center',
@@ -300,18 +295,22 @@ const styles = StyleSheet.create({
   },
   listContent: {
     gap: spacing.sm,
-    paddingBottom: layout.bottomNavClearance,
+    paddingBottom: layout.bottomNavClearance + spacing.lg,
   },
-  promoCardInner: {
-    backgroundColor: colors.neutral.background,
-    borderRadius: 18,
+  promoCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.cardBorder,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
+    ...leopardElevation.subtle,
   },
   promoCardApplied: {
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderColor: colors.brand.background,
+    borderColor: customerPalette.primary,
     borderWidth: 1.5,
+    backgroundColor: customerPalette.primaryBg,
   },
   cardHeader: {
     alignItems: 'center',
@@ -319,58 +318,84 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   codeTag: {
-    backgroundColor: colors.brand.softBackground,
-    borderRadius: radius.control,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: customerPalette.primaryBg,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
   },
   codeText: {
-    color: colors.brand.background,
-    fontSize: 13,
+    color: customerPalette.primary,
+    ...typeScale.footnote,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
-    letterSpacing: 0.5,
   },
   discountText: {
-    color: leopardPalette.accentYellowDark,
-    fontSize: typeScale.subheadline.fontSize,
+    color: customerPalette.accent,
+    ...typeScale.subheadline,
     fontVariant: ['tabular-nums'],
     fontWeight: '700',
   },
   promoTitle: {
-    color: colors.neutral.titleText,
-    fontSize: typeScale.subheadline.fontSize,
+    color: colors.neutral.text,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   promoDesc: {
-    color: colors.neutral.text,
-    fontSize: typeScale.footnote.fontSize,
-    lineHeight: 17,
+    color: customerPalette.textMutedSlate,
+    ...typeScale.footnote,
+    lineHeight: 18,
   },
   cardFooter: {
     alignItems: 'center',
-    borderTopColor: colors.neutral.rowDivider,
+    borderTopColor: customerPalette.cardBorder,
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: spacing.xs,
   },
   expiryText: {
-    color: colors.neutral.subtleText,
-    fontSize: typeScale.caption1.fontSize,
+    color: customerPalette.textSubtle,
+    ...typeScale.caption2,
     fontVariant: ['tabular-nums'],
   },
   applyBtn: {
     alignItems: 'center',
-    height: 44,
     justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 70,
-    paddingHorizontal: 12,
+    backgroundColor: customerPalette.primaryBg,
+    borderRadius: radius.pill,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xxs,
+    minHeight: 32,
+  },
+  applyBtnActive: {
+    backgroundColor: customerPalette.primary,
   },
   applyBtnText: {
-    color: colors.brand.background,
-    fontSize: 13,
+    color: customerPalette.primary,
+    ...typeScale.footnote,
     fontWeight: '600',
+  },
+  applyBtnTextActive: {
+    color: customerPalette.surfaceWhite,
+  },
+  emptyContainer: {
+    padding: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  emptyTitle: {
+    ...typeScale.subheadline,
+    fontWeight: '600',
+    color: colors.neutral.text,
+  },
+  emptySubtitle: {
+    ...typeScale.caption1,
+    color: customerPalette.textSubtle,
+  },
+  pressed: {
+    opacity: 0.8,
   },
 });

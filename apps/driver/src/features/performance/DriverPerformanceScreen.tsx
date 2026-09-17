@@ -6,12 +6,15 @@ import {
   IconSecurityShield,
   IconSpeedTruck,
   IconStar,
+  IconUser,
   ScreenScaffold,
   ScreenState,
   StarRating,
   colors,
+  customerPalette,
   driverPrimitives,
   iosContinuousCurve,
+  leopardPalette,
   radius,
   spacing,
   typeScale,
@@ -68,29 +71,23 @@ export function DriverPerformanceScreen({
           <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
         ) : (
           <>
-            {/* ── 1. Executive Rating Bento Card (Apple White Minimalist) ── */}
+            {/* ── 1. Executive Rating Bento Card (Midnight Navy Brand Hero) ── */}
             <View style={styles.ratingHeroCard}>
               <View style={styles.ratingScoreRow}>
                 <Text style={styles.ratingBigNumber}>{ratingAvg.toFixed(2)}</Text>
-                <IconStar color={driverPrimitives.colors.amber500} filled size={28} />
+                <IconStar color={leopardPalette.accentYellow} filled size={28} />
               </View>
 
               <View style={styles.starsWrapper}>
-                <StarRating rating={ratingAvg} size={16} />
+                <StarRating
+                  color={leopardPalette.accentYellow}
+                  emptyColor="rgba(255, 255, 255, 0.25)"
+                  rating={ratingAvg}
+                  size={18}
+                />
               </View>
 
               <Text style={styles.ratingCountText}>{ratingCount} đánh giá</Text>
-
-              <View style={styles.ratingBadgePill}>
-                <View style={styles.ratingBadgeDot} />
-                <Text style={styles.ratingBadgeText}>
-                  {ratingAvg >= 4.8
-                    ? 'Chất lượng xuất sắc'
-                    : ratingAvg >= 4.0
-                    ? 'Đạt chuẩn vận tải'
-                    : 'Cần cải thiện chất lượng'}
-                </Text>
-              </View>
             </View>
 
             {/* ── 2. Operational Core KPIs Section (Apple Inset Grouped) ── */}
@@ -134,7 +131,7 @@ export function DriverPerformanceScreen({
               </View>
             </View>
 
-            {/* ── 3. Customer Reviews Feed (Apple Inset Grouped) ── */}
+            {/* ── 3. Customer Reviews Feed (Apple Inset Grouped with Avatars) ── */}
             <View style={styles.sectionBlock}>
               <Text style={styles.sectionLabel}>
                 Đánh giá từ khách hàng ({recentReviews.length})
@@ -149,14 +146,26 @@ export function DriverPerformanceScreen({
                   {recentReviews.map((item, index) => (
                     <React.Fragment key={item.id}>
                       <View style={styles.reviewItemRow}>
-                        <View style={styles.reviewItemHeader}>
-                          <StarRating rating={item.rating} size={14} />
-                          <Text style={styles.reviewDateText}>
-                            {formatReviewDate(item.createdAt)}
-                          </Text>
+                        {/* Left: Avatar */}
+                        <View style={styles.reviewAvatarSquircle}>
+                          <IconUser color={driverPrimitives.colors.gray500} size={18} />
                         </View>
-                        <Text style={styles.reviewCommentText}>{item.comment}</Text>
+
+                        {/* Right: Stars + Date + Comment */}
+                        <View style={styles.reviewContentCol}>
+                          <View style={styles.reviewHeaderRow}>
+                            <StarRating rating={item.rating} size={13} />
+                            <Text style={styles.reviewDateText}>
+                              {formatReviewDate(item.createdAt)}
+                            </Text>
+                          </View>
+
+                          {item.comment ? (
+                            <Text style={styles.reviewCommentText}>{item.comment}</Text>
+                          ) : null}
+                        </View>
                       </View>
+
                       {index < recentReviews.length - 1 ? (
                         <View style={styles.reviewSeparator} />
                       ) : null}
@@ -184,18 +193,22 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  /* 1. Rating Hero Card - Pure Apple White Minimal */
+  /* 1. Rating Hero Card - Midnight Navy Brand Hero */
   ratingHeroCard: {
     alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: colors.neutral.border,
-    borderRadius: 20,
+    backgroundColor: leopardPalette.darkHeroBg,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     borderWidth: 1,
+    elevation: 6,
     gap: 8,
-    paddingVertical: 22,
-    paddingHorizontal: 16,
-    ...driverPrimitives.shadows.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 24,
+    shadowColor: leopardPalette.darkHeroBg,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
   },
   ratingScoreRow: {
     alignItems: 'center',
@@ -203,9 +216,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ratingBigNumber: {
-    color: driverPrimitives.colors.gray900,
-    ...typeScale.largeTitle,
+    color: customerPalette.surfaceWhite,
+    fontSize: 38,
     fontVariant: ['tabular-nums'],
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   starsWrapper: {
@@ -213,32 +227,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.hairline,
   },
   ratingCountText: {
-    color: colors.neutral.mutedText,
-    ...typeScale.caption1,
+    color: leopardPalette.inputPlaceholder,
+    ...typeScale.footnote,
     fontVariant: ['tabular-nums'],
-  },
-  ratingBadgePill: {
-    alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: spacing.xxs,
-    paddingHorizontal: 10,
-    paddingVertical: spacing.xxs,
-  },
-  ratingBadgeDot: {
-    backgroundColor: driverPrimitives.colors.green500,
-    borderRadius: radius.pill,
-    height: 6,
-    width: 6,
-  },
-  ratingBadgeText: {
-    color: driverPrimitives.colors.gray700,
-    ...typeScale.caption2,
-    fontWeight: '600',
   },
 
   /* 2. Core KPIs Section - Apple Inset Grouped */
@@ -291,8 +282,8 @@ const styles = StyleSheet.create({
   metricValueText: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.title3,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   metricDivider: {
@@ -301,7 +292,7 @@ const styles = StyleSheet.create({
     marginLeft: 54,
   },
 
-  /* 3. Reviews Feed - Apple Grouped */
+  /* 3. Reviews Feed - Apple Grouped with Avatars */
   reviewsGroupCard: {
     backgroundColor: driverPrimitives.colors.white,
     borderColor: colors.neutral.border,
@@ -312,29 +303,49 @@ const styles = StyleSheet.create({
     ...driverPrimitives.shadows.sm,
   },
   reviewItemRow: {
-    gap: 6,
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md - 2,
+    paddingVertical: 14,
   },
-  reviewItemHeader: {
+  reviewAvatarSquircle: {
+    alignItems: 'center',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: 'center',
+    marginTop: 2,
+    width: 36,
+  },
+  reviewContentCol: {
+    flex: 1,
+    gap: 6,
+  },
+  reviewHeaderRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: 20,
   },
   reviewDateText: {
     color: colors.neutral.mutedText,
-    ...typeScale.caption1,
+    ...typeScale.caption2,
     fontVariant: ['tabular-nums'],
   },
   reviewCommentText: {
-    color: driverPrimitives.colors.gray900,
+    color: colors.neutral.titleText,
     ...typeScale.footnote,
     lineHeight: 20,
   },
   reviewSeparator: {
     backgroundColor: driverPrimitives.colors.gray100,
     height: 1,
-    marginHorizontal: spacing.md,
+    marginLeft: 60,
+    marginRight: spacing.md,
   },
   emptyCard: {
     alignItems: 'center',
@@ -342,8 +353,8 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral.border,
     borderRadius: radius.cardXl,
     borderWidth: 1,
-    paddingVertical: spacing.xl,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xl,
   },
   emptyText: {
     color: colors.neutral.mutedText,

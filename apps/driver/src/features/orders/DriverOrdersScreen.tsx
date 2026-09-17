@@ -28,7 +28,6 @@ import { DriverLocationStatus } from './components/DriverLocationStatus';
 import { DriverReceivingSettingsModal } from './components/DriverReceivingSettingsModal';
 import { DriverSystemBanner } from './components/DriverSystemBanner';
 import { DriverActiveTripCard } from './components/DriverActiveTripCard';
-import { DriverNotice } from './components/DriverNotice';
 import { DriverQuickNavOverlay } from './components/DriverQuickNavOverlay';
 import { useDriverIdlePingHealth } from './useDriverIdlePing';
 import { getDriverCurrentLocation, type DriverLocationState } from './driver-current-location';
@@ -50,7 +49,6 @@ export type DriverOrdersScreenProps = Readonly<{
   onSetAvailability?: (commandId: string) => void;
   onOpenOrder?: (orderId: string) => void;
   onRetry?: () => void;
-  onNoticeAction?: () => void;
   incomingOffer?: IncomingDispatchOffer | null;
   onAcceptIncomingOffer?: (orderId: string) => void;
   onDeclineIncomingOffer?: (orderId: string) => void;
@@ -59,6 +57,7 @@ export type DriverOrdersScreenProps = Readonly<{
   networkError?: string | null;
   driverIdentity?: {
     name?: string | null;
+    avatarUrl?: string | null;
     vehiclePlate?: string | null;
     vehicleType?: string | null;
   };
@@ -81,7 +80,6 @@ export function DriverOrdersScreen({
   onAcceptIncomingOffer,
   onDeclineIncomingOffer,
   onNavigate,
-  onNoticeAction,
   onOpenOrder,
   onRetry,
   onSetAvailability,
@@ -287,8 +285,6 @@ export function DriverOrdersScreen({
               networkError={networkError}
               onRetry={onRetry}
             />
-
-            {isContent ? <DriverNotice onNoticeAction={onNoticeAction} view={view} /> : null}
           </ScrollView>
         </GestureBottomSheet>
       ) : (
@@ -371,8 +367,6 @@ export function DriverOrdersScreen({
                 networkError={networkError}
                 onRetry={onRetry}
               />
-
-              <DriverNotice onNoticeAction={onNoticeAction} view={view} />
             </>
           ) : null}
         </View>
@@ -381,6 +375,7 @@ export function DriverOrdersScreen({
       {/* ── Layer 4: Grab-style floating quick-nav (pill + avatar) ── */}
       {!activeTrip ? (
         <DriverQuickNavOverlay
+          avatarUrl={driverIdentity?.avatarUrl}
           driverName={driverIdentity?.name}
           earningsTodayLabel={earningsTodayVnd !== undefined ? formatDongLabel(earningsTodayVnd) : undefined}
           isOnline={isOnline}

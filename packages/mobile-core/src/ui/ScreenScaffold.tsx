@@ -11,6 +11,7 @@ export const SCREEN_SCAFFOLD_SAFE_AREA_OWNER = 'root' as const;
 type ScreenScaffoldProps = PropsWithChildren<
   Readonly<{
     stickyFooter?: ReactNode;
+    stickyFooterBleed?: boolean;
     eyebrow?: string;
     hasFloatingNavBar?: boolean;
     headerTone?: 'plain' | 'ink';
@@ -36,6 +37,7 @@ export function ScreenScaffold({
   headerTone = 'plain',
   onBack,
   stickyFooter,
+  stickyFooterBleed = false,
   subtitle,
   title,
 }: ScreenScaffoldProps) {
@@ -128,11 +130,19 @@ export function ScreenScaffold({
         <View
           style={[
             styles.stickyFooter,
+            stickyFooterBleed ? styles.stickyFooterBleed : null,
             hasFloatingNavBar ? styles.stickyFooterWithFloatingNav : null,
           ]}
           testID="screen-scaffold-sticky-footer"
         >
-          <View style={styles.footerContent}>{stickyFooter}</View>
+          <View
+            style={[
+              styles.footerContent,
+              stickyFooterBleed ? styles.footerContentBleed : null,
+            ]}
+          >
+            {stickyFooter}
+          </View>
         </View>
       ) : null}
     </View>
@@ -202,7 +212,8 @@ const styles = StyleSheet.create({
   topBarLeading: {
     alignItems: 'flex-start',
     justifyContent: 'center',
-    width: 44,
+    minWidth: 44,
+    flexShrink: 0,
   },
   topBarCenter: {
     alignItems: 'center',
@@ -213,11 +224,12 @@ const styles = StyleSheet.create({
   topBarTrailing: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    width: 44,
+    minWidth: 44,
+    flexShrink: 0,
   },
   topBarSpacer: {
     height: 32,
-    width: 44,
+    minWidth: 44,
   },
   titleRow: {
     alignItems: 'center',
@@ -289,12 +301,22 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     position: 'relative',
   },
+  stickyFooterBleed: {
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
   stickyFooterWithFloatingNav: {
     paddingBottom: layout.bottomNavClearance,
   },
   footerContent: {
     maxWidth: layout.contentMaxWidth,
     width: '100%',
+  },
+  footerContentBleed: {
+    maxWidth: '100%',
   },
   sectionHeading: {
     gap: spacing.xxs,

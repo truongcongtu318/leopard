@@ -62,7 +62,9 @@ export function DriverConnectionCapsule({
       style={({ pressed }) => [
         styles.capsule,
         {
-          backgroundColor: isOnline ? driverPrimitives.colors.green500 : driverPrimitives.colors.dark900,
+          backgroundColor: colors.brand.primary,
+          borderColor: isOnline ? '#00B14F' : 'rgba(255, 255, 255, 0.16)',
+          borderWidth: isOnline ? 2 : 1,
           paddingHorizontal: isOnline ? 0 : 28,
           width: isOnline ? 52 : undefined,
         },
@@ -75,7 +77,7 @@ export function DriverConnectionCapsule({
         {isPending ? (
           <ActivityIndicator color={colors.neutral.surface} size="small" testID="driver-connection-spinner" />
         ) : (
-          <PowerGlyph color={colors.neutral.surface} size={18} />
+          <PowerGlyph color={isOnline ? '#00B14F' : colors.neutral.surface} size={20} />
         )}
       </View>
       {isOnline ? null : <Text style={styles.label}>Bật kết nối</Text>}

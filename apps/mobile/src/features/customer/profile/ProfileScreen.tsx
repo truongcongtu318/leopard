@@ -182,7 +182,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                 <View style={[styles.bentoIconBadge, { backgroundColor: colors.neutral.surfaceMuted }]}>
                   <IconWallet color={customerPalette.textSlateDark} size={14} />
                 </View>
-                <Text style={styles.bentoEyebrow}>KÝ QUỸ & ĐƠN</Text>
+                <Text style={styles.bentoEyebrow}>Ký quỹ & đơn</Text>
               </Pressable>
               <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="sm" />
             </View>
@@ -215,7 +215,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                 <View style={[styles.bentoIconBadge, { backgroundColor: colors.neutral.surfaceMuted }]}>
                   <IconTag color={customerPalette.textSlateDark} size={14} />
                 </View>
-                <Text style={styles.bentoEyebrow}>MÃ ƯU ĐÃI</Text>
+                <Text style={styles.bentoEyebrow}>Mã ưu đãi</Text>
               </View>
               <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="sm" />
             </View>
@@ -229,7 +229,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 
         {/* 3. NHÓM VẬN CHUYỂN & ĐƠN HÀNG */}
         <View style={styles.sectionGroup}>
-          <SectionHeader title="VẬN CHUYỂN & ĐƠN HÀNG" />
+          <SectionHeader title="Vận chuyển & đơn hàng" />
           <View style={styles.insetCard}>
             <MenuRow
               badge={
@@ -256,7 +256,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 
         {/* 4. NHÓM TÀI CHÍNH & DOANH NGHIỆP (B2B ECOSYSTEM) */}
         <View style={styles.sectionGroup}>
-          <SectionHeader title="TÀI CHÍNH & DOANH NGHIỆP" />
+          <SectionHeader title="Tài chính & doanh nghiệp" />
           <View style={styles.insetCard}>
             <MenuRow
               icon={<IconFileText color={customerPalette.textSlateDark} size={19} />}
@@ -271,7 +271,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
 
         {/* 5. NHÓM HỖ TRỢ & HỆ THỐNG */}
         <View style={styles.sectionGroup}>
-          <SectionHeader title="HỖ TRỢ & HỆ THỐNG" />
+          <SectionHeader title="Hỗ trợ & hệ thống" />
           <View style={styles.insetCard}>
             <MenuRow
               icon={<IconSupport247 color={colors.danger.text} size={19} />}
@@ -338,7 +338,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     padding: 18,
-    paddingBottom: 26,
     position: 'relative',
     shadowColor: leopardPalette.darkHeroBg,
     shadowOffset: { width: 0, height: 8 },
@@ -516,7 +515,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 4,
     flexDirection: 'row',
-    marginTop: -16,
     padding: 14,
     shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 4 },
@@ -596,11 +594,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   sectionHeader: {
-    color: customerPalette.textSubtle,
-    fontSize: 11,
+    color: customerPalette.textMutedSlate,
+    ...typeScale.footnote,
     fontWeight: '600',
-    letterSpacing: 0.8,
-    marginLeft: 4,
+    letterSpacing: 0.1,
+    marginLeft: spacing.xs,
   },
   insetCard: {
     backgroundColor: customerPalette.surfaceWhite,

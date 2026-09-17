@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   stopChipActive: {
     backgroundColor: '#0B2545',
-    borderColor: '#F59E0B',
+    borderColor: '#F26722',
     borderWidth: 1.5,
   },
   stopChipPending: {

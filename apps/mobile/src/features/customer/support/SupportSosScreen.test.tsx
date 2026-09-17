@@ -18,15 +18,14 @@ describe('SupportSosScreen', () => {
     jest.spyOn(Linking, 'openURL').mockImplementation(async () => true);
   });
 
-  it('renders hotline, SOS, FAQs, Legal sections and feedback form', async () => {
+  it('renders hotline, SOS, FAQs and Legal sections', async () => {
     const screen = await render(<SupportSosScreen />);
 
     expect(screen.getByText('Trợ giúp & SOS')).toBeTruthy();
     expect(screen.getByText('1900 6868')).toBeTruthy();
     expect(screen.getByText('Báo cáo khẩn cấp (SOS)')).toBeTruthy();
-    expect(screen.getByText('CÂU HỎI THƯỜNG GẶP (FAQ)')).toBeTruthy();
-    expect(screen.getByText('ĐIỀU KHOẢN DỊCH VỤ & CHÍNH SÁCH BẢO MẬT')).toBeTruthy();
-    expect(screen.getByText('GỬI Ý KIẾN ĐÓNG GÓP')).toBeTruthy();
+    expect(screen.getByText('Câu hỏi thường gặp')).toBeTruthy();
+    expect(screen.getByText('Điều khoản dịch vụ & chính sách bảo mật')).toBeTruthy();
 
     await screen.unmount();
   });

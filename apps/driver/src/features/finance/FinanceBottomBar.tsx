@@ -6,7 +6,9 @@ import Svg, { Path } from 'react-native-svg';
 import {
   colors,
   driverPrimitives,
-  iosContinuousCurve,
+  IconWallet,
+  spacing,
+  typeScale,
 } from '@leopard/mobile-core';
 
 export type FinanceTabKey = 'earnings' | 'wallet';
@@ -16,22 +18,14 @@ export type FinanceBottomBarProps = Readonly<{
   onNavigate?: (route: string) => void;
 }>;
 
+const ACTIVE_COLOR = colors.brand.primary; // #0B2545 Midnight Navy
+const INACTIVE_COLOR = driverPrimitives.colors.gray500; // #8E8E93 Apple System Gray
+
 function BarChartTabIcon({ color }: { color: string }) {
   return (
     <Svg height={22} viewBox="0 0 24 24" width={22}>
       <Path
-        d="M4 10a1.5 1.5 0 0 1 3 0v8a1.5 1.5 0 0 1-3 0v-8zm6.5-5a1.5 1.5 0 0 1 3 0v13a1.5 1.5 0 0 1-3 0V5zm6.5 7a1.5 1.5 0 0 1 3 0v6a1.5 1.5 0 0 1-3 0v-6z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
-
-function WalletTabIcon({ color }: { color: string }) {
-  return (
-    <Svg height={22} viewBox="0 0 24 24" width={22}>
-      <Path
-        d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.99 1-1.72V9c0-.73-.41-1.37-1-1.72zM20 9v6h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3zM5 5h14v2H5V5zm0 14V9h10v1H9c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h6v1H5v2z"
+        d="M4.5 11.5C4.5 10.67 5.17 10 6 10s1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-7zm6-6.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v13.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V5zm6 7c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v6.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V12z"
         fill={color}
       />
     </Svg>
@@ -43,7 +37,8 @@ export function FinanceBottomBar({
   onNavigate,
 }: FinanceBottomBarProps) {
   const insets = useContext(SafeAreaInsetsContext);
-  const bottomInset = Math.max(insets?.bottom ?? 0, 10);
+  // Guarantee a minimum safe clearance (8pt) even on screens without safe area insets (web/preview/older devices)
+  const bottomInset = insets?.bottom ? insets.bottom : spacing.xs;
 
   const tabs = [
     {
@@ -51,7 +46,7 @@ export function FinanceBottomBar({
       label: 'Thu nhập',
       route: '/earnings',
       renderIcon: (active: boolean) => (
-        <BarChartTabIcon color={active ? '#00B14F' : '#8E8E93'} />
+        <BarChartTabIcon color={active ? ACTIVE_COLOR : INACTIVE_COLOR} />
       ),
     },
     {
@@ -59,7 +54,11 @@ export function FinanceBottomBar({
       label: 'Ví',
       route: '/wallet',
       renderIcon: (active: boolean) => (
-        <WalletTabIcon color={active ? '#00B14F' : '#8E8E93'} />
+        <IconWallet
+          color={active ? ACTIVE_COLOR : INACTIVE_COLOR}
+          filled={active}
+          size={22}
+        />
       ),
     },
   ];
@@ -102,10 +101,7 @@ export function FinanceBottomBar({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.neutral.surface,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
+    width: '100%',
     zIndex: 50,
   },
   topBorder: {
@@ -118,14 +114,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: 52,
     justifyContent: 'space-around',
-    paddingTop: 4,
+    paddingBottom: spacing.xxs,
+    paddingTop: spacing.xs,
   },
   tabBtn: {
     alignItems: 'center',
     flex: 1,
     height: '100%',
     justifyContent: 'center',
-    minHeight: 44,
   },
   iconWrap: {
     alignItems: 'center',
@@ -134,17 +130,16 @@ const styles = StyleSheet.create({
     width: 24,
   },
   tabLabel: {
-    color: '#8E8E93',
-    fontSize: 10.5,
+    ...typeScale.caption2,
+    color: INACTIVE_COLOR,
     fontWeight: '500',
-    letterSpacing: -0.2,
-    marginTop: 3,
+    marginTop: spacing.xxs - 1,
   },
   tabLabelActive: {
-    color: '#00B14F',
+    color: ACTIVE_COLOR,
     fontWeight: '700',
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
 });

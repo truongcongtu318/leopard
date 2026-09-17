@@ -5,6 +5,7 @@ import {
   IconCheck,
   IconPaymentConvenient,
   IconQrPayment,
+  colors,
   customerPalette,
   iosContinuousCurve,
   radius,
@@ -24,7 +25,7 @@ export function BookingPaymentSection({
 }: BookingPaymentSectionProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>PHƯƠNG THỨC THANH TOÁN</Text>
+      <Text style={styles.sectionHeader}>Phương thức thanh toán</Text>
 
       <View style={styles.insetGroupedCard}>
         {/* VietQR */}
@@ -94,23 +95,20 @@ export function BookingPaymentSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 24,
-    marginBottom: 32,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
   },
   sectionHeader: {
     ...typeScale.footnote,
-    fontSize: 13,
     fontWeight: '600',
-    color: '#6E6E73',
-    paddingHorizontal: 32,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: -0.08,
+    color: colors.neutral.mutedText,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
   },
   insetGroupedCard: {
-    marginHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    marginHorizontal: spacing.md,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.card,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
@@ -118,12 +116,12 @@ const styles = StyleSheet.create({
   methodRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     minHeight: 64,
   },
   methodRowSelected: {
-    backgroundColor: 'rgba(11, 37, 69, 0.03)',
+    backgroundColor: customerPalette.primaryBg,
   },
   rowPressed: {
     opacity: 0.75,
@@ -131,11 +129,11 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F2F2F7',
+    borderRadius: radius.control,
+    backgroundColor: colors.neutral.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm,
     ...iosContinuousCurve,
   },
   methodInfo: {
@@ -144,31 +142,28 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   methodName: {
     ...typeScale.body,
-    fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: colors.neutral.text,
   },
   recommendedBadge: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 5,
+    backgroundColor: colors.warning.background,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+    borderRadius: radius.cardSm,
   },
   recommendedBadgeText: {
     ...typeScale.caption2,
-    fontSize: 11,
     fontWeight: '700',
-    color: '#D97706',
+    color: colors.warning.text,
   },
   methodDesc: {
     ...typeScale.footnote,
-    fontSize: 13,
-    color: '#8E8E93',
-    marginTop: 2,
+    color: customerPalette.textSubtle,
+    marginTop: spacing.hairline,
   },
   checkmarkSlot: {
     width: 24,
@@ -179,7 +174,7 @@ const styles = StyleSheet.create({
   checkmarkCircle: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     backgroundColor: customerPalette.primary,
     justifyContent: 'center',
     alignItems: 'center',

@@ -77,7 +77,6 @@ describe('AddressBookScreen', () => {
 
     // Default badge and status
     expect(screen.getByText('Mặc định')).toBeTruthy();
-    expect(screen.getByText('Đang áp dụng cho đơn mới')).toBeTruthy();
 
     // Contact details
     expect(screen.getByText('Nguyễn Văn A')).toBeTruthy();
@@ -201,7 +200,6 @@ describe('AddressBookScreen', () => {
       expect((httpClient.patch as any)).toHaveBeenCalledWith(
         '/users/me/addresses/addr-2/default',
       );
-      expect(screen.getByText('Đang áp dụng cho đơn mới')).toBeTruthy();
     });
 
     expect(screen.getByLabelText('Đặt Kho trung tâm Quận 7 làm mặc định')).toBeTruthy();

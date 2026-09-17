@@ -84,6 +84,7 @@ export function DriverOrdersListRuntime({
     if (profileQuery.data && profileQuery.data.kind === 'content') {
       return {
         name: profileQuery.data.name ?? null,
+        avatarUrl: profileQuery.data.avatarUrl ?? null,
         vehicleLabel: profileQuery.data.vehicleLabel ?? null,
       };
     }

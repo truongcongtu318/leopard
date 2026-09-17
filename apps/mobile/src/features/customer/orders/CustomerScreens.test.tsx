@@ -46,17 +46,23 @@ describe('CustomerOrdersScreen', () => {
     await screen.unmount();
   });
 
-  it('renders active filter chip with Midnight Navy #0B2545 background', async () => {
+  it('renders search bar and filters completed orders by search query', async () => {
     const screen = await render(
       <CustomerOrdersScreen view={createCustomerListFixture('C-LIST-SUCCESS')} />,
     );
 
-    const allFilterChip = screen.getByRole('button', { name: /Tất cả/ });
-    expect(allFilterChip.props.style).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ backgroundColor: '#0B2545' }),
-      ]),
-    );
+    const searchInput = screen.getByLabelText('Tìm kiếm đơn hàng');
+    expect(searchInput).toBeTruthy();
+
+    // Type search query matching one specific order
+    await fireEvent.changeText(searchInput, 'LP-260815-009');
+    expect(screen.getByText(/LP-260815-009/)).toBeTruthy();
+
+    // Clear search
+    const clearBtn = screen.getByLabelText('Xóa tìm kiếm');
+    await fireEvent.press(clearBtn);
+    expect(searchInput.props.value).toBe('');
+
     await screen.unmount();
   });
 

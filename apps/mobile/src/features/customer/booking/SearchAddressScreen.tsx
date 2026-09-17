@@ -15,6 +15,7 @@ import {
   IconClose,
   IconLocationPin,
   IconSearch,
+  colors,
   customerPalette,
   iosContinuousCurve,
   radius,
@@ -301,7 +302,7 @@ export function SearchAddressScreen({
         {/* Search Results */}
         {isSearching && searchResults.length > 0 && (
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionHeader}>KẾT QUẢ TÌM KIẾM</Text>
+            <Text style={styles.sectionHeader}>Kết quả tìm kiếm</Text>
             <View style={styles.insetGroupedCard}>
               <FlatList
                 data={searchResults}
@@ -360,10 +361,10 @@ export function SearchAddressScreen({
         {/* Default Inset Grouped Sections */}
         {!isSearching && (
           <>
-            {/* GẦN ĐÂY (chỉ hiện khi có địa chỉ gần đây thật) */}
+            {/* Gần đây */}
             {recentAddresses.length > 0 && (
               <View style={styles.sectionContainer}>
-                <Text style={styles.sectionHeader}>GẦN ĐÂY</Text>
+                <Text style={styles.sectionHeader}>Gần đây</Text>
                 <View style={styles.insetGroupedCard}>
                   {recentAddresses.map((item, index) => (
                     <React.Fragment key={item.id}>
@@ -392,9 +393,9 @@ export function SearchAddressScreen({
               </View>
             )}
 
-            {/* SỔ ĐỊA CHỈ */}
+            {/* Sổ địa chỉ */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionHeader}>SỔ ĐỊA CHỈ</Text>
+              <Text style={styles.sectionHeader}>Sổ địa chỉ</Text>
               <View style={styles.insetGroupedCard}>
                 {effectiveSavedAddresses.map((item, index) => (
                   <React.Fragment key={item.id}>
@@ -521,18 +522,15 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     ...typeScale.footnote,
-    fontSize: 13,
     fontWeight: '600',
-    color: '#6E6E73',
-    textTransform: 'uppercase',
-    letterSpacing: -0.08,
-    paddingHorizontal: 32,
-    marginBottom: 8,
+    color: colors.neutral.mutedText,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
   },
   insetGroupedCard: {
-    marginHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    marginHorizontal: spacing.md,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.control,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
@@ -540,8 +538,8 @@ const styles = StyleSheet.create({
   rowItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     minHeight: 56,
   },
   rowPressed: {

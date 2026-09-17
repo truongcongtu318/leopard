@@ -25,13 +25,13 @@ export function CustomerSettingsScreen() {
 
   return (
     <ScreenScaffold
+      headerTone="plain"
       onBack={() => router.back()}
-      subtitle="Tùy chỉnh thông báo, ngôn ngữ và bảo mật ứng dụng."
       title="Cài đặt"
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Group 1: Thông báo */}
-        <Text style={styles.sectionLabel}>THÔNG BÁO</Text>
+        <Text style={styles.sectionLabel}>Thông báo</Text>
         <View style={styles.groupedCard}>
           <View style={styles.settingRow}>
             <View style={styles.textWrap}>
@@ -41,7 +41,7 @@ export function CustomerSettingsScreen() {
             <Switch
               accessibilityLabel="Bật hoặc tắt thông báo đẩy"
               onValueChange={setPushEnabled}
-              thumbColor={Platform.OS === 'android' ? (pushEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+              thumbColor={colors.neutral.surface}
               trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={pushEnabled}
             />
@@ -55,7 +55,7 @@ export function CustomerSettingsScreen() {
             <Switch
               accessibilityLabel="Bật hoặc tắt tin nhắn SMS cập nhật"
               onValueChange={setSmsEnabled}
-              thumbColor={Platform.OS === 'android' ? (smsEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+              thumbColor={colors.neutral.surface}
               trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={smsEnabled}
             />
@@ -69,7 +69,7 @@ export function CustomerSettingsScreen() {
             <Switch
               accessibilityLabel="Bật hoặc tắt âm thanh thông báo"
               onValueChange={setSoundEnabled}
-              thumbColor={Platform.OS === 'android' ? (soundEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+              thumbColor={colors.neutral.surface}
               trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={soundEnabled}
             />
@@ -83,7 +83,7 @@ export function CustomerSettingsScreen() {
             <Switch
               accessibilityLabel="Bật hoặc tắt tin tức và khuyến mãi"
               onValueChange={setPromoEnabled}
-              thumbColor={Platform.OS === 'android' ? (promoEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+              thumbColor={colors.neutral.surface}
               trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={promoEnabled}
             />
@@ -91,7 +91,7 @@ export function CustomerSettingsScreen() {
         </View>
 
         {/* Group 2: Ngôn ngữ */}
-        <Text style={styles.sectionLabel}>NGÔN NGỮ & KHU VỰC</Text>
+        <Text style={styles.sectionLabel}>Ngôn ngữ & khu vực</Text>
         <View style={styles.groupedCard}>
           <View style={[styles.settingRow, styles.settingRowLast]}>
             <View style={styles.textWrap}>
@@ -103,7 +103,7 @@ export function CustomerSettingsScreen() {
         </View>
 
         {/* Group 3: Bảo mật & Pháp lý */}
-        <Text style={styles.sectionLabel}>BẢO MẬT & PHÁP LÝ</Text>
+        <Text style={styles.sectionLabel}>Bảo mật & pháp lý</Text>
         <View style={styles.groupedCard}>
           <Pressable
             accessibilityLabel="Bảo mật tài khoản & PIN"
@@ -154,11 +154,10 @@ const styles = StyleSheet.create({
     paddingBottom: layout.bottomNavClearance + 32,
   },
   sectionLabel: {
-    fontFamily: systemFontFamily,
-    color: customerPalette.textSubtle,
-    fontSize: 12,
+    color: customerPalette.textMutedSlate,
+    ...typeScale.footnote,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
     paddingHorizontal: 4,

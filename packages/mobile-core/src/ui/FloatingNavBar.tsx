@@ -36,13 +36,13 @@ function renderDefaultNavIcon(key: string, isActive: boolean, accentColor: strin
   const color = isActive ? accentColor : '#64748B';
   switch (key) {
     case 'home':
-      return <IconHome color={color} size={22} />;
+      return <IconHome color={color} filled={isActive} size={22} />;
     case 'orders':
-      return <IconOrders color={color} size={22} />;
+      return <IconOrders color={color} filled={isActive} size={22} />;
     case 'wallet':
-      return <IconWallet color={color} size={22} />;
+      return <IconWallet color={color} filled={isActive} size={22} />;
     case 'account':
-      return <IconUser color={color} size={22} />;
+      return <IconUser color={color} filled={isActive} size={22} />;
     default:
       return null;
   }

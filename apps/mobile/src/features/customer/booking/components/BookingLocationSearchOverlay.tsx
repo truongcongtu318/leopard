@@ -263,7 +263,7 @@ export function BookingLocationSearchOverlay({
           {/* Real Search Results */}
           {isSearching && searchResults.length > 0 && (
             <View style={styles.resultsWrap}>
-              <Text style={styles.sectionHeader}>KẾT QUẢ TÌM KIẾM THỰC TẾ</Text>
+              <Text style={styles.sectionHeader}>Kết quả tìm kiếm</Text>
               <FlatList
                 data={searchResults}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -297,7 +297,7 @@ export function BookingLocationSearchOverlay({
           {/* Real Saved Addresses (If any) */}
           {!isSearching && realSavedAddresses.length > 0 && (
             <View style={styles.resultsWrap}>
-              <Text style={styles.sectionHeader}>SỔ ĐỊA CHỈ ĐÃ LƯU</Text>
+              <Text style={styles.sectionHeader}>Sổ địa chỉ đã lưu</Text>
               <FlatList
                 data={realSavedAddresses}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}

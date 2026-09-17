@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   IconUser,
+  colors,
   customerPalette,
   iosContinuousCurve,
   radius,
@@ -37,7 +38,7 @@ export function BookingReceiverSection({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>NGƯỜI NHẬN</Text>
+      <Text style={styles.sectionHeader}>Người nhận</Text>
 
       <View style={styles.insetGroupedCard}>
         {/* Tên người nhận */}
@@ -95,36 +96,32 @@ export function BookingReceiverSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 24,
+    marginTop: spacing.lg,
   },
   sectionHeader: {
     ...typeScale.footnote,
-    fontSize: 13,
     fontWeight: '600',
-    color: '#6E6E73',
-    paddingHorizontal: 32,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: -0.08,
+    color: colors.neutral.mutedText,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
   },
   insetGroupedCard: {
-    marginHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    marginHorizontal: spacing.md,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.card,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
   },
   fieldRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   fieldLabel: {
-    ...typeScale.subheadline,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '500',
-    color: '#8E8E93',
-    marginBottom: 4,
+    color: customerPalette.textSubtle,
+    marginBottom: spacing.xxs,
   },
   inputWrap: {
     flexDirection: 'row',
@@ -134,9 +131,8 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 36,
     ...typeScale.body,
-    fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: colors.neutral.text,
     padding: 0,
   },
   contactBtn: {
@@ -148,50 +144,47 @@ const styles = StyleSheet.create({
   contactIconCircle: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#EBF2FA',
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.primaryBg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   phoneInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   countryCodeBadge: {
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing.xs,
     height: 34,
-    backgroundColor: 'rgba(118, 118, 128, 0.12)',
-    borderRadius: 8,
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderRadius: radius.cardSm,
     justifyContent: 'center',
     alignItems: 'center',
     ...iosContinuousCurve,
   },
   countryCodeText: {
-    ...typeScale.body,
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '600',
-    color: '#000000',
+    color: colors.neutral.text,
   },
   phoneTextInput: {
     flex: 1,
     height: 36,
     ...typeScale.body,
-    fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: colors.neutral.text,
     padding: 0,
     fontVariant: ['tabular-nums'],
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E5E5EA',
-    marginLeft: 16,
+    backgroundColor: colors.neutral.border,
+    marginLeft: spacing.md,
   },
   errorText: {
-    ...typeScale.footnote,
-    fontSize: 12,
-    color: '#FF3B30',
+    ...typeScale.caption1,
+    color: colors.danger.text,
     marginTop: 4,
   },
 });

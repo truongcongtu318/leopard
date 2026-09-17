@@ -476,10 +476,10 @@ describe('MapPanel', () => {
 });
 
 describe('customerPalette', () => {
-  it('aligns customerPalette with Midnight Navy primary and Cheetah Golden Amber accent', () => {
+  it('aligns customerPalette with Midnight Navy primary and Lalamove Heat Orange accent', () => {
     expect(customerPalette.primary).toBe('#0B2545');
     expect(customerPalette.tabActive).toBe('#0B2545');
     expect(customerPalette.tabActiveBg).toBe('#F0F4FA');
-    expect(customerPalette.accent).toBe('#F59E0B');
+    expect(customerPalette.accent).toBe('#F26722');
   });
 });

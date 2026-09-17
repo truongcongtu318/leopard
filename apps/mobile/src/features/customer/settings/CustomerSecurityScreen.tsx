@@ -75,8 +75,8 @@ export function CustomerSecurityScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* SECTION 1: SINH TRẮC HỌC (DOUBLE-BEZEL CARD) */}
-        <Text style={styles.sectionLabel}>SINH TRẮC HỌC</Text>
+        {/* SECTION 1: SINH TRẮC HỌC */}
+        <Text style={styles.sectionLabel}>Sinh trắc học</Text>
         <View style={styles.doubleBezelOuter}>
           <View style={styles.doubleBezelInner}>
             <View style={styles.switchRow}>
@@ -98,8 +98,8 @@ export function CustomerSecurityScreen() {
           </View>
         </View>
 
-        {/* SECTION 3: APPLE GUIDELINE 5.1.1 ACCOUNT DELETION (DOUBLE-BEZEL DANGER CARD) */}
-        <Text style={styles.sectionLabelDanger}>QUẢN LÝ DỮ LIỆU & TÀI KHOẢN</Text>
+        {/* SECTION 3: APPLE GUIDELINE 5.1.1 ACCOUNT DELETION */}
+        <Text style={styles.sectionLabelDanger}>Quản lý dữ liệu & tài khoản</Text>
         <View style={[styles.doubleBezelOuter, styles.dangerOuter]}>
           <View style={styles.doubleBezelInner}>
             <View style={styles.dangerHeaderRow}>
@@ -227,17 +227,17 @@ const styles = StyleSheet.create({
     paddingBottom: layout.bottomNavClearance + 20,
   },
   sectionLabel: {
-    color: colors.brand.background,
-    fontSize: 12,
+    color: customerPalette.textMutedSlate,
+    ...typeScale.footnote,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
     marginTop: spacing.xs,
   },
   sectionLabelDanger: {
     color: colors.danger.text,
-    fontSize: 12,
+    ...typeScale.footnote,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
     marginTop: spacing.xs,
   },
   /* Double-Bezel Card: 24px outer, 18px inner */

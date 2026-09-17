@@ -415,62 +415,62 @@ export const hitSlop = (visualSize: number, minimum: number = 44) => {
 export const colors = {
   neutral: {
     background: '#FFFFFF',
-    canvas: '#F8FAFC',
+    canvas: '#F5F6F8',
     surface: '#FFFFFF',
-    surfaceMuted: '#F1F5F9',
-    text: '#0F172A',
-    titleText: '#0F172A',
-    mutedText: '#475569',
-    subtleText: '#64748B',
-    border: '#E2E8F0',
-    subtleBorder: '#CBD5E1',
-    rowDivider: '#E2E8F0',
+    surfaceMuted: '#F0F2F5',
+    text: '#1A1A1A',
+    titleText: '#1A1A1A',
+    mutedText: '#555555',
+    subtleText: '#777777',
+    border: '#E8E8E8',
+    subtleBorder: '#D8D8D8',
+    rowDivider: '#EEEEEE',
   },
   operational: {
-    ink: '#0F172A',
+    ink: '#1A1A1A',
     inkMuted: '#CBD5E1',
     inkPillBg: 'rgba(11, 30, 66, 0.08)',
     road: '#CBD5E1',
-    mapLand: '#F8FAFC',
+    mapLand: '#F5F6F8',
   },
   brand: {
-    primary: '#0B2545',          // Midnight Navy (Chữ L & Viền Báo của Logo)
-    accent: '#F59E0B',           // Cheetah Golden Amber (Màu Báo Gấm)
-    blue: '#0284C7',
-    green: '#16A34A',
+    primary: '#0B2545',          // Midnight Navy (Chữ L & Viền Báo của Logo - Giữ nguyên)
+    accent: '#F26722',           // Lalamove Heat Orange (Màu Báo Gấm & Năng lượng tốc độ)
+    blue: '#1890FF',
+    green: '#00B14F',
     background: '#0B2545',
     text: '#FFFFFF',
-    softBackground: '#FFFBEB',
+    softBackground: '#FFF5EE',
     softText: '#0B2545',
     border: '#0B2545',
-    accentSoft: '#FEF3C7',
-    accentText: '#D97706',
+    accentSoft: '#FFE8DB',
+    accentText: '#D9541F',
   },
   // Apple system-color semantics (light mode values).
   info: {
     background: '#EAF2FF',
-    text: '#007AFF',
+    text: '#1890FF',
     border: '#B8D6FF',
   },
   warning: {
-    background: '#FFFBEB',
-    text: '#F59E0B',
-    border: '#FDE68A',
+    background: '#FFF5EE',
+    text: '#F26722',
+    border: '#FFD1B3',
   },
   active: {
-    background: '#FFFBEB',
-    text: '#D97706',
-    border: '#F59E0B',
+    background: '#FFF5EE',
+    text: '#D9541F',
+    border: '#F26722',
   },
   success: {
-    background: '#E7F9EC',
-    text: '#34C759',
-    border: '#B4EBC0',
+    background: '#E8F8EE',
+    text: '#00B14F',
+    border: '#A3E7BD',
   },
   danger: {
-    background: '#FFEBEA',
-    text: '#FF3B30',
-    border: '#FFC5C1',
+    background: '#FFF1F0',
+    text: '#FF4D4F',
+    border: '#FFA39E',
   },
 } as const;
 
@@ -481,15 +481,15 @@ export const colors = {
 export const pastelTheme = {
   yellowCard: {
     bg: '#FFFFFF',
-    border: '#FDE68A',
-    accent: '#F59E0B',
-    text: '#92400E',
+    border: '#FFD1B3',
+    accent: '#F26722',
+    text: '#C2410C',
   },
   greenCard: {
     bg: '#FFFFFF',
-    border: '#BBF7D0',
-    accent: '#16A34A',
-    text: '#14532D',
+    border: '#A3E7BD',
+    accent: '#00B14F',
+    text: '#00662A',
   },
   blueCard: {
     bg: '#FFFFFF',
@@ -499,69 +499,69 @@ export const pastelTheme = {
   },
   slateCard: {
     bg: '#FFFFFF',
-    border: '#E2E8F0',
-    accent: '#475569',
-    text: '#0F172A',
+    border: '#E8E8E8',
+    accent: '#555555',
+    text: '#1A1A1A',
   },
 } as const;
 
 export const leopardPalette = {
-  // Brand — Midnight Navy & Cheetah Golden Amber
+  // Brand — Midnight Navy & Lalamove Orange
   primary: '#0B2545',
   primaryDark: '#071A30',
   primarySoft: '#133560',
   primaryBg: '#F0F4FA',
   primaryBorder: '#CBD9EB',
 
-  // Accent — Cheetah Golden Amber
-  accentYellow: '#F59E0B',
-  accentYellowDark: '#D97706',
-  accentYellowSoft: '#FDE68A',
-  accentYellowBg: '#FFFBEB',
-  accentYellowBorder: '#FDE68A',
+  // Accent — Lalamove Heat Orange & Cheetah Glow
+  accentYellow: '#F26722',
+  accentYellowDark: '#D9541F',
+  accentYellowSoft: '#FFD1B3',
+  accentYellowBg: '#FFF5EE',
+  accentYellowBorder: '#FFD1B3',
 
   // Eco — Calm Green
-  ecoGreen: '#16A34A',
-  ecoGreenSoft: '#BBF7D0',
-  ecoGreenBg: '#F0FDF4',
-  ecoGreenBorder: '#BBF7D0',
+  ecoGreen: '#00B14F',
+  ecoGreenSoft: '#A3E7BD',
+  ecoGreenBg: '#E8F8EE',
+  ecoGreenBorder: '#A3E7BD',
 
   // Surfaces
-  bgMuted: '#F8FAFC',
+  bgMuted: '#F5F6F8',
   surfaceWhite: '#FFFFFF',
-  canvas: '#F8FAFC',
+  canvas: '#F5F6F8',
 
   // Typography
-  textSlateDark: '#0F172A',
-  textMutedSlate: '#475569',
-  textSubtle: '#64748B',
+  textSlateDark: '#1A1A1A',
+  textMutedSlate: '#555555',
+  textSubtle: '#777777',
 
   // Borders & dividers
-  cardBorder: '#E2E8F0',
-  subtleDivider: '#E2E8F0',
+  cardBorder: '#E8E8E8',
+  subtleDivider: '#EEEEEE',
 
   // Tab bar
   tabActive: '#0B2545',
-  tabInactive: '#64748B',
+  tabInactive: '#777777',
   tabBarBg: '#FFFFFF',
-  tabBarBorder: '#E2E8F0',
+  tabBarBorder: '#E8E8E8',
 
   // Input fields
   inputBg: '#FFFFFF',
-  inputBorder: '#CBD5E1',
+  inputBorder: '#E0E0E0',
   inputFocusBorder: '#0B2545',
   inputFocusRing: 'rgba(11, 37, 69, 0.12)',
-  inputPlaceholder: '#94A3B8',
+  inputPlaceholder: '#999999',
 
   // Vehicle card accents
-  vehicleBaGac: '#F59E0B',
+  vehicleBaGac: '#FEA000',
   vehicleTruck500: '#0B2545',
-  vehicleTruck1T: '#1D4ED8',
+  vehicleTruck1T: '#1890FF',
   vehicleTruck2T: '#4338CA',
 
   // Status online/offline indicator
-  onlineGreen: '#34C759',
-  offlineGray: '#94A3B8',
+  onlineGreen: '#00B14F',
+  offlineGray: '#999999',
 
   // Legacy — kept for backward compatibility
   darkHeroBg: '#0B2545',
@@ -569,7 +569,7 @@ export const leopardPalette = {
 
 /**
  * Customer-role colour palette.
- * Midnight Navy (#0B2545) is primary action colour; Leopard Amber (#F59E0B) is accent/badges/points.
+ * Midnight Navy (#0B2545) is primary action colour; Lalamove Orange (#F26722) is accent/badges/points.
  * Use this in every customer-specific screen instead of leopardPalette.
  */
 export const customerPalette = {
@@ -580,33 +580,33 @@ export const customerPalette = {
   primaryBorder: '#CBD9EB',
   primaryText: '#0B2545',
 
-  // Brand Secondary — Cheetah Golden Amber (Huy hiệu, điểm thưởng, voucher, CTA highlight)
-  accent: '#F59E0B',
-  accentDark: '#D97706',
-  accentBg: '#FFFBEB',
-  accentBorder: '#FDE68A',
-  accentText: '#B45309',
+  // Brand Secondary — Lalamove Orange / Cheetah Glow (Huy hiệu, điểm thưởng, voucher, CTA highlight)
+  accent: '#F26722',
+  accentDark: '#D9541F',
+  accentBg: '#FFF5EE',
+  accentBorder: '#FFD1B3',
+  accentText: '#C2410C',
 
   // Tab / nav (Active state)
   tabActive: '#0B2545',
   tabActiveBg: '#F0F4FA',
-  tabInactive: '#64748B',
+  tabInactive: '#777777',
 
   // Input focus
   inputFocusBorder: '#0B2545',
   inputFocusRing: 'rgba(11, 37, 69, 0.12)',
 
   // Shared neutrals
-  textSlateDark: '#0F172A',
-  textMutedSlate: '#475569',
-  textSubtle: '#64748B',
-  cardBorder: '#E2E8F0',
-  subtleDivider: '#E2E8F0',
+  textSlateDark: '#1A1A1A',
+  textMutedSlate: '#555555',
+  textSubtle: '#777777',
+  cardBorder: '#E8E8E8',
+  subtleDivider: '#EEEEEE',
   surfaceWhite: '#FFFFFF',
-  bgMuted: '#F8FAFC',
-  canvas: '#F8FAFC',
-  onlineGreen: '#34C759',
-  offlineGray: '#94A3B8',
+  bgMuted: '#F5F6F8',
+  canvas: '#F5F6F8',
+  onlineGreen: '#00B14F',
+  offlineGray: '#999999',
 } as const;
 
 export const leopardRadius = {

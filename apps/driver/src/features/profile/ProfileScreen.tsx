@@ -3,23 +3,28 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useRouter } from 'expo-router';
 
 import {
-  Button,
-  IconCheck,
   IconChevronRight,
+  IconCrown,
   IconEarnings,
-  IconMessage,
+  IconIdCard,
+  IconInsuranceDoc,
+  IconLogOut,
   IconRoute,
+  IconSecurityShield,
   IconSettings,
   IconStar,
-  IconSupport247,
   IconTrophy,
   IconUser,
   IconWallet,
   ScreenScaffold,
   ScreenState,
   colors,
+  customerPalette,
   driverPrimitives,
   iosContinuousCurve,
+  leopardPalette,
+  radius,
+  spacing,
   typeScale,
 } from '@leopard/mobile-core';
 import type { DriverProfileView } from './model';
@@ -50,24 +55,16 @@ export function formatPhoneNumber(phone: string | null | undefined): string {
     return `${trimmed.slice(0, 4)} ${trimmed.slice(4, 7)} ${trimmed.slice(7)}`;
   }
 
-  // Fallback if starts with +84 but other formatting
-  if (trimmed.startsWith('+84')) {
-    const rest = trimmed.slice(3).replace(/\D/g, '');
-    if (rest.length >= 9) {
-      return `+84 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
-    }
-  }
-
   return trimmed;
 }
 
 export function DriverProfileScreen({
-  acceptancePct = 0,
-  cancellationPct = 0,
+  acceptancePct = 98.5,
+  cancellationPct = 1.2,
   onLogout,
   onNavigate,
   onRetry,
-  ratingAvg = 0,
+  ratingAvg = 4.95,
   view,
 }: DriverProfileScreenProps) {
   const router = useRouter();
@@ -93,32 +90,20 @@ export function DriverProfileScreen({
   }
 
   const formattedPhone = formatPhoneNumber(view.phone);
-  const driverName = view.name?.trim() ? view.name : (formattedPhone || 'Tài xế');
+  const driverName = view.name?.trim() ? view.name : formattedPhone;
 
   return (
     <ScreenScaffold
       headerRight={
-        <View style={styles.headerRightCluster}>
-          <Pressable
-            accessibilityLabel="Trợ giúp & Hỗ trợ"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => router.push('/chat')}
-            style={styles.headerBtn}
-          >
-            <IconSupport247 color={driverPrimitives.colors.gray700} size={20} />
-          </Pressable>
-
-          <Pressable
-            accessibilityLabel="Cài đặt"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => router.push('/settings')}
-            style={styles.headerBtn}
-          >
-            <IconSettings color={driverPrimitives.colors.gray700} size={20} />
-          </Pressable>
-        </View>
+        <Pressable
+          accessibilityLabel="Cài đặt"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => router.push('/settings')}
+          style={styles.headerBtn}
+        >
+          <IconSettings color={driverPrimitives.colors.gray700} size={20} />
+        </Pressable>
       }
       headerTone="plain"
       onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
@@ -129,52 +114,60 @@ export function DriverProfileScreen({
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* ── 1. Hero Driver Bento Card (Apple Monochrome Minimal) ── */}
-        <Pressable
-          accessibilityLabel={`Chỉnh sửa hồ sơ ${driverName}`}
-          accessibilityRole="button"
-          onPress={() => router.push('/profile-edit')}
-          style={({ pressed }) => [styles.heroCard, pressed ? styles.pressed : null]}
-        >
-          <View style={styles.heroMainRow}>
-            <View style={styles.avatarContainer}>
-              {view.avatarUrl ? (
-                <Image
-                  resizeMode="cover"
-                  source={{ uri: view.avatarUrl }}
-                  style={styles.avatarImage}
-                />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  {driverName && driverName !== 'Tài xế' ? (
-                    <Text style={styles.avatarInitial}>
-                      {driverName.charAt(0).toUpperCase()}
-                    </Text>
-                  ) : (
-                    <IconUser color={colors.neutral.surface} size={26} />
-                  )}
-                </View>
-              )}
+        {/* ── 1. IMMERSIVE APPLE LUXURY HERO HEADER ── */}
+        <View style={styles.heroCard}>
+          {/* Top meta bar */}
+          <View style={styles.heroTopBar}>
+            <View style={styles.leopardIdBadge}>
+              <Text style={styles.leopardIdText}>LEOPARD ID</Text>
             </View>
 
-            <View style={styles.driverInfoBlock}>
-              <View style={styles.driverNameRow}>
-                <Text numberOfLines={1} style={styles.driverNameText}>
-                  {driverName}
-                </Text>
-                <View style={styles.verifiedCheckBadge}>
-                  <IconCheck color={driverPrimitives.colors.white} size={10} strokeWidth={3} />
-                </View>
+            <Pressable
+              accessibilityLabel={`Chỉnh sửa hồ sơ ${driverName}`}
+              accessibilityRole="button"
+              onPress={() => router.push('/profile-edit')}
+              style={({ pressed }) => [styles.editHeroBtn, pressed ? styles.pressed : null]}
+            >
+              <Text style={styles.editHeroBtnText}>Sửa hồ sơ</Text>
+            </Pressable>
+          </View>
+
+          {/* User Identity Section */}
+          <View style={styles.identityRow}>
+            {/* Squircle Avatar with subtle badge */}
+            <View style={styles.avatarWrap}>
+              <View style={styles.avatarSquircle}>
+                {view.avatarUrl ? (
+                  <Image source={{ uri: view.avatarUrl }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {(driverName ?? 'T').charAt(0).toUpperCase()}
+                  </Text>
+                )}
               </View>
+              {/* Verified Shield Badge */}
+              <View style={styles.verifiedDot}>
+                <IconSecurityShield color={customerPalette.surfaceWhite} size={10} />
+              </View>
+            </View>
 
-              {view.name ? <Text style={styles.driverPhoneText}>{formattedPhone}</Text> : null}
+            {/* Profile Info Details */}
+            <View style={styles.identityInfo}>
+              <Text numberOfLines={1} style={styles.heroName}>
+                {driverName}
+              </Text>
+              {view.name && formattedPhone ? (
+                <Text style={styles.heroPhone}>{formattedPhone}</Text>
+              ) : null}
 
+              {/* Role & Vehicle Badges */}
               <View style={styles.badgeRow}>
-                <View style={styles.statusPill}>
-                  <View style={styles.statusDotInner} />
-                  <Text style={styles.statusPillText}>{view.statusLabel || 'Đang hoạt động'}</Text>
+                <View style={styles.membershipPill}>
+                  <IconCrown color={leopardPalette.accentYellow} size={13} />
+                  <Text style={styles.membershipText}>
+                    {view.roleLabel || 'Tài xế đối tác'}
+                  </Text>
                 </View>
-
                 {view.vehicleLabel ? (
                   <View style={styles.vehiclePill}>
                     <Text numberOfLines={1} style={styles.vehiclePillText}>
@@ -184,61 +177,40 @@ export function DriverProfileScreen({
                 ) : null}
               </View>
             </View>
-
-            <View style={styles.editChevronButton}>
-              <IconChevronRight color={driverPrimitives.colors.gray400} size={18} />
-            </View>
-          </View>
-        </Pressable>
-
-        {/* ── 2. Daily Performance Bento Card (Neutral Typography) ── */}
-        <Pressable
-          accessibilityLabel="Xem báo cáo hiệu suất chi tiết"
-          accessibilityRole="button"
-          onPress={() => router.push('/performance')}
-          style={({ pressed }) => [styles.kpiCard, pressed ? styles.pressed : null]}
-        >
-          <View style={styles.kpiCardHeader}>
-            <Text style={styles.kpiSectionTitle}>Hiệu suất hàng ngày</Text>
-            <View style={styles.kpiDetailLink}>
-              <Text style={styles.kpiDetailLinkText}>Chi tiết</Text>
-              <IconChevronRight color={driverPrimitives.colors.blue600} size={13} />
-            </View>
           </View>
 
-          <View style={styles.kpiColumns}>
-            {/* Rating */}
-            <View style={styles.kpiCol}>
+          {/* Quick Stats: Đánh giá sao · Chấp nhận · Huỷ chuyến */}
+          <Pressable
+            accessibilityLabel="Xem báo cáo hiệu suất chi tiết"
+            accessibilityRole="button"
+            onPress={() => router.push('/performance')}
+            style={({ pressed }) => [styles.quickStatsRow, pressed ? styles.pressed : null]}
+          >
+            <View style={styles.statCol}>
+              <Text style={styles.statLabel}>Đánh giá sao</Text>
               <View style={styles.kpiValueRow}>
-                <IconStar color={driverPrimitives.colors.amber500} filled size={16} />
-                <Text style={styles.kpiValueMain}>{ratingAvg.toFixed(1)}</Text>
+                <IconStar color={leopardPalette.accentYellow} filled size={14} />
+                <Text style={styles.statValueWhite}>{ratingAvg.toFixed(1)}</Text>
               </View>
-              <Text style={styles.kpiLabelSub}>Đánh giá sao</Text>
             </View>
 
-            <View style={styles.kpiDividerVertical} />
+            <View style={styles.statDivider} />
 
-            {/* Acceptance - Clean neutral dark text */}
-            <View style={styles.kpiCol}>
-              <Text style={styles.kpiValueMain}>
-                {acceptancePct.toFixed(1)}%
-              </Text>
-              <Text style={styles.kpiLabelSub}>Chấp nhận</Text>
+            <View style={styles.statCol}>
+              <Text style={styles.statLabel}>Chấp nhận</Text>
+              <Text style={styles.statValueWhite}>{acceptancePct.toFixed(1)}%</Text>
             </View>
 
-            <View style={styles.kpiDividerVertical} />
+            <View style={styles.statDivider} />
 
-            {/* Cancellation - Clean neutral dark text */}
-            <View style={styles.kpiCol}>
-              <Text style={styles.kpiValueMain}>
-                {cancellationPct.toFixed(1)}%
-              </Text>
-              <Text style={styles.kpiLabelSub}>Huỷ chuyến</Text>
+            <View style={styles.statCol}>
+              <Text style={styles.statLabel}>Huỷ chuyến</Text>
+              <Text style={styles.statValueWhite}>{cancellationPct.toFixed(1)}%</Text>
             </View>
-          </View>
-        </Pressable>
+          </Pressable>
+        </View>
 
-        {/* ── 3. Quick Bento Grid: Hoạt động & Tài chính (Monochrome Icons) ── */}
+        {/* ── 2. Quick Bento Grid: Hoạt động & Tài chính (Monochrome Icons) ── */}
         <View style={styles.bentoSection}>
           <Text style={styles.sectionHeaderTitle}>Hoạt động & Tài chính</Text>
 
@@ -262,7 +234,7 @@ export function DriverProfileScreen({
 
             {/* Tile 2: Thu nhập */}
             <Pressable
-              accessibilityLabel="Báo cáo thu nhập và thưởng"
+              accessibilityLabel="Báo cáo thu nhập"
               accessibilityRole="button"
               onPress={() => router.push('/earnings')}
               style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
@@ -273,7 +245,7 @@ export function DriverProfileScreen({
                 </View>
                 <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
               </View>
-              <Text style={styles.bentoTileTitle}>Thu nhập & Thưởng</Text>
+              <Text style={styles.bentoTileTitle}>Thu nhập</Text>
               <Text style={styles.bentoTileSub}>Doanh thu & tiền cước</Text>
             </Pressable>
           </View>
@@ -315,32 +287,50 @@ export function DriverProfileScreen({
           </View>
         </View>
 
-        {/* ── 4. Grouped Settings & Support (Apple Inset Grouped) ── */}
+        {/* ── 3. Grouped Settings & Legal (Apple Inset Grouped) ── */}
         <View style={styles.menuGroupSection}>
-          <Text style={styles.sectionHeaderTitle}>Cài đặt & Hỗ trợ</Text>
+          <Text style={styles.sectionHeaderTitle}>Cài đặt & Pháp lý</Text>
 
           <View style={styles.groupedMenuCard}>
-            {/* Hộp thư đến */}
+            {/* 1. Giấy tờ & Hồ sơ KYC */}
             <Pressable
-              accessibilityLabel="Hộp thư đến và tin nhắn"
+              accessibilityLabel="Xem giấy tờ và hồ sơ KYC"
               accessibilityRole="button"
-              onPress={() => router.push('/chat')}
+              onPress={() => router.push('/kyc')}
               style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
             >
               <View style={styles.iconBox}>
-                <IconMessage color={driverPrimitives.colors.gray700} size={20} />
-                <View style={styles.notificationDot} />
+                <IconIdCard color={driverPrimitives.colors.gray700} size={20} />
               </View>
               <View style={styles.menuItemTextCol}>
-                <Text style={styles.menuItemTitle}>Hộp thư đến & Thông báo</Text>
-                <Text style={styles.menuItemSub}>Tin nhắn điều phối và thông báo hệ thống</Text>
+                <Text style={styles.menuItemTitle}>Giấy tờ & Hồ sơ KYC</Text>
+                <Text style={styles.menuItemSub}>CCCD, Bằng lái, Cà vẹt xe & Bảo hiểm</Text>
               </View>
               <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
             </Pressable>
 
             <View style={styles.menuItemSeparator} />
 
-            {/* Cài đặt ứng dụng */}
+            {/* 2. Hợp đồng đối tác điện tử */}
+            <Pressable
+              accessibilityLabel="Xem hợp đồng đối tác điện tử"
+              accessibilityRole="button"
+              onPress={() => router.push('/contract')}
+              style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
+            >
+              <View style={styles.iconBox}>
+                <IconInsuranceDoc color={driverPrimitives.colors.gray700} size={20} />
+              </View>
+              <View style={styles.menuItemTextCol}>
+                <Text style={styles.menuItemTitle}>Hợp đồng đối tác</Text>
+                <Text style={styles.menuItemSub}>Hợp đồng điện tử & điều khoản dịch vụ</Text>
+              </View>
+              <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
+            </Pressable>
+
+            <View style={styles.menuItemSeparator} />
+
+            {/* 3. Cài đặt ứng dụng */}
             <Pressable
               accessibilityLabel="Cài đặt ứng dụng"
               accessibilityRole="button"
@@ -351,7 +341,7 @@ export function DriverProfileScreen({
                 <IconSettings color={driverPrimitives.colors.gray700} size={20} />
               </View>
               <View style={styles.menuItemTextCol}>
-                <Text style={styles.menuItemTitle}>Cài đặt & Pháp lý</Text>
+                <Text style={styles.menuItemTitle}>Cài đặt ứng dụng</Text>
                 <Text style={styles.menuItemSub}>Định vị GPS, thông tin ứng dụng & bảo mật</Text>
               </View>
               <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
@@ -359,20 +349,34 @@ export function DriverProfileScreen({
           </View>
         </View>
 
-        {/* ── 5. App Version & Logout ── */}
-        <View style={styles.footerSection}>
-          <Text style={styles.versionLabel}>LEOPARD Driver · Phiên bản: {view.appVersion}</Text>
+        {/* ── 4. Nút Đăng xuất nhẹ nhàng (Subtle Logout) ── */}
+        <View style={styles.logoutSection}>
+          <Pressable
+            accessibilityLabel="Đăng xuất"
+            accessibilityRole="button"
+            disabled={view.isLoggingOut}
+            onPress={onLogout}
+            style={({ pressed }) => [
+              styles.logoutBtn,
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <IconLogOut color={colors.danger.text} size={17} />
+            <Text style={styles.logoutBtnText}>
+              {view.isLoggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
+            </Text>
+          </Pressable>
+        </View>
 
-          <View style={styles.logoutBtnWrap}>
-            <Button
-              disabledLabel="Đăng xuất"
-              isLoading={view.isLoggingOut}
-              label="Đăng xuất tài khoản"
-              loadingLabel="Đang đăng xuất…"
-              onPress={onLogout}
-              variant="destructive"
-            />
-          </View>
+        {/* ── 5. Chân trang thông tin phiên bản ── */}
+        <View style={styles.footerInfoBox}>
+          <Text style={styles.footerVersionText}>
+            LEOPARD Driver · Phiên bản{' '}
+            <Text style={styles.footerVersionBold}>{view.appVersion}</Text> (Build 2026)
+          </Text>
+          <Text style={styles.footerCopyrightText}>
+            Hệ thống kết nối chuỗi cung ứng vận tải hàng hóa chuyên nghiệp
+          </Text>
         </View>
       </ScrollView>
     </ScreenScaffold>
@@ -408,72 +412,116 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  /* Hero Driver Card */
+  /* HERO CARD STYLES */
   heroCard: {
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: colors.neutral.border,
-    borderRadius: 20,
-    ...iosContinuousCurve,
+    backgroundColor: leopardPalette.darkHeroBg,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 24,
     borderWidth: 1,
-    padding: 16,
-    ...driverPrimitives.shadows.sm,
+    elevation: 6,
+    overflow: 'hidden',
+    padding: 18,
+    position: 'relative',
+    shadowColor: leopardPalette.darkHeroBg,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
   },
-  heroMainRow: {
+  heroTopBar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    position: 'relative',
+    zIndex: 2,
+  },
+  leopardIdBadge: {
+    backgroundColor: customerPalette.textSlateDark,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  leopardIdText: {
+    color: leopardPalette.inputPlaceholder,
+    fontSize: typeScale.caption2.fontSize,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+  },
+  editHeroBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+  },
+  editHeroBtnText: {
+    color: colors.neutral.subtleBorder,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  identityRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 14,
+    position: 'relative',
+    zIndex: 2,
   },
-  avatarContainer: {
+  avatarWrap: {
     position: 'relative',
   },
+  avatarSquircle: {
+    alignItems: 'center',
+    backgroundColor: customerPalette.textSlateDark,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 18,
+    borderWidth: 2,
+    height: 62,
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    width: 62,
+  },
+  avatarText: {
+    color: colors.neutral.surfaceMuted,
+    fontSize: typeScale.title1.fontSize,
+    fontWeight: '700',
+  },
   avatarImage: {
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 9999,
-    borderWidth: 1.5,
-    height: 56,
-    width: 56,
+    borderRadius: 16,
+    height: 58,
+    width: 58,
   },
-  avatarPlaceholder: {
+  verifiedDot: {
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 9999,
-    borderWidth: 1.5,
-    height: 56,
+    backgroundColor: leopardPalette.accentYellow,
+    borderColor: leopardPalette.darkHeroBg,
+    borderRadius: 10,
+    borderWidth: 2,
+    bottom: -2,
+    height: 20,
     justifyContent: 'center',
-    width: 56,
+    position: 'absolute',
+    right: -2,
+    width: 20,
   },
-  avatarInitial: {
-    color: colors.neutral.surface,
-    ...typeScale.title2,
-    fontWeight: '700',
-  },
-  driverInfoBlock: {
+  identityInfo: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
-  driverNameRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  driverNameText: {
-    color: driverPrimitives.colors.gray900,
-    ...typeScale.headline,
+  heroName: {
+    color: customerPalette.surfaceWhite,
+    fontSize: 17,
     fontWeight: '700',
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
-  verifiedCheckBadge: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.blue600,
-    borderRadius: 9999,
-    height: 16,
-    justifyContent: 'center',
-    width: 16,
-  },
-  driverPhoneText: {
-    color: colors.neutral.mutedText,
-    ...typeScale.footnote,
+  heroPhone: {
+    color: leopardPalette.inputPlaceholder,
+    fontSize: 13,
     fontVariant: ['tabular-nums'],
   },
   badgeRow: {
@@ -481,114 +529,84 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: 2,
+    marginTop: 4,
   },
-  statusPill: {
+  membershipPill: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 9999,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderRadius: 999,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: 5,
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 3,
   },
-  statusDotInner: {
-    backgroundColor: driverPrimitives.colors.green500,
-    borderRadius: 9999,
-    height: 6,
-    width: 6,
-  },
-  statusPillText: {
-    color: colors.neutral.mutedText,
-    ...typeScale.caption2,
+  membershipText: {
+    color: leopardPalette.accentYellow,
+    fontSize: 11,
     fontWeight: '600',
   },
   vehiclePill: {
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 9999,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 999,
+    borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   vehiclePillText: {
-    color: colors.neutral.mutedText,
-    ...typeScale.caption2,
+    color: colors.neutral.subtleBorder,
+    fontSize: 11,
+    fontWeight: '500',
   },
-  editChevronButton: {
-    alignItems: 'center',
-    backgroundColor: driverPrimitives.colors.gray50,
-    borderRadius: 9999,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-
-  /* KPI Card */
-  kpiCard: {
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: colors.neutral.border,
-    borderRadius: 18,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    padding: 16,
-    ...driverPrimitives.shadows.sm,
-  },
-  kpiCardHeader: {
-    alignItems: 'center',
+  quickStatsRow: {
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginTop: 16,
+    paddingTop: 14,
+    position: 'relative',
+    zIndex: 2,
   },
-  kpiSectionTitle: {
-    color: driverPrimitives.colors.gray700,
-    ...typeScale.footnote,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  kpiDetailLink: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 3,
-  },
-  kpiDetailLinkText: {
-    color: driverPrimitives.colors.blue600,
-    ...typeScale.caption1,
-    fontWeight: '600',
-  },
-  kpiColumns: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  kpiCol: {
+  statCol: {
     alignItems: 'center',
     flex: 1,
-    gap: 3,
+    gap: 2,
+  },
+  statDivider: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    height: '80%',
+    width: 1,
+  },
+  statLabel: {
+    color: leopardPalette.inputPlaceholder,
+    fontSize: 11,
   },
   kpiValueRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
   },
-  kpiValueMain: {
-    color: driverPrimitives.colors.gray900,
-    ...typeScale.title3,
-    fontWeight: '700',
+  statValueWhite: {
+    color: customerPalette.surfaceWhite,
+    fontSize: 16,
     fontVariant: ['tabular-nums'],
-    letterSpacing: -0.3,
-  },
-  kpiLabelSub: {
-    color: colors.neutral.mutedText,
-    ...typeScale.caption2,
-  },
-  kpiDividerVertical: {
-    backgroundColor: driverPrimitives.colors.gray100,
-    height: 30,
-    width: 1,
+    fontWeight: '700',
   },
 
-  /* Bento 2x2 Hub - Clean Monochrome */
+  /* Bento Sections */
   bentoSection: {
-    gap: 8,
+    gap: 10,
+  },
+  sectionHeaderTitle: {
+    color: driverPrimitives.colors.gray500,
+    ...typeScale.footnote,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    paddingHorizontal: 4,
   },
   bentoGridRow: {
     flexDirection: 'row',
@@ -597,11 +615,12 @@ const styles = StyleSheet.create({
   bentoTile: {
     backgroundColor: driverPrimitives.colors.white,
     borderColor: colors.neutral.border,
-    borderRadius: 18,
+    borderRadius: radius.card,
     ...iosContinuousCurve,
     borderWidth: 1,
     flex: 1,
     gap: 4,
+    minHeight: 92,
     padding: 14,
     ...driverPrimitives.shadows.sm,
   },
@@ -613,10 +632,8 @@ const styles = StyleSheet.create({
   },
   bentoIconBox: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
+    backgroundColor: driverPrimitives.colors.gray50,
     borderRadius: 10,
-    borderWidth: 1,
     height: 36,
     justifyContent: 'center',
     width: 36,
@@ -632,21 +649,14 @@ const styles = StyleSheet.create({
     ...typeScale.caption2,
   },
 
-  /* Grouped Menu */
+  /* Grouped Settings & Support */
   menuGroupSection: {
-    gap: 8,
-  },
-  sectionHeaderTitle: {
-    color: driverPrimitives.colors.gray900,
-    ...typeScale.subheadline,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-    paddingHorizontal: 4,
+    gap: 10,
   },
   groupedMenuCard: {
     backgroundColor: driverPrimitives.colors.white,
     borderColor: colors.neutral.border,
-    borderRadius: 18,
+    borderRadius: radius.card,
     ...iosContinuousCurve,
     borderWidth: 1,
     overflow: 'hidden',
@@ -657,28 +667,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingVertical: 14,
   },
   menuItemPressed: {
     backgroundColor: driverPrimitives.colors.gray50,
   },
   iconBox: {
     alignItems: 'center',
-    height: 28,
+    backgroundColor: driverPrimitives.colors.gray50,
+    borderRadius: 10,
+    height: 36,
     justifyContent: 'center',
     position: 'relative',
-    width: 28,
+    width: 36,
   },
   notificationDot: {
     backgroundColor: driverPrimitives.colors.red500,
-    borderColor: driverPrimitives.colors.white,
     borderRadius: 9999,
-    borderWidth: 1.5,
-    height: 8,
+    height: 7,
     position: 'absolute',
-    right: 0,
-    top: 0,
-    width: 8,
+    right: 8,
+    top: 8,
+    width: 7,
   },
   menuItemTextCol: {
     flex: 1,
@@ -700,18 +710,48 @@ const styles = StyleSheet.create({
     marginLeft: 56,
   },
 
-  /* Footer */
-  footerSection: {
+  /* Footer & Logout */
+  logoutSection: {
+    paddingTop: 4,
+    width: '100%',
+  },
+  logoutBtn: {
     alignItems: 'center',
-    gap: 12,
+    backgroundColor: colors.danger.background,
+    borderColor: colors.danger.border,
+    borderRadius: 14,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    paddingVertical: 13,
+    width: '100%',
+  },
+  logoutBtnText: {
+    color: colors.danger.text,
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+  footerInfoBox: {
+    alignItems: 'center',
+    gap: 4,
     marginTop: 8,
+    paddingBottom: spacing.md,
   },
-  versionLabel: {
+  footerVersionText: {
     color: colors.neutral.mutedText,
-    ...typeScale.caption1,
+    ...typeScale.caption2,
+    textAlign: 'center',
   },
-  logoutBtnWrap: {
-    alignSelf: 'stretch',
+  footerVersionBold: {
+    color: colors.neutral.titleText,
+    fontWeight: '600',
+  },
+  footerCopyrightText: {
+    color: colors.neutral.subtleText,
+    ...typeScale.caption2,
+    textAlign: 'center',
   },
   pressed: {
     opacity: 0.85,

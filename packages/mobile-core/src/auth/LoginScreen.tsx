@@ -932,8 +932,8 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   primaryCtaBtnVerified: {
-    backgroundColor: '#16A34A',
-    shadowColor: '#16A34A',
+    backgroundColor: '#0B2545',
+    shadowColor: '#0B2545',
   },
   primaryCtaBtnPressed: {
     opacity: 0.88,

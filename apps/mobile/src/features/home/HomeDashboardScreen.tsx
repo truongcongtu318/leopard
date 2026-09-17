@@ -566,8 +566,6 @@ export function HomeDashboardScreen({
           setPickupText(resolved);
           setPickupLabel('Vị trí hiện tại');
           setLocationNotice(null);
-          addressStore.saveAddress({ label: 'Vị trí hiện tại', address: resolved, category: 'OTHER', latitude: lat, longitude: lng, isDefault: true });
-          setAddressStoreVersion((v) => v + 1);
         }
       } catch {
         setLocationNotice('Không lấy được vị trí hiện tại. Vui lòng nhập điểm lấy hàng thủ công.');
@@ -578,8 +576,17 @@ export function HomeDashboardScreen({
   const addressList = useMemo(() => savedAddresses ?? addressStore.getAddresses(), [savedAddresses, addressStoreVersion]);
 
   const effectiveHubList = useMemo(() => {
-    if (addressList && addressList.length > 0) {
-      return addressList;
+    const validSaved = (addressList || []).filter(
+      (a) => a.label !== 'Vị trí hiện tại' && a.address && a.address.trim().length > 0,
+    );
+    if (validSaved.length > 0) {
+      const seen = new Set<string>();
+      return validSaved.filter((a) => {
+        const key = (a.address || a.label || '').trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
     return POPULAR_LOGISTICS_HUBS;
   }, [addressList]);
@@ -946,7 +953,7 @@ export function HomeDashboardScreen({
 
                 {/* Quick Hub Chips */}
                 <View style={styles.savedAddressesHeader}>
-                  <Text style={styles.savedAddressesSectionTitle}>GỢI Ý ĐỊA CHỈ NHANH</Text>
+                  <Text style={styles.savedAddressesSectionTitle}>Gợi ý địa chỉ nhanh</Text>
                   <Pressable
                     accessibilityLabel="Mở sổ địa chỉ"
                     accessibilityRole="button"
@@ -1616,7 +1623,7 @@ export function HomeDashboardScreen({
               <View style={styles.sectionHeaderRow}>
                 <View style={styles.sectionTitleWithBadge}>
                   <View style={styles.liveIndicatorDotActive} />
-                  <Text style={styles.sectionLabel}>ĐANG VẬN CHUYỂN</Text>
+                  <Text style={styles.sectionLabel}>Đang vận chuyển</Text>
                 </View>
                 <View style={styles.liveTagBadge}><Text style={styles.liveTagText}>Trực tiếp</Text></View>
               </View>
@@ -2096,11 +2103,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   savedAddressesSectionTitle: {
-    ...typeScale.caption2,
-    fontWeight: '700',
+    ...typeScale.footnote,
+    fontWeight: '600',
     color: customerPalette.textSubtle,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
   },
   manageAddressesBtn: {
     flexDirection: 'row',

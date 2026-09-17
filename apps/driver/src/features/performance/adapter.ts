@@ -9,6 +9,11 @@ export interface DriverPerformanceReviewResponse {
   rating: number;
   comment: string | null;
   createdAt: string;
+  customer?: {
+    id?: string;
+    name?: string | null;
+    phone?: string | null;
+  } | null;
 }
 
 export interface DriverPerformanceResponse {

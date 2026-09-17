@@ -27,6 +27,7 @@ import {
   driverPrimitives,
   iconSize,
   iosContinuousCurve,
+  leopardPalette,
   typeScale,
 } from '@leopard/mobile-core';
 import { formatPhoneNumber } from './ProfileScreen';
@@ -219,7 +220,7 @@ export function DriverEditProfileScreen({
           {/* Guideline Card */}
           <View style={styles.guidelineCard}>
             <View style={styles.guidelineHeader}>
-              <IconSecurityShield color={driverPrimitives.colors.green600} size={14} />
+              <IconSecurityShield color={colors.brand.primary} size={14} />
               <Text style={styles.guidelineTitle}>Tiêu chuẩn ảnh nhận diện đối tác</Text>
             </View>
             <Text style={styles.guidelineText}>
@@ -420,8 +421,8 @@ const styles = StyleSheet.create({
 
   /* Guideline Box */
   guidelineCard: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#DCFCE7',
+    backgroundColor: leopardPalette.primaryBg,
+    borderColor: leopardPalette.primaryBorder,
     borderRadius: 14,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -436,12 +437,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   guidelineTitle: {
-    color: '#15803D',
+    color: colors.brand.primary,
     ...typeScale.caption1,
     fontWeight: '700',
   },
   guidelineText: {
-    color: '#166534',
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
     lineHeight: 16,
   },

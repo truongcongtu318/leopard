@@ -16,47 +16,45 @@ import { Platform } from 'react-native';
 
 export const driverPrimitives = {
   colors: {
-    // LEOPARD Brand — Trackly Orange (not yet wired into screens below;
-    // those still reference green* directly. See driverBrand export.)
-    orange50: '#FFF1E9',
-    orange500: '#F86E3F',
+    // LEOPARD Brand — Lalamove Heat Orange
+    orange50: '#FFF5EE',
+    orange500: '#F26722',
     orange600: '#D9541F',
     orange700: '#C2410C',
 
-    // Grab Iconic Emerald — kept as-is: used for success/online status
-    // across existing screens, not purely brand identity.
+    // Primary Emerald / Fresh Green — used for success/online status
     green50: '#E8F8EE',
     green100: '#D1F2DD',
-    green500: '#00B14F', // Primary Grab Emerald
+    green500: '#00B14F', // Fresh Green
     green600: '#009743',
     green700: '#008038',
     green900: '#004D22',
 
     // Dark HUD & Charcoal Inks
-    dark950: '#0F172A',
-    dark900: '#1E242B', // "Bật kết nối" Hero Duty Switch background
+    dark950: '#0B2545',
+    dark900: '#1A1A1A', // "Bật kết nối" Hero Duty Switch background
     dark800: '#2A323D',
     dark700: '#334155',
 
-    // Neutral Grays & Surfaces
+    // Neutral Grays & Surfaces (Lalamove Clean Grey Scheme)
     white: '#FFFFFF',
-    gray50: '#F8FAFC',
-    gray100: '#F1F5F9', // Circular action icon bg
-    gray200: '#E2E8F0', // Card dividers & borders
-    gray300: '#CBD5E1',
-    gray400: '#94A3B8', // Inactive icons & chevrons
-    gray500: '#64748B', // Subtitles & metadata
-    gray700: '#334155', // Body labels
-    gray900: '#1E293B', // High contrast title text
+    gray50: '#F5F6F8', // Lalamove Canvas
+    gray100: '#F0F2F5', // Circular action icon bg
+    gray200: '#E8E8E8', // Card dividers & borders
+    gray300: '#D8D8D8',
+    gray400: '#999999', // Inactive icons & chevrons
+    gray500: '#777777', // Subtitles & metadata
+    gray700: '#555555', // Body labels
+    gray900: '#1A1A1A', // High contrast title text
 
     // Accents & Signals
-    amber400: '#FBBF24',
-    amber500: '#F59E0B', // Driver star rating (★ 5.00)
-    red500: '#EF4444', // "MỚI" badge, red notification dot, critical alert
+    amber400: '#FFB800',
+    amber500: '#FEA000', // Lalamove Orange Peel star rating (★ 5.00)
+    red500: '#FF4D4F', // "MỚI" badge, red notification dot, critical alert
     red600: '#DC2626',
-    red50: '#FEF2F2',
-    blue500: '#007AFF', // Action link, navigation puck, tooltip callout
-    blue600: '#0055D4',
+    red50: '#FFF1F0',
+    blue500: '#1890FF', // Action link, navigation puck, tooltip callout
+    blue600: '#096DD9',
     cyan400: '#06B6D4',
     teal400: '#2DD4BF', // Diamond rewards gem (💎)
   },
@@ -165,12 +163,12 @@ export const driverSemantics = {
     canvas: driverPrimitives.colors.gray50,
     card: driverPrimitives.colors.white,
     cardSubtle: driverPrimitives.colors.gray50,
-    cardHighlighted: driverPrimitives.colors.green50,
+    cardHighlighted: driverPrimitives.colors.orange50,
     overlayScrim: 'rgba(15, 23, 42, 0.45)',
     hudPill: driverPrimitives.colors.white,
-    powerPill: driverPrimitives.colors.dark900,
+    powerPill: driverPrimitives.colors.dark950,
     quickActionCircle: driverPrimitives.colors.gray100,
-    activeTabCircle: driverPrimitives.colors.green500,
+    activeTabCircle: driverPrimitives.colors.dark950,
   },
 
   text: {
@@ -178,17 +176,17 @@ export const driverSemantics = {
     secondary: driverPrimitives.colors.gray500,
     muted: driverPrimitives.colors.gray400,
     inverse: driverPrimitives.colors.white,
-    brand: driverPrimitives.colors.green500,
-    brandDark: driverPrimitives.colors.green700,
+    brand: driverPrimitives.colors.dark950,
+    brandDark: driverPrimitives.colors.dark950,
     warning: driverPrimitives.colors.red600,
     link: driverPrimitives.colors.blue500,
   },
 
   border: {
     divider: driverPrimitives.colors.gray200,
-    subtle: 'rgba(226, 232, 240, 0.8)',
-    highlight: driverPrimitives.colors.green100,
-    focus: driverPrimitives.colors.green500,
+    subtle: 'rgba(232, 232, 232, 0.8)',
+    highlight: driverPrimitives.colors.orange50,
+    focus: driverPrimitives.colors.dark950,
   },
 
   status: {
@@ -259,7 +257,7 @@ export const driverComponents = {
     borderRadius: driverPrimitives.radius.pill,
     backgroundColor: driverPrimitives.colors.white,
     ...driverPrimitives.shadows.floating,
-    activeItemBg: driverPrimitives.colors.green500,
+    activeItemBg: driverPrimitives.colors.dark950,
     inactiveItemColor: driverPrimitives.colors.gray500,
     iconSize: 24,
   },
@@ -269,7 +267,7 @@ export const driverComponents = {
     borderTopWidth: 1,
     borderTopColor: driverPrimitives.colors.gray200,
     backgroundColor: driverPrimitives.colors.white,
-    activeColor: driverPrimitives.colors.green500,
+    activeColor: driverPrimitives.colors.dark950,
     inactiveColor: driverPrimitives.colors.gray400,
     labelFontSize: 12,
   },
@@ -301,9 +299,9 @@ export const driverComponents = {
     backgroundColor: driverPrimitives.colors.white,
     borderWidth: 1,
     borderColor: driverPrimitives.colors.gray200,
-    bannerHighlightBg: driverPrimitives.colors.green50,
-    bannerHighlightTextColor: driverPrimitives.colors.green700,
-    switchActiveColor: driverPrimitives.colors.green500,
+    bannerHighlightBg: driverPrimitives.colors.orange50,
+    bannerHighlightTextColor: driverPrimitives.colors.orange700,
+    switchActiveColor: driverPrimitives.colors.orange500,
     chevronColor: driverPrimitives.colors.gray400,
   },
 

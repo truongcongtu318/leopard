@@ -33,11 +33,11 @@ describe('CustomerSecurityScreen', () => {
     expect(screen.getByLabelText('Quay lại')).toBeTruthy();
 
     // Biometric section
-    expect(screen.getByText('SINH TRẮC HỌC')).toBeTruthy();
+    expect(screen.getByText('Sinh trắc học')).toBeTruthy();
     expect(screen.getByText('Đăng nhập bằng FaceID / Vân tay')).toBeTruthy();
 
     // Account Deletion section (Apple 5.1.1)
-    expect(screen.getByText('QUẢN LÝ DỮ LIỆU & TÀI KHOẢN')).toBeTruthy();
+    expect(screen.getByText('Quản lý dữ liệu & tài khoản')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Xóa tài khoản vĩnh viễn' })).toBeTruthy();
   });
 

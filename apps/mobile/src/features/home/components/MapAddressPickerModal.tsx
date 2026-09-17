@@ -1136,18 +1136,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   searchingBadge: {
-    backgroundColor: leopardPalette.ecoGreenBg,
+    backgroundColor: leopardPalette.primaryBg,
     paddingHorizontal: 7,
     paddingVertical: 4,
     borderRadius: 6,
     marginLeft: 6,
     borderWidth: 1,
-    borderColor: leopardPalette.ecoGreenBorder,
+    borderColor: leopardPalette.primaryBorder,
   },
   searchingBadgeText: {
     fontSize: typeScale.caption2.fontSize,
     fontWeight: '600',
-    color: leopardPalette.ecoGreen,
+    color: colors.brand.primary,
   },
   mapInputWrapper: {
     flexDirection: 'row',
@@ -1301,17 +1301,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   pinnedNotice: {
-    backgroundColor: leopardPalette.ecoGreenBg,
+    backgroundColor: leopardPalette.primaryBg,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: leopardPalette.ecoGreenBorder,
+    borderColor: leopardPalette.primaryBorder,
     marginTop: -4,
   },
   pinnedNoticeText: {
     fontSize: typeScale.caption1.fontSize,
-    color: leopardPalette.ecoGreen,
+    color: colors.brand.primary,
     fontWeight: '600',
   },
   mapSectionSeparator: {

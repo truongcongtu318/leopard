@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import {
+  colors,
   customerPalette,
   iosContinuousCurve,
   radius,
@@ -38,7 +39,7 @@ export function BookingServicesSection({
 }: BookingServicesSectionProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>DỊCH VỤ THÊM</Text>
+      <Text style={styles.sectionHeader}>Dịch vụ thêm</Text>
 
       <View style={styles.insetGroupedCard}>
         {/* Toggle Bốc xếp */}
@@ -141,22 +142,19 @@ export function BookingServicesSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 24,
+    marginTop: spacing.lg,
   },
   sectionHeader: {
     ...typeScale.footnote,
-    fontSize: 13,
     fontWeight: '600',
-    color: '#6E6E73',
-    paddingHorizontal: 32,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: -0.08,
+    color: colors.neutral.mutedText,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
   },
   insetGroupedCard: {
-    marginHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    marginHorizontal: spacing.md,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.card,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
@@ -165,57 +163,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     minHeight: 56,
   },
   toggleTextCol: {
     flex: 1,
-    paddingRight: 16,
+    paddingRight: spacing.md,
   },
   toggleTitle: {
     ...typeScale.body,
-    fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: colors.neutral.text,
   },
   toggleSubtitle: {
     ...typeScale.footnote,
-    fontSize: 13,
-    color: '#8E8E93',
-    marginTop: 2,
+    color: customerPalette.textSubtle,
+    marginTop: spacing.hairline,
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E5E5EA',
-    marginLeft: 16,
+    backgroundColor: colors.neutral.border,
+    marginLeft: spacing.md,
   },
   vatExpandedContainer: {
-    paddingBottom: 4,
+    paddingBottom: spacing.xxs,
   },
   vatField: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   fieldLabel: {
-    ...typeScale.subheadline,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '500',
-    color: '#8E8E93',
-    marginBottom: 4,
+    color: customerPalette.textSubtle,
+    marginBottom: spacing.xxs,
   },
   textInput: {
     height: 36,
     ...typeScale.body,
-    fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: colors.neutral.text,
     padding: 0,
   },
   errorText: {
-    ...typeScale.footnote,
-    fontSize: 12,
-    color: '#FF3B30',
-    marginTop: 2,
+    ...typeScale.caption1,
+    color: colors.danger.text,
+    marginTop: spacing.hairline,
   },
 });

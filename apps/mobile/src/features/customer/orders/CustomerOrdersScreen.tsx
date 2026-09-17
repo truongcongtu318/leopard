@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 
@@ -17,6 +18,7 @@ import {
   customerPalette,
   IconClock,
   IconRoute,
+  IconSearch,
   IconSpeedTruck,
   iosContinuousCurve,
   layout,
@@ -145,13 +147,20 @@ function AppleSegmentedControl({
         onPress={() => { haptic.selection(); onSegmentChange('active'); }}
         style={[s.segmentTab, activeSegment === 'active' && s.segmentTabActive]}
       >
-        {activeCount > 0 ? <PulseDot color={customerPalette.onlineGreen} size={5} /> : null}
+        {activeCount > 0 ? (
+          <PulseDot
+            color={activeSegment === 'active' ? '#6EE7B7' : customerPalette.onlineGreen}
+            size={5}
+          />
+        ) : null}
         <Text style={[s.segmentLabel, activeSegment === 'active' && s.segmentLabelActive]}>
           Đang giao
         </Text>
         {activeCount > 0 ? (
-          <View style={s.segmentBadge}>
-            <Text style={s.segmentBadgeText}>{activeCount}</Text>
+          <View style={[s.segmentBadge, activeSegment === 'active' && s.segmentBadgeActive]}>
+            <Text style={[s.segmentBadgeText, activeSegment === 'active' && s.segmentBadgeTextActive]}>
+              {activeCount}
+            </Text>
           </View>
         ) : null}
       </Pressable>
@@ -171,51 +180,56 @@ function AppleSegmentedControl({
   );
 }
 
-// ── Inline Filter Bar (local, no callback) ───────────────────────────
+// ── Search Bar in "Lịch sử" tab ──────────────────────────────────────
 
-type LocalFilter = 'ALL' | 'DELIVERED' | 'CANCELLED';
-
-const LOCAL_FILTERS: readonly Readonly<{ value: LocalFilter; label: string }>[] = [
-  { value: 'ALL', label: 'Tất cả' },
-  { value: 'DELIVERED', label: 'Hoàn thành' },
-  { value: 'CANCELLED', label: 'Đã hủy' },
-];
-
-function InlineFilterBar({
-  selected,
-  onSelect,
-  counts,
+function OrdersSearchBar({
+  isFocused,
+  onBlur,
+  onChangeText,
+  onClear,
+  onFocus,
+  value,
 }: Readonly<{
-  selected: LocalFilter;
-  onSelect: (f: LocalFilter) => void;
-  counts: Readonly<Record<LocalFilter, number>>;
+  value: string;
+  onChangeText: (text: string) => void;
+  onClear: () => void;
+  isFocused: boolean;
+  onFocus: () => void;
+  onBlur: () => void;
 }>) {
   return (
-    <View style={s.filterBar}>
-      {LOCAL_FILTERS.map((f) => {
-        const isActive = f.value === selected;
-        const count = counts[f.value];
-        return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActive }}
-            key={f.value}
-            onPress={() => { haptic.selection(); onSelect(f.value); }}
-            style={[s.filterChip, isActive && s.filterChipActive]}
-          >
-            <Text style={[s.filterChipText, isActive && s.filterChipTextActive]}>
-              {f.label}
-            </Text>
-            {count > 0 ? (
-              <View style={[s.filterBadge, isActive && s.filterBadgeActive]}>
-                <Text style={[s.filterBadgeText, isActive && s.filterBadgeTextActive]}>
-                  {count}
-                </Text>
-              </View>
-            ) : null}
-          </Pressable>
-        );
-      })}
+    <View
+      style={[s.searchBar, isFocused && s.searchBarFocused]}
+      testID="customer-orders-search-bar"
+    >
+      <IconSearch
+        color={isFocused ? customerPalette.primary : leopardPalette.textMutedSlate}
+        size={17}
+      />
+      <TextInput
+        accessibilityLabel="Tìm kiếm đơn hàng"
+        autoCapitalize="none"
+        autoCorrect={false}
+        onBlur={onBlur}
+        onChangeText={onChangeText}
+        onFocus={onFocus}
+        placeholder="Tìm theo mã đơn, địa chỉ giao nhận..."
+        placeholderTextColor={leopardPalette.textMutedSlate}
+        returnKeyType="search"
+        style={s.searchInput}
+        value={value}
+      />
+      {value ? (
+        <Pressable
+          accessibilityLabel="Xóa tìm kiếm"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={onClear}
+          style={s.clearSearchBtn}
+        >
+          <Text style={s.clearSearchIcon}>✕</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -318,9 +332,6 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
   order: CustomerOrderListItemView;
   onPress?: (orderId: string) => void;
 }>) {
-  const isDelivered = order.status === 'DELIVERED';
-  const isCancelled = order.status === 'CANCELLED';
-
   return (
     <Pressable
       accessibilityHint="Xem chi tiết đơn hàng"
@@ -332,7 +343,7 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
       {/* Header: icon + reference + status */}
       <View style={s.completedHeader}>
         <View style={s.completedIconBox}>
-          <IconSpeedTruck color={isDelivered ? colors.success.text : isCancelled ? colors.danger.text : customerPalette.primary} size={18} />
+          <IconSpeedTruck color={customerPalette.primary} size={18} />
         </View>
         <View style={s.completedTitleWrap}>
           <Text numberOfLines={1} style={s.completedRef}>Đơn {order.reference}</Text>
@@ -455,7 +466,8 @@ export function CustomerOrdersScreen({
   view,
 }: CustomerOrdersScreenProps) {
   const [segment, setSegment] = useState<OrdersSegment>('all');
-  const [localFilter, setLocalFilter] = useState<LocalFilter>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Loading state
   if (view.kind === 'loading') {
@@ -492,20 +504,20 @@ export function CustomerOrdersScreen({
   const activeOrders = view.orders.filter((o) => isActiveOrder(o.status));
   const completedOrders = view.orders.filter((o) => !isActiveOrder(o.status));
 
-  // Local filter on completed orders — no server round-trip
+  // Search filter on completed orders — no server round-trip
   const filteredOrders = useMemo(() => {
-    if (localFilter === 'ALL') return completedOrders;
-    return completedOrders.filter((o) => o.status === localFilter);
-  }, [completedOrders, localFilter]);
-
-  const filterCounts: Record<LocalFilter, number> = useMemo(() => ({
-    ALL: completedOrders.length,
-    DELIVERED: completedOrders.filter((o) => o.status === 'DELIVERED').length,
-    CANCELLED: completedOrders.filter((o) => o.status === 'CANCELLED').length,
-  }), [completedOrders]);
-
-  // Auto-switch to active tab if there are active orders and segment is 'all'
-  // ponytail: could add useEffect to auto-switch, skipping — user controls tab
+    if (!searchQuery.trim()) return completedOrders;
+    const q = searchQuery.trim().toLowerCase();
+    return completedOrders.filter((o) => {
+      const matchRef = o.reference?.toLowerCase().includes(q);
+      const matchOrigin = o.route?.origin?.label?.toLowerCase().includes(q);
+      const matchDest = o.route?.destination?.label?.toLowerCase().includes(q);
+      const matchStatus = o.status?.toLowerCase().includes(q);
+      const matchPrice = o.priceLabel?.toLowerCase().includes(q);
+      const matchEta = o.etaLabel?.toLowerCase().includes(q);
+      return Boolean(matchRef || matchOrigin || matchDest || matchStatus || matchPrice || matchEta);
+    });
+  }, [completedOrders, searchQuery]);
 
   const renderActiveItem = useCallback(
     ({ item }: ListRenderItemInfo<CustomerOrderListItemView>) => (
@@ -558,13 +570,16 @@ export function CustomerOrdersScreen({
               onSegmentChange={setSegment}
             />
 
-            {/* Inline local filter in "Lịch sử" tab */}
+            {/* Search bar in "Lịch sử" tab */}
             {segment === 'all' ? (
               <>
-                <InlineFilterBar
-                  counts={filterCounts}
-                  onSelect={setLocalFilter}
-                  selected={localFilter}
+                <OrdersSearchBar
+                  isFocused={isSearchFocused}
+                  onBlur={() => setIsSearchFocused(false)}
+                  onChangeText={setSearchQuery}
+                  onClear={() => setSearchQuery('')}
+                  onFocus={() => setIsSearchFocused(true)}
+                  value={searchQuery}
                 />
                 <Notice view={view} />
               </>
@@ -574,6 +589,14 @@ export function CustomerOrdersScreen({
         ListEmptyComponent={
           segment === 'active' ? (
             <EmptyActiveState />
+          ) : searchQuery.trim() ? (
+            <View style={s.emptySearchState}>
+              <IconSearch color={colors.neutral.subtleText} size={28} />
+              <Text style={s.emptySearchTitle}>Không tìm thấy đơn hàng</Text>
+              <Text style={s.emptySearchBody}>
+                Không có đơn nào khớp với từ khóa "{searchQuery}".
+              </Text>
+            </View>
           ) : null
         }
         ListFooterComponent={
@@ -620,7 +643,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: radius.control,
     ...iosContinuousCurve,
-    padding: spacing.hairline,
+    padding: spacing.hairline + 1,
     gap: spacing.hairline,
   },
   segmentTab: {
@@ -629,22 +652,23 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 1,
     paddingHorizontal: spacing.sm,
-    borderRadius: radius.cardSm,
+    borderRadius: radius.control - 3,
     ...iosContinuousCurve,
   },
   segmentTabActive: {
-    backgroundColor: colors.neutral.surface,
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12)',
+    backgroundColor: customerPalette.primary,
+    boxShadow: '0 2px 6px rgba(11, 37, 69, 0.2)',
   },
   segmentLabel: {
     ...typeScale.subheadline,
     color: colors.neutral.subtleText,
+    fontWeight: '500',
   },
   segmentLabelActive: {
     fontWeight: '600',
-    color: colors.neutral.text,
+    color: '#FFFFFF',
   },
   segmentBadge: {
     backgroundColor: customerPalette.onlineGreen,
@@ -655,60 +679,76 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  segmentBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+  },
   segmentBadgeText: {
     color: colors.neutral.surface,
     ...typeScale.caption2,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
+  segmentBadgeTextActive: {
+    color: '#FFFFFF',
+  },
 
-  // ─── Inline Filter Bar ─────────────────────────────────────────
-  filterBar: {
+  // ─── Search Bar ───────────────────────────────────────────────
+  searchBar: {
+    alignItems: 'center',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: spacing.xs,
-    paddingVertical: spacing.hairline,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: Platform.OS === 'ios' ? spacing.xs + 1 : spacing.xxs + 2,
+    minHeight: 40,
   },
-  filterChip: {
-    flexDirection: 'row',
+  searchBarFocused: {
+    borderColor: customerPalette.primary,
+  },
+  searchInput: {
+    color: colors.neutral.text,
+    flex: 1,
+    ...typeScale.subheadline,
+    padding: 0,
+  },
+  clearSearchBtn: {
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.cardSm,
-    ...iosContinuousCurve,
-    backgroundColor: colors.neutral.surfaceMuted,
-  },
-  filterChipActive: {
-    backgroundColor: customerPalette.primary,
-  },
-  filterChipText: {
-    ...typeScale.footnote,
-    color: colors.neutral.subtleText,
-  },
-  filterChipTextActive: {
-    color: colors.neutral.surface,
-    fontWeight: '600',
-  },
-  filterBadge: {
-    minWidth: 20,
-    height: 18,
-    borderRadius: radius.cardSm,
-    backgroundColor: colors.neutral.surface,
-    alignItems: 'center',
+    height: 20,
     justifyContent: 'center',
-    paddingHorizontal: spacing.xxs,
-    marginLeft: spacing.xxs,
+    width: 20,
   },
-  filterBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  filterBadgeText: {
-    ...typeScale.caption2,
+  clearSearchIcon: {
+    color: colors.neutral.subtleText,
+    ...typeScale.caption1,
     fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-    color: colors.neutral.mutedText,
   },
-  filterBadgeTextActive: {
-    color: colors.neutral.surface,
+
+  // ─── Empty Search State ───────────────────────────────────────
+  emptySearchState: {
+    alignItems: 'center',
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    gap: spacing.xs,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  emptySearchTitle: {
+    color: colors.neutral.text,
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+  emptySearchBody: {
+    color: colors.neutral.mutedText,
+    ...typeScale.caption1,
+    textAlign: 'center',
   },
 
   // ─── Hero Active Order Card ───────────────────────────────────

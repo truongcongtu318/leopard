@@ -3,7 +3,6 @@ import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import {
   IconClock,
-  IconMessage,
   IconPhone,
   IconRoute,
   IconShieldAlert,
@@ -41,15 +40,6 @@ export function DriverActiveTripCard({
       return;
     }
     callPhoneNumber(trip.customerContact);
-  };
-
-  const handleChat = () => {
-    if (onNavigate) {
-      const contact = trip.customerContact ? `?customerContact=${encodeURIComponent(trip.customerContact)}` : '';
-      onNavigate(`/chat/${trip.id}${contact}`);
-    } else if (onOpenOrder) {
-      onOpenOrder(trip.id);
-    }
   };
 
   const handleNavigateLeg = () => {
@@ -170,16 +160,6 @@ export function DriverActiveTripCard({
             testID="driver-call-btn"
           >
             <IconPhone color="#16A34A" size={18} />
-          </Pressable>
-          <Pressable
-            accessibilityLabel="Nhắn tin trong ứng dụng"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={handleChat}
-            style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.pressed : null]}
-            testID="driver-chat-btn"
-          >
-            <IconMessage color="#1D4ED8" size={18} />
           </Pressable>
         </View>
       </View>

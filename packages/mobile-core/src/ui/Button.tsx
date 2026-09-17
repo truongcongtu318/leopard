@@ -121,8 +121,8 @@ export function Button({
   const shouldHaptic = enableHaptics ?? (variant === 'primary' || variant === 'prominent' || variant === 'destructive');
   const visibleLabel = isLoading
     ? loadingLabel
-    : disabled
-      ? (disabledLabel ?? `${label} — Không khả dụng`)
+    : disabled && disabledLabel
+      ? disabledLabel
       : label;
 
   return (

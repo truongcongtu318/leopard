@@ -63,7 +63,7 @@ export function DriverBankAccountsScreen({
         {/* Security Notice */}
         <View style={styles.securityNoticeCard}>
           <View style={styles.securityNoticeIconWrap}>
-            <IconSecurityShield color="#059669" size={18} />
+            <IconSecurityShield color={colors.brand.primary} size={18} />
           </View>
           <View style={styles.securityNoticeTextCol}>
             <Text style={styles.securityNoticeTitle}>Rút tiền tức thì 24/7 qua Napas247</Text>
@@ -85,7 +85,7 @@ export function DriverBankAccountsScreen({
               <View style={styles.cardHeader}>
                 <View style={styles.cardHeaderLeft}>
                   <View style={[styles.bankIconWrap, styles.bankIconWrapDefault]}>
-                    <IconBank color="#10B981" size={22} />
+                    <IconBank color={colors.brand.primary} size={22} />
                   </View>
                   <View>
                     <Text style={styles.bankName}>{bankName}</Text>

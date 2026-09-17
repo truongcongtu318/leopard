@@ -22,9 +22,9 @@ describe('CustomerSettingsScreen', () => {
     const screen = await render(<CustomerSettingsScreen />);
 
     expect(screen.getByText('Cài đặt')).toBeTruthy();
-    expect(screen.getByText('THÔNG BÁO')).toBeTruthy();
-    expect(screen.getByText('NGÔN NGỮ & KHU VỰC')).toBeTruthy();
-    expect(screen.getByText('BẢO MẬT & PHÁP LÝ')).toBeTruthy();
+    expect(screen.getByText('Thông báo')).toBeTruthy();
+    expect(screen.getByText('Ngôn ngữ & khu vực')).toBeTruthy();
+    expect(screen.getByText('Bảo mật & pháp lý')).toBeTruthy();
     expect(screen.getByText('Bảo mật tài khoản & PIN')).toBeTruthy();
 
     await screen.unmount();

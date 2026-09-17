@@ -30,12 +30,11 @@ export default function DriverPreviewCockpitPage() {
       <View style={styles.cockpitContainer}>
         <DriverOrderDetailScreen
           onBack={() => {}}
-          onConfirmCashPayment={() => alert('Đã xác nhận thu tiền mặt')}
-          onExecuteTask={(cmd) => alert(`Thực hiện lệnh: ${cmd}`)}
-          onOpenIncidentModal={() => alert('Mở popup báo sự cố')}
-          onOpenLocationSettings={() => alert('Mở cài đặt vị trí')}
-          onRetryProof={() => alert('Thử lại upload')}
-          onSelectProof={() => alert('Mở máy ảnh / chọn ảnh e-POD')}
+          onConfirmCashPayment={() => {}}
+          onExecuteTask={(cmd) => {}}
+          onOpenLocationSettings={() => {}}
+          onRetryProof={() => {}}
+          onSelectProof={() => {}}
           view={fixtureView}
         />
       </View>

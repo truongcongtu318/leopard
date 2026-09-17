@@ -60,19 +60,9 @@ export function DriverEarningsScreen({
 
   return (
     <ScreenScaffold
-      headerRight={
-        <Pressable
-          accessibilityLabel="Trợ giúp"
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => handleNavigate('/chat')}
-          style={styles.headerActionBtn}
-        >
-          <IconSupport247 color={driverPrimitives.colors.gray700} size={20} />
-        </Pressable>
-      }
       headerTone="plain"
       onBack={() => (router.canGoBack() ? router.back() : handleNavigate('/orders'))}
+      stickyFooterBleed
       stickyFooter={
         <FinanceBottomBar activeTab="earnings" onNavigate={handleNavigate} />
       }
@@ -99,7 +89,7 @@ export function DriverEarningsScreen({
               <View style={styles.heroHeaderRow}>
                 <View style={styles.heroTitleGroup}>
                   <View style={styles.heroIconBox}>
-                    <IconEarnings color={driverPrimitives.colors.gray700} size={18} />
+                    <IconEarnings color="#FFFFFF" size={18} />
                   </View>
                   <Text style={styles.heroTitle}>Thu nhập hôm nay</Text>
                 </View>
@@ -246,16 +236,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
 
-  /* Hero Card */
+  /* Hero Card - Brand Primary Blue (Midnight Navy) */
   heroCard: {
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: colors.neutral.border,
+    backgroundColor: colors.brand.primary,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: 20,
     ...iosContinuousCurve,
     borderWidth: 1,
     gap: 12,
     padding: 16,
-    ...driverPrimitives.shadows.sm,
+    ...driverPrimitives.shadows.md,
   },
   heroHeaderRow: {
     alignItems: 'center',
@@ -269,8 +259,8 @@ const styles = StyleSheet.create({
   },
   heroIconBox: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 8,
     borderWidth: 1,
     height: 32,
@@ -278,28 +268,29 @@ const styles = StyleSheet.create({
     width: 32,
   },
   heroTitle: {
-    color: driverPrimitives.colors.gray900,
+    color: '#FFFFFF',
     ...typeScale.subheadline,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   jobsBadge: {
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderColor: colors.neutral.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
     borderRadius: 9999,
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
   jobsBadgeText: {
-    color: colors.neutral.mutedText,
+    color: '#FFFFFF',
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   heroAmount: {
-    color: driverPrimitives.colors.gray900,
+    color: '#FFFFFF',
     ...typeScale.largeTitle,
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.5,
   },
@@ -310,13 +301,13 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   heroScopeNote: {
-    color: colors.neutral.mutedText,
+    color: 'rgba(255, 255, 255, 0.7)',
     ...typeScale.caption1,
   },
   detailLinkText: {
-    color: driverPrimitives.colors.blue500,
+    color: '#93C5FD',
     ...typeScale.footnote,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   /* Sections */

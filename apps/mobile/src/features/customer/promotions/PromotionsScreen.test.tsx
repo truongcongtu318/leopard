@@ -81,8 +81,7 @@ describe('PromotionsScreen', () => {
     await waitFor(() => expect((httpClient.get as any)).toHaveBeenCalledWith('/promotions'));
 
     expect(screen.getByText('Khuyến mãi')).toBeTruthy();
-    expect(screen.getByText('Nhập mã khuyến mãi')).toBeTruthy();
-    expect(screen.getByText('MÃ KHUYẾN MÃI CÓ SẴN')).toBeTruthy();
+    expect(screen.getByText('Mã khuyến mãi có sẵn')).toBeTruthy();
     expect(screen.getByText('LEOPARD20')).toBeTruthy();
     expect(screen.getByText('VAN50K')).toBeTruthy();
     expect(screen.getByText('TRUCK100')).toBeTruthy();
@@ -106,7 +105,7 @@ describe('PromotionsScreen', () => {
     );
 
     expect(screen.getByText('Đang dùng')).toBeTruthy();
-    expect(screen.getByText('Đã áp dụng')).toBeTruthy();
+    expect(screen.getByText(/Đã áp dụng mã LEOPARD20/)).toBeTruthy();
 
     await screen.unmount();
   });

@@ -97,7 +97,7 @@ describe('HomeDashboardScreen', () => {
     expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
 
     // Active shipment sits below booking: status + route + ETA, opens on press
-    expect(screen.getByText('Đang vận chuyển')).toBeTruthy();
+    expect(screen.getAllByText('Đang vận chuyển')[0]).toBeTruthy();
     expect(screen.getByText('Kho Tân Bình')).toBeTruthy();
     expect(screen.getAllByText(/18 phút/)[0]).toBeTruthy();
     expect(screen.getByText(/59C-882\.14/)).toBeTruthy();
@@ -805,12 +805,12 @@ describe('HomeDashboardScreen', () => {
     // Hub chip style and text color
     const hubChip = screen.getByTestId('hub-chip-Kho Thủ Đức');
     const hubChipStyle = StyleSheet.flatten(hubChip.props.style);
-    expect(hubChipStyle.backgroundColor).toBe('#F8FAFC');
-    expect(hubChipStyle.borderColor).toBe('#E2E8F0');
+    expect(hubChipStyle.backgroundColor).toBe('#F5F6F8');
+    expect(hubChipStyle.borderColor).toBe('#E8E8E8');
 
     // Active shipment ETA pill
     const etaPill = screen.getByTestId('active-shipment-eta-pill');
-    expect(StyleSheet.flatten(etaPill.props.style).backgroundColor).toBe('#F1F5F9');
+    expect(StyleSheet.flatten(etaPill.props.style).backgroundColor).toBe('#F0F2F5');
     const etaText = screen.getByText(/ETA dự kiến 18 phút/);
     expect(StyleSheet.flatten(etaText.props.style).color).toBe('#0B2545');
 

@@ -26,8 +26,8 @@ describe('SearchAddressScreen', () => {
       />
     );
 
-    expect(screen.getByText('GẦN ĐÂY')).toBeTruthy();
-    expect(screen.getByText('SỔ ĐỊA CHỈ')).toBeTruthy();
+    expect(screen.getByText('Gần đây')).toBeTruthy();
+    expect(screen.getByText('Sổ địa chỉ')).toBeTruthy();
   });
 
   it('triggers onSelectAddress when a recent or search item is tapped', async () => {

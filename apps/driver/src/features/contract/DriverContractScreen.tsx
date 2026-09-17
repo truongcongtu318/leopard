@@ -6,10 +6,14 @@ import {
   IconCheck,
   IconExternalLink,
   IconFileText,
+  IconSecurityShield,
+  IconSpeedTruck,
+  IconWallet,
   ScreenScaffold,
   ScreenState,
   colors,
-  leopardPalette,
+  driverPrimitives,
+  iosContinuousCurve,
   radius,
   spacing,
   typeScale,
@@ -50,14 +54,14 @@ export function DriverContractScreen({ isError, isLoading, onRetry, status }: Dr
 
   return (
     <ScreenScaffold
-      eyebrow="LEOPARD · B2B PARTNERSHIP"
-      headerTone="ink"
+      headerTone="plain"
       onBack={() => router.back()}
-      title="Hợp đồng đối tác số hóa"
+      title="Hợp đồng đối tác"
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        style={styles.scrollWrap}
         testID="contract-screen-scroll"
       >
         {isLoading ? (
@@ -71,30 +75,37 @@ export function DriverContractScreen({ isError, isLoading, onRetry, status }: Dr
             title="Chưa có hợp đồng"
           />
         ) : (
-          <View style={styles.cardOuter}>
-            <View style={styles.cardInner}>
+          <>
+            {/* ── 1. Hero Contract Status Card (Apple Inset Grouped) ── */}
+            <View style={styles.heroCard}>
               <View style={styles.overviewHeader}>
                 <View style={styles.overviewIconBadge}>
-                  <IconFileText color="#1D4ED8" size={20} />
+                  <IconFileText color={colors.brand.primary} size={22} />
                 </View>
                 <View style={styles.overviewTextCol}>
-                  <Text style={styles.contractCodeLabel}>PHIÊN BẢN HỢP ĐỒNG</Text>
+                  <Text style={styles.contractCodeLabel}>Phiên bản hợp đồng</Text>
                   <Text style={styles.contractCodeValue}>{status.version}</Text>
                 </View>
                 <View style={styles.statusPillActive} testID="contract-signed-badge">
                   <IconCheck color="#16A34A" size={12} strokeWidth={2.5} />
-                  <Text style={styles.statusPillText}>ĐÃ KÝ</Text>
+                  <Text style={styles.statusPillText}>Đã ký điện tử</Text>
                 </View>
               </View>
-              <View style={styles.overviewDivider} />
+
+              <View style={styles.divider} />
+
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
-                  <Text style={styles.metaLabel}>Người ký:</Text>
+                  <Text style={styles.metaLabel}>Người ký xác nhận</Text>
                   <Text style={styles.metaValue}>{status.signedByName}</Text>
                 </View>
                 <View style={styles.metaItem}>
-                  <Text style={styles.metaLabel}>Ngày ký:</Text>
+                  <Text style={styles.metaLabel}>Thời gian ký kết</Text>
                   <Text style={styles.metaValue}>{formatSignedAt(status.signedAt)}</Text>
+                </View>
+                <View style={styles.metaItem}>
+                  <Text style={styles.metaLabel}>Tính pháp lý</Text>
+                  <Text style={styles.metaValueHighlight}>Chứng thực điện tử hợp lệ</Text>
                 </View>
               </View>
 
@@ -107,12 +118,90 @@ export function DriverContractScreen({ isError, isLoading, onRetry, status }: Dr
                 style={({ pressed }) => [styles.downloadPdfBtn, pressed ? styles.pressed : null]}
                 testID="btn-download-contract-pdf"
               >
-                <IconFileText color="#1D4ED8" size={16} />
+                <IconFileText color={colors.brand.primary} size={18} />
                 <Text style={styles.downloadPdfText}>Tải tệp hợp đồng đã ký (PDF)</Text>
-                <IconExternalLink color="#1D4ED8" size={14} />
+                <IconExternalLink color={colors.brand.primary} size={15} />
               </Pressable>
             </View>
-          </View>
+
+            {/* ── 2. Key Terms Summary (Apple Inset Grouped) ── */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionTitle}>Tóm tắt điều khoản chính</Text>
+
+              <View style={styles.termsCard}>
+                <View style={styles.termItem}>
+                  <View style={styles.termIconBox}>
+                    <IconSpeedTruck color={colors.brand.primary} size={18} />
+                  </View>
+                  <View style={styles.termContent}>
+                    <Text style={styles.termTitle}>Tư cách & Phương tiện vận chuyển</Text>
+                    <Text style={styles.termDesc}>
+                      Tài xế là đối tác vận tải độc lập, chủ động phương tiện và thời gian hoạt động theo thỏa thuận dịch vụ.
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.termDivider} />
+
+                <View style={styles.termItem}>
+                  <View style={styles.termIconBox}>
+                    <IconWallet color={colors.brand.primary} size={18} />
+                  </View>
+                  <View style={styles.termContent}>
+                    <Text style={styles.termTitle}>Thu nhập & Phân chia cước phí</Text>
+                    <Text style={styles.termDesc}>
+                      Thu nhập được đối soát tự động theo từng cuốc xe hoàn tất và có thể rút về tài khoản ngân hàng bất kỳ lúc nào.
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.termDivider} />
+
+                <View style={styles.termItem}>
+                  <View style={styles.termIconBox}>
+                    <IconSecurityShield color={colors.brand.primary} size={18} />
+                  </View>
+                  <View style={styles.termContent}>
+                    <Text style={styles.termTitle}>Bảo vệ hàng hóa & Quy chuẩn e-POD</Text>
+                    <Text style={styles.termDesc}>
+                      Cam kết bảo quản nguyên vẹn hàng hóa, tuân thủ quy trình chụp ảnh xác nhận và lấy chữ ký người nhận.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* ── 3. Parties Info (Apple Inset Grouped) ── */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionTitle}>Các bên tham gia ký kết</Text>
+
+              <View style={styles.partiesCard}>
+                <View style={styles.partyBox}>
+                  <Text style={styles.partyRoleLabel}>Bên giao kết (Nền tảng)</Text>
+                  <Text style={styles.partyName}>CÔNG TY CỔ PHẦN LEOPARD EXPRESS</Text>
+                  <Text style={styles.partySub}>Đại diện: Ban Điều Hành Nền Tảng LEOPARD</Text>
+                  <Text style={styles.partySub}>Tổng đài hỗ trợ đối tác: 1900 6868</Text>
+                </View>
+
+                <View style={styles.partyDivider} />
+
+                <View style={styles.partyBox}>
+                  <Text style={styles.partyRoleLabel}>Bên nhận giao kết (Đối tác tài xế)</Text>
+                  <Text style={styles.partyName}>Tài xế đối tác ({status.signedByName})</Text>
+                  <Text style={styles.partySub}>Tư cách: Tài xế đối tác vận tải công nghệ</Text>
+                  <Text style={styles.partySub}>Trạng thái: Đã xác thực CCCD & GPLX chính chủ</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* ── 4. Legal Security Note ── */}
+            <View style={styles.securityNoteBox}>
+              <IconSecurityShield color={driverPrimitives.colors.green700} size={18} />
+              <Text style={styles.securityNoteText}>
+                Bản hợp đồng điện tử được mã hóa và lưu trữ bảo mật trên hệ thống đám mây LEOPARD, có đầy đủ giá trị pháp lý theo Luật Giao dịch điện tử.
+              </Text>
+            </View>
+          </>
         )}
       </ScrollView>
     </ScreenScaffold>
@@ -120,48 +209,46 @@ export function DriverContractScreen({ isError, isLoading, onRetry, status }: Dr
 }
 
 const styles = StyleSheet.create({
+  scrollWrap: {
+    backgroundColor: colors.neutral.canvas,
+    flex: 1,
+  },
   scrollContent: {
-    padding: spacing.md,
     gap: spacing.md,
-    paddingBottom: 40,
+    paddingHorizontal: 0,
+    paddingVertical: spacing.sm,
+    paddingBottom: 48,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
-  cardOuter: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: radius.bezelOuter,
-    borderWidth: 1.5,
-    padding: 4,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardInner: {
-    backgroundColor: '#FAFCFF',
+
+  /* 1. Hero Contract Card */
+  heroCard: {
+    backgroundColor: driverPrimitives.colors.white,
     borderColor: colors.neutral.border,
-    borderRadius: radius.bezelInner,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 12,
+    gap: spacing.sm + 2,
     padding: spacing.md,
+    ...driverPrimitives.shadows.sm,
   },
   overviewHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   overviewIconBadge: {
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-    borderRadius: 10,
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
+    borderColor: 'rgba(11, 37, 69, 0.12)',
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    height: 38,
+    height: 42,
     justifyContent: 'center',
-    width: 38,
+    width: 42,
   },
   overviewTextCol: {
     flex: 1,
@@ -170,67 +257,180 @@ const styles = StyleSheet.create({
   contractCodeLabel: {
     color: colors.neutral.mutedText,
     ...typeScale.caption2,
-    letterSpacing: 0.4,
   },
   contractCodeValue: {
     ...typeScale.subheadline,
-    color: leopardPalette.primary,
+    color: colors.brand.primary,
     fontWeight: '700',
-    letterSpacing: 0.5,
     fontVariant: ['tabular-nums'],
   },
   statusPillActive: {
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
-    borderColor: '#86EFAC',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
     borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   statusPillText: {
-    color: '#15803D',
+    color: driverPrimitives.colors.green700,
     ...typeScale.caption2,
     fontWeight: '600',
   },
-  overviewDivider: {
+  divider: {
     backgroundColor: colors.neutral.border,
     height: 1,
   },
   metaRow: {
-    gap: 6,
+    gap: spacing.xs,
   },
   metaItem: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   metaLabel: {
     color: colors.neutral.mutedText,
-    ...typeScale.caption2,
+    ...typeScale.footnote,
   },
   metaValue: {
-    color: colors.neutral.text,
-    ...typeScale.caption2,
+    color: driverPrimitives.colors.gray900,
+    ...typeScale.footnote,
+    fontWeight: '600',
+  },
+  metaValueHighlight: {
+    color: driverPrimitives.colors.green700,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   downloadPdfBtn: {
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-    borderRadius: 10,
+    backgroundColor: colors.brand.softBackground,
+    borderColor: 'rgba(11, 37, 69, 0.15)',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.xs,
     justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    minHeight: 46,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   downloadPdfText: {
-    color: '#1D4ED8',
-    ...typeScale.footnote,
+    color: colors.brand.primary,
+    ...typeScale.subheadline,
     fontWeight: '600',
+  },
+
+  /* 2. Key Terms Section */
+  sectionBlock: {
+    gap: spacing.xs,
+  },
+  sectionTitle: {
+    color: driverPrimitives.colors.gray900,
+    ...typeScale.subheadline,
+    fontWeight: '600',
+    paddingHorizontal: spacing.xxs,
+  },
+  termsCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...driverPrimitives.shadows.sm,
+  },
+  termItem: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+  },
+  termIconBox: {
+    alignItems: 'center',
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    height: 36,
+    justifyContent: 'center',
+    marginTop: 2,
+    width: 36,
+  },
+  termContent: {
+    flex: 1,
+    gap: 4,
+  },
+  termTitle: {
+    color: driverPrimitives.colors.gray900,
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+  termDesc: {
+    color: colors.neutral.mutedText,
+    ...typeScale.caption1,
+    lineHeight: 18,
+  },
+  termDivider: {
+    backgroundColor: driverPrimitives.colors.gray100,
+    height: 1,
+    marginLeft: 60,
+  },
+
+  /* 3. Parties Section */
+  partiesCard: {
+    backgroundColor: driverPrimitives.colors.white,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
+    ...driverPrimitives.shadows.sm,
+  },
+  partyBox: {
+    gap: 4,
+  },
+  partyRoleLabel: {
+    color: colors.brand.primary,
+    ...typeScale.caption2,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  partyName: {
+    color: driverPrimitives.colors.gray900,
+    ...typeScale.subheadline,
+    fontWeight: '700',
+  },
+  partySub: {
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
+  },
+  partyDivider: {
+    backgroundColor: colors.neutral.border,
+    height: 1,
+  },
+
+  /* 4. Security Note */
+  securityNoteBox: {
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderColor: '#DCFCE7',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  securityNoteText: {
+    color: driverPrimitives.colors.green900,
+    ...typeScale.caption1,
+    flex: 1,
+    lineHeight: 18,
   },
 });

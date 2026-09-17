@@ -1,28 +1,38 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { DriverSettingsScreen } from './DriverSettingsScreen';
 
 describe('DriverSettingsScreen', () => {
-  it('renders all settings categories and test alert row', async () => {
+  it('renders all settings categories and essential switches', async () => {
     const screen = await render(<DriverSettingsScreen />);
 
-    // Test alert row in sound settings
-    expect(screen.getByText('Nghe thử chuông nổ đơn')).toBeTruthy();
+    // Essential setting rows
+    expect(screen.getByText('Tự động nhận đơn')).toBeTruthy();
+    expect(screen.getByText('Âm báo chuyến mới')).toBeTruthy();
+    expect(screen.getByText('Rung khi có đơn mới')).toBeTruthy();
+    expect(screen.getByText('Tự động nghỉ sau chuyến này')).toBeTruthy();
 
     // Section headings
     expect(screen.getByText('Báo hiệu & điều phối')).toBeTruthy();
     expect(screen.getByText('Bản đồ & dẫn đường xe tải')).toBeTruthy();
     expect(screen.getByText('Màn hình & tối ưu pin')).toBeTruthy();
-    expect(screen.getByText('Quyền thiết bị & dữ liệu')).toBeTruthy();
-    expect(screen.getByText('Trợ giúp & pháp lý')).toBeTruthy();
+    expect(screen.getByText('Trợ giúp & hỗ trợ')).toBeTruthy();
 
     await screen.unmount();
   });
 
-  it('settings has no hardcoded diagnostics', async () => {
+  it('settings has no hardcoded diagnostics or fake gimmick features', async () => {
     const screen = await render(<DriverSettingsScreen />);
 
+    // Removed gimmick items
+    expect(screen.queryByText('Đề xuất giá cước')).toBeNull();
+    expect(screen.queryByText('Mức âm lượng chuông điều phối:')).toBeNull();
+    expect(screen.queryByText('Nghe thử chuông nổ đơn')).toBeNull();
+    expect(screen.queryByText('Giọng nói đọc tóm tắt đơn hàng')).toBeNull();
+    expect(screen.queryByText('Dọn dẹp bộ nhớ đệm (Cache)')).toBeNull();
+
+    // Diagnostics
     expect(screen.queryByText('±3m · Cao')).toBeNull();
     expect(screen.queryByText('24 ms')).toBeNull();
     expect(screen.queryByText('142 MB')).toBeNull();
@@ -70,30 +80,20 @@ describe('DriverSettingsScreen', () => {
     await screen.unmount();
   });
 
-  it('allows tapping test alert button and reset defaults', async () => {
+  it('allows tapping reset defaults, support and emergency SOS buttons', async () => {
     const screen = await render(<DriverSettingsScreen />);
-
-    const testBtn = screen.getByRole('button', {
-      name: 'Thử nghiệm âm thanh chuông báo và độ nhạy',
-    });
-    await fireEvent.press(testBtn);
 
     const resetBtn = screen.getByRole('button', { name: 'Khôi phục cài đặt gốc' });
     await fireEvent.press(resetBtn);
 
-    await screen.unmount();
-  });
-
-  it('allows adjusting dispatch alert ringtone volume and displays emergency SOS button', async () => {
-    const screen = await render(<DriverSettingsScreen />);
-
-    expect(screen.getByText('Mức âm lượng chuông điều phối:')).toBeTruthy();
-    const vol75Btn = screen.getByRole('button', { name: 'Âm lượng 75%' });
-    await fireEvent.press(vol75Btn);
+    const supportBtn = screen.getByRole('button', { name: 'Tổng đài hỗ trợ đối tác' });
+    expect(supportBtn).toBeTruthy();
+    await fireEvent.press(supportBtn);
 
     const sosBtn = screen.getByRole('button', { name: 'Nút gọi khẩn cấp SOS' });
     expect(sosBtn).toBeTruthy();
     expect(screen.getByText('Gọi cứu hộ khẩn cấp SOS (24/7)')).toBeTruthy();
+    await fireEvent.press(sosBtn);
 
     await screen.unmount();
   });

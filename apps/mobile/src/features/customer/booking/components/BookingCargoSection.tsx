@@ -12,6 +12,7 @@ import {
 import {
   IconCamera,
   IconClose,
+  colors,
   customerPalette,
   iosContinuousCurve,
   pickDeviceImage,
@@ -62,7 +63,7 @@ export function BookingCargoSection({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>HÀNG HÓA</Text>
+      <Text style={styles.sectionHeader}>Hàng hóa</Text>
 
       {/* Chip cuộn ngang loại hàng */}
       <ScrollView
@@ -158,28 +159,25 @@ export function BookingCargoSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 24,
+    marginTop: spacing.lg,
   },
   sectionHeader: {
     ...typeScale.footnote,
-    fontSize: 13,
     fontWeight: '600',
-    color: '#6E6E73',
-    paddingHorizontal: 32,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: -0.08,
+    color: colors.neutral.mutedText,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
   },
   chipsScroll: {
-    paddingHorizontal: 16,
-    gap: 8,
-    paddingBottom: 10,
+    paddingHorizontal: spacing.md,
+    gap: spacing.xs,
+    paddingBottom: spacing.xs,
   },
   chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.pill,
     minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
@@ -194,37 +192,34 @@ const styles = StyleSheet.create({
   },
   chipText: {
     ...typeScale.footnote,
-    fontSize: 14,
     fontWeight: '500',
-    color: '#000000',
+    color: colors.neutral.text,
   },
   chipTextSelected: {
-    color: '#FFFFFF',
+    color: customerPalette.surfaceWhite,
     fontWeight: '600',
   },
   insetGroupedCard: {
-    marginHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 16,
+    marginHorizontal: spacing.md,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.card,
+    padding: spacing.md,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
   },
   noteWrap: {
-    paddingBottom: 4,
+    paddingBottom: spacing.xxs,
   },
   fieldLabel: {
-    ...typeScale.subheadline,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '500',
-    color: '#8E8E93',
-    marginBottom: 6,
+    color: customerPalette.textSubtle,
+    marginBottom: spacing.xxs,
   },
   multilineInput: {
-    ...typeScale.body,
-    fontSize: 15,
-    color: '#000000',
+    ...typeScale.callout,
+    color: colors.neutral.text,
     minHeight: 64,
     textAlignVertical: 'top',
     padding: 0,
@@ -232,41 +227,40 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E5E5EA',
-    marginVertical: 12,
+    backgroundColor: colors.neutral.border,
+    marginVertical: spacing.sm,
   },
   photoSection: {
-    paddingTop: 2,
+    paddingTop: spacing.hairline,
   },
   photoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   photoCount: {
     ...typeScale.footnote,
-    fontSize: 13,
-    color: '#8E8E93',
+    color: customerPalette.textSubtle,
     fontVariant: ['tabular-nums'],
   },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: spacing.sm,
   },
   thumbnailWrapper: {
     width: 72,
     height: 72,
-    borderRadius: 12,
+    borderRadius: radius.control,
     position: 'relative',
     ...iosContinuousCurve,
   },
   thumbnailImage: {
     width: 72,
     height: 72,
-    borderRadius: 12,
-    backgroundColor: '#F2F2F7',
+    borderRadius: radius.control,
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   deletePhotoBtn: {
     position: 'absolute',
@@ -281,7 +275,7 @@ const styles = StyleSheet.create({
   deletePhotoCircle: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -289,20 +283,19 @@ const styles = StyleSheet.create({
   addPhotoBox: {
     width: 72,
     height: 72,
-    borderRadius: 12,
+    borderRadius: radius.control,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    borderColor: colors.neutral.border,
+    backgroundColor: colors.neutral.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
     ...iosContinuousCurve,
   },
   addPhotoText: {
     ...typeScale.caption2,
-    fontSize: 11,
     fontWeight: '600',
     color: customerPalette.primary,
-    marginTop: 2,
+    marginTop: spacing.hairline,
   },
 });

@@ -15,6 +15,7 @@ import {
   colors,
   driverPrimitives,
   iosContinuousCurve,
+  leopardPalette,
   radius,
   spacing,
   typeScale,
@@ -89,7 +90,7 @@ export function DriverHistoryScreen({
         <View style={styles.kpiCard}>
           <View style={styles.kpiCol}>
             <View style={styles.kpiIconWrap}>
-              <IconSpeedTruck color={driverPrimitives.colors.gray500} size={16} />
+              <IconSpeedTruck color="#93C5FD" size={16} />
             </View>
             <Text style={styles.kpiValue}>{total}</Text>
             <Text style={styles.kpiLabel}>Tổng chuyến</Text>
@@ -99,7 +100,7 @@ export function DriverHistoryScreen({
 
           <View style={styles.kpiCol}>
             <View style={styles.kpiIconWrap}>
-              <IconTrophy color={driverPrimitives.colors.gray500} size={16} />
+              <IconTrophy color={leopardPalette.accentYellow} size={16} />
             </View>
             <Text style={styles.kpiValue}>{formatCompact(displayedRevenue)}</Text>
             <Text style={styles.kpiLabel}>Doanh thu (trang đã tải)</Text>
@@ -109,7 +110,7 @@ export function DriverHistoryScreen({
 
           <View style={styles.kpiCol}>
             <View style={styles.kpiIconWrap}>
-              <IconSecurityShield color={driverPrimitives.colors.gray500} size={16} />
+              <IconSecurityShield color="#34D399" size={16} />
             </View>
             <Text style={styles.kpiValue}>{completionRate}%</Text>
             <Text style={styles.kpiLabel}>Tỷ lệ (trang đã tải)</Text>
@@ -180,7 +181,9 @@ export function DriverHistoryScreen({
               >
                 {/* Header: Reference & Payout */}
                 <View style={styles.tripHeaderRow}>
-                  <Text style={styles.tripReferenceText}>{item.reference}</Text>
+                  <View style={styles.tripReferenceBadge}>
+                    <Text style={styles.tripReferenceText}>{item.reference}</Text>
+                  </View>
                   <Text style={styles.tripPayoutText}>
                     {item.payoutAmount > 0 ? `+${formatCurrency(item.payoutAmount)}` : '0 ₫'}
                   </Text>
@@ -304,72 +307,84 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
 
-  /* 1. KPI Bento Card */
+  /* 1. KPI Bento Card (Midnight Navy Brand Hero) */
   kpiCard: {
-    backgroundColor: driverPrimitives.colors.white,
-    borderColor: colors.neutral.border,
-    borderRadius: 18,
+    backgroundColor: colors.brand.primary,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    ...driverPrimitives.shadows.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    shadowColor: colors.brand.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    elevation: 5,
   },
   kpiCol: {
     alignItems: 'center',
     flex: 1,
-    gap: 2,
+    gap: spacing.xxs,
   },
   kpiIconWrap: {
     alignItems: 'center',
-    height: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: radius.pill,
+    height: 28,
     justifyContent: 'center',
+    marginBottom: spacing.hairline,
+    width: 28,
   },
   kpiValue: {
-    color: driverPrimitives.colors.gray900,
-    ...typeScale.callout,
+    color: '#FFFFFF',
+    ...typeScale.headline,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   kpiLabel: {
-    color: colors.neutral.mutedText,
+    color: 'rgba(255, 255, 255, 0.72)',
     ...typeScale.caption2,
     textAlign: 'center',
   },
   kpiDividerVertical: {
-    backgroundColor: colors.neutral.border,
-    height: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    height: '65%',
     width: 1,
+    alignSelf: 'center',
   },
 
   /* 2. Date Filter Segmented Control */
   segmentedControl: {
-    backgroundColor: colors.neutral.border,
-    borderRadius: radius.cardSm,
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.control,
     ...iosContinuousCurve,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: spacing.hairline,
-    padding: spacing.hairline,
+    padding: 3,
   },
   segmentBtn: {
     alignItems: 'center',
-    borderRadius: radius.cardSm - 2,
+    borderRadius: radius.control - 3,
     ...iosContinuousCurve,
     flex: 1,
-    paddingVertical: 7,
+    paddingVertical: spacing.xs + 1,
   },
   segmentBtnActive: {
-    backgroundColor: driverPrimitives.colors.white,
+    backgroundColor: colors.brand.primary,
     ...driverPrimitives.shadows.sm,
   },
   segmentBtnText: {
     color: colors.neutral.mutedText,
     ...typeScale.caption1,
+    fontWeight: '500',
   },
   segmentBtnTextActive: {
-    color: driverPrimitives.colors.gray900,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
 
@@ -383,7 +398,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     borderWidth: 1,
-    gap: spacing.xs,
+    gap: spacing.xs + 2,
     padding: spacing.md,
     ...driverPrimitives.shadows.sm,
   },
@@ -392,14 +407,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  tripReferenceBadge: {
+    backgroundColor: 'rgba(11, 37, 69, 0.05)',
+    borderColor: 'rgba(11, 37, 69, 0.08)',
+    borderRadius: radius.cardSm - 4,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+  },
   tripReferenceText: {
-    color: colors.neutral.mutedText,
+    color: colors.brand.primary,
     ...typeScale.caption1,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   tripPayoutText: {
-    color: driverPrimitives.colors.gray900,
+    color: driverPrimitives.colors.green700,
     ...typeScale.subheadline,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -415,9 +439,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   routeArrowText: {
-    color: driverPrimitives.colors.gray400,
+    color: colors.brand.accent,
     ...typeScale.footnote,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   routeDestText: {
     color: driverPrimitives.colors.gray900,

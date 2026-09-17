@@ -52,31 +52,31 @@ function TabIconFallback({ active, id }: { active: boolean; id: string }) {
     case 'home':
       return (
         <View style={styles.iconBox}>
-          <IconHome color={iconColor} size={20} />
+          <IconHome color={iconColor} filled={active} size={20} />
         </View>
       );
     case 'orders':
       return (
         <View style={styles.iconBox}>
-          <IconOrders color={iconColor} size={20} />
+          <IconOrders color={iconColor} filled={active} size={20} />
         </View>
       );
     case 'notifications':
       return (
         <View style={styles.iconBox}>
-          <IconBell color={iconColor} size={20} />
+          <IconBell color={iconColor} filled={active} size={20} />
         </View>
       );
     case 'wallet':
       return (
         <View style={styles.iconBox}>
-          <IconWallet color={iconColor} size={20} />
+          <IconWallet color={iconColor} filled={active} size={20} />
         </View>
       );
     case 'earnings':
       return (
         <View style={styles.iconBox}>
-          <IconEarnings color={iconColor} size={20} />
+          <IconEarnings color={iconColor} filled={active} size={20} />
         </View>
       );
     case 'history':
@@ -88,7 +88,7 @@ function TabIconFallback({ active, id }: { active: boolean; id: string }) {
     case 'profile':
       return (
         <View style={styles.iconBox}>
-          <IconUser color={iconColor} size={20} />
+          <IconUser color={iconColor} filled={active} size={20} />
         </View>
       );
     default:

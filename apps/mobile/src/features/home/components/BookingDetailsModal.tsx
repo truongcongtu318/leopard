@@ -1197,8 +1197,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   toggleRowActive: {
-    backgroundColor: leopardPalette.ecoGreenBg,
-    borderColor: leopardPalette.ecoGreenBorder,
+    backgroundColor: leopardPalette.primaryBg,
+    borderColor: leopardPalette.primaryBorder,
   },
   checkbox: {
     width: 22,
@@ -1211,8 +1211,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxActive: {
-    borderColor: leopardPalette.ecoGreen,
-    backgroundColor: leopardPalette.ecoGreen,
+    borderColor: colors.brand.primary,
+    backgroundColor: colors.brand.primary,
   },
   toggleLabelCol: {
     flex: 1,
@@ -1225,7 +1225,7 @@ const styles = StyleSheet.create({
   toggleFee: {
     ...typeScale.footnote,
     fontWeight: '700',
-    color: leopardPalette.ecoGreen,
+    color: colors.brand.accent,
     fontVariant: ['tabular-nums'],
   },
 

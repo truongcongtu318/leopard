@@ -1,7 +1,25 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
-import { typeScale, colors, customerPalette, leopardPalette, haptic, iosContinuousCurve, layout, radius, spacing, typography, IconBell, IconOrders, IconTag, IconTxPayment, ScreenScaffold } from '@leopard/mobile-core';
+import {
+  colors,
+  control,
+  customerPalette,
+  haptic,
+  hitSlop,
+  iosContinuousCurve,
+  layout,
+  leopardElevation,
+  leopardPalette,
+  radius,
+  spacing,
+  typeScale,
+  IconBell,
+  IconOrders,
+  IconTag,
+  IconTxPayment,
+  ScreenScaffold,
+} from '@leopard/mobile-core';
 import { isOlderThanOneDay } from './adapter';
 import type { NotificationFilter, NotificationItemView, NotificationsContentView } from './model';
 
@@ -77,10 +95,16 @@ export function NotificationsScreen({
       <Pressable
         accessibilityLabel="Đọc tất cả thông báo"
         accessibilityRole="button"
-        onPress={onMarkAllRead}
+        hitSlop={hitSlop(32, control.minimumTouchHeight)}
+        onPress={() => {
+          haptic.selection();
+          onMarkAllRead();
+        }}
         style={({ pressed }) => [styles.markAllBtn, pressed ? styles.pressed : null]}
       >
-        <Text style={styles.markAllBtnText}>Đọc tất cả</Text>
+        <Text numberOfLines={1} style={styles.markAllBtnText}>
+          Đọc tất cả
+        </Text>
       </Pressable>
     ) : null;
 
@@ -88,7 +112,6 @@ export function NotificationsScreen({
     <ScreenScaffold
       headerRight={markAllButton}
       onBack={onBack}
-      subtitle="Cập nhật trạng thái đơn hàng, thanh toán và tin tức hệ thống."
       title="Thông báo"
     >
       <View style={styles.container}>
@@ -160,6 +183,7 @@ export function NotificationsScreen({
 
         <SectionList
           contentContainerStyle={styles.listContent}
+          contentInsetAdjustmentBehavior="automatic"
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <View style={styles.emptyBox}>
@@ -176,8 +200,12 @@ export function NotificationsScreen({
                 <Pressable
                   accessibilityLabel="Xem tất cả thông báo"
                   accessibilityRole="button"
+                  hitSlop={hitSlop(36, control.minimumTouchHeight)}
                   onPress={() => setFilter('all')}
-                  style={styles.resetFilterBtn}
+                  style={({ pressed }) => [
+                    styles.resetFilterBtn,
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <Text style={styles.resetFilterBtnText}>Xem tất cả thông báo</Text>
                 </Pressable>
@@ -207,44 +235,45 @@ export function NotificationsScreen({
             const meta = getItemMeta(item.type);
 
             return (
-              <View style={styles.cardBezelOuter}>
-                <Pressable
-                  accessibilityLabel={item.title}
-                  accessibilityHint={`${item.isRead ? '' : 'Chưa đọc. '}${item.body}. ${item.createdAtLabel}`}
-                  accessibilityRole="button"
-                  onPress={() => onPressItem(item)}
-                  style={({ pressed }) => [
-                    styles.card,
-                    !item.isRead ? styles.cardUnread : null,
-                    pressed ? styles.pressed : null,
-                  ]}
-                >
-                  <View style={styles.cardHeader}>
-                    <View style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
-                      {meta.icon}
-                    </View>
-
-                    <View style={styles.cardHeaderContent}>
-                      <View style={styles.cardMetaTopRow}>
-                        <View style={[styles.typeBadge, { backgroundColor: meta.bg }]}>
-                          <Text style={[styles.typeBadgeText, { color: meta.badgeColor }]}>
-                            {meta.badgeText}
-                          </Text>
-                        </View>
-                        <Text style={styles.cardTime}>{item.createdAtLabel}</Text>
-                      </View>
-
-                      <Text numberOfLines={1} style={styles.cardTitle}>
-                        {item.title}
-                      </Text>
-                    </View>
-
-                    {!item.isRead ? <View style={styles.unreadDot} /> : null}
+              <Pressable
+                accessibilityHint={`${item.isRead ? '' : 'Chưa đọc. '}${item.body}. ${item.createdAtLabel}`}
+                accessibilityLabel={item.title}
+                accessibilityRole="button"
+                onPress={() => {
+                  haptic.light();
+                  onPressItem(item);
+                }}
+                style={({ pressed }) => [
+                  styles.card,
+                  !item.isRead ? styles.cardUnread : null,
+                  pressed ? styles.pressed : null,
+                ]}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
+                    {meta.icon}
                   </View>
 
-                  <Text style={styles.cardBody}>{item.body}</Text>
-                </Pressable>
-              </View>
+                  <View style={styles.cardHeaderContent}>
+                    <View style={styles.cardMetaTopRow}>
+                      <View style={[styles.typeBadge, { backgroundColor: meta.bg }]}>
+                        <Text style={[styles.typeBadgeText, { color: meta.badgeColor }]}>
+                          {meta.badgeText}
+                        </Text>
+                      </View>
+                      <Text style={styles.cardTime}>{item.createdAtLabel}</Text>
+                    </View>
+
+                    <Text numberOfLines={1} style={styles.cardTitle}>
+                      {item.title}
+                    </Text>
+                  </View>
+
+                  {!item.isRead ? <View style={styles.unreadDot} /> : null}
+                </View>
+
+                <Text style={styles.cardBody}>{item.body}</Text>
+              </Pressable>
             );
           }}
           renderSectionHeader={({ section: { title } }) => (
@@ -262,6 +291,7 @@ export function NotificationsScreen({
               data: displayedList.filter((n) => isOlderThanOneDay(n.createdAt)),
             },
           ].filter((s) => s.data.length > 0)}
+          showsVerticalScrollIndicator={false}
         />
       </View>
     </ScreenScaffold>
@@ -271,7 +301,7 @@ export function NotificationsScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   pressed: {
     opacity: 0.75,
@@ -280,40 +310,41 @@ const styles = StyleSheet.create({
     backgroundColor: colors.warning.background,
     borderColor: colors.warning.border,
     borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1,
     padding: spacing.sm,
   },
   noticeText: {
-    ...typography.body,
+    ...typeScale.body,
     color: colors.neutral.text,
   },
   markAllBtn: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    minHeight: control.minimumTouchHeight,
   },
   markAllBtnText: {
     color: customerPalette.primary,
-    fontSize: 12,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   filterWrap: {
-    marginBottom: 2,
+    marginBottom: spacing.hairline,
   },
   filterStrip: {
     flexDirection: 'row',
-    gap: 6,
-    paddingVertical: 2,
-    paddingRight: 4,
+    gap: spacing.xs,
+    paddingVertical: spacing.xxs,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
+    minHeight: 36,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
     backgroundColor: colors.neutral.surfaceMuted,
   },
@@ -321,74 +352,61 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primary,
   },
   filterChipText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.neutral.subtleText,
   },
   filterChipTextActive: {
-    color: colors.neutral.surface,
+    color: customerPalette.surfaceWhite,
     fontWeight: '600',
   },
   filterBadge: {
     minWidth: 20,
     height: 18,
-    borderRadius: 9,
-    backgroundColor: colors.neutral.surface,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
-    marginLeft: 6,
+    paddingHorizontal: spacing.xxs,
+    marginLeft: spacing.xs,
   },
   filterBadgeActive: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   filterBadgeText: {
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
     color: colors.neutral.mutedText,
   },
   filterBadgeTextActive: {
-    color: colors.neutral.surface,
+    color: customerPalette.surfaceWhite,
   },
   listContent: {
     gap: spacing.sm,
-    paddingBottom: layout.bottomNavClearance,
+    paddingBottom: layout.bottomNavClearance + spacing.md,
   },
   sectionHeaderWrap: {
-    paddingVertical: 4,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.hairline,
   },
   sectionHeader: {
     color: colors.neutral.subtleText,
-    fontSize: 12,
+    ...typeScale.footnote,
     fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  cardBezelOuter: {
-    backgroundColor: 'rgba(11, 30, 66, 0.04)',
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 4,
   },
   card: {
-    backgroundColor: colors.neutral.surface,
+    backgroundColor: customerPalette.surfaceWhite,
     borderColor: colors.neutral.border,
-    borderRadius: 18,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
     gap: spacing.xs,
     padding: spacing.md,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    ...leopardElevation.subtle,
   },
   cardUnread: {
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.subtleBorder,
-    borderLeftColor: customerPalette.primary,
-    borderLeftWidth: 3.5,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: customerPalette.primaryBorder,
   },
   cardHeader: {
     alignItems: 'center',
@@ -397,106 +415,118 @@ const styles = StyleSheet.create({
   },
   iconCircle: {
     alignItems: 'center',
-    borderRadius: 19,
-    height: 38,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    height: 40,
     justifyContent: 'center',
-    width: 38,
+    width: 40,
   },
   cardHeaderContent: {
     flex: 1,
     minWidth: 0,
-    gap: 2,
+    gap: spacing.hairline,
   },
   cardMetaTopRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.xs,
   },
   typeBadge: {
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
+    borderRadius: radius.cardSm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   typeBadgeText: {
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   cardTitle: {
     color: colors.neutral.text,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   cardTime: {
     color: customerPalette.offlineGray,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption2,
+    fontVariant: ['tabular-nums'],
   },
   unreadDot: {
     backgroundColor: leopardPalette.accentYellow,
-    borderRadius: 4,
+    borderRadius: radius.pill,
     height: 8,
     width: 8,
     alignSelf: 'center',
   },
   cardBody: {
     color: colors.neutral.mutedText,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     lineHeight: 18,
-    paddingLeft: 46,
+    paddingLeft: 48,
   },
   emptyBox: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
+    backgroundColor: customerPalette.surfaceWhite,
     borderColor: colors.neutral.border,
-    borderRadius: 16,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 6,
+    gap: spacing.xs,
     marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
+    ...leopardElevation.subtle,
   },
   emptyIconCircle: {
     alignItems: 'center',
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 30,
-    height: 60,
+    borderRadius: radius.pill,
+    height: 56,
     justifyContent: 'center',
-    marginBottom: 4,
-    width: 60,
+    marginBottom: spacing.xxs,
+    width: 56,
   },
   emptyTitle: {
     color: colors.neutral.text,
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '600',
     textAlign: 'center',
   },
   emptyMessage: {
     color: colors.neutral.subtleText,
-    fontSize: typeScale.footnote.fontSize,
-    lineHeight: 18,
+    ...typeScale.footnote,
     textAlign: 'center',
   },
   resetFilterBtn: {
-    marginTop: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 999,
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     backgroundColor: colors.neutral.surfaceMuted,
+    minHeight: control.minimumTouchHeight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   resetFilterBtnText: {
     color: colors.neutral.text,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   loadMoreBtn: {
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 999,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     marginTop: spacing.sm,
-    paddingVertical: 10,
+    minHeight: control.minimumTouchHeight,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
   },
   loadMoreBtnText: {
     color: customerPalette.primary,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
 });

@@ -46,7 +46,7 @@ describe('CustomerProfileScreen', () => {
     expect(screen.getByText('Tổng đơn')).toBeTruthy();
     expect(screen.getByText('12')).toBeTruthy();
     expect(screen.getByText('Đang xử lý')).toBeTruthy();
-    expect(screen.getByText('Mã ưu đãi')).toBeTruthy();
+    expect(screen.getAllByText('Mã ưu đãi')[0]).toBeTruthy();
     expect(screen.getByText('3 mã')).toBeTruthy();
     expect(screen.queryByText('850 pts')).toBeNull();
     expect(screen.queryByText('320k ₫')).toBeNull();

@@ -5,11 +5,14 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import {
   colors,
+  control,
   customerPalette,
   haptic,
+  hitSlop,
   httpClient,
   iosContinuousCurve,
   layout,
+  leopardElevation,
   leopardPalette,
   radius,
   spacing,
@@ -109,7 +112,6 @@ export function CustomerWalletScreen({
           }
 
           if (payments.length === 0) {
-            // Suy diễn từ trạng thái order
             const isDelivered = order.status === 'DELIVERED';
             const isCancelled = order.status === 'CANCELLED';
             const status: EscrowStatus = isDelivered ? 'SETTLED' : isCancelled ? 'REFUNDED' : 'PENDING';
@@ -203,14 +205,11 @@ export function CustomerWalletScreen({
       case 'HELD':
         return { bg: colors.success.background, text: colors.success.text, border: colors.success.border };
       case 'SETTLED':
-        // ponytail-noted gap: no blue token in colors; leave hardcoded (see report)
-        return { bg: '#EFF6FF', text: '#2563EB', border: '#BFDBFE' };
+        return { bg: colors.info.background, text: colors.info.text, border: colors.info.border };
       case 'PENDING':
-        // ponytail-noted gap: no amber token matching this exact trio; leave hardcoded (see report)
-        return { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' };
+        return { bg: colors.warning.background, text: colors.warning.text, border: colors.warning.border };
       case 'REFUNDED':
-        // ponytail-noted gap: no purple token exists; leave hardcoded (see report)
-        return { bg: '#F5F3FF', text: '#7C3AED', border: '#DDD6FE' };
+        return { bg: customerPalette.accentBg, text: customerPalette.accentText, border: customerPalette.accentBorder };
       case 'FAILED':
       default:
         return { bg: colors.danger.background, text: colors.danger.text, border: colors.danger.border };
@@ -220,10 +219,12 @@ export function CustomerWalletScreen({
   return (
     <ScreenScaffold
       hasFloatingNavBar
+      onBack={() => router.back()}
       title="Lịch sử ký quỹ & thanh toán"
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
@@ -231,19 +232,18 @@ export function CustomerWalletScreen({
         {/* 1. Thẻ Tổng Ký Quỹ Thật (Escrow Pool Card) */}
         <View style={styles.balanceCard}>
           <View style={styles.cardTopRow}>
-            <View style={styles.brandPill}>
-              <View style={styles.pulseDot} />
-              <IconWallet color={colors.neutral.surfaceMuted} size={16} />
-              <Text style={styles.brandPillText}>Ký quỹ đảm bảo LEOPARD</Text>
+            <View style={styles.cardHeaderBrand}>
+              <IconWallet color={customerPalette.surfaceWhite} size={16} />
+              <Text style={styles.cardHeaderTitle}>Ký quỹ an toàn</Text>
             </View>
             <View style={styles.securityBadge}>
-              <IconSecurityShield color="#10B981" size={14} />
+              <IconSecurityShield color={colors.success.text} size={14} />
               <Text style={styles.securityBadgeText}>Bảo đảm 100%</Text>
             </View>
           </View>
 
           <View style={styles.balanceBody}>
-            <Text style={styles.balanceEyebrow}>TỔNG ĐÃ KÝ QUỸ THEO ĐƠN</Text>
+            <Text style={styles.balanceEyebrow}>Tổng tiền ký quỹ theo đơn</Text>
             <View style={styles.amountRow}>
               <Text style={styles.balanceAmount}>
                 {showBalance ? formatVndPrice(totalEscrowed) : '•••••••• ₫'}
@@ -251,13 +251,20 @@ export function CustomerWalletScreen({
               <Pressable
                 accessibilityLabel={showBalance ? 'Ẩn số tiền' : 'Hiện số tiền'}
                 accessibilityRole="button"
-                onPress={() => setShowBalance(!showBalance)}
-                style={styles.eyeToggleBtn}
+                hitSlop={hitSlop(36, control.minimumTouchHeight)}
+                onPress={() => {
+                  haptic.selection();
+                  setShowBalance(!showBalance);
+                }}
+                style={({ pressed }) => [
+                  styles.eyeToggleBtn,
+                  pressed && styles.eyeToggleBtnPressed,
+                ]}
               >
                 {showBalance ? (
-                  <IconEye color={customerPalette.offlineGray} size={20} />
+                  <IconEye color={customerPalette.surfaceWhite} size={18} />
                 ) : (
-                  <IconEyeOff color={customerPalette.offlineGray} size={20} />
+                  <IconEyeOff color={customerPalette.surfaceWhite} size={18} />
                 )}
               </Pressable>
             </View>
@@ -265,15 +272,24 @@ export function CustomerWalletScreen({
 
           {/* Card Meta Footer */}
           <View style={styles.cardFooter}>
-            <Text style={styles.cardFooterNapas}>Thanh toán & Ký quỹ an toàn qua VietQR</Text>
-            <Text style={styles.cardFooterNumber}>{escrowItems.length} giao dịch đơn</Text>
+            <View style={styles.cardFooterLeft}>
+              <IconQrPayment color={customerPalette.surfaceWhite} size={14} />
+              <Text numberOfLines={1} style={styles.cardFooterNapas}>
+                Thanh toán an toàn qua VietQR
+              </Text>
+            </View>
+            <View style={styles.cardFooterBadge}>
+              <Text numberOfLines={1} style={styles.cardFooterNumber}>
+                {escrowItems.length} giao dịch đơn
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* 2. Lịch Sử Ký Quỹ & Thanh Toán Thật Theo Đơn */}
+        {/* 2. Lịch Sử Ký Quỹ & Thanh Toán Theo Đơn */}
         <View style={styles.historySection}>
           <View style={styles.historyHeaderRow}>
-            <Text style={styles.sectionLabel}>LỊCH SỬ KÝ QUỸ THEO ĐƠN</Text>
+            <Text style={styles.sectionLabel}>Lịch sử ký quỹ theo đơn</Text>
           </View>
 
           {/* Thanh lọc phân loại trạng thái ký quỹ */}
@@ -371,9 +387,9 @@ export function CustomerWalletScreen({
                           ]}
                         >
                           {isRefund ? (
-                            <IconTxRefund color={leopardPalette.ecoGreen} size={18} />
+                            <IconTxRefund color={leopardPalette.ecoGreen} size={20} />
                           ) : (
-                            <IconTxPayment color={customerPalette.textMutedSlate} size={18} />
+                            <IconTxPayment color={customerPalette.textMutedSlate} size={20} />
                           )}
                         </View>
 
@@ -422,9 +438,12 @@ export function CustomerWalletScreen({
                             accessibilityLabel={`Thanh toán ngay cho đơn ${item.orderReference}`}
                             accessibilityRole="button"
                             onPress={() => router.push(`/customer/orders/checkout/${item.orderId}`)}
-                            style={styles.payNowBtn}
+                            style={({ pressed }) => [
+                              styles.payNowBtn,
+                              pressed && styles.pressed,
+                            ]}
                           >
-                            <IconQrPayment color={customerPalette.surfaceWhite} size={14} />
+                            <IconQrPayment color={customerPalette.surfaceWhite} size={16} />
                             <Text style={styles.payNowBtnText}>Thanh toán ngay</Text>
                           </Pressable>
                         </View>
@@ -448,20 +467,17 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: layout.bottomNavClearance + 32,
+    paddingBottom: layout.bottomNavClearance + spacing.xl,
   },
   balanceCard: {
     backgroundColor: customerPalette.primary,
     borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 24,
+    borderRadius: radius.cardXl,
+    ...iosContinuousCurve,
     borderWidth: 1,
     gap: spacing.md,
-    padding: spacing.lg,
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    elevation: 6,
+    padding: spacing.md,
+    ...leopardElevation.modal,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -469,48 +485,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.xs,
   },
-  pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10B981',
-  },
-  brandPill: {
+  cardHeaderBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
+    gap: spacing.xs,
+    flex: 1,
+    minWidth: 0,
   },
-  brandPillText: {
-    color: colors.neutral.surfaceMuted,
-    ...typeScale.caption1,
+  cardHeaderTitle: {
+    color: customerPalette.surfaceWhite,
+    ...typeScale.subheadline,
     fontWeight: '600',
-    letterSpacing: 0.4,
   },
   securityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xxs,
+    flexShrink: 0,
   },
   securityBadgeText: {
     color: colors.success.text,
-    ...typeScale.caption1,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   balanceBody: {
-    gap: 4,
+    gap: spacing.xxs,
   },
   balanceEyebrow: {
-    color: customerPalette.offlineGray,
+    color: 'rgba(255, 255, 255, 0.7)',
     ...typeScale.caption2,
     fontWeight: '600',
-    letterSpacing: 0.8,
   },
   amountRow: {
     flexDirection: 'row',
@@ -519,63 +525,84 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: customerPalette.surfaceWhite,
-    fontSize: typeScale.title1.fontSize,
+    ...typeScale.title1,
     fontWeight: '700',
-    letterSpacing: 0.5,
     fontVariant: ['tabular-nums'],
   },
   eyeToggleBtn: {
-    padding: 6,
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eyeToggleBtnPressed: {
+    opacity: 0.7,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    paddingTop: 12,
+    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+    paddingTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  cardFooterLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minWidth: 0,
   },
   cardFooterNapas: {
-    color: customerPalette.offlineGray,
-    fontSize: typeScale.caption1.fontSize,
-    fontWeight: '600',
-    letterSpacing: 0.4,
+    color: 'rgba(255, 255, 255, 0.7)',
+    ...typeScale.caption1,
+    fontWeight: '500',
+  },
+  cardFooterBadge: {
+    flexShrink: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.cardSm,
   },
   cardFooterNumber: {
-    color: customerPalette.cardBorder,
-    fontSize: 12,
+    color: customerPalette.surfaceWhite,
+    ...typeScale.caption2,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    fontVariant: ['tabular-nums'],
   },
 
   /* History Section */
   historySection: {
-    gap: 12,
+    gap: spacing.sm,
   },
   historyHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.hairline,
   },
   sectionLabel: {
     color: colors.neutral.text,
-    fontSize: 13,
+    ...typeScale.subheadline,
     fontWeight: '600',
-    letterSpacing: 0.6,
   },
   filterTabsRow: {
     flexDirection: 'row',
-    gap: 6,
-    paddingVertical: 2,
-    paddingRight: 4,
+    gap: spacing.xs,
+    paddingVertical: spacing.xxs,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
+    minHeight: 36,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
     backgroundColor: colors.neutral.surfaceMuted,
   },
@@ -583,7 +610,7 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primary,
   },
   filterChipText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: customerPalette.textSubtle,
   },
   filterChipTextActive: {
@@ -593,18 +620,18 @@ const styles = StyleSheet.create({
   filterBadge: {
     minWidth: 20,
     height: 18,
-    borderRadius: 9,
+    borderRadius: radius.pill,
     backgroundColor: customerPalette.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
-    marginLeft: 6,
+    paddingHorizontal: spacing.xxs,
+    marginLeft: spacing.xs,
   },
   filterBadgeActive: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   filterBadgeText: {
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
     color: customerPalette.textMutedSlate,
@@ -613,74 +640,77 @@ const styles = StyleSheet.create({
     color: customerPalette.surfaceWhite,
   },
   loadingContainer: {
-    padding: 32,
+    padding: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   loadingText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: customerPalette.textSubtle,
   },
   emptyContainer: {
-    padding: 32,
+    padding: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 16,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    gap: 6,
+    gap: spacing.xs,
   },
   emptyTitle: {
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
     color: colors.neutral.text,
   },
   emptySubtitle: {
-    fontSize: 12,
+    ...typeScale.caption1,
     color: customerPalette.textSubtle,
     textAlign: 'center',
   },
   retryBtn: {
-    marginTop: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    marginTop: spacing.xs,
+    minHeight: control.minimumTouchHeight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     backgroundColor: customerPalette.primary,
-    borderRadius: 8,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   retryBtnText: {
     color: customerPalette.surfaceWhite,
-    fontSize: 12,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   historyList: {
-    gap: 10,
+    gap: spacing.sm,
   },
   txRow: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    ...leopardElevation.subtle,
   },
   txMainCol: {
-    gap: 10,
+    gap: spacing.sm,
   },
   txTopMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.sm,
   },
   txIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -688,78 +718,80 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral.surfaceMuted,
   },
   txIconBoxRefund: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: colors.success.background,
   },
   txMeta: {
     flex: 1,
-    gap: 3,
+    gap: spacing.xxs,
   },
   txTitle: {
-    fontSize: 13,
+    ...typeScale.subheadline,
     fontWeight: '600',
     color: colors.neutral.text,
   },
   txSubRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   txDate: {
-    fontSize: 11,
+    ...typeScale.caption2,
     color: customerPalette.offlineGray,
   },
   orderRefBadge: {
     backgroundColor: colors.neutral.surfaceMuted,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+    borderRadius: radius.cardSm,
   },
   orderRefBadgeText: {
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
     color: customerPalette.textMutedSlate,
     fontVariant: ['tabular-nums'],
   },
   txAmountCol: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: spacing.xxs,
   },
   txAmount: {
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.headline,
     fontWeight: '700',
     color: colors.neutral.text,
     fontVariant: ['tabular-nums'],
   },
   statusBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.cardSm,
     borderWidth: 1,
   },
   statusBadgeText: {
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
-    letterSpacing: 0.2,
   },
   txActionRow: {
     borderTopWidth: 1,
-    borderTopColor: colors.neutral.surfaceMuted,
-    paddingTop: 8,
+    borderTopColor: customerPalette.cardBorder,
+    paddingTop: spacing.sm,
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
   payNowBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: spacing.xs,
     backgroundColor: customerPalette.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    minHeight: control.minimumTouchHeight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
   },
   payNowBtnText: {
     color: customerPalette.surfaceWhite,
-    fontSize: 12,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   pressed: {

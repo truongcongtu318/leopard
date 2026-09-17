@@ -1,7 +1,13 @@
 import React from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { driverPrimitives, iosContinuousCurve } from '@leopard/mobile-core';
+import {
+  driverPrimitives,
+  iosContinuousCurve,
+  radius,
+  spacing,
+  typeScale,
+} from '@leopard/mobile-core';
 
 export type DriverConnectionStatusRowProps = Readonly<{
   isOnline: boolean;
@@ -47,19 +53,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: driverPrimitives.colors.white,
     borderColor: driverPrimitives.colors.gray200,
-    borderRadius: 9999,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
-    marginBottom: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     ...driverPrimitives.shadows.sm,
   },
   dot: {
-    borderRadius: 9999,
+    borderRadius: radius.pill,
     height: 10,
-    marginRight: 10,
+    marginRight: spacing.xs + 2,
     width: 10,
   },
   textWrap: {
@@ -67,12 +73,12 @@ const styles = StyleSheet.create({
   },
   title: {
     color: driverPrimitives.colors.gray900,
-    fontSize: 14.5,
+    ...typeScale.subheadline,
     fontWeight: '700',
   },
   subtitle: {
     color: driverPrimitives.colors.gray500,
-    fontSize: 12,
+    ...typeScale.caption1,
     fontWeight: '500',
     marginTop: 1,
   },
